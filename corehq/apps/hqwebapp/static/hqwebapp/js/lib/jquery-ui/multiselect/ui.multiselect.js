@@ -28,7 +28,7 @@
 (function($) {
 
 $.widget("ui.multiselect", {
-  options: {
+	options: {
 		sortable: true,
 		searchable: true,
 		doubleClickable: true,
@@ -137,6 +137,18 @@ $.widget("ui.multiselect", {
 		this.container.remove();
 
 		$.widget.prototype.destroy.apply(this, arguments);
+	},
+	refresh: function() {
+		this.container.remove();
+		this._create();
+	},
+	addSelected: function(value, text) {
+		this.element.append(
+			$("<option/>").prop('value', value)
+			              .prop('selected', 'selected')
+			              .text(text)
+		);
+		this.refresh();
 	},
 	_populateLists: function(options) {
 		this.selectedList.children('.ui-element').remove();

@@ -3,21 +3,23 @@
 
 import uuid
 import os
-from couchforms.tests.testutils import post_xform_to_couch
 from django.test import TestCase
+from corehq.form_processor.tests.utils import run_with_all_backends, post_xform
+from corehq.util.test_utils import TestFileMixin
 
 
-class XMLElementTest(TestCase):
+class XMLElementTest(TestCase, TestFileMixin):
+    file_path = ('data',)
+    root = os.path.dirname(__file__)
 
+    @run_with_all_backends
     def test_various_encodings(self):
         tests = (
             ('utf-8', u'हिन्दी चट्टानों'),
             ('UTF-8', u'हिन्दी चट्टानों'),
             ('ASCII', 'hello'),
         )
-        file_path = os.path.join(os.path.dirname(__file__), "data", "encoding.xml")
-        with open(file_path, "rb") as f:
-            xml_template = f.read()
+        xml_template = self.get_xml('encoding')
 
         for encoding, value in tests:
             xml_data = xml_template.format(
@@ -25,7 +27,7 @@ class XMLElementTest(TestCase):
                 form_id=uuid.uuid4().hex,
                 sample_value=value.encode(encoding),
             )
-            xform = post_xform_to_couch(xml_data)
-            self.assertEqual(value, xform.form['test'])
+            xform = post_xform(xml_data)
+            self.assertEqual(value, xform.form_data['test'])
             elem = xform.get_xml_element()
             self.assertEqual(value, elem.find('{http://commcarehq.org/couchforms-tests}test').text)

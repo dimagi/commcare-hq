@@ -5,9 +5,10 @@ from celery.task import task
 from celery.utils.log import get_task_logger
 from django.conf import settings
 import zipfile
-from corehq.apps.app_manager.models import get_app
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.models import CommCareMultimedia
+from corehq.util.files import file_extention_from_filename
 from soil import DownloadBase
 from django.utils.translation import ugettext as _
 from soil.util import expose_file_download, expose_cached_download
@@ -15,6 +16,7 @@ from soil.util import expose_file_download, expose_cached_download
 logging = get_task_logger(__name__)
 
 MULTIMEDIA_EXTENSIONS = ('.mp3', '.wav', '.jpg', '.png', '.gif', '.3gp', '.mp4', '.zip', )
+
 
 @task
 def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_media=False,
@@ -105,10 +107,10 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
 
 
 @task
-def build_application_zip(include_multimedia_files, include_index_files,
-                            app, download_id, compress_zip=False, filename="commcare.zip"):
+def build_application_zip(include_multimedia_files, include_index_files, app,
+                          download_id, compress_zip=False, filename="commcare.zip"):
     from corehq.apps.hqmedia.views import iter_app_files
-    
+
     DownloadBase.set_progress(build_application_zip, 0, 100)
 
     errors = []
@@ -150,6 +152,7 @@ def build_application_zip(include_multimedia_files, include_index_files,
         expose_cached_download(
             FileWrapper(open(fpath)),
             expiry=(1 * 60 * 60),
+            file_extension=file_extention_from_filename(filename),
             **common_kwargs
         )
 

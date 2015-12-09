@@ -27,6 +27,22 @@ def format_decimal(d):
         return None
 
 
+def _location_map(location_ids):
+    return {
+        loc.location_id: loc
+        for loc in (SQLLocation.objects
+                    .filter(is_archived=False,
+                            location_id__in=location_ids)
+                    .prefetch_related('location_type'))
+    }
+
+
+def geopoint(location):
+    if None in (location.latitude, location.longitude):
+        return None
+    return '{} {}'.format(location.latitude, location.longitude)
+
+
 class CommtrackDataSourceMixin(object):
 
     @property
@@ -87,7 +103,7 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
         return datetime(date.year, date.month, date.day, 23, 59, 59)
 
-    def get_data(self, slugs=None):
+    def get_data(self):
         if self.active_location:
             current_location = self.active_location.sql_location
 
@@ -227,7 +243,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             )
         )
 
-    def get_data(self, slugs=None):
+    def get_data(self):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
         stock_states = StockState.objects.filter(
@@ -256,7 +272,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             if self.config.get('aggregate'):
                 return self.aggregated_data(stock_states)
             else:
-                return self.raw_product_states(stock_states, slugs)
+                return self.raw_product_states(stock_states)
 
     def leaf_node_data(self, stock_states):
         for state in stock_states:
@@ -358,10 +374,10 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
             return result
 
-    def raw_product_states(self, stock_states, slugs):
+    def raw_product_states(self, stock_states):
         for state in stock_states:
             yield {
-                slug: f(state) for slug, f in self._slug_attrib_map.items() if not slugs or slug in slugs
+                slug: f(state) for slug, f in self._slug_attrib_map.items()
             }
 
 
@@ -373,19 +389,18 @@ class StockStatusBySupplyPointDataSource(StockStatusDataSource):
         product_ids = sorted(products.keys(), key=lambda e: products[e])
 
         by_supply_point = map_reduce(lambda e: [(e['location_id'],)], data=data, include_docs=True)
-        locs = dict((loc._id, loc) for loc in Location.view(
-                '_all_docs',
-                keys=by_supply_point.keys(),
-                include_docs=True))
+        locs = _location_map(by_supply_point.keys())
 
         for loc_id, subcases in by_supply_point.iteritems():
+            if loc_id not in locs:
+                continue  # it's archived, skip
             loc = locs[loc_id]
             by_product = dict((c['product_id'], c) for c in subcases)
 
             rec = {
                 'name': loc.name,
-                'type': loc.location_type,
-                'geo': loc._geopoint,
+                'type': loc.location_type.name,
+                'geo': geopoint(loc),
             }
             for prod in product_ids:
                 rec.update(dict(('%s-%s' % (prod, key), by_product.get(prod, {}).get(key)) for key in
@@ -427,12 +442,11 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                 doc['_id']: doc['location_id']
                 for doc in iter_docs(SupplyPointCase.get_db(), sp_ids)
             }
-            locations = {
-                doc['_id']: Location.wrap(doc)
-                for doc in iter_docs(Location.get_db(), spoint_loc_map.values())
-            }
+            locations = _location_map(spoint_loc_map.values())
 
             for spoint_id, loc_id in spoint_loc_map.items():
+                if loc_id not in locations:
+                    continue  # it's archived, skip
                 loc = locations[loc_id]
 
                 results = StockReport.objects.filter(
@@ -450,20 +464,20 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                     try:
                         if XFormInstance.get(form_id).xmlns in form_xmlnses:
                             yield {
-                                'loc': loc,
-                                'loc_id': loc._id,
+                                'parent_name': loc.parent.name if loc.parent else '',
+                                'loc_id': loc.location_id,
                                 'loc_path': loc.path,
                                 'name': loc.name,
-                                'type': loc.location_type,
+                                'type': loc.location_type.name,
                                 'reporting_status': 'reporting',
-                                'geo': loc._geopoint,
+                                'geo': geopoint(loc),
                                 'last_reporting_date': date,
                             }
                             matched = True
                             break
                     except ResourceNotFound:
                         logging.error('Stock report for location {} in {} references non-existent form {}'.format(
-                            loc._id, loc.domain, form_id
+                            loc.location_id, loc.domain, form_id
                         ))
 
                 if not matched:
@@ -473,12 +487,12 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                         'date'
                     ).order_by('-date')[:1]
                     yield {
-                        'loc': loc,
-                        'loc_id': loc._id,
+                        'parent_name': loc.parent.name if loc.parent else '',
+                        'loc_id': loc.location_id,
                         'loc_path': loc.path,
                         'name': loc.name,
-                        'type': loc.location_type,
+                        'type': loc.location_type.name,
                         'reporting_status': 'nonreporting',
-                        'geo': loc._geopoint,
+                        'geo': geopoint(loc),
                         'last_reporting_date': result[0][0] if result else ''
                     }

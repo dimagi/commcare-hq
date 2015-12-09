@@ -10,8 +10,12 @@ Software Plan: {{ plan_name }}
 Status: {{ payment_status }}
 Amount Due this Month: {{ amount_due }}
 Total Balance: {{ total_balance }}
-Payment Due Date: {{ date_due }}
 {% endblocktrans %}
+{% if total_balance > 0 %}
+{% blocktrans %}
+    Payment Due Date: {{ date_due }}
+{% endblocktrans %}
+{% endif  %}
 
 {% if is_total_balance_due %}
     {% if is_small_invoice %}
@@ -50,11 +54,13 @@ Payment Due Date: {{ date_due }}
           the project space.
     {% endblocktrans %}
 {% else %}
+    {% if total_balance > 0 %}
     {% blocktrans %}
-    Please note that the due date for this payment has been postponed, as
-    the amount due this month is less than $100.  You will start receiving
-    reminder emails for payments once your total balance reaches $100.
+        Please note that the due date for this payment has been postponed, as
+        the amount due this month is less than $100.  You will start receiving
+        reminder emails for payments once your total balance reaches $100.
     {% endblocktrans %}
+    {% endif  %}
 
     {% if can_view_statement %}
         {% blocktrans %}

@@ -87,7 +87,7 @@
             <li>Click Submit</li>
             <li>Wait until the page loads. If successful click back and refresh to see your new build.</li>
         </ol>
-        <form action="{% url 'corehq.apps.builds.views.import_build' %}" method="post">
+        <form action="{% url 'corehq.apps.builds.views.import_build' %}" method="post">% csrf_token %}
             <label for="import_build_name">Source for artifacts.zip</label>
             <input id="import_build_name" type="text" name="source"/>
             <br/>
@@ -102,11 +102,11 @@
     </div>
     <div style="height:150px;"></div>
 
-    <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
-    <script src="{% static 'hqstyle/js/core/bootstrap.min.js' %}"></script>
+    <script src="{% static 'jquery-1.7.1-legacy/jquery.js' %}"></script>
+    <script src="{% static 'style/lib/bootstrap2/bootstrap.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'hqwebapp/js/lib/knockout-2.3.0.js' %}"></script>
-    <script type="text/javascript" src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
+    <script type="text/javascript" src="{% static 'knockout-2.3.0-legacy/knockout.js' %}"></script>
+    <script type="text/javascript" src="{% static 'underscore-legacy/underscore-min.js' %}"></script>
     <script type="text/javascript" src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script>
         var doc = {{ doc|JSON }};
@@ -195,6 +195,7 @@
                     .attr("value", value)
                     .appendTo($form);
             });
+            $("{% csrf_token %}").appendTo($form);
             $form.appendTo("body");
             $form.submit();
         }

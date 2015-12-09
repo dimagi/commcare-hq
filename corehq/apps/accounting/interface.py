@@ -1,22 +1,87 @@
-from corehq.apps.accounting.dispatcher import (
-    AccountingAdminInterfaceDispatcher
-)
-from corehq.apps.accounting.filters import *
-from corehq.apps.accounting.forms import AdjustBalanceForm
-from corehq.apps.accounting.models import (
-    BillingAccount, Subscription, SoftwarePlan
-)
-from corehq.apps.accounting.utils import get_money_str, quantize_accounting_decimal, make_anchor_tag
+import datetime
+
+from django.core.urlresolvers import reverse
+from django.db.models import Q
+from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
+
+from couchexport.models import Format
+from dimagi.utils.decorators.memoized import memoized
+
+from corehq.const import SERVER_DATE_FORMAT
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import (
-    DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
+    DataTablesColumn,
+    DataTablesColumnGroup,
+    DataTablesHeader,
 )
-from django.core.urlresolvers import reverse
-from django.utils.safestring import mark_safe
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import format_datatables_data
-from corehq.const import USER_DATE_FORMAT
-from couchexport.models import Format
+
+from .dispatcher import AccountingAdminInterfaceDispatcher
+from .filters import (
+    AccountTypeFilter,
+    ActiveStatusFilter,
+    BillingContactFilter,
+    CreatedSubAdjMethodFilter,
+    DateCreatedFilter,
+    DateFilter,
+    DimagiContactFilter,
+    DomainFilter,
+    DoNotInvoiceFilter,
+    DueDatePeriodFilter,
+    EndDateFilter,
+    EntryPointFilter,
+    IsHiddenFilter,
+    NameFilter,
+    PaymentStatusFilter,
+    PaymentTransactionIdFilter,
+    ProBonoStatusFilter,
+    SalesforceAccountIDFilter,
+    SalesforceContractIDFilter,
+    SoftwarePlanEditionFilter,
+    SoftwarePlanNameFilter,
+    SoftwarePlanVisibilityFilter,
+    StartDateFilter,
+    StatementPeriodFilter,
+    SubscriberFilter,
+    SubscriptionTypeFilter,
+    TrialStatusFilter,
+)
+from .forms import AdjustBalanceForm
+from .models import (
+    BillingAccount,
+    BillingContactInfo,
+    CreditAdjustment,
+    CreditAdjustmentReason,
+    FeatureType,
+    Invoice,
+    PaymentRecord,
+    SoftwarePlan,
+    SoftwarePlanVersion,
+    SoftwareProductType,
+    Subscription,
+    SubscriptionAdjustment,
+    SubscriptionAdjustmentMethod,
+    SubscriptionAdjustmentReason,
+    WireInvoice,
+)
+from .utils import (
+    get_money_str,
+    make_anchor_tag,
+    quantize_accounting_decimal,
+)
+
+
+def invoice_column_cell(invoice):
+    from corehq.apps.accounting.views import InvoiceSummaryView
+    return format_datatables_data(
+        mark_safe(make_anchor_tag(
+            reverse(InvoiceSummaryView.urlname, args=(invoice.id,)),
+            invoice.invoice_number
+        )),
+        invoice.id,
+    )
 
 
 class AddItemInterface(GenericTabularReport):
@@ -182,7 +247,7 @@ class SubscriptionInterface(AddItemInterface):
             DataTablesColumn("Do Not Invoice"),
             DataTablesColumn("Created By"),
             DataTablesColumn("Type"),
-            DataTablesColumn("Pro-Bono"),
+            DataTablesColumn("Discounted"),
         )
         if not self.is_rendered_as_email:
             header.add_column(DataTablesColumn("Action"))
@@ -227,7 +292,7 @@ class SubscriptionInterface(AddItemInterface):
         do_not_invoice = DoNotInvoiceFilter.get_value(self.request, self.domain)
         if do_not_invoice is not None:
             filters.update(
-                do_not_invoice=(do_not_invoice == DO_NOT_INVOICE),
+                do_not_invoice=(do_not_invoice == DoNotInvoiceFilter.DO_NOT_INVOICE),
             )
 
         filter_created_by = CreatedSubAdjMethodFilter.get_value(
@@ -473,8 +538,12 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 contact_info = BillingContactInfo()
 
             account_url = reverse(ManageBillingAccountView.urlname, args=[invoice.account.id])
+            invoice_url = reverse(WireInvoiceSummaryView.urlname, args=(invoice.id,))
             columns = [
-                invoice.invoice_number,
+                format_datatables_data(
+                    mark_safe(make_anchor_tag(invoice_url, invoice.invoice_number)),
+                    invoice.id,
+                ),
                 format_datatables_data(
                     mark_safe(make_anchor_tag(account_url, invoice.account.name)),
                     invoice.account.name
@@ -492,16 +561,15 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 contact_info.state_province_region,
                 contact_info.postal_code,
                 contact_info.country,
-                invoice.date_start.strftime(USER_DATE_FORMAT),
-                invoice.date_end.strftime(USER_DATE_FORMAT),
-                invoice.date_due.strftime(USER_DATE_FORMAT),
+                invoice.date_start,
+                invoice.date_end,
+                invoice.date_due,
                 get_exportable_column(invoice.subtotal),
                 get_exportable_column(invoice.balance),
                 "Paid" if invoice.is_paid else "Not paid",
                 "YES" if invoice.is_hidden else "no",
             ]
 
-            invoice_url = reverse(WireInvoiceSummaryView.urlname, args=(invoice.id,))
             if not self.is_rendered_as_email:
                 columns.extend([
                     mark_safe(make_anchor_tag(invoice_url, 'Go to Invoice'))
@@ -548,8 +616,6 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
             filters.update(
                 is_hidden=(is_hidden == IsHiddenFilter.IS_HIDDEN),
             )
-
-        filters.update(is_hidden_to_ops=False)
 
         return filters
 
@@ -629,7 +695,6 @@ class InvoiceInterface(InvoiceInterfaceBase):
 
         if not self.is_rendered_as_email:
             header.add_column(DataTablesColumn("Action"))
-            header.add_column(DataTablesColumn("View Invoice"))
         return header
 
     @property
@@ -655,9 +720,10 @@ class InvoiceInterface(InvoiceInterfaceBase):
             plan_href = reverse(EditSubscriptionView.urlname, args=[invoice.subscription.id])
             account_name = invoice.subscription.account.name
             account_href = reverse(ManageBillingAccountView.urlname, args=[invoice.subscription.account.id])
+            invoice_href = reverse(InvoiceSummaryView.urlname, args=(invoice.id,))
 
             columns = [
-                invoice.invoice_number,
+                invoice_column_cell(invoice),
                 format_datatables_data(
                     mark_safe(make_anchor_tag(account_href, account_name)),
                     invoice.subscription.account.name
@@ -681,9 +747,9 @@ class InvoiceInterface(InvoiceInterfaceBase):
                 contact_info.country,
                 invoice.subscription.account.salesforce_account_id or "--",
                 invoice.subscription.salesforce_contract_id or "--",
-                invoice.date_start.strftime(USER_DATE_FORMAT),
-                invoice.date_end.strftime(USER_DATE_FORMAT),
-                invoice.date_due.strftime(USER_DATE_FORMAT) if invoice.date_due else "None",
+                invoice.date_start,
+                invoice.date_end,
+                invoice.date_due if invoice.date_due else "None",
             ]
 
             plan_subtotal, plan_deduction = get_subtotal_and_deduction(
@@ -720,14 +786,9 @@ class InvoiceInterface(InvoiceInterfaceBase):
                     "data-target": adjust_href,
                     "class": "btn",
                 }
-                columns.extend([
+                columns.append(
                     mark_safe(make_anchor_tag(adjust_href, adjust_name, adjust_attrs)),
-                    mark_safe(make_anchor_tag(
-                        reverse(InvoiceSummaryView.urlname, args=(invoice.id,)),
-                        "Go to Invoice",
-                        {"class": "btn"},
-                    ))
-                ])
+                )
             rows.append(columns)
         return rows
 
@@ -812,8 +873,6 @@ class InvoiceInterface(InvoiceInterfaceBase):
                 is_hidden=(is_hidden == IsHiddenFilter.IS_HIDDEN),
             )
 
-        filters.update(is_hidden_to_ops=False)
-
         return filters
 
     @property
@@ -867,6 +926,21 @@ class InvoiceInterface(InvoiceInterfaceBase):
         )
 
 
+def _get_domain_from_payment_record(payment_record):
+    from corehq.apps.accounting.models import CreditAdjustment
+    credit_adjustments = CreditAdjustment.objects.filter(payment_record=payment_record)
+    domains = set(
+        credit_adj.credit_line.account.created_by_domain
+        for credit_adj in credit_adjustments
+        if credit_adj.credit_line.account.created_by_domain
+    ) | set(
+        credit_adj.credit_line.subscription.subscriber.domain
+        for credit_adj in credit_adjustments
+        if credit_adj.credit_line.subscription
+    )
+    return ', '.join(domains) if domains else None
+
+
 class PaymentRecordInterface(GenericTabularReport):
     section_name = "Accounting"
     dispatcher = AccountingAdminInterfaceDispatcher
@@ -902,7 +976,7 @@ class PaymentRecordInterface(GenericTabularReport):
         account_name = NameFilter.get_value(self.request, self.domain)
         if account_name is not None:
             filters.update(
-                payment_method__account__name=account_name,
+                creditadjustment__credit_line__account__name=account_name,
             )
         if DateCreatedFilter.use_filter(self.request):
             filters.update(
@@ -912,7 +986,7 @@ class PaymentRecordInterface(GenericTabularReport):
         subscriber = SubscriberFilter.get_value(self.request, self.domain)
         if subscriber is not None:
             filters.update(
-                payment_method__billing_admin__domain=subscriber,
+                creditadjustment__credit_line__subscription__subscriber__domain=subscriber
             )
         transaction_id = PaymentTransactionIdFilter.get_value(self.request, self.domain)
         if transaction_id:
@@ -927,16 +1001,29 @@ class PaymentRecordInterface(GenericTabularReport):
 
     @property
     def rows(self):
+        from corehq.apps.accounting.views import ManageBillingAccountView
         rows = []
         for record in self.payment_records:
+            applicable_credit_line = CreditAdjustment.objects.filter(
+                payment_record_id=record.id
+            ).latest('last_modified').credit_line
+            account = applicable_credit_line.account
             rows.append([
                 format_datatables_data(
-                    text=record.date_created.strftime(USER_DATE_FORMAT),
+                    text=record.date_created.strftime(SERVER_DATE_FORMAT),
                     sort_key=record.date_created.isoformat(),
                 ),
-                record.payment_method.account.name,
-                record.payment_method.billing_admin.domain,
-                record.payment_method.billing_admin.web_user,
+                format_datatables_data(
+                    text=mark_safe(
+                        make_anchor_tag(
+                            reverse(ManageBillingAccountView.urlname, args=[account.id]),
+                            account.name
+                        )
+                    ),
+                    sort_key=account.name,
+                ),
+                _get_domain_from_payment_record(record),
+                record.payment_method.web_user,
                 format_datatables_data(
                     text=mark_safe(
                         '<a href="https://dashboard.stripe.com/payments/%s"'
@@ -950,3 +1037,182 @@ class PaymentRecordInterface(GenericTabularReport):
                 quantize_accounting_decimal(record.amount),
             ])
         return rows
+
+
+class SubscriptionAdjustmentInterface(GenericTabularReport):
+    section_name = 'Accounting'
+    dispatcher = AccountingAdminInterfaceDispatcher
+    name = 'Subscription Adjustments'
+    description = 'A log of all subscription changes.'
+    slug = 'subscription_adjustments'
+    base_template = 'accounting/report_filter_actions.html'
+    asynchronous = True
+    exportable = True
+
+    fields = [
+        'corehq.apps.accounting.interface.DomainFilter',
+        'corehq.apps.accounting.interface.DateFilter',
+    ]
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn("Date"),
+            DataTablesColumn("Subscription"),
+            DataTablesColumn("Project Space"),
+            DataTablesColumn("Reason"),
+            DataTablesColumn("Method"),
+            DataTablesColumn("Note"),
+            DataTablesColumn("By User"),
+        )
+
+    @property
+    def rows(self):
+        from corehq.apps.accounting.views import EditSubscriptionView
+
+        def get_choice(choice, choices):
+            for slug, user_text in choices:
+                if choice == slug:
+                    return user_text
+            return None
+
+        return [
+            map(lambda x: x or '', [
+                sub_adj.date_created,
+                format_datatables_data(
+                    mark_safe(make_anchor_tag(
+                        reverse(EditSubscriptionView.urlname, args=(sub_adj.subscription.id,)),
+                        sub_adj.subscription
+                    )),
+                    sub_adj.subscription.id,
+                ),
+                sub_adj.subscription.subscriber.domain,
+                get_choice(sub_adj.reason, SubscriptionAdjustmentReason.CHOICES),
+                get_choice(sub_adj.method, SubscriptionAdjustmentMethod.CHOICES),
+                sub_adj.note,
+                sub_adj.web_user,
+            ])
+            for sub_adj in self.subscription_adjustments
+        ]
+
+    @property
+    def subscription_adjustments(self):
+        query = SubscriptionAdjustment.objects.all()
+
+        domain = DomainFilter.get_value(self.request, self.domain)
+        if domain is not None:
+            query = query.filter(subscription__subscriber__domain=domain)
+
+        if DateFilter.use_filter(self.request):
+            query = query.filter(
+                date_created__gte=DateFilter.get_start_date(self.request),
+                date_created__lte=DateFilter.get_end_date(self.request),
+            )
+
+        return query
+
+
+class CreditAdjustmentInterface(GenericTabularReport):
+    section_name = 'Accounting'
+    dispatcher = AccountingAdminInterfaceDispatcher
+    name = 'Credit Adjustments'
+    description = 'A log of all credit line changes.'
+    slug = 'credit_adjustments'
+    base_template = 'accounting/report_filter_actions.html'
+    asynchronous = True
+    exportable = True
+
+    fields = [
+        'corehq.apps.accounting.interface.NameFilter',
+        'corehq.apps.accounting.interface.DomainFilter',
+        'corehq.apps.accounting.interface.DateFilter',
+    ]
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn("Date"),
+            DataTablesColumnGroup(
+                "Credit Line",
+                DataTablesColumn("Account"),
+                DataTablesColumn("Subscription"),
+                DataTablesColumn("Product/Feature Type")
+            ),
+            DataTablesColumn("Project Space"),
+            DataTablesColumn("Reason"),
+            DataTablesColumn("Invoice"),
+            DataTablesColumn("Note"),
+            DataTablesColumn("Amount"),
+            DataTablesColumn("By User"),
+        )
+
+    @property
+    def rows(self):
+        from corehq.apps.accounting.views import (
+            EditSubscriptionView,
+            ManageBillingAccountView,
+        )
+        return [
+            map(lambda x: x or '', [
+                credit_adj.date_created,
+                format_datatables_data(
+                    text=mark_safe(
+                        make_anchor_tag(
+                            reverse(ManageBillingAccountView.urlname, args=[credit_adj.credit_line.account.id]),
+                            credit_adj.credit_line.account.name
+                        )
+                    ),
+                    sort_key=credit_adj.credit_line.account.name,
+                ),
+                format_datatables_data(
+                    mark_safe(make_anchor_tag(
+                        reverse(EditSubscriptionView.urlname, args=(credit_adj.credit_line.subscription.id,)),
+                        credit_adj.credit_line.subscription
+                    )),
+                    credit_adj.credit_line.subscription.id,
+                ) if credit_adj.credit_line.subscription else '',
+                dict(FeatureType.CHOICES).get(
+                    credit_adj.credit_line.feature_type,
+                    dict(SoftwareProductType.CHOICES).get(
+                        credit_adj.credit_line.product_type,
+                        "Any"
+                    ),
+                ),
+                (
+                    credit_adj.credit_line.subscription.subscriber.domain
+                    if credit_adj.credit_line.subscription is not None else (
+                        credit_adj.invoice.subscription.subscriber.domain
+                        if credit_adj.invoice else ''
+                    )
+                ),
+                dict(CreditAdjustmentReason.CHOICES)[credit_adj.reason],
+                invoice_column_cell(credit_adj.invoice) if credit_adj.invoice else None,
+                credit_adj.note,
+                quantize_accounting_decimal(credit_adj.amount),
+                credit_adj.web_user,
+            ])
+            for credit_adj in self.filtered_credit_adjustments
+        ]
+
+    @property
+    def filtered_credit_adjustments(self):
+        query = CreditAdjustment.objects.all()
+
+        account_name = NameFilter.get_value(self.request, self.domain)
+        if account_name is not None:
+            query = query.filter(credit_line__account__name=account_name)
+
+        domain = DomainFilter.get_value(self.request, self.domain)
+        if domain is not None:
+            query = query.filter(
+                Q(credit_line__subscription__subscriber__domain=domain)
+                | Q(invoice__subscription__subscriber__domain=domain)
+            )
+
+        if DateFilter.use_filter(self.request):
+            query = query.filter(
+                date_created__gte=DateFilter.get_start_date(self.request),
+                date_created__lte=DateFilter.get_end_date(self.request),
+            )
+
+        return query

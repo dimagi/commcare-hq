@@ -1,6 +1,6 @@
 import uuid
-from corehq.apps.app_manager.suite_xml import SuiteGenerator
-from corehq.apps.app_manager.util import is_usercase_in_use, get_cloudcare_session_data
+from corehq.apps.app_manager.util import get_cloudcare_session_data
+from corehq.apps.smsforms.util import process_sms_form_complete
 from .models import XFORMS_SESSION_SMS, SQLXFormsSession
 from datetime import datetime
 from corehq.apps.cloudcare.touchforms_api import get_session_data
@@ -9,6 +9,7 @@ from touchforms.formplayer.api import (
     DigestAuth,
     get_raw_instance,
     InvalidSessionIdException,
+    TouchformsError,
 )
 from touchforms.formplayer import sms as tfsms
 from django.conf import settings
@@ -43,22 +44,20 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
     session_data = get_session_data(domain, contact, case_id, device_id=COMMCONNECT_DEVICE_ID)
     
     # since the API user is a superuser, force touchforms to query only
-    # the contact's cases by specifying it as an additional filterp
-    if contact.doc_type == "CommCareCase":
+    # the contact's cases by specifying it as an additional filter
+    if contact.doc_type == "CommCareCase" and form.requires_case():
         session_data["additional_filters"] = {
-            "case_id": contact.get_id,
-            "footprint": "True",
-            "include_children": "True" if case_for_case_submission else "False",
+            "case_id": case_id,
+            "footprint": "true" if form.uses_parent_case() else "false",
         }
-    else:
+    elif contact.doc_type in ("CommCareUser", "WebUser"):
         session_data["additional_filters"] = {
             "user_id": contact.get_id,
-            "footprint": "True"
+            "footprint": "true"
         }
     
     if app and form:
-        suite_gen = SuiteGenerator(app, is_usercase_in_use(domain))
-        session_data.update(get_cloudcare_session_data(suite_gen, domain, form, contact))
+        session_data.update(get_cloudcare_session_data(domain, form, contact))
 
     language = contact.get_language_code()
     config = XFormsConfig(form_content=form.render_xform(),
@@ -84,6 +83,11 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
     )
     session.save()
     responses = session_start_info.first_responses
+
+    if len(responses) > 0 and responses[0].status == 'http-error':
+        session.end(False)
+        session.save()
+        raise TouchformsError('Cannot connect to touchforms.')
 
     # Prevent future update conflicts by getting the session again from the db
     # since the session could have been updated separately in the first_responses call
@@ -175,15 +179,4 @@ def submit_unfinished_form(session_id, include_case_side_effects=False):
         cleaned_xml = tostring(root)
         
         # Submit the xml and end the session
-        resp = submit_form_locally(cleaned_xml, session.domain,
-            app_id=session.app_id)
-        xform_id = resp['X-CommCareHQ-FormID']
-        session.end(completed=False)
-        session.submission_id = xform_id
-        session.save()
-        
-        # Tag the submission as a partial submission
-        xform = XFormInstance.get(xform_id)
-        xform.partial_submission = True
-        xform.survey_incentive = session.survey_incentive
-        xform.save()
+        process_sms_form_complete(session, cleaned_xml, completed=False)

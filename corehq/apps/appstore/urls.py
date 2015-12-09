@@ -1,15 +1,8 @@
-from django.conf.urls import url, include, patterns
-from corehq.apps.appstore.dispatcher import AppstoreDispatcher
-
-store_urls = patterns('corehq.apps.appstore.views',
-    url(r'^$', 'appstore_default', name="appstore_interfaces_default"),
-    AppstoreDispatcher.url_pattern(),
-)
+from django.conf.urls import url, patterns
 
 urlpatterns = patterns('corehq.apps.appstore.views',
     url(r'^$', 'appstore', name='appstore'),
     url(r'^api/', 'appstore_api', name='appstore_api'),
-    url(r'^store/', include(store_urls)),
 
     url(r'^(?P<domain>[\w\.-]+)/info/$', 'project_info', name='project_info'),
 

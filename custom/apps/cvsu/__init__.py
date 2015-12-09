@@ -1,4 +1,5 @@
-from .reports import ChildProtectionReport, ChildProtectionReportTrend, CVSUPerformanceReport, CVSUPerformanceReportTrend
+from .reports import ChildProtectionReport, ChildProtectionReportTrend, CVSUPerformanceReport, \
+    CVSUPerformanceReportTrend
 
 CUSTOM_REPORTS = (
     ('Child Protection & Gender based Violence', (
@@ -8,5 +9,5 @@ CUSTOM_REPORTS = (
     ('Performance Evaluation', (
         CVSUPerformanceReport,
         CVSUPerformanceReportTrend,
-    )),
+    ))
 )

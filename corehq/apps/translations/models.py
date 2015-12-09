@@ -2,7 +2,6 @@ from collections import defaultdict
 from dimagi.ext.couchdbkit import (Document, DictProperty,
     StringProperty, ListProperty)
 import commcare_translations
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch import CouchDocLockableMixIn
 
 class TranslationMixin(Document):
@@ -79,7 +78,7 @@ class Translation(object):
     def get_translations(cls, lang, key=None, one=False):
         if key:
             translations = []
-            r = get_db().view('translations/popularity',
+            r = TranslationDoc.get_db().view('translations/popularity',
                 startkey=[lang, key],
                 endkey=[lang, key, {}],
                 group=True
@@ -93,7 +92,7 @@ class Translation(object):
             return translations
         else:
             translations = defaultdict(list)
-            r = get_db().view('translations/popularity',
+            r = TranslationDoc.get_db().view('translations/popularity',
                 startkey=[lang],
                 endkey=[lang, {}],
                 group=True

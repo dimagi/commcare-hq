@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url, include
 from corehq.apps.app_manager.view_helpers import DynamicTemplateView
-from corehq.apps.app_manager.views import DownloadCCZ, AppSummaryView
+from corehq.apps.app_manager.views import DownloadCCZ, AppSummaryView, AppDiffView
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 
@@ -14,7 +14,6 @@ app_urls = patterns('corehq.apps.app_manager.views',
     url(r'^multimedia_ajax/$', 'multimedia_ajax', name='app_multimedia_ajax'),
     url(r'^copy/$', 'view_app', name='app_copy'),
     url(r'^delete/$', 'view_app', name='app_delete'),
-    url(r'^migrate_filters/$', 'migrate_app_filters', name="migrate_app_filters"),
     url(r'^$', 'view_app', name='view_app'),
     url(r'^releases/$', 'release_manager', name='release_manager'),
     url(r'^current_version/$', 'current_app_version', name='current_app_version'),
@@ -26,33 +25,39 @@ app_urls = patterns('corehq.apps.app_manager.views',
     url(r'^modules-(?P<module_id>[\w-]+)/$', 'view_module', name='view_module'),
     url(r'^modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/$',
         'view_form', name='view_form'),
+    url(r'^get_form_datums/$', 'get_form_datums', name='get_form_datums'),
     url(r'^user_registration/$', 'view_user_registration',
         name='view_user_registration'),
     url(r'^user_registration/source/$', 'user_registration_source',
         name='user_registration_source'),
     url(r'^modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/source/$',
-        'form_source', name='form_source'),
+        'form_designer', name='form_source'),
     url(r'^summary/$', AppSummaryView.as_view(), name=AppSummaryView.urlname),
     url(r'^update_build_comment/$', 'update_build_comment',
         name='update_build_comment'),
 )
 
 urlpatterns = patterns('corehq.apps.app_manager.views',
-    url(r'^$', 'default', name='default_app'),
+    url(r'^$', 'view_app', name='default_app'),
     url(r'^xform/(?P<form_unique_id>[\w-]+)/$', 'xform_display'),
     url(r'^browse/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/source/$',
         'get_xform_source', name='get_xform_source'),
     url(r'^browse/(?P<app_id>[\w-]+)/user_registration/source/$',
         'get_user_registration_source', name='get_user_registration_source'),
     url(r'^casexml/(?P<form_unique_id>[\w-]+)/$', 'form_casexml'),
-    url(r'^source/(?P<app_id>[\w-]+)/$', 'app_source'),
+    url(r'^source/(?P<app_id>[\w-]+)/$', 'app_source', name='app_source'),
     url(r'^import_app/$', 'import_app', name='import_app'),
+    url(r'^app_from_template/(?P<slug>[\w-]+)/$', 'app_from_template', name='app_from_template'),
     url(r'^copy_app/$', 'copy_app', name='copy_app'),
     url(r'^view/(?P<app_id>[\w-]+)/', include(app_urls)),
+    url(r'^schema/(?P<app_id>[\w-]+)/$', 'get_data_schema', name='get_data_schema'),
+    url(r'^schema/form/(?P<form_unique_id>[\w-]+)/$',
+        'get_data_schema', name='get_form_data_schema'),
     url(r'^new_module/(?P<app_id>[\w-]+)/$', 'new_module'),
     url(r'^new_app/$', 'new_app', name='new_app'),
     url(r'^default_new_app/$', 'default_new_app', name='default_new_app'),
     url(r'^new_form/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$', 'new_form'),
+    url(r'^drop_user_case/(?P<app_id>[\w-]+)/$', 'drop_user_case', name='drop_user_case'),
 
     url(r'^delete_app/(?P<app_id>[\w-]+)/$', 'delete_app'),
     url(r'^delete_module/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
@@ -84,8 +89,12 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
         'edit_careplan_form_actions'),
     url(r'^edit_advanced_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
         'edit_advanced_form_actions'),
+
+    # Scheduler Modules
     url(r'^edit_visit_schedule/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
         'edit_visit_schedule'),
+    url(r'^edit_schedule_phases/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$', 'edit_schedule_phases'),
+
     # multimedia stuff
     url(r'^multimedia/(?P<app_id>[\w-]+)/download/$',
         'multimedia_list_download', name='multimedia_list_download'),
@@ -126,6 +135,8 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^revert/(?P<app_id>[\w-]+)/$', 'revert_to_copy'),
     url(r'^delete_copy/(?P<app_id>[\w-]+)/$', 'delete_copy'),
 
+    url(r'^api/list_apps/$', 'list_apps', name='list_apps'),
+    url(r'^api/download_ccz/$', 'direct_ccz', name='direct_ccz'),
     url(r'^download/(?P<app_id>[\w-]+)/$', 'download_index', name='download_index'),
     # the order of these download urls is important
     url(r'^download/(?P<app_id>[\w-]+)/CommCare.ccz$', DownloadCCZ.as_view(),
@@ -137,6 +148,8 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
         include('corehq.apps.app_manager.download_urls')),
     url(r'^formdefs/(?P<app_id>[\w-]+)/', 'formdefs', name='formdefs'),
     url(r'^ng_template/(?P<template>[\w-]+)', DynamicTemplateView.as_view(), name='ng_template'),
+
+    url(r'^diff/(?P<first_app_id>[\w-]+)/(?P<second_app_id>[\w-]+)/$', AppDiffView.as_view(), name=AppDiffView.urlname),
 
     url(r'^', include('custom.ucla.urls')),
 )

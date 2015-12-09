@@ -1,19 +1,18 @@
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.reports.filters.base import BaseReportFilter
 
 
 class SearchFilter(BaseReportFilter):
     slug = "search_query"
     template = "reports/filters/search.html"
-    label = ugettext_noop("Search")
+    label = ugettext_lazy("Search")
 
-    #bubble help, should be noop'ed
+    # bubble help, should use ugettext_lazy
     search_help_title = None
     search_help_content = None
 
-    #inline help text, should be noop'ed
+    # inline help text, should use ugettext_lazy
     search_help_inline = None
-
 
     @property
     def filter_context(self):

@@ -1,424 +1,50 @@
-"""
-Custom report definitions - control display of reports.
-
-The BaseReport is somewhat general, but it's
-currently specific to monthly reports.  It would be pretty simple to make
-this more general and subclass for montly reports , but I'm holding off on
-that until we actually have another use case for it.
-"""
 from collections import defaultdict, OrderedDict
+from itertools import chain
 import datetime
-import logging
 import pickle
-import json
 import re
+import urllib
 from dateutil import parser
+from dateutil.rrule import MONTHLY, rrule
 
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
-from sqlagg.filters import RawFilter, IN, EQFilter
+from sqlagg.filters import IN
 from corehq.const import SERVER_DATETIME_FORMAT
 from couchexport.models import Format
-from custom.common import ALL_OPTION
+from couchforms.models import XFormInstance
+from custom.opm.utils import numeric_fn
+from custom.utils.utils import clean_IN_filter_value
 
-from dimagi.utils.couch.database import iter_docs, get_db
-from dimagi.utils.dates import add_months_to_date
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.web import json_request
-from sqlagg.base import AliasColumn
-from sqlagg.columns import SimpleColumn, SumColumn, CountUniqueColumn
+from sqlagg.columns import SimpleColumn
 
 from corehq.apps.es import cases as case_es, filters as es_filters
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
-from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter, DictDataFormat
-from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin, DatespanMixin
-from corehq.apps.reports.standard.maps import ElasticSearchMapReport
-from corehq.apps.reports.util import make_form_couch_key
+from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
+from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
+from corehq.apps.reports.standard.maps import GenericMapReport
+from corehq.apps.reports.util import (
+    get_INFilter_bindparams,
+    make_form_couch_key,
+)
 from corehq.apps.users.models import CommCareCase, CouchUser
-from corehq.elastic import es_query
-from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.translation import localize
 from dimagi.utils.couch import get_redis_client
 
-from .utils import (BaseMixin, normal_format, format_percent,
-                    get_matching_users, UserSqlData)
-from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow
-from .health_status import HealthStatus, AWCHealthStatus
+from .utils import (BaseMixin, get_matching_users)
+from .beneficiary import Beneficiary, ConditionsMet, OPMCaseRow, LongitudinalConditionsMet
+from .health_status import AWCHealthStatus
 from .incentive import Worker
 from .filters import (HierarchyFilter, MetHierarchyFilter,
                       OPMSelectOpenCloseFilter as OpenCloseFilter)
 from .constants import *
-
-
-DATE_FILTER = "date between :startdate and :enddate"
-DATE_FILTER_EXTENDED = """(
-    opened_on <= :enddate AND (
-        closed_on >= :enddate OR
-        closed_on = ''
-        )
-    ) OR (
-    opened_on <= :enddate AND (
-        closed_on >= :startdate or closed_on <= :enddate
-        )
-    )
-"""
-DATE_FILTER_EXTENDED_OPENED = """(
-    opened_on <= :enddate AND (
-        closed_on >= :enddate OR
-        closed_on = ''
-        )
-    )
-"""
-DATE_FILTER_EXTENDED_CLOSED = """(
-    opened_on <= :enddate AND (
-        closed_on <= :enddate AND
-        closed_on != ''
-        )
-    )
-"""
-
-def ret_val(value):
-    return value
-
-
-class OpmCaseSqlData(SqlData):
-
-    table_name = "fluff_OpmCaseFluff"
-
-    def __init__(self, domain, user_id, datespan):
-        self.domain = domain
-        self.user_id = user_id
-        self.datespan = datespan
-
-    @property
-    def filter_values(self):
-        return dict(
-            domain=self.domain,
-            user_id=self.user_id,
-            startdate=str(self.datespan.startdate_utc.date()),
-            enddate=str(self.datespan.enddate_utc.date()),
-            edd_startdate=self.datespan.startdate.date().isoformat(),
-            edd_enddate=add_months_to_date(self.datespan.enddate_utc.date(), 5).isoformat(),
-            test_account='111%'
-        )
-
-    @property
-    def group_by(self):
-        return ['user_id']
-
-    @property
-    def filters(self):
-        filters = [
-            "domain = :domain",
-            "user_id = :user_id",
-            "edd < :edd_enddate",
-            "edd > :edd_startdate",
-            "account_number not like :test_account",
-            DATE_FILTER_EXTENDED_OPENED,
-        ]
-
-        return filters
-
-    @property
-    def columns(self):
-        return [
-            DatabaseColumn("User ID", SimpleColumn("user_id")),
-            DatabaseColumn("Women registered", SumColumn("women_registered_total")),
-            DatabaseColumn("Children registered", SumColumn("children_registered_total"))
-        ]
-
-    @property
-    def data(self):
-        if self.user_id in super(OpmCaseSqlData, self).data:
-            return super(OpmCaseSqlData, self).data[self.user_id]
-        else:
-            return None
-
-
-class OpmFormSqlData(SqlData):
-    table_name = "fluff_OpmFormFluff"
-
-    def __init__(self, domain, user_id, datespan):
-        self.domain = domain
-        self.user_id = user_id
-        self.datespan = datespan
-
-    @property
-    def filter_values(self):
-        return dict(
-            domain=self.domain,
-            user_id=self.user_id,
-            startdate=self.datespan.startdate_utc.date(),
-            enddate=self.datespan.enddate_utc.date()
-        )
-
-    @property
-    def group_by(self):
-        return ['user_id']
-
-    @property
-    def filters(self):
-        filters = [
-            "domain = :domain",
-            "date between :startdate and :enddate"
-        ]
-        if self.user_id:
-            filters.append("user_id = :user_id")
-        return filters
-
-    @property
-    def columns(self):
-        return [
-            DatabaseColumn("User ID", SimpleColumn("user_id")),
-            DatabaseColumn("Growth Monitoring Total", SumColumn("growth_monitoring_total")),
-            DatabaseColumn("Service Forms Total", SumColumn("service_forms_total")),
-        ]
-
-    @property
-    def data(self):
-        if self.user_id is None:
-            return super(OpmFormSqlData, self).data
-        if self.user_id in super(OpmFormSqlData, self).data:
-            return super(OpmFormSqlData, self).data[self.user_id]
-        else:
-            return None
-
-
-VHND_PROPERTIES = [
-    "vhnd_available",
-    "vhnd_anm_present",
-    "vhnd_asha_present",
-    "vhnd_cmg_present",
-    "vhnd_ifa_available",
-    "vhnd_adult_scale_available",
-    "vhnd_child_scale_available",
-    "vhnd_adult_scale_functional",
-    "vhnd_child_scale_functional",
-    "vhnd_ors_available",
-    "vhnd_zn_available",
-    "vhnd_measles_vacc_available",
-]
-
-class VhndAvailabilitySqlData(SqlData):
-
-    table_name = "fluff_VhndAvailabilityFluff"
-
-    @property
-    def filter_values(self):
-        return {}
-
-    @property
-    def group_by(self):
-        return ['owner_id', 'date']
-
-    @property
-    def filters(self):
-        return []
-
-    @property
-    def columns(self):
-        return [DatabaseColumn('date', SimpleColumn("date"))] +\
-               [DatabaseColumn("", SumColumn(prop)) for prop in VHND_PROPERTIES]
-
-
-class OpmHealthStatusSqlData(SqlData):
-
-    table_name = 'fluff_OpmHealthStatusAllInfoFluff'
-
-    def __init__(self, domain, user_id, datespan, case_status):
-        self.domain = domain
-        self.user_id = user_id
-        self.datespan = datespan
-        self.case_status = case_status
-
-    @property
-    def filter_values(self):
-        filter = dict(
-            domain=self.domain,
-            user_id=self.user_id,
-            startdate=str(self.datespan.startdate_utc.date()),
-            enddate=str(self.datespan.enddate_utc.date()),
-            lmp_total=1
-        )
-        return filter
-
-    @property
-    def group_by(self):
-        return ['user_id']
-
-    @property
-    def filters(self):
-        return [
-            "domain = :domain",
-            "user_id = :user_id"
-        ]
-
-    @property
-    def wrapped_sum_column_filters(self):
-        return self.wrapped_filters + [RawFilter(DATE_FILTER)]
-
-    @property
-    def wrapped_sum_column_filters_extended(self):
-        filters = self.wrapped_filters
-        if self.case_status == 'open':
-            filters.extend([RawFilter(DATE_FILTER_EXTENDED_OPENED)])
-        elif self.case_status == 'closed':
-            filters.extend([RawFilter(DATE_FILTER_EXTENDED_CLOSED)])
-        else:
-            filters.extend([RawFilter(DATE_FILTER_EXTENDED)])
-        return filters
-
-    @property
-    def columns(self):
-        def AggColumn(label, alias, sum_slug, slug, extended=False):
-            return AggregateColumn(
-                label,
-                format_percent,
-                [
-                    AliasColumn(alias),
-                    SumColumn(
-                        sum_slug,
-                        filters=self.wrapped_sum_column_filters_extended
-                                if extended else self.wrapped_sum_column_filters),
-                ],
-                slug=slug,
-                format_fn=ret_val,
-            )
-
-        def GrowthMonitoringColumn(number):
-            return AggColumn(
-                "# of Children Who Have Attended At Least {} Growth Monitoring"
-                "Session".format(number),
-                alias='childrens',
-                sum_slug='growth_monitoring_session_{}_total'.format(number),
-                slug='growth_monitoring_session_{}'.format(number),
-            )
-
-        return [
-            DatabaseColumn('# of Beneficiaries Registered',
-                CountUniqueColumn('account_number',
-                    alias="beneficiaries",
-                    filters=self.wrapped_sum_column_filters_extended),
-                format_fn=normal_format),
-            AggregateColumn(
-                '# of Pregnant Women Registered',
-                format_percent,
-                [
-                    AliasColumn('beneficiaries'),
-                    CountUniqueColumn(
-                        'account_number',
-                        filters=self.wrapped_sum_column_filters_extended + [EQFilter('lmp_total', 'lmp_total')]),
-                ],
-                slug='lmp',
-                format_fn=ret_val,
-            ),
-            AggregateColumn('# of Mothers of Children Aged 3 Years and Below Registered',
-                format_percent,
-                [AliasColumn('beneficiaries'),
-                    SumColumn('lactating_total',
-                        # TODO necessary?
-                        alias='mothers',
-                        filters=self.wrapped_sum_column_filters_extended)],
-                    slug='mother_reg',
-                    format_fn=ret_val),
-            DatabaseColumn('# of Children Between 0 and 3 Years of Age Registered',
-                SumColumn('children_total',
-                    alias="childrens",
-                    filters=self.wrapped_sum_column_filters_extended),
-                format_fn=normal_format),
-            AggColumn(
-                '# of Beneficiaries Attending VHND Monthly',
-                alias='beneficiaries',
-                sum_slug='vhnd_monthly_total',
-                slug='vhnd_monthly',
-            ),
-            AggColumn(
-                '# of Pregnant Women Who Have Received at least 30 IFA Tablets',
-                alias='beneficiaries',
-                sum_slug='ifa_tablets_total',
-                slug='ifa_tablets',
-            ),
-            AggColumn(
-                '# of Pregnant Women Whose Weight Gain Was Monitored At Least Once',
-                alias='beneficiaries',
-                sum_slug='weight_once_total',
-                slug='weight_once',
-            ),
-            AggColumn(
-                '# of Pregnant Women Whose Weight Gain Was Monitored Twice',
-                alias='beneficiaries',
-                sum_slug='weight_twice_total',
-                slug='weight_twice',
-            ),
-            AggColumn(
-                '# of Children Whose Weight Was Monitored at Birth',
-                alias='childrens',
-                sum_slug='children_monitored_at_birth_total',
-                slug='children_monitored_at_birth',
-            ),
-            AggColumn(
-                '# of Children Whose Birth Was Registered',
-                alias='childrens',
-                sum_slug='children_registered_total',
-                slug='children_registered',
-            ),
-            GrowthMonitoringColumn(1),
-            GrowthMonitoringColumn(2),
-            GrowthMonitoringColumn(3),
-            GrowthMonitoringColumn(4),
-            GrowthMonitoringColumn(5),
-            GrowthMonitoringColumn(6),
-            GrowthMonitoringColumn(7),
-            GrowthMonitoringColumn(8),
-            GrowthMonitoringColumn(9),
-            GrowthMonitoringColumn(10),
-            GrowthMonitoringColumn(11),
-            GrowthMonitoringColumn(12),
-            AggColumn(
-                '# of Children Whose Nutritional Status is Normal',
-                alias='childrens',
-                sum_slug='nutritional_status_normal_total',
-                slug='nutritional_status_normal',
-            ),
-            AggColumn(
-                '# of Children Whose Nutritional Status is "MAM"',
-                alias='childrens',
-                sum_slug='nutritional_status_mam_total',
-                slug='nutritional_status_mam',
-            ),
-            AggColumn(
-                '# of Children Whose Nutritional Status is "SAM"',
-                alias='childrens',
-                sum_slug='nutritional_status_sam_total',
-                slug='nutritional_status_sam',
-            ),
-            AggregateColumn('# of Children Who Have Received ORS and Zinc Treatment if He/She Contracts Diarrhea',
-                    format_percent,
-                    [SumColumn('treated_total',
-                        filters=self.wrapped_sum_column_filters),
-                        SumColumn('suffering_total',
-                            filters=self.wrapped_sum_column_filters)],
-                        slug='ors_zinc',
-                        format_fn=ret_val),
-            AggColumn(
-                '# of Mothers of Children Aged 3 Years and Below Who Reported to Have Exclusively Breastfed Their Children for First 6 Months',
-                alias='mothers',
-                sum_slug='excbreastfed_total',
-                slug="breastfed",
-            ),
-            AggColumn(
-                '# of Children Who Received Measles Vaccine',
-                alias='childrens',
-                sum_slug='measlesvacc_total',
-                slug='measlesvacc',
-            ),
-        ]
 
 
 class SharedDataProvider(object):
@@ -440,9 +66,12 @@ class SharedDataProvider(object):
         'stock_zntab',
     ]
 
+    def __init__(self, cases=None):
+        self.cases = cases
+
     def get_all_vhnd_forms(self):
         key = make_form_couch_key(DOMAIN, xmlns=VHND_XMLNS)
-        return get_db().view(
+        return XFormInstance.get_db().view(
             'reports_forms/all_forms',
             startkey=key,
             endkey=key+[{}],
@@ -500,6 +129,19 @@ class SharedDataProvider(object):
             [date for date in self._service_dates[owner_id][prop]],
         )
 
+    @property
+    @memoized
+    def forms_by_case(self):
+        assert self.cases is not None, \
+            "SharedDataProvider was not instantiated with cases"
+        all_form_ids = chain(*(case.xform_ids for case in self.cases))
+        forms_by_case = defaultdict(list)
+        for form in iter_docs(XFormInstance.get_db(), all_form_ids):
+            if form['xmlns'] in OPM_XMLNSs:
+                case_id = form['form']['case']['@case_id']
+                forms_by_case[case_id].append(XFormInstance.wrap(form))
+        return forms_by_case
+
 
 class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport, ElasticTabularReport):
     """
@@ -520,8 +162,11 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     exportable_all = False
     export_format_override = Format.UNZIPPED_CSV
     block = ''
+    is_cacheable = True
+    include_out_of_range_cases = False
 
     _debug_data = []
+
     @property
     def debug(self):
         return bool(self.request.GET.get('debug'))
@@ -593,13 +238,12 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
                 filter_by = [('block', 'block')]
         return filter_by
 
-
     @property
     def headers(self):
         headers = []
         for t in self.model.method_map:
-            if len(t) == 3:
-                headers.append(DataTablesColumn(name=t[1], visible=t[2]))
+            if self.model == Worker or self.model == Beneficiary:
+                headers.append(DataTablesColumn(name=t[1], visible=t[2], sort_type=t[3]))
             else:
                 headers.append(DataTablesColumn(name=t[1]))
         return DataTablesHeader(*headers)
@@ -635,9 +279,18 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
         """
         rows = []
         self._debug_data = []
-        for row in self.get_rows(self.datespan):
+        for row in self.get_rows():
             try:
-                rows.append(self.get_row_data(row))
+                case = self.get_row_data(row)
+                if self.include_out_of_range_cases or not case.case_is_out_of_range:
+                    rows.append(case)
+                else:
+                    if self.debug:
+                        self._debug_data.append({
+                            'case_id': row._id,
+                            'message': _('Reporting period incomplete'),
+                            'traceback': _('Reporting period incomplete'),
+                        })
             except InvalidRow as e:
                 if self.debug:
                     import sys, traceback
@@ -695,24 +348,10 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
 def _get_terms_list(terms):
     """
     >>> terms = ["Sahora", "Kenar Paharpur", "   ", " Patear"]
-    >>> _get_filter_list(terms)
-    [["sahora"], ["kenar", "paharpur"], ["patear"]]
+    >>> _get_terms_list(terms)
+    [['sahora'], ['kenar', 'paharpur'], ['patear']]
     """
     return filter(None, [term.lower().split() for term in terms])
-
-
-def get_nested_terms_filter(prop, terms):
-    filters = []
-
-    def make_filter(term):
-        return es_filters.term(prop, term)
-
-    for term in _get_terms_list(terms):
-        if len(term) == 1:
-            filters.append(make_filter(term[0]))
-        elif len(term) > 1:
-            filters.append(es_filters.AND(*(make_filter(t) for t in term)))
-    return es_filters.OR(*filters)
 
 
 class CaseReportMixin(object):
@@ -722,7 +361,7 @@ class CaseReportMixin(object):
 
     @memoized
     def column_index(self, key):
-        for i, (k, _, _) in enumerate(self.model.method_map):
+        for i, (k, _1, _2, _3) in enumerate(self.model.method_map):
             if k == key:
                 return i
 
@@ -735,7 +374,18 @@ class CaseReportMixin(object):
     def users_matching_filter(self):
         return get_matching_users(self.awcs, self.gp, self.block)
 
-    def get_rows(self, datespan):
+    def get_rows(self):
+        return self.cases
+
+    @property
+    @memoized
+    def cases(self):
+        if 'debug_case' in self.request.GET:
+            case = CommCareCase.get(self.request.GET['debug_case'])
+            if case.domain != DOMAIN:
+                raise Http404()
+            return [case]
+
         query = case_es.CaseES().domain(self.domain)\
                 .fields([])\
                 .opened_range(lte=self.datespan.enddate_utc)\
@@ -782,7 +432,7 @@ class CaseReportMixin(object):
         sorted_objects = self.sort_and_set_serial_numbers(self.row_objects + self.extra_row_objects)
         for row in sorted_objects:
             rows.append([getattr(row, method) for
-                        method, header, visible in self.model.method_map])
+                        method, header, visible, sort_type in self.model.method_map])
 
         if self.debug:
             def _debug_item_to_row(debug_val):
@@ -798,7 +448,7 @@ class CaseReportMixin(object):
         from operator import attrgetter
         sorted_rows = sorted(case_objects, key=attrgetter('awc_name', 'name'))
         for count, row in enumerate(sorted_rows, 1):
-            row.serial_number = count
+            row.serial_number = numeric_fn(count)
         return sorted_rows
 
     def filter(self, fn, filter_fields=None):
@@ -819,6 +469,11 @@ class CaseReportMixin(object):
 
     def set_extra_row_objects(self, row_objects):
         self.extra_row_objects = self.extra_row_objects + row_objects
+
+    @property
+    @memoized
+    def data_provider(self):
+        return SharedDataProvider(self.cases)
 
 
 class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
@@ -845,7 +500,9 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
         if len(rows) == 1:
             return rows[0]
         def zip_fn((i, values)):
-            if isinstance(values[0], int):
+            if i == self.column_index('num_children'):
+                return values[0]
+            elif isinstance(values[0], int):
                 return sum(values)
             elif i == self.column_index('case_id'):
                 unique_values = set(v for v in values if v is not None)
@@ -868,9 +525,10 @@ class MetReport(CaseReportMixin, BaseReport):
     report_template_path = "opm/met_report.html"
     slug = "met_report"
     model = ConditionsMet
-    exportable = False
     default_rows = 5
     cache_key = 'opm-report'
+    show_total = True
+    exportable = True
 
     @property
     def row_objects(self):
@@ -879,34 +537,48 @@ class MetReport(CaseReportMixin, BaseReport):
         """
         rows = []
         self._debug_data = []
-        awc_codes = {user['awc']: user['awc_code']
-                     for user in UserSqlData().get_data()}
         total_payment = 0
-        for index, row in enumerate(self.get_rows(self.datespan), 1):
+        for index, row in enumerate(self.get_rows(), 1):
             try:
-                case_row = self.get_row_data(row, index=1, awc_codes=awc_codes)
-                total_payment += case_row.cash_amt
-                rows.append(case_row)
+                case_row = self.get_row_data(row, index=1)
+                if not case_row.case_is_out_of_range:
+                    total_payment += case_row.cash_amt
+                    rows.append(case_row)
+                else:
+                    case_row.one = ''
+                    case_row.two = ''
+                    case_row.three = ''
+                    case_row.four = ''
+                    case_row.five = ''
+                    case_row.pay = '--'
+                    case_row.payment_last_month = '--'
+                    case_row.cash = '--'
+                    case_row.issue = _('Reporting period incomplete')
+                    rows.append(case_row)
             except InvalidRow as e:
                 if self.debug:
-                    import sys
-                    import traceback
-                    type, exc, tb = sys.exc_info()
-                    self._debug_data.append({
-                        'case_id': row._id,
-                        'message': repr(e),
-                        'traceback': ''.join(traceback.format_tb(tb)),
-                    })
-        self.total_row = ["" for __ in self.model.method_map]
-        self.total_row[0] = _("Total Payment")
-        self.total_row[self.column_index('cash')] = "Rs. {}".format(total_payment)
+                    self.add_debug_data(row._id, e)
+        if self.show_total:
+            self.total_row = ["" for __ in self.model.method_map]
+            self.total_row[0] = _("Total Payment")
+            self.total_row[self.column_index('cash')] = "Rs. {}".format(total_payment)
         return rows
 
-    def get_row_data(self, row, **kwargs):
-        return self.model(row, self, child_index=kwargs.get('index', 1), awc_codes=kwargs.get('awc_codes', {}))
+    def add_debug_data(self, row_id, e):
+        import sys
+        import traceback
+        type, exc, tb = sys.exc_info()
+        self._debug_data.append({
+            'case_id': row_id,
+            'message': repr(e),
+            'traceback': ''.join(traceback.format_tb(tb)),
+        })
 
-    def get_rows(self, datespan):
-        result = super(MetReport, self).get_rows(datespan)
+    def get_row_data(self, row, **kwargs):
+        return self.model(row, self, child_index=kwargs.get('index', 1))
+
+    def get_rows(self):
+        result = super(MetReport, self).get_rows()
         result.sort(key=lambda case: [
             case.get_case_property(prop)
             for prop in ['block_name', 'village_name', 'awc_name']
@@ -928,12 +600,13 @@ class MetReport(CaseReportMixin, BaseReport):
     def headers(self):
         if not self.is_rendered_as_email:
             return DataTablesHeader(*[
-                DataTablesColumn(name=header, visible=visible) for method, header, visible in self.model.method_map
+                DataTablesColumn(name=header, visible=visible, sort_type=sort_type)
+                for method, header, visible, sort_type in self.model.method_map
             ])
         else:
             with localize('hin'):
                 return DataTablesHeader(*[
-                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible
+                    DataTablesColumn(name=_(header), visible=visible) for method, header, visible, sort_type
                     in self.model.method_map if method != 'case_id' and method != 'closed_date'
                 ])
 
@@ -949,8 +622,9 @@ class MetReport(CaseReportMixin, BaseReport):
         self.update_report_context()
 
         cache = get_redis_client()
-        if cache.exists(self.redis_key):
-            rows = pickle.loads(cache.get(self.redis_key))
+        value = cache.get(self.redis_key)
+        if value is not None:
+            rows = pickle.loads(value)
         else:
             rows = self.rows
 
@@ -1027,6 +701,15 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
         return OPMCaseRow(row, self)
 
     @property
+    def fields(self):
+        return [
+            HierarchyFilter,
+            MonthFilter,
+            YearFilter,
+            OpenCloseFilter,
+        ]
+
+    @property
     def fixed_cols_spec(self):
         return dict(num=7, width=600)
 
@@ -1038,7 +721,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
         return DataTablesHeader(*headers)
 
     @property
-    @request_cache("raw")
+    @request_cache()
     def print_response(self):
         self.is_rendered_as_email = True
         self.use_datatables = False
@@ -1075,6 +758,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
                 awc=user['awc'],
                 awc_code=user['awc_code'],
                 gp=user['gp'],
+                block=user['block'],
             )
 
     @property
@@ -1105,7 +789,12 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
     def format_cell(self, val, denom):
         if denom is None:
             return val if val is not None else ""
-        pct = " ({:.0%})".format(float(val) / denom) if denom != 0 else ""
+        if val == "NA":
+            return "NA"
+        try:
+            pct = " ({:.0%})".format(float(val) / denom) if denom != 0 else ""
+        except TypeError:
+            return "NA"
         return "{} / {}{}".format(val, denom, pct)
 
     @property
@@ -1132,7 +821,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
                     if denom != 'no_denom' and denom != 'one':
                         denom = getattr(awc, denom)
                         row.append(denom)
-                        row.append(float(value) / denom if denom != 0 else "")
+                        row.append(float(value) / denom if denom != 0 and value != "NA" else "")
                 yield row
 
         self.pagination.count = 1000000
@@ -1144,17 +833,22 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
 class UsersIdsData(SqlData):
     table_name = "fluff_OpmUserFluff"
     group_by = ['doc_id', 'name', 'awc', 'awc_code', 'bank_name',
-                'ifs_code', 'account_number', 'gp', 'block', 'village']
+                'ifs_code', 'account_number', 'gp', 'block', 'village', 'gps']
 
     @property
     def filters(self):
-        if self.config.get('awc'):
-            return [IN('awc', 'awc')]
-        elif self.config.get('gp'):
-            return [IN('gp', 'gp')]
-        elif self.config.get('block'):
-            return [IN('block', 'block')]
+        for column_name in ['awc', 'gp', 'block']:
+            if self.config.get(column_name):
+                return [IN(column_name, get_INFilter_bindparams(column_name, self.config[column_name]))]
         return []
+
+    @property
+    def filter_values(self):
+        filter_values = super(UsersIdsData, self).filter_values
+        for column_name in ['awc', 'gp', 'block']:
+            if filter_values.get(column_name):
+                return clean_IN_filter_value(filter_values, column_name)
+        return filter_values
 
     @property
     def columns(self):
@@ -1168,14 +862,23 @@ class UsersIdsData(SqlData):
             DatabaseColumn('account_number', SimpleColumn('account_number')),
             DatabaseColumn('gp', SimpleColumn('gp')),
             DatabaseColumn('block', SimpleColumn('block')),
-            DatabaseColumn('village', SimpleColumn('village'))
+            DatabaseColumn('village', SimpleColumn('village')),
+            DatabaseColumn('gps', SimpleColumn('gps'))
         ]
 
 
-class IncentivePaymentReport(BaseReport):
+class IncentivePaymentReport(CaseReportMixin, BaseReport):
     name = "AWW Payment Report"
     slug = 'incentive_payment_report'
     model = Worker
+    include_out_of_range_cases = True
+
+    @property
+    def headers(self):
+        headers = super(IncentivePaymentReport, self).headers
+        if self.debug:
+            headers.add_column(DataTablesColumn(name='Debug Info'))
+        return headers
 
     @property
     def fields(self):
@@ -1191,190 +894,35 @@ class IncentivePaymentReport(BaseReport):
     def get_model_kwargs(self):
         return {'last_month_totals': self.last_month_totals}
 
-    def get_rows(self, datespan):
-        config = {}
-        for lvl in ['awc', 'gp', 'block']:
-            req_prop = 'hierarchy_%s' % lvl
-            request_param = self.request.GET.getlist(req_prop, [])
-            if request_param and not request_param[0] == ALL_OPTION:
-                config.update({lvl: tuple(self.request.GET.getlist(req_prop, []))})
-                break
-        return UsersIdsData(config=config).get_data()
-
-    def get_row_data(self, row, **kwargs):
-        case_sql_data = OpmCaseSqlData(DOMAIN, row['doc_id'], self.datespan)
-        form_sql_data = OpmFormSqlData(DOMAIN, row['doc_id'], self.datespan)
-        return self.model(row, self, case_sql_data.data, form_sql_data.data)
-
-
-def this_month_if_none(month, year):
-    if month is not None:
-        assert year is not None, \
-            "You must pass either nothing or a month AND a year"
-        return month, year
-    else:
-        this_month = datetime.datetime.utcnow()
-        return this_month.month, this_month.year
-
-
-class HealthStatusReport(DatespanMixin, BaseReport):
-
-    ajax_pagination = True
-    asynchronous = True
-    name = "Health Status Report"
-    slug = "health_status"
-    fix_left_col = True
-    model = HealthStatus
-    report_template_path = "opm/hsr_report.html"
+    @property
+    @memoized
+    def awc_data(self):
+        """
+        Returns a map of user IDs to lists of wrapped CommCareCase objects that those users own.
+        """
+        case_objects = self.row_objects + self.extra_row_objects
+        cases_by_owner = {}
+        for case_object in case_objects:
+            owner_id = case_object.owner_id
+            cases_by_owner[owner_id] = cases_by_owner.get(owner_id, []) + [case_object]
+        return cases_by_owner
 
     @property
     def rows(self):
-        ret = list(super(HealthStatusReport, self).rows)
-        self.total_row = calculate_total_row(ret)
-        return ret
-
-    @property
-    def export_name(self):
-        return "%s %s to %s" % (super(BaseReport, self).export_name, self.datespan.startdate_display,
-                             self.datespan.enddate_display)
-
-    @property
-    def fields(self):
-        return [HierarchyFilter, OpenCloseFilter, DatespanFilter]
-
-    @property
-    def case_status(self):
-        return OpenCloseFilter.case_status(self.request_params)
-
-    @property
-    @memoized
-    def es_results(self):
-        q = {
-            "query": {
-                "filtered": {
-                    "query": {
-                    },
-                    "filter": {
-                        "bool": {
-                            "must": [
-                                {"term": {"domain.exact": self.domain}},
-                            ]
-                        }
-                    }
-                }
-            },
-            "size": self.pagination.count,
-            "from": self.pagination.start,
-        }
-        es_filters = q["query"]["filtered"]["filter"]
-        if self.awcs:
-            awc_term = get_nested_terms_filter("user_data.awc", self.awcs)
-            es_filters["bool"]["must"].append(awc_term)
-        elif self.gp:
-            gp_term = get_nested_terms_filter("user_data.gp", self.gp)
-            es_filters["bool"]["must"].append(gp_term)
-        elif self.blocks:
-            block_term = get_nested_terms_filter("user_data.block", self.blocks)
-            es_filters["bool"]["must"].append(block_term)
-        q["query"]["filtered"]["query"].update({"match_all": {}})
-        logging.info("ESlog: [%s.%s] ESquery: %s" % (self.__class__.__name__, self.domain, json.dumps(q)))
-        return es_query(q=q, es_url=USER_INDEX + '/_search', dict_only=False,
-                        start_at=self.pagination.start, size=self.pagination.count)
-
-    def get_rows(self, dataspan):
-        return self.es_results['hits'].get('hits', [])
+        rows = []
+        for user in self.users_matching_filter:
+            user_case_list = self.awc_data.get(user['doc_id'], None)
+            row = self.model(user, self, user_case_list)
+            data = []
+            for t in self.model.method_map:
+                data.append(getattr(row, t[0]))
+            if self.debug:
+                data.append(row.debug_info)
+            rows.append(data)
+        return rows
 
     def get_row_data(self, row, **kwargs):
-        def empty_health_status(row):
-            model = HealthStatus()
-            model.awc = row['_source']['user_data']['awc']
-            return model
-
-        if 'user_data' in row['_source'] and 'awc' in row['_source']['user_data']:
-            sql_data = OpmHealthStatusSqlData(DOMAIN, row['_id'], self.datespan, self.case_status)
-            if sql_data.data:
-                formatter = DataFormatter(DictDataFormat(sql_data.columns, no_value=format_percent(0, 0)))
-                data = dict(formatter.format(sql_data.data, keys=sql_data.keys, group_by=sql_data.group_by))
-                if row['_id'] not in data:
-                    return empty_health_status(row)
-                data[row['_id']].update({'awc': row['_source']['user_data']['awc']})
-                return HealthStatus(**data[row['_id']])
-            else:
-                return empty_health_status(row)
-        else:
-            raise InvalidRow("AWC not found for case")
-
-    @property
-    def fixed_cols_spec(self):
-        return dict(num=2, width=300)
-
-    @property
-    @request_cache()
-    def print_response(self):
-        """
-        Returns the report for printing.
-        """
-        self.is_rendered_as_email = True
-        self.use_datatables = False
-        self.override_template = "opm/hsr_print.html"
-        self.update_report_context()
-        self.pagination.count = 1000000
-        self.context['report_table'].update(
-            rows=self.rows
-        )
-        rendered_report = render_to_string(self.template_report, self.context,
-            context_instance=RequestContext(self.request)
-        )
-        return HttpResponse(rendered_report)
-
-    @property
-    def export_table(self):
-        """
-        Exports the report as excel.
-
-        When rendering a complex cell, it will assign a value in the following order:
-        1. cell['raw']
-        2. cell['sort_key']
-        3. str(cell)
-        """
-        try:
-            import xlwt
-        except ImportError:
-            raise Exception("It doesn't look like this machine is configured for "
-                            "excel export. To export to excel you have to run the "
-                            "command:  easy_install xlutils")
-        self.pagination.count = 1000000
-        headers = self.headers
-        formatted_rows = self.rows
-
-
-        table = headers.as_export_table
-        rows = [_unformat_row(row) for row in formatted_rows]
-        table.extend(rows)
-        if self.total_row:
-            table.append(_unformat_row(self.total_row))
-        if self.statistics_rows:
-            table.extend([_unformat_row(row) for row in self.statistics_rows])
-
-        return [[self.export_sheet_name, table]]
-
-
-def calculate_total_row(rows):
-    regexp = re.compile('(.*?)>([0-9]+)<.*')
-    total_row = []
-    if len(rows) > 0:
-        num_cols = len(rows[0])
-        for i in range(num_cols):
-            colrows = [cr[i] for cr in rows]
-            if i == 0:
-                total_row.append("Total:")
-            else:
-                columns = [int(regexp.match(r).group(2)) for r in colrows]
-                if len(columns):
-                    total_row.append("<span style='display: block; text-align:center;'>%s</span>" % reduce(lambda x, y: x + y, columns, 0))
-                else:
-                    total_row.append('')
-    return total_row
+        return OPMCaseRow(row, self)
 
 
 def _unformat_row(row):
@@ -1391,25 +939,31 @@ def _unformat_row(row):
     return formatted_row
 
 
-class HealthMapSource(HealthStatusReport):
+class HealthMapSource(NewHealthStatusReport):
+
+    total_rows = 0
 
     @property
     @memoized
     def get_users(self):
-        return super(HealthMapSource, self).es_results['hits'].get('hits', [])
+        awcs = [awc.split('-')[0].strip() for awc in self.awcs]
+        config = {
+            'awc': tuple(awcs),
+            'gp': tuple(self.gp),
+            'block': tuple(self.blocks)
+        }
+        return UsersIdsData(config=config).get_data()
 
     @property
     def gps_mapping(self):
         users = self.get_users
         mapping = {}
         for user in users:
-            user_src = user.get('_source', {})
-            aww_name = user_src.get('first_name', "") + " " + user_src.get('last_name', "")
-            meta_data = user_src.get('user_data', {})
-            awc = meta_data.get("awc", "")
-            block = meta_data.get("block", "")
-            gp = meta_data.get("gp", "")
-            gps = meta_data.get("gps", "")
+            aww_name = user['name']
+            awc = user['awc']
+            block = user['block']
+            gp = user['gp']
+            gps = user['gps']
             mapping[awc] = {
                 "AWW": aww_name,
                 "Block": block,
@@ -1432,29 +986,33 @@ class HealthMapSource(HealthStatusReport):
         ret = super(HealthMapSource, self).rows
         new_rows = []
         for row in ret:
-            awc = row[0]
+            awc = row[1]
             awc_map = gps_mapping.get(awc, None) or ""
-            gps = awc_map["gps"] if awc_map else "--"
             extra_columns = ["--"] * 4
             if awc_map:
                 extra_columns = []
                 for key in ["gps", "AWW", "Block", "GP"]:
                     extra_columns.append(awc_map.get(key, "--"))
-            escaped_row = [row[0]]
-            for cell in row[1:]:
+            escaped_row = ['', row[1]]
+            for cell in row[2:]:
                 # _unformat_row([<html>] => ["N - f%"])
-                percent = re.findall(pattern, _unformat_row([cell])[0])
-                html_cell = {"html": cell, "sort_key": int(percent[0] if percent else 0)}
+                try:
+                    percent = re.findall(pattern, _unformat_row([cell])[0])
+                    html_cell = {"html": cell, "sort_key": int(percent[0] if percent else 0)}
+                except TypeError:
+                    html_cell = {"html": cell, "sort_key": cell}
                 escaped_row.append(html_cell)
             new_rows.append(extra_columns + escaped_row)
         return new_rows
 
 
-class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomProjectReport):
+class HealthMapReport(BaseMixin, GenericMapReport, GetParamsMixin, CustomProjectReport, MonthYearMixin):
     name = "Health Status (Map)"
+    title = "Health Status (Map)"
     slug = "health_status_map"
-    fields = [HierarchyFilter, OpenCloseFilter, DatespanFilter]
-    report_partial_path = 'opm/map_template.html'
+    fields = [HierarchyFilter, MonthFilter, YearFilter, OpenCloseFilter]
+    report_partial_path = "opm/map_template.html"
+    base_template = 'opm/map_base_template.html'
     printable = True
 
     data_source = {
@@ -1475,8 +1033,8 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
             subtitles.append("Gram Panchayat - %s" % ", ".join(gps))
         if blocks:
             subtitles.append("Blocks - %s" % ", ".join(blocks))
-        startdate = self.request_params.get('startdate', '')
-        enddate = self.request_params.get('enddate', '')
+        startdate = self.datespan.startdate
+        enddate = self.datespan.enddate
         subtitles.append(" From %s to %s" % (startdate, enddate))
         subtitles.append("Generated {}".format(
             datetime.datetime.utcnow().strftime(SERVER_DATETIME_FORMAT)))
@@ -1504,40 +1062,36 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
                 '# of Children Whose Nutritional Status is Normal': 'Children Whose Nutritional Status is Normal'
         }
         additional_columns = [
-            "Total # of Beneficiaries Registered",
-            "# of Mothers of Children Aged 3 Years and Below Registered",
-            "# of Children Between 0 and 3 Years of Age Registered",
-            "# of Pregnant Women Who Have Received at least 30 IFA Tablets",
-            "# of Pregnant Women Whose Weight Gain Was Monitored At Least Once",
-            "# of Pregnant Women Whose Weight Gain Was Monitored Twice",
-            "# of Children Whose Weight Was Monitored at Birth",
-            "# of Children Who Have Attended At Least 1 Growth Monitoring Session",
-            "# of Children Who Have Attended At Least 2 Growth Monitoring Sessions",
-            "# of Children Who Have Attended At Least 3 Growth Monitoring Sessions",
-            "# of Children Who Have Attended At Least 4 Growth Monitoring Sessions",
-            '# of Children Who Have Attended At Least 5 Growth Monitoring Sessions',
-            '# of Children Who Have Attended At Least 6 Growth Monitoring Sessions',
-            '# of Children Who Have Attended At Least 7 Growth Monitoring Sessions',
-            '# of Children Who Have Attended At Least 8 Growth Monitoring Sessions',
-            '# of Children Who Have Attended At Least 9 Growth Monitoring Sessions',
-            '# of Children Who Have Attended At Least 10 Growth Monitoring Sessions',
-            '# of Children Who Have Attended At Least 11 Growth Monitoring Sessions',
-            '# of Children Who Have Attended At Least 12 Growth Monitoring Sessions',
-            '# of Children Who Have Received ORS and Zinc Treatment if He/She Contracts Diarrhea',
-            '# of Mothers of Children Aged 3 Years and Below Who Reported to Have Exclusively Breastfed Their Children for First 6 Months',
-            '# of Children Who Received Measles Vaccine',
+            "Registered Beneficiaries",
+            "Registered children",
+            "Child birth registered",
+            "Received at least 30 IFA tablets",
+            "Weight monitored in second trimester",
+            "Weight monitored in third trimester",
+            "Weight monitored at birth",
+            "Growth monitoring when 0-3 months old",
+            "Growth Monitoring when 4-6 months old",
+            "Growth Monitoring when 7-9 months old",
+            "Growth Monitoring when 10-12 months old",
+            "Growth Monitoring when 13-15 months old",
+            "Growth Monitoring when 16-18 months old",
+            "Growth Monitoring when 19-21 months old",
+            "Growth Monitoring when 22-24 months old",
+            "Received ORS and Zinc treatment for diarrhoea",
+            "Exclusively breastfed for first 6 months",
+            "Received Measles vaccine",
         ]
         columns = ["AWW", "Block", "GP"] + [
-            "AWC",
-            "# of Pregnant Women Registered",
-            "# of Children Whose Birth Was Registered",
-            "# of Beneficiaries Attending VHND Monthly",
-            '# of Children Whose Nutritional Status is "SAM"',
-            '# of Children Whose Nutritional Status is "MAM"',
-            '# of Children Whose Nutritional Status is Normal'
+            "AWC Name",
+            "Registered pregnant women",
+            "Registered children",
+            "Pregnant women attended VHND",
+            'Severely underweight',
+            'Underweight',
+            'Normal weight for age'
         ]
-        return {
-            "detail_columns": columns[0:5],
+        config = {
+            "detail_columns": columns[:5],
             "display_columns": columns[4:],
             "table_columns": columns,
             "column_titles": title_mapping,
@@ -1552,6 +1106,14 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
                 title: "return x + ' \%'" for title in additional_columns + columns[4:]
             }
         }
+        default_metric = self.request.GET.get('metric', None)
+        if default_metric:
+            for metric in config['metrics']:
+                unquote = urllib.unquote(default_metric)
+                if metric['color']['column'] == unquote:
+                    metric['default'] = True
+                    break
+        return config
 
     @property
     def rows(self):
@@ -1588,12 +1150,70 @@ class HealthMapReport(BaseMixin, ElasticSearchMapReport, GetParamsMixin, CustomP
         """
         self.is_rendered_as_email = True
         self.use_datatables = False
-        self.update_report_context()
-        self.pagination.count = 1000000
-        self.context['report_table'].update(
-            rows=self.rows
+        self.override_template = "opm/map_template.html"
+
+        return HttpResponse(self._async_context()['report'])
+
+
+class LongitudinalCMRReport(MetReport):
+    name = "Longitudinal CMR"
+    slug = 'longitudinal_cmr'
+    model = LongitudinalConditionsMet
+    show_total = False
+    exportable = True
+    export_format_override = Format.XLS
+    month = None
+    year = None
+
+    @property
+    def row_objects(self):
+        """
+        Returns a list of objects, each representing a row in the report
+        """
+        rows = []
+        self._debug_data = []
+        now = datetime.datetime.now()
+        for index, row in enumerate(self.get_rows(), 1):
+            months = list(
+                rrule(MONTHLY, dtstart=datetime.date(row.opened_on.year, row.opened_on.month, 1),
+                      until=datetime.date(now.year, now.month, 1))
+            )
+            for month in months:
+                self.month = month.month
+                self.year = month.year
+                try:
+                    case_row = self.get_row_data(row, index=1)
+                    if not case_row.case_is_out_of_range:
+                        rows.append(case_row)
+                    else:
+                        case_row.one = ''
+                        case_row.two = ''
+                        case_row.three = ''
+                        case_row.four = ''
+                        case_row.five = ''
+                        case_row.pay = '--'
+                        case_row.payment_last_month = '--'
+                        case_row.issue = _('Reporting period incomplete')
+                        rows.append(case_row)
+                except InvalidRow as e:
+                    if self.debug:
+                        self.add_debug_data(row._id, e)
+        return rows
+
+    @property
+    def fields(self):
+        return [
+            MetHierarchyFilter,
+            OpenCloseFilter,
+        ]
+
+    @property
+    def redis_key(self):
+        redis_key = self.cache_key + "_" + self.slug
+        redis_key += "?blocks=%s&gps=%s&awcs=%s&is_open=%s" % (
+            self.blocks,
+            self.gp,
+            self.awcs,
+            self.request_params.get('is_open')
         )
-        rendered_report = render_to_string(
-            self.template_report, self.context, context_instance=RequestContext(self.request)
-        )
-        return HttpResponse(rendered_report)
+        return redis_key

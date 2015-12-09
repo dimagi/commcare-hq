@@ -1,9 +1,12 @@
 from django.test import TestCase
+
 from corehq.apps.receiverwrapper import submit_form_locally
-from couchforms.models import XFormError
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 class CaseProcessingErrorsTest(TestCase):
+
+    @run_with_all_backends
     def test_no_case_id(self):
         """
         submit form with a case block that has no case_id
@@ -20,7 +23,9 @@ class CaseProcessingErrorsTest(TestCase):
             </case>
         </data>
         """
-        submit_form_locally(
+
+        domain = 'special_domain'
+        _, xform, _ = submit_form_locally(
             """<data xmlns="example.com/foo">
                 <meta>
                     <instanceID>abc-easy-as-123</instanceID>
@@ -29,23 +34,12 @@ class CaseProcessingErrorsTest(TestCase):
                 <update><foo>bar</foo></update>
             </case>
             </data>""",
-            'my_very_special_domain',
+            domain,
         )
-        xform_errors = XFormError.view(
-            'domain/docs',
-            startkey=['my_very_special_domain', 'XFormError'],
-            endkey=['my_very_special_domain', 'XFormError', {}],
-            reduce=False,
-            include_docs=True,
-        ).all()
+        self.assertTrue(xform.is_error)
+        self.assertEqual(xform.problem, 'IllegalCaseId: case_id must not be empty')
 
-        related_errors = [xform_error for xform_error in xform_errors
-                          if xform_error.get_id == 'abc-easy-as-123']
-        self.assertEqual(len(related_errors), 1)
-        related_error = related_errors[0]
-        self.assertEqual(related_error.problem,
-                         'IllegalCaseId: case_id must not be empty')
-
+    @run_with_all_backends
     def test_uses_referrals(self):
         """
         submit form with a case block that uses referrals
@@ -55,7 +49,8 @@ class CaseProcessingErrorsTest(TestCase):
         - the form is not saved under its original id
         - an XFormError is saved with the original id as orig_id
         """
-        submit_form_locally(
+        domain = 'special_domain'
+        _, xform, _ = submit_form_locally(
             """<data xmlns="example.com/foo">
                 <meta>
                     <instanceID>abc-easy-as-456</instanceID>
@@ -69,19 +64,7 @@ class CaseProcessingErrorsTest(TestCase):
                 </referral>
             </case>
             </data>""",
-            'my_very_special_domain',
+            domain,
         )
-        xform_errors = XFormError.view(
-            'domain/docs',
-            startkey=['my_very_special_domain', 'XFormError'],
-            endkey=['my_very_special_domain', 'XFormError', {}],
-            reduce=False,
-            include_docs=True,
-        ).all()
-
-        related_errors = [xform_error for xform_error in xform_errors
-                          if xform_error.get_id == 'abc-easy-as-456']
-        self.assertEqual(len(related_errors), 1)
-        related_error = related_errors[0]
-        self.assertEqual(related_error.problem,
-                'UsesReferrals: Sorry, referrals are no longer supported!')
+        self.assertTrue(xform.is_error)
+        self.assertEqual(xform.problem, 'UsesReferrals: Sorry, referrals are no longer supported!')

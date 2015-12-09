@@ -217,7 +217,7 @@ class LocationImportTest(CommTrackTest):
                 self.domain.name,
                 Product.get_by_code(self.domain.name, 'pp')._id,
                 'state',
-                sp._id,
+                sp.case_id,
             )),
             77 / DAYS_IN_MONTH
         )

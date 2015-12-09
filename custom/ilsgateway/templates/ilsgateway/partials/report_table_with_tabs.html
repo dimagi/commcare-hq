@@ -8,8 +8,18 @@
 {% else %}
     <div style="float: left;" class="{{ thisreport.css_class }}">
         <div class="media">
-          <div class="media-body" style="height: 64px">
-             <h4 class="media-heading">{{ report_table.title }}</h4>{% if report_table.title_url %}<a href="{{ report_table.title_url }}">{{ report_table.title_url_name }}</a>{% endif %}
+          <div class="media-body">
+             <h4 class="media-heading {% if report_table.searchable %}searchable{% endif %}">
+                 <span>
+                    {{ report_table.title }}
+                 </span>
+                 {% if report_table.searchable %}
+                     <span style="position: absolute; right: 150px">
+                         <label>Search: <input type="text" class="filter-box" aria-controls="report_table_inventory_region_table"></label>
+                     </span>
+                 {% endif %}
+             </h4>
+              {% if report_table.title_url %}<a href="{{ report_table.title_url }}">{{ report_table.title_url_name }}</a>{% endif %}
               {% if report_table.subtitle %}
                 <span style="color: slategray">{{ report_table.subtitle }}</span>
               {% endif %}
@@ -110,6 +120,10 @@
 
                 var id = '#report_table_{{ report_table.slug }}';
                 var datatable = $(id).dataTable(params);
+                window.test = datatable;
+                $('.filter-box').on('keyup', function () {
+                    datatable.fnFilter(this.value);
+                });
 
                 var show_hide_table_columns = function(element) {
                     var col_idx = $(element).attr('data-column');

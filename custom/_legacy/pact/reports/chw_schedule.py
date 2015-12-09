@@ -5,6 +5,7 @@ import json
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.es import ReportXFormES, get_report_script_field
 from corehq.util.dates import iso_string_to_datetime, iso_string_to_date
+from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.parsing import json_format_date
 from pact.enums import PACT_DOMAIN
 from pact.lib.quicksect import IntervalNode
@@ -13,9 +14,10 @@ import logging
 
 cached_schedules = {}
 
+
 def get_seconds(d):
     import time
-    return time.mktime(d.utctimetuple())
+    return time.mktime(force_to_datetime(d).utctimetuple())
 
 
 class CHWPatientSchedule(object):

@@ -1,6 +1,6 @@
 import json
 import os
-from custom.ewsghana.api import GhanaEndpoint
+from custom.ewsghana.api import GhanaEndpoint, SMSUser
 
 
 class MockEndpoint(GhanaEndpoint):
@@ -16,7 +16,10 @@ class MockEndpoint(GhanaEndpoint):
         elif 'product' in url:
             return self._from_json('sample_products.json', **kwargs)
         elif 'stocktransactions' in url:
-            return self._from_json('sample_stocktransactions.json', **kwargs)
+            meta, objects = self._from_json('sample_stocktransactions.json', **kwargs)
+            if filters.get('supply_point'):
+                objects = filter(lambda x: str(x['supply_point']) == filters['supply_point'], objects)
+            return meta, objects
 
     def _from_json(self, filename, **kwargs):
         with open(os.path.join(self.datapath, filename)) as f:
@@ -51,3 +54,9 @@ class MockEndpoint(GhanaEndpoint):
             return objects[7]
         elif id == 900:
             return objects[8]
+
+    def get_smsuser(self, user_id, **kwargs):
+        with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
+            objects = json.loads(f.read())
+            if user_id == 2342:
+                return SMSUser(objects[0])

@@ -1,5 +1,5 @@
 import datetime
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.smsbillables.models import SmsBillable
 from django.core.management import BaseCommand

@@ -23,10 +23,25 @@ MSG_MISSING_EXTERNAL_ID = "sms.caselookup.missingexternalid"
 MSG_CASE_NOT_FOUND = "sms.caselookup.casenotfound"
 MSG_MULTIPLE_CASES_FOUND = "sms.caselookup.multiplecasesfound"
 MSG_FIELD_DESCRIPTOR = "sms.survey.fielddescriptor"
+MSG_FORM_NOT_FOUND = "sms.survey.formnotfound"
+MSG_FORM_ERROR = "sms.survey.formerror"
 MSG_OPTED_IN = "sms.opt.in"
 MSG_OPTED_OUT = "sms.opt.out"
 MSG_DUPLICATE_USERNAME = "sms.validation.duplicateusername"
 MSG_USERNAME_TOO_LONG = "sms.validation.usernametoolong"
+MSG_VERIFICATION_START_WITH_REPLY = "sms.verify.startwithreplyto"
+MSG_VERIFICATION_START_WITHOUT_REPLY = "sms.verify.startwithoutreplyto"
+MSG_VERIFICATION_SUCCESSFUL = "sms.verify.successful"
+MSG_MOBILE_WORKER_INVITATION_START = "sms.invitation.mobile.start"
+MSG_MOBILE_WORKER_ANDROID_INVITATION = "sms.invitation.mobile.android"
+MSG_MOBILE_WORKER_JAVA_INVITATION = "sms.invitation.mobile.java"
+MSG_REGISTRATION_WELCOME_CASE = "sms.registration.welcome.case"
+MSG_REGISTRATION_WELCOME_MOBILE_WORKER = "sms.registration.welcome.mobileworker"
+MSG_UPDATE = "sms.update"
+MSG_UPDATE_LOCATION_SITE_CODE_NOT_FOUND = "sms.update.location.sitecodenotfound"
+MSG_UPDATE_UNRECOGNIZED_ACTION = "sms.update.unrecognizedaction"
+MSG_UPDATE_LOCATION_SYNTAX = "sms.update.location.syntax"
+MSG_UPDATE_LOCATION_SUCCESS = "sms.update.location.success"
 
 _MESSAGES = {
     MSG_MULTIPLE_SESSIONS: ugettext_noop("An error has occurred. Please try restarting the survey."),
@@ -50,26 +65,67 @@ _MESSAGES = {
     MSG_CASE_NOT_FOUND: ugettext_noop("Case with the given external id was not found."),
     MSG_MULTIPLE_CASES_FOUND: ugettext_noop("More than one case was found with the given external id."),
     MSG_FIELD_DESCRIPTOR: ugettext_noop("Field '{0}': "),
+    MSG_FORM_NOT_FOUND: ugettext_noop("Could not find the survey being requested."),
+    MSG_FORM_ERROR: ugettext_noop("There is a configuration error with this survey. "
+        "Please contact your administrator."),
     MSG_OPTED_IN: ugettext_noop("You have opted-in to receive messages from"
         " CommCareHQ. To opt-out, reply to this number with {0}"),
     MSG_OPTED_OUT: ugettext_noop("You have opted-out from receiving"
         " messages from CommCareHQ. To opt-in, reply to this number with {0}"),
     MSG_DUPLICATE_USERNAME: ugettext_noop("CommCare user {0} already exists"),
     MSG_USERNAME_TOO_LONG: ugettext_noop("Username {0} is too long.  Must be under {1} characters."),
+    MSG_VERIFICATION_START_WITH_REPLY: ugettext_noop("Welcome to CommCareHQ! Is this phone used by {0}? "
+        "If yes, reply '123' to {1} to start using SMS with CommCareHQ."),
+    MSG_VERIFICATION_START_WITHOUT_REPLY: ugettext_noop("Welcome to CommCareHQ! Is this phone used by {0}? "
+        "If yes, reply '123' to start using SMS with CommCareHQ."),
+    MSG_VERIFICATION_SUCCESSFUL: ugettext_noop("Thank you. This phone has been verified for "
+        "using SMS with CommCareHQ"),
+    MSG_MOBILE_WORKER_INVITATION_START: ugettext_noop("Welcome to CommCareHQ! What type of phone are you "
+        "using? Reply 1 for Android, 2 for other."),
+    MSG_MOBILE_WORKER_ANDROID_INVITATION: ugettext_noop("Please register here: {0}"),
+    MSG_MOBILE_WORKER_JAVA_INVITATION: ugettext_noop("Please reply with an SMS saying 'join {0} worker "
+        "[username]', entering your requested username in place of [username]"),
+    MSG_REGISTRATION_WELCOME_CASE: ugettext_noop("Thank you for registering with CommCareHQ."),
+    MSG_REGISTRATION_WELCOME_MOBILE_WORKER: ugettext_noop("Thank you for registering with CommCareHQ."),
+    MSG_UPDATE_UNRECOGNIZED_ACTION: ugettext_noop('Error: Unrecognized update action provided.'),
+    MSG_UPDATE: ugettext_noop("Usage: #update <keyword>"),
+    MSG_UPDATE_LOCATION_SITE_CODE_NOT_FOUND: ugettext_noop("Location with site code {0} was not found."),
+    MSG_UPDATE_LOCATION_SYNTAX: ugettext_noop("Usage: #update location <site_code>"),
+    MSG_UPDATE_LOCATION_SUCCESS: ugettext_noop("Location updated successfully.")
+
 }
 
-def get_message(msg_id, verified_number=None, context=None):
+
+def get_message(msg_id, verified_number=None, context=None, domain=None, language=None):
+    """
+    Translates the message according to the user's and domain's preferences.
+
+    msg_id - one of the MSG_* constants above
+    verified_number - pass in the verified number of a contact in order to
+                      use this contact's domain and language to translate
+    context - some messages require additional parameters; pass them as a
+              tuple or list
+    domain - if the contact doesn't have a verified number, pass the domain
+             in here to use this domain's translation doc
+    language - if the contact doesn't have a verified number, pass the language
+               code in here to use this language
+    """
     default_msg = _MESSAGES.get(msg_id, "")
 
-    if verified_number:
+    if domain:
+        tdoc = StandaloneTranslationDoc.get_obj(domain, "sms")
+    elif verified_number:
         tdoc = StandaloneTranslationDoc.get_obj(verified_number.domain, "sms")
     else:
         tdoc = None
 
-    try:
-        user_lang = verified_number.owner.get_language_code()
-    except:
-        user_lang = None
+    if language:
+        user_lang = language
+    else:
+        try:
+            user_lang = verified_number.owner.get_language_code()
+        except:
+            user_lang = None
 
     def get_translation(lang):
         return tdoc.translations.get(lang, {}).get(msg_id, None)
@@ -112,4 +168,3 @@ def get_message(msg_id, verified_number=None, context=None):
         msg = msg.format(*context)
 
     return msg
-

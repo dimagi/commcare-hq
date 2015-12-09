@@ -1,12 +1,13 @@
 [
   {
-    "backend": "smsgh",
     "email": null,
     "family_name": "",
     "id": 2342,
     "is_active": "True",
     "name": "Test1",
-    "phone_numbers": ["+2222222222"],
+    "phone_numbers": [
+        {"phone_number": "+2222222222", "backend": "smsgh", "default": true}
+    ],
     "role": "Other",
     "supply_point": {
         "active": true,
@@ -14,7 +15,7 @@
         "groups":[],
         "id": 456,
         "last_reported": "2012-12-21T14:05:16.808993",
-        "location_id": 591,
+        "location_id": 620,
         "name": "aa55",
         "primary_reporter": null,
         "supervised_by": null,
@@ -24,13 +25,14 @@
     "to": ""
   },
   {
-    "backend": "smsgh",
     "email": null,
     "family_name": "",
     "id": 338,
     "is_active": "False",
     "name": "Test2",
-    "phone_numbers": ["+22223333"],
+    "phone_numbers": [
+        {"phone_number": "+22223333", "backend": "message_tester", "default": true}
+    ],
     "role": "Nurse",
     "supply_point":{
         "active": true,

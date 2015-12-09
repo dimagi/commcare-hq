@@ -1,0 +1,44 @@
+[
+    {
+        "id": 797096,
+        "status_date": "2015-07-14T05:24:18.457216",
+        "status_type": "soh_fac",
+        "status_value": "submitted",
+        "supply_point": 4407
+    },
+    {
+        "id": 797097,
+        "status_date": "2015-07-14T05:24:18.457216",
+        "status_type": "la_fac",
+        "status_value": "reminder_sent",
+        "supply_point": 4407
+    },
+    {
+        "id": 797098,
+        "status_date": "2015-07-14T05:40:05.986349",
+        "status_type": "del_fac",
+        "status_value": "received",
+        "supply_point": 3445
+    },
+    {
+        "id": 797099,
+        "status_date": "2015-07-14T05:43:36.526462",
+        "status_type": "del_fac",
+        "status_value": "received",
+        "supply_point": 3445
+    },
+    {
+        "id": 797100,
+        "status_date": "2015-07-14T05:44:31.657170",
+        "status_type": "del_fac",
+        "status_value": "received",
+        "supply_point": 3445
+    },
+    {
+        "id": 797100,
+        "status_date": "2015-07-14T05:44:31.657170",
+        "status_type": "del_fac",
+        "status_value": "received",
+        "supply_point": 600
+    }
+]

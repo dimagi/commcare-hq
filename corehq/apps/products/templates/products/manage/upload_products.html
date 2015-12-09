@@ -1,4 +1,4 @@
-{% extends "settings/base_template.html" %}
+{% extends "settings/bootstrap2/base_template.html" %}
 {% load hq_shared_tags %}
 
 {% block js %} {{ block.super }}
@@ -6,5 +6,5 @@
 {% endblock %}
 
 {% block main_column %}
-    {% include "hqwebapp/partials/bulk_upload.html" %}
+    {% include "style/bootstrap2/partials/bulk_upload.html" %}
 {% endblock %}

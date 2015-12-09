@@ -1,0 +1,25 @@
+            <ItemData ItemOID="{{ item.item_oid }}" Value="{{ item.value }}">
+              {% if audit_logs %}
+              <OpenClinica:AuditLogs EntityID="{{ item.item_oid }}">
+                {% for al in item.audit_logs %}
+                <OpenClinica:AuditLog ID="{{ al.id }}"
+                                      UserID="{{ al.user_id }}"
+                                      UserName="{{ al.username }}"
+                                      Name="{{ al.full_name }}"
+                                      DateTimeStamp="{{ al.timestamp }}"
+                                      AuditType="{{ al.audit_type }}"
+                                      {% if al.reason %}
+                                      ReasonForChange="{{ al.reason }}"
+                                      {% endif %}
+                                      {% if al.old_value %}
+                                      OldValue="{{ al.old_value }}"
+                                      {% endif %}
+                                      NewValue="{{ al.new_value }}"
+                                      ValueType="{{ al.value_type }}"/>
+                {% endfor %}
+              </OpenClinica:AuditLogs>
+              {% endif %}
+              {% if item.measurement_unit_oid %}
+              <MeasurementUnitRef MeasurementUnitOID="{{ item.measurement_unit_oid }}"/>
+              {% endif %}
+            </ItemData>

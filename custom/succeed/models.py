@@ -9,6 +9,12 @@ from custom.utils.utils import flat_field
 from fluff.filters import CustomFilter
 
 
+LAST_VISIT = {
+    'visit_name': 'last',
+    'days': -1
+}
+
+
 class _(Document):
     pass
 
@@ -21,17 +27,22 @@ def get_next_visit(case):
     actions = list(case['actions'])
     next_visit = VISIT_SCHEDULE[0]
     for visit_key, visit in enumerate(VISIT_SCHEDULE):
-        for key, action in enumerate(actions):
-            if visit['xmlns'] == action['xform_xmlns']:
-                try:
-                    next_visit = VISIT_SCHEDULE[visit_key + 1]
-                    del actions[key]
-                    break
-                except IndexError:
-                    next_visit = {
-                        'visit_name': 'last',
-                        'days': -1
-                    }
+        is_ignored = case.get_case_property(visit['ignored_field'])
+        completed = case.get_case_property(visit['completion_field'])
+        if completed != '' and is_ignored is not None and is_ignored.lower() == 'yes':
+            try:
+                next_visit = VISIT_SCHEDULE[visit_key + 1]
+            except IndexError:
+                next_visit = LAST_VISIT
+        else:
+            for key, action in enumerate(actions):
+                if visit['xmlns'] == action['xform_xmlns']:
+                    try:
+                        next_visit = VISIT_SCHEDULE[visit_key + 1]
+                        del actions[key]
+                        break
+                    except IndexError:
+                        next_visit = LAST_VISIT
     return next_visit
 
 
@@ -96,12 +107,13 @@ class UCLAPatientFluff(fluff.IndicatorDocument):
     user_id = flat_field(lambda case: case.user_id)
 
     bp_category = flat_field(lambda case: get_property(case, 'BP_category'))
-    care_site = flat_field(lambda case: get_property(case, 'care_site').lower())
+    care_site = flat_field(lambda case: get_property(case, 'care_site_display').lower())
     is_active = flat_field(lambda case: is_active(case))
     visit_name = flat_field(lambda case: visit_name(case))
     visit_days = flat_field(lambda case: visit_days(case))
     last_interaction = flat_field(lambda case: last_interaction(case))
 
     emitter = RandomizationDate()
+
 
 UCLAPatientFluffPillow = UCLAPatientFluff.pillow()

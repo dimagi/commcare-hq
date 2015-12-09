@@ -59,12 +59,12 @@ BaseListViewModel = function (o) {
             type: 'POST',
             url: action_url,
             dataType: 'json',
-            error: unsuccessful_archive_action(button, data_index),
-            success: successful_archive_action(button, data_index)
+            error: view_model.unsuccessful_archive_action(button, data_index),
+            success: view_model.successful_archive_action(button, data_index)
         });
     };
 
-    var successful_archive_action = function (button, index) {
+    view_model.successful_archive_action = function (button, index) {
         return function (data) {
             if (data.success) {
                 var $modal = $(button).parent().parent();
@@ -79,14 +79,14 @@ BaseListViewModel = function (o) {
                     view_model.archive_action_items(actioned);
                 });
             } else {
-                unsuccessful_archive_action(button, index)(data);
+                view_model.unsuccessful_archive_action(button, index)(data);
             }
-        }
-    }
-    var unsuccessful_archive_action = function (button, index) {
+        };
+    };
+    view_model.unsuccessful_archive_action = function (button, index) {
         return function (data) {
             $(button).button('unsuccessful');
-        }
+        };
     };
 
     return view_model;

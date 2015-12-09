@@ -154,7 +154,7 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
             search_url=reverse("global_quick_find"),
             doc_id=error.doc_id,
             search_title=_("Search HQ for this document: %(doc_id)s") % {'doc_id': error.doc_id},
-            raw_url=reverse("doc_in_es"),
+            raw_url=reverse("raw_couch"),
             raw_title=_("Open the raw document: %(doc_id)s") % {'doc_id': error.doc_id},
             error_url=reverse(EditPillowError.urlname),
             error_id=error.id,
@@ -213,7 +213,7 @@ class EditPillowError(BasePageView):
         elif action == ACTION_SEND and not len(error_ids) == 1:
             messages.error(self.request, _("Only one error may be sent to FogBugs at a time."))
         else:
-            with transaction.commit_on_success():
+            with transaction.atomic():
                 if action == ACTION_DELETE:
                     PillowError.objects.filter(id__in=error_ids).delete()
                 elif action == ACTION_RESET:

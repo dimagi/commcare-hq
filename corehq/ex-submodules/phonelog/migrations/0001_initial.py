@@ -1,68 +1,59 @@
-# encoding: utf-8
-import datetime
-from south.db import db
-from south.v2 import SchemaMigration
-from django.db import models
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 
-class Migration(SchemaMigration):
-
-    def forwards(self, orm):
-        
-        # Adding model 'Log'
-        db.create_table(u'phonelog_log', (
-            ('xform_id', self.gf('django.db.models.fields.CharField')(max_length=50)),
-            ('msg', self.gf('django.db.models.fields.TextField')()),
-            ('id', self.gf('django.db.models.fields.CharField')(max_length=50, primary_key=True)),
-            ('type', self.gf('django.db.models.fields.CharField')(max_length=32)),
-            ('date', self.gf('django.db.models.fields.DateTimeField')()),
-            ('domain', self.gf('django.db.models.fields.CharField')(max_length=100)),
-            ('device_id', self.gf('django.db.models.fields.CharField')(max_length=50)),
-            ('app_version', self.gf('django.db.models.fields.TextField')()),
-            ('username', self.gf('django.db.models.fields.CharField')(max_length=100)),
-        ))
-        db.send_create_signal(u'phonelog', ['Log'])
-
-        # Adding model 'UserLog'
-        db.create_table(u'phonelog_userlog', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('xform_id', self.gf('django.db.models.fields.CharField')(max_length=50)),
-            ('user_id', self.gf('django.db.models.fields.CharField')(max_length=50)),
-            ('sync_token', self.gf('django.db.models.fields.CharField')(max_length=50)),
-            ('username', self.gf('django.db.models.fields.CharField')(max_length=100)),
-        ))
-        db.send_create_signal(u'phonelog', ['UserLog'])
+from django.db import models, migrations
 
 
-    def backwards(self, orm):
-        
-        # Deleting model 'Log'
-        db.delete_table(u'phonelog_log')
+class Migration(migrations.Migration):
 
-        # Deleting model 'UserLog'
-        db.delete_table(u'phonelog_userlog')
+    dependencies = [
+    ]
 
-
-    models = {
-        u'phonelog.log': {
-            'Meta': {'object_name': 'Log'},
-            'app_version': ('django.db.models.fields.TextField', [], {}),
-            'date': ('django.db.models.fields.DateTimeField', [], {}),
-            'device_id': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
-            'domain': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'id': ('django.db.models.fields.CharField', [], {'max_length': '50', 'primary_key': 'True'}),
-            'msg': ('django.db.models.fields.TextField', [], {}),
-            'type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
-            'username': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'xform_id': ('django.db.models.fields.CharField', [], {'max_length': '50'})
-        },
-        u'phonelog.userlog': {
-            'Meta': {'object_name': 'UserLog'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'sync_token': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
-            'user_id': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
-            'username': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'xform_id': ('django.db.models.fields.CharField', [], {'max_length': '50'})
-        }
-    }
-
-    complete_apps = ['phonelog']
+    operations = [
+        migrations.CreateModel(
+            name='DeviceReportEntry',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('xform_id', models.CharField(max_length=50, db_index=True)),
+                ('i', models.IntegerField()),
+                ('msg', models.TextField()),
+                ('type', models.CharField(max_length=32, db_index=True)),
+                ('date', models.DateTimeField(db_index=True)),
+                ('server_date', models.DateTimeField(null=True, db_index=True)),
+                ('domain', models.CharField(max_length=100, db_index=True)),
+                ('device_id', models.CharField(max_length=50, null=True, db_index=True)),
+                ('app_version', models.TextField(null=True)),
+                ('username', models.CharField(max_length=100, null=True, db_index=True)),
+                ('user_id', models.CharField(max_length=50, null=True, db_index=True)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='UserEntry',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('xform_id', models.CharField(max_length=50, db_index=True)),
+                ('i', models.IntegerField()),
+                ('user_id', models.CharField(max_length=50)),
+                ('sync_token', models.CharField(max_length=50)),
+                ('username', models.CharField(max_length=100, db_index=True)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.AlterUniqueTogether(
+            name='userentry',
+            unique_together=set([('xform_id', 'i')]),
+        ),
+        migrations.AlterUniqueTogether(
+            name='devicereportentry',
+            unique_together=set([('xform_id', 'i')]),
+        ),
+        migrations.AlterIndexTogether(
+            name='devicereportentry',
+            index_together=set([('domain', 'date')]),
+        ),
+    ]

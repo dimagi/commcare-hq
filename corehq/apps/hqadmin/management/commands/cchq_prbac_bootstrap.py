@@ -7,6 +7,7 @@ import logging
 from optparse import make_option
 
 # Django imports
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.core.mail import mail_admins
 
@@ -18,6 +19,15 @@ logger = logging.getLogger(__name__)
 
 
 BULK_CASE_AND_USER_MANAGEMENT = 'bulk_case_and_user_management'
+
+
+def cchq_prbac_bootstrap(apps, schema_editor):
+    """Convenience function for use in data migrations.
+    Example operation:
+        migrations.RunPython(cchq_prbac_bootstrap)
+    """
+    call_command('cchq_prbac_bootstrap')
+
 
 class Command(BaseCommand):
     help = 'Populate a fresh database with some sample roles and grants'
@@ -90,6 +100,7 @@ class Command(BaseCommand):
             grantee = Role.objects.get(slug=grantee_slug)
             priv = Role.objects.get(slug=priv_slug)
 
+            Role.get_cache().clear()
             if grantee.has_privilege(priv):
                 if self.verbose:
                     logger.info('Privilege already granted: %s => %s', grantee.slug, priv.slug)
@@ -137,7 +148,15 @@ class Command(BaseCommand):
         Role(slug=privileges.HIPAA_COMPLIANCE_ASSURANCE, name='HIPAA Compliance Assurance', description=''),
         Role(slug=privileges.ALLOW_EXCESS_USERS, name='Can Add Users Above Limit', description=''),
         Role(slug=privileges.COMMCARE_LOGO_UPLOADER, name='Custom CommCare Logo Uploader', description=''),
+        Role(slug=privileges.LOCATIONS, name='Locations', description=''),
         Role(slug=privileges.REPORT_BUILDER, name='User Configurable Report Builder', description=''),
+        Role(slug=privileges.USER_CASE, name='User Case Management', description=''),
+        Role(slug=privileges.DATA_CLEANUP, name='Data Management',
+             description='Tools for cleaning up data, including editing submissions and archiving forms.'),
+        Role(slug=privileges.TEMPLATED_INTENTS, name='Templated Intents',
+             description='Provides a dropdown for Android App Callouts'),
+        Role(slug=privileges.CUSTOM_INTENTS, name='Custom Intents',
+             description='Allows for specifying custom intents'),
     ]
 
     BOOTSTRAP_PLANS = [
@@ -162,6 +181,8 @@ class Command(BaseCommand):
         privileges.BULK_USER_MANAGEMENT,
         privileges.BULK_CASE_MANAGEMENT,
         privileges.ALLOW_EXCESS_USERS,
+        privileges.LOCATIONS,
+        privileges.USER_CASE,
     ]
 
     pro_plan_features = standard_plan_features + [
@@ -171,12 +192,15 @@ class Command(BaseCommand):
         privileges.HIPAA_COMPLIANCE_ASSURANCE,
         privileges.DEIDENTIFIED_DATA,
         privileges.REPORT_BUILDER,
+        privileges.DATA_CLEANUP,
+        privileges.TEMPLATED_INTENTS,
     ]
 
     advanced_plan_features = pro_plan_features + [
         privileges.CUSTOM_BRANDING,
         privileges.ACTIVE_DATA_MANAGEMENT,
         privileges.COMMCARE_LOGO_UPLOADER,
+        privileges.CUSTOM_INTENTS,
     ]
 
     enterprise_plan_features = advanced_plan_features + []

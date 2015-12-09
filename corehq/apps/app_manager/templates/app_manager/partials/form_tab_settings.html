@@ -10,6 +10,18 @@
                 {% input_trans form.name langs %}
             </div>
         </div>
+        <div class="control-group">
+            <label class="control-label" for="comment-id">
+                {% trans "Comment" %}
+                <span class="hq-help-template"
+                      data-title="{% trans "Comment" %}"
+                      data-content="{% blocktrans %}Comments to document or explain this form for other app builders or maintainers.{% endblocktrans %}"
+                ></span>
+            </label>
+            <div id="form-comment" class="controls">
+                <textarea id="comment-id" name="comment">{{ form.comment }}</textarea>
+            </div>
+        </div>
 
         <legend>
         <a class="accordion-toggle collapsed" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-multimedia">
@@ -38,9 +50,13 @@
 
                 {% if allow_form_filtering %}
                     {% include "app_manager/partials/form_filter.html" %}
+                {% else  %}
+                    <div class="label">{% trans 'Form filtering is disabled for this form' %}</div>
                 {% endif %}
                 {% if allow_form_workflow %}
                     {% include "app_manager/partials/form_workflow.html" %}
+                {% else %}
+                    <div class="label">{% trans 'Form workflows are disabled for this form' %}</div>
                 {% endif %}
 
             </div>
@@ -78,5 +94,6 @@
             </div>
             {% endif %}
         </div>
+
     </form>
 </div>

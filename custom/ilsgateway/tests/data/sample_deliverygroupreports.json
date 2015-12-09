@@ -1,0 +1,37 @@
+[
+    {
+        "delivery_group": "B",
+        "id": 1532,
+        "quantity": 0,
+        "report_date": "2015-06-12T08:07:37.628849",
+        "supply_point": 4407
+    },
+    {
+        "delivery_group": "C",
+        "id": 1533,
+        "quantity": 0,
+        "report_date": "2015-06-12T08:07:37.629894",
+        "supply_point": 3445
+    },
+    {
+        "delivery_group": "A",
+        "id": 1534,
+        "quantity": 0,
+        "report_date": "2015-06-12T08:09:32.921344",
+        "supply_point": 4407
+    },
+    {
+        "delivery_group": "B",
+        "id": 1535,
+        "quantity": 0,
+        "report_date": "2015-06-12T08:09:32.923453",
+        "supply_point": 3445
+    },
+    {
+        "delivery_group": "B",
+        "id": 1535,
+        "quantity": 0,
+        "report_date": "2015-06-12T08:09:32.923453",
+        "supply_point": 600
+    }
+]

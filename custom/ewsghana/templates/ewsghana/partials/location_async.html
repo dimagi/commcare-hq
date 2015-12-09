@@ -1,0 +1,7 @@
+{% extends 'reports/filters/location_async.html' %}
+{% block location_select %}
+  <select data-bind="options: children,
+                     optionsText: 'display_name',
+                     value: selected_child"></select>
+{% endblock %}
+

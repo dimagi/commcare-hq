@@ -1,7 +1,9 @@
 import base64
 from copy import copy
+import hashlib
 from mimetypes import guess_type
 import datetime
+import threading
 
 
 class CouchAttachmentsBuilder(object):
@@ -49,6 +51,16 @@ class CouchAttachmentsBuilder(object):
     def __init__(self, original=None):
         self._dict = original or {}
 
+    @staticmethod
+    def couch_style_digest(data):
+        return 'md5-{}'.format(base64.b64encode(hashlib.md5(data).digest()))
+
+    def no_change(self, name, data):
+        return (
+            self._dict.get(name) and
+            self._dict[name].get('digest') == self.couch_style_digest(data)
+        )
+
     def add(self, content, name=None, content_type=None):
         if hasattr(content, 'read'):
             if hasattr(content, 'seek'):
@@ -60,10 +72,20 @@ class CouchAttachmentsBuilder(object):
             data = data.encode('utf-8')
         if content_type is None:
             content_type = ';'.join(filter(None, guess_type(name)))
-        self._dict[name] = {
-            'data': base64.b64encode(data),
-            'content_type': content_type,
-        }
+        # optimization alert:
+        # don't make couch re-save attachment if there's no change in content
+        if self.no_change(name, data):
+            # just set the content_type in case it's different
+            # don't know of any case where this matters
+            # but seems semantically correct
+            self._dict[name].update({
+                'content_type': content_type,
+            })
+        else:
+            self._dict[name] = {
+                'data': base64.b64encode(data),
+                'content_type': content_type,
+            }
 
     def remove(self, name):
         """
@@ -84,7 +106,7 @@ class PaginateViewLogHandler(object):
 
 
 def paginate_view(db, view_name, chunk_size,
-                  log_handler=PaginateViewLogHandler(), **kwargs):
+                  log_handler=PaginateViewLogHandler(), **view_kwargs):
     """
     intended as a more performant drop-in replacement for
 
@@ -105,31 +127,66 @@ def paginate_view(db, view_name, chunk_size,
     chunk_size is how many docs to fetch per request to couchdb
 
     """
-    if kwargs.get('reduce', True):
+    if view_kwargs.get('reduce', True):
         raise ValueError('paginate_view must be called with reduce=False')
 
-    if 'limit' in kwargs:
+    if 'limit' in view_kwargs:
         raise ValueError('paginate_view cannot be called with limit')
 
-    if 'skip' in kwargs:
+    if 'skip' in view_kwargs:
         raise ValueError('paginate_view cannot be called with skip')
 
-    kwargs['limit'] = chunk_size
+    view_kwargs['limit'] = chunk_size
     total_emitted = 0
     len_results = -1
     while len_results:
-        log_handler.view_starting(db, view_name, kwargs, total_emitted)
+        log_handler.view_starting(db, view_name, view_kwargs, total_emitted)
         start_time = datetime.datetime.utcnow()
-        results = db.view(view_name, **kwargs)
+        results = db.view(view_name, **view_kwargs)
         len_results = len(results)
 
         for result in results:
             yield result
 
         total_emitted += len_results
-        log_handler.view_ending(db, view_name, kwargs, total_emitted,
+        log_handler.view_ending(db, view_name, view_kwargs, total_emitted,
                                 datetime.datetime.utcnow() - start_time)
         if len_results:
-            kwargs['startkey'] = result['key']
-            kwargs['startkey_docid'] = result['id']
-            kwargs['skip'] = 1
+            view_kwargs['startkey'] = result['key']
+            view_kwargs['startkey_docid'] = result['id']
+            view_kwargs['skip'] = 1
+
+
+_override_db = threading.local()
+
+
+class OverrideDB(object):
+    def __init__(self, document_class, database):
+        self.document_class = document_class
+        self.database = database
+        self.orig_database = None
+        self.orig_get_db = None
+        if not hasattr(_override_db, 'class_to_db'):
+            _override_db.class_to_db = {}
+
+    def __enter__(self):
+        try:
+            self.orig_database = _override_db.class_to_db[self.document_class]
+        except KeyError:
+            self.orig_get_db = self.document_class.get_db
+            self.document_class.get_db = classmethod(_get_db)
+        _override_db.class_to_db[self.document_class] = self.database
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # explict comparison with None necessary
+        # because Database.__nonzero__ returns the doc count
+        if self.orig_database is not None:
+            _override_db.class_to_db[self.document_class] = self.orig_database
+        else:
+            assert self.orig_get_db
+            del _override_db.class_to_db[self.document_class]
+            self.document_class.get_db = self.orig_get_db
+
+
+def _get_db(cls):
+    return _override_db.class_to_db[cls]

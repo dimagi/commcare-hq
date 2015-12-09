@@ -18,16 +18,12 @@
                 </th>
             </tr>
         </thead>
-        <tbody data-bind="foreach: visibleUsers">
-            <tr data-bind="if: full_name && phone_numbers && !in_charge">
-                <td data-bind="text: full_name"></td>
+        <tbody data-bind="foreach: visibleUsers()">
+            <tr data-bind="if: full_name && phone_numbers && !in_charge()">
+                <td><a data-bind="attr: { href: url }, text: full_name"></a></td>
                 <td data-bind="text: phone_numbers"></td>
             </tr>
         </tbody>
-
-        <tr>
-            <td><a href="{% url 'add_commcare_account' domain %}?location_id={{ location_id }}">Create new Mobile Worker</a></td>
-        </tr>
     </table>
     <br />
     <h4 class="media-heading">Web Users</h4>
@@ -50,12 +46,15 @@
             {% if user.first_name or user.last_name %}
                 {% if user.email %}
                     <tr>
-                        <td>{{ user.first_name }} {{ user.last_name }}</td>
+                        <td><a href="{% url 'user_account' domain user.id %}">{{ user.first_name }} {{ user.last_name }}</a></td>
                         <td>{{ user.email }}</td>
                     </tr>
                 {% endif %}
             {% endif %}
         {% endfor %}
+        <tr>
+            <td><h4><strong><a href="{% url 'invite_web_user' domain %}?location_id={{ location_id }}">Invite Web User</a></strong></h4></td>
+        </tr>
     </table>
 
 
@@ -71,11 +70,11 @@
         </thead>
         <tbody data-bind="foreach: inCharges" class="users">
         <tr data-bind="if: full_name">
-            <td><div data-bind="text: full_name"></div></td>
+            <td><a data-bind="attr: { href: url }, text: full_name"></a></td>
         </tr>
         </tbody>
         <tr>
-            <td><button id="in-charge-button" class="btn" data-target="#configureInCharge" data-toggle="modal">Configure In Charge</button></td>
+            <td><button id="in-charge-button" class="btn btn-small" data-target="#configureInCharge" data-toggle="modal">Configure In Charge</button></td>
         </tr>
     </table>
     {% if rendered_as != 'email' %}
@@ -91,7 +90,7 @@
                 <div class="control-group">
                     <label class="control-label" for="in_charge_select">{% trans "Select In Charge users" %}</label>
                     <div class="controls">
-                        <select style="width: 250px" multiple data-bind="options: users, optionsText: 'full_name', optionsValue: 'id', selectedOptions: selectedUsers, select2: {}"></select>
+                        <select style="width: 250px" multiple data-bind="options: districtInCharges, optionsText: 'optionsText', optionsValue: 'id', selectedOptions: selectedUsers, select2: {}"></select>
                     </div>
                 </div>
             </div>
@@ -107,7 +106,7 @@
 <script src="{% static 'ewsghana/ko/ewsghana.users_view_model.js' %}"></script>
 <script>
     ko.applyBindings(
-        new UsersViewModel(ko.toJS({{ users | JSON }}), '{{ location_id }}', '{% url 'configure_in_charge' domain %}'),
+        new UsersViewModel(ko.toJS({{ users | JSON }}), ko.toJS({{ district_in_charges | JSON }}), '{{ location_id }}', '{% url 'configure_in_charge' domain %}'),
         document.getElementById('users-tables')
     );
 </script>

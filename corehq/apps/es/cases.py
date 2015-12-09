@@ -1,3 +1,20 @@
+"""
+CaseES
+------
+
+Here's an example getting pregnancy cases that are either still open or were
+closed after May 1st.
+
+.. code-block:: python
+
+    from corehq.apps.es import cases as case_es
+
+    q = (case_es.CaseES()
+         .domain('testproject')
+         .case_type('pregnancy')
+         .OR(case_es.is_closed(False),
+             case_es.closed_range(gte=datetime.date(2015, 05, 01))))
+"""
 from .es_query import HQESQuery
 from . import filters
 
@@ -10,9 +27,12 @@ class CaseES(HQESQuery):
         return [
             opened_range,
             closed_range,
+            modified_range,
+            server_modified_range,
             is_closed,
             case_type,
             owner,
+            active_in_range,
         ] + super(CaseES, self).builtin_filters
 
 
@@ -22,6 +42,14 @@ def opened_range(gt=None, gte=None, lt=None, lte=None):
 
 def closed_range(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('closed_on', gt, gte, lt, lte)
+
+
+def modified_range(gt=None, gte=None, lt=None, lte=None):
+    return filters.date_range('modified_on', gt, gte, lt, lte)
+
+
+def server_modified_range(gt=None, gte=None, lt=None, lte=None):
+    return filters.date_range('server_modified_on', gt, gte, lt, lte)
 
 
 def is_closed(closed=True):
@@ -34,3 +62,11 @@ def case_type(type_):
 
 def owner(owner_id):
     return filters.term('owner_id', owner_id)
+
+
+def active_in_range(gt=None, gte=None, lt=None, lte=None):
+    """Restricts cases returned to those with actions during the range"""
+    return filters.nested(
+        "actions",
+        filters.date_range("actions.date", gt, gte, lt, lte)
+    )

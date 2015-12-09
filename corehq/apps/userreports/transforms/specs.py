@@ -1,6 +1,8 @@
 from dimagi.ext.jsonobject import JsonObject, StringProperty
 from corehq.apps.userreports.specs import TypeProperty
-from corehq.apps.userreports.transforms.custom.date import get_month_display
+from corehq.apps.userreports.transforms.custom.date import get_month_display, days_elapsed_from_date
+from corehq.apps.userreports.transforms.custom.numeric import \
+    get_short_decimal_display
 from corehq.apps.userreports.transforms.custom.users import (
     get_user_display,
     get_owner_display,
@@ -18,9 +20,11 @@ class Transform(JsonObject):
 
 _CUSTOM_TRANSFORM_MAP = {
     'month_display': get_month_display,
+    'days_elapsed_from_date': days_elapsed_from_date,
     'user_display': get_user_display,
     'owner_display': get_owner_display,
     'user_without_domain_display': get_user_without_domain_display,
+    'short_decimal_display': get_short_decimal_display,
 }
 
 
@@ -38,3 +42,18 @@ class CustomTransform(JsonObject):
 
     def transform(self, value):
         return self.get_transform_function()(value)
+
+
+class DateFormatTransform(Transform):
+    type = TypeProperty('date_format')
+    format = StringProperty(required=True)
+
+    def get_transform_function(self):
+
+        def transform_function(value):
+            try:
+                return value.strftime(self.format)
+            except:
+                return value
+
+        return transform_function

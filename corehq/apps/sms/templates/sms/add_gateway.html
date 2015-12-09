@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/base_section.html' %}
+{% extends 'style/bootstrap2/base_section.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
     <script src="{% static 'sms/ko/add_gateway_form_handler.ko.js' %}"></script>
 {% endblock %}
 

@@ -92,6 +92,16 @@
     </span>
 </script>
 
+<script type="text/html" id="CommcareSettings.widgets.number">
+    <span>
+        <input type="number" class="span3" data-bind="
+            value: visibleValue,
+            valueUpdate: 'textchange',
+            attr: {disabled: !enabled(), id: inputId}
+        " />
+    </span>
+</script>
+
 <script type="text/html" id="CommcareSettings.widgets.textarea">
     <span>
         <textarea type="text" data-bind="value: value, attr: {id: inputId}" />
@@ -149,7 +159,9 @@ todo fix
 </script>
 {% endcomment %}
 
+
 <div class="tab-pane" id="commcare-settings">
+    <div id="app_short_comment" class="app-comment">{{ app.short_comment }}</div>
     <div class="clearfix" id="settings-save-btn" data-bind="saveButton2: state, saveOptions: saveOptions"></div>
     <form class="form-horizontal">
         <div data-bind="foreach: sections">
@@ -165,10 +177,10 @@ todo fix
                         visible: visible,
                         css: {error: hasError()}
                     ">
-                        <label class="control-label" data-bind="attr: {for: inputId}">
-                            <span data-bind="text: name"></span>
-                            <span data-bind="makeHqHelp: {name: name, description: $data.description, format: $data.description_format}, visible: $data.description"></span>
-                        </label>
+                        <div class="control-label">
+                            <label data-bind="text: name, attr: {for: inputId}" class="inner-control-label"></label>
+                            <span data-bind="makeHqHelp: { name: name, description: $data.description, format: $data.description_format}, visible: $data.description"></span>
+                        </div>
                         <div class="controls">
                             <span data-bind="template: $data.widget_template || 'CommcareSettings.widgets.' + widget"></span>
                             <span data-bind="visible: disabledMessage(), css: {'text-warning': !optionOK(), 'text-success': optionOK}">
@@ -187,12 +199,11 @@ todo fix
                                 {% endblocktrans %}
                                 </span>
                             </p>
-                            <p class="help-block" data-bind="visible: !$data.valueIsLegal()">
-                                {% blocktrans %}
-                                    This is not an allowed value for this field
-                                {% endblocktrans %}
-                            </p>
                             <span class="label label-info" data-bind="visible: $data.preview">{% trans "Preview" %}</span>
+                            <span class="help-inline" data-bind="
+                                text: $data.warning || $parents[1].warning,
+                                visible: !$data.valueIsLegal()">
+                            </span>
                         </div>
                     </div>
                 </div>

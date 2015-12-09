@@ -1,19 +1,24 @@
 import re
+from corehq.apps.sms.api import send_sms_to_verified_number
+from corehq.util.translation import localize
 
 from custom.ilsgateway.tanzania.handlers.arrived import ArrivedHandler
 from custom.ilsgateway.tanzania.handlers.delivered import DeliveredHandler
 from custom.ilsgateway.tanzania.handlers.help import HelpHandler
+from custom.ilsgateway.tanzania.handlers.la import LossAndAdjustment
 from custom.ilsgateway.tanzania.handlers.language import LanguageHandler
 from custom.ilsgateway.tanzania.handlers.messageinitiator import MessageInitiatior
 from custom.ilsgateway.tanzania.handlers.notdelivered import NotDeliveredHandler
 from custom.ilsgateway.tanzania.handlers.notsubmitted import NotSubmittedHandler
 from custom.ilsgateway.tanzania.handlers.register import RegisterHandler
 from custom.ilsgateway.tanzania.handlers.soh import SOHHandler
+from custom.ilsgateway.tanzania.handlers.stockout import StockoutHandler
 from custom.ilsgateway.tanzania.handlers.stop import StopHandler
 from custom.ilsgateway.tanzania.handlers.supervision import SupervisionHandler
 from custom.ilsgateway.tanzania.handlers.randr import RandrHandler
 from custom.ilsgateway.tanzania.handlers.yes import YesHandler
 from custom.ilsgateway.models import ILSGatewayConfig
+from custom.ilsgateway.tanzania.reminders import CONTACT_SUPERVISOR
 
 
 def handle(verified_contact, text, msg=None):
@@ -27,6 +32,10 @@ def handle(verified_contact, text, msg=None):
     if not args:
         return False
     keyword = args[0]
+
+    if keyword.startswith('#'):
+        return False
+
     args = args[1:]
     params = {
         'user': user,
@@ -55,6 +64,8 @@ def handle(verified_contact, text, msg=None):
         ('language', 'lang', 'lugha'): LanguageHandler,
         ('stop', 'acha', 'hapo'): StopHandler,
         ('yes', 'ndio', 'ndyo'): YesHandler,
+        ('la', 'um'): LossAndAdjustment,
+        ('stockout', 'hakuna'): StockoutHandler,
         ('register', 'reg', 'join', 'sajili'): RegisterHandler,
         ('test',): MessageInitiatior,
         ('not',): not_function(args[0]) if args else None
@@ -62,7 +73,7 @@ def handle(verified_contact, text, msg=None):
 
     def choose_handler(keyword):
         for k, v in handlers.iteritems():
-            if keyword in k:
+            if keyword.lower() in k:
                 return v
         return None
 
@@ -74,3 +85,7 @@ def handle(verified_contact, text, msg=None):
             return handler.handle()
         else:
             return handler.help()
+    elif keyword != 'l':
+        with localize(verified_contact.owner.get_language_code()):
+            send_sms_to_verified_number(verified_contact, unicode(CONTACT_SUPERVISOR))
+        return True

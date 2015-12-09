@@ -1,4 +1,4 @@
-{% extends "hqwebapp/two_column.html" %}
+{% extends "style/bootstrap2/two_column.html" %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load i18n %}
@@ -291,11 +291,7 @@
                             {{ app.title }}
                         </a>
                         <small style="display: block;">{% trans "By" %}
-                            {% ifequal app.publisher 'organization' %}
-                                {{ app.get_organization.title }}
-                            {% else %}
-                                {{ app.author|default:app.name_of_publisher }}
-                            {% endifequal %}
+                            {{ app.author|default:app.name_of_publisher }}
                         </small>
                     </h3>
                     {% if app.project_type %}

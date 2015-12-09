@@ -1,13 +1,51 @@
+from functools import partial
+import traceback
 import requests
 import json
 from copy import deepcopy
 from collections import defaultdict, namedtuple
 from time import sleep
-from couchdbkit import ResourceNotFound, BulkSaveError
+from couchdbkit import ResourceNotFound, BulkSaveError, Document
 from django.http import Http404
 from jsonobject.exceptions import WrappingAttributeError
+from corehq.util.exceptions import DocumentClassNotFound
 from dimagi.utils.chunked import chunked
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.requestskit import get_auth
+from django.conf import settings
+
+
+class DocumentNotFound(Exception):
+    pass
+
+
+def get_document_or_not_found(cls, domain, doc_id, additional_doc_types=None):
+    allowed_doc_types = (additional_doc_types or []) + [cls.__name__]
+    try:
+        unwrapped = cls.get_db().get(doc_id)
+    except ResourceNotFound:
+        raise DocumentNotFound("Document {} of class {} not found!".format(
+            doc_id,
+            cls.__name__
+        ))
+
+    if ((unwrapped.get('domain', None) != domain and
+         domain not in unwrapped.get('domains', [])) or
+        unwrapped['doc_type'] not in allowed_doc_types):
+
+        raise DocumentNotFound("Document {} of class {} not in domain {}!".format(
+            doc_id,
+            cls.__name__,
+            domain,
+        ))
+
+    try:
+        return cls.wrap(unwrapped)
+    except WrappingAttributeError:
+        raise DocumentNotFound("Issue wrapping document {} of class {}!".format(
+            doc_id,
+            cls.__name__
+        ))
 
 
 def get_document_or_404(cls, domain, doc_id, additional_doc_types=None):
@@ -15,21 +53,55 @@ def get_document_or_404(cls, domain, doc_id, additional_doc_types=None):
     Gets a document and enforces its domain and doc type.
     Raises Http404 if the doc isn't found or domain/doc_type don't match.
     """
-    allowed_doc_types = (additional_doc_types or []) + [cls.__name__]
     try:
-        unwrapped = cls.get_db().get(doc_id)
-    except ResourceNotFound:
-        raise Http404()
+        return get_document_or_not_found(
+            cls, domain, doc_id, additional_doc_types=additional_doc_types)
+    except DocumentNotFound as e:
+        tb = traceback.format_exc()
+        raise Http404("{}\n\n{}".format(e, tb))
 
-    if ((unwrapped.get('domain', None) != domain and
-         domain not in unwrapped.get('domains', [])) or
-        unwrapped['doc_type'] not in allowed_doc_types):
-        raise Http404()
+
+@memoized
+def get_classes_by_doc_type():
+    queue = [Document]
+    classes_by_doc_type = {}
+    while queue:
+        klass = queue.pop()
+        try:
+            klass._meta.app_label
+        except AttributeError:
+            # exclude abstract base classes (which don't have an app_label)
+            pass
+        else:
+            # a base class (e.g. CommCareCase) wins over a subclass (e.g. BiharCase)
+            if klass._doc_type not in classes_by_doc_type:
+                classes_by_doc_type[klass._doc_type] = klass
+        queue.extend(klass.__subclasses__())
+    return classes_by_doc_type
+
+
+def get_document_class_by_doc_type(doc_type):
+    """
+    Given the doc_type of a document class, get the class itself.
+
+    Raises a DocumentClassNotFound if not found
+    """
 
     try:
-        return cls.wrap(unwrapped)
-    except WrappingAttributeError:
-        raise Http404()
+        return get_classes_by_doc_type()[doc_type]
+    except KeyError:
+        raise DocumentClassNotFound(
+            u'No Document class with name "{}" could be found.'.format(doc_type))
+
+
+def get_db_by_doc_type(doc_type):
+    """
+    Lookup a database by document type. Returns None if the database is not found.
+    """
+    try:
+        return get_document_class_by_doc_type(doc_type).get_db()
+    except DocumentClassNotFound:
+        return None
 
 
 def categorize_bulk_save_errors(error):
@@ -51,8 +123,11 @@ class IterDB(object):
 
         iter_db.error_ids  # docs that errored
         iter_db.saved_ids  # docs that saved correctly
+
+    `new_edits` param will be passed directly to db.bulk_save
     """
-    def __init__(self, database, chunksize=100, throttle_secs=None):
+    def __init__(self, database, chunksize=100, throttle_secs=None,
+                 new_edits=None):
         self.db = database
         self.chunksize = chunksize
         self.throttle_secs = throttle_secs
@@ -60,6 +135,7 @@ class IterDB(object):
         self.deleted_ids = set()
         self.error_ids = set()
         self.errors_by_type = defaultdict(list)
+        self.new_edits = new_edits
 
     def __enter__(self):
         self.to_save = []
@@ -72,7 +148,8 @@ class IterDB(object):
         except BulkSaveError as e:
             categorized_errors = categorize_bulk_save_errors(e)
             success_ids = {r['id'] for r in categorized_errors.pop(None, [])}
-            self.errors_by_type = categorized_errors
+            for error_type, error_ids in categorized_errors.items():
+                self.errors_by_type[error_type].extend(error_ids)
             self.error_ids.update(d['id'] for d in e.errors)
         else:
             success_ids = {d['id'] for d in results}
@@ -82,7 +159,8 @@ class IterDB(object):
         return success_ids
 
     def _commit_save(self):
-        success_ids = self._write(self.db.bulk_save, self.to_save)
+        bulk_save = partial(self.db.bulk_save, new_edits=self.new_edits)
+        success_ids = self._write(bulk_save, self.to_save)
         self.saved_ids.update(success_ids)
         self.to_save = []
 
@@ -144,7 +222,7 @@ def send_keys_to_couch(db, keys):
     return r.json()['rows']
 
 
-def iter_update(db, fn, ids, max_retries=3):
+def iter_update(db, fn, ids, max_retries=3, verbose=False):
     """
     Map `fn` over every doc in `db` matching `ids`
 
@@ -220,4 +298,14 @@ def iter_update(db, fn, ids, max_retries=3):
                "change or remove the '_id' field?".format(fn.__name__) +
                ", ".join(results.error_ids))
         raise IterUpdateError(results, msg)
+
+    if verbose:
+        print "couldn't find {} docs".format(len(results.not_found_ids))
+        print "ignored {} docs".format(len(results.ignored_ids))
+        print "deleted {} docs".format(len(results.deleted_ids))
+        print "updated {} docs".format(len(results.updated_ids))
     return results
+
+
+def stale_ok():
+    return settings.COUCH_STALE_QUERY

@@ -13,11 +13,13 @@
                 <dt>{% trans 'Username' %}</dt>
                 <dd>{{ couch_user.html_username|safe }}</dd>
                 {% for field in form_uneditable.visible_fields %}
+                {% if couch_user|getattr:field.name %}
                 <dt>{{ field.label }}</dt>
                 <dd class="hq-dd-userinfo">{{ couch_user|getattr:field.name }}</dd>
+                {% endif %}
                 {% endfor %}
-                <dt>{% trans 'Phone Numbers' %}</dt>
                 {% if phonenumbers %}
+                <dt>{% trans 'Phone Numbers' %}</dt>
                 <dd>
                     <ul>
                         {% for phonenumber in phonenumbers %}
@@ -71,5 +73,10 @@
               <button type="submit" class="btn btn-primary">{% trans 'Update CommCare Supply Settings' %}</button>
             </div>
         </form>
+    {% endif %}
+    {% if request|toggle_enabled:"EWS_WEB_USER_EXTENSION" %}
+        <a class="btn btn-primary" href="{% url 'ews_user_settings' domain=domain user_id=couch_user.get_id %}">
+            Edit EWS settings
+        </a>
     {% endif %}
 {% endblock %}

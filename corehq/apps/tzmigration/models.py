@@ -32,3 +32,6 @@ class TimezoneMigrationProgress(models.Model):
     migration_status = models.CharField(choices=MigrationStatus.choices,
                                         max_length=MigrationStatus.max_length,
                                         default=MigrationStatus.NOT_STARTED)
+
+    class Meta:
+        app_label = 'tzmigration'

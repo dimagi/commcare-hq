@@ -22,8 +22,15 @@ CT_LEDGER_REQUESTED = 'ct-requested'
 CT_LEDGER_APPROVED = 'ct-approved'
 
 SCHEDULE_PHASE = 'current_schedule_phase'
-SCHEDULE_LAST_VISIT = 'last_visit_number_{}'
-SCHEDULE_LAST_VISIT_DATE = 'last_visit_date_{}'
+SCHEDULE_LAST_VISIT = u'last_visit_number_{}'
+SCHEDULE_LAST_VISIT_DATE = u'last_visit_date_{}'
+SCHEDULE_GLOBAL_NEXT_VISIT_DATE = u'next_visit_date'
+SCHEDULE_NEXT_DUE = u'next_due'
+SCHEDULE_TERMINATED = '-1'
+SCHEDULE_CURRENT_VISIT_NUMBER = 'current_visit_number'
+SCHEDULE_UNSCHEDULED_VISIT = 'unscheduled_visit'
+SCHEDULE_MAX_DATE = (2 ** 31) - 1
+SCHEDULE_DATE_CASE_OPENED = u'date_opened'
 
 ATTACHMENT_PREFIX = 'attachment:'
 
@@ -32,4 +39,15 @@ USERCASE_TYPE = 'commcare-user'
 USERCASE_ID = 'usercase_id'
 USERCASE_PREFIX = 'user/'
 
+AUTO_SELECT_USER = 'user'
+AUTO_SELECT_FIXTURE = 'fixture'
+AUTO_SELECT_CASE = 'case'
+AUTO_SELECT_LOCATION = 'location'
+AUTO_SELECT_RAW = 'raw'
+AUTO_SELECT_USERCASE = 'usercase'
+
 RETURN_TO = 'return_to'
+
+AMPLIFIES_YES = 'yes'
+AMPLIFIES_NO = 'no'
+AMPLIFIES_NOT_SET = 'not_set'

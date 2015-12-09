@@ -1,13 +1,25 @@
 # coding=utf-8
+from collections import namedtuple
 import functools
 import hashlib
 import inspect
 from inspect import isfunction
 import logging
-from django.core.cache import get_cache
+from django.core.cache import caches as django_caches
 from corehq.util.soft_assert.api import soft_assert
 
 logger = logging.getLogger('quickcache')
+
+
+class CacheWithTimeout(namedtuple('CacheWithTimeout', ['cache', 'timeout'])):
+    def get(self, key, default=None):
+        return self.cache.get(key, default=default)
+
+    def set(self, key, value):
+        return self.cache.set(key, value, timeout=self.timeout)
+
+    def delete(self, key):
+        return self.cache.delete(key)
 
 
 class TieredCache(object):
@@ -68,7 +80,7 @@ class QuickCache(object):
                     )
 
         self.encoding_assert = soft_assert(
-            to=['{}@{}'.format('skelly', 'dimagi.com')],
+            notify_admins=True,
             fail_if_debug=False,
             skip_frames=5,
         )
@@ -116,9 +128,15 @@ class QuickCache(object):
         elif isinstance(value, (list, tuple)):
             return 'L' + self._hash(
                 ','.join(map(self._serialize_for_key, value)))
+        elif isinstance(value, dict):
+            return 'D' + self._hash(
+                ','.join(sorted(map(self._serialize_for_key, value.items())))
+            )
         elif isinstance(value, set):
             return 'S' + self._hash(
                 ','.join(sorted(map(self._serialize_for_key, value))))
+        elif value is None:
+            return 'N'
         else:
             raise ValueError('Bad type "{}": {}'.format(type(value), value))
 
@@ -153,11 +171,12 @@ class SkippableQuickCache(QuickCache):
         self.skip_arg = skip_arg
 
         arg_spec = inspect.getargspec(self.fn)
-        if self.skip_arg not in arg_spec.args:
-            raise ValueError(
-                'We cannot use "{}" as the "skip" parameter because the function {} has '
-                'no such argument'.format(self.skip_arg, self.fn.__name__)
-            )
+        if not isfunction(skip_arg):
+            if self.skip_arg not in arg_spec.args:
+                raise ValueError(
+                    'We cannot use "{}" as the "skip" parameter because the function {} has '
+                    'no such argument'.format(self.skip_arg, self.fn.__name__)
+                )
 
         if not isfunction(self.vary_on):
             for arg, attrs in self.vary_on:
@@ -169,7 +188,11 @@ class SkippableQuickCache(QuickCache):
 
     def __call__(self, *args, **kwargs):
         callargs = inspect.getcallargs(self.fn, *args, **kwargs)
-        skip = callargs[self.skip_arg]
+        if not isfunction(self.skip_arg):
+            skip = callargs[self.skip_arg]
+        elif isfunction(self.skip_arg):
+            skip = self.skip_arg(*args, **kwargs)
+
         if not skip:
             return super(SkippableQuickCache, self).__call__(*args, **kwargs)
         else:
@@ -186,6 +209,15 @@ def skippable_quickcache(vary_on, skip_arg, timeout=None, memoize_timeout=None, 
     @skippable_quickcache(['name'], skip_arg='force')
     def get_by_name(name, force=False):
         ...
+
+    The skip_arg can also be a function and will receive the save arguments as the function:
+    def skip_fn(name, address):
+        return name == 'Ben' and 'Chicago' not in address
+
+    @skippable_quickcache(['name'], skip_arg=skip_fn)
+    def get_by_name_and_address(name, address):
+        ...
+
     """
     skippable_cache = functools.partial(SkippableQuickCache, skip_arg=skip_arg)
 
@@ -254,12 +286,19 @@ def quickcache(vary_on, timeout=None, memoize_timeout=None, cache=None,
         raise ValueError('You can only use timeout '
                          'when not overriding the cache')
 
-    timeout = timeout or 5 * 60
+    timeout = timeout if timeout is not None else 5 * 60
     memoize_timeout = memoize_timeout or 10
 
     if cache is None:
-        cache = TieredCache([get_cache('locmem://', timeout=memoize_timeout),
-                             get_cache('default', timeout=timeout)])
+        caches = [
+            CacheWithTimeout(
+                django_caches['locmem'],
+                timeout=memoize_timeout)]
+        if timeout > 0:
+            caches.append(
+                CacheWithTimeout(
+                    django_caches['default'], timeout=timeout))
+        cache = TieredCache(caches)
 
     def decorator(fn):
         helper = helper_class(fn, vary_on=vary_on, cache=cache)

@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/base_paginated_crud.html' %}
+{% extends 'style/bootstrap2/base_paginated_crud.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -13,17 +13,12 @@
     <div class="btn-group">
         <a href="{% url 'add_normal_keyword' domain %}" class="btn btn-success">
             <i class="icon-plus"></i>
-            {% trans 'Add Keyword' %}</a>
-        <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>
-        </button>
-        <ul class="dropdown-menu">
-            <li><a href="{% url 'add_normal_keyword' domain %}">
-                {% trans 'Add Normal Keyword' %}
-            </a></li>
-            <li><a href="{% url 'add_structured_keyword' domain %}">
-                {% trans 'Add Structured Keyword' %}</a></li>
-        </ul>
+            {% trans 'Add Keyword' %}
+        </a>
+        <a href="{% url 'add_structured_keyword' domain %}" class="btn btn-success">
+            <i class="icon-plus"></i>
+            {% trans 'Add Structured Keyword' %}
+        </a>
     </div>
 {% endblock %}
 

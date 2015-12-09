@@ -15,23 +15,26 @@ var HQExportDownloader = function (options) {
                 $modal.find('.modal-header h3 span').text($(this).data("formname"));
 
                 $.getJSON($(this).data('dlocation'), function (d) {
-                    var autoRefresh = '';
+                    var autoRefresh = true;
                     var pollDownloader = function () {
-                        if ($('#ready_'+d.download_id).length == 0)
+                        if (autoRefresh && $('#ready_'+d.download_id).length === 0)
                         {
                             $.get(d.download_url, function(data) {
                                 $modal.find(self.loadedData).html(data);
                                 self.setUpEventTracking(caseType);
+                                if (autoRefresh) {
+                                    setTimeout(pollDownloader, 2000);
+                                }
                             });
                         } else {
                             $modal.find(self.loadingIndicator).addClass('hide');
-                            clearInterval(autoRefresh);
+                            autoRefresh = false;
                         }
                     };
                     $(self.modal).on('hide', function () {
-                        clearInterval(autoRefresh);
+                        autoRefresh = false;
                     });
-                    autoRefresh = setInterval(pollDownloader, 2000);
+                    pollDownloader();
                 });
 
 

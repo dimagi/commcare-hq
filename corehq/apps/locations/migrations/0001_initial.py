@@ -1,67 +1,69 @@
-# encoding: utf-8
-import datetime
-from south.db import db
-from south.v2 import SchemaMigration
-from django.db import models
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 
-class Migration(SchemaMigration):
-
-    def forwards(self, orm):
-        
-        # Adding model 'SQLLocation'
-        db.create_table(u'locations_sqllocation', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('domain', self.gf('django.db.models.fields.CharField')(max_length=255, db_index=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=100, null=True)),
-            ('location_id', self.gf('django.db.models.fields.CharField')(max_length=100, db_index=True)),
-            ('location_type', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('site_code', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('external_id', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
-            ('metadata', self.gf('json_field.fields.JSONField')(default={})),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('last_modified', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('is_archived', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('latitude', self.gf('django.db.models.fields.DecimalField')(null=True, max_digits=20, decimal_places=10)),
-            ('longitude', self.gf('django.db.models.fields.DecimalField')(null=True, max_digits=20, decimal_places=10)),
-            ('parent', self.gf('mptt.fields.TreeForeignKey')(blank=True, related_name='children', null=True, to=orm['locations.SQLLocation'])),
-            ('supply_point_id', self.gf('django.db.models.fields.CharField')(max_length=255, unique=True, null=True, db_index=True)),
-            (u'lft', self.gf('django.db.models.fields.PositiveIntegerField')(db_index=True)),
-            (u'rght', self.gf('django.db.models.fields.PositiveIntegerField')(db_index=True)),
-            (u'tree_id', self.gf('django.db.models.fields.PositiveIntegerField')(db_index=True)),
-            (u'level', self.gf('django.db.models.fields.PositiveIntegerField')(db_index=True)),
-        ))
-        db.send_create_signal(u'locations', ['SQLLocation'])
+from django.db import models, migrations
+import mptt.fields
+import json_field.fields
 
 
-    def backwards(self, orm):
-        
-        # Deleting model 'SQLLocation'
-        db.delete_table(u'locations_sqllocation')
+class Migration(migrations.Migration):
 
+    dependencies = [
+        ('products', '0001_initial'),
+    ]
 
-    models = {
-        u'locations.sqllocation': {
-            'Meta': {'object_name': 'SQLLocation'},
-            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'domain': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
-            'external_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'is_archived': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'last_modified': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'latitude': ('django.db.models.fields.DecimalField', [], {'null': 'True', 'max_digits': '20', 'decimal_places': '10'}),
-            u'level': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'}),
-            u'lft': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'}),
-            'location_id': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
-            'location_type': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'longitude': ('django.db.models.fields.DecimalField', [], {'null': 'True', 'max_digits': '20', 'decimal_places': '10'}),
-            'metadata': ('json_field.fields.JSONField', [], {'default': '{}'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True'}),
-            'parent': ('mptt.fields.TreeForeignKey', [], {'blank': 'True', 'related_name': "'children'", 'null': 'True', 'to': u"orm['locations.SQLLocation']"}),
-            u'rght': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'}),
-            'site_code': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'supply_point_id': ('django.db.models.fields.CharField', [], {'max_length': '255', 'unique': 'True', 'null': 'True', 'db_index': 'True'}),
-            u'tree_id': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'})
-        }
-    }
-
-    complete_apps = ['locations']
+    operations = [
+        migrations.CreateModel(
+            name='LocationType',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('domain', models.CharField(max_length=255, db_index=True)),
+                ('name', models.CharField(max_length=255)),
+                ('code', models.SlugField(null=True, db_index=False)),
+                ('administrative', models.BooleanField(default=False)),
+                ('shares_cases', models.BooleanField(default=False)),
+                ('view_descendants', models.BooleanField(default=False)),
+                ('last_modified', models.DateTimeField(auto_now=True)),
+                ('emergency_level', models.DecimalField(default=0.5, max_digits=10, decimal_places=1)),
+                ('understock_threshold', models.DecimalField(default=1.5, max_digits=10, decimal_places=1)),
+                ('overstock_threshold', models.DecimalField(default=3.0, max_digits=10, decimal_places=1)),
+                ('parent_type', models.ForeignKey(to='locations.LocationType', null=True)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='SQLLocation',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('domain', models.CharField(max_length=255, db_index=True)),
+                ('name', models.CharField(max_length=100, null=True)),
+                ('location_id', models.CharField(unique=True, max_length=100, db_index=True)),
+                ('site_code', models.CharField(max_length=255)),
+                ('external_id', models.CharField(max_length=255, null=True)),
+                ('metadata', json_field.fields.JSONField(default={}, help_text='Enter a valid JSON object')),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('last_modified', models.DateTimeField(auto_now=True)),
+                ('is_archived', models.BooleanField(default=False)),
+                ('latitude', models.DecimalField(null=True, max_digits=20, decimal_places=10)),
+                ('longitude', models.DecimalField(null=True, max_digits=20, decimal_places=10)),
+                ('stocks_all_products', models.BooleanField(default=True)),
+                ('supply_point_id', models.CharField(max_length=255, unique=True, null=True, db_index=True)),
+                ('lft', models.PositiveIntegerField(editable=False, db_index=True)),
+                ('rght', models.PositiveIntegerField(editable=False, db_index=True)),
+                ('tree_id', models.PositiveIntegerField(editable=False, db_index=True)),
+                ('level', models.PositiveIntegerField(editable=False, db_index=True)),
+                ('_products', models.ManyToManyField(to='products.SQLProduct', null=True)),
+                ('location_type', models.ForeignKey(to='locations.LocationType')),
+                ('parent', mptt.fields.TreeForeignKey(related_name='children', blank=True, to='locations.SQLLocation', null=True)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+        migrations.AlterUniqueTogether(
+            name='sqllocation',
+            unique_together=set([('domain', 'site_code')]),
+        ),
+    ]

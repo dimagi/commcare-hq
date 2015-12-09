@@ -1,3 +1,4 @@
+from collections import namedtuple
 import os
 import tempfile
 import uuid
@@ -13,6 +14,7 @@ class SharedDriveConfiguration(object):
         self._restore_dir = self._init_dir(restore_dir)
         self.transfer_dir = self._init_dir(transfer_dir)
         self.temp_dir = self._init_dir(temp_dir)
+        self.tzmigration_planning_dir = self._init_dir('tzmigration-planning')
 
     def _init_dir(self, name):
         if not self.shared_drive_path or not os.path.isdir(self.shared_drive_path) or not name:
@@ -75,43 +77,58 @@ def get_dynamic_db_settings(server_root, username, password, dbname,
     }
 
 
-def _make_couchdb_tuple(row, couch_database_url):
+class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
+                          ['couch_database_url', 'couchdb_apps', 'extra_db_names'])):
+    def make_couchdb_tuples(self):
+        """
+        Helper function to generate couchdb tuples
+        for mapping app name to couch database URL.
 
-    if isinstance(row, basestring):
-        app_label = row
-        return app_label, couch_database_url
-    else:
-        app_label, postfix = row
-        return app_label, '%s__%s' % (couch_database_url, postfix)
+        """
+        return [self._make_couchdb_tuple(row) for row in self.couchdb_apps]
 
+    def _make_couchdb_tuple(self, row):
+        if isinstance(row, basestring):
+            app_label, postfix = row, None
+        else:
+            app_label, postfix = row
+        if postfix:
+            return app_label, '%s__%s' % (self.couch_database_url, postfix)
+        else:
+            return app_label, self.couch_database_url
 
-def make_couchdb_tuples(config, couch_database_url):
-    """
-    Helper function to generate couchdb tuples
-    for mapping app name to couch database URL.
+    def get_extra_couchdbs(self):
+        """
+        Create a mapping from database prefix to database url
 
-    """
-    return [_make_couchdb_tuple(row, couch_database_url) for row in config]
+        """
+        extra_dbs = {}
+        postfixes = []
+        for row in self.couchdb_apps:
+            if isinstance(row, tuple):
+                _, postfix = row
+                if postfix:
+                    postfixes.append(postfix)
 
+        postfixes.extend(self.extra_db_names)
+        for postfix in postfixes:
+            extra_dbs[postfix] = '%s__%s' % (self.couch_database_url, postfix)
 
-def get_extra_couchdbs(config, couch_database_url):
-    """
-    Create a mapping from database prefix to database url
-
-    :param config:              list of database strings or tuples
-    :param couch_database_url:  main database url
-    """
-    extra_dbs = {}
-    for row in config:
-        if isinstance(row, tuple):
-            _, postfix = row
-            extra_dbs[postfix] = '%s__%s' % (couch_database_url, postfix)
-
-    return extra_dbs
+        return extra_dbs
 
 
 def celery_failure_handler(task, exc, task_id, args, kwargs, einfo):
     from redis.exceptions import ConnectionError
-    from redis_cache.exceptions import ConnectionInterrumped
-    if isinstance(exc, (ConnectionInterrumped, ConnectionError)):
+    from django_redis.exceptions import ConnectionInterrupted
+    if isinstance(exc, (ConnectionInterrupted, ConnectionError)):
         task.retry(args=args, kwargs=kwargs, exc=exc, max_retries=3, countdown=60 * 5)
+
+
+def get_allowed_websocket_channels(request, channels):
+    from django.core.exceptions import PermissionDenied
+    if request.user and request.user.is_authenticated() and request.user.is_superuser:
+        return channels
+    else:
+        raise PermissionDenied(
+            'Not allowed to subscribe or to publish to websockets without superuser permissions!'
+        )

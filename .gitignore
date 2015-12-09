@@ -13,12 +13,12 @@ xforms/
 /data/
 submissions/
 /export/
+/bower_components
 bad/
 *.log*
 CommCare.ja*
 startover.sh
 celery.db
-*.sql
 tmp.sh
 /resource_versions.py
 /loadtest/results/
@@ -34,6 +34,7 @@ dump.rdb
 **/less/*.css
 /staticmedia*
 .transifexrc
+python_env
 
 submodules/formdesigner
 submodules/vellum/Vellum
@@ -49,4 +50,6 @@ docs/_build
 celerybeat-schedule
 
 # compiled translations
-/locale/**/*.mo
+/locale/*/*/*.mo
+.grunt
+node_modules/

@@ -1,12 +1,14 @@
 from collections import defaultdict
-import json
 import logging
 from datetime import timedelta, datetime
 from django.conf import settings
 
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.http import Http404
-from casexml.apps.case.models import CommCareCase
+from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
+from corehq.apps.reports.dbaccessors import stale_get_export_count
+from corehq.couchapps.dbaccessors import get_attachment_size_by_domain
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
 from corehq import privileges
@@ -14,11 +16,14 @@ from corehq import privileges
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
 from corehq.apps.data_interfaces.interfaces import DataInterface
+from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin
-from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration
+from corehq.apps.reports.models import HQGroupExportConfiguration, \
+    FormExportSchema, CaseExportSchema
 from corehq.apps.reports.util import datespan_from_beginning
 from couchexport.models import SavedExportSchema, Format
-from corehq.apps.app_manager.models import get_app, Application
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import Application
 
 
 class ExportReport(DataInterface, ProjectReportParametersMixin):
@@ -47,27 +52,17 @@ class FormExportReportBase(ExportReport, DatespanMixin):
               'corehq.apps.reports.filters.select.GroupFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter']
 
-    @property
-    def can_view_deid(self):
-        return has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
-
     @memoized
     def get_saved_exports(self):
-        # add saved exports. because of the way in which the key is stored
-        # (serialized json) this is a little bit hacky, but works.
-        startkey = json.dumps([self.domain, ""])[:-3]
-        endkey = "%s{" % startkey
-        exports = FormExportSchema.view("couchexport/saved_export_schemas",
-            startkey=startkey, endkey=endkey,
-            include_docs=True)
-        exports = filter(lambda x: x.type == "form", exports)
-        if not self.can_view_deid:
+        from corehq.apps.export.views import user_can_view_deid_exports
+        exports = FormExportSchema.get_stale_exports(self.domain)
+        if not user_can_view_deid_exports(self.domain, self.request.couch_user):
             exports = filter(lambda x: not x.is_safe, exports)
         return sorted(exports, key=lambda x: x.name)
 
     @property
     def default_datespan(self):
-        return datespan_from_beginning(self.domain, self.datespan_default_days, self.timezone)
+        return datespan_from_beginning(self.domain, self.timezone)
 
     def get_filter_params(self):
         params = self.request.GET.copy()
@@ -91,13 +86,6 @@ class FormExportReportBase(ExportReport, DatespanMixin):
         ]
 
 
-def sizeof_fmt(num):
-    for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
-        if num < 1024.0:
-            return "%3.1f %s" % (num, x)
-        num /= 1024.0
-
-
 class ExcelExportReport(FormExportReportBase):
     name = ugettext_noop("Export Forms")
     slug = "excel_export_data"
@@ -107,16 +95,6 @@ class ExcelExportReport(FormExportReportBase):
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
         return True
-
-    def _get_domain_attachments_size(self):
-        # hash of app_id, xmlns to size of attachments
-        startkey = [self.domain]
-
-        db = Application.get_db()
-        view = db.view('attachments/attachments', startkey=startkey,
-                       endkey=startkey + [{}], group_level=3, reduce=True,
-                       group=True)
-        return {(a['key'][1], a['key'][2]): sizeof_fmt(a['value']) for a in view}
 
     def properties(self, size_hash):
         properties = dict()
@@ -141,7 +119,7 @@ class ExcelExportReport(FormExportReportBase):
         startkey = [self.domain]
         db = Application.get_db()  # the view emits from both forms and applications
 
-        size_hash = self._get_domain_attachments_size()
+        size_hash = get_attachment_size_by_domain(self.domain)
 
         for f in db.view('exports_forms/by_xmlns',
                          startkey=startkey, endkey=startkey + [{}], group=True,
@@ -312,28 +290,18 @@ class CaseExportReport(ExportReport):
         return self.request.GET.copy()
 
     def get_saved_exports(self):
-        startkey = json.dumps([self.domain, ""])[:-3]
-        endkey = "%s{" % startkey
-        exports = SavedExportSchema.view("couchexport/saved_export_schemas",
-            startkey=startkey, endkey=endkey,
-            include_docs=True).all()
-        exports = filter(lambda x: x.type == "case", exports)
+        exports = CaseExportSchema.get_stale_exports(self.domain)
         return sorted(exports, key=lambda x: x.name)
 
     @property
     def report_context(self):
         context = super(CaseExportReport, self).report_context
-        cases = CommCareCase.get_db().view("hqcase/types_by_domain",
-            startkey=[self.domain],
-            endkey=[self.domain, {}],
-            reduce=True,
-            group=True,
-            group_level=2).all()
+        case_types = get_case_types_for_domain(self.domain)
         groups = HQGroupExportConfiguration.by_domain(self.domain)
         context.update(
-            case_types=[case['key'][1] for case in cases],
+            case_types=case_types,
             group_exports=[group.case_exports for group in groups
-                if group.case_exports],
+                           if group.case_exports],
             report_slug=self.slug,
         )
         context['case_format'] = self.request.GET.get('case_format') or 'csv'
@@ -361,14 +329,7 @@ class DeidExportReport(FormExportReportBase):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        startkey = json.dumps([domain, ""])[:-3]
-        return SavedExportSchema.view("couchexport/saved_export_schemas",
-            startkey=startkey,
-            limit=1,
-            include_docs=False,
-            #stale=settings.COUCH_STALE_QUERY,
-        ).count() > 0
-
+        return stale_get_export_count(domain) > 0
 
     def get_saved_exports(self):
         return filter(lambda export: export.is_safe, super(DeidExportReport, self).get_saved_exports())

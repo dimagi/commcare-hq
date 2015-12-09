@@ -1,0 +1,215 @@
+{% extends 'style/bootstrap3/base_section.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load djangular_tags %}
+
+{% block js %}
+<script type="text/javascript" src="{% new_static 'style/js/pagination.ng.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script type="text/javascript">
+(function (angular, undefined) {
+    'use strict';
+    var autoUpdateRuleApp = angular.module('autoUpdateRuleApp', ['hq.pagination']);
+    autoUpdateRuleApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
+        djangoRMIProvider.configure({% djng_current_rmi %});
+    }]);
+    autoUpdateRuleApp.constant('paginationLimitCookieName', '{{ pagination_limit_cookie_name }}');
+    autoUpdateRuleApp.constant('paginationCustomData', {
+        activateRule: function (rule, djangoRMI) {
+            djangoRMI.update_rule({
+                id: rule.id,
+                update_action: 'activate'
+            })
+            .success(function (data) {
+                if (data.success) {
+                    rule.active = true;
+                    rule.action_error = '';
+                } else {
+                    rule.action_error = data.error;
+                }
+            })
+            .error(function () {
+                rule.action_error = '{% trans "Issue communicating with server. Try again."|escapejs %}';
+            });
+        },
+        deactivateRule: function (rule, djangoRMI) {
+            djangoRMI.update_rule({
+                id: rule.id,
+                update_action: 'deactivate'
+            })
+            .success(function (data) {
+                if (data.success) {
+                    rule.active = false;
+                    rule.action_error = '';
+                } else {
+                    rule.action_error = data.error;
+                }
+            })
+            .error(function () {
+                rule.action_error = '{% trans "Issue communicating with server. Try again."|escapejs %}';
+            });
+        },
+        deleteRule: function (rule, djangoRMI, paginationController) {
+            $('#delete_' + rule.id).modal('hide');
+            djangoRMI.update_rule({
+                id: rule.id,
+                update_action: 'delete'
+            })
+            .success(function (data) {
+                if (data.success) {
+                    rule.action_error = '';
+                } else {
+                    rule.action_error = data.error;
+                }
+                paginationController.getData();
+            })
+            .error(function () {
+                rule.action_error = '{% trans "Issue communicating with server. Try again."|escapejs %}';
+            });
+        },
+    });
+}(window.angular));
+</script>
+{% endblock %}
+
+{% block page_content %}
+<div ng-app="autoUpdateRuleApp">
+    <div class="btn-toolbar" style="margin-bottom: 20px;">
+        <a href="{% url "add_automatic_update_rule" domain %}">
+            <button type="button" class="btn btn-success">
+                <i class="fa fa-plus"></i> {% trans "Add Automatic Update Rule" %}
+            </button>
+        </a>
+    </div>
+    <div class="panel panel-default"
+         ng-controller="PaginatedListController as paginationController"
+         ng-cloak>
+        <div class="panel-heading">
+            <h3 class="panel-title">{% trans 'Automatic Update Rules' %}</h3>
+        </div>
+        <div class="panel-body">
+            <div class="alert alert-info" ng-hide="paginatedItems.length > 0 || notLoaded || hasError">
+                {% blocktrans %}
+                    <strong>There are currently no automatic update rules in this project.</strong>
+                {% endblocktrans %}
+            </div>
+            <div class="pull-right" style="clear: right;">
+                <pagination direction-links="true"
+                            total-items="total"
+                            items-per-page="limit"
+                            previous-text="&laquo;"
+                            next-text="&raquo;"
+                            max-size="maxSize"
+                            ng-model="currentPage"
+                            ng-change="pageChanged()"
+                            ng-show="paginatedItems.length > 0"></pagination>
+            </div>
+            <table class="table table-striped table-responsive"
+                   style="margin-bottom: 0;"
+                   ng-show="paginatedItems.length > 0">
+                <thead>
+                    <tr>
+                        <th class="col-xs-3">{% trans "Name" %}</th>
+                        <th class="col-xs-2">{% trans "Case Type" %}</th>
+                        <th class="col-xs-2">{% trans "Status" %}</th>
+                        <th class="col-xs-2">{% trans "Last Run" %}</th>
+                        <th class="col-xs-3">{% trans "Action" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="rule in paginatedItems">
+                        {% angularjs %}
+                        <td>
+                            <a href="{{ rule.edit_url }}">
+                                <strong>{{ rule.name }}</strong>
+                            </a>
+                        </td>
+                        <td>{{ rule.case_type }}</td>
+                        <td>
+                            <span ng-show="rule.active">{% trans "Active" %}</span>
+                            <span ng-hide="rule.active">{% trans "Inactive" %}</span>
+                        </td>
+                        <td>{{ rule.last_run }}</td>
+                        <td>
+                            <button type="button"
+                                    class="btn btn-default"
+                                    ng-hide="rule.active"
+                                    ng-click="activateRule(rule, djangoRMI);">
+                                {% trans "Activate" %}
+                            </button>
+                            <button type="button"
+                                    class="btn btn-default"
+                                    ng-show="rule.active"
+                                    ng-click="deactivateRule(rule, djangoRMI);">
+                                {% trans "Deactivate" %}
+                            </button>
+                            <button type="button"
+                                    class="btn btn-default"
+                                    data-toggle="modal"
+                                    data-target="#delete_{{ rule.id }}">
+                                    {% trans "Delete" %}
+                            </button>
+                            <div id="delete_{{ rule.id }}" class="modal fade">
+                                <div class="modal-dialog">
+                                    <form class="modal-content"
+                                          method="post"
+                                          ng-submit="deleteRule(rule, djangoRMI, paginationController);">
+                                        <div class="modal-header">
+                                            <button type="button"
+                                                    class="close"
+                                                    data-dismiss="modal">
+                                                <span aria-hidden="true">&times;</span>
+                                                <span class="sr-only">{% trans "Close" %}</span>
+                                            </button>
+                                            <h4 class="modal-title">{% trans "Delete Rule" %}</h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p class="lead">
+                                                {% blocktrans %}
+                                                    Are you sure you want to <strong>delete</strong> this rule?
+                                                {% endblocktrans %}
+                                            </p>
+                                            <p class="lead">
+                                                <strong>{{ rule.name }}</strong>
+                                            </p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button"
+                                                    class="btn btn-default"
+                                                    data-dismiss="modal">
+                                                {% trans "Cancel" %}
+                                            </button>
+                                            <button type="submit"
+                                                    class="btn btn-default btn-danger">
+                                                {% trans "Delete" %}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            <p ng-show="!!rule.action_error">
+                                <i class="fa fa-exclamation-triangle"></i>
+                                {{ rule.action_error }}
+                            </p>
+                        </td>
+                        {% endangularjs %}
+                    </tr>
+                </tbody>
+            </table>
+            <div class="pull-right" style="clear: right;">
+                <pagination direction-links="true"
+                            total-items="total"
+                            items-per-page="limit"
+                            previous-text="&laquo;"
+                            next-text="&raquo;"
+                            max-size="maxSize"
+                            ng-model="currentPage"
+                            ng-change="pageChanged()"
+                            ng-show="paginatedItems.length > 0"></pagination>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

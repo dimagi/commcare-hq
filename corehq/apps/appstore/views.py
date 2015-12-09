@@ -1,6 +1,7 @@
 import json
 from urllib import urlencode
 from corehq.apps.registration.utils import create_30_day_trial
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 
 from django.contrib.auth.decorators import login_required
@@ -9,10 +10,12 @@ from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
 from django.shortcuts import render
 from django.contrib import messages
+from dimagi.utils.name_to_url import name_to_url
 from django.utils.translation import ugettext as _, ugettext_lazy
-from corehq.apps.app_manager.views import _clear_app_cache
+from corehq.apps.app_manager.views.apps import clear_app_cache
 
 from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 from corehq.apps.domain.models import Domain
 from dimagi.utils.couch.database import apply_update
@@ -146,7 +149,7 @@ def appstore(request, template="appstore/appstore_base.html"):
 def appstore_api(request):
     params, facets = parse_args_for_es(request)
     results = es_snapshot_query(params, facets)
-    return HttpResponse(json.dumps(results), mimetype="application/json")
+    return HttpResponse(json.dumps(results), content_type="application/json")
 
 
 def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time"):
@@ -174,12 +177,6 @@ def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time"):
         })
 
     return es_query(params, facets, terms, q)
-
-
-def appstore_default(request):
-    from corehq.apps.appstore.dispatcher import AppstoreDispatcher
-
-    return HttpResponseRedirect(reverse(AppstoreDispatcher.name(), args=['advanced']))
 
 
 @require_superuser
@@ -218,7 +215,7 @@ def import_app(request, domain):
         assert full_apps, 'Bad attempt to copy apps from a project without any!'
         for app in full_apps:
             new_doc = from_project.copy_component(app['doc_type'], app.get_id, to_project_name, user)
-        _clear_app_cache(request, to_project_name)
+        clear_app_cache(request, to_project_name)
 
         from_project.downloads += 1
         from_project.save()
@@ -243,7 +240,11 @@ def copy_snapshot(request, domain):
 
         from corehq.apps.registration.forms import DomainRegistrationForm
 
-        args = {'domain_name': request.POST['new_project_name'], 'eula_confirmed': True}
+        args = {
+            'domain_name': request.POST['new_project_name'],
+            'hr_name': request.POST['new_project_name'],
+            'eula_confirmed': True,
+        }
         form = DomainRegistrationForm(args)
 
         if request.POST.get('new_project_name', ""):
@@ -251,18 +252,25 @@ def copy_snapshot(request, domain):
                 messages.error(request, _("This project is not published and can't be downloaded"))
                 return project_info(request, domain)
 
-            if form.is_valid():
-                new_domain = dom.save_copy(form.cleaned_data['domain_name'], user=user)
-            else:
+            if not form.is_valid():
                 messages.error(request, form.errors)
                 return project_info(request, domain)
 
-            if new_domain is None:
-                messages.error(request, _("A project by that name already exists"))
-                return project_info(request, domain)
+            new_domain_name = name_to_url(form.cleaned_data['hr_name'], "project")
+            with CriticalSection(['copy_domain_snapshot_{}_to_{}'.format(dom.name, new_domain_name)]):
+                try:
+                    new_domain = dom.save_copy(new_domain_name,
+                                               new_hr_name=form.cleaned_data['hr_name'],
+                                               user=user)
+                    if new_domain.commtrack_enabled:
+                        new_domain.convert_to_commtrack()
 
-            # sign new project up for trial
-            create_30_day_trial(new_domain)
+                except NameUnavailableException:
+                    messages.error(request, _("A project by that name already exists"))
+                    return project_info(request, domain)
+
+                # sign new project up for trial
+                create_30_day_trial(new_domain)
 
             def inc_downloads(d):
                 d.downloads += 1
@@ -345,7 +353,7 @@ def deployments_api(request):
     params, facets = parse_args_for_es(request)
     params = dict([(DEPLOYMENT_MAPPING.get(p, p), params[p]) for p in params])
     results = es_deployments_query(params, facets)
-    return HttpResponse(json.dumps(results), mimetype="application/json")
+    return HttpResponse(json.dumps(results), content_type="application/json")
 
 
 def es_deployments_query(params, facets=None, terms=None, sort_by="snapshot_time"):

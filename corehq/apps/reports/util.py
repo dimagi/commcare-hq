@@ -1,31 +1,32 @@
 from collections import namedtuple
 from datetime import datetime, timedelta
-import logging
+from importlib import import_module
 import math
+import pytz
 import warnings
 
-from django.contrib import messages
-from django.http import Http404
-import pytz
 from django.conf import settings
-from django.utils.importlib import import_module
+from django.http import Http404
 from django.utils import html, safestring
 
-from corehq.apps.announcements.models import ReportAnnouncement
+from couchexport.util import SerializableFunction
+from couchforms.analytics import (
+    get_all_user_ids_submitted,
+    get_first_form_submission_received,
+    get_username_in_last_form_user_id_submitted,
+)
+from dimagi.utils.dates import DateSpan
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.web import json_request
+
+from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_id_to_username
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
-from couchexport.util import SerializableFunction
-from dimagi.utils.couch.cache import cache_core
-from dimagi.utils.couch.database import get_db
-from dimagi.utils.dates import DateSpan
-from corehq.apps.domain.models import Domain
-from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.parsing import string_to_datetime
-from dimagi.utils.web import json_request
+
+from .models import HQUserType, TempCommCareUser
 
 
 def make_form_couch_key(domain, by_submission_time=True,
@@ -55,18 +56,6 @@ def make_form_couch_key(domain, by_submission_time=True,
             prefix.append('user')
             key.append(user_id)
     return [" ".join(prefix)] + key
-
-
-def all_xmlns_in_domain(domain):
-    # todo replace form_list with this
-    key = make_form_couch_key(domain, xmlns="")
-    domain_xmlns = get_db().view('reports_forms/all_forms',
-        startkey=key,
-        endkey=key+[{}],
-        group=True,
-        group_level=3,
-    ).all()
-    return [d['key'][-1] for d in domain_xmlns if d['key'][-1] is not None]
 
 
 def user_list(domain):
@@ -113,7 +102,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         if not user_filter:
             user_filter = HQUserType.all()
         users = []
-        submitted_user_ids = get_all_userids_submitted(domain)
+        submitted_user_ids = get_all_user_ids_submitted(domain)
         registered_user_ids = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain)])
         if include_inactive:
             registered_user_ids.update(dict([(u.user_id, u) for u in CommCareUser.by_domain(domain, is_active=False)]))
@@ -125,7 +114,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
                  (user_filter[HQUserType.ADMIN].show or
                   user_filter[HQUserType.DEMO_USER].show or
                   user_filter[HQUserType.UNKNOWN].show):
-                username = get_username_from_forms(domain, user_id)
+                username = get_username_from_forms(domain, user_id).lower()
                 temp_user = TempCommCareUser(domain, username, user_id)
                 if user_filter[temp_user.filter_flag].show:
                     users.append(temp_user)
@@ -144,34 +133,17 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
     return users
 
 
-def get_all_userids_submitted(domain):
-    submitted = get_db().view('reports_forms/all_submitted_users',
-        startkey=[domain],
-        endkey=[domain, {}],
-        group=True,
-    ).all()
-    return [user['key'][1] for user in submitted]
-
-
 def get_username_from_forms(domain, user_id):
-    key = make_form_couch_key(domain, user_id=user_id)
-    user_info = get_db().view(
-        'reports_forms/all_forms',
-        startkey=key,
-        limit=1,
-        reduce=False
-    ).one()
-    username = HQUserType.human_readable[HQUserType.ADMIN]
-    try:
-        possible_username = user_info['value']['username']
-        if not possible_username == 'none':
-            username = possible_username
-        return username
-    except KeyError:
-        possible_username = user_id_to_username(user_id)
+
+    def possible_usernames():
+        yield get_username_in_last_form_user_id_submitted(domain, user_id)
+        yield user_id_to_username(user_id)
+
+    for possible_username in possible_usernames():
         if possible_username:
-            username = possible_username
-    return username
+            return possible_username
+    else:
+        return HQUserType.human_readable[HQUserType.ADMIN]
 
 
 def namedtupledict(name, fields):
@@ -276,12 +248,17 @@ def datespan_export_filter(doc, datespan):
         return True
     return False
 
-def case_users_filter(doc, users):
-    for id in (doc.get('owner_id'), doc.get('user_id')):
-        if id and id in users:
-            return True
+
+def case_users_filter(doc, users, groups=None):
+    for id_ in (doc.get('owner_id'), doc.get('user_id')):
+        if id_:
+            if id_ in users:
+                return True
+            if groups and id_ in groups:
+                return True
     else:
         return False
+
 
 def case_group_filter(doc, group):
     if group:
@@ -290,11 +267,13 @@ def case_group_filter(doc, group):
     else:
         return False
 
+
 def users_filter(doc, users):
     try:
         return doc['form']['meta']['userID'] in users
     except KeyError:
         return False
+
 
 def group_filter(doc, group):
     if group:
@@ -327,9 +306,11 @@ def create_export_filter(request, domain, export_type='form'):
 
     if export_type == 'case':
         if use_user_filters:
+            groups = [g.get_id for g in Group.get_case_sharing_groups(domain)]
             filtered_users = users_matching_filter(domain, user_filters)
             filter = SerializableFunction(case_users_filter,
-                                          users=filtered_users)
+                                          users=filtered_users,
+                                          groups=groups)
         else:
             filter = SerializableFunction(case_group_filter, group=group)
     else:
@@ -339,8 +320,10 @@ def create_export_filter(request, domain, export_type='form'):
             datespan.set_timezone(get_timezone_for_user(request.couch_user, domain))
             filter &= SerializableFunction(datespan_export_filter, datespan=datespan)
         if use_user_filters:
+            groups = [g.get_id for g in Group.get_case_sharing_groups(domain)]
             filtered_users = users_matching_filter(domain, user_filters)
-            filter &= SerializableFunction(users_filter, users=filtered_users)
+            filter &= SerializableFunction(users_filter,
+                                           users=filtered_users)
         else:
             filter &= SerializableFunction(group_filter, group=group)
     return filter
@@ -348,13 +331,11 @@ def create_export_filter(request, domain, export_type='form'):
 
 def get_possible_reports(domain_name):
     from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, CustomProjectReportDispatcher)
-    from corehq.apps.adm.dispatcher import ADMSectionDispatcher
     from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
     # todo: exports should be its own permission at some point?
     report_map = (ProjectReportDispatcher().get_reports(domain_name) +
                   CustomProjectReportDispatcher().get_reports(domain_name) +
-                  ADMSectionDispatcher().get_reports(domain_name) +
                   DataInterfaceDispatcher().get_reports(domain_name))
     reports = []
     domain = Domain.get_by_name(domain_name)
@@ -382,25 +363,6 @@ def friendly_timedelta(td):
         if t[1]:
             text.append("%d %s%s" % (t[1], t[0], "s" if t[1] != 1 else ""))
     return ", ".join(text)
-
-
-def set_report_announcements_for_user(request, couch_user):
-    key = ["type", ReportAnnouncement.__name__]
-    now = datetime.utcnow()
-
-    db = ReportAnnouncement.get_db()
-    data = cache_core.cached_view(db, "announcements/all_announcements", reduce=False,
-                                 startkey=key + [now.strftime("%Y-%m-%dT%H:00")], endkey=key + [{}],
-                                 )
-
-    announce_ids = [a['id'] for a in data if a['id'] not in couch_user.announcements_seen]
-    for announcement_id in announce_ids:
-        try:
-            announcement = ReportAnnouncement.get(announcement_id)
-            if announcement.show_to_new_users or (announcement.date_created > couch_user.created_on):
-                messages.info(request, announcement.as_html)
-        except Exception as e:
-            logging.error("Could not fetch Report Announcement: %s" % e)
 
 
 # Copied from http://djangosnippets.org/snippets/1170/
@@ -439,28 +401,14 @@ def numcell(text, value=None, convert='int', raw=None):
             value = text
     return format_datatables_data(text=text, sort_key=value, raw=raw)
 
-def datespan_from_beginning(domain, default_days, timezone):
+
+def datespan_from_beginning(domain, timezone):
     now = datetime.utcnow()
-    def extract_date(x):
-        try:
-            def clip_timezone(datestring):
-                return datestring[:len('yyyy-mm-ddThh:mm:ss')]
-            return string_to_datetime(clip_timezone(x['key'][2]))
-        except Exception:
-            logging.error("Tried to get a date from this, but it didn't work: %r" % x)
-            return None
-    key = make_form_couch_key(domain)
-    startdate = get_db().view('reports_forms/all_forms',
-        startkey=key,
-        endkey=key+[{}],
-        limit=1,
-        descending=False,
-        reduce=False,
-        wrapper=extract_date,
-    ).one() #or now - timedelta(days=default_days - 1)
+    startdate = get_first_form_submission_received(domain)
     datespan = DateSpan(startdate, now, timezone=timezone)
     datespan.is_default = True
     return datespan
+
 
 def get_installed_custom_modules():
 
@@ -480,3 +428,11 @@ def is_mobile_worker_with_report_access(couch_user, domain):
         and domain is not None
         and Domain.get_by_name(domain).default_mobile_worker_redirect == 'reports'
     )
+
+
+def get_INFilter_element_bindparam(base_name, index):
+    return '%s_%d' % (base_name, index)
+
+
+def get_INFilter_bindparams(base_name, values):
+    return tuple(get_INFilter_element_bindparam(base_name, i) for i, val in enumerate(values))

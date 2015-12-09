@@ -1,5 +1,4 @@
 # Standard Library imports
-import base64
 from functools import wraps
 import logging
 
@@ -15,10 +14,11 @@ from django.utils.translation import ugettext as _
 
 # External imports
 from django_digest.decorators import httpdigest
+from corehq.apps.domain.auth import determine_authtype_from_request, basicauth
 from django_prbac.utils import has_privilege
 
-from django.http import HttpResponse
-from django.contrib.auth import authenticate, login
+from tastypie.authentication import ApiKeyAuthentication
+from tastypie.http import HttpUnauthorized
 
 # CCHQ imports
 from corehq.apps.domain.models import Domain
@@ -81,6 +81,9 @@ def login_and_domain_required(view_func):
                 elif domain.is_snapshot:
                     # snapshots are publicly viewable
                     return require_previewer(view_func)(req, domain_name, *args, **kwargs)
+                elif domain.allow_domain_requests:
+                    from corehq.apps.users.views import DomainRequestView
+                    return DomainRequestView.as_view()(req, *args, **kwargs)
                 else:
                     raise Http404
             else:
@@ -98,27 +101,18 @@ class LoginAndDomainMixin(object):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
 
-def basicauth(realm=''):
-    # stolen and modified from: https://djangosnippets.org/snippets/243/
+def api_key():
+    api_auth_class = ApiKeyAuthentication()
+
     def real_decorator(view):
         def wrapper(request, *args, **kwargs):
-            if 'HTTP_AUTHORIZATION' in request.META:
-                auth = request.META['HTTP_AUTHORIZATION'].split()
-                if len(auth) == 2:
-                    if auth[0].lower() == "basic":
-                        uname, passwd = base64.b64decode(auth[1]).split(':', 1)
-                        user = authenticate(username=uname, password=passwd)
-                        if user is not None and user.is_active:
-                            login(request, user)
-                            request.user = user
-                            return view(request, *args, **kwargs)
+            auth = api_auth_class.is_authenticated(request)
+            if auth:
+                if isinstance(auth, HttpUnauthorized):
+                    return auth
+                return view(request, *args, **kwargs)
 
-            # Either they did not provide an authorization header or
-            # something in the authorization attempt failed. Send a 401
-            # back to them to ask them to authenticate.
-            response = HttpResponse()
-            response.status_code = 401
-            response['WWW-Authenticate'] = 'Basic realm="%s"' % realm
+            response = HttpUnauthorized()
             return response
         return wrapper
     return real_decorator
@@ -134,7 +128,11 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False):
                 @challenge_fn
                 def _inner(request, domain, *args, **kwargs):
                     request.couch_user = couch_user = CouchUser.from_django_user(request.user)
-                    if (allow_cc_users or couch_user.is_web_user()) and couch_user.is_member_of(domain):
+                    if (
+                        couch_user
+                        and (allow_cc_users or couch_user.is_web_user())
+                        and couch_user.is_member_of(domain)
+                    ):
                         return fn(request, domain, *args, **kwargs)
                     else:
                         return HttpResponseForbidden()
@@ -157,6 +155,27 @@ def login_or_basic_ex(allow_cc_users=False):
 
 login_or_basic = login_or_basic_ex()
 
+
+def login_or_digest_or_basic(default='basic'):
+    def decorator(fn):
+        @wraps(fn)
+        def _inner(request, *args, **kwargs):
+            function_wrapper = {
+                'basic': login_or_basic_ex(allow_cc_users=True),
+                'digest': login_or_digest_ex(allow_cc_users=True),
+            }[determine_authtype_from_request(request, default=default)]
+            if not function_wrapper:
+                return HttpResponseForbidden()
+            return function_wrapper(fn)(request, *args, **kwargs)
+        return _inner
+    return decorator
+
+
+def login_or_api_key_ex(allow_cc_users=False):
+    return _login_or_challenge(api_key(), allow_cc_users=allow_cc_users)
+
+
+login_or_api_key = login_or_api_key_ex()
 
 # For views that are inside a class
 # todo where is this being used? can be replaced with decorator below
@@ -208,7 +227,7 @@ def login_required(view_func):
 ########################################################################################################
 #
 # Have to write this to be sure this decorator still works if DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME
-# is not defined - people may forget to do this, because it's not a standard, defined Django 
+# is not defined - people may forget to do this, because it's not a standard, defined Django
 # config setting
 
 def domain_admin_required_ex(redirect_page_name=None):
@@ -267,4 +286,3 @@ def require_previewer(view_func):
     return shim
 
 cls_require_previewer = cls_to_view(additional_decorator=require_previewer)
-

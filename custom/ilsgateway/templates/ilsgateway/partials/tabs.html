@@ -24,5 +24,11 @@
                 {% endif %}
             {% endblock report-tab %}
         </ul>
+        {% if view_mode == "supervision" %}
+            <ul class="nav nav-pills">
+                <li class="active"><a href="">Supervision Report</a></li>
+                <li><a href="{% url 'supervision' domain %}">Supervision Documents</a></li>
+            </ul>
+        {% endif %}
     {% endblock report-content-tabs %}
 </div>

@@ -1,13 +1,13 @@
+from datetime import datetime
 from django.test import TestCase
 from lxml import etree
 
-from casexml.apps.case.tests import delete_all_cases, delete_all_xforms
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.tests.utils import generate_restore_payload
-from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.models import StockReport, StockTransaction
-from couchforms.models import XFormInstance
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from dimagi.utils.couch.database import get_safe_write_kwargs
 
 from corehq.apps.domain.models import Domain
@@ -15,12 +15,12 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import Location, LocationType, SQLLocation
 from corehq.apps.products.models import Product
-from corehq.apps.sms.backend import test
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from corehq.apps.users.models import CommCareUser
+from dimagi.utils.parsing import json_format_date
 
-from .. import const
 from ..helpers import make_supply_point
-from ..models import SupplyPointCase, CommtrackConfig, ConsumptionConfig
+from ..models import CommtrackConfig, ConsumptionConfig
 from ..sms import StockReportParser, process
 from ..util import get_default_requisition_config, get_or_create_default_program
 
@@ -37,10 +37,7 @@ ROAMING_USER = {
     'phone_number': TEST_NUMBER,
     'first_name': 'roaming',
     'last_name': 'reporter',
-    'user_data': {
-        const.UserRequisitionRoles.REQUESTER: True,
-        const.UserRequisitionRoles.RECEIVER: True,
-    },
+    'user_data': {},
 }
 
 FIXED_USER = {
@@ -48,31 +45,8 @@ FIXED_USER = {
     'phone_number': str(int(TEST_NUMBER) + 1),
     'first_name': 'fixed',
     'last_name': 'reporter',
-    'user_data': {
-        const.UserRequisitionRoles.REQUESTER: True,
-        const.UserRequisitionRoles.RECEIVER: True,
-    },
+    'user_data': {},
     'home_loc': 'loc1',
-}
-
-APPROVER_USER = {
-    'username': 'test-approver',
-    'phone_number': '5550000',
-    'first_name': 'approver',
-    'last_name': 'user',
-    'user_data': {
-        const.UserRequisitionRoles.APPROVER: True,
-    },
-}
-
-PACKER_USER = {
-    'username': 'test-packer',
-    'phone_number': '5550001',
-    'first_name': 'packer',
-    'last_name': 'user',
-    'user_data': {
-        const.UserRequisitionRoles.SUPPLIER: True,
-    },
 }
 
 
@@ -80,8 +54,8 @@ def bootstrap_domain(domain_name=TEST_DOMAIN):
     # little test utility that makes a commtrack-enabled domain with
     # a default config and a location
     domain_obj = create_domain(domain_name)
-    domain_obj.commtrack_enabled = True
     domain_obj.save(**get_safe_write_kwargs())
+    domain_obj.convert_to_commtrack()
     return domain_obj
 
 
@@ -101,7 +75,7 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
         last_name=last_name
     )
     if home_loc == setup.loc.site_code:
-        if not SupplyPointCase.get_by_location(setup.loc):
+        if not SupplyInterface(domain).get_by_location(setup.loc):
             make_supply_point(domain, setup.loc)
 
         user.set_location(setup.loc)
@@ -168,7 +142,9 @@ class CommTrackTest(TestCase):
         StockReport.objects.all().delete()
         StockTransaction.objects.all().delete()
 
-        self.backend = test.bootstrap(TEST_BACKEND, to_console=True)
+        self.backend = TestSMSBackend(name=TEST_BACKEND.upper(), is_global=True)
+        self.backend.save()
+
         self.domain = bootstrap_domain()
         bootstrap_location_types(self.domain.name)
         bootstrap_products(self.domain.name)
@@ -190,13 +166,6 @@ class CommTrackTest(TestCase):
         self.sp = make_supply_point(self.domain.name, self.loc)
         self.users = [bootstrap_user(self, **user_def) for user_def in self.user_definitions]
 
-        if False:
-            # bootstrap additional users for requisitions
-            # needs to get reinserted for requisition stuff later
-            self.approver = bootstrap_user(self, **APPROVER_USER)
-            self.packer = bootstrap_user(self, **PACKER_USER)
-            self.users += [self.approver, self.packer]
-
         # everyone should be in a group.
         self.group = Group(domain=TEST_DOMAIN, name='commtrack-folks',
                            users=[u._id for u in self.users],
@@ -212,15 +181,7 @@ class CommTrackTest(TestCase):
         self.backend.delete()
         for u in self.users:
             u.delete()
-        self.domain.delete() # domain delete cascades to everything else
-
-    def get_commtrack_forms(self, domain):
-        return XFormInstance.view('reports_forms/all_forms',
-            startkey=['submission xmlns', domain, COMMTRACK_REPORT_XMLNS],
-            endkey=['submission xmlns', domain, COMMTRACK_REPORT_XMLNS, {}],
-            reduce=False,
-            include_docs=True
-        )
+        self.domain.delete()  # domain delete cascades to everything else
 
 
 def get_ota_balance_xml(project, user):
@@ -233,6 +194,27 @@ def extract_balance_xml(xml_payload):
     if balance_blocks:
         return [etree.tostring(bb) for bb in balance_blocks]
     return []
+
+
+def get_single_balance_block(case_id, product_id, quantity, date_string=None, section_id='stock'):
+    date_string = date_string or json_format_date(datetime.utcnow())
+    return """
+<balance xmlns="http://commcarehq.org/ledger/v1" entity-id="{case_id}" date="{date}" section-id="{section_id}">
+    <entry id="{product_id}" quantity="{quantity}" />
+</balance>""".format(
+        case_id=case_id, product_id=product_id, quantity=quantity, date=date_string, section_id=section_id
+    ).strip()
+
+
+def get_single_transfer_block(src_id, dest_id, product_id, quantity, date_string=None, section_id='stock'):
+    date_string = date_string or json_format_date(datetime.utcnow())
+    return """
+<transfer xmlns="http://commcarehq.org/ledger/v1" src="{src_id}" dest="{dest_id}" date="{date}" section-id="{section_id}">
+    <entry id="{product_id}" quantity="{quantity}" />
+</transfer >""".format(
+        src_id=src_id, dest_id=dest_id, product_id=product_id, quantity=quantity,
+        date=date_string, section_id=section_id,
+    ).strip()
 
 
 def fake_sms(user, text):

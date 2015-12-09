@@ -1,0 +1,23 @@
+{% extends 'accounting/plans_base.html' %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
+    <script src="{% static 'accounting/ko/accounting.software_plan_version_handler.js' %}"></script>
+{% endblock %}
+
+{% block main_column %}
+    <p class="lead">
+        You are viewing a specific version of this plan.
+    </p>
+    <p>
+        If you want to make updates to this plan, go to the <a href="{% url "edit_software_plan" plan_id %} ">
+        plan updates form</a>.  Remember that you will need to update any subscriptions to reference the new plan
+        version.
+    </p>
+    <div class="tab-pane" id="versions">
+        {% include 'accounting/version_summary_tab.html' %}
+    </div>
+{% endblock %}

@@ -7,16 +7,21 @@ from django.utils import html, safestring
 from couchdbkit.resource import ResourceNotFound
 from corehq import privileges
 
-from dimagi.utils.couch.database import get_db
 from django.core.cache import cache
-from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege
 
+from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
 
+# SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
+SYSTEM_USER_ID = 'system'
+DEMO_USER_ID = 'demo_user'
+JAVA_ADMIN_USERNAME = 'admin'
 WEIRD_USER_IDS = [
     'commtrack-system',    # internal HQ/commtrack system forms
-    'demo_user',           # demo mode
+    DEMO_USER_ID,           # demo mode
     'demo_user_group_id',  # demo mode with case sharing enabled
+    UNOWNED_EXTENSION_OWNER_ID,
+    SYSTEM_USER_ID,
 ]
 
 
@@ -60,8 +65,8 @@ def user_id_to_username(user_id):
     from corehq.apps.users.models import CouchUser
     if not user_id:
         return user_id
-    elif user_id == "demo_user":
-        return "demo_user"
+    elif user_id == DEMO_USER_ID:
+        return DEMO_USER_ID
     try:
         login = CouchUser.get_db().get(user_id)
     except ResourceNotFound:
@@ -104,7 +109,8 @@ def django_user_from_couch_id(id):
     From a couch id of a profile object, get the django user
     """
     # get the couch doc
-    couch_rep = get_db().get(id)
+    from corehq.apps.users.models import CouchUser
+    couch_rep = CouchUser.get_db().get(id)
     django_id = couch_rep["django_user"]["id"]
     return User.objects.get(id=django_id)
 
@@ -136,8 +142,9 @@ def user_data_from_registration_form(xform):
     Helper function for create_or_update_from_xform
     """
     user_data = {}
-    if "user_data" in xform.form and "data" in xform.form["user_data"]:
-        items = xform.form["user_data"]["data"]
+    form_data = xform.form_data
+    if "user_data" in form_data and "data" in form_data["user_data"]:
+        items = form_data["user_data"]["data"]
         if not isinstance(items, list):
             items = [items]
         for item in items:
@@ -152,29 +159,11 @@ def can_add_extra_mobile_workers(request):
     user_limit = request.plan.user_limit
     if user_limit == -1 or num_web_users < user_limit:
         return True
-    try:
-        ensure_request_has_privilege(request, privileges.ALLOW_EXCESS_USERS)
-    except PermissionDenied:
+    if not has_privilege(request, privileges.ALLOW_EXCESS_USERS):
         account = BillingAccount.get_account_by_domain(request.domain)
         if account is None or account.date_confirmed_extra_charges is None:
             return False
     return True
-
-
-def smart_query_string(query):
-    """
-    If query does not use the ES query string syntax,
-    default to doing an infix search for each term.
-    returns (is_simple, query)
-    """
-    special_chars = ['&&', '||', '!', '(', ')', '{', '}', '[', ']', '^', '"',
-                     '~', '*', '?', ':', '\\', '/']
-    for char in special_chars:
-        if char in query:
-            return False, query
-    r = re.compile(r'\w+')
-    tokens = r.findall(query)
-    return True, "*{}*".format("* *".join(tokens))
 
 
 def user_display_string(username, first_name="", last_name=""):

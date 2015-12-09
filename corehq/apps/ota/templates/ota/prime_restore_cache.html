@@ -1,7 +1,7 @@
-{% extends 'style/base_section.html' %}
+{% extends 'style/bootstrap3/base_section.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% load crispy_forms_tags_b3 %}
+{% load crispy_forms_tags %}
 {% block page_content %}
 
 <p>Use this form to generate the restore response for users and cache the results for 24 hours.</p>
@@ -12,6 +12,6 @@
 </p>
 </br>
 <div id="prime-restore-cache-form">
-    {% crispy_b3 form %}
+    {% crispy form %}
 </div>
 {% endblock %}

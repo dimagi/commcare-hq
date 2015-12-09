@@ -28,6 +28,7 @@ var CaseConfig = (function () {
         self.caseType = params.caseType;
         self.reserved_words = params.reserved_words;
         self.moduleCaseTypes = params.moduleCaseTypes;
+        self.allowUsercase = params.allowUsercase;
 
         self.setPropertiesMap = function (propertiesMap) {
             self.propertiesMap = ko.mapping.fromJS(propertiesMap);
@@ -166,10 +167,18 @@ var CaseConfig = (function () {
                 self.forceRefreshTextchangeBinding($home);
 
                 ko.applyBindings(self, $usercaseMgmt.get(0));
-                $usercaseMgmt.on('textchange', 'input', self.usercaseChange)
-                             .on('change', 'select, input[type="hidden"]', self.usercaseChange)
-                             .on('click', 'a', self.usercaseChange);
-                self.caseConfigViewModel.usercase_transaction.ensureBlankProperties();
+                if (self.allowUsercase) {
+                    $usercaseMgmt.on('textchange', 'input', self.usercaseChange)
+                                 .on('change', 'select, input[type="hidden"]', self.usercaseChange)
+                                 .on('click', 'a', self.usercaseChange);
+                    self.caseConfigViewModel.usercase_transaction.ensureBlankProperties();
+                } else {
+                    $usercaseMgmt.find('input').prop('disabled', true);
+                    $usercaseMgmt.find('select').prop('disabled', true);
+                    $usercaseMgmt.find('a').off('click');
+                    // Remove "Load properties" / "Save properties" link
+                    _.each($usercaseMgmt.find('.firstProperty'), function (elem) { elem.remove(); });
+                }
                 self.forceRefreshTextchangeBinding($usercaseMgmt);
             });
 
@@ -185,7 +194,6 @@ var CaseConfig = (function () {
         self.caseTypes = _.unique(_(self.moduleCaseTypes).map(function (moduleCaseType) {
             return moduleCaseType.case_type;
         }));
-
         self.getCaseTypeLabel = function (caseType) {
             var module_names = [], label;
             for (var i = 0; i < self.moduleCaseTypes.length; i++) {
@@ -865,6 +873,7 @@ var CaseConfig = (function () {
             self.condition = o.condition || DEFAULT_CONDITION_ALWAYS;
             self.close_condition = o.close_condition || DEFAULT_CONDITION_NEVER;
             self.repeat_context = o.repeat_context;
+            self.relationship = o.relationship || null;
             return self;
         },
         to_case_transaction: function (o, caseConfig) {
@@ -875,13 +884,13 @@ var CaseConfig = (function () {
                     required: true
                 }], self.case_properties, caseConfig);
 
-
             return CaseTransaction.wrap({
                 case_type: self.case_type,
                 reference_id: self.reference_id,
                 case_properties: case_properties,
                 condition: self.condition,
                 close_condition: self.close_condition,
+                relationship: self.relationship,
                 suggestedProperties: function () {
                     if (this.case_type() && _(caseConfig.propertiesMap).has(this.case_type())) {
                         var all = caseConfig.propertiesMap[this.case_type()]();

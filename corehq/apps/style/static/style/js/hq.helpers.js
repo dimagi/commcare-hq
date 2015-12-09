@@ -40,17 +40,6 @@ $(function() {
         $.post(post_url, {note_id: note_id});
         $(this).parents('.alert').hide(150);
     });
-
-    $(document).on('click', '.no-click', function (e) {
-        // Prevent default actions for click events on this element and all
-        // child elements. This is usually used for click triggered popovers.
-        e.preventDefault();
-    });
-    $(document).on('click', '.allow-click', function (e) {
-        // Adding this class to a child of a 'no-click' element will allow the click on this
-        // element to take place. e.g. link inside click triggered popover
-        e.stopPropagation();
-    });
 });
 
 var oldHide = $.fn.popover.Constructor.prototype.hide;
@@ -59,23 +48,37 @@ $.fn.popover.Constructor.prototype.hide = function() {
     if (this.options.trigger === "hover" && this.tip().is(":hover")) {
         var that = this;
         setTimeout(function() {
-            return that.hide.call(that, arguments);
+            return that.hide.apply(that, arguments);
         }, that.options.delay.hide);
         return;
     }
-    oldHide.call(this, arguments);
+    oldHide.apply(this, arguments);
 };
 
 $.fn.hqHelp = function () {
     var self = this;
     self.each(function(i) {
-        var $helpElem = $($(self).get(i));
-        $helpElem.find('i').popover({
+        var $self = $(self),
+            $helpElem = $($self.get(i)),
+            $link = $helpElem.find('a');
+
+        var options = {
             html: true,
+            trigger: 'focus',
             content: function() {
                 return $('#popover_content_wrapper').html();
             }
-        })
+        };
+        if (!$link.data("title")) {
+            options.template = '<div class="popover"><div class="arrow"></div><div class="popover-inner"><div class="popover-content"><p></p></div></div></div>';
+        }
+        $link.popover(options);
+
+        // Prevent jumping to the top of the page when link is clicked
+        $helpElem.find('a').click(function(event) {
+            ga_track_event("Clicked Help Bubble", $(this).data('title'), '-');
+            event.preventDefault();
+        });
     });
 };
 
@@ -91,7 +94,7 @@ $.showMessage = function (message, level) {
 
 
 $.fn.addSpinnerToButton = function () {
-    $(this).prepend('<i class="icon-refresh icon-spin"></i> ');
+    $(this).prepend('<i class="fa fa-refresh fa-spin icon-refresh icon-spin"></i> ');
 };
 
 
@@ -119,3 +122,9 @@ $.fn.enableButton = function () {
 };
 
 
+$.fn.koApplyBindings = function (context) {
+    if (!this.length) {
+        throw new Error("No element passed to koApplyBindings");
+    }
+    return ko.applyBindings(context, this.get(0));
+};

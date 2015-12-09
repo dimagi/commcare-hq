@@ -1,7 +1,11 @@
+from collections import defaultdict
 from datetime import datetime
+from django.dispatch.dispatcher import receiver
+from corehq.apps.domain.signals import commcare_domain_pre_delete
+from corehq.apps.locations.signals import location_edited
 
 from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
-from django.db import models
+from django.db import models, connection
 
 from casexml.apps.stock.models import DocDomainMapping
 from corehq.apps.products.models import Product
@@ -145,13 +149,18 @@ class SupplyPointStatus(models.Model):
         return SupplyPointStatusTypes.get_display_name(self.status_type, self.status_value)
 
     @classmethod
-    def wrap_from_json(cls, obj, location_id):
-        obj['location_id'] = location_id
+    def wrap_from_json(cls, obj, location):
+        try:
+            obj['location_id'] = location.location_id
+        except SQLLocation.DoesNotExist:
+            return None
         obj['external_id'] = obj['id']
         del obj['id']
+        del obj['supply_point']
         return cls(**obj)
 
     class Meta:
+        app_label = 'ilsgateway'
         verbose_name = "Facility Status"
         verbose_name_plural = "Facility Statuses"
         get_latest_by = "status_date"
@@ -168,13 +177,19 @@ class DeliveryGroupReport(models.Model):
     external_id = models.PositiveIntegerField(null=True, db_index=True)
 
     class Meta:
+        app_label = 'ilsgateway'
         ordering = ('-report_date',)
 
     @classmethod
-    def wrap_from_json(cls, obj, location_id):
-        obj['location_id'] = location_id
+    def wrap_from_json(cls, obj, location):
+        try:
+            obj['location_id'] = location.location_id
+        except SQLLocation.DoesNotExist:
+            return None
+
         obj['external_id'] = obj['id']
         del obj['id']
+        del obj['supply_point']
         return cls(**obj)
 
 
@@ -189,6 +204,9 @@ class ReportingModel(models.Model):
     create_date = models.DateTimeField(editable=False)
     update_date = models.DateTimeField(editable=False)
     external_id = models.PositiveIntegerField(db_index=True, null=True)
+
+    class Meta:
+        app_label = 'ilsgateway'
 
     def save(self, *args, **kwargs):
         if not self.id:
@@ -209,12 +227,18 @@ class SupplyPointWarehouseRecord(models.Model):
     supply_point = models.CharField(max_length=100, db_index=True)
     create_date = models.DateTimeField()
 
+    class Meta:
+        app_label = 'ilsgateway'
+
 
 # Ported from:
 # https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L9
 class OrganizationSummary(ReportingModel):
     total_orgs = models.PositiveIntegerField(default=0)
     average_lead_time_in_days = models.FloatField(default=0)
+
+    class Meta:
+        app_label = 'ilsgateway'
 
     def __unicode__(self):
         return "%s: %s/%s" % (self.location_id, self.date.month, self.date.year)
@@ -234,6 +258,9 @@ class GroupSummary(models.Model):
     on_time = models.PositiveIntegerField(default=0)
     complete = models.PositiveIntegerField(default=0)  # "complete" = submitted or responded
     external_id = models.PositiveIntegerField(db_index=True, null=True)
+
+    class Meta:
+        app_label = 'ilsgateway'
 
     @classmethod
     def wrap_form_json(cls, obj, location_id):
@@ -313,6 +340,9 @@ class ProductAvailabilityData(ReportingModel):
     without_stock = models.PositiveIntegerField(default=0)
     without_data = models.PositiveIntegerField(default=0)
 
+    class Meta:
+        app_label = 'ilsgateway'
+
     @classmethod
     def wrap_from_json(cls, obj, domain, location_id):
         product = Product.get_by_code(domain, obj['product'])
@@ -321,6 +351,11 @@ class ProductAvailabilityData(ReportingModel):
         obj['external_id'] = obj['id']
         del obj['id']
         return cls(**obj)
+
+    def __str__(self):
+        return 'ProductAvailabilityData(date={}, product={}, total={}, with_stock={}, without_stock={}, ' \
+               'without_data={})'.format(self.date, self.product, self.total, self.with_stock,
+                                         self.without_stock, self.without_data)
 
 
 # Ported from:
@@ -338,6 +373,9 @@ class ProductAvailabilityDashboardChart(object):
     xaxistitle = "Products"
     yaxistitle = "Facilities"
 
+    class Meta:
+        app_label = 'ilsgateway'
+
 
 # Ported from:
 # https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L97
@@ -347,6 +385,9 @@ class Alert(ReportingModel):
     text = models.TextField()
     url = models.CharField(max_length=100, blank=True, null=True)
     expires = models.DateTimeField()
+
+    class Meta:
+        app_label = 'ilsgateway'
 
 
 # Ported from:
@@ -416,6 +457,9 @@ class ReportRun(models.Model):
     domain = models.CharField(max_length=60)
     location = models.ForeignKey(SQLLocation, null=True)
 
+    class Meta:
+        app_label = 'ilsgateway'
+
     @classmethod
     def last_success(cls, domain):
         """
@@ -436,6 +480,7 @@ class HistoricalLocationGroup(models.Model):
     group = models.CharField(max_length=1)
 
     class Meta:
+        app_label = 'ilsgateway'
         unique_together = ('location_id', 'date', 'group')
 
 
@@ -444,12 +489,18 @@ class RequisitionReport(models.Model):
     submitted = models.BooleanField(default=False)
     report_date = models.DateTimeField(default=datetime.utcnow)
 
+    class Meta:
+        app_label = 'ilsgateway'
+
 
 class SupervisionDocument(models.Model):
     document = models.TextField()
     domain = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
     data_type = models.CharField(max_length=100)
+
+    class Meta:
+        app_label = 'ilsgateway'
 
 
 class ILSNotes(models.Model):
@@ -460,3 +511,79 @@ class ILSNotes(models.Model):
     user_phone = models.CharField(max_length=20, null=True)
     date = models.DateTimeField()
     text = models.TextField()
+
+    class Meta:
+        app_label = 'ilsgateway'
+
+
+@receiver(commcare_domain_pre_delete)
+def domain_pre_delete_receiver(domain, **kwargs):
+    domain_name = domain.name
+    locations_ids = SQLLocation.objects.filter(domain=domain_name).values_list('location_id', flat=True)
+    if locations_ids:
+        DeliveryGroupReport.objects.filter(location_id__in=locations_ids).delete()
+        SupplyPointWarehouseRecord.objects.filter(supply_point__in=locations_ids).delete()
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "DELETE FROM ilsgateway_alert WHERE location_id IN "
+                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+            )
+            cursor.execute(
+                "DELETE FROM ilsgateway_groupsummary WHERE org_summary_id IN "
+                "(SELECT id FROM ilsgateway_organizationsummary WHERE location_id IN "
+                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s))", [domain_name]
+            )
+
+            cursor.execute(
+                "DELETE FROM ilsgateway_organizationsummary WHERE location_id IN "
+                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+            )
+
+            cursor.execute(
+                "DELETE FROM ilsgateway_productavailabilitydata WHERE location_id IN "
+                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+            )
+
+            cursor.execute(
+                "DELETE FROM ilsgateway_supplypointstatus WHERE location_id IN "
+                "(SELECT location_id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+            )
+
+            cursor.execute(
+                "DELETE FROM ilsgateway_historicallocationgroup WHERE location_id_id IN "
+                "(SELECT id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
+            )
+
+    ReportRun.objects.filter(domain=domain_name).delete()
+    ILSNotes.objects.filter(domain=domain_name).delete()
+    SupervisionDocument.objects.filter(domain=domain_name).delete()
+
+
+@receiver(location_edited)
+def location_edited_receiver(sender, loc, moved, **kwargs):
+    from custom.ilsgateway.tanzania.warehouse.updater import default_start_date, \
+        process_non_facility_warehouse_data
+
+    config = ILSGatewayConfig.for_domain(loc.domain)
+    if not config or not config.enabled or not moved or not loc.previous_parents:
+        return
+
+    last_run = ReportRun.last_success(loc.domain)
+    if not last_run:
+        return
+
+    previous_parent = SQLLocation.objects.get(location_id=loc.previous_parents[-1])
+    type_location_map = defaultdict(set)
+
+    previous_ancestors = list(previous_parent.get_ancestors(include_self=True))
+    actual_ancestors = list(loc.sql_location.get_ancestors())
+
+    for sql_location in previous_ancestors + actual_ancestors:
+        type_location_map[sql_location.location_type.name].add(sql_location)
+
+    for location_type in ["DISTRICT", "REGION", "MSDZONE"]:
+        for sql_location in type_location_map[location_type]:
+            process_non_facility_warehouse_data.delay(
+                sql_location.couch_location, default_start_date(), last_run.end, last_run, strict=False
+            )

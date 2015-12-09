@@ -25,6 +25,8 @@ class MockReport(object):
 BLANK = '__blank__'
 def _make_request(path=BLANK, domain=BLANK, user=BLANK):
     request = HttpRequest()
+    request.META['SERVER_NAME'] = 'example.com'
+    request.META['SERVER_PORT'] = '80'
     if domain != BLANK:
         request.domain = domain
     if path != BLANK:

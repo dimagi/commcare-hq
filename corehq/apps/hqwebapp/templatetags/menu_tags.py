@@ -5,10 +5,23 @@ from django.utils.safestring import mark_safe
 
 from corehq.apps.domain.models import Domain
 import corehq.apps.style.utils as style_utils
-import corehq
 from corehq.apps.hqwebapp.models import MaintenanceAlert
+from corehq.tabs import MENU_TABS
 
 register = template.Library()
+
+
+def get_active_tab(visible_tabs, request_path):
+    for is_active_tab_fn in [
+        lambda t: t.is_active_fast,
+        lambda t: t.is_active,
+        lambda t: t.url and request_path.startswith(t.url),
+    ]:
+        for tab in visible_tabs:
+            if is_active_tab_fn(tab):
+                tab.is_active_tab = True
+                return tab
+
 
 class MainMenuNode(template.Node):
     def render(self, context):
@@ -24,52 +37,26 @@ class MainMenuNode(template.Node):
         except (ValueError, AttributeError):
             module = None
 
-        tabs = corehq.TABS + getattr(module, 'TABS', ())
+        tabs = getattr(module, 'TABS', MENU_TABS)
         visible_tabs = []
-        all_tabs = []
-
-        active_tab = None
-
         for tab_class in tabs:
             t = tab_class(
                     request, current_url_name, domain=domain,
                     couch_user=couch_user, project=project, org=org)
 
             t.is_active_tab = False
-            all_tabs.append(t)
             if t.real_is_viewable:
                 visible_tabs.append(t)
 
-        # only highlight the first tab considered active.  This allows
-        # multiple tabs to contain the same sidebar item, but in all but
-        # the first it will effectively be a link to the other tabs.
-        for t in all_tabs:
-            if t.is_active_fast:
-                t.is_active_tab = True
-                active_tab = t
-                break
-
-        if active_tab is None:
-            for t in all_tabs:
-                if t.is_active:
-                    t.is_active_tab = True
-                    active_tab = t
-                    break
-
-        if active_tab is None:
-            for t in visible_tabs:
-                if t.url and request.get_full_path().startswith(t.url):
-                    active_tab = t
-                    break
-
         # set the context variable in the highest scope so it can be used in
         # other blocks
-        context.dicts[0]['active_tab'] = active_tab
+        context.dicts[0]['active_tab'] = get_active_tab(visible_tabs,
+                                                        request.get_full_path())
 
         template = {
-            style_utils.BOOTSTRAP_2: 'hqwebapp/partials/main_menu.html',
-            style_utils.BOOTSTRAP_3: 'style/includes/menu_main.html',
-        }[style_utils.bootstrap_version(request)]
+            style_utils.BOOTSTRAP_2: 'style/bootstrap2/partials/menu_main.html',
+            style_utils.BOOTSTRAP_3: 'style/bootstrap3/partials/menu_main.html',
+        }[style_utils.get_bootstrap_version()]
         return mark_safe(render_to_string(template, {
             'tabs': visible_tabs,
         }))
@@ -87,7 +74,7 @@ def format_subtab_menu(context):
     else:
         subtabs = None
 
-    return mark_safe(render_to_string("hqwebapp/partials/subtab_menu.html", {
+    return mark_safe(render_to_string("style/bootstrap2/partials/subtab_menu.html", {
         'subtabs': subtabs if subtabs and len(subtabs) > 1 else None
     }))
 
@@ -134,14 +121,15 @@ def format_sidebar(context):
                                 actual_context = {}
                                 for d in context.dicts:
                                     actual_context.update(d)
+                                subpage['is_active'] = True
                                 subpage['title'] = subpage['title'](**actual_context)
                             nav['subpage'] = subpage
                             break
 
     template = {
-        style_utils.BOOTSTRAP_2: 'hqwebapp/partials/sidebar.html',
-        style_utils.BOOTSTRAP_3: 'style/includes/navigation_left_sidebar.html',
-    }[style_utils.bootstrap_version(request)]
+        style_utils.BOOTSTRAP_2: 'style/bootstrap2/partials/navigation_left_sidebar.html',
+        style_utils.BOOTSTRAP_3: 'style/bootstrap3/partials/navigation_left_sidebar.html',
+    }[style_utils.get_bootstrap_version()]
     return mark_safe(render_to_string(template, {
         'sections': sections
     }))

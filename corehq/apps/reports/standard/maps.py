@@ -4,6 +4,7 @@ import re
 from django.conf import settings
 from django.utils.translation import ugettext_noop
 from casexml.apps.case.models import CommCareCase
+from corehq import toggles
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport, GetParamsMixin
@@ -130,12 +131,12 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         def _headers(e, root=[]):
             if hasattr(e, '__iter__'):
                 if hasattr(e, 'html'):
-                    root = list(root) + [e.html]
+                    root = list(root) + [unicode(e.html)]
                 for sub in e:
                     for k in _headers(sub, root):
                         yield k
             else:
-                yield root + [e.html]
+                yield root + [unicode(e.html)]
         headers = ['::'.join(k) for k in _headers(report.headers)]
 
         for row in report.rows:
@@ -479,7 +480,8 @@ class DemoMapReport(GenericMapReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return user and user.is_previewer()
+        return user and toggles.DEMO_REPORTS.enabled(user.username) \
+            or domain and toggles.DEMO_REPORTS.enabled(domain)
 
 class DemoMapReport2(GenericMapReport):
     """this report is a demonstration of the maps report's capabilities
@@ -560,7 +562,8 @@ class DemoMapReport2(GenericMapReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return user and user.is_previewer()
+        return user and toggles.DEMO_REPORTS.enabled(user.username) \
+            or domain and toggles.DEMO_REPORTS.enabled(domain)
 
 class GenericCaseListMap(GenericMapReport):
     fields = CaseListMixin.fields
@@ -637,7 +640,8 @@ class DemoMapCaseList(GenericCaseListMap):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return user and user.is_previewer()
+        return user and toggles.DEMO_REPORTS.enabled(user.username) \
+            or domain and toggles.DEMO_REPORTS.enabled(domain)
 
 """
 metrics:

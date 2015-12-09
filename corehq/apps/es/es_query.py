@@ -1,5 +1,13 @@
 """
-Basic usage:
+ESQuery
+=======
+
+ESQuery is a library for building elasticsearch queries in a friendly,
+more readable manner.
+
+Basic usage
+-----------
+
 There should be a file and subclass of ESQuery for each index we have.
 
 Each method returns a new object, so you can chain calls together like
@@ -7,16 +15,16 @@ SQLAlchemy. Here's an example usage:
 
 .. code-block:: python
 
-    q = FormsES()\\
-        .domain(self.domain)\\
-        .xmlns(self.xmlns)\\
-        .submitted(gte=self.datespan.startdate_param,
-                    lt=self.datespan.enddateparam)\\
-        .fields(['xmlns', 'domain', 'app_id'])\\
-        .sort('received_on', desc=False)\\
-        .size(self.pagination.count)\\
-        .start(self.pagination.start)\\
-        .terms_facet('babies.count', 'babies_saved', size=10)
+    q = (FormsES()
+         .domain(self.domain)
+         .xmlns(self.xmlns)
+         .submitted(gte=self.datespan.startdate_param,
+                    lt=self.datespan.enddateparam)
+         .fields(['xmlns', 'domain', 'app_id'])
+         .sort('received_on', desc=False)
+         .size(self.pagination.count)
+         .start(self.pagination.start)
+         .terms_facet('babies.count', 'babies_saved', size=10))
     result = q.run()
     total_docs = result.total
     hits = result.hits
@@ -29,14 +37,43 @@ but you can always add your own like so:
     q.filter({"some_arbitrary_filter": {...}})
     q.set_query({"fancy_query": {...}})
 
-Index query classes have default filters to exclude things like inactive
-users or deleted docs, but you can remove these with `remove_default_filters`.
-
-For debugging or more helpful error messages, you can use `query.dumps()`
-and `query.pprint()`, both of which use `json.dumps()` and are suitable for
+For debugging or more helpful error messages, you can use ``query.dumps()``
+and ``query.pprint()``, both of which use ``json.dumps()`` and are suitable for
 pasting in to ES Head or Marvel or whatever
 
-language:
+Filtering
+---------
+
+Filters are implemented as standalone functions, so they can be composed and
+nested ``q.OR(web_users(), mobile_users())``.
+Filters can be passed to the ``query.filter`` method: ``q.filter(web_users())``
+
+There is some syntactic sugar that lets you skip this boilerplate and just
+call the filter as if it were a method on the query class:  ``q.web_users()``
+In order to be available for this shorthand, filters are added to the
+``builtin_filters`` property of the main query class.
+I know that's a bit confusing, but it seemed like the best way to make filters
+available in both contexts.
+
+Generic filters applicable to all indices are available in
+``corehq.apps.es.filters``.  (But most/all can also be accessed as a query
+method, if appropriate)
+
+Filtering Specific Indices
+--------------------------
+
+There is a file for each elasticsearch index (if not, feel free to add one).
+This file provides filters specific to that index, as well as an
+appropriately-directed ESQuery subclass with references to these filters.
+
+These index-specific query classes also have default filters to exclude things
+like inactive users or deleted docs.
+These things should nearly always be excluded, but if necessary, you can remove
+these with ``remove_default_filters``.
+
+Language
+--------
+
  * es_query - the entire query, filters, query, pagination, facets
  * filters - a list of the individual filters
  * query - the query, used for searching, not filtering
@@ -51,6 +88,7 @@ language:
 from collections import namedtuple
 from copy import deepcopy
 import json
+from corehq.apps.es.utils import values_list
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -58,24 +96,26 @@ from corehq.elastic import ES_URLS, ESError, run_query, SIZE_LIMIT
 
 from . import facets
 from . import filters
+from . import queries
 
 
 class ESQuery(object):
     """
-    This query builder only outputs the following query structure
-    {
-        "query": {
-            "filtered": {
-                "filter": {
-                    "and": [
-                        <filters>
-                    ]
-                },
-                "query": <query>
-            }
-        },
-        <size, sort, other params>
-    }
+    This query builder only outputs the following query structure::
+
+        {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            <filters>
+                        ]
+                    },
+                    "query": <query>
+                }
+            },
+            <size, sort, other params>
+        }
     """
     index = None
     _fields = None
@@ -83,7 +123,7 @@ class ESQuery(object):
     _size = None
     _facets = None
     default_filters = {
-        "match_all": {"match_all": {}}
+        "match_all": filters.match_all()
     }
 
     def __init__(self, index=None):
@@ -97,28 +137,30 @@ class ESQuery(object):
         self.es_query = {"query": {
             "filtered": {
                 "filter": {"and": []},
-                "query": {'match_all': {}}
+                "query": queries.match_all()
             }
         }}
 
     @property
     def builtin_filters(self):
         """
-        A list of callables that return filters
-        These will all be available as instance methods, so you can do
-            self.term(field, value)
-        instead of
-            self.filter(filters.term(field, value))
+        A list of callables that return filters. These will all be available as
+        instance methods, so you can do ``self.term(field, value)`` instead of
+        ``self.filter(filters.term(field, value))``
         """
         return [
             filters.term,
             filters.OR,
             filters.AND,
+            filters.NOT,
             filters.range_filter,
             filters.date_range,
+            filters.missing,
             filters.exists,
             filters.empty,
+            filters.non_null,
             filters.doc_id,
+            filters.nested,
         ]
 
     def __getattr__(self, attr):
@@ -133,9 +175,7 @@ class ESQuery(object):
         raise AttributeError("There is no builtin filter named %s" % attr)
 
     def run(self):
-        """
-        Actually run the query.  Return an ESQuerySet object.
-        """
+        """Actually run the query.  Returns an ESQuerySet object."""
         raw = run_query(self.url, self.raw_query)
         return ESQuerySet(raw, deepcopy(self))
 
@@ -161,9 +201,7 @@ class ESQuery(object):
         return self._default_filters.values() + self._filters
 
     def facet(self, _facet):
-        """
-        Add a facet to the query.
-        """
+        """Add a facet to the query."""
         query = deepcopy(self)
         query._facets.append(_facet)
         return query
@@ -178,7 +216,6 @@ class ESQuery(object):
     def _query(self):
         return self.es_query['query']['filtered']['query']
 
-    @property
     def set_query(self, query):
         """
         Add a query.  Most stuff we want is better done with filters, but
@@ -188,10 +225,14 @@ class ESQuery(object):
         es.es_query['query']['filtered']['query'] = query
         return es
 
-    def assemble(self):
-        """
-        Build out the es_query dict
-        """
+    def search_string_query(self, search_string, default_fields=None):
+        """Accepts a user-defined search string"""
+        return self.set_query(
+            queries.search_string_query(search_string, default_fields)
+        )
+
+    def _assemble(self):
+        """Build out the es_query dict"""
         self._filters.extend(self._default_filters.values())
         if self._fields is not None:
             self.es_query['fields'] = self._fields
@@ -205,25 +246,19 @@ class ESQuery(object):
             }
 
     def fields(self, fields):
-        """
-        Restrict the fields returned from elasticsearch
-        """
+        """Restrict the fields returned from elasticsearch"""
         query = deepcopy(self)
         query._fields = fields
         return query
 
     def start(self, start):
-        """
-        Pagination.  Analagous to SQL offset.
-        """
+        """Pagination.  Analagous to SQL offset."""
         query = deepcopy(self)
         query._start = start
         return query
 
     def size(self, size):
-        """
-        Restrict number of results returned.  Analagous to SQL limit.
-        """
+        """Restrict number of results returned.  Analagous to SQL limit."""
         query = deepcopy(self)
         query._size = size
         return query
@@ -231,14 +266,16 @@ class ESQuery(object):
     @property
     def raw_query(self):
         query = deepcopy(self)
-        query.assemble()
+        query._assemble()
         return query.es_query
 
     def dumps(self, pretty=False):
+        """Returns the JSON query that will be sent to elasticsearch."""
         indent = 4 if pretty else None
         return json.dumps(self.raw_query, indent=indent)
 
     def pprint(self):
+        """pretty prints the JSON query that will be sent to elasticsearch."""
         print self.dumps(pretty=True)
 
     @property
@@ -246,9 +283,7 @@ class ESQuery(object):
         return ES_URLS[self.index]
 
     def sort(self, field, desc=False):
-        """
-        Order the results by field.
-        """
+        """Order the results by field."""
         query = deepcopy(self)
         query.es_query['sort'] = {
             field: {'order': 'desc' if desc else 'asc'}
@@ -256,23 +291,32 @@ class ESQuery(object):
         return query
 
     def remove_default_filters(self):
-        """
-        Some sensible defaults are provided.  Use this if you don't want 'em
-        """
+        """Sensible defaults are provided.  Use this if you don't want 'em"""
         query = deepcopy(self)
         query._default_filters = {"match_all": filters.match_all()}
         return query
 
     def remove_default_filter(self, default):
+        """Remove a specific default filter by passing in its name."""
         query = deepcopy(self)
         if default in query._default_filters:
             query._default_filters.pop(default)
         return query
 
+    def values(self, *fields):
+        """modeled after django's QuerySet.values"""
+        if fields:
+            return self.fields(fields).run().hits
+        else:
+            return self.run().hits
+
+    def values_list(self, *fields, **kwargs):
+        return values_list(self.fields(fields).run().hits, *fields, **kwargs)
+
 
 class ESQuerySet(object):
     """
-    The object returned from ESQuery.run
+    The object returned from ``ESQuery.run``
      * ESQuerySet.raw is the raw response from elasticsearch
      * ESQuerySet.query is the ESQuery object
     """
@@ -295,10 +339,12 @@ class ESQuerySet(object):
 
     @property
     def doc_ids(self):
+        """Return just the docs ids from the response."""
         return [r['_id'] for r in self.raw_hits]
 
     @property
     def hits(self):
+        """Return the docs from the response."""
         if self.query._fields == []:
             return self.ids
         elif self.query._fields is not None:
@@ -308,6 +354,7 @@ class ESQuerySet(object):
 
     @property
     def total(self):
+        """Return the total number of docs matching the query."""
         return self.raw['hits']['total']
 
     @property
@@ -324,10 +371,17 @@ class ESQuerySet(object):
     @property
     @memoized
     def facets(self):
+        """
+        Namedtuple of the facets defined in the query.
+        See the facet docs for more specifics.
+        """
         facets = self.query._facets
         raw = self.raw.get('facets', {})
         results = namedtuple('facet_results', [f.name for f in facets])
         return results(**{f.name: f.parse_result(raw) for f in facets})
+
+    def __repr__(self):
+        return '{}({!r}, {!r})'.format(self.__class__.__name__, self.raw, self.query)
 
 
 class HQESQuery(ESQuery):
@@ -337,6 +391,7 @@ class HQESQuery(ESQuery):
     @property
     def builtin_filters(self):
         return [
-            filters.domain,
+            filters.doc_id,
             filters.doc_type,
+            filters.domain,
         ] + super(HQESQuery, self).builtin_filters

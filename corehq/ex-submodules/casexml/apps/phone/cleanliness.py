@@ -1,16 +1,26 @@
 from collections import namedtuple
 from datetime import datetime
-from casexml.apps.case.dbaccessors import get_all_case_owner_ids, get_open_case_ids, get_closed_case_ids, \
-    get_reverse_indexed_case_ids, get_indexed_case_ids
+from couchdbkit import ResourceNotFound
+from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
+from casexml.apps.case.dbaccessors import get_indexed_case_ids, \
+    get_all_reverse_indices_info, get_extension_case_ids
 from casexml.apps.case.exceptions import IllegalCaseId
-from casexml.apps.case.util import get_indexed_cases
+from casexml.apps.case.models import CommCareCase
+from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
+from corehq.apps.domain.models import Domain
+from corehq.apps.hqcase.dbaccessors import get_open_case_ids, \
+    get_closed_case_ids, get_all_case_owner_ids
 from corehq.apps.users.util import WEIRD_USER_IDS
-from corehq.toggles import OWNERSHIP_CLEANLINESS
 from django.conf import settings
+from corehq.util.soft_assert import soft_assert
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.logging import notify_exception
 
 
-FootprintInfo = namedtuple('FootprintInfo', ['base_ids', 'all_ids'])
+FootprintInfo = namedtuple('FootprintInfo', ['base_ids', 'all_ids', 'extension_ids'])
+DependentCaseInfo = namedtuple("DependentCaseInfo", ["all_ids", "extension_ids"])
+DirectDependencies = namedtuple("DirectDependencies", ['all', 'indexed_cases', 'extension_cases'])
 CleanlinessFlag = namedtuple('CleanlinessFlag', ['is_clean', 'hint'])
 
 
@@ -18,13 +28,7 @@ def should_track_cleanliness(domain):
     """
     Whether a domain should track cleanliness on submission.
     """
-    if settings.UNIT_TESTING:
-        override = getattr(
-            settings, 'TESTS_SHOULD_TRACK_CLEANLINESS', None)
-        if override is not None:
-            return override
-
-    return domain and OWNERSHIP_CLEANLINESS.enabled(domain)
+    return True
 
 
 def should_create_flags_on_submission(domain):
@@ -43,19 +47,48 @@ def should_create_flags_on_submission(domain):
     return False
 
 
-def set_cleanliness_flags_for_domain(domain):
+def set_cleanliness_flags_for_all_domains(force_full=False):
+    """
+    Updates cleanliness for all domains
+    """
+    for domain in Domain.get_all_names():
+        try:
+            set_cleanliness_flags_for_domain(domain, force_full=force_full)
+        except InvalidDomainError as e:
+            notify_exception(None, unicode(e))
+
+
+def set_cleanliness_flags_for_domain(domain, force_full=False):
     """
     Sets all cleanliness flags for an entire domain.
     """
     for owner_id in get_all_case_owner_ids(domain):
-        if owner_id not in WEIRD_USER_IDS:
-            set_cleanliness_flags(domain, owner_id)
+        if owner_id and owner_id not in WEIRD_USER_IDS:
+            try:
+                set_cleanliness_flags(domain, owner_id, force_full=force_full)
+            except InvalidOwnerIdError as e:
+                notify_exception(None, unicode(e))
 
 
-def set_cleanliness_flags(domain, owner_id):
+def _is_web_user(owner_id):
+    from corehq.apps.users.models import WebUser
+    try:
+        document = WebUser.get_db().get(owner_id)
+    except ResourceNotFound:
+        document = {'doc_type': 'unknown'}
+    return document.get('doc_type', None) == 'WebUser'
+
+
+def set_cleanliness_flags(domain, owner_id, force_full=False):
     """
     For a given owner ID, manually sets the cleanliness flag on that ID.
     """
+    if not domain or len(domain) > 100:
+        raise InvalidDomainError(u'Domain {} must be a non-empty string less than 100 characters'.format(domain))
+    if not owner_id or len(owner_id) > 100:
+        raise InvalidOwnerIdError(
+            u'Owner ID {} must be a non-empty string less than 100 characters'.format(owner_id)
+        )
     cleanliness_object = OwnershipCleanlinessFlag.objects.get_or_create(
         owner_id=owner_id,
         domain=domain,
@@ -64,54 +97,134 @@ def set_cleanliness_flags(domain, owner_id):
 
     def needs_full_check(domain, cleanliness_obj):
         # if it already is clean we don't need to do anything since that gets invalidated on submission
-        return (
-            # if clean, only check if the toggle is not enabled since then it won't be properly invalidated
-            # on submission
-            cleanliness_obj.is_clean and not OWNERSHIP_CLEANLINESS.enabled(domain)
-        ) or (
-            # if dirty, first check the hint and only do a full check if it's not valid
-            not cleanliness_object.is_clean and (
-                not cleanliness_object.hint or not hint_still_valid(domain, owner_id, cleanliness_object.hint)
-            )
+        # if dirty, first check the hint and only do a full check if it's not valid
+        return not cleanliness_obj.is_clean and (
+            not cleanliness_obj.hint or not hint_still_valid(domain, cleanliness_obj.hint)
         )
-    if needs_full_check(domain, cleanliness_object):
-        # either the hint wasn't set or wasn't valid - rebuild from scratch
+
+    needs_check = needs_full_check(domain, cleanliness_object)
+    previous_clean_flag = cleanliness_object.is_clean
+    if force_full or needs_check:
+        # either the hint wasn't set, wasn't valid or we're forcing a rebuild - rebuild from scratch
         cleanliness_flag = get_cleanliness_flag_from_scratch(domain, owner_id)
         cleanliness_object.is_clean = cleanliness_flag.is_clean
         cleanliness_object.hint = cleanliness_flag.hint
+
+    if force_full and not needs_check and previous_clean_flag and not cleanliness_object.is_clean:
+        # we went from clean to dirty and would not have checked except that we forced it
+        # this seems to indicate a problem in the logic that invalidates the flag, unless the feature
+        # flag was turned off for the domain. either way cory probably wants to know.
+
+        # filter out docs where we expect this to be broken (currently just web users)
+        if not _is_web_user(owner_id):
+            _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False, fail_if_debug=False)
+            _assert(False, 'Cleanliness flags out of sync for a {} with id {} in domain {}!'.format(
+                owner_doc_type, owner_id, domain
+            ))
 
     cleanliness_object.last_checked = datetime.utcnow()
     cleanliness_object.save()
 
 
-def hint_still_valid(domain, owner_id, hint):
+def hint_still_valid(domain, hint):
     """
     For a given domain/owner/cleanliness hint check if it's still valid
     """
-    related_cases = get_indexed_cases(domain, [hint])
-    return any([c.owner_id != owner_id for c in related_cases])
+    try:
+        hint_case = CommCareCase.get(hint)
+        hint_owner = hint_case.owner_id
+    except ResourceNotFound:
+        # hint was deleted
+        return False
+    dependent_case_ids = set(get_dependent_case_info(domain, [hint]).all_ids)
+    return any([c['owner_id'] != hint_owner and c['owner_id'] != UNOWNED_EXTENSION_OWNER_ID
+                for c in iter_docs(CommCareCase.get_db(), dependent_case_ids)])
 
 
 def get_cleanliness_flag_from_scratch(domain, owner_id):
     footprint_info = get_case_footprint_info(domain, owner_id)
-    cases_to_check = footprint_info.all_ids - footprint_info.base_ids
+    owned_cases = footprint_info.base_ids
+    cases_to_check = footprint_info.all_ids - owned_cases
     if cases_to_check:
-        closed_owned_case_ids = set(get_closed_case_ids(owner_id))
-        cases_to_check = cases_to_check - closed_owned_case_ids
+        closed_owned_case_ids = set(get_closed_case_ids(domain, owner_id))
+        cases_to_check = cases_to_check - closed_owned_case_ids - footprint_info.extension_ids
+        # check extension cases that are unowned or owned by others
+        extension_cases_to_check = footprint_info.extension_ids - closed_owned_case_ids - owned_cases
+        while extension_cases_to_check:
+            extension_case = extension_cases_to_check.pop()
+            dependent_cases = set(get_dependent_case_info(domain, [extension_case]).all_ids)
+            unowned_dependent_cases = dependent_cases - owned_cases
+            extension_cases_to_check = extension_cases_to_check - dependent_cases
+            dependent_cases_owned_by_other_owners = {
+                dependent_case['_id']
+                for dependent_case in iter_docs(CommCareCase.get_db(), unowned_dependent_cases)
+                if dependent_case['owner_id'] != UNOWNED_EXTENSION_OWNER_ID
+            }
+            if dependent_cases_owned_by_other_owners:
+                hint_id = dependent_cases & owned_cases
+                return CleanlinessFlag(False, hint_id.pop())
+
         if cases_to_check:
             # it wasn't in any of the open or closed IDs - it must be dirty
-            reverse_index_ids = set(get_reverse_indexed_case_ids(domain, list(cases_to_check)))
-            indexed_with_right_owner = (reverse_index_ids & (footprint_info.base_ids | closed_owned_case_ids))
-            if indexed_with_right_owner:
-                return CleanlinessFlag(False, indexed_with_right_owner.pop())
+            reverse_index_infos = get_all_reverse_indices_info(domain, list(cases_to_check))
+            reverse_index_ids = set([r.case_id for r in reverse_index_infos])
+            indexed_with_right_owner = (reverse_index_ids & (owned_cases | closed_owned_case_ids))
+            found_deleted_cases = False
+            while indexed_with_right_owner:
+                hint_id = indexed_with_right_owner.pop()
+                infos_for_this_owner = _get_info_by_case_id(reverse_index_infos, hint_id)
+                for info in infos_for_this_owner:
+                    try:
+                        case = CommCareCase.get(info.referenced_id)
+                        if case.doc_type == 'CommCareCase':
+                            return CleanlinessFlag(False, hint_id)
+                        else:
+                            found_deleted_cases = True
+                    except ResourceNotFound:
+                        # the case doesn't exist - don't use it as a dirty flag
+                        found_deleted_cases = True
 
-            # I'm not sure if this code can ever be hit, but if it is we should fail hard
-            # until we can better understand it.
-            raise IllegalCaseId('Owner {} in domain {} has an invalid index reference chain!!'.format(
-                owner_id, domain
-            ))
+            if found_deleted_cases:
+                # if we made it all the way to the end of the loop without returning anything
+                # then the owner was only flagged as dirty due to missing cases,
+                # This implies the owner is still clean.
+                return CleanlinessFlag(True, None)
+            else:
+                # I don't believe code can ever be hit, but if it is we should fail hard
+                # until we can better understand it.
+                raise IllegalCaseId('Owner {} in domain {} has an invalid index reference chain!!'.format(
+                    owner_id, domain
+                ))
 
     return CleanlinessFlag(True, None)
+
+
+def _get_info_by_case_id(index_infos, case_id):
+    return [i for i in index_infos if i.case_id == case_id]
+
+
+def get_dependent_case_info(domain, cases):
+    """ Fetches all dependent cases of cases passed in"""
+    all_dependencies = set()
+    direct_dependencies = _get_direct_dependencies(domain, cases)
+    new_case_ids = direct_dependencies.all
+    all_extensions = direct_dependencies.extension_cases
+    while new_case_ids:
+        all_dependencies = all_dependencies | new_case_ids
+        direct_dependencies = _get_direct_dependencies(domain, list(new_case_ids))
+        all_extensions = all_extensions | direct_dependencies.extension_cases
+        new_case_ids = direct_dependencies.all - all_dependencies
+    return DependentCaseInfo(all_ids=all_dependencies, extension_ids=all_extensions)
+
+
+def _get_direct_dependencies(domain, cases):
+    extension_cases = set(get_extension_case_ids(domain, cases))
+    indexed_cases = set(get_indexed_case_ids(domain, cases))
+    return DirectDependencies(
+        all=extension_cases | indexed_cases,
+        indexed_cases=indexed_cases,
+        extension_cases=extension_cases
+    )
 
 
 def get_case_footprint_info(domain, owner_id):
@@ -123,13 +236,8 @@ def get_case_footprint_info(domain, owner_id):
       2) doesn't return full blown case objects but just IDs
       3) differentiates between the base set and the complete list
     """
-    all_case_ids = set()
-    # get base set of cases (anything open with this owner id)
-    open_case_ids = get_open_case_ids(owner_id)
-    new_case_ids = set(open_case_ids)
-    while new_case_ids:
-        all_case_ids = all_case_ids | new_case_ids
-        referenced_case_ids = get_indexed_case_ids(domain, list(new_case_ids))
-        new_case_ids = set(referenced_case_ids) - all_case_ids
-
-    return FootprintInfo(base_ids=set(open_case_ids), all_ids=all_case_ids)
+    open_case_ids = set(get_open_case_ids(domain, owner_id))
+    dependent_cases = get_dependent_case_info(domain, open_case_ids)
+    return FootprintInfo(base_ids=set(open_case_ids),  # open cases with this owner
+                         all_ids=dependent_cases.all_ids | open_case_ids,
+                         extension_ids=dependent_cases.extension_ids)

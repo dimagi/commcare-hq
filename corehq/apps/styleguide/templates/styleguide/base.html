@@ -37,7 +37,7 @@
         {% endcompress %}
 
         {% compress js %}
-            <script type="text/javascript" src="{% new_static 'style/lib/jquery/jquery-1.11.1.min.js' %}"></script>
+            <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
             <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
         {% endcompress %}
 
@@ -57,6 +57,7 @@
                 </div>
                 <nav class="collapse navbar-collapse" role="navigation">
                     <ul class="nav navbar-nav">
+                        <li><a href="{% url 'styleguide_views' %}">Views</a></li>
                         <li><a href="{% url 'styleguide_forms' %}">Forms</a></li>
                         <li><a href="{% url 'styleguide_icons' %}">Icons</a></li>
                         <li><a href="{% url 'styleguide_colors' %}">Colors</a></li>

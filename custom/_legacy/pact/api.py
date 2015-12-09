@@ -162,10 +162,10 @@ class PactFormAPI(DomainAPI):
             length = temp_xml.tell()
             temp_xml.seek(0)
             wrapper = FileWrapper(temp_xml)
-            response = HttpResponse(wrapper, mimetype='text/xml')
+            response = HttpResponse(wrapper, content_type='text/xml')
             response['Content-Length'] = length
 
-        response = HttpResponse(return_iterator(), mimetype='text/xml')
+        response = HttpResponse(return_iterator(), content_type='text/xml')
         return response
 
 

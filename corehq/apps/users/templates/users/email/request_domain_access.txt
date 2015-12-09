@@ -1,0 +1,9 @@
+{% load i18n %}
+{% blocktrans %}
+{{ full_name }} ({{ email }}) has requested to access {{ domain_name }} as a web user.
+
+To approve or delete this request, visit {{ url }}.
+
+Thanks,
+CommCareHQ
+{% endblocktrans %}

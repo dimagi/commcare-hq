@@ -1,5 +1,6 @@
 from django.core.management.base import LabelCommand, CommandError
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
 
@@ -13,9 +14,10 @@ class Command(LabelCommand):
             raise CommandError('Usage: %s\n%s' % (self.args, self.help))
 
         domain = args[0]
-        case_ids = CommCareCase.get_all_cases(domain, wrapper=lambda r: r['id'])
+        case_ids = get_case_ids_in_domain(domain)
 
         print 'loading %s cases in %s' % (len(case_ids), domain)
+
         def stream_cases(all_case_ids):
             for case_ids in chunked(all_case_ids, 1000):
                 for case in wrapped_docs(CommCareCase, keys=case_ids):

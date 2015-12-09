@@ -1,10 +1,8 @@
 from couchdbkit import ResourceNotFound
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
-    DictProperty,
     Document,
     DocumentSchema,
-    Property,
     SchemaListProperty,
     StringProperty,
 )
@@ -78,10 +76,9 @@ class ApplicationAccess(Document):
 
     @classmethod
     def get_by_domain(cls, domain):
-        self = cls.view('cloudcare/application_access',
-            key=domain,
-            include_docs=True
-        ).first()
+        from corehq.apps.cloudcare.dbaccessors import \
+            get_application_access_for_domain
+        self = get_application_access_for_domain(domain)
         return self or cls(domain=domain)
 
     def user_can_access_app(self, user, app):

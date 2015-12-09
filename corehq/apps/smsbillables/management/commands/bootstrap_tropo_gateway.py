@@ -2,17 +2,17 @@ import logging
 from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
-from corehq.apps.tropo.api import TropoBackend
+from corehq.messaging.smsbackends.tropo.models import TropoBackend
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
 
 logger = logging.getLogger('accounting')
 
 
-def bootstrap_tropo_gateway(orm):
-    currency = (orm['accounting.Currency'] if orm else Currency).objects.get(code="USD")
-    sms_gateway_fee_class = orm['smsbillables.SmsGatewayFee'] if orm else SmsGatewayFee
-    sms_gateway_fee_criteria_class = orm['smsbillables.SmsGatewayFeeCriteria'] if orm else SmsGatewayFeeCriteria
+def bootstrap_tropo_gateway(apps):
+    currency = (apps.get_model('accounting', 'Currency') if apps else Currency).objects.get(code="USD")
+    sms_gateway_fee_class = apps.get_model('smsbillables', 'SmsGatewayFee') if apps else SmsGatewayFee
+    sms_gateway_fee_criteria_class = apps.get_model('smsbillables', 'SmsGatewayFeeCriteria') if apps else SmsGatewayFeeCriteria
 
     SmsGatewayFee.create_new(
         TropoBackend.get_api_id(),

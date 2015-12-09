@@ -102,14 +102,12 @@ cloudCare.Details = Backbone.Model.extend({
 
 cloudCare.caseViewMixin = {
     lookupField: function (field) {
-        var self = this;
-        if (self.options.delegation) {
-            // casedb maps case_ids to unwrapped case json
-            var parent = self.options.casedb[self.model.get('indices').parent.case_id];
-            return parent[field];
-        } else {
-            return self.model.getProperty(field);
+        var parentCase;
+        if (isParentField(field) && this.model.get('casedb')) {
+            parentCase = this.model.get('casedb').get(this.model.get('indices').parent.case_id);
+            return parentCase.getProperty(field.slice('parent/'.length));
         }
+        return this.model.getProperty(field);
     },
     delegationFormName: function () {
         var self = this;
@@ -173,12 +171,11 @@ cloudCare.CaseView = Selectable.extend(cloudCare.caseViewMixin).extend({
     }
 });
 
-        
 cloudCare.CaseList = Backbone.Collection.extend({
     initialize: function () {
         var self = this;
         _.bindAll(self, 'url', 'setUrl');
-        self.casedb = {};
+        self.casedb = null;
     },
     model: cloudCare.Case,
     url: function () {
@@ -187,25 +184,12 @@ cloudCare.CaseList = Backbone.Collection.extend({
     setUrl: function (url) {
         this.caseUrl = url;
     },
-    parse: function (resp) {
-        var self = this;
-        if (resp.cases) {
-            // object: {cases: [...], parents: [...]}
-            for (var key in resp) {
-                if (resp.hasOwnProperty(key)) {
-                    var cases = resp[key];
-                    for (var i = 0; i < cases.length; i++) {
-                        self.casedb[cases[i]._id] = cases[i];
-                    }
-                }
-            }
-            return resp.cases;
-        } else {
-            // just the array: [...]
-            return resp;
+    parse: function(response) {
+        if (response.parents) {
+            this.casedb = new cloudCare.CaseList(response.cases.concat(response.parents));
         }
-
-    }
+        return response.cases;
+    },
 });
 
 cloudCare.CaseListView = Backbone.View.extend({
@@ -227,15 +211,28 @@ cloudCare.CaseListView = Backbone.View.extend({
             this.caseList.setUrl(this.options.caseUrl);
             showLoading();
             this.caseList.fetch({
+                data: {
+                    requires_parent_cases: this.requiresParentCases(this.detailsShort)
+                },
                 success: hideLoadingCallback,
                 error: _caseListLoadError
             });
         }
     },
     render: function () {
-	    var self = this;
-	    self.el = $('<section />').attr("id", "case-list").addClass("span7");
-        var table = $("<table />").addClass("table table-striped datatable").css('clear', 'both').appendTo($(self.el));
+        var self = this,
+            $panelBody,
+            $panel;
+        self.el = $('<section />').attr("id", "case-list").addClass("col-sm-7");
+        self.$el = $(self.el);
+        $panel = $('<div class="panel panel-default"></div>')
+            .append('<div class="panel-heading">Cases</div>');
+
+        $panelBody = $('<div class="panel-body"></div>');
+        $panel.append($panelBody);
+        self.$el.append($panel);
+
+        var table = $("<table />").addClass("table table-striped table-hover datatable clearfix").appendTo($panelBody);
         var thead = $("<thead />").appendTo(table);
         var theadrow = $("<tr />").appendTo(thead);
         if (self.options.delegation) {
@@ -251,13 +248,17 @@ cloudCare.CaseListView = Backbone.View.extend({
 
         return self;
     },
+    requiresParentCases: function(details) {
+        var columns = details.get('columns');
+        return _.any(_.map(columns, function(d) { return d.field; }), isParentField);
+    },
     appendItem: function (item) {
         var self = this;
+        item.set('casedb', self.caseList.casedb);
         var caseView = new cloudCare.CaseView({
             model: item,
             columns: self.detailsShort.get("columns"),
             delegation: self.options.delegation,
-            casedb: self.caseList.casedb,
             appConfig: self.options.appConfig,
             language: self.options.language
         });
@@ -283,31 +284,34 @@ cloudCare.CaseListView = Backbone.View.extend({
 
     },
     appendAll: function () {
+        var $table;
         this.caseList.each(this.appendItem);
-        $('table', this.el).dataTable({
+        $table = $('table', this.el);
+        $table.css('width', '100%');
+        $table.dataTable({
             bFilter: true,
             bPaginate: false,
             bSort: true,
             oLanguage: {
-                "sSearch": "Filter cases:"
+                "sSearch": "Filter cases:",
+                "sEmptyTable": "No cases available. You must register a case to access this form."
             },
-            sScrollX: $('#case-list').css('width'),
+            sScrollX: $('#case-list').outerWidth(),
             bScrollCollapse: true
         });
         var $dataTablesFilter = $(".dataTables_filter");
-        $dataTablesFilter.css('float', 'none').css('padding', '3px').addClass('span12');
-        $dataTablesFilter.addClass("form-search");
+        $dataTablesFilter.addClass('col-sm-4 form-search form-group');
         var $inputField = $dataTablesFilter.find("input"),
             $inputLabel = $dataTablesFilter.find("label");
 
         $dataTablesFilter.append($inputField);
         $inputField.attr("id", "dataTables-filter-box");
-        $inputField.addClass("search-query").addClass("input-large");
-        $inputField.attr("placeholder", "Filter...");
+        $inputField.addClass("search-query").addClass("form-control");
+        $inputField.attr("placeholder", "Filter cases");
 
         $inputLabel.attr("for", "dataTables-filter-box");
         $inputLabel.text('Filter cases:');
-        this.el.parent().before($('<section class="row-fluid" />').append($dataTablesFilter));
+        this.el.parent().before($('<section class="row" />').append($dataTablesFilter));
     }
 });
 
@@ -320,14 +324,24 @@ cloudCare.CaseDetailsView = Backbone.View.extend(cloudCare.caseViewMixin).extend
     },
     
     render: function () {
-        var self = this;
+        var self = this,
+            $panelBody,
+            $panel;
         if (!self._everRendered) {
-            self.el = $('<section />').attr("id", "case-details").addClass("span5");
+            self.el = $('<section />').attr("id", "case-details").addClass("col-sm-5");
             self._everRendered = true;
         }
         $(self.el).html(""); // clear
+
+        $panel = $('<div class="panel panel-default"></div>')
+            .append('<div class="panel-heading">Case Details</div>');
+        $panelBody = $('<div class="panel-default"></div>');
+        $panel.append($panelBody);
+        $(self.el).append($panel);
+
+
         if (self.model) {
-            var table = $("<table />").addClass("table table-striped datatable").appendTo($(self.el));
+            var table = $("<table />").addClass("table table-striped table-hover datatable").appendTo($panelBody);
             var thead = $("<thead />").appendTo(table);
             var theadrow = $("<tr />").appendTo(thead);
 	        $("<th />").attr("colspan", "2").text("Case Details for " + self.model.getProperty("name")).appendTo(theadrow);
@@ -349,7 +363,7 @@ cloudCare.CaseMainView = Backbone.View.extend({
         _.bindAll(this, 'render', 'selectCase', 'fetchCaseList');
         // adding an internal section so that the filter button displays correctly
         self.el = self.options.el;
-        self.section = $('<section class="row-fluid" />');
+        self.section = $('<section class="row" />');
         self.section.appendTo(self.el);
         // this is copy-pasted
         self.delegation = self.options.appConfig.form_index === 'task-list';
@@ -367,7 +381,6 @@ cloudCare.CaseMainView = Backbone.View.extend({
             details: self.options.summaryDetails,
             language: self.options.language,
             appConfig: self.options.appConfig,
-            casedb: self.listView.caseList.casedb,
             delegation: self.delegation
         });
         $(self.detailsView.render().el).appendTo($(self.section));

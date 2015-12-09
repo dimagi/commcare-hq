@@ -16,7 +16,7 @@ class FormDataPillow(SQLPillow):
     include_docs = False
 
     def process_sql(self, doc_dict, delete=False):
-        if delete:
+        if delete or doc_dict['doc_type'] != 'XFormInstance':
             try:
                 FormData.objects.get(instance_id=doc_dict['_id']).delete()
             except FormData.DoesNotExist:
@@ -42,7 +42,7 @@ class CaseDataPillow(SQLPillow):
     include_docs = False
 
     def process_sql(self, doc_dict, delete=False):
-        if delete or doc_dict['doc_type'] == 'CommCareCase-Deleted':
+        if delete or doc_dict['doc_type'] != 'CommCareCase':
             try:
                 CaseData.objects.get(case_id=doc_dict['_id']).delete()
             except CaseData.DoesNotExist:

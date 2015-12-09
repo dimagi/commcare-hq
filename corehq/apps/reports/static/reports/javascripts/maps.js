@@ -118,7 +118,10 @@ function initTable(data, config) {
         function(settings, row, i) {
             // datatables doesn't really offer a better way to do this;
             // you have to set all filtering up-front
-            return data.features[i].visible;
+            if (data.features[i] != void(0)) {
+                return data.features[i].visible;
+            }
+            return true;
         }
     );
     var table = new HQReportDataTables({

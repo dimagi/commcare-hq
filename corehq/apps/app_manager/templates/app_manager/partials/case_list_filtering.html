@@ -1,0 +1,45 @@
+{% load i18n %}
+
+<div data-bind="with: filter">
+
+    <div class="control-group">
+        <button class="btn btn-small" data-bind="visible: !showing(), click: function(data){data.showing(true);}">
+            <i class="icon icon-plus"></i>
+            {% trans "Add filter" %}
+        </button>
+    </div>
+
+    <div data-bind="visible: showing">
+        <form class="form-horizontal">
+            <div class="control-group">
+                <label class="control-label">
+                    {% trans "Filter" %}
+                    <span class="hq-help-template"
+                        data-title="{% trans "Filter" %}"
+                        data-content=
+                        "{% blocktrans %}
+                            This XPath expression specifies which cases
+                            should appear in the case list. It can refer to
+                            any case properties and should return true if a
+                            record should be shown and false otherwise. The
+                            same functions are available as when writing
+                            Display or Validation conditions. Refer to case
+                            properties using their name (there's no need to
+                            include a &quot;/data/&quot; in front of the
+                            case property).
+                        {% endblocktrans %}"
+                    ></span>
+                </label>
+                <div class="controls">
+                    <input type="text" placeholder="Filter expression" class="ui-autocomplete-input"
+                           data-bind="value: filterText"
+                    >
+                    <a data-bind="click: function(data){showing(false);}">
+                        <i class="icon-remove icon-blue"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+</div>

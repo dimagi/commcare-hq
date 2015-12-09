@@ -1,6 +1,6 @@
 {% load hq_shared_tags %}
 
-<div class="span6">
+<div>
   <div data-bind="foreach: selected_path">
     <select data-bind="enable: _.every(children(), function(child) { return child.name() === '_all' || child.can_edit()}), options: children, optionsText: 'display_name', value: selected_child"></select>
   </div>

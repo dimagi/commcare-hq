@@ -3,8 +3,9 @@ import json
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django import forms
+from corehq.toggles import MULTIPLE_CHOICE_CUSTOM_FIELD
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -61,18 +62,19 @@ class CustomDataFieldForm(forms.Form):
     """
     label = forms.CharField(
         required=True,
-        error_messages={'required': _('All fields are required')}
+        error_messages={'required': ugettext_lazy('All fields are required')}
     )
     slug = XmlSlugField(
         required=True,
         error_messages={
-            'required': _('All fields are required'),
-            'invalid': _('Key fields must consist only of letters, numbers, '
+            'required': ugettext_lazy('All fields are required'),
+            'invalid': ugettext_lazy('Key fields must consist only of letters, numbers, '
                          'underscores or hyphens.'),
         }
     )
     is_required = forms.BooleanField(required=False)
     choices = forms.CharField(widget=forms.HiddenInput, required=False)
+    is_multiple_choice = forms.BooleanField(required=False)
 
     def __init__(self, raw, *args, **kwargs):
         # Pull the raw_choices out here, because Django incorrectly
@@ -102,7 +104,7 @@ class CustomDataModelMixin(object):
 
     @classmethod
     def page_name(cls):
-        return _("Edit {} Fields").format(cls.entity_string)
+        return _("Edit {} Fields").format(unicode(cls.entity_string))
 
     def get_definition(self):
         return CustomDataFieldsDefinition.get_or_create(self.domain,
@@ -126,11 +128,13 @@ class CustomDataModelMixin(object):
         definition.save()
 
     def get_field(self, field):
+        multiple_choice_enabled = MULTIPLE_CHOICE_CUSTOM_FIELD.enabled(self.domain)
         return CustomDataField(
             slug=field.get('slug'),
             is_required=field.get('is_required'),
             label=field.get('label'),
             choices=field.get('choices'),
+            is_multiple_choice=field.get('is_multiple_choice') if multiple_choice_enabled else False
         )
 
     @property
@@ -153,7 +157,9 @@ class CustomDataModelMixin(object):
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             self.save_custom_fields()
-            msg = _(u"{} fields saved successfully").format(self.entity_string)
+            msg = _(u"{} fields saved successfully").format(
+                unicode(self.entity_string)
+            )
             messages.success(request, msg)
             return self.get(request, success=True, *args, **kwargs)
         else:

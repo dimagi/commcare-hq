@@ -1,0 +1,16 @@
+Dear Finance team,
+
+The {{ plan_name }} plan subscription for project space {{ domain }} (attached to Billing account *{{billing_account}}*{% if salesforce_contract_id %}and Salesforce ID *{{salesforce_contract_id}}*) {% endif %}), set as Contracted, has incurred a total of ${{amount_due}} additional charges in the past months. Those charges are linked to additional SMS or user charges that are not included in the Pre-paid software plan nor in any pre-paid additional SMS/Credits that would have been included in the contract and added as credits at the initial set-up of that subscription. You can find attached the detailed invoice.
+
+The billing contact for this Billing Account are:
+{% for billing_contact in billing_contacts %}
+- {{billing_contact}}
+{% endfor %}
+
+The finance team is responsible for deciding when and how to communicate these additional charges/this invoice to the partner.
+
+If you want to look at the detailed monthly invoices, you can go to {{admin_invoices_url}}
+
+Best Regards,
+The CommCare HQ Team
+www.commcarehq.org

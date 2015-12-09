@@ -449,16 +449,6 @@ EXAMPLE_CASE = {
 
 
 class testReportCaseProcessing(TestCase):
-    def testXFormMapping(self):
-        """
-        Verify that a simple case doc will yield the basic mapping
-        """
-
-        pillow = XFormPillow(create_index=False, online=False)
-        t1 = pillow.get_mapping_from_type(XFORM_SINGLE_CASE)
-        t2 = pillow.get_mapping_from_type(XFORM_MULTI_CASES)
-
-        self.assertEqual(t1, t2)
 
     def testXFormPillowSingleCaseProcess(self):
         """

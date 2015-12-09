@@ -30,7 +30,7 @@ def render_to_pdf(request, domain, case_id, report_slug):
     context_dict = get_dict_to_report(domain, case_id, report_slug)
     context = Context(context_dict)
     html = template.render(context)
-    response = HttpResponse(mimetype="application/pdf")
+    response = HttpResponse(content_type="application/pdf")
     # weasyprint.HTML(string=html).write_pdf(response)
     return response
 

@@ -27,6 +27,7 @@ indicators           | List of indicators to save
 table_id             | A unique ID for the table
 display_name         | A display name for the table that shows up in UIs
 base_item_expression | Used for making tables off of repeat or list data
+named_expressions    | A list of named expressions that can be referenced in other filters and indicators
 named_filters        | A list of named filters that can be referenced in other filters and indicators
 
 
@@ -73,26 +74,38 @@ In user configurable reports the following expression types are currently suppor
 
 Expression Type | Description  | Example
 --------------- | ------------ | ------
+identity        | Just returns whatever is passed in | `doc`
 constant        | A constant   | `"hello"`, `4`, `2014-12-20`
 property_name   | A reference to the property in a document |  `doc["name"]`
 property_path   | A nested reference to a property in a document | `doc["child"]["age"]`
 conditional     | An if/else expression | `"legal" if doc["age"] > 21 else "underage"`
+switch          | A switch statement | `if doc["age"] == 21: "legal"` `elif doc["age"] == 60: ...` `else: ...`
+array_index     | An index into an array | `doc[1]`
+iterator        | Combine multiple expressions into a list | `[doc.name, doc.age, doc.gender]`
 related_doc     | A way to reference something in another document | `form.case.owner_id`
 root_doc        | A way to reference the root document explicitly (only needed when making a data source from repeat/child data) | `repeat.parent.name`
+nested          | A way to chain any two expressions together | `f1(f2(doc))`
+dict            | A way to emit a dictionary of key/value pairs | `{"name": "test", "value": f(doc)}`
+
 
 ### JSON snippets for expressions
 
-Here are JSON snippets for the four expression types. Hopefully they are self-explanatory.
+Here are JSON snippets for the various expression types. Hopefully they are self-explanatory.
 
 ##### Constant Expression
 
-This expression returns the constant "hello":
+There are two formats for constant expressions. The simplified format is simply the constant itself. For example `"hello"`, or `5`.
+
+The complete format is as follows. This expression returns the constant `"hello"`:
+
 ```
 {
     "type": "constant",
     "constant": "hello"
 }
 ```
+
+
 ##### Property Name Expression
 
 This expression returns `doc["age"]`:
@@ -103,16 +116,18 @@ This expression returns `doc["age"]`:
 }
 ```
 An optional `"datatype"` attribute may be specified, which will attempt to cast the property to the given data type. The options are "date", "datetime", "string", "integer", and "decimal". If no datatype is specified, "string" will be used.
+
 ##### Property Path Expression
 
 This expression returns `doc["child"]["age"]`:
 ```
 {
-    "type": "property_name",
+    "type": "property_path",
     "property_path": ["child", "age"]
 }
 ```
 An optional `"datatype"` attribute may be specified, which will attempt to cast the property to the given data type. The options are "date", "datetime", "string", "integer", and "decimal". If no datatype is specified, "string" will be used.
+
 ##### Conditional Expression
 
 This expression returns `"legal" if doc["age"] > 21 else "underage"`:
@@ -143,6 +158,87 @@ Note that this expression contains other expressions inside it! This is why expr
 
 Note also that it's important to make sure that you are comparing values of the same type. In this example, the expression that retrieves the age property from the document also casts the value to an integer. If this datatype is not specified, the expression will compare a string to the `21` value, which will not produce the expected results!
 
+##### Switch Expression
+
+This expression returns the value of the expression for the case that matches the switch on expression. Note that case values may only be strings at this time.
+```json
+{
+    "type": "switch",
+    "switch_on": {
+        "type": "property_name",
+        "property_name": "district"
+    },
+    "cases": {
+        "north": {
+            "type": "constant",
+            "constant": 4000
+        },
+        "south": {
+            "type": "constant",
+            "constant": 2500
+        },
+        "east": {
+            "type": "constant",
+            "constant": 3300
+        },
+        "west": {
+            "type": "constant",
+            "constant": 65
+        },
+    },
+    "default": {
+        "type": "constant",
+        "constant": 0
+    }
+}
+```
+
+##### Array Index Expression
+
+This expression returns `doc["siblings"][0]`:
+```json
+{
+    "type": "array_index",
+    "array_expression": {
+        "type": "property_name",
+        "property_name": "siblings"
+    },
+    "index_expression": {
+        "type": "constant",
+        "constant": 0
+    }
+}
+```
+It will return nothing if the siblings property is not a list, the index isn't a number, or the indexed item doesn't exist.
+
+##### Iterator Expression
+
+```json
+{
+    "type": "iterator",
+    "expressions": [
+        {
+            "type": "property_name",
+            "property_name": "p1"
+        },
+        {
+            "type": "property_name",
+            "property_name": "p2"
+        },
+        {
+            "type": "property_name",
+            "property_name": "p3"
+        },
+    ],
+    "test": {}
+}
+```
+
+This will emit `[doc.p1, doc.p2, doc.p3]`.
+You can add a `test` attribute to filter rows from what is emitted - if you don't specify this then the iterator will include one row per expression it contains regardless of what is passed in.
+This can be used/combined with the `base_item_expression` to emit multiple rows per document.
+
+
 #### Related document expressions
 
 This can be used to lookup a property in another document. Here's an example that lets you look up `form.case.owner_id` from a form.
@@ -161,6 +257,80 @@ This can be used to lookup a property in another document. Here's an example tha
     }
 }
 ```
+
+#### Nested expressions
+
+These can be used to nest expressions. This can be used, e.g. to pull a specific property out of an item in a list of objects.
+
+The following nested expression is the equivalent of a `property_path` expression to `["outer", "inner"]` and demonstrates the functionality.
+More examples can be found in the [practical examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md).
+
+```json
+{
+    "type": "nested",
+    "argument_expression": {
+        "type": "property_name",
+        "property_name": "outer"
+    },
+    "value_expression": {
+        "type": "property_name",
+        "property_name": "inner"
+    }
+}
+```
+
+#### Dict expressions
+
+These can be used to create dictionaries of key/value pairs. This is only useful as an intermediate structure in another expression since the result of the expression is a dictionary that cannot be saved to the database.
+
+See the [practical examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md) for a way this can be used in a `base_item_expression` to emit multiple rows for a single form/case based on different properties.
+
+Here is a simple example that demonstrates the structure. The keys of `properties` must be text, and the values must be valid expressions (or constants):
+
+```json
+{
+    "type": "named",
+    "properties": {
+        "name": "a constant name",
+        "value": {
+            "type": "property_name",
+            "property_name": "prop"
+        },
+        "value2": {
+            "type": "property_name",
+            "property_name": "prop2"
+        }
+    }
+}
+```
+
+#### Named Expressions
+
+Last, but certainly not least, are named expressions.
+These are special expressions that can be defined once in a data source and then used throughout other filters and indicators in that data source.
+This allows you to write out a very complicated expression a single time, but still use it in multiple places with a simple syntax.
+
+Named expressions are defined in a special section of the data source. To reference a named expression, you just specify the type of `"named"` and the name as folllows:
+
+```json
+{
+    "type": "named",
+    "name": "my_expression"
+}
+```
+
+This assumes that your named expression section of your data source includes a snippet like the following:
+
+```json
+{
+    "my_expression": {
+        "type": "property_name",
+        "property_name": "test"
+    }
+}
+```
+
+This is just a simple example - the value that `"my_expression"` takes on can be as complicated as you want _as long as it doesn't reference any other named expressions_.
 
 ### Boolean Expression Filters
 
@@ -281,34 +451,8 @@ The following filter represents the statement: `!(doc["nationality"] == "europea
 
 ### Practical Examples
 
-Below are some practical examples showing various filter types.
+See [examples.md](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md) for some practical examples showing various filter types.
 
-#### Matching form submissions from a particular form type
-
-```
-{
-    "type": "boolean_expression",
-    "expression": {
-        "type": "property_name",
-        "property_name": "xmlns",
-    },
-    "operator": "eq",
-    "property_value": "http://openrosa.org/formdesigner/my-registration-form"
-}
-```
-#### Matching cases of a specific type
-
-```
-{
-    "type": "boolean_expression",
-    "expression": {
-        "type": "property_name",
-        "property_name": "type",
-    },
-    "operator": "eq",
-    "property_value": "child"
-}
-```
 
 ## Indicators
 
@@ -334,11 +478,12 @@ Additionally, specific indicator types have other type-specific properties. Thes
 
 The following primary indicator types are supported:
 
-Indicator Type | Description
--------------- | -----------
-boolean        | Save `1` if a filter is true, otherwise `0`.
-expression     | Save the output of an expression.
-choice_list    | Save multiple columns, one for each of a predefined set of choices
+Indicator Type  | Description
+--------------  | -----------
+boolean         | Save `1` if a filter is true, otherwise `0`.
+expression      | Save the output of an expression.
+choice_list     | Save multiple columns, one for each of a predefined set of choices
+ledger_balances | Save a column for each product specified, containing ledger data
 
 *Note/todo: there are also other supported formats, but they are just shortcuts around the functionality of these ones they are left out of the current docs.*
 
@@ -411,6 +556,40 @@ A sample spec is below:
 }
 ```
 
+#### Ledger Balance Indicators
+
+Ledger Balance indicators take a list of product codes and a ledger section,
+and produce a column for each product code, saving the value found in the
+corresponding ledger.
+
+Property            | Description
+--------------------|------------
+ledger_section      | The ledger section to use for this indicator, for example, "stock"
+product_codes       | A list of the products to include in the indicator.  This will be used in conjunction with the `column_id` to produce each column name.
+case_id_expression  | (optional) An expression used to get the case where each ledger is found.  If not specified, it will use the row's doc id.
+
+```
+{
+    "type": "ledger_balances",
+    "column_id": "soh",
+    "display_name": "Stock On Hand",
+    "ledger_section": "stock",
+    "product_codes": ["aspirin", "bandaids", "gauze"],
+    "case_id_expression": {
+        "type": "property_name",
+        "property_name": "_id"
+    }
+}
+```
+
+This spec would produce the following columns in the data source:
+
+soh_aspirin | soh_bandaids | soh_gauze
+------------|--------------|----------
+ 20         |  11          |  5
+ 67         |  32          |  9
+
+
 ### Practical notes for creating indicators
 
 These are some practical notes for how to choose what indicators to create.
@@ -419,9 +598,13 @@ These are some practical notes for how to choose what indicators to create.
 
 All indicators output single values. Though fractional indicators are common, these should be modeled as two separate indicators (for numerator and denominator) and the relationship should be handled in the report UI config layer.
 
-## Saving Repeat Data
+## Saving Multiple Rows per Case/Form
 
-You can save data from a repeatable or child element in a form by specifying a root level `base_item_expression` that describes how to get the repeat data from the main document. You can also use the `root_doc` expression type to reference parent properties. This is not described in detail, but the following sample (which creates a table off of a repeat element called "time_logs" can be used as a guide):
+You can save multiple rows per case/form by specifying a root level `base_item_expression` that describes how to get the repeat data from the main document.
+You can also use the `root_doc` expression type to reference parent properties.
+This can be combined with the `iterator` expression type to do complex data source transforms.
+This is not described in detail, but the following sample (which creates a table off of a repeat element called "time_logs" can be used as a guide).
+There are also additional examples in the [examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md):
 
 ```
 {
@@ -488,9 +671,11 @@ You can save data from a repeatable or child element in a form by specifying a r
 
 A report configuration takes data from a data source and renders it in the UI. A report configuration consists of a few different sections:
 
-1. A list of filter fields. These map to filters that show up in the UI, and should translate to queries that can be made to limit the returned data.
-2. A list of aggregation fields. These defines how indicator data will be aggregated into rows in the report. The complete list of aggregations fields forms the *primary key* of each row in the report.
-3. A list of columns. Columns define the report columns that show up from the data source, as well as any aggregation information needed.
+1. [Report Filters](#report-filters) - These map to filters that show up in the UI, and should translate to queries that can be made to limit the returned data.
+2. [Aggregation](#aggregation) - This defines what each row of the report will be. It is a list of columns forming the *primary key* of each row.
+3. [Report Columns](#report-columns) - Columns define the report columns that show up from the data source, as well as any aggregation information needed.
+4. [Charts](#charts) - Definition of charts to display on the report.
+5. [Sort Expression](#sort-expression) - How the rows in the report are ordered.
 
 ## Samples
 
@@ -500,7 +685,7 @@ Here are some sample configurations that can be used as a reference until we hav
 - [GSID form report](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/gsid/gsid-form-report.json)
 
 
-## Report filters
+## Report Filters
 
 The documentation for report filters is still in progress. Apologies for brevity below.
 
@@ -535,18 +720,40 @@ Date filters allow you filter on a date. They will show a datepicker in the UI.
   "required": false
 }
 ```
+Date filters have an optional `compare_as_string` option that allows the date
+filter to be compared against an indicator of data type `string`. You shouldn't
+ever need to use this option (make your column a `date` or `datetime` type
+instead), but it exists because the report builder needs it. 
 
 ### Dynamic choice lists
 
-Dynamic choice lists provide a select widget that shows all possible values for a column.
+Dynamic choice lists provide a select widget that will generate a list of options dynamically.
 
-```
+The default behavior is simply to show all possible values for a column, however you can also specify a `choice_provider` to customize this behavior.
+Currently the only supported `choice_provider` is for locations.
+
+Simple example assuming "village" is a name:
+```json
 {
   "type": "dynamic_choice_list",
   "slug": "village",
   "field": "village",
   "display": "Village",
   "datatype": "string"
+}
+```
+
+Example assuming "village" is a location ID, which is converted to names using the location `choice_provider`:
+```json
+{
+  "type": "dynamic_choice_list",
+  "slug": "village",
+  "field": "location_id",
+  "display": "Village",
+  "datatype": "string",
+  "choice_provider": {
+      "type": "location"
+  }
 }
 ```
 
@@ -559,15 +766,32 @@ Choice lists allow manual configuration of a fixed, specified number of choices 
   "slug": "role",
   "field": "role",
   "choices": [
-    {"value": "doctor", display:"Doctor"},
+    {"value": "doctor", "display": "Doctor"},
     {"value": "nurse"}
   ]
 }
 ```
 
+### Internationalization
+
+Report builders may specify translations for the filter display value. See the section on internationalization in the Report Column section for more information.
+```json
+{
+    "type": "choice_list",
+    "slug": "state",
+    "display": {"en": "State", "fr": "État"},
+    ...
+}
+```
+
 ## Report Columns
 
-Reports are made up of columns. There are currently three supported types of columns: _fields_ (which represent a single value), _percentages_ which combine two values in to a percent, and _expanded_ which expand a select question into multiple columns.
+Reports are made up of columns. The currently supported column types ares:
+
+* [_field_](#field-columns) which represents a single value
+* [_percent_](#percent-columns) which combines two values in to a percent
+* [_aggregate_date_](#aggregatedatecolumn) which aggregates data by month
+* [_expanded_](#expanded-columns) which expands a select question into multiple columns
 
 ### Field columns
 
@@ -617,20 +841,34 @@ Percent columns have a type of `"percent"`. They must specify a `numerator` and 
 
 The following percentage formats are supported.
 
-Format    | Description                                    | example
---------- | -----------------------------------------------| --------
-percent   | A whole number percentage (the default format) | 33%
-fraction  | A fraction                                     | 1/3
-both      | Percentage and fraction                        | 33% (1/3)
+Format          | Description                                    | example
+--------------- | -----------------------------------------------| --------
+percent         | A whole number percentage (the default format) | 33%
+fraction        | A fraction                                     | 1/3
+both            | Percentage and fraction                        | 33% (1/3)
+numeric_percent | Percentage as a number                         | 33
+decimal         | Fraction as a decimal number                   | .333
 
-#### Column IDs
 
-Column IDs in percentage fields *must be unique for the whole report*. If you use a field in a normal column and in a percent column you must assign unique `column_id` values to it in order for the report to process both.
+### AggregateDateColumn
+
+AggregateDate columns allow for aggregating data by month over a given date field.  They have a type of `"aggregate_date"`. Unlike regular fields, you do not specify how aggregation happens, it is automatically grouped by month.
+
+Here's an example of an aggregate date column that aggregates the `received_on` property for each month (allowing you to count/sum things that happened in that month).
+
+```json
+ {
+    "column_id": "received_on",
+    "field": "received_on",
+    "type": "aggregate_date",
+    "display": "Month"
+  }
+```
 
 
 ### Expanded Columns
 
-Expanded columns have a type of `"expanded"`. Expanded columns will be "expanded" into a new column for each distinct value in this column of the data source. The maximum expansion is to 10 columns. For example:
+Expanded columns have a type of `"expanded"`. Expanded columns will be "expanded" into a new column for each distinct value in this column of the data source. For example:
 
 If you have a data source like this:
 ```
@@ -674,15 +912,95 @@ Then you will get a report like this:
 +----------+----------------------+----------------------+
 ```
 
-### Aggregation
+Expanded columns have an optional parameter `"max_expansion"` (defaults to 10) which limits the number of columns that can be created.  WARNING: Only override the default if you are confident that there will be no adverse performance implications for the server.
 
-TODO: finish aggregation docs
 
-### Transforms
+### The "aggregation" column property
 
-Transforms can be used to transform the value returned by a column just before it reaches the user. Currently there are four supported transform types. These are shown below:
+The aggregation column property defines how the column should be aggregated. If the report is not doing any aggregation, or if the column is one of the aggregation columns this should always be `"simple"` (see [Aggregation](#aggregation) below for more information on aggregation).
 
-#### Displaying username instead of user ID
+The following table documents the other aggregation options, which can be used in aggregate reports.
+
+Format          | Description
+--------------- | -----------------------------------------------
+simple          | No aggregation
+avg             | Average (statistical mean) of the values
+count_unique    | Count the unique values found
+count           | Count all rows
+min             | Choose the minimum value
+max             | Choose the maximum value
+sum             | Sum the values
+
+#### Column IDs
+
+Column IDs in percentage fields *must be unique for the whole report*. If you use a field in a normal column and in a percent column you must assign unique `column_id` values to it in order for the report to process both.
+
+
+### Calculating Column Totals
+
+To sum a column and include the result in a totals row at the bottom of the report, set the `calculate_total` value in the column configuration to `true`.
+
+### Internationalization
+Report columns can be translated into multiple languages. To specify translations
+for a column header, use an object as the `display` value in the configuration
+instead of a string. For example:
+```
+{
+    "type": "field",
+    "field": "owner_id",
+    "column_id": "owner_id",
+    "display": {
+        "en": "Owner Name",
+        "he": "שם"
+    },
+    "format": "default",
+    "transform": {
+        "type": "custom",
+        "custom_type": "owner_display"
+    },
+    "aggregation": "simple"
+}
+```
+The value displayed to the user is determined as follows:
+- If a display value is specified for the users language, that value will appear in the report.
+- If the users language is not present, display the `"en"` value.
+- If `"en"` is not present, show an arbitrary translation from the `display` object.
+- If `display` is a string, and not an object, the report shows the string.
+
+Valid `display` languages are any of the two or three letter language codes available on the user settings page.
+
+
+## Aggregation
+
+Aggregation in reports is done using a list of columns to aggregate on.
+This defines how indicator data will be aggregated into rows in the report.
+The columns represent what will be grouped in the report, and should be the `column_id`s of valid report columns.
+In most simple reports you will only have one level of aggregation. See examples below.
+
+### No aggregation
+
+```json
+["doc_id"]
+```
+
+### Aggregate by 'username' column
+
+```json
+["username"]
+```
+
+### Aggregate by two columns
+
+```json
+["column1", "column2"]
+```
+
+## Transforms
+
+Transforms can be used in two places - either to manipulate the value of a column just before it gets saved to a data source, or to transform the value returned by a column just before it reaches the user in a report.
+The currently supported transform types are shown below:
+
+### Displaying username instead of user ID
 
 ```
 {
@@ -691,7 +1009,7 @@ Transforms can be used to transform the value returned by a column just before i
 }
 ```
 
-#### Displaying username minus @domain.commcarehq.org instead of user ID
+### Displaying username minus @domain.commcarehq.org instead of user ID
 
 ```
 {
@@ -700,7 +1018,7 @@ Transforms can be used to transform the value returned by a column just before i
 }
 ```
 
-#### Displaying owner name instead of owner ID
+### Displaying owner name instead of owner ID
 
 ```
 {
@@ -709,7 +1027,7 @@ Transforms can be used to transform the value returned by a column just before i
 }
 ```
 
-#### Displaying month name instead of month index
+### Displaying month name instead of month index
 
 ```
 {
@@ -718,11 +1036,31 @@ Transforms can be used to transform the value returned by a column just before i
 }
 ```
 
-# Charts
+### Rounding decimals
+Rounds decimal and floating point numbers to two decimal places.
+
+```
+{
+    "type": "custom",
+    "custom_type": "short_decimal_display"
+}
+```
+
+### Date formatting
+Formats dates with the given format string. See [here](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior) for an explanation of format string behavior.
+If there is an error formatting the date, the transform is not applied to that value.
+```
+{
+   "type": "date_format", 
+   "format": "%Y-%m-%d %H:%M"
+}
+```
+
+## Charts
 
 There are currently three types of charts supported. Pie charts, and two types of bar charts.
 
-## Pie charts
+### Pie charts
 
 A pie chart takes two inputs and makes a pie chart. Here are the inputs:
 
@@ -743,7 +1081,7 @@ Here's a sample spec:
 }
 ```
 
-## Aggregate multibar charts
+### Aggregate multibar charts
 
 An aggregate multibar chart is used to aggregate across two columns (typically both of which are select questions). It takes three inputs:
 
@@ -765,14 +1103,14 @@ Here's a sample spec:
 }
 ```
 
-## Multibar charts
+### Multibar charts
 
-A multibar chart takes a single x-axis column (typically a select questions) and any number of y-axis columns (typically indicators or counts) and makes a bar chart from them.
+A multibar chart takes a single x-axis column (typically a user, date, or select question) and any number of y-axis columns (typically indicators or counts) and makes a bar chart from them.
 
 Field          | Description
 ---------------| -----------------------------------------------
 x_axis_column  | This will be the x-axis on the chart.
-y_axis_columns | These are the columns to use for the secondary axis. These will be the slices of the bar (or individual bars in "grouped" format)
+y_axis_columns | These are the columns to use for the secondary axis. These will be the slices of the bar (or individual bars in "grouped" format).
 
 Here's a sample spec:
 
@@ -782,10 +1120,35 @@ Here's a sample spec:
     "title": "HIV Mismatch by Clinic",
     "x_axis_column": "clinic",
     "y_axis_columns": [
-        "diagnoses_match_no",
-        "diagnoses_match_yes"
+        {
+            "column_id": "diagnoses_match_no",
+            "display": "No match"
+        },
+        {
+            "column_id": "diagnoses_match_yes",
+            "display": "Match"
+        }
     ]
 }
+```
+
+## Sort Expression
+
+A sort order for the report rows can be specified. Multiple fields, in either ascending or descending order, may be specified. Example:
+
+Field should refer to report column IDs, not database fields.
+
+```
+[
+  {
+    "field": "district", 
+    "order": "DESC"
+  }, 
+  {
+    "field": "date_of_data_collection", 
+    "order": "ASC"
+  }
+]
 ```
 
 # Export
@@ -868,13 +1231,36 @@ They conform to a slightly different style:
 }
 ```
 
-Having defined the data source you need to add the path to the data source file to the `CUSTOM_DATA_SOURCES`
-setting in `settings.py`. Now when the `CustomDataSourcePillow` is run it will pick up the data source
+Having defined the data source you need to add the path to the data source file to the `STATIC_DATA_SOURCES`
+setting in `settings.py`. Now when the `StaticDataSourcePillow` is run it will pick up the data source
 and rebuild it.
 
 Changes to the data source require restarting the pillow which will rebuild the SQL table. Alternately you
 can use the UI to rebuild the data source (requires Celery to be running).
 
+
+## Static configurable reports
+
+Configurable reports can also be defined in the source repository.  Static configurable reports have
+the following style:
+```
+{
+    "domains": ["my-domain"],
+    "data_source_table": "my_table",
+    "report_id": "my-report",
+    "config": {
+        ... put the normal report configuration here
+    }
+}
+```
+
+## Custom configurable reports
+
+Sometimes a client's needs for a rendered report are outside of the scope of the framework.  To render
+the report using a custom Django template or with custom Excel formatting, define a subclass of
+`ConfigurableReport` and override the necessary functions.  Then include the python path to the class
+in the field `custom_configurable_report` of the static report and don't forget to include the static
+report in `STATIC_DATA_SOURCES` in `settings.py`.
 
 ## Extending User Configurable Reports
 
@@ -893,6 +1279,13 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor'),
 ]
 ```
+
+Following are some custom expressions that are currently available.
+
+- `location_type_name`:  A way to get location type from a location document id.
+- `location_parent_id`:  A shortcut to get a location's parent ID a location id.
+
+You can find examples of these in [practical examples](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md).
 
 ## Inspecting database tables
 

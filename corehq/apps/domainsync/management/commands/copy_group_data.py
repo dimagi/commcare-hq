@@ -2,13 +2,14 @@ import logging
 from optparse import make_option
 from couchdbkit import Database, BulkSaveError
 from django.core.management.base import LabelCommand, CommandError
-import itertools
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
 from corehq.apps.domain.models import Domain
 from corehq.apps.domainsync.config import DocumentTransform, save
 from corehq.apps.groups.models import Group
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.users.models import CouchUser, UserRole
+from corehq.util.couch_helpers import OverrideDB
 from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 
@@ -39,6 +40,12 @@ class Command(LabelCommand):
                 raise
 
     def handle(self, *args, **options):
+        raise CommandError(
+            'copy_group_data is currently broken. '
+            'Ask Danny or Ethan to fix it along the lines of '
+            'https://github.com/dimagi/commcare-hq/pull/9180/files#diff-9d976dc051a36a028c6604581dfbce5dR95'
+        )
+
         if len(args) != 2:
             raise CommandError('Usage is copy_group_data %s' % self.args)
 
@@ -62,25 +69,12 @@ class Command(LabelCommand):
         if not exclude_user_owned:
             owners.extend(group.users)
 
-        def keys_for_owner(domain, owner_id):
-            return [
-                [domain, owner_id, False],
-                [domain, owner_id, True],
-            ]
-
-        def get_case_ids(owners):
-            keys = list(itertools.chain(*[keys_for_owner(domain.name, owner_id) for owner_id in owners]))
-            results = sourcedb.view(
-                'hqcase/by_owner',
-                keys=keys,
-                reduce=False,
-                include_docs=False,
-            )
-            return [res['id'] for res in results]
-
         print 'getting case ids'
 
-        case_ids = get_case_ids(owners)
+        with OverrideDB(CommCareCase, sourcedb):
+            case_ids = get_case_ids_in_domain_by_owner(
+                domain.name, owner_id__in=owners)
+
         xform_ids = set()
 
         print 'copying %s cases' % len(case_ids)

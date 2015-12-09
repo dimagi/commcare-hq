@@ -247,6 +247,7 @@ class CommCareMultimedia(SafeSaveDocument):
             'CommCareImage': CommCareImage,
             'CommCareAudio': CommCareAudio,
             'CommCareVideo': CommCareVideo,
+            'CommCareMultimedia': CommCareMultimedia,
         }[doc_type]
 
     @classmethod
@@ -399,19 +400,9 @@ class HQMediaMapItem(DocumentSchema):
     version = IntegerProperty()
     unique_id = StringProperty()
 
-    @staticmethod
-    def format_match_map(path, media_type=None, media_id=None, upload_path=""):
-        """
-            This method is deprecated. Use CommCareMultimedia.get_media_info instead.
-        """
-        # todo cleanup references to this method
-        return {
-            "path": path,
-            "uid": path.replace('jr://','').replace('/', '_').replace('.', '_'),
-            "m_id": media_id if media_id else "",
-            "url": reverse("hqmedia_download", args=[media_type, media_id]) if media_id else "",
-            "upload_path": upload_path
-        }
+    @property
+    def url(self):
+        return reverse("hqmedia_download", args=[self.media_type, self.multimedia_id]) if self.multimedia_id else ""
 
     @classmethod
     def gen_unique_id(cls, m_id, path):
@@ -520,46 +511,39 @@ class HQMediaMixin(Document):
         self.media_form_errors = False
 
         def _add_menu_media(item, **kwargs):
-            if item.media_image:
-                media.append(ApplicationMediaReference(item.media_image,
-                                                       media_class=CommCareImage,
-                                                       is_menu_media=True, **kwargs))
-            if item.media_audio:
-                media.append(ApplicationMediaReference(item.media_audio,
-                                                       media_class=CommCareAudio,
-                                                       is_menu_media=True, **kwargs))
+            media.extend([ApplicationMediaReference(image,
+                                                    media_class=CommCareImage,
+                                                    is_menu_media=True, **kwargs)
+                          for image in item.all_image_paths()
+                          if image])
 
+            media.extend([ApplicationMediaReference(audio,
+                                                    media_class=CommCareAudio,
+                                                    is_menu_media=True, **kwargs)
+                          for audio in item.all_audio_paths()
+                          if audio])
 
-        for m, module in enumerate(self.get_modules()):
+        for m, module in enumerate(filter(lambda m: m.uses_media(), self.get_modules())):
             media_kwargs = {
                 'module_name': module.name,
                 'module_id': m,
                 'app_lang': self.default_language,
             }
             _add_menu_media(module, **media_kwargs)
-            if module.case_list_form.form_id:
-                media.append(ApplicationMediaReference(
-                    module.case_list_form.media_audio,
-                    media_class=CommCareAudio,
-                    **media_kwargs)
-                )
-                media.append(ApplicationMediaReference(
-                    module.case_list_form.media_image,
-                    media_class=CommCareImage,
-                    **media_kwargs)
-                )
 
-            if module.case_list.show:
-                media.append(ApplicationMediaReference(
-                    module.case_list.media_audio,
-                    media_class=CommCareAudio,
-                    **media_kwargs)
-                )
-                media.append(ApplicationMediaReference(
-                    module.case_list.media_image,
-                    media_class=CommCareImage,
-                    **media_kwargs)
-                )
+            for name, details, display in module.get_details():
+                if display and details.display == 'short' and details.lookup_enabled and details.lookup_image:
+                    media.append(ApplicationMediaReference(
+                        details.lookup_image,
+                        media_class=CommCareImage,
+                        **media_kwargs)
+                    )
+
+            if module.case_list_form.form_id:
+                _add_menu_media(module.case_list_form, **media_kwargs)
+
+            if hasattr(module, 'case_list') and module.case_list.show:
+                _add_menu_media(module.case_list, **media_kwargs)
 
             for f_order, f in enumerate(module.get_forms()):
                 media_kwargs['form_name'] = f.name
@@ -580,38 +564,62 @@ class HQMediaMixin(Document):
                     for video in parsed.video_references:
                         if video:
                             media.append(ApplicationMediaReference(video, media_class=CommCareVideo, **media_kwargs))
+                    for text in parsed.text_references:
+                        if text:
+                            media.append(ApplicationMediaReference(text, media_class=CommCareMultimedia, **media_kwargs))
                 except (XFormValidationError, XFormException):
                     self.media_form_errors = True
         return media
 
-    def get_menu_media(self, module, module_index, form=None, form_index=None):
+    def get_menu_media(self, module, module_index, form=None, form_index=None, to_language=None):
         if not module:
             # user_registration isn't a real module, for instance
             return {}
         media_kwargs = self.get_media_ref_kwargs(
             module, module_index, form=form, form_index=form_index,
             is_menu_media=True)
+        media_kwargs.update(to_language=to_language or self.default_language)
         item = form or module
         return self._get_item_media(item, media_kwargs)
 
-    def get_case_list_form_media(self, module, module_index):
+    def get_case_list_form_media(self, module, module_index, to_language=None):
         if not module:
             # user_registration isn't a real module, for instance
             return {}
         media_kwargs = self.get_media_ref_kwargs(module, module_index)
+        media_kwargs.update(to_language=to_language or self.default_language)
         return self._get_item_media(module.case_list_form, media_kwargs)
 
-    def get_case_list_menu_item_media(self, module, module_index):
-        if not module:
+    def get_case_list_menu_item_media(self, module, module_index, to_language=None):
+        if not module or not module.uses_media() or not hasattr(module, 'case_list'):
             # user_registration isn't a real module, for instance
             return {}
         media_kwargs = self.get_media_ref_kwargs(module, module_index)
+        media_kwargs.update(to_language=to_language or self.default_language)
         return self._get_item_media(module.case_list, media_kwargs)
+
+    def get_case_list_lookup_image(self, module, module_index, type='case'):
+        if not module:
+            return {}
+        media_kwargs = self.get_media_ref_kwargs(module, module_index)
+        details_name = '{}_details'.format(type)
+        if not hasattr(module, details_name):
+            return {}
+
+        image = ApplicationMediaReference(
+            module[details_name].short.lookup_image,
+            media_class=CommCareImage,
+            **media_kwargs
+        ).as_dict()
+        return {
+            'image': image
+        }
 
     def _get_item_media(self, item, media_kwargs):
         menu_media = {}
+        to_language = media_kwargs.pop('to_language', self.default_language)
         image_ref = ApplicationMediaReference(
-            item.media_image,
+            item.icon_by_language(to_language),
             media_class=CommCareImage,
             **media_kwargs
         )
@@ -619,7 +627,7 @@ class HQMediaMixin(Document):
         menu_media['image'] = image_ref
 
         audio_ref = ApplicationMediaReference(
-            item.media_audio,
+            item.audio_by_language(to_language),
             media_class=CommCareAudio,
             **media_kwargs
         )
@@ -747,65 +755,17 @@ class HQMediaMixin(Document):
             if not media or (not media.is_shared and self.domain not in media.owners):
                 del self.multimedia_map[path]
 
-    def get_media_references(self, request=None):
-        """
-            DEPRECATED METHOD: Use self.all_media instead.
-            Use this to check all Application media against the stored multimedia_map.
-        """
-        #todo this should get updated to use self.all_media
-        from corehq.apps.app_manager.models import Application
-        if not isinstance(self, Application):
-            raise NotImplementedError("Sorry, this method is only supported for CommCare HQ Applications.")
+    def check_media_state(self):
+        has_missing_refs = False
 
-        from corehq.apps.hqmedia.utils import get_application_media
-        all_media, form_errors = get_application_media(self)
-
-        # Because couchdbkit is terrible?
-        multimedia_map = self.multimedia_map
-
-        missing_refs = False
-
-        references = {}
-        for section, media in all_media.items():
-            references[section] = {}
-            for media_type, paths in media.items():
-                maps = []
-                missing = 0
-                matched = 0
-                errors = 0
-                for path in paths:
-                    match_map = None
-                    try:
-                        media_item = multimedia_map[path]
-                        match_map = HQMediaMapItem.format_match_map(path,
-                            media_item.media_type, media_item.multimedia_id)
-                        matched += 1
-                    except KeyError:
-                        match_map = HQMediaMapItem.format_match_map(path)
-                        missing += 1
-                    except AttributeError:
-                        errors += 1
-                        if request:
-                            messages.error(request, _("Encountered an AttributeError for media: %s" % path))
-                    except UnicodeEncodeError:
-                        errors += 1
-                        if request:
-                            messages.error(request, _("This application has unsupported text in one "
-                                                      "of it's media file label fields: %s" % path))
-                    if match_map:
-                        maps.append(match_map)
-                    if errors > 0 or missing > 0:
-                        missing_refs = True
-
-                references[section][media_type] = {
-                    'maps': maps,
-                    'missing': missing,
-                    'matched': matched,
-                    'errors': errors,
-                }
+        for media in self.all_media:
+            try:
+                self.multimedia_map[media.path]
+            except KeyError:
+                has_missing_refs = True
 
         return {
-            "references": references,
-            "form_errors": form_errors,
-            "missing_refs": missing_refs,
+            "has_media": bool(self.all_media),
+            "has_form_errors": self.media_form_errors,
+            "has_missing_refs": has_missing_refs,
         }

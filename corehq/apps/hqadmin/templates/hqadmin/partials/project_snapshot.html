@@ -1,4 +1,4 @@
-<h3>Current Build :: {{ snapshot.current_branch }}</h3>
+<h3>Current Build :: {{ snapshot.current_branch }}{% if snapshot.diff_url %} (<a href="{{ snapshot.diff_url }}">changelog</a>){% endif %}</h3>
 <div>
     <h4>Last Commits</h4>
     {% with snapshot.commits as commits %}

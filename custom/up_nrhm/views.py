@@ -16,5 +16,5 @@ def asha_af_report(request, domain):
     )
     return HttpResponse(
         json.dumps(report.rows),
-        mimetype='application/json'
+        content_type='application/json'
     )

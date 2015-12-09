@@ -1,0 +1,31 @@
+{
+    "domains": ["example", "dimagi"],
+    "data_source_table": "all_candidates",
+    "report_id": "a-custom-report",
+    "config": {
+        "doc_type":"ReportConfiguration",
+        "description":"",
+        "title":"Custom Title",
+        "filters":[],
+        "report_meta":{
+            "doc_type":"ReportMeta",
+            "builder_report_type":null,
+            "created_by_builder":false
+        },
+        "visible":true,
+        "aggregation_columns":[
+        ],
+        "columns":[
+            {
+                "description":null,
+                "field":"name",
+                "format":"default",
+                "column_id":"name",
+                "alias":null,
+                "type":"field",
+                "display":"name",
+                "aggregation":"simple"
+            }
+        ]
+    }
+}

@@ -12,7 +12,7 @@ To change your subscription, please log into your project on
 settings: {{ subscription_url }}
 
 If you have questions about our pricing plans, you can review them here:
-http://www.commcarehq.org/software-plans/
+https://www.commcarehq.org/pricing/
 
 Thank you for your use and support of {{ product }}.
 

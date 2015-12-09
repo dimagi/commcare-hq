@@ -44,17 +44,19 @@ $.fn.inlineTouchform = function (options) {
                     });
                 },
                 onerror: function (resp) {
-                    $target.html(alertHtml(resp.message, 'alert-error'));
+                    $target.html(alertHtml(
+                        resp.human_readable_message || resp.message || 'An unexpected error occurred!',
+                        'alert-danger'
+                    ));
                 },
                 onload: function (adapter, resp) {
                     options.onload();
                 }
             });
+            data.onLoading = onLoading;
+            data.onLoadingComplete = onLoadingComplete;
             var sess = new WebFormSession(data);
-            sess.load($target, options.lang, {
-                onLoading: onLoading,
-                onLoadingComplete: onLoadingComplete
-            });
+            sess.load($target, options.lang);
         }
     });
 };

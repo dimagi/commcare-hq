@@ -7,8 +7,10 @@ register = template.Library()
 LANG_BUTTON = ' <span style="color: #FFFFFF; text-decoration:none;" class="btn btn-mini btn-inverse btn-langcode-preprocessed%(extra_class)s">%(lang)s</span>'
 EMPTY_LABEL = '<span class="label label-info">Empty</span>'
 
+
 @register.simple_tag
-def translate(t, lang, langs=[]):
+def translate(t, lang, langs=None):
+    langs = langs or []
     for lang in [lang] + langs:
         if lang in t:
             return t[lang]
@@ -43,7 +45,9 @@ def html_name(name):
 
 
 @register.simple_tag
-def input_trans(name, langs=["default"], input_name='name'):
+def input_trans(name, langs=None, input_name='name'):
+    if langs is None:
+        langs = ["default"]
     template = '<input type="text" name="{}" value="%(value)s" placeholder="%(placeholder)s" />'.format(input_name)
     for lang in langs:
         if lang in name:

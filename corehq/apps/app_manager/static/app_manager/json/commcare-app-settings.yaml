@@ -75,23 +75,11 @@
   since: "2.0"
   permission: "cloudcare"
 
-- id: commtrack_enabled
-  name: "CommCare Supply"
-  description: 'Enable CommCare Supply'
-  description_format: html
-  widget: bool
-  default: false
-#  contingent_default: [{"condition": "{$parent.commtrack_enabled}=true", "value": "true"}]
-  requires: "{$parent.commtrack_enabled}=true"
-  hide_if_not_enabled: true
-  since: "2.0"
-  preview: true
-
 - id: commtrack_requisition_mode
   name: "CommCare Supply Requisition Mode"
   description: "CommCare Supply Requisition Mode"
   description_format: html
-  requires: "{hq.commtrack_enabled}=true"
+  requires: "{$parent.commtrack_enabled}=true"
   values: ['disabled', '3-step', '4-step']
   value_names:
    - "Disable Requisitions"
@@ -158,8 +146,8 @@
   since: '2.14'
 
 - id: amplifies_workers
-  name: 'Amplifies Workers'
-  description: 'Amplifies the impact of services offered by a Frontline Worker. Examples: an FLW who uses CommCare to improve counseling and screening of pregnant women. An FLW that uses CommCare Supply to increase their supply of medicines. A nurse who uses CommCare to implement protocols.'
+  name: 'Service Delivery App'
+  description: "This application is used for service delivery. Examples: An FLW who uses CommCare to improve counseling and screening of pregnant women. An FLW that uses CommCare Supply to improve their supply of medicines. A teacher who uses CommCare to assess and improve students' performance."
   values: ['yes', 'no', 'not_set']
   value_names:
    - 'Yes'
@@ -170,7 +158,7 @@
 
 - id: amplifies_project
   name: 'Amplifies Project'
-  description: 'Amplifies the impact of a Frontline Program (FLP). Examples: programs that use M&E data collected by CommCare. Programs that use CommCare data to make programmatic decisions.'
+  description: 'Amplifies the impact of a Frontline Program (FLP). Examples: Programs that use M&E data collected by CommCare. Programs that use CommCare data to make programmatic decisions.'
   values: ['yes', 'no', 'not_set']
   value_names:
    - 'Yes'
@@ -178,3 +166,27 @@
    - 'Not Set'
   default: 'not_set'
   preview: true
+
+- id: use_grid_menus
+  name: Use Menu Grids
+  description: Display root menu as a grid instead of a list.
+  widget: bool
+  default: false
+  since: "2.24"
+  toggle: GRID_MENUS
+
+- id: minimum_use_threshold
+  name: 'Minimum Use Threshold'
+  description: 'This field indicates the minimum number of forms in this application that a user should submit monthly in order to be considered using sufficiently to generate a WAM. The default value is 15. Please see <a href="https://confluence.dimagi.com/display/internal/WAMs+and+PAMs">confluence</a> or the data team for further clarification.'
+  widget: number
+  preview: true
+  warning: 'The minimum use threshold must be between 1 and 100'
+  min_value: 1
+  max_value: 100
+
+- id: comment
+  name: 'Comment'
+  description: >
+    A comment to document or explain this application for other app builders or maintainers.
+  default: ''
+  widget: textarea

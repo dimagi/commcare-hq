@@ -5,11 +5,10 @@ from django.test.utils import override_settings
 from casexml.apps.case.xml import V3
 from casexml.apps.phone.tests.utils import generate_restore_payload
 from corehq.apps.domain.models import Domain
-from couchforms.tests.testutils import post_xform_to_couch
+from corehq.apps.receiverwrapper import submit_form_locally
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
-from casexml.apps.case.xform import process_cases
 from casexml.apps.phone.models import SyncLog
-from casexml.apps.phone.restore import StringRestoreResponse
+from casexml.apps.phone.restore import FileRestoreResponse
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user
 
 
@@ -18,6 +17,7 @@ class OtaV3RestoreTest(TestCase):
     """Tests OTA Restore v3"""
 
     def setUp(self):
+        self.domain = 'dummy-project'
         delete_all_cases()
         delete_all_sync_logs()
 
@@ -25,8 +25,7 @@ class OtaV3RestoreTest(TestCase):
         file_path = os.path.join(os.path.dirname(__file__), "data", "create_short.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = post_xform_to_couch(xml_data)
-        process_cases(form)
+        submit_form_locally(xml_data, self.domain)
 
         expected_case_block = """
         <case case_id="asdf" date_modified="2010-06-29T13:42:50.000000Z" user_id="foo"
@@ -42,7 +41,7 @@ class OtaV3RestoreTest(TestCase):
         </case>"""
 
         restore_payload = generate_restore_payload(
-            project=Domain(name='dummy-project'),
+            project=Domain(name=self.domain),
             user=dummy_user(),
             items=True,
             version=V3
@@ -77,7 +76,7 @@ class TestRestoreResponse(SimpleTestCase):
         user = 'user1'
         body = '<elem>data0</elem>'
         expected = self._expected(user, body, items=None)
-        with StringRestoreResponse(user, False) as response:
+        with FileRestoreResponse(user, False) as response:
             response.append(body)
             response.finalize()
             self.assertEqual(expected, str(response))
@@ -86,7 +85,7 @@ class TestRestoreResponse(SimpleTestCase):
         user = 'user1'
         body = '<elem>data0</elem>'
         expected = self._expected(user, body, items=2)
-        response = StringRestoreResponse(user, True)
+        response = FileRestoreResponse(user, True)
         response.append(body)
         response.finalize()
         self.assertEqual(expected, str(response))
@@ -96,10 +95,10 @@ class TestRestoreResponse(SimpleTestCase):
         body1 = '<elem>data0</elem>'
         body2 = '<elem>data1</elem>'
         expected = self._expected(user, body1 + body2, items=3)
-        response1 = StringRestoreResponse(user, True)
+        response1 = FileRestoreResponse(user, True)
         response1.append(body1)
 
-        response2 = StringRestoreResponse(user, True)
+        response2 = FileRestoreResponse(user, True)
         response2.append(body2)
 
         added = response1 + response2

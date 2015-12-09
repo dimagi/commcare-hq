@@ -13,6 +13,7 @@ OUTBOUND_RETRIES = getattr(settings, "IVR_OUTBOUND_RETRIES",
 OUTBOUND_RETRY_INTERVAL = getattr(settings, "IVR_OUTBOUND_RETRY_INTERVAL",
     DEFAULT_OUTBOUND_RETRY_INTERVAL)
 
+
 @task(ignore_result=True)
 def initiate_outbound_call(*args, **kwargs):
     retry_num = kwargs.pop("retry_num", 0)
@@ -29,4 +30,3 @@ def initiate_outbound_call(*args, **kwargs):
             kwargs["retry_num"] = retry_num + 1
             initiate_outbound_call.apply_async(args=args, kwargs=kwargs,
                 countdown=(60*OUTBOUND_RETRY_INTERVAL))
-

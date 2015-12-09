@@ -1,7 +1,7 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from django import forms
-from django_countries.countries import COUNTRIES
+from django_countries.data import COUNTRIES
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import INCOMING, OUTGOING
@@ -16,7 +16,8 @@ class PublicSMSRateCalculatorForm(forms.Form):
         super(PublicSMSRateCalculatorForm, self).__init__(*args, **kwargs)
 
         isd_codes = []
-        for country_shortcode, country_name in COUNTRIES:
+        countries = sorted(COUNTRIES.items(), key=lambda x: x[1].encode('utf-8'))
+        for country_shortcode, country_name in countries:
             country_isd_code = country_code_for_region(country_shortcode)
             isd_codes.append((country_isd_code, country_name))
 

@@ -1,12 +1,14 @@
-from sqlagg.base import CustomQueryColumn, QueryMeta
+from sqlagg.base import CustomQueryColumn, QueryMeta, AliasColumn, TableNotFoundException
 from sqlagg.columns import CountUniqueColumn, SumWhen, SimpleColumn
 from sqlagg.filters import BETWEEN, EQ, LTE
 import sqlalchemy
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
-from corehq.apps.userreports.models import CustomDataSourceConfiguration
+from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
+from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.sql import get_table_name, get_indicator_table
+from django.utils.translation import ugettext as _
 
 TABLE_ID = 'asha_facilitators'
+DOMAIN = 'up-nrhm'
 
 
 class FunctionalityChecklistMeta(QueryMeta):
@@ -46,10 +48,17 @@ class FunctionalityChecklistMeta(QueryMeta):
         self.columns.append(column.sql_column)
 
     def get_asha_table(self, metadata):
-        config = CustomDataSourceConfiguration.by_id(CustomDataSourceConfiguration.get_doc_id(TABLE_ID))
+        config = StaticDataSourceConfiguration.by_id(
+            StaticDataSourceConfiguration.get_doc_id(DOMAIN, TABLE_ID)
+        )
         return get_indicator_table(config, custom_metadata=metadata)
 
     def execute(self, metadata, connection, filter_values):
+        try:
+            table = metadata.tables[self.table_name]
+        except KeyError:
+            raise TableNotFoundException("Unable to query table, table not found: %s" % self.table_name)
+
         asha_table = self.get_asha_table(metadata)
 
         max_date_query = sqlalchemy.select([
@@ -59,7 +68,7 @@ class FunctionalityChecklistMeta(QueryMeta):
 
         if self.filters:
             for filter in self.filters:
-                max_date_query.append_whereclause(filter.build_expression())
+                max_date_query.append_whereclause(filter.build_expression(table))
 
         max_date_query.append_group_by(
             asha_table.c.case_id
@@ -127,7 +136,7 @@ class ASHAFacilitatorsData(SqlData):
     def columns(self):
         return [
             DatabaseColumn(
-                "Total number of ASHAs under the Facilitator",
+                _("Total number of ASHAs under the Facilitator"),
                 CountUniqueColumn(
                     "case_id",
                     filters=[EQ('owner_id', 'af'), LTE('registration_date', 'enddate')],
@@ -135,59 +144,67 @@ class ASHAFacilitatorsData(SqlData):
                 )
             ),
             DatabaseColumn(
-                "Total number of ASHAs for whom functionality checklist was filled",
+                _("Total number of ASHAs for whom functionality checklist was filled"),
                 FunctionalityChecklistColumn(
                     whens={'{} IS NOT NULL'.format(self._qualify_column('case_id')): 1},
                     alias="total_ashas_checklist"
                 )
             ),
             DatabaseColumn(
-                "Newborn visits within first day of birth in case of home deliveries",
+                _("Newborn visits within first day of birth in case of home deliveries"),
                 FunctionalityChecklistColumn('hv_fx_home_birth_visits', whens={1: 1}),
             ),
             DatabaseColumn(
-                "Set of home visits for newborn care as specified in the HBNC guidelines<br/>"
-                "(six visits in case of Institutional delivery and seven in case of a home delivery)",
+                _("Set of home visits for newborn care as specified in the HBNC guidelines<br/>"
+                "(six visits in case of Institutional delivery and seven in case of a home delivery)"),
                 FunctionalityChecklistColumn('hv_fx_newborns_visited', whens={1: 1}),
             ),
             DatabaseColumn(
-                "Attending VHNDs/Promoting immunization",
+                _("Attending VHNDs/Promoting immunization"),
                 FunctionalityChecklistColumn('hv_fx_vhnd', whens={1: 1}),
             ),
             DatabaseColumn(
-                "Supporting institutional delivery",
+                _("Supporting institutional delivery"),
                 FunctionalityChecklistColumn('hv_fx_support_inst_delivery', whens={1: 1}),
             ),
             DatabaseColumn(
-                "Management of childhood illness - especially diarrhea and pneumonia",
+                _("Management of childhood illness - especially diarrhea and pneumonia"),
                 FunctionalityChecklistColumn('hv_fx_child_illness_mgmt', whens={1: 1}),
             ),
             DatabaseColumn(
-                "Household visits with nutrition counseling",
+                _("Household visits with nutrition counseling"),
                 FunctionalityChecklistColumn('hv_fx_nut_counseling', whens={1: 1}),
             ),
             DatabaseColumn(
-                "Fever cases seen/malaria slides made in malaria endemic area",
+                _("Fever cases seen/malaria slides made in malaria endemic area"),
                 FunctionalityChecklistColumn('hv_fx_malaria', whens={1: 1}),
             ),
             DatabaseColumn(
-                "Acting as DOTS provider",
+                _("Acting as DOTS provider"),
                 FunctionalityChecklistColumn('hv_fx_dots', whens={1: 1}),
             ),
             DatabaseColumn(
-                "Holding or attending village/VHSNC meeting",
+                _("Holding or attending village/VHSNC meeting"),
                 FunctionalityChecklistColumn('hv_fx_vhsnc', whens={1: 1}),
             ),
             DatabaseColumn(
-                "Successful referral of the IUD, "
-                "female sterilization or male sterilization cases and/or providing OCPs/Condoms",
+                _("Successful referral of the IUD, "
+                "female sterilization or male sterilization cases and/or providing OCPs/Condoms"),
                 FunctionalityChecklistColumn('hv_fx_fp', whens={1: 1}),
             ),
-            DatabaseColumn(
-                "<b>Total number of ASHAs who are functional on at least 6/10 tasks</b>",
-                FunctionalityChecklistColumn(
-                    whens={'hv_percent_functionality >= 60': 1},
-                    alias='percent_functionality'),
+            AggregateColumn(
+                _("<b>Total number of ASHAs who are functional on at least %s of the tasks</b>") % "60%",
+                aggregate_fn=lambda x, y: {
+                    'sort_key': ((x or 0) * 100 / (y or 1)),
+                    'html': '{0}/{1} ({2}%)'.format((x or 0), y, ((x or 0) * 100 / (y or 1)))
+                },
+                columns=[
+                    FunctionalityChecklistColumn(
+                        whens={'hv_percent_functionality >= 60': 1},
+                        alias='percent_functionality'),
+                    AliasColumn('total_ashas')
+                ],
+                format_fn=lambda x: x
             ),
         ]
 
@@ -210,9 +227,9 @@ class ASHAFunctionalityChecklistData(SqlData):
     @property
     def columns(self):
         return [
-            DatabaseColumn("Total number of ASHAs under the Facilitator", SimpleColumn("doc_id",)),
-            DatabaseColumn("ASHA name", SimpleColumn("hv_asha_name",)),
-            DatabaseColumn("Date of last for submission", SimpleColumn("completed_on",)),
+            DatabaseColumn(_("Total number of ASHAs under the Facilitator"), SimpleColumn("doc_id",)),
+            DatabaseColumn(_("ASHA name"), SimpleColumn("hv_asha_name",)),
+            DatabaseColumn(_("Date of last for submission"), SimpleColumn("completed_on",)),
         ]
 
     @property
@@ -241,30 +258,30 @@ class ASHAAFChecklistData(SqlData):
             return "%d%%" % value
 
         return [
-            DatabaseColumn("Date", SimpleColumn('completed_on')),
-            DatabaseColumn("Newborn visits within first day of birth in case of home deliveries",
+            DatabaseColumn(_("Date"), SimpleColumn('completed_on')),
+            DatabaseColumn(_("Newborn visits within first day of birth in case of home deliveries"),
                            SimpleColumn("hv_fx_home_birth_visits"), format_fn=convert_value),
-            DatabaseColumn("Set of home visits for newborn care as specified in the HBNC guidelines "
-                           "(six visits in case of Institutional delivery and seven in case of a home delivery)",
+            DatabaseColumn(_("Set of home visits for newborn care as specified in the HBNC guidelines "
+                           "(six visits in case of Institutional delivery and seven in case of a home delivery)"),
                            SimpleColumn("hv_fx_newborns_visited",), format_fn=convert_value),
-            DatabaseColumn("Attending VHNDs/Promoting immunization",
+            DatabaseColumn(_("Attending VHNDs/Promoting immunization"),
                            SimpleColumn("hv_fx_vhnd",), format_fn=convert_value),
-            DatabaseColumn("Supporting institutional delivery",
+            DatabaseColumn(_("Supporting institutional delivery"),
                            SimpleColumn("hv_fx_support_inst_delivery",), format_fn=convert_value),
-            DatabaseColumn("Management of childhood illness - especially diarrhea and pneumonia",
+            DatabaseColumn(_("Management of childhood illness - especially diarrhea and pneumonia"),
                            SimpleColumn("hv_fx_child_illness_mgmt",), format_fn=convert_value),
-            DatabaseColumn("Household visits with nutrition counseling",
+            DatabaseColumn(_("Household visits with nutrition counseling"),
                            SimpleColumn("hv_fx_nut_counseling",), format_fn=convert_value),
-            DatabaseColumn("Fever cases seen/malaria slides made in malaria endemic area",
+            DatabaseColumn(_("Fever cases seen/malaria slides made in malaria endemic area"),
                            SimpleColumn("hv_fx_malaria",), format_fn=convert_value),
-            DatabaseColumn("Acting as DOTS provider",
+            DatabaseColumn(_("Acting as DOTS provider"),
                            SimpleColumn("hv_fx_dots",), format_fn=convert_value),
-            DatabaseColumn("Holding or attending village/VHSNC meeting",
+            DatabaseColumn(_("Holding or attending village/VHSNC meeting"),
                            SimpleColumn("hv_fx_vhsnc",), format_fn=convert_value),
-            DatabaseColumn("Successful referral of the IUD, female sterilization or male sterilization cases "
-                           "and/or providing OCPs/Condoms",
+            DatabaseColumn(_("Successful referral of the IUD, female sterilization or male sterilization cases "
+                           "and/or providing OCPs/Condoms"),
                            SimpleColumn("hv_fx_fp",), format_fn=convert_value),
-            DatabaseColumn("Functionality Score", SimpleColumn("hv_percent_functionality",), format_fn=percent)
+            DatabaseColumn(_("Functionality Score"), SimpleColumn("hv_percent_functionality",), format_fn=percent)
         ]
 
     @property

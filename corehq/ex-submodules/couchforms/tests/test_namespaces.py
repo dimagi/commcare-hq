@@ -1,23 +1,30 @@
 import os
 from django.test import TestCase
-from couchforms.tests.testutils import create_and_save_xform
-from couchforms.models import XFormInstance
+
+from corehq.form_processor.tests.utils import run_with_all_backends, post_xform
+from corehq.util.test_utils import TestFileMixin
 
 
-class TestNamespaces(TestCase):
-    
+class TestNamespaces(TestCase, TestFileMixin):
+    file_path = ('data', 'posts')
+    root = os.path.dirname(__file__)
+
+    def _assert_xmlns(self, xmlns, xform, xpath, expect_xmlns_index=False):
+        result = xform.get_data(xpath)
+        self.assertEqual(xmlns, result['@xmlns'] if expect_xmlns_index else result)
+
+    @run_with_all_backends
     def testClosed(self):
-        file_path = os.path.join(os.path.dirname(__file__), "data", "namespaces.xml")
-        xml_data = open(file_path, "rb").read()
-        with create_and_save_xform(xml_data) as doc_id:
-            xform = XFormInstance.get(doc_id)
+        xml_data = self.get_xml('namespaces')
+        xform = post_xform(xml_data)
+
         self.assertEqual("http://commcarehq.org/test/ns", xform.xmlns)
-        self.assertEqual("no namespace here", xform.xpath("form/empty"))
-        self.assertEqual("http://commcarehq.org/test/flatns", xform.xpath("form/flat")["@xmlns"])
-        self.assertEqual("http://commcarehq.org/test/parent", xform.xpath("form/parent")["@xmlns"])
-        self.assertEqual("cwo", xform.xpath("form/parent/childwithout"))
-        self.assertEqual("http://commcarehq.org/test/child1", xform.xpath("form/parent/childwith")["@xmlns"])
-        self.assertEqual("http://commcarehq.org/test/child2", xform.xpath("form/parent/childwithelement")["@xmlns"])
-        self.assertEqual("gc", xform.xpath("form/parent/childwithelement/grandchild"))
-        self.assertEqual("lcwo", xform.xpath("form/parent/lastchildwithout"))
-        self.assertEqual("nothing here either", xform.xpath("form/lastempty"))
+        self._assert_xmlns('no namespace here', xform, 'form/empty')
+        self._assert_xmlns('http://commcarehq.org/test/flatns', xform, 'form/flat', True)
+        self._assert_xmlns('http://commcarehq.org/test/parent', xform, 'form/parent', True)
+        self._assert_xmlns('cwo', xform, 'form/parent/childwithout')
+        self._assert_xmlns('http://commcarehq.org/test/child1', xform, 'form/parent/childwith', True)
+        self._assert_xmlns('http://commcarehq.org/test/child2', xform, 'form/parent/childwithelement', True)
+        self._assert_xmlns('gc', xform, 'form/parent/childwithelement/grandchild')
+        self._assert_xmlns('lcwo', xform, 'form/parent/lastchildwithout')
+        self._assert_xmlns('nothing here either', xform, 'form/lastempty')

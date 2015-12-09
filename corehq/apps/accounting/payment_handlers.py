@@ -1,44 +1,29 @@
 from decimal import Decimal
 import logging
+from django.db import transaction
 import stripe
 from django.conf import settings
 from django.utils.translation import ugettext as _
-from corehq import Domain
 from corehq.apps.accounting.models import (
     BillingAccount,
     CreditLine,
     Invoice,
     PaymentRecord,
     SoftwareProductType,
+    FeatureType,
+    PaymentMethod,
+    PreOrPostPay,
+    StripePaymentMethod,
+    LastPayment
 )
 from corehq.apps.accounting.user_text import get_feature_name
 from corehq.apps.accounting.utils import fmt_dollar_amount
+from corehq.apps.domain.models import Domain
 from corehq.const import USER_DATE_FORMAT
 from dimagi.utils.decorators.memoized import memoized
 
 stripe.api_key = settings.STRIPE_PRIVATE_KEY
 logger = logging.getLogger('accounting')
-
-def get_or_create_stripe_customer(payment_method):
-    customer = None
-    if payment_method.customer_id is not None:
-        try:
-            customer = stripe.Customer.retrieve(payment_method.customer_id)
-        except stripe.InvalidRequestError:
-            pass
-    if customer is None:
-        customer = stripe.Customer.create(
-            description="Account Admin %(web_user)s for %(domain)s, "
-                        "Account %(account_name)s" % {
-                'web_user': payment_method.billing_admin.web_user,
-                'domain': payment_method.billing_admin.domain,
-                'account_name': payment_method.account.name,
-            },
-            email=payment_method.billing_admin.web_user,
-        )
-    payment_method.customer_id = customer.id
-    payment_method.save()
-    return customer
 
 
 class BaseStripePaymentHandler(object):
@@ -47,8 +32,9 @@ class BaseStripePaymentHandler(object):
     receipt_email_template = None
     receipt_email_template_plaintext = None
 
-    def __init__(self, payment_method):
+    def __init__(self, payment_method, domain):
         self.payment_method = payment_method
+        self.domain = domain
 
     @property
     def cost_item_name(self):
@@ -59,7 +45,7 @@ class BaseStripePaymentHandler(object):
     @property
     @memoized
     def core_product(self):
-        domain = Domain.get_by_name(self.payment_method.billing_admin.domain)
+        domain = Domain.get_by_name(self.domain)
         return SoftwareProductType.get_type_by_domain(domain)
 
     def create_charge(self, amount, card=None, customer=None):
@@ -83,6 +69,12 @@ class BaseStripePaymentHandler(object):
         amt_cents = amount * Decimal('100')
         return int(amt_cents.quantize(Decimal(10)))
 
+    def update_payment_information(self, account):
+        account.last_payment_method = LastPayment.CC_ONE_TIME
+        account.pre_or_post_pay = PreOrPostPay.POSTPAY
+        account.save()
+
+
     def process_request(self, request):
         customer = None
         amount = self.get_charge_amount(request)
@@ -90,6 +82,8 @@ class BaseStripePaymentHandler(object):
         remove_card = request.POST.get('removeCard')
         is_saved_card = request.POST.get('selectedCardType') == 'saved'
         save_card = request.POST.get('saveCard') and not is_saved_card
+        autopay = request.POST.get('autopayCard')
+        billing_account = BillingAccount.get_account_by_domain(self.domain)
         generic_error = {
             'error': {
                 'message': _(
@@ -100,35 +94,17 @@ class BaseStripePaymentHandler(object):
             },
         }
         try:
-            if remove_card:
-                customer = get_or_create_stripe_customer(self.payment_method)
-                customer.cards.retrieve(card).delete()
-                return {
-                    'success': True,
-                    'removedCard': card,
-                }
-            if save_card:
-                customer = get_or_create_stripe_customer(self.payment_method)
-                card = customer.cards.create(card=card)
-                customer.default_card = card
-                customer.save()
-                card = card
-            if is_saved_card:
-                customer = get_or_create_stripe_customer(self.payment_method)
+            with transaction.atomic():
+                if remove_card:
+                    self.payment_method.remove_card(card)
+                    return {'success': True, 'removedCard': card, }
+                if save_card:
+                    card = self.payment_method.create_card(card, billing_account, self.domain, autopay=autopay)
+            if save_card or is_saved_card:
+                customer = self.payment_method.customer
+
             charge = self.create_charge(amount, card=card, customer=customer)
-            payment_record = PaymentRecord.create_record(
-                self.payment_method, charge.id, amount
-            )
-            self.update_credits(payment_record)
-            try:
-                self.send_email(payment_record)
-            except Exception:
-                logger.error(
-                    "[BILLING] Failed to send out an email receipt for "
-                    "payment related to PaymentRecord No. %s. "
-                    "Everything else succeeded."
-                    % payment_record.id, exc_info=True
-                )
+            self.update_payment_information(billing_account)
         except stripe.error.CardError as e:
             # card was declined
             return e.json_body
@@ -154,10 +130,28 @@ class BaseStripePaymentHandler(object):
                     'error_msg': e,
                 }, exc_info=True)
             return generic_error
+
+        with transaction.atomic():
+            payment_record = PaymentRecord.create_record(
+                self.payment_method, charge.id, amount
+            )
+            self.update_credits(payment_record)
+
+        try:
+            self.send_email(payment_record)
+        except Exception:
+            logger.error(
+                "[BILLING] Failed to send out an email receipt for "
+                "payment related to PaymentRecord No. %s. "
+                "Everything else succeeded."
+                % payment_record.id, exc_info=True
+            )
+
         return {
             'success': True,
             'card': card,
             'wasSaved': save_card,
+            'changedBalance': amount,
         }
 
     def get_email_context(self):
@@ -169,7 +163,7 @@ class BaseStripePaymentHandler(object):
         additional_context = self.get_email_context()
         from corehq.apps.accounting.tasks import send_purchase_receipt
         send_purchase_receipt.delay(
-            payment_record, self.core_product, self.receipt_email_template,
+            payment_record, self.core_product, self.domain, self.receipt_email_template,
             self.receipt_email_template_plaintext, additional_context
         )
 
@@ -178,8 +172,8 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
     receipt_email_template = 'accounting/invoice_receipt_email.html'
     receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
 
-    def __init__(self, payment_method, invoice):
-        super(InvoiceStripePaymentHandler, self).__init__(payment_method)
+    def __init__(self, payment_method, domain, invoice):
+        super(InvoiceStripePaymentHandler, self).__init__(payment_method, domain)
         self.invoice = invoice
 
     @property
@@ -221,7 +215,7 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
         context.update({
             'balance': fmt_dollar_amount(self.invoice.balance),
             'is_paid': self.invoice.is_paid,
-            'date_due': self.invoice.date_due.strftime(USER_DATE_FORMAT),
+            'date_due': self.invoice.date_due.strftime(USER_DATE_FORMAT) if self.invoice.date_due else 'None',
             'invoice_num': self.invoice.invoice_number,
         })
         return context
@@ -232,8 +226,7 @@ class BulkStripePaymentHandler(BaseStripePaymentHandler):
     receipt_email_template_plaintext = 'accounting/bulk_payment_receipt_email_plaintext.txt'
 
     def __init__(self, payment_method, domain):
-        super(BulkStripePaymentHandler, self).__init__(payment_method)
-        self.domain = domain
+        super(BulkStripePaymentHandler, self).__init__(payment_method, domain)
 
     @property
     def cost_item_name(self):
@@ -303,24 +296,41 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
     receipt_email_template = 'accounting/credit_receipt_email.html'
     receipt_email_template_plaintext = 'accounting/credit_receipt_email_plaintext.txt'
 
-    def __init__(self, payment_method, account, subscription=None,
-                 product_type=None, feature_type=None):
-        super(CreditStripePaymentHandler, self).__init__(payment_method)
-        self.product_type = product_type
-        self.feature_type = feature_type
+    def __init__(self, payment_method, domain, account, subscription=None, post_data=None):
+        super(CreditStripePaymentHandler, self).__init__(payment_method, domain)
+        self.features = [{'type': feature_type[0],
+                          'amount': Decimal(post_data.get(feature_type[0], 0))}
+                         for feature_type in FeatureType.CHOICES
+                         if Decimal(post_data.get(feature_type[0], 0)) > 0]
+        self.products = [{'type': product_type[0],
+                          'amount': Decimal(post_data.get(product_type[0], 0))}
+                         for product_type in SoftwareProductType.CHOICES
+                         if Decimal(post_data.get(product_type[0], 0)) > 0]
+        self.post_data = post_data
         self.account = account
         self.subscription = subscription
+        self.credit_lines = []
 
     @property
     def cost_item_name(self):
-        return "%(credit_type)s Credit %(sub_or_account)s" % {
-            'credit_type': ("%s Product" % self.product_type
-                            if self.product_type is not None
-                            else "%s Feature" % self.feature_type),
-            'sub_or_account': ("Subscription %s" % self.subscription
-                               if self.subscription is None
-                               else "Account %s" % self.account.id),
-        }
+        credit_types = [unicode(product['type']) for product in self._humanized_products()]
+        credit_types += [unicode(feature['type']) for feature in self._humanized_features()]
+        return _("Credits: {credit_types} for {sub_or_account}").format(
+            credit_types=", ".join(credit_types),
+            sub_or_account=("Subscription %s" % self.subscription
+                            if self.subscription is None
+                            else "Account %s" % self.account.id)
+        )
+
+    def _humanized_features(self):
+        return [{'type': get_feature_name(feature['type'], self.core_product),
+                 'amount': fmt_dollar_amount(feature['amount'])}
+                for feature in self.features]
+
+    def _humanized_products(self):
+        return [{'type': product['type'],
+                 'amount': fmt_dollar_amount(product['amount'])}
+                for product in self.products]
 
     def get_charge_amount(self, request):
         return Decimal(request.POST['amount'])
@@ -334,29 +344,121 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
             description="Payment for %s" % self.cost_item_name,
         )
 
+    def update_payment_information(self, account):
+        account.last_payment_method = LastPayment.CC_ONE_TIME
+        account.pre_or_post_pay = PreOrPostPay.PREPAY
+        account.save()
+
+
     def update_credits(self, payment_record):
-        self.credit_line = CreditLine.add_credit(
-            payment_record.amount, account=self.account, subscription=self.subscription,
-            product_type=self.product_type, feature_type=self.feature_type,
-            payment_record=payment_record,
-        )
+        for feature in self.features:
+            feature_amount = feature['amount']
+            if feature_amount >= 0.5:
+                self.credit_lines.append(CreditLine.add_credit(
+                    feature_amount,
+                    account=self.account,
+                    subscription=self.subscription,
+                    feature_type=feature['type'],
+                    payment_record=payment_record,
+                ))
+            else:
+                logger.error("[BILLING] {account} tried to make a payment for {feature} for less than $0.5."
+                             "You should follow up with them.".format(account=self.account,
+                                                                      feature=feature['type']))
+        for product in self.products:
+            plan_amount = product['amount']
+            if plan_amount >= 0.5:
+                self.credit_lines.append(CreditLine.add_credit(
+                    plan_amount,
+                    account=self.account,
+                    subscription=self.subscription,
+                    product_type=product['type'],
+                    payment_record=payment_record,
+                ))
+            else:
+                logger.error("[BILLING] {account} tried to make a payment for {product} for less than $0.5."
+                             "You should follow up with them.".format(account=self.account,
+                                                                      product=product['type']))
 
     def process_request(self, request):
         response = super(CreditStripePaymentHandler, self).process_request(request)
-        if hasattr(self, 'credit_line'):
+        if self.credit_lines:
             response.update({
-                'balance': fmt_dollar_amount(self.credit_line.balance),
+                'balances': [{'type': cline.product_type if cline.product_type else cline.feature_type,
+                              'balance': fmt_dollar_amount(cline.balance)}
+                             for cline in self.credit_lines]
             })
         return response
 
     def get_email_context(self):
         context = super(CreditStripePaymentHandler, self).get_email_context()
-        if self.product_type:
-            credit_name = _("%s Software Plan" % self.product_type)
-        else:
-            credit_name = get_feature_name(self.feature_type, self.core_product)
         context.update({
-            'credit_name': credit_name,
+            'items': self._humanized_products() + self._humanized_features()
         })
         return context
 
+
+class AutoPayInvoicePaymentHandler(object):
+    def pay_autopayable_invoices(self, date_due):
+        """ Pays the full balance of all autopayable invoices on date_due """
+        autopayable_invoices = Invoice.autopayable_invoices(date_due)
+        for invoice in autopayable_invoices:
+            logging.info("[Billing][Autopay] Autopaying invoice {}".format(invoice.id))
+            amount = invoice.balance.quantize(Decimal(10) ** -2)
+
+            auto_payer = invoice.subscription.account.auto_pay_user
+            payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
+            autopay_card = payment_method.get_autopay_card(invoice.subscription.account)
+            if autopay_card is None:
+                continue
+
+            try:
+                payment_record = payment_method.create_charge(autopay_card, amount_in_dollars=amount)
+            except stripe.error.CardError:
+                self._handle_card_declined(invoice, payment_method)
+                continue
+            except payment_method.STRIPE_GENERIC_ERROR as e:
+                self._handle_card_errors(invoice, payment_method, e)
+                continue
+            else:
+                with transaction.atomic():
+                    invoice.pay_invoice(payment_record)
+                    invoice.subscription.account.last_payment_method = LastPayment.CC_AUTO
+                    invoice.account.save()
+
+                self._send_payment_receipt(invoice, payment_record)
+
+    def _send_payment_receipt(self, invoice, payment_record):
+        from corehq.apps.accounting.tasks import send_purchase_receipt
+        receipt_email_template = 'accounting/invoice_receipt_email.html'
+        receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
+        try:
+            domain = invoice.subscription.subscriber.domain
+            product = SoftwareProductType.get_type_by_domain(Domain.get_by_name(domain))
+
+            context = {
+                'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
+                'balance': fmt_dollar_amount(invoice.balance),
+                'is_paid': invoice.is_paid,
+                'date_due': invoice.date_due.strftime(USER_DATE_FORMAT) if invoice.date_due else 'None',
+                'invoice_num': invoice.invoice_number,
+            }
+            send_purchase_receipt.delay(
+                payment_record, product, domain, receipt_email_template, receipt_email_template_plaintext, context,
+            )
+        except:
+            self._handle_email_failure(invoice, payment_record)
+
+    def _handle_card_declined(self, invoice):
+        logger.error("[Billing][Autopay] An automatic payment failed for invoice: {} "
+                     "because the card was declined. This invoice will not be automatically paid."
+                     .format(invoice.id))
+
+    def _handle_card_errors(self, invoice, e):
+        logger.error("[Billing][Autopay] An automatic payment failed for invoice: {invoice} "
+                     "because the of {error}. This invoice will not be automatically paid."
+                     .format(invoice=invoice.id, error=e))
+
+    def _handle_email_failure(self, payment_record):
+        logger.error("[Billing][Autopay] During an automatic payment, sending a payment receipt failed"
+                     " for Payment Record: {}. Everything else succeeded".format(payment_record.id))

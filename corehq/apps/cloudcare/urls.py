@@ -1,11 +1,11 @@
 from django.conf.urls import patterns, url, include
 from django.views.generic import TemplateView
-from corehq.apps.cloudcare.views import EditCloudcareUserPermissionsView
+from corehq.apps.cloudcare.views import EditCloudcareUserPermissionsView, CloudcareMain
 
 app_urls = patterns('corehq.apps.cloudcare.views',
     url(r'^view/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/context/$',
         'form_context', name='cloudcare_form_context'),
-    url(r'^(?P<urlPath>.*)$', 'cloudcare_main', name='cloudcare_main'),
+    url(r'^(?P<urlPath>.*)$', CloudcareMain.as_view(), name='cloudcare_main'),
 )
 
 api_urls = patterns('corehq.apps.cloudcare.views',
@@ -23,7 +23,6 @@ api_urls = patterns('corehq.apps.cloudcare.views',
     url(r'^sessions/(?P<session_id>[\w-]*)/$', 'get_session_context', name='cloudcare_get_session_context'),
     url(r'^ledgers/$', 'get_ledgers', name='cloudcare_get_ledgers'),
     url(r'^render_form/$', 'render_form', name='cloudcare_render_form'),
-    url(r'^render_xml/$', 'render_xml', name='cloudcare_render_xml'),
 )
 
 # used in settings urls

@@ -1,11 +1,7 @@
 from dimagi.ext.couchdbkit import *
 import freddy
 import datetime
-import pytz
 import copy
-
-def utcnow():
-    return datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
 
 
 def clean_data(data):
@@ -67,8 +63,9 @@ class FacilityRegistry(Document):
 
     @classmethod
     def by_domain(cls, domain):
-        return cls.view('facilities/registries_by_domain', reduce=False,
-            key=domain, include_docs=True).all()
+        from corehq.apps.facilities.dbaccessors import \
+            get_facility_registries_in_domain
+        return get_facility_registries_in_domain(domain)
 
     @property
     def remote_registry(self):
@@ -117,14 +114,14 @@ class FacilityRegistry(Document):
                         their_f.save()
                 else:
                     # new remote facility
-                    now = utcnow()
+                    now = datetime.datetime.utcnow()
                     our_new_f = Facility(registry_id=self._id,
                         domain=self.domain, data=data, synced_at=now,
                         sync_attempted_at=now)
 
                     our_new_f.save(update_remote=False)
 
-            self.synced_at = utcnow()
+            self.synced_at = datetime.datetime.utcnow()
 
         except Exception:
             self.last_sync_failed = True
@@ -142,7 +139,7 @@ class FacilityRegistry(Document):
         self.remote_registry
 
         if self._id is None:
-            self.created_at = utcnow()
+            self.created_at = datetime.datetime.utcnow()
 
         return super(FacilityRegistry, self).save(*args, **kwargs)
 
@@ -207,7 +204,7 @@ class Facility(Document):
         return super(Facility, self).delete(*args, **kwargs)
 
     def save(self, update_remote=True, *args, **kwargs):
-        now = utcnow()
+        now = datetime.datetime.utcnow()
         self.sync_attempted_at = now
 
         try:

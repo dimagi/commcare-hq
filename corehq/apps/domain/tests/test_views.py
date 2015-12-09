@@ -7,7 +7,7 @@ from django.test.client import Client
 
 from corehq import toggles
 from corehq.apps.users.models import WebUser
-from corehq.apps.receiverwrapper.models import AppStructureRepeater
+from corehq.apps.repeaters.models import AppStructureRepeater
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.models import Application, APP_V1
 from corehq.apps.domain.views import CreateNewExchangeSnapshotView
@@ -34,6 +34,29 @@ class TestDomainViews(TestCase):
         self.user.delete()
         self.domain.delete()
         
+    def test_allow_domain_requests(self):
+        self.client.login(username=self.username, password=self.password)
+
+        public_domain = Domain(name="public", is_active=True)
+        public_domain.allow_domain_requests = True
+        public_domain.save()
+
+        response = self.client.get(reverse("domain_homepage", args=[public_domain.name]), follow=True)
+        self.assertEqual(response.status_code, 200)
+
+        public_domain.delete()
+
+    def test_disallow_domain_requests(self):
+        self.client.login(username=self.username, password=self.password)
+
+        private_domain = Domain(name="private", is_active=True)
+        private_domain.save()
+
+        response = self.client.get(reverse("domain_homepage", args=[private_domain.name]), follow=True)
+        self.assertEqual(response.status_code, 404)
+
+        private_domain.delete()
+
     def test_add_repeater(self):
         forwarding_url = 'https://example.com/forwarding'
 

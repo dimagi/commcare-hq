@@ -1,3 +1,4 @@
+from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.util.test_utils import unit_testing_only
 from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.models import XFormInstance, doc_types
@@ -88,3 +89,29 @@ def clear_forms_in_domain(domain):
     items = get_forms_of_all_types(domain)
     for item in items:
         item.delete()
+
+
+def get_form_xml_element(form_id):
+    return XFormInstance(_id=form_id).get_xml_element()
+
+
+@unit_testing_only
+def get_commtrack_forms(domain):
+    key = ['submission xmlns', domain, COMMTRACK_REPORT_XMLNS]
+    return XFormInstance.view(
+        'reports_forms/all_forms',
+        startkey=key,
+        endkey=key + [{}],
+        reduce=False,
+        include_docs=True
+    )
+
+
+def get_exports_by_form(domain):
+    return XFormInstance.get_db().view(
+        'exports_forms/by_xmlns',
+        startkey=[domain],
+        endkey=[domain, {}],
+        group=True,
+        stale=settings.COUCH_STALE_QUERY
+    )

@@ -122,7 +122,7 @@ def average_lead_time(facility_id, window_date):
 
 
 def needed_status_types(org_summary):
-    facility = Location.get(docid=org_summary.location_id)
+    facility = Location.get(org_summary.location_id)
     return [status_type for status_type in const.NEEDED_STATUS_TYPES if _is_valid_status(facility,
                                                                                    org_summary.date, status_type)]
 
@@ -156,7 +156,7 @@ def not_responding_facility(org_summary):
 def update_product_availability_facility_data(org_summary):
     # product availability
 
-    facility = Location.get(docid=org_summary.location_id)
+    facility = Location.get(org_summary.location_id)
     assert facility.location_type == "FACILITY"
     prods = SQLProduct.objects.filter(domain=facility.domain, is_archived=False)
     for p in prods:
@@ -172,7 +172,8 @@ def update_product_availability_facility_data(org_summary):
             previous_reports = ProductAvailabilityData.objects.filter(
                 product=p.product_id,
                 location_id=facility._id,
-                date__lt=org_summary.date
+                date__lt=org_summary.date,
+                total=1
             )
             if previous_reports.count():
                 prev = previous_reports.latest('date')
@@ -186,7 +187,7 @@ def update_product_availability_facility_data(org_summary):
                 product_data.without_data = 1
             product_data.save()
         assert (product_data.with_stock + product_data.without_stock + product_data.without_data) == 1, \
-            "bad product data config"
+            "bad product data config for %s" % product_data
 
 
 def default_start_date():
@@ -230,12 +231,12 @@ def populate_report_data(start_date, end_date, domain, runner, locations=None, s
         if runner.location.location_type.name.upper() != 'FACILITY':
             facilities = []
             non_facilities = itertools.dropwhile(
-                lambda location: location._id != runner.location.location_id,
+                lambda location: location.location_id != runner.location.location_id,
                 non_facilities
             )
         else:
             facilities = itertools.dropwhile(
-                lambda location: location._id != runner.location.location_id,
+                lambda location: location.location_id != runner.location.location_id,
                 facilities
             )
 
@@ -260,7 +261,7 @@ def populate_report_data(start_date, end_date, domain, runner, locations=None, s
     update_historical_data(domain)
 
 
-@task(queue='background_queue')
+@task(queue='logistics_background_queue')
 def process_facility_warehouse_data(facility, start_date, end_date, runner):
     """
     process all the facility-level warehouse tables
@@ -331,8 +332,9 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner):
         update_product_availability_facility_data(org_summary)
 
         # alerts
-        populate_no_primary_alerts(facility, window_date)
-        populate_facility_stockout_alerts(facility, window_date)
+        with transaction.atomic():
+            populate_no_primary_alerts(facility, window_date)
+            populate_facility_stockout_alerts(facility, window_date)
 
 
 @transaction.atomic
@@ -342,7 +344,7 @@ def process_facility_statuses(facility_id, statuses, alerts=True):
     data warehouse tables. This should only be called on supply points
     that are facilities.
     """
-    facility = Location.get(docid=facility_id)
+    facility = Location.get(facility_id)
     for status in statuses:
         warehouse_date = _get_window_date(status.status_type, status.status_date)
         if _is_valid_status(facility, status.status_date, status.status_type):
@@ -456,16 +458,16 @@ def get_non_archived_facilities_below(location):
     return [Location.wrap(doc) for doc in get_docs(Location.get_db(), child_ids)]
 
 
-@task(queue='background_queue')
+@task(queue='logistics_background_queue')
 def process_non_facility_warehouse_data(location, start_date, end_date, runner, strict=True):
     runner.location = location.sql_location
     runner.save()
     facs = get_non_archived_facilities_below(location)
     fac_ids = [f._id for f in facs]
-    logging.info("processing non-facility %s (%s), %s children" % (location.name, str(location._id), len(facs)))
+    logging.info("processing non-facility %s (%s), %s children" % (location.name, str(location.location_id), len(facs)))
     for year, month in months_between(start_date, end_date):
         window_date = datetime(year, month, 1)
-        org_summary = OrganizationSummary.objects.get_or_create(location_id=location._id, date=window_date)[0]
+        org_summary = OrganizationSummary.objects.get_or_create(location_id=location.location_id, date=window_date)[0]
 
         org_summary.total_orgs = len(facs)
         sub_summaries = OrganizationSummary.objects.filter(date=window_date, location_id__in=fac_ids)
@@ -483,7 +485,7 @@ def process_non_facility_warehouse_data(location, start_date, end_date, runner, 
         prods = SQLProduct.objects.filter(domain=location.domain, is_archived=False)
         for p in prods:
             product_data = ProductAvailabilityData.objects.get_or_create(product=p.product_id,
-                                                                         location_id=location._id,
+                                                                         location_id=location.location_id,
                                                                          date=window_date)[0]
 
             sub_prods = ProductAvailabilityData.objects.filter(product=p.product_id,
@@ -526,7 +528,7 @@ def process_non_facility_warehouse_data(location, start_date, end_date, runner, 
         for alert_type in [const.RR_NOT_SUBMITTED, const.DELIVERY_NOT_RECEIVED,
                            const.SOH_NOT_RESPONDING, const.RR_NOT_RESPONDED, const.DELIVERY_NOT_RESPONDING]:
             sub_alerts = Alert.objects.filter(location_id__in=fac_ids, date=window_date, type=alert_type)
-            aggregate_response_alerts(location._id, window_date, sub_alerts, alert_type)
+            aggregate_response_alerts(location.location_id, window_date, sub_alerts, alert_type)
 
 
 def aggregate_response_alerts(location_id, date, alerts, alert_type):
@@ -552,17 +554,17 @@ def update_historical_data(domain, locations=None):
         else:
             locations = Location.by_domain(domain)
 
-    for sp in locations:
+    for loc in locations:
         try:
-            SupplyPointWarehouseRecord.objects.get(supply_point=sp._id)
+            SupplyPointWarehouseRecord.objects.get(supply_point=loc.location_id)
         except SupplyPointWarehouseRecord.DoesNotExist:
             # we didn't have a record so go through and historically update
             # anything we maybe haven't touched
-            for year, month in months_between(start_date, sp.sql_location.created_at):
+            for year, month in months_between(start_date, loc.sql_location.created_at):
                 window_date = datetime(year, month, 1)
                 for cls in [OrganizationSummary, ProductAvailabilityData, GroupSummary]:
-                    _init_warehouse_model(cls, sp, window_date)
-            SupplyPointWarehouseRecord.objects.create(supply_point=sp._id,
+                    _init_warehouse_model(cls, loc, window_date)
+            SupplyPointWarehouseRecord.objects.create(supply_point=loc.location_id,
                                                       create_date=datetime.utcnow())
 
 
@@ -576,16 +578,16 @@ def _init_warehouse_model(cls, location, date):
 
 
 def _init_default(location, date):
-    OrganizationSummary.objects.get_or_create(location_id=location._id, date=date)
+    OrganizationSummary.objects.get_or_create(location_id=location.location_id, date=date)
 
 
 def _init_with_product(location, date):
     for p in SQLProduct.objects.filter(domain=location.domain, is_archived=False):
-        ProductAvailabilityData.objects.get_or_create(location_id=location._id, date=date, product=p.product_id)
+        ProductAvailabilityData.objects.get_or_create(location_id=location.location_id, date=date, product=p.product_id)
 
 
 def _init_group_summary(location, date):
-    org_summary = OrganizationSummary.objects.get(location_id=location._id, date=date)
+    org_summary = OrganizationSummary.objects.get(location_id=location.location_id, date=date)
     for title in const.NEEDED_STATUS_TYPES:
         GroupSummary.objects.get_or_create(org_summary=org_summary,
                                            title=title)

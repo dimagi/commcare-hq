@@ -2,42 +2,61 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% block title %}
+    {% if request.couch_user.is_web_user %}
+        {% trans "Preview Form" %}
+    {% else %}
+        {% trans "CloudCare" %}
+    {% endif %}
+{% endblock %}
+
 {% block head %}
         {{ block.super }}
     {% include "imports/proptable.html" %}
     {% include "imports/fancy-code.html" %}
+
+    <script src="{% new_static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% new_static 'datatables/media/js/dataTables.bootstrap.min.js' %}"></script>
+{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{% new_static 'nprogress/nprogress.css' %}">
+    <link rel="stylesheet" href="{% new_static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
+    <link type="text/css"
+          rel="stylesheet"
+          media="all"
+          href="{% new_static 'datatables/media/css/jquery.dataTables.min.css ' %}" />
+    <link rel="stylesheet" href="{% new_static 'formplayer/style/webforms.css' %}">
+    <link rel="stylesheet" href="{% new_static 'cloudcare/css/cloudcare.css' %}">
+    <link rel="stylesheet" href="{% new_static 'codemirror/lib/codemirror.css' %}" />
 {% endblock %}
 
 {% block js %} {{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/underscore-1.4.4.js' %}"></script>
-<script type="text/javascript" src="{% static 'hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+    <script src="{% new_static 'nprogress/nprogress.js' %}"></script>
 
-    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
-    <script src="{% static 'case/js/cheapxml.js' %}"></script>
-    <script src="{% static 'case/js/casexml.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/backbone.js' %}"></script>
-    <script src="{% static 'cloudcare/js/util.js' %}"></script>
-    <script src="{% static 'cloudcare/js/backbone/shared.js' %}"></script>
-    <script src="{% static 'cloudcare/js/backbone/apps.js' %}"></script>
-    <script src="{% static 'cloudcare/js/backbone/cases.js' %}"></script>
-    <script src="{% static 'cloudcare/js/post.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
+    <script src="{% new_static 'case/js/cheapxml.js' %}"></script>
+    <script src="{% new_static 'case/js/casexml.js' %}"></script>
+    <script src="{% new_static 'backbone/backbone-min.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/util.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/backbone/shared.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/backbone/apps.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/backbone/cases.js' %}"></script>
+    <script src="{% new_static 'cloudcare/js/post.js' %}"></script>
 
-    {# touchforms includes #}
-    <script language="javascript" type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}">
+    <script src="{% new_static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/vendor/purify.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/vendor/ba-tiny-pubsub.min.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/vendor/shortcut.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/webformsession.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/formnav-all.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/entrycontrols_full.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/fullform-ui.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/utils.js' %}"></script>
 
-    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
-    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/vendor/shortcut.js' %}"></script>
-    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/xforgasm.js' %}?version={{app_version}}"></script>
-    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/formnav-all.js' %}?version={{app_version}}"></script>
-    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/entrycontrols_full.js' %}?version={{app_version}}"></script>
-    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/build/fullform-ui.templates.js' %}?version={{app_version}}"></script>
-    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/fullform-ui.js' %}?version={{app_version}}"></script>
-
-    <link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
-    <link rel="stylesheet" href="{% static 'cloudcare/css/cloudcare.css' %}">
-
+    <script src="{% new_static 'codemirror/lib/codemirror.js' %}"></script>
+    <script src="{% new_static 'codemirror/mode/xml/xml.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -47,18 +66,17 @@
 
     var translatedStrings = {
         saved : "{% trans "Form successfully saved" %}",
-        loading : "{% trans "Loading..." %}",
-        saving : "{% trans "Saving..." %}",
         errSaving : "{% trans "Error saving!" %}",
         errSavingDetail : "{% trans "Save failed. Details: " %}",
         unknownError: "{% trans "Unknown error: " %}",
         unknownErrorDetail: "{% trans "This can happen if you loaded CloudCare from a different address than the server address" %}",
         saveAll : "{% trans "All changes saved!" %}",
-        newWindow: "{% trans "open in new window" %}",
+        newWindow: "{% trans "Open in New Window" %}",
         deleteSaved: "{% trans "Permanently delete this form? You will not be able to return to it later." %}",
         deleteSuccess: "{% trans "Form was deleted." %}",
         caseListError: "{% trans "Unable to load the case list. If you are using a filter expression please double check the syntax and try again. Please report an issue if this problem persists." %}",
-        dirty: "{% trans "You have not submitted this form. Click 'Cancel' to continue working on this form. If you click 'OK' you can resume work on this form later." %}"
+        navigateDirty: "{% trans "You have not submitted this form. Click ‘Stay on this Page’ to continue working on this form. If you click 'Leave this Page' you can resume work on this form later." %}",
+        sidebarDirty: "{% trans "You have not submitted this form. Click ‘Cancel’ to continue working on this form. If you click 'OK' you can resume work on this form later." %}"
     };
 
     $(function () {
@@ -67,7 +85,6 @@
         var caseUrlRoot = "{% url "cloudcare_get_cases" domain %}";
         var submitUrlRoot = "{% url "receiver_post" domain %}";
         var sessionUrlRoot = "{% url "cloudcare_get_sessions" domain %}";
-        var renderXmlRoot = "{% url "cloudcare_render_xml" domain %}";
         var renderFormRoot = "{% url "cloudcare_render_form" domain %}";
         var language = "{{ language }}";
         var apps = {{ apps|JSON }};
@@ -92,23 +109,18 @@
             initialCase: initialCase,
             initialParent: initialParent,
             sessionsEnabled: sessionsEnabled,
-            renderXmlRoot: renderXmlRoot,
             renderFormRoot: renderFormRoot,
             instanceViewerEnabled: instanceViewerEnabled
         });
+
         // TODO: when we figure out what to do about get params, use this
         Backbone.history.start({pushState: true, root: urlRoot});
 
         set_pin(30, $('#cloudcare-main'), $('#loading'));
 
-        function enableOffline() {
-            $('#debug-opts').show();
-            $('#use-offline').attr('checked', 'checked');
-        }
-        var offlineEnabled = {{ offline_enabled|JSON }};
-        if (offlineEnabled) {
-            enableOffline();
-        }
+        $.subscribe('formplayer.dirty', function() {
+            window.mainView.router.view.dirty = true
+        });
 
     }());
 
@@ -117,17 +129,14 @@
         $(function() {
            window.onbeforeunload = function() {
                if (window.mainView.router.view && window.mainView.router.view.dirty) {
-                   return translatedStrings.dirty;
+                   return translatedStrings.navigateDirty;
                }
            }
         }())
     </script>
 {% endblock %}
 
-{% block sidebar %}
-{% if sessions_enabled %}
-    <div id="save-indicator" class="alert" style="display: none;"></div>
-{% endif %}
+{% block page_navigation %}
     <section id="app-main" >
         <nav id="app-list" ></nav>
         <nav id="module-list" ></nav>
@@ -135,40 +144,28 @@
 {% if sessions_enabled %}
         <nav id="sessions"></nav>
 {% endif %}
-        <!-- keep this well-hidden for now -->
-        <nav id="debug-opts" style="display: none;">
-          <ul class="nav nav-list">
-            <li>
-              <label class="checkbox">
-                <input id="use-offline" type="checkbox" /> Use offline CloudCare
-              </label>
-            </li>
-          </ul>
-        </nav>
     </section>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     {% if request.couch_user.is_web_user %}
         <div class="alert fade in alert-block alert-full alert-warning ">
             <a class="close" data-dismiss="alert" href="#">&times;</a>
                 {% blocktrans %}
-                    You are using CloudCare as a Web User!
-                    Any data you submit will show up in reports as submitted by "Unknown User".
-                    Features that rely on mobile workers, like case sharing and lookup tables, will not work properly.
+                    You are previewing a form as a web user!
+                    Any data you submit will show up in reports as submitted by "Unknown User". There are a
+                    few features that rely on mobile workers and will not work properly:
+                    <ul>
+                        <li>Case sharing</li>
+                        <li>Lookup tables</li>
+                        <li>User-as-a-case</li>
+                    </ul>
                     For the best experience please logout and login as a Mobile Worker.
-                    More information on CloudCare can be found at the <a href="https://help.commcarehq.org/display/commcarepublic/CloudCare+-+Web+Data+Entry">CommCare Help Site</a>.
+                    More information can be found at the <a href="https://help.commcarehq.org/display/commcarepublic/CloudCare+-+Web+Data+Entry">CommCare Help Site</a>.
                 {% endblocktrans %}
         </div>
     {% endif %}
-    <div id="offline-prompt" class="alert fade in alert-block alert-full alert-danger" style="display: none;">
-        {% blocktrans %}
-            Offline CloudCare is not running!
-            <a href="http://mrgris.com/a/dimagi/offline-cloudcare.jnlp">Launch it here</a>.
-            (It may take a moment to start up once it has downloaded)
-        {% endblocktrans %}
-    </div>
-    <div id="cloudcare-main" style="position:relative;">
+    <div id="cloudcare-main">
         {% if not apps_raw %}
             <h3>No Apps found</h3>
             {% blocktrans %}
@@ -190,27 +187,12 @@
             {% endif %}
         {% endif %}
         <section id="cloudcare-notifications"></section>
-        <div id="loading" class="well" style="display: none; position: fixed; right: 0; margin-right: 40px; top: 40px;">
-            <img width="32" height="32" alt="Loading" src="{% static 'formplayer/img/loading_transparent.gif' %}" />
-            {% trans "Loading" %}...
-        </div>
         <section id="case-crumbs" style="width: 800px"></section>
         <section id="cases"></section>
-        <section id="webforms" style="min-width: 800px;"></section>
-        {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
-            <hr/>
-            <div id="instance-xml-home" name="instance-xml-home">
-                <div id="question-viewer-pretty"></div>
-                <div id="xml-viewer-pretty"></div>
-                <input id="evaluate-result" style="display: block;"/>
-                <section>
-                    <input id="xpath" name="xpath" value="/data/[your path here]" style="min-width: 300px;"/>
-                    <input id="evaluate-button" type="submit" value="Evaluate" />
-                </section>
-            </div>
-        {% endif %}
+        <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
     </div>
 
     {% include 'cloudcare/includes/case_details.html' %}
+    {% include 'formplayer/fullform-ui/templates.html' %}
 
 {% endblock %}

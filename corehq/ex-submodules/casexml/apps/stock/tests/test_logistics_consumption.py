@@ -5,6 +5,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.models import StockReport, StockTransaction
 from casexml.apps.stock.tests import ago
 from casexml.apps.stock import const
+from corehq.apps.commtrack.consumption import should_exclude_invalid_periods
 from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
@@ -64,6 +65,10 @@ class LogisticsConsumptionTest(TestCase):
     def setUp(self):
         StockTransaction.objects.all().delete()
         StockReport.objects.all().delete()
+
+    def tearDown(self):
+        should_exclude_invalid_periods.clear(self.domain.name)
+        should_exclude_invalid_periods.clear(None)
 
     def test_report_without_config(self):
         self.create_transactions(self.domain.name)

@@ -1,0 +1,19 @@
+{% extends "style/bootstrap2/base_section.html" %}
+{% load hq_shared_tags %}
+
+{% block js %} {{ block.super }}
+    <script type="text/javascript" src="{% static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(function () {
+            var path = '{{ request.path }}';
+            COMMCAREHQ.initBlock($('.hq-content'));
+            $('.hq-help-template').each(function () {
+                COMMCAREHQ.transformHelpTemplate($(this), false);
+            });
+            $('.hq-help').hqHelp();
+        });
+    </script>
+{% endblock %}

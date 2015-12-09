@@ -1,9 +1,7 @@
 from optparse import make_option
-from django.conf import settings
 from django.core.management import BaseCommand
-from elasticsearch import Elasticsearch
 from corehq.elastic import get_es_new
-from pillowtop import get_all_pillows
+from pillowtop import get_all_pillow_instances
 from pillowtop.listener import AliasedElasticPillow
 
 
@@ -23,7 +21,8 @@ class Command(BaseCommand):
         # if it doesn't exist
         found_indices = set(es.indices.get_aliases().keys())
         existing_indices = set(
-            pillow.es_index for pillow in filter(lambda x: isinstance(x, AliasedElasticPillow), get_all_pillows())
+            pillow.es_index for pillow in filter(lambda x: isinstance(x, AliasedElasticPillow),
+                                                 get_all_pillow_instances())
         )
 
         if options['verbose']:

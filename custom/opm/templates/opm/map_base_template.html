@@ -1,0 +1,52 @@
+{% extends "reports/base_template.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js-inline %}
+    {{ block.super }}
+    {% if "print" in report.url_root %}
+        <style>
+            body {
+                width: 297mm;
+            }
+            #map {
+                height: 15cm !important;
+                page-break-after: always;
+            }
+            tr {
+                page-break-inside: avoid;
+            }
+            small {
+                font-size: 1em !important;
+            }
+
+            @page {
+                size: A4 landscape;
+            }
+            @media print {
+                #report_table_health_status_map_processing {
+                    display: none;
+                }
+                .leaflet-top {
+                    display: none;
+                }
+            }
+        </style>
+    {% endif %}
+    <script type="text/javascript">
+        var report_url = '/a/opm/reports/custom/';
+        $("#print-report").click(function (e) {
+            e.stopImmediatePropagation();
+
+            var metrics = $('#metrics').find('.selected');
+            var params = window.location.search;
+            if (metrics.length === 2) {
+                var met = $(metrics[1]).text();
+                params = params + '&metric=' + encodeURIComponent(met)
+            }
+
+            var base_url = window.location.pathname.replace(report_url, report_url+"print/") + params;
+            window.open(base_url);
+        });
+    </script>
+{% endblock %}

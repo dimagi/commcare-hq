@@ -3,7 +3,7 @@
 {% load i18n %}
 
 {% block js %} {{ block.super }}
-    <script src="{% static 'reminders/ko/reminders.old.list.js' %}"></script>
+    <script src="{% static 'reminders/ko/reminders.progressbar.js' %}"></script>
     <script src="{% static 'reminders/ko/reminders.list.js' %}"></script>
     {% include "imports/datatables.html" %}
 {% endblock %}
@@ -30,27 +30,22 @@
 {% endblock %}
 
 {% block main_column %}
+    <h2>{% trans 'Reminders' %}</h2>
     <div class="btn-group">
         <a href="{% url "create_reminder_schedule" domain %}" class="btn btn-success">
             <i class="icon-plus"></i>
-            {% trans 'Add Reminder' %}</a>
-        <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>
-        </button>
-        <ul class="dropdown-menu">
-            <li><a href="{% url "create_reminder_schedule" domain %}">
-                {% trans 'Add Reminder' %}
-            </a></li>
-            <li><a href="{% url "create_complex_reminder_schedule" domain %}">
-                {% trans 'Add Multi Event Reminder' %}</a></li>
-        </ul>
+            {% trans 'Add Single Event Reminder' %}
+        </a>
+        <a href="{% url "create_complex_reminder_schedule" domain %}" class="btn btn-success">
+            <i class="icon-plus"></i>
+            {% trans 'Add Multi Event Reminder' %}
+        </a>
     </div>
     <div id="reminders-list">
         <div data-bind="template: {
             name: 'reminder-list-template',
             data: {
                 reminders: reminders,
-                title: '{% trans 'Reminders' %}'
             }
         }"></div>
     </div>
@@ -58,7 +53,6 @@
     <script type="text/html" id="reminder-list-template">
         <div class="row-fluid">
             <div class="span12">
-                <h3 data-bind="text: title"></h3>
                 <table id="reminder-list-table" class="table table-striped table-bordered">
                     <thead>
                         <tr>

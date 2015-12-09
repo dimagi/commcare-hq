@@ -1,28 +1,57 @@
 import re
-from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.app_manager.exceptions import LocationXpathValidationError
+from corehq.apps.app_manager.const import (
+    USERCASE_TYPE,
+    SCHEDULE_PHASE,
+    SCHEDULE_LAST_VISIT,
+    SCHEDULE_LAST_VISIT_DATE,
+    SCHEDULE_TERMINATED,
+    SCHEDULE_MAX_DATE,
+    SCHEDULE_DATE_CASE_OPENED,
+    SCHEDULE_NEXT_DUE,
+    SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
+)
+from corehq.apps.app_manager.exceptions import (
+    CaseXPathValidationError,
+    LocationXpathValidationError,
+    ScheduleError,
+)
 from django.utils.translation import ugettext as _
+
+
+DOT_INTERPOLATE_PATTERN = r'(\D|^)\.(\D|$)'
 
 
 def dot_interpolate(string, replacement):
     """
     Replaces non-decimal dots in `string` with `replacement`
     """
-    pattern = r'(\D|^)\.(\D|$)'
     repl = '\g<1>%s\g<2>' % replacement
-    return re.sub(pattern, repl, string)
+    return re.sub(DOT_INTERPOLATE_PATTERN, repl, string)
 
 
-def interpolate_xpath(string, case_xpath=None):
+def interpolate_xpath(string, case_xpath=None, fixture_xpath=None):
     """
     Replace xpath shortcuts with full value.
     """
+    if case_xpath is None and ('#case' in string or re.search(DOT_INTERPOLATE_PATTERN, string)):
+        # At the moment this function is only used by module and form filters.
+        # If that changes, amend the error message accordingly.
+        raise CaseXPathValidationError(_(
+            'Your filter refers to a case, but the case is not available. Either refer to the user case, or make '
+            'sure all the forms in this module update or close a case, which means registration forms must go in '
+            'a different module.'
+        ))
     replacements = {
         '#user': UserCaseXPath().case(),
         '#session/': session_var('', path=''),
     }
+    if fixture_xpath:
+        replacements['$fixture_value'] = fixture_xpath
+
     if case_xpath:
         replacements['#case'] = case_xpath
+        replacements['#parent'] = CaseIDXPath(case_xpath + '/index/parent').case()
+        replacements['#host'] = CaseIDXPath(case_xpath + '/index/host').case()
 
     for pattern, repl in replacements.items():
         string = string.replace(pattern, repl)
@@ -77,6 +106,9 @@ class XPath(unicode):
     def neq(self, b):
         return XPath(u'{} != {}'.format(self, b))
 
+    def gt(self, b):
+        return XPath(u'{} > {}'.format(self, b))
+
     @staticmethod
     def expr(template, args, chainable=False):
         if chainable:
@@ -117,6 +149,10 @@ class XPath(unicode):
     @staticmethod
     def int(a):
         return XPath(u'int({})'.format(a))
+
+    @staticmethod
+    def empty_string():
+        return XPath(u"''")
 
 
 class CaseSelectionXPath(XPath):
@@ -309,3 +345,365 @@ class ScheduleFixtureInstance(XPath):
 
     def expires(self):
         return XPath(u"instance('{0}')/schedule/@expires".format(self))
+
+    def starts(self):
+        return XPath(u"instance('{0}')/schedule/@starts".format(self))
+
+    def unscheduled_visits(self):
+        return XPath(u"instance('{0}')/schedule/@allow_unscheduled".format(self))
+
+
+class ScheduleFormXPath(object):
+    """
+    XPath queries for scheduled forms
+    """
+    def __init__(self, form, phase, module):
+        self.form = form
+        self.phase = phase
+        self.module = module
+
+        try:
+            self.phase.anchor
+        except AttributeError:
+            raise ScheduleError("Phase needs an Anchor")
+
+        self.anchor_detail_variable_name = u"anchor_{}".format(self.form.schedule_form_id)
+        self.last_visit_detail_variable_name = SCHEDULE_LAST_VISIT.format(self.form.schedule_form_id)
+        self.last_visit_date_detail_variable_name = SCHEDULE_LAST_VISIT_DATE.format(self.form.schedule_form_id)
+
+        self.anchor = u"${}".format(self.anchor_detail_variable_name)
+        self.last_visit = u"${}".format(self.last_visit_detail_variable_name)
+        self.last_visit_date = u"${}".format(self.last_visit_date_detail_variable_name)
+        self.date_opened = u"${}".format(SCHEDULE_DATE_CASE_OPENED)
+        self.current_schedule_phase = SCHEDULE_PHASE
+
+    @property
+    def fixture_id(self):
+        from corehq.apps.app_manager import id_strings
+        return id_strings.schedule_fixture(self.module, self.phase, self.form)
+
+    @property
+    def fixture(self):
+        return ScheduleFixtureInstance(self.fixture_id)
+
+    @property
+    def xpath_phase_set(self):
+        """
+        returns the due date if there are valid upcoming schedules
+        otherwise, returns a Really Big Number
+        """
+        return XPath.if_(self.next_valid_schedules(include_beginning_of_relevancy_window=False),
+                         self.due_date(), SCHEDULE_MAX_DATE)
+
+    @property
+    def first_visit_phase_set(self):
+        """
+        returns the first due date if the case hasn't been visited yet.
+        """
+        within_zeroth_phase = XPath.and_(
+            XPath(self.current_schedule_phase).eq(XPath.string('')),  # No visits yet
+            XPath(self.anchor).neq(XPath.string('')),
+            self.within_form_relevancy(),
+        )
+
+        return XPath.if_(
+            within_zeroth_phase,
+            self.first_due_date(),
+            self.xpath_phase_set
+        )
+
+    @property
+    def next_visit_due_num(self):
+        phase = self.phase.id
+        return XPath.if_(self.next_valid_schedules(phase), self.next_visit_id(), 0)
+
+    @property
+    def is_unscheduled_visit(self):
+        """count(visit[within_window][@id != coalesce(last_visit_number_{form_id},0)]) = 0"""
+        last_visit_id = XPath(u'@id != {}'.format(u"coalesce({}, {})".format(self.last_visit, 0)))
+        count = XPath.count(
+            self.fixture.visit().select_raw(self.within_window()).
+            select_raw(last_visit_id)
+        )
+        return XPath(u"{} = 0".format(count))
+
+    @staticmethod
+    def next_visit_date(last_visit_dates):
+        """
+        Returns the next visit date given all the last visits
+        if($next_visit_date < today() and (current_schedule_phase = '' or last_visit_date_{all_forms} = ''),
+            $date_case_opened,
+            $next_visit_date)
+        """
+        # (last_visit_f1 = '' and last_visit_f2 = '' and ...)
+        no_visits = XPath.and_(*[u"${} = ''".format(last_visit)
+                                 for last_visit in last_visit_dates])
+
+        use_date_opened = XPath.and_(
+            XPath(u"${} < today()".format(SCHEDULE_GLOBAL_NEXT_VISIT_DATE)),
+            XPath.or_(
+                XPath(SCHEDULE_PHASE).eq(XPath.string('')),
+                no_visits
+            )
+        )
+        return XPath.if_(
+            use_date_opened,
+            u"${}".format(SCHEDULE_DATE_CASE_OPENED),
+            u"${}".format(SCHEDULE_GLOBAL_NEXT_VISIT_DATE),
+        )
+
+    def filter_condition(self, phase_id):
+        """returns the `relevant` condition on whether to show this form in the list"""
+        next_valid_schedules = self.next_valid_schedules(phase_id)
+        visit_allowed = self.visit_allowed()
+        return XPath.and_(next_valid_schedules, visit_allowed)
+
+    def current_schedule_phase_calculation(self, termination_condition, transition_condition):
+        """
+        Returns the current schedule phase calculation, taking transition and termination conditions into account.
+
+        if({termination_condition}, '-1',
+            if({transition_condition}, current_form_phase + 1, current_form_phase))
+        """
+        this_phase = self.phase.id
+        next_phase = this_phase + 1
+
+        return XPath.if_(
+            termination_condition,
+            SCHEDULE_TERMINATED,
+            XPath.if_(
+                transition_condition,
+                str(next_phase),
+                str(this_phase),
+            ),
+        )
+
+    def within_form_relevancy(self):
+        """
+        (today() >= date({anchor}) + int({schedule}/@starts)
+        and (today <= date{anchor} + int({schedule}/@expires) or {schedule}/@expires = ''))
+        """
+        starts = self.fixture.starts()
+
+        return XPath.and_(
+            XPath(u"today() >= ({} + {})".format(XPath.date(self.anchor), XPath.int(starts))),
+            self.before_form_relevancy_expires()
+        )
+
+    def before_form_relevancy_expires(self):
+        """(today <= date{anchor} + int({schedule}/@expires) or {schedule}/@expires = '')"""
+        expires = self.fixture.expires()
+        return XPath.or_(
+            XPath(expires).eq(XPath.string('')),
+            u"today() <= ({} + {})".format(XPath.date(self.anchor), XPath.int(expires))
+        )
+
+    def next_valid_schedules(self, phase_id=None, include_beginning_of_relevancy_window=True):
+        """
+        [current_schedule_phase = '' or ]current_schedule_phase = phase.id and
+        {anchor} != '' and
+        {within_form_relevancy_window} | {before_form_relevancy_expires}
+
+        include_beginning_of_relevancy_window option either takes into account the form relevancy window
+        """
+
+        current_phase_query = XPath(self.current_schedule_phase).eq(self.phase.id)
+        if phase_id == 1:
+            # No visits yet
+            zeroth_phase = XPath(self.current_schedule_phase).eq(XPath.string(''))
+            current_phase_query = XPath.or_(zeroth_phase, current_phase_query)
+
+        valid_within_window = XPath.and_(
+            current_phase_query,
+            XPath(self.anchor).neq(XPath.string('')),
+            (self.within_form_relevancy() if include_beginning_of_relevancy_window
+             else self.before_form_relevancy_expires()),
+        )
+
+        return valid_within_window
+
+    def before_window(self):
+        """
+        if(@repeats = 'True',
+             (@expires = '' or today() <= date(last_visit_date{form_id}) + int(@increment) + int(@expires)),
+             (@expires = '' or today() <= date({anchor}) + int(@due) + int(@expires))
+        )
+        """
+        before_repeat = XPath.or_(
+            XPath('@expires').eq(XPath.string('')),
+            XPath(u'today() <= ({} + {} + {})'.format(
+                XPath.date(self.last_visit_date),
+                XPath.int('@increment'),
+                XPath.int('@expires'))
+            )
+        )
+        before_standard = XPath.or_(
+            XPath('@expires').eq(XPath.string('')),
+            XPath(u'today() <= ({} + {} + {})'.format(
+                XPath.date(self.anchor),
+                XPath.int('@due'),
+                XPath.int('@expires'))
+            )
+        )
+        return XPath.if_(
+            "@repeats = 'True'",
+            before_repeat,
+            before_standard,
+        )
+
+    def within_window(self):
+        """
+        if(@repeats = 'True',
+            today() >= date(last_visit_date_{form_id}) + int(@increment) + int(@starts) and
+                 (@expires = '' or today() <= date(last_visit_date{form_id}) + int(@increment) + int(@expires)),
+            today() >= date({anchor}) + int(@due) + int(@starts) and
+                 (@expires = '' or today() <= date({anchor}) + int(@due) + int(@expires))
+        )
+        """
+        within_repeat = XPath.and_(
+            XPath(u'today() >= ({} + {} + {})'.format(
+                XPath.date(self.last_visit_date),
+                XPath.int('@increment'),
+                XPath.int('@starts'),
+            )),
+            XPath.or_(
+                XPath('@expires').eq(XPath.string('')),
+                XPath(u'today() <= ({} + {} + {})'.format(
+                    XPath.date(self.last_visit_date),
+                    XPath.int('@increment'),
+                    XPath.int('@expires'))
+                )
+            )
+        )
+        within_standard = XPath.and_(
+            XPath(u'today() >= ({} + {} + {})'.format(
+                XPath.date(self.anchor),
+                XPath.int('@due'),
+                XPath.int('@starts'),
+            )),
+            XPath.or_(
+                XPath('@expires').eq(XPath.string('')),
+                XPath(u'today() <= ({} + {} + {})'.format(
+                    XPath.date(self.anchor),
+                    XPath.int('@due'),
+                    XPath.int('@expires'))
+                )
+            )
+        )
+        return XPath.if_(
+            "@repeats = 'True'",
+            within_repeat,
+            within_standard,
+        )
+
+    def next_visits(self):
+        """last_visit_num_{form_unique_id} = '' or if(@repeats = 'True',
+        @id >= last_visit_num_{form_unique_id}, @id > last_visit_num_{form_unique_id}
+        """
+        last_visit_repeat = XPath(u'@id >= {}'.format(self.last_visit))
+        last_visit_no_repeat = XPath(u'@id > {}'.format(self.last_visit))
+        next_visits = u"if(@repeats = 'True', {}, {})".format(last_visit_repeat, last_visit_no_repeat)
+        first_visit = XPath(u"{} = ''".format(self.last_visit))
+
+        return XPath.or_(first_visit, next_visits)
+
+    def upcoming_scheduled_visits(self):
+        """instance(...)/schedule/visit/[next_visits][within_window]"""
+        return (self.fixture.
+                visit().
+                select_raw(self.next_visits()).
+                select_raw(self.within_window()))
+
+    def visit_allowed(self):
+        """
+        {schedule}/@allow_unscheduled = 'True' or
+        count({upcoming_scheduled_visits} > 0)
+        """
+        num_upcoming_visits = XPath.count(self.upcoming_scheduled_visits())
+        num_upcoming_visits_gt_0 = XPath(u'{} > 0'.format(num_upcoming_visits))
+        return XPath.or_(
+            XPath(u"{} = 'True'".format(self.fixture.unscheduled_visits())),
+            num_upcoming_visits_gt_0
+        )
+
+    def due_first(self):
+        """instance(...)/schedule/visit[before_window][1]/@due"""
+        # Only uses @due since we can't have a repeat visit on the first visit
+        due = self.fixture.visit().select_raw(self.before_window()).select_raw("1").slash("@due")
+        return u"coalesce({}, {} - {})".format(due, SCHEDULE_MAX_DATE, XPath.date(self.anchor))
+
+    def due_later(self):
+        """if(visit/[next_visits][before_window][1]/@increment != '', @increment + last_visit_date_{form_id},
+              visit/[next_visits][before_window][1]/@due != '', @due + anchor_date, MAX_DATE)
+        """
+        due_visit = (self.fixture.visit().
+                     select_raw(self.next_visits()).
+                     select_raw(self.before_window()).
+                     select_raw("1"))
+        due_repeat = due_visit.slash("@increment")
+        due_regular = due_visit.slash("@due")
+        due = (
+            u"if({repeat} != '', {repeat} + date({last_visit}),"
+            " if({regular} != '', {regular} + date({anchor}),"
+            " {max_date}))".format(
+                repeat=due_repeat,
+                last_visit=self.last_visit_date,
+                regular=due_regular,
+                anchor=self.anchor,
+                max_date=SCHEDULE_MAX_DATE,)
+        )
+        return due
+
+    def next_visit_id(self):
+        """{visit}/[next_visits][within_window][1]/@id"""
+        return (self.upcoming_scheduled_visits().
+                select_raw("1").
+                slash("@id"))
+
+    def first_due_date(self):
+        return u"{} + {}".format(XPath.date(self.anchor), XPath.int(self.due_first()))
+
+    def due_date(self):
+        return u"coalesce({}, {})".format(self.due_later(), SCHEDULE_MAX_DATE)
+
+
+class QualifiedScheduleFormXPath(ScheduleFormXPath):
+    """
+    Fully Qualified XPath queries for scheduled forms
+
+    Instead of raw case properties, this fetches the properties from the casedb
+    """
+    def __init__(self, form, phase, module, case_xpath):
+        super(QualifiedScheduleFormXPath, self).__init__(form, phase, module)
+        self.case_xpath = case_xpath
+        self.last_visit = self.case_xpath.slash(SCHEDULE_LAST_VISIT.format(self.form.schedule_form_id))
+        self.last_visit_date = self.case_xpath.slash(SCHEDULE_LAST_VISIT_DATE).format(self.form.schedule_form_id)
+        self.anchor = self.case_xpath.slash(self.phase.anchor)
+        self.current_schedule_phase = self.case_xpath.slash(SCHEDULE_PHASE)
+
+    @staticmethod
+    def next_visit_date(forms, case_xpath):
+        """
+        Returns the next visit date given all the last visits
+        if($next_visit_date < today() and (current_schedule_phase = '' or last_visit_date_{all_forms} = ''),
+            $date_case_opened,
+            $next_due_visit)
+        """
+        last_visit_dates = [case_xpath.slash(SCHEDULE_LAST_VISIT_DATE).format(form.schedule_form_id)
+                            for form in forms]
+        # (last_visit_f1 = '' and last_visit_f2 = '' and ...)
+        no_visits = XPath.and_(*[u"{} = ''".format(last_visit)
+                                 for last_visit in last_visit_dates])
+
+        use_date_opened = XPath.and_(
+            XPath(u"/data/{} < today()".format(SCHEDULE_GLOBAL_NEXT_VISIT_DATE)),
+            XPath.or_(
+                XPath(case_xpath.slash(SCHEDULE_PHASE)).eq(XPath.string('')),
+                no_visits
+            )
+        )
+        return XPath.if_(
+            use_date_opened,
+            case_xpath.slash(SCHEDULE_DATE_CASE_OPENED),
+            u"/data/{}".format(SCHEDULE_GLOBAL_NEXT_VISIT_DATE),
+        )

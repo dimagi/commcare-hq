@@ -1,0 +1,2240 @@
+{
+    "domains": ["mc-inscale"],
+    "config": {
+        "referenced_doc_type": "XFormInstance",
+        "engine_id": "ucr",
+        "table_id": "malaria_consortium",
+        "display_name": "Malaria Consortium",
+        "configured_filter": {
+            "type": "and",
+            "filters": [
+                {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "xmlns"
+                    },
+                    "property_value": "http://openrosa.org/user-registration",
+                    "operator": "not_eq"
+                },
+                {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "xmlns"
+                    },
+                    "property_value": "http://code.javarosa.org/devicereport",
+                    "operator": "not_eq"
+                }
+            ]
+        },
+        "named_filters": {
+            "newborn_reg": {
+                "type": "property_match",
+                "property_value": "http://openrosa.org/formdesigner/2E5C67B9-041A-413C-9F03-4243ED502016",
+                "property_name": "xmlns"
+            },
+            "newborn_follup": {
+                "type": "property_match",
+                "property_value": "http://openrosa.org/formdesigner/A4BCDED3-5D58-4312-AF6A-76A97C9530DB",
+                "property_name": "xmlns"
+            },
+            "child_reg": {
+                "type": "property_match",
+                "property_value": "http://openrosa.org/formdesigner/1DB6E1EF-AEE4-47BF-A13C-1B6CD79E8199",
+                "property_name": "xmlns"
+            },
+            "child_follup": {
+                "type": "property_match",
+                "property_value": "http://openrosa.org/formdesigner/d2401a55c30432c0881f8a2f7eaa179338253051",
+                "property_name": "xmlns"
+            },
+            "adult_reg": {
+                "type": "property_match",
+                "property_value": "http://openrosa.org/formdesigner/35af30a99b8343e4dc6f15fe3a7c61d3207fa8e2",
+                "property_name": "xmlns"
+            },
+            "adult_follup": {
+                "type": "property_match",
+                "property_value": "http://openrosa.org/formdesigner/af5f05c6c5389959335491450381219523e4eaff",
+                "property_name": "xmlns"
+            },
+            "weekly_summary": {
+                "type": "property_match",
+                "property_value": "http://openrosa.org/formdesigner/7EFB54F1-337B-42A7-9C6A-460AE8B0CDD8",
+                "property_name": "xmlns"
+            }
+
+        },
+        "named_expressions": {
+            "results_rdt": {
+                "type": "property_path",
+                "property_path": ["form", "consult", "results_rdt"]
+            },
+            "rdt_result": {
+                "type": "property_path",
+                "property_path": ["form", "self_report", "rdt_result"]
+            },
+            "diagnosis_given": {
+                "type": "property_path",
+                "property_path": ["form", "self_report", "diagnosis_given"]
+            },
+            "treatment_given": {
+                "type": "property_path",
+                "property_path": ["form", "self_report", "treatment_given"]
+            },
+            "referral_given_reason": {
+                "type": "property_path",
+                "property_path": ["form", "self_report", "referral_given_reason"]
+            },
+            "referral_needed": {
+                "type": "property_path",
+                "property_path": ["form", "referral_needed"]
+            },
+            "referral_reported": {
+                "type": "property_path",
+                "property_path": ["form", "self_report", "referral_reported"]
+            },
+            "referral_not_given": {
+                "type": "property_path",
+                "property_path": ["form", "self_report", "referral_given"]
+            }
+        },
+        "configured_indicators": [
+            {
+                "column_id": "date",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["received_on"]
+                },
+                "datatype": "datetime"
+            },
+            {
+                "column_id": "user_id",
+                "type": "expression",
+                "expression": {
+                    "type": "property_path",
+                    "property_path": ["form", "meta", "userID"]
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "user_name",
+                "type": "expression",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareUser",
+                    "doc_id_expression": {
+                        "type": "property_path",
+                        "property_path": ["form", "meta", "userID"]
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "username"
+                    }
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "hf",
+                "type": "expression",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareUser",
+                    "doc_id_expression": {
+                        "type": "property_path",
+                        "property_path": ["form", "meta", "userID"]
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": ["user_data", "health_facility"]
+                    }
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "district",
+                "type": "expression",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareUser",
+                    "doc_id_expression": {
+                        "type": "property_path",
+                        "property_path": ["form", "meta", "userID"]
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": ["user_data", "district"]
+                    }
+                },
+                "datatype": "string"
+            },
+            {
+                "column_id": "home_visit",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "pregnant"],
+                                "datetyoe": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "1"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "post_partem",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "post_partum"],
+                                "datetyoe": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "1"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "sex",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "sex"],
+                                "datetyoe": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "1"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "newborn_reg",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "newborn_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": 1
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "newborn_followup",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "newborn_follup"
+                    },
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": 1
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "child_reg",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": 1
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "child_followup",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_follup"
+                    },
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": 1
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "adult_followup",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_follup"
+                    },
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": 1
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "rdt_children",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "named",
+                                "name": "results_rdt"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "1"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "conditional",
+                            "test": {
+                                "operator": "in",
+                                "expression": {
+                                    "type": "named",
+                                    "name": "results_rdt"
+                                },
+                                "type": "boolean_expression",
+                                "property_value": ["2", "3"]
+                            },
+                            "expression_if_true": {
+                                "type": "constant",
+                                "constant": 0
+                            },
+                            "expression_if_false": {
+                                "type": "constant",
+                                "constant": -1
+                            }
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "rdt_adult",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "named",
+                                    "name": "rdt_result"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "1"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "conditional",
+                            "test": {
+                                "operator": "in",
+                                "expression": {
+                                    "type": "named",
+                                    "name": "rdt_result"
+                                },
+                                "type": "boolean_expression",
+                                "property_value": ["2", "3"]
+                            },
+                            "expression_if_true": {
+                                "type": "constant",
+                                "constant": 0
+                            },
+                            "expression_if_false": {
+                                "type": "constant",
+                                "constant": -1
+                            }
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "malaria_child",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "diagnosis_given"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "1"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "malaria_adult",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "diagnosis_given"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "1"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "diarrhea_child",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "diagnosis_given"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "2"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "diarrhea_adult",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "diagnosis_given"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "2"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "ari_child",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "diagnosis_given"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "3"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "ari_adult",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                       "type": "named",
+                       "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "diagnosis_given"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "pneumonia"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "it_malaria_child",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "any_in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "treatment_given"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": ["4", "5", "7", "8", "9", "10", "11"]
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "it_malaria_adult",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "any_in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "treatment_given"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": ["4", "5", "7", "8", "9", "10", "11"]
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "it_diarrhea_child",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "treatment_given"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "3"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "it_diarrhea_adult",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "any_in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "treatment_given"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": ["3", "6"]
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "it_ari_child",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "any_in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "treatment_given"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": ["1", "2"]
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "it_ari_adult",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "any_in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "treatment_given"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": ["1", "2"]
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "malnutrition_child",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_given_reason"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "5"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "malnutrition_adult",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_given_reason"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "5"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "vaccination_child",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_given_reason"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "3"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "vaccination_adult",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_given_reason"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "3"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "vaccination_newborn",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "newborn_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_given_reason"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "3"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "danger_sign_child",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_given_reason"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "1"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "danger_sign_adult",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_given_reason"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "1"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "danger_sign_newborn",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "newborn_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_given_reason"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "1"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "prenatal_consult",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_given_reason"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "6"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "missing_malaria_meds_child",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_given_reason"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "7"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "missing_malaria_meds_adult",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_given_reason"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "7"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "other_child",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "any_in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_given_reason"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": ["0", "6"]
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "other_newborn",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "newborn_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "any_in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_given_reason"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": ["0", "2", "4"]
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "other_adult",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_given_reason"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": 0
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+                "column_id": "deaths_newborn",
+                "type": "expression",
+                "datatype": "integer",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "weekly_summary"
+                    },
+                    "expression_if_true": {
+                        "type": "property_path",
+                        "property_path": ["form", "deaths", "deaths_newborn"]
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                }
+            },
+            {
+                "column_id": "deaths_children",
+                "type": "expression",
+                "datatype": "integer",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "weekly_summary"
+                    },
+                    "expression_if_true": {
+                        "type": "property_path",
+                        "property_path": ["form", "deaths", "deaths_children"]
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                }
+            },
+            {
+                "column_id": "deaths_mothers",
+                "type": "expression",
+                "datatype": "integer",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "weekly_summary"
+                    },
+                    "expression_if_true": {
+                        "type": "property_path",
+                        "property_path": ["form", "deaths", "deaths_mothers"]
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                }
+            },
+            {
+                "column_id": "deaths_others",
+                "type": "expression",
+                "datatype": "integer",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "weekly_summary"
+                    },
+                    "expression_if_true": {
+                        "type": "property_path",
+                        "property_path": ["form", "deaths", "deaths_others"]
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                }
+            },
+            {
+                "column_id": "heath_ed_talks",
+                "type": "expression",
+                "datatype": "integer",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "weekly_summary"
+                    },
+                    "expression_if_true": {
+                        "type": "property_path",
+                        "property_path": ["form", "he", "he_number"]
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                }
+            },
+            {
+                "column_id": "heath_ed_participants",
+                "type": "expression",
+                "datatype": "integer",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "weekly_summary"
+                    },
+                    "expression_if_true": {
+                        "type": "property_path",
+                        "property_path": ["form", "he", "he_number_participants"]
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                }
+            },
+            {
+            "column_id": "has_pneumonia",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "has_pneumonia"],
+                                "datetyoe": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "yes"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "pneumonia_ds",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "pneumonia_ds"],
+                                "datetyoe": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "yes"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "diarrhoea_ds",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "diarrhoea_ds"],
+                                "datetyoe": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "yes"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "diarrhoea",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "non_severe_symptoms", "diarrhoea"],
+                                "datetyoe": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "1"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "has_malaria",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "has_malaria"],
+                                "datetyoe": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "yes"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "referral_needed_newborn",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "newborn_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_needed"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "yes"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "referral_given_newborn",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "newborn_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "referral_given"],
+                                "datetyoe": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "yes"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "referral_needed_child",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_needed"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "yes"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "referral_given_child",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "self_report", "referral_given"],
+                                "datetyoe": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "1"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "treatment_preg_ds",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "preg_danger_signs", "treatment_preg_ds"]
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "OK"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "referral_given_adult",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "self_report", "referral_given"],
+                                "datetyoe": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "1"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "cases_rdt_not_done",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "named",
+                                "name": "results_rdt"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "0"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "internal_newborn_has_danger_sign",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "newborn_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "has_danger_sign"],
+                                "datetyoe": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "yes"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "referral_reported_newborn",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "newborn_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_reported"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "1"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "internal_child_has_danger_sign",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_path",
+                                "property_path": ["form", "has_danger_sign"],
+                                "datetyoe": "string"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "yes"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "internal_child_referral_not_given",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_not_given"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "0"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "internal_adult_referral_not_given",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_not_given"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "0"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "internal_child_no_malaria_meds",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "child_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_given_reason"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "7"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            },
+            {
+            "column_id": "internal_adult_no_malaria_meds",
+                "type": "expression",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "named",
+                        "name": "adult_reg"
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in_multi",
+                            "expression": {
+                                "type": "named",
+                                "name": "referral_given_reason"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "7"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": 1
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": -1
+                    }
+                },
+                "datatype": "integer"
+            }
+        ]
+    }
+}

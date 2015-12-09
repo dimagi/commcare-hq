@@ -1,18 +1,16 @@
 from django.test import TestCase
 from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.models import User, get_properly_wrapped_sync_log
 from datetime import datetime
 from casexml.apps.phone.checksum import EMPTY_HASH, CaseStateHash
 from casexml.apps.case.xml import V2
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.tests.util import delete_all_sync_logs, delete_all_xforms, delete_all_cases
 from casexml.apps.phone.exceptions import BadStateException
 from casexml.apps.phone.tests.utils import generate_restore_response, \
     get_exactly_one_wrapped_sync_log, generate_restore_payload
-from corehq import toggles
 from corehq.apps.domain.models import Domain
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -44,8 +42,8 @@ class StateHashTest(TestCase):
             )
             self.fail("Call to generate a payload with a bad hash should fail!")
         except BadStateException, e:
-            self.assertEqual(empty_hash, e.expected)
-            self.assertEqual(wrong_hash, e.actual)
+            self.assertEqual(empty_hash, e.server_hash)
+            self.assertEqual(wrong_hash, e.phone_hash)
             self.assertEqual(0, len(e.case_ids))
 
         response = generate_restore_response(self.project, self.user, self.sync_log.get_id, version=V2,
@@ -59,7 +57,7 @@ class StateHashTest(TestCase):
                        owner_id=self.user.user_id).as_xml()
         c2 = CaseBlock(case_id="123abc", create=True, 
                        owner_id=self.user.user_id).as_xml()
-        post_case_blocks([c1, c2], 
+        post_case_blocks([c1, c2],
                          form_extras={"last_sync_token": self.sync_log.get_id})
         
         self.sync_log = get_properly_wrapped_sync_log(self.sync_log.get_id)
@@ -76,18 +74,8 @@ class StateHashTest(TestCase):
                                      version=V2, state_hash=str(bad_hash))
             self.fail("Call to generate a payload with a bad hash should fail!")
         except BadStateException, e:
-            self.assertEqual(real_hash, e.expected)
-            self.assertEqual(bad_hash, e.actual)
+            self.assertEqual(real_hash, e.server_hash)
+            self.assertEqual(bad_hash, e.phone_hash)
             self.assertEqual(2, len(e.case_ids))
             self.assertTrue("abc123" in e.case_ids)
             self.assertTrue("123abc" in e.case_ids)
-
-
-class FileResponseStateHashTest(StateHashTest):
-
-    def setUp(self):
-        super(FileResponseStateHashTest, self).setUp()
-        update_toggle_cache(toggles.FILE_RESTORE.slug, self.user.username, True)
-
-    def tearDown(self):
-        clear_toggle_cache(toggles.FILE_RESTORE.slug, self.user.username)

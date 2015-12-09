@@ -8,58 +8,69 @@ import re
 import io
 from PIL import Image
 import uuid
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.sites.models import get_current_site
+from django.utils.http import urlsafe_base64_encode
+from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, HIPAA_COMPLIANCE_CHECKBOX
 from dimagi.utils.decorators.memoized import memoized
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from corehq import privileges, toggles
+from django.db import transaction
+from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.feature_previews import CALLCENTER
-import settings
 
 from django import forms
 from crispy_forms.bootstrap import FormActions, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
+from crispy_forms import bootstrap as twbscrispy
+from corehq.apps.style import crispy as hqcrispy
+from crispy_forms import bootstrap as twbscrispy
+
 from django.core.urlresolvers import reverse
 
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
-    ImageField, DecimalField, IntegerField)
+    ImageField)
 from django.forms.widgets import  Select
-from django.utils.encoding import smart_str
-from django.contrib.auth.forms import PasswordResetForm
+from django.utils.encoding import smart_str, force_bytes
 from django.utils.safestring import mark_safe
-from django_countries.countries import COUNTRIES
+from django_countries.data import COUNTRIES
 from corehq.apps.accounting.models import (
     BillingAccount,
-    BillingAccountAdmin,
+    BillingAccountType,
     BillingContactInfo,
     CreditAdjustmentReason,
     CreditLine,
     Currency,
     DefaultProductPlan,
     FeatureType,
+    PreOrPostPay,
     ProBonoStatus,
     SoftwarePlanEdition,
     Subscription,
     SubscriptionAdjustmentMethod,
     SubscriptionType,
+    EntryPoint,
+    FundingSource
 )
-from corehq.apps.app_manager.models import (Application, RemoteApp,
-                                            FormBase, get_apps_in_domain)
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
-    AREA_CHOICES, SUB_AREA_CHOICES, Domain, TransferDomainRequest)
+    AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, Domain, TransferDomainRequest)
 from corehq.apps.reminders.models import CaseReminderHandler
 
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import TextField
-from dimagi.utils.django.email import send_HTML_email
+from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
 import django
 
@@ -85,19 +96,55 @@ class ProjectSettingsForm(forms.Form):
     global_timezone = forms.CharField(
         initial="UTC",
         label="Project Timezone",
-        widget=BootstrapDisabledInput(attrs={'class': 'input-xlarge'}))
+        widget=forms.HiddenInput
+    )
     override_global_tz = forms.BooleanField(
         initial=False,
         required=False,
         label="",
         widget=BootstrapCheckboxInput(
-            attrs={'data-bind': 'checked: override_tz, event: {change: updateForm}'},
-            inline_label=ugettext_noop("Override project's timezone setting just for me.")))
+            inline_label=ugettext_noop("Override project's timezone setting just for me.")
+        )
+    )
     user_timezone = TimeZoneChoiceField(
         label="My Timezone",
-        initial=global_timezone.initial,
-        widget=forms.Select(attrs={'class': 'input-xlarge', 'bindparent': 'visible: override_tz',
-                                   'data-bind': 'event: {change: updateForm}'}))
+        initial=global_timezone.initial
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(ProjectSettingsForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_id = 'my-project-settings-form'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.all().wrap_together(crispy.Fieldset, 'Override Project Timezone')
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Override Project Timezone',
+                crispy.Field('global_timezone', css_class='input-xlarge'),
+                twbscrispy.PrependedText(
+                    'override_global_tz', '', data_bind='checked: override_tz, event: {change: updateForm}'
+                ),
+                crispy.Div(
+                    crispy.Field(
+                        'user_timezone',
+                        css_class='input-xlarge',
+                        data_bind='event: {change: updateForm}'
+                    ),
+                    data_bind='visible: override_tz'
+                )
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update My Settings"),
+                    type="submit",
+                    css_id="update-proj-settings",
+                    css_class='btn-primary disabled',
+                    data_bind="hqbSubmitReady: form_is_ready"
+                )
+            )
+        )
 
     def clean_user_timezone(self):
         data = self.cleaned_data['user_timezone']
@@ -136,14 +183,18 @@ class SnapshotApplicationForm(forms.Form):
         super(SnapshotApplicationForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
-            'publish',
-            'name',
-            'description',
-            'deployment_date',
-            'phone_model',
-            'user_type',
-            'attribution_notes',
+            twbscrispy.PrependedText('publish', ''),
+            crispy.Div(
+                'name',
+                'description',
+                'deployment_date',
+                'phone_model',
+                'user_type',
+                'attribution_notes'
+            )
         )
 
 
@@ -157,7 +208,7 @@ class SnapshotFixtureForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
-            'publish',
+            twbscrispy.PrependedText('publish', ''),
             'description',
         )
 
@@ -200,6 +251,8 @@ class SnapshotSettingsForm(forms.Form):
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
 
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -225,19 +278,20 @@ class SnapshotSettingsForm(forms.Form):
             ),
             crispy.Fieldset(
                 'Content',
-                'share_multimedia',
-                'share_reminders',
+                twbscrispy.PrependedText('share_multimedia', ''),
+                twbscrispy.PrependedText('share_reminders', '')
             ),
             crispy.Fieldset(
                 'Licensing',
                 'license',
-                'cda_confirmed',
+                twbscrispy.PrependedText('cda_confirmed', ''),
             ),
         )
 
         if self.is_superuser:
-            self.helper.layout.append(crispy.Fieldset('Starter App', 'is_starter_app',),)
-
+            self.helper.layout.append(
+                crispy.Fieldset('Starter App', twbscrispy.PrependedText('is_starter_app', ''))
+            )
 
         self.fields['license'].help_text = \
             render_to_string('domain/partials/license_explanations.html', {
@@ -332,8 +386,8 @@ class SnapshotSettingsForm(forms.Form):
 
 
 class TransferDomainFormErrors(object):
-    USER_DNE = _(u'The user being transferred to does not exist')
-    DOMAIN_MISMATCH = _(u'Mismatch in domains when confirming')
+    USER_DNE = ugettext_lazy(u'The user being transferred to does not exist')
+    DOMAIN_MISMATCH = ugettext_lazy(u'Mismatch in domains when confirming')
 
 
 class TransferDomainForm(forms.ModelForm):
@@ -405,59 +459,105 @@ class SubAreaMixin():
             raise forms.ValidationError(_('This is not a valid sub-area for the area %s') % area)
         return sub_area
 
+
 class DomainGlobalSettingsForm(forms.Form):
-    hr_name = forms.CharField(label=_("Project Name"))
+    USE_LOCATION_CHOICE = "user_location"
+    USE_PARENT_LOCATION_CHOICE = 'user_parent_location'
+    LOCATION_CHOICES = [USE_LOCATION_CHOICE, USE_PARENT_LOCATION_CHOICE]
+    CASES_AND_FIXTURES_CHOICE = "cases_and_fixtures"
+    CASES_ONLY_CHOICE = "cases_only"
+
+    hr_name = forms.CharField(
+        label=ugettext_lazy("Project Name"),
+        help_text=ugettext_lazy("This name will appear in the upper right corner "
+                                "when you are in this project. Changing this name "
+                                "will not change the URL of the project.")
+    )
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
     logo = ImageField(
-        label=_("Custom Logo"),
+        label=ugettext_lazy("Custom Logo"),
         required=False,
-        help_text=_("Upload a custom image to display instead of the "
+        help_text=ugettext_lazy("Upload a custom image to display instead of the "
                     "CommCare HQ logo.  It will be automatically resized to "
                     "a height of 32 pixels.")
     )
     delete_logo = BooleanField(
-        label=_("Delete Logo"),
+        label=ugettext_lazy("Delete Logo"),
         required=False,
-        help_text=_("Delete your custom logo and use the standard one.")
+        help_text=ugettext_lazy("Delete your custom logo and use the standard one.")
     )
     call_center_enabled = BooleanField(
-        label=_("Call Center Application"),
+        label=ugettext_lazy("Call Center Application"),
         required=False,
-        help_text=_("Call Center mode is a CommCareHQ module for managing "
+        help_text=ugettext_lazy("Call Center mode is a CommCareHQ module for managing "
                     "call center workflows. It is still under "
                     "active development. Do not enable for your domain unless "
                     "you're actively piloting it.")
     )
+    call_center_type = ChoiceField(
+        label=ugettext_lazy("Call Center Type"),
+        initial=CASES_AND_FIXTURES_CHOICE,
+        choices=[
+            (CASES_AND_FIXTURES_CHOICE, "Create cases and indicators"),
+            (CASES_ONLY_CHOICE, "Create just cases"),
+        ],
+        help_text=ugettext_lazy(
+            """
+            If "Create cases and indicators" is selected, each user will have a case associated with it,
+            and fixtures will be synced containing indicators about each user. If "Create just cases"
+            is selected, the fixtures will not be created.
+            """
+        ),
+        required=False,
+    )
     call_center_case_owner = ChoiceField(
-        label=_("Call Center Case Owner"),
+        label=ugettext_lazy("Call Center Case Owner"),
         initial=None,
         required=False,
-        help_text=_("Select the person who will be listed as the owner "
+        help_text=ugettext_lazy("Select the person who will be listed as the owner "
                     "of all cases created for call center users.")
     )
     call_center_case_type = CharField(
-        label=_("Call Center Case Type"),
+        label=ugettext_lazy("Call Center Case Type"),
         required=False,
-        help_text=_("Enter the case type to be used for FLWs in call center apps")
+        help_text=ugettext_lazy("Enter the case type to be used for FLWs in call center apps")
     )
 
     def __init__(self, *args, **kwargs):
-        domain = kwargs.pop('domain', None)
+        self.domain = kwargs.pop('domain', None)
         self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper[3] = twbscrispy.PrependedText('delete_logo', '')
+        self.helper[4] = twbscrispy.PrependedText('call_center_enabled', '')
+        self.helper.all().wrap_together(crispy.Fieldset, 'Edit Basic Information')
+        self.helper.layout.append(
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update Basic Info"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
+
         if not self.can_use_custom_logo:
             del self.fields['logo']
             del self.fields['delete_logo']
 
-        if domain:
-            if not CALLCENTER.enabled(domain):
-                self.fields['call_center_enabled'].widget = forms.HiddenInput()
-                self.fields['call_center_case_owner'].widget = forms.HiddenInput()
-                self.fields['call_center_case_type'].widget = forms.HiddenInput()
+        if self.domain:
+            if not CALLCENTER.enabled(self.domain):
+                del self.fields['call_center_enabled']
+                del self.fields['call_center_type']
+                del self.fields['call_center_case_owner']
+                del self.fields['call_center_case_type']
             else:
-                groups = Group.get_case_sharing_groups(domain)
-                users = CommCareUser.by_domain(domain)
+                groups = Group.get_case_sharing_groups(self.domain)
+                users = CommCareUser.by_domain(self.domain)
 
                 call_center_user_choices = [
                     (user._id, user.raw_username + ' [user]') for user in users
@@ -465,9 +565,16 @@ class DomainGlobalSettingsForm(forms.Form):
                 call_center_group_choices = [
                     (group._id, group.name + ' [group]') for group in groups
                 ]
+                call_center_location_choices = []
+                if CALL_CENTER_LOCATION_OWNERS.enabled(self.domain):
+                    call_center_location_choices = [
+                        (self.USE_LOCATION_CHOICE, ugettext_lazy("user's location [location]")),
+                        (self.USE_PARENT_LOCATION_CHOICE, ugettext_lazy("user's location's parent [location]")),
+                    ]
 
                 self.fields["call_center_case_owner"].choices = \
                     [('', '')] + \
+                    call_center_location_choices + \
                     call_center_user_choices + \
                     call_center_group_choices
 
@@ -477,9 +584,20 @@ class DomainGlobalSettingsForm(forms.Form):
         timezone_field.run_validators(data)
         return smart_str(data)
 
-    def save(self, request, domain):
-        domain.hr_name = self.cleaned_data['hr_name']
+    def clean(self):
+        cleaned_data = super(DomainGlobalSettingsForm, self).clean()
+        if (cleaned_data.get('call_center_enabled') and
+                (not cleaned_data.get('call_center_case_type') or
+                 not cleaned_data.get('call_center_case_owner') or
+                 not cleaned_data.get('call_center_type'))):
+            raise forms.ValidationError(_(
+                'You must choose a Call Center Type, Owner, and Case Type to use the call center application. '
+                'Please uncheck the "Call Center Application" setting or enter values for the other fields.'
+            ))
 
+        return cleaned_data
+
+    def _save_logo_configuration(self, domain):
         if self.can_use_custom_logo:
             logo = self.cleaned_data['logo']
             if logo:
@@ -496,12 +614,26 @@ class DomainGlobalSettingsForm(forms.Form):
             elif self.cleaned_data['delete_logo']:
                 domain.delete_attachment(LOGO_ATTACHMENT)
 
-        domain.call_center_config.enabled = self.cleaned_data.get('call_center_enabled', False)
-        if domain.call_center_config.enabled:
-            domain.internal.using_call_center = True
-            domain.call_center_config.case_owner_id = self.cleaned_data.get('call_center_case_owner', None)
-            domain.call_center_config.case_type = self.cleaned_data.get('call_center_case_type', None)
+    def _save_call_center_configuration(self, domain):
+        cc_config = domain.call_center_config
+        cc_config.enabled = self.cleaned_data.get('call_center_enabled', False)
+        if cc_config.enabled:
 
+            domain.internal.using_call_center = True
+            cc_config.use_fixtures = self.cleaned_data['call_center_type'] == self.CASES_AND_FIXTURES_CHOICE
+
+            owner = self.cleaned_data.get('call_center_case_owner', None)
+            if owner in self.LOCATION_CHOICES:
+                cc_config.call_center_case_owner = None
+                cc_config.use_user_location_as_owner = True
+                cc_config.user_location_ancestor_level = 1 if owner == self.USE_PARENT_LOCATION_CHOICE else 0
+            else:
+                cc_config.case_owner_id = owner
+                cc_config.use_user_location_as_owner = False
+
+            cc_config.case_type = self.cleaned_data.get('call_center_case_type', None)
+
+    def _save_timezone_configuration(self, domain):
         global_tz = self.cleaned_data['default_timezone']
         if domain.default_timezone != global_tz:
             domain.default_timezone = global_tz
@@ -514,6 +646,12 @@ class DomainGlobalSettingsForm(forms.Form):
                     users_to_save.append(user)
             if users_to_save:
                 WebUser.bulk_save(users_to_save)
+
+    def save(self, request, domain):
+        domain.hr_name = self.cleaned_data['hr_name']
+        self._save_logo_configuration(domain)
+        self._save_call_center_configuration(domain)
+        self._save_timezone_configuration(domain)
         domain.save()
         return True
 
@@ -521,14 +659,14 @@ class DomainGlobalSettingsForm(forms.Form):
 class DomainMetadataForm(DomainGlobalSettingsForm):
 
     cloudcare_releases = ChoiceField(
-        label=_("CloudCare should use"),
+        label=ugettext_lazy("CloudCare should use"),
         initial=None,
         required=False,
         choices=(
-            ('stars', _('Latest starred version')),
-            ('nostars', _('Highest numbered version (not recommended)')),
+            ('stars', ugettext_lazy('Latest starred version')),
+            ('nostars', ugettext_lazy('Highest numbered version (not recommended)')),
         ),
-        help_text=_("Choose whether CloudCare should use the latest "
+        help_text=ugettext_lazy("Choose whether CloudCare should use the latest "
                     "starred build or highest numbered build in your "
                     "application.")
     )
@@ -542,7 +680,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
         if project.cloudcare_releases == 'default' or not domain_has_privilege(domain, privileges.CLOUDCARE):
             # if the cloudcare_releases flag was just defaulted, don't bother showing
             # this setting at all
-            self.fields['cloudcare_releases'].widget = forms.HiddenInput()
+            del self.fields['cloudcare_releases']
 
     def save(self, request, domain):
         res = DomainGlobalSettingsForm.save(self, request, domain)
@@ -570,24 +708,58 @@ def tuple_of_copies(a_list, blank=True):
 
 class PrivacySecurityForm(forms.Form):
     restrict_superusers = BooleanField(
-        label=_("Restrict Dimagi Staff Access"),
+        label=ugettext_lazy("Restrict Dimagi Staff Access"),
         required=False,
-        help_text=_("If access to a project space is restricted only users added " +
-                    "to the domain and staff members will have access.")
+        help_text=ugettext_lazy("If access to a project space is restricted only users added " +
+                                "to the domain and staff members will have access.")
     )
     secure_submissions = BooleanField(
-        label=_("Secure submissions"),
+        label=ugettext_lazy("Secure submissions"),
         required=False,
-        help_text=_(mark_safe(
+        help_text=ugettext_lazy(mark_safe(
             "Secure Submissions prevents others from impersonating your mobile workers."
             "This setting requires all deployed applications to be using secure "
             "submissions as well. "
             "<a href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'>"
             "Read more about secure submissions here</a>"))
     )
+    allow_domain_requests = BooleanField(
+        label=ugettext_lazy("Web user requests"),
+        required=False,
+        help_text=ugettext_lazy("Allow unknown users to request web access to the domain."),
+    )
+    hipaa_compliant = BooleanField(
+        label=ugettext_lazy("HIPAA compliant"),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        user_name = kwargs.pop('user_name')
+        super(PrivacySecurityForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper[0] = twbscrispy.PrependedText('restrict_superusers', '')
+        self.helper[1] = twbscrispy.PrependedText('secure_submissions', '')
+        self.helper[2] = twbscrispy.PrependedText('allow_domain_requests', '')
+        self.helper[3] = twbscrispy.PrependedText('hipaa_compliant', '')
+        if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
+            self.helper.layout.pop(3)
+        self.helper.all().wrap_together(crispy.Fieldset, 'Edit Privacy Settings')
+        self.helper.layout.append(
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Update Privacy Settings"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
 
     def save(self, domain):
         domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
+        domain.allow_domain_requests = self.cleaned_data.get('allow_domain_requests', False)
         secure_submissions = self.cleaned_data.get(
             'secure_submissions', False)
         apps_to_save = []
@@ -597,6 +769,8 @@ class PrivacySecurityForm(forms.Form):
                     app.secure_submissions = secure_submissions
                     apps_to_save.append(app)
         domain.secure_submissions = secure_submissions
+        domain.hipaa_compliant = self.cleaned_data.get('hipaa_compliant', False)
+
         domain.save()
 
         if apps_to_save:
@@ -631,10 +805,10 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             "The organization built and deployed their app themselves. Dimagi may have provided indirect support"
         ))
     is_test = ChoiceField(
-        label=_("Real Project"),
-        choices=(('none', _('Unknown')),
-                 ('true', _('Test')),
-                 ('false', _('Real')),)
+        label=ugettext_lazy("Real Project"),
+        choices=(('none', ugettext_lazy('Unknown')),
+                 ('true', ugettext_lazy('Test')),
+                 ('false', ugettext_lazy('Real')),)
     )
     area = ChoiceField(
         label=ugettext_noop("Sector*"),
@@ -647,29 +821,34 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     organization_name = CharField(
         label=ugettext_noop("Organization Name*"),
         required=False,
-        help_text=_("Quick 1-2 sentence summary of the project."),
+        help_text=ugettext_lazy("Quick 1-2 sentence summary of the project."),
     )
     notes = CharField(label=ugettext_noop("Notes*"), required=False, widget=forms.Textarea)
     phone_model = CharField(
         label=ugettext_noop("Device Model"),
-        help_text=_("Add CloudCare, if this project is using CloudCare as well"),
+        help_text=ugettext_lazy("Add CloudCare, if this project is using CloudCare as well"),
         required=False,
     )
     deployment_date = CharField(
         label=ugettext_noop("Deployment date"),
         required=False,
-        help_text=_("Date that the project went live (usually right after training).")
+        help_text=ugettext_lazy("Date that the project went live (usually right after training).")
+    )
+    business_unit = forms.ChoiceField(
+        label=ugettext_noop('Business Unit'),
+        choices=tuple_of_copies(BUSINESS_UNITS),
+        required=False,
     )
     countries = forms.MultipleChoiceField(
         label=ugettext_noop("Countries"),
-        choices=COUNTRIES,
+        choices=sorted(COUNTRIES.items(), key=lambda x: x[0]),
         required=False,
     )
     commtrack_domain = ChoiceField(
         label=ugettext_noop("CommCare Supply Project"),
         choices=tf_choices('Yes', 'No'),
         required=False,
-        help_text=_("This app aims to improve the supply of goods and materials")
+        help_text=ugettext_lazy("This app aims to improve the supply of goods and materials")
     )
 
     def __init__(self, can_edit_eula, *args, **kwargs):
@@ -693,6 +872,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
 
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
@@ -706,6 +887,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'notes',
                 'phone_model',
                 'deployment_date',
+                'business_unit',
                 'countries',
                 'commtrack_domain',
                 crispy.Div(*additional_fields),
@@ -716,11 +898,11 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'sf_account_id',
                 'services',
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 StrictButton(
                     _("Update Project Information"),
                     type="submit",
-                    css_class='btn btn-primary',
+                    css_class='btn-primary',
                 ),
             ),
         )
@@ -748,6 +930,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             notes=self.cleaned_data['notes'],
             phone_model=self.cleaned_data['phone_model'],
             commtrack_domain=self.cleaned_data['commtrack_domain'] == 'true',
+            business_unit=self.cleaned_data['business_unit'],
             **kwargs
         )
 
@@ -770,39 +953,84 @@ def clean_password(txt):
     return txt
 
 
-class HQPasswordResetForm(PasswordResetForm):
+class HQPasswordResetForm(forms.Form):
     """
-    Modified from PasswordResetForm to filter only web users by default.
+    Only finds users and emails forms where the USERNAME is equal to the
+    email specified (preventing Mobile Workers from using this form to submit).
 
-    This prevents duplicate emails with linked commcare user accounts to the same email.
+    This small change is why we can't use the default PasswordReset form.
     """
+    email = forms.EmailField(label=ugettext_lazy("Username"), max_length=254)
     error_messages = {
-        'unknown': _("That email address doesn't have an associated "
+        'unknown': ugettext_lazy("That email address doesn't have an associated "
                      "user account. Are you sure you've registered?"),
-        'unusable': _("The user account associated with this email "
-                      "address cannot reset the password."),
+        'unusable': ugettext_lazy("The user account associated with this email "
+                       "address cannot reset the password."),
     }
 
     def clean_email(self):
         UserModel = get_user_model()
         email = self.cleaned_data["email"]
         matching_users = UserModel._default_manager.filter(username__iexact=email)
-        if matching_users.count():
-            self.users_cache = matching_users
-        else:
-            # revert to previous behavior to theoretically allow commcare users to create an account
-            self.users_cache = UserModel._default_manager.filter(email__iexact=email)
 
         # below here is not modified from the superclass
-        if not len(self.users_cache):
+        if not len(matching_users):
             raise forms.ValidationError(self.error_messages['unknown'])
-        if not any(user.is_active for user in self.users_cache):
+        if not any(user.is_active for user in matching_users):
             # none of the filtered users are active
             raise forms.ValidationError(self.error_messages['unknown'])
         if any((user.password == UNUSABLE_PASSWORD_PREFIX)
-               for user in self.users_cache):
+               for user in matching_users):
             raise forms.ValidationError(self.error_messages['unusable'])
         return email
+
+    def save(self, domain_override=None,
+             subject_template_name='registration/password_reset_subject.txt',
+             email_template_name='registration/password_reset_email.html',
+             # WARNING: Django 1.7 passes this in automatically. do not remove
+             html_email_template_name=None,
+             use_https=False, token_generator=default_token_generator,
+             from_email=None, request=None):
+        """
+        Generates a one-use only link for resetting password and sends to the
+        user.
+        """
+        UserModel = get_user_model()
+        email = self.cleaned_data["email"]
+
+        # this is the line that we couldn't easily override in PasswordForm where
+        # we specifically filter for the username, not the email, so that
+        # mobile workers who have the same email set as a web worker don't
+        # get a password reset email.
+        active_users = UserModel._default_manager.filter(
+            username__iexact=email, is_active=True)
+
+        # the code below is copied from default PasswordForm
+        for user in active_users:
+            # Make sure that no email is sent to a user that actually has
+            # a password marked as unusable
+            if not user.has_usable_password():
+                continue
+            if not domain_override:
+                current_site = get_current_site(request)
+                site_name = current_site.name
+                domain = current_site.domain
+            else:
+                site_name = domain = domain_override
+            c = {
+                'email': user.email,
+                'domain': domain,
+                'site_name': site_name,
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                'user': user,
+                'token': token_generator.make_token(user),
+                'protocol': 'https' if use_https else 'http',
+            }
+            subject = render_to_string(subject_template_name, c)
+            # Email subject *must not* contain newlines
+            subject = ''.join(subject.splitlines())
+            email = render_to_string(email_template_name, c)
+            send_mail_async.delay(subject, email, from_email, [user.email])
 
 
 class ConfidentialPasswordResetForm(HQPasswordResetForm):
@@ -816,16 +1044,6 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
 
 
 class EditBillingAccountInfoForm(forms.ModelForm):
-    billing_admins = forms.CharField(
-        required=False,
-        label=ugettext_noop("Other Billing Admins"),
-        help_text=ugettext_noop(mark_safe(
-            "<p>These are the Web Users that will be able to access and "
-            "modify your account's subscription and billing information.</p> "
-            "<p>Your logged in account is already a Billing Administrator."
-            "</p>"
-        )),
-    )
 
     class Meta:
         model = BillingContactInfo
@@ -850,17 +1068,9 @@ class EditBillingAccountInfoForm(forms.ModelForm):
 
         super(EditBillingAccountInfoForm, self).__init__(data, *args, **kwargs)
 
-        other_admins = self.account.billing_admins.filter(
-            domain=self.domain).exclude(web_user=self.creating_user).all()
-        self.fields['billing_admins'].initial = ','.join([o.web_user for o in other_admins])
-
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _("Billing Administrators"),
-                crispy.Field('billing_admins', css_class='input-xxlarge'),
-            ),
             crispy.Fieldset(
                 _("Basic Information"),
                 'company_name',
@@ -877,7 +1087,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large",
-                             data_countryname=dict(COUNTRIES).get(self.current_country, '')),
+                             data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
             FormActions(
                 StrictButton(
@@ -887,22 +1097,6 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 ),
             ),
         )
-
-    def clean_billing_admins(self):
-        data = self.cleaned_data['billing_admins']
-        all_admins = data.split(',')
-        result = []
-        for admin in all_admins:
-            if admin and admin != u'':
-                result.append(BillingAccountAdmin.objects.get_or_create(
-                    web_user=admin,
-                    domain=self.domain,
-                )[0])
-        result.append(BillingAccountAdmin.objects.get_or_create(
-            web_user=self.creating_user,
-            domain=self.domain,
-        )[0])
-        return result
 
     def clean_phone_number(self):
         data = self.cleaned_data['phone_number']
@@ -917,19 +1111,14 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                                               "Did you forget the country code?"))
             return "+%s%s" % (parsed_number.country_code, parsed_number.national_number)
 
+    # Does not use the commit kwarg.
+    # TODO - Should support it or otherwise change the function name
+    @transaction.atomic
     def save(self, commit=True):
         billing_contact_info = super(EditBillingAccountInfoForm, self).save(commit=False)
         billing_contact_info.account = self.account
         billing_contact_info.save()
 
-        billing_admins = self.cleaned_data['billing_admins']
-        other_domain_admins = copy.copy(self.account.billing_admins.exclude(
-            domain=self.domain).all())
-        self.account.billing_admins.clear()
-        for other_admin in other_domain_admins:
-            self.account.billing_admins.add(other_admin)
-        for admin in billing_admins:
-            self.account.billing_admins.add(admin)
         self.account.save()
         return True
 
@@ -950,10 +1139,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         self.helper.layout = crispy.Layout(
             'plan_edition',
             crispy.Fieldset(
-                _("Billing Administrators"),
-                crispy.Field('billing_admins', css_class='input-xxlarge'),
-            ),
-            crispy.Fieldset(
                 _("Basic Information"),
                 'company_name',
                 'first_name',
@@ -969,7 +1154,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large",
-                             data_countryname=dict(COUNTRIES).get(self.current_country, ''))
+                             data_countryname=COUNTRIES.get(self.current_country, ''))
             ),
             FormActions(
                 crispy.HTML('<a href="%(url)s" style="margin-right:5px;" class="btn">%(title)s</a>' % {
@@ -985,38 +1170,43 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         )
 
     def save(self, commit=True):
-        account_save_success = super(ConfirmNewSubscriptionForm, self).save(commit=False)
-        if not account_save_success:
-            return False
-
         try:
-            if self.current_subscription is not None:
-                if self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
-                    self.current_subscription.cancel_subscription(adjustment_method=SubscriptionAdjustmentMethod.USER,
-                                                                  web_user=self.creating_user)
+            with transaction.atomic():
+                account_save_success = super(ConfirmNewSubscriptionForm, self).save()
+                if not account_save_success:
+                    return False
+
+                if self.current_subscription is not None:
+                    if self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
+                        self.current_subscription.cancel_subscription(adjustment_method=SubscriptionAdjustmentMethod.USER,
+                                                                      web_user=self.creating_user)
+                    else:
+                        subscription = self.current_subscription.change_plan(
+                            self.plan_version,
+                            web_user=self.creating_user,
+                            adjustment_method=SubscriptionAdjustmentMethod.USER,
+                            service_type=SubscriptionType.SELF_SERVICE,
+                            pro_bono_status=ProBonoStatus.NO,
+                        )
+                        subscription.is_active = True
+                        if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
+                            subscription.do_not_invoice = True
+                        subscription.save()
                 else:
-                    subscription = self.current_subscription.change_plan(
-                        self.plan_version,
+                    subscription = Subscription.new_domain_subscription(
+                        self.account, self.domain, self.plan_version,
                         web_user=self.creating_user,
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.SELF_SERVICE,
                         pro_bono_status=ProBonoStatus.NO,
+                        funding_source=FundingSource.CLIENT
                     )
                     subscription.is_active = True
                     if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
+                        # this point can only be reached if the initiating user was a superuser
                         subscription.do_not_invoice = True
                     subscription.save()
-            else:
-                subscription = Subscription.new_domain_subscription(
-                    self.account, self.domain, self.plan_version,
-                    web_user=self.creating_user,
-                    adjustment_method=SubscriptionAdjustmentMethod.USER)
-                subscription.is_active = True
-                if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
-                    # this point can only be reached if the initiating user was a superuser
-                    subscription.do_not_invoice = True
-                subscription.save()
-            return True
+                return True
         except Exception:
             logger.exception("There was an error subscribing the domain '%s' to plan '%s'. "
                              "Go quickly!" % (self.domain, self.plan_version.plan.name))
@@ -1037,7 +1227,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         super(ConfirmSubscriptionRenewalForm, self).__init__(
             account, domain, creating_user, data=data, *args, **kwargs
         )
-
+        self.renewed_version = renewed_version
         self.fields['plan_edition'].initial = renewed_version.plan.edition
         self.fields['confirm_legal'].label = mark_safe(ugettext_noop(
             'I have read and agree to the <a href="%(pa_url)s" '
@@ -1049,10 +1239,6 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         from corehq.apps.domain.views import DomainSubscriptionView
         self.helper.layout = crispy.Layout(
             'plan_edition',
-            crispy.Fieldset(
-                _("Billing Administrators"),
-                crispy.Field('billing_admins', css_class='input-xxlarge'),
-            ),
             crispy.Fieldset(
                 _("Basic Information"),
                 'company_name',
@@ -1069,7 +1255,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large",
-                             data_countryname=dict(COUNTRIES).get(self.current_country, ''))
+                             data_countryname=COUNTRIES.get(self.current_country, ''))
             ),
             crispy.Fieldset(
                 _("Re-Confirm Product Agreement"),
@@ -1089,17 +1275,19 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         )
 
     def save(self, commit=True):
-        account_save_success = super(ConfirmSubscriptionRenewalForm, self).save(commit=False)
-        if not account_save_success:
-            return False
-
         try:
-            self.current_subscription.renew_subscription(
-                web_user=self.creating_user,
-                adjustment_method=SubscriptionAdjustmentMethod.USER,
-                service_type=SubscriptionType.SELF_SERVICE,
-                pro_bono_status=ProBonoStatus.NO,
-            )
+            with transaction.atomic():
+                account_save_success = super(ConfirmSubscriptionRenewalForm, self).save()
+                if not account_save_success:
+                    return False
+                self.current_subscription.renew_subscription(
+                    web_user=self.creating_user,
+                    adjustment_method=SubscriptionAdjustmentMethod.USER,
+                    service_type=SubscriptionType.SELF_SERVICE,
+                    pro_bono_status=ProBonoStatus.NO,
+                    funding_source=FundingSource.CLIENT,
+                    new_version=self.renewed_version,
+                )
         except SubscriptionRenewalError as e:
             logger.error("[BILLING] Subscription for %(domain)s failed to "
                          "renew due to: %(error)s." % {
@@ -1110,21 +1298,21 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
 
 
 class ProBonoForm(forms.Form):
-    contact_email = forms.EmailField(label=_("Contact email"))
-    organization = forms.CharField(label=_("Organization"))
+    contact_email = forms.EmailField(label=ugettext_lazy("Contact email"))
+    organization = forms.CharField(label=ugettext_lazy("Organization"))
     project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
     pay_only_features_needed = forms.CharField(widget=forms.Textarea, label="Pay only features needed")
-    duration_of_project = forms.CharField(help_text=_(
+    duration_of_project = forms.CharField(help_text=ugettext_lazy(
         "We grant pro-bono subscriptions to match the duration of your "
         "project, up to a maximum of 12 months at a time (at which point "
         "you need to reapply)."
     ))
-    domain = forms.CharField(label=_("Project Space"))
+    domain = forms.CharField(label=ugettext_lazy("Project Space"))
     dimagi_contact = forms.CharField(
-        help_text=_("If you have already been in touch with someone from "
+        help_text=ugettext_lazy("If you have already been in touch with someone from "
                     "Dimagi, please list their name."),
         required=False)
-    num_expected_users = forms.CharField(label=_("Number of expected users"))
+    num_expected_users = forms.CharField(label=ugettext_lazy("Number of expected users"))
 
     def __init__(self, use_domain_field, *args, **kwargs):
         super(ProBonoForm, self).__init__(*args, **kwargs)
@@ -1162,11 +1350,11 @@ class ProBonoForm(forms.Form):
             }
             html_content = render_to_string("domain/email/pro_bono_application.html", params)
             text_content = render_to_string("domain/email/pro_bono_application.txt", params)
-            recipient = settings.SUPPORT_EMAIL
+            recipient = settings.PROBONO_SUPPORT_EMAIL
             subject = "[Pro-Bono Application]"
             if domain is not None:
                 subject = "%s %s" % (subject, domain)
-            send_HTML_email(subject, recipient, html_content, text_content=text_content,
+            send_html_email_async.delay(subject, recipient, html_content, text_content=text_content,
                             email_from=settings.DEFAULT_FROM_EMAIL)
         except Exception:
             logging.error("Couldn't send pro-bono application email. "
@@ -1175,6 +1363,12 @@ class ProBonoForm(forms.Form):
 
 
 class InternalSubscriptionManagementForm(forms.Form):
+    autocomplete_account_types = [
+        BillingAccountType.CONTRACT,
+        BillingAccountType.GLOBAL_SERVICES,
+        BillingAccountType.USER_CREATED,
+    ]
+
     @property
     def slug(self):
         raise NotImplementedError
@@ -1197,7 +1391,10 @@ class InternalSubscriptionManagementForm(forms.Form):
     @property
     @memoized
     def next_account(self):
-        matching_accounts = BillingAccount.objects.filter(name=self.account_name).order_by('date_created')
+        matching_accounts = BillingAccount.objects.filter(
+            name=self.account_name,
+            account_type=BillingAccountType.GLOBAL_SERVICES,
+        ).order_by('date_created')
         if matching_accounts:
             account = matching_accounts[0]
         else:
@@ -1207,6 +1404,9 @@ class InternalSubscriptionManagementForm(forms.Form):
                 created_by_domain=self.domain,
                 currency=Currency.get_default(),
                 dimagi_contact=self.web_user,
+                account_type=BillingAccountType.GLOBAL_SERVICES,
+                entry_point=EntryPoint.CONTRACTED,
+                pre_or_post_pay=PreOrPostPay.POSTPAY
             )
             account.save()
         contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
@@ -1220,13 +1420,18 @@ class InternalSubscriptionManagementForm(forms.Form):
 
     @property
     @memoized
-    def current_account(self):
-        return BillingAccount.get_account_by_domain(self.domain)
+    def current_subscription(self):
+        return Subscription.get_subscribed_plan_by_domain(self.domain)[1]
 
     @property
     @memoized
-    def current_subscription(self):
-        return Subscription.get_subscribed_plan_by_domain(self.domain)[1]
+    def autocomplete_account_name(self):
+        if (
+            self.current_subscription
+            and self.current_subscription.account.account_type in self.autocomplete_account_types
+        ):
+            return self.current_subscription.account.name
+        return None
 
     @property
     @memoized
@@ -1235,10 +1440,18 @@ class InternalSubscriptionManagementForm(forms.Form):
             return None
         try:
             return BillingContactInfo.objects.get(
-                account=self.current_subscription.account
+                account=self.current_subscription.account,
+                account__account_type__in=self.autocomplete_account_types,
             ).emails
         except BillingContactInfo.DoesNotExist:
             return None
+
+    @property
+    def subscription_default_fields(self):
+        return {
+            'internal_change': True,
+            'web_user': self.web_user,
+        }
 
     def __init__(self, domain, web_user, *args, **kwargs):
         super(InternalSubscriptionManagementForm, self).__init__(*args, **kwargs)
@@ -1247,13 +1460,17 @@ class InternalSubscriptionManagementForm(forms.Form):
 
     @property
     def form_actions(self):
-        return FormActions(
-            crispy.ButtonHolder(
-                crispy.Submit(
-                    self.slug,
-                    ugettext_noop('Update')
+        return (
+            crispy.Hidden('slug', self.slug),
+            FormActions(
+                crispy.ButtonHolder(
+                    crispy.Submit(
+                        self.slug,
+                        ugettext_noop('Update'),
+                        css_class='disable-on-submit',
+                    )
                 )
-            )
+            ),
         )
 
 
@@ -1273,29 +1490,37 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
                 'sure this is an internal Dimagi test space, not in use by a '
                 'partner.'
             )),
-            self.form_actions
+            *self.form_actions
         )
 
+    @transaction.atomic
     def process_subscription_management(self):
         enterprise_plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, SoftwarePlanEdition.ENTERPRISE
         ).plan.get_version()
         if self.current_subscription:
-            new_subscription = self.current_subscription.change_plan(
+            self.current_subscription.change_plan(
                 enterprise_plan_version,
-                web_user=self.web_user,
+                account=self.next_account,
+                transfer_credits=self.current_subscription.account == self.next_account,
+                **self.subscription_default_fields
             )
-            new_subscription.account = self.next_account
         else:
-            new_subscription = Subscription.new_domain_subscription(
+            Subscription.new_domain_subscription(
                 self.next_account,
                 self.domain,
                 enterprise_plan_version,
-                is_active=True,
-                web_user=self.web_user,
+                **self.subscription_default_fields
             )
-        new_subscription.do_not_invoice = True
-        new_subscription.save()
+
+    @property
+    def subscription_default_fields(self):
+        fields = super(DimagiOnlyEnterpriseForm, self).subscription_default_fields
+        fields.update({
+            'do_not_invoice': True,
+            'service_type': SubscriptionType.INTERNAL,
+        })
+        return fields
 
     @property
     def account_name(self):
@@ -1304,7 +1529,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
 
 class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
     slug = 'advanced_extended_trial'
-    subscription_type = ugettext_noop('3 Month Trial')
+    subscription_type = ugettext_noop('Extended Trial')
 
     organization_name = forms.CharField(
         label=ugettext_noop('Organization Name'),
@@ -1316,18 +1541,15 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
         max_length=BillingContactInfo._meta.get_field('emails').max_length
     )
 
-    end_date = forms.DateField(
-        widget=forms.HiddenInput,
+    trial_length = forms.ChoiceField(
+        choices=[(days, "%d days" % days) for days in [30, 60, 90]],
+        label="Trial Length",
     )
 
     def __init__(self, domain, web_user, *args, **kwargs):
-        end_date = datetime.date.today() + relativedelta(months=3)
-        kwargs['initial'] = {
-            'end_date': end_date,
-        }
-
         super(AdvancedExtendedTrialForm, self).__init__(domain, web_user, *args, **kwargs)
 
+        self.fields['organization_name'].initial = self.autocomplete_account_name
         self.fields['emails'].initial = self.current_contact_emails
 
         self.helper = FormHelper()
@@ -1335,47 +1557,54 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
         self.helper.layout = crispy.Layout(
             crispy.Field('organization_name'),
             crispy.Field('emails', css_class='input-xxlarge'),
-            crispy.Field('end_date'),
+            crispy.Field('trial_length', data_bind='value: trialLength'),
             crispy.HTML(_(
-                '<p><i class="icon-info-sign"></i> The 3 month trial includes '
+                '<p><i class="icon-info-sign"></i> The trial includes '
                 'access to all features, 5 mobile workers, and 25 SMS.  Fees '
                 'apply for users or SMS in excess of these limits (1 '
                 'USD/user/month, regular SMS fees).</p>'
             )),
             crispy.HTML(_(
                 '<p><i class="icon-info-sign"></i> The trial will begin as soon '
-                'as you hit "Update" and end on %(end_date)s.  On %(end_date)s '
-                ' the project space will automatically be subscribed to the '
+                'as you hit "Update" and end on <span data-bind="text: end_date"></span>.  '
+                'On <span data-bind="text: end_date"></span> '
+                'the project space will automatically be subscribed to the '
                 'Community plan.</p>'
-            ) % {
-                'end_date': end_date,
-            }),
-            self.form_actions
+            )),
+            *self.form_actions
         )
 
+    @transaction.atomic
     def process_subscription_management(self):
         advanced_trial_plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, edition=SoftwarePlanEdition.ADVANCED, is_trial=True,
         )
         if self.current_subscription:
-            new_subscription = self.current_subscription.change_plan(
+            self.current_subscription.change_plan(
                 advanced_trial_plan_version,
-                date_end=self.cleaned_data['end_date'],
-                web_user=self.web_user,
+                account=self.next_account,
+                transfer_credits=self.current_subscription.account == self.next_account,
+                **self.subscription_default_fields
             )
-            new_subscription.account = self.next_account
         else:
-            new_subscription = Subscription.new_domain_subscription(
+            Subscription.new_domain_subscription(
                 self.next_account,
                 self.domain,
                 advanced_trial_plan_version,
-                date_end=self.cleaned_data['end_date'],
-                is_active=True,
-                web_user=self.web_user,
+                **self.subscription_default_fields
             )
-        new_subscription.do_not_invoice = False
-        new_subscription.auto_generate_credits = False
-        new_subscription.save()
+
+    @property
+    def subscription_default_fields(self):
+        fields = super(AdvancedExtendedTrialForm, self).subscription_default_fields
+        fields.update({
+            'auto_generate_credits': False,
+            'date_end': datetime.date.today() + relativedelta(days=int(self.cleaned_data['trial_length'])),
+            'do_not_invoice': False,
+            'is_trial': True,
+            'service_type': SubscriptionType.EXTENDED_TRIAL
+        })
+        return fields
 
     @property
     def account_name(self):
@@ -1440,15 +1669,33 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
+        self.fields['fogbugz_client_name'].initial = self.autocomplete_account_name
         self.fields['emails'].initial = self.current_contact_emails
 
         plan_edition = self.current_subscription.plan_version.plan.edition if self.current_subscription else None
-        if plan_edition not in [
+
+        if self.is_uneditable:
+            self.helper.layout = crispy.Layout(
+                TextField('software_plan_edition', plan_edition),
+                TextField('fogbugz_client_name', self.current_subscription.account.name),
+                TextField('emails', self.current_contact_emails),
+                TextField('start_date', self.current_subscription.date_start),
+                TextField('end_date', self.current_subscription.date_end),
+                crispy.HTML(_(
+                    '<p><i class="icon-info-sign"></i> This project is on a contracted Enterprise '
+                    'subscription. You cannot change contracted Enterprise subscriptions here. '
+                    'Please contact the Ops team at %(accounts_email)s to request changes.</p>' % {
+                        'accounts_email': settings.ACCOUNTS_EMAIL,
+                    }
+                ))
+            )
+        elif plan_edition not in [
             first for first, second in self.fields['software_plan_edition'].choices
         ]:
             self.fields['start_date'].initial = datetime.date.today()
             self.fields['end_date'].initial = datetime.date.today() + relativedelta(years=1)
             self.helper.layout = crispy.Layout(
+                TextField('software_plan_edition', plan_edition),
                 crispy.Field('software_plan_edition'),
                 crispy.Field('fogbugz_client_name'),
                 crispy.Field('emails', css_class='input-xxlarge'),
@@ -1460,18 +1707,17 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     '<p><i class="icon-info-sign"></i> Clicking "Update" will set '
                     'up the subscription in CommCareHQ to one of our standard '
                     'contracted plans.  If you need to set up a non-standard plan, '
-                    'please email %(accounts_email)s.</p>' % {
+                    'please email %(accounts_email)s.</p>') % {
                         'accounts_email': settings.ACCOUNTS_EMAIL,
                     }
-                )),
-                self.form_actions
+                ),
+                *self.form_actions
             )
         else:
-            self.fields['fogbugz_client_name'].initial = self.current_subscription.account.name
             self.fields['end_date'].initial = self.current_subscription.date_end
+            self.fields['software_plan_edition'].initial = plan_edition
             self.helper.layout = crispy.Layout(
-                TextField('software_plan_edition', plan_edition),
-                crispy.Hidden('software_plan_edition', plan_edition),
+                crispy.Field('software_plan_edition'),
                 crispy.Field('fogbugz_client_name'),
                 crispy.Field('emails', css_class='input-xxlarge'),
                 TextField('start_date', self.current_subscription.date_start),
@@ -1487,48 +1733,30 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                     'Please use this page only to extend the existing services contract.</p>'
                     '</div>'
                 )),
-                self.form_actions
+                *self.form_actions
             )
 
+    @transaction.atomic
     def process_subscription_management(self):
         new_plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, edition=self.cleaned_data['software_plan_edition'],
         )
-        revert_current_subscription_end_date = None
-        if self.current_subscription and (
-            not self.current_subscription.date_end
-            or self.cleaned_data['start_date'] < self.current_subscription.date_end
-        ):
-            revert_current_subscription_end_date = self.current_subscription.date_end
-            self.current_subscription.date_end = self.cleaned_data['start_date']
-            self.current_subscription.save()
-        try:
-            if not self.current_subscription or self.cleaned_data['start_date'] > datetime.date.today():
-                new_subscription = Subscription.new_domain_subscription(
-                    self.next_account,
-                    self.domain,
-                    new_plan_version,
-                    date_start=self.cleaned_data['start_date'],
-                    date_end=self.cleaned_data['end_date'],
-                    web_user=self.web_user,
-                )
-            else:
-                new_subscription = self.current_subscription.change_plan(
-                    new_plan_version,
-                    date_end=self.cleaned_data['end_date'],
-                    web_user=self.web_user,
-                )
-            if new_subscription.date_start <= datetime.date.today() and datetime.date.today() < new_subscription.date_end:
-                new_subscription.is_active = True
-            new_subscription.do_not_invoice = False
-            new_subscription.auto_generate_credits = True
-            new_subscription.save()
-        except:
-            # If the entire transaction did not go through, rollback saved changes
-            if revert_current_subscription_end_date:
-                self.current_subscription.date_end = revert_current_subscription_end_date
-                self.current_subscription.save()
-            raise
+
+        if not self.current_subscription or self.cleaned_data['start_date'] > datetime.date.today():
+            new_subscription = Subscription.new_domain_subscription(
+                self.next_account,
+                self.domain,
+                new_plan_version,
+                date_start=self.cleaned_data['start_date'],
+                **self.subscription_default_fields
+            )
+        else:
+            new_subscription = self.current_subscription.change_plan(
+                new_plan_version,
+                transfer_credits=self.current_subscription.account == self.next_account,
+                account=self.next_account,
+                **self.subscription_default_fields
+            )
 
         CreditLine.add_credit(
             self.cleaned_data['sms_credits'],
@@ -1544,6 +1772,25 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             web_user=self.web_user,
             reason=CreditAdjustmentReason.MANUAL,
         )
+
+    @property
+    def is_uneditable(self):
+        return (
+            self.current_subscription
+            and self.current_subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
+            and self.current_subscription.service_type == SubscriptionType.CONTRACTED
+        )
+
+    @property
+    def subscription_default_fields(self):
+        fields = super(ContractedPartnerForm, self).subscription_default_fields
+        fields.update({
+            'auto_generate_credits': True,
+            'date_end': self.cleaned_data['end_date'],
+            'do_not_invoice': False,
+            'service_type': SubscriptionType.CONTRACTED,
+        })
+        return fields
 
     @property
     def account_name(self):
@@ -1607,14 +1854,26 @@ class SelectSubscriptionTypeForm(forms.Form):
         required=False,
     )
 
-    def __init__(self, *args, **kwargs):
-        super(SelectSubscriptionTypeForm, self).__init__(*args, **kwargs)
+    def __init__(self, defaults=None, disable_input=False, **kwargs):
+        defaults = defaults or {}
+        super(SelectSubscriptionTypeForm, self).__init__(defaults, **kwargs)
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
-        self.helper.layout = crispy.Layout(
-            crispy.Field(
-                'subscription_type',
-                data_bind='value: subscriptionType',
+        if defaults and disable_input:
+            self.helper.layout = crispy.Layout(
+                TextField(
+                    'subscription_type', {
+                        form.slug: form.subscription_type
+                        for form in INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
+                    }[defaults.get('subscription_type')]
+                ),
             )
-        )
+        else:
+            self.helper.layout = crispy.Layout(
+                crispy.Field(
+                    'subscription_type',
+                    data_bind='value: subscriptionType',
+                    css_class="disabled"
+                )
+            )

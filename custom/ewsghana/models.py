@@ -1,3 +1,12 @@
+from django.core.urlresolvers import reverse
+from django.dispatch import receiver
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.signals import commcare_domain_pre_delete
+from corehq.apps.locations.models import SQLLocation, Location
+from corehq.apps.sms.mixin import VerifiedNumber
+from corehq.apps.users.models import WebUser
+from corehq.apps.users.views import EditWebUserView
+from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
 from custom.utils.utils import add_to_module_map
 from casexml.apps.stock.models import DocDomainMapping
@@ -68,8 +77,85 @@ class EWSGhanaConfig(Document):
             STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain, True, NAMESPACE_DOMAIN)
 
 
-class AlertsSent(models.Model):
-    create_date = models.DateTimeField(editable=False)
-    alert_type = models.TextField()
-    alert_text = models.TextField()
-    supply_point_id = models.CharField(max_length=10)
+class FacilityInCharge(models.Model):
+    user_id = models.CharField(max_length=128, db_index=True)
+    location = models.ForeignKey(SQLLocation)
+
+    class Meta:
+        app_label = 'ewsghana'
+
+
+class EWSExtension(models.Model):
+    user_id = models.CharField(max_length=128, db_index=True)
+    domain = models.CharField(max_length=128)
+    location_id = models.CharField(max_length=128, null=True, db_index=True)
+    sms_notifications = models.BooleanField(default=False)
+
+    @property
+    def supply_point(self):
+        if not self.location_id:
+            return
+        return Location.get(doc_id=self.location_id).linked_supply_point()
+
+    @property
+    def web_user(self):
+        return WebUser.get(self.user_id)
+
+    @property
+    def verified_number(self):
+        return VerifiedNumber.by_phone(self.phone_number)
+
+    @property
+    def domain_object(self):
+        return Domain.get_by_name(self.domain)
+
+
+class EWSMigrationStats(models.Model):
+    products_count = models.IntegerField(default=0)
+    locations_count = models.IntegerField(default=0)
+    supply_points_count = models.IntegerField(default=0)
+    sms_users_count = models.IntegerField(default=0)
+    web_users_count = models.IntegerField(default=0)
+    domain = models.CharField(max_length=128, db_index=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+
+class EWSMigrationProblem(models.Model):
+    domain = models.CharField(max_length=128, db_index=True)
+    object_id = models.CharField(max_length=128, null=True)
+    object_type = models.CharField(max_length=30)
+    description = models.CharField(max_length=128)
+    external_id = models.CharField(max_length=128)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    @property
+    def object_url(self):
+        from corehq.apps.locations.views import EditLocationView
+
+        if self.object_type == 'smsuser':
+            return reverse(
+                EditCommCareUserView.urlname, kwargs={'domain': self.domain, 'couch_user_id': self.object_id}
+            )
+        elif self.object_type == 'webuser':
+            return reverse(
+                EditWebUserView.urlname, kwargs={'domain': self.domain, 'couch_user_id': self.object_id}
+            )
+        elif self.object_type == 'location':
+            return reverse(EditLocationView.urlname, kwargs={'domain': self.domain, 'loc_id': self.object_id})
+        return
+
+
+class SQLNotification(models.Model):
+    domain = models.CharField(max_length=128)
+    user_id = models.CharField(max_length=128)
+    type = models.CharField(max_length=128)
+    week = models.IntegerField()
+    year = models.IntegerField()
+
+
+@receiver(commcare_domain_pre_delete)
+def domain_pre_delete_receiver(domain, **kwargs):
+    FacilityInCharge.objects.filter(location__in=SQLLocation.objects.filter(domain=domain)).delete()
+    EWSExtension.objects.filter(domain=domain).delete()
+    EWSMigrationStats.objects.filter(domain=domain).delete()
+    EWSMigrationProblem.objects.filter(domain=domain).delete()

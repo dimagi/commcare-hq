@@ -44,10 +44,11 @@ var HQReport = function (options) {
                         if (self.isExportAll) {
                             $.ajax({
                                 url: getReportBaseUrl("export"),
-                                data: getReportParams(undefined, true),
+                                data: getReportParams(undefined),
                                 type: "POST",
                                 success: function() {
-                                    alert("Your requested excel report will be sent to the email address defined in your account settings.");
+                                    alert_user("Your requested excel report will be sent to the email address " +
+                                               "defined in your account settings.", "success");
                                 }
                             })
                         } else {
@@ -82,7 +83,8 @@ var HQReport = function (options) {
     };
 
     self.saveDatespanToCookie = function () {
-        if (self.datespan) {
+        var validDate = /^\d{4}-\d{2}-\d{2}$/;
+        if (self.datespan && validDate.test(self.datespan.startdate) && validDate.test(self.datespan.enddate)) {
             $.cookie(self.datespanCookie+'.startdate', self.datespan.startdate,
                 {path: self.urlRoot, expires: 1});
             $.cookie(self.datespanCookie+'.enddate', self.datespan.enddate,
@@ -155,7 +157,7 @@ var HQReport = function (options) {
         });
     };
 
-    function getReportParams(additionalParams, asObject) {
+    function getReportParams(additionalParams) {
         var params = window.location.search.substr(1);
         if (params.length <= 1) {
             if (self.loadDatespanFromCookie()) {
@@ -164,16 +166,6 @@ var HQReport = function (options) {
             }
         }
         params += (additionalParams ? "&" + additionalParams : "");
-        if (asObject) {
-            // http://stackoverflow.com/a/8649003/835696
-            return JSON.parse('{"' +
-                decodeURI(params)
-                    .replace(/"/g, '\\"')
-                    .replace(/&/g, '","')
-                    .replace(/=/g,'":"') +
-                '"}');
-
-        }
         return params;
 
     }

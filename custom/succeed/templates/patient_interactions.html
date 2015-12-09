@@ -19,8 +19,6 @@
                 <th>{% trans "Visit Name" %}</th>
                 <th>{% trans "Target Date" %}</th>
                 <th>{% trans "Completed Date" %}</th>
-                <th>{% trans "Completed By" %}</th>
-                <th>{% trans "Scheduled Date" %}</th>
             </tr>
         </thead>
         <tbody>
@@ -34,8 +32,6 @@
                     <td>{{ visit.name }}</td>
                     <td>{{ visit.target_date }}</td>
                     <td>{{ visit.received_date }}</td>
-                    <td>{{ visit.completed_by }}</td>
-                    <td>{{ visit.scheduled_date }}</td>
                 </tr>
             {% endfor %}
         </tbody>

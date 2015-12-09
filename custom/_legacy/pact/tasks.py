@@ -6,7 +6,8 @@ from celery.schedules import crontab
 from celery.task import task, periodic_task
 import json
 from casexml.apps.case.mock import CaseBlock
-from corehq.apps.hqcase.utils import submit_case_blocks, get_case_ids_in_domain
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
+from corehq.apps.hqcase.utils import submit_case_blocks
 
 from couchforms.models import XFormInstance
 from dimagi.utils.logging import notify_exception

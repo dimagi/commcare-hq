@@ -55,6 +55,11 @@
             ga_track_event("Download Form Export", "Download Saved Form Export", exportName);
         });
 
+        $('.daily-saved-update').click(function(){
+            var exportName = $(this).attr("data-exportName");
+            ga_track_event("Update Form Export", "Update Saved Form Export", exportName);
+        });
+
         $(function () {
             // postGo is copied from main.js since that's now not being included, ever since the redesign
             function postGo (url, params) {
@@ -251,13 +256,6 @@
                 {% include "reports/partials/form_name.html" with html='yes' %}
                 {% if form.app_copy %}
                     <span class="label label-info">{% trans "Mislabeled" %}</span>
-                    {% if request.couch_user.can_edit_data %}
-                        (<a href="{% url "change_submissions_app_id" domain %}" class="fix-submissions-link"
-                           data-app_id="{{ form.current_app.id }}"
-                           data-xmlns="{{ form.xmlns }}"
-                           data-new_app_id="{{ form.app_copy.id }}"
-                           data-new_app_name="{{ form.app_copy.name }}">{% trans "Fix" %}</a>)
-                    {% endif %}
                 {% endif %}
                 {% if not form.has_app and not form.no_suggestions %}
                     <p><span class="label label-important suggestions">Suggestions:</span></p>
@@ -280,14 +278,6 @@
                                     {% endwith %}
                                     {% if possibility.app_deleted %}
                                         <span class="label label-info">{% trans "deleted" %}</span>
-                                    {% endif %}
-
-                                    {% if request.couch_user.can_edit_data %}
-                                    <a href="{% url "change_submissions_app_id" domain %}" class="fix-submissions-link"
-                                       data-app_id="{{ form.current_app.id }}"
-                                       data-xmlns="{{ form.xmlns }}"
-                                       data-new_app_id="{{ possibility.app.id }}"
-                                       data-new_app_name="{{ possibility.app.name }}">{% if form.possibilities|length == 1 %}{% trans "Fix" %}{% else %}{% trans "Select this option" %}{% endif %}</a>
                                     {% endif %}
                                 </li>
                                 {% endfor %}
@@ -320,15 +310,20 @@
                 {% if exports_has_media %}
                 <td class="cell-vertical-centered">
                     {% if form.size %}
-                        {% if form.app.id %}
-                        <a href="{% url "form_multimedia_export" domain %}?app_id={{form.app.id}}&amp;xmlns={{form.xmlns}}&{{ get_filter_params.urlencode|safe }}"
-                            class="btn btn-primary dl-export" ><i
-                            class="icon-download-alt icon-white"></i> {% trans "Download " %} <br> ({{form.size}})</a>
-                        {% else %}
-                        <a href="{% url "form_multimedia_export" domain %}?xmlns={{form.xmlns}}&amp;{{ get_filter_params.urlencode|safe }}"
-                            class="btn btn-primary dl-export" ><i
-                            class="icon-download-alt icon-white"></i> {% trans "Download " %} <br> ({{form.size}})</a>
-                        {% endif %}
+                        <a  data-toggle='modal' href="#export-download-status"
+                            {% if form.app.id %}
+                                data-downloadurl='{% url "form_multimedia_export" domain %}?app_id={{form.app.id}}&amp;{{ get_filter_params.urlencode|safe }}'
+                            {% else %}
+                                data-downloadurl='{% url "form_multimedia_export" domain %}?{{ get_filter_params.urlencode|safe }}'
+                            {% endif %}
+                            data-xmlns="{{form.xmlns}}"
+                            data-modulename="{% if form.has_app and form.module %}{{ form.module.name|trans:form.app.langs }}{% endif %}"
+                            data-formname="{% include 'reports/partials/form_name.html' %}"
+                            data-bind='click: requestMultimediaDownload'
+                            class="btn btn-primary dl-export" >
+                                <i class="icon-download-alt icon-white"></i>
+                                {% trans "Download " %} <br> ({{form.size}})
+                        </a>
                     {% else %}
                         <span class="label">{% trans "No Multimedia" %}</span>
                     {% endif %}

@@ -6,7 +6,7 @@ from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
     RegistrationData, RandRHistory, Notes, RecentMessages
-from custom.ilsgateway.models import OrganizationSummary, DeliveryGroups, SupplyPointStatusTypes
+from custom.ilsgateway.models import OrganizationSummary, DeliveryGroups, SupplyPointStatusTypes, GroupSummary
 from custom.ilsgateway.tanzania.reports.mixins import DeliverySubmissionData
 from custom.ilsgateway.tanzania.reports.utils import make_url, link_format, latest_status_or_none,\
     get_this_lead_time, get_avg_lead_time
@@ -20,6 +20,7 @@ class LeadTimeHistory(ILSData):
     title = "Lead Time History"
     slug = "lead_time_history"
     show_chart = False
+    searchable = True
 
     @property
     def headers(self):
@@ -63,6 +64,7 @@ class DeliveryStatus(ILSData):
     show_table = True
     slug = "delivery_status"
     show_chart = False
+    searchable = True
 
     def __init__(self, config=None, css_class='row_chart'):
         super(DeliveryStatus, self).__init__(config, css_class)
@@ -96,6 +98,15 @@ class DeliveryStatus(ILSData):
             dg.extend(DeliveryGroups().delivering(locations, date.month))
 
         for child in dg:
+            group_summary = GroupSummary.objects.filter(
+                org_summary__date__lte=self.config['startdate'],
+                org_summary__location_id=child.location_id,
+                title=SupplyPointStatusTypes.DELIVERY_FACILITY,
+                total=1
+            ).exists()
+            if not group_summary:
+                continue
+
             latest = latest_status_or_none(
                 child.location_id,
                 SupplyPointStatusTypes.DELIVERY_FACILITY,
@@ -108,7 +119,7 @@ class DeliveryStatus(ILSData):
             url = make_url(FacilityDetailsReport, self.config['domain'],
                            '?location_id=%s&filter_by_program=%s&'
                            'datespan_type=%s&datespan_first=%s&datespan_second=%s',
-                           (self.config['location_id'],
+                           (child.location_id,
                             self.config['program'], self.config['datespan_type'],
                             self.config['datespan_first'], self.config['datespan_second']))
 
@@ -137,6 +148,7 @@ class DeliveryData(ILSData):
     show_chart = False
     slug = 'delivery_data'
     title = 'Delivery Data'
+    searchable = True
 
     @property
     def headers(self):
@@ -155,10 +167,11 @@ class DeliveryData(ILSData):
             percent_format = lambda x, y: x * 100 / (y or 1)
 
             return [
-                [_('Didn\'t Respond'), dg.not_responding, '%.2f%%' % percent_format(dg.not_responding, dg.total)],
-                [_('Not Received'), dg.not_received, '%.2f%%' % percent_format(dg.not_received, dg.total)],
-                [_('Received'), dg.received, '%.2f%%' % percent_format(dg.received, dg.total)],
-                [_('Total'), dg.total, '100%'],
+                [_('Didn\'t Respond'), '%d' % dg.not_responding,
+                 '%.1f%%' % percent_format(dg.not_responding, dg.total)],
+                [_('Not Received'), '%d' % dg.not_received, '%.1f%%' % percent_format(dg.not_received, dg.total)],
+                [_('Received'), '%d' % dg.received, '%.1f%%' % percent_format(dg.received, dg.total)],
+                [_('Total'), '%d' % dg.total, '100%'],
             ]
 
 

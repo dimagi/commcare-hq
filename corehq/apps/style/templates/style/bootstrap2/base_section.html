@@ -1,0 +1,24 @@
+{% extends 'style/bootstrap2/two_column.html' %}
+{% load hq_shared_tags %}
+
+{% block title %}{% if current_page.title %}{{ current_page.title }} - {% endif %}{{ section.page_name }}{% endblock %}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{{ section.url }}"><strong>{{ section.page_name }}</strong></a> <span class="divider">&gt;</span>
+        </li>
+        {% block subsection-title %}
+            {% if current_page.parents %}
+                {% for parent in current_page.parents %}
+                    <li><a href="{{ parent.url }}">{{ parent.title }}</a> <span class="divider">&gt;</span></li>
+                {% endfor %}
+            {% endif %}
+            {% if current_page.page_name %}
+            <li class="active">
+                <a href="{{ current_page.url }}">{{ current_page.page_name }}</a>
+            </li>
+            {% endif %}
+        {% endblock %}
+    </ul>
+{% endblock %}

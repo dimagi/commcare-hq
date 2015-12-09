@@ -1,6 +1,7 @@
 from decimal import Decimal
 import random
 import datetime
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import call_command
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
@@ -14,7 +15,8 @@ from corehq.apps.accounting import generator, tasks, utils
 from corehq.apps.accounting.models import (
     Invoice, FeatureType, LineItem, Subscriber, DefaultProductPlan,
     CreditAdjustment, CreditLine, SubscriptionAdjustment, SoftwareProductType,
-    SoftwarePlanEdition, BillingRecord, BillingAccount,
+    SoftwarePlanEdition, BillingRecord, BillingAccount, SubscriptionType,
+    InvoiceBaseManager, SMALL_INVOICE_THRESHOLD, Subscription
 )
 
 
@@ -52,6 +54,7 @@ class BaseInvoiceTestCase(BaseAccountingTest):
         Invoice.objects.all().delete()
         generator.delete_all_subscriptions()
         generator.delete_all_accounts()
+        super(BaseInvoiceTestCase, self).tearDown()
 
 
 class TestInvoice(BaseInvoiceTestCase):
@@ -128,6 +131,124 @@ class TestInvoice(BaseInvoiceTestCase):
             invoice.date_end
         )
         domain.delete()
+
+    def test_date_due_not_set_small_invoice(self):
+        """Date Due doesn't get set if the invoice is small"""
+        Subscription.objects.all().delete()
+        subscription_length = 5  # months
+        plan = DefaultProductPlan.objects.get(
+            edition=SoftwarePlanEdition.STANDARD,
+            product_type=SoftwareProductType.COMMCARE,
+            is_trial=False
+        ).plan.get_version()
+        subscription, _ = generator.generate_domain_subscription_from_date(
+            generator.get_start_date(),
+            self.account,
+            self.domain.name,
+            subscription_length=subscription_length,
+            plan_version=plan,
+        )
+
+        invoice_date_small = utils.months_from_date(subscription.date_start, 1)
+        tasks.generate_invoices(invoice_date_small)
+        small_invoice = subscription.invoice_set.first()
+
+        self.assertTrue(small_invoice.balance <= SMALL_INVOICE_THRESHOLD)
+        self.assertIsNone(small_invoice.date_due)
+
+    def test_date_due_set_large_invoice(self):
+        """Date Due only gets set for a large invoice (> $100)"""
+        Subscription.objects.all().delete()
+        subscription_length = 5  # months
+        plan = DefaultProductPlan.objects.get(
+            edition=SoftwarePlanEdition.ADVANCED,
+            product_type=SoftwareProductType.COMMCARE,
+            is_trial=False
+        ).plan.get_version()
+        subscription, _ = generator.generate_domain_subscription_from_date(
+            generator.get_start_date(),
+            self.account,
+            self.domain.name,
+            subscription_length=subscription_length,
+            plan_version=plan,
+        )
+
+        invoice_date_large = utils.months_from_date(subscription.date_start, 3)
+        tasks.generate_invoices(invoice_date_large)
+        large_invoice = subscription.invoice_set.last()
+
+        self.assertTrue(large_invoice.balance > SMALL_INVOICE_THRESHOLD)
+        self.assertIsNotNone(large_invoice.date_due)
+
+    def test_date_due_gets_set_autopay(self):
+        """Date due always gets set for autopay """
+        Subscription.objects.all().delete()
+        subscription_length = 4
+        plan = DefaultProductPlan.objects.get(
+            edition=SoftwarePlanEdition.STANDARD,
+            product_type=SoftwareProductType.COMMCARE,
+            is_trial=False
+        ).plan.get_version()
+        autopay_subscription, _ = generator.generate_domain_subscription_from_date(
+            generator.get_start_date(),
+            self.account,
+            self.domain.name,
+            subscription_length=subscription_length,
+            plan_version=plan
+        )
+
+        autopay_subscription.account.update_autopay_user(self.billing_contact.username, self.domain)
+        invoice_date_autopay = utils.months_from_date(autopay_subscription.date_start, 1)
+        tasks.generate_invoices(invoice_date_autopay)
+
+        autopay_invoice = autopay_subscription.invoice_set.last()
+        self.assertTrue(autopay_invoice.balance <= SMALL_INVOICE_THRESHOLD)
+        self.assertIsNotNone(autopay_invoice.date_due)
+
+
+class TestContractedInvoices(BaseInvoiceTestCase):
+    def setUp(self):
+        super(TestContractedInvoices, self).setUp()
+        generator.delete_all_subscriptions()
+
+        self.subscription, self.subscription_length = generator.generate_domain_subscription_from_date(
+            generator.get_start_date(),
+            self.account,
+            self.domain.name,
+            min_num_months=self.min_subscription_length,
+            service_type=SubscriptionType.CONTRACTED,
+        )
+
+        self.invoice_date = utils.months_from_date(
+            self.subscription.date_start,
+            random.randint(2, self.subscription_length)
+        )
+
+    def test_contracted_invoice_email_recipient(self):
+        """
+        For contracted invoices, emails should be sent to finance@dimagi.com
+        """
+
+        expected_recipient = ["finance@dimagi.com"]
+
+        tasks.generate_invoices(self.invoice_date)
+
+        self.assertEqual(Invoice.objects.count(), 1)
+        actual_recipient = Invoice.objects.first().email_recipients
+        self.assertEqual(actual_recipient, expected_recipient)
+
+    def test_contracted_invoice_email_template(self):
+        """
+        Emails for contracted invoices should use the contracted invoices template
+        """
+        expected_template = BillingRecord.INVOICE_CONTRACTED_HTML_TEMPLATE
+
+        tasks.generate_invoices(self.invoice_date)
+
+        self.assertEqual(BillingRecord.objects.count(), 1)
+        actual_template = BillingRecord.objects.first().html_template
+
+        self.assertTrue(actual_template, expected_template)
 
 
 class TestProductLineItem(BaseInvoiceTestCase):
@@ -414,9 +535,11 @@ class TestManagementCmdInvoice(BaseInvoiceTestCase):
         # Basic hide invoices
         call_command('hide_invoices_by_id', *[i.pk for i in invoices])
         for i in invoices:
-            self.assertTrue(Invoice.objects.get(pk=i.pk).is_hidden_to_ops)
+            self.assertTrue(super(
+                InvoiceBaseManager, Invoice.objects).get_queryset().get(pk=i.pk).is_hidden_to_ops)
 
         # Basic unhide invoices
         call_command('hide_invoices_by_id', *[i.pk for i in invoices], unhide=True)
         for i in invoices:
-            self.assertFalse(Invoice.objects.get(pk=i.pk).is_hidden_to_ops)
+            self.assertFalse(super(
+                InvoiceBaseManager, Invoice.objects).get_queryset().get(pk=i.pk).is_hidden_to_ops)

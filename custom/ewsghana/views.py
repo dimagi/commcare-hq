@@ -5,38 +5,41 @@ from django.core.exceptions import PermissionDenied
 from django.forms.formsets import formset_factory
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404
+from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST, require_GET
+from django.views.generic.base import RedirectView
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.models import StockState, StockTransaction
+from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.sms import process
+from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.products.models import Product
-from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.util import clean_phone_number
+from corehq.apps.locations.permissions import locations_access_required, user_can_edit_any_location
+from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
 from custom.common import ALL_OPTION
-from custom.ewsghana.alerts.alerts import on_going_process_user, on_going_stockout_process_user, \
-    urgent_non_reporting_process_user, urgent_stockout_process_user, report_reminder_process_user
 from custom.ewsghana.api import GhanaEndpoint, EWSApi
-from custom.ewsghana.forms import InputStockForm
-from custom.ewsghana.models import EWSGhanaConfig
-from custom.ewsghana.reminders.reminders import first_soh_process_user, second_soh_process_user, \
-    third_soh_process_users_and_facilities, stockout_process_user, rrirv_process_user, visit_website_process_user
-from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct
+from custom.ewsghana.filters import EWSDateFilter
+from custom.ewsghana.forms import InputStockForm, EWSUserSettings
+from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge, EWSExtension, EWSMigrationStats, \
+    EWSMigrationProblem
+from custom.ewsghana.reports.specific_reports.dashboard_report import DashboardReport
+from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct, StockStatus
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData, StockLevelsReport
 from custom.ewsghana.stock_data import EWSStockDataSynchronization
 from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \
-    delete_last_migrated_stock_data
+    delete_last_migrated_stock_data, convert_user_data_fields_task, migrate_email_settings, \
+    delete_connections_field_task
 from custom.ewsghana.utils import make_url, has_input_stock_permissions
 from custom.ilsgateway.views import GlobalStats
 from custom.logistics.tasks import add_products_to_loc, locations_fix, resync_web_users
 from custom.logistics.tasks import stock_data_task
-from custom.logistics.views import BaseConfigView, BaseRemindersTester
+from custom.logistics.views import BaseConfigView
 from dimagi.utils.dates import force_to_datetime
-from dimagi.utils.web import json_handler
+from dimagi.utils.web import json_handler, json_response
 
 
 class EWSGlobalStats(GlobalStats):
@@ -54,46 +57,6 @@ class EWSConfigView(BaseConfigView):
     page_title = ugettext_noop("EWS Ghana")
     template_name = 'ewsghana/ewsconfig.html'
     source = 'ewsghana'
-
-
-class RemindersTester(BaseRemindersTester):
-    post_url = 'reminders_tester'
-
-    reminders = {
-        'first_soh': first_soh_process_user,
-        'second_soh': second_soh_process_user,
-        'third_soh': third_soh_process_users_and_facilities,
-        'stockout': stockout_process_user,
-        'rrirv': rrirv_process_user,
-        'visit_website': visit_website_process_user,
-        'alert_on_going_reporting': on_going_process_user,
-        'alert_on_going_stockouts': on_going_stockout_process_user,
-        'alert_urgent_non_reporting_user': urgent_non_reporting_process_user,
-        'alert_urgent_stockout': urgent_stockout_process_user,
-        'alert_report_reminder': report_reminder_process_user
-    }
-
-    def post(self, request, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-
-        reminder = request.POST.get('reminder')
-        phone_number = context.get('phone_number')
-
-        if reminder and phone_number:
-            phone_number = clean_phone_number(phone_number)
-            v = VerifiedNumber.by_phone(phone_number, include_pending=True)
-            if v and v.verified:
-                user = v.owner
-                if not user:
-                    return self.get(request, *args, **kwargs)
-                reminder_function = self.reminders.get(reminder)
-                if reminder_function:
-                    if reminder == 'third_soh':
-                        reminder_function([user], [user.sql_location], test=True)
-                    else:
-                        reminder_function(user, test=True)
-        messages.success(request, "Reminder was sent successfully")
-        return self.get(request, *args, **kwargs)
 
 
 class InputStockView(BaseDomainView):
@@ -126,22 +89,22 @@ class InputStockView(BaseDomainView):
                 product = Product.get(docid=form.cleaned_data['product_id'])
                 if form.cleaned_data['receipts']:
                     data.append(
-                        StockTransaction(
+                        StockTransactionHelper(
                             domain=self.domain,
                             location_id=location.location_id,
                             case_id=location.supply_point_id,
-                            product=product,
+                            product_id=product.get_id,
                             action=const.StockActions.RECEIPTS,
                             quantity=form.cleaned_data['receipts']
                         ),
                     )
                 if form.cleaned_data['stock_on_hand'] is not None:
                     data.append(
-                        StockTransaction(
+                        StockTransactionHelper(
                             domain=self.domain,
                             location_id=location.location_id,
                             case_id=location.supply_point_id,
-                            product=product,
+                            product_id=product.get_id,
                             action=const.StockActions.STOCKONHAND,
                             quantity=form.cleaned_data['stock_on_hand']
                         ),
@@ -200,6 +163,41 @@ class InputStockView(BaseDomainView):
         return context
 
 
+class EWSUserExtensionView(BaseCommTrackManageView):
+
+    template_name = 'ewsghana/user_extension.html'
+
+    @property
+    def page_context(self):
+        page_context = super(EWSUserExtensionView, self).page_context
+        user_id = self.kwargs['user_id']
+
+        try:
+            extension = EWSExtension.objects.get(domain=self.domain, user_id=user_id)
+            sms_notifications = extension.sms_notifications
+            facility = extension.location_id
+        except EWSExtension.DoesNotExist:
+            sms_notifications = None
+            facility = None
+
+        page_context['form'] = EWSUserSettings(user_id=user_id, domain=self.domain, initial={
+            'sms_notifications': sms_notifications, 'facility': facility
+        })
+        page_context['couch_user'] = self.web_user
+        return page_context
+
+    @property
+    def web_user(self):
+        return WebUser.get(docid=self.kwargs['user_id'])
+
+    def post(self, request, *args, **kwargs):
+        form = EWSUserSettings(request.POST, user_id=kwargs['user_id'], domain=self.domain)
+        if form.is_valid():
+            form.save(self.web_user, self.domain)
+            messages.add_message(request, messages.SUCCESS, 'Settings updated successfully!')
+        return self.get(request, *args, **kwargs)
+
+
 @domain_admin_required
 @require_POST
 def sync_ewsghana(request, domain):
@@ -251,11 +249,15 @@ def ews_add_products_to_locs(request, domain):
 
 @domain_admin_required
 @require_POST
-def clear_products(request, domain):
-    locations = SQLLocation.objects.filter(domain=domain)
-    for loc in locations:
-        loc.products = []
-        loc.save()
+def migrate_email_settings_view(request, domain):
+    migrate_email_settings.delay(domain)
+    return HttpResponse('OK')
+
+
+@domain_admin_required
+@require_POST
+def delete_connections_field(request, domain):
+    delete_connections_field_task.delay(domain)
     return HttpResponse('OK')
 
 
@@ -263,6 +265,11 @@ def clear_products(request, domain):
 @require_POST
 def delete_last_stock_data(request, domain):
     delete_last_migrated_stock_data.delay(domain)
+    return HttpResponse('OK')
+
+
+def convert_user_data_fields(request, domain):
+    convert_user_data_fields_task.delay(domain)
     return HttpResponse('OK')
 
 
@@ -279,7 +286,7 @@ def inventory_management(request, domain):
     )
     return HttpResponse(
         json.dumps(inventory_management_ds.charts[0].data, default=json_handler),
-        mimetype='application/json'
+        content_type='application/json'
     )
 
 
@@ -296,7 +303,7 @@ def stockouts_product(request, domain):
     )
     return HttpResponse(
         json.dumps(stockout_graph.charts[0].data, default=json_handler),
-        mimetype='application/json'
+        content_type='application/json'
     )
 
 
@@ -304,15 +311,106 @@ def stockouts_product(request, domain):
 def configure_in_charge(request, domain):
     in_charge_ids = request.POST.getlist('users[]')
     location_id = request.POST.get('location_id')
-    all_users = CommCareUser.view(
-        'locations/users_by_location_id',
-        startkey=[location_id],
-        endkey=[location_id, {}],
-        include_docs=True
-    ).all()
-
-    for u in all_users:
-        if (u.user_data.get('role') == 'In Charge') != (u._id in in_charge_ids):
-            u.user_data['role'] = 'In Charge' if u._id in in_charge_ids else 'Other'
-            u.save()
+    location = SQLLocation.objects.get(location_id=location_id)
+    for user_id in in_charge_ids:
+        FacilityInCharge.objects.get_or_create(user_id=user_id, location=location)
+    FacilityInCharge.objects.filter(location=location).exclude(user_id__in=in_charge_ids).delete()
     return HttpResponse('OK')
+
+
+def loc_to_payload(loc):
+    return {'id': loc.location_id, 'name': loc.display_name}
+
+
+@locations_access_required
+def non_administrative_locations_for_select2(request, domain):
+    id = request.GET.get('id')
+    query = request.GET.get('name', '').lower()
+    if id:
+        try:
+            loc = SQLLocation.objects.get(location_id=id)
+            if loc.domain != domain:
+                raise SQLLocation.DoesNotExist()
+        except SQLLocation.DoesNotExist:
+            return json_response(
+                {'message': 'no location with id %s found' % id},
+                status_code=404,
+            )
+        else:
+            return json_response(loc_to_payload(loc))
+
+    locs = []
+    user = request.couch_user
+
+    user_loc = user.get_sql_location(domain)
+
+    if user_can_edit_any_location(user, request.project):
+        locs = SQLLocation.objects.filter(domain=domain, location_type__administrative=False)
+    elif user_loc:
+        locs = user_loc.get_descendants(include_self=True, location_type__administrative=False)
+
+    if locs != [] and query:
+        locs = locs.filter(name__icontains=query)
+
+    return json_response(map(loc_to_payload, locs[:10]))
+
+
+class BalanceMigrationView(BaseDomainView):
+
+    template_name = 'ewsghana/balance.html'
+    section_name = 'Balance'
+    section_url = ''
+
+    @property
+    def page_context(self):
+        return {
+            'stats': get_object_or_404(EWSMigrationStats, domain=self.domain),
+            'products_count': SQLProduct.objects.filter(domain=self.domain).count(),
+            'locations_count': SQLLocation.objects.filter(
+                domain=self.domain, location_type__administrative=True
+            ).exclude(is_archived=True).count(),
+            'supply_points_count': SQLLocation.objects.filter(
+                domain=self.domain, location_type__administrative=False
+            ).exclude(is_archived=True).count(),
+            'web_users_count': WebUser.by_domain(self.domain, reduce=True)[0]['value'],
+            'sms_users_count': CommCareUser.by_domain(self.domain, reduce=True)[0]['value'],
+            'problems': EWSMigrationProblem.objects.filter(domain=self.domain)
+        }
+
+
+class DashboardPageView(RedirectView):
+
+    def get_redirect_url(self, *args, **kwargs):
+        domain = kwargs['domain']
+        url = DashboardReport.get_raw_url(domain, request=self.request)
+        user = self.request.couch_user
+        dm = user.get_domain_membership(domain) if user else None
+        if dm:
+            if dm.program_id:
+                program_id = dm.program_id
+            else:
+                program_id = 'all'
+
+            loc_id = ''
+            if dm.location_id:
+                location = SQLLocation.objects.get(location_id=dm.location_id)
+                if not location.location_type.administrative:
+                    url = StockStatus.get_raw_url(domain, request=self.request)
+                loc_id = location.location_id
+            else:
+                try:
+                    extension = EWSExtension.objects.get(domain=domain, user_id=user.get_id)
+                    loc_id = extension.location_id
+                    if loc_id:
+                        url = StockStatus.get_raw_url(domain, request=self.request)
+                except EWSExtension.DoesNotExist:
+                    pass
+            start_date, end_date = EWSDateFilter.last_reporting_period()
+            url = '%s?location_id=%s&filter_by_program=%s&startdate=%s&enddate=%s' % (
+                url,
+                loc_id or '',
+                program_id if program_id else '',
+                start_date.strftime('%Y-%m-%d'),
+                end_date.strftime('%Y-%m-%d')
+            )
+        return url

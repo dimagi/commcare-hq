@@ -5,12 +5,13 @@ from django.test import SimpleTestCase, TestCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseAttachment
-from casexml.apps.case.tests import delete_all_cases
+from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.xml import V2
-from corehq.apps.app_manager.tests import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain, \
+    get_cases_in_domain
 from corehq.apps.hqcase.tasks import explode_cases
-from corehq.apps.hqcase.utils import make_creating_casexml, submit_case_blocks, \
-    get_case_ids_in_domain, get_cases_in_domain
+from corehq.apps.hqcase.utils import make_creating_casexml, submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
 
@@ -89,7 +90,7 @@ class mock_fetch_case_attachment(object):
         CommCareCase.fetch_case_attachment = self.old_fetch_case_attachment
 
 
-class ExplodeCasesTest(SimpleTestCase, TestFileMixin):
+class ExplodeCasesTest(SimpleTestCase, TestXmlMixin):
     maxDiff = 1000000
 
     def test_make_creating_casexml(self):
@@ -129,7 +130,6 @@ class ExplodeCasesDbTest(TestCase):
             user_id=self.user_id,
             owner_id=self.user_id,
             case_type='exploder-type',
-            version=V2
         ).as_string()
         submit_case_blocks([caseblock], self.domain.name)
         self.assertEqual(1, len(get_case_ids_in_domain(self.domain.name)))
@@ -148,7 +148,6 @@ class ExplodeCasesDbTest(TestCase):
             user_id=self.user_id,
             owner_id=self.user_id,
             case_type=parent_type,
-            version=V2
         ).as_string()
 
         child_id = uuid.uuid4().hex
@@ -159,7 +158,6 @@ class ExplodeCasesDbTest(TestCase):
             owner_id=self.user_id,
             case_type='exploder-child-type',
             index={'parent': (parent_type, parent_id)},
-            version=V2
         ).as_string()
 
         submit_case_blocks([parent_block, child_block], self.domain.name)

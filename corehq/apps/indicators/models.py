@@ -27,8 +27,8 @@ class DocumentMismatchError(Exception):
 
 class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
     """
-        An Indicator Definition defines how to compute the indicator that lives
-        in the namespaced computed_ property of a case or form.
+    An Indicator Definition defines how to compute the indicator that lives
+    in the namespaced computed_ property of a case or form.
     """
     namespace = StringProperty()
     domain = StringProperty()
@@ -785,9 +785,9 @@ class FormIndicatorDefinition(BaseDocumentIndicatorDefinition, FormDataIndicator
 
 class FormLabelIndicatorDefinition(FormIndicatorDefinition):
     """
-        This indicator definition labels the forms of a certain XMLNS with the slug provided as its type.
-        This type is used as a way to label that form in couch views.
-        For example, I want an XMLNS of http://domain.commcarehq.org/child/visit/ to map to child_visit_form.
+    This indicator definition labels the forms of a certain XMLNS with the slug provided as its type.
+    This type is used as a way to label that form in couch views.
+    For example, I want an XMLNS of http://domain.commcarehq.org/child/visit/ to map to child_visit_form.
     """
     _admin_crud_class = FormLabelIndicatorAdminCRUDManager
 
@@ -813,10 +813,10 @@ class FormLabelIndicatorDefinition(FormIndicatorDefinition):
 
 class FormDataAliasIndicatorDefinition(FormIndicatorDefinition):
     """
-        This Indicator Definition is targeted for the scenarios where you have an indicator report across multiple
-        domains and each domain's application doesn't necessarily have standardized question IDs. This provides a way
-        of aliasing question_ids on a per-domain basis so that you can reference the same data in a standardized way
-        as a computed_ indicator.
+    This Indicator Definition is targeted for the scenarios where you have an indicator report across multiple
+    domains and each domain's application doesn't necessarily have standardized question IDs. This provides a way
+    of aliasing question_ids on a per-domain basis so that you can reference the same data in a standardized way
+    as a computed_ indicator.
     """
     question_id = StringProperty()
 
@@ -833,10 +833,10 @@ class FormDataAliasIndicatorDefinition(FormIndicatorDefinition):
 
 class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
     """
-        Use this indicator when you want to pull the value from a case property of a case related to a form
-        and include it as an indicator for that form.
-        This currently assumes the pre-2.0 model of CommCareCases and that there is only one related case per form.
-        This should probably get rewritten to handle forms that update more than one type of case or for sub-cases.
+    Use this indicator when you want to pull the value from a case property of a case related to a form
+    and include it as an indicator for that form.
+    This currently assumes the pre-2.0 model of CommCareCases and that there is only one related case per form.
+    This should probably get rewritten to handle forms that update more than one type of case or for sub-cases.
     """
     case_property = StringProperty()
 
@@ -903,8 +903,8 @@ class CaseIndicatorDefinition(BaseDocumentIndicatorDefinition):
 
 class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicatorDefinitionMixin):
     """
-        Use this for when you want to grab all forms with the relevant xmlns in a case's xform_ids property and
-        include a property from those forms as an indicator for this case.
+    Use this for when you want to grab all forms with the relevant xmlns in a case's xform_ids property and
+    include a property from those forms as an indicator for this case.
     """
     question_id = StringProperty()
     _returns_multiple = True

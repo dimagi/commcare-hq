@@ -1,7 +1,8 @@
-<p>Hi!</p>
-<p>{{ inviter }} has invited you to join the {{ domain }} project space at CommCareHQ. This invitation expires in {{ days }} day(s)</p>
-<p>CommCareHQ is a tool that helps manage frontline workers around the world.</p>
-<p>To accept this invitation click <a href="{{ url }}">this link</a>. If you are unable to click the link, copy and paste the following url into your browser. {{url}}</p>
-<p>If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCareHQ visit http://www.commcarehq.org/.</p>
-<p>Thanks for using our site!</p>
-<p>-The CommCareHQ team</p>
+{% load i18n %}
+<p>{% blocktrans %}Hi!{% endblocktrans %}</p>
+<p>{% blocktrans %}{{ inviter }} has invited you to join the {{ domain }} project space at CommCareHQ. This invitation expires in {{ days }} day(s){% endblocktrans %}</p>
+<p>{% blocktrans %}CommCareHQ is a tool that helps manage frontline workers around the world.{% endblocktrans %}</p>
+<p>{% blocktrans %}To accept this invitation click <a href="{{ url }}">this link</a>. If you are unable to click the link, copy and paste the following url into your browser. {{url}}{% endblocktrans %}</p>
+<p>{% blocktrans %}If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCareHQ visit http://www.commcarehq.org/.{% endblocktrans %}</p>
+<p>{% blocktrans %}Thanks for using our site!{% endblocktrans %}</p>
+<p>{% blocktrans %}-The CommCareHQ team{% endblocktrans %}</p>

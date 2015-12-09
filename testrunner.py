@@ -1,13 +1,19 @@
+import datetime
+from collections import defaultdict
 from functools import wraps
+from unittest.util import strclass
+from couchdbkit import Database, ResourceNotFound
+
 from couchdbkit.ext.django import loading
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
-import datetime
+from django.apps import AppConfig
 from django.conf import settings
-from django.utils import unittest
-import settingshelper
-
 from django.test import TransactionTestCase
+from django.utils import unittest
 from mock import patch, Mock
+from corehq.tests.optimizer import OptimizedTestRunnerMixin
+
+import settingshelper
 
 
 def set_db_enabled(is_enabled):
@@ -46,10 +52,14 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         settings.INSTALLED_APPS = (tuple(settings.INSTALLED_APPS) +
                                    tuple(settings.TEST_APPS))
         settings.CELERY_ALWAYS_EAGER = True
+        # keep a copy of the original PILLOWTOPS setting around in case other tests want it.
+        settings._PILLOWTOPS = settings.PILLOWTOPS
         settings.PILLOWTOPS = {}
         return super(HqTestSuiteRunner, self).setup_test_environment(**kwargs)
 
     def setup_databases(self, **kwargs):
+        from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
+        self.blob_db = TemporaryFilesystemBlobDB()
         self.newdbname = self.get_test_db_name(settings.COUCH_DATABASE_NAME)
         print "overridding the couch settings!"
         new_db_settings = settingshelper.get_dynamic_db_settings(
@@ -67,8 +77,26 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
             db_name: self.get_test_db_name(url)
             for db_name, url in settings.EXTRA_COUCHDB_DATABASES.items()
         }
-
         return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
+
+    def teardown_databases(self, old_config, **kwargs):
+        self.blob_db.close()
+        for db_uri in settings.EXTRA_COUCHDB_DATABASES.values():
+            db = Database(db_uri)
+            self._assert_is_a_test_db(db_uri)
+            self._delete_db_if_exists(db)
+        super(HqTestSuiteRunner, self).teardown_databases(old_config, **kwargs)
+
+    @staticmethod
+    def _assert_is_a_test_db(db_uri):
+        assert db_uri.endswith('_test'), db_uri
+
+    @staticmethod
+    def _delete_db_if_exists(db):
+        try:
+            db.server.delete_db(db.dbname)
+        except ResourceNotFound:
+            pass
 
     def get_all_test_labels(self):
         return [self._strip(app) for app in settings.INSTALLED_APPS
@@ -81,8 +109,9 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
             test_labels, extra_tests, **kwargs
         )
 
-    def _strip(self, app_name):
-        return app_name.split('.')[-1]
+    def _strip(self, entry):
+        app_config = AppConfig.create(entry)
+        return app_config.label
 
 
 class TimingTestSuite(unittest.TestSuite):
@@ -107,11 +136,37 @@ class TimingTestSuite(unittest.TestSuite):
 
         klass.__call__ = new_call
 
+        original_setUpClass = getattr(klass, 'setUpClass', None)
+        if original_setUpClass:
+            @wraps(original_setUpClass)
+            def new_setUpClass(cls, *args, **kwargs):
+                start = datetime.datetime.utcnow()
+                result = original_setUpClass(*args, **kwargs)
+                end = datetime.datetime.utcnow()
+                suite.test_times.append((cls.setUpClass, end - start))
+                return result
+            klass.setUpClass = classmethod(new_setUpClass)
+
         self._patched_test_classes.add(klass)
 
     def addTest(self, test):
         self.patch_test_class(test.__class__)
         super(TimingTestSuite, self).addTest(test)
+
+    @staticmethod
+    def get_test_class(method):
+        """
+        return the TestCase class associated with method
+
+        method can either be a test_* method, or setUpClass
+
+        """
+        try:
+            # setUpClass
+            return method.im_self
+        except AttributeError:
+            # test_* method
+            return method.__class__
 
 
 class TwoStageTestRunner(HqTestSuiteRunner):
@@ -178,9 +233,10 @@ class TwoStageTestRunner(HqTestSuiteRunner):
         old_config = self.setup_databases()
         result = self.run_suite(suite)
 
-        from corehq.db import _engine, Session
+        from corehq.db import Session, connection_manager
         Session.remove()
-        _engine.dispose()
+        connection_manager.dispose_all()
+
 
         self.teardown_databases(old_config)
         return self.suite_result(suite, result)
@@ -208,11 +264,18 @@ class TwoStageTestRunner(HqTestSuiteRunner):
         return failures
 
     def print_test_times(self, suite, percent=.5):
-        total_time = reduce(
+        self.print_test_times_by_test(suite, percent)
+        self.print_test_times_by_class(suite, percent)
+
+    def _get_total_time(self, time_tuples):
+        return reduce(
             lambda x, y: x + y,
-            (test_time for _, test_time in suite.test_times),
+            (test_time for _, test_time in time_tuples),
             datetime.timedelta(seconds=0)
         )
+
+    def _print_test_times(self, sorted_times, percent):
+        total_time = self._get_total_time(sorted_times)
         rounded_total_time = total_time - datetime.timedelta(
             microseconds=total_time.microseconds
         )
@@ -225,12 +288,33 @@ class TwoStageTestRunner(HqTestSuiteRunner):
                 rounded_total_time,
             )
         )
-        for test, test_time in sorted(suite.test_times, key=lambda x: x[1], reverse=True):
+        for test, test_time in sorted_times:
             cumulative_time += test_time
             print ' ', test, test_time
             if cumulative_time > total_time / 2:
                 break
 
+    def print_test_times_by_test(self, suite, percent=.5):
+        self._print_test_times(
+            sorted(suite.test_times, key=lambda x: x[1], reverse=True),
+            percent,
+        )
+
+    def print_test_times_by_class(self, suite, percent=.5):
+        times_by_class = defaultdict(datetime.timedelta)
+        for test, test_time in suite.test_times:
+            times_by_class[strclass(TimingTestSuite.get_test_class(test))] += test_time
+        self._print_test_times(
+            sorted(times_by_class.items(), key=lambda x: x[1], reverse=True),
+            percent,
+        )
+
+
+class DevTestRunner(OptimizedTestRunnerMixin, TwoStageTestRunner):
+    """
+    See OptimizedTestRunner.
+    """
+    pass
 
 class NonDbOnlyTestRunner(TwoStageTestRunner):
     """

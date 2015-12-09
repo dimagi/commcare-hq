@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta
 from celery.task import periodic_task, task
 from corehq.apps.reminders.models import (CaseReminderHandler, CaseReminder,
-    CASE_CRITERIA)
+    CASE_CRITERIA, REMINDER_TYPE_DEFAULT)
 from django.conf import settings
 from dimagi.utils.logging import notify_exception
 from casexml.apps.case.models import CommCareCase
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.couch.bulk import soft_delete_docs
 
 # In minutes
 CASE_CHANGED_RETRY_INTERVAL = 5
@@ -26,7 +28,7 @@ def get_subcases(case):
             subcases.append(CommCareCase.get(index.referenced_id))
     return subcases
 
-@task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True)
+@task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True)
 def case_changed(case_id, handler_ids, retry_num=0):
     try:
         _case_changed(case_id, handler_ids)
@@ -63,7 +65,7 @@ def _case_changed(case_id, handler_ids):
                 for subcase in subcases:
                     handler.case_changed(subcase, **kwargs)
 
-@task(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True)
+@task(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True, acks_late=True)
 def process_reminder_rule(handler, schedule_changed, prev_definition,
     send_immediately):
     try:
@@ -106,3 +108,17 @@ def _fire_reminder(reminder_id):
                 reminder.save()
 
 
+@task(queue='background_queue', ignore_result=True, acks_late=True)
+def delete_reminders_for_cases(domain, case_ids):
+    handler_ids = CaseReminderHandler.get_handler_ids(
+        domain, reminder_type_filter=REMINDER_TYPE_DEFAULT)
+    for ids in chunked(case_ids, 50):
+        keys = [[domain, handler_id, case_id]
+                for handler_id in handler_ids
+                for case_id in ids]
+        results = CaseReminder.get_db().view(
+            'reminders/by_domain_handler_case',
+            keys=keys,
+            include_docs=True
+        )
+        soft_delete_docs([row['doc'] for row in results], CaseReminder)

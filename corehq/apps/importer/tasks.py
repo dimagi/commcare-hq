@@ -1,12 +1,12 @@
 from celery.task import task
 from xml.etree import ElementTree
 from dimagi.utils.couch.database import is_bigcouch
-from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.importer.const import LookupErrors, ImportErrors
 from corehq.apps.importer import util as importer_util
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from soil import DownloadBase
 from casexml.apps.case.xml import V2
@@ -18,18 +18,24 @@ POOL_SIZE = 10
 PRIME_VIEW_FREQUENCY = 500
 CASEBLOCK_CHUNKSIZE = 100
 
+
 @task
 def bulk_import_async(import_id, config, domain, excel_id):
     excel_ref = DownloadBase.get(excel_id)
     spreadsheet = importer_util.get_spreadsheet(excel_ref, config.named_columns)
-    return do_import(spreadsheet, config, domain, task=bulk_import_async)
+    result = do_import(spreadsheet, config, domain, task=bulk_import_async)
+
+    # return compatible with soil
+    return {
+        'messages': result
+    }
 
 
 def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKSIZE):
     if not spreadsheet:
-        return {'error': 'EXPIRED'}
+        return {'errors': 'EXPIRED'}
     if spreadsheet.has_errors:
-        return {'error': 'HAS_ERRORS'}
+        return {'errors': 'HAS_ERRORS'}
 
     row_count = spreadsheet.get_num_rows()
     columns = spreadsheet.get_header_columns()
@@ -50,7 +56,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
     def _submit_caseblocks(caseblocks):
         if caseblocks:
             submit_case_blocks(
-                [ElementTree.tostring(cb.as_xml(format_datetime=json_format_datetime)) for cb in caseblocks],
+                [ElementTree.tostring(cb.as_xml()) for cb in caseblocks],
                 domain,
                 username,
                 user_id,
@@ -133,7 +139,12 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         if uploaded_owner_name:
             # If an owner name was provided, replace the provided
             # uploaded_owner_id with the id of the provided group or owner
-            uploaded_owner_id = importer_util.get_id_from_name(uploaded_owner_name, domain, name_cache)
+            try:
+                uploaded_owner_id = importer_util.get_id_from_name(uploaded_owner_name, domain, name_cache)
+            except SQLLocation.MultipleObjectsReturned:
+                errors.add(ImportErrors.DuplicateLocationName, i + 1)
+                continue
+
             if not uploaded_owner_id:
                 errors.add(ImportErrors.InvalidOwnerName, i + 1)
                 continue
@@ -186,7 +197,6 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 caseblock = CaseBlock(
                     create=True,
                     case_id=id,
-                    version=V2,
                     owner_id=owner_id,
                     user_id=user_id,
                     case_type=config.case_type,
@@ -211,7 +221,6 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 caseblock = CaseBlock(
                     create=False,
                     case_id=case._id,
-                    version=V2,
                     update=fields_to_update,
                     **extras
                 )
@@ -226,7 +235,6 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
             _submit_caseblocks(caseblocks)
             num_chunks += 1
             caseblocks = []
-
 
     # final purge of anything left in the queue
     _submit_caseblocks(caseblocks)

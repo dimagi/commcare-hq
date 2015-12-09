@@ -107,13 +107,7 @@
         <h1>
             {{ project.title }}
             <small>{% trans "by" %}
-                {% ifequal project.publisher 'organization' %}
-{#                <a href="{% url "orgs_public" project.organization %}">#}
-                    {{ project.get_organization.title }}
-{#                </a>#}
-                {% else %}
-                    {{ project.author|default:project.name_of_publisher|default:"*Publisher's name*" }}
-                {% endifequal %}
+                {{ project.author|default:project.name_of_publisher|default:"*Publisher's name*" }}
             </small>
         </h1>
         <h4 style="color: #808080;">{{ project.short_description }}</h4>
@@ -291,7 +285,7 @@
         {% if fixtures %}
             <div class='alert alert-warning'>
                 Lookup Tables are not supported on our Community plan.
-                <a href="http://www.commcarehq.org/software-plans/">Learn more
+                <a href="https://www.commcarehq.org/pricing/">Learn more
                     about our pricing plans here</a>
             </div>
         {% endif %}

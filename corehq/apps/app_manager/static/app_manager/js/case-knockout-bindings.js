@@ -20,6 +20,13 @@ var utils = {
 };
 
 ko.bindingHandlers.questionsSelect = {
+    /*
+        The value used with this binding should be in the form:
+        [
+            {value: "someValue", label: "someLabel"},
+            ...
+        ]
+     */
     init: function (element, valueAccessor) {
         $(element).after('<div class="alert alert-error"></div>');
     },

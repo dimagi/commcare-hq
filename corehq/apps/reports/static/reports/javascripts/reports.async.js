@@ -11,6 +11,7 @@ var HQAsyncReport = function (o) {
     self.reportRequest = null;
     self.customAsyncUrl = o.customAsyncUrl || null;
     self.additionalParams = o.additionalParams || '';
+    self.additionalWindowParams = o.additionalWindowParams || '';
 
     self.humanReadableErrors = {
         400: "Please check your Internet connection!",
@@ -80,7 +81,9 @@ var HQAsyncReport = function (o) {
         }
         self.filterForm.submit(function () {
             var params = urlSerialize(this);
-            History.pushState(null,window.location.title,window.location.pathname+"?"+params);
+            History.pushState(null,window.location.title,
+                window.location.pathname + '?' + params
+                + (self.additionalWindowParams ? '&' + self.additionalWindowParams: ''));
             self.updateFilters(params);
             self.updateReport(false, params, true);
             return false;

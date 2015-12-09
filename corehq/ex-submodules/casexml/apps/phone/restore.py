@@ -1,28 +1,27 @@
-from StringIO import StringIO
 from io import FileIO
-from os import path
 import os
 from uuid import uuid4
 import shutil
 import hashlib
-import tempfile
 from couchdbkit import ResourceConflict, ResourceNotFound
+from casexml.apps.phone.cache_utils import copy_payload_and_synclog_and_get_new_file
 from casexml.apps.phone.data_providers import get_restore_providers, get_long_running_providers
 from casexml.apps.phone.data_providers.case.load_testing import get_loadtest_factor
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
 )
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, FILE_RESTORE, STREAM_RESTORE_CACHE
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
-from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log
+from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, LOG_FORMAT_SIMPLIFIED, \
+    get_sync_log_class_by_format
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml
 from datetime import datetime, timedelta
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
-from couchforms.xml import (
+from couchforms.openrosa_response import (
     ResponseNature,
     get_simple_response_xml,
 )
@@ -43,14 +42,13 @@ INITIAL_SYNC_CACHE_TIMEOUT = 60 * 60  # 1 hour
 INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
 
 
-def stream_response(payload, is_file=True):
+def stream_response(payload, headers=None):
     try:
-        if is_file:
-            response = StreamingHttpResponse(FileWrapper(open(payload, 'r')), mimetype="text/xml")
-            response['Content-Length'] = os.path.getsize(payload)
-            return response
-        else:
-            return StreamingHttpResponse(FileWrapper(payload), mimetype="text/xml")
+        response = StreamingHttpResponse(FileWrapper(payload), content_type="text/xml")
+        if headers:
+            for header, value in headers.items():
+                response[header] = value
+        return response
     except IOError as e:
         return HttpResponse(e, status=500)
 
@@ -127,7 +125,7 @@ class FileRestoreResponse(RestoreResponse):
 
     def __init__(self, username=None, items=False):
         super(FileRestoreResponse, self).__init__(username, items)
-        self.filename = path.join(settings.SHARED_DRIVE_CONF.restore_dir, uuid4().hex)
+        self.filename = os.path.join(settings.SHARED_DRIVE_CONF.restore_dir, uuid4().hex)
 
         self.response_body = FileIO(self.get_filename(self.BODY_TAG_SUFFIX), 'w+')
 
@@ -176,7 +174,6 @@ class FileRestoreResponse(RestoreResponse):
 
     def get_cache_payload(self, full=False):
         return {
-            'is_file': True,
             'data': self.get_filename() if not full else open(self.get_filename(), 'r')
         }
 
@@ -185,92 +182,73 @@ class FileRestoreResponse(RestoreResponse):
             return f.read()
 
     def get_http_response(self):
-        return stream_response(self.get_filename())
+        headers = {'Content-Length': os.path.getsize(self.get_filename())}
+        return stream_response(open(self.get_filename(), 'r'), headers)
 
 
-class StringRestoreResponse(RestoreResponse):
+class CachedPayload(object):
 
-    def __init__(self, username=None, items=False):
-        super(StringRestoreResponse, self).__init__(username, items)
-        self.response_body = StringIO()
-        self.response = None
+    def __init__(self, payload, is_initial):
+        self.is_initial = is_initial
+        self.payload = payload
+        self.payload_path = None
+        if isinstance(payload, dict):
+            self.payload_path = payload['data']
+            if os.path.exists(self.payload_path):
+                self.payload = open(self.payload_path, 'r')
+            else:
+                self.payload = None
+        elif payload:
+            assert hasattr(payload, 'read'), 'expected file like object'
 
-    def __add__(self, other):
-        if not isinstance(other, StringRestoreResponse):
-            raise NotImplemented()
-
-        response = StringRestoreResponse(self.username, self.items)
-        response.num_items = self.num_items + other.num_items
-        response.response_body.write(self.response_body.getvalue())
-        response.response_body.write(other.response_body.getvalue())
-
-        return response
-
-    def finalize(self):
-        # Add 1 to num_items to account for message element
-        items = self.items_template.format(self.num_items + 1) if self.items else ''
-        self.response = '{start}{body}{end}'.format(
-            start=self.start_tag_template.format(
-                items=items,
-                username=self.username,
-                nature=ResponseNature.OTA_RESTORE_SUCCESS),
-            body=self.response_body.getvalue(),
-            end=self.closing_tag
-        )
-        self.finalized = True
-        self.close()
-
-    def get_cache_payload(self, full=False):
-        return {
-            'is_file': False,
-            'data': self.response
-        }
+    def __nonzero__(self):
+        return bool(self.payload)
 
     def as_string(self):
-        return self.response
+        try:
+            return self.payload.read()
+        finally:
+            self.payload.close()
 
-    def get_http_response(self):
-        return HttpResponse(self.response, mimetype="text/xml")
+    def get_content_length(self):
+        if self.payload_path:
+            return os.path.getsize(self.payload_path)
+        return None
+
+    def as_file(self):
+        return self.payload
+
+    def finalize(self):
+        # When serving a cached initial payload we should still generate a new sync log
+        # This is to avoid issues with multiple devices ending up syncing to the same
+        # sync log, which causes all kinds of assertion errors when the two devices
+        # touch the same cases
+        if self and self.is_initial:
+            try:
+                file_reference = copy_payload_and_synclog_and_get_new_file(self.payload)
+                self.payload = file_reference.file
+                self.payload_path = file_reference.path
+            except Exception, e:
+                # don't fail hard if anything goes wrong since this is an edge case optimization
+                soft_assert(to=['czue' + '@' + 'dimagi.com'])(False, u'Error finalizing cached log: {}'.format(e))
 
 
 class CachedResponse(object):
     def __init__(self, payload):
-        self.is_file = False
-        self.is_stream = False
         self.payload = payload
-        if isinstance(payload, dict):
-            self.payload = payload['data']
-            self.is_file = payload['is_file']
-        elif hasattr(payload, 'read'):
-            self.is_stream = True
 
     def exists(self):
-        return self.payload and (not self.is_file or path.exists(self.payload))
+        return bool(self.payload)
 
     def as_string(self):
-        if self.is_stream:
-            return self.payload.read()
-        if self.is_file:
-            with open(self.payload, 'r') as f:
-                return f.read()
-        else:
-            return self.payload
+        return self.payload.as_string()
 
     def get_http_response(self):
-        if self.is_stream:
-            return stream_response(self.payload, is_file=False)
-        if self.is_file:
-            return stream_response(self.payload, is_file=True)
-        else:
-            return HttpResponse(self.payload, mimetype="text/xml")
-
-
-def get_restore_class(domain, user):
-    restore_class = StringRestoreResponse
-    if FILE_RESTORE.enabled(domain) or FILE_RESTORE.enabled(user.username):
-        restore_class = FileRestoreResponse
-
-    return restore_class
+        headers = {}
+        content_length = self.payload.get_content_length()
+        if content_length is not None:
+            headers['Content-Length'] = content_length
+        return stream_response(self.payload.as_file(), headers)
 
 
 class RestoreParams(object):
@@ -283,13 +261,16 @@ class RestoreParams(object):
     :param version:             The version of the restore format
     :param state_hash:          The case state hash string to use to verify the state of the phone
     :param include_item_count:  Set to `True` to include the item count in the response
+    :param force_restore_mode:  Set to `clean` or `legacy` to force a particular restore type.
     """
 
-    def __init__(self, sync_log_id='', version=V1, state_hash='', include_item_count=False):
+    def __init__(self, sync_log_id='', version=V1, state_hash='', include_item_count=False,
+                 force_restore_mode=None):
         self.sync_log_id = sync_log_id
         self.version = version
         self.state_hash = state_hash
         self.include_item_count = include_item_count
+        self.force_restore_mode = force_restore_mode
 
 
 class RestoreCacheSettings(object):
@@ -315,6 +296,8 @@ class RestoreState(object):
     This allows the providers to set values on the state, for either logging or performance
     reasons.
     """
+    restore_class = FileRestoreResponse
+
     def __init__(self, project, user, params):
         self.project = project
         self.domain = project.name if project else ''
@@ -331,13 +314,34 @@ class RestoreState(object):
 
     def validate_state(self):
         check_version(self.params.version)
-        if self.last_sync_log and self.params.state_hash:
-            parsed_hash = CaseStateHash.parse(self.params.state_hash)
-            computed_hash = self.last_sync_log.get_state_hash()
-            if computed_hash != parsed_hash:
-                raise BadStateException(expected=computed_hash,
-                                        actual=parsed_hash,
-                                        case_ids=self.last_sync_log.get_footprint_of_cases_on_phone())
+        if self.last_sync_log:
+            if self.params.state_hash:
+                parsed_hash = CaseStateHash.parse(self.params.state_hash)
+                computed_hash = self.last_sync_log.get_state_hash()
+                if computed_hash != parsed_hash:
+                    # log state error on the sync log
+                    self.last_sync_log.had_state_error = True
+                    self.last_sync_log.error_date = datetime.utcnow()
+                    self.last_sync_log.error_hash = str(parsed_hash)
+                    self.last_sync_log.save()
+
+                    exception = BadStateException(
+                        server_hash=computed_hash,
+                        phone_hash=parsed_hash,
+                        case_ids=self.last_sync_log.get_footprint_of_cases_on_phone()
+                    )
+                    if self.last_sync_log.log_format == LOG_FORMAT_SIMPLIFIED:
+                        from corehq.apps.reports.standard.deployments import SyncHistoryReport
+                        last_bugfix_date = datetime(2015, 10, 20)
+                        _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'])
+                        sync_history_url = '{}?individual={}'.format(
+                            SyncHistoryReport.get_url(self.domain),
+                            self.user.user_id
+                        )
+                        _assert(self.last_sync_log.date < last_bugfix_date, '{}, sync history report: {}'.format(
+                            exception, sync_history_url
+                        ))
+                    raise exception
 
     @property
     @memoized
@@ -356,6 +360,10 @@ class RestoreState(object):
                     self.params.sync_log_id, self.user.user_id, sync_log.user_id
                 ))
 
+            # convert to the right type if necessary
+            if not isinstance(sync_log, self.sync_log_class):
+                # this call can fail with an IncompatibleSyncLogType error
+                sync_log = self.sync_log_class.from_other_format(sync_log)
             return sync_log
         else:
             return None
@@ -381,6 +389,14 @@ class RestoreState(object):
         else:
             return StockSettings()
 
+    @property
+    def is_first_extension_sync(self):
+        extension_toggle_enabled = EXTENSION_CASES_SYNC_ENABLED.enabled(self.domain)
+        try:
+            return extension_toggle_enabled and not self.last_sync_log.extensions_checked
+        except AttributeError:
+            return extension_toggle_enabled
+
     def start_sync(self):
         self.start_time = datetime.utcnow()
         self.current_sync_log = self.create_sync_log()
@@ -392,20 +408,22 @@ class RestoreState(object):
 
     def create_sync_log(self):
         previous_log_id = None if self.is_initial else self.last_sync_log._id
+        previous_log_rev = None if self.is_initial else self.last_sync_log._rev
         last_seq = str(get_db().info()["update_seq"])
         new_synclog = SyncLog(
             user_id=self.user.user_id,
             last_seq=last_seq,
             owner_ids_on_phone=list(self.owner_ids),
             date=datetime.utcnow(),
-            previous_log_id=previous_log_id
+            previous_log_id=previous_log_id,
+            previous_log_rev=previous_log_rev,
         )
         new_synclog.save(**get_safe_write_kwargs())
         return new_synclog
 
     @property
-    def restore_class(self):
-        return get_restore_class(self.domain, self.user)
+    def sync_log_class(self):
+        return get_sync_log_class_by_format(LOG_FORMAT_SIMPLIFIED)
 
     @property
     @memoized
@@ -457,9 +475,7 @@ class RestoreConfig(object):
 
     def get_payload(self):
         """
-        This function currently returns either a full string payload or a string name of a file
-        that contains the contents of the payload. If FILE_RESTORE toggle is enabled, then this will return
-        the filename, otherwise it will return the full string payload
+        This function returns a RestoreResponse class that encapsulates the response.
         """
         self.validate()
 
@@ -500,7 +516,7 @@ class RestoreConfig(object):
                 e.message,
                 ResponseNature.OTA_RESTORE_ERROR
             )
-            return HttpResponse(response, mimetype="text/xml",
+            return HttpResponse(response, content_type="text/xml",
                                 status=412)  # precondition failed
 
     def _initial_cache_key(self):
@@ -514,11 +530,11 @@ class RestoreConfig(object):
             return CachedResponse(None)
 
         if self.sync_log:
-            stream = STREAM_RESTORE_CACHE.enabled(self.domain)
-            payload = self.sync_log.get_cached_payload(self.version, stream=stream)
+            payload = CachedPayload(self.sync_log.get_cached_payload(self.version, stream=True), is_initial=False)
         else:
-            payload = self.cache.get(self._initial_cache_key())
+            payload = CachedPayload(self.cache.get(self._initial_cache_key()), is_initial=True)
 
+        payload.finalize()
         return CachedResponse(payload)
 
     def set_cached_payload_if_necessary(self, resp, duration):
@@ -527,6 +543,9 @@ class RestoreConfig(object):
             # if there is a sync token, always cache
             try:
                 data = cache_payload['data']
+                self.sync_log.last_cached = datetime.utcnow()
+                self.sync_log.hash_at_last_cached = str(self.sync_log.get_state_hash())
+                self.sync_log.save()
                 self.sync_log.set_cached_payload(data, self.version)
                 try:
                     data.close()

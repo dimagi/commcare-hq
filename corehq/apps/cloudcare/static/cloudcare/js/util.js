@@ -1,3 +1,14 @@
+if (!String.prototype.startsWith) {
+    String.prototype.startsWith = function(searchString, position) {
+        position = position || 0;
+        return this.indexOf(searchString, position) === position;
+    };
+}
+
+NProgress.configure({
+    showSpinner: false,
+});
+
 var getLocalizedString = function (property, language) {
     // simple utility to localize a string based on a dict of 
     // language mappings.
@@ -17,23 +28,6 @@ var localize = function(obj, language) {
     return s || localize.NOT_FOUND;
 };
 localize.NOT_FOUND = '?';
-
-var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-    var url = urlRoot;
-    if (appId !== undefined) {
-        url = url + "view/" + appId;
-        if (moduleId !== undefined) {
-            url = url + "/" + moduleId;
-            if (formId !== undefined) {
-                url = url + "/" + formId;
-                if (caseId !== undefined) {
-                    url = url + "/" + caseId;
-                }
-            }
-        }  
-    }
-    return url;
-};
 
 var getFormUrl = function(urlRoot, appId, moduleId, formId, instanceId) {
     // TODO: make this cleaner
@@ -89,11 +83,15 @@ var getSessionContextUrl = function(sessionUrlRoot, session_id) {
     return sessionUrlRoot + session_id;
 };
 
+var isParentField = function(field) {
+    return field ? field.startsWith('parent/') : false;
+};
+
 var showError = function (message, location, autoHideTime) {
     if (message === undefined) {
         message = "sorry, there was an error";
     }
-    _show(message, location, autoHideTime, "alert alert-error");
+    _show(message, location, autoHideTime, "alert alert-danger");
 };
 
 var showSuccess = function (message, location, autoHideTime) {
@@ -101,10 +99,6 @@ var showSuccess = function (message, location, autoHideTime) {
         message = "success";
     }
     _show(message, location, autoHideTime, "alert alert-success");
-};
-
-var showRenderedForm = function (message, $location) {
-    $location.html(message || "Could not render form");
 };
 
 var _show = function (message, location, autoHideTime, classes) {
@@ -118,14 +112,12 @@ var _show = function (message, location, autoHideTime, classes) {
 };
 
 var showLoading = function (selector) {
-    selector = selector || "#loading";
-    $(selector).show();
+    NProgress.start();
 };
 
 var tfLoading = function (selector) {
     showLoading();
-    $('#save-indicator').text(translatedStrings.saving).removeClass('alert-success alert-error').addClass('alert-warning').show();
-}
+};
 
 var hideLoading = function (selector) {
     selector = selector || "#loading";
@@ -135,16 +127,12 @@ var hideLoading = function (selector) {
 var tfLoadingComplete = function (isError) {
     hideLoading();
     if (isError) {
-        $('#save-indicator').text(translatedStrings.errSaving).removeClass('alert-warning alert-success').addClass('alert-error').show();
-    } else {
-        $('#save-indicator').text(translatedStrings.saveAll).removeClass('alert-warning alert-error').addClass('alert-success').show();
+        showError(translatedStrings.errSaving, $('#cloudcare-notifications'));
     }
-
 }
 
 var hideLoading = function (selector) {
-    selector = selector || "#loading";
-    $(selector).hide();
+    NProgress.done();
 };
 
 var hideLoadingCallback = function () {

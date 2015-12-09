@@ -1,8 +1,17 @@
-{% extends 'hqwebapp/two_column.html' %}
+{% extends 'style/bootstrap2/two_column.html' %}
 {% load i18n %}
 
 {% block main_column %}
     <h2>Supervision Documents</h2>
+    <ul class="nav nav-pills">
+        {% for title, href in report_links %}
+            <li><a href='{{ href }}'>{{ title }}</a></li>
+        {% endfor %}
+    </ul>
+    <ul class="nav nav-pills">
+        <li><a href="{{ report_links.4.1 }}">Supervision Report</a></li>
+        <li class="active"><a href="{% url 'supervision' domain %}">Supervision Documents</a></li>
+    </ul>
     <table class="table table-striped">
         {% for document in documents %}
             <tr>

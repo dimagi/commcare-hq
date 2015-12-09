@@ -3,28 +3,34 @@ from django.test import TestCase, SimpleTestCase
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 
-class GroupTest(TestCase):
+DOMAIN = 'test-domain'
 
-    def setUp(self):
+
+class GroupTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.active_user = CommCareUser.create(domain=DOMAIN, username='activeguy', password='secret')
+        cls.inactive_user = CommCareUser.create(domain=DOMAIN, username='inactivegal', password='secret')
+        cls.inactive_user.is_active = False
+        cls.inactive_user.save()
+        cls.deleted_user = CommCareUser.create(domain=DOMAIN, username='goner', password='secret')
+        cls.deleted_user.retire()
+
+    @classmethod
+    def tearDownClass(cls):
+        for group in Group.by_domain(DOMAIN):
+            group.delete()
         for user in CommCareUser.all():
             user.delete()
 
     def testGetUsers(self):
-        domain = 'group-test'
-        active_user = CommCareUser.create(domain=domain, username='activeguy', password='secret')
-        inactive_user = CommCareUser.create(domain=domain, username='inactivegal', password='secret')
-        inactive_user.is_active = False
-        inactive_user.save()
-        deleted_user = CommCareUser.create(domain=domain, username='goner', password='secret')
-        deleted_user.retire()
-
-        group = Group(domain=domain, name='group',
-                      users=[active_user._id, inactive_user._id, deleted_user._id])
+        group = Group(domain=DOMAIN, name='group',
+                      users=[self.active_user._id, self.inactive_user._id, self.deleted_user._id])
         group.save()
 
         def _check_active_users(userlist):
             self.assertEqual(len(userlist), 1)
-            self.assertEqual(active_user._id, userlist[0])
+            self.assertEqual(self.active_user._id, userlist[0])
 
         # try all the flavors of this
         _check_active_users([u._id for u in group.get_users()])
@@ -34,19 +40,40 @@ class GroupTest(TestCase):
 
         def _check_all_users(userlist):
             self.assertEqual(len(userlist), 2)
-            self.assertTrue(active_user._id in userlist)
-            self.assertTrue(inactive_user._id in userlist)
-            self.assertFalse(deleted_user._id in userlist)
+            self.assertTrue(self.active_user._id in userlist)
+            self.assertTrue(self.inactive_user._id in userlist)
+            self.assertFalse(self.deleted_user._id in userlist)
 
         _check_all_users([u._id for u in group.get_users(is_active=False)])
         _check_all_users(group.get_user_ids(is_active=False))
         _check_all_users([u._id for u in group.get_static_users(is_active=False)])
         _check_all_users(group.get_static_user_ids(is_active=False))
 
+    def test_bulk_save(self):
+        group1 = Group(domain=DOMAIN, name='group1',
+                       users=[self.active_user._id, self.inactive_user._id, self.deleted_user._id])
+        group1.save()
+        group2 = Group(domain=DOMAIN, name='group2',
+                       users=[self.active_user._id, self.inactive_user._id, self.deleted_user._id])
+        group2.save()
 
-class WrapGroupTest(SimpleTestCase):
+        group1.remove_user(self.active_user._id, save=False)
+        group2.remove_user(self.deleted_user._id, save=False)
 
-    document_class = Group
+        g1_old_modified = group1.last_modified
+        g2_old_modified = group2.last_modified
+
+        Group.bulk_save([group1, group2])
+
+        group1_updated = Group.get(group1.get_id)
+        group2_updated = Group.get(group2.get_id)
+        self.assertNotEqual(g1_old_modified, group1_updated.last_modified)
+        self.assertNotEqual(g2_old_modified, group2_updated.last_modified)
+
+
+# This is a mixin so importing it doesn't re-run the tests
+class WrapGroupTestMixin(object):
+    document_class = None
 
     def test_yes_Z(self):
         date_string = '2014-08-26T15:20:20.062732Z'
@@ -73,3 +100,7 @@ class WrapGroupTest(SimpleTestCase):
         bad_date_string = '2014-08-26T15:20'
         with self.assertRaises(BadValueError):
             self.document_class.wrap({'last_modified': bad_date_string})
+
+
+class WrapGroupTest(WrapGroupTestMixin, SimpleTestCase):
+    document_class = Group

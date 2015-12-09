@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/base_page.html' %}
+{% extends 'style/bootstrap2/base_page.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load timezone_tags %}
@@ -6,6 +6,7 @@
 {% block title %}{% trans "Edit Feature Flag: " %}{{ toggle_meta.label }}{% endblock %}
 
 {% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
     <script src="{% static 'hqwebapp/js/main.js' %}"></script>
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'formdesigner/js/lib/underscore-1.5.2.js' %}"></script>
@@ -108,7 +109,7 @@
 {% endblock %}
 {% block page_content %}
     {% if toggle_meta.description %}
-        <p>{{ toggle_meta.description }}</p>
+        <p>{{ toggle_meta.description|safe }}</p>
     {% endif %}
     <p>{% trans "This flag is tagged as: " %}<span class="label label-{{ toggle_meta.tag.css_class }}">{{ toggle_meta.tag.name }}</span></p>
     {% if toggle_meta.help_link %}

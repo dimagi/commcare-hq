@@ -1,11 +1,12 @@
-from corehq.apps.groups.models import Group
+from casexml.apps.case.xform import is_device_report
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
-from corehq.elastic import es_query, ES_URLS, stream_es_query, get_es
+from corehq.elastic import ES_URLS, stream_es_query, get_es, doc_exists_in_es
 from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX
-from couchforms.models import XFormInstance
+from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.decorators.memoized import memoized
-from pillowtop.listener import AliasedElasticPillow, BulkPillow
+from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class
+from pillowtop.listener import AliasedElasticPillow, PythonPillow
 from django.conf import settings
 
 
@@ -38,89 +39,72 @@ class UserPillow(AliasedElasticPillow):
     es_index = USER_INDEX
     default_mapping = USER_MAPPING
 
-    @memoized
-    def calc_meta(self):
-        #todo: actually do this correctly
-
-        """
-        override of the meta calculator since we're separating out all the types,
-        so we just do a hash of the "prototype" instead to determined md5
-        """
-        return self.calc_mapping_hash({"es_meta": self.es_meta,
-                                       "mapping": self.default_mapping})
-
+    @classmethod
     def get_unique_id(self):
         return USER_INDEX
 
-    def get_mapping_from_type(self, doc_dict):
+    def change_transform(self, doc_dict):
+        super(UserPillow, self).change_transform(doc_dict)
+        doc_dict = self._cast_user_data_to_string(doc_dict)
+        return doc_dict
+
+    def _cast_user_data_to_string(self, doc_dict):
         """
-        Define mapping uniquely to the user_type document.
-        See below on why date_detection is False
-
-        NOTE: DO NOT MODIFY THIS UNLESS ABSOLUTELY NECESSARY. A CHANGE BELOW WILL GENERATE A NEW
-        HASH FOR THE INDEX NAME REQUIRING A REINDEX+RE-ALIAS. THIS IS A SERIOUSLY RESOURCE
-        INTENSIVE OPERATION THAT REQUIRES SOME CAREFUL LOGISTICS TO MIGRATE
+        Make all user_data strings
+        ES doesn't allow dynamic dicts with the same key name to have different types, so coerce everything
         """
-        #the meta here is defined for when the case index + type is created for the FIRST time
-        #subsequent data added to it will be added automatically, but date_detection is necessary
-        # to be false to prevent indexes from not being created due to the way we store dates
-        #all are strings EXCEPT the core case properties which we need to explicitly define below.
-        #that way date sort and ranges will work with canonical date formats for queries.
-        return {
-            self.get_type_string(doc_dict): self.default_mapping
-        }
+        user_data = doc_dict.get('user_data', {})
+        if user_data and type(user_data) is dict:
+            for k, v in user_data.iteritems():
+                try:
+                    doc_dict['user_data'][k] = unicode(v)
+                except UnicodeDecodeError:
+                    doc_dict['user_data'][k] = v  # If we can't decode it, let elastic deal with it
+        return doc_dict
 
-    def get_type_string(self, doc_dict):
-        return self.es_type
 
-class GroupToUserPillow(BulkPillow):
-    couch_filter = "groups/all_groups"
+class GroupToUserPillow(PythonPillow):
     document_class = CommCareUser
 
-    def __init__(self, **kwargs):
-        super(GroupToUserPillow, self).__init__(**kwargs)
-        self.couch_db = Group.get_db()
+    def __init__(self):
+        checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
+        super(GroupToUserPillow, self).__init__(checkpoint=checkpoint)
 
-    def change_trigger(self, changes_dict):
+    def python_filter(self, change):
+        return change.document.get('doc_type', None) in ('Group', 'Group-Deleted')
+
+    def change_transport(self, doc_dict):
         es = get_es()
-        user_ids = changes_dict["doc"].get("users", [])
+        user_ids = doc_dict.get("users", [])
         q = {"filter": {"and": [{"terms": {"_id": user_ids}}]}}
         for user_source in stream_es_query(es_url=ES_URLS["users"], q=q, fields=["__group_ids", "__group_names"]):
             group_ids = set(user_source.get('fields', {}).get("__group_ids", []))
             group_names = set(user_source.get('fields', {}).get("__group_names", []))
-            if changes_dict["doc"]["name"] not in group_names or changes_dict["doc"]["_id"] not in group_ids:
-                group_ids.add(changes_dict["doc"]["_id"])
-                group_names.add(changes_dict["doc"]["name"])
+            if doc_dict["name"] not in group_names or doc_dict["_id"] not in group_ids:
+                group_ids.add(doc_dict["_id"])
+                group_names.add(doc_dict["name"])
                 doc = {"__group_ids": list(group_ids), "__group_names": list(group_names)}
                 es.post("%s/user/%s/_update" % (USER_INDEX, user_source["_id"]), data={"doc": doc})
 
-    def change_transport(self, doc_dict):
-        pass
 
-    def send_bulk(self, payload):
-        pass
-
-
-class UnknownUsersPillow(BulkPillow):
+class UnknownUsersPillow(PythonPillow):
     """
-        This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
+    This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
     """
     document_class = XFormInstance
-    couch_filter = "couchforms/xforms"
     include_docs_when_preindexing = False
+    es_path = USER_INDEX + "/user/"
 
-    def __init__(self, **kwargs):
-        super(UnknownUsersPillow, self).__init__(**kwargs)
-        self.couch_db = XFormInstance.get_db()
+    def __init__(self):
+        checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
+        super(UnknownUsersPillow, self).__init__(checkpoint=checkpoint)
         self.user_db = CouchUser.get_db()
         self.es = get_es()
 
-    def get_fields_from_emitted_dict(self, emitted_dict):
-        domain = emitted_dict['key'][1]
-        user_id = emitted_dict['value'].get('user_id')
-        username = emitted_dict['value'].get('username')
-        xform_id = emitted_dict['id']
-        return user_id, username, domain, xform_id
+    def python_filter(self, change):
+        # designed to exactly mimic the behavior of couchforms/filters/xforms.js
+        doc = change.document
+        return doc.get('doc_type', None) in all_known_formlike_doc_types() and not is_device_report(doc)
 
     def get_fields_from_doc(self, doc):
         form_meta = doc.get('form', {}).get('meta', {})
@@ -134,19 +118,18 @@ class UnknownUsersPillow(BulkPillow):
     def _user_exists(self, user_id):
         return self.user_db.doc_exist(user_id)
 
-    def change_trigger(self, changes_dict):
-        if 'key' in changes_dict:
-            user_id, username, domain, xform_id = self.get_fields_from_emitted_dict(changes_dict)
-        else:
-            doc = changes_dict['doc'] if 'doc' in changes_dict else self.couch_db.open_doc(changes_dict['id'])
-            user_id, username, domain, xform_id = self.get_fields_from_doc(doc)
+    def _user_indexed(self, user_id):
+        return doc_exists_in_es('users', user_id)
+
+    def change_transport(self, doc_dict):
+        doc = doc_dict
+        user_id, username, domain, xform_id = self.get_fields_from_doc(doc)
 
         if user_id in WEIRD_USER_IDS:
             user_id = None
 
-        es_path = USER_INDEX + "/user/"
         if (user_id and not self._user_exists(user_id)
-                and not self.es.head(es_path + user_id)):
+                and not self._user_indexed(user_id)):
             doc_type = "AdminUser" if username == "admin" else "UnknownUser"
             doc = {
                 "_id": user_id,
@@ -157,13 +140,7 @@ class UnknownUsersPillow(BulkPillow):
             }
             if domain:
                 doc["domain_membership"] = {"domain": domain}
-            self.es.put(es_path + user_id, data=doc)
-
-    def change_transport(self, doc_dict):
-        pass
-
-    def send_bulk(self, payload):
-        pass
+            self.es.put(self.es_path + user_id, data=doc)
 
 
 def add_demo_user_to_user_index():

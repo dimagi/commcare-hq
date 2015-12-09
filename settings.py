@@ -28,6 +28,9 @@ LESS_WATCH = False
 # "dev-min" - use built/minified vellum (submodules/formdesigner/_build/src)
 VELLUM_DEBUG = None
 
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+BASE_DIR = os.path.dirname(__file__)
+
 # gets set to False for unit tests that run without the database
 DB_ENABLED = True
 try:
@@ -86,13 +89,17 @@ LOCALE_PATHS = (
     os.path.join(FILEPATH, 'locale'),
 )
 
+BOWER_COMPONENTS = os.path.join(FILEPATH, 'bower_components')
+
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
     'compressor.finders.CompressorFinder',
 )
 
-STATICFILES_DIRS = ()
+STATICFILES_DIRS = (
+    BOWER_COMPONENTS,
+)
 
 # bleh, why did this submodule have to be removed?
 # deploy fails if this item is present and the path does not exist
@@ -103,6 +110,7 @@ del _formdesigner_path
 
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
+ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -119,13 +127,18 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.eggs.Loader',
 )
 
+CSRF_ALWAYS_OFF = True
+
 MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
+    'corehq.apps.hqwebapp.middleware.HQCsrfViewMiddleWare',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.common.BrokenLinkEmailsMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
+    'corehq.middleware.TimeoutMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
@@ -136,6 +149,9 @@ MIDDLEWARE_CLASSES = [
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+
+# time in minutes before forced logout due to inactivity
+INACTIVITY_TIMEOUT = 30
 
 PASSWORD_HASHERS = (
     # this is the default list with SHA1 moved to the front
@@ -163,7 +179,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     # sticks the base template inside all responses
     "corehq.util.context_processors.base_template",
     "corehq.util.context_processors.analytics_js",
-    "corehq.util.context_processors.raven",
+    'corehq.util.context_processors.websockets_override',
 ]
 
 TEMPLATE_DIRS = []
@@ -177,34 +193,31 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'south',
     'djcelery',
     'djtables',
     'django_prbac',
-    'djkombu',
     'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
-    'markup_deprecated',
     'gunicorn',
-    'raven.contrib.django.raven_compat',
     'compressor',
     'mptt',
+    'tastypie',
+    'ws4redis',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
     'bootstrap3',
-    'bootstrap3_transitional',
 )
 
 HQ_APPS = (
     'django_digest',
-    'rosetta',
     'auditcare',
     'hqscripts',
     'casexml.apps.case',
+    'corehq.apps.casegroups',
     'casexml.apps.phone',
     'casexml.apps.stock',
     'corehq.apps.cleanup',
@@ -212,6 +225,7 @@ HQ_APPS = (
     'corehq.apps.smsbillables',
     'corehq.apps.accounting',
     'corehq.apps.appstore',
+    'corehq.apps.data_analytics',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
     'corehq.apps.hqadmin',
@@ -222,10 +236,12 @@ HQ_APPS = (
     'corehq.apps.loadtestendpoints',
     'corehq.apps.locations',
     'corehq.apps.products',
+    'corehq.apps.prelogin',
     'corehq.apps.programs',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
     'corehq.apps.tzmigration',
+    'corehq.form_processor.app_config.FormProcessorAppConfig',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -234,13 +250,13 @@ HQ_APPS = (
     'dimagi.utils',
     'formtranslate',
     'langcodes',
-    'corehq.apps.adm',
     'corehq.apps.analytics',
-    'corehq.apps.announcements',
     'corehq.apps.callcenter',
+    'corehq.apps.change_feed',
     'corehq.apps.crud',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
+    'corehq.apps.repeaters',
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.facilities',
@@ -256,23 +272,28 @@ HQ_APPS = (
     'corehq.apps.sms',
     'corehq.apps.smsforms',
     'corehq.apps.ivr',
-    'corehq.apps.tropo',
-    'corehq.apps.twilio',
-    'corehq.apps.megamobile',
-    'corehq.apps.kookoo',
-    'corehq.apps.sislog',
-    'corehq.apps.yo',
-    'corehq.apps.telerivet',
-    'corehq.apps.mach',
+    'corehq.messaging.smsbackends.tropo',
+    'corehq.messaging.smsbackends.twilio',
+    'corehq.apps.dropbox',
+    'corehq.messaging.smsbackends.megamobile',
+    'corehq.messaging.ivrbackends.kookoo',
+    'corehq.messaging.smsbackends.sislog',
+    'corehq.messaging.smsbackends.yo',
+    'corehq.messaging.smsbackends.telerivet',
+    'corehq.messaging.smsbackends.mach',
+    'corehq.messaging.smsbackends.http',
+    'corehq.messaging.smsbackends.smsgh',
+    'corehq.messaging.smsbackends.apposit',
+    'corehq.messaging.smsbackends.test',
+    'corehq.apps.performance_sms',
     'corehq.apps.registration',
-    'corehq.apps.unicel',
+    'corehq.messaging.smsbackends.unicel',
     'corehq.apps.reports',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
     'corehq.apps.data_interfaces',
     'corehq.apps.export',
     'corehq.apps.builds',
-    'corehq.apps.orgs',
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.apps.cachehq',
@@ -293,16 +314,16 @@ HQ_APPS = (
     'pillow_retry',
     'corehq.apps.style',
     'corehq.apps.styleguide',
-    'corehq.apps.grapevine',
+    'corehq.messaging.smsbackends.grapevine',
     'corehq.apps.dashboard',
     'corehq.util',
     'dimagi.ext',
+    'corehq.doctypemigrations',
 
     # custom reports
     'a5288',
     'custom.bihar',
     'custom.penn_state',
-    'dca',
     'custom.apps.gsid',
     'hsph',
     'mvp',
@@ -330,15 +351,18 @@ HQ_APPS = (
     'custom.colalife',
     'custom.intrahealth',
     'custom.world_vision',
-    'custom.tdh',
     'custom.up_nrhm',
 
     'custom.care_pathways',
     'custom.common',
-    'bootstrap3_crispy',
 
     'custom.dhis2',
-    'custom.evin',
+    'custom.openclinica',
+    'custom.guinea_backup',
+
+    # tests only
+    # todo: figure out how to not put these into INSTALLED_APPS, TEST_APPS doesn't seem to work
+    'testapps.test_pillowtop',
 )
 
 TEST_APPS = ()
@@ -349,32 +373,28 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'couchdbkit.ext.django',
     'corehq.apps.data_interfaces',
     'corehq.apps.ivr',
-    'corehq.apps.mach',
+    'corehq.messaging.smsbackends.mach',
+    'corehq.messaging.smsbackends.http',
     'corehq.apps.ota',
     'corehq.apps.settings',
-    'corehq.apps.telerivet',
-    'corehq.apps.tropo',
-    'corehq.apps.megamobile',
-    'corehq.apps.yo',
+    'corehq.messaging.smsbackends.telerivet',
+    'corehq.messaging.smsbackends.tropo',
+    'corehq.messaging.smsbackends.megamobile',
+    'corehq.messaging.smsbackends.yo',
+    'corehq.messaging.smsbackends.smsgh',
+    'corehq.messaging.smsbackends.apposit',
     'crispy_forms',
-    'bootstrap3_crispy',
     'django_extensions',
     'django_prbac',
     'djcelery',
     'djtables',
-    'djkombu',
     'gunicorn',
     'langcodes',
     'luna',
-    'raven.contrib.django.raven_compat',
-    'rosetta',
-    'soil',
-    'south',
     'custom.apps.crs_reports',
     'custom.m4change',
 
     # submodules with tests that run on travis
-    # 'couchexport',
     'ctable',
     'ctable_view',
     'dimagi.utils',
@@ -392,6 +412,7 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL = '/'
 
+
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
 ####### Domain settings  #######
@@ -408,17 +429,6 @@ LOGIN_URL = "/accounts/login/"
 # administrator, here's where he/she is redirected
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"
 
-# domain syncs
-# e.g.
-#               { sourcedomain1: { "domain": targetdomain1,
-#                      "transform": path.to.transformfunction1 },
-#                 sourcedomain2: {...} }
-DOMAIN_SYNCS = {}
-# if you want to deidentify app names, put a dictionary in your settings
-# of source names to deidentified names
-DOMAIN_SYNC_APP_NAME_MAP = {}
-DOMAIN_SYNC_DATABASE_NAME = "commcarehq-public"
-
 
 ####### Release Manager App settings  #######
 RELEASE_FILE_PATH = os.path.join("data", "builds")
@@ -430,7 +440,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 ####### Shared/Global/UI Settings #######
 
 # restyle some templates
-BASE_TEMPLATE = "hqwebapp/base.html"
+BASE_TEMPLATE = "style/bootstrap2/base.html"  # should eventually be bootstrap3
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
@@ -448,7 +458,6 @@ EMAIL_SMTP_HOST = "smtp.gmail.com"
 EMAIL_SMTP_PORT = 587
 # These are the normal Django settings
 EMAIL_USE_TLS = True
-SEND_BROKEN_LINK_EMAILS = True
 
 # put email addresses here to have them receive bug reports
 BUG_REPORT_RECIPIENTS = ()
@@ -458,11 +467,15 @@ EXCHANGE_NOTIFICATION_RECIPIENTS = []
 SERVER_EMAIL = 'commcarehq-noreply@dimagi.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+PROBONO_SUPPORT_EMAIL = 'billing-support@dimagi.com'
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
+FINANCE_EMAIL = 'finance@dimagi.com'
+DATA_EMAIL = 'datatree@dimagi.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@dimagi.com'
+INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
-INVOICING_CONTACT_EMAIL = SUPPORT_EMAIL
+INVOICING_CONTACT_EMAIL = 'billing-support@dimagi.com'
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
 CONTACT_EMAIL = 'info@dimagi.com'
@@ -470,6 +483,7 @@ BOOKKEEPER_CONTACT_EMAILS = []
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
+BASE_ADDRESS = 'localhost:8000'
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -487,7 +501,7 @@ FIXTURE_GENERATORS = {
         "corehq.apps.callcenter.fixturegenerators.indicators_fixture_generator",
         "corehq.apps.products.fixtures.product_fixture_generator",
         "corehq.apps.programs.fixtures.program_fixture_generator",
-        "corehq.apps.userreports.fixtures.report_fixture_generator",
+        "corehq.apps.app_manager.fixtures.report_fixture_generator",
         # custom
         "custom.bihar.reports.indicators.fixtures.generator",
         "custom.m4change.fixtures.report_fixtures.generator",
@@ -517,9 +531,6 @@ TRANSFER_FILE_DIR_NAME = None
 
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
-SMS_GATEWAY_URL = "http://localhost:8001/"
-SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&text=%(message)s"
-
 # celery
 BROKER_URL = 'django://'  # default django db based
 
@@ -542,6 +553,15 @@ CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
 # It's set to the main queue here and can be overridden to put it
 # on its own queue.
 CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
+
+
+# websockets config
+from settingshelper import get_allowed_websocket_channels
+WEBSOCKET_URL = '/ws/'
+WS4REDIS_PREFIX = 'ws'
+WSGI_APPLICATION = 'ws4redis.django_runserver.application'
+WS4REDIS_ALLOWED_CHANNELS = get_allowed_websocket_channels
+
 
 TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 # this is what gets appended to @domain after your accounts
@@ -577,17 +597,6 @@ COUCHLOG_AUTH_DECORATOR = 'corehq.apps.domain.decorators.require_superuser_or_de
 
 # couchlog/case search
 LUCENE_ENABLED = False
-
-
-# unicel sms config
-UNICEL_CONFIG = {"username": "Dimagi",
-                 "password": "changeme",
-                 "sender": "Promo"}
-
-# mach sms config
-MACH_CONFIG = {"username": "Dimagi",
-               "password": "changeme",
-               "service_profile": "changeme"}
 
 ####### SMS Queue Settings #######
 
@@ -679,6 +688,7 @@ AUDIT_MODEL_SAVE = [
 
 AUDIT_VIEWS = [
     'corehq.apps.settings.views.ChangeMyPasswordView',
+    'corehq.apps.hqadmin.views.AuthenticateAs',
 ]
 
 AUDIT_MODULES = [
@@ -686,23 +696,23 @@ AUDIT_MODULES = [
     'corehq.apps.userreports',
     'corehq.apps.data',
     'corehq.apps.registration',
+    'tastypie',
 ]
 
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
-    'GOOGLE_ANALYTICS_ID': '',
-    'PINGDOM_ID': '',
-    'ANALYTICS_ID_PUBLIC_COMMCARE': '',
+    'GOOGLE_ANALYTICS_API_ID': '',
+    'ANALYTICS_API_ID_PUBLIC_COMMCARE': '',
     'KISSMETRICS_KEY': '',
     'HUBSPOT_API_KEY': '',
-    'HUBSPOT_ID': '',
+    'HUBSPOT_API_ID': '',
 }
 
 ANALYTICS_CONFIG = {
     "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
-OPEN_EXCHANGE_RATES_ID = ''
+OPEN_EXCHANGE_RATES_API_ID = ''
 
 # for touchforms maps
 GMAPS_API_KEY = "changeme"
@@ -820,6 +830,12 @@ LOGGING = {
             'formatter': 'verbose',
             'filename': ACCOUNTING_LOG_FILE
         },
+        'analytics': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'formatter': 'simple',
+            'filename': ANALYTICS_LOG_FILE
+        },
         'couchlog': {
             'level': 'WARNING',
             'class': 'couchlog.handlers.CouchHandler',
@@ -829,9 +845,10 @@ LOGGING = {
             'filters': ['require_debug_false'],
             'class': 'corehq.util.log.HqAdminEmailHandler',
         },
-        'sentry': {
+        'notify_exception': {
             'level': 'ERROR',
-            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+            'filters': ['require_debug_false'],
+            'class': 'corehq.util.log.NotifyExceptionEmailer',
         },
         'null': {
             'class': 'django.utils.log.NullHandler',
@@ -839,7 +856,7 @@ LOGGING = {
     },
     'loggers': {
         '': {
-            'handlers': ['console', 'file', 'couchlog', 'sentry'],
+            'handlers': ['console', 'file', 'couchlog'],
             'propagate': True,
             'level': 'INFO',
         },
@@ -853,27 +870,22 @@ LOGGING = {
             'propagate': False,
         },
         'notify': {
-            'handlers': ['mail_admins'],
+            'handlers': ['notify_exception'],
             'level': 'ERROR',
             'propagate': True,
         },
         'celery.task': {
-            'handlers': ['console', 'file', 'couchlog', 'sentry'],
+            'handlers': ['console', 'file', 'couchlog'],
             'level': 'INFO',
             'propagate': True
         },
         'pillowtop': {
-            'handlers': ['pillowtop', 'sentry'],
+            'handlers': ['pillowtop'],
             'level': 'ERROR',
             'propagate': False,
         },
-        'pillowtop_eval': {
-            'handlers': ['sentry'],
-            'level': 'INFO',
-            'propagate': False,
-        },
         'smsbillables': {
-            'handlers': ['file', 'sentry'],
+            'handlers': ['file'],
             'level': 'ERROR',
             'propagate': False,
         },
@@ -883,18 +895,28 @@ LOGGING = {
             'propagate': False,
         },
         'accounting': {
-            'handlers': ['accountinglog', 'sentry', 'console', 'couchlog', 'mail_admins'],
+            'handlers': ['accountinglog', 'console', 'couchlog', 'mail_admins'],
             'level': 'INFO',
             'propagate': False,
+        },
+        'analytics': {
+            'handlers': ['analytics'],
+            'level': 'DEBUG',
+            'propagate': True,
         },
     }
 }
 
 # Django Compressor
 COMPRESS_PRECOMPILERS = (
-   ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
+    ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
 )
 COMPRESS_ENABLED = True
+
+LESS_B3_PATHS = {
+    'variables': '../../../style/less/bootstrap3/includes/variables',
+    'mixins': '../../../style/less/bootstrap3/includes/mixins',
+}
 
 LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
 
@@ -913,12 +935,11 @@ BANK_SWIFT_CODE = ''
 STRIPE_PUBLIC_KEY = ''
 STRIPE_PRIVATE_KEY = ''
 
-# Mailchimp
-MAILCHIMP_APIKEY = ''
-MAILCHIMP_COMMCARE_USERS_ID = ''
-MAILCHIMP_MASS_EMAIL_ID = ''
-
 SQL_REPORTING_DATABASE_URL = None
+UCR_DATABASE_URL = None
+
+# Override this in localsettings to specify custom reporting databases
+CUSTOM_DATABASES = {}
 
 # number of days since last access after which a saved export is considered unused
 SAVED_EXPORT_ACCESS_CUTOFF = 35
@@ -926,10 +947,33 @@ SAVED_EXPORT_ACCESS_CUTOFF = 35
 # override for production
 DEFAULT_PROTOCOL = 'http'
 
-####### South Settings #######
-SKIP_SOUTH_TESTS = True
-SOUTH_TESTS_MIGRATE = False
+# Dropbox
+DROPBOX_KEY = ''
+DROPBOX_SECRET = ''
+DROPBOX_APP_NAME = ''
 
+# Amazon S3
+S3_ACCESS_KEY = None
+S3_SECRET_KEY = None
+
+# Supervisor RPC
+SUPERVISOR_RPC_ENABLED = False
+SUBSCRIPTION_USERNAME = None
+SUBSCRIPTION_PASSWORD = None
+
+ENVIRONMENT_HOSTS = {
+    'pillowtop': ['localhost']
+}
+
+DATADOG_API_KEY = None
+DATADOG_APP_KEY = None
+
+# Override with the PEM export of an RSA private key, for use with any
+# encryption or signing workflows.
+HQ_PRIVATE_KEY = None
+
+
+KAFKA_URL = 'localhost:9092'
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -939,8 +983,26 @@ try:
         from settings_demo import *
     else:
         from localsettings import *
+        _fix_logger_obfuscation = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
+        if _fix_logger_obfuscation:
+            # this is here because the logging config cannot import
+            # corehq.util.log.HqAdminEmailHandler, for example, if there
+            # is a syntax error in any module imported by corehq/__init__.py
+            # Setting FIX_LOGGER_ERROR_OBFUSCATION = True in
+            # localsettings.py will reveal the real error.
+            # Note that changing this means you will not be able to use/test anything
+            # related to email logging.
+            for handler in LOGGING["handlers"].values():
+                if handler["class"].startswith("corehq."):
+                    if _fix_logger_obfuscation != 'quiet':
+                        print "{} logger is being changed to {}".format(
+                            handler['class'],
+                            'logging.StreamHandler'
+                        )
+                    handler["class"] = "logging.StreamHandler"
 except ImportError:
-    pass
+    # fallback in case nothing else is found - used for readthedocs
+    from dev_settings import *
 
 if DEBUG:
     try:
@@ -953,8 +1015,11 @@ if DEBUG:
             'luna',
         )
 
+    INSTALLED_APPS = INSTALLED_APPS + ('corehq.apps.mocha',)
+
     import warnings
     warnings.simplefilter('default')
+    os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
 else:
     TEMPLATE_LOADERS = [
         ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
@@ -966,13 +1031,23 @@ db_settings['PORT'] = db_settings.get('PORT', '5432')
 options = db_settings.get('OPTIONS')
 db_settings['OPTIONS'] = '?{}'.format(urlencode(options)) if options else ''
 
-if UNIT_TESTING:
-    db_settings['NAME'] = 'test_{}'.format(db_settings['NAME'])
+if UNIT_TESTING and sys.argv[1] == "test":
+    # Use test database name, but only if running the test command.
+    # Django uses different database names than the ones in DATABASES
+    # when setting up for tests. However, UNIT_TESTING may be true in
+    # some cases where django is not running tests (js tests on travis),
+    # and therefore does not change the database name.
+    from django.db.backends.creation import TEST_DATABASE_PREFIX
+    db_settings['NAME'] = TEST_DATABASE_PREFIX + db_settings['NAME']
 
 if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
     SQL_REPORTING_DATABASE_URL = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
         **db_settings
     )
+
+if not UCR_DATABASE_URL or UNIT_TESTING:
+    # by default just use the reporting DB for UCRs
+    UCR_DATABASE_URL = SQL_REPORTING_DATABASE_URL
 
 MVP_INDICATOR_DB = 'mvp-indicators'
 
@@ -984,8 +1059,7 @@ INDICATOR_CONFIG = {
 ####### Couch Forms & Couch DB Kit Settings #######
 from settingshelper import (
     get_dynamic_db_settings,
-    make_couchdb_tuples,
-    get_extra_couchdbs,
+    CouchSettingsHelper,
     SharedDriveConfiguration
 )
 
@@ -998,19 +1072,24 @@ _dynamic_db_settings = get_dynamic_db_settings(
 )
 
 # create local server and database configs
-COUCH_SERVER = _dynamic_db_settings["COUCH_SERVER"]
 COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 
+NEW_USERS_GROUPS_DB = 'users'
+USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
+
+NEW_FIXTURES_DB = 'fixtures'
+FIXTURES_DB = NEW_FIXTURES_DB
+
+NEW_DOMAINS_DB = 'domains'
+DOMAINS_DB = NEW_DOMAINS_DB
+
 COUCHDB_APPS = [
-    'adm',
-    'announcements',
     'api',
     'app_manager',
     'appstore',
-    'orgs',
     'builds',
     'case',
-    'callcenter',
+    'casegroups',
     'cleanup',
     'cloudcare',
     'commtrack',
@@ -1024,12 +1103,9 @@ COUCHDB_APPS = [
     'ctable',
     'custom_data_fields',
     'hqadmin',
-    'domain',
     'ext',
     'facilities',
     'fluff_filter',
-    'fixtures',
-    'groups',
     'hqcase',
     'hqmedia',
     'hope',
@@ -1050,7 +1126,6 @@ COUCHDB_APPS = [
     'telerivet',
     'toggle',
     'translations',
-    'users',
     'utils',  # dimagi-utils
     'formplayer',
     'phonelog',
@@ -1065,7 +1140,6 @@ COUCHDB_APPS = [
     # custom reports
     'penn_state',
     'care_benin',
-    'dca',
     'gsid',
     'hsph',
     'mvp',
@@ -1078,7 +1152,8 @@ COUCHDB_APPS = [
     'ewsghana',
     ('auditcare', 'auditcare'),
     ('couchlog', 'couchlog'),
-    ('receiverwrapper', 'receiverwrapper'),
+    ('performance_sms', 'meta'),
+    ('repeaters', 'receiverwrapper'),
     ('userreports', 'meta'),
     ('custom_data_fields', 'meta'),
     # needed to make couchdbkit happy
@@ -1090,18 +1165,34 @@ COUCHDB_APPS = [
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
     ('export', 'meta'),
-    'tdhtesting'
+    ('callcenter', 'meta'),
+
+    # users and groups
+    ('groups', USERS_GROUPS_DB),
+    ('users', USERS_GROUPS_DB),
+
+    # fixtures
+    ('fixtures', FIXTURES_DB),
+
+    # domains
+    ('domain', DOMAINS_DB),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
-COUCHDB_DATABASES = make_couchdb_tuples(COUCHDB_APPS, COUCH_DATABASE)
-EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE)
+COUCH_SETTINGS_HELPER = CouchSettingsHelper(COUCH_DATABASE, COUCHDB_APPS, [
+    NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB,
+])
+COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.make_couchdb_tuples()
+EXTRA_COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.get_extra_couchdbs()
 
 INSTALLED_APPS += LOCAL_APPS
 
 if ENABLE_PRELOGIN_SITE:
     INSTALLED_APPS += PRELOGIN_APPS
+
+seen = set()
+INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)]
 
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
 
@@ -1139,8 +1230,8 @@ MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
     messages.DEBUG: '',
     messages.SUCCESS: 'alert-success',
-    messages.WARNING: 'alert-error',
-    messages.ERROR: 'alert-error',
+    messages.WARNING: 'alert-error alert-danger',
+    messages.ERROR: 'alert-error alert-danger',
 }
 
 COMMCARE_USER_TERM = "Mobile Worker"
@@ -1160,16 +1251,17 @@ SMS_HANDLERS = [
 ]
 
 SMS_LOADED_BACKENDS = [
-    "corehq.apps.unicel.api.UnicelBackend",
-    "corehq.apps.mach.api.MachBackend",
-    "corehq.apps.tropo.api.TropoBackend",
-    "corehq.apps.sms.backend.http_api.HttpBackend",
-    "corehq.apps.telerivet.models.TelerivetBackend",
-    "corehq.apps.sms.test_backend.TestSMSBackend",
-    "corehq.apps.sms.backend.test.TestBackend",
-    "corehq.apps.grapevine.api.GrapevineBackend",
-    "corehq.apps.twilio.models.TwilioBackend",
-    "corehq.apps.megamobile.api.MegamobileBackend",
+    'corehq.messaging.smsbackends.unicel.models.UnicelBackend',
+    'corehq.messaging.smsbackends.mach.models.MachBackend',
+    'corehq.messaging.smsbackends.tropo.models.TropoBackend',
+    'corehq.messaging.smsbackends.http.models.HttpBackend',
+    'corehq.messaging.smsbackends.telerivet.models.TelerivetBackend',
+    'corehq.messaging.smsbackends.test.models.TestSMSBackend',
+    'corehq.messaging.smsbackends.grapevine.models.GrapevineBackend',
+    'corehq.messaging.smsbackends.twilio.models.TwilioBackend',
+    'corehq.messaging.smsbackends.megamobile.models.MegamobileBackend',
+    'corehq.messaging.smsbackends.smsgh.models.SMSGHBackend',
+    'corehq.messaging.smsbackends.apposit.models.AppositBackend',
 ]
 
 IVR_BACKEND_MAP = {
@@ -1223,28 +1315,18 @@ PILLOWTOPS = {
         'corehq.pillows.sofabed.FormDataPillow',
         'corehq.pillows.sofabed.CaseDataPillow',
     ],
-    'phonelog': [
-        'corehq.pillows.log.PhoneLogPillow',
-    ],
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
         'corehq.apps.userreports.pillow.ConfigurableIndicatorPillow',
-        'corehq.apps.userreports.pillow.CustomDataSourcePillow',
+        'corehq.apps.userreports.pillow.StaticDataSourcePillow',
     ],
     'cache': [
         'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
     ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
-        'custom.opm.models.OpmCaseFluffPillow',
         'custom.opm.models.OpmUserFluffPillow',
-        'custom.opm.models.OpmFormFluffPillow',
-        'custom.opm.models.OpmHealthStatusAllInfoFluffPillow',
-        'custom.opm.models.OPMHierarchyFluffPillow',
-        'custom.opm.models.VhndAvailabilityFluffPillow',
-        'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
-        'custom.reports.mc.models.MalariaConsortiumFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
         'custom.m4change.models.LdHmisCaseFluffPillow',
         'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
@@ -1254,7 +1336,7 @@ PILLOWTOPS = {
         'custom.intrahealth.models.CouvertureFluffPillow',
         'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
         'custom.intrahealth.models.IntraHealthFluffPillow',
-        'custom.intrahealth.models.RecapPassagePillow',
+        'custom.intrahealth.models.RecapPassageFluffPillow',
         'custom.intrahealth.models.TauxDeRuptureFluffPillow',
         'custom.intrahealth.models.LivraisonFluffPillow',
         'custom.intrahealth.models.RecouvrementFluffPillow',
@@ -1263,27 +1345,63 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionMotherFluffPillow',
         'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
-        'custom.tdh.models.TDHEnrollChildFluffPillow',
-        'custom.tdh.models.TDHInfantClassificationFluffPillow',
-        'custom.tdh.models.TDHInfantTreatmentFluffPillow',
-        'custom.tdh.models.TDHNewbornClassificationFluffPillow',
-        'custom.tdh.models.TDHNewbornTreatmentFluffPillow',
-        'custom.tdh.models.TDHChildClassificationFluffPillow',
-        'custom.tdh.models.TDHChildTreatmentFluffPillow',
-        'custom.succeed.models.UCLAPatientFluffPillow'
+        'custom.succeed.models.UCLAPatientFluffPillow',
+        {
+            'name': 'MalariaConsortiumFluffPillow',
+            'class': 'custom.reports.mc.models.MalariaConsortiumFluffPillow',
+            'instance': 'custom.reports.mc.models.get_pillow',
+        }
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
         'mvp_docs.pillows.MVPCaseIndicatorPillow',
     ],
+    'experimental': [
+        {
+            'name': 'DefaultChangeFeedPillow',
+            'class': 'corehq.apps.change_feed.pillow.ChangeFeedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
+        },
+        {
+            'name': 'KafkaCaseConsumerPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_case_consumer_pillow',
+        },
+        {
+            'name': 'LoggingPythonDemoPillow',
+            'class': 'corehq.apps.change_feed.consumer.pillow.LoggingPythonPillow',
+            'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_python_pillow_consumer',
+        },
+
+    ]
 }
 
 
-CUSTOM_DATA_SOURCES = [
+STATIC_UCR_REPORTS = [
+    os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'deidentified_va_report.json'),
+    os.path.join('custom', 'abt', 'reports', 'incident_report.json'),
+    os.path.join('custom', 'abt', 'reports', 'sms_indicator_report.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_country.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_level_1.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_level_2.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
+    os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
+    os.path.join('custom', 'abt', 'reports', 'supervisory_report.json'),
+]
+
+
+STATIC_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
+    os.path.join('custom', 'succeed', 'data_sources', 'patient_task_list.json'),
     os.path.join('custom', 'apps', 'gsid', 'data_sources', 'patient_summary.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
+    os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
+    os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
+    os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
+    os.path.join('custom', 'apps', 'cvsu', 'data_sources', 'unicef_malawi.json')
 ]
 
 
@@ -1294,18 +1412,14 @@ for k, v in LOCAL_PILLOWTOPS.items():
 
 COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.DomainGenerationCache',
-    'corehq.apps.cachehq.cachemodels.OrganizationGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserGenerationCache',
     'corehq.apps.cachehq.cachemodels.GroupGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
-    'corehq.apps.cachehq.cachemodels.TeamGenerationCache',
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
     'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
-    'corehq.apps.cachehq.cachemodels.DomainInvitationGenerationCache',
-    'corehq.apps.cachehq.cachemodels.CommtrackConfigGenerationCache',
+    'corehq.apps.cachehq.cachemodels.InvitationGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
-    'corehq.apps.cachehq.cachemodels.UserReportsReportConfigCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 
@@ -1338,6 +1452,15 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_UCR_EXPRESSIONS = [
     ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
+    ('mvp_medical_cause', 'mvp.ucr.reports.expressions.medical_cause_expression'),
+    ('mvp_no_treatment_reason', 'mvp.ucr.reports.expressions.no_treatment_reason_expression'),
+    ('mvp_treatment_provider_name', 'mvp.ucr.reports.expressions.treatment_provider_name_expression'),
+    ('mvp_treatment_place_name', 'mvp.ucr.reports.expressions.treatment_place_name_expression'),
+    ('mvp_death_place', 'mvp.ucr.reports.expressions.death_place_expression'),
+    ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
+    ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
+    ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
+    ('cvsu_expression', 'custom.apps.cvsu.expressions.cvsu_expression')
 ]
 
 CUSTOM_MODULES = [
@@ -1345,6 +1468,10 @@ CUSTOM_MODULES = [
     'custom.ilsgateway',
     'custom.ewsghana',
 ]
+
+CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
+    'ews-ghana': 'dashboard_page'
+}
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
@@ -1357,8 +1484,6 @@ DOMAIN_MODULE_MAP = {
     'care-bihar': 'custom.bihar',
     'bihar': 'custom.bihar',
     'cvsulive': 'custom.apps.cvsu',
-    'dca-malawi': 'dca',
-    'eagles-fahu': 'dca',
     'fri': 'custom.fri.reports',
     'fri-testing': 'custom.fri.reports',
     'gsid': 'custom.apps.gsid',
@@ -1396,8 +1521,8 @@ DOMAIN_MODULE_MAP = {
     'wvindia2': 'custom.world_vision',
     'pathways-india-mis': 'custom.care_pathways',
     'pathways-tanzania': 'custom.care_pathways',
-    'tdhtesting': 'custom.tdh',
-    'rec': 'custom.tdh'
+    'kemri': 'custom.openclinica',
+    'novartis': 'custom.openclinica',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
@@ -1407,15 +1532,15 @@ CASEXML_FORCE_DOMAIN_CHECK = True
 # the group shown here, plus a second group consisting of everything else
 TRAVIS_TEST_GROUPS = (
     (
-        'accounting', 'adm', 'announcements', 'api', 'app_manager', 'appstore',
+        'accounting', 'api', 'app_manager', 'appstore',
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
-        'case', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
-        'couchapps', 'couchlog', 'crud', 'cvsu', 'dca', 'django_digest',
+        'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
+        'couchapps', 'couchlog', 'crud', 'cvsu', 'django_digest',
         'domain', 'domainsync', 'export',
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
-        'care_pathways', 'colalife', 'common', 'compressor',
+        'care_pathways', 'colalife', 'common', 'compressor', 'smsbillables',
     ),
 )
 
@@ -1436,3 +1561,16 @@ COMPRESS_OFFLINE_CONTEXT = {
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
+
+
+if 'locmem' not in CACHES:
+    CACHES['locmem'] = {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}
+if 'dummy' not in CACHES:
+    CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
+
+try:
+    from datadog import initialize
+except ImportError:
+    pass
+else:
+    initialize(DATADOG_API_KEY, DATADOG_APP_KEY)

@@ -95,9 +95,6 @@ class ReportAPITest(unittest.TestCase):
             keys=[["user2"]],
             group_by=['user']
         )
-        data = ds.get_data(['indicator_a'])
+        data = ds.get_data()
         self.assertEqual(data, [
-            {
-                'indicator_a': 1,
-            }
-        ])
+            {'cd': 50, 'indicator_a': 1, 'indicator_b': 1, 'user': 'Bob'}])

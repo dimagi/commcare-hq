@@ -1,10 +1,13 @@
-
 # Standard library imports
 from functools import wraps
+from itertools import imap
 import json
 
 # Django imports
 import datetime
+from corehq.apps.api.couch import UserQuerySetAdapter
+from corehq.apps.domain.auth import determine_authtype_from_header
+from dimagi.utils.couch.database import iter_docs
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 from django.conf import settings
@@ -17,14 +20,19 @@ from tastypie.exceptions import BadRequest
 from tastypie.throttle import CacheThrottle
 
 # External imports
+from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.es import FormES
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.users.decorators import require_permission, require_permission_raw
 from corehq.toggles import IS_DEVELOPER, API_THROTTLE_WHITELIST
 from couchforms.models import XFormInstance
 
 # CCHQ imports
-from corehq.apps.domain.decorators import login_or_digest, login_or_basic
+from corehq.apps.domain.decorators import (
+    login_or_digest,
+    login_or_basic,
+    login_or_api_key)
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
@@ -33,21 +41,6 @@ from corehq.apps.api.serializers import CustomXMLSerializer, XFormInstanceSerial
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import HqBaseResource, DomainSpecificResourceMixin
 from dimagi.utils.parsing import string_to_boolean
-
-
-def determine_authtype(request):
-    """
-    Guess the auth type, based on request.
-    """
-    auth_header = (request.META.get('HTTP_AUTHORIZATION') or '').lower()
-    if auth_header.startswith('basic '):
-        return 'basic'
-    elif auth_header.startswith('digest '):
-        return 'digest'
-
-    # the initial digest request doesn't have any authorization, so default to
-    # digest in order to send back
-    return 'digest'
 
 
 def api_auth(view_func):
@@ -75,8 +68,11 @@ class LoginAndDomainAuthentication(Authentication):
         decorator_map = {
             'digest': login_or_digest,
             'basic': login_or_basic,
+            'api_key': login_or_api_key,
         }
-        return decorator_map[determine_authtype(request)]
+        # the initial digest request doesn't have any authorization, so default to
+        # digest in order to send back
+        return decorator_map[determine_authtype_from_header(request, default='digest')]
 
     def _auth_test(self, request, wrappers, **kwargs):
         PASSED_AUTH = 'is_authenticated'
@@ -235,8 +231,6 @@ class CommCareUserResource(UserResource):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-
-
         show_archived = _safe_bool(bundle, 'archived')
         group_id = bundle.request.GET.get('group')
         if group_id:
@@ -245,7 +239,7 @@ class CommCareUserResource(UserResource):
                 raise BadRequest('Project %s has no group with id=%s' % (domain, group_id))
             return list(group.get_users(only_commcare=True))
         else:
-            return list(CommCareUser.by_domain(domain, strict=True, is_active=not show_archived))
+            return UserQuerySetAdapter(domain, show_archived=show_archived)
 
 
 class WebUserResource(UserResource):
@@ -302,7 +296,7 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        closed_only = {
+        include_closed = {
             'true': True,
             'false': False,
             'any': True
@@ -312,10 +306,15 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
         key = [domain]
         if case_type:
             key.append(case_type)
-        status = 'all' if closed_only else 'open'
-        cases = CommCareCase.get_all_cases(domain, case_type=case_type, status=status, include_docs=True)
-        return list(cases)
 
+        if include_closed:
+            case_ids = get_case_ids_in_domain(domain, type=case_type)
+        else:
+            case_ids = get_open_case_ids_in_domain(domain, type=case_type)
+
+        cases = imap(CommCareCase.wrap,
+                     iter_docs(CommCareCase.get_db(), case_ids))
+        return list(cases)
 
     class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(Permissions.edit_data)
@@ -346,6 +345,7 @@ class XFormInstanceResource(HqBaseResource, DomainSpecificResourceMixin):
         list_allowed_methods = []
         detail_allowed_methods = ['get']
         resource_name = 'form'
+        ordering = ['received_on']
         serializer = XFormInstanceSerializer()
 
 def _safe_bool(bundle, param, default=False):

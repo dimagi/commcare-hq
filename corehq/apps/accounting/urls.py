@@ -1,5 +1,5 @@
 from django.conf.urls import *
-from corehq import AccountingAdminInterfaceDispatcher
+from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.views import *
 
 
@@ -23,6 +23,7 @@ urlpatterns = patterns('corehq.apps.accounting.views',
     url(r'^accounts/new_subscription/(\d+)/$', NewSubscriptionView.as_view(), name=NewSubscriptionView.urlname),
     url(r'^software_plans/new/$', NewSoftwarePlanView.as_view(), name=NewSoftwarePlanView.urlname),
     url(r'^software_plans/(\d+)/$', EditSoftwarePlanView.as_view(), name=EditSoftwarePlanView.urlname),
+    url(r'^software_plan_versions/(\d+)/(\d+)/$', ViewSoftwarePlanVersionView.as_view(), name=ViewSoftwarePlanVersionView.urlname),
     url(r'^invoices/(\d+)/$', InvoiceSummaryView.as_view(), name=InvoiceSummaryView.urlname),
     url(r'^wire_invoices/(\d+)/$', WireInvoiceSummaryView.as_view(), name=WireInvoiceSummaryView.urlname),
     url(AccountingAdminInterfaceDispatcher.pattern(), AccountingAdminInterfaceDispatcher.as_view(),

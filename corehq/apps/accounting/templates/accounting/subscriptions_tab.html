@@ -21,6 +21,7 @@
                 <th>{% trans "Last Invoice Due Date" %}</th>
                 <th>{% trans "Delay Invoicing Until" %}</th>
                 <th>{% trans "Do Not Invoice" %}</th>
+                <th>{% trans '"Do Not Invoice" Reason' %}</th>
                 <th>{% trans "Edit" %}</th>
             </tr>
         </thead>
@@ -36,6 +37,7 @@
                     <td>{{ last_due_date }}</td>
                     <td>{{ subscription.date_delay_invoicing }}</td>
                     <td>{{ subscription.do_not_invoice }}</td>
+                    <td>{{ subscription.no_invoice_reason }}</td>
                     <td><a href="{% url 'edit_subscription' subscription.id %}" class="btn">Edit</a></td>
                 </tr>
             {% endfor %}

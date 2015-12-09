@@ -1,19 +1,30 @@
 from __future__ import absolute_import
 from itertools import imap
+
+from django.conf import settings
+
 from dimagi.ext.couchdbkit import *
 import re
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_SUFFIX
 from datetime import datetime
+from corehq.apps.groups.dbaccessors import (
+    get_group_ids_by_domain,
+    group_by_domain,
+    refresh_group_views,
+    stale_group_by_name,
+)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.groups.exceptions import CantSaveException
+from corehq.util.quickcache import quickcache
 
 dt_no_Z_re = re.compile('^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d\d\d\d\d\d)?$')
 
 
-class Group(UndoableDocument):
+class Group(QuickCachedDocumentMixin, UndoableDocument):
     """
     The main use case for these 'groups' of users is currently
     so that we can break down reports by arbitrary regions.
@@ -43,7 +54,34 @@ class Group(UndoableDocument):
 
     def save(self, *args, **kwargs):
         self.last_modified = datetime.utcnow()
-        return super(Group, self).save(*args, **kwargs)
+        super(Group, self).save(*args, **kwargs)
+        refresh_group_views()
+
+    @classmethod
+    def save_docs(cls, docs, use_uuids=True, all_or_nothing=False):
+        utcnow = datetime.utcnow()
+        for doc in docs:
+            doc['last_modified'] = utcnow
+        super(Group, cls).save_docs(docs, use_uuids, all_or_nothing)
+        refresh_group_views()
+
+    bulk_save = save_docs
+
+    def delete(self):
+        super(Group, self).delete()
+        refresh_group_views()
+
+    @classmethod
+    def delete_docs(cls, docs, **params):
+        super(Group, cls).delete_docs(docs, **params)
+        refresh_group_views()
+
+    bulk_delete = delete_docs
+
+    def clear_caches(self):
+        super(Group, self).clear_caches()
+        self.by_domain.clear(self.__class__, self.domain)
+        self.ids_by_domain.clear(self.__class__, self.domain)
 
     def add_user(self, couch_user_id, save=True):
         if not isinstance(couch_user_id, basestring):
@@ -112,7 +150,7 @@ class Group(UndoableDocument):
         self.save()
 
     def get_user_ids(self, is_active=True):
-        return [user.user_id for user in self.get_users(is_active)]
+        return [user.user_id for user in self.get_users(is_active=is_active)]
 
     @memoized
     def get_users(self, is_active=True, only_commcare=False):
@@ -135,14 +173,10 @@ class Group(UndoableDocument):
     def get_static_users(self, is_active=True):
         return self.get_users(is_active)
 
-
     @classmethod
+    @quickcache(['cls.__name__', 'domain'])
     def by_domain(cls, domain):
-        return cls.view('groups/by_domain',
-            key=domain,
-            include_docs=True,
-            #stale=settings.COUCH_STALE_QUERY,
-        ).all()
+        return group_by_domain(domain)
 
     @classmethod
     def choices_by_domain(cls, domain):
@@ -153,21 +187,15 @@ class Group(UndoableDocument):
         return group_choices
 
     @classmethod
+    @quickcache(['cls.__name__', 'domain'])
     def ids_by_domain(cls, domain):
-        return [r['id'] for r in cls.get_db().view('groups/by_domain',
-            key=domain,
-            include_docs=False,
-        )]
+        return get_group_ids_by_domain(domain)
 
     @classmethod
     def by_name(cls, domain, name, one=True):
-        result = cls.view('groups/by_name',
-            key=[domain, name],
-            include_docs=True,
-            #stale=settings.COUCH_STALE_QUERY,
-        )
-        if one:
-            return result.one()
+        result = stale_group_by_name(domain, name)
+        if one and result:
+            return result[0]
         else:
             return result
 
@@ -207,7 +235,7 @@ class Group(UndoableDocument):
             startkey=key,
             endkey=key + [{}],
             include_docs=True,
-            # stale=settings.COUCH_STALE_QUERY,
+            stale=settings.COUCH_STALE_QUERY,
         ).all()
 
     def create_delete_record(self, *args, **kwargs):
@@ -248,9 +276,7 @@ class Group(UndoableDocument):
 
     def __repr__(self):
         return ("Group(domain={self.domain!r}, name={self.name!r}, "
-                + "case_sharing={self.case_sharing!r}, users={users!r})"
-        ).format(self=self, users=self.get_users())
-
+                "case_sharing={self.case_sharing!r})").format(self=self)
 
 class UnsavableGroup(Group):
     def save(self, *args, **kwargs):

@@ -1,8 +1,8 @@
 from corehq.apps.commtrack.models import StockState
+from corehq.apps.locations.dbaccessors import get_user_docs_by_location
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.sms.models import SMSLog
-from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 from custom.ilsgateway.models import SupplyPointStatusTypes, ILSNotes
@@ -55,6 +55,7 @@ class InventoryHistoryData(ILSData):
 class RegistrationData(ILSData):
     show_chart = False
     show_table = True
+    searchable = True
 
     @property
     def title(self):
@@ -81,12 +82,7 @@ class RegistrationData(ILSData):
         elif self.config['loc_type'] == 'REGION':
             location = location.parent.parent
 
-        users = CommCareUser.get_db().view(
-            'locations/users_by_location_id',
-            startkey=[location.location_id],
-            endkey=[location.location_id, {}],
-            include_docs=True
-        ).all()
+        users = get_user_docs_by_location(self.config['domain'], location.location_id)
         if users:
             for user in users:
                 u = user['doc']

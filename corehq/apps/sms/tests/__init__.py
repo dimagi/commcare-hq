@@ -1,32 +1,36 @@
-from corehq.apps.accounting import generator
-from corehq.apps.accounting.models import (
-    BillingAccount,
-    DefaultProductPlan,
-    SoftwarePlanEdition,
-    Subscription,
-    SubscriptionAdjustment,
-)
-from corehq.apps.accounting.tests import BaseAccountingTest
-from corehq.apps.domain.calculations import num_mobile_users
-from corehq.apps.sms.api import send_sms_to_verified_number, send_sms_with_backend, send_sms_with_backend_name
-from corehq.apps.sms.mixin import SMSBackend, BadSMSConfigException
-from corehq.apps.sms.models import CommConnectCase
-from django.conf import settings
-from dimagi.ext.couchdbkit import *
-from couchdbkit.exceptions import ResourceNotFound
-from casexml.apps.case.models import CommCareCase
 #from .inbound_handlers import *
 from .opt_tests import *
 from .migration import *
+from .test_dbaccessors import *
+from .test_all_backends import *
+from .test_backend_migration import *
+from .update_location_keyword_test import *
+
+from corehq.apps.domain.calculations import num_mobile_users
+from corehq.apps.domain.models import Domain
+from corehq.apps.sms.api import send_sms_to_verified_number, send_sms_with_backend, send_sms_with_backend_name
+from corehq.apps.sms.mixin import (SMSBackend, BadSMSConfigException,
+    MobileBackend, apply_leniency)
+from corehq.apps.sms.models import CommConnectCase
+from corehq.apps.sms.util import get_contact
+from corehq.apps.sms.tests.util import BaseSMSTest
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
+from dimagi.ext.couchdbkit import *
+from couchdbkit.exceptions import ResourceNotFound
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.models import CommCareUser
 from django.contrib.sites.models import Site
 from corehq.apps.users.util import format_username
+from django.conf import settings
+from django.test import TestCase
+from corehq.apps.accounting import generator
 
 
 class BackendInvocationDoc(Document):
     pass
 
-class TestCaseBackend(SMSBackend):
+
+class TestCaseBackend(TestSMSBackend):
 
     @classmethod
     def get_api_id(cls):
@@ -63,7 +67,7 @@ class TestCaseBackend(SMSBackend):
             return False
 
 
-class BackendTestCase(BaseAccountingTest):
+class BackendTestCase(BaseSMSTest):
     def get_or_create_site(self):
         site, created = Site.objects.get_or_create(id=settings.SITE_ID)
         if created:
@@ -83,21 +87,7 @@ class BackendTestCase(BaseAccountingTest):
         self.domain_obj = Domain(name=self.domain)
         self.domain_obj.save()
 
-        generator.instantiate_accounting_for_tests()
-        self.account = BillingAccount.get_or_create_account_by_domain(
-            self.domain_obj.name,
-            created_by="automated-test",
-        )[0]
-        plan = DefaultProductPlan.get_default_plan_by_domain(
-            self.domain_obj, edition=SoftwarePlanEdition.ADVANCED
-        )
-        self.subscription = Subscription.new_domain_subscription(
-            self.account,
-            self.domain_obj.name,
-            plan
-        )
-        self.subscription.is_active = True
-        self.subscription.save()
+        self.create_account_and_subscription(self.domain_obj.name)
         self.domain_obj = Domain.get(self.domain_obj._id) # Prevent resource conflict
 
         self.backend1 = TestCaseBackend(name="BACKEND1",is_global=True)
@@ -142,6 +132,15 @@ class BackendTestCase(BaseAccountingTest):
         self.backend_mapping4 = BackendMapping(is_global=True,prefix="265",backend_id=self.backend4._id)
         self.backend_mapping4.save()
 
+        self.backend_mapping5 = BackendMapping(is_global=True, prefix="256", backend_id=self.backend5._id)
+        self.backend_mapping5.save()
+
+        self.backend_mapping6 = BackendMapping(is_global=True, prefix="25670", backend_id=self.backend6._id)
+        self.backend_mapping6.save()
+
+        self.backend_mapping7 = BackendMapping(is_global=True, prefix="25675", backend_id=self.backend7._id)
+        self.backend_mapping7.save()
+
         self.case = CommCareCase(domain=self.domain)
         self.case.set_case_property("contact_phone_number","15551234567")
         self.case.set_case_property("contact_phone_number_is_verified", "1")
@@ -170,19 +169,18 @@ class BackendTestCase(BaseAccountingTest):
 
         self.backend5.delete_invoke_doc()
         self.backend5.delete()
+        self.backend_mapping5.delete()
 
         self.backend6.delete_invoke_doc()
         self.backend6.delete()
+        self.backend_mapping6.delete()
 
         self.backend7.delete_invoke_doc()
         self.backend7.delete()
+        self.backend_mapping7.delete()
 
         self.contact.delete_verified_number()
         self.case.delete()
-
-        SubscriptionAdjustment.objects.all().delete()
-        self.subscription.delete()
-        self.account.delete()
 
         self.domain_obj.delete()
 
@@ -190,6 +188,13 @@ class BackendTestCase(BaseAccountingTest):
             self.site.delete()
 
         settings.SMS_LOADED_BACKENDS.pop()
+
+        super(BackendTestCase, self).tearDown()
+
+    def test_multiple_country_prefixes(self):
+        self.assertEqual(MobileBackend.auto_load('256800000000')._id, self.backend5._id)
+        self.assertEqual(MobileBackend.auto_load('256700000000')._id, self.backend6._id)
+        self.assertEqual(MobileBackend.auto_load('256750000000')._id, self.backend7._id)
 
     def test_backend(self):
         # Test the backend map
@@ -462,3 +467,36 @@ class BackendTestCase(BaseAccountingTest):
         incoming("+9991234568", "JOIN {} WORKER tester".format(self.domain), "TEST_CASE_BACKEND")
         current_num_users = num_mobile_users(self.domain)
         self.assertEqual(prev_num_users, current_num_users)
+
+
+class TestUtilFunctions(TestCase):
+    def setUp(self):
+        self.case = CommCareCase(domain='test-domain', name='test-case')
+        self.case.save()
+
+        self.user = CommCareUser.create('test-domain', 'test-user', '123')
+
+    def test_get_contact(self):
+        contact = get_contact(self.case.get_id)
+        self.assertEqual(contact.get_id, self.case.get_id)
+        self.assertTrue(isinstance(contact, CommConnectCase))
+
+        contact = get_contact(self.user.get_id)
+        self.assertEqual(contact.get_id, self.user.get_id)
+        self.assertTrue(isinstance(contact, CommCareUser))
+
+        try:
+            get_contact('this-id-should-not-be-found')
+        except Exception:
+            pass
+        else:
+            self.assertTrue(False)
+
+    def test_apply_leniency(self):
+        self.assertEqual('16175551234', apply_leniency(' 1 (617) 555-1234 '))
+        self.assertEqual('16175551234', apply_leniency(' 1.617.555.1234 '))
+        self.assertEqual('16175551234', apply_leniency(' +1 617 555 1234 '))
+
+    def tearDown(self):
+        self.case.delete()
+        self.user.delete()

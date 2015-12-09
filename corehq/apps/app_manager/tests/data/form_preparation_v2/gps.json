@@ -34,7 +34,6 @@
     "case_sharing": false,
     "cloudcare_enabled": false,
     "comment_from": null,
-    "commtrack_enabled": false,
     "commtrack_requisition_mode": null,
     "copy_history": [],
     "deployment_date": null,

@@ -23,7 +23,10 @@
         },
         {
             "type": "field",
-            "display": "Tickets",
+            "display": {
+                "en": "Tickets",
+                "fr": "Billets"
+            },
             "description": "Number of tickets",
             "field": "count",
             "aggregation": "sum"

@@ -1,4 +1,7 @@
 import os
+
+from django.conf import settings
+
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.pdfgen.canvas import Canvas
@@ -6,7 +9,6 @@ from reportlab.platypus import Paragraph
 from corehq.apps.accounting.exceptions import InvoiceError
 from corehq.apps.accounting.utils import get_money_str
 from corehq.const import USER_DATE_FORMAT
-import settings
 
 
 LOGO_FILENAME = \
@@ -107,7 +109,7 @@ class InvoiceTemplate(object):
                  swift_code=settings.BANK_SWIFT_CODE,
                  applied_credit=None,
                  subtotal=None, tax_rate=None, applied_tax=None, total=None,
-                 is_wire=False):
+                 is_wire=False, is_prepayment=False):
         self.canvas = Canvas(filename)
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
         self.logo_filename = os.path.join(os.getcwd(), logo_filename)
@@ -132,6 +134,7 @@ class InvoiceTemplate(object):
         self.applied_tax = applied_tax
         self.total = total
         self.is_wire = is_wire
+        self.is_prepayment = is_prepayment
 
         self.items = []
 
@@ -144,10 +147,11 @@ class InvoiceTemplate(object):
         self.draw_from_address()
         self.draw_to_address()
         self.draw_project_name()
-        self.draw_statement_period()
+        if not self.is_prepayment:
+            self.draw_statement_period()
         self.draw_invoice_label()
         self.draw_details()
-        if not self.is_wire:
+        if not self.is_wire or self.is_prepayment:
             self.draw_table()
         self.draw_footer()
 

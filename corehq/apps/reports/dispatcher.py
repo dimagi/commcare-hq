@@ -7,13 +7,13 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
 from dimagi.utils.decorators.datespan import datespan_in_request
 from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
+from django_prbac.utils import has_privilege
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.toggles import IS_DEVELOPER
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 
 datespan_default = datespan_in_request(
     from_param="startdate",
@@ -70,7 +70,7 @@ class ReportDispatcher(View):
 
     def get_reports(self, domain=None):
         attr_name = self.map_name
-        import corehq
+        from corehq import reports
         domain_module = Domain.get_module_by_name(domain)
         if domain:
             project = Domain.get_by_name(domain)
@@ -82,7 +82,7 @@ class ReportDispatcher(View):
                 reports = reports(project)
             return tuple(reports)
 
-        corehq_reports = process(getattr(corehq, attr_name, ()))
+        corehq_reports = process(getattr(reports, attr_name, ()))
         custom_reports = process(getattr(domain_module, attr_name, ()))
 
         return corehq_reports + custom_reports
@@ -130,7 +130,11 @@ class ReportDispatcher(View):
         class_name = cls.__module__ + '.' + cls.__name__ if cls else ''
 
         permissions_check = permissions_check or self.permissions_check
-        if cls and (permissions_check(class_name, request, domain=domain)):
+        if (
+            cls
+            and permissions_check(class_name, request, domain=domain)
+            and self.toggles_enabled(cls, request)
+        ):
             report = cls(request, domain=domain, **report_kwargs)
             report.rendered_as = render_as
             try:
@@ -139,6 +143,12 @@ class ReportDispatcher(View):
                 return HttpResponseBadRequest(e)
         else:
             raise Http404()
+
+    @staticmethod
+    def toggles_enabled(report_class, request):
+        if not getattr(report_class, 'toggles', ()):
+            return True
+        return all(toggle_enabled(request, toggle) for toggle in report_class.toggles)
 
     @classmethod
     def name(cls):
@@ -176,10 +186,12 @@ class ReportDispatcher(View):
             report_contexts = []
             for report in report_group:
                 class_name = report.__module__ + '.' + report.__name__
-                if not dispatcher.permissions_check(class_name, request, domain=domain, is_navigation_check=True):
-                    continue
-                if report.show_in_navigation(
-                        domain=domain, project=project, user=couch_user):
+                if (
+                    dispatcher.permissions_check(class_name, request, domain=domain,
+                                                 is_navigation_check=True)
+                    and cls.toggles_enabled(report, request)
+                    and report.show_in_navigation(domain=domain, project=project, user=couch_user)
+                ):
                     if hasattr(report, 'override_navigation_list'):
                         report_contexts.extend(report.override_navigation_list(context))
                     else:
@@ -247,11 +259,8 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
         return super(CustomProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
-        if is_navigation_check:
-            try:
-                ensure_request_has_privilege(request, privileges.CUSTOM_REPORTS)
-            except PermissionDenied:
-                return False
+        if is_navigation_check and not has_privilege(request, privileges.CUSTOM_REPORTS):
+            return False
         return super(CustomProjectReportDispatcher, self).permissions_check(report, request, domain)
 
 

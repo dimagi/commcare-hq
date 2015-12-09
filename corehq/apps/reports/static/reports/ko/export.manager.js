@@ -1,5 +1,7 @@
+// TODO - after old usage is removed, refactor into two separate entities
 var ExportManager = function (o) {
     var self = this;
+    self.isNewExporter = o.is_new_exporter || false;
     self.selected_exports = ko.observableArray();
     self.export_type = o.export_type || "form";
     self.is_custom = o.is_custom || false;
@@ -17,13 +19,25 @@ var ExportManager = function (o) {
     self.exportModalLoading = o.loadingIndicator || '.loading-indicator';
     self.exportModalLoadedData = o.loadedData || '.loaded-data';
 
-    self.bulk_download_notice_text = (self.is_custom) ?
-        "Custom Form Exports" :
-        "Full Form Exports";
+    self.bulk_download_notice_text = self.isNewExporter ? (
+        o.bulk_download_notice_text || ''): (self.is_custom ?
+        "Custom Form Exports" : "Full Form Exports"
+    );
 
     self.xmlns_formdesigner = o.xmlns_formdesigner || 'formdesigner';
 
     self.sheet_names = ko.observable(new Object());
+
+    self.selectedExportsData = o.selectedExportsData || {};
+
+    if(self.isNewExporter) {
+        self.bulkDownloadPageUrlRoot = o.bulkDownloadPageUrlRoot;
+        self.bulkDownloadPageUrl = ko.computed(function() {
+            return self.bulkDownloadPageUrlRoot + '?' + self.selected_exports().map(
+                function(export_id) { return "export_id=" + export_id; }
+            ).join('&');
+        });
+    }
 
     var resetModal = function (modal_title, newLine) {
             self.$modal.find(self.exportModalLoading).removeClass('hide');
@@ -46,30 +60,34 @@ var ExportManager = function (o) {
          * @param params
          */
         updateModal = function(params) {
-            var autoRefresh = '';
+            var autoRefresh = true;
             var pollDownloader = function () {
-                if ($('#ready_'+params.data.download_id).length == 0) {
+                if (autoRefresh && $('#ready_'+params.data.download_id).length === 0) {
                     $.get(params.data.download_url, function(data) {
                         self.$modal.find(self.exportModalLoadedData).html(data);
                         self.setUpEventTracking({
                             xmlns: params.xmlns,
                             isBulkDownload: params.isBulkDownload,
-                            exportName: params.exportName
+                            exportName: params.exportName,
+                            isMultimedia: params.isMultimedia
                         });
+                        if (autoRefresh) {
+                            setTimeout(pollDownloader, 2000);
+                        }
                     }).error(function () {
                         self.$modal.find(self.exportModalLoading).addClass('hide');
                         self.$modal.find(self.exportModalLoadedData).html('<p class="alert alert-error">Oh no! Your download was unable to be completed. We have been notified and are already hard at work solving this issue.</p>');
-                        clearInterval(autoRefresh);
+                        autoRefresh = false;
                     });
                 } else {
                     self.$modal.find(self.exportModalLoading).addClass('hide');
-                    clearInterval(autoRefresh);
+                    autoRefresh = false;
                 }
             };
             $(self.exportModal).on('hide', function () {
-                clearInterval(autoRefresh);
+                autoRefresh = false;
             });
-            autoRefresh = setInterval(pollDownloader, 2000);
+            pollDownloader();
         },
         displayModalError = function(error_text) {
             var $error = $('<p class="alert alert-error" />');
@@ -94,6 +112,12 @@ var ExportManager = function (o) {
         params = params || {};
         var downloadButton = self.$modal.find(self.exportModalLoadedData).find("a.btn.btn-primary").first();
         if (downloadButton.length) {
+
+            if (params.isMultimedia) {
+                var action = self.is_custom ? "Download Custom Form Multimedia" : "Download Form Multimedia";
+                gaTrackLink(downloadButton, "Form Exports", action, params.exportName);
+                return;
+            }
 
             // Device reports event
             // (This is a bit of a special case due to its unique "action" and "label"
@@ -129,18 +153,33 @@ var ExportManager = function (o) {
         }
     };
 
-    self.updateSelectedExports = function (data, event) {
-        var $checkbox = $(event.srcElement || event.currentTarget);
-        var add_to_list = ($checkbox.attr('checked') === 'checked'),
-            downloadButton = $checkbox.parent().parent().parent().find('.dl-export');
-        if (add_to_list) {
-            $checkbox.parent().find('.label').removeClass('label-info').addClass('label-success');
-            self.selected_exports.push(downloadButton);
-        } else {
-            $checkbox.parent().find('.label').removeClass('label-success').addClass('label-info');
-            self.selected_exports.splice(self.selected_exports().indexOf(downloadButton), 1);
-        }
-    };
+    if(!self.isNewExporter) {
+        self.updateSelectedExports = function (data, event) {
+            var $checkbox = $(event.srcElement || event.currentTarget);
+            var add_to_list = ($checkbox.attr('checked') === 'checked'),
+                downloadButton = $checkbox.parent().parent().parent().find('.dl-export');
+            if (add_to_list) {
+                $checkbox.parent().find('.label').removeClass('label-info').addClass('label-success');
+                self.selected_exports.push(downloadButton);
+            } else {
+                $checkbox.parent().find('.label').removeClass('label-success').addClass('label-info');
+                self.selected_exports.splice(self.selected_exports().indexOf(downloadButton), 1);
+            }
+        };
+    } else {
+        self.updateSelectedExports = function (data, event) {
+            var $checkbox = $(event.srcElement || event.currentTarget);
+            var add_to_list = ($checkbox.attr('checked') === 'checked'),
+                export_id = $checkbox.attr('value');
+            if (add_to_list) {
+                $checkbox.parent().find('.label').removeClass('label-info').addClass('label-success');
+                self.selected_exports.push(export_id);
+            } else {
+                $checkbox.parent().find('.label').removeClass('label-success').addClass('label-info');
+                self.selected_exports.splice(self.selected_exports().indexOf(export_id), 1);
+            }
+        };
+    }
 
     self.downloadExport = function(params) {
         var displayDownloadError = function (response) {
@@ -157,6 +196,7 @@ var ExportManager = function (o) {
                     data: data,
                     xmlns: params.xmlns,
                     isBulkDownload: params.isBulkDownload,
+                    isMultimedia: params.isMultimedia,
                     exportName: params.exportName
                 });
             },
@@ -194,47 +234,84 @@ var ExportManager = function (o) {
         if (self.is_custom)
             prepareExport = new Array();
 
-        for (var i in self.selected_exports()) {
-            var curExpButton = self.selected_exports()[i];
+        if(self.isNewExporter) {
+            for (var export_id in self.selectedExportsData) {
+                var export_data = self.selectedExportsData[export_id];
+                var xmlns = export_data.xmlns,
+                    module = export_data.modulename,
+                    export_type = export_data.exporttype,
+                    form = export_data.formname,
+                    _id = export_id;
 
-            var _id = curExpButton.data('appid') || curExpButton.data('exportid'),
-                xmlns = curExpButton.data('xmlns'),
-                module = curExpButton.data('modulename'),
-                export_type = curExpButton.data('exporttype'),
-                form = curExpButton.data('formname');
+                var sheetName = getSheetName(module, form, xmlns);
 
-            var sheetName = "sheet";
-            if (self.is_custom) {
-                var $sheetNameElem = curExpButton.parent().parent().find('.sheetname');
-                if($sheetNameElem.data('duplicate'))
-                    break;
-                sheetName = curExpButton.parent().parent().find('.sheetname').val();
-            } else
-                sheetName = getSheetName(module, form, xmlns);
+                var export_tag;
+                if (self.is_custom)
+                    export_tag = {
+                        domain: self.domain,
+                        xmlns: xmlns,
+                        sheet_name: sheetName,
+                        export_id: _id,
+                        export_type: export_type
+                    };
+                else
+                    export_tag = [self.domain, xmlns, sheetName];
 
-            var export_tag;
-            if (self.is_custom)
-                export_tag = {
-                    domain: self.domain,
-                    xmlns: xmlns,
-                    sheet_name: sheetName,
-                    export_id: _id,
-                    export_type: export_type
-                };
-            else
-                export_tag = [self.domain, xmlns, sheetName];
+                if (!_id)
+                    _id = "unknown_application";
 
-            if (!_id)
-                _id = "unknown_application";
+                if (self.is_custom)
+                    prepareExport.push(export_tag);
+                else {
+                    if (!prepareExport.hasOwnProperty(_id))
+                        prepareExport[_id] = [];
+                    prepareExport[_id].push(export_tag);
+                }
+            }
+        } else {
+            for (var i in self.selected_exports()) {
+                var curExpButton = self.selected_exports()[i];
 
-            if (self.is_custom)
-                prepareExport.push(export_tag);
-            else {
-                if (!prepareExport.hasOwnProperty(_id))
-                    prepareExport[_id] = new Array();
-                prepareExport[_id].push(export_tag);
+                var _id = curExpButton.data('appid') || curExpButton.data('exportid'),
+                    xmlns = curExpButton.data('xmlns'),
+                    module = curExpButton.data('modulename'),
+                    export_type = curExpButton.data('exporttype'),
+                    form = curExpButton.data('formname');
+
+                var sheetName = "sheet";
+                if (self.is_custom) {
+                    var $sheetNameElem = curExpButton.parent().parent().find('.sheetname');
+                    if($sheetNameElem.data('duplicate'))
+                        break;
+                    sheetName = curExpButton.parent().parent().find('.sheetname').val();
+                } else
+                    sheetName = getSheetName(module, form, xmlns);
+
+                var export_tag;
+                if (self.is_custom)
+                    export_tag = {
+                        domain: self.domain,
+                        xmlns: xmlns,
+                        sheet_name: sheetName,
+                        export_id: _id,
+                        export_type: export_type
+                    };
+                else
+                    export_tag = [self.domain, xmlns, sheetName];
+
+                if (!_id)
+                    _id = "unknown_application";
+
+                if (self.is_custom)
+                    prepareExport.push(export_tag);
+                else {
+                    if (!prepareExport.hasOwnProperty(_id))
+                        prepareExport[_id] = new Array();
+                    prepareExport[_id].push(export_tag);
+                }
             }
         }
+
 
         if (self.is_custom && prepareExport.length == 0) {
             displayModalError('No valid sheets were available for Custom Bulk Export. Please check for duplicate sheet names.');
@@ -252,7 +329,6 @@ var ExportManager = function (o) {
                 params[filter] = self.jsonExportFilters[filter];
             }
         }
-
         self.downloadBulkExport(self.bulkDownloadUrl, params);
     };
 
@@ -316,6 +392,23 @@ var ExportManager = function (o) {
         });
     };
 
+    self.requestMultimediaDownload = function(data, event){
+        var $button = $(event.srcElement || event.currentTarget),
+            xmlns = $button.data('xmlns'),
+            downloadUrl = $button.data('downloadurl') + '&xmlns=' + xmlns,
+            title = $button.data('modulename');
+
+        title = $button.data('formname').length ? title + " > " + $button.data('formname') : title;
+
+        resetModal("'" + title + "' (multimedia)", true);
+        self.downloadExport({
+            downloadUrl: downloadUrl,
+            xmlns: xmlns,
+            isMultimedia: true,
+            exportName: xmlns
+        });
+    };
+
     self.checkCustomSheetNameLength = function(data, event) {
         var src = event.srcElement || event.currentTarget;
         var $input = $(src);
@@ -334,20 +427,39 @@ var ExportManager = function (o) {
         return true;
     };
 
-    self.toggleSelectAllExports = function (data, event) {
-        var $toggleBtn = $(event.srcElement || event.currentTarget),
-            check_class = (self.is_custom) ? '.select-custom' : '.select-bulk';
-        if ($toggleBtn.data('all'))
-            $.each($(check_class), function () {
-                $(this).attr('checked', true);
-                self.updateSelectedExports({}, {srcElement: this})
-            });
-        else
-            $.each($(check_class), function () {
-                $(this).attr('checked', false);
-                self.updateSelectedExports({}, {srcElement: this})
-            });
-    };
+    if(!self.isNewExporter) {
+        self.toggleSelectAllExports = function (data, event) {
+            var $toggleBtn = $(event.srcElement || event.currentTarget),
+                check_class = (self.is_custom) ? '.select-custom' : '.select-bulk';
+            if ($toggleBtn.data('all'))
+                $.each($(check_class), function () {
+                    $(this).attr('checked', true);
+                    self.updateSelectedExports({}, {srcElement: this});
+                });
+            else
+                $.each($(check_class), function () {
+                    $(this).attr('checked', false);
+                    self.updateSelectedExports({}, {srcElement: this});
+                });
+        };
+    } else {
+        self.toggleSelectAllExports = function (data, event) {
+            var $toggleBtn = $(event.srcElement || event.currentTarget),
+                check_class = '.select-export';
+            if ($toggleBtn.data('all')) {
+                $.each($(check_class), function () {
+                    $(this).attr('checked', true);
+                    self.updateSelectedExports({}, {srcElement: this});
+                });
+            } else {
+                $.each($(check_class), function () {
+                    $(this).attr('checked', false);
+                    self.updateSelectedExports({}, {srcElement: this});
+                });
+            }
+        };
+    }
+
 
 },
     getFormattedSheetName = function (a, b) {

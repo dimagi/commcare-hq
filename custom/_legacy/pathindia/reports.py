@@ -1,6 +1,7 @@
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
-from dimagi.utils.couch.database import get_db
+from couchforms.models import XFormInstance
 
 class PathIndiaKrantiReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     name = "Key Indicators"
@@ -16,7 +17,7 @@ class PathIndiaKrantiReport(CustomProjectReport, ProjectReportParametersMixin, D
         report_data = dict()
         for user in self.users:
             key = [user.user_id]
-            data = get_db().view("pathindia/kranti_report",
+            data = XFormInstance.get_db().view("pathindia/kranti_report",
                 reduce=True,
                 startkey = key+[self.datespan.startdate_param_utc],
                 endkey = key+[self.datespan.enddate_param_utc]
@@ -113,7 +114,7 @@ class PathIndiaKrantiReport(CustomProjectReport, ProjectReportParametersMixin, D
                 total_link_workers=len(self.users),
                 month_of_reporting=month_reporting_range,
                 date_of_sending_report=self.datespan.enddate.strftime(USER_DATE_FORMAT),
-                total_preg_women_monitored=get_db().view("pathindia/kranti_cases",
+                total_preg_women_monitored=CommCareCase.get_db().view("pathindia/kranti_cases",
                     reduce=True
                 ).first().get('value', 0),
                 uhp=self.group.name if self.group else "All UHPs"

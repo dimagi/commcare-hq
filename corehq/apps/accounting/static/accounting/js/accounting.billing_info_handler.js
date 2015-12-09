@@ -10,13 +10,11 @@ var BillingContactInfoHandler = function (valid_email_text) {
         };
         callback(data);
     };
-    self.billing_admins = new AsyncSelect2Handler('billing_admins', true);
     self.emails = new EmailSelect2Handler('emails', valid_email_text);
     self.active_accounts = new AsyncSelect2Handler('active_accounts');
 
     self.init = function () {
         self.country.init();
-        self.billing_admins.init();
         self.emails.init();
         self.active_accounts.init();
     };
@@ -31,7 +29,7 @@ var AsyncSelect2Handler = function (field, multiple) {
 
     self.init = function () {
         $(function () {
-            var $field = $('[name="' + self.fieldName + '"]');
+            var $field = $('.hq-content [name="' + self.fieldName + '"]');
             if ($field.attr('type') !== 'hidden') {
                 $field.select2({
                     minimumInputLength: 0,
@@ -46,7 +44,7 @@ var AsyncSelect2Handler = function (field, multiple) {
                                 handler: 'select2_billing',
                                 action: self.fieldName,
                                 searchString: term,
-                                existing: $('[name="' + self.fieldName + '"]').val().split(','),
+                                existing: $('.hq-content [name="' + self.fieldName + '"]').val().split(','),
                                 additionalData: self.getAdditionalData()
                             };
                         },
@@ -82,7 +80,7 @@ var EmailSelect2Handler = function (field, valid_email_text) {
 
     self.init = function () {
         $(function () {
-            $('[name="' + self.fieldName + '"]').select2({
+            $('.hq-content [name="' + self.fieldName + '"]').select2({
                 createSearchChoice: function (term, data) {
                     var matchedData = $(data).filter(function() {
                         return this.text.localeCompare(term) === 0;

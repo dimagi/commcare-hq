@@ -1,3 +1,5 @@
+import langcodes
+
 from django import forms
 from django.core.validators import MinLengthValidator
 from django.template.loader import render_to_string
@@ -6,9 +8,15 @@ from corehq.apps.userreports.reports.view import ConfigurableReport
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 from .models import (
+    DEFAULT_REPORT_NOTIF_SUBJECT,
     ReportConfig,
     ReportNotification,
 )
+
+
+class LanguageSelect(forms.Select):
+    class Media:
+        js = ('reports/javascripts/language_field.js',)
 
 
 class SavedReportConfigForm(forms.Form):
@@ -70,15 +78,22 @@ class SavedReportConfigForm(forms.Form):
             )
 
         date_range = self.cleaned_data['date_range']
-        if date_range == 'last7':
-            self.cleaned_data['days'] = 7
-        elif date_range == 'last30':
-            self.cleaned_data['days'] = 30
-        elif (date_range == 'lastn' and self.cleaned_data['days'] is None
-              and self.cleaned_data['report_type'] != ConfigurableReport.prefix):
-            raise forms.ValidationError(
-                "Field 'days' was expected but not provided."
-            )
+
+        if (
+            self.cleaned_data['report_type'] == ConfigurableReport.prefix
+            and not self.cleaned_data['datespan_slug']
+        ):
+            self.cleaned_data['date_range'] = None
+        else:
+            if date_range == 'last7':
+                self.cleaned_data['days'] = 7
+            elif date_range == 'last30':
+                self.cleaned_data['days'] = 30
+            elif (date_range == 'lastn' and self.cleaned_data['days'] is None
+                  and self.cleaned_data['report_type'] != ConfigurableReport.prefix):
+                raise forms.ValidationError(
+                    "Field 'days' was expected but not provided."
+                )
 
         return self.cleaned_data
 
@@ -117,7 +132,21 @@ class ScheduledReportForm(forms.Form):
         label='Other recipients',
         required=False)
 
-    def __init__(self, display_privacy_disclaimer, *args, **kwargs):
+    email_subject = forms.CharField(
+        required=False,
+        help_text='Translated into recipient\'s language if set to "%(default_subject)s".' % {
+            'default_subject': DEFAULT_REPORT_NOTIF_SUBJECT,
+        },
+    )
+
+    language = forms.ChoiceField(
+        label='Language',
+        required=False,
+        choices=[('', '')] + langcodes.get_all_langs_for_select(),
+        widget=LanguageSelect()
+    )
+
+    def __init__(self, *args, **kwargs):
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_id = 'id-scheduledReportForm'
@@ -129,10 +158,15 @@ class ScheduledReportForm(forms.Form):
                 'hour',
                 'send_to_owner',
                 'attach_excel',
+                crispy.Field(
+                    'email_subject',
+                    css_class='input-xlarge',
+                ),
                 'recipient_emails',
+                'language',
                 crispy.HTML(
                     render_to_string('reports/partials/privacy_disclaimer.html')
-                ) if display_privacy_disclaimer else None
+                )
             )
         )
         self.helper.add_input(crispy.Submit('submit_btn', 'Submit'))

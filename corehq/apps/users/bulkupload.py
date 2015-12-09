@@ -1,7 +1,11 @@
 from StringIO import StringIO
 import logging
 from django.core.exceptions import ValidationError
+from django.core.validators import EmailValidator
 from django.utils.translation import ugettext as _
+from corehq.util.spreadsheets.excel import flatten_json, json_to_headers, \
+    alphanumeric_sort_key
+from dimagi.utils.parsing import string_to_boolean
 
 from couchdbkit.exceptions import (
     BulkSaveError,
@@ -9,20 +13,20 @@ from couchdbkit.exceptions import (
     ResourceNotFound,
 )
 from couchexport.writers import Excel2007ExportWriter
-from dimagi.utils.excel import (flatten_json, json_to_headers,
-    alphanumeric_sort_key)
 from soil import DownloadBase
 
-from corehq.apps.commtrack.util import get_supply_point, submit_mapping_case_block
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.commtrack.util import submit_mapping_case_block, get_supply_point_and_location
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.dbaccessors.all_commcare_users import get_all_commcare_users_by_domain
 
-from .forms import CommCareAccountForm
+from .forms import get_mobile_worker_max_username_length
 from .models import CommCareUser, CouchUser
 from .util import normalize_username, raw_username
-from .views.mobile.custom_data_fields import UserFieldsView
 
 
 class UserUploadError(Exception):
@@ -32,7 +36,7 @@ class UserUploadError(Exception):
 required_headers = set(['username'])
 allowed_headers = set([
     'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
-    'uncategorized_data', 'user_id', 'location-sms-code',
+    'uncategorized_data', 'user_id', 'is_active', 'location-sms-code',
 ]) | required_headers
 
 
@@ -144,11 +148,11 @@ class SiteCodeToSupplyPointCache(BulkCacheBase):
     """
 
     def lookup(self, site_code):
-        supply_point = get_supply_point(
+        case_location = get_supply_point_and_location(
             self.domain,
             site_code
-        )['case']
-        return supply_point
+        )
+        return case_location.case
 
 
 class SiteCodeToLocationCache(BulkCacheBase):
@@ -275,7 +279,7 @@ def create_or_update_groups(domain, group_specs, log):
     group_names = set()
     for row in group_specs:
         group_id = row.get('id')
-        group_name = row.get('name')
+        group_name = unicode(row.get('name') or '')
         case_sharing = row.get('case-sharing')
         reporting = row.get('reporting')
         data = row.get('data')
@@ -313,6 +317,7 @@ def create_or_update_groups(domain, group_specs, log):
 
 
 def create_or_update_users_and_groups(domain, user_specs, group_specs, location_specs, task=None):
+    from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     custom_data_validator = UserFieldsView.get_validator(domain)
     ret = {"errors": [], "rows": []}
     total = len(user_specs) + len(group_specs) + len(location_specs)
@@ -327,7 +332,9 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
     user_ids = set()
     allowed_groups = set(group_memoizer.groups)
     allowed_group_names = [group.name for group in allowed_groups]
-    location_cache = SiteCodeToLocationCache(domain)
+    can_access_locations = domain_has_privilege(domain, privileges.LOCATIONS)
+    if can_access_locations:
+        location_cache = SiteCodeToLocationCache(domain)
     try:
         for row in user_specs:
             _set_progress(current)
@@ -335,7 +342,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
 
             data = row.get('data')
             email = row.get('email')
-            group_names = row.get('group')
+            group_names = map(unicode, row.get('group') or [])
             language = row.get('language')
             name = row.get('name')
             password = row.get('password')
@@ -347,7 +354,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
 
             if password:
                 password = unicode(password)
-            group_names = group_names or []
             try:
                 username = normalize_username(str(username), domain)
             except TypeError:
@@ -363,6 +369,19 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                 'username': raw_username(username) if username else None,
                 'row': row,
             }
+
+            is_active = row.get('is_active')
+            if isinstance(is_active, basestring):
+                try:
+                    is_active = string_to_boolean(is_active) if is_active else None
+                except ValueError:
+                    ret['rows'].append({
+                        'username': username,
+                        'row': row,
+                        'flag': _("'is_active' column can only contain 'true' or 'false'"),
+                    })
+                    continue
+
             if username in usernames or user_id in user_ids:
                 status_row['flag'] = 'repeat'
             elif not username and not user_id:
@@ -398,17 +417,18 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                             user.set_password(password)
                         status_row['flag'] = 'updated'
                     else:
-                        if len(raw_username(username)) > CommCareAccountForm.max_len_username:
+                        max_username_length = get_mobile_worker_max_username_length(domain)
+                        if len(raw_username(username)) > max_username_length:
                             ret['rows'].append({
                                 'username': username,
                                 'row': row,
                                 'flag': _("username cannot contain greater than %d characters" %
-                                          CommCareAccountForm.max_len_username)
+                                          max_username_length)
                             })
                             continue
                         if not is_password(password):
                             raise UserUploadError(_("Cannot create a new user with a blank password"))
-                        user = CommCareUser.create(domain, username, password, uuid=user_id or '', commit=False)
+                        user = CommCareUser.create(domain, username, password, commit=False)
                         status_row['flag'] = 'created'
                     if phone_number:
                         user.add_phone_number(_fmt_phone(phone_number), default=True)
@@ -424,11 +444,19 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                     if language:
                         user.language = language
                     if email:
-                        user.email = email
+                        email_validator = EmailValidator()
+                        try:
+                            email_validator(email)
+                            user.email = email
+                        except ValidationError:
+                            raise UserUploadError(_("User has an invalid email address"))
+                    if is_active is not None:
+                        user.is_active = is_active
+
                     user.save()
-                    if location_code:
+                    if can_access_locations and location_code:
                         loc = location_cache.get(location_code)
-                        if user.location_id != loc._id:
+                        if user.location_id != loc.location_id:
                             # this triggers a second user save so
                             # we want to avoid doing it if it isn't
                             # needed
@@ -515,7 +543,7 @@ def build_data_headers(keys, header_prefix='data'):
     )
 
 
-def parse_users(group_memoizer, users, user_data_model, location_cache):
+def parse_users(group_memoizer, domain, user_data_model, location_cache):
 
     def _get_group_names(user):
         return sorted(map(
@@ -538,13 +566,14 @@ def parse_users(group_memoizer, users, user_data_model, location_cache):
             'username': user.raw_username,
             'language': user.language,
             'user_id': user._id,
+            'is_active': str(user.is_active),
             'location-sms-code': location_cache.get(user.location_id),
         }
 
     user_data_keys = set()
     user_groups_length = 0
     user_dicts = []
-    for user in users:
+    for user in get_all_commcare_users_by_domain(domain):
         group_names = _get_group_names(user)
         user_dicts.append(_make_user_dict(user, group_names, location_cache))
         user_data_keys.update(user.user_data.keys() if user.user_data else [])
@@ -552,8 +581,10 @@ def parse_users(group_memoizer, users, user_data_model, location_cache):
 
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
-        'language', 'user_id', 'location-sms-code'
+        'language', 'user_id', 'is_active',
     ]
+    if domain_has_privilege(domain, privileges.LOCATIONS):
+        user_headers.append('location-sms-code')
     user_data_fields = [f.slug for f in user_data_model.fields]
     user_headers.extend(build_data_headers(user_data_fields))
     user_headers.extend(build_data_headers(
@@ -602,6 +633,7 @@ def parse_groups(groups):
 
 
 def dump_users_and_groups(response, domain):
+    from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     def _load_memoizer(domain):
         group_memoizer = GroupMemoizer(domain=domain)
         # load groups manually instead of calling group_memoizer.load_all()
@@ -629,7 +661,7 @@ def dump_users_and_groups(response, domain):
 
     user_headers, user_rows = parse_users(
         group_memoizer,
-        CommCareUser.by_domain(domain),
+        domain,
         user_data_model,
         location_cache
     )
@@ -645,6 +677,7 @@ def dump_users_and_groups(response, domain):
     ]
 
     domain_obj = Domain.get_by_name(domain)
+    # This is only for domains using the multiple locations feature flag
     if domain_obj.commtrack_enabled and domain_obj.supports_multiple_locations_per_user:
         headers.append(
             ('locations', [['username', 'location-sms-code', 'location name (optional)']])

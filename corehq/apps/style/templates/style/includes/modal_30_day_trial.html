@@ -15,16 +15,16 @@
                         <p class="lead">
                         {% blocktrans %}
                             <strong>{{ feat_name }}</strong> is only available for the {{ req_plan }}
-                            Plan and higher. You are currently on a trial version
-                            of the {{ current_plan }} Plan.
+                            Plan and higher. Your subscription to {{ current_plan }} Plan is under a
+                            trial period.
                         {% endblocktrans %}
                         </p>
                         <p>
                         {% blocktrans %}
                             We want you to have a chance to use and evaluate our
                             pay-only features before deciding which plan to subscribe to.
-                            You will have access to <strong>{{ feat_name }}</strong> for a
-                            30 day trial period. <strong>This period is ending on {{ date_end }}.</strong>
+                            You will have access to <strong>{{ feat_name }}</strong> during
+                            this trial period, ending on {{ date_end }}.
                             After {{ date_end }}, you will no longer have access to {{ feat_name }}.
                         {% endblocktrans %}
                         </p>
@@ -38,7 +38,7 @@
                     {% endwith %}
                     {% endwith %}
                     {% endwith %}
-                    {% if request.is_billing_admin %}
+                    {% if request.is_domain_admin %}
                         <p>
                             <a class="btn btn-primary" href="{% url 'domain_select_plan' request.domain %}">
                                 {% blocktrans %}

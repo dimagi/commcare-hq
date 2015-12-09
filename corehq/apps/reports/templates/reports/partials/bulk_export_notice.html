@@ -2,6 +2,18 @@
 <div class="well" data-bind="showBulkExportNotice: selected_exports" style="display: none;">
         <span class="lead">
             {% trans "Download" %} <span data-bind="text: bulk_download_notice_text"></span>:
-            <a data-toggle="modal" data-backdrop="static" href="#export-download-status" class="btn btn-success pull-right" data-bind="click: requestBulkDownload"><i class="icon-download-alt icon-white"></i> {% trans "Bulk Download of" %} <span data-bind="text: bulk_download_notice_text"></span></a>
+            <a class="btn btn-success pull-right"
+               {% if not is_revamped %}
+               data-toggle="modal"
+               data-backdrop="static"
+               href="#export-download-status"
+               data-bind="click: requestBulkDownload"
+               {% else %}
+               data-bind="attr: { href: bulkDownloadPageUrl }"
+               {% endif %}
+            >
+                <i class="icon-download-alt icon-white"></i>
+                {% trans "Bulk Download of" %} <span data-bind="text: bulk_download_notice_text"></span>
+            </a>
         </span>
 </div>

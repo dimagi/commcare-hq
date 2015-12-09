@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from custom.succeed.utils import CONFIG
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
@@ -88,7 +88,9 @@ VISIT_SCHEDULE = [
         'responsible_party': CONFIG['cm_role'],
         'show_button': True,
         'target_date_case_property': 'CM1_form_target',
-        'completed_date': ['CM1_form_completed']
+        'completed_date': ['CM1_form_completed'],
+        'ignored_field': 'CM1_form_ignore',
+        'completion_field': 'CM1_form_completed'
     },
     {
         'visit_name': _('CM Medical Record Review'),
@@ -98,7 +100,9 @@ VISIT_SCHEDULE = [
         'responsible_party': CONFIG['cm_role'],
         'show_button': True,
         'target_date_case_property': 'CM2_form_target',
-        'completed_date': ['CM2_form_completed']
+        'completed_date': ['CM2_form_completed'],
+        'ignored_field': 'CM2_form_ignore',
+        'completion_field': 'CM2_form_completed'
     },
     {
         'visit_name': _('CM 1-week Telephone Call'),
@@ -109,7 +113,9 @@ VISIT_SCHEDULE = [
         'responsible_party': CONFIG['cm_role'],
         'scheduled_source': 'CM3_scheduled_date',
         'target_date_case_property': 'CM3_form_target',
-        'completed_date': ['CM3_form_completed']
+        'completed_date': ['CM3_form_completed'],
+        'ignored_field': 'CM3_form_ignore',
+        'completion_field': 'CM3_form_completed'
     },
     {
         'visit_name': _('CM Initial huddle'),
@@ -119,7 +125,9 @@ VISIT_SCHEDULE = [
         'responsible_party': CONFIG['cm_role'],
         'show_button': True,
         'target_date_case_property': 'HUD1_form_target',
-        'completed_date': ['HUD1_form_completed']
+        'completed_date': ['HUD1_form_completed'],
+        'ignored_field': 'HUD1_form_ignore',
+        'completion_field': 'HUD1_form_completed'
     },
     {
         'visit_name': _('CHW Home Visit 1'),
@@ -130,7 +138,9 @@ VISIT_SCHEDULE = [
         'responsible_party': CONFIG['chw_role'],
         'scheduled_source': 'CHW1_scheduled_date',
         'target_date_case_property': 'CHW1_form_target',
-        'completed_date': ['CHW1_1_complete', 'CHW1_1_complete_date']
+        'completed_date': ['CHW1_1_complete', 'CHW1_1_complete_date'],
+        'ignored_field': 'CHW1_form_ignore',
+        'completion_field': 'CHW1_1_complete_date'
     },
     {
         'visit_name': _('CM Clinic Visit 1'),
@@ -141,7 +151,9 @@ VISIT_SCHEDULE = [
         'responsible_party': CONFIG['cm_role'],
         'scheduled_source': 'CM4_scheduled_date',
         'target_date_case_property': 'CM4_1_form_target',
-        'completed_date': ['CM4_1_complete', 'CM4_1_complete_date']
+        'completed_date': ['CM4_1_complete', 'CM4_1_complete_date'],
+        'ignored_field': 'CM4_form_ignore',
+        'completion_field': 'CM4_1_complete_date'
     },
     {
         'visit_name': _('CHW Home Visit 2'),
@@ -152,7 +164,9 @@ VISIT_SCHEDULE = [
         'responsible_party': CONFIG['chw_role'],
         'scheduled_source': 'CHW1_2_scheduled_date',
         'target_date_case_property': 'CHW1_2_form_target',
-        'completed_date': ['CHW1_2_complete', 'CHW1_2_complete_date']
+        'completed_date': ['CHW1_2_complete', 'CHW1_2_complete_date'],
+        'ignored_field': 'CHW2_form_ignore',
+        'completion_field': 'CHW1_2_complete_date'
     },
     {
         'visit_name': _('CM Clinic Visit 2'),
@@ -163,7 +177,9 @@ VISIT_SCHEDULE = [
         'responsible_party': CONFIG['cm_role'],
         'scheduled_source': 'CM4_2_scheduled_date',
         'target_date_case_property': 'CM4_2_form_target',
-        'completed_date': ['CM4_2_complete', 'CM4_2_complete_date']
+        'completed_date': ['CM4_2_complete', 'CM4_2_complete_date'],
+        'ignored_field': 'CM5_form_ignore',
+        'completion_field': 'CM4_2_complete_date'
     },
     {
         'visit_name': _('CHW CDSMP tracking'),
@@ -173,7 +189,9 @@ VISIT_SCHEDULE = [
         'show_button': False,
         'responsible_party': CONFIG['chw_role'],
         'target_date_case_property': 'CHW4_form_target',
-        'completed_date': ['CHW4_form_completed']
+        'completed_date': ['CHW4_form_completed'],
+        'ignored_field': 'CHW4_form_ignore',
+        'completion_field': 'CHW4_form_completed'
     },
     {
         'visit_name': _('CHW Home Visit 3'),
@@ -184,7 +202,9 @@ VISIT_SCHEDULE = [
         'responsible_party': CONFIG['chw_role'],
         'scheduled_source': 'CHW1_3_scheduled_date',
         'target_date_case_property': 'CHW1_3_form_target',
-        'completed_date': ['CHW1_3_complete', 'CHW1_3_complete_date']
+        'completed_date': ['CHW1_3_complete', 'CHW1_3_complete_date'],
+        'ignored_field': 'CHW2-2_form_ignore',
+        'completion_field': 'CHW1_3_complete_date'
     },
     {
         'visit_name': _('CM Clinic Visit 3'),
@@ -195,7 +215,9 @@ VISIT_SCHEDULE = [
         'responsible_party': CONFIG['cm_role'],
         'scheduled_source': 'CM4_3_scheduled_date',
         'target_date_case_property': 'CM4_3_form_target',
-        'completed_date': ['CM4_3_complete', 'CM4_3_complete_date']
+        'completed_date': ['CM4_3_complete', 'CM4_3_complete_date'],
+        'ignored_field': 'CM5-2_form_ignore',
+        'completion_field': 'CM4_3_complete_date'
     },
 ]
 

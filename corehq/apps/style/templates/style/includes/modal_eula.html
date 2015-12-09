@@ -1,6 +1,6 @@
 {% load i18n %}
 {% if request.couch_user and not request.couch_user.is_eula_signed %}
-    <div class="modal fade" id="modalEula">
+    <div class="modal fade" id="eulaModal">
         <div class="modal-dialog">
             <form id="eula-agree"
                   action="{% url "agree_to_eula" %}"
@@ -28,10 +28,10 @@
         </div>
     </div>
     {% url "eula_basic" as eula_url %}
-    {% include 'style/includes/load_into_modal.html' with modal_id="modal-eula" load_from=eula_url %}
+    {% include 'style/includes/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
     <script type="text/javascript">
         $(window).load(function(){
-            $('#modalEula').modal('show');
+            $('#eulaModal').modal('show');
         });
     </script>
 {% endif %}

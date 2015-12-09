@@ -1,37 +1,33 @@
-# encoding: utf-8
-import datetime
-from south.db import db
-from south.v2 import SchemaMigration
-from django.db import models
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 
-class Migration(SchemaMigration):
-
-    def forwards(self, orm):
-        
-        # Adding model 'McctStatus'
-        db.create_table(u'm4change_mcctstatus', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('form_id', self.gf('django.db.models.fields.CharField')(max_length=100, db_index=True)),
-            ('status', self.gf('django.db.models.fields.CharField')(max_length=20)),
-            ('domain', self.gf('django.db.models.fields.CharField')(max_length=256, null=True, db_index=True)),
-        ))
-        db.send_create_signal(u'm4change', ['McctStatus'])
+from django.db import models, migrations
 
 
-    def backwards(self, orm):
-        
-        # Deleting model 'McctStatus'
-        db.delete_table(u'm4change_mcctstatus')
+class Migration(migrations.Migration):
 
+    dependencies = [
+    ]
 
-    models = {
-        u'm4change.mcctstatus': {
-            'Meta': {'object_name': 'McctStatus'},
-            'domain': ('django.db.models.fields.CharField', [], {'max_length': '256', 'null': 'True', 'db_index': 'True'}),
-            'form_id': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'status': ('django.db.models.fields.CharField', [], {'max_length': '20'})
-        }
-    }
-
-    complete_apps = ['m4change']
+    operations = [
+        migrations.CreateModel(
+            name='McctStatus',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('form_id', models.CharField(unique=True, max_length=100, db_index=True)),
+                ('status', models.CharField(max_length=20)),
+                ('domain', models.CharField(max_length=256, null=True, db_index=True)),
+                ('reason', models.CharField(max_length=32, null=True)),
+                ('received_on', models.DateField(null=True)),
+                ('registration_date', models.DateField(null=True)),
+                ('immunized', models.BooleanField(default=False)),
+                ('is_booking', models.BooleanField(default=False)),
+                ('is_stillbirth', models.BooleanField(default=False)),
+                ('modified_on', models.DateTimeField(auto_now=True)),
+                ('user', models.CharField(max_length=255, null=True)),
+            ],
+            options={
+            },
+            bases=(models.Model,),
+        ),
+    ]

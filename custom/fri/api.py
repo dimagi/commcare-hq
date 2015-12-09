@@ -4,6 +4,7 @@ from dateutil.parser import parse
 from datetime import datetime, timedelta, date, time
 import pytz
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.util.timezones.conversions import PhoneTime
 from custom.fri.models import (
     PROFILE_A,
@@ -18,8 +19,8 @@ from custom.fri.models import (
     FRIExtraMessage,
 )
 from corehq.util.timezones.utils import get_timezone_for_user
-from redis_cache.cache import RedisCache
-from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.couch import release_lock
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq.apps.domain.models import Domain
 from dimagi.utils.logging import notify_exception
 
@@ -98,13 +99,15 @@ MSG_ID_CLOSED = "CLOSED"
 MSG_ID_REOPEN = "REOPEN"
 MSG_ID_OFF_NOTICE = "OFF_NOTICE"
 
+
 def letters_only(text):
     return re.sub(r"[^a-zA-Z]", "", text).upper()
 
+
 def get_interactive_participants(domain):
-    cases = CommCareCase.view("hqcase/types_by_domain", key=[domain, "participant"], include_docs=True, reduce=False).all()
+    cases = get_cases_in_domain(domain, 'participant')
     result = []
-    timezone = get_timezone_for_user(None, domain) # Use project timezone only
+    timezone = get_timezone_for_user(None, domain)  # Use project timezone only
     current_date = datetime.now(tz=timezone).date()
     for case in cases:
         study_arm = case.get_case_property("study_arm")
@@ -113,9 +116,10 @@ def get_interactive_participants(domain):
             if start_date is None:
                 continue
             end_date = start_date + timedelta(days=55)
-            if current_date >= start_date and current_date <= end_date:
+            if start_date <= current_date <= end_date:
                 result.append(case)
     return result
+
 
 def get_message_bank(domain, risk_profile=None, for_comparing=False):
     if risk_profile is not None:
@@ -196,11 +200,6 @@ def randomize_messages(case):
         randomized_message.save()
         order += 1
 
-def get_redis_client():
-    rcache = cache_core.get_redis_default_cache()
-    if not isinstance(rcache, RedisCache):
-        raise Exception("Could not get redis client. Is redis down?")
-    return rcache.raw_client
 
 def already_randomized(case):
     any_message = FRIRandomizedMessage.view(
@@ -219,7 +218,7 @@ def get_randomized_message(case, order):
         lock.acquire(blocking=True)
         if not already_randomized(case):
             randomize_messages(case)
-        lock.release()
+        release_lock(lock, True)
 
         message = FRIRandomizedMessage.view(
             "fri/randomized_message",

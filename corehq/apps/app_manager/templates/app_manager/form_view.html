@@ -101,8 +101,8 @@
         reserved_words: {{ case_reserved_words_json|JSON }},
         moduleCaseTypes: {{ module_case_types|JSON }},
         caseType: {{ form.get_case_type|JSON }},
+        allowUsercase: {{ allow_usercase|JSON }},
         propertiesMap: {{ case_properties|JSON }},
-        usercaseEnabled: {{ usercase_toggle_on|JSON }},
         usercasePropertiesMap: {{ usercase_properties|JSON }}
         {% if app.application_version == '1.0' %}
         ,ejs_urls: {

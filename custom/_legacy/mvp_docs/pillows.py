@@ -3,19 +3,23 @@ from couchdbkit import ChangesStream, ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.indicators.models import FormIndicatorDefinition, \
     CaseIndicatorDefinition, CaseDataInFormIndicatorDefinition
-from corehq.apps.indicators.utils import get_namespaces, get_indicator_domains
+from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.pillows.utils import get_deleted_doc_types
 from couchforms.models import XFormInstance
 from mvp_docs.models import IndicatorXForm, IndicatorCase
+from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class
 from pillowtop.listener import BasicPillow
 
 pillow_logging = logging.getLogger("pillowtop")
-pillow_eval_logging = logging.getLogger("pillowtop_eval")
 
 
 class MVPIndicatorPillowBase(BasicPillow):
     indicator_class = None
     couch_filter = 'hqadmin/domains_and_doc_types'
+
+    def __init__(self):
+        checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
+        super(MVPIndicatorPillowBase, self).__init__(checkpoint=checkpoint)
 
     @property
     def extra_args(self):
@@ -32,22 +36,8 @@ class MVPIndicatorPillowBase(BasicPillow):
     def _deleted_doc_types(self):
         return get_deleted_doc_types(self._main_doc_type)
 
-    def run_burst(self):
-        """
-        Use this for testing pillows. Will run through the changes stream once.
-        """
-        changes_stream = ChangesStream(
-            db=self.couch_db,
-            since=self.since,
-            filter=self.couch_filter,
-            include_docs=self.include_docs,
-            **self.extra_args
-        )
-        for change in changes_stream:
-            if change:
-                self.processor(change)
-
     def change_transform(self, doc_dict):
+        from corehq.apps.indicators.utils import get_namespaces
         doc_type = doc_dict.get('doc_type')
         if doc_type in self._deleted_doc_types:
             self._delete_doc(doc_dict)
@@ -80,24 +70,19 @@ class MVPFormIndicatorPillow(MVPIndicatorPillowBase):
         if not xmlns:
             return
 
-        form_indicator_defs = []
-        for namespace in namespaces:
-            form_indicator_defs.extend(
-                FormIndicatorDefinition.get_all(namespace, domain, xmlns=xmlns)
-            )
-
+        form_indicator_defs = get_form_indicators(namespaces, domain, xmlns)
         if not form_indicator_defs:
             return
 
         try:
             indicator_form = IndicatorXForm.wrap_for_indicator_db(doc_dict)
             indicator_form.update_indicators_in_bulk(
-                form_indicator_defs, logger=pillow_eval_logging,
+                form_indicator_defs, logger=pillow_logging,
                 save_on_update=False
             )
             indicator_form.save()
         except Exception as e:
-            pillow_eval_logging.error(
+            pillow_logging.error(
                 "Error creating for MVP Indicator for form %(form_id)s: "
                 "%(error)s" % {
                     'form_id': doc_dict['_id'],
@@ -128,12 +113,12 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
         try:
             indicator_case = IndicatorCase.wrap_for_indicator_db(doc_dict)
             indicator_case.update_indicators_in_bulk(
-                case_indicator_defs, logger=pillow_eval_logging,
+                case_indicator_defs, logger=pillow_logging,
                 save_on_update=False
             )
             indicator_case.save()
         except Exception as e:
-            pillow_eval_logging.error(
+            pillow_logging.error(
                 "Error creating for MVP Indicator for form %(form_id)s: "
                 "%(error)s" % {
                     'form_id': doc_dict['_id'],
@@ -148,24 +133,31 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
             return
 
         for xform_id in xform_ids:
+            related_xform_indicators = []
             try:
-                xform_dict = XFormInstance.get_db().get(xform_id)
-                xform_doc = IndicatorXForm.wrap_for_indicator_db(xform_dict)
+                # first try to get the doc from the indicator DB
+                xform_doc = IndicatorXForm.get(xform_id)
             except ResourceNotFound:
-                pillow_eval_logging.error(
-                    "Could not find an XFormInstance with id %(xform_id)s "
-                    "related to Case %(case_id)s" % {
-                        'xform_id': xform_id,
-                        'case_id': doc_dict['_id'],
-                    }
-                )
-                continue
+                # if that fails fall back to the main DB
+                try:
+                    xform_dict = XFormInstance.get_db().get(xform_id)
+                    xform_doc = IndicatorXForm.wrap_for_indicator_db(xform_dict)
+                    related_xform_indicators = get_form_indicators(namespaces, domain, xform_doc.xmlns)
+                except ResourceNotFound:
+                    pillow_logging.error(
+                        "Could not find an XFormInstance with id %(xform_id)s "
+                        "related to Case %(case_id)s" % {
+                            'xform_id': xform_id,
+                            'case_id': doc_dict['_id'],
+                        }
+                    )
+                    continue
 
             if not xform_doc.xmlns:
                 continue
-            related_xform_defs = []
+
             for namespace in namespaces:
-                related_xform_defs.extend(
+                related_xform_indicators.extend(
                     CaseDataInFormIndicatorDefinition.get_all(
                         namespace,
                         domain,
@@ -173,8 +165,15 @@ class MVPCaseIndicatorPillow(MVPIndicatorPillowBase):
                     )
                 )
             xform_doc.update_indicators_in_bulk(
-                related_xform_defs,
-                logger=pillow_eval_logging,
+                related_xform_indicators,
+                logger=pillow_logging,
                 save_on_update=False
             )
             xform_doc.save()
+
+
+def get_form_indicators(namespaces, domain, xmlns):
+    return [
+        indicator for namespace in namespaces
+        for indicator in FormIndicatorDefinition.get_all(namespace, domain, xmlns=xmlns)
+    ]

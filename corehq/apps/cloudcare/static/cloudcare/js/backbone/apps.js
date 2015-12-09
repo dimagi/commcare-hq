@@ -60,8 +60,8 @@ cloudCare.AppListView = Backbone.View.extend({
 
     render: function () {
         var self = this;
-        var ul = $("<ul />").addClass("nav nav-list").appendTo($(self.el));
-        $("<li />").addClass("nav-header").text("Apps").appendTo(ul);
+        var ul = $("<ul />").addClass("nav nav-hq-sidebar").appendTo($(self.el));
+        $("<li />").addClass("text-hq-nav-header").text("Apps").appendTo(ul);
         _(self.appList.models).each(function(item){
             self.appendItem(item);
         });
@@ -128,9 +128,6 @@ cloudCare.App = LocalizableModel.extend({
     },
     renderFormRoot: function () {
         return this.get("renderFormRoot");
-    },
-    renderXmlRoot: function () {
-        return this.get("renderXmlRoot");
     },
     instanceViewerEnabled: function () {
         return this.get("instanceViewerEnabled");
@@ -247,8 +244,8 @@ cloudCare.SessionListView = Backbone.View.extend({
         var self = this;
         $(self.el).html('');
         if (self.sessionList.length) {
-            var ul = $("<ul />").addClass("nav nav-list").appendTo($(self.el));
-            $("<li />").addClass("nav-header").text("Incomplete Forms").appendTo(ul);
+            var ul = $("<ul />").addClass("nav nav-hq-sidebar").appendTo($(self.el));
+            $("<li />").addClass("text-hq-nav-header").text("Incomplete Forms").appendTo(ul);
             _(self.sessionList.models).each(function(item){
                 self.appendItem(item);
             });
@@ -370,8 +367,8 @@ cloudCare.ModuleListView = Backbone.View.extend({
         this._moduleViews = {};
 
         var self = this;
-        var ul = $("<ul />").addClass("nav nav-list").appendTo($(this.el));
-        $("<li />").addClass("nav-header").text("Modules").appendTo(ul);
+        var ul = $("<ul />").addClass("nav nav-hq-sidebar").appendTo($(this.el));
+        $("<li />").addClass("text-hq-nav-header").text("Modules").appendTo(ul);
         _(this.moduleList.models).each(function(item){
             self.appendItem(item);
         });
@@ -424,8 +421,8 @@ cloudCare.FormListView = Backbone.View.extend({
         var taskListOnly = self.model ? self.model.taskListOnly : false;
         $(self.el).html("");
         if (self.model) {
-	        var formUl = $("<ul />").addClass("nav nav-list").appendTo($(self.el));
-	        $("<li />").addClass("nav-header").text("Forms").appendTo(formUl);
+	        var formUl = $("<ul />").addClass("nav nav-hq-sidebar").appendTo($(self.el));
+	        $("<li />").addClass("text-hq-nav-header").text("Forms").appendTo(formUl);
 	        _(self.model.forms).each(function (form) {
                 if (!taskListOnly || form.get('index') === 'task-list') {
                     self.appendForm(form);
@@ -520,7 +517,8 @@ cloudCare.AppView = Backbone.View.extend({
         this.model = app;
     },
     selectCase: function (caseModel) {
-        var self = this;
+        var self = this,
+            buttonUrl;
         self.formListView.caseView.selectCase(caseModel);
         if (caseModel) {
             var module = self.selectedModule;
@@ -530,7 +528,7 @@ cloudCare.AppView = Backbone.View.extend({
                 // Construct a button which will take the user to the form
 
                 var buttonText = "Enter " + form.getLocalized("name", self.options.language);
-                var buttonUrl = getFormEntryUrl(self.options.urlRoot,
+                buttonUrl = getFormEntryUrl(self.options.urlRoot,
                                                         form.get("app_id"),
                                                         form.get("module_index"),
                                                         form.get("index"),
@@ -544,7 +542,7 @@ cloudCare.AppView = Backbone.View.extend({
                 //       But, in the currently selected case heading we want a singular version
                 //       e.g. "Mother: Mary"
                 var buttonText = "View " + self.selectedModule.get("case_label")[self.options.language];
-                var buttonUrl = getChildSelectUrl(self.options.urlRoot,
+                buttonUrl = getChildSelectUrl(self.options.urlRoot,
                                                         form.get("app_id"),
                                                         form.get("module_index"),
                                                         form.get("index"),
@@ -559,9 +557,9 @@ cloudCare.AppView = Backbone.View.extend({
             ).addClass("btn btn-primary").appendTo(
                 self.formListView.caseView.detailsView.el
             );
-            $('<a />').attr('href', buttonUrl).attr('target', '_blank').text(translatedStrings.newWindow).appendTo(
+            $('<a class="btn btn-default"/>').attr('href', buttonUrl).attr('target', '_blank').text(translatedStrings.newWindow).appendTo(
                 self.formListView.caseView.detailsView.el
-            ).css("padding-left", "2em");
+            ).css("margin-left", "5px");
             self.formListView.enterForm.click(buttonOnClick);
         } else {
             if (self.formListView.enterForm) {
@@ -651,6 +649,9 @@ cloudCare.AppView = Backbone.View.extend({
             self.caseSelectionView.model.set("childCase", caseModel);
         }
 
+        data.formContext = {
+            case_model: caseModel ? caseModel.toJSON() : null
+        };
         data.onsubmit = function (xml) {
             window.mainView.router.view.dirty = false;
             // post to receiver
@@ -689,25 +690,30 @@ cloudCare.AppView = Backbone.View.extend({
             cloudCare.dispatch.trigger("form:ready", form, caseModel);
         };
         data.answerCallback = function(sessionId) {
-
-            var instanceViewerEnabled = self.options.instanceViewerEnabled;
-
-            if(instanceViewerEnabled) {
-                var render_xml_url = self.options.renderXmlRoot;
+            if (self.options.instanceViewerEnabled && $('#auto-sync-control').is(':checked')) {
                 $.ajax({
-                    url: render_xml_url,
+                    url: self.options.renderFormRoot,
                     data: {'session_id': sessionId},
                     success: function (data) {
-                        showRenderedForm(data, $("#xml-viewer-pretty"));
-                    }
-                });
+                        var $instanceTab = $('#debugger-xml-instance-tab'),
+                            codeMirror;
 
-                var render_form_url = self.options.renderFormRoot;
-                $.ajax({
-                    url: render_form_url,
-                    data: {'session_id': sessionId},
-                    success: function (data) {
-                        showRenderedForm(data, $("#question-viewer-pretty"));
+                        codeMirror = CodeMirror(function(el) {
+                            $('#xml-viewer-pretty').html(el);
+                        }, {
+                            value: data.instance_xml,
+                            mode: 'xml',
+                            viewportMargin: Infinity,
+                            readOnly: true,
+                            lineNumbers: true,
+                        });
+
+                        $instanceTab.off();
+                        $instanceTab.on('shown.bs.tab', function() {
+                            codeMirror.refresh();
+                        });
+
+                        $("#question-viewer-pretty").html(data.form_data || 'Could not render form');
                     }
                 });
             }
@@ -724,18 +730,14 @@ cloudCare.AppView = Backbone.View.extend({
                 return '/hq/multimedia/file/' + media_type + '/' + id + '/' + name;
             }
         };
+        data.onLoading = tfLoading;
+        data.onLoadingComplete = tfLoadingComplete;
         var loadSession = function() {
             var sess = new WebFormSession(data);
             // TODO: probably shouldn't hard code these divs
-            sess.load($('#webforms'), self.options.language, {
-                onLoading: tfLoading,
-                onLoadingComplete: tfLoadingComplete
-            });
+            sess.load($('#webforms'), self.options.language);
         };
-        var promptForOffline = function(show) {
-            $('#offline-prompt')[show ? 'show' : 'hide']();
-        };
-        touchformsInit(data.xform_url, loadSession, promptForOffline);
+        loadSession();
     },
     selectForm: function (form) {
         var self = this;
@@ -866,6 +868,21 @@ cloudCare.AppMainView = Backbone.View.extend({
         self._navEnabled = true;
         self.router = new cloudCare.AppNavigation();
         self._sessionsEnabled = self.options.sessionsEnabled;
+        self._urlParams = {};
+
+        // http://stackoverflow.com/a/2880929/835696
+        // populates a dictionary of key values from the url
+        (window.onpopstate = function () {
+            var match,
+                pl     = /\+/g,  // Regex for replacing addition symbol with a space
+                search = /([^&=]+)=?([^&]*)/g,
+                decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
+                query  = window.location.search.substring(1);
+
+            self._urlParams = {};
+            while (match = search.exec(query))
+               self._urlParams[decode(match[1])] = decode(match[2]);
+        })();
 
         // set initial data, if any
         if (self.options.initialApp) {
@@ -892,7 +909,6 @@ cloudCare.AppMainView = Backbone.View.extend({
             urlRoot: self.options.urlRoot,
             sessionUrlRoot: self.options.sessionUrlRoot,
             submitUrlRoot: self.options.submitUrlRoot,
-            renderXmlRoot: self.options.renderXmlRoot,
             renderFormRoot: self.options.renderFormRoot,
             instanceViewerEnabled: self.options.instanceViewerEnabled
         });
@@ -1240,8 +1256,9 @@ cloudCare.AppMainView = Backbone.View.extend({
     },
 
     navigate: function (path, options) {
+        var params = _.map(this._urlParams, function(value, key) { return key + '=' + value; }).join('&');
         if (this._navEnabled) {
-            this.router.navigate(path, options);
+            this.router.navigate(params.length ? path + '?' + params : path, options);
         }
     },
     selectApp: function (appId, options) {

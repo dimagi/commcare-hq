@@ -1,13 +1,15 @@
 from django.db import transaction
+from corehq.apps.hqcase.dbaccessors import \
+    get_supply_point_case_in_domain_by_id
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty,\
     FloatProperty, DictProperty
-from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, CommtrackActionConfig
+from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.programs.models import Program
 from corehq.apps.users.models import UserRole
 from custom.api.utils import apply_updates
 from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroupReport, HistoricalLocationGroup
-from custom.logistics.utils import get_supply_point_by_external_id
 from custom.logistics.api import LogisticsEndpoint, APISynchronization, ApiSyncObject
 from corehq.apps.locations.models import Location as Loc
 
@@ -100,7 +102,7 @@ class Groups(JsonObject):
 
 
 def _get_location_id(facility, domain):
-    supply_point = get_supply_point_by_external_id(domain, facility)
+    supply_point = get_supply_point_case_in_domain_by_id(domain, facility)
     return supply_point.location_id if supply_point else None
 
 
@@ -128,20 +130,52 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
         self.deliverygroupreports_url = self._urlcombine(self.base_uri, '/deliverygroupreports/')
         self.groups = self._urlcombine(self.base_uri, '/groups/')
 
-    def get_supplypointstatuses(self, domain, facility, **kwargs):
+    def get_supplypointstatuses(self, domain, facility=None, **kwargs):
         meta, supplypointstatuses = self.get_objects(self.supplypointstatuses_url, **kwargs)
-        try:
-            location_id = SQLLocation.objects.get(domain=domain, external_id=facility).location_id
-            return meta, [SupplyPointStatus.wrap_from_json(supplypointstatus, location_id) for supplypointstatus in
-                          supplypointstatuses]
-        except SQLLocation.DoesNotExist:
-            return None, None
+        location = None
+        if facility:
+            try:
+                location = SQLLocation.objects.get(domain=domain, external_id=facility)
+            except SQLLocation.DoesNotExist:
+                return meta, []
 
-    def get_deliverygroupreports(self, domain, facility, **kwargs):
+        statuses = []
+        for supplypointstatus in supplypointstatuses:
+            if not location:
+                try:
+                    statuses.append(SupplyPointStatus.wrap_from_json(supplypointstatus, SQLLocation.objects.get(
+                        domain=domain,
+                        external_id=supplypointstatus['supply_point']
+                    )))
+                except SQLLocation.DoesNotExist:
+                    continue
+            else:
+                statuses.append(SupplyPointStatus.wrap_from_json(supplypointstatus, location))
+        return meta, statuses
+
+    def get_deliverygroupreports(self, domain, facility=None, **kwargs):
         meta, deliverygroupreports = self.get_objects(self.deliverygroupreports_url, **kwargs)
-        location_id = SQLLocation.objects.filter(domain=domain, external_id=facility)
-        return meta, [DeliveryGroupReport.wrap_from_json(deliverygroupreport, location_id)
-                      for deliverygroupreport in deliverygroupreports]
+        location = None
+        if facility:
+            try:
+                location = SQLLocation.objects.get(domain=domain, external_id=facility)
+            except SQLLocation.DoesNotExist:
+                return meta, []
+
+        reports = []
+        for deliverygroupreport in deliverygroupreports:
+            if not location:
+                try:
+                    reports.append(DeliveryGroupReport.wrap_from_json(deliverygroupreport, SQLLocation.objects.get(
+                        domain=domain,
+                        external_id=deliverygroupreport['supply_point']
+                    )))
+                except SQLLocation.DoesNotExist:
+                    continue
+            else:
+                reports.append(DeliveryGroupReport.wrap_from_json(deliverygroupreport, location))
+
+        return meta, reports
 
     def get_groups(self, **kwargs):
         meta, groups_list = self.get_objects(self.groups, **kwargs)
@@ -149,13 +183,16 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
             Groups(obj) for obj in groups_list
         ]
 
-    def get_stocktransactions(self, start_date=None, end_date=None, **kwargs):
-        kwargs.get('filters', {}).update({
-            'date__gte': start_date,
-        })
-        meta, stock_transactions = self.get_objects(self.stocktransactions_url, **kwargs)
+    def get_stocktransactions(self, filters=None, **kwargs):
+        filters = filters or {}
+        meta, stock_transactions = self.get_objects(self.stocktransactions_url, filters=filters, **kwargs)
         return meta, [(self.models_map['stock_transaction'])(stock_transaction)
                       for stock_transaction in stock_transactions]
+
+
+EXCLUDED_REGIONS = [
+    24, 25, 26, 27, 148
+]
 
 
 class ILSGatewayAPI(APISynchronization):
@@ -192,7 +229,7 @@ class ILSGatewayAPI(APISynchronization):
                 'location_region',
                 self.endpoint.get_locations,
                 self.location_sync,
-                'date_updated__gte',
+                'date_updated',
                 filters={
                     'type': 'region',
                     'is_active': True
@@ -202,7 +239,7 @@ class ILSGatewayAPI(APISynchronization):
                 'location_district',
                 self.endpoint.get_locations,
                 self.location_sync,
-                'date_updated__gte',
+                'date_updated',
                 filters={
                     'type': 'district',
                     'is_active': True
@@ -212,7 +249,7 @@ class ILSGatewayAPI(APISynchronization):
                 'location_facility',
                 self.endpoint.get_locations,
                 self.location_sync,
-                'date_updated__gte',
+                'date_updated',
                 filters={
                     'type': 'facility',
                     'is_active': True
@@ -224,8 +261,8 @@ class ILSGatewayAPI(APISynchronization):
                 self.location_groups_sync,
                 migrate_once=True
             ),
-            ApiSyncObject('webuser', self.endpoint.get_webusers, self.web_user_sync, 'user__date_joined__gte'),
-            ApiSyncObject('smsuser', self.endpoint.get_smsusers, self.sms_user_sync, 'date_updated__gte')
+            ApiSyncObject('webuser', self.endpoint.get_webusers, self.web_user_sync, 'user__date_joined'),
+            ApiSyncObject('smsuser', self.endpoint.get_smsusers, self.sms_user_sync, 'date_updated')
         ]
 
     def create_or_edit_roles(self):
@@ -334,6 +371,9 @@ class ILSGatewayAPI(APISynchronization):
             return
 
         if not location:
+            if ilsgateway_location.id in EXCLUDED_REGIONS:
+                return
+
             if ilsgateway_location.parent_id:
                 try:
                     sql_loc_parent = SQLLocation.objects.get(
@@ -344,6 +384,8 @@ class ILSGatewayAPI(APISynchronization):
                 except SQLLocation.DoesNotExist:
                     parent = self.endpoint.get_location(ilsgateway_location.parent_id)
                     loc_parent = self.location_sync(Location(parent))
+                    if not loc_parent:
+                        return
 
                 if ilsgateway_location.type == 'REGION':
                     location = Loc(parent=get_or_create_msd_zone(ilsgateway_location))
@@ -365,8 +407,9 @@ class ILSGatewayAPI(APISynchronization):
             location.external_id = unicode(ilsgateway_location.id)
             location.save()
 
-            if ilsgateway_location.type == 'FACILITY' and not SupplyPointCase.get_by_location(location):
-                SupplyPointCase.create_from_location(self.domain, location)
+            interface = SupplyInterface(self.domain)
+            if ilsgateway_location.type == 'FACILITY' and not interface.get_by_location(location):
+                interface.create_from_location(self.domain, location)
                 location.save()
         else:
             location_dict = {
@@ -380,17 +423,17 @@ class ILSGatewayAPI(APISynchronization):
             }
             if ilsgateway_location.groups:
                 location_dict['metadata']['group'] = ilsgateway_location.groups[0]
-            case = SupplyPointCase.get_by_location(location)
+            case = SupplyInterface(self.domain).get_by_location(location)
             if apply_updates(location, location_dict):
                 location.save()
                 if case:
                     case.update_from_location(location)
                 else:
-                    SupplyPointCase.create_from_location(self.domain, location)
+                    SupplyInterface.create_from_location(self.domain, location)
         return location
 
     def location_groups_sync(self, location_groups):
-        with transaction.commit_on_success():
+        with transaction.atomic():
             for date, groups in location_groups.groups.iteritems():
                 try:
                     sql_location = SQLLocation.objects.get(

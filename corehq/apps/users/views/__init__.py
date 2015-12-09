@@ -1,65 +1,73 @@
 from __future__ import absolute_import
+from datetime import datetime
 import json
+import langcodes
+import logging
 import re
 import urllib
-from django.utils.decorators import method_decorator
-from django.views.decorators.debug import sensitive_post_parameters
-from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
-from corehq import Domain, privileges, toggles
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.sms.mixin import BadSMSConfigException
-from corehq.apps.style.decorators import (
-    check_preview_bootstrap3,
-    use_knockout_js,
-)
-from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
-from corehq.apps.users.util import smart_query_string
-from corehq.elastic import ADD_TO_ES_FILTER, es_query, ES_URLS
-from dimagi.utils.decorators.memoized import memoized
-from django_prbac.exceptions import PermissionDenied
-from django_prbac.utils import ensure_request_has_privilege
-import langcodes
-from datetime import datetime
-from couchdbkit.exceptions import ResourceNotFound
 
-from dimagi.utils.couch.database import get_db
+from django.contrib import messages
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
-from django.contrib import messages
+
+from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
+
+from couchdbkit.exceptions import ResourceNotFound
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.web import json_response
 from django_digest.decorators import httpdigest
+from django_prbac.utils import has_privilege
 from no_exceptions.exceptions import Http403
 
-from dimagi.utils.web import json_response
-
-from corehq.apps.registration.forms import AdminInvitesUserForm
-from corehq.apps.hqwebapp.utils import InvitationView
-from corehq.apps.users.forms import (UpdateUserRoleForm, BaseUserInfoForm, UpdateMyAccountInfoForm, CommtrackUserForm, UpdateUserPermissionForm)
-from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser,
-                                      DomainRemovalRecord, UserRole, AdminUserRole, DomainInvitation, PublicUser,
-                                      DomainMembershipError)
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
-from corehq.apps.orgs.models import Team
+from corehq.apps.domain.models import Domain, toggles
+from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.es.queries import search_string_query
+from corehq.apps.hqwebapp.utils import send_confirmation_email
+from corehq.apps.hqwebapp.views import BasePageView, logout
+from corehq.apps.registration.forms import AdminInvitesUserForm, \
+    NewWebUserRegistrationForm
+from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.reports.util import get_possible_reports
-from corehq.apps.sms import verify as smsverify
+from corehq.apps.sms.verify import (
+    initiate_sms_verification_workflow,
+    VERIFICATION__ALREADY_IN_USE,
+    VERIFICATION__ALREADY_VERIFIED,
+    VERIFICATION__RESENT_PENDING,
+    VERIFICATION__WORKFLOW_STARTED,
+)
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_knockout_js,
+)
+from corehq.apps.translations.models import StandaloneTranslationDoc
+from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
+from corehq.apps.users.forms import (BaseUserInfoForm, CommtrackUserForm, DomainRequestForm,
+                                     UpdateMyAccountInfoForm, UpdateUserPermissionForm, UpdateUserRoleForm)
+from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
+                                      DomainRemovalRecord, UserRole, AdminUserRole, Invitation, PublicUser,
+                                      DomainMembershipError)
+from corehq.elastic import ADD_TO_ES_FILTER, es_query, ES_URLS
 from corehq.util.couch import get_document_or_404
-
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
 
 def _users_context(request, domain):
     couch_user = request.couch_user
     web_users = WebUser.by_domain(domain)
-    teams = Team.get_by_domain(domain)
-    for team in teams:
-        for user in team.get_members():
-            if user.get_id not in [web_user.get_id for web_user in web_users]:
-                user.from_team = True
-                web_users.append(user)
 
     for user in [couch_user] + list(web_users):
         user.current_domain = domain
@@ -109,10 +117,11 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
             user = CouchUser.get_by_user_id(self.couch_user._id, self.domain)
             if user:
                 if user.has_permission(self.domain, 'edit_commcare_users'):
-                    redirect = reverse("commcare_users", args=[self.domain])
+                    from corehq.apps.users.views.mobile import MobileWorkerListView
+                    redirect = reverse(MobileWorkerListView.urlname, args=[self.domain])
                 elif user.has_permission(self.domain, 'edit_web_users'):
                     redirect = reverse(
-                        get_web_user_list_view(self.request).urlname,
+                        ListWebUsersView.urlname,
                         args=[self.domain]
                     )
         return redirect
@@ -134,10 +143,9 @@ class BaseEditUserView(BaseUserSettingsView):
 
     @property
     def parent_pages(self):
-        list_view = get_web_user_list_view(self.request)
         return [{
-            'title': list_view.page_title,
-            'url': reverse(list_view.urlname, args=[self.domain]),
+            'title': ListWebUsersView.page_title,
+            'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
         }]
 
     @property
@@ -219,7 +227,7 @@ class BaseEditUserView(BaseUserSettingsView):
             self.editable_user.save()
         elif self.request.POST['form_type'] == "update-user":
             if all([self.update_user(), self.custom_user_is_valid()]):
-                messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.username)
+                messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
 
         return self.get(request, *args, **kwargs)
 
@@ -260,7 +268,7 @@ class EditWebUserView(BaseEditUserView):
             'form_uneditable': BaseUserInfoForm(),
         }
         if (self.request.project.commtrack_enabled or
-                self.request.project.locations_enabled):
+                self.request.project.uses_locations):
             ctx.update({'update_form': self.commtrack_form})
         if self.request.couch_user.is_superuser:
             ctx.update({'update_permissions': True})
@@ -272,8 +280,6 @@ class EditWebUserView(BaseEditUserView):
         return super(EditWebUserView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        if self.editable_user_id == self.couch_user._id:
-            return HttpResponseRedirect(reverse(EditMyAccountDomainView.urlname, args=[self.domain]))
         return super(EditWebUserView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -283,6 +289,26 @@ class EditWebUserView(BaseEditUserView):
                                                                         editable_user=self.editable_user, is_super_user=is_super_user):
                 messages.success(self.request, _('Changed system permissions for user "%s"') % self.editable_user.username)
         return super(EditWebUserView, self).post(request, *args, **kwargs)
+
+
+def get_domain_languages(domain):
+    app_languages = [res['key'][1] for res in Application.get_db().view(
+        'languages/list',
+        startkey=[domain],
+        endkey=[domain, {}],
+        group='true'
+    ).all()]
+
+    translation_doc = StandaloneTranslationDoc.get_obj(domain, 'sms')
+    sms_languages = translation_doc.langs if translation_doc else []
+
+    domain_languages = []
+    for lang_code in set(app_languages + sms_languages):
+        name = langcodes.get_name(lang_code)
+        label = u"{} ({})".format(lang_code, name) if name else lang_code
+        domain_languages.append((lang_code, label))
+
+    return sorted(domain_languages) or langcodes.get_all_langs_for_select()
 
 
 class BaseFullEditUserView(BaseEditUserView):
@@ -298,28 +324,9 @@ class BaseFullEditUserView(BaseEditUserView):
 
     @property
     @memoized
-    def language_choices(self):
-        language_choices = []
-        results = []
-        if self.domain:
-            results = get_db().view('languages/list', startkey=[self.domain], endkey=[self.domain, {}], group='true').all()
-        if results:
-            for result in results:
-                lang_code = result['key'][1]
-                label = result['key'][1]
-                long_form = langcodes.get_name(lang_code)
-                if long_form:
-                    label += " (" + langcodes.get_name(lang_code) + ")"
-                language_choices.append((lang_code, label))
-        else:
-            language_choices = langcodes.get_all_langs_for_select()
-        return language_choices
-
-    @property
-    @memoized
     def form_user_update(self):
         form = super(BaseFullEditUserView, self).form_user_update
-        form.load_language(language_choices=self.language_choices)
+        form.load_language(language_choices=get_domain_languages(self.domain))
         return form
 
     def post(self, request, *args, **kwargs):
@@ -362,7 +369,7 @@ class EditMyAccountDomainView(BaseFullEditUserView):
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
         }
         if (self.request.project.commtrack_enabled or
-                self.request.project.locations_enabled):
+                self.request.project.uses_locations):
             context.update({
                 'update_form': self.commtrack_form,
             })
@@ -371,53 +378,38 @@ class EditMyAccountDomainView(BaseFullEditUserView):
     def get(self, request, *args, **kwargs):
         if self.couch_user.is_commcare_user():
             from corehq.apps.users.views.mobile import EditCommCareUserView
-            return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[self.domain, self.editable_user_id]))
+            return HttpResponseRedirect(reverse(EditCommCareUserView.urlname,
+                                        args=[self.domain, self.editable_user_id]))
         return super(EditMyAccountDomainView, self).get(request, *args, **kwargs)
 
 
-class NewListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
-    template_name = 'users/web_users.b3.html'
+class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
+    template_name = 'users/web_users.html'
     page_title = ugettext_lazy("Web Users & Roles")
-    urlname = 'web_users_b3'
+    urlname = 'web_users'
 
-    @method_decorator(check_preview_bootstrap3())
-    @method_decorator(use_knockout_js())
+    @use_bootstrap3
+    @use_knockout_js
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
-        return super(NewListWebUsersView, self).dispatch(request, *args, **kwargs)
+        return super(ListWebUsersView, self).dispatch(request, *args, **kwargs)
 
     def query_es(self, limit, skip, query=None):
-        is_simple, query = smart_query_string(query or '')
-
         web_user_filter = [
             {"term": {"user.domain_memberships.domain": self.domain}},
         ]
         web_user_filter.extend(ADD_TO_ES_FILTER['web_users'])
 
-        default_fields = ["username", "last_name", "first_name"]
         q = {
-            "query": {"query_string": {
-                "query": query,
-                "default_operator": "AND",
-                "fields": default_fields if is_simple else None
-            }},
             "filter": {"and": web_user_filter},
             "sort": {'username.exact': 'asc'},
         }
+        default_fields = ["username", "last_name", "first_name"]
+        q["query"] = search_string_query(query, default_fields)
         return es_query(
             params={}, q=q, es_url=ES_URLS["users"],
             size=limit, start_at=skip,
         )
-
-    def apply_teams_to_users(self, web_users):
-        teams = Team.get_by_domain(self.domain)
-        for team in teams:
-            for user in team.get_members():
-                if user.get_id not in [web_user.get_id for web_user in web_users]:
-                    user.from_team = True
-                    web_users.append(user)
-        for user in web_users:
-            user.current_domain = self.domain
 
     @allow_remote_invocation
     def get_users(self, in_data):
@@ -437,14 +429,13 @@ class NewListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             results = web_users_query.get('hits', {}).get('hits', [])
 
             web_users = [WebUser.wrap(w['_source']) for w in results]
-            self.apply_teams_to_users(web_users)  # for roles
 
             def _fmt_result(domain, u):
                 return {
-                    'email': u.email,
+                    'email': u.get_email(),
                     'domain': domain,
                     'name': u.full_name,
-                    'role': u.role_label(),
+                    'role': u.role_label(domain),
                     'phoneNumbers': u.phone_numbers,
                     'id': u.get_id,
                     'editUrl': reverse('user_account', args=[domain, u.get_id]),
@@ -488,11 +479,8 @@ class NewListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     def can_edit_roles(self):
-        try:
-            ensure_request_has_privilege(self.request, privileges.ROLE_BASED_ACCESS)
-        except PermissionDenied:
-            return False
-        return self.couch_user.is_domain_admin
+        return has_privilege(self.request, privileges.ROLE_BASED_ACCESS) \
+            and self.couch_user.is_domain_admin
 
     @property
     @memoized
@@ -506,7 +494,7 @@ class NewListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     @property
     @memoized
     def invitations(self):
-        invitations = DomainInvitation.by_domain(self.domain)
+        invitations = Invitation.by_domain(self.domain)
         for invitation in invitations:
             invitation.role_label = self.role_labels.get(invitation.role, "")
         return invitations
@@ -519,90 +507,11 @@ class NewListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
             'invitations': self.invitations,
+            'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],
+            'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
+            'uses_locations': self.domain_object.uses_locations,
         }
-
-
-class ListWebUsersView(BaseUserSettingsView):
-    template_name = 'users/web_users.html'
-    page_title = ugettext_lazy("Web Users & Roles")
-    urlname = 'web_users'
-
-    @method_decorator(require_can_edit_web_users)
-    def dispatch(self, request, *args, **kwargs):
-        return super(ListWebUsersView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    @memoized
-    def web_users(self):
-        web_users = WebUser.by_domain(self.domain)
-        teams = Team.get_by_domain(self.domain)
-        for team in teams:
-            for user in team.get_members():
-                if user.get_id not in [web_user.get_id for web_user in web_users]:
-                    user.from_team = True
-                    web_users.append(user)
-        for user in web_users:
-            user.current_domain = self.domain
-        web_users.sort(key=lambda x: (x.role_label(), x.email))
-        return web_users
-
-    @property
-    @memoized
-    def user_roles(self):
-        user_roles = [AdminUserRole(domain=self.domain)]
-        user_roles.extend(sorted(UserRole.by_domain(self.domain),
-                                 key=lambda role: role.name if role.name else u'\uFFFF'))
-
-        #  indicate if a role has assigned users, skip admin role
-        for i in range(1, len(user_roles)):
-            role = user_roles[i]
-            role.__setattr__('hasUsersAssigned',
-                             True if len(role.ids_of_assigned_users) > 0 else False)
-        return user_roles
-
-    @property
-    def can_edit_roles(self):
-        try:
-            ensure_request_has_privilege(self.request, privileges.ROLE_BASED_ACCESS)
-        except PermissionDenied:
-            return False
-        return self.couch_user.is_domain_admin
-
-    @property
-    @memoized
-    def role_labels(self):
-        role_labels = {}
-        for r in self.user_roles:
-            key = 'user-role:%s' % r.get_id if r.get_id else r.get_qualified_id()
-            role_labels[key] = r.name
-        return role_labels
-
-    @property
-    @memoized
-    def invitations(self):
-        invitations = DomainInvitation.by_domain(self.domain)
-        for invitation in invitations:
-            invitation.role_label = self.role_labels.get(invitation.role, "")
-        return invitations
-
-    @property
-    def page_context(self):
-        return {
-            'web_users': self.web_users,
-            'user_roles': self.user_roles,
-            'can_edit_roles': self.can_edit_roles,
-            'default_role': UserRole.get_default(),
-            'report_list': get_possible_reports(self.domain),
-            'invitations': self.invitations,
-            'domain_object': self.domain_object
-        }
-
-
-def get_web_user_list_view(request):
-    if toggles.PAGINATE_WEB_USERS.enabled(request.domain):
-        return NewListWebUsersView
-    return ListWebUsersView
 
 
 @require_can_edit_web_users
@@ -620,7 +529,7 @@ def remove_web_user(request, domain, couch_user_id):
         ), extra_tags="html")
 
     return HttpResponseRedirect(
-        reverse(get_web_user_list_view(request).urlname, args=[domain]))
+        reverse(ListWebUsersView.urlname, args=[domain]))
 
 
 @require_can_edit_web_users
@@ -632,7 +541,7 @@ def undo_remove_web_user(request, domain, record_id):
     ))
 
     return HttpResponseRedirect(
-        reverse(get_web_user_list_view(request).urlname, args=[domain]))
+        reverse(ListWebUsersView.urlname, args=[domain]))
 
 
 # If any permission less than domain admin were allowed here, having that permission would give you the permission
@@ -673,13 +582,131 @@ def delete_user_role(request, domain):
     return json_response({"_id": copy_id})
 
 
-class UserInvitationView(InvitationView):
-    inv_type = DomainInvitation
+class UserInvitationView(object):
+    # todo cleanup this view so it properly inherits from BaseSectionPageView
     template = "users/accept_invite.html"
-    need = ["domain"]
+
+    def __call__(self, request, invitation_id, **kwargs):
+        logging.warning("Don't use this view in more apps until it gets cleaned up.")
+        # add the correct parameters to this instance
+        self.request = request
+        self.inv_id = invitation_id
+        if 'domain' in kwargs:
+            self.domain = kwargs['domain']
+
+        if request.GET.get('switch') == 'true':
+            logout(request)
+            return redirect_to_login(request.path)
+        if request.GET.get('create') == 'true':
+            logout(request)
+            return HttpResponseRedirect(request.path)
+
+        try:
+            invitation = Invitation.get(invitation_id)
+        except ResourceNotFound:
+            messages.error(request, _("Sorry, it looks like your invitation has expired. "
+                                      "Please check the invitation link you received and try again, or request a "
+                                      "project administrator to send you the invitation again."))
+            return HttpResponseRedirect(reverse("login"))
+        if invitation.is_accepted:
+            messages.error(request, _("Sorry, that invitation has already been used up. "
+                                      "If you feel this is a mistake please ask the inviter for "
+                                      "another invitation."))
+            return HttpResponseRedirect(reverse("login"))
+
+        self.validate_invitation(invitation)
+
+        if invitation.is_expired:
+            return HttpResponseRedirect(reverse("no_permissions"))
+
+        context = self.added_context()
+        if request.user.is_authenticated():
+            is_invited_user = request.couch_user.username.lower() == invitation.email.lower()
+            if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
+                if is_invited_user:
+                    # if this invite was actually for this user, just mark it accepted
+                    messages.info(request, _("You are already a member of {entity}.").format(
+                        entity=self.inviting_entity))
+                    invitation.is_accepted = True
+                    invitation.save()
+                else:
+                    messages.error(request, _("It looks like you are trying to accept an invitation for "
+                                             "{invited} but you are already a member of {entity} with the "
+                                             "account {current}. Please sign out to accept this invitation "
+                                             "as another user.").format(
+                                                 entity=self.inviting_entity,
+                                                 invited=invitation.email,
+                                                 current=request.couch_user.username,
+                                             ))
+                return HttpResponseRedirect(self.redirect_to_on_success)
+
+            if not is_invited_user:
+                messages.error(request, _("The invited user {invited} and your user {current} do not match!").format(
+                    invited=invitation.email, current=request.couch_user.username))
+
+            if request.method == "POST":
+                couch_user = CouchUser.from_django_user(request.user)
+                self._invite(invitation, couch_user)
+                track_workflow(request.couch_user.get_email(),
+                               "Current user accepted a project invitation",
+                               {"Current user accepted a project invitation": "yes"})
+                return HttpResponseRedirect(self.redirect_to_on_success)
+            else:
+                mobile_user = CouchUser.from_django_user(request.user).is_commcare_user()
+                context.update({
+                    'mobile_user': mobile_user,
+                    "invited_user": invitation.email if request.couch_user.username != invitation.email else "",
+                })
+                return render(request, self.template, context)
+        else:
+            if request.method == "POST":
+                form = NewWebUserRegistrationForm(request.POST)
+                if form.is_valid():
+                    # create the new user
+                    user = activate_new_user(form)
+                    user.save()
+                    messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
+                    self._invite(invitation, user)
+                    authenticated = authenticate(username=form.cleaned_data["email"],
+                                                 password=form.cleaned_data["password"])
+                    if authenticated is not None and authenticated.is_active:
+                        login(request, authenticated)
+                    track_workflow(request.POST['email'],
+                                   "New User Accepted a project invitation",
+                                   {"New User Accepted a project invitation": "yes"})
+                    return HttpResponseRedirect(reverse("domain_homepage", args=[invitation.domain]))
+            else:
+                if CouchUser.get_by_username(invitation.email):
+                    return HttpResponseRedirect(reverse("login") + '?next=' +
+                        reverse('domain_accept_invitation', args=[invitation.domain, invitation.get_id]))
+                domain = Domain.get_by_name(invitation.domain)
+                form = NewWebUserRegistrationForm(initial={
+                    'email': invitation.email,
+                    'hr_name': domain.display_name() if domain else invitation.domain,
+                    'create_domain': False,
+                })
+
+        context.update({"form": form})
+        return render(request, self.template, context)
+
+    def _invite(self, invitation, user):
+        self.invite(invitation, user)
+        invitation.is_accepted = True
+        invitation.save()
+        messages.success(self.request, self.success_msg)
+        send_confirmation_email(invitation)
 
     def added_context(self):
-        return {'domain': self.domain}
+        username = self.request.user.username
+        # Add zero-width space for better line breaking
+        username = username.replace("@", "&#x200b;@")
+
+        return {
+            'create_domain': False,
+            'formatted_username': username,
+            'domain': self.domain,
+            'invite_type': _('Project'),
+        }
 
     def validate_invitation(self, invitation):
         assert invitation.domain == self.domain
@@ -700,14 +727,8 @@ class UserInvitationView(InvitationView):
         return reverse("domain_homepage", args=[self.domain,])
 
     def invite(self, invitation, user):
-        project = Domain.get_by_name(self.domain)
-        user.add_domain_membership(domain=self.domain)
-        user.set_role(self.domain, invitation.role)
-        if project.commtrack_enabled and not project.location_restriction_for_users:
-            user.get_domain_membership(self.domain).location_id = invitation.supply_point
-            user.get_domain_membership(self.domain).program_id = invitation.program
-        user.save()
-
+        user.add_as_web_user(invitation.domain, role=invitation.role,
+                             location_id=invitation.supply_point, program_id=invitation.program)
 
 @sensitive_post_parameters('password')
 def accept_invitation(request, domain, invitation_id):
@@ -719,7 +740,7 @@ def accept_invitation(request, domain, invitation_id):
 def reinvite_web_user(request, domain):
     invitation_id = request.POST['invite']
     try:
-        invitation = DomainInvitation.get(invitation_id)
+        invitation = Invitation.get(invitation_id)
         invitation.invited_on = datetime.utcnow()
         invitation.save()
         invitation.send_activation_email()
@@ -731,9 +752,16 @@ def reinvite_web_user(request, domain):
 @require_POST
 @require_can_edit_web_users
 def delete_invitation(request, domain):
-    invitation_id = request.POST['invite']
-    invitation = DomainInvitation.get(invitation_id)
+    invitation_id = request.POST['id']
+    invitation = Invitation.get(invitation_id)
     invitation.delete()
+    return json_response({'status': 'ok'})
+
+
+@require_POST
+@require_can_edit_web_users
+def delete_request(request, domain):
+    DomainRequest.objects.get(id=request.POST['id']).delete()
     return json_response({'status': 'ok'})
 
 
@@ -745,54 +773,136 @@ class BaseManageWebUserView(BaseUserSettingsView):
 
     @property
     def parent_pages(self):
-        list_view = get_web_user_list_view(self.request)
         return [{
-            'title': list_view.page_title,
-            'url': reverse(list_view.urlname, args=[self.domain]),
+            'title': ListWebUsersView.page_title,
+            'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
         }]
 
 
 class InviteWebUserView(BaseManageWebUserView):
     template_name = "users/invite_web_user.html"
     urlname = 'invite_web_user'
-    page_title = ugettext_noop("Invite Web User to Project")
+    page_title = ugettext_lazy("Add Web User to Project")
 
     @property
     @memoized
     def invite_web_user_form(self):
         role_choices = UserRole.role_choices(self.domain)
+        loc = None
+        domain_request = DomainRequest.objects.get(id=self.request_id) if self.request_id else None
+        initial = {
+            'email': domain_request.email if domain_request else None,
+        }
+        if 'location_id' in self.request.GET:
+            from corehq.apps.locations.models import SQLLocation
+            loc = SQLLocation.objects.get(location_id=self.request.GET.get('location_id'))
         if self.request.method == 'POST':
             current_users = [user.username for user in WebUser.by_domain(self.domain)]
-            pending_invites = [di.email for di in DomainInvitation.by_domain(self.domain)]
+            pending_invites = [di.email for di in Invitation.by_domain(self.domain)]
             return AdminInvitesUserForm(
                 self.request.POST,
                 excluded_emails=current_users + pending_invites,
                 role_choices=role_choices,
                 domain=self.domain
             )
-        return AdminInvitesUserForm(role_choices=role_choices, domain=self.domain)
+        return AdminInvitesUserForm(initial=initial, role_choices=role_choices, domain=self.domain, location=loc)
+
+    @property
+    @memoized
+    def request_id(self):
+        if 'request_id' in self.request.GET:
+            return self.request.GET.get('request_id')
+        return None
 
     @property
     def page_context(self):
         return {
             'registration_form': self.invite_web_user_form,
+            'request_id': self.request_id,
         }
 
     def post(self, request, *args, **kwargs):
         if self.invite_web_user_form.is_valid():
+            # If user exists and has already requested access, just add them to the project
+            # Otherwise, send an invitation
+            create_invitation = True
             data = self.invite_web_user_form.cleaned_data
-            # create invitation record
-            data["invited_by"] = request.couch_user.user_id
-            data["invited_on"] = datetime.utcnow()
-            data["domain"] = self.domain
-            invite = DomainInvitation(**data)
-            invite.save()
-            invite.send_activation_email()
-            messages.success(request, "Invitation sent to %s" % invite.email)
+            domain_request = DomainRequest.by_email(self.domain, data["email"])
+            if domain_request is not None:
+                domain_request.is_approved = True
+                domain_request.save()
+                user = CouchUser.get_by_username(domain_request.email)
+                if user is not None:
+                    domain_request.send_approval_email()
+                    create_invitation = False
+                    user.add_as_web_user(self.domain, role=data["role"],
+                                         location_id=data.get("supply_point", None),
+                                         program_id=data.get("program", None))
+                messages.success(request, "%s added." % data["email"])
+            else:
+                track_workflow(request.couch_user.get_email(),
+                               "Sent a project invitation",
+                               {"Sent a project invitation": "yes"})
+                messages.success(request, "Invitation sent to %s" % data["email"])
+
+            if create_invitation:
+                data["invited_by"] = request.couch_user.user_id
+                data["invited_on"] = datetime.utcnow()
+                data["domain"] = self.domain
+                invite = Invitation(**data)
+                invite.save()
+                invite.send_activation_email()
             return HttpResponseRedirect(reverse(
-                get_web_user_list_view(self.request).urlname,
+                ListWebUsersView.urlname,
                 args=[self.domain]
             ))
+        return self.get(request, *args, **kwargs)
+
+
+class DomainRequestView(BasePageView):
+    urlname = "domain_request"
+    page_title = ugettext_lazy("Request Access")
+    template_name = "users/domain_request.html"
+    request_form = None
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.request.domain])
+
+    @property
+    def page_context(self):
+        domain = Domain.get_by_name(self.request.domain)
+        if self.request_form is None:
+            initial = {'domain': domain.name}
+            if self.request.user.is_authenticated():
+                initial.update({
+                    'email': self.request.user.get_username(),
+                    'full_name': self.request.user.get_full_name(),
+                })
+            self.request_form = DomainRequestForm(initial=initial)
+        return {
+            'domain': domain.name,
+            'domain_name': domain.display_name(),
+            'request_form': self.request_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        self.request_form = DomainRequestForm(request.POST)
+        if self.request_form.is_valid():
+            data = self.request_form.cleaned_data
+            with CriticalSection(["domain_request_%s" % data['domain']]):
+                if DomainRequest.by_email(data['domain'], data['email']) is not None:
+                    messages.error(request, _("A request is pending for this email. "
+                        "You will receive an email when the request is approved."))
+                else:
+                    domain_request = DomainRequest(**data)
+                    domain_request.send_request_email()
+                    domain_request.save()
+                    domain = Domain.get_by_name(domain_request.domain)
+                    return render(request, "users/confirmation_sent.html", {
+                        'hr_name': domain.display_name() if domain else domain_request.domain,
+                        'url': reverse("appstore"),
+                    })
         return self.get(request, *args, **kwargs)
 
 
@@ -805,14 +915,11 @@ def make_phone_number_default(request, domain, couch_user_id):
 
     phone_number = request.POST['phone_number']
     if not phone_number:
-        return Http404('Must include phone number in request.')
+        raise Http404('Must include phone number in request.')
 
     user.set_default_phone_number(phone_number)
-    if user.is_commcare_user():
-        from corehq.apps.users.views.mobile import EditCommCareUserView
-        redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
-    else:
-        redirect = reverse(EditMyAccountDomainView.urlname, args=[domain])
+    from corehq.apps.users.views.mobile import EditCommCareUserView
+    redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
     return HttpResponseRedirect(redirect)
 
 
@@ -825,14 +932,11 @@ def delete_phone_number(request, domain, couch_user_id):
 
     phone_number = request.POST['phone_number']
     if not phone_number:
-        return Http404('Must include phone number in request.')
+        raise Http404('Must include phone number in request.')
 
     user.delete_phone_number(phone_number)
-    if user.is_commcare_user():
-        from corehq.apps.users.views.mobile import EditCommCareUserView
-        redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
-    else:
-        redirect = reverse(EditMyAccountDomainView.urlname, args=[domain])
+    from corehq.apps.users.views.mobile import EditCommCareUserView
+    redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
     return HttpResponseRedirect(redirect)
 
 
@@ -843,24 +947,22 @@ def verify_phone_number(request, domain, couch_user_id):
     but it can be passed as %-encoded GET parameters
     """
     if 'phone_number' not in request.GET:
-        return Http404('Must include phone number in request.')
+        raise Http404('Must include phone number in request.')
     phone_number = urllib.unquote(request.GET['phone_number'])
     user = CouchUser.get_by_user_id(couch_user_id, domain)
 
-    try:
-        # send verification message
-        smsverify.send_verification(domain, user, phone_number)
+    result = initiate_sms_verification_workflow(user, phone_number)
+    if result == VERIFICATION__ALREADY_IN_USE:
+        messages.error(request, _('Cannot start verification workflow. Phone number is already in use.'))
+    elif result == VERIFICATION__ALREADY_VERIFIED:
+        messages.error(request, _('Phone number is already verified.'))
+    elif result == VERIFICATION__RESENT_PENDING:
+        messages.success(request, _('Verification message resent.'))
+    elif result == VERIFICATION__WORKFLOW_STARTED:
+        messages.success(request, _('Verification workflow started.'))
 
-        # create pending verified entry if doesn't exist already
-        user.save_verified_number(domain, phone_number, False, None)
-    except BadSMSConfigException:
-        messages.error(request, "Could not verify phone number. It seems there is no usable SMS backend.")
-
-    if user.is_commcare_user():
-        from corehq.apps.users.views.mobile import EditCommCareUserView
-        redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
-    else:
-        redirect = reverse(EditMyAccountDomainView.urlname, args=[domain])
+    from corehq.apps.users.views.mobile import EditCommCareUserView
+    redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
     return HttpResponseRedirect(redirect)
 
 
@@ -900,7 +1002,7 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
     django_user = commcare_user.get_django_user()
     if request.method == "POST":
         form = SetPasswordForm(user=django_user, data=request.POST)
-        if form.is_valid() and (request.project.password_format() != 'n' or request.POST.get('new_password1').isnumeric()):
+        if form.is_valid():
             form.save()
             json_dump['status'] = 'OK'
             form = SetPasswordForm(user=django_user)
@@ -918,27 +1020,6 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
 @login_and_domain_required
 def test_httpdigest(request, domain):
     return HttpResponse("ok")
-
-
-@require_superuser
-def audit_logs(request, domain):
-    usernames = [user.username for user in WebUser.by_domain(domain)]
-    data = {}
-    for username in usernames:
-        data[username] = []
-        for doc in get_db().view('auditcare/urlpath_by_user_date',
-            startkey=[username],
-            endkey=[username, {}],
-            include_docs=True,
-            wrapper=lambda r: r['doc']
-        ).all():
-            try:
-                (d,) = re.search(r'^/a/([\w\-_\.]+)/', doc['request_path']).groups()
-                if d == domain:
-                    data[username].append(doc)
-            except Exception:
-                pass
-    return json_response(data)
 
 
 @domain_admin_required

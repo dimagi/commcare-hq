@@ -1,5 +1,6 @@
 from django.test import TestCase
-from corehq.apps.app_manager.models import Application, RemoteApp, get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.models import Application, RemoteApp
 from corehq.apps.domain.shortcuts import create_domain
 
 

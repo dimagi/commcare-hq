@@ -50,7 +50,7 @@
         <td class="span6" title="{{ question.value }}">
             {% include 'reports/form/partials/single_form_label.html' %}
         </td>
-        <td class="span6" title="{{ question.response }}">
+        <td class="span6" title="{{ question.get_formatted_response }}">
             {% if question.options %}
                 <div class="form-data-readable">
                 {% for option in question.options %}
@@ -64,7 +64,7 @@
                 </div>
             {% else %}
                 <div class="form-data-readable form-data-raw">
-                    {% if question.response %}{{ question.response|linebreaksbr }}{% endif %}
+                    {% if question.response %}{{ question.get_formatted_response|linebreaksbr }}{% endif %}
                 </div>
             {% endif %}
         </td>

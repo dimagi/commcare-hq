@@ -1,6 +1,6 @@
 {% extends "userreports/userreports_base.html" %}
 {% load i18n %}
-{% load crispy_forms_tags_b3 %}
+{% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 
 {% block js-inline %}{{ block.super }}
@@ -15,5 +15,5 @@
     </script>
 {% endblock %}
 {% block main_column %}
-    {% crispy_b3 form %}
+    {% crispy form %}
 {% endblock %}

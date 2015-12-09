@@ -1,3 +1,4 @@
+import threading
 from django.conf import settings
 from corehq.apps.tzmigration.exceptions import TimezoneMigrationProgressError
 from corehq.util.quickcache import skippable_quickcache
@@ -16,6 +17,20 @@ def set_migration_started(domain):
     else:
         raise TimezoneMigrationProgressError(
             'Cannot start a migration that is already in state {}'
+            .format(progress.migration_status)
+        )
+
+
+def set_migration_not_started(domain):
+    progress, _ = TimezoneMigrationProgress.objects.get_or_create(pk=domain)
+    if progress.migration_status == MigrationStatus.IN_PROGRESS:
+        progress.migration_status = MigrationStatus.NOT_STARTED
+        progress.save()
+        # reset cache
+        get_migration_status(domain, strict=True)
+    else:
+        raise TimezoneMigrationProgressError(
+            'Cannot abort a migration that is in state {}'
             .format(progress.migration_status)
         )
 
@@ -39,6 +54,10 @@ def get_migration_status(domain, strict=False):
     return progress.migration_status
 
 
+def timezone_migration_in_progress(domain):
+    return get_migration_status(domain) == MigrationStatus.IN_PROGRESS
+
+
 def phone_timezones_have_been_processed():
     """
     The timezone data migration happening some time in Apr-May 2015
@@ -57,6 +76,12 @@ def phone_timezones_have_been_processed():
 
 
 def phone_timezones_should_be_processed():
+    try:
+        if _thread_local._force_phone_timezones_should_be_processed:
+            return True
+    except AttributeError:
+        pass
+
     if settings.UNIT_TESTING:
         override = getattr(
             settings, 'PHONE_TIMEZONES_SHOULD_BE_PROCESSED', None)
@@ -64,6 +89,25 @@ def phone_timezones_should_be_processed():
             return override
     return _get_migration_status_from_threadlocals() in (
         MigrationStatus.IN_PROGRESS, MigrationStatus.COMPLETE)
+
+
+_thread_local = threading.local()
+
+
+class _ForcePhoneTimezonesShouldBeProcessed(object):
+    def __enter__(self):
+        try:
+            self.orig = _thread_local._force_phone_timezones_should_be_processed
+        except AttributeError:
+            self.orig = False
+        _thread_local._force_phone_timezones_should_be_processed = True
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        _thread_local._force_phone_timezones_should_be_processed = self.orig
+
+
+def force_phone_timezones_should_be_processed():
+    return _ForcePhoneTimezonesShouldBeProcessed()
 
 
 def _get_migration_status_from_threadlocals():

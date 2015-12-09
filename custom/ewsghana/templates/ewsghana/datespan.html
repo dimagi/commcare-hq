@@ -1,0 +1,134 @@
+{% extends 'reports/filters/base.html' %}
+{% load hq_shared_tags %}
+{% block filter_content %}
+<div id="0">
+    <input type="hidden" name="startdate" data-bind="value: startdate">
+    <input type="hidden" name="enddate" data-bind="value: enddate">
+    <div>
+        <select id="date_span_type"
+            class="{{ css_class }}"
+            data-bind="options: select_params,
+                       optionsText: 'text',
+                       optionsValue: 'val',
+                       value: selectedType,
+                       select2: {}"
+            name="datespan_type"></select>
+    </div>
+
+    <br>
+    <br>
+    <div>
+        <select id="date_span_first"
+            class="{{ css_class }}"
+            data-bind="options: firstOptions,
+                       optionsText: 'text',
+                       optionsValue: 'val',
+                       value: first_selected,
+                       select2: {}"
+            name="datespan_first"></select>
+    </div>
+     <!-- ko if: selectedType() == 1 -->
+    <br>
+    <br>
+    <div>
+        <select id="date_span_second"
+            class="{{ css_class }}"
+            data-bind="options: secondOptions,
+                       optionsText: 'text',
+                       optionsValue: 'val',
+                       value: second_selected,
+                       select2: {}"
+            name="datespan_second"></select>
+    </div>
+    <!-- /ko -->
+</div>
+
+{% endblock %}
+{% block filter_js %}
+<script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
+<script type="text/javascript">
+    $(function () {
+        ko.bindingHandlers.select2 = {
+            init: function(element, valueAccessor) {
+
+                 var options = ko.toJS(valueAccessor()) || {};
+                  setTimeout(function() {
+                      $(element).select2(options);
+                  }, 0);
+
+                ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
+                    $(element).select2('destroy');
+                });
+            },
+            update: function(element) {
+                $(element).trigger('change');
+            }
+        };
+
+
+
+    var dateSpanModel = {
+        select_params: {{ select_options|JSON }},
+        selectedType: ko.observable({{ selected_type }}),
+        first_selected: ko.observable('{{ selected_first }}'),
+        second_selected: ko.observable('{{ selected_second }}')
+    };
+
+    var getDateFromWeek = function(idx) {
+        return dateSpanModel.first_selected().split("|")[idx];
+    };
+
+    var getDateFromMonth = function(start_or_end) {
+        var month = dateSpanModel.first_selected();
+        var year = dateSpanModel.second_selected();
+        var date = year + "-" + month + "-01";
+        var dateobj = moment(date, "YYYY-MM-DD");
+        if (start_or_end === 1) {
+            return dateobj.format("YYYY-MM-DD")
+        } else {
+            return dateobj.endOf("month").format("YYYY-MM-DD")
+        }
+    };
+
+    dateSpanModel.firstOptions =  ko.computed(function() {
+        if(dateSpanModel.selectedType()){
+            var type = ko.utils.arrayFirst(dateSpanModel.select_params, function(item) {
+                return item.val === dateSpanModel.selectedType()
+            });
+
+            return type.firstOptions;
+        }
+    });
+
+    dateSpanModel.secondOptions =  ko.computed(function() {
+        if(dateSpanModel.selectedType()){
+            var type = ko.utils.arrayFirst(dateSpanModel.select_params, function(item) {
+                return item.val === dateSpanModel.selectedType()
+            });
+
+            return type.secondOptions;
+        }
+    });
+
+    dateSpanModel.startdate = ko.computed(function() {
+        if(dateSpanModel.selectedType() === 2) {
+            return getDateFromWeek(0)
+        } else {
+            return getDateFromMonth(1)
+        }
+    });
+
+    dateSpanModel.enddate = ko.computed(function() {
+        if(dateSpanModel.selectedType() === 2) {
+            return getDateFromWeek(1)
+        } else {
+            return getDateFromMonth(2)
+        }
+    });
+
+    ko.applyBindings(dateSpanModel, $('#0').get(0));
+    $('#date_span_type').select2();
+    $('#date_span_first').select2();
+    $('#date_span_second').select2();
+    });
+</script>{% endblock %}

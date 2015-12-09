@@ -12,7 +12,6 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'users/js/key_filters.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
@@ -68,7 +67,7 @@
                  self.signOff = ko.observable('');
                  self.formDeleteUserSent = ko.observable(false);
                  self.disabled = function () {
-                     var understand = self.signOff().toLowerCase() === '{{ couch_user.username }}';
+                     var understand = self.signOff().toLowerCase() === '{{ couch_user.username|safe }}';
                      return self.formDeleteUserSent() || !understand;
                  };
                  self.submit = function () {
@@ -123,7 +122,7 @@
         <li><a href="#groups" data-toggle="tab">{% trans "Groups" %}</a></li>
         {% if commtrack_enabled %}
         <li><a href="#commtrack-data" data-toggle="tab">{% trans "CommCare Supply" %}</a></li>
-        {% elif locations_enabled %}
+        {% elif uses_locations %}
         <li><a href="#commtrack-data" data-toggle="tab">{% trans "Locations" %}</a></li>
         {% endif %}
         <li><a href="#user-password" data-toggle="tab">{% trans "Password" %}</a></li>
@@ -137,16 +136,27 @@
         </div>
 
         <div class="tab-pane" id="groups">
+        {% if needs_to_downgrade_locations %}
+            <div>
+                <p>
+                    {% trans "This project no longer has access to the Organization feature." %}
+                    <a href="{% url "downgrade_locations" domain %}">
+                        {% trans "Click here to fix this." %}
+                    </a>
+                </p>
+            </div>
+        {% else %}
             <form class="form" action="{% url "update_user_groups" domain couch_user.user_id %}" method='post'>
                 <legend>{% trans 'Edit Groups' %}</legend>
                 {% if not are_groups %}
                 <p>{% blocktrans %}
                     No groups created yet. Go to <a href="{{ groups_url }}">groups configuration</a> to create them.
-                   {% endblocktrans %}</p>
+                    {% endblocktrans %}</p>
                 {% else %}
                 {% crispy group_form %}
                 {% endif %}
             </form>
+        {% endif %}
         </div>
         {% if commtrack %}
         <div class="tab-pane" id="commtrack-data">
@@ -189,7 +199,7 @@
 {% endblock %}
 
 {% block modals %} {{ block.super }}
-    {% include 'users/partial/basic_info_modals.html' %}
+    {% include 'users/partial/basic_info_modals.html' with user_type='mobile' %}
     {% if not is_currently_logged_in_user %}
     <div id="delete_user_{{ couch_user.user_id }}" class="modal hide fade">
         <div class="modal-header">

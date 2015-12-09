@@ -1,4 +1,4 @@
-{% extends "hqwebapp/two_column.html" %}
+{% extends "style/bootstrap2/two_column.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -18,11 +18,7 @@
                 }
             });
             $('.hq-help-template').each(function () {
-                COMMCAREHQ.makeHqHelp({
-                    content: $(this).data('content'),
-                    title: $(this).data('title')
-                }, false).insertAfter(this);
-                $(this).remove();
+                COMMCAREHQ.transformHelpTemplate($(this), false);
             });
             $('.hq-help').hqHelp();
             var activeTabCookie = 'active_tab',

@@ -1,11 +1,14 @@
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
+from django.utils.decorators import method_decorator
 from django.views.generic import *
+from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.styleguide.palette import (
     PaletteColor,
     PaletteColorGroup,
     Palette,
 )
+from corehq.apps.styleguide.example_forms import BasicCrispyForm
 
 
 def styleguide_default(request):
@@ -20,9 +23,8 @@ class MainStyleGuideView(TemplateView):
 class BaseStyleGuideArticleView(TemplateView):
     template_name = 'styleguide/base_section.html'
 
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
-        # todo remove after bootstrap 3 migration is over
-        request.preview_bootstrap3 = True
         return super(BaseStyleGuideArticleView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -71,6 +73,18 @@ class BaseStyleGuideArticleView(TemplateView):
             context, **response_kwargs)
 
 
+class ClassBasedViewStyleGuideView(BaseStyleGuideArticleView):
+    urlname = 'styleguide_views'
+    navigation_name = 'cb_views'
+
+    @property
+    def sections(self):
+        return [
+            'views/intro',
+            'views/base_classes',
+        ]
+
+
 class FormsStyleGuideView(BaseStyleGuideArticleView):
     urlname = 'styleguide_forms'
     navigation_name = 'forms'
@@ -78,10 +92,17 @@ class FormsStyleGuideView(BaseStyleGuideArticleView):
     @property
     def sections(self):
         return [
-            'forms/best_practices',
+            'forms/intro',
+            'forms/b3_migration',
             'forms/anatomy',
             'forms/controls',
         ]
+
+    @property
+    def page_context(self):
+        return {
+            'basic_crispy_form': BasicCrispyForm(),
+        }
 
 
 class IconsStyleGuideView(BaseStyleGuideArticleView):

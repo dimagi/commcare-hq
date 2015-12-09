@@ -2,12 +2,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block js-inline %}{{ block.super }}
-    <script>
-        analytics.workflow('Created new account');
-    </script>
-{% endblock %}
-
 {% block title %}New Project Space{% endblock title %}
 
 {% block head %}{{ block.super }}
@@ -19,24 +13,6 @@
         {% blocktrans %}Welcome to {{ SITE_NAME }}! <small>It's time to create your first project.</small>{% endblocktrans %}
     {% else %}
         {% blocktrans %}Create a New Project Space{% endblocktrans %}
-    {% endif %}
-{% endblock %}
-
-{% block breadcrumbs %}
-    {% if is_new %}
-        <ul class="breadcrumb breadcrumb-steps">
-            <li class="past">
-                {% blocktrans %}Account Created for <strong>{{ request.couch_user.first_name }}</strong>{% endblocktrans %}
-                <span class="divider">></span>
-            </li>
-            <li class="active">
-                {% blocktrans %}Create a Project Space{% endblocktrans %}
-                <span class="divider">></span>
-            </li>
-            <li>
-                {% blocktrans %}Confirm Account{% endblocktrans %}
-            </li>
-        </ul>
     {% endif %}
 {% endblock %}
 
@@ -60,6 +36,7 @@
     </p>
     {% endif %}
     <form class="form-horizontal" method="post" action="{{ request.get_full_path }}">
+        {% csrf_token %}
         <fieldset>
             {% for global_error in form.non_field_errors %}
                 <div class="alert alert-error">

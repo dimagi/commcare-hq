@@ -1,10 +1,11 @@
 import json
-from django.test import SimpleTestCase as TestCase
+from django.test import SimpleTestCase
 import os
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, CaseList
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 
 
-class BuildErrorsTest(TestCase):
+class BuildErrorsTest(SimpleTestCase):
     def test_subcase_errors(self):
         with open(os.path.join(os.path.dirname(__file__), 'data', 'subcase-details.json')) as f:
             source = json.load(f)
@@ -33,6 +34,30 @@ class BuildErrorsTest(TestCase):
         self.assertIn(update_path_error, errors)
         self.assertIn(subcase_path_error, errors)
 
+    def test_empty_module_errors(self):
+        factory = AppFactory(build_version='2.24')
+        app = factory.app
+        m1 = factory.new_basic_module('register', 'case', with_form=False)
+        factory.new_advanced_module('update', 'case', with_form=False)
+
+        m2 = factory.new_basic_module('update', 'case', with_form=False)
+        m2.case_list = CaseList(show=True, label={'en': "case_list"})
+
+        factory.new_shadow_module('update', m1, with_form=False)
+        errors = app.validate_app()
+
+        standard_module_error = {
+            'type': 'no forms or case list',
+            'module': {'id': 0, 'name': {'en': u'register module'}},
+        }
+        advanced_module_error = {
+            'type': 'no forms or case list',
+            'module': {'id': 1, 'name': {'en': u'update module'}},
+        }
+        self.assertEqual(len(errors), 2)
+        self.assertIn(standard_module_error, errors)
+        self.assertIn(advanced_module_error, errors)
+
     def test_parent_cycle_in_app(self):
         cycle_error = {
             'type': 'parent cycle',
@@ -59,3 +84,24 @@ class BuildErrorsTest(TestCase):
             app = Application.wrap(source)
             errors = app.validate_app()
             self.assertIn(case_tile_error, errors)
+
+    def test_case_list_form_advanced_module_different_case_config(self):
+        case_tile_error = {
+            'type': "all forms in case list module must load the same cases",
+            'module': {'id': 1, 'name': {u'en': u'update module'}},
+            'form': {'id': 1, 'name': {u'en': u'update form 1'}},
+        }
+
+        factory = AppFactory(build_version='2.11')
+        m0, m0f0 = factory.new_basic_module('register', 'person')
+        factory.form_opens_case(m0f0)
+
+        m1, m1f0 = factory.new_advanced_module('update', 'person', case_list_form=m0f0)
+        factory.form_requires_case(m1f0, case_type='house')
+        factory.form_requires_case(m1f0, parent_case_type='house')
+
+        m1f1 = factory.new_form(m1)
+        factory.form_requires_case(m1f1)  # only loads a person case and not a house case
+
+        errors = factory.app.validate_app()
+        self.assertIn(case_tile_error, errors)

@@ -1,7 +1,9 @@
 from datetime import datetime
 from couchdbkit import MultipleResultsFound
+from couchforms.models import XFormInstance
 from django.db import models
 from django.db.models import Q
+from django.utils.translation import ugettext_noop
 
 
 XFORMS_SESSION_SMS = "SMS"
@@ -34,6 +36,9 @@ class SQLXFormsSession(models.Model):
     workflow = models.CharField(null=True, blank=True, max_length=20)
     reminder_id = models.CharField(null=True, blank=True, max_length=50)
 
+    class Meta:
+        app_label = 'smsforms'
+
     def __unicode__(self):
         return 'Form %(form)s in domain %(domain)s. Last modified: %(mod)s' % \
             {"form": self.form_xmlns,
@@ -50,6 +55,28 @@ class SQLXFormsSession(models.Model):
         """
         self.completed = completed
         self.modified_time = self.end_time = datetime.utcnow()
+
+    @property
+    def related_subevent(self):
+        subevents = self.messagingsubevent_set.all()
+        return subevents[0] if subevents else None
+
+    @property
+    def status(self):
+        xform_instance = None
+        if self.submission_id:
+            xform_instance = XFormInstance.get(self.submission_id)
+
+        if xform_instance:
+            if xform_instance.partial_submission:
+                return ugettext_noop('Completed (Partially Completed Submission)')
+            else:
+                return ugettext_noop('Completed')
+        else:
+            if self.is_open and self.session_type == XFORMS_SESSION_SMS:
+                return ugettext_noop('In Progress')
+            else:
+                return ugettext_noop('Not Finished')
 
     @property
     def is_open(self):

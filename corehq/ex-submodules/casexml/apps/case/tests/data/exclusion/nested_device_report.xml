@@ -1,25 +1,17 @@
 <?xml version='1.0' ?>
 <form xmlns="http://www.commcarehq.org/case/test/devicelog">
-	<case>
-		<case_id>case_in_form</case_id>
-		<user_id>device_user</user_id>
-		<date_modified>2010-06-29T13:42:50</date_modified>
-		<create>
-			<case_type_id>form_case_type</case_type_id>
-			<user_id>device_user</user_id>
-			<case_name>form case</case_name>
-		</create>
+    <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="case_in_form" user_id="device_user" date_modified="2010-06-29T13:42:50" >
+	    <create>
+	        <case_type>form_case_type</case_type>
+	        <case_name>form case</case_name>
+	    </create>
 	</case>
 	<log xmlns="http://code.javarosa.org/devicereport">
-		<case>
-			<case_id>case_in_device</case_id>
-			<user_id>device_user</user_id>
-			<date_modified>2010-06-29T13:42:50</date_modified>
-			<create>
-				<case_type_id>device_case_type</case_type_id>
-				<user_id>device_user</user_id>
-				<case_name>device case</case_name>
-			</create>
-		</case>
+        <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="case_in_device" user_id="device_user" date_modified="2010-06-29T13:42:50" >
+            <create>
+                <case_type>form_case_type</case_type>
+                <case_name>form case</case_name>
+            </create>
+        </case>
 	</log>
 </form>

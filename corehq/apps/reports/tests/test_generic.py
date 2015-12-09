@@ -1,4 +1,4 @@
-from unittest2 import expectedFailure
+from unittest import expectedFailure
 from corehq.apps.reports.generic import GenericTabularReport
 from django.test import SimpleTestCase
 

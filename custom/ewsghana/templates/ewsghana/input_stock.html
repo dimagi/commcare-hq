@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/two_column.html' %}
+{% extends 'style/bootstrap2/two_column.html' %}
 {% block main_column %}
     <form method="post">
         {% csrf_token %}
@@ -39,7 +39,6 @@
             {% endfor %}
         </table>
 
-        # TODO remove disabled after UAT training
-        <input type="submit" value="Submit" disabled/>
+        <input type="submit" value="Submit"/>
     </form>
 {% endblock %}

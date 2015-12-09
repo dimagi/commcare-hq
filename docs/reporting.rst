@@ -56,7 +56,8 @@ Example Custom Report Scaffolding
             ]
 
 Hooking up reports to CommCare HQ
-----------------------------------
+---------------------------------
+
 Custom reports can be configured in code or in the database. To configure custom reports in code
 follow the following instructions.
 
@@ -84,11 +85,13 @@ Finally, add a mapping to your custom reports to `__init__.py` in your custom re
 
 Reporting on data stored in SQL
 -------------------------------
+
 As described above there are various ways of getting reporting data into
 and SQL database. From there we can query the data in a number of ways.
 
 Extending the ``SqlData`` class
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 The ``SqlData`` class allows you to define how to query the data
 in a declarative manner by breaking down a query into a number of components.
 
@@ -222,7 +225,7 @@ e.g.
 .. code-block:: python
 
   class CustomReportDataSource(ReportDataSource):
-      def get_data(self, slugs=None):
+      def get_data(self):
           startdate = self.config['start']
           enddate = self.config['end']
 
@@ -246,7 +249,7 @@ at the `drew` or `aaharsneha` domains on prod for examples.
 .. _Fluff:
 
 How pillow/fluff work
-----------------------
+---------------------
 
 `GitHub <https://github.com/dimagi/fluff>`_
 

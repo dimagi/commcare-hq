@@ -37,10 +37,15 @@
                 </a>
                 {% endif %}
                 <form style="display: inline-block;" action={% url "hq_update_saved_export" domain %} method="POST">
+                    {% csrf_token %}
                     <input type="hidden" name="group_export_id" value="{{ component.group_id }}" />
                     <input type="hidden" name="index" value="{{ component.index }}" />
                     <input type="hidden" name="report_slug" value="{{ report_slug }}" />
-                    <button type="submit" class="btn btn-info disable-on-submit" ><i class="icon-table icon-white"></i> {% trans "Update Data" %}</button>
+                    <button type="submit" class="btn btn-info disable-on-submit daily-saved-update"
+                            data-typeIdentifier="{{ component.config.index.1}}"
+                            data-exportName="{{ component.config.name }}">
+                        <i class="icon-table icon-white"></i> {% trans "Update Data" %}
+                    </button>
                 </form>
             </td>
         </tr>

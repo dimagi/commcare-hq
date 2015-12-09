@@ -4,7 +4,7 @@ from xml.etree import ElementTree
 
 from casexml.apps.case.xml import V1
 from casexml.apps.phone.tests.utils import generate_restore_payload
-from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.programs.fixtures import program_fixture_generator
 from corehq.apps.products.fixtures import product_fixture_generator
 from corehq.apps.products.models import Product
@@ -15,7 +15,7 @@ from casexml.apps.phone.models import SyncLog
 import datetime
 
 
-class FixtureTest(CommTrackTest, TestFileMixin):
+class FixtureTest(CommTrackTest, TestXmlMixin):
 
     def _random_string(self, length):
         return ''.join(random.choice(string.ascii_lowercase)
@@ -29,7 +29,7 @@ class FixtureTest(CommTrackTest, TestFileMixin):
         self.product_names = get_product_name()
 
     def generate_product_xml(self, user, randomize_data=True):
-        products = ''
+        products = []
         product_list = Product.by_domain(user.domain)
         self._initialize_product_names(len(product_list))
         for i, product in enumerate(product_list):
@@ -58,7 +58,7 @@ class FixtureTest(CommTrackTest, TestFileMixin):
                 product_data = {}
                 custom_data_xml = ''
 
-            products += '''
+            product_xml = '''
                 <product id="{id}">
                     <name>{name}</name>
                     <unit>{unit}</unit>
@@ -91,7 +91,10 @@ class FixtureTest(CommTrackTest, TestFileMixin):
             product.product_data = product_data
             product.save()
 
-        return products
+            products.append((product, product_xml))
+
+        products.sort(key=lambda p: p[0].code)
+        return ''.join(product_xml for product, product_xml in products)
 
     def generate_product_fixture_xml(self, user, randomize_data=True):
         return """

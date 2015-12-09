@@ -1,15 +1,14 @@
 from collections import defaultdict
 from casexml.apps.stock.models import StockTransaction
-from corehq.apps.commtrack.models import StockState, CommtrackConfig
+from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.filters.dates import DatespanFilter
+from custom.ewsghana.filters import EWSDateFilter, EWSRestrictionLocationFilter
 from custom.ewsghana.reports import EWSData, MultiReport
 from django.utils.translation import ugettext as _
-from custom.ewsghana.utils import get_supply_points, get_country_id
+from custom.ewsghana.utils import get_descendants, get_country_id, ews_date_format
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -20,17 +19,20 @@ class EmailReportData(EWSData):
     def get_locations(self, loc_id, domain):
         return []
 
+
+class StockSummaryReportData(EmailReportData):
+    slug = 'stock_summary'
+
     @property
     def headers(self):
         return DataTablesHeader(*[
             DataTablesColumn(_('Product')),
-            DataTablesColumn(_('% Facilities with Stockouts')),
             DataTablesColumn(_('Total # Facilities Registered with this Product')),
-            DataTablesColumn(_('Total Stock')),
-            DataTablesColumn(_('% Facilities with Consumption Data')),
-            DataTablesColumn(_('Monthly Consumption')),
-            DataTablesColumn(_('Months of Stock')),
-            DataTablesColumn(_('Stock Status'))
+            DataTablesColumn(_('Total # facilities reported')),
+            DataTablesColumn(_('% Facilities with Stockouts')),
+            DataTablesColumn(_('% Facilities with Adequate Stock')),
+            DataTablesColumn(_('% Facilities with Low Stock')),
+            DataTablesColumn(_('% Facilities Overstocked')),
         ])
 
     @property
@@ -38,15 +40,83 @@ class EmailReportData(EWSData):
         def percent(x, y):
             return "%d%% <small>(%d)</small>" % (x * 100 / (y or 1), x)
 
-        def stock_status(status, loc):
-            if status == 0.0:
-                return '<div style="background-color: rgba(255, 47, 54, 0.5);"><b>Stockout</b></div>'
-            elif status < loc.location_type.understock_threshold:
-                return '<div style="background-color: rgba(255, 234, 112, 0.5)"><b>Low</b></div>'
-            elif status < loc.location_type.overstock_threshold + 7:
-                return '<div style="background-color: rgba(17, 148, 16, 0.5)"><b>Adequate</b></div>'
+        def _stock_status(status, loc):
+            daily = status.daily_consumption or 0
+            state = status.stock_on_hand / ((daily * 30) or 1)
+            if state == 0.0:
+                return "stockout"
+            elif state < loc.location_type.understock_threshold:
+                return "adequate"
+            elif state < loc.location_type.overstock_threshold + 7:
+                return "low"
             else:
-                return '<div style="background-color: rgba(179, 80, 255, 0.5)"><b>Overstock</b></div>'
+                return "overstock"
+
+        locations = self.get_locations(self.config['location_id'], self.config['domain'])
+
+        row_data = {}
+
+        for product in SQLProduct.by_domain(self.domain).exclude(is_archived=True):
+            row_data[product.name] = {'total_fac': 0, 'reported_fac': 0,
+                                      'stockout': 0, 'low': 0, 'overstock': 0, 'adequate': 0}
+
+        for location in locations:
+            location_products = list(location.products)
+            stock_states = StockState.objects.filter(
+                case_id=location.supply_point_id,
+                section_id=STOCK_SECTION_TYPE,
+                sql_product__in=location_products
+            )
+
+            for product in location_products:
+                row_data[product.name]['total_fac'] += 1
+
+            for state in stock_states:
+                p_name = state.sql_product.name
+                row_data[p_name]['reported_fac'] += 1
+                s = _stock_status(state, location)
+                row_data[p_name][s] += 1
+
+        rows = []
+        for k, v in row_data.iteritems():
+            if v['total_fac'] > 0:
+                rows.append([
+                    k,
+                    v['total_fac'],
+                    v['reported_fac'],
+                    percent(v['stockout'], v['reported_fac']),
+                    percent(v['adequate'], v['reported_fac']),
+                    percent(v['low'], v['reported_fac']),
+                    percent(v['overstock'], v['reported_fac']),
+                ])
+        return rows
+
+    def get_locations(self, loc_id, domain):
+        return get_descendants(loc_id)
+
+
+class CMSRMSReportData(EmailReportData):
+    title = 'Weekly Stock Summary Report - CMS and RMS'
+    slug = 'stock_summary'
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(*[
+            DataTablesColumn(_('Product')),
+            DataTablesColumn(_('Total # facilities registered with this product')),
+            DataTablesColumn(_('Total # facilities reported')),
+            DataTablesColumn(_('% Facilities with stockouts'))
+        ])
+
+        for location in self.get_locations(self.config['location_id'], self.config['domain']).order_by('name'):
+            headers.add_column(DataTablesColumn(location.name))
+        headers.add_column(DataTablesColumn(_('Total Stock')))
+        return headers
+
+    @property
+    def rows(self):
+        def percent(x, y):
+            return "%d%% <small>(%d)</small>" % (x * 100 / (y or 1), x)
 
         locations = self.get_locations(self.config['location_id'], self.config['domain'])
 
@@ -54,43 +124,39 @@ class EmailReportData(EWSData):
         row_data = {product.name: defaultdict(lambda: 0) for product in products}
 
         for location in locations:
-            stock_states = StockState.objects.filter(
+            stock_transactions = StockTransaction.objects.filter(
                 case_id=location.supply_point_id,
                 section_id=STOCK_SECTION_TYPE,
-                sql_product__in=products
-            )
+                sql_product__in=products,
+                report__date__range=[
+                    self.config['startdate'],
+                    self.config['enddate']
+                ]
+            ).distinct('product_id').order_by('product_id', '-report__date')
 
-            for state in stock_states:
-                p_name = state.sql_product.name
-                row_data[p_name]['total_fac'] += 1
-                if state.stock_on_hand:
-                    row_data[p_name]['total_stock'] += int(state.stock_on_hand)
-                else:
+            for stock_transaction in stock_transactions:
+                p_name = stock_transaction.sql_product.name
+                row_data[p_name]['reported_fac'] += 1
+                if not stock_transaction.stock_on_hand:
                     row_data[p_name]['fac_with_stockout'] += 1
-                if state.get_monthly_consumption():
-                    row_data[p_name]['fac_with_consumption'] += 1
-                    row_data[p_name]['monthly_consumption'] += state.get_monthly_consumption()
+                row_data[p_name][location.pk] = int(stock_transaction.stock_on_hand)
+                row_data[p_name]['total'] += int(stock_transaction.stock_on_hand)
+            for product in location.products:
+                row_data[product.name]['total_fac'] += 1
 
         rows = []
         for k, v in row_data.iteritems():
-            months_of_stock = float(v['total_stock']) / float(v['monthly_consumption'] or 1)
-            rows.append([k, percent(v['fac_with_stockout'], v['total_fac']),
-                        v['total_fac'], v['total_stock'], percent(v['fac_with_consumption'], v['total_fac']),
-                        round(v['monthly_consumption']), "<b>%.1f</b>" % months_of_stock,
-                        stock_status(months_of_stock, location)])
+            row = [
+                k,
+                v['total_fac'],
+                v['reported_fac'],
+                percent(v['fac_with_stockout'], v['total_fac'])
+            ]
+            for location in locations.order_by('name'):
+                row.append(v[location.pk])
+            row.append(v['total'])
+            rows.append(row)
         return rows
-
-
-class StockSummaryReportData(EmailReportData):
-    slug = 'stock_summary'
-
-    def get_locations(self, loc_id, domain):
-        return get_supply_points(loc_id, domain)
-
-
-class CMSRMSReportData(EmailReportData):
-    title = 'Weekly Stock Summary Report - CMS and RMS'
-    slug = 'stock_summary'
 
     def get_locations(self, loc_id, domain):
         return SQLLocation.objects.filter(
@@ -137,7 +203,7 @@ class EmailReportingData(EWSData):
 
 class StockSummaryReportingData(EmailReportingData):
     def get_locations(self, loc_id, domain):
-        return [loc.supply_point_id for loc in get_supply_points(loc_id, domain)]
+        return [loc.supply_point_id for loc in get_descendants(loc_id)]
 
 
 class CMSRMSSummaryReportingData(EmailReportingData):
@@ -152,7 +218,7 @@ class CMSRMSSummaryReportingData(EmailReportingData):
 
 
 class StockSummaryReport(MultiReport):
-    fields = [AsyncLocationFilter, DatespanFilter]
+    fields = [EWSRestrictionLocationFilter, EWSDateFilter]
     name = "Stock Summary"
     slug = 'stock_summary_report'
     exportable = False
@@ -161,8 +227,11 @@ class StockSummaryReport(MultiReport):
 
     @property
     def title(self):
-        return 'Weekly Stock Summary - ' + SQLLocation.objects.get(
-            location_id=self.report_config['location_id']).name
+        return 'Weekly Stock Summary Report - {0} - {1} {2}'.format(
+            SQLLocation.objects.get(location_id=self.report_config['location_id']).name,
+            ews_date_format(self.datespan.startdate_utc),
+            ews_date_format(self.datespan.enddate_utc)
+        )
 
     @property
     def report_config(self):
@@ -188,13 +257,19 @@ class StockSummaryReport(MultiReport):
 
 
 class CMSRMSReport(MultiReport):
-    title = "Weekly Stock Summary - CMS and RMS"
-    fields = [DatespanFilter]
+    fields = [EWSDateFilter]
     name = "CMS and RMS Summary"
     slug = 'cms_rms_summary_report'
     exportable = True
     is_exportable = True
     split = False
+
+    @property
+    def title(self):
+        return 'Weekly Stock Summary Report - CMS and RMS - {0} {1}'.format(
+            ews_date_format(self.datespan.startdate_utc),
+            ews_date_format(self.datespan.enddate_utc)
+        )
 
     @property
     def report_config(self):

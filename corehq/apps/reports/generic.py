@@ -27,6 +27,7 @@ from dimagi.utils.web import json_request, json_response
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import request_cache
 from django.utils.translation import ugettext
+from export import get_writer
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
@@ -73,6 +74,7 @@ class GenericReportView(object):
     slug = None  # Name to be used in the URL (with lowercase and underscores)
     section_name = None  # string. ex: "Reports"
     dispatcher = None  # ReportDispatcher subclass
+    toggles = ()  # Optionally provide toggles to turn on/off the report
 
     is_cacheable = False  # whether to use caching on @request_cache methods
 
@@ -304,6 +306,11 @@ class GenericReportView(object):
         return self.slug
 
     @property
+    def export_target(self):
+        writer = get_writer(self.export_format)
+        return writer.target_app
+
+    @property
     def default_report_url(self):
         return "#"
 
@@ -442,6 +449,7 @@ class GenericReportView(object):
                 special_notice=self.special_notice,
                 report_title=self.report_title or self.rendered_report_title,
                 report_subtitles=self.report_subtitles,
+                export_target=self.export_target,
             ),
             current_config_id=current_config_id,
             default_config=default_config,
@@ -450,12 +458,6 @@ class GenericReportView(object):
             domain=self.domain,
             layout_flush_content=self.flush_layout
         )
-
-    def set_announcements(self):
-        """
-            Update django messages here.
-        """
-        pass
 
     def update_filter_context(self):
         """
@@ -514,7 +516,6 @@ class GenericReportView(object):
             self.update_filter_context()
             self.update_report_context()
             template = self.template_report
-        self.set_announcements()
         return render(self.request, template, self.context)
 
     @property

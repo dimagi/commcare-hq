@@ -153,8 +153,9 @@ def arbitrary_backend_ids():
     for backend in get_available_backends().values():
         backend_instance = data_gen.arbitrary_unique_name("back")
         backend_ids[backend.get_api_id()] = backend_instance
-        sms_backend = SMSBackend()
+        sms_backend = backend()
         sms_backend._id = backend_instance
+        sms_backend.name = backend_instance
         sms_backend.is_global = True
         sms_backend.save()
     return backend_ids
@@ -185,7 +186,10 @@ def arbitrary_messages_by_backend_and_direction(backend_ids,
 
 def arbitrary_currency():
     return Currency.objects.get_or_create(
-        rate_to_default=Decimal('%5.f' % random.uniform(0.5, 2.0)),
+        code='OTH',
+        defaults={
+            'rate_to_default': Decimal('%5.f' % random.uniform(0.5, 2.0)),
+        },
     )[0]
 
 

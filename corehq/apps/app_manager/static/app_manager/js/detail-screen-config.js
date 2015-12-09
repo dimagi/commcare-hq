@@ -193,6 +193,198 @@ var filterViewModel = function(filterText, saveButton){
     };
 };
 
+var caseListLookupViewModel = function($el, state, saveButton){
+    'use strict';
+    var self = this,
+        detail_type = $el.data('detail-type');
+
+    var ObservableKeyValue = function(obs){
+        this.key = ko.observable(obs.key);
+        this.value = ko.observable(obs.value);
+    };
+
+    var _fireChange = function(){
+        saveButton.fire('change');
+    };
+
+    self.initSaveButtonListeners = function($el){
+        $el.find('input[type=text], textarea').bind('textchange', _fireChange);
+        $el.find('input[type=checkbox]').bind('change', _fireChange);
+        $el.find(".case-list-lookup-icon button").bind("click", _fireChange); // Trigger save button when icon upload buttons are clicked
+    };
+
+    var _remove_empty = function(type){
+        self[type].remove(function(t){
+            var is_blank = (!t.key() && !t.value());
+            return is_blank;
+        });
+    };
+
+    self.add_item = function(type){
+        _remove_empty(type);
+        var data = (type === 'extras') ? {key: '', value: ''} : {key: ''};
+        self[type].push(new ObservableKeyValue(data));
+    };
+
+    self.remove_item = function(type, item){
+        self[type].remove(item);
+        if (self[type]().length === 0){
+            self.add_item(type);
+        }
+        _fireChange();
+    };
+
+    var _trimmed_extras = function(){
+        return _.compact(_.map(self.extras(), function(extra){
+            if (!(extra.key() === "" && extra.value() ==="")){
+                return {key: extra.key(), value: extra.value()};
+            }
+        }));
+    };
+
+    var _trimmed_responses = function(){
+        return _.compact(_.map(self.responses(), function(response){
+            if (response.key() !== ""){
+                return {key: response.key()};
+            }
+        }));
+    };
+
+    self.serialize = function(){
+        var image_path = $el.find(".case-list-lookup-icon input[type=hidden]").val() || null;
+
+        var data = {
+            lookup_enabled: self.lookup_enabled(),
+            lookup_action: self.lookup_action(),
+            lookup_name: self.lookup_name(),
+            lookup_extras: _trimmed_extras(),
+            lookup_responses: _trimmed_responses(),
+            lookup_image: image_path,
+        };
+
+        return data;
+    };
+
+    var _validate_inputs = function(errors){
+        errors = errors || [];
+        $el.find('input[required]').each(function(){
+            var $this = $(this);
+            if ($this.val().trim().length === 0){
+                $this.closest('.control-group').addClass('error');
+                var $help = $this.siblings('.help-inline');
+                $help.show();
+                errors.push($help.text());
+            }
+            else {
+                $this.closest('.control-group').removeClass('error');
+                $this.siblings('.help-inline').hide();
+            }
+        });
+        return errors;
+    };
+
+    var _validate_extras = function(errors){
+        errors = errors || [];
+        var $extra = $el.find("#" + detail_type + "-extras"),
+            $extra_help = $extra.find(".help-inline");
+
+        if (!_trimmed_extras().length){
+            $extra.addClass('error');
+            $extra_help.show();
+            errors.push($extra_help.text());
+        }
+        else {
+            $extra.removeClass('error');
+            $extra_help.hide();
+        }
+        return errors;
+    };
+
+    var _validate_responses = function(errors){
+        errors = errors || [];
+        var $response = $el.find("#" + detail_type + "-responses"),
+            $response_help = $response.find(".help-inline");
+
+        if (!_trimmed_responses().length){
+            $response.addClass('error');
+            $response_help.show();
+            errors.push($response_help.text());
+        }
+        else {
+            $response.removeClass('error');
+            $response_help.hide();
+        }
+        return errors;
+    };
+
+    self.validate = function(){
+        var errors = [];
+
+        $("#message-alerts > div").each(function(){
+            $(this).alert('close');
+        });
+
+        if (self.lookup_enabled()){
+            _validate_inputs(errors);
+            _validate_extras(errors);
+            _validate_responses(errors);
+        }
+
+        if (errors.length){
+            _.each(errors, function(error){
+                alert_user(error, "error");
+            });
+            return false;
+        }
+        return true;
+    };
+
+    self.$el = $el;
+    self.$form = $el.find('form');
+
+    self.lookup_enabled = ko.observable(state.lookup_enabled);
+    self.lookup_action = ko.observable(state.lookup_action);
+    self.lookup_name = ko.observable(state.lookup_name);
+    self.extras = ko.observableArray(ko.utils.arrayMap(state.lookup_extras, function(extra){
+        return new ObservableKeyValue(extra);
+    }));
+    self.responses = ko.observableArray(ko.utils.arrayMap(state.lookup_responses, function(response){
+        return new ObservableKeyValue(response);
+    }));
+
+    if (self.extras().length === 0){
+        self.add_item('extras');
+    }
+    if (self.responses().length === 0){
+        self.add_item('responses');
+    }
+
+    self.show_add_extra = ko.computed(function(){
+        if (self.extras().length){
+            var last_key = self.extras()[self.extras().length - 1].key(),
+                last_value = self.extras()[self.extras().length - 1].value();
+            return !(last_key === "" && last_value === "");
+        }
+        return true;
+    });
+
+    self.show_add_response = ko.computed(function(){
+        if (self.responses().length){
+            var last_key = self.responses()[self.responses().length - 1].key();
+            return last_key !== "";
+        }
+        return true;
+    });
+
+    self.initSaveButtonListeners(self.$el);
+};
+
+ko.bindingHandlers.addSaveButtonListener = {
+    init: function(element, valueAccessor, allBindings, viewModel, bindingContext){
+        bindingContext.$parent.initSaveButtonListeners($(element).parent());
+    }
+};
+
 // http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
 // connect items with observableArrays
 ko.bindingHandlers.sortableList = {
@@ -244,6 +436,16 @@ function ParentSelect(init) {
     });
 }
 
+function FixtureSelect(init) {
+    var self = this;
+    self.active = ko.observable(init.active);
+    self.fixtureType = ko.observable(init.fixtureType);
+    self.displayColumn = ko.observable(init.displayColumn);
+    self.localize = ko.observable(init.localize);
+    self.variableColumn = ko.observable(init.variableColumn);
+    self.xpath = ko.observable(init.xpath);
+}
+
 var DetailScreenConfig = (function () {
     "use strict";
 
@@ -263,41 +465,40 @@ var DetailScreenConfig = (function () {
                 column properites: model, field, header, format
                 column extras: enum, late_flag
             */
-            var that = this, elements, i;
+            var that = this;
             eventize(this);
             this.original = JSON.parse(JSON.stringify(col));
 
-            function orDefault(value, d) {
-                if (value === undefined) {
-                    return d;
-                } else {
-                    return value;
-                }
-            }
-            this.original.model = this.original.model || screen.model;
-            this.original.field = this.original.field || "";
-            this.original.hasAutocomplete = orDefault(this.original.hasAutocomplete, true);
-            this.original.header = this.original.header || {};
-            this.original.format = this.original.format || "plain";
-            this.original['enum'] = this.original['enum'] || [];
+            // Set defaults for normal (non-tab) column attributes
+            var defaults = {
+                calc_xpath: ".",
+                enum: [],
+                field: "",
+                filter_xpath: "",
+                format: "plain",
+                graph_configuration: {},
+                hasAutocomplete: false,
+                header: {},
+                model: screen.model,
+                time_ago_interval: DetailScreenConfig.TIME_AGO.year,
+            };
+            _.defaults(this.original, defaults);
             this.original.late_flag = _.isNumber(this.original.late_flag) ? this.original.late_flag : 30;
-            this.original.filter_xpath = this.original.filter_xpath || "";
-            this.original.calc_xpath = this.original.calc_xpath || ".";
-            this.original.graph_configuration = this.original.graph_configuration || {};
+
             this.original.case_tile_field = ko.utils.unwrapObservable(this.original.case_tile_field) || "";
-
-            // Tab attributes
-            this.original.isTab = this.original.isTab !== undefined ? this.original.isTab : false;
-            this.isTab = this.original.isTab;
-
             this.case_tile_field = ko.observable(this.original.case_tile_field);
 
-
-            this.original.time_ago_interval = this.original.time_ago_interval || DetailScreenConfig.TIME_AGO.year;
+            // Set up tab attributes
+            var tabDefaults = {
+                isTab: false,
+                hasNodeset: false,
+                nodeset: "",
+            };
+            _.defaults(this.original, tabDefaults);
+            _.extend(this, _.pick(this.original, _.keys(tabDefaults)));
 
             this.screen = screen;
             this.lang = screen.lang;
-
             this.model = uiElement.select([
                 {label: "Case", value: "case"}
             ]).val(this.original.model);
@@ -314,14 +515,8 @@ var DetailScreenConfig = (function () {
                 that.field.observableVal(that.field.val());
             });
 
-            this.saveAttempted = ko.observable(false);
-            this.showWarning = ko.computed(function() {
-                // True if an invalid property name warning should be displayed.
-                return (this.field.observableVal() || this.saveAttempted()) && !DetailScreenConfig.field_val_re.test(this.field.observableVal());
-            }, this);
-
             (function () {
-                var i, lang, visibleVal = "", invisibleVal = "";
+                var i, lang, visibleVal = "", invisibleVal = "", nodesetVal;
                 if (that.original.header && that.original.header[that.lang]) {
                     visibleVal = invisibleVal = that.original.header[that.lang];
                 } else {
@@ -335,13 +530,34 @@ var DetailScreenConfig = (function () {
                 }
                 that.header = uiElement.input().val(invisibleVal);
                 that.header.setVisibleValue(visibleVal);
+
+                that.nodeset = uiElement.input().val(that.original.nodeset);
                 if (that.isTab) {
                     // hack to wait until the input's there to prepend the Tab: label.
                     setTimeout(function () {
-                        that.header.ui.addClass('input-prepend').prepend($('<span class="add-on">Tab:</span>'));
+                        that.header.ui.addClass('input-prepend').prepend($('<span class="add-on">Tab</span>'));
+                        that.nodeset.ui.addClass('input-prepend').prepend($('<span class="add-on">Nodeset</span>'));
                     }, 0);
+
+                    // Observe nodeset values for the sake of validation
+                    if (that.hasNodeset) {
+                        that.nodeset.observableVal = ko.observable(that.original.nodeset);
+                        that.nodeset.on("change", function(){
+                            that.nodeset.observableVal(that.nodeset.val());
+                        });
+                    }
                 }
             }());
+
+            this.saveAttempted = ko.observable(false);
+            this.showWarning = ko.computed(function() {
+                if (this.isTab) {
+                    // Data tab missing its nodeset
+                    return this.hasNodeset && !this.nodeset.observableVal();
+                }
+                // Invalid property name
+                return (this.field.observableVal() || this.saveAttempted()) && !DetailScreenConfig.field_val_re.test(this.field.observableVal());
+            }, this);
 
             // Add the graphing option if this is a graph so that we can set the value to graph
             var menuOptions = DetailScreenConfig.MENU_OPTIONS;
@@ -386,7 +602,6 @@ var DetailScreenConfig = (function () {
             this.calc_xpath_extra = uiElement.input().val(this.original.calc_xpath.toString());
             this.calc_xpath_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.CALC_XPATH_EXTRA_LABEL));
 
-
             this.time_ago_extra = uiElement.select([
                 {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.YEARS, value: DetailScreenConfig.TIME_AGO.year},
                 {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.MONTHS, value: DetailScreenConfig.TIME_AGO.month},
@@ -398,10 +613,14 @@ var DetailScreenConfig = (function () {
             ]).val(this.original.time_ago_interval.toString());
             this.time_ago_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.TIME_AGO_EXTRA_LABEL));
 
-            elements = [
+            function fireChange() {
+                that.fire('change');
+            }
+            _.each([
                 'model',
                 'field',
                 'header',
+                'nodeset',
                 'format',
                 'enum_extra',
                 'graph_extra',
@@ -409,15 +628,9 @@ var DetailScreenConfig = (function () {
                 'filter_xpath_extra',
                 'calc_xpath_extra',
                 'time_ago_extra'
-            ];
-
-            function fireChange() {
-                that.fire('change');
-            }
-
-            for (i = 0; i < elements.length; i += 1) {
-                this[elements[i]].on('change', fireChange);
-            }
+            ], function(element) {
+                that[element].on('change', fireChange);
+            });
             this.case_tile_field.subscribe(fireChange);
 
             this.$format = $('<div/>').append(this.format.ui);
@@ -486,6 +699,7 @@ var DetailScreenConfig = (function () {
                 var column = this.original;
                 column.field = this.field.val();
                 column.header[this.lang] = this.header.val();
+                column.nodeset = this.nodeset.val();
                 column.format = this.format.val();
                 column.enum = this.enum_extra.getItems();
                 column.graph_configuration =
@@ -497,11 +711,10 @@ var DetailScreenConfig = (function () {
                 column.case_tile_field = this.case_tile_field();
                 if (this.isTab) {
                     // Note: starting_index is added by Screen.serialize
-                    return {
+                    return _.extend({
                         starting_index: this.starting_index,
-                        header: column.header,
-                        isTab: true
-                    };
+                        has_nodeset: column.hasNodeset,
+                    }, _.pick(column, ['header', 'isTab', 'nodeset']));
                 }
                 return column;
             },
@@ -545,7 +758,7 @@ var DetailScreenConfig = (function () {
             this.properties = options.properties;
             this.childCaseTypes = options.childCaseTypes;
             this.fixtures = options.fixtures;
-            // The column key is used to retreive the columns from the spec and
+            // The column key is used to retrieve the columns from the spec and
             // as the name of the key in the data object that is sent to the
             // server on save.
             this.columnKey = options.columnKey;
@@ -556,10 +769,13 @@ var DetailScreenConfig = (function () {
             // of these configurations.
             this.containsSortConfiguration = options.containsSortConfiguration;
             this.containsParentConfiguration = options.containsParentConfiguration;
+            this.containsFixtureConfiguration = options.containsFixtureConfiguration;
             this.containsFilterConfiguration = options.containsFilterConfiguration;
+            this.containsCaseListLookupConfiguration = options.containsCaseListLookupConfiguration;
             this.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
             this.allowsTabs = options.allowsTabs;
             this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
+            this.persistCaseContext = ko.observable(spec[this.columnKey].persist_case_context || false);
             this.persistTileOnForms = ko.observable(spec[this.columnKey].persist_tile_on_forms || false);
             this.enableTilePullDown = ko.observable(spec[this.columnKey].pull_down_tile || false);
             this.allowsEmptyColumns = options.allowsEmptyColumns;
@@ -598,14 +814,17 @@ var DetailScreenConfig = (function () {
                 columns.splice(
                     tabs[i].starting_index + i,
                     0,
-                    {isTab: true, header: tabs[i].header}
+                    _.extend({
+                        hasNodeset: tabs[i].has_nodeset,
+                    }, _.pick(tabs[i], ["header", "nodeset", "isTab"]))
                 );
             }
             if (this.columnKey === 'long') {
-                this.addTab = function() {
+                this.addTab = function(hasNodeset) {
                     var col = that.initColumnAsColumn(Column.init({
                         isTab: true,
-                        model: 'tab'
+                        hasNodeset: hasNodeset,
+                        model: 'tab',
                     }, that));
                     that.columns.splice(0, 0, col);
                 };
@@ -633,6 +852,9 @@ var DetailScreenConfig = (function () {
                 this.saveButton.fire('change');
             });
             this.useCaseTiles.subscribe(function(){
+                that.saveButton.fire('change');
+            });
+            this.persistCaseContext.subscribe(function(){
                 that.saveButton.fire('change');
             });
             this.persistTileOnForms.subscribe(function(){
@@ -665,6 +887,10 @@ var DetailScreenConfig = (function () {
                             return;
                         }
                     } else {
+                        if (column.showWarning()){
+                            alert("There are errors in your tabs");
+                            return;
+                        }
                         containsTab = true;
                     }
                 }
@@ -684,16 +910,23 @@ var DetailScreenConfig = (function () {
                         }
                     }
                 }
-
-                this.saveButton.ajax({
-                    url: this.saveUrl,
-                    type: "POST",
-                    data: this.serialize(),
-                    dataType: 'json',
-                    success: function (data) {
-                        COMMCAREHQ.app_manager.updateDOM(data.update);
-                    }
-                });
+                if (this.validate()){
+                    this.saveButton.ajax({
+                        url: this.saveUrl,
+                        type: "POST",
+                        data: this.serialize(),
+                        dataType: 'json',
+                        success: function (data) {
+                            COMMCAREHQ.app_manager.updateDOM(data.update);
+                        }
+                    });
+                }
+            },
+            validate: function(){
+                if (this.containsCaseListLookupConfiguration){
+                    return this.config.caseListLookup.validate();
+                }
+                return true;
             },
             serialize: function () {
                 var columns = this.columns();
@@ -724,6 +957,7 @@ var DetailScreenConfig = (function () {
                 ));
 
                 data.useCaseTiles = this.useCaseTiles() == "yes" ? true : false;
+                data.persistCaseContext = this.persistCaseContext();
                 data.persistTileOnForms = this.persistTileOnForms();
                 data.enableTilePullDown = this.persistTileOnForms() ? this.enableTilePullDown() : false;
 
@@ -738,6 +972,20 @@ var DetailScreenConfig = (function () {
                     }
                     data.parent_select = JSON.stringify(parentSelect);
                 }
+                if (this.containsFixtureConfiguration) {
+                    var fixtureSelect;
+                    if (this.config.hasOwnProperty('fixtureSelect')) {
+                        fixtureSelect = {
+                            active: this.config.fixtureSelect.active(),
+                            fixture_type: this.config.fixtureSelect.fixtureType(),
+                            display_column: this.config.fixtureSelect.displayColumn(),
+                            localize: this.config.fixtureSelect.localize(),
+                            variable_column: this.config.fixtureSelect.variableColumn(),
+                            xpath: this.config.fixtureSelect.xpath()
+                        };
+                    }
+                    data.fixture_select = JSON.stringify(fixtureSelect);
+                }
                 if (this.containsSortConfiguration) {
                     data.sort_elements = JSON.stringify(_.map(this.config.sortRows.sortRows(), function(row){
                         return {
@@ -749,6 +997,9 @@ var DetailScreenConfig = (function () {
                 }
                 if (this.containsFilterConfiguration) {
                     data.filter = JSON.stringify(this.config.filter.serialize());
+                }
+                if (this.containsCaseListLookupConfiguration){
+                    data.case_list_lookup = JSON.stringify(this.config.caseListLookup.serialize());
                 }
                 if (this.containsCustomXMLConfiguration){
                     data.custom_xml = this.config.customXMLViewModel.xml();
@@ -805,6 +1056,17 @@ var DetailScreenConfig = (function () {
                     langs: this.langs
                 });
             }
+
+            if (spec.hasOwnProperty('fixtureSelect') && spec.fixtureSelect) {
+                this.fixtureSelect = new FixtureSelect({
+                    active: spec.fixtureSelect.active,
+                    fixtureType: spec.fixtureSelect.fixture_type,
+                    displayColumn: spec.fixtureSelect.display_column,
+                    localize: spec.fixtureSelect.localize,
+                    variableColumn: spec.fixtureSelect.variable_column,
+                    xpath: spec.fixtureSelect.xpath
+                });
+            }
             this.saveUrl = spec.saveUrl;
             this.contextVariables = spec.contextVariables;
 
@@ -830,7 +1092,9 @@ var DetailScreenConfig = (function () {
                         fixtures: spec.fixtures,
                         containsSortConfiguration: columnType == "short",
                         containsParentConfiguration: columnType == "short",
+                        containsFixtureConfiguration: (columnType == "short" && window.toggles.FIXTURE_CASE_SELECTION),
                         containsFilterConfiguration: columnType == "short",
+                        containsCaseListLookupConfiguration: (columnType == "short" && window.toggles.CASE_LIST_LOOKUP),
                         containsCustomXMLConfiguration: columnType == "short",
                         allowsTabs: columnType == 'long',
                         allowsEmptyColumns: columnType == 'long'
@@ -864,6 +1128,8 @@ var DetailScreenConfig = (function () {
                 this.customXMLViewModel.xml.subscribe(function(v){
                     that.shortScreen.saveButton.fire("change");
                 });
+                var $case_list_lookup_el = $("#" + spec.state.type + "-list-callout-configuration");
+                this.caseListLookup = new caseListLookupViewModel($case_list_lookup_el, spec.state.short, this.shortScreen.saveButton);
             }
             if (spec.state.long !== undefined) {
                 this.longScreen = addScreen(spec.state, "long");

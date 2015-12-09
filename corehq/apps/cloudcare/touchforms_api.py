@@ -5,7 +5,7 @@ import json
 from django.conf import settings
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from django.core.urlresolvers import reverse
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
@@ -48,11 +48,9 @@ class SessionDataHelper(object):
         session_data = {
             'device_id': device_id,
             'app_version': '2.0',
-            'username': self.couch_user.raw_username,
-            'user_id': self.couch_user.get_id,
             'domain': self.domain,
-            'user_data': self.couch_user.user_data if isinstance(self.couch_user, CommCareUser) else {},
         }
+        session_data.update(get_user_contributions_to_touchforms_session(self.couch_user))
         if self.case_id:
             if self.delegation:
                 session_data["delegation_id"] = self.case_id
@@ -107,5 +105,17 @@ class SessionDataHelper(object):
 def get_session_data(domain, couch_user, case_id=None, device_id=CLOUDCARE_DEVICE_ID, delegation=False):
     return SessionDataHelper(domain, couch_user, case_id, delegation=delegation).get_session_data(device_id)
 
+
 def filter_cases(domain, couch_user, xpath, additional_filters=None, auth=None, delegation=False):
     return SessionDataHelper(domain, couch_user, delegation=delegation).filter_cases(xpath, additional_filters, auth)
+
+
+def get_user_contributions_to_touchforms_session(couch_user_or_commconnect_case):
+    return {
+        'username': couch_user_or_commconnect_case.raw_username,
+        'user_id': couch_user_or_commconnect_case.get_id,
+        # This API is used by smsforms, so sometimes "couch_user" can be
+        # a CommConnectCase, in which case there is no user_data.
+        'user_data': (couch_user_or_commconnect_case.user_session_data
+            if isinstance(couch_user_or_commconnect_case, CouchUser) else {}),
+    }

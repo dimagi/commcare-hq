@@ -1,24 +1,24 @@
-{% extends "settings/base_template.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% block head %} {{ block.super }}
-<link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
-<link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css' %}" />
+{% block stylesheets %}
+    {{ block.super }}
+
+    <style>
+        #hq-sidebar {
+            min-height: 1470px;
+        }
+    </style>
 {% endblock %}
 
-{% block main_column %}
+
+{% block page_content %}
     <form id="update-project-info" class="form-horizontal disable-on-submit" method="post">
         {% crispy form %}
     </form>
-{% endblock %}
-
-{% block js %}{{ block.super }}
-<script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
-<script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
-<script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -79,3 +79,7 @@
 
     </script>
 {% endblock %}
+
+<div>
+
+</div>

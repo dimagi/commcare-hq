@@ -1,19 +1,21 @@
 import datetime
 from couchdbkit.exceptions import ResourceNotFound
-from casexml.apps.stock.consumption import ConsumptionConfiguration
+from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from couchforms.models import XFormInstance
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.accounting import generator
 from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState, ConsumptionConfig
 from corehq.apps.commtrack.tests.util import TEST_BACKEND, make_loc
 from corehq.apps.locations.models import Location, SQLLocation, LocationType
+from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.sms.backend import test
 from corehq.apps.sms.mixin import MobileBackend
 from corehq.apps.users.models import CommCareUser
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from custom.ewsghana.models import EWSGhanaConfig
-from custom.ewsghana.utils import prepare_domain, bootstrap_user
-from custom.logistics.test.test_script import TestScript
+from custom.ewsghana.utils import prepare_domain, bootstrap_user, create_backend
+from custom.logistics.tests.test_script import TestScript
 from casexml.apps.stock.models import StockReport, StockTransaction
 from casexml.apps.stock.models import DocDomainMapping
 
@@ -43,31 +45,10 @@ class EWSScriptTest(TestScript):
             report=report
         )
         stock_transaction.save()
-        report = StockReport(
-            form_id=xform._id,
-            date=now.replace(second=0, microsecond=0),
-            type='balance',
-            domain=TEST_DOMAIN
-        )
-        report.save()
-        stock_transaction = StockTransaction(
-            case_id=loc.linked_supply_point().get_id,
-            product_id=product.get_id,
-            sql_product=SQLProduct.objects.get(product_id=product.get_id),
-            section_id='stock',
-            type='stockonhand',
-            stock_on_hand=consumption,
-            report=report
-        )
-        stock_transaction.save()
 
     def setUp(self):
-        p1 = Product.get_by_code(TEST_DOMAIN, 'mc')
-        p2 = Product.get_by_code(TEST_DOMAIN, 'lf')
-        p3 = Product.get_by_code(TEST_DOMAIN, 'mg')
-        self._create_stock_state(p1, 5)
-        self._create_stock_state(p2, 10)
-        self._create_stock_state(p3, 5)
+        Product.get_by_code(TEST_DOMAIN, 'mc')
+        Product.get_by_code(TEST_DOMAIN, 'lf')
 
     def tearDown(self):
         StockTransaction.objects.all().delete()
@@ -78,6 +59,8 @@ class EWSScriptTest(TestScript):
     @classmethod
     def setUpClass(cls):
         domain = prepare_domain(TEST_DOMAIN)
+        cls.sms_backend_mapping, cls.backend = create_backend()
+
         p = Product(domain=domain.name, name='Jadelle', code='jd', unit='each')
         p.save()
         p2 = Product(domain=domain.name, name='Male Condom', code='mc', unit='each')
@@ -88,21 +71,85 @@ class EWSScriptTest(TestScript):
         p4.save()
         p5 = Product(domain=domain.name, name='Micro-G', code='mg', unit='each')
         p5.save()
-        loc = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=domain.name)
-        test.bootstrap(TEST_BACKEND, to_console=True)
-        bootstrap_user(username='stella', domain=domain.name, home_loc=loc)
-        bootstrap_user(username='super', domain=domain.name, home_loc=loc,
-                       phone_number='222222', user_data={'role': 'In Charge'})
 
+        Product(domain=domain.name, name='Ad', code='ad', unit='each').save()
+        Product(domain=domain.name, name='Al', code='al', unit='each').save()
+        Product(domain=domain.name, name='Qu', code='qu', unit='each').save()
+        Product(domain=domain.name, name='Sp', code='sp', unit='each').save()
+        Product(domain=domain.name, name='Rd', code='rd', unit='each').save()
+        Product(domain=domain.name, name='Ov', code='ov', unit='each').save()
+        Product(domain=domain.name, name='Ml', code='ml', unit='each').save()
+
+        national = make_loc(code='country', name='Test national', type='country', domain=domain.name)
+        region = make_loc(code='region', name='Test region', type='region', domain=domain.name, parent=national)
+        loc = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=domain.name,
+                       parent=national)
+        SupplyInterface.create_from_location(TEST_DOMAIN, loc)
+        loc.save()
+
+        rms2 = make_loc(code="wrms", name="Test RMS 2", type="Regional Medical Store", domain=domain.name,
+                        parent=region)
+        SupplyInterface.create_from_location(TEST_DOMAIN, rms2)
+        rms2.save()
+
+        cms = make_loc(code="cms", name="Central Medical Stores", type="Central Medical Store",
+                       domain=domain.name, parent=national)
+        SupplyInterface.create_from_location(TEST_DOMAIN, cms)
+        cms.save()
+
+        loc2 = make_loc(code="tf", name="Test Facility", type="CHPS Facility", domain=domain.name, parent=region)
+        SupplyInterface.create_from_location(TEST_DOMAIN, loc2)
+        loc2.save()
+
+        supply_point_id = loc.linked_supply_point().get_id
+        supply_point_id2 = loc2.linked_supply_point().get_id
+
+        cls.sms_backend = TestSMSBackend(name=TEST_BACKEND.upper(), is_global=True)
+        cls.sms_backend.save()
+        cls.user1 = bootstrap_user(username='stella', first_name='test1', last_name='test1',
+                                   domain=domain.name, home_loc=loc)
+        cls.user2 = bootstrap_user(username='super', domain=domain.name, home_loc=loc2,
+                                   first_name='test2', last_name='test2',
+                                   phone_number='222222', user_data={'role': ['In Charge']})
+        cls.user3 = bootstrap_user(username='pharmacist', domain=domain.name, home_loc=loc2,
+                                   first_name='test3', last_name='test3',
+                                   phone_number='333333')
+        cls.rms_user = bootstrap_user(username='rmsuser', domain=domain.name, home_loc=rms2,
+                                      first_name='test4', last_name='test4',
+                                      phone_number='44444')
+        cls.cms_user = bootstrap_user(username='cmsuser', domain=domain.name, home_loc=cms,
+                                      first_name='test5', last_name='test5',
+                                      phone_number='55555')
+        cls.region_user = bootstrap_user(username='regionuser', domain=domain.name, home_loc=region,
+                                         first_name='test6', last_name='test6',
+                                         phone_number='66666')
+        cls.without_location = bootstrap_user(username='withoutloc', domain=domain.name, first_name='test7',
+                                              last_name='test7', phone_number='77777')
         try:
             XFormInstance.get(docid='test-xform')
         except ResourceNotFound:
             xform = XFormInstance(_id='test-xform')
             xform.save()
+
         sql_location = loc.sql_location
-        sql_location.products = SQLProduct.objects.filter(product_id=p5.get_id)
+        sql_location.products = []
         sql_location.save()
+
+        sql_location = loc2.sql_location
+        sql_location.products = []
+        sql_location.save()
+
+        sql_location = rms2.sql_location
+        sql_location.products = []
+        sql_location.save()
+
+        sql_location = cms.sql_location
+        sql_location.products = []
+        sql_location.save()
+
         config = CommtrackConfig.for_domain(domain.name)
+        config.use_auto_consumption = False
+        config.individual_consumption_defaults = True
         config.actions.append(
             CommtrackActionConfig(
                 action='receipts',
@@ -110,23 +157,34 @@ class EWSScriptTest(TestScript):
                 caption='receipts'
             )
         )
-        config.consumption_config = ConsumptionConfig(min_transactions=0, min_window=0, optimal_window=60)
+        config.consumption_config = ConsumptionConfig(
+            use_supply_point_type_default_consumption=True,
+            exclude_invalid_periods=True
+        )
         config.save()
+
+        set_default_consumption_for_supply_point(TEST_DOMAIN, p2.get_id, supply_point_id, 8)
+        set_default_consumption_for_supply_point(TEST_DOMAIN, p3.get_id, supply_point_id, 5)
+
+        set_default_consumption_for_supply_point(TEST_DOMAIN, p2.get_id, supply_point_id2, 10)
+        set_default_consumption_for_supply_point(TEST_DOMAIN, p3.get_id, supply_point_id2, 10)
+        set_default_consumption_for_supply_point(TEST_DOMAIN, p5.get_id, supply_point_id2, 10)
 
     @classmethod
     def tearDownClass(cls):
-        MobileBackend.load_by_name(TEST_DOMAIN, TEST_BACKEND).delete()
+        cls.sms_backend.delete()
         CommCareUser.get_by_username('stella').delete()
         CommCareUser.get_by_username('super').delete()
-        SQLLocation.objects.all().delete()
+        delete_all_locations()
         LocationType.objects.all().delete()
         for product in Product.by_domain(TEST_DOMAIN):
             product.delete()
         SQLProduct.objects.all().delete()
         EWSGhanaConfig.for_domain(TEST_DOMAIN).delete()
         DocDomainMapping.objects.all().delete()
-        Location.by_site_code(TEST_DOMAIN, 'garms').delete()
         generator.delete_all_subscriptions()
+        cls.sms_backend_mapping.delete()
+        cls.backend.delete()
         Domain.get_by_name(TEST_DOMAIN).delete()
 
 

@@ -4,6 +4,8 @@ from dateutil.relativedelta import relativedelta
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
+from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
+    get_number_of_cases_per_domain
 from corehq.util.dates import iso_string_to_datetime
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.users.util import WEIRD_USER_IDS
@@ -13,8 +15,10 @@ from corehq.apps.hqadmin.reporting.reports import (
     USER_COUNT_UPPER_BOUND,
     get_mobile_users,
 )
+from couchforms.analytics import get_number_of_forms_per_domain, \
+    get_number_of_forms_in_domain, domain_has_submission_in_last_30_days, \
+    get_first_form_submission_received, get_last_form_submission_received
 
-from dimagi.utils.couch.database import get_db
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.reports.util import make_form_couch_key
@@ -26,11 +30,11 @@ from dimagi.utils.parsing import json_format_datetime
 
 def num_web_users(domain, *args):
     key = ["active", domain, 'WebUser']
-    row = get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).one()
+    row = CouchUser.get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).one()
     return row["value"] if row else 0
 
 def num_mobile_users(domain, *args):
-    row = get_db().view('users/by_domain', startkey=[domain], endkey=[domain, {}]).one()
+    row = CouchUser.get_db().view('users/by_domain', startkey=[domain], endkey=[domain, {}]).one()
     return row["value"] if row else 0
 
 DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
@@ -72,8 +76,7 @@ def active_mobile_users(domain, *args):
 
 
 def cases(domain, *args):
-    row = get_db().view("hqcase/types_by_domain", startkey=[domain], endkey=[domain, {}]).one()
-    return row["value"] if row else 0
+    return get_number_of_cases_in_domain(domain)
 
 
 def cases_in_last(domain, days):
@@ -110,21 +113,16 @@ def inactive_cases_in_last(domain, days):
     data = es_query(params={"domain.exact": domain, 'closed': False}, q=q, es_url=CASE_INDEX + '/case/_search', size=1)
     return data['hits']['total'] if data.get('hits') else 0
 
+
 def forms(domain, *args):
-    key = make_form_couch_key(domain)
-    row = get_db().view("reports_forms/all_forms", startkey=key, endkey=key+[{}]).one()
-    return row["value"] if row else 0
-
-def sms(domain, direction):
-    key = [domain, "SMSLog", direction]
-    row = get_db().view("sms/direction_by_domain",
-                        startkey=key,
-                        endkey=key + [{}]).one()
-    return row["value"] if row else 0
+    return get_number_of_forms_in_domain(domain)
 
 
-def sms_in_last(domain, days=None):
+def _sms_helper(domain, direction=None, days=None):
     query = SMSES().domain(domain).size(0)
+
+    if direction:
+        query = query.direction(direction)
 
     if days:
         query = query.received(date.today() - relativedelta(days=30))
@@ -132,53 +130,52 @@ def sms_in_last(domain, days=None):
     return query.run().total
 
 
+def sms(domain, direction):
+    return _sms_helper(domain, direction=direction)
+
+
+def sms_in_last(domain, days=None):
+    return _sms_helper(domain, days=days)
+
+
 def sms_in_last_bool(domain, days=None):
     return sms_in_last(domain, days) > 0
 
 
+def sms_in_in_last(domain, days=None):
+    return _sms_helper(domain, direction="I", days=days)
+
+
+def sms_out_in_last(domain, days=None):
+    return _sms_helper(domain, direction="O", days=days)
+
+
 def active(domain, *args):
-    now = datetime.utcnow()
-    then = json_format_datetime(now - timedelta(days=30))
-    now = json_format_datetime(now)
+    return domain_has_submission_in_last_30_days(domain)
 
-    key = ['submission', domain]
-    row = get_db().view(
-        "reports_forms/all_forms",
-        startkey=key+[then],
-        endkey=key+[now],
-        limit=1
-    ).all()
-    return True if row else False
 
-def display_time(row, display=True):
-    submission_time = row["key"][2]
+def display_time(submission_time, display=True):
     if display:
-        return iso_string_to_datetime(submission_time).strftime(DISPLAY_DATE_FORMAT)
+        return submission_time.strftime(DISPLAY_DATE_FORMAT)
     else:
-        return submission_time
+        return json_format_datetime(submission_time)
+
 
 def first_form_submission(domain, display=True):
-    key = make_form_couch_key(domain)
-    row = get_db().view(
-        "reports_forms/all_forms",
-        reduce=False,
-        startkey=key,
-        endkey=key+[{}],
-        limit=1
-    ).first()
-    return display_time(row, display) if row else "No forms"
+    try:
+        submission_time = get_first_form_submission_received(domain)
+    except ValueError:
+        return None
+    return display_time(submission_time, display) if submission_time else None
+
 
 def last_form_submission(domain, display=True):
-    key = make_form_couch_key(domain)
-    row = get_db().view(
-        "reports_forms/all_forms",
-        reduce=False,
-        endkey=key,
-        startkey=key+[{}],
-        descending=True,
-        limit=1
-    ).first()
-    return display_time(row, display) if row else "No forms"
+    try:
+        submission_time = get_last_form_submission_received(domain)
+    except ValueError:
+        return None
+    return display_time(submission_time, display) if submission_time else None
+
 
 def has_app(domain, *args):
     return bool(ApplicationBase.get_db().view(
@@ -187,6 +184,7 @@ def has_app(domain, *args):
         endkey=[domain, {}],
         limit=1
     ).first())
+
 
 def app_list(domain, *args):
     domain = Domain.get_by_name(domain)
@@ -207,7 +205,8 @@ CALC_ORDER = [
     'cases_in_last--120', 'active', 'first_form_submission',
     'last_form_submission', 'has_app', 'web_users', 'active_apps',
     'uses_reminders', 'sms--I', 'sms--O', 'sms_in_last', 'sms_in_last--30',
-    'sms_in_last_bool', 'sms_in_last_bool--30'
+    'sms_in_last_bool', 'sms_in_last_bool--30', 'sms_in_in_last--30',
+    'sms_out_in_last--30',
 ]
 
 CALCS = {
@@ -220,6 +219,8 @@ CALCS = {
     'sms_in_last': "# SMS ever",
     'sms_in_last_bool--30': "used messaging in last 30 days",
     'sms_in_last_bool': "used messaging ever",
+    'sms_in_in_last--30': "# incoming SMS in last 30 days",
+    'sms_out_in_last--30': "# outgoing SMS in last 30 days",
     'cases': "# cases",
     'mobile_users--active': "# active mobile users",
     'mobile_users--inactive': "# inactive mobile users",
@@ -244,6 +245,8 @@ CALC_FNS = {
     "sms": sms,
     "sms_in_last": sms_in_last,
     "sms_in_last_bool": sms_in_last_bool,
+    "sms_in_in_last": sms_in_in_last,
+    "sms_out_in_last": sms_out_in_last,
     "cases": cases,
     "mobile_users": active_mobile_users,
     "active_cases": not_implemented,
@@ -258,6 +261,7 @@ CALC_FNS = {
     'uses_reminders': uses_reminders,
 }
 
+
 def dom_calc(calc_tag, dom, extra_arg=''):
     ans = CALC_FNS[calc_tag](dom, extra_arg) if extra_arg else CALC_FNS[calc_tag](dom)
     if ans is True:
@@ -266,13 +270,12 @@ def dom_calc(calc_tag, dom, extra_arg=''):
         return _('no')
     return ans
 
+
 def _all_domain_stats():
     webuser_counts = defaultdict(lambda: 0)
     commcare_counts = defaultdict(lambda: 0)
-    form_counts = defaultdict(lambda: 0)
-    case_counts = defaultdict(lambda: 0)
 
-    for row in get_db().view('users/by_domain', startkey=["active"],
+    for row in CouchUser.get_db().view('users/by_domain', startkey=["active"],
                              endkey=["active", {}], group_level=3).all():
         _, domain, doc_type = row['key']
         value = row['value']
@@ -281,18 +284,8 @@ def _all_domain_stats():
             'CommCareUser': commcare_counts
         }[doc_type][domain] = value
 
-    key = make_form_couch_key(None)
-    form_counts.update(dict([(row["key"][1], row["value"]) for row in \
-                                get_db().view("reports_forms/all_forms",
-                                    group=True,
-                                    group_level=2,
-                                    startkey=key,
-                                    endkey=key+[{}]
-                             ).all()]))
-
-    case_counts.update(dict([(row["key"][0], row["value"]) for row in \
-                             get_db().view("hqcase/types_by_domain",
-                                           group=True,group_level=1).all()]))
+    form_counts = get_number_of_forms_per_domain()
+    case_counts = get_number_of_cases_per_domain()
 
     return {"web_users": webuser_counts,
             "commcare_users": commcare_counts,
@@ -303,7 +296,8 @@ ES_CALCED_PROPS = ["cp_n_web_users", "cp_n_active_cc_users", "cp_n_cc_users",
                    "cp_n_active_cases", "cp_n_cases", "cp_n_forms",
                    "cp_first_form", "cp_last_form", "cp_is_active",
                    'cp_has_app', "cp_n_in_sms", "cp_n_out_sms", "cp_n_sms_ever",
-                   "cp_n_sms_30_d", "cp_sms_ever", "cp_sms_30_d"]
+                   "cp_n_sms_30_d", "cp_sms_ever", "cp_sms_30_d", "cp_n_sms_in_30_d",
+                   "cp_n_sms_out_30_d"]
 
 def total_distinct_users(domains=None):
     """

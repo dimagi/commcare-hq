@@ -1,15 +1,1 @@
-{% extends base_template %}
-
-{# stuff to override old styles -- remove when everything is migrated over #}
-{% block oldstyle_tag %}{% endblock %}
-{% block oldstyle_imports %}{% endblock %}
-{% block oldstyle_hack_start %}{% endblock %}
-{% block oldstyle_hack_end %}{% endblock %}
-
-{% block layout_style %}hq-centered-content{% endblock %}
-
-{% block content %}
-    <div class="container">
-        {% block centered-content %}{% endblock %}
-    </div>
-{% endblock content %}
+{% extends 'style/bootstrap2/centered.html' %}

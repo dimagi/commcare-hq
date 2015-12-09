@@ -3,16 +3,6 @@ from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
 
 
-def supply_point_ids(locations):
-    keys = [[loc.domain, loc._id] for loc in locations]
-    rows = SupplyPointCase.get_db().view(
-        'commtrack/supply_point_by_loc',
-        keys=keys,
-        include_docs=False,
-    )
-    return [row['id'] for row in rows]
-
-
 def get_relevant_supply_point_ids(domain, active_location=None):
     """
     Return a list of supply point ids for the selected location

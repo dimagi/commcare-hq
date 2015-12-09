@@ -1,14 +1,11 @@
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.caselogic import get_related_cases
-from casexml.apps.phone.data_providers import get_case_payload_batched
-from casexml.apps.phone.data_providers.case.batched import filter_cases_modified_elsewhere_since_sync
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest, PARENT_TYPE
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload, generate_restore_payload
 from casexml.apps.case.tests.util import assert_user_has_cases
 from casexml.apps.phone.models import User
 from casexml.apps.phone.restore import RestoreConfig
 from dimagi.utils.decorators.profile import line_profile
-from casexml.apps.case.xml import V2
 from corehq.apps.domain.models import Domain
 from datetime import datetime
 
@@ -62,35 +59,7 @@ class SyncPerformanceTest(SyncBaseTest):
 
     @line_profile([
         RestoreConfig.get_payload,
-        get_case_payload_batched,
         get_related_cases,
-        filter_cases_modified_elsewhere_since_sync
-    ])
-    def test_profile_filter_cases_modified_elsewhere_since_sync(self):
-        total_cases = 100
-        proportion_modified = 0
-
-        modified = total_cases * proportion_modified
-        id_list = ['case_id_{}'.format(i) for i in range(total_cases)]
-        self._createCaseStubs(id_list, user_id=USER_ID, owner_id=SHARED_ID)
-
-        caseblocks = []
-        for case_id in id_list[:modified]:
-            caseblocks.append(CaseBlock(
-                case_id=case_id,
-                user_id=OTHER_USER_ID,
-                version=V2,
-                update={'favorite_color': 'blue'}
-            ).as_xml())
-        self._postFakeWithSyncToken(caseblocks, self.other_sync_log.get_id)
-
-        assert_user_has_cases(self, self.user, id_list[:modified], restore_id=self.sync_log.get_id)
-
-    @line_profile([
-        RestoreConfig.get_payload,
-        get_case_payload_batched,
-        get_related_cases,
-        filter_cases_modified_elsewhere_since_sync
     ])
     def test_profile_get_related_cases(self):
         total_parent_cases = 50
@@ -109,7 +78,6 @@ class SyncPerformanceTest(SyncBaseTest):
                 user_id=USER_ID,
                 owner_id=REFERRED_TO_GROUP,
                 case_type=REFERRAL_TYPE,
-                version=V2,
                 index={'parent': (PARENT_TYPE, parent_case_id)}
             ).as_xml())
         self._postFakeWithSyncToken(caseblocks, self.sync_log.get_id)
@@ -119,9 +87,7 @@ class SyncPerformanceTest(SyncBaseTest):
 
     @line_profile([
         RestoreConfig.get_payload,
-        get_case_payload_batched,
         get_related_cases,
-        filter_cases_modified_elsewhere_since_sync
     ])
     def test_profile_get_related_cases_grandparent(self):
         total_parent_cases = 5
@@ -140,7 +106,6 @@ class SyncPerformanceTest(SyncBaseTest):
                 user_id=USER_ID,
                 owner_id=SHARED_ID,
                 case_type='child',
-                version=V2,
                 index={'parent': (PARENT_TYPE, parent_case_id)}
             ).as_xml())
         self._postFakeWithSyncToken(caseblocks, self.sync_log.get_id)
@@ -156,7 +121,6 @@ class SyncPerformanceTest(SyncBaseTest):
                 user_id=USER_ID,
                 owner_id=REFERRED_TO_GROUP,
                 case_type=REFERRAL_TYPE,
-                version=V2,
                 index={'parent': ('child', child_case_id)}
             ).as_xml())
         self._postFakeWithSyncToken(caseblocks, self.sync_log.get_id)

@@ -147,8 +147,7 @@ class BuildSpec(DocumentSchema):
 
     def get_label(self):
         if not self.is_null():
-            fmt = "{self.version} "
-            fmt += "(latest)" if self.latest else "({self.build_number})"
+            fmt = "{self.version}"
             return fmt.format(self=self)
         else:
             return None

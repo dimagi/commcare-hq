@@ -1,5 +1,5 @@
 from custom.opm.constants import InvalidRow
-from custom.opm.tests import OPMCaseReportTestBase, OPMCase, MockCaseRow
+from custom.opm.tests.case_reports import OPMCaseReportTestBase, OPMCase, MockCaseRow
 
 
 class TestInvalidDates(OPMCaseReportTestBase):

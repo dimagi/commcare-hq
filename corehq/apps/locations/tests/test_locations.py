@@ -1,16 +1,10 @@
-from corehq.apps.groups.tests import WrapGroupTest
-from corehq.apps.locations.models import Location, LocationType, SQLLocation, \
-    LOCATION_SHARING_PREFIX, LOCATION_REPORTING_PREFIX
+from corehq.apps.groups.tests.test_groups import WrapGroupTestMixin
+from corehq.apps.locations.models import Location, LocationType, SQLLocation
 from corehq.apps.locations.tests.util import make_loc
-from corehq.apps.locations.fixtures import location_fixture_generator
 from corehq.apps.commtrack.helpers import make_supply_point, make_product
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.users.models import CommCareUser
-from django.test import TestCase
-from couchdbkit import ResourceNotFound
-from corehq import toggles
-from corehq.apps.groups.models import Group
-from corehq.apps.groups.exceptions import CantSaveException
+from django.test import TestCase, SimpleTestCase
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.shortcuts import create_domain
 
@@ -18,7 +12,6 @@ from corehq.apps.domain.shortcuts import create_domain
 class LocationProducts(TestCase):
     def setUp(self):
         self.domain = create_domain('locations-test')
-        self.domain.locations_enabled = True
         self.domain.save()
 
         LocationType.objects.get_or_create(
@@ -78,9 +71,38 @@ class LocationProducts(TestCase):
 
 
 class LocationTestBase(TestCase):
+    dependent_apps = [
+        'auditcare',
+        'casexml.apps.case',
+        'casexml.apps.phone',
+        'casexml.apps.stock',
+        'corehq.apps.accounting',
+        'corehq.apps.commtrack',
+        'corehq.apps.domain',
+        'corehq.apps.dropbox',
+        'corehq.apps.fixtures',
+        'corehq.apps.hqcase',
+        'corehq.apps.products',
+        'corehq.apps.reminders',
+        'corehq.apps.sms',
+        'corehq.apps.smsforms',
+        'corehq.apps.tzmigration',
+        'corehq.apps.users',
+        'corehq.couchapps',
+        'couchforms',
+        'custom.logistics',
+        'custom.ilsgateway',
+        'custom.ewsghana',
+        'django.contrib.admin',
+        'django_digest',
+        'django_prbac',
+        'tastypie',
+        'touchforms.formplayer',
+    ]
+
     def setUp(self):
         self.domain = create_domain('locations-test')
-        self.domain.locations_enabled = True
+        self.domain.convert_to_commtrack()
         bootstrap_location_types(self.domain.name)
 
         self.loc = make_loc('loc', type='outlet', domain=self.domain.name)
@@ -107,7 +129,7 @@ class LocationsTest(LocationTestBase):
         sql_loc = SQLLocation.objects.get(name=self.loc.name)
         self.assertEqual(
             sql_loc.couch_location._id,
-            self.loc._id
+            self.loc.location_id
         )
 
         self.assertEqual(
@@ -169,11 +191,11 @@ class LocationsTest(LocationTestBase):
 
         # parent and parent_id
         self.assertEqual(
-            self.user.location._id,
+            self.user.location.location_id,
             test_state1.parent_id
         )
         self.assertEqual(
-            self.user.location._id,
+            self.user.location.location_id,
             test_state1.parent._id
         )
 
@@ -198,16 +220,6 @@ class LocationsTest(LocationTestBase):
             Location.filter_by_type(self.domain.name, 'village', test_state1)
         )
 
-        # Location.filter_by_type_count
-        self.assertEqual(
-            2,
-            Location.filter_by_type_count(self.domain.name, 'village')
-        )
-        self.assertEqual(
-            1,
-            Location.filter_by_type_count(self.domain.name, 'village', test_state1)
-        )
-
         # Location.get_in_domain
         test_village2.domain = 'rejected'
         bootstrap_location_types('rejected')
@@ -223,17 +235,10 @@ class LocationsTest(LocationTestBase):
             Location.get_in_domain(self.domain.name, 'not-a-real-id'),
         )
 
-        def _all_locations(domain):
-            return Location.view(
-                'locations/hierarchy',
-                startkey=[domain],
-                endkey=[domain, {}],
-                reduce=False,
-                include_docs=True
-            ).all()
-        compare(
-            [self.user.location, test_state1, test_state2, test_village1],
-            _all_locations(self.domain.name)
+        self.assertEqual(
+            {loc.location_id for loc in [self.user.location, test_state1, test_state2,
+                                 test_village1]},
+            set(SQLLocation.objects.filter(domain=self.domain.name).location_ids()),
         )
 
         # Location.by_site_code
@@ -253,196 +258,5 @@ class LocationsTest(LocationTestBase):
         )
 
 
-class LocationGroupTest(LocationTestBase):
-    def setUp(self):
-        super(LocationGroupTest, self).setUp()
-
-        self.test_state = make_loc(
-            'teststate',
-            type='state',
-            domain=self.domain.name
-        )
-        self.test_village = make_loc(
-            'testvillage',
-            type='village',
-            parent=self.test_state,
-            domain=self.domain.name
-        )
-        self.test_outlet = make_loc(
-            'testoutlet',
-            type='outlet',
-            parent=self.test_village,
-            domain=self.domain.name
-        )
-
-        toggles.MULTIPLE_LOCATIONS_PER_USER.set("domain:{}".format(self.domain.name), True)
-
-    def test_group_name(self):
-        # just location name for top level
-        self.assertEqual(
-            'teststate-Cases',
-            self.test_state.sql_location.case_sharing_group_object().name
-        )
-
-        # locations combined by forward slashes otherwise
-        self.assertEqual(
-            'teststate/testvillage/testoutlet-Cases',
-            self.test_outlet.sql_location.case_sharing_group_object().name
-        )
-
-        # reporting group is similar but has no ending
-        self.assertEqual(
-            'teststate/testvillage/testoutlet',
-            self.test_outlet.sql_location.reporting_group_object().name
-        )
-
-    def test_id_assignment(self):
-        # each should have the same id, but with a different prefix
-        self.assertEqual(
-            LOCATION_SHARING_PREFIX + self.test_outlet._id,
-            self.test_outlet.sql_location.case_sharing_group_object()._id
-        )
-        self.assertEqual(
-            LOCATION_REPORTING_PREFIX + self.test_outlet._id,
-            self.test_outlet.sql_location.reporting_group_object()._id
-        )
-
-    def test_group_properties(self):
-        # case sharing groups should ... be case sharing
-        self.assertTrue(
-            self.test_outlet.sql_location.case_sharing_group_object().case_sharing
-        )
-        self.assertFalse(
-            self.test_outlet.sql_location.case_sharing_group_object().reporting
-        )
-
-        # and reporting groups reporting
-        self.assertFalse(
-            self.test_outlet.sql_location.reporting_group_object().case_sharing
-        )
-        self.assertTrue(
-            self.test_outlet.sql_location.reporting_group_object().reporting
-        )
-
-        # both should set domain properly
-        self.assertEqual(
-            self.domain.name,
-            self.test_outlet.sql_location.reporting_group_object().domain
-        )
-        self.assertEqual(
-            self.domain.name,
-            self.test_outlet.sql_location.case_sharing_group_object().domain
-        )
-
-    def test_accessory_methods(self):
-        # we need to expose group id without building the group sometimes
-        # so lets make sure those match up
-        expected_id = self.loc.sql_location.case_sharing_group_object()._id
-        self.assertEqual(
-            expected_id,
-            self.loc.group_id
-        )
-
-    def test_not_real_groups(self):
-        # accessing a group object should not cause it to save
-        # in the DB
-        group_obj = self.test_outlet.sql_location.case_sharing_group_object()
-        with self.assertRaises(ResourceNotFound):
-            Group.get(group_obj._id)
-
-    def test_cant_save_wont_save(self):
-        group_obj = self.test_outlet.sql_location.case_sharing_group_object()
-        with self.assertRaises(CantSaveException):
-            group_obj.save()
-
-    def test_custom_data(self):
-        # need to put the location data on the
-        # group with a special prefix
-        self.loc.metadata = {
-            'foo': 'bar',
-            'fruit': 'banana'
-        }
-        self.loc.save()
-
-        self.assertDictEqual(
-            {
-                'commcare_location_type': self.loc.location_type,
-                'commcare_location_name': self.loc.name,
-                'commcare_location_foo': 'bar',
-                'commcare_location_fruit': 'banana'
-            },
-            self.loc.sql_location.case_sharing_group_object().metadata
-        )
-        self.assertDictEqual(
-            {
-                'commcare_location_type': self.loc.location_type,
-                'commcare_location_name': self.loc.name,
-                'commcare_location_foo': 'bar',
-                'commcare_location_fruit': 'banana'
-            },
-            self.loc.sql_location.reporting_group_object().metadata
-        )
-
-    def test_location_fixture_generator(self):
-        """
-        This tests the location XML fixture generator. It specifically ensures that no duplicate XML
-        nodes are generated when all locations have a parent and multiple locations are enabled.
-        """
-        self.domain.commtrack_enabled = True
-        self.domain.save()
-        self.loc.delete()
-
-        state = make_loc(
-            'teststate1',
-            type='state',
-            domain=self.domain.name
-        )
-        district = make_loc(
-            'testdistrict1',
-            type='district',
-            domain=self.domain.name,
-            parent=state
-        )
-        block = make_loc(
-            'testblock1',
-            type='block',
-            domain=self.domain.name,
-            parent=district
-        )
-        village = make_loc(
-            'testvillage1',
-            type='village',
-            domain=self.domain.name,
-            parent=block
-        )
-        outlet1 = make_loc(
-            'testoutlet1',
-            type='outlet',
-            domain=self.domain.name,
-            parent=village
-        )
-        outlet2 = make_loc(
-            'testoutlet2',
-            type='outlet',
-            domain=self.domain.name,
-            parent=village
-        )
-        outlet3 = make_loc(
-            'testoutlet3',
-            type='outlet',
-            domain=self.domain.name,
-            parent=village
-        )
-        self.user.set_location(outlet2)
-        self.user.add_location_delegate(outlet1)
-        self.user.add_location_delegate(outlet2)
-        self.user.add_location_delegate(outlet3)
-        self.user.add_location_delegate(state)
-        self.user.save()
-        fixture = location_fixture_generator(self.user, '2.0')
-        self.assertEquals(len(fixture[0].findall('.//state')), 1)
-        self.assertEquals(len(fixture[0].findall('.//outlet')), 3)
-
-
-class WrapLocationTest(WrapGroupTest):
+class WrapLocationTest(WrapGroupTestMixin, SimpleTestCase):
     document_class = Location

@@ -40,6 +40,7 @@
     {% if with_tabs %}
         {% include 'ilsgateway/partials/tabs.html' %}
     {% endif %}
+
     {% for thisreport in reports %}
         {% if thisreport.show_chart %}
             {% if thisreport.charts %}
@@ -79,11 +80,15 @@
     <script>
         $(document).ajaxStop(function () {
             $('#group_location_async select').first().css('display', 'none');
+            if ($('#group_location_async select').length === 5) {
+                $('#group_location_async select').last().css('display', 'none');
+            }
             if ($('#paramSelectorForm fieldset').children().length === 1) {
                 $('#reportFilters').css('display', 'none');
                 $('#toggle-report-filters').css('display', 'none');
             }
         });
+
     </script>
     {% for thisreport in reports %}
         {% for chart in thisreport.charts %}

@@ -1,10 +1,11 @@
 {% load hq_shared_tags %}
 <script>
+    var menuImage, menuAudio;
     $(function () {
         var $mediaImage = $('#{{ qualifier|default_if_none:"" }}media_image'),
             $mediaAudio = $('#{{ qualifier|default_if_none:"" }}media_audio');
 
-        var menuImage = new AppMenuMediaManager({
+        menuImage = new AppMenuMediaManager({
             ref: {{ item.menu_refs.image|JSON }},
             objectMap: {{ multimedia.object_map|JSON }},
             uploadController: iconUploader,
@@ -12,7 +13,7 @@
             inputElement: $mediaImage
         });
 
-        var menuAudio = new AppMenuMediaManager({
+        menuAudio = new AppMenuMediaManager({
             ref: {{ item.menu_refs.audio|JSON }},
             objectMap: {{ multimedia.object_map|JSON }},
             uploadController: audioUploader,

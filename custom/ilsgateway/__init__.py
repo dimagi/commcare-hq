@@ -1,5 +1,5 @@
 from custom.ilsgateway.comparison_reports import ProductsCompareReport, LocationsCompareReport, \
-    WebUsersCompareReport, SMSUsersCompareReport
+    WebUsersCompareReport, SMSUsersCompareReport, ProductAvailabilityReport, SupplyPointStatusReport
 from custom.ilsgateway.tanzania.reports.alerts import AlertReport
 from custom.ilsgateway.tanzania.reports.dashboard_report import DashboardReport
 from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
@@ -23,7 +23,9 @@ CUSTOM_REPORTS = (
         ProductsCompareReport,
         LocationsCompareReport,
         WebUsersCompareReport,
-        SMSUsersCompareReport
+        SMSUsersCompareReport,
+        ProductAvailabilityReport,
+        SupplyPointStatusReport
     )),
 )
 
@@ -34,4 +36,12 @@ PRODUCTS_CODES_PROGRAMS_MAPPING = {
     "Anti-Malaria": ['al', 'sp', 'qi'],
     "Essential Medicine": ['ab', 'bp', 'ca', 'cp', 'dx', 'fs', 'md', 'os', 'pc', 'zs'],
     "Safe Motherhood": ['eo', 'ff']
+}
+
+LOGISTICS_PRODUCT_ALIASES = {
+    'iucd': 'id',
+    'depo': 'dp',
+    'impl': 'ip',
+    'coc': 'cc',
+    'pop': 'pp'
 }

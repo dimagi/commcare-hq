@@ -9,6 +9,7 @@ from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 
@@ -27,12 +28,14 @@ from corehq.apps.fixtures.exceptions import (
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, FieldList, FixtureTypeField
 from corehq.apps.fixtures.upload import run_upload, validate_file_format, get_workbook
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
+from corehq.apps.fixtures.utils import is_field_name_invalid
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import Permissions
+from corehq.util.files import file_extention_from_filename
+from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
+    WorksheetNotFound
 from dimagi.utils.couch.bulk import CouchTransaction
-from dimagi.utils.excel import WorksheetNotFound, JSONReaderError, \
-    HeaderValueError
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from dimagi.utils.decorators.view import get_file
@@ -59,16 +62,22 @@ def strip_json(obj, disallow_basic=None, disallow=None):
 
     return ret
 
+
 def _to_kwargs(req):
     # unicode can mix this up so have a little utility to do it
     # was seeing this only locally, not sure if python / django
     # version dependent
     return dict((str(k), v) for k, v in json.load(req, object_pairs_hook=OrderedDict).items())
 
+
 @require_can_edit_fixtures
 def tables(request, domain):
     if request.method == 'GET':
-        return json_response([strip_json(x) for x in FixtureDataType.by_domain(domain)])
+        return json_response(
+            [strip_json(x) for x in
+             sorted(FixtureDataType.by_domain(domain), key=lambda data_type: data_type.tag)]
+        )
+
 
 @require_can_edit_fixtures
 def update_tables(request, domain, data_type_id, test_patch=None):
@@ -105,6 +114,30 @@ def update_tables(request, domain, data_type_id, test_patch=None):
 
     if request.method == 'POST' or request.method == "PUT":
         fields_update = test_patch or _to_kwargs(request)
+
+        # validate fields
+        validation_errors = []
+        for field_name, options in fields_update['fields'].items():
+            method = options.keys()
+            if 'update' in method:
+                field_name = options['update']
+            if field_name.startswith('xml') and 'remove' not in method:
+                validation_errors.append(
+                    _("Field name \"%s\" cannot begin with 'xml'.") % field_name
+                )
+            if is_field_name_invalid(field_name) and 'remove' not in method:
+                validation_errors.append(
+                    _("Field name \"%s\" cannot include /, "
+                      "\\, <, >, or spaces.") % field_name
+                )
+        if validation_errors:
+            return json_response({
+                'validation_errors': validation_errors,
+                'error_msg': _(
+                    "Could not update table because field names were not "
+                    "correctly formatted"),
+            })
+
         fields_patches = fields_update["fields"]
         data_tag = fields_update["tag"]
         is_global = fields_update["is_global"]
@@ -279,8 +312,11 @@ class UploadItemLists(TemplateView):
     def post(self, request):
         replace = 'replace' in request.POST
 
-        file_ref = expose_cached_download(request.file.read(),
-                                   expiry=1*60*60)
+        file_ref = expose_cached_download(
+            request.file.read(),
+            file_extension=file_extention_from_filename(request.file.name),
+            expiry=1*60*60,
+        )
 
         # catch basic validation in the synchronous UI
         try:
@@ -322,8 +358,10 @@ class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
             'title': _(self.page_title),
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
+            'next_url': reverse('edit_lookup_tables', args=[self.domain]),
+            'next_url_text': _("Return to manage lookup tables"),
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'style/bootstrap2/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -344,6 +382,7 @@ def fixture_upload_job_poll(request, domain, download_id, template="fixtures/par
     return render(request, template, context)
 
 
+@csrf_exempt
 @require_POST
 @login_or_digest
 @require_can_edit_fixtures
@@ -367,7 +406,7 @@ def upload_fixture_api(request, domain, **kwargs):
         resp_json = {}
         resp_json["code"] = code
         resp_json["message"] = message
-        return HttpResponse(json.dumps(resp_json), mimetype="application/json")
+        return HttpResponse(json.dumps(resp_json), content_type="application/json")
 
     try:
         upload_file = request.FILES["file-to-upload"]
@@ -422,7 +461,7 @@ def upload_fixture_api(request, domain, **kwargs):
     if num_unknown_users:
         resp_json["message"] += "%s%s%s" % (("and following " if num_unknown_groups else ""), warn_users, upload_resp.unknown_users)
 
-    return HttpResponse(json.dumps(resp_json), mimetype="application/json")
+    return HttpResponse(json.dumps(resp_json), content_type="application/json")
 
 
 @login_and_domain_required

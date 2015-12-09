@@ -1,0 +1,130 @@
+{% extends 'style/bootstrap3/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+{% load djangular_tags %}
+
+{% block stylesheets %}
+<style type="text/css">
+    .form-notice-container {
+        position: relative;
+        height: 80px;
+    }
+    .form-notice-container-tall {
+        height: 145px;
+    }
+    @media (max-width: 767px) {
+        .form-notice-container {
+            height: 125px;
+        }
+        .form-notice-container-tall {
+            height: 217px;
+        }
+    }
+    .form-notice {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.6);
+        z-index: 4999;
+
+    }
+    .form-notice .label {
+        display: block;
+        z-index: 5000;
+    }
+    .progress-exports {
+        margin-bottom: 2px;
+        margin-top: 6px;
+    }
+    .form-actions-exports {
+        margin-bottom: 30px;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block js %}
+<script type="text/javascript" src="{% new_static 'export/js/download_export.ng.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}
+<script type="text/javascript">
+(function (angular, undefined) {
+   'use strict';
+    var downloadExportsApp = angular.module('downloadExportsApp', ['hq.download_export']);
+    downloadExportsApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
+        djangoRMIProvider.configure({% djng_current_rmi %});
+    }]);
+    downloadExportsApp.constant('exportList', {{ export_list|JSON }});
+    downloadExportsApp.constant('maxColumnSize', {{ max_column_size|JSON }});
+    downloadExportsApp.constant('defaultDateRange', '{{ default_date_range }}');
+    downloadExportsApp.constant('checkForMultimedia', {{ check_for_multimedia|BOOL }});
+    downloadExportsApp.constant('formElement', {
+        progress: function () {
+            return $('#download-progress-bar');
+        },
+        group: function () {
+            return $('#id_group');
+        },
+        user_type: function () {
+            return $('#id_user_types');
+        }
+    });
+}(window.angular));
+</script>
+{% endblock %}
+
+{% block page_content %}
+    <div ng-app="downloadExportsApp">
+        <div ng-controller="DownloadExportFormController"
+             ng-cloak>
+            <div class="alert alert-info">
+                {% blocktrans %}
+                    You are downloading the following exports:
+                {% endblocktrans %}
+                <ul>
+                    {% angularjs %}
+                    <li ng-repeat="export in exportList">
+                        <a href="{{ export.edit_url }}" target="_blank">
+                            <i class="fa fa-file-text"></i>
+                            {{ export.name }}</a>
+                    </li>
+                    {% endangularjs %}
+                </ul>
+            </div>
+        {% if show_no_submissions_warning %}
+            <div class="alert alert-warning">
+                <h4>
+                    <i class="fa fa-exclamation-triangle"></i>
+                    {% trans "No submissions available." %}
+                </h4>
+                <p>
+                    {% blocktrans %}
+                        It seems your project doesn't have any submissions
+                        from its applications. Please submit data before
+                        using the export tool.
+                    {% endblocktrans %}
+                </p>
+                <p>
+                    {% blocktrans %}
+                        To get started, please
+                        <a href="https://confluence.dimagi.com/display/commcarepublic/Deploy+and+Install+an+Application+on+CommCareHQ"
+                           target="_blank">deploy</a>
+                        your application and submit data from a phone. You may also
+                        <a href="https://confluence.dimagi.com/display/commcarepublic/CloudCare+-+Web+Data+Entry"
+                           target="_blank">submit data via CloudCare</a>, depending on your project's
+                        <a href="https://www.commcarehq.org/pricing/" target="_blank">plan level</a>.
+                    {% endblocktrans %}
+                </p>
+            </div>
+        {% else %}
+            {% include 'export/partial/export_download_prepare.html' %}
+        {% endif %}
+        </div>
+        {% include 'export/partial/export_download_progress.html' %}
+    </div>
+
+{% endblock page_content %}

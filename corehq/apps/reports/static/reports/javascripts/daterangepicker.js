@@ -23,10 +23,28 @@ $(function() {
         $(this).daterangepicker({
             format: 'YYYY-MM-DD',
             showDropdowns: true,
-            maxDate: now,
             ranges: ranges,
             separator: separator
         });
+
+        $('.daterangepicker_start_input').hide();
+        $('.daterangepicker_end_input').hide();
+
+        $('.ranges .applyBtn').hide();
+        $('.ranges .cancelBtn').hide();
+
+        //the custom range button is the 4th li, but has no other
+        //defining class or id to select it
+        $('.ranges ul li:last').click(function() {
+            $('.ranges .applyBtn').show();
+            $('.ranges .cancelBtn').show();
+        });
+
+        $('.ranges ul li:not(:last)').click(function() {
+            $('.ranges .applyBtn').hide();
+            $('.ranges .cancelBtn').hide();
+        });
+
     };
     $.fn.createDefaultDateRangePicker = function () {
         this.createDateRangePicker(

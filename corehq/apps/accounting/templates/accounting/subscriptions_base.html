@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/base_section.html' %}
+{% extends 'style/bootstrap2/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 
@@ -11,9 +11,10 @@
     <script src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
     <script src="{% static 'accounting/js/credits-tab.js' %}"></script>
     <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
     <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
     <script src="{% static 'accounting/js/accounting.subscription_info_handler.js' %}"></script>
+    <script src="{% static 'accounting/js/invoices.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}

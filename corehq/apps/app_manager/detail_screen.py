@@ -1,5 +1,6 @@
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager import suite_xml as sx
+from corehq.apps.app_manager.suite_xml import xml_models as sx
+from corehq.apps.app_manager.suite_xml import const
 from corehq.apps.app_manager.util import is_sort_only_column
 from corehq.apps.app_manager.xpath import (
     CaseXPath,
@@ -10,6 +11,7 @@ from corehq.apps.app_manager.xpath import (
     XPath,
     dot_interpolate,
     UserCaseXPath)
+from corehq.apps.hqmedia.models import CommCareMultimedia
 
 CASE_PROPERTY_MAP = {
     # IMPORTANT: if you edit this you probably want to also edit
@@ -234,9 +236,15 @@ class FormattedDetailColumn(object):
 class HideShortHeaderColumn(FormattedDetailColumn):
 
     @property
-    def header_width(self):
+    def header(self):
         if self.detail.display == 'short':
-            return 0
+            header = sx.Header(
+                text=sx.Text(),
+                width=self.template_width
+            )
+        else:
+            header = super(HideShortHeaderColumn, self).header
+        return header
 
 
 class HideShortColumn(HideShortHeaderColumn):
@@ -321,13 +329,33 @@ class Enum(FormattedDetailColumn):
 @register_format_type('enum-image')
 class EnumImage(Enum):
     template_form = 'image'
-    header_width = '13%'
-    template_width = '13%'
+
+    @property
+    def header_width(self):
+        return self.template_width
+
+    @property
+    def template_width(self):
+        '''
+        Set column width to accommodate widest image.
+        '''
+        width = 0
+        if self.app.enable_case_list_icon_dynamic_width:
+            for i, item in enumerate(self.column.enum):
+                for path in item.value.values():
+                    map_item = self.app.multimedia_map[path]
+                    if map_item is not None:
+                        image = CommCareMultimedia.get(map_item.multimedia_id)
+                        if image is not None:
+                            for media in image.aux_media:
+                                width = max(width, media.media_meta['size']['width'])
+        if width == 0:
+            return '13%'
+        return str(width)
 
 
 @register_format_type('late-flag')
 class LateFlag(HideShortHeaderColumn):
-
     template_width = "11%"
 
     XPATH_FUNCTION = u"if({xpath} = '', '*', if(today() - date({xpath}) > {column.late_flag}, '*', ''))"
@@ -444,17 +472,20 @@ class Graph(FormattedDetailColumn):
         return template
 
 
-@register_type_processor(sx.FIELD_TYPE_ATTACHMENT)
+@register_type_processor(const.FIELD_TYPE_ATTACHMENT)
 class AttachmentXpathGenerator(BaseXpathGenerator):
     @property
     def xpath(self):
-        return sx.FIELD_TYPE_ATTACHMENT + "/" + self.column.field_property
+        return const.FIELD_TYPE_ATTACHMENT + "/" + self.column.field_property
 
 
-@register_type_processor(sx.FIELD_TYPE_PROPERTY)
+@register_type_processor(const.FIELD_TYPE_PROPERTY)
 class PropertyXpathGenerator(BaseXpathGenerator):
     @property
     def xpath(self):
+        if self.column.model == 'product':
+            return self.column.field
+
         parts = self.column.field.split('/')
         if self.column.model == 'case':
             parts[-1] = CASE_PROPERTY_MAP.get(parts[-1], parts[-1])
@@ -493,7 +524,7 @@ class PropertyXpathGenerator(BaseXpathGenerator):
         )
 
 
-@register_type_processor(sx.FIELD_TYPE_INDICATOR)
+@register_type_processor(const.FIELD_TYPE_INDICATOR)
 class IndicatorXpathGenerator(BaseXpathGenerator):
     @property
     def xpath(self):
@@ -502,7 +533,7 @@ class IndicatorXpathGenerator(BaseXpathGenerator):
         return IndicatorXpath(instance_id).instance().slash(indicator)
 
 
-@register_type_processor(sx.FIELD_TYPE_LOCATION)
+@register_type_processor(const.FIELD_TYPE_LOCATION)
 class LocationXpathGenerator(BaseXpathGenerator):
     @property
     def xpath(self):
@@ -511,7 +542,7 @@ class LocationXpathGenerator(BaseXpathGenerator):
         return LocationXpath('commtrack:locations').location(self.column.field_property, hierarchy)
 
 
-@register_type_processor(sx.FIELD_TYPE_LEDGER)
+@register_type_processor(const.FIELD_TYPE_LEDGER)
 class LedgerXpathGenerator(BaseXpathGenerator):
 
     @property
@@ -527,9 +558,9 @@ class LedgerXpathGenerator(BaseXpathGenerator):
         )
 
 
-@register_type_processor(sx.FIELD_TYPE_SCHEDULE)
+@register_type_processor(const.FIELD_TYPE_SCHEDULE)
 class ScheduleXpathGenerator(BaseXpathGenerator):
 
     @property
     def xpath(self):
-        return self.column.field_property
+        return "${}".format(self.column.field_property)

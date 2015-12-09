@@ -12,29 +12,22 @@ hard_coded_group_filter = lambda group: bool((group.metadata or {}).get('awc-cod
 hard_coded_fixture_id = 'indicators:bihar-supervisor'
 
 
-def generator(user, version, last_sync=None):
-    if user.domain in hard_coded_domains:
-        groups = filter(hard_coded_group_filter, Group.by_user(user))
-        if len(groups) == 1:
-            data_provider = IndicatorDataProvider(
-                domain=user.domain,
-                indicator_set=IndicatorConfig(INDICATOR_SETS).get_indicator_set(hard_coded_indicators),
-                groups=groups,
-            )
-            fixture_provider = IndicatorFixtureProvider(
-                hard_coded_fixture_id, user, data_provider
-            )
-            return [fixture_provider.to_fixture()]
-    return []
-
 class IndicatorFixtureProvider(object):
+    id = hard_coded_fixture_id
 
-    def __init__(self, id, user, data_provider):
-        self.id = id
-        self.user = user
-        self.data_provider = data_provider
+    def __call__(self, user, version, last_sync=None):
+        if user.domain in hard_coded_domains:
+            groups = filter(hard_coded_group_filter, Group.by_user(user))
+            if len(groups) == 1:
+                data_provider = IndicatorDataProvider(
+                    domain=user.domain,
+                    indicator_set=IndicatorConfig(INDICATOR_SETS).get_indicator_set(hard_coded_indicators),
+                    groups=groups,
+                )
+                return [self.get_fixture(user, data_provider)]
+        return []
 
-    def to_fixture(self):
+    def get_fixture(self, user, data_provider):
         """
         Generate a fixture representation of the indicator set. Something like the following:
            <fixture id="indicators:bihar-supervisor" user_id="3ce8b1611c38e956d3b3b84dd3a7ac18">
@@ -65,13 +58,13 @@ class IndicatorFixtureProvider(object):
                     'id': indicator.slug,
                 },
             )
-            done, due = self.data_provider.get_indicator_data(indicator)
+            done, due = data_provider.get_indicator_data(indicator)
             ind_el.append(_el('name', indicator.name, attrib={'lang': 'en'}))
             ind_el.append(_el('name', _(indicator.name), attrib={'lang': 'hin'}))
             ind_el.append(_el('done', done))
             ind_el.append(_el('due', due))
             clients = ElementTree.Element('clients')
-            for case_id, data in self.data_provider.get_case_data(indicator).items():
+            for case_id, data in data_provider.get_case_data(indicator).items():
                 client = ElementTree.Element('client',
                     attrib={
                         'id': case_id,
@@ -86,12 +79,12 @@ class IndicatorFixtureProvider(object):
         # switch to hindi so we can use our builtin translations
         with localize('hin'):
             root = ElementTree.Element('fixture',
-                attrib={'id': self.id, 'user_id': self.user._id},
+                attrib={'id': self.id, 'user_id': user._id},
             )
             group = ElementTree.Element('group',
                 attrib={
-                    'id': self.data_provider.groups[0]._id,
-                    'team': self.data_provider.groups[0].name
+                    'id': data_provider.groups[0]._id,
+                    'team': data_provider.groups[0].name
                 },
             )
             root.append(group)
@@ -99,14 +92,11 @@ class IndicatorFixtureProvider(object):
 
             # hack: we have to have something with 'clients' show up first in the list
             # context: http://manage.dimagi.com/default.asp?107569
-            sorted_indicators = sorted(self.data_provider.summary_indicators,
-                                       key=lambda indicator: -len(self.data_provider.get_case_data(indicator)))
+            sorted_indicators = sorted(data_provider.summary_indicators,
+                                       key=lambda indicator: -len(data_provider.get_case_data(indicator)))
             for indicator in sorted_indicators:
                 indicators.append(_indicator_to_fixture(indicator))
             group.append(indicators)
             return root
 
-    def to_string(self):
-        return ElementTree.tostring(self.to_fixture(), encoding="utf-8")
-
-
+generator = IndicatorFixtureProvider()

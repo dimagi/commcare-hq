@@ -1,0 +1,75 @@
+{% load hq_shared_tags %}{% load compress %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Doc {{ doc_id }}</title>
+
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'style/lib/bootstrap-3.2.0/dist/css/bootstrap.min.css' %}"/>
+        <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
+        <link rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
+
+        {% compress js %}
+            <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
+            <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
+        {% endcompress %}
+
+        {# CodeMirror uses granular resources as a means of config #}
+        <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
+        <script src="{% static 'codemirror/mode/javascript/javascript.js' %}"></script>
+        <script src="{% static 'codemirror/addon/fold/foldcode.js' %}"></script>
+        <script src="{% static 'codemirror/addon/fold/foldgutter.js' %}"></script>
+        <script src="{% static 'codemirror/addon/fold/brace-fold.js' %}"></script>
+
+        <style>
+            .CodeMirror {
+                height: auto;
+            }
+        </style>
+
+    </head>
+    <body>
+        <div class="container-fluid">
+            <div class="page-header">
+                <h1>Enter a doc id</h1>
+                <form class="form-inline" method="GET" action="">
+                    <input name="id" class="form-control" type="search" style="width: 30em"/>
+                    <select class="form-control" name="db_name" style="width: 12em">
+                        <option value="">All Databases</option>
+                        {% for db in all_databases %}
+                            <option value="{{ db }}">{{ db }}</option>
+                        {% endfor %}
+                    </select>
+                    <input class="btn btn-primary form-control" type="submit"/>
+                </form>
+            </div>
+            {% if doc_id %}
+                <h3>Doc {{ doc_id }}</h3>
+                <p>Doc type: {{ doc_type }}</p>
+                <p>Couch database: {{ dbname }}</p>
+                <div>
+                    <h3>Couch Doc:</h3>
+                    <pre id="couch-document">{{ doc }}</pre>
+                </div>
+            {% endif %}
+        </div>
+
+        <script>
+            // don't break if offline (Also why I left it as a <pre/>)
+            if (window.CodeMirror) {
+                var couchDocElement = document.getElementById('couch-document');
+                var myCodeMirror = CodeMirror(function(elt) {
+                    couchDocElement.parentNode.replaceChild(elt, couchDocElement);
+                }, {
+                    value: couchDocElement.textContent,
+                    readOnly: true,
+                    lineNumbers: true,
+                    mode: {name: "javascript", json: true},
+                    viewportMargin: Infinity,
+                    foldGutter: true,
+                    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+                });
+            }
+        </script>
+
+    </body>
+</html>

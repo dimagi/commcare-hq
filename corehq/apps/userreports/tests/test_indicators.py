@@ -1,8 +1,17 @@
+import datetime
+import uuid
 from copy import copy
 from decimal import Decimal
-from django.test import SimpleTestCase
+from django.db.models.signals import post_save
+from mock import patch
+from django.test import SimpleTestCase, TestCase
+from corehq.apps.commtrack.models import StockState, update_domain_mapping
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.indicators import LedgerBalancesIndicator
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
+from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.products.models import SQLProduct
 
 
 class SingleIndicatorTestBase(SimpleTestCase):
@@ -358,6 +367,16 @@ class ExpressionIndicatorTest(SingleIndicatorTestBase):
         })
         self._check_result(indicator, {'month': "3"}, "March")
 
+    def test_literal(self):
+        indicator = IndicatorFactory.from_spec({
+            "type": "expression",
+            "expression": 10,
+            "column_id": "foo",
+            "datatype": "integer"
+        })
+        self._check_result(indicator, {}, 10)
+        self._check_result(indicator, {'foo': 'bar'}, 10)
+
 
 class ChoiceListIndicatorTest(SimpleTestCase):
     def setUp(self):
@@ -438,3 +457,87 @@ class IndicatorDatatypeTest(SingleIndicatorTestBase):
         self._check_result(indicator, dict(foo=5.5), Decimal(5.5))
         self._check_result(indicator, dict(foo=None), None)
         self._check_result(indicator, dict(foo="banana"), None)
+
+
+class LedgerBalancesIndicatorTest(SimpleTestCase):
+    def setUp(self):
+        self.spec = {
+            "type": "ledger_balances",
+            "column_id": "soh",
+            "display_name": "Stock On Hand",
+            "ledger_section": "soh",
+            "product_codes": ["abc", "def", "ghi"],
+            "case_id_expression": {
+                "type": "property_name",
+                "property_name": "_id"
+            }
+        }
+        self.stock_states = {'abc': 32, 'def': 85, 'ghi': 11}
+
+    @patch.object(LedgerBalancesIndicator, '_get_values_by_product')
+    def test_ledger_balances_indicator(self, get_values_by_product):
+        get_values_by_product.return_value = self.stock_states
+        indicator = IndicatorFactory.from_spec(self.spec)
+
+        doc = {'_id': 'case1'}
+        values = indicator.get_values(doc, EvaluationContext(doc, 0))
+
+        self.assertEqual(
+            [(val.column.id, val.value) for val in values],
+            [('soh_abc', 32), ('soh_def', 85), ('soh_ghi', 11)]
+        )
+
+
+class TestGetValuesByProduct(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        post_save.disconnect(update_domain_mapping, StockState)
+        cls.domain_obj = create_domain('test-domain')
+        for product_code, section, value in [
+            ('coke', 'soh', 32),
+            ('coke', 'consumption', 63),
+            ('surge', 'soh', 85),
+            ('fanta', 'soh', 11),
+        ]:
+            product = cls._make_product(product_code)
+            cls._make_stock_state(product, section, value)
+
+    @classmethod
+    def tearDownClass(cls):
+        post_save.connect(update_domain_mapping, StockState)
+        cls.domain_obj.delete()
+
+    @staticmethod
+    def _make_product(code):
+        return SQLProduct.objects.create(
+            domain='test-domain',
+            product_id=uuid.uuid4().hex,
+            code=code,
+        )
+
+    @staticmethod
+    def _make_stock_state(product, section_id, value):
+        return StockState.objects.create(
+            stock_on_hand=value,
+            case_id='case1',
+            product_id=product.product_id,
+            sql_product=product,
+            section_id=section_id,
+            last_modified_date=datetime.datetime.now(),
+        )
+
+    def test_get_soh_values_by_product(self):
+        values = LedgerBalancesIndicator._get_values_by_product(
+            'soh', 'case1', ['coke', 'surge', 'new_coke']
+        )
+        self.assertEqual(values['coke'], 32)
+        self.assertEqual(values['surge'], 85)
+        self.assertEqual(values['new_coke'], 0)
+
+    def test_get_consumption_by_product(self):
+        values = LedgerBalancesIndicator._get_values_by_product(
+            'consumption', 'case1', ['coke', 'surge', 'new_coke']
+        )
+        self.assertEqual(values['coke'], 63)
+        self.assertEqual(values['surge'], 0)
+        self.assertEqual(values['new_coke'], 0)

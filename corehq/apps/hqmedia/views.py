@@ -19,12 +19,13 @@ from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResp
 from django.shortcuts import render
 import shutil
 from corehq import privileges
+from corehq.util.files import file_extention_from_filename
 
 from soil import DownloadBase
 
 from corehq.apps.app_manager.decorators import safe_download, require_can_edit_apps
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
-from corehq.apps.app_manager.models import get_app
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache, BulkMultimediaStatusCacheNfs
 from corehq.apps.hqmedia.controller import (
     MultimediaBulkUploadController,
@@ -118,23 +119,6 @@ def choose_media(request, domain, app_id):
         return HttpResponse(json.dumps({'match_found': True, 'audio': {'m_id': file._id, 'url': file.url()}}))
     else:
         raise Http404()
-
-
-@require_can_edit_apps
-def media_urls(request, domain, app_id):
-    # IS THIS USED?????
-    # I rewrote it so it actually produces _something_, but is it useful???
-    app = get_app(domain, app_id)
-    # todo remove get_media_references
-    multimedia = app.get_media_references()
-    pathUrls = {}
-    for section, types in multimedia['references'].items():
-        for media_type, info in types.items():
-            for m in info['maps']:
-                if m.get('path'):
-                    pathUrls[m['path']] = m
-
-    return HttpResponse(json.dumps(pathUrls))
 
 
 class BaseMultimediaUploaderView(BaseMultimediaTemplateView):
@@ -285,7 +269,11 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             status.save()
         else:
             self.uploaded_file.file.seek(0)
-            saved_file = expose_cached_download(self.uploaded_file.file.read(), expiry=BulkMultimediaStatusCache.cache_expiry)
+            saved_file = expose_cached_download(
+                self.uploaded_file.file.read(),
+                expiry=BulkMultimediaStatusCache.cache_expiry,
+                file_extension=file_extention_from_filename(self.uploaded_file.name),
+            )
             processing_id = saved_file.download_id
             status = BulkMultimediaStatusCache(processing_id)
             status.save()
@@ -347,9 +335,9 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
 
     def process_upload(self):
         self.uploaded_file.file.seek(0)
-        data = self.uploaded_file.file.read()
-        multimedia = self.media_class.get_by_data(data)
-        multimedia.attach_data(data,
+        self.data = self.uploaded_file.file.read()
+        multimedia = self.media_class.get_by_data(self.data)
+        multimedia.attach_data(self.data,
                                original_filename=self.uploaded_file.name,
                                username=self.username)
         multimedia.add_domain(self.domain, owner=True)
@@ -422,6 +410,15 @@ class ProcessVideoFileUploadView(BaseProcessFileUploadView):
         return ['video']
 
 
+class ProcessTextFileUploadView(BaseProcessFileUploadView):
+    media_class = CommCareMultimedia
+    name = "hqmedia_uploader_text"
+
+    @classmethod
+    def valid_base_types(cls):
+        return ['text']
+
+
 class RemoveLogoView(BaseMultimediaView):
     name = "hqmedia_remove_logo"
 
@@ -480,7 +477,6 @@ def iter_app_files(app, include_multimedia_files, include_index_files):
         app.remove_unused_mappings()
         file_iterator, errors = iter_media_files(app.get_media_objects())
     if include_index_files:
-        from corehq.apps.app_manager.views import iter_index_files
         index_files, index_file_errors = iter_index_files(app)
         if index_file_errors:
             errors.extend(index_file_errors)
@@ -524,7 +520,8 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
         if error_response:
             return error_response
 
-        download = DownloadBase()
+        message = request.GET['message'] if 'message' in request.GET else None
+        download = DownloadBase(message=message)
         download.set_task(build_application_zip.delay(
             include_multimedia_files=self.include_multimedia_files,
             include_index_files=self.include_index_files,
@@ -617,9 +614,40 @@ class ViewMultimediaFile(View):
                 data = CommCareImage.get_thumbnail_data(data, self.thumb)
             buffer = StringIO(data)
             metadata = {'content_type': content_type}
-            obj.cache_put(buffer, metadata, timeout=0)
+            obj.cache_put(buffer, metadata, timeout=None)
         else:
             metadata, buffer = obj.get()
             data = buffer.getvalue()
             content_type = metadata['content_type']
-        return HttpResponse(data, mimetype=content_type)
+        return HttpResponse(data, content_type=content_type)
+
+
+def iter_index_files(app):
+    from corehq.apps.app_manager.views.download import download_index_files
+    skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
+    text_extensions = ('.xml', '.ccpr', '.txt')
+    get_name = lambda f: {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
+    files = []
+    errors = []
+
+    def _encode_if_unicode(s):
+        return s.encode('utf-8') if isinstance(s, unicode) else s
+
+    def _files(files):
+        for name, f in files:
+            if name not in skip_files:
+                # TODO: make RemoteApp.create_all_files not return media files
+                extension = os.path.splitext(name)[1]
+                data = _encode_if_unicode(f) if extension in text_extensions else f
+                yield (get_name(name), data)
+    try:
+        files = download_index_files(app)
+    except Exception:
+        errors = _(
+            "We were unable to get your files "
+            "because your Application has errors. "
+            "Please click Make New Version under Deploy "
+            "for feedback on how to fix these errors."
+        )
+
+    return _files(files), errors

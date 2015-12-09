@@ -1,6 +1,11 @@
 from corehq.pillows import cacheinvalidate
+from dimagi.utils.decorators.memoized import memoized
 
-cache_pillow = cacheinvalidate.CacheInvalidatePillow()
+
+@memoized
+def get_cache_pillow():
+    return cacheinvalidate.CacheInvalidatePillow()
+
 
 def invalidate_document(document, deleted=False):
     """
@@ -8,7 +13,7 @@ def invalidate_document(document, deleted=False):
     """
     # this is a hack that use the caching pillow invalidation that was intended to be
     # rolled out to track this globally.
-    cache_pillow.change_trigger({
+    get_cache_pillow().change_trigger({
         'doc': document.to_json(),
         'id': document._id,
         'deleted': deleted,

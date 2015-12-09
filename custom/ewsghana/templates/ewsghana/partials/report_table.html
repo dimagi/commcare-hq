@@ -6,9 +6,10 @@
     <div class="row">
         {% for chart in charts %}
             {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
+            <button class="btn btn-default imageDownload" data-chart-id="#chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}">Save this graph to .jpg</button>
             <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="span{{ chart_span }} hide">
-            <svg style='height: {{ chart.height }}px'> </svg>
-        </div>
+                <svg style='height: {{ chart.height }}px'> </svg>
+            </div>
         {% endfor %}
     </div>
 {% endif %}
@@ -68,7 +69,7 @@
         var params = {
                 sDom: dataTablesDom,
                 "sPaginationType": "bootstrap",
-                iDisplayLength: 10,
+                iDisplayLength: {{ report_table.default_rows }},
                 iDisplayStart: 0,
                 sScrollX: "100%"
             };
@@ -110,24 +111,6 @@
                 .transition().duration(100).call(multibar_chart);
          };
 
-        var show_hide_line_chart_data = function() {
-            var data = JSON.parse(JSON.stringify(line_chart_data));
-            var productCodes = [];
-            $("#report_table_product_selection_pane input:not(:checked)").each(function() {
-                productCodes.push($(this).attr('value'));
-                productCodes.push($(this).attr('name'));
-            });
-
-            for(var i = 0; i < data.length; i++) {
-                data = jQuery.grep(data, function(value) {
-                    return !_.contains(productCodes, value.key)
-                });
-            }
-            d3.select(line_chart_id + ' svg')
-                    .datum(data)
-                    .transition().duration(500).call(line_chart);
-        };
-
         $('.toggle-column').bind('click', function() {
             {% if report_table.slug != 'product_selection_pane' and report_table.slug != 'facility_report' %}
                 if (datatable.fnSettings().aoColumns.length > 1) {
@@ -144,7 +127,7 @@
         });
 
         {% if report_table.slug != 'product_selection_pane' and report_table.slug != 'facility_report' %}
-            $("#report_table_product_selection_pane input:not(:checked)").each(function () {
+            $("#report_table_product_selection_pane input.product-checkbox:not(:checked)").each(function () {
                 if (datatable.fnSettings().aoColumns.length > 1) {
                     show_hide_table_columns(this);
                 }

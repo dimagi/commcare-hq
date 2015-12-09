@@ -25,7 +25,7 @@ hqLayout.utils = {
             $footer = $(hqLayout.selector.footer),
             $breadcrumbs = $(hqLayout.selector.breadcrumbs);
         var absorbedHeight = $navigation.outerHeight() + $footer.outerHeight();
-        if ($breadcrumbs) {
+        if ($breadcrumbs.length) {
             absorbedHeight += $breadcrumbs.outerHeight();
         }
         return $(window).height() - absorbedHeight;
@@ -45,17 +45,20 @@ hqLayout.actions = {
     balanceSidebar: function () {
         var $sidebar = $(hqLayout.selector.sidebar),
             $content = $(hqLayout.selector.content);
-        if ($sidebar && $content) {
+        if ($content.length) {
             var availableHeight = hqLayout.utils.getAvailableContentHeight(),
-                contentHeight = $content.innerHeight();
+                contentHeight = $content.innerHeight(),
+                footerHeight = $(hqLayout.selector.footer).outerHeight();
             if (contentHeight > availableHeight) {
-                $content.css('padding-bottom',
-                        $(hqLayout.selector.footer).outerHeight() + 15 + 'px');
+                $content.css('padding-bottom', footerHeight + 15 + 'px');
                 contentHeight = $content.outerHeight();
             }
 
-            var newSidebarHeight = Math.max(availableHeight, contentHeight);
-            $sidebar.css('min-height', newSidebarHeight + 'px');
+            if ($sidebar.length) {
+                var newSidebarHeight = Math.max(availableHeight, contentHeight);
+                $sidebar.css('min-height', newSidebarHeight + 'px');
+                $sidebar.css('padding-bottom', footerHeight + 15 + 'px');
+            }
         }
     },
     recheckFooterStatus: function () {

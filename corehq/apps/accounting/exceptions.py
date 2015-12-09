@@ -10,6 +10,10 @@ class InvoiceError(Exception):
     pass
 
 
+class InvoiceAlreadyCreatedError(Exception):
+    pass
+
+
 class CreditLineError(Exception):
     pass
 

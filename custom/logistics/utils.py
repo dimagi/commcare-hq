@@ -1,18 +1,20 @@
-from corehq import Domain
-from corehq.apps.commtrack.models import SupplyPointCase
+def iterate_over_api_objects(func, filters=None):
+    filters = filters or {}
+    offset = 0
+    limit = 100
+    _, objects = func(limit=limit, offset=offset, filters=filters)
+    while objects:
+        for obj in objects:
+            yield obj
+
+        offset += 100
+        _, objects = func(limit=limit, offset=offset, filters=filters)
 
 
-def get_supply_point_by_external_id(domain, external_id):
-    return SupplyPointCase.view('hqcase/by_domain_external_id',
-        key=[domain, str(external_id)],
-        reduce=False,
-        include_docs=True,
-        limit=1
-    ).first()
+def get_username_for_user(domain, smsuser, username_part=None):
+        domain_part = "%s.commcarehq.org" % domain
 
-
-def get_reporting_types(domain):
-    return [
-        location_type for location_type in Domain.get_by_name(domain).location_types
-        if not location_type.administrative
-    ]
+        if not username_part:
+            username_part = "%s%d" % (smsuser.name.strip().replace(' ', '.').lower(),
+                                      smsuser.id)
+        return "%s@%s" % (username_part[:(128 - (len(domain_part) + 1))], domain_part), username_part

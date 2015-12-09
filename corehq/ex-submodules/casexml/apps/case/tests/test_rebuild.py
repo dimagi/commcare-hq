@@ -2,23 +2,40 @@ import uuid
 from couchdbkit.exceptions import ResourceNotFound
 from django.test import TestCase, SimpleTestCase
 from casexml.apps.case import const
-from casexml.apps.case.cleanup import rebuild_case
+from casexml.apps.case.cleanup import rebuild_case_from_forms
 from casexml.apps.case.exceptions import MissingServerDate
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase, CommCareCaseAction, _action_sort_key_function
+from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from datetime import datetime, timedelta
 from copy import deepcopy
-from casexml.apps.case.tests.util import post_util as real_post_util, delete_all_cases
+from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import primary_actions, post_case_blocks
+from corehq.form_processor.backends.couch.update_strategy import ActionsUpdateStrategy, _action_sort_key_function
+from corehq.form_processor.models import RebuildWithReason
 from couchforms.models import XFormInstance
-from dimagi.utils.parsing import json_format_datetime
+
+REBUILD_TEST_DOMAIN = 'rebuild-test'
 
 
-def post_util(**kwargs):
-    form_extras = kwargs.get('form_extras', {})
-    form_extras['domain'] = 'rebuild-test'
-    kwargs['form_extras'] = form_extras
-    return real_post_util(**kwargs)
+def _post_util(create=False, case_id=None, user_id=None, owner_id=None,
+              case_type=None, form_extras=None, close=False, date_modified=None,
+              **kwargs):
+
+    form_extras = form_extras or {}
+    form_extras['domain'] = REBUILD_TEST_DOMAIN
+
+    uid = lambda: uuid.uuid4().hex
+    case_id = case_id or uid()
+    block = CaseBlock(create=create,
+                      case_id=case_id,
+                      user_id=user_id or uid(),
+                      owner_id=owner_id or uid(),
+                      case_type=case_type or 'test',
+                      date_modified=date_modified,
+                      update=kwargs,
+                      close=close).as_xml()
+    post_case_blocks([block], form_extras)
+    return case_id
 
 
 class CaseRebuildTest(TestCase):
@@ -45,8 +62,8 @@ class CaseRebuildTest(TestCase):
             self.fail(msg)
 
     def testActionEquality(self):
-        case_id = post_util(create=True)
-        post_util(case_id=case_id, p1='p1', p2='p2')
+        case_id = _post_util(create=True)
+        _post_util(case_id=case_id, p1='p1', p2='p2')
 
         case = CommCareCase.get(case_id)
         self.assertEqual(2, len(case.actions)) # create + update
@@ -72,9 +89,10 @@ class CaseRebuildTest(TestCase):
 
     def testBasicRebuild(self):
         user_id = 'test-basic-rebuild-user'
-        case_id = post_util(create=True, user_id=user_id)
-        post_util(case_id=case_id, p1='p1-1', p2='p2-1', user_id=user_id)
-        post_util(case_id=case_id, p2='p2-2', p3='p3-2', user_id=user_id)
+        now = datetime.utcnow()
+        case_id = _post_util(create=True, user_id=user_id, date_modified=now)
+        _post_util(case_id=case_id, p1='p1-1', p2='p2-1', user_id=user_id, date_modified=now)
+        _post_util(case_id=case_id, p2='p2-2', p3='p3-2', user_id=user_id, date_modified=now)
 
         # check initial state
         case = CommCareCase.get(case_id)
@@ -92,16 +110,16 @@ class CaseRebuildTest(TestCase):
         # rebuild by flipping the actions
         case.actions = [case.actions[0], a2, a1]
         case.xform_ids = [case.xform_ids[0], case.xform_ids[2], case.xform_ids[1]]
-        case.rebuild()
+        ActionsUpdateStrategy(case).soft_rebuild_case()
         self.assertEqual(case.p1, 'p1-1') # original
         self.assertEqual(case.p2, 'p2-1') # updated (back!)
         self.assertEqual(case.p3, 'p3-2') # new
 
     def testActionComparison(self):
         user_id = 'test-action-comparison-user'
-        case_id = post_util(create=True, property='a1 wins', user_id=user_id)
-        post_util(case_id=case_id, property='a2 wins', user_id=user_id)
-        post_util(case_id=case_id, property='a3 wins', user_id=user_id)
+        case_id = _post_util(create=True, property='a1 wins', user_id=user_id)
+        _post_util(case_id=case_id, property='a2 wins', user_id=user_id)
+        _post_util(case_id=case_id, property='a3 wins', user_id=user_id)
 
         # check initial state
         case = CommCareCase.get(case_id)
@@ -120,19 +138,20 @@ class CaseRebuildTest(TestCase):
         _confirm_action_order(case, [a1, a2, a3])
 
         # test initial rebuild does nothing
-        case.rebuild()
+        update_strategy = ActionsUpdateStrategy(case)
+        update_strategy.soft_rebuild_case()
         _confirm_action_order(case, [a1, a2, a3])
 
         # test sorting by server date
         case.actions[2].server_date = case.actions[2].server_date + timedelta(days=1)
-        case.rebuild()
+        update_strategy.soft_rebuild_case()
         _confirm_action_order(case, [a1, a3, a2])
 
         # test sorting by date within the same day
         case = CommCareCase.get(case_id)
         _confirm_action_order(case, [a1, a2, a3])
         case.actions[2].date = case.actions[3].date + timedelta(minutes=1)
-        case.rebuild()
+        ActionsUpdateStrategy(case).soft_rebuild_case()
         _confirm_action_order(case, [a1, a3, a2])
 
         # test original form order
@@ -140,54 +159,45 @@ class CaseRebuildTest(TestCase):
         case.actions[3].server_date = case.actions[2].server_date
         case.actions[3].date = case.actions[2].date
         case.xform_ids = [a1.xform_id, a3.xform_id, a2.xform_id]
-        case.rebuild()
+        ActionsUpdateStrategy(case).soft_rebuild_case()
         _confirm_action_order(case, [a1, a3, a2])
 
         # test create comes before update
         case = CommCareCase.get(case_id)
         case.actions = [a1, create, a2, a3]
-        case.rebuild()
+        ActionsUpdateStrategy(case).soft_rebuild_case()
         _confirm_action_order(case, [a1, a2, a3])
 
     def testRebuildEmpty(self):
-        self.assertEqual(None, rebuild_case('notarealid'))
-        try:
-            CommCareCase.get_with_rebuild('notarealid')
-            self.fail('get with rebuild should still fail for unknown cases')
-        except ResourceNotFound:
-            pass
+        self.assertEqual(None, rebuild_case_from_forms('anydomain', 'notarealid', RebuildWithReason(reason='test')))
 
     def testRebuildCreateCase(self):
-        case_id = post_util(create=True)
-        post_util(case_id=case_id, p1='p1', p2='p2')
+        case_id = _post_util(create=True)
+        _post_util(case_id=case_id, p1='p1', p2='p2')
 
         # delete initial case
         case = CommCareCase.get(case_id)
         case.delete()
 
-        case = rebuild_case(case_id)
-        self.assertEqual(case.p1, 'p1')
-        self.assertEqual(case.p2, 'p2')
-        self.assertEqual(2, len(primary_actions(case)))  # create + update
-
-        case.delete()
         try:
             CommCareCase.get(case_id)
             self.fail('get should fail on deleted cases')
         except ResourceNotFound:
             pass
 
-        case = CommCareCase.get_with_rebuild(case_id)
+        case = rebuild_case_from_forms(REBUILD_TEST_DOMAIN, case_id, RebuildWithReason(reason='test'))
         self.assertEqual(case.p1, 'p1')
         self.assertEqual(case.p2, 'p2')
+        self.assertEqual(2, len(primary_actions(case)))  # create + update
 
     def testReconcileActions(self):
         now = datetime.utcnow()
         # make sure we timestamp everything so they have the right order
-        case_id = post_util(create=True, form_extras={'received_on': now})
-        post_util(case_id=case_id, p1='p1-1', p2='p2-1', form_extras={'received_on': now + timedelta(seconds=1)})
-        post_util(case_id=case_id, p2='p2-2', p3='p3-2', form_extras={'received_on': now + timedelta(seconds=2)})
+        case_id = _post_util(create=True, form_extras={'received_on': now})
+        _post_util(case_id=case_id, p1='p1-1', p2='p2-1', form_extras={'received_on': now + timedelta(seconds=1)})
+        _post_util(case_id=case_id, p2='p2-2', p3='p3-2', form_extras={'received_on': now + timedelta(seconds=2)})
         case = CommCareCase.get(case_id)
+        update_strategy = ActionsUpdateStrategy(case)
 
         original_actions = [deepcopy(a) for a in case.actions]
         original_form_ids = [id for id in case.xform_ids]
@@ -198,21 +208,21 @@ class CaseRebuildTest(TestCase):
         # test reordering
         case.actions = [case.actions[2], case.actions[1], case.actions[0]]
         self._assertListNotEqual(original_actions, case.actions)
-        case.reconcile_actions()
+        update_strategy.reconcile_actions()
         self._assertListEqual(original_actions, case.actions)
 
         # test duplication
         case.actions = case.actions * 3
         self.assertEqual(9, len(case.actions))
         self._assertListNotEqual(original_actions, case.actions)
-        case.reconcile_actions()
+        update_strategy.reconcile_actions()
         self._assertListEqual(original_actions, case.actions)
 
         # test duplication, even when dates are off
         case.actions = original_actions + [deepcopy(case.actions[2])]
         case.actions[-1].server_date = case.actions[-1].server_date + timedelta(seconds=1)
         self._assertListNotEqual(original_actions, case.actions)
-        case.reconcile_actions()
+        update_strategy.reconcile_actions()
         self._assertListEqual(original_actions, case.actions)
 
         # test duplication with different properties is actually
@@ -221,11 +231,11 @@ class CaseRebuildTest(TestCase):
         case.actions[-1].updated_unknown_properties['new'] = 'mismatch'
         self.assertEqual(4, len(case.actions))
         self._assertListNotEqual(original_actions, case.actions)
-        case.reconcile_actions()
+        update_strategy.reconcile_actions()
         self._assertListNotEqual(original_actions, case.actions)
 
         # test clean slate rebuild
-        case = rebuild_case(case_id)
+        case = rebuild_case_from_forms(REBUILD_TEST_DOMAIN, case_id, RebuildWithReason(reason='test'))
         self._assertListEqual(original_actions, primary_actions(case))
         self._assertListEqual(original_form_ids, case.xform_ids)
 
@@ -234,7 +244,7 @@ class CaseRebuildTest(TestCase):
         Checks that archiving the only form associated with the case archives
         the case and unarchiving unarchives it.
         """
-        case_id = post_util(create=True, p1='p1-1', p2='p2-1')
+        case_id = _post_util(create=True, p1='p1-1', p2='p2-1')
         case = CommCareCase.get(case_id)
 
         self.assertEqual('CommCareCase', case._doc['doc_type'])
@@ -259,11 +269,11 @@ class CaseRebuildTest(TestCase):
     def testFormArchiving(self):
         now = datetime.utcnow()
         # make sure we timestamp everything so they have the right order
-        case_id = post_util(create=True, p1='p1-1', p2='p2-1',
+        case_id = _post_util(create=True, p1='p1-1', p2='p2-1',
                             form_extras={'received_on': now})
-        post_util(case_id=case_id, p2='p2-2', p3='p3-2', p4='p4-2',
+        _post_util(case_id=case_id, p2='p2-2', p3='p3-2', p4='p4-2',
                   form_extras={'received_on': now + timedelta(seconds=1)})
-        post_util(case_id=case_id, p4='p4-3', p5='p5-3', close=True,
+        _post_util(case_id=case_id, p4='p4-3', p5='p5-3', close=True,
                   form_extras={'received_on': now + timedelta(seconds=2)})
 
         case = CommCareCase.get(case_id)
@@ -362,9 +372,13 @@ class CaseRebuildTest(TestCase):
         way_earlier = now - timedelta(days=1)
         # make sure we timestamp everything so they have the right order
         create_block = CaseBlock(case_id, create=True, date_modified=way_earlier)
-        post_case_blocks([create_block.as_xml(json_format_datetime)], form_extras={'received_on': way_earlier})
+        post_case_blocks(
+            [create_block.as_xml()], form_extras={'received_on': way_earlier}
+        )
         update_block = CaseBlock(case_id, update={'foo': 'bar'}, date_modified=earlier)
-        post_case_blocks([update_block.as_xml(json_format_datetime)], form_extras={'received_on': earlier})
+        post_case_blocks(
+            [update_block.as_xml()], form_extras={'received_on': earlier}
+        )
 
         case = CommCareCase.get(case_id)
         self.assertEqual(earlier, case.modified_on)
@@ -377,10 +391,10 @@ class CaseRebuildTest(TestCase):
     def testArchiveAgainstDeletedCases(self):
         now = datetime.utcnow()
         # make sure we timestamp everything so they have the right order
-        case_id = post_util(create=True, p1='p1', form_extras={'received_on': now})
-        post_util(case_id=case_id, p2='p2',
+        case_id = _post_util(create=True, p1='p1', form_extras={'received_on': now})
+        _post_util(case_id=case_id, p2='p2',
                   form_extras={'received_on': now + timedelta(seconds=1)})
-        post_util(case_id=case_id, p3='p3',
+        _post_util(case_id=case_id, p3='p3',
                   form_extras={'received_on': now + timedelta(seconds=2)})
 
         case = CommCareCase.get(case_id)
@@ -402,7 +416,7 @@ class TestCheckActionOrder(SimpleTestCase):
             CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
             CommCareCaseAction(server_date=datetime(2001, 1, 3, 0, 0, 0)),
         ])
-        self.assertTrue(case.check_action_order())
+        self.assertTrue(ActionsUpdateStrategy(case).check_action_order())
 
     def test_out_of_order(self):
         case = CommCareCase(actions=[
@@ -410,7 +424,7 @@ class TestCheckActionOrder(SimpleTestCase):
             CommCareCaseAction(server_date=datetime(2001, 1, 3, 0, 0, 0)),
             CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
         ])
-        self.assertFalse(case.check_action_order())
+        self.assertFalse(ActionsUpdateStrategy(case).check_action_order())
 
     def test_sorted_with_none(self):
         case = CommCareCase(actions=[
@@ -419,7 +433,7 @@ class TestCheckActionOrder(SimpleTestCase):
             CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
             CommCareCaseAction(server_date=datetime(2001, 1, 3, 0, 0, 0)),
         ])
-        self.assertTrue(case.check_action_order())
+        self.assertTrue(ActionsUpdateStrategy(case).check_action_order())
 
     def test_out_of_order_with_none(self):
         case = CommCareCase(actions=[
@@ -428,7 +442,7 @@ class TestCheckActionOrder(SimpleTestCase):
             CommCareCaseAction(server_date=None),
             CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
         ])
-        self.assertFalse(case.check_action_order())
+        self.assertFalse(ActionsUpdateStrategy(case).check_action_order())
 
 
 class TestActionSortKey(SimpleTestCase):

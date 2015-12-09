@@ -1,5 +1,6 @@
 import json
 from tastypie import fields
+from tastypie.resources import Resource
 
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta, LoginAndDomainAuthentication
 from corehq.apps.api.util import get_object_or_not_exist
@@ -10,7 +11,7 @@ from corehq.util.quickcache import quickcache
 from ..models import Location, SQLLocation
 
 
-@quickcache(['user._id', 'project.name', 'only_editable'])
+@quickcache(['user._id', 'project.name', 'only_editable'], timeout=10)
 def _user_locations_ids(user, project, only_editable):
     # admins and users not assigned to a location can see and edit everything
     def all_ids():
@@ -74,4 +75,17 @@ class LocationResource(HqBaseResource):
         authentication = LoginAndDomainAuthentication()
         object_class = Location
         resource_name = 'location'
+        limit = 0
+
+
+class InternalLocationResource(LocationResource):
+
+    # using the default resource dispatch function to bypass our authorization for internal use
+    def dispatch(self, request_type, request, **kwargs):
+        return Resource.dispatch(self, request_type, request, **kwargs)
+
+    class Meta(CustomResourceMeta):
+        authentication = LoginAndDomainAuthentication()
+        object_class = Location
+        resource_name = 'location_internal'
         limit = 0

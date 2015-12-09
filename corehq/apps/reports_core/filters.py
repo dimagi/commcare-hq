@@ -1,24 +1,14 @@
 from collections import namedtuple
 from datetime import datetime, time
+from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.userreports.expressions.getters import transform_from_datatype
-from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE
+from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, CHOICE_DELIMITER
+from corehq.apps.userreports.util import localize
 from corehq.util.dates import iso_string_to_date
 
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_lazy as _
-
-
-class FilterException(Exception):
-    pass
-
-
-class MissingParamException(FilterException):
-    pass
-
-
-class FilterValueException(FilterException):
-    pass
 
 
 FilterParam = namedtuple('FilterParam', ['name', 'required'])
@@ -28,20 +18,15 @@ class BaseFilter(object):
     """
     Base object for filters.
     """
+    template = None
+    javascript_template = None
 
-    def __init__(self, name, required=False, params=None):
+    def __init__(self, name, params=None):
         self.name = name
-        self.required = required
         self.params = params or []
 
     def get_value(self, context):
-        context_ok = self.check_context(context)
-        if self.required and not context_ok:
-            required_slugs = ', '.join([slug.name for slug in self.params if slug.required])
-            raise MissingParamException("Missing filter parameters. "
-                                        "Required parameters are: {}".format(required_slugs))
-
-        if context_ok:
+        if self.check_context(context):
             kwargs = {param.name: context[param.name] for param in self.params if param.name in context}
             return self.value(**kwargs)
         else:
@@ -69,12 +54,12 @@ class BaseFilter(object):
         """
         return None
 
-    def context(self, value):
+    def context(self, value, lang=None):
         """
         Context for rendering the filter.
         """
         context = {
-            'label': self.label,
+            'label': localize(self.label, lang),
             'css_id': self.css_id,
             'value': value,
         }
@@ -92,7 +77,7 @@ class DatespanFilter(BaseFilter):
     template = 'reports_core/filters/datespan_filter/datespan_filter.html'
     javascript_template = 'reports_core/filters/datespan_filter/datespan_filter.js'
 
-    def __init__(self, name, required=True, label='Datespan Filter',
+    def __init__(self, name, label='Datespan Filter',
                  css_id=None):
         self.label = label
         self.css_id = css_id or name
@@ -101,8 +86,7 @@ class DatespanFilter(BaseFilter):
             FilterParam(self.enddate_param_name, True),
             FilterParam('date_range_inclusive', False),
         ]
-        super(DatespanFilter, self).__init__(required=required, name=name, params=params)
-
+        super(DatespanFilter, self).__init__(name=name, params=params)
 
     @property
     def startdate_param_name(self):
@@ -133,8 +117,8 @@ class DatespanFilter(BaseFilter):
             return DateSpan(startdate, enddate, inclusive=date_range_inclusive)
 
     def default_value(self):
-        # default to a week's worth of data.
-        return DateSpan.since(7)
+        # default to "Show All Dates"
+        return None
 
     def filter_context(self):
         return {
@@ -145,14 +129,14 @@ class DatespanFilter(BaseFilter):
 class NumericFilter(BaseFilter):
     template = "reports_core/filters/numeric_filter.html"
 
-    def __init__(self, name, required=True, label=_('Numeric Filter'), css_id=None):
+    def __init__(self, name, label=_('Numeric Filter'), css_id=None):
         self.label = label
         self.css_id = css_id or name
         params = [
             FilterParam(self.operator_param_name, True),
             FilterParam(self.operand_param_name, True),
         ]
-        super(NumericFilter, self).__init__(required=required, name=name, params=params)
+        super(NumericFilter, self).__init__(name=name, params=params)
 
     @property
     def operator_param_name(self):
@@ -187,21 +171,22 @@ class ChoiceListFilter(BaseFilter):
     """
     Filter for a list of choices. Each choice should be a Choice object as per above.
     """
+    template = 'reports_core/filters/choice_list_filter.html'
 
-    def __init__(self, name, required=True, label='Choice List Filter',
-                 template='reports_core/filters/choice_list_filter.html',
+    def __init__(self, name, datatype, label='Choice List Filter',
                  css_id=None, choices=None):
         params = [
             FilterParam(name, True),
         ]
-        super(ChoiceListFilter, self).__init__(required=required, name=name, params=params)
+        super(ChoiceListFilter, self).__init__(name=name, params=params)
+        self.datatype = datatype
         self.label = label
-        self.template = template
         self.css_id = css_id or self.name
         self.choices = choices or []
 
     def value(self, **kwargs):
-        choice = unicode(kwargs[self.name])
+        raw_value = kwargs[self.name]
+        choice = transform_from_datatype(self.datatype)(raw_value) if raw_value != SHOW_ALL_CHOICE else raw_value
         choice_values = map(lambda c: c.value, self.choices)
         if choice not in choice_values:
             raise FilterValueException(_(u'Choice "{choice}" not found in choices: {choices}')
@@ -222,7 +207,7 @@ class DynamicChoiceListFilter(BaseFilter):
     template = 'reports_core/filters/dynamic_choice_list_filter/dynamic_choice_list.html'
     javascript_template = 'reports_core/filters/dynamic_choice_list_filter/dynamic_choice_list.js'
 
-    def __init__(self, name, field, required, datatype, label, show_all, url_generator, css_id=None):
+    def __init__(self, name, field, datatype, label, show_all, url_generator, choice_provider, css_id=None):
         """
         url_generator should be a callable that takes a domain, report, and filter and returns a url.
         see userreports.reports.filters.dynamic_choice_list_url for an example.
@@ -230,20 +215,22 @@ class DynamicChoiceListFilter(BaseFilter):
         params = [
             FilterParam(name, True),
         ]
-        super(DynamicChoiceListFilter, self).__init__(required=required, name=name, params=params)
+        super(DynamicChoiceListFilter, self).__init__(name=name, params=params)
         self.datatype = datatype
         self.field = field
         self.label = label
         self.show_all = show_all
         self.css_id = css_id or self.name
         self.url_generator = url_generator
+        self.choice_provider = choice_provider
 
     def value(self, **kwargs):
-        choice = kwargs[self.name]
-        if choice:
-            typed_choice = transform_from_datatype(self.datatype)(choice)
-            return Choice(typed_choice, choice)
-        return Choice(SHOW_ALL_CHOICE, '')
+        selection = unicode(kwargs.get(self.name, ""))
+        if selection:
+            choices = selection.split(CHOICE_DELIMITER)
+            typed_choices = [transform_from_datatype(self.datatype)(c) for c in choices]
+            return [Choice(tc, c) for (tc, c) in zip(typed_choices, choices)]
+        return self.default_value()
 
     def default_value(self):
-        return None
+        return [Choice(SHOW_ALL_CHOICE, '')]

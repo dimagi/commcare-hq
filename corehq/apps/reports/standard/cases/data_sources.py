@@ -10,11 +10,9 @@ import json
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.util import loc_group_id_or_none
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -93,12 +91,10 @@ class CaseInfo(object):
     @property
     @memoized
     def location(self):
-        loc_id = loc_group_id_or_none(self.owner_id)
-        if loc_id:
-            try:
-                return SQLLocation.objects.get(location_id=loc_id)
-            except SQLLocation.DoesNotExist:
-                return None
+        try:
+            return SQLLocation.objects.get(location_id=self.owner_id)
+        except SQLLocation.DoesNotExist:
+            return None
 
     @property
     def owner(self):
@@ -130,7 +126,7 @@ class CaseInfo(object):
     @property
     @memoized
     def owning_group(self):
-        mc = cache.get_cache('default')
+        mc = cache.caches['default']
         cache_key = "%s.%s" % (Group.__class__.__name__, self.owner_id)
         try:
             if mc.has_key(cache_key):
@@ -144,32 +140,11 @@ class CaseInfo(object):
         except Exception:
             return None
 
-    @property
-    @memoized
-    def owner_doc(self, wrap=False):
-        doc = None
-        if self.owner_id:
-            try:
-                doc = get_db().get(self.owner_id)
-            except ResourceNotFound:
-                pass
-        if not doc:
-            return None
-
-        if wrap:
-            class_ = {
-                'CommCareUser': CommCareUser,
-                'Group': Group,
-            }.get(doc['doc_type'])
-            return class_.wrap(doc)
-        else:
-            return doc
-
     @memoized
     def _get_username(self, user_id):
         username = self.report.usernames.get(user_id)
         if not username:
-            mc = cache.get_cache('default')
+            mc = cache.caches['default']
             cache_key = "%s.%s" % (CouchUser.__class__.__name__, user_id)
 
             try:

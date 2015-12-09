@@ -6,8 +6,8 @@ from corehq.apps.domain.utils import legacy_domain_re
 from django.contrib import admin
 from corehq.apps.domain.views import ProBonoStaticView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
-from corehq.apps.orgs.urls import organizations_urls
 from corehq.apps.reports.urls import report_urls
+from corehq.apps.registration.utils import PRICING_LINK
 
 try:
     from localsettings import LOCAL_APP_URLS
@@ -29,7 +29,6 @@ handler403 = 'corehq.apps.hqwebapp.views.no_permissions'
 from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specific
 from corehq.apps.settings.urls import domain_specific as settings_domain_specific
 from corehq.apps.settings.urls import users_redirect, domain_redirect
-from corehq.apps.adm.urls import adm_admin_interface_urls
 from corehq.apps.sms.urls import sms_admin_interface_urls
 
 
@@ -47,16 +46,13 @@ domain_specific = patterns('',
     (r'^phone/', include('corehq.apps.ota.urls')),
     (r'^phone/', include('corehq.apps.mobile_auth.urls')),
     (r'^sms/', include('corehq.apps.sms.urls')),
-    (r'^commtrack/', include('corehq.apps.commtrack.urls')),
     (r'^reminders/', include('corehq.apps.reminders.urls')),
     (r'^indicators/mvp/', include('mvp.urls')),
     (r'^indicators/', include('corehq.apps.indicators.urls')),
-    (r'^reports/adm/', include('corehq.apps.adm.urls')),
     (r'^reports/', include('corehq.apps.reports.urls')),
     (r'^data/', include('corehq.apps.data_interfaces.urls')),
     (r'^', include(hqwebapp_domain_specific)),
     (r'^case/', include('corehq.apps.hqcase.urls')),
-    (r'^cleanup/', include('corehq.apps.cleanup.urls')),
     (r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     (r'^fixtures/', include('corehq.apps.fixtures.urls')),
     (r'^importer/', include('corehq.apps.importer.urls')),
@@ -70,6 +66,7 @@ domain_specific = patterns('',
     (r'^', include('custom.uth.urls')),
     (r'^dashboard/', include('corehq.apps.dashboard.urls')),
     (r'^configurable_reports/', include('corehq.apps.userreports.urls')),
+    (r'^performance_messaging/', include('corehq.apps.performance_sms.urls')),
 )
 
 urlpatterns = patterns('',
@@ -77,18 +74,15 @@ urlpatterns = patterns('',
         url=static('hqwebapp/img/favicon2.png'))),
     (r'^auditcare/', include('auditcare.urls')),
     (r'^admin/', include(admin.site.urls)),
+    (r'^analytics/', include('corehq.apps.analytics.urls')),
     (r'^register/', include('corehq.apps.registration.urls')),
     (r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
-    (r'^o/', include('corehq.apps.orgs.urls')),
-    (r'^organizations/', include(organizations_urls)),
     (r'^account/', include('corehq.apps.settings.urls')),
     (r'^project_store(.*)$', 'corehq.apps.appstore.views.rewrite_url'),
     (r'^exchange/', include('corehq.apps.appstore.urls')),
     (r'^webforms/', include('touchforms.formplayer.urls')),
     (r'', include('corehq.apps.hqwebapp.urls')),
     (r'', include('corehq.apps.domain.urls')),
-    (r'^adm/', include(adm_admin_interface_urls)),
-    (r'^announcements/', include('corehq.apps.announcements.urls')),
     (r'^hq/accounting/', include('corehq.apps.accounting.urls')),
     (r'^hq/sms/', include(sms_admin_interface_urls)),
     (r'^hq/multimedia/', include('corehq.apps.hqmedia.urls')),
@@ -98,15 +92,18 @@ urlpatterns = patterns('',
     (r'^hq/pillow_errors/', include('corehq.apps.hqpillow_retry.urls')),
     (r'^couchlog/', include('couchlog.urls')),
     (r'^formtranslate/', include('formtranslate.urls')),
-    (r'^unicel/', include('corehq.apps.unicel.urls')),
-    (r'^tropo/', include('corehq.apps.tropo.urls')),
-    (r'^twilio/', include('corehq.apps.twilio.urls')),
-    (r'^megamobile/', include('corehq.apps.megamobile.urls')),
-    (r'^telerivet/', include('corehq.apps.telerivet.urls')),
-    (r'^kookoo/', include('corehq.apps.kookoo.urls')),
-    (r'^yo/', include('corehq.apps.yo.urls')),
-    (r'^gvi/', include('corehq.apps.grapevine.urls')),
-    (r'^sislog/', include('corehq.apps.sislog.urls')),
+    (r'^unicel/', include('corehq.messaging.smsbackends.unicel.urls')),
+    (r'^smsgh/', include('corehq.messaging.smsbackends.smsgh.urls')),
+    (r'^apposit/', include('corehq.messaging.smsbackends.apposit.urls')),
+    (r'^tropo/', include('corehq.messaging.smsbackends.tropo.urls')),
+    (r'^twilio/', include('corehq.messaging.smsbackends.twilio.urls')),
+    (r'^dropbox/', include('corehq.apps.dropbox.urls')),
+    (r'^megamobile/', include('corehq.messaging.smsbackends.megamobile.urls')),
+    (r'^telerivet/', include('corehq.messaging.smsbackends.telerivet.urls')),
+    (r'^kookoo/', include('corehq.messaging.ivrbackends.kookoo.urls')),
+    (r'^yo/', include('corehq.messaging.smsbackends.yo.urls')),
+    (r'^gvi/', include('corehq.messaging.smsbackends.grapevine.urls')),
+    (r'^sislog/', include('corehq.messaging.smsbackends.sislog.urls')),
     (r'^langcodes/', include('langcodes.urls')),
     (r'^builds/', include('corehq.apps.builds.urls')),
     (r'^downloads/temp/', include('soil.urls')),
@@ -133,21 +130,17 @@ urlpatterns = patterns('',
         name=ProBonoStaticView.urlname),
     url(r'^loadtest/', include('corehq.apps.loadtestendpoints.urls')),
     url(r'^robots.txt$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
-    url(r'^commcare_supply_demo/$', TemplateView.as_view(template_name='commcare_supply_dashboard.html')),
+    url(r'^software-plans/$', RedirectView.as_view(url=PRICING_LINK), name='go_to_pricing'),
 ) + patterns('', *LOCAL_APP_URLS)
 
 if settings.ENABLE_PRELOGIN_SITE:
     urlpatterns += patterns('', *PRELOGIN_APP_URLS)
 
-# django rosetta support if configured
-if 'rosetta' in settings.INSTALLED_APPS:
-    urlpatterns += patterns('',
-        url(r'^rosetta/', include('rosetta.urls')),
-    )
-
 #django-staticfiles static/ url mapper
 if settings.DEBUG:
+    urlpatterns += patterns('',
+        url(r'^mocha/', include('corehq.apps.mocha.urls')),
+    )
     urlpatterns += patterns('django.contrib.staticfiles.views',
         url(r'^static/(?P<path>.*)$', 'serve'),
     )
-

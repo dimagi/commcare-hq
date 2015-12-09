@@ -1,11 +1,10 @@
 [proxy]
-hqproxy0.internal.commcarehq.org
-hqproxy3.internal.commcarehq.org
+hqproxy5.internal.commcarehq.org
 
 [webworkers]
-hqdjango3.internal.commcarehq.org
-hqdjango4.internal.commcarehq.org
-hqdjango5.internal.commcarehq.org
+hqdjango12.internal.commcarehq.org
+hqdjango13.internal.commcarehq.org
+hqdjango14.internal.commcarehq.org
 
 [webworkers:vars]
 newrelic_app_name=django
@@ -18,6 +17,12 @@ hqdb0.internal.commcarehq.org
 
 [rabbitmq]
 hqdb0.internal.commcarehq.org
+
+[zookeeper]
+hqes0.internal.commcarehq.org
+
+[kafka]
+hqes0.internal.commcarehq.org kafka_broker_id=0
 
 [celery]
 # ansible makes the first thing in this list the flower url
@@ -47,6 +52,3 @@ hqes0.internal.commcarehq.org elasticsearch_node_name=hqes0
 
 [shared_dir_host]
 hqdb0.internal.commcarehq.org
-
-[sentry]
-logs.internal.dimagi.com

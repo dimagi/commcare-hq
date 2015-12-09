@@ -10,6 +10,7 @@ from dimagi.utils.dates import force_to_datetime
 
 DEFAULT_CONSUMPTION_FUNCTION = lambda case_id, product_id: None
 
+
 class ConsumptionConfiguration(object):
     DEFAULT_MIN_PERIODS = 2
     DEFAULT_MIN_WINDOW = 10

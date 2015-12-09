@@ -1,5 +1,6 @@
 from urlparse import urlparse
 from datetime import datetime
+import logging
 import json
 import os
 import re
@@ -32,25 +33,30 @@ from django.template.context import RequestContext
 from restkit import Resource
 
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.announcements.models import Notification
+from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
+from corehq.apps.dropbox.decorators import require_dropbox_session
+from corehq.apps.dropbox.models import DropboxUploadHelper
+from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN
+from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
-from corehq.apps.receiverwrapper.models import Repeater
 from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.util.cache_utils import ExponentialBackoff
 from corehq.util.context_processors import get_domain_type
+from corehq.util.datadog.utils import create_datadog_event
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception, notify_js_exception
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+from corehq.apps.hqadmin.management.commands.celery_deploy_in_progress import CELERY_DEPLOY_IN_PROGRESS_FLAG
 from corehq.apps.domain.models import Domain
-from couchforms.models import XFormInstance
-from soil import heartbeat
+from soil import heartbeat, DownloadBase
 from soil import views as soil_views
 
 
@@ -73,10 +79,16 @@ def couch_check():
     # work, and if other error handling allows the request to get this far.
 
     try:
-        xforms = XFormInstance.view('reports_forms/all_forms', limit=1).all()
-    except:
-        xforms = None
-    return (isinstance(xforms, list), None)
+        results = Application.view('app_manager/builds_by_date', limit=1).all()
+    except Exception:
+        return False, None
+    else:
+        return isinstance(results, list), None
+
+
+def is_deploy_in_progress():
+    cache = get_redis_default_cache()
+    return cache.get(CELERY_DEPLOY_IN_PROGRESS_FLAG) is not None
 
 
 def celery_check():
@@ -87,12 +99,15 @@ def celery_check():
         app.config_from_object(settings)
         i = app.control.inspect()
         ping = i.ping()
-        if not ping:
+        if not ping and not is_deploy_in_progress():
             chk = (False, 'No running Celery workers were found.')
         else:
             chk = (True, None)
     except IOError as e:
-        chk = (False, "Error connecting to the backend: " + str(e))
+        if is_deploy_in_progress():
+            chk = (True, None)
+        else:
+            chk = (False, "Error connecting to the backend: " + str(e))
     except ImportError as e:
         chk = (False, str(e))
 
@@ -104,29 +119,29 @@ def hb_check():
     if celery_monitoring:
         try:
             cresource = Resource(celery_monitoring, timeout=3)
-            t = cresource.get("api/workers").body_string()
+            t = cresource.get("api/workers", params_dict={'status': True}).body_string()
             all_workers = json.loads(t)
             bad_workers = []
-            for hostname, w in all_workers.items():
-                if not w['status']:
+            for hostname, status in all_workers.items():
+                if not status:
                     bad_workers.append('* {} celery worker down'.format(hostname))
             if bad_workers:
                 return (False, '\n'.join(bad_workers))
             else:
                 hb = heartbeat.is_alive()
-        except:
-            hb = False
+        except Exception:
+            hb = is_deploy_in_progress()
     else:
         try:
             hb = heartbeat.is_alive()
-        except:
+        except Exception:
             hb = False
     return (hb, None)
 
 
 def redis_check():
     try:
-        redis = cache.get_cache('redis')
+        redis = cache.caches['redis']
         result = redis.set('serverup_check_key', 'test')
     except (InvalidCacheBackendError, ValueError):
         result = True  # redis not in use, ignore
@@ -146,11 +161,16 @@ def server_error(request, template_name='500.html'):
     # hat tip: http://www.arthurkoziel.com/2009/01/15/passing-mediaurl-djangos-500-error-view/
     t = loader.get_template(template_name)
     type, exc, tb = sys.exc_info()
+
+    traceback_text = ''.join(traceback.format_tb(tb))
+    traceback_key = uuid.uuid4().hex
+    cache.cache.set(traceback_key, traceback_text, 60*60)
+
     return HttpResponseServerError(t.render(RequestContext(request,
         {'MEDIA_URL': settings.MEDIA_URL,
          'STATIC_URL': settings.STATIC_URL,
          'domain': domain,
-         '500traceback': ''.join(traceback.format_tb(tb)),
+         '500traceback': traceback_key,
         })))
 
 
@@ -170,11 +190,14 @@ def redirect_to_default(req, domain=None):
         if domain != None:
             url = reverse('domain_login', args=[domain])
         else:
-            try:
-                from corehq.apps.prelogin.views import HomePublicView
-                url = reverse(HomePublicView.urlname)
-            except ImportError:
-                # this happens when the prelogin app is not included.
+            if settings.ENABLE_PRELOGIN_SITE:
+                try:
+                    from corehq.apps.prelogin.views import HomePublicView
+                    url = reverse(HomePublicView.urlname)
+                except ImportError:
+                    # this happens when the prelogin app is not included.
+                    url = reverse('landing_page')
+            else:
                 url = reverse('landing_page')
     else:
         if domain:
@@ -193,7 +216,8 @@ def redirect_to_default(req, domain=None):
                         req.couch_user, domain)):
                     url = reverse("cloudcare_main", args=[domain, ""])
                 else:
-                    url = reverse('dashboard_default', args=[domain])
+                    from corehq.apps.dashboard.views import dashboard_default
+                    return dashboard_default(req, domain)
 
             else:
                 raise Http404
@@ -220,7 +244,7 @@ def yui_crossdomain(req):
     <allow-access-from domain="%s"/>
     <site-control permitted-cross-domain-policies="master-only"/>
 </cross-domain-policy>""" % get_site_domain()
-    return HttpResponse(x_domain, mimetype="application/xml")
+    return HttpResponse(x_domain, content_type="application/xml")
 
 
 @login_required()
@@ -252,7 +276,7 @@ def server_up(req):
             "check_func": hb_check
         },
         "celery": {
-            "always_check": False,
+            "always_check": True,
             "message": "* celery is down",
             "check_func": celery_check
         },
@@ -285,6 +309,10 @@ def server_up(req):
                 else:
                     message.append(check_info['message'])
     if failed:
+        create_datadog_event(
+            'Serverup check failed', '\n'.join(message),
+            alert_type='error', aggregation_key='serverup',
+        )
         return HttpResponse('<br>'.join(message), status=500)
     else:
         return HttpResponse("success")
@@ -310,33 +338,37 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
              })))
 
 
-def _login(req, domain, template_name):
+def _login(req, domain_name, template_name):
 
     if req.user.is_authenticated() and req.method != "POST":
         redirect_to = req.REQUEST.get('next', '')
         if redirect_to:
             return HttpResponseRedirect(redirect_to)
-        if not domain:
+        if not domain_name:
             return HttpResponseRedirect(reverse('homepage'))
         else:
-            return HttpResponseRedirect(reverse('domain_homepage', args=[domain]))
+            return HttpResponseRedirect(reverse('domain_homepage', args=[domain_name]))
 
-    if req.method == 'POST' and domain and '@' not in req.POST.get('username', '@'):
+    if req.method == 'POST' and domain_name and '@' not in req.POST.get('username', '@'):
         req.POST._mutable = True
-        req.POST['username'] = format_username(req.POST['username'], domain)
+        req.POST['username'] = format_username(req.POST['username'], domain_name)
         req.POST._mutable = False
 
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    if domain:
+    if domain_name:
+        domain = Domain.get_by_name(domain_name)
         context.update({
-            'domain': domain,
+            'domain': domain_name,
+            'hr_name': domain.display_name() if domain else domain_name,
             'next': req.REQUEST.get('next', '/a/%s/' % domain),
+            'allow_domain_requests': domain.allow_domain_requests,
         })
 
+    authentication_form = EmailAuthenticationForm if not domain_name else CloudCareAuthenticationForm
     return django_login(req, template_name=template_name,
-                        authentication_form=EmailAuthenticationForm if not domain else CloudCareAuthenticationForm,
+                        authentication_form=authentication_form,
                         extra_context=context)
 
 
@@ -388,8 +420,54 @@ def logout(req):
         return HttpResponseRedirect(reverse('login'))
 
 @login_and_domain_required
-def retrieve_download(req, domain, download_id, template="hqwebapp/file_download.html"):
+def retrieve_download(req, domain, download_id, template="style/includes/file_download.html"):
     return soil_views.retrieve_download(req, download_id, template)
+
+
+def dropbox_next_url(request, download_id):
+    return request.POST.get('dropbox-next', None) or request.META.get('HTTP_REFERER', '/')
+
+
+@login_required
+@require_dropbox_session(next_url=dropbox_next_url)
+def dropbox_upload(request, download_id):
+    download = DownloadBase.get(download_id)
+    if download is None:
+        logging.error("Download file request for expired/nonexistent file requested")
+        raise Http404
+    else:
+        filename = download.get_filename()
+        # Hack to get target filename from content disposition
+        match = re.search('filename="([^"]*)"', download.content_disposition)
+        dest = match.group(1) if match else 'download.txt'
+
+        try:
+            uploader = DropboxUploadHelper.create(
+                request.session.get(DROPBOX_ACCESS_TOKEN),
+                src=filename,
+                dest=dest,
+                download_id=download_id,
+                user=request.user,
+            )
+        except DropboxUploadAlreadyInProgress:
+            uploader = DropboxUploadHelper.objects.get(download_id=download_id)
+            messages.warning(
+                request,
+                u'The file is in the process of being synced to dropbox! It is {0:.2f}% '
+                'complete.'.format(uploader.progress * 100)
+            )
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+        uploader.upload()
+
+        messages.success(
+            request,
+            _(u"Apps/{app}/{dest} is queued to sync to dropbox! You will receive an email when it"
+                " completes.".format(app=settings.DROPBOX_APP_NAME, dest=dest))
+        )
+
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
 
 @require_superuser
 def debug_notify(request):
@@ -497,7 +575,9 @@ def bug_report(req):
     if req.POST.get('five-hundred-report'):
         extra_message = ("This messge was reported from a 500 error page! "
                          "Please fix this ASAP (as if you wouldn't anyway)...")
-        traceback_info = "Traceback of this 500: \n%s" % report['500traceback']
+        traceback_info = cache.cache.get(report['500traceback'])
+        cache.cache.delete(report['500traceback'])
+        traceback_info = "Traceback of this 500: \n%s" % traceback_info
         message = "%s \n\n %s \n\n %s" % (message, extra_message, traceback_info)
 
     email = EmailMessage(
@@ -530,26 +610,11 @@ def bug_report(req):
     return HttpResponse()
 
 
-@login_required()
-@require_POST
-def dismiss_notification(request):
-    note_id = request.POST.get('note_id', None)
-    note = Notification.get(note_id)
-    if note:
-        if note.user != request.couch_user.username:
-            return json_response({"status": "failure: Not the same user"})
-
-        note.dismissed = True
-        note.save()
-        return json_response({"status": "success"})
-    return json_response({"status": "failure: No note by that name"})
-
-
 def render_static(request, template):
     """
     Takes an html file and renders it Commcare HQ's styling
     """
-    return render(request, "hqwebapp/blank.html", {'tmpl': template})
+    return render(request, "style/bootstrap2/blank.html", {'tmpl': template})
 
 
 def eula(request):
@@ -585,7 +650,7 @@ def unsubscribe(request, user_id):
 class BasePageView(TemplateView):
     urlname = None  # name of the view used in urls
     page_title = None  # what shows up in the <title>
-    template_name = 'hqwebapp/base_page.html'
+    template_name = 'style/bootstrap2/base_page.html'
 
     @property
     def page_name(self):
@@ -646,7 +711,7 @@ class BasePageView(TemplateView):
 
 class BaseSectionPageView(BasePageView):
     section_name = ""
-    template_name = "hqwebapp/base_section.html"
+    template_name = "style/bootstrap2/base_section.html"
 
     @property
     def section_url(self):
@@ -864,7 +929,7 @@ class CRUDPaginatedViewMixin(object):
 
     def get_create_form_response(self, create_form):
         return render_to_string(
-            'hqwebapp/partials/create_item_form.html', {
+            'style/includes/create_item_form.html', {
                 'form': create_form
             }
         )
@@ -874,7 +939,7 @@ class CRUDPaginatedViewMixin(object):
 
     def get_update_form_response(self, update_form):
         return render_to_string(
-            'hqwebapp/partials/update_item_form.html', {
+            'style/bootstrap2/partials/update_item_form.html', {
                 'form': update_form
             }
         )
@@ -941,25 +1006,19 @@ def quick_find(request):
             messages.info(request, _("We've redirected you to the %s matching your query") % doc_info.type_display)
             return HttpResponseRedirect(doc_info.link)
         elif request.couch_user.is_superuser:
-            return HttpResponseRedirect('{}?id={}'.format(reverse('doc_in_es'), doc.get('_id')))
+            return HttpResponseRedirect('{}?id={}'.format(reverse('raw_couch'), doc.get('_id')))
         else:
             return json_response(doc_info)
 
-    try:
-        doc = get_db().get(query)
-    except ResourceNotFound:
-        pass
+    for db_name in (None, 'users', 'receiverwrapper', 'meta'):
+        try:
+            doc = get_db(db_name).get(query)
+        except ResourceNotFound:
+            pass
+        else:
+            return deal_with_couch_doc(doc)
     else:
-        return deal_with_couch_doc(doc)
-
-    try:
-        doc = Repeater.get_db().get(query)
-    except ResourceNotFound:
-        pass
-    else:
-        return deal_with_couch_doc(doc)
-
-    raise Http404()
+        raise Http404()
 
 
 def osdd(request, template='osdd.xml'):
@@ -968,7 +1027,7 @@ def osdd(request, template='osdd.xml'):
     return response
 
 @require_superuser
-def maintenance_alerts(request, template='hqwebapp/maintenance_alerts.html'):
+def maintenance_alerts(request, template='style/bootstrap2/maintenance_alerts.html'):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
 
     return render(request, template, {
@@ -1009,3 +1068,28 @@ def deactivate_alert(request):
     ma.save()
     return HttpResponseRedirect(reverse('alerts'))
 
+
+class DataTablesAJAXPaginationMixin(object):
+    @property
+    def echo(self):
+        return self.request.GET.get('sEcho')
+
+    @property
+    def display_start(self):
+        return int(self.request.GET.get('iDisplayStart'))
+
+    @property
+    def display_length(self):
+        return int(self.request.GET.get('iDisplayLength'))
+
+    @property
+    def search_phrase(self):
+        return self.request.GET.get('sSearch', '').strip()
+
+    def datatables_ajax_response(self, data, total_records, filtered_records=None):
+        return HttpResponse(json.dumps({
+            'sEcho': self.echo,
+            'aaData': data,
+            'iTotalRecords': total_records,
+            'iTotalDisplayRecords': filtered_records or total_records,
+        }))

@@ -16,8 +16,9 @@ from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.app_manager import util as app_manager_util
-from corehq.apps.app_manager.models import get_apps_in_domain, Application, RemoteApp, Form, get_app
-from corehq.apps.receiverwrapper.models import Repeater, repeater_types
+from corehq.apps.app_manager.models import Application, RemoteApp
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.repeaters.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.users.util import format_username
@@ -25,7 +26,7 @@ from corehq.apps.users.models import CouchUser, Permissions
 
 from corehq.apps.api.resources import v0_1, v0_3, HqBaseResource, DomainSpecificResourceMixin, \
     SimpleSortableResourceMixin
-from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
+from corehq.apps.api.es import XFormES, CaseES, ElasticAPIQuerySet, es_search
 from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
 from corehq.apps.api.serializers import CommCareCaseSerializer
 
@@ -95,9 +96,11 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
                 return doc
 
         # Note that XFormES is used only as an ES client, for `run_query` against the proper index
-        return ESQuerySet(payload=es_query,
-                          model=wrapper,
-                          es_client=self.xform_es(domain)).order_by('-received_on')
+        return ElasticAPIQuerySet(
+            payload=es_query,
+            model=wrapper,
+            es_client=self.xform_es(domain)
+        ).order_by('-received_on')
 
     class Meta(v0_3.XFormInstanceResource.Meta):
         ordering = ['received_on']
@@ -216,9 +219,12 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         if 'size' in query:
             del query['size']
 
-        return ESQuerySet(payload = query,
-                          model = CommCareCase,
-                          es_client = self.case_es(domain)).order_by('server_modified_on') # Not that CaseES is used only as an ES client, for `run_query` against the proper index
+        # Note that CaseES is used only as an ES client, for `run_query` against the proper index
+        return ElasticAPIQuerySet(
+            payload=query,
+            model=CommCareCase,
+            es_client=self.case_es(domain)
+        ).order_by('server_modified_on')
 
     class Meta(v0_3.CommCareCaseResource.Meta):
         max_limit = 100 # Today, takes ~25 seconds for some domains
@@ -334,7 +340,6 @@ class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
             dehydrated['forms'] = []
             for form in module.forms:
                 form_unique_id = form.unique_id
-                form = Form.get_form(form_unique_id)
                 form_jvalue = {
                     'xmlns': form.xmlns,
                     'name': form.name,
@@ -425,9 +430,11 @@ class HOPECaseResource(CommCareCaseResource):
             del query['size']
 
         # Note that CaseES is used only as an ES client, for `run_query` against the proper index
-        return ESQuerySet(payload=query,
-                          model=HOPECase,
-                          es_client=self.case_es(domain)).order_by('server_modified_on')
+        return ElasticAPIQuerySet(
+            payload=query,
+            model=HOPECase,
+            es_client=self.case_es(domain),
+        ).order_by('server_modified_on')
 
     def alter_list_data_to_serialize(self, request, data):
 

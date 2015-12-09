@@ -42,7 +42,7 @@ class SelectControlDemoView(BaseControlDemoFormsView):
     urlname = 'ex_controls_demo'
     template_name = 'styleguide/examples/controls_demo/selects.html'
 
-    @method_decorator(use_select2())
+    @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(SelectControlDemoView, self).dispatch(request, *args, **kwargs)
 

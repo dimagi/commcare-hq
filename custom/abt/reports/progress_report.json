@@ -1,31 +1,45 @@
 {
     "doc_type":"ReportConfiguration",
-    "domain":"abt-test-2",
-    "config_id":"0ff37d5a88231f873d4d98b410a2c3c0",
+    "domain":"airs",
+    "config_id":"b9aa4b9a7e9cc23c6e7fed3778048d1c",
     "description":"",
     "title":"Spray Progress Report",
+    "sort_expression":[
+
+    ],
     "filters":[
         {
-            "field":"date_of_data_collection",
+            "compare_as_string":false,
             "required":false,
+            "display":{
+                "en":"Date of data collection"
+            },
+            "field":"date_of_data_collection",
             "type":"date",
-            "slug":"date_of_data_collection",
-            "display":"Date of data collection"
+            "slug":"date_of_data_collection"
         },
         {
+            "compare_as_string":false,
             "required":false,
             "datatype":"string",
             "show_all":true,
-            "display":"Pays",
+            "display":{
+                "fra":"Pays",
+                "en":"Country"
+            },
             "field":"country",
             "type":"dynamic_choice_list",
             "slug":"country"
         },
         {
+            "compare_as_string":false,
             "required":false,
             "datatype":"string",
             "show_all":true,
-            "display":"Niveau 2",
+            "display":{
+                "fra":"Niveau 2",
+                "en":"Level 2"
+            },
             "field":"level_2",
             "type":"dynamic_choice_list",
             "slug":"level_2"
@@ -40,7 +54,7 @@
     "configured_charts":[
 
     ],
-    "_id":"615411c86928c3dacca01008dc6cb877",
+    "_id":"ba373d99eb728215204693207579ccb1",
     "report_meta":{
         "doc_type":"ReportMeta",
         "builder_report_type":null,
@@ -57,7 +71,10 @@
             "column_id":"country",
             "alias":null,
             "type":"field",
-            "display":"Pays",
+            "display":{
+                "fra":"Pays",
+                "en":"Country"
+            },
             "aggregation":"simple"
         },
         {
@@ -70,8 +87,93 @@
             "column_id":"level_2",
             "alias":null,
             "type":"field",
-            "display":"Niveau 2",
+            "display":{
+                "fra":"Niveau 2",
+                "en":"Level 2"
+            },
             "aggregation":"simple"
+        },
+        {
+            "column_id":"total_sprayers",
+            "type":"field",
+            "field": "total_sprayers",
+            "aggregation":"sum",
+            "display":{
+                "fra": "# Applicateurs",
+                "en": "SOPs Worked"
+            }
+        },
+        {
+            "column_id":"structures_found",
+            "type":"field",
+            "field":"structures_found",
+            "aggregation":"sum",
+            "display":{
+                "fra":"# Pieces Trouvées",
+                "en":"# Structures found"
+            }
+        },
+        {
+            "column_id":"structures_sprayed",
+            "type":"field",
+            "field":"structures_sprayed",
+            "aggregation":"sum",
+            "display":{
+                "fra":"# Pieces Traitées",
+                "en":"# Structures Sprayed"
+            }
+        },
+        {
+            "column_id":"insecticide_used",
+            "type":"field",
+            "field":"insecticide_used",
+            "aggregation":"sum",
+            "display":{
+                "fra":"# Bouteilles Utilisées",
+                "en": "# Insecticide Used"
+            }
+        },
+        {
+            "column_id":"cum_building_per_worker",
+            "type":"percent",
+            "format":"decimal",
+            "numerator":{
+                "column_id":"cum_building_per_worker_numerator",
+                "type":"field",
+                "field":"structures_sprayed",
+                "aggregation":"sum"
+            },
+            "denominator":{
+                "column_id":"cum_building_per_worker_denominator",
+                "type":"field",
+                "field":"total_sprayers",
+                "aggregation":"sum"
+            },
+            "display":{
+                "fra":"Moyenne de pièces par applicateur",
+                "en":"# Structures per SOP"
+            }
+        },
+        {
+            "column_id":"cum_building_per_bottle",
+            "type":"percent",
+            "format":"decimal",
+            "numerator":{
+                "column_id":"cum_building_per_bottle_numerator",
+                "type":"field",
+                "field":"structures_sprayed",
+                "aggregation":"sum"
+            },
+            "denominator":{
+                "column_id":"cum_building_per_bottle_denominator",
+                "type":"field",
+                "field":"insecticide_used",
+                "aggregation":"sum"
+            },
+            "display":{
+                "fra":"Moyenne de pièces par bouteille",
+                "en":"# Structures per IU"
+            }
         },
         {
             "description":null,
@@ -107,8 +209,21 @@
             "field":"cum_spray_progress",
             "alias":null,
             "type":"percent",
-            "display":"Taux de couverture: Niveau 2",
+            "display":{
+                "fra":"Taux de couverture: Niveau 2",
+                "en":"Cumulative Spray Coverage: Level 2"
+            },
             "aggregation":"simple"
+        },
+        {
+            "column_id":"target",
+            "type":"field",
+            "field":"target_number",
+            "aggregation":"simple",
+            "display":{
+                "fra":"Cible",
+                "en":"Target"
+            }
         },
         {
             "description":null,
@@ -144,7 +259,10 @@
             "field":"cum_spray_progress",
             "alias":null,
             "type":"percent",
-            "display":"Progr\u00e8s de pulv\u00e9risation quotidien: Niveau 2",
+            "display":{
+                "fra":"Progr\u00e8s de pulv\u00e9risation quotidien: Niveau 2",
+                "en":"Cumulative Spray Progress: Level 2"
+            },
             "aggregation":"simple"
         }
     ]

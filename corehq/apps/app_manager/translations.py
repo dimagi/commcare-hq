@@ -1,7 +1,11 @@
 from collections import OrderedDict
+from django.utils.encoding import force_text
+from django.utils.safestring import mark_safe
 from lxml import etree
 import copy
-from openpyxl.shared.exc import InvalidFileException
+import re
+from lxml.etree import XMLSyntaxError, Element
+from openpyxl.utils.exceptions import InvalidFileException
 
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
@@ -9,8 +13,8 @@ from corehq.apps.app_manager.exceptions import (
     XFormException)
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.util import save_xform
-from corehq.apps.app_manager.xform import namespaces, WrappedNode
-from dimagi.utils.excel import WorkbookJSONReader, HeaderValueError
+from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
+from corehq.util.spreadsheets.excel import HeaderValueError, WorkbookJSONReader
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
@@ -41,7 +45,11 @@ def process_bulk_app_translation_upload(app, f):
         workbook = WorkbookJSONReader(f)
     except (HeaderValueError, InvalidFileException) as e:
         msgs.append(
-            (messages.error, _("App Translation Failed! " + str(e)))
+            (messages.error, _(
+                "App Translation Failed! "
+                "Please make sure you are using a valid Excel 2007 or later (.xlsx) file. "
+                "Error details: {}."
+            ).format(e))
         )
         return msgs
 
@@ -163,19 +171,19 @@ def make_modules_and_forms_row(row_type, sheet_name, languages, case_labels,
     assert sheet_name is not None
     assert isinstance(languages, list)
     assert isinstance(case_labels, list)
-    assert isinstance(media_image, (type(None), basestring))
-    assert isinstance(media_audio, (type(None), basestring))
+    assert isinstance(media_image, list)
+    assert isinstance(media_audio, list)
     assert isinstance(unique_id, basestring)
 
     return [item if item is not None else ""
             for item in ([row_type, sheet_name] + languages + case_labels
-                         + [media_image, media_audio, unique_id])]
+                         + media_image + media_audio + [unique_id])]
 
 
 def expected_bulk_app_sheet_headers(app):
     '''
     Returns lists representing the expected structure of bulk app translation
-    excel file uploads.
+    excel file uploads and downloads.
 
     The list will be in the form:
     [
@@ -201,8 +209,8 @@ def expected_bulk_app_sheet_headers(app):
             sheet_name='sheet_name',
             languages=languages_list,
             case_labels=['label_for_cases_%s' % l for l in app.langs],
-            media_image='icon_filepath',
-            media_audio='audio_filepath',
+            media_image=['icon_filepath_%s' % l for l in app.langs],
+            media_audio=['audio_filepath_%s' % l for l in app.langs],
             unique_id='unique_id',
         )
     ])
@@ -223,6 +231,9 @@ def expected_bulk_app_sheet_headers(app):
 
 
 def expected_bulk_app_sheet_rows(app):
+    """
+    Data rows for bulk app translation download
+    """
 
     # keys are the names of sheets, values are lists of tuples representing rows
     rows = {"Modules_and_forms": []}
@@ -238,8 +249,8 @@ def expected_bulk_app_sheet_rows(app):
             sheet_name=module_string,
             languages=[module.name.get(lang) for lang in app.langs],
             case_labels=[module.case_label.get(lang) for lang in app.langs],
-            media_image=module.media_image,
-            media_audio=module.media_audio,
+            media_image=[module.icon_by_language(lang) for lang in app.langs],
+            media_audio=[module.audio_by_language(lang) for lang in app.langs],
             unique_id=module.unique_id,
         )
         rows["Modules_and_forms"].append(row_data)
@@ -310,8 +321,8 @@ def expected_bulk_app_sheet_rows(app):
                     languages=[form.name.get(lang) for lang in app.langs],
                     # leave all
                     case_labels=[None] * len(app.langs),
-                    media_image=form.media_image,
-                    media_audio=form.media_audio,
+                    media_image=[form.icon_by_language(lang) for lang in app.langs],
+                    media_audio=[form.audio_by_language(lang) for lang in app.langs],
                     unique_id=form.unique_id
                 )
 
@@ -335,7 +346,12 @@ def expected_bulk_app_sheet_rows(app):
 
                         for value_node in text_node.findall("./{f}value"):
                             value_form = value_node.attrib.get("form", "default")
-                            value = value_node.text
+                            value = ''
+                            for part in ItextValue.from_node(value_node).parts:
+                                if isinstance(part, ItextOutput):
+                                    value += "<output value=\"" + part.ref + "\"/>"
+                                else:
+                                    value += mark_safe(force_text(part).replace('<', '&lt;').replace('>', '&gt;'))
                             itext_items[text_id][(lang, value_form)] = value
 
                 for text_id, values in itext_items.iteritems():
@@ -422,14 +438,10 @@ def process_modules_and_forms_sheet(rows, app):
                     if lang in document.case_label:
                         del document.case_label[lang]
 
-        image = row.get('icon_filepath', None)
-        audio = row.get('audio_filepath', None)
-        if image == '':
-            image = None
-        if audio == '':
-            audio = None
-        document.media_image = image
-        document.media_audio = audio
+        for lang in app.langs:
+            document.set_icon(lang, row.get('icon_filepath_%s' % lang, ''))
+            document.set_audio(lang, row.get('audio_filepath_%s' % lang, ''))
+
     return msgs
 
 
@@ -488,6 +500,32 @@ def update_form_translations(sheet, rows, missing_cols, app):
                 new_trans_el.set('default', '')
             itext.xml.append(new_trans_el)
 
+    def _update_translation_node(new_translation, value_node, attributes=None, delete_node=True):
+        if delete_node and not new_translation:
+            # Remove the node if it already exists
+            if value_node.exists():
+                value_node.xml.getparent().remove(value_node.xml)
+            return
+
+        # Create the node if it does not already exist
+        if not value_node.exists():
+            e = etree.Element(
+                "{f}value".format(**namespaces), attributes
+            )
+            text_node.xml.append(e)
+            value_node = WrappedNode(e)
+        # Update the translation
+        value_node.xml.tail = ''
+        for node in value_node.findall("./*"):
+            node.xml.getparent().remove(node.xml)
+        escaped_trans = escape_output_value(new_translation)
+        value_node.xml.text = escaped_trans.text
+        for n in escaped_trans.getchildren():
+            value_node.xml.append(n)
+
+    def _looks_like_markdown(str):
+        return re.search(r'^\d+\. |^\*|~~.+~~|# |\*{1,3}\S+\*{1,3}|\[.+\]\(\S+\)', str)
+
     # Update the translations
     for lang in app.langs:
         translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
@@ -504,49 +542,70 @@ def update_form_translations(sheet, rows, missing_cols, app):
                 ))
                 continue
 
-            # Add or remove translations
+            translations = dict()
             for trans_type in ['default', 'audio', 'image', 'video']:
+                try:
+                    col_key = get_col_key(trans_type, lang)
+                    translations[trans_type] = row[col_key]
+                except KeyError:
+                    # has already been logged as unrecoginzed column
+                    continue
 
-                if trans_type == 'default':
-                    attributes = None
-                    value_node = next(
-                        n for n in text_node.findall("./{f}value")
-                        if 'form' not in n.attrib
-                    )
-                else:
-                    attributes = {'form': trans_type}
-                    value_node = text_node.find(
-                        "./{f}value[@form='%s']" % trans_type
-                    )
+            keep_value_node = any(v for k, v in translations.items())
 
-                col_key = get_col_key(trans_type, lang)
-                new_translation = row[col_key]
+            # Add or remove translations
+            for trans_type, new_translation in translations.items():
                 if not new_translation and col_key not in missing_cols:
                     # If the cell corresponding to the label for this question
                     # in this language is empty, fall back to another language
                     for l in app.langs:
-                        fallback = row[get_col_key(trans_type, l)]
+                        key = get_col_key(trans_type, l)
+                        if key in missing_cols:
+                            continue
+                        fallback = row[key]
                         if fallback:
                             new_translation = fallback
                             break
 
-                if new_translation:
-                    # Create the node if it does not already exist
-                    if not value_node.exists():
-                        e = etree.Element(
-                            "{f}value".format(**namespaces), attributes
+                if trans_type == 'default':
+                    if new_translation:
+                        value_node = next(
+                            n for n in text_node.findall("./{f}value")
+                            if 'form' not in n.attrib
                         )
-                        text_node.xml.append(e)
-                        value_node = WrappedNode(e)
-                    # Update the translation
-                    value_node.xml.text = new_translation
+                        old_translation = etree.tostring(value_node.xml, method="text", encoding="unicode").strip()
+                        markdown_node = text_node.find("./{f}value[@form='markdown']")
+                        has_markdown = _looks_like_markdown(new_translation)
+                        had_markdown = markdown_node.exists()
+                        vetoed_markdown = not had_markdown and _looks_like_markdown(old_translation)
+
+                        if not((not has_markdown and not had_markdown)    # not dealing with markdown at all
+                               or (has_markdown and vetoed_markdown)):    # looks like markdown, but markdown is off
+                            _update_translation_node(new_translation if has_markdown and not vetoed_markdown else '',
+                                                     markdown_node,
+                                                     {'form': 'markdown'})
+                    _update_translation_node(new_translation,
+                                             text_node.find("./{f}value"),
+                                             {'form': trans_type}, delete_node=(not keep_value_node))
                 else:
-                    # Remove the node if it already exists
-                    if value_node.exists():
-                        value_node.xml.getparent().remove(value_node.xml)
+                    _update_translation_node(new_translation,
+                                             text_node.find("./{f}value[@form='%s']" % trans_type),
+                                             {'form': trans_type})
 
     save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
     return msgs
+
+
+def escape_output_value(value):
+    try:
+        return etree.fromstring(u"<value>{}</value>".format(
+            re.sub("(?<!/)>", "&gt;", re.sub("<(\s*)(?!output)", "&lt;\\1", value))
+        ))
+    except XMLSyntaxError:
+        # if something went horribly wrong just don't bother with escaping
+        element = Element('value')
+        element.text = value
+        return element
 
 
 def update_case_list_translations(sheet, rows, app):
@@ -570,6 +629,9 @@ def update_case_list_translations(sheet, rows, app):
 
     module_index = int(sheet.worksheet.title.replace("module", "")) - 1
     module = app.get_module(module_index)
+
+    if isinstance(module, ReportModule):
+        return msgs
 
     # It is easier to process the translations if mapping and graph config
     # rows are nested under their respective DetailColumns.
@@ -706,11 +768,11 @@ def has_at_least_one_translation(row, prefix, langs):
     """
     Returns true if the given row has at least one translation.
 
-    >>> has_at_least_one_translation(
+    >> has_at_least_one_translation(
         {'default_en': 'Name', 'case_property': 'name'}, 'default', ['en', 'fra']
     )
     true
-    >>> has_at_least_one_translation(
+    >> has_at_least_one_translation(
         {'case_property': 'name'}, 'default', ['en', 'fra']
     )
     false

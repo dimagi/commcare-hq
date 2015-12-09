@@ -37,6 +37,10 @@ download and install your own locally built CommCare application!
 Adding CommCare (J2ME) Builds to CommCare HQ
 =====================================
 
+Following is a manual process to find and import a build. Alternatively, you can run
+`./manage.py commcare_build_importer` to do the same without leaving your console.
+This will run you through all the builds and let you import the build you need.
+
 * First you need to get the CommCare build off the Dimagi build server:
     1. Go here http://jenkins.dimagi.com/view/CommCare%20Mobile/ 
     2. Pick the branch you want and click on the link (e.g. "commcare-mobile-2.19")

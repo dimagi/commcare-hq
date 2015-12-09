@@ -1,7 +1,8 @@
 import os.path
 from django.http import HttpResponseRedirect, HttpResponseServerError
 from django.utils.datastructures import MultiValueDictKeyError
-from casexml.apps.case.models import CommCareCase
+from corehq.apps.hqcase.dbaccessors import get_case_properties, \
+    get_case_types_for_domain
 from corehq.apps.importer import base
 from corehq.apps.importer import util as importer_util
 from corehq.apps.importer.tasks import bulk_import_async
@@ -9,7 +10,9 @@ from django.views.decorators.http import require_POST
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.apps.app_manager.models import ApplicationBase
-from soil.util import expose_cached_download
+from corehq.util.files import file_extention_from_filename
+from soil.exceptions import TaskFailedError
+from soil.util import expose_cached_download, get_download_context
 from soil import DownloadBase
 from soil.heartbeat import heartbeat_enabled, is_alive
 from django.template.context import RequestContext
@@ -65,7 +68,11 @@ def excel_config(request, domain):
                             'Excel 97/2000 .xls file.')
 
     # stash content in the default storage for subsequent views
-    file_ref = expose_cached_download(uploaded_file_handle.read(), expiry=1*60*60)
+    file_ref = expose_cached_download(
+        uploaded_file_handle.read(),
+        expiry=1*60*60,
+        file_extension=file_extention_from_filename(uploaded_file_handle.name),
+    )
     request.session[EXCEL_SESSION_ID] = file_ref.download_id
     spreadsheet = importer_util.get_spreadsheet(file_ref, named_columns)
 
@@ -92,16 +99,7 @@ def excel_config(request, domain):
         if not row['key'][1] in case_types_from_apps:
             case_types_from_apps.append(row['key'][1])
 
-    case_types_from_cases = []
-    # load types from all case records
-    for row in CommCareCase.view('hqcase/types_by_domain',
-                                 reduce=True,
-                                 group=True,
-                                 startkey=[domain],
-                                 endkey=[domain, {}]).all():
-        if row['key'][1] and not row['key'][1] in case_types_from_cases:
-            case_types_from_cases.append(row['key'][1])
-
+    case_types_from_cases = get_case_types_for_domain(domain)
     # for this we just want cases that have data but aren't being used anymore
     case_types_from_cases = filter(lambda x: x not in case_types_from_apps, case_types_from_cases)
 
@@ -212,7 +210,7 @@ def excel_fields(request, domain):
     else:
         excel_fields = columns
 
-    case_fields = importer_util.get_case_properties(domain, case_type)
+    case_fields = get_case_properties(domain, case_type)
 
     # hide search column and matching case fields from the update list
     try:
@@ -312,43 +310,25 @@ def excel_commit(request, domain):
 
 @require_can_edit_data
 def importer_job_poll(request, domain, download_id, template="importer/partials/import_status.html"):
-    download_data = DownloadBase.get(download_id)
-    is_ready = False
-
-    if download_data is None:
-        download_data = DownloadBase(download_id=download_id)
-        try:
-            if download_data.task.failed():
-                return HttpResponseServerError()
-        except (TypeError, NotImplementedError):
-            # no result backend / improperly configured
-            pass
-
-    alive = True
-    if heartbeat_enabled():
-        alive = is_alive()
-
-    context = RequestContext(request)
-
-    if download_data.task.result and 'error' in download_data.task.result:
-        error = download_data.task.result['error']
+    try:
+        download_context = get_download_context(download_id, check_state=True)
+    except TaskFailedError as e:
+        error = e.errors
         if error == 'EXPIRED':
             return _spreadsheet_expired(request, domain)
         elif error == 'HAS_ERRORS':
             messages.error(request, _('The session containing the file you '
                                       'uploaded has expired - please upload '
                                       'a new one.'))
-            return HttpResponseRedirect(base.ImportCases.get_url(domain=domain) + "?error=cache")
-
-    if download_data.task.state == 'SUCCESS':
-        is_ready = True
-        context['result'] = download_data.task.result
-
-    context['is_ready'] = is_ready
-    context['is_alive'] = alive
-    context['progress'] = download_data.get_progress()
-    context['download_id'] = download_id
-    return render_to_response(template, context_instance=context)
+        else:
+            messages.error(request, _('Sorry something went wrong with that import. Please try again. '
+                                      'Report an issue if you continue to have problems.'))
+        return HttpResponseRedirect(base.ImportCases.get_url(domain=domain) + "?error=cache")
+    else:
+        context = RequestContext(request)
+        context.update(download_context)
+        context['url'] = base.ImportCases.get_url(domain=domain)
+        return render_to_response(template, context_instance=context)
 
 
 def _spreadsheet_expired(req, domain):

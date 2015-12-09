@@ -1,3 +1,21 @@
+"""
+DomainES
+--------
+
+Here's an example generating a histogram of domain creations (that's a type of
+faceted query), filtered by a provided list of domains and a report date range.
+
+.. code-block:: python
+
+    from corehq.apps.es import DomainES
+
+    domains_after_date = (DomainES()
+                          .in_domains(domains)
+                          .created(gte=datespan.startdate, lte=datespan.enddate)
+                          .date_histogram('date', 'date_created', interval)
+                          .size(0))
+    histo_data = domains_after_date.run().facet('date', 'entries')
+"""
 from .es_query import HQESQuery
 from . import filters
 
@@ -15,6 +33,7 @@ class DomainES(HQESQuery):
             commconnect_domains,
             commtrack_domains,
             created,
+            last_modified,
             in_domains,
             is_active,
             is_snapshot,
@@ -55,8 +74,12 @@ def created(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('date_created', gt, gte, lt, lte)
 
 
+def last_modified(gt=None, gte=None, lt=None, lte=None):
+    return filters.date_range('last_modified', gt, gte, lt, lte)
+
+
 def in_domains(domains):
-    return filters.term('name', list(domains))
+    return filters.term('name', domains)
 
 
 def is_active(is_active=True):
@@ -65,4 +88,3 @@ def is_active(is_active=True):
 
 def is_snapshot(is_snapshot=True):
     return filters.term('is_snapshot', is_snapshot)
-
