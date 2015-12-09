@@ -7,7 +7,7 @@ from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.users.models import WebUser, UserRole, CommCareUser
 from corehq.apps.programs.models import Program
 from custom.ewsghana.api import EWSUser, EWSApi, Product, Location
-from custom.ewsghana.models import EWSExtension
+from custom.ewsghana.models import EWSExtension, FacilityInCharge
 
 from custom.ewsghana.tests.mock_endpoint import MockEndpoint
 
@@ -34,6 +34,7 @@ class WebUsersSyncTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        FacilityInCharge.objects.all().delete()
         delete_all_locations()
 
     def tearDown(self):
