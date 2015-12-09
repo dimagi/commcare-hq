@@ -19,7 +19,10 @@ from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
-from corehq.apps.reports.analytics.sqlaccessors import get_form_counts_by_user
+from corehq.apps.reports.analytics.sqlaccessors import (
+    get_form_counts_for_user_by_date,
+    get_form_counts_for_daterange_by_user,
+)
 from corehq.apps.sofabed.dbaccessors import get_form_counts_by_user_xmlns
 from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser
@@ -539,10 +542,11 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
         return self.paginate_list(users)
 
     def users_by_range(self, start, end, order):
-        results = FormData.objects \
-            .filter(**self.date_filter(start, end)) \
-            .values('user_id') \
-            .annotate(Count('user_id'))
+        results = get_form_counts_for_daterange_by_user(
+            start,
+            end,
+            self.date_field,
+        )
 
         count_dict = dict((result['user_id'], result['user_id__count']) for result in results)
         return self.users_sorted_by_count(count_dict, order)
@@ -581,6 +585,7 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
         self.sort_col = self.request_params.get('iSortCol_0', 0)
         totals_col = self.column_count - 1
         order = self.request_params.get('sSortDir_0')
+
         if self.sort_col == totals_col:
             users = self.users_by_range(self.startdate, self.enddate, order)
         elif 0 < self.sort_col < totals_col:
@@ -611,7 +616,7 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
         else:
             user_ids = map(lambda user: user.user_id, self.all_users)
 
-        results = get_form_counts_by_user(
+        results = get_form_counts_for_user_by_date(
             user_ids,
             self.startdate,
             self.enddate,
