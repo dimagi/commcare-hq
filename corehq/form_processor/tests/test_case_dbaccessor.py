@@ -16,7 +16,7 @@ DOMAIN = 'test-case-accessor'
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class CaseAccessorTestsSQL(TestCase):
-    dependent_apps = []
+    dependent_apps = ['corehq.sql_accessors', 'corehq.sql_proxy_accessors']
 
     def test_get_case_by_id(self):
         case = _create_case()
