@@ -180,13 +180,13 @@ def _get_usage_info(toggle):
     last_used = {}
     for enabled in toggle.enabled_users:
         name = _enabled_item_name(enabled)
-        try:
-            if _namespace_domain(enabled):
-                last_used[name] = _format_date(get_last_form_submission_received(name))
-            else:
+        if _namespace_domain(enabled):
+            last_used[name] = _format_date(get_last_form_submission_received(name))
+        else:
+            try:
                 last_used[name] = _format_date(CouchUser.get_by_username(name).last_login)
-        except (ResourceNotFound):
-            last_used[name] = NOT_FOUND
+            except ResourceNotFound:
+                last_used[name] = NOT_FOUND
     last_used["_latest"] = _get_most_recently_used(last_used)
 
     return last_used
