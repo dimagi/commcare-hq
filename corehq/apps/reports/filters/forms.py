@@ -16,6 +16,11 @@ from django.utils.translation import ugettext_noop, ugettext_lazy
 REMOTE_APP_WILDCARD = "http://(.+).commcarehq.org"
 MISSING_APP_ID = "_MISSING_APP_ID"
 
+PARAM_SLUG_STATUS = 'status'
+PARAM_SLUG_APP_ID = 'app_id'
+PARAM_SLUG_MODULE = 'module'
+PARAM_SLUG_XMLNS = 'xmlns'
+
 
 class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     """
@@ -35,7 +40,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                                          "to choose from. Please create an application!")
     template = "reports/filters/form_app_module_drilldown.html"
     unknown_slug = "unknown"
-    app_slug = 'app_id'
     fuzzy_slug = "@@FUZZY"
     show_global_hide_fuzzy_checkbox = True
     unknown_remote_app_id = 'unknown_remote_app'
@@ -65,7 +69,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                   'status'),
                  (_('Application'),
                   _("Select Application...") if self.use_only_last else _("Show all Forms of this Application Type..."),
-                  self.app_slug),
+                  PARAM_SLUG_APP_ID),
              ] + labels[1:]
         return labels
 
@@ -483,7 +487,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         if instance._show_unknown:
             return True
         for param in params:
-            if param['slug'] == cls.app_slug:
+            if param['slug'] == PARAM_SLUG_APP_ID:
                 return True
         return False
 
@@ -505,10 +509,9 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 filter_results[0]['slug'] == 'status' and
                 filter_results[0]['value'] == 'remote'
             ) or (
-                filter_results[0]['slug'] == self.app_slug and self._remote_forms
+                filter_results[0]['slug'] == PARAM_SLUG_APP_ID and self._remote_forms
             )
         )
-
         if filter_results[-1]['slug'] == 'xmlns':
             xmlns = filter_results[-1]['value']
             app_id = filter_results[-3]['value']
@@ -659,12 +662,15 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @classmethod
     def get_labels(cls):
         return [
-            (_('Application'), _("Select an Application") if cls.use_only_last
-                                    else _("Show Forms in all Applications"), cls.app_slug),
-            (_('Module'), _("Select a Module") if cls.use_only_last
-                                    else _("Show Forms from all Modules in selected Application"), 'module'),
-            (_('Form'), _("Select a Form") if cls.use_only_last
-                                    else _("Show all Forms in selected Module"), 'xmlns'),
+            (_('Application'),
+             _("Select an Application") if cls.use_only_last
+             else _("Show Forms in all Applications"), PARAM_SLUG_APP_ID),
+            (_('Module'),
+             _("Select a Module") if cls.use_only_last
+             else _("Show Forms from all Modules in selected Application"), PARAM_SLUG_MODULE),
+            (_('Form'),
+             _("Select a Form") if cls.use_only_last
+             else _("Show all Forms in selected Module"), PARAM_SLUG_XMLNS),
         ]
 
     @classmethod
