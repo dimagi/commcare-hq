@@ -428,11 +428,12 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             return self.request.GET.get('%s_%s_xmlns' % (self.slug, self.unknown_slug), '')
         return ''
 
-    def formatted_name_from_app(self, app):
+    @staticmethod
+    def formatted_name_from_app(display_lang, app):
         langs = app['app']['langs']
-        app_name = self.get_translated_value(self.display_lang, langs, app['app']['names'])
-        module_name = self.get_translated_value(self.display_lang, langs, app['module']['names'])
-        form_name = self.get_translated_value(self.display_lang, langs, app['form']['names'])
+        app_name = FormsByApplicationFilter.get_translated_value(display_lang, langs, app['app']['names'])
+        module_name = FormsByApplicationFilter.get_translated_value(display_lang, langs, app['module']['names'])
+        form_name = FormsByApplicationFilter.get_translated_value(display_lang, langs, app['form']['names'])
         is_deleted = app.get('is_deleted', False)
         if is_deleted:
             app_name = "%s [Deleted]" % app_name
@@ -611,7 +612,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                     result[xmlns_app] = _generate_report_app_info(
                         app['xmlns'],
                         app_id,
-                        self.formatted_name_from_app(app),
+                        self.formatted_name_from_app(self.display_lang, app),
                         is_remote=app.get('is_remote', False),
                     )
 
@@ -624,7 +625,8 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                             result["%s %s" % (xmlns, self.fuzzy_slug)] = _generate_report_app_info(
                                 xmlns,
                                 info['unknown_id'],
-                                "%s [Fuzzy Submissions]" % self.formatted_name_from_app(app_map),
+                                "%s [Fuzzy Submissions]" % self.formatted_name_from_app(
+                                    self.display_lang, app_map),
                                 is_fuzzy=True,
                             )
         return result
