@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap2/base_paginated_crud.html' %}
+{% extends 'style/bootstrap3/base_paginated_crud.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
@@ -10,74 +10,76 @@
             International text messages sent from this gateway may not be delivered in all countries.
         {% endblocktrans %}
     </div>
-    <div class="row-fluid" style="margin-top: 50px;">
-        <div class="span12">
-            <form class="form form-horizontal" method="post">
-                {% crispy initiate_new_form %}
-            </form>
+    <div class="row" style="margin-top: 50px;">
+        <div class="col-sm-12">
+            {% crispy initiate_new_form %}
         </div>
     </div>
 {% endblock %}
 
 {% block pagination_templates %}
     <script type="text/html" id="gateway-template">
-        <td class="span4">
+        <td class="col-sm-4">
             <a data-bind="if: editUrl, attr: {href: editUrl}"><span data-bind="text: name"></span></a>
             <!--ko ifnot: editUrl --><span data-bind="text: name"></span><!-- /ko -->
         </td>
-        <td class="span4" data-bind="text: description"></td>
-        <td class="span4" data-bind="text: supported_countries"></td>
-        <td class="span2">
+        <td class="col-sm-4" data-bind="text: description"></td>
+        <td class="col-sm-4" data-bind="text: supported_countries"></td>
+        <td class="col-sm-2">
             <button type="button"
-                    class="btn refresh-list-confirm"
+                    class="btn btn-default refresh-list-confirm"
                     data-loading-text="{% trans 'Setting as default...' %}">{% trans 'Set As Default' %}</button>
         </td>
-        <td class="span2">
+        <td class="col-sm-2">
             <!-- ko if: canDelete -->
             <a data-bind="attr: {href: '#' + deleteModalId }"
                class="btn btn-danger"
-               data-toggle="modal"><i class="icon-remove"></i> {% trans 'Delete' %}</a>
-            <div class="modal hide fade" data-bind="attr: {id: deleteModalId}">
-                <div class="modal-header">
-                    <a class="close" data-dismiss="modal">&times;</a>
-                    <h4>
-                        Delete the SMS Connection '<span data-bind="text: name"></span>'.
-                    </h4>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to delete the SMS Connection '<span data-bind="text: name"></span>'?</p>
-                </div>
-                <div class="modal-footer">
-                    <a href="#" class="btn btn-danger delete-item-confirm">
-                        <i class="icon-remove"></i> {% trans "Delete" %}
-                    </a>
-                    <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+               data-toggle="modal"><i class="fa fa-times"></i> {% trans 'Delete' %}</a>
+            <div class="modal fade" data-bind="attr: {id: deleteModalId}">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title">
+                                Delete the SMS Connection '<span data-bind="text: name"></span>'.
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to delete the SMS Connection '<span data-bind="text: name"></span>'?</p>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="#" class="btn btn-danger delete-item-confirm">
+                                <i class="fa fa-times"></i> {% trans "Delete" %}
+                            </a>
+                            <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
+                        </div>
+                    </div>
                 </div>
             </div>
             <!-- /ko -->
-            <!-- ko if: isGlobal --><span class="label"><i class="icon-info-sign"></i> {% trans 'Global Connection' %}</span><!-- /ko -->
-            <!-- ko if: isShared --><span class="label"><i class="icon-info-sign"></i> {% trans 'Shared Connection' %}</span><!-- /ko -->
+            <!-- ko if: isGlobal --><span class="label label-default"><i class="fa fa-info-circle"></i> {% trans 'Global Connection' %}</span><!-- /ko -->
+            <!-- ko if: isShared --><span class="label label-default"><i class="fa fa-info-circle"></i> {% trans 'Shared Connection' %}</span><!-- /ko -->
         </td>
     </script>
 
     <script type="text/html" id="gateway-deleted-template">
-        <td class="span4" data-bind="text: name"></td>
-        <td class="span4" data-bind="text: description"></td>
-        <td class="span4" data-bind="text: supported_countries"></td>
-        <td class="span4" colspan="2">
+        <td class="col-sm-4" data-bind="text: name"></td>
+        <td class="col-sm-4" data-bind="text: description"></td>
+        <td class="col-sm-4" data-bind="text: supported_countries"></td>
+        <td class="col-sm-4" colspan="2">
             {% trans 'DELETED' %}
         </td>
     </script>
 
     <script type="text/html" id="gateway-default-template">
-        <td class="span4">
+        <td class="col-sm-4">
             <a data-bind="if: editUrl, attr: {href: editUrl}"><span data-bind="text: name"></span></a>
             <!--ko ifnot: editUrl --><span data-bind="text: name"></span><!-- /ko -->
         </td>
-        <td class="span4" data-bind="text: description"></td>
-        <td class="span4" data-bind="text: supported_countries"></td>
-        <td class="span2"><span class="label label-info">{% trans 'DEFAULT CONNECTION' %}</span></td>
-        <td class="span2">
+        <td class="col-sm-4" data-bind="text: description"></td>
+        <td class="col-sm-4" data-bind="text: supported_countries"></td>
+        <td class="col-sm-2"><span class="label label-info">{% trans 'DEFAULT CONNECTION' %}</span></td>
+        <td class="col-sm-2">
             <button type="button"
                     class="btn btn-danger refresh-list-confirm"
                     data-loading-text="{% trans 'Removing from default...' %}">{% trans 'Remove As Default' %}</button>
@@ -85,8 +87,8 @@
     </script>
 
     <script type="text/html" id="gateway-automatic-template">
-        <td class="span8" colspan="3"><em data-bind="text: name"></em></td>
-        <td class="span4" colspan="2"><span class="label label-info">{% trans 'DEFAULT CONNECTION' %}</span></td>
+        <td class="col-sm-8" colspan="3"><em data-bind="text: name"></em></td>
+        <td class="col-sm-4" colspan="2"><span class="label label-info">{% trans 'DEFAULT CONNECTION' %}</span></td>
     </script>
 {% endblock %}
 
