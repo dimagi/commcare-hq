@@ -3,10 +3,9 @@
 {% block js-inline %}
 <script>
 $(function () {
-    var alerts = {{ alerts|JSON }};
-    ko.applyBindings({
-        alerts: alerts
-    }, $('#main_container').get(0));
+    $('#main_container').koApplyBindings({
+        alerts: {{ alerts|JSON }}
+    });
 });
 </script>
 {% endblock %}

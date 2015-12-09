@@ -20,7 +20,7 @@
             }
         );
         $(function () {
-            ko.applyBindings(paginatedListModel, $('#editable-paginated-list').get(0));
+            $('#editable-paginated-list').koApplyBindings(paginatedListModel);
         });
     </script>
     {% block js-paginated %}{% endblock %}
