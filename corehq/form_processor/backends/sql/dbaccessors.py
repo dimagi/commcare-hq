@@ -153,8 +153,8 @@ class FormAccessorSQL(AbstractFormAccessor):
 
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
-                'SELECT form_pk FROM save_new_form_and_related_models(%s, %s, %s)',
-                [form, unsaved_attachments, operations]
+                'SELECT form_pk FROM save_new_form_and_related_models(%s, %s, %s, %s)',
+                [form.form_id, form, unsaved_attachments, operations]
             )
             result = fetchone_as_namedtuple(cursor)
             form.id = result.form_pk
@@ -324,12 +324,13 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
         # cast arrays that can be empty to appropriate type
         query = """SELECT case_pk FROM save_case_and_related_models(
-            %s, %s, %s::{}[], %s::{}[], %s::INTEGER[], %s::INTEGER[]
+            %s, %s, %s, %s::{}[], %s::{}[], %s::INTEGER[], %s::INTEGER[]
         )"""
         query = query.format(CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE)
         with get_cursor(CommCareCaseSQL) as cursor:
             try:
                 cursor.execute(query, [
+                    case.case_id,
                     case,
                     transactions_to_save,
                     indices_to_save_or_update,

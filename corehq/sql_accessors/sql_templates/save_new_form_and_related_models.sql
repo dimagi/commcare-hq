@@ -1,9 +1,11 @@
 DROP FUNCTION IF EXISTS save_new_form_and_related_models(
+    TEXT,
     form_processor_xforminstancesql,
     form_processor_xformattachmentsql[],
     form_processor_xformoperationsql[]);
 
 CREATE FUNCTION save_new_form_and_related_models(
+    p_form_id TEXT,
     form form_processor_xforminstancesql,
     attachments form_processor_xformattachmentsql[],
     operations form_processor_xformoperationsql[],
@@ -16,6 +18,11 @@ BEGIN
     IF form.id IS NOT NULL THEN
         RAISE EXCEPTION 'Form already saved: %', form.form_id;
     END IF;
+
+    IF p_form_id <> form.form_id THEN
+        RAISE EXCEPTION 'form_id parameter not equal to XFormInstance.form_id';
+    END IF;
+
 
     INSERT INTO form_processor_xforminstancesql (
         form_id,

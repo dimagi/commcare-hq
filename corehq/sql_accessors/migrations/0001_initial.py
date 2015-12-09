@@ -26,12 +26,37 @@ class Migration(migrations.Migration):
     operations = [
         # no longer required
         HqRunSQL(
-            'DROP FUNCTION IF EXISTS deprecate_form(TEXT, TEXT, TIMESTAMP);'
+            'DROP FUNCTION IF EXISTS deprecate_form(TEXT, TEXT, TIMESTAMP)',
             'SELECT 1'
         ),
         # replaced by save_new_form_and_related_models
         HqRunSQL(
-            'DROP FUNCTION IF EXISTS save_new_form_with_attachments(form_processor_xforminstancesql, form_processor_xformattachmentsql[]);'
+            'DROP FUNCTION IF EXISTS save_new_form_with_attachments(form_processor_xforminstancesql, form_processor_xformattachmentsql[])',
+            'SELECT 1'
+        ),
+        # signature changed
+        HqRunSQL(
+            """
+            DROP FUNCTION IF EXISTS save_case_and_related_models(
+                form_processor_commcarecasesql,
+                form_processor_casetransaction[],
+                form_processor_commcarecaseindexsql[],
+                form_processor_caseattachmentsql[],
+                INTEGER[],
+                INTEGER[]
+            )
+            """,
+            'SELECT 1'
+        ),
+        # signature changed
+        HqRunSQL(
+            """
+            DROP FUNCTION IF EXISTS save_new_form_and_related_models(
+            form_processor_xforminstancesql,
+            form_processor_xformattachmentsql[],
+            form_processor_xformoperationsql[]
+            )
+            """,
             'SELECT 1'
         ),
         migrator.get_migration('archive_unarchive_form.sql'),

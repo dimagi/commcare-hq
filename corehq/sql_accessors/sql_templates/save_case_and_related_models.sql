@@ -1,4 +1,5 @@
 DROP FUNCTION IF EXISTS save_case_and_related_models(
+    TEXT,
     form_processor_commcarecasesql,
     form_processor_casetransaction[],
     form_processor_commcarecaseindexsql[],
@@ -8,6 +9,7 @@ DROP FUNCTION IF EXISTS save_case_and_related_models(
 );
 
 CREATE FUNCTION save_case_and_related_models(
+    p_case_id TEXT,
     commcarecase form_processor_commcarecasesql,
     transactions form_processor_casetransaction[],
     indices form_processor_commcarecaseindexsql[],
@@ -23,6 +25,10 @@ DECLARE
     attachement_id_to_delete INTEGER;
     index_id_to_delete INTEGER;
 BEGIN
+    IF p_case_id <> commcarecase.case_id THEN
+        RAISE EXCEPTION 'case_id parameter not equal to CommCareCase.case_id';
+    END IF;
+
     IF commcarecase.id IS NOT NULL THEN
         UPDATE form_processor_commcarecasesql SET
             domain = commcarecase.domain,

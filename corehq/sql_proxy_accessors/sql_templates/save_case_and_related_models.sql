@@ -1,4 +1,5 @@
 DROP FUNCTION IF EXISTS save_case_and_related_models(
+    TEXT,
     form_processor_commcarecasesql,
     form_processor_casetransaction[],
     form_processor_commcarecaseindexsql[],
@@ -8,6 +9,7 @@ DROP FUNCTION IF EXISTS save_case_and_related_models(
 );
 
 CREATE FUNCTION save_case_and_related_models(
+    p_case_id TEXT,
     commcarecase form_processor_commcarecasesql,
     transactions form_processor_casetransaction[],
     indices form_processor_commcarecaseindexsql[],
@@ -17,5 +19,5 @@ CREATE FUNCTION save_case_and_related_models(
     case_pk OUT INTEGER
 ) AS $$
     CLUSTER '{{ PL_PROXY_CLUSTER_NAME }}';
-    RUN ON hash_string(commcarecase.case_id, 'siphash24');
+    RUN ON hash_string(p_case_id, 'siphash24');
 $$ LANGUAGE plproxy;
