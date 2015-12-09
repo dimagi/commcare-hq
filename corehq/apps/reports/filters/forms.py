@@ -14,7 +14,6 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
 MISSING_APP_ID = "_MISSING_APP_ID"
-UNKNOWN_REMOTE_APP_ID = 'unknown_remote_app'
 
 PARAM_SLUG_STATUS = 'status'
 PARAM_SLUG_APP_ID = 'app_id'
@@ -22,7 +21,6 @@ PARAM_SLUG_MODULE = 'module'
 PARAM_SLUG_XMLNS = 'xmlns'
 
 PARAM_VALUE_STATUS_ACTIVE = 'active'
-PARAM_VALUE_STATUS_REMOTE = 'remote'
 PARAM_VALUE_STATUS_DELETED = 'deleted'
 
 
@@ -132,7 +130,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     def drilldown_map(self):
         final_map = []
         map_active = []
-        map_remote = []
         map_deleted = []
 
         all_forms = self._application_forms_info.copy()
@@ -140,7 +137,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         for app_map in all_forms.values():
             app_langs = app_map['app']['langs']
             is_deleted = app_map['is_deleted']
-            is_remote = app_map.get('is_remote', False)
 
             app_name = self.get_translated_value(self.display_lang, app_langs, app_map['app']['names'])
             if is_deleted:
@@ -158,23 +154,19 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                         module['next'].append(self._map_structure(form_map['xmlns'], form_name))
                     app['next'].append(module)
 
-            if is_remote:
-                map_remote.append(app)
-            elif is_deleted:
+            if is_deleted:
                 map_deleted.append(app)
             else:
                 map_active.append(app)
 
-        if (bool(map_remote) + bool(map_deleted) + bool(map_active)) > 1:
+        if (bool(map_deleted) + bool(map_active)) > 1:
             self.display_app_type = True
             if map_active:
                 final_map.append(self._map_structure(PARAM_VALUE_STATUS_ACTIVE, _('Active CommCare Applications'), map_active))
-            if map_remote:
-                final_map.append(self._map_structure(PARAM_VALUE_STATUS_REMOTE, _('Remote CommCare Applications'), map_remote))
             if map_deleted:
                 final_map.append(self._map_structure(PARAM_VALUE_STATUS_DELETED, _('Deleted CommCare Applications'), map_deleted))
         else:
-            final_map.extend(map_active or map_remote or map_deleted)
+            final_map.extend(map_active or map_deleted)
 
         return final_map
 
@@ -276,8 +268,8 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @memoized
     def _nonmatching_app_forms(self):
         """
-            These are forms that we could not find exact matches for in remote apps or in
-
+        These are forms that we could not find exact matches for in known or deleted apps
+        (including remote apps)
         """
         all_forms = set(self._all_forms)
         std_app_forms = set(self._application_forms)
@@ -345,9 +337,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         if self._show_unknown:
             return self.request.GET.get('%s_%s_xmlns' % (self.slug, self.unknown_slug), '')
         return ''
-
-    def _clean_remote_id(self, app_id):
-        return app_id if app_id != UNKNOWN_REMOTE_APP_ID else MISSING_APP_ID
 
     @memoized
     def get_unknown_form_name(self, xmlns, app_id=None, none_if_not_found=False):
@@ -452,14 +441,12 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             for line in data:
                 app = line['value']
                 app_id = app['app']['id']
-                app_id = self._clean_remote_id(app_id)
                 xmlns_app = self.make_xmlns_app_key(app['xmlns'], app_id)
                 if xmlns_app not in result:
                     result[xmlns_app] = self._generate_report_app_info(
                         app['xmlns'],
                         app_id,
                         self._formatted_name_from_app(self.display_lang, app),
-                        is_remote=app.get('is_remote', False),
                     )
 
             if not self._hide_fuzzy_results and self._fuzzy_forms:
@@ -478,13 +465,12 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             return result
 
     @staticmethod
-    def _generate_report_app_info(xmlns, app_id, name, is_fuzzy=False, is_remote=False):
+    def _generate_report_app_info(xmlns, app_id, name, is_fuzzy=False):
         return {
             'xmlns': xmlns,
             'app_id': app_id,
             'name': name,
             'is_fuzzy': is_fuzzy,
-            'is_remote': is_remote
         }
 
     def _get_selected_forms_for_unknown_apps(self):
