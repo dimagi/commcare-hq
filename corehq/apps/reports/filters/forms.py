@@ -5,7 +5,7 @@ from django.utils.safestring import mark_safe
 import re
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_submissions_using_xmlns, \
-    get_all_form_definitions_grouped_by_app_and_xmlns
+    get_all_form_definitions_grouped_by_app_and_xmlns, get_all_app_structures
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseTagsFilter
 from corehq.util.debug import print_return_value
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
@@ -238,27 +238,21 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 'next_app_id': {...},
             }
         """
-        data = self._raw_data(["app module form", self.domain])
+        data = get_all_app_structures(self.domain)
         default_module = lambda num: {'module': None, 'forms': []}
         app_forms = {}
-        for line in data:
-            app_info = line.get('value')
-            if not app_info:
-                continue
-
-            index_offset = 1 if app_info.get('is_user_registration', False) else 0
-
-            app_id = app_info['app']['id']
-
+        for app_structure in data:
+            index_offset = 1 if app_structure.is_user_registration else 0
+            app_id = app_structure.app.id
             if not app_id in app_forms:
                 app_forms[app_id] = {
-                    'app': app_info['app'],
-                    'is_user_registration': app_info.get('is_user_registration', False),
-                    'is_deleted': app_info['is_deleted'],
+                    'app': app_structure.app,
+                    'is_user_registration': app_structure.is_user_registration,
+                    'is_deleted': app_structure.is_deleted,
                     'modules': []
                 }
 
-            module_id = app_info['module']['id'] + index_offset
+            module_id = app_structure.module.id + index_offset
 
             new_modules = module_id - len(app_forms[app_id]['modules']) + 1
             if new_modules > 0:
@@ -266,11 +260,11 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 # these 'filler modules' are eventually ignored when rendering the drilldown map.
                 app_forms[app_id]['modules'].extend([default_module(module_id - m) for m in range(0, new_modules)])
 
-            if not app_info.get('is_user_registration'):
-                app_forms[app_id]['modules'][module_id]['module'] = app_info['module']
+            if not app_structure.is_user_registration:
+                app_forms[app_id]['modules'][module_id]['module'] = app_structure.module
                 app_forms[app_id]['modules'][module_id]['forms'].append({
-                    'form': app_info['form'],
-                    'xmlns': app_info['xmlns'],
+                    'form': app_structure.form,
+                    'xmlns': app_structure.xmlns,
                 })
         return app_forms
 
@@ -510,7 +504,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             endkey=endkey+[{}],
             **kwargs
         ).all()
-
 
 
     @classmethod
