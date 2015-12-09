@@ -4,6 +4,7 @@ from urllib import urlencode
 import math
 from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import operator
+from pygooglechart import ScatterChart
 import pytz
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
@@ -977,11 +978,6 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             Hat tip: http://github.com/dustin/bindir/blob/master/gitaggregates.py
         """
         no_data = not data
-        try:
-            from pygooglechart import ScatterChart
-        except ImportError:
-            raise Exception("WorkerActivityTimes requires pygooglechart.")
-
         chart = ScatterChart(width, height, x_range=(-1, 24), y_range=(-1, 7))
 
         chart.add_data([(h % 24) for h in range(24 * 8)])
