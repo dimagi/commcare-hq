@@ -535,15 +535,13 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         parsed_params = FormsByApplicationFilterParams(filter_results)
         use_remote_form_data = parsed_params.show_remote
 
-        if filter_results[-1]['slug'] == 'xmlns':
-            xmlns = filter_results[-1]['value']
-            app_id = filter_results[-3]['value']
+        if parsed_params.xmlns:
             if use_remote_form_data:
-                app_id = self._clean_remote_id(app_id)
-                data = [{'value': self._remote_forms[self.make_xmlns_app_key(xmlns, app_id)]}]
+                app_id = self._clean_remote_id(parsed_params.app_id)
+                data = [{'value': self._remote_forms[self.make_xmlns_app_key(parsed_params.xmlns, app_id)]}]
             else:
-                status = filter_results[0]['value'] if filter_results[0]['slug'] == 'status' else 'active'
-                key = ["status xmlns app", self.domain, status, filter_results[-1]['value'], filter_results[-3]['value']]
+                status = parsed_params.status or PARAM_VALUE_STATUS_ACTIVE
+                key = ["status xmlns app", self.domain, status, parsed_params.xmlns, parsed_params.app_id]
                 data = self._raw_data(key)
         else:
             data = []
