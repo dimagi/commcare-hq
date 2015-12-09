@@ -777,7 +777,7 @@ class LedgerValue(models.Model):
     Represents the current state of a ledger. Supercedes StockState
     """
     # domain not included and assumed to be accessed through the foreign key to the case table. legit?
-    case = models.ForeignKey(CommCareCaseSQL, to_field='case_id', db_index=True)
+    case = models.CharField(max_length=255, db_index=True)  # remove foreign key until we're sharding this
     # can't be a foreign key to products because of sharding.
     # also still unclear whether we plan to support ledgers to non-products
     entry_id = models.CharField(max_length=100, db_index=True)
