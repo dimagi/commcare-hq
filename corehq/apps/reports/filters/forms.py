@@ -543,7 +543,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 key = ["status xmlns app", self.domain, status, parsed_params.xmlns, parsed_params.app_id]
                 return self._raw_data(key)
         else:
-            data = []
             if parsed_params.show_remote:
                 all_forms = []
                 if filter_results[-1]['slug'] == 'module':
@@ -561,7 +560,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                     except KeyError:
                         pass
                 app_id = self._clean_remote_id(app_id)
-                data.extend([{'value': self._remote_forms[self.make_xmlns_app_key(f['xmlns'], app_id)]} for f in all_forms])
+                return [{'value': self._remote_forms[self.make_xmlns_app_key(f['xmlns'], app_id)]} for f in all_forms]
             elif self._application_forms:
                 prefix = "app module form"
                 key = [self.domain]
@@ -575,8 +574,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                         except Exception:
                             break
                     key.append(val)
-                data.extend(self._raw_data([prefix]+key))
-            return data
+                return self._raw_data([prefix]+key)
 
     def _get_selected_forms(self, filter_results):
         """
