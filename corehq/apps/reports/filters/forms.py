@@ -76,14 +76,14 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         context.update({
             'unknown_available': bool(self._unknown_forms),
             'unknown': {
-                'show': self.show_unknown,
+                'show': self._show_unknown,
                 'slug': self.unknown_slug,
                 'selected': self._selected_unknown_xmlns,
                 'options': self._unknown_forms_options,
                 'default_text': "Select an Unknown Form..." if self.use_only_last else "Show All Unknown Forms...",
             },
             'hide_fuzzy': {
-                'show': not self.show_unknown and self.show_global_hide_fuzzy_checkbox and self._fuzzy_forms,
+                'show': not self._show_unknown and self.show_global_hide_fuzzy_checkbox and self._fuzzy_forms,
                 'slug': '%s_%s' % (self.slug, self.fuzzy_slug),
                 'checked': self._hide_fuzzy_results,
             },
@@ -412,7 +412,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         return list(set([self.split_xmlns_app_key(x, only_xmlns=True) for x in self._unknown_forms]))
 
     @property
-    def show_unknown(self):
+    def _show_unknown(self):
         return self.request.GET.get('%s_%s' % (self.slug, self.unknown_slug))
 
     @property
@@ -422,7 +422,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @property
     def _selected_unknown_xmlns(self):
-        if self.show_unknown:
+        if self._show_unknown:
             return self.request.GET.get('%s_%s_xmlns' % (self.slug, self.unknown_slug), '')
         return ''
 
@@ -495,7 +495,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @classmethod
     def has_selections(cls, request):
         params, instance = super(cls, cls).get_value(request, request.domain)
-        if instance.show_unknown:
+        if instance._show_unknown:
             return True
         for param in params:
             if param['slug'] == cls.app_slug:
@@ -587,7 +587,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             }
 
         result = {}
-        if self.show_unknown:
+        if self._show_unknown:
             all_unknown = [self._selected_unknown_xmlns] if self._selected_unknown_xmlns else self._unknown_forms
             for form in all_unknown:
                 xmlns, app_id = self.split_xmlns_app_key(form)
