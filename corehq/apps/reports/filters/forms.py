@@ -15,6 +15,7 @@ from django.utils.translation import ugettext_noop, ugettext_lazy
 
 REMOTE_APP_WILDCARD = "http://(.+).commcarehq.org"
 MISSING_APP_ID = "_MISSING_APP_ID"
+UNKNOWN_REMOTE_APP_ID = 'unknown_remote_app'
 
 PARAM_SLUG_STATUS = 'status'
 PARAM_SLUG_APP_ID = 'app_id'
@@ -73,7 +74,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     unknown_slug = "unknown"
     fuzzy_slug = "@@FUZZY"
     show_global_hide_fuzzy_checkbox = True
-    unknown_remote_app_id = 'unknown_remote_app'
     display_app_type = False # whether we're displaying the application type select box in the filter
 
     @property
@@ -310,7 +310,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                         app_info = {
                             'app': {
                                 'is_unknown': True,
-                                'id': self.unknown_remote_app_id,
+                                'id': UNKNOWN_REMOTE_APP_ID,
                                 'names': 'Name Unknown',
                                 'langs': None,
                             },
@@ -462,7 +462,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         return ''
 
     def _clean_remote_id(self, app_id):
-        return app_id if app_id != self.unknown_remote_app_id else MISSING_APP_ID
+        return app_id if app_id != UNKNOWN_REMOTE_APP_ID else MISSING_APP_ID
 
     @memoized
     def get_unknown_form_name(self, xmlns, app_id=None, none_if_not_found=False):
@@ -535,7 +535,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             return data
 
         parsed_params = FormsByApplicationFilterParams(filter_results)
-
         if parsed_params.xmlns:
             if parsed_params.show_remote:
                 app_id = self._clean_remote_id(parsed_params.app_id)
