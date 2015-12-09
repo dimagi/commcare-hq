@@ -543,6 +543,7 @@ class SubscriptionForm(forms.Form):
                     crispy.Field(
                         'no_invoice_reason', data_bind="attr: {required: noInvoice}"),
                     data_bind="visible: noInvoice"),
+                'do_not_email',
                 'auto_generate_credits',
                 'service_type',
                 'pro_bono_status',
