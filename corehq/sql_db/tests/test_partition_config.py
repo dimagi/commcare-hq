@@ -75,4 +75,4 @@ class PlProxyTests(SimpleTestCase):
         }
         configs = get_shard_config_strings(shard_mapping)
         self.assertEqual(3, len(configs))
-        self.assertIn("p1 'dbname=commcarehq hostname=hqdb0 port=5432'", configs)
+        self.assertIn("p1 'dbname=commcarehq host=hqdb0 port=5432'", configs)
