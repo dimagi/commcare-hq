@@ -401,6 +401,10 @@
                     if (self.custom_export.default_format() === 'html') {
                         analytics.usage("Create Export", exportType, "Excel Dashboard");
                     }
+
+                    if (!self.custom_export._id || !self.custom_export._id()) {
+                        analytics.workflow("Clicked 'Create' in export edit page")
+                    }
                     self.save(false);
                 };
 
