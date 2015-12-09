@@ -4,10 +4,9 @@ from django.conf import settings
 from django.utils.safestring import mark_safe
 import re
 from corehq.apps.app_manager.models import RemoteApp, Application
+from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_submissions_using_xmlns
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseTagsFilter
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
-from couchforms.models import XFormInstance
-from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.decorators.memoized import memoized
 
 # For translations
@@ -445,26 +444,8 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                         if form['xmlns'] == xmlns:
                             return form['name'].values()[0]
 
-
-        key = ["xmlns", self.domain, xmlns]
-        results = cache_core.cached_view(
-            XFormInstance.get_db(),
-            'reports_forms/name_by_xmlns',
-            reduce=False,
-            startkey=key,
-            endkey=key + [{}],
-            limit=1,
-            cache_expire=60
-        )
-
-        try:
-            data = list(results)[0]
-        except IndexError:
-            data = None
-
-        if data:
-            return data['value']
-        return None if none_if_not_found else "Name Unknown"
+        guessed_name = guess_form_name_from_submissions_using_xmlns(self.domain, xmlns)
+        return guessed_name or (None if none_if_not_found else _("Name Unknown"))
 
     @staticmethod
     def get_translated_value(display_lang, app_langs, obj):
