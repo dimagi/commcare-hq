@@ -90,8 +90,8 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual([], operations)
 
         # don't call form.archive to avoid sending the signals
-        FormAccessorSQL.archive_form(form.form_id, user_id='user1')
-        FormAccessorSQL.unarchive_form(form.form_id, user_id='user2')
+        FormAccessorSQL.archive_form(form, user_id='user1')
+        FormAccessorSQL.unarchive_form(form, user_id='user2')
 
         operations = FormAccessorSQL.get_form_operations(form.form_id)
         self.assertEqual(2, len(operations))
@@ -138,7 +138,7 @@ class FormAccessorTestsSQL(TestCase):
         # basic check
         forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormInstance', 5)
         self.assertEqual(2, len(forms))
-        self.assertEqual([form1.form_id, form2.form_id], [f.form_id for f in forms])
+        self.assertEqual({form1.form_id, form2.form_id}, {f.form_id for f in forms})
 
         # check reverse ordering
         forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormInstance', 5, recent_first=True)
@@ -151,7 +151,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(form1.form_id, forms[0].form_id)
 
         # change state of form1
-        FormAccessorSQL.archive_form(form1.form_id, 'user1')
+        FormAccessorSQL.archive_form(form1, 'user1')
 
         # check filtering by state
         forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormArchived', 2)
@@ -194,7 +194,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(1, len(transactions))
         self.assertFalse(transactions[0].revoked)
 
-        FormAccessorSQL.archive_form(form.form_id, 'user1')
+        FormAccessorSQL.archive_form(form, 'user1')
         form = FormAccessorSQL.get_form(form.form_id)
         self.assertEqual(XFormInstanceSQL.ARCHIVED, form.state)
         operations = form.history
@@ -206,7 +206,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(1, len(transactions))
         self.assertTrue(transactions[0].revoked)
 
-        FormAccessorSQL.unarchive_form(form.form_id, 'user2')
+        FormAccessorSQL.unarchive_form(form, 'user2')
         form = FormAccessorSQL.get_form(form.form_id)
         self.assertEqual(XFormInstanceSQL.NORMAL, form.state)
         operations = form.history

@@ -120,18 +120,21 @@ class FormAccessorSQL(AbstractFormAccessor):
             return sum([result.deleted_count for result in results])
 
     @staticmethod
-    def archive_form(form_id, user_id=None):
-        FormAccessorSQL._archive_unarchive_form(form_id, user_id, True)
+    def archive_form(form, user_id=None):
+        FormAccessorSQL._archive_unarchive_form(form, user_id, True)
 
     @staticmethod
-    def unarchive_form(form_id, user_id=None):
-        FormAccessorSQL._archive_unarchive_form(form_id, user_id, False)
+    def unarchive_form(form, user_id=None):
+        FormAccessorSQL._archive_unarchive_form(form, user_id, False)
 
     @staticmethod
-    def _archive_unarchive_form(form_id, user_id, archive):
+    def _archive_unarchive_form(form, user_id, archive):
+        from casexml.apps.case.xform import get_case_ids_from_form
+        form_id = form.form_id
+        case_ids = list(get_case_ids_from_form(form))
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
-            cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s)', [form_id, archive])
+            cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)', [case_ids, form_id, archive])
 
     @staticmethod
     def save_new_form(form):

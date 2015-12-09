@@ -272,7 +272,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         if self.is_archived:
             return
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        FormAccessorSQL.archive_form(self.form_id, user_id=user_id)
+        FormAccessorSQL.archive_form(self, user_id=user_id)
         xform_archived.send(sender="form_processor", xform=self)
 
     def unarchive(self, user_id=None):
@@ -280,7 +280,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
             return
 
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        FormAccessorSQL.unarchive_form(self.form_id, user_id=user_id)
+        FormAccessorSQL.unarchive_form(self, user_id=user_id)
         xform_unarchived.send(sender="form_processor", xform=self)
 
     def __unicode__(self):

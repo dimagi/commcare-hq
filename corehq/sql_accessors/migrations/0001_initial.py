@@ -59,6 +59,11 @@ class Migration(migrations.Migration):
             """,
             'SELECT 1'
         ),
+        # signature changed
+        HqRunSQL(
+            "DROP FUNCTION IF EXISTS revoke_restore_case_transactions_for_form(TEXT, BOOLEAN)",
+            "SELECT 1",
+        ),
         migrator.get_migration('archive_unarchive_form.sql'),
         migrator.get_migration('case_modified_since.sql'),
         migrator.get_migration('check_form_exists.sql'),
