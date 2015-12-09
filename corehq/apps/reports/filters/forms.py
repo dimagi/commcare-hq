@@ -74,7 +74,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     def filter_context(self):
         context = super(FormsByApplicationFilter, self).filter_context
         context.update({
-            'unknown_available': bool(self.unknown_forms),
+            'unknown_available': bool(self._unknown_forms),
             'unknown': {
                 'show': self.show_unknown,
                 'slug': self.unknown_slug,
@@ -399,7 +399,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @property
     @memoized
-    def unknown_forms(self):
+    def _unknown_forms(self):
         nonmatching = set(self._nonmatching_app_forms)
         fuzzy_forms = set(self._fuzzy_forms.keys())
 
@@ -409,7 +409,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @property
     @memoized
     def unknown_xmlns(self):
-        return list(set([self.split_xmlns_app_key(x, only_xmlns=True) for x in self.unknown_forms]))
+        return list(set([self.split_xmlns_app_key(x, only_xmlns=True) for x in self._unknown_forms]))
 
     @property
     def show_unknown(self):
@@ -589,7 +589,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
         result = {}
         if self.show_unknown:
-            all_unknown = [self.selected_unknown_xmlns] if self.selected_unknown_xmlns else self.unknown_forms
+            all_unknown = [self.selected_unknown_xmlns] if self.selected_unknown_xmlns else self._unknown_forms
             for form in all_unknown:
                 xmlns, app_id = self.split_xmlns_app_key(form)
                 if form not in result:
