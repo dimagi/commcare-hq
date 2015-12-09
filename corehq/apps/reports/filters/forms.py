@@ -6,6 +6,7 @@ import re
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_submissions_using_xmlns
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseTagsFilter
+from corehq.util.debug import print_return_value
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
 from dimagi.utils.decorators.memoized import memoized
 
@@ -196,10 +197,10 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @memoized
     def _application_forms(self):
         """
-            These are forms with an xmlns that can be matched to an Application or Application-Deleted
-            id with certainty.
+        These are forms with an xmlns that can be matched to an Application or Application-Deleted
+        id with certainty.
         """
-        data = self._raw_data(["xmlns app", self.domain], group=True)
+        data = self._get_all_forms_grouped_by_app_and_xmlns()
         all_forms = self.get_xmlns_app_keys(data)
         return all_forms
 
@@ -289,7 +290,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @memoized
     def _fuzzy_forms(self):
         matches = {}
-        app_data = self._raw_data(["xmlns app", self.domain], group=True)
+        app_data = self._get_all_forms_grouped_by_app_and_xmlns()
         app_xmlns = [d['key'][-2] for d in app_data]
         for form in self._nonmatching_app_forms:
             xmlns = self.split_xmlns_app_key(form, only_xmlns=True)
@@ -494,6 +495,10 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                     "%s; ID: %s" % (self.get_unknown_form_name(xmlns), xmlns)
                 )
         return result
+
+    @memoized
+    def _get_all_forms_grouped_by_app_and_xmlns(self):
+        return self._raw_data(["xmlns app", self.domain], group=True)
 
     @staticmethod
     def _raw_data(startkey, endkey=None, group=False):
