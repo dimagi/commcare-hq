@@ -613,7 +613,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                         is_remote=app.get('is_remote', False),
                     )
 
-            if self._fuzzy_forms and not self._hide_fuzzy_results:
+            if not self._hide_fuzzy_results and self._fuzzy_forms:
                 selected_xmlns = [r['xmlns'] for r in result.values()]
                 selected_apps = [r['app_id'] for r in result.values()]
                 for xmlns, info in self._fuzzy_form_data.items():
