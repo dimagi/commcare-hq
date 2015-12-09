@@ -106,7 +106,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         map_remote = []
         map_deleted = []
 
-        all_forms = self.application_forms_info.copy()
+        all_forms = self._application_forms_info.copy()
         all_forms.update(self.remote_forms_info.copy())
 
         for app_map in all_forms.values():
@@ -175,7 +175,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @property
     @memoized
-    def application_forms_info(self):
+    def _application_forms_info(self):
         """
             This is the data used for creating the drilldown_map. This returns the following type of structure:
             {
@@ -311,7 +311,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @memoized
     def remote_forms_info(self):
         """
-            Used for placing remote forms into the drilldown_map. Outputs the same structure as application_forms_info.
+            Used for placing remote forms into the drilldown_map. Outputs the same structure as _application_forms_info.
         """
         remote_forms = {}
         for form, info in self.remote_forms.items():
