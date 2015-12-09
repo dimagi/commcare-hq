@@ -5,7 +5,7 @@ BEGIN
     SELECT NOT exists(
         SELECT 1 FROM form_processor_commcarecasesql
         WHERE form_processor_commcarecasesql.case_id = $1
-          AND form_processor_commcarecasesql.server_modified_on=$2
+          AND form_processor_commcarecasesql.server_modified_on = $2 AT TIME ZONE 'UTC'
     ) INTO case_modified;
 END;
 $$ LANGUAGE plpgsql;
