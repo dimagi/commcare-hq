@@ -61,6 +61,8 @@ branches:
   - migrate-domains  # Ethan 12/2
   - bootstrap2-upgrade  # Biyeun 12/2
   - saved-export-blobs # Daniel 12/3
+  - es-fix # Noah 12/7
+  - use-strict-apply-bindings # Jenny 12/7
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

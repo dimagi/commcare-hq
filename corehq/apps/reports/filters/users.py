@@ -24,8 +24,7 @@ from .base import (
 
 
 class UserTypeFilter(BaseReportFilter):
-    # note, this is a butchered refactor of the original FilterUsersField.
-    # don't use this as a guideline for anything.
+    # note, don't use this as a guideline for anything.
     slug = "ufilter"
     label = ugettext_lazy("User Type")
     template = "reports/filters/filter_users.html"

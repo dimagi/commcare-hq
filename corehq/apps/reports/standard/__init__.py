@@ -49,11 +49,11 @@ class CommCareUserMemoizer(object):
     def get_by_user_id(self, user_id):
         return CommCareUser.get_by_user_id(user_id)
 
+
 class ProjectReportParametersMixin(object):
     """
     All the parameters necessary for the project reports.
     Intended to be mixed in with a GenericReportView object.
-
     """
 
     default_case_type = None
