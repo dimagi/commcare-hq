@@ -80,10 +80,6 @@ def get_number_of_forms_all_domains_in_couch():
     return all_forms - device_logs
 
 
-def get_form_xml_element(form_id):
-    return XFormInstance(_id=form_id).get_xml_element()
-
-
 @unit_testing_only
 def get_commtrack_forms(domain):
     key = ['submission xmlns', domain, COMMTRACK_REPORT_XMLNS]
