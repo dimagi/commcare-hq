@@ -8,9 +8,9 @@ from pygooglechart import ScatterChart
 import pytz
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
-from corehq.apps.es.forms import FormES
 from corehq.apps.reports import util
-from corehq.apps.reports.analytics.esaccessors import get_last_submission_time_for_user
+from corehq.apps.reports.analytics.esaccessors import get_last_submission_time_for_user, \
+    get_submission_counts_by_user
 from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
@@ -1086,16 +1086,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         else:
             return self.combined_users
 
-    def es_form_submissions(self, datespan=None):
-        datespan = datespan or self.datespan
-        form_query = (FormES()
-                      .domain(self.domain)
-                      .completed(gte=datespan.startdate.date(),
-                                 lte=datespan.enddate.date())
-                      .user_facet()
-                      .size(1))
-        return form_query.run()
-
     def es_last_submissions(self, datespan=None):
         """
         Creates a dict of userid => date of last submission
@@ -1151,10 +1141,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         if avg_datespan.startdate.year < 1900:  # srftime() doesn't work for dates below 1900
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
 
-        form_data = self.es_form_submissions()
-        submissions_by_user = form_data.facets.user.counts_by_term()
-        avg_form_data = self.es_form_submissions(datespan=avg_datespan)
-        avg_submissions_by_user = avg_form_data.facets.user.counts_by_term()
+        submissions_by_user = get_submission_counts_by_user(self.domain, self.datespan)
+        avg_submissions_by_user = get_submission_counts_by_user(self.domain, avg_datespan)
 
         if self.view_by == 'groups':
             active_users_by_group = {

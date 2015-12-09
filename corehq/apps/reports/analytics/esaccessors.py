@@ -16,3 +16,13 @@ def get_last_submission_time_for_user(domain, user_id, datespan):
 
     return convert_to_date(results[0]['_source']['form']['meta']['timeEnd'] if results else None)
 
+
+def get_submission_counts_by_user(domain, datespan):
+    datespan = datespan or datespan
+    form_query = (FormES()
+                  .domain(domain)
+                  .completed(gte=datespan.startdate.date(),
+                             lte=datespan.enddate.date())
+                  .user_facet()
+                  .size(1))
+    return form_query.run().facets.user.counts_by_term()
