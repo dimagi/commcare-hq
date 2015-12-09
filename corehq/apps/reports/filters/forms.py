@@ -381,11 +381,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @property
     @memoized
-    def fuzzy_xmlns(self):
-        return [d['xmlns'] for d in self._fuzzy_forms.values()]
-
-    @property
-    @memoized
     def fuzzy_form_data(self):
         fuzzy = {}
         for form in self._fuzzy_forms:
