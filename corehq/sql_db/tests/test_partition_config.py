@@ -1,8 +1,7 @@
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-from corehq.sql_db.management.commands.configure_pl_proxy_cluster import get_pl_proxy_server_config_sql, \
-    get_shard_config_strings
+from corehq.sql_db.management.commands.configure_pl_proxy_cluster import get_shard_config_strings
 from ..config import PartitionConfig
 from ..exceptions import PartitionValidationError
 
