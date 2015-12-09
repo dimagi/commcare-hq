@@ -574,23 +574,24 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
 
     @property
     def rows(self):
-        if self.datespan.is_valid():
-            self.sort_col = self.request_params.get('iSortCol_0', 0)
-            totals_col = self.column_count - 1
-            order = self.request_params.get('sSortDir_0')
-            if self.sort_col == totals_col:
-                users = self.users_by_range(self.startdate, self.enddate, order)
-            elif 0 < self.sort_col < totals_col:
-                start = self.dates[self.sort_col-1]
-                end = start + datetime.timedelta(days=1)
-                users = self.users_by_range(start, end, order)
-            else:
-                users = self.users_by_username(order)
+        if not self.datespan.is_valid():
+            return [[self.datespan.get_validation_reason()]]
 
-            rows = [self.get_row(user) for user in users]
-            self.total_row = self.get_row()
-            return rows
-        return [[self.datespan.get_validation_reason()]]
+        self.sort_col = self.request_params.get('iSortCol_0', 0)
+        totals_col = self.column_count - 1
+        order = self.request_params.get('sSortDir_0')
+        if self.sort_col == totals_col:
+            users = self.users_by_range(self.startdate, self.enddate, order)
+        elif 0 < self.sort_col < totals_col:
+            start = self.dates[self.sort_col-1]
+            end = start + datetime.timedelta(days=1)
+            users = self.users_by_range(start, end, order)
+        else:
+            users = self.users_by_username(order)
+
+        rows = [self.get_row(user) for user in users]
+        self.total_row = self.get_row()
+        return rows
 
     @property
     def get_all_rows(self):
