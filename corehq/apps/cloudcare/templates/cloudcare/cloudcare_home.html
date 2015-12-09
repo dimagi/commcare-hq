@@ -49,10 +49,11 @@
     <script src="{% new_static 'formplayer/script/vendor/purify.js' %}"></script>
     <script src="{% new_static 'formplayer/script/vendor/ba-tiny-pubsub.min.js' %}"></script>
     <script src="{% new_static 'formplayer/script/vendor/shortcut.js' %}"></script>
-    <script src="{% new_static 'formplayer/script/xforgasm.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/webformsession.js' %}"></script>
     <script src="{% new_static 'formplayer/script/formnav-all.js' %}"></script>
     <script src="{% new_static 'formplayer/script/entrycontrols_full.js' %}"></script>
     <script src="{% new_static 'formplayer/script/fullform-ui.js' %}"></script>
+    <script src="{% new_static 'formplayer/script/utils.js' %}"></script>
 
     <script src="{% new_static 'codemirror/lib/codemirror.js' %}"></script>
     <script src="{% new_static 'codemirror/mode/xml/xml.js' %}"></script>
@@ -117,15 +118,6 @@
 
         set_pin(30, $('#cloudcare-main'), $('#loading'));
 
-        function enableOffline() {
-            $('#debug-opts').show();
-            $('#use-offline').attr('checked', 'checked');
-        }
-        var offlineEnabled = {{ offline_enabled|JSON }};
-        if (offlineEnabled) {
-            enableOffline();
-        }
-
         $.subscribe('formplayer.dirty', function() {
             window.mainView.router.view.dirty = true
         });
@@ -152,16 +144,6 @@
 {% if sessions_enabled %}
         <nav id="sessions"></nav>
 {% endif %}
-        <!-- keep this well-hidden for now -->
-        <nav id="debug-opts" style="display: none;">
-          <ul class="nav nav-list">
-            <li>
-              <label class="checkbox">
-                <input id="use-offline" type="checkbox" /> Use offline CloudCare
-              </label>
-            </li>
-          </ul>
-        </nav>
     </section>
 {% endblock %}
 
@@ -183,13 +165,6 @@
                 {% endblocktrans %}
         </div>
     {% endif %}
-    <div id="offline-prompt" class="alert fade in alert-block alert-full alert-danger" style="display: none;">
-        {% blocktrans %}
-            Offline CloudCare is not running!
-            <a href="http://mrgris.com/a/dimagi/offline-cloudcare.jnlp">Launch it here</a>.
-            (It may take a moment to start up once it has downloaded)
-        {% endblocktrans %}
-    </div>
     <div id="cloudcare-main">
         {% if not apps_raw %}
             <h3>No Apps found</h3>
@@ -214,7 +189,7 @@
         <section id="cloudcare-notifications"></section>
         <section id="case-crumbs" style="width: 800px"></section>
         <section id="cases"></section>
-        <section id="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
+        <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
     </div>
 
     {% include 'cloudcare/includes/case_details.html' %}

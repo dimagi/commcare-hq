@@ -35,6 +35,7 @@ def flatten(d, parent_key='', delimiter='/'):
             items.append((new_key, v))
     return dict(items)
 
+
 class XFormPillow(HQPillow):
     document_class = XFormInstance
     couch_filter = "couchforms/xforms"

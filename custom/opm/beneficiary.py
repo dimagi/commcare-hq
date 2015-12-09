@@ -549,7 +549,7 @@ class OPMCaseRow(object):
                 return form.get_data(self.child_xpath('form/child_{num}/child{num}_child_register')) == '1'
             return any(
                 _test(form)
-                for form in self.filtered_forms(CFU1_XMLNS, 6)
+                for form in self.filtered_forms(CFU1_XMLNS, 7)
             )
 
     @property
@@ -1075,11 +1075,11 @@ class LongitudinalConditionsMet(ConditionsMet):
         self.two_two = format_bool(self.preg_weighed_trimestered(9))
         self.three = format_bool(self.preg_received_ifa)
         self.four = format_bool(self.child_attended_vhnd)
-        self.five = format_bool(self.child_age == 6)
+        self.five = format_bool(self.child_birth_registered)
         self.six = format_bool(self.child_growth_calculated)
         self.seven = format_bool(self.child_breastfed)
         self.eight = format_bool(self.child_age == 3)
-        self.nine = format_bool(self.child_received_ors if self.status == 'mother' else False)
+        self.nine = format_bool(self.child_received_ors_in_this_window if self.status == 'mother' else False)
         self.ten = format_bool(self.child_age == 12)
         self.opened_on = self.case_property('opened_on', EMPTY_FIELD)
         self.closed_on = self.case_property('closed_on', False)

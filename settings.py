@@ -1031,8 +1031,14 @@ db_settings['PORT'] = db_settings.get('PORT', '5432')
 options = db_settings.get('OPTIONS')
 db_settings['OPTIONS'] = '?{}'.format(urlencode(options)) if options else ''
 
-if UNIT_TESTING:
-    db_settings['NAME'] = 'test_{}'.format(db_settings['NAME'])
+if UNIT_TESTING and sys.argv[1] == "test":
+    # Use test database name, but only if running the test command.
+    # Django uses different database names than the ones in DATABASES
+    # when setting up for tests. However, UNIT_TESTING may be true in
+    # some cases where django is not running tests (js tests on travis),
+    # and therefore does not change the database name.
+    from django.db.backends.creation import TEST_DATABASE_PREFIX
+    db_settings['NAME'] = TEST_DATABASE_PREFIX + db_settings['NAME']
 
 if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
     SQL_REPORTING_DATABASE_URL = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
@@ -1321,7 +1327,6 @@ PILLOWTOPS = {
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
         'custom.opm.models.OpmUserFluffPillow',
-        'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
         'custom.m4change.models.LdHmisCaseFluffPillow',
         'custom.m4change.models.ImmunizationHmisCaseFluffPillow',

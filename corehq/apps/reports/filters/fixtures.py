@@ -103,6 +103,7 @@ class AsyncLocationFilter(BaseReportFilter):
     label = ugettext_noop("Location")
     slug = "location_async"
     template = "reports/filters/location_async.html"
+    make_optional = False
 
     @property
     def filter_context(self):
@@ -122,12 +123,23 @@ class AsyncLocationFilter(BaseReportFilter):
             'control_slug': self.slug, # todo: cleanup, don't follow this structure
             'loc_id': loc_id,
             'locations': load_locs_json(self.domain, loc_id, user=user),
+            'make_optional': self.make_optional,
             'hierarchy': location_hierarchy_config(self.domain)
         }
 
     @classmethod
     def get_value(cls, request, domain):
         return request.GET.get('location_id')
+
+
+class OptionalAsyncLocationFilter(AsyncLocationFilter):
+    """
+    This is the same as the AsyncLocationFilter, only when the template is
+    rendered, it will give the user the option of filtering by location or
+    not. If the user chooses to not filter by location, the location_id
+    value will be blank.
+    """
+    make_optional = True
 
 
 class MultiLocationFilter(AsyncDrillableFilter):

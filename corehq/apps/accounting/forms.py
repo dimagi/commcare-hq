@@ -362,6 +362,7 @@ class SubscriptionForm(forms.Form):
     no_invoice_reason = forms.CharField(
         label=ugettext_lazy("Justify why \"Do Not Invoice\""), max_length=256, required=False
     )
+    do_not_email = forms.BooleanField(label="Do Not Email", required=False)
     auto_generate_credits = forms.BooleanField(
         label=ugettext_lazy("Auto-generate Plan Credits"), required=False
     )
@@ -592,11 +593,12 @@ class SubscriptionForm(forms.Form):
             start_date = self.subscription.date_start
         elif start_date is None:
             raise ValidationError(_("You must specify a start date"))
-        if (self.cleaned_data['end_date'] is not None
-            and start_date > self.cleaned_data['end_date']):
+
+        end_date = self.cleaned_data.get('end_date')
+        if end_date is not None and start_date > end_date:
             raise ValidationError(_("End date must be after start date."))
 
-        if self.cleaned_data['end_date'] and self.cleaned_data['end_date'] <= datetime.date.today():
+        if end_date and end_date <= datetime.date.today():
             raise ValidationError(_("End date must be in the future."))
 
         return self.cleaned_data
@@ -612,6 +614,7 @@ class SubscriptionForm(forms.Form):
         salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
         do_not_invoice = self.cleaned_data['do_not_invoice']
         no_invoice_reason = self.cleaned_data['no_invoice_reason']
+        do_not_email = self.cleaned_data['do_not_email']
         auto_generate_credits = self.cleaned_data['auto_generate_credits']
         service_type = self.cleaned_data['service_type']
         pro_bono_status = self.cleaned_data['pro_bono_status']
@@ -624,6 +627,7 @@ class SubscriptionForm(forms.Form):
             salesforce_contract_id=salesforce_contract_id,
             do_not_invoice=do_not_invoice,
             no_invoice_reason=no_invoice_reason,
+            do_not_email=do_not_email,
             auto_generate_credits=auto_generate_credits,
             web_user=self.web_user,
             service_type=service_type,
@@ -648,6 +652,7 @@ class SubscriptionForm(forms.Form):
             date_delay_invoicing=self.cleaned_data['delay_invoice_until'],
             do_not_invoice=self.cleaned_data['do_not_invoice'],
             no_invoice_reason=self.cleaned_data['no_invoice_reason'],
+            do_not_email=self.cleaned_data['do_not_email'],
             auto_generate_credits=self.cleaned_data['auto_generate_credits'],
             salesforce_contract_id=self.cleaned_data['salesforce_contract_id'],
             web_user=self.web_user,

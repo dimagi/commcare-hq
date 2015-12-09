@@ -215,6 +215,7 @@
             <li class="sort-action">
                 <form method="post"
                       action="{% url "corehq.apps.app_manager.views.rearrange" domain app.id 'modules' %}">
+                      {% csrf_token %}
                 </form>
             </li>
             <li class="sort-disabled edit-form-li {% if is_user_registration %} active{% endif %}" id="user-registration-nav-link">
@@ -244,6 +245,7 @@
                             <li class="sort-action">
                                 <form method="post"
                                       action="{% url "corehq.apps.app_manager.views.rearrange" domain app.id 'forms' %}">
+                                      {% csrf_token %}
                                 </form>
                             </li>
                             {% with nav_form as selected_form %}
