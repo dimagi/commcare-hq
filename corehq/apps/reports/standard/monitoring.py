@@ -19,6 +19,7 @@ from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
+from corehq.apps.reports.analytics.sqlaccessors import get_form_counts_by_user
 from corehq.apps.sofabed.dbaccessors import get_form_counts_by_user_xmlns
 from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser
@@ -604,19 +605,19 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
         Assemble a row for a given user.
         If no user is passed, assemble a totals row.
         """
-        values = ['date']
-        results = FormData.objects.filter(**self.date_filter(self.startdate, self.enddate))
-
+        user_ids = []
         if user:
-            results = results.filter(user_id=user.user_id)
-            values.append('user_id')
+            user_ids = [user.user_id]
         else:
-            user_ids = [user_a.user_id for user_a in self.all_users]
-            results = results.filter(user_id__in=user_ids)
+            user_ids = map(lambda user: user.user_id, self.all_users)
 
-        results = results.extra({'date': "date(%s AT TIME ZONE '%s')" % (self.date_field, self.timezone)}) \
-            .values(*values) \
-            .annotate(Count(self.date_field))
+        results = get_form_counts_by_user(
+            user_ids,
+            self.startdate,
+            self.enddate,
+            self.date_field,
+            self.timezone
+        )
 
         count_field = '%s__count' % self.date_field
         counts_by_date = dict((result['date'].isoformat(), result[count_field]) for result in results)
