@@ -1,9 +1,5 @@
-import os
 from couchdbkit.ext.django import syncdb
-from django.apps import apps
 from django.db.models import signals, get_app
-# here so django doesn't complain
-from corehq.preindex.default_plugin import DefaultPreindexPlugin
 from corehq.preindex.preindex_plugins import PREINDEX_PLUGINS
 
 
