@@ -151,7 +151,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @property
     @memoized
-    def all_forms(self):
+    def _all_forms(self):
         """
             Here we grab all forms ever submitted to this domain on CommCare HQ or all forms that the Applications
             for this domain know about.
@@ -252,7 +252,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         """
         result = {}
 
-        all_forms = set(self.all_forms)
+        all_forms = set(self._all_forms)
         std_app_forms = set(self._application_forms)
         other_forms = list(all_forms.difference(std_app_forms))
 
@@ -358,7 +358,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             These are forms that we could not find exact matches for in remote apps or in
 
         """
-        all_forms = set(self.all_forms)
+        all_forms = set(self._all_forms)
         std_app_forms = set(self._application_forms)
         remote_app_forms = set(self.remote_forms.keys())
         nonmatching = all_forms.difference(std_app_forms)
