@@ -575,6 +575,8 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                             break
                     key.append(val)
                 return self._raw_data([prefix]+key)
+            else:
+                return []
 
     def _get_selected_forms(self, filter_results):
         """
