@@ -37,6 +37,7 @@
                 </a>
                 {% endif %}
                 <form style="display: inline-block;" action={% url "hq_update_saved_export" domain %} method="POST">
+                    {% csrf_token %}
                     <input type="hidden" name="group_export_id" value="{{ component.group_id }}" />
                     <input type="hidden" name="index" value="{{ component.index }}" />
                     <input type="hidden" name="report_slug" value="{{ report_slug }}" />

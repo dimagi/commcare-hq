@@ -9,6 +9,7 @@ from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 
@@ -381,6 +382,7 @@ def fixture_upload_job_poll(request, domain, download_id, template="fixtures/par
     return render(request, template, context)
 
 
+@csrf_exempt
 @require_POST
 @login_or_digest
 @require_can_edit_fixtures

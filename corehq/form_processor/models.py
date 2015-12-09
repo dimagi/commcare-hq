@@ -2,6 +2,7 @@ import hashlib
 import json
 import os
 import collections
+from tempfile import gettempdir
 
 from datetime import datetime
 from jsonobject import JsonObject
@@ -301,9 +302,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model):
 
     @property
     def filepath(self):
-        if getattr(settings, 'IS_TRAVIS', False):
-            return os.path.join('/home/travis/', str(self.attachment_id))
-        return os.path.join('/tmp/', str(self.attachment_id))
+        return os.path.join(gettempdir(), str(self.attachment_id))
 
     def write_content(self, content):
         with open(self.filepath, 'w+') as f:

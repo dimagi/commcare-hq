@@ -19,7 +19,10 @@ DATABASES = {
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
         'HOST': 'localhost',
-        'PORT': '5432'
+        'PORT': '5432',
+        'TEST': {
+            'SERIALIZE': False,
+        },
     }
 }
 

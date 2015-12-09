@@ -9,6 +9,7 @@ from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
 from corehq.apps.es.forms import FormES
 from corehq.apps.reports import util
+from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport
@@ -29,6 +30,11 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_datetime, json_format_date
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+
+
+TOO_MUCH_DATA = ugettext_noop(
+    'The filters you selected include too much data. Please change your filters and try again'
+)
 
 
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -109,7 +115,6 @@ class CompletionOrSubmissionTimeMixin(object):
 
 class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     """
-    todo move this to the cached version when ready
     User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
     danny   5 (25%)         10 (50%)        20 (100%)       17                          6
     (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
@@ -786,6 +791,12 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
     @property
     def rows(self):
+        try:
+            return self._get_rows()
+        except TooMuchDataError as e:
+            return [['<span class="label label-important">{}</span>'.format(e)] + ['--'] * 5]
+
+    def _get_rows(self):
         rows = []
         total = 0
         total_seconds = 0
@@ -811,7 +822,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                 .extra(
                     where=[where], params=params
                 )
-
+            if results.count() > 5000:
+                raise TooMuchDataError(_(TOO_MUCH_DATA))
             for row in results:
                 completion_time = (PhoneTime(row['time_end'], self.timezone)
                                    .server_time().done())
@@ -910,8 +922,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     @memoized
     def activity_times(self):
         all_times = []
-        users_data = EMWF.pull_users_and_groups(
-            self.domain, self.request, True, True)
+        users_data = EMWF.pull_users_and_groups(self.domain, self.request, True, True)
         for user in users_data.combined_users:
             for form, info in self.all_relevant_forms.items():
                 key = make_form_couch_key(
@@ -928,6 +939,8 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
                 ).all()
                 all_times.extend([iso_string_to_datetime(d['key'][-1])
                                   for d in data])
+                if len(all_times) > 5000:
+                    raise TooMuchDataError()
         if self.by_submission_time:
             all_times = [ServerTime(t).user_time(self.timezone).done()
                          for t in all_times]
@@ -935,16 +948,25 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             all_times = [PhoneTime(t, self.timezone).user_time(self.timezone).done()
                          for t in all_times]
 
-        return [(t.weekday(), t.hour) for t in all_times]
+        aggregated_times = defaultdict(int)
+        for t in all_times:
+            aggregated_times[(t.weekday(), t.hour)] += 1
+        return aggregated_times
 
     @property
     def report_context(self):
-        chart_data = defaultdict(int)
-        for time in self.activity_times:
-            chart_data[time] += 1
+        error = None
+        try:
+            activity_times = self.activity_times
+            if len(activity_times) == 0:
+                error = _("Note: No submissions matched your filters.")
+        except TooMuchDataError:
+            activity_times = defaultdict(int)
+            error = _(TOO_MUCH_DATA)
+
         return dict(
-            chart_url=self.generate_chart(chart_data, timezone=self.timezone),
-            no_data=not self.activity_times,
+            chart_url=self.generate_chart(activity_times, timezone=self.timezone),
+            error=error,
             timezone=self.timezone,
         )
 

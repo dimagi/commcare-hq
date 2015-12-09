@@ -3,7 +3,6 @@ from uuid import uuid4
 
 from couchdbkit import ResourceNotFound
 from datetime import datetime
-from django.db.models.query_utils import Q
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -14,10 +13,10 @@ from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from couchforms.models import XFormInstance
+from dimagi.ext import jsonobject
 from dimagi.utils.couch.database import safe_delete
 from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, \
-    CaseTransaction, Attachment
+from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
 from django.conf import settings
 
 
@@ -155,7 +154,7 @@ def create_form_for_test(domain, case_id=None, attachments=None, save=True):
     user_id = 'user1'
     utcnow = datetime.utcnow()
 
-    form_data = get_simple_form_data(form_id, case_id)
+    form_xml = get_simple_form_xml(form_id, case_id)
 
     form = XFormInstanceSQL(
         form_id=form_id,
@@ -170,7 +169,7 @@ def create_form_for_test(domain, case_id=None, attachments=None, save=True):
         lambda a: Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type),
         attachments.items()
     )
-    attachment_tuples.append(Attachment('form.xml', form_data, 'text/xml'))
+    attachment_tuples.append(Attachment('form.xml', form_xml, 'text/xml'))
 
     FormProcessorSQL.store_attachments(form, attachment_tuples)
 
@@ -201,9 +200,9 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
     <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
         <n1:deviceID>DEV IL</n1:deviceID>
         <n1:timeStart>2013-04-19T16:52:41.000-04</n1:timeStart>
-        <n1:timeEnd>2013-04-19T16:53:02.799-04</n1:timeEnd>
+        <n1:timeEnd>{time_end}</n1:timeEnd>
         <n1:username>eve</n1:username>
-        <n1:userID>cruella_deville</n1:userID>
+        <n1:userID>{user_id}</n1:userID>
         <n1:instanceID>{uuid}</n1:instanceID>
         <n2:appVersion xmlns:n2="http://commcarehq.org/xforms"></n2:appVersion>
     </n1:meta>
@@ -211,9 +210,16 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
 </data>"""
 
 
-def get_simple_form_data(form_id, case_id=None):
+class TestFormMetadata(jsonobject.JsonObject):
+    domain = jsonobject.StringProperty(required=False)
+    user_id = jsonobject.StringProperty(default='cruella_deville')
+    time_end = jsonobject.DateTimeProperty(default=datetime(2013, 4, 19, 16, 53, 2))
+
+
+def get_simple_form_xml(form_id, case_id=None, metadata=None):
+    metadata = metadata or TestFormMetadata()
     case_block = ''
     if case_id:
         case_block = CaseBlock(create=True, case_id=case_id).as_string()
-    form_data = SIMPLE_FORM.format(uuid=form_id, case_block=case_block)
-    return form_data
+    form_xml = SIMPLE_FORM.format(uuid=form_id, case_block=case_block, **metadata.to_json())
+    return form_xml
