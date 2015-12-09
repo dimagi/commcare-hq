@@ -8,9 +8,11 @@ from couchdbkit.ext.django import loading
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
 from django.apps import AppConfig
 from django.conf import settings
+from django.core.management import call_command
 from django.test import TransactionTestCase
 from django.utils import unittest
 from mock import patch, Mock
+from corehq.preindex import get_preindex_plugin
 from corehq.tests.optimizer import OptimizedTestRunnerMixin
 
 import settingshelper
@@ -45,6 +47,7 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
     dbs = []
 
     def setup_test_environment(self, **kwargs):
+        self._assert_only_test_databases_accessed()
         # monkey patch TEST_APPS into INSTALLED_APPS
         # so that tests are run for them
         # without having to explicitly have them in INSTALLED_APPS
@@ -55,7 +58,7 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         # keep a copy of the original PILLOWTOPS setting around in case other tests want it.
         settings._PILLOWTOPS = settings.PILLOWTOPS
         settings.PILLOWTOPS = {}
-        return super(HqTestSuiteRunner, self).setup_test_environment(**kwargs)
+        super(HqTestSuiteRunner, self).setup_test_environment(**kwargs)
 
     def setup_databases(self, **kwargs):
         from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
@@ -73,10 +76,12 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
             setattr(settings, setting, value)
             print "set %s settting to %s" % (setting, value)
 
-        settings.EXTRA_COUCHDB_DATABASES = {
-            db_name: self.get_test_db_name(url)
-            for db_name, url in settings.EXTRA_COUCHDB_DATABASES.items()
-        }
+        settings.COUCH_SETTINGS_HELPER = settings.COUCH_SETTINGS_HELPER._replace(
+            is_test=True)
+        settings.EXTRA_COUCHDB_DATABASES = settings.COUCH_SETTINGS_HELPER.get_extra_couchdbs()
+
+        call_command('sync_couch_views')
+        get_preindex_plugin('sms').sync_design_docs()
         return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
 
     def teardown_databases(self, old_config, **kwargs):
@@ -87,9 +92,20 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
             self._delete_db_if_exists(db)
         super(HqTestSuiteRunner, self).teardown_databases(old_config, **kwargs)
 
+    def _assert_only_test_databases_accessed(self):
+        original_init = Database.__init__
+        self_ = self
+
+        def asserting_init(self, uri, create=False, server=None, **params):
+            original_init(self, uri, create=create, server=server, **params)
+            self_._assert_is_a_test_db(self.dbname)
+
+        Database.__init__ = asserting_init
+
     @staticmethod
     def _assert_is_a_test_db(db_uri):
         assert db_uri.endswith('_test'), db_uri
+        assert '_test_test' not in db_uri, db_uri
 
     @staticmethod
     def _delete_db_if_exists(db):
