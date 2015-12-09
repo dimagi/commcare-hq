@@ -495,7 +495,8 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 )
         return result
 
-    def _raw_data(self, startkey, endkey=None, group=False):
+    @staticmethod
+    def _raw_data(startkey, endkey=None, group=False):
         if endkey is None:
             endkey = startkey
         kwargs = dict(group=group) if group else dict(reduce=False)
