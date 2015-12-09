@@ -397,7 +397,7 @@ def _create_case(domain=None, form_id=None, case_type=None):
         case.track_create(CaseTransaction.form_transaction(case, form))
         cases = [case]
 
-    FormProcessorSQL.save_processed_models([form], cases)
+    FormProcessorSQL.save_processed_models(form, cases)
     return CaseAccessorSQL.get_case(case_id)
 
 

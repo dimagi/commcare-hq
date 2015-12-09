@@ -237,7 +237,7 @@ class FormAccessorTestsSQL(TestCase):
     def test_save_processed_models_deprecated(self):
         existing_form, new_form = _simulate_form_edit()
 
-        FormProcessorSQL.save_processed_models([new_form, existing_form])
+        FormProcessorSQL.save_processed_models(new_form, deprecated_form=existing_form)
 
         self._validate_deprecation(existing_form, new_form)
 

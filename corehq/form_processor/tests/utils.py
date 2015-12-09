@@ -143,7 +143,7 @@ def post_xform(instance_xml, attachments=None, domain='test-domain'):
     """
     result = process_xform_xml(domain, instance_xml, attachments=attachments)
     with result.get_locked_forms() as xforms:
-        FormProcessorInterface(domain).save_processed_models(xforms[0], xforms)
+        FormProcessorInterface(domain).save_processed_models(xforms)
         return xforms[0]
 
 
