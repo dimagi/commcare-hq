@@ -4,7 +4,7 @@ CREATE FUNCTION archive_unarchive_form(form_id TEXT, archiving_user_id TEXT, arc
 DECLARE
     new_state INT;
     operation TEXT;
-    curtime TIMESTAMP := clock_timestamp() AT TIME ZONE 'utc';
+    curtime TIMESTAMP := clock_timestamp();
 BEGIN
     IF $3 THEN
         new_state := {{ FORM_STATE_ARCHIVED }};
