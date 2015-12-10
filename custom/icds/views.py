@@ -38,12 +38,3 @@ def _get_user_permissions(user, domain):
         location_type_name = 'state'
         location_name = ''
     return location_type_name, location_name
-
-def _get_tableau_trusted_ticket(client_ip):
-    # TODO: Add client_ip into request and configure extended checking on Tableau server
-    TABLEAU_SERVER = 'https://icds.commcarehq.org/trusted'
-    headers = {
-        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-    }
-    response = requests.post(TABLEAU_SERVER, data={'username': 'tsheffels', 'client_ip': client_ip}, headers=headers)
-    return response

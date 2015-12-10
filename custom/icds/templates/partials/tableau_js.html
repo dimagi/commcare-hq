@@ -58,12 +58,10 @@
     }
 
     function onMarksSelection(marksEvent) {
-        console.log('onMarksSelection', marksEvent);
         return marksEvent.getMarksAsync().then(activateDrilldown);
     }
 
     function activateDrilldown(marks) {
-        console.log('onMarksSelection', marks);
         clearDrilldown();
         // marks is an array of what the user has clicked
         var html = [],
@@ -203,7 +201,6 @@
     initializeViz();
 
     window.onpopstate = function (event) {
-        console.log(event.state);
         if(!event.state.location) {
             alert('History object needs a location to navigate to')
         }
