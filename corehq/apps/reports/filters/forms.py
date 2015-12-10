@@ -536,16 +536,12 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         return get_all_form_definitions_grouped_by_app_and_xmlns(self.domain)
 
     @staticmethod
-    def _raw_data(startkey, endkey=None, group=False):
-        if endkey is None:
-            endkey = startkey
-        kwargs = dict(group=group) if group else dict(reduce=False)
+    def _raw_data(startkey):
         return Application.get_db().view('reports_forms/by_app_info',
             startkey=startkey,
-            endkey=endkey+[{}],
-            **kwargs
+            endkey=startkey+[{}],
+            reduce=False
         ).all()
-
 
     @classmethod
     def make_xmlns_app_key(cls, xmlns, app_id):
