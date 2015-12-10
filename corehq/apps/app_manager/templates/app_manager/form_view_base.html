@@ -99,6 +99,7 @@
         <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
         <script src="{% static 'app_manager/js/case-config-ui-1.js' %}"></script>
     {% endif %}
+    {% include "app_manager/partials/xpathValidator.html" %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
