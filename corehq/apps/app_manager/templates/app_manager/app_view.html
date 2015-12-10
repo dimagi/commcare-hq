@@ -59,7 +59,7 @@
                 return self;
             }());
             ko.applyBindings(multimedia_tab, $("#multimedia").get(0));
-            $('#multimedia-shower').on('show', function () {
+            $('#multimedia-shower').on('show.bs.tab', function () {
                 if (multimedia_tab.load_state() === null) {
                     multimedia_tab.load_if_necessary();
                 }

@@ -44,7 +44,7 @@
             backdrop: 'static',
             keyboard: false,
             show: true
-        }).on('hide', function () {
+        }).on('hide.bs.modal', function () {
             window.location = "{% url "corehq.apps.app_manager.views.view_app" domain %}";
         });
     });

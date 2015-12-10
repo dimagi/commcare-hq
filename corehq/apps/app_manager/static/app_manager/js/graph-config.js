@@ -49,7 +49,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         var $modal = $modalDiv.find('.modal');
         $modal.appendTo('body');
         $modal.modal('show');
-        $modal.on('hidden', function () {
+        $modal.on('hidden.bs.modal', function () {
             $modal.remove();
         });
     };
