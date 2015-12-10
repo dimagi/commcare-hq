@@ -117,10 +117,11 @@ def get_location_data_model(domain):
 
 
 class LocationExporter(object):
-    def __init__(self, domain, include_consumption=False):
+    def __init__(self, domain, include_consumption=False, include_ids=False):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)
         self.include_consumption_flag = include_consumption
+        self.include_ids = include_ids
         self.data_model = get_location_data_model(domain)
         self.administrative_types = {}
 
@@ -184,6 +185,7 @@ class LocationExporter(object):
             uncategorized_keys.update(uncategorized_data.keys())
 
             loc_dict = {
+                'location_id': loc.location_id,
                 'site_code': loc.site_code,
                 'name': loc.name,
                 'parent_site_code': loc.parent.site_code if loc.parent else '',
@@ -197,6 +199,9 @@ class LocationExporter(object):
             tab_rows.append(dict(flatten_json(loc_dict)))
 
         tab_headers = ['site_code', 'name', 'parent_site_code', 'latitude', 'longitude']
+        if self.include_ids:
+            tab_headers = ['location_id'] + tab_headers
+
         def _extend_headers(prefix, headers):
             tab_headers.extend(json_to_headers(
                 {prefix: {header: None for header in headers}}
@@ -216,8 +221,9 @@ class LocationExporter(object):
                 for loc_type in self.domain_obj.location_types]
 
 
-def dump_locations(response, domain, include_consumption=False):
-    exporter = LocationExporter(domain, include_consumption=include_consumption)
+def dump_locations(response, domain, include_consumption=False, include_ids=False):
+    exporter = LocationExporter(domain, include_consumption=include_consumption,
+                                include_ids=include_ids)
     result = write_to_file(exporter.get_export_dict())
     response.write(result)
 

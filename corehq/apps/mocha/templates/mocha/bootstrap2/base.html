@@ -3,6 +3,6 @@
 
 {% block core_libraries %}
 {% include "style/includes/bootstrap2/core_libraries.html" %}
-<script src="{% static 'style/lib/bootstrap2/bootstrap.min.js' %}"></script>
+{% include 'style/bootstrap2/partials/bootstrap2_js.html' %}
 <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
 {% endblock %}

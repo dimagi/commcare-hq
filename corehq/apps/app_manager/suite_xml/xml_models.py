@@ -603,12 +603,20 @@ class Detail(OrderedXmlObject, IdNode):
                 for datum in getattr(frame, 'datums', []):
                     result.add(datum.value)
 
+        def _get_graph_config_xpaths(configuration):
+            result = set()
+            for config in configuration.configs:
+                result.add(config.xpath_function)
+            return result
+
         for field in self.fields:
             if field.template.form == 'graph':
                 s = etree.tostring(field.template.node)
                 template = load_xmlobject_from_string(s, xmlclass=GraphTemplate)
+                result.update(_get_graph_config_xpaths(template.graph.configuration))
                 for series in template.graph.series:
                     result.add(series.nodeset)
+                    result.update(_get_graph_config_xpaths(series.configuration))
             else:
                 result.add(field.header.text.xpath_function)
                 result.add(field.template.text.xpath_function)
