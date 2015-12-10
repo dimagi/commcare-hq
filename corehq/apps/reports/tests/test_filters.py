@@ -4,6 +4,7 @@ from corehq.apps.reports.filters.forms import FormsByApplicationFilterParams, Fo
     PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE, PARAM_VALUE_STATUS_DELETED, PARAM_SLUG_APP_ID, PARAM_SLUG_MODULE
 
 
+
 class TestEmwfPagination(SimpleTestCase):
     def make_data_source(self, options):
         def matching_objects(query):
@@ -57,58 +58,7 @@ class TestEmwfPagination(SimpleTestCase):
         self.assertEqual(options, [])
 
 
-class TestFormsByApplicationFilter(SimpleTestCase):
-    DOMAIN = 'test-domain'
-
-    def _run_test(self, expected_prefix, expected_keys, input_filter_params):
-        parsed = FormsByApplicationFilterParams(input_filter_params)
-        prefix, keys = FormsByApplicationFilter.get_prefix_and_key_for_filter_results_and_parsed_params(
-            self.DOMAIN, input_filter_params, parsed
-        )
-        self.assertEqual(expected_prefix, prefix)
-        self.assertEqual(expected_keys, keys)
-
-    @staticmethod
-    def _make_filter(slug, value):
-        return {'slug': slug, 'value': value}
-
-    def test_prefix_and_keys_none(self):
-        self._run_test('app module form', [self.DOMAIN], [])
-
-    def test_prefix_and_keys_status(self):
-        self._run_test('status app module form', [self.DOMAIN, PARAM_VALUE_STATUS_ACTIVE],
-                       [self._make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE)])
-        self._run_test('status app module form', [self.DOMAIN, PARAM_VALUE_STATUS_DELETED],
-                       [self._make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_DELETED)])
-
-    def test_prefix_and_keys_app_id(self):
-        app_id = 'test-app-id'
-        params = [
-            self._make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
-            self._make_filter(PARAM_SLUG_APP_ID, app_id)
-        ]
-        self._run_test('status app module form', [self.DOMAIN, PARAM_VALUE_STATUS_ACTIVE, app_id], params)
-
-    def test_prefix_and_keys_module(self):
-        app_id = 'test-app-id'
-        params = [
-            self._make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
-            self._make_filter(PARAM_SLUG_APP_ID, app_id),
-            self._make_filter(PARAM_SLUG_MODULE, '0'),
-        ]
-        self._run_test('status app module form', [self.DOMAIN, PARAM_VALUE_STATUS_ACTIVE, app_id, 0], params)
-
-    def test_prefix_and_keys_invalid_module(self):
-        app_id = 'test-app-id'
-        params = [
-            self._make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
-            self._make_filter(PARAM_SLUG_APP_ID, app_id),
-            self._make_filter(PARAM_SLUG_MODULE, 'foo'),
-        ]
-        self._run_test('status app module form', [self.DOMAIN, PARAM_VALUE_STATUS_ACTIVE, app_id], params)
-
-
-class TestFormsByApplicationFilter(SimpleTestCase):
+class FormsByApplicationFilterSimpleTest(SimpleTestCase):
     DOMAIN = 'test-domain'
 
     def _run_test(self, expected_prefix, expected_keys, input_filter_params):
@@ -119,41 +69,41 @@ class TestFormsByApplicationFilter(SimpleTestCase):
         self.assertEqual(expected_prefix, prefix)
         self.assertEqual(expected_keys, keys)
 
-    @staticmethod
-    def _make_filter(slug, value):
-        return {'slug': slug, 'value': value}
-
     def test_prefix_and_keys_none(self):
         self._run_test('app module form', [self.DOMAIN], [])
 
     def test_prefix_and_keys_status(self):
         self._run_test('status app module form', [self.DOMAIN, PARAM_VALUE_STATUS_ACTIVE],
-                       [self._make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE)])
+                       [_make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE)])
         self._run_test('status app module form', [self.DOMAIN, PARAM_VALUE_STATUS_DELETED],
-                       [self._make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_DELETED)])
+                       [_make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_DELETED)])
 
     def test_prefix_and_keys_app_id(self):
         app_id = 'test-app-id'
         params = [
-            self._make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
-            self._make_filter(PARAM_SLUG_APP_ID, app_id)
+            _make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
+            _make_filter(PARAM_SLUG_APP_ID, app_id)
         ]
         self._run_test('status app module form', [self.DOMAIN, PARAM_VALUE_STATUS_ACTIVE, app_id], params)
 
     def test_prefix_and_keys_module(self):
         app_id = 'test-app-id'
         params = [
-            self._make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
-            self._make_filter(PARAM_SLUG_APP_ID, app_id),
-            self._make_filter(PARAM_SLUG_MODULE, '0'),
+            _make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
+            _make_filter(PARAM_SLUG_APP_ID, app_id),
+            _make_filter(PARAM_SLUG_MODULE, '0'),
         ]
         self._run_test('status app module form', [self.DOMAIN, PARAM_VALUE_STATUS_ACTIVE, app_id, 0], params)
 
     def test_prefix_and_keys_invalid_module(self):
         app_id = 'test-app-id'
         params = [
-            self._make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
-            self._make_filter(PARAM_SLUG_APP_ID, app_id),
-            self._make_filter(PARAM_SLUG_MODULE, 'foo'),
+            _make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
+            _make_filter(PARAM_SLUG_APP_ID, app_id),
+            _make_filter(PARAM_SLUG_MODULE, 'foo'),
         ]
         self._run_test('status app module form', [self.DOMAIN, PARAM_VALUE_STATUS_ACTIVE, app_id], params)
+
+
+def _make_filter(slug, value):
+    return {'slug': slug, 'value': value}
