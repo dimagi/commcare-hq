@@ -14,7 +14,7 @@
                 lang: {{ lang|JSON }},
                 langs: {{ app.langs|JSON }}
             });
-            ko.applyBindings(parentSelect, $('#detail-screen-parent').get(0));
+            $('#detail-screen-parent').koApplyBindings(parentSelect);
         });
     </script>
 {% endblock %}

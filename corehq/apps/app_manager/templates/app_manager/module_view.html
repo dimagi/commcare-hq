@@ -87,11 +87,11 @@
                     contextVariables: COMMCAREHQ.app_manager.module_view
                 });
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
-                ko.applyBindings(detailScreenConfig, $list_home.get(0));
+                $list_home.koApplyBindings(detailScreenConfig);
 
                 if (detail.long !== undefined) {
                     var $detail_home = $("#" + detail.type + "-detail-screen-detail-config-tab");
-                    ko.applyBindings(detailScreenConfig, $detail_home.get(0));
+                    $detail_home.koApplyBindings(detailScreenConfig);
                 }
             }
         });
@@ -171,7 +171,7 @@
                     {{ case_list_form_not_allowed_reason.allow|JSON }},
                     {{ case_list_form_not_allowed_reason.message|JSON }}
                 );
-                ko.applyBindings(caseListForm, $('#case-list-form').get(0));
+                $('#case-list-form').koApplyBindings(caseListForm);
                 // Reset save button after bindings
                 // see http://manage.dimagi.com/default.asp?145851
                 var $form = $('#case-list-form').closest('form'),
