@@ -7,7 +7,7 @@ from casexml.apps.case.models import CommCareCase
 def get_number_of_cases_in_domain(domain, type=None):
     type_key = [type] if type else []
     row = CommCareCase.get_db().view(
-        "hqcase/types_by_domain",
+        "case_types_by_domain/view",
         startkey=[domain] + type_key,
         endkey=[domain] + type_key + [{}],
         reduce=True,
@@ -19,7 +19,7 @@ def get_number_of_cases_per_domain():
     return {
         row["key"][0]: row["value"]
         for row in CommCareCase.get_db().view(
-            "hqcase/types_by_domain",
+            "case_types_by_domain/view",
             group=True,
             group_level=1,
         ).all()
@@ -44,7 +44,7 @@ def get_case_ids_in_domain(domain, type=None):
     return [
         res['id'] for type_key in type_keys
         for res in CommCareCase.get_db().view(
-            'hqcase/types_by_domain',
+            'case_types_by_domain/view',
             startkey=[domain] + type_key,
             endkey=[domain] + type_key + [{}],
             reduce=False,
@@ -62,7 +62,7 @@ def get_cases_in_domain(domain, type=None):
 def get_case_types_for_domain(domain):
     key = [domain]
     rows = CommCareCase.get_db().view(
-        'hqcase/types_by_domain',
+        'case_types_by_domain/view',
         startkey=key,
         endkey=key + [{}],
         group_level=2,
