@@ -7,7 +7,7 @@ from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from datetime import datetime
-from django.db import models
+from django.db import models, transaction
 import json_field
 from casexml.apps.case.cleanup import close_case
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
@@ -617,9 +617,12 @@ class Location(CachedCouchDocumentMixin, Document):
         This also unassigns users assigned to the location.
         """
         to_delete = [loc for loc in [self] + self.descendants]
-        SQLLocation.objects.get(location_id=self._id).delete()
-        for loc in to_delete:
-            loc._delete_single_couch_location()
+
+        # if there are errors deleting couch locations, roll back sql delete
+        with transaction.atomic():
+            SQLLocation.objects.get(location_id=self._id).delete()
+            for loc in to_delete:
+                loc._delete_single_couch_location()
 
     def save(self, *args, **kwargs):
         """
