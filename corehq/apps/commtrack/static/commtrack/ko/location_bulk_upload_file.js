@@ -10,15 +10,18 @@ $(function () {
         );
     }
 
-    // modify download url to pass extra option
+    // modify download url to pass extra options
     function ConsumptionOptionsViewModel(base_url) {
         this.base_url = base_url;
         this.include_consumption = ko.observable(false);
+        this.include_ids = ko.observable(false);
         self = this;
         this.url = ko.computed(function() {
-            // ternary prevents adding include_consumption=false to other
-            // bulk pages
-            return self.base_url + (self.include_consumption() ? "?include_consumption=true" : "");
+            return (
+                self.base_url
+                + (self.include_consumption() ? "?include_consumption=true" : "")
+                + (self.include_ids() ? "?include_ids=true" : "")
+            );
         });
     }
 
