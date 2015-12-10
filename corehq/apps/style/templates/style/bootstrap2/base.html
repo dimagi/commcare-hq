@@ -12,9 +12,13 @@
         <link type="application/opensearchdescription+xml" rel="search" href="{% url 'osdd' %}" title="CommCare HQ"/>
         <link rel="shortcut icon" href="{% static 'style/img/favicon.png' %}" />
 
+        {% if less_debug %}
+            <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core-debug.less' %}"/>
+        {% else %}
         {% compress css %}
             <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
         {% endcompress %}
+        {% endif %}
         {% compress css %}
             <link type="text/less"
                       rel="stylesheet"
@@ -352,7 +356,7 @@
         {% endblock %}
         </div>
         <!--Begin javascript -->
-        <script src="{% static 'style/lib/bootstrap2/bootstrap.min.js' %}"></script>
+        {% include 'style/bootstrap2/partials/bootstrap2_js.html' %}
         <script src="{% static 'hqstyle/js/jquery/plugins/jquery.form.js' %}"></script>
 
         {% block js %}

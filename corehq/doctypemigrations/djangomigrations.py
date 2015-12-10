@@ -6,7 +6,7 @@ Before you can merge you must run the {slug} doc_type migration.
 
 If you're seeing this on your **dev machine**, run
 
-./manage.py sync_couchdb
+./manage.py sync_couch_views
 ./manage.py run_doctype_migration {slug} --initial
 ./manage.py migrate
 

@@ -38,7 +38,7 @@ def bihar_reassignment(sender, xform, cases, **kwargs):
                         )
                         # update the list of cases not to touch so we don't reassign the same
                         # cases multiple times in the same form
-                        cases_not_to_touch = cases_not_to_touch | set(reassigned)
+                        cases_not_to_touch = cases_not_to_touch | set(reassigned or [])
 
 
 cases_received.connect(bihar_reassignment)

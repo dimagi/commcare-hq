@@ -465,6 +465,7 @@ class SubscriptionForm(forms.Form):
             self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
             self.fields['do_not_invoice'].initial = subscription.do_not_invoice
             self.fields['no_invoice_reason'].initial = subscription.no_invoice_reason
+            self.fields['do_not_email'].initial = subscription.do_not_email
             self.fields['auto_generate_credits'].initial = subscription.auto_generate_credits
             self.fields['service_type'].initial = subscription.service_type
             self.fields['pro_bono_status'].initial = subscription.pro_bono_status
@@ -543,6 +544,7 @@ class SubscriptionForm(forms.Form):
                     crispy.Field(
                         'no_invoice_reason', data_bind="attr: {required: noInvoice}"),
                     data_bind="visible: noInvoice"),
+                'do_not_email',
                 'auto_generate_credits',
                 'service_type',
                 'pro_bono_status',
@@ -589,13 +591,14 @@ class SubscriptionForm(forms.Form):
                 }))
 
         start_date = self.cleaned_data.get('start_date')
-        if start_date is None and self.subscription is not None:
-            start_date = self.subscription.date_start
-        elif start_date is None:
-            raise ValidationError(_("You must specify a start date"))
+        if not start_date:
+            if self.subscription:
+                start_date = self.subscription.date_start
+            else:
+                raise ValidationError(_("You must specify a start date"))
 
         end_date = self.cleaned_data.get('end_date')
-        if end_date is not None and start_date > end_date:
+        if end_date and start_date > end_date:
             raise ValidationError(_("End date must be after start date."))
 
         if end_date and end_date <= datetime.date.today():

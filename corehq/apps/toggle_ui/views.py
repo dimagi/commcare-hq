@@ -7,6 +7,7 @@ from django.utils.decorators import method_decorator
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import require_superuser_or_developer
 from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js
 from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN
 from toggle.models import Toggle
 from toggle.shortcuts import clear_toggle_cache
@@ -20,6 +21,7 @@ class ToggleBaseView(BasePageView):
 
     def toggle_map(self):
         return dict([(t.slug, t) for t in all_toggles()])
+
 
 class ToggleListView(ToggleBaseView):
     urlname = 'toggle_list'
@@ -67,6 +69,12 @@ class ToggleListView(ToggleBaseView):
 class ToggleEditView(ToggleBaseView):
     urlname = 'edit_toggle'
     template_name = 'toggle/edit_flag.html'
+
+    @use_bootstrap3
+    @use_knockout_js
+    @method_decorator(require_superuser_or_developer)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ToggleEditView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_title(self):
