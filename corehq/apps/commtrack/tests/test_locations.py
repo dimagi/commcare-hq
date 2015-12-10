@@ -87,6 +87,43 @@ class LocationsTest(CommTrackTest):
         sp = SupplyPointCase.get(sp.case_id)
         self.assertFalse(sp.closed)
 
+    def test_full_delete(self):
+        test_loc = make_loc(
+            'test_loc',
+            type='state',
+            parent=self.user.location
+        )
+        test_loc.save()
+
+        original_count = len(list(Location.by_domain(self.domain.name)))
+
+        loc = self.user.location
+        loc.full_delete()
+
+        # it should also delete children
+        self.assertEqual(
+            len(list(Location.by_domain(self.domain.name))),
+            original_count - 2
+        )
+        self.assertEqual(
+            len(Location.root_locations(self.domain.name)),
+            0
+        )
+        # permanently gone from sql db
+        self.assertEqual(
+            len(SQLLocation.objects.all()),
+            0
+        )
+
+    def test_delete_closes_sp_cases(self):
+        loc = make_loc('test_loc')
+        sp = make_supply_point(self.domain.name, loc)
+
+        self.assertFalse(sp.closed)
+        loc.full_delete()
+        sp = SupplyPointCase.get(sp.case_id)
+        self.assertTrue(sp.closed)
+
 
 class MultiLocationsTest(CommTrackTest):
     """
