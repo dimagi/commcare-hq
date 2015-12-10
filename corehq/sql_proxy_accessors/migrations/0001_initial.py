@@ -7,8 +7,7 @@ from django.db import models, migrations
 from corehq.sql_db.config import PartitionConfig
 from corehq.sql_db.management.commands.configure_pl_proxy_cluster import get_drop_server_sql, \
     get_pl_proxy_server_config_sql, get_user_mapping_sql
-from corehq.sql_db.operations import HqRunSQL, HqRunPython
-from corehq.util.migration import RawSQLMigration, noop_migration
+from corehq.sql_db.operations import HqRunSQL, noop_migration, RawSQLMigration
 
 migrator = RawSQLMigration(('corehq', 'sql_proxy_accessors', 'sql_templates'), {
     'PL_PROXY_CLUSTER_NAME': settings.PL_PROXY_CLUSTER_NAME

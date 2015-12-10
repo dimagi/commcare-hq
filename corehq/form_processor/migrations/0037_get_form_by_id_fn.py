@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
-from corehq.util.migration import noop_migration
+from corehq.sql_db.operations import noop_migration
 
 
 class Migration(migrations.Migration):
