@@ -116,7 +116,7 @@
             groupDB: groupDB,
             appDB: appDB
         });
-        ko.applyBindings(controller, $home.get(0));
+        $home.koApplyBindings(controller);
         $home.show();
         $(document).on('change', '#cloudcare-app-settings *', function () {
             controller.saveButton.fire('change');

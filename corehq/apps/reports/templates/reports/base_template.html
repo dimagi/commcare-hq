@@ -21,12 +21,15 @@
             defaultConfig.datespan_slug = null;
 
             
-            $("#savedReports").reportConfigEditor({
-                filterForm: $("#reportFilters"),
-                items: {{ report_configs|JSON }},
-                defaultItem: defaultConfig,
-                saveUrl: '{% url "add_report_config" domain %}'
-            });
+            var $savedReports = $("#savedReports");
+            if ($savedReports.length) {
+                $savedReports.reportConfigEditor({
+                    filterForm: $("#reportFilters"),
+                    items: {{ report_configs|JSON }},
+                    defaultItem: defaultConfig,
+                    saveUrl: '{% url "add_report_config" domain %}'
+                });
+            }
 
             /* Toggle #reportFilters overflow visibility depending on whether
               it's collapsed or not.  Storing the modal ID is a hack to get
