@@ -44,11 +44,11 @@ class ApplicationDataSourceUIHelper(object):
     - Add the following knockout bindings to your template:
 
         $(function () {
-            ko.applyBindings({
+            $("#FORM").koApplyBindings({
                 application: ko.observable(""),
                 sourceType: ko.observable(""),
                 sourcesMap: {{ sources_map|JSON }}
-            }, $("#FORM").get(0));
+            });
         });
 
     Where FORM is a selector for your form and sources_map is the .all_sources property from this object

@@ -148,8 +148,8 @@
 
         var scheduleView = new ScheduleListViewModel();
         $(function () {
-            ko.applyBindings(scheduleView, $("#scheduleblock")[0]);
-            $( "#id_active_date" ).datepicker({ minDate: 0, maxDate: "+14D" });
+            $("#scheduleblock").koApplyBindings(scheduleView);
+            $("#id_active_date").datepicker({ minDate: 0, maxDate: "+14D" });
             $('#new_schedule_form').ajaxForm(function() {
                 var send_xhr = $.ajax({
                     "type": "POST",

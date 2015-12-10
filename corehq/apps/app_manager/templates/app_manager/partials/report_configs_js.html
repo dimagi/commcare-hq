@@ -26,7 +26,7 @@
         ]).each(function($element) {
             // never call applyBindings with null as the second arg!
             if ($element.get(0)) {
-                ko.applyBindings(reportModule, $element.get(0));
+                $element.koApplyBindings(reportModule);
             }
         });
         menuImage.ref.subscribe(function() {

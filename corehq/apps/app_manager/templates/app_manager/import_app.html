@@ -28,7 +28,7 @@
         }
         var source = {{ app.export_json|JSON }};
         var post_url = "{% url "corehq.apps.app_manager.views.import_app" domain %}";
-        ko.applyBindings(new CompressionViewModel(source, post_url), $('#app-import-form').get(0));
+        $('#app-import-form').koApplyBindings(new CompressionViewModel(source, post_url));
     </script>
 {% endblock %}
 
