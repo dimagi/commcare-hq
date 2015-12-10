@@ -49,7 +49,7 @@ class Command(BaseCommand):
         if not isinstance(self.user, CommCareUser):
             print ("Sorry, the user you specify has to be a mobile worker. "
                    "This changed when delete_cases was refactored to use "
-                   "hqcase/by_owner instead of case/by_owner. "
+                   "cases_by_owner/view instead of case/by_owner. "
                    "The new view needs an explicit domain, "
                    "and I didn't implement that for WebUsers who can belong "
                    "to multiple domains, but usually do not own cases.")
