@@ -205,3 +205,4 @@ corehq.apps.repeaters:
   - django_prbac
   - corehq.apps.accounting
   - corehq.apps.smsforms
+corehq.sql_db: []

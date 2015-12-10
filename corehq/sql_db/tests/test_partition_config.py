@@ -1,8 +1,7 @@
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-from corehq.sql_db.config import DbShard
-from corehq.sql_db.management.commands.configure_pl_proxy_cluster import get_shard_config_strings
+from corehq.sql_db.config import parse_existing_shard, ShardMeta, get_shards_to_update
 from ..config import PartitionConfig
 from ..exceptions import NotPowerOf2Error, NotZeroStartError, NonContinuousShardsError
 
@@ -60,10 +59,10 @@ class TestPartitionConfig(SimpleTestCase):
         config = PartitionConfig()
         shards = config.get_shards()
         self.assertEquals(shards, [
-            DbShard(0, 'db1'),
-            DbShard(1, 'db1'),
-            DbShard(2, 'db2'),
-            DbShard(3, 'db2'),
+            ShardMeta(id=0, dbname='test_db1', host='hqdb0', port=5432),
+            ShardMeta(id=1, dbname='test_db1', host='hqdb0', port=5432),
+            ShardMeta(id=2, dbname='test_db2', host='hqdb0', port=5432),
+            ShardMeta(id=3, dbname='test_db2', host='hqdb0', port=5432),
         ])
 
     @override_settings(PARTITION_DATABASE_CONFIG=INVALID_SHARD_RANGE_START)
@@ -84,14 +83,33 @@ class TestPartitionConfig(SimpleTestCase):
 
 @override_settings(DATABASES=TEST_DATABASES)
 class PlProxyTests(SimpleTestCase):
-    def test_get_shard_config_strings(self):
-        shards = [
-            DbShard(0, 'db1'),
-            DbShard(1, 'db1'),
-            DbShard(2, 'db2'),
+    dependent_apps = []
+
+    def test_get_server_option_string(self):
+        self.assertEqual(
+            "p0 'dbname=test_db1 host=hqdb0 port=5432'",
+            ShardMeta(id=0, dbname='test_db1', host='hqdb0', port=5432).get_server_option_string()
+        )
+
+    def test_parse_existing_shard(self):
+        parsed = parse_existing_shard('p1=dbname=db1 host=hqdb0 port=5432')
+        self.assertEqual(ShardMeta(id=1, dbname='db1', host='hqdb0', port=5432), parsed)
+
+        parsed = parse_existing_shard('p25=dbname=db2 host=hqdb1 port=6432')
+        self.assertEqual(ShardMeta(id=25, dbname='db2', host='hqdb1', port=6432), parsed)
+
+    def test_get_shards_to_update(self):
+        existing = [
+            ShardMeta(id=0, dbname='db0', host='hqdb0', port=5432),
+            ShardMeta(id=1, dbname='db0', host='hqdb0', port=5432),
+            ShardMeta(id=2, dbname='db1', host='hqdb1', port=5432),
+            ShardMeta(id=3, dbname='db1', host='hqdb1', port=5432),
         ]
-        configs = get_shard_config_strings(shards)
-        self.assertEqual(3, len(configs))
-        self.assertIn("p0 'dbname=test_db1 host=hqdb0 port=5432'", configs)
-        self.assertIn("p1 'dbname=test_db1 host=hqdb0 port=5432'", configs)
-        self.assertIn("p2 'dbname=test_db2 host=hqdb0 port=5432'", configs)
+        new = [
+            ShardMeta(id=0, dbname='db0', host='hqdb0', port=5432),
+            ShardMeta(id=1, dbname='db2', host='hqdb2', port=5432),  # changed
+            ShardMeta(id=2, dbname='db1', host='hqdb1', port=5432),
+            ShardMeta(id=3, dbname='db3', host='hqdb3', port=5432),  # changed
+        ]
+        to_update = get_shards_to_update(existing, new)
+        self.assertEqual([new[1], new[3]], to_update)
