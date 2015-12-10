@@ -47,6 +47,13 @@ class SetupSimpleAppMixin(object):
         cls.app = app_factory.app
         update_reports_analytics_indexes()
 
+    def _assert_form_details_match(self, index, details):
+        self.assertEqual(self.app._id, details.app.id)
+        self.assertEqual(index, details.module.id)
+        self.assertEqual(0, details.form.id)
+        self.assertEqual(self.xmlnses[index], details.xmlns)
+        self.assertFalse(details.is_user_registration)
+
 
 class ReportAppAnalyticsTest(SetupSimpleAppMixin, TestCase):
     dependent_apps = ['corehq.couchapps']
@@ -67,11 +74,7 @@ class ReportAppAnalyticsTest(SetupSimpleAppMixin, TestCase):
         app_structures = get_all_form_details(self.domain)
         self.assertEqual(2, len(app_structures))
         for i, details in enumerate(app_structures):
-            self.assertEqual(self.app._id, details.app.id)
-            self.assertEqual(i, details.module.id)
-            self.assertEqual(0, details.form.id)
-            self.assertEqual(self.xmlnses[i], details.xmlns)
-            self.assertFalse(details.is_user_registration)
+            self._assert_form_details_match(i, details)
 
     def test_get_form_details_for_xmlns_no_data(self):
         self.assertEqual([], get_form_details_for_xmlns('missing', 'missing'))
@@ -82,8 +85,4 @@ class ReportAppAnalyticsTest(SetupSimpleAppMixin, TestCase):
         [details_1] = get_form_details_for_xmlns(self.domain, self.f1_xmlns)
         [details_2] = get_form_details_for_xmlns(self.domain, self.f2_xmlns)
         for i, details in enumerate([details_1, details_2]):
-            self.assertEqual(self.app._id, details.app.id)
-            self.assertEqual(i, details.module.id)
-            self.assertEqual(0, details.form.id)
-            self.assertEqual(self.xmlnses[i], details.xmlns)
-            self.assertFalse(details.is_user_registration)
+            self._assert_form_details_match(i, details)
