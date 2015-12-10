@@ -60,5 +60,11 @@ class ShardingTests(TestCase):
 
         self.assertEqual(num_forms, sum(forms_per_db.values()), forms_per_db)
         self.assertEqual(num_forms, sum(cases_per_db.values()), cases_per_db)
-        self.assertTrue(all(num_forms_in_db < num_forms for num_forms_in_db in forms_per_db.values()), forms_per_db)
-        self.assertTrue(all(num_cases_in_db < num_forms for num_cases_in_db in cases_per_db.values()), cases_per_db)
+        self.assertTrue(
+            all(num_forms_in_db < num_forms for num_forms_in_db in forms_per_db.values()),
+            forms_per_db
+        )
+        self.assertTrue(
+            all(num_cases_in_db < num_forms for num_cases_in_db in cases_per_db.values()),
+            cases_per_db
+        )

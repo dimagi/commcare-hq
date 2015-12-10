@@ -5,6 +5,7 @@ from corehq.sql_db.config import parse_existing_shard, ShardMeta, get_shards_to_
 from ..config import PartitionConfig
 from ..exceptions import NotPowerOf2Error, NotZeroStartError, NonContinuousShardsError
 
+
 def _get_partition_config(shard_config):
     return {
         'shards': shard_config,

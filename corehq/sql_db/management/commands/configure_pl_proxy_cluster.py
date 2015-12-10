@@ -1,4 +1,3 @@
-from difflib import ndiff
 from optparse import make_option
 
 import re
@@ -29,6 +28,7 @@ ALTER_SERVER_TEMPLATE = """
         {options}
     );
 """
+
 
 class Command(BaseCommand):
     args = ''
@@ -161,5 +161,3 @@ def get_user_mapping_sql():
 def _confirm(msg):
     confirm_update = raw_input(msg + ' [yes / no] ')
     return confirm_update == 'yes'
-
-
