@@ -63,12 +63,12 @@ class ReportAppAnalyticsTest(TestCase):
     def test_get_all_form_details(self):
         app_structures = get_all_form_details(self.domain)
         self.assertEqual(2, len(app_structures))
-        for i, app_structure in enumerate(app_structures):
-            self.assertEqual(self.app._id, app_structure.app.id)
-            self.assertEqual(i, app_structure.module.id)
-            self.assertEqual(0, app_structure.form.id)
-            self.assertEqual(self.xmlnses[i], app_structure.xmlns)
-            self.assertFalse(app_structure.is_user_registration)
+        for i, details in enumerate(app_structures):
+            self.assertEqual(self.app._id, details.app.id)
+            self.assertEqual(i, details.module.id)
+            self.assertEqual(0, details.form.id)
+            self.assertEqual(self.xmlnses[i], details.xmlns)
+            self.assertFalse(details.is_user_registration)
 
     def test_get_form_details_by_xmlns_no_data(self):
         self.assertEqual([], get_form_details_by_xmlns('missing', 'missing'))
