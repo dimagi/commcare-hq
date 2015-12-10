@@ -267,10 +267,8 @@ def _move_no_longer_owned_cases_to_dependent_list_if_necessary(restore_state):
         if removed_owners:
             # if we removed any owner ids, then any cases that belonged to those owners need
             # to be moved to the dependent list
-            case_ids_to_try_purging = get_case_ids_in_domain_by_owner(
-                domain=restore_state.domain,
-                owner_id__in=list(removed_owners),
-            )
+            domain = restore_state.domain
+            case_ids_to_try_purging = CaseAccessors(domain).get_case_ids_in_domain_by_owners(list(removed_owners))
             for to_purge in case_ids_to_try_purging:
                 if to_purge in restore_state.current_sync_log.case_ids_on_phone:
                     restore_state.current_sync_log.dependent_case_ids_on_phone.add(to_purge)

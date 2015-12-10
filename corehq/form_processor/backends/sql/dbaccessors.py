@@ -326,6 +326,14 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.case_id for result in results]
 
     @staticmethod
+    def get_case_ids_in_domain_by_owners(domain, owner_ids):
+        query = CommCareCaseSQL.objects.filter(
+            domain=domain,
+            owner_id__in=owner_ids,
+        )
+        return list(query.values_list('case_id', flat=True))
+
+    @staticmethod
     def save_case(case):
         transactions_to_save = case.get_tracked_models_to_create(CaseTransaction)
 

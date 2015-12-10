@@ -4,7 +4,12 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_case_xform_ids
 from corehq.apps.hqcase.dbaccessors import (
     get_open_case_ids,
-    get_closed_case_ids)
+    get_closed_case_ids,
+    get_case_ids_in_domain_by_owner
+)
+# TODO: What is the difference between these two?
+#   corehq.apps.hqcase.dbaccessors
+#   casexml.apps.case.dbaccessors
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
     get_case_ids_modified_with_owner_since
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
@@ -60,6 +65,10 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     @staticmethod
     def get_case_ids_in_domain(domain, type=None):
         return get_case_ids_in_domain(domain, type=type)
+
+    @staticmethod
+    def get_case_ids_in_domain_by_owners(domain, owner_ids):
+        return get_case_ids_in_domain_by_owner(domain, owner_id__in=owner_ids)
 
     @staticmethod
     def get_open_case_ids(domain, owner_id):
