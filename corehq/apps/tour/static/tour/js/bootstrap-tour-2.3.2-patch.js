@@ -257,6 +257,7 @@
             $element = $('body');
           }
           $element.popover('hide').removeClass("tour-" + _this._options.name + "-element tour-" + _this._options.name + "-" + i + "-element");
+          $element.find('.popover').remove();
           if (step.reflex) {
             $element.removeClass('tour-step-element-reflex').off("" + (_this._reflexEvent(step.reflex)) + ".tour-" + _this._options.name);
           }
