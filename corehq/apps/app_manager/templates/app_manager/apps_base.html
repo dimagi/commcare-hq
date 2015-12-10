@@ -31,6 +31,7 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
+    {# TODO: move things to bower? Ctrl+F "Javascript Library Management" in B3 migration guide #}
     <script src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% new_static 'langcodes/js/langcodes.js' %}"></script>
     <script src="{% new_static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
