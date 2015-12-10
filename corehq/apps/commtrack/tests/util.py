@@ -164,6 +164,7 @@ class CommTrackTest(TestCase):
 
         self.loc = make_loc('loc1')
         self.sp = make_supply_point(self.domain.name, self.loc)
+        self.loc.save()
         self.users = [bootstrap_user(self, **user_def) for user_def in self.user_definitions]
 
         # everyone should be in a group.
