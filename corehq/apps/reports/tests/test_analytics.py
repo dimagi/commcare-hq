@@ -3,7 +3,8 @@ from django.test import TestCase
 from corehq.apps.app_manager.tests import AppFactory
 from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_submissions_using_xmlns, \
     update_reports_analytics_indexes, get_all_form_definitions_grouped_by_app_and_xmlns, SimpleFormInfo, \
-    get_all_form_details, get_form_details_for_xmlns
+    get_all_form_details, get_form_details_for_xmlns, get_form_details_for_app_and_module, \
+    get_form_details_for_app_and_xmlns
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import TestFormMetadata, get_simple_form_xml
 from corehq.form_processor.utils import convert_xform_to_json
@@ -85,4 +86,27 @@ class ReportAppAnalyticsTest(SetupSimpleAppMixin, TestCase):
         [details_1] = get_form_details_for_xmlns(self.domain, self.f1_xmlns)
         [details_2] = get_form_details_for_xmlns(self.domain, self.f2_xmlns)
         for i, details in enumerate([details_1, details_2]):
+            self._assert_form_details_match(i, details)
+
+    def test_get_form_details_for_app_and_module_no_data(self):
+        self.assertEqual([], get_form_details_for_app_and_module('missing', self.app.id, 0))
+        self.assertEqual([], get_form_details_for_app_and_module(self.domain, 'missing', 0))
+        self.assertEqual([], get_form_details_for_app_and_module(self.domain, self.app.id, 3))
+
+    def test_get_form_details_for_app_and_module(self):
+        for i in range(2):
+            [details] = get_form_details_for_app_and_module(self.domain, self.app.id, i)
+            self._assert_form_details_match(i, details)
+
+    def test_get_form_details_for_app_and_xmlns_no_data(self):
+        self.assertEqual([], get_form_details_for_app_and_xmlns('missing', self.app.id, self.f1_xmlns))
+        self.assertEqual([], get_form_details_for_app_and_xmlns(self.domain, 'missing', self.f1_xmlns))
+        self.assertEqual([], get_form_details_for_app_and_xmlns(self.domain, self.app.id, 'missing'))
+        self.assertEqual(
+            [], get_form_details_for_app_and_xmlns(self.domain, self.app.id, self.f1_xmlns, deleted=True)
+        )
+
+    def test_get_form_details_for_app_and_xmlns(self):
+        for i in range(2):
+            [details] = get_form_details_for_app_and_xmlns(self.domain, self.app.id, self.xmlnses[i])
             self._assert_form_details_match(i, details)
