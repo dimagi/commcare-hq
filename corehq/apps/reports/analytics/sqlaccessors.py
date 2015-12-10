@@ -3,7 +3,7 @@ from django.db.models.aggregates import Count
 from corehq.apps.sofabed.models import FormData
 
 
-def get_form_counts_for_user_by_date(user_ids, startdate, enddate, date_field, timezone):
+def get_form_counts_for_users_by_date(user_ids, startdate, enddate, date_field, timezone):
     assert len(user_ids) > 0
 
     if len(user_ids) == 1:

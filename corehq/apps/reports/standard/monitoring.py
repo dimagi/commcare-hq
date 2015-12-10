@@ -20,7 +20,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
 from corehq.apps.reports.analytics.sqlaccessors import (
-    get_form_counts_for_user_by_date,
+    get_form_counts_for_users_by_date,
     get_form_counts_for_daterange_by_user,
 )
 from corehq.apps.sofabed.dbaccessors import get_form_counts_by_user_xmlns
@@ -616,7 +616,7 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
         else:
             user_ids = map(lambda user: user.user_id, self.all_users)
 
-        results = get_form_counts_for_user_by_date(
+        results = get_form_counts_for_users_by_date(
             user_ids,
             self.startdate,
             self.enddate,
