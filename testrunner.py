@@ -94,7 +94,15 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
 
         def asserting_init(self, uri, create=False, server=None, **params):
             original_init(self, uri, create=create, server=server, **params)
-            self_._assert_is_a_test_db(self.dbname)
+            try:
+                self_._assert_is_a_test_db(self.dbname)
+            except AssertionError:
+                db = self
+
+                def request(self, *args, **kwargs):
+                    self_._assert_is_a_test_db(db.dbname)
+
+                self.res.request = request
 
         Database.__init__ = asserting_init
 
