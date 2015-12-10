@@ -4,15 +4,13 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/commcaresettings.js' %}"></script>
     {% if app.get_doc_type == "Application" %}
-        <script src="{% static 'translations/js/translations.js' %}"></script>
+        <script src="{% new_static 'translations/js/translations.js' %}"></script>
     {% endif %}
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
-    <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
-    <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/supported-languages.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
@@ -245,7 +243,7 @@
     {% endif %}
 {% endblock %}
 
-{% block head %}{{ block.super }}
+{% block stylesheets %}{{ block.super }}
     <style>
         .sortable-handle {
             cursor: move;

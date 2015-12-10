@@ -6,10 +6,8 @@
 {% load timezone_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
-    <script src="{% static 'app_manager/js/releases.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/app_manager_utils.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/releases.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
 <script>
@@ -100,7 +98,7 @@
         background-repeat: no-repeat;
     }
     .pending {
-        background-image: url("{% static 'hqwebapp/img/ajax-loader.gif' %}");
+        background-image: url("{% new_static 'hqwebapp/img/ajax-loader.gif' %}");
         background-size: 80%;
         background-position: center;
     }
@@ -161,7 +159,7 @@
             <tbody data-bind="visible: buildState, css: {hide: false}" class="hide">
                 <tr data-bind="visible: buildState() == 'pending'">
                     <td colspan="9">
-                        <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                        <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}"/>
                         <span class="label label-success">
                             {% trans "Please wait while your CommCare Application builds" %}
                         </span>
@@ -246,7 +244,7 @@
                                 </a>
                             </form>
                             <span data-bind="visible: pending_comment_update()">
-                                <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                                <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}"/>
                             </span>
                         </div>
                         <div data-bind="visible: comment_update_error()" class="alert alert-error">
@@ -288,7 +286,7 @@
                 <tr>
                     <td colspan="9">
                         <div data-bind="visible: fetchState() === 'pending', css: {hide: false}" class="hide">
-                            <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                            <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}"/>
                         </div>
                         <div data-bind="visible: fetchState() === 'error', css: {hide: false}" class="hide">
                             <div class="alert alert-error">
@@ -393,7 +391,7 @@
                                                         "></a></code>
                                                     </span>
                                                     <img data-bind="visible: generating_url()"
-                                                        src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                                                        src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}"/>
                                                     <span class="text-warning" data-bind="visible: !get_short_odk_url() && !generating_url()">
                                                         {% trans "No short code available; try making another version." %}
                                                     </span>
@@ -527,7 +525,7 @@
                                                     </form>
                                                 </div>
                                                 <div data-bind="visible: $parent.generating_url()">
-                                                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                                                    <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}"/>
                                                 </div>
                                                 <div data-bind="visible: !$parent.sms_url($index()) && !$parent.generating_url()">
                                                     <span class="label label-important">
@@ -568,6 +566,6 @@
     </div>
 
 <!-- Async Download Modals -->
-<script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
+<script src="{% new_static 'app_manager/js/download_async_modal.js' %}"></script>
 {% include 'app_manager/partials/download_async_modal.html' with element_id='download-zip-modal' %}
 {% endblock %}

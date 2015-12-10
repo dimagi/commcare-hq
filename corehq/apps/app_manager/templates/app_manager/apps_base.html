@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap2/two_column.html' %}
+{% extends 'style/bootstrap3/two_column.html' %}
 {% load xforms_extras %}
 {% load url_extras %}
 {% load hq_shared_tags %}
@@ -8,7 +8,7 @@
 
 {% block title %}{% trans "Applications" %}{% endblock %}
 
-{% block page-title %}
+{% block page_title %}
     <ul class="breadcrumb">
         <li>
             <strong>{% trans "Applications" %}</strong>
@@ -20,18 +20,20 @@
 
 {% block stylesheets %}{{ block.super }}
     {% compress css %}
-    <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/legacy/app_manager.less' %}"/>
+    {# TODO: should this still exist? #}
+    <link type="text/less" rel="stylesheet" media="all" href="{% new_static 'style/less/legacy/app_manager.less' %}"/>
     {% endcompress %}
 {% endblock %}
 
 {% block head %}{{ block.super }}
+    {# TODO: drop this altogether? #}
     {% include "imports/jqmodal.html" %}
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
-    <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
+    <script src="{% new_static 'langcodes/js/langcodes.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -92,10 +94,10 @@
     </script>
 {% endblock %}
 
-{% block sidebar %}
+{% block page_navigation %}
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
 <div class="app-manager-content hide">
     {% if app %}
         {% if error %}

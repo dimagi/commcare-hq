@@ -5,12 +5,8 @@
 
 {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
 
-{% block head %}
-    {{ block.super }}
-    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
-    <link rel="stylesheet" href="{% static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
-    <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
-    <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
+{% block stylesheets %}{{ block.super }}
+    <link rel="stylesheet" href="{% new_static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
     <style>
         .casexml ul {
             margin-left: 15px;
@@ -67,6 +63,27 @@
             font-size: 1rem;
         }
     </style>
+{% endblock %}
+
+{% block js %}{{ block.super }}
+    <script src="{% new_static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
+    <script src="{% new_static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
+    <script src="{% new_static 'style/ko/knockout_subscribables.ko.js' %}"></script>
+    <script src="{% new_static 'style/lib/jquery/plugins/jquery.caret-1.5.2.min.js' %}"></script>
+
+    {% if app.application_version == '2.0' %}
+        <script src="{% new_static 'app_manager/js/case-knockout-bindings.js' %}"></script>
+        <script src="{% new_static 'app_manager/js/case-config-utils.js' %}"></script>
+        {% block js_extra %}
+            <script src="{% new_static 'app_manager/js/case-config-ui-2.js' %}"></script>
+        {% endblock %}
+    {% else %}
+        <script src="{% new_static 'app_manager/js/ejs.min.js' %}"></script>
+        <script src="{% new_static 'app_manager/js/case-config-ui-1.js' %}"></script>
+    {% endif %}
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
     {% if app.application_version == '2.0' %}
     <style>
         #open-referral-action,
@@ -80,35 +97,14 @@
         }
     </style>
     {% endif %}
-{% endblock %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
-    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_subscribables.ko.js' %}"></script>
-    <script src="{% static 'style/lib/jquery/plugins/jquery.caret-1.5.2.min.js' %}"></script>
-
-    {% if app.application_version == '2.0' %}
-        <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
-        <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
-        {% block js_extra %}
-            <script src="{% static 'app_manager/js/case-config-ui-2.js' %}"></script>
-        {% endblock %}
-    {% else %}
-        <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
-        <script src="{% static 'app_manager/js/case-config-ui-1.js' %}"></script>
-    {% endif %}
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
     {% include "style/bootstrap2/ko/value-or-none-ui.html" %}
     {% if not is_user_registration %}
         {% include "app_manager/partials/nav_menu_media_js_common.html" %}
         {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
     {% endif %}
     {% if allow_form_workflow %}
-        <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
+        <script src="{% new_static 'app_manager/js/form_workflow.js' %}"></script>
     {% endif %}
     <script>
         $(function(){

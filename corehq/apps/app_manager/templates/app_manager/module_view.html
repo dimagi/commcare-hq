@@ -3,10 +3,9 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
-    <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/guidGenerator.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/key-value-mapping.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/graph-config.js' %}"></script>
     <script>
     if (window.toggles === undefined) {
         window.toggles = {};
@@ -23,10 +22,10 @@
     window.toggles.CASE_LIST_LOOKUP = {{ request|toggle_enabled:"CASE_LIST_LOOKUP"|BOOL }}
     window.toggles.FIXTURE_CASE_SELECTION = {{ request|toggle_enabled:"FIXTURE_CASE_SELECTION"|BOOL }}
     </script>
-    <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/detail-screen-config.js' %}"></script>
 {% endblock %}
-{% block head %}{{ block.super }}
-    <link rel="stylesheet" href="{% static 'app_manager/css/graph-configuration.css' %}"/>
+{% block stylesheets %}{{ block.super }}
+    <link rel="stylesheet" href="{% new_static 'app_manager/css/graph-configuration.css' %}"/>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     {% include "style/bootstrap2/ko/value-or-none-ui.html" %}
