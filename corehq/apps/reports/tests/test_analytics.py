@@ -38,7 +38,6 @@ class SetupSimpleAppMixin(object):
         cls.domain = uuid.uuid4().hex
         cls.f1_xmlns = 'xmlns1'
         cls.f2_xmlns = 'xmlns2'
-        cls.xmlnses = [cls.f1_xmlns, cls.f2_xmlns]
         app_factory = AppFactory(domain=cls.domain)
         module1, form1 = app_factory.new_basic_module('m1', '_casetype')
         module2, form2 = app_factory.new_basic_module('m2', '_casetype2')
@@ -46,11 +45,22 @@ class SetupSimpleAppMixin(object):
         form2.xmlns = cls.f2_xmlns
         app_factory.app.save()
         cls.app = app_factory.app
+        deleted_app_factory = AppFactory(domain=cls.domain)
+        deleted_module1, deleted_form1 = deleted_app_factory.new_basic_module('del-m1', '_casetype3')
+        cls.deleted_xmlns = 'xmlns3'
+        deleted_form1.xmlns = cls.deleted_xmlns
+        deleted_app_factory.app.doc_type = 'Application-Deleted'
+        # make sure the ID comes after the primary app
+        deleted_app_factory.app._id = '{}z'.format(cls.app.id)
+        deleted_app_factory.app.save()
+        cls.deleted_app = deleted_app_factory.app
+        cls.xmlnses = [cls.f1_xmlns, cls.f2_xmlns, cls.deleted_xmlns]
         update_reports_analytics_indexes()
 
     def _assert_form_details_match(self, index, details):
-        self.assertEqual(self.app._id, details.app.id)
-        self.assertEqual(index, details.module.id)
+        expected_app = self.app if index < 2 else self.deleted_app
+        self.assertEqual(expected_app._id, details.app.id)
+        self.assertEqual(index % 2, details.module.id)
         self.assertEqual(0, details.form.id)
         self.assertEqual(self.xmlnses[index], details.xmlns)
         self.assertFalse(details.is_user_registration)
@@ -64,7 +74,9 @@ class ReportAppAnalyticsTest(SetupSimpleAppMixin, TestCase):
 
     def test_get_all_form_definitions_grouped_by_app_and_xmlns(self):
         self.assertEqual(
-            [SimpleFormInfo(self.app._id, self.f1_xmlns), SimpleFormInfo(self.app._id, self.f2_xmlns)],
+            [SimpleFormInfo(self.app._id, self.f1_xmlns),
+             SimpleFormInfo(self.app._id, self.f2_xmlns),
+             SimpleFormInfo(self.deleted_app._id, self.deleted_xmlns)],
             get_all_form_definitions_grouped_by_app_and_xmlns(self.domain)
         )
 
@@ -73,7 +85,7 @@ class ReportAppAnalyticsTest(SetupSimpleAppMixin, TestCase):
 
     def test_get_all_form_details(self):
         app_structures = get_all_form_details(self.domain)
-        self.assertEqual(2, len(app_structures))
+        self.assertEqual(3, len(app_structures))
         for i, details in enumerate(app_structures):
             self._assert_form_details_match(i, details)
 
