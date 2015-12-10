@@ -76,12 +76,6 @@ class RequisitionCase(CommCareCase):
         # only used by openlmis
         raise NotImplementedError()
 
-        # return cls.view('hqcase/by_domain_external_id',
-        #     key=[domain, external_id],
-        #     include_docs=True, reduce=False,
-        #     classes={'CommCareCase': RequisitionCase}
-        # ).all()
-
     @classmethod
     def get_display_config(cls):
         return [
