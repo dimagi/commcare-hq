@@ -401,11 +401,11 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         Returns the raw form data based on the current filter selection.
         """
         if not filter_results:
-            data = []
             if self._application_forms:
                 key = ["app module form", self.domain]
-                data.extend(self._raw_data(key))
-            return data
+                return self._raw_data(key)
+            else:
+                return []
 
         parsed_params = FormsByApplicationFilterParams(filter_results)
         if parsed_params.xmlns:
