@@ -57,8 +57,16 @@ def get_all_form_definitions_grouped_by_app_and_xmlns(domain):
     ]
 
 
-def get_all_form_details(domain):
-    startkey = ["app module form", domain]
+def get_all_form_details(domain, deleted=None):
+    """
+    deleted = None means include all options.
+    deleted = True/False will only included deleted/non-deleted apps
+    """
+    if deleted is None:
+        startkey = ["app module form", domain]
+    else:
+        status = 'deleted' if deleted else 'active'
+        startkey = ["status app module form", domain, status]
     return [
         _row_to_form_details(r) for r in Application.get_db().view(
             'reports_forms/by_app_info',

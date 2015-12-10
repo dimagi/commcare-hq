@@ -89,6 +89,17 @@ class ReportAppAnalyticsTest(SetupSimpleAppMixin, TestCase):
         for i, details in enumerate(app_structures):
             self._assert_form_details_match(i, details)
 
+    def test_get_all_form_details_active(self):
+        details = get_all_form_details(self.domain, deleted=False)
+        self.assertEqual(2, len(details))
+        for i, detail in enumerate(details):
+            self._assert_form_details_match(i, detail)
+
+    def test_get_all_form_details_deleted(self):
+        details = get_all_form_details(self.domain, deleted=True)
+        self.assertEqual(1, len(details))
+        self._assert_form_details_match(2, details[0])
+
     def test_get_form_details_for_xmlns_no_data(self):
         self.assertEqual([], get_form_details_for_xmlns('missing', 'missing'))
         self.assertEqual([], get_form_details_for_xmlns(self.domain, 'missing'))
