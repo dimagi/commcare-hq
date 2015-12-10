@@ -5,7 +5,6 @@ from corehq.preindex import get_preindex_plugin
 
 def catch_signal(sender, **kwargs):
     """Function used by syncdb signal"""
-    print 'catch_signal', sender.label
     app_name = sender.label.rsplit('.', 1)[0]
     app_label = app_name.split('.')[-1]
     plugin = get_preindex_plugin(app_label)
