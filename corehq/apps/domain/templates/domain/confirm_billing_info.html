@@ -38,7 +38,7 @@
             cards: {{ cards|JSON }},
             url: "{% url 'cards_view' domain %}"
         });
-        ko.applyBindings(cardManager, $("#card-manager")[0])
+        $("#card-manager").koApplyBindings(cardManager);
     </script>
 {% endblock %}
 

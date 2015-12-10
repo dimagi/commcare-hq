@@ -139,9 +139,7 @@ var EWSDrilldownOption = function (select, drilldown_map) {
 };
 
 $.fn.ewsdrilldownOptionFilter = function (options) {
-    this.each(function(i) {
-        var viewModel = new EWSDrilldownOptionFilterControl(options);
-        ko.applyBindings(viewModel, $(this).get(i));
-        viewModel.init();
-    });
+    var viewModel = new EWSDrilldownOptionFilterControl(options);
+    $(this).koApplyBindings(viewModel);
+    viewModel.init();
 };

@@ -2,12 +2,9 @@
 $(function () {
     "use strict";
     if ($("#bulk_upload_form").get(0)) {
-        ko.applyBindings(
-            {
-                file: ko.observable(null)
-            },
-            $("#bulk_upload_form").get(0)
-        );
+        $("#bulk_upload_form").koApplyBindings({
+            file: ko.observable(null),
+        });
     }
 
     // modify download url to pass extra options
@@ -25,8 +22,7 @@ $(function () {
         });
     }
 
-    ko.applyBindings(
+    $("#download_block").koApplyBindings(
         new ConsumptionOptionsViewModel($("#download_link").get(0).href),
-        $("#download_block").get(0)
     );
 });
