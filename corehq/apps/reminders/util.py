@@ -251,3 +251,13 @@ def get_unverified_number_for_recipient(recipient):
 
 def get_preferred_phone_number_for_recipient(recipient):
     return get_verified_number_for_recipient(recipient) or get_unverified_number_for_recipient(recipient)
+
+
+@quickcache(['reminder_id'], timeout=60 * 60 * 24 * 7 * 5)
+def get_reminder_domain(reminder_id):
+    """
+    A reminder instance's domain should never change once set, so
+    we can use a very long timeout.
+    """
+    from corehq.apps.reminders.models import CaseReminder
+    return CaseReminder.get(reminder_id).domain
