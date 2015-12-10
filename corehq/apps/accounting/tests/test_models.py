@@ -112,6 +112,15 @@ class TestSubscription(BaseAccountingTest):
         self.assertRaises(models.ProtectedError, self.subscription.plan_version.delete)
         self.assertRaises(models.ProtectedError, self.subscription.subscriber.delete)
 
+    def test_is_hidden_to_ops(self):
+        self.subscription.is_hidden_to_ops = True
+        self.subscription.save()
+        self.assertEqual(0, len(Subscription.objects.filter(id=self.subscription.id)))
+
+        self.subscription.is_hidden_to_ops = False
+        self.subscription.save()
+        self.assertEqual(1, len(Subscription.objects.filter(id=self.subscription.id)))
+
     def tearDown(self):
         self.billing_contact.delete()
         self.dimagi_user.delete()
