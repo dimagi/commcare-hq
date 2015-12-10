@@ -3,7 +3,7 @@ from django.conf import settings
 from django.utils.safestring import mark_safe
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_submissions_using_xmlns, \
-    get_all_form_definitions_grouped_by_app_and_xmlns, get_all_form_details, get_form_details_by_xmlns
+    get_all_form_definitions_grouped_by_app_and_xmlns, get_all_form_details, get_form_details_for_xmlns
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseTagsFilter
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
 from dimagi.utils.decorators.memoized import memoized
@@ -299,7 +299,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         for form in self._fuzzy_forms:
             xmlns, unknown_id = self.split_xmlns_app_key(form)
             fuzzy[xmlns] = {
-                'apps': [detail for detail in get_form_details_by_xmlns(self.domain, xmlns)],
+                'apps': [detail for detail in get_form_details_for_xmlns(self.domain, xmlns)],
                 'unknown_id': unknown_id,
             }
         return fuzzy
