@@ -1083,12 +1083,14 @@ FIXTURES_DB = NEW_FIXTURES_DB
 NEW_DOMAINS_DB = 'domains'
 DOMAINS_DB = NEW_DOMAINS_DB
 
+NEW_CASES_DB = 'cases'
+CASES_DB = NEW_CASES_DB
+
 COUCHDB_APPS = [
     'api',
     'app_manager',
     'appstore',
     'builds',
-    'case',
     'casegroups',
     'cleanup',
     'cloudcare',
@@ -1176,12 +1178,15 @@ COUCHDB_APPS = [
 
     # domains
     ('domain', DOMAINS_DB),
+
+    # cases
+    ('case', CASES_DB)
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
 COUCH_SETTINGS_HELPER = CouchSettingsHelper(COUCH_DATABASE, COUCHDB_APPS, [
-    NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB,
+    NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB, NEW_CASES_DB,
 ])
 COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.make_couchdb_tuples()
 EXTRA_COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.get_extra_couchdbs()
