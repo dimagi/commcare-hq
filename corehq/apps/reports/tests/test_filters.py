@@ -1,8 +1,9 @@
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
+from corehq.apps.reports.analytics.couchaccessors import FormDetails
 from corehq.apps.reports.filters.api import paginate_options
 from corehq.apps.reports.filters.forms import FormsByApplicationFilterParams, FormsByApplicationFilter, \
     PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE, PARAM_VALUE_STATUS_DELETED, PARAM_SLUG_APP_ID, PARAM_SLUG_MODULE
-
+from corehq.apps.reports.tests import SetupSimpleAppMixin
 
 
 class TestEmwfPagination(SimpleTestCase):
@@ -105,5 +106,37 @@ class FormsByApplicationFilterSimpleTest(SimpleTestCase):
         self._run_test('status app module form', [self.DOMAIN, PARAM_VALUE_STATUS_ACTIVE, app_id], params)
 
 
+class FormsByApplicationFilterDbTest(SetupSimpleAppMixin, TestCase):
+    dependent_apps = ['corehq.couchapps']
+
+    def test_get_filtered_data_by_app_id(self):
+        params = FormsByApplicationFilterParams([
+            _make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
+            _make_filter(PARAM_SLUG_APP_ID, self.app.id)
+        ])
+        results = FormsByApplicationFilter.get_filtered_data_for_parsed_params(self.domain, params)
+        results = map(_row_to_form_details, results)
+        self.assertEqual(2, len(results))
+        for i, details in enumerate(results):
+            self._assert_form_details_match(i, details)
+
+    def test_get_filtered_data_by_module_id(self):
+        for i in range(2):
+            params = FormsByApplicationFilterParams([
+                _make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
+                _make_filter(PARAM_SLUG_APP_ID, self.app.id),
+                _make_filter(PARAM_SLUG_MODULE, str(i)),
+            ])
+            results = FormsByApplicationFilter.get_filtered_data_for_parsed_params(self.domain, params)
+            results = map(_row_to_form_details, results)
+            self.assertEqual(1, len(results))
+            details = results[0]
+            self._assert_form_details_match(i, details)
+
+
 def _make_filter(slug, value):
     return {'slug': slug, 'value': value}
+
+
+def _row_to_form_details(row):
+    return FormDetails.wrap(row['value'])
