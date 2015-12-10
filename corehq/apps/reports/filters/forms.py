@@ -3,7 +3,7 @@ from django.conf import settings
 from django.utils.safestring import mark_safe
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_submissions_using_xmlns, \
-    get_all_form_definitions_grouped_by_app_and_xmlns, get_all_app_structures
+    get_all_form_definitions_grouped_by_app_and_xmlns, get_all_form_details
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseTagsFilter
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
 from dimagi.utils.decorators.memoized import memoized
@@ -235,7 +235,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 'next_app_id': {...},
             }
         """
-        data = get_all_app_structures(self.domain)
+        data = get_all_form_details(self.domain)
         default_module = lambda num: {'module': None, 'forms': []}
         app_forms = {}
         for app_structure in data:

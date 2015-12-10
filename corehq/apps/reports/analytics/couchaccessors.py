@@ -57,7 +57,7 @@ def get_all_form_definitions_grouped_by_app_and_xmlns(domain):
     ]
 
 
-def get_all_app_structures(domain):
+def get_all_form_details(domain):
     startkey = ["app module form", domain]
     return [
         _row_to_app_structure(r) for r in Application.get_db().view(
