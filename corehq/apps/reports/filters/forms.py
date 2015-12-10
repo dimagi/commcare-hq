@@ -3,7 +3,8 @@ from django.conf import settings
 from django.utils.safestring import mark_safe
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_submissions_using_xmlns, \
-    get_all_form_definitions_grouped_by_app_and_xmlns, get_all_form_details, get_form_details_for_xmlns
+    get_all_form_definitions_grouped_by_app_and_xmlns, get_all_form_details, get_form_details_for_xmlns, \
+    get_form_details_for_app_and_xmlns, FormDetails
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseTagsFilter
 from corehq.util.soft_assert import soft_assert
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
@@ -25,6 +26,7 @@ PARAM_VALUE_STATUS_DELETED = 'deleted'
 
 
 class FormsByApplicationFilterParams(object):
+
     def __init__(self, params):
         self.app_id = self.status = self.module = self.xmlns = self.most_granular_filter = None
         for param in params:
@@ -406,17 +408,18 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         """
         if not filter_results:
             if self._application_forms:
-                key = ["app module form", self.domain]
-                return self._raw_data(key)
+                return get_all_form_details(self.domain)
             else:
                 return []
 
         parsed_params = FormsByApplicationFilterParams(filter_results)
         if parsed_params.xmlns:
-            status = parsed_params.status or PARAM_VALUE_STATUS_ACTIVE
-            # todo: replace get_form_details_for_app_and_xmlns
-            key = ["status xmlns app", self.domain, status, parsed_params.xmlns, parsed_params.app_id]
-            return self._raw_data(key)
+            return get_form_details_for_app_and_xmlns(
+                self.domain,
+                parsed_params.app_id,
+                parsed_params.xmlns,
+                deleted=parsed_params.status==PARAM_VALUE_STATUS_DELETED,
+            )
         else:
             if not self._application_forms:
                 return []
@@ -483,15 +486,13 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         else:
             result = {}
             data = self._get_filtered_data(filter_results)
-            for line in data:
-                app = line['value']
-                app_id = app['app']['id']
-                xmlns_app = self.make_xmlns_app_key(app['xmlns'], app_id)
+            for form_details in data:
+                xmlns_app = self.make_xmlns_app_key(form_details.xmlns, form_details.app.id)
                 if xmlns_app not in result:
                     result[xmlns_app] = self._generate_report_app_info(
-                        app['xmlns'],
-                        app_id,
-                        self._formatted_name_from_app(self.display_lang, app),
+                        form_details.xmlns,
+                        form_details.app.id,
+                        self._formatted_name_from_app(self.display_lang, form_details),
                     )
 
             if not self._hide_fuzzy_results and self._fuzzy_forms:
@@ -537,11 +538,14 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @staticmethod
     def _raw_data(startkey):
-        return Application.get_db().view('reports_forms/by_app_info',
-            startkey=startkey,
-            endkey=startkey+[{}],
-            reduce=False
-        ).all()
+        return [
+            FormDetails.wrap(row['value']) for row in Application.get_db().view(
+                'reports_forms/by_app_info',
+                startkey=startkey,
+                endkey=startkey+[{}],
+                reduce=False
+            ).all()
+        ]
 
     @classmethod
     def make_xmlns_app_key(cls, xmlns, app_id):
