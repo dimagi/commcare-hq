@@ -4,7 +4,7 @@ from django.utils.safestring import mark_safe
 
 register = template.Library()
 
-LANG_BUTTON = ' <span style="color: #FFFFFF; text-decoration:none;" class="btn btn-mini btn-inverse btn-langcode-preprocessed%(extra_class)s">%(lang)s</span>'
+LANG_BUTTON = ' <span style="color: #FFFFFF; text-decoration:none;" class="btn btn-mini btn-info btn-langcode-preprocessed%(extra_class)s">%(lang)s</span>'
 EMPTY_LABEL = '<span class="label label-info">Empty</span>'
 
 

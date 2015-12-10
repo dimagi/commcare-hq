@@ -11,7 +11,7 @@
                 <img data-bind="attr: {src: thumbnailUrl}" />
             </a>
             <button type="button"
-                    class="btn"
+                    class="btn btn-default"
                     data-toggle="modal"
                     data-bind="attr: { 'data-hqmediapath': currentPath },
                                event: {
@@ -66,7 +66,7 @@
                    name="{{ qualifier|default_if_none:"" }}media_image"
                    data-bind="value: savedPath" />
             <button type="button"
-                    class="btn"
+                    class="btn btn-default"
                     data-bind="
                         visible: showCustomPath,
                         event: {
@@ -86,13 +86,13 @@
         <div class="controls commcare-feature"
              data-since-version="1.3">
             <a data-bind="visible: isMediaMatched, attr: {href: url}"
-               class="btn bt-default"
+               class="btn btn-default"
                target="_blank">
                 <i class="icon icon-volume-up"></i>
                 {% trans "Preview" %}
             </a>
             <button type="button"
-                    class="btn"
+                    class="btn btn-default"
                     data-toggle="modal"
                     data-bind="attr: { 'data-hqmediapath': currentPath },
                                event: {
@@ -154,7 +154,7 @@
                    class="jr-resource-field"
                    data-bind="value: savedPath" />
             <button type="button"
-                    class="btn"
+                    class="btn btn-default"
                     data-bind="
                         visible: showCustomPath,
                         event: {

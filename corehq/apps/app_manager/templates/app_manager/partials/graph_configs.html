@@ -21,7 +21,7 @@
                 <input type="text" data-bind="value: keyValuePair[1]">
             </p>
         </div>
-        <button class="btn" data-bind="click: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).config.addConfig">
+        <button class="btn btn-default" data-bind="click: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).config.addConfig">
             <i class="icon-plus"></i>
             {% trans "Add Configuration Item" %}
         </button>
@@ -37,7 +37,7 @@
                     <input type="text" data-bind="value: keyValuePair[1]">
                 </p>
             </div>
-            <button class="btn" data-bind="click: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_configs[series].addConfig">
+            <button class="btn btn-default" data-bind="click: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_configs[series].addConfig">
                 <i class="icon-plus"></i>
                 {% trans "Add Series Configuration Item" %}
             </button>

@@ -1,9 +1,9 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 <div class="btn-group">
-    <button class="btn" data-bind="click: addProperty">{% trans "Add Property" %}</button>
+    <button class="btn btn-default" data-bind="click: addProperty">{% trans "Add Property" %}</button>
     {% if request|feature_preview_enabled:'CALC_XPATHS' or request|toggle_enabled:'GRAPH_CREATION' %}
-    <button class="btn dropdown-toggle" data-toggle="dropdown">
+    <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
         <span class="caret"></span>
     </button>
     <ul class="dropdown-menu">

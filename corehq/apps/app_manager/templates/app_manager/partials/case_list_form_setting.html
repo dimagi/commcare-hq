@@ -35,10 +35,10 @@
                 </div>
             </div>
             <div class="btn-group" data-bind="visible: !allowed && !caseListForm()">
-                <button class="btn disabled" disabled="disabled">
+                <button class="btn btn-default disabled" disabled="disabled">
                     <span>{% trans "Not available" %}</span>
                 </button>
-                <button class="btn dropdown-toggle" data-toggle="dropdown">
+                <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
                     <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu">
@@ -60,7 +60,7 @@
                     To learn more, see our <a href="https://help.commcarehq.org/display/commcarepublic/Minimize+Duplicates" target="_blank">Help Site</a>
                     {% endblocktrans %}
                 </div>
-                <a href="#" class="btn btn-mini" data-bind="click: toggleMessage">
+                <a href="#" class="btn btn-default btn-mini" data-bind="click: toggleMessage">
                     {% trans "OK, close this" %}
                 </a>
             </div>

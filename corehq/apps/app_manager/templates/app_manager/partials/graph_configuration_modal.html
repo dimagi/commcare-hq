@@ -88,7 +88,7 @@
                                         <div data-bind="foreach: configPairs">
                                             <div data-bind="template: 'graph_property_value_mapping_inputs'" class="config-controls"></div>
                                         </div>
-                                        <a class="btn btn-small" href="#" data-bind="click: addConfigPair">
+                                        <a class="btn btn-default btn-small" href="#" data-bind="click: addConfigPair">
                                             <i class="icon-plus"></i> Add Property &rarr; Value mapping
                                         </a>
                                     </div>
@@ -172,7 +172,7 @@
         </div>
 
         <div class="modal-footer">
-            <button class="btn" data-dismiss="modal">Cancel</button>
+            <button class="btn btn-default" data-dismiss="modal">Cancel</button>
             <button class="btn btn-primary" data-dismiss="modal" data-bind="click: onSave">Save</button>
         </div>
     </div>
@@ -192,8 +192,7 @@
     {# TODO: The following markup is pretty similar to the markup #}
     {#       on the key_value_mapping page... consider making it DRYer #}
     {#       ex: there could be a single class for language badges #}
-    <span class="btn btn-inverse btn-mini lang-text"
-        style="color:#ffffff; text-decoration: none;"
+    <span class="btn btn-info btn-mini lang-text"
         data-bind="
             text: getBackup().lang,
             {# language badge is only visible if the field is empty and a backup was found #}

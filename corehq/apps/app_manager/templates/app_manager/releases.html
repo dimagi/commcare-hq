@@ -217,7 +217,7 @@
                         </div>
                     </td>
                     <td>
-                        <button class="btn" data-bind="
+                        <button class="btn btn-default" data-bind="
                             openModal: 'revert-build-modal-template',
                             visible: version() !== $root.currentAppVersion()
                         ">{% trans "Revert" %}</button>
@@ -294,7 +294,7 @@
                             </div>
                         </div>
                         <div data-bind="visible: fetchState() !== 'pending' && !doneFetching(), css: {hide: false}" class="hide">
-                            <a href="#" class="btn" data-bind="click: getMoreSavedApps">{% trans "View More" %}</a>
+                            <a href="#" class="btn btn-default" data-bind="click: getMoreSavedApps">{% trans "View More" %}</a>
                         </div>
                         <div data-bind="visible: doneFetching() && !savedApps().length, css: {hide: false}" class="hide">
                             <div class="alert alert-info">
@@ -314,7 +314,7 @@
                 <p>{% trans "Are you sure you want to delete this version" %} (<span data-bind="text: version"></span>)?</p>
             </div>
             <div class="modal-footer">
-                <a href="#" class="btn" data-dismiss="modal">Cancel</a>
+                <a href="#" class="btn btn-default" data-dismiss="modal">Cancel</a>
                 <a class="btn btn-danger" href="#" data-bind="click: $root.deleteSavedApp" data-dismiss="modal">{% trans "Delete Version" %}</a>
             </div>
         </script>
@@ -329,7 +329,7 @@
                 {% endblocktrans %}
             </div>
             <div class="modal-footer">
-                <a href="#" class="btn" data-dismiss="modal">Cancel</a>
+                <a href="#" class="btn btn-default" data-dismiss="modal">Cancel</a>
                 <a href="#" class="btn btn-danger" data-bind="click: $root.revertSavedApp" data-dismiss="modal">{% trans "Revert" %}</a>
             </div>
         </script>
@@ -521,7 +521,7 @@
                                                         <textarea class="bitly" name="message" data-bind="text: 'Update to CommCare: ' +
                                                             $parent.sms_url($index()) + ' (&quot;' + $parent.short_name() + '&quot; v. ' + $parent.version() + ')'"></textarea>
                                                         <br />
-                                                        <input type="submit" class="btn" value="Send"/>
+                                                        <input type="submit" class="btn btn-default" value="Send"/>
                                                     </form>
                                                 </div>
                                                 <div data-bind="visible: $parent.generating_url()">
@@ -560,7 +560,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <a href="#" class="btn" data-dismiss="modal">Close</a>
+                <a href="#" class="btn btn-default" data-dismiss="modal">Close</a>
             </div>
         </script>
     </div>
