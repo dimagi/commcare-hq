@@ -22,7 +22,7 @@ class AppPart(jsonobject.JsonObject):
     names = DefaultProperty()  # this is almost always a dict, but for user registration it's a string
 
 
-class AppFormStructure(jsonobject.JsonObject):
+class FormDetails(jsonobject.JsonObject):
     xmlns = jsonobject.StringProperty()
     app = jsonobject.ObjectProperty(AppInfo)
     module = jsonobject.ObjectProperty(AppPart)
@@ -71,4 +71,4 @@ def get_all_app_structures(domain):
 
 
 def _row_to_app_structure(row):
-    return AppFormStructure.wrap(row['value'])
+    return FormDetails.wrap(row['value'])
