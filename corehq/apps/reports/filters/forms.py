@@ -420,11 +420,16 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         else:
             if not self._application_forms:
                 return []
-
-            prefix, key = self.get_prefix_and_key_for_filter_results_and_parsed_params(
+            return self.get_filtered_data_for_filter_results_and_parsed_params(
                 self.domain, filter_results, parsed_params
             )
-            return self._raw_data([prefix] + key)
+
+    @staticmethod
+    def get_filtered_data_for_filter_results_and_parsed_params(domain, filter_results, parsed_params):
+        prefix, key = FormsByApplicationFilter.get_prefix_and_key_for_filter_results_and_parsed_params(
+            domain, filter_results, parsed_params
+        )
+        return FormsByApplicationFilter._raw_data([prefix] + key)
 
     @staticmethod
     def get_prefix_and_key_for_filter_results_and_parsed_params(domain, filter_results, parsed_params):
