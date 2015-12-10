@@ -411,22 +411,21 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             key = ["status xmlns app", self.domain, status, parsed_params.xmlns, parsed_params.app_id]
             return self._raw_data(key)
         else:
-            if self._application_forms:
-                prefix = "app module form"
-                key = [self.domain]
-                if parsed_params.status:
-                    prefix = "%s %s" % ("status", prefix)
-                for f in filter_results:
-                    val = f['value']
-                    if f['slug'] == 'module':
-                        try:
-                            val = int(val)
-                        except Exception:
-                            break
-                    key.append(val)
-                return self._raw_data([prefix] + key)
-            else:
+            if not self._application_forms:
                 return []
+            prefix = "app module form"
+            key = [self.domain]
+            if parsed_params.status:
+                prefix = "%s %s" % ("status", prefix)
+            for f in filter_results:
+                val = f['value']
+                if f['slug'] == 'module':
+                    try:
+                        val = int(val)
+                    except Exception:
+                        break
+                key.append(val)
+            return self._raw_data([prefix] + key)
 
     def _get_selected_forms(self, filter_results):
         """
