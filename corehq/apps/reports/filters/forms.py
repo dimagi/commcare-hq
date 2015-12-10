@@ -408,28 +408,37 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         parsed_params = FormsByApplicationFilterParams(filter_results)
         if parsed_params.xmlns:
             status = parsed_params.status or PARAM_VALUE_STATUS_ACTIVE
+            # todo: replace get_form_details_for_app_and_xmlns
             key = ["status xmlns app", self.domain, status, parsed_params.xmlns, parsed_params.app_id]
             return self._raw_data(key)
         else:
             if not self._application_forms:
                 return []
-            prefix = "app module form"
-            key = [self.domain]
-            if parsed_params.status:
-                prefix = "%s %s" % ("status", prefix)
-            for f in filter_results:
-                val = f['value']
-                if f['slug'] == 'module':
-                    try:
-                        val = int(val)
-                    except Exception:
-                        break
-                key.append(val)
+
+            prefix, key = self.get_prefix_and_key_for_filter_results_and_parsed_params(
+                self.domain, filter_results, parsed_params
+            )
             return self._raw_data([prefix] + key)
+
+    @staticmethod
+    def get_prefix_and_key_for_filter_results_and_parsed_params(domain, filter_results, parsed_params):
+        prefix = "app module form"
+        key = [domain]
+        if parsed_params.status:
+            prefix = "%s %s" % ("status", prefix)
+        for f in filter_results:
+            val = f['value']
+            if f['slug'] == 'module':
+                try:
+                    val = int(val)
+                except Exception:
+                    break
+            key.append(val)
+        return prefix, key
 
     def _get_selected_forms(self, filter_results):
         """
-            Returns the appropriate form information based on the current filter selection.
+        Returns the appropriate form information based on the current filter selection.
         """
         if self._show_unknown:
             return self._get_selected_forms_for_unknown_apps()
