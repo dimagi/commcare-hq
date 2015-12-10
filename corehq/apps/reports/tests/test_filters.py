@@ -113,8 +113,8 @@ class TestFormsByApplicationFilter(SimpleTestCase):
 
     def _run_test(self, expected_prefix, expected_keys, input_filter_params):
         parsed = FormsByApplicationFilterParams(input_filter_params)
-        prefix, keys = FormsByApplicationFilter.get_prefix_and_key_for_filter_results_and_parsed_params(
-            self.DOMAIN, input_filter_params, parsed
+        prefix, keys = FormsByApplicationFilter.get_prefix_and_key_for_parsed_params(
+            self.DOMAIN, parsed
         )
         self.assertEqual(expected_prefix, prefix)
         self.assertEqual(expected_keys, keys)

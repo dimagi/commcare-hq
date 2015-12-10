@@ -420,19 +420,19 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         else:
             if not self._application_forms:
                 return []
-            return self.get_filtered_data_for_filter_results_and_parsed_params(
-                self.domain, filter_results, parsed_params
+            return self.get_filtered_data_for_parsed_params(
+                self.domain, parsed_params
             )
 
     @staticmethod
-    def get_filtered_data_for_filter_results_and_parsed_params(domain, filter_results, parsed_params):
-        prefix, key = FormsByApplicationFilter.get_prefix_and_key_for_filter_results_and_parsed_params(
-            domain, filter_results, parsed_params
+    def get_filtered_data_for_parsed_params(domain, parsed_params):
+        prefix, key = FormsByApplicationFilter.get_prefix_and_key_for_parsed_params(
+            domain, parsed_params
         )
         return FormsByApplicationFilter._raw_data([prefix] + key)
 
     @staticmethod
-    def get_prefix_and_key_for_filter_results_and_parsed_params(domain, filter_results, parsed_params):
+    def get_prefix_and_key_for_parsed_params(domain, parsed_params):
         # this code path has multiple forks:
         # 0. if status isn't set (which cory doesn't think is possible) it doesn't filter by status
         #    otherwise it will set status to be either "active" or "deleted" apps
@@ -460,7 +460,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 _assert(False, "got to form ID even though this shouldn't be possible")
                 return [domain, parsed_params.status, parsed_params.app_id,
                         parsed_params.get_module_int(), parsed_params.xmlns]
-
             elif parsed_params.most_granular_filter == 'module':
                 return [domain, parsed_params.status, parsed_params.app_id, parsed_params.get_module_int()]
             elif parsed_params.most_granular_filter == 'app_id':
