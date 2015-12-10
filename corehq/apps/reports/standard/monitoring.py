@@ -590,7 +590,7 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
         if self.sort_col == totals_col:
             users = self.users_by_range(self.startdate, self.enddate, order)
         elif 0 < self.sort_col < totals_col:
-            start = self.dates[self.sort_col-1]
+            start = self.dates[self.sort_col - 1]
             end = start + datetime.timedelta(days=1)
             users = self.users_by_range(start, end, order)
         else:
