@@ -186,7 +186,7 @@ def get_case_properties(domain, case_type=None):
     if case_type:
         key.append(case_type)
     keys = [row['key'] for row in CommCareCase.get_db().view(
-        'hqcase/all_case_properties',
+        'all_case_properties/view',
         startkey=key,
         endkey=key + [{}],
         reduce=True,
