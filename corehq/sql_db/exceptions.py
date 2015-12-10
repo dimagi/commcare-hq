@@ -6,10 +6,6 @@ class NotPowerOf2Error(PartitionValidationError):
     pass
 
 
-class ShardOverlapError(PartitionValidationError):
-    pass
-
-
 class NonContinuousShardsError(PartitionValidationError):
     pass
 

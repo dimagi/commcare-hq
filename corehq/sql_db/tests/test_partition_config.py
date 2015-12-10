@@ -4,9 +4,7 @@ from django.test.utils import override_settings
 from corehq.sql_db.config import DbShard
 from corehq.sql_db.management.commands.configure_pl_proxy_cluster import get_shard_config_strings
 from ..config import PartitionConfig
-from ..exceptions import PartitionValidationError, NotPowerOf2Error, NotZeroStartError, NonContinuousShardsError, \
-    ShardOverlapError
-
+from ..exceptions import NotPowerOf2Error, NotZeroStartError, NonContinuousShardsError
 
 def _get_partition_config(shard_config):
     return {

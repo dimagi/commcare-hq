@@ -1,8 +1,7 @@
 from collections import namedtuple
 
 from django.conf import settings
-from .exceptions import PartitionValidationError, NotPowerOf2Error, NonContinuousShardsError, ShardOverlapError, \
-    NotZeroStartError
+from .exceptions import PartitionValidationError, NotPowerOf2Error, NonContinuousShardsError, NotZeroStartError
 
 FORM_PROCESSING_GROUP = 'form_processing'
 PROXY_GROUP = 'proxy'
@@ -37,11 +36,7 @@ class PartitionConfig(object):
                             previous_range[1], shard_range[0]
                         ))
 
-            current_shards = set(range(shard_range[0], shard_range[1] + 1))
-            if shards_seen & current_shards:
-                raise ShardOverlapError('{} has shards that other dbs point to'.format(group))
-            shards_seen |= current_shards
-
+            shards_seen |= set(range(shard_range[0], shard_range[1] + 1))
             previous_range = shard_range
 
         num_shards = len(shards_seen)
