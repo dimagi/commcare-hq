@@ -531,10 +531,10 @@
       }
       $template.addClass("tour-" + this._options.name + " tour-" + this._options.name + "-" + i);
       if (step.prev < 0) {
-        $prev.addClass('disabled');
+        $prev.addClass('disabled').attr('disabled', 'disabled');
       }
       if (step.next < 0) {
-        $next.addClass('disabled');
+        $next.addClass('disabled').attr('disabled', 'disabled');
       }
       if (!step.duration) {
         $resume.remove();
