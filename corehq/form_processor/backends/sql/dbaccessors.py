@@ -1,7 +1,7 @@
 import logging
 from itertools import groupby
 
-from django.db import connections, InternalError
+from django.db import connections, InternalError, transaction
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
 from corehq.form_processor.models import (
@@ -112,6 +112,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             return result.form_exists
 
     @staticmethod
+    @transaction.atomic
     def hard_delete_forms(domain, form_ids):
         assert isinstance(form_ids, list)
         with get_cursor(XFormInstanceSQL) as cursor:
@@ -128,6 +129,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         FormAccessorSQL._archive_unarchive_form(form, user_id, False)
 
     @staticmethod
+    @transaction.atomic
     def _archive_unarchive_form(form, user_id, archive):
         from casexml.apps.case.xform import get_case_ids_from_form
         form_id = form.form_id
@@ -137,6 +139,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)', [case_ids, form_id, archive])
 
     @staticmethod
+    @transaction.atomic
     def save_new_form(form):
         """
         Save a previously unsaved form
@@ -163,6 +166,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             form.id = result.form_pk
 
     @staticmethod
+    @transaction.atomic
     def save_deprecated_form(form):
         assert form.is_saved(), "Can't deprecate an unsaved form"
         assert form.is_deprecated, 'Re-saving already saved forms not supported'
@@ -188,6 +192,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         FormAccessorSQL.save_new_form(form)
 
     @staticmethod
+    @transaction.atomic
     def update_form_problem_and_state(form):
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
@@ -197,6 +202,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     @unit_testing_only
+    @transaction.atomic
     def delete_test_forms(domain=None, user_id=None):
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT delete_test_forms(%s, %s)', [domain, user_id])
@@ -319,6 +325,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             cursor.execute('SELECT delete_test_cases(%s)', [domain])
 
     @staticmethod
+    @transaction.atomic
     def save_case(case):
         transactions_to_save = case.get_tracked_models_to_create(CaseTransaction)
 
