@@ -2,6 +2,7 @@ import logging
 from itertools import groupby
 
 from django.db import connection, InternalError
+from django.db.models import Q
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
 from corehq.form_processor.models import (
@@ -327,6 +328,18 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                     )
                     logging.debug(msg)
                 raise CaseSaveError(e)
+
+    @staticmethod
+    def get_open_case_ids(domain, owner_id):
+        owner_id_is_falsey = Q(owner_id=None) | Q(owner_id="")
+        owner_query = Q(owner_id=owner_id) | (owner_id_is_falsey & Q(modified_by=owner_id))
+        query = CommCareCaseSQL.objects.filter(domain=domain, closed=False).filter(owner_query)
+        return list(query.values_list('case_id', flat=True))
+
+    @staticmethod
+    def get_closed_case_ids(domain, owner_id):
+        query = CommCareCaseSQL.objects.filter(domain=domain, owner_id=owner_id, closed=True)
+        return list(query.values_list('case_id', flat=True))
 
 
 def _order_list(id_list, object_list, id_property):

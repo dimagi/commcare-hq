@@ -1,6 +1,8 @@
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_case_xform_ids
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
+from corehq.apps.hqcase.dbaccessors import (
+    get_open_case_ids,
+    get_closed_case_ids)
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
 from couchforms.dbaccessors import get_forms_by_type
 from couchforms.models import XFormInstance, doc_types
@@ -52,3 +54,11 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     @staticmethod
     def get_case_ids_in_domain(domain, type=None):
         return get_case_ids_in_domain(domain, type=type)
+
+    @staticmethod
+    def get_open_case_ids(domain, owner_id):
+        return get_open_case_ids(domain, owner_id)
+
+    @staticmethod
+    def get_closed_case_ids(domain, owner_id):
+        return get_closed_case_ids(domain, owner_id)

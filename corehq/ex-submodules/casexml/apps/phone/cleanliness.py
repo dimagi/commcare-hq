@@ -145,11 +145,12 @@ def hint_still_valid(domain, hint):
 
 
 def get_cleanliness_flag_from_scratch(domain, owner_id):
+    casedb = CaseAccessors(domain)
     footprint_info = get_case_footprint_info(domain, owner_id)
     owned_cases = footprint_info.base_ids
     cases_to_check = footprint_info.all_ids - owned_cases
     if cases_to_check:
-        closed_owned_case_ids = set(get_closed_case_ids(domain, owner_id))
+        closed_owned_case_ids = set(casedb.get_closed_case_ids(owner_id))
         cases_to_check = cases_to_check - closed_owned_case_ids - footprint_info.extension_ids
         # check extension cases that are unowned or owned by others
         extension_cases_to_check = footprint_info.extension_ids - closed_owned_case_ids - owned_cases
@@ -239,7 +240,7 @@ def get_case_footprint_info(domain, owner_id):
       2) doesn't return full blown case objects but just IDs
       3) differentiates between the base set and the complete list
     """
-    open_case_ids = set(get_open_case_ids(domain, owner_id))
+    open_case_ids = set(CaseAccessors(domain).get_open_case_ids(owner_id))
     dependent_cases = get_dependent_case_info(domain, open_case_ids)
     return FootprintInfo(base_ids=set(open_case_ids),  # open cases with this owner
                          all_ids=dependent_cases.all_ids | open_case_ids,

@@ -166,9 +166,10 @@ class CleanOwnerCaseSyncOperation(object):
 
     def _get_case_ids_for_owners_without_extensions(self, owner_id):
         if self.is_clean(owner_id):
+            domain = self.restore_state.domain
             if self.restore_state.is_initial:
                 # for a clean owner's initial sync the base set is just the open ids
-                return set(get_open_case_ids(self.restore_state.domain, owner_id))
+                return set(CaseAccessors(domain).get_open_case_ids(owner_id))
             else:
                 # for a clean owner's steady state sync, the base set is anything modified since last sync
                 return set(get_case_ids_modified_with_owner_since(
@@ -188,9 +189,11 @@ class CleanOwnerCaseSyncOperation(object):
             # extension parameters get set correctly
             return get_case_footprint_info(self.restore_state.domain, owner_id).all_ids
         else:
+            domain = self.restore_state.domain
+            case_accessor = CaseAccessors(domain)
             if self.restore_state.is_initial:
                 # for a clean owner's initial sync the base set is just the open ids and their extensions
-                all_case_ids = set(get_open_case_ids(self.restore_state.domain, owner_id))
+                all_case_ids = set(case_accessor.get_open_case_ids(owner_id))
                 new_case_ids = set(all_case_ids)
                 while new_case_ids:
                     all_case_ids = all_case_ids | new_case_ids
@@ -205,7 +208,7 @@ class CleanOwnerCaseSyncOperation(object):
                 # we also need to fetch unowned extension cases that have been modified
                 extension_case_ids = self.restore_state.last_sync_log.extension_index_tree.indices.keys()
                 modified_extension_cases = set(filter_cases_modified_since(
-                    self.restore_state.domain, extension_case_ids, self.restore_state.last_sync_log.date
+                    domain, extension_case_ids, self.restore_state.last_sync_log.date
                 ))
                 return modified_non_extension_cases | modified_extension_cases
 
