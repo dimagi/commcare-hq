@@ -24,10 +24,10 @@
     }"></div>
     <!-- /ko -->
     <div data-bind="if: actionType == 'load'" class="row-fluid">
-        <div class="well well-small span6">
+        <div class="well well-small col-sm-6">
             <div data-bind="template: 'case-config:case-transaction:case-preload'"></div>
         </div>
-        <div class="well well-small span6">
+        <div class="well well-small col-sm-6">
             <div data-bind="template: 'case-config:case-transaction:case-properties'"></div>
         </div>
     </div>
@@ -246,7 +246,7 @@
 
 <div id="case-config-ko" class="row">
     <div data-bind="saveButton: saveButton"></div>
-    <div data-bind="with: caseConfigViewModel" class="span11">
+    <div data-bind="with: caseConfigViewModel" class="col-sm-11">
         <div class="dropdown" data-bind="visible: actionOptions().length">
             <a href="#" data-toggle="dropdown">
                 <i class="icon-plus icon-blue"></i>

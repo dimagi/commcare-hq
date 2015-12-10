@@ -392,7 +392,7 @@
                     <div class="casexml" id="usercasexml_home">
                         {% block usercase_management_content %}
                             {%  if form.uses_usercase and not allow_usercase %}
-                                <div class="container-fluid span6">
+                                <div class="container-fluid col-sm-6">
                                 <p>{% blocktrans %}
                                     The User Case feature is no longer available because of the change in your
                                     CommCare subscription. Although currently-deployed applications will still
@@ -408,10 +408,10 @@
                                 {% endblocktrans %}</p>
 
                                 <p>
-                                    <a href="{% url 'domain_select_plan' domain %}" class="btn btn-primary span6">
+                                    <a href="{% url 'domain_select_plan' domain %}" class="btn btn-primary col-sm-6">
                                         {% trans "Change your subscription" %}
                                     </a>
-                                    <a href="{% url 'drop_user_case' domain app.id %}" class="btn btn-danger span6">
+                                    <a href="{% url 'drop_user_case' domain app.id %}" class="btn btn-danger col-sm-6">
                                         {% trans "Remove User Case Properties" %}
                                     </a>
                                 </p>

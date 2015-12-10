@@ -34,17 +34,17 @@
                     {% trans "Extra" %}
                 </label>
                 <div class="controls">
-                    <div class="well well-small form form-inline clearfix span6">
+                    <div class="well well-small form form-inline clearfix col-sm-6">
                         <!-- ko foreach: extras() -->
                         <div class="fd-kv-pair control-row clearfix" style="margin-bottom: 5px;">
-                            <div class="span3">
+                            <div class="col-sm-3">
                                 <input class="fd-kv-key input-block-level" type="text" data-bind="value: key, addSaveButtonListener: true" placeholder="key" />
                             </div>
-                            <div class="span1" style="text-align:center;">&rarr;</div>
-                            <div class="span7">
+                            <div class="col-sm-1" style="text-align:center;">&rarr;</div>
+                            <div class="col-sm-7">
                                 <input class="fd-kv-val input-block-level" type="text" data-bind="value: value, addSaveButtonListener: true" placeholder="value" />
                             </div>
-                            <div class="span1">
+                            <div class="col-sm-1">
                                 <a href="#" class="btn fd-kv-remove-pair btn-small btn-danger" data-bind="visible: ($parent.extras().length > 1 || !(key() === '' && value() === '')), click: function(item){ $parent.remove_item('extras', item) }">
                                     <i class="icon-remove"></i>
                                 </a>
@@ -61,13 +61,13 @@
                     {% trans "Response" %}
                 </label>
                 <div class="controls">
-                    <div class="well well-small form form-inline clearfix span6">
+                    <div class="well well-small form form-inline clearfix col-sm-6">
                         <!-- ko foreach: responses() -->
                         <div class="fd-kv-pair control-row clearfix" style="margin-bottom: 5px;">
-                            <div class="span3">
+                            <div class="col-sm-3">
                                 <input class="fd-kv-key input-block-level" type="text" data-bind="value: key, addSaveButtonListener: true" placeholder="key" />
                             </div>
-                            <div class="span1">
+                            <div class="col-sm-1">
                                 <a href="#" class="btn fd-kv-remove-pair btn-small btn-danger" data-bind="visible: ($parent.responses().length > 1 || key() != ''), click: function(item){ $parent.remove_item('responses', item) }">
                                     <i class="icon-remove"></i>
                                 </a>

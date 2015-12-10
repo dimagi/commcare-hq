@@ -2,10 +2,10 @@
 
 <script type="text/html" id="usercase-config:case-transaction">
     <div class="row-fluid top-spacer">
-        <div class="well span6">
+        <div class="well col-sm-6">
             <div data-bind="template: 'case-config:case-transaction:case-preload'"></div>
         </div>
-        <div class="well span6">
+        <div class="well col-sm-6">
             <div data-bind="template: 'case-config:case-transaction:case-properties'"></div>
         </div>
     </div>
@@ -13,7 +13,7 @@
 
 <div id="usercase-config-ko">
     <div class="row-fluid">
-        <div class="span12">
+        <div class="col-sm-12">
             {% if allow_usercase %}
             <div data-bind="saveButton: saveUsercaseButton"></div>
             {% endif %}

@@ -32,7 +32,7 @@
                     </div>
                     <div data-bind="visible: filter.selectedValue.doc_type() === 'CustomDatespanFilter'">
                         <span>today() - </span><span data-bind="text: filter.display"></span>
-                        <select class="span3"
+                        <select class="col-sm-3"
                                 data-bind="
                                     options: report.filterConfig.date_operators,
                                     value: filter.selectedValue.operator

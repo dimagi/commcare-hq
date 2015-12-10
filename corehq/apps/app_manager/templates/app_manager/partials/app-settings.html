@@ -5,7 +5,7 @@
 <script type="text/html" id="CommcareSettings.widgets.select">
     <span>
         <span data-bind="if: valueIsLegal()">
-            <select class="span3" data-bind="
+            <select class="col-sm-3" data-bind="
                 options: options,
                 value: selectedOption,
                 optionsText: 'label',
@@ -13,7 +13,7 @@
             "></select>
         </span>
         <span data-bind="if: !valueIsLegal()" >
-            <select class="span3 error" data-bind="
+            <select class="col-sm-3 error" data-bind="
                 options: options,
                 value: writeSelectedOption,
                 optionsText: 'label',
@@ -25,7 +25,7 @@
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.bool">
-    <span class="span3">
+    <span class="col-sm-3">
         <input type="checkbox" data-bind="checked: boolValue, attr: {disabled: !enabled(), id: inputId}"/>
     </span>
 </script>
@@ -84,7 +84,7 @@
 
 <script type="text/html" id="CommcareSettings.widgets.text">
     <span>
-        <input type="text" class="span6" data-bind="
+        <input type="text" class="col-sm-6" data-bind="
             value: visibleValue,
             valueUpdate: 'textchange',
             attr: {disabled: !enabled(), id: inputId}
@@ -94,7 +94,7 @@
 
 <script type="text/html" id="CommcareSettings.widgets.number">
     <span>
-        <input type="number" class="span3" data-bind="
+        <input type="number" class="col-sm-3" data-bind="
             value: visibleValue,
             valueUpdate: 'textchange',
             attr: {disabled: !enabled(), id: inputId}
