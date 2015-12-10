@@ -1,180 +1,191 @@
 <div id="graph_configuration_modal" class="hide">
 
-    <div class="modal hide fade graph-config">
+    <div class="modal fade graph-config">
 
-        <div class="modal-header">
-            <a class="close" data-dismiss="modal">×</a>
-            <h3 data-bind="text: 'Editing ' + graphDisplayName()"></h3>
-        </div>
+        <div class="modal-dialog">
 
-        <div class="modal-body" style="max-height:372px; overflow-y: scroll;">
+            <div class="modal-content">
 
-            <form class="form-horizontal">
-              <div class="control-group">
-                <label class="control-label" for="graphType">Graph Type</label>
-                <div class="controls">
-                    <select id="graphType" data-bind="
-                        options: availableGraphTypes,
-                        value: selectedGraphType
-                    ">
-                    </select>
+                <div class="modal-header">
+                    <button type=”button” class=”close” data-dismiss=”modal”>
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h3 class="modal-title" data-bind="text: 'Editing ' + graphDisplayName()"></h3>
                 </div>
-              </div>
-            </form>
 
-            <div data-bind="bootstrapTabs: true">
-                <div class="tabbable">
-                    <ul class="nav nav-tabs">
-                        <li class="active"><a>Series</a></li>
-                        <li><a>Configuration</a></li>
-                        <li><a>Annotations</a></li>
-                    </ul>
-                </div>
-                <div class="tab-content">
+                <div class="modal-body" style="max-height:372px; overflow-y: scroll;">
 
-                    <div class="tab-pane series">
+                    <form class="form-horizontal">
+                      <div class="control-group">
+                        <label class="control-label" for="graphType">Graph Type</label>
+                        <div class="controls">
+                            <select id="graphType" data-bind="
+                                options: availableGraphTypes,
+                                value: selectedGraphType
+                            ">
+                            </select>
+                        </div>
+                      </div>
+                    </form>
 
-                        <div data-bind="foreach: series">
-                            <form class="form-horizontal">
-                                <div class="control-group">
-                                    <label class="control-label">Source</label>
-                                    <div class="controls">
-                                        <select data-bind="
-                                            value: selectedSource,
-                                            options: sourceOptions,
-                                            optionsText: 'text'
+                    <div data-bind="bootstrapTabs: true">
+                        <div class="tabbable">
+                            <ul class="nav nav-tabs">
+                                <li class="active"><a>Series</a></li>
+                                <li><a>Configuration</a></li>
+                                <li><a>Annotations</a></li>
+                            </ul>
+                        </div>
+                        <div class="tab-content">
+
+                            <div class="tab-pane series">
+
+                                <div data-bind="foreach: series">
+                                    <form class="form-horizontal">
+                                        <div class="control-group">
+                                            <label class="control-label">Source</label>
+                                            <div class="controls">
+                                                <select data-bind="
+                                                    value: selectedSource,
+                                                    options: sourceOptions,
+                                                    optionsText: 'text'
+                                                ">
+                                                </select>
+                                                <a href="#" data-bind="
+                                                    click: toggleShowDataPath,
+                                                    text: showDataPath() ? 'hide path' : 'show path'
+                                                    "></a>
+                                                <div class="pull-right">
+                                                    <a class="btn btn-danger" data-bind="click: $parent.removeSeries">
+                                                        <i class="icon-trash"></i> Delete Series
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="control-group" data-bind="visible: showDataPath">
+                                            <label class="control-label">Data</label>
+                                            <div class="controls">
+                                                <input type="text" class="input-block-level" data-bind="value: dataPath">
+                                            </div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label" data-bind="text: xLabel"></label>
+                                            <div class="controls">
+                                                <input type="text" data-bind="value: xFunction">
+                                            </div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label" data-bind="text: yLabel"></label>
+                                            <div class="controls">
+                                                <input type="text" data-bind="value: yFunction">
+                                            </div>
+                                        </div>
+                                        <!-- ko if: 'radiusFunction' in $data -->
+                                        <div class="control-group">
+                                            <label class="control-label">Radius</label>
+                                            <div class="controls">
+                                                <input type="text" data-bind="value: radiusFunction">
+                                            </div>
+                                        </div>
+                                        <!-- /ko -->
+                                        <div class="control-group">
+                                            <label class="control-label">Configuration</label>
+                                            <div class="controls">
+                                                <div data-bind="foreach: configPairs">
+                                                    <div data-bind="template: 'graph_property_value_mapping_inputs'" class="config-controls"></div>
+                                                </div>
+                                                <a class="btn btn-default btn-small" href="#" data-bind="click: addConfigPair">
+                                                    <i class="icon-plus"></i> Add Property &rarr; Value mapping
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <a class="btn btn-success" href="#" data-bind="click: addSeries">
+                                    <i class="icon-plus"></i> Add Series
+                                </a>
+                            </div>
+
+                            <div class="tab-pane configuration">
+
+                                {# Display the locale-specific property/value pairs #}
+                                <div data-bind="foreach: axisTitleConfigurations">
+                                    <form class="form-inline">
+
+                                        <div class="property-name" data-bind="text: property"></div>
+                                        &rarr;
+                                        <input type="text" class="input" data-bind="
+                                            value: values[$parent.lang],
+                                            attr: {placeholder: getBackup().value}
                                         ">
-                                        </select>
-                                        <a href="#" data-bind="
-                                            click: toggleShowDataPath,
-                                            text: showDataPath() ? 'hide path' : 'show path'
-                                            "></a>
-                                        <div class="pull-right">
-                                            <a class="btn btn-danger" data-bind="click: $parent.removeSeries">
-                                                <i class="icon-trash"></i> Delete Series
+                                        <span data-bind="template: 'backup_language_badge'"></span>
+
+                                    </form>
+                                </div>
+                                <div data-bind="foreach: configPairs">
+                                    <form class="form-inline">
+                                      <div data-bind="template: 'graph_property_value_mapping_inputs'"></div>
+                                    </form>
+                                </div>
+                                <a class="btn btn-success" href="#" data-bind="click: addConfigPair">
+                                    <i class="icon-plus"></i> Add Property &rarr; Value mapping
+                                </a>
+                            </div>
+
+                            <div class="tab-pane annotations">
+                                <table data-bind="if: annotations().length">
+                                    <thead>
+                                        <tr>
+                                          <th>x</th>
+                                          <th>y</th>
+                                          <th>Display Text</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody data-bind="foreach: annotations">
+                                      <tr>
+                                        <td>
+                                            <input type="text" class="input-mini" placeholder="x" data-bind="value: x">
+                                        </td>
+                                        <td>
+                                            <input type="text" class="input-mini" placeholder="y" data-bind="value: y">
+                                        </td>
+                                        <td>
+                                            <input type="text" class="input" placeholder="Display Text" data-bind="
+                                                value: values[$parent.lang],
+                                                attr: {placeholder: getBackup().value}
+                                            ">
+                                            <span data-bind="template: 'backup_language_badge'"></span>
+                                        </td>
+                                        <td>
+                                            <a class="btn btn-small btn-danger" href="#" data-bind="
+                                                click: $parent.removeAnnotation
+                                            ">
+                                                <i class="icon-remove"></i> Delete
                                             </a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="control-group" data-bind="visible: showDataPath">
-                                    <label class="control-label">Data</label>
-                                    <div class="controls">
-                                        <input type="text" class="input-block-level" data-bind="value: dataPath">
-                                    </div>
-                                </div>
-                                <div class="control-group">
-                                    <label class="control-label" data-bind="text: xLabel"></label>
-                                    <div class="controls">
-                                        <input type="text" data-bind="value: xFunction">
-                                    </div>
-                                </div>
-                                <div class="control-group">
-                                    <label class="control-label" data-bind="text: yLabel"></label>
-                                    <div class="controls">
-                                        <input type="text" data-bind="value: yFunction">
-                                    </div>
-                                </div>
-                                <!-- ko if: 'radiusFunction' in $data -->
-                                <div class="control-group">
-                                    <label class="control-label">Radius</label>
-                                    <div class="controls">
-                                        <input type="text" data-bind="value: radiusFunction">
-                                    </div>
-                                </div>
-                                <!-- /ko -->
-                                <div class="control-group">
-                                    <label class="control-label">Configuration</label>
-                                    <div class="controls">
-                                        <div data-bind="foreach: configPairs">
-                                            <div data-bind="template: 'graph_property_value_mapping_inputs'" class="config-controls"></div>
-                                        </div>
-                                        <a class="btn btn-default btn-small" href="#" data-bind="click: addConfigPair">
-                                            <i class="icon-plus"></i> Add Property &rarr; Value mapping
-                                        </a>
-                                    </div>
-                                </div>
-                            </form>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                </table>
+                                <a class="btn btn-success" href="#" data-bind="click: addAnnotation">
+                                    <i class="icon-plus"></i> Add Annotation
+                                </a>
+                            </div>
+
                         </div>
-
-                        <a class="btn btn-success" href="#" data-bind="click: addSeries">
-                            <i class="icon-plus"></i> Add Series
-                        </a>
-                    </div>
-
-                    <div class="tab-pane configuration">
-
-                        {# Display the locale-specific property/value pairs #}
-                        <div data-bind="foreach: axisTitleConfigurations">
-                            <form class="form-inline">
-
-                                <div class="property-name" data-bind="text: property"></div>
-                                &rarr;
-                                <input type="text" class="input" data-bind="
-                                    value: values[$parent.lang],
-                                    attr: {placeholder: getBackup().value}
-                                ">
-                                <span data-bind="template: 'backup_language_badge'"></span>
-
-                            </form>
-                        </div>
-                        <div data-bind="foreach: configPairs">
-                            <form class="form-inline">
-                              <div data-bind="template: 'graph_property_value_mapping_inputs'"></div>
-                            </form>
-                        </div>
-                        <a class="btn btn-success" href="#" data-bind="click: addConfigPair">
-                            <i class="icon-plus"></i> Add Property &rarr; Value mapping
-                        </a>
-                    </div>
-
-                    <div class="tab-pane annotations">
-                        <table data-bind="if: annotations().length">
-                            <thead>
-                                <tr>
-                                  <th>x</th>
-                                  <th>y</th>
-                                  <th>Display Text</th>
-                                </tr>
-                            </thead>
-                            <tbody data-bind="foreach: annotations">
-                              <tr>
-                                <td>
-                                    <input type="text" class="input-mini" placeholder="x" data-bind="value: x">
-                                </td>
-                                <td>
-                                    <input type="text" class="input-mini" placeholder="y" data-bind="value: y">
-                                </td>
-                                <td>
-                                    <input type="text" class="input" placeholder="Display Text" data-bind="
-                                        value: values[$parent.lang],
-                                        attr: {placeholder: getBackup().value}
-                                    ">
-                                    <span data-bind="template: 'backup_language_badge'"></span>
-                                </td>
-                                <td>
-                                    <a class="btn btn-small btn-danger" href="#" data-bind="
-                                        click: $parent.removeAnnotation
-                                    ">
-                                        <i class="icon-remove"></i> Delete
-                                    </a>
-                                </td>
-                              </tr>
-                            </tbody>
-                        </table>
-                        <a class="btn btn-success" href="#" data-bind="click: addAnnotation">
-                            <i class="icon-plus"></i> Add Annotation
-                        </a>
                     </div>
 
                 </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" data-dismiss="modal" data-bind="click: onSave">Save</button>
+                </div>
+
             </div>
 
         </div>
 
-        <div class="modal-footer">
-            <button class="btn btn-default" data-dismiss="modal">Cancel</button>
-            <button class="btn btn-primary" data-dismiss="modal" data-bind="click: onSave">Save</button>
-        </div>
     </div>
 
 </div>

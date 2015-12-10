@@ -132,18 +132,24 @@
 {% block modals %}
     {{ block.super }}
     {% if app.is_deleted %}
-    <div id="deleted-app-dialog" class="modal hide fade">
-        <div class="modal-header"><h3>{% trans 'Oops! This application was deleted.' %}</h3></div>
-        <div class="modal-body">
-            <p>{% trans 'If you want your application back, click Restore.' %}</p>
-        </div>
-        <div class="modal-footer">
-            <a href="{% url "undo_delete_app" domain app.id %}" class="post-link btn btn-primary">
-                {% trans "Restore" %}
-            </a>
-            <a href="#" class="btn btn-default" data-dismiss="modal">
-                {% trans "No thanks, get me out of here" %}
-            </a>
+    <div id="deleted-app-dialog" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">{% trans 'Oops! This application was deleted.' %}</h3>
+                </div>
+                <div class="modal-body">
+                    <p>{% trans 'If you want your application back, click Restore.' %}</p>
+                </div>
+                <div class="modal-footer">
+                    <a href="{% url "undo_delete_app" domain app.id %}" class="post-link btn btn-primary">
+                        {% trans "Restore" %}
+                    </a>
+                    <a href="#" class="btn btn-default" data-dismiss="modal">
+                        {% trans "No thanks, get me out of here" %}
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
     {% endif %}
