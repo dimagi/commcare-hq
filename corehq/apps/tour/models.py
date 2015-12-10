@@ -1,22 +1,34 @@
+import datetime
+from django.contrib.auth.models import User
 from django.db import models
 import json_field
 
 
 class GuidedTours(models.Model):
-    web_user = models.CharField(max_length=80, null=False)
-    tours = json_field.JSONField(
-        default={},
+    user = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        unique=True
     )
-    history = json_field.JSONField(
+    seen_tours = json_field.JSONField(
         default={},
     )
 
     @classmethod
-    def enable_tour_for_user(cls, tour_slug, web_user):
-        # todo
-        pass
+    def has_seen_tour(cls, user, tour_slug):
+        guided_tour, _ = GuidedTours.objects.get_or_create(user=user)
+        return tour_slug not in guided_tour.seen_tours
 
     @classmethod
-    def is_tour_enabled_for_user(cls, tour_slug, web_user):
-        # todo
-        return True
+    def mark_as_seen(cls, user, tour_slug):
+        guided_tour, _ = GuidedTours.objects.get_or_create(user=user)
+        guided_tour.seen_tours[tour_slug] = datetime.datetime.now()
+        guided_tour.save()
+
+
+def mark_tour_as_seen_for_user(user, tour_slug):
+    GuidedTours.mark_as_seen(user, tour_slug)
+
+
+def has_user_seen_tour(user, tour_slug):
+    return GuidedTours.has_seen_tour(user, tour_slug)
