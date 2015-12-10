@@ -3,7 +3,7 @@ from django.test import TestCase
 from corehq.apps.app_manager.tests import AppFactory
 from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_submissions_using_xmlns, \
     update_reports_analytics_indexes, get_all_form_definitions_grouped_by_app_and_xmlns, SimpleFormInfo, \
-    get_all_form_details
+    get_all_form_details, get_form_details_by_xmlns
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import TestFormMetadata, get_simple_form_xml
 from corehq.form_processor.utils import convert_xform_to_json
@@ -69,3 +69,18 @@ class ReportAppAnalyticsTest(TestCase):
             self.assertEqual(0, app_structure.form.id)
             self.assertEqual(self.xmlnses[i], app_structure.xmlns)
             self.assertFalse(app_structure.is_user_registration)
+
+    def test_get_form_details_by_xmlns_no_data(self):
+        self.assertEqual([], get_form_details_by_xmlns('missing', 'missing'))
+        self.assertEqual([], get_form_details_by_xmlns(self.domain, 'missing'))
+        self.assertEqual([], get_form_details_by_xmlns('missing', self.f1_xmlns))
+
+    def test_get_form_details_by_xmlns(self):
+        [details_1] = get_form_details_by_xmlns(self.domain, self.f1_xmlns)
+        [details_2] = get_form_details_by_xmlns(self.domain, self.f2_xmlns)
+        for i, details in enumerate([details_1, details_2]):
+            self.assertEqual(self.app._id, details.app.id)
+            self.assertEqual(i, details.module.id)
+            self.assertEqual(0, details.form.id)
+            self.assertEqual(self.xmlnses[i], details.xmlns)
+            self.assertFalse(details.is_user_registration)

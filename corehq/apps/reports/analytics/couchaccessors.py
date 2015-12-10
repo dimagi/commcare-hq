@@ -70,5 +70,17 @@ def get_all_form_details(domain):
     ]
 
 
+def get_form_details_by_xmlns(domain, xmlns):
+    startkey = ["xmlns", domain, xmlns]
+    return [
+        _row_to_app_structure(row) for row in Application.get_db().view('reports_forms/by_app_info',
+            startkey=startkey,
+            endkey=startkey + [{}],
+            reduce=False,
+            stale=stale_ok(),
+        ).all()
+    ]
+
+
 def _row_to_app_structure(row):
     return FormDetails.wrap(row['value'])

@@ -3,7 +3,7 @@ from django.conf import settings
 from django.utils.safestring import mark_safe
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_submissions_using_xmlns, \
-    get_all_form_definitions_grouped_by_app_and_xmlns, get_all_form_details
+    get_all_form_definitions_grouped_by_app_and_xmlns, get_all_form_details, get_form_details_by_xmlns
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseTagsFilter
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
 from dimagi.utils.decorators.memoized import memoized
@@ -289,7 +289,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 matches[form] = {
                     'app_ids': [d.app_id for d in app_data if d.xmlns == xmlns],
                     'xmlns': xmlns,
-                    }
+                }
         return matches
 
     @property
@@ -298,10 +298,8 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         fuzzy = {}
         for form in self._fuzzy_forms:
             xmlns, unknown_id = self.split_xmlns_app_key(form)
-            key = ["xmlns", self.domain, xmlns]
-            info = self._raw_data(key)
             fuzzy[xmlns] = {
-                'apps': [i['value'] for i in info],
+                'apps': [detail for detail in get_form_details_by_xmlns(self.domain, xmlns)],
                 'unknown_id': unknown_id,
             }
         return fuzzy
@@ -381,7 +379,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         app_name = FormsByApplicationFilter.get_translated_value(display_lang, langs, app['app']['names'])
         module_name = FormsByApplicationFilter.get_translated_value(display_lang, langs, app['module']['names'])
         form_name = FormsByApplicationFilter.get_translated_value(display_lang, langs, app['form']['names'])
-        is_deleted = app.get('is_deleted', False)
+        is_deleted = app['is_deleted']
         if is_deleted:
             app_name = "%s [Deleted]" % app_name
         return "%s > %s > %s" % (app_name, module_name, form_name)
@@ -454,13 +452,13 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 selected_xmlns = [r['xmlns'] for r in result.values()]
                 selected_apps = [r['app_id'] for r in result.values()]
                 for xmlns, info in self._fuzzy_form_data.items():
-                    for app_map in info['apps']:
-                        if xmlns in selected_xmlns and app_map['app']['id'] in selected_apps:
+                    for form_details in info['apps']:
+                        if xmlns in selected_xmlns and form_details.app.id in selected_apps:
                             result["%s %s" % (xmlns, self.fuzzy_slug)] = self._generate_report_app_info(
                                 xmlns,
                                 info['unknown_id'],
                                 "%s [Fuzzy Submissions]" % self._formatted_name_from_app(
-                                    self.display_lang, app_map),
+                                    self.display_lang, form_details),
                                 is_fuzzy=True,
                             )
             return result
