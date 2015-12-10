@@ -9,7 +9,7 @@ class Command(ElasticReindexer):
     help = "Fast reindex of case elastic index by using the case view and reindexing cases"
 
     doc_class = CommCareCase
-    view_name = 'hqcase/by_owner'
+    view_name = 'cases_by_owner/view'
     pillow_class = ReportCasePillow
     file_prefix = "ptop_fast_reindex_Report"
 
