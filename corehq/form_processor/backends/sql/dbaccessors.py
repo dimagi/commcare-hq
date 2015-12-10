@@ -99,10 +99,12 @@ class FormAccessorSQL(AbstractFormAccessor):
     def get_forms_by_type(domain, type_, limit, recent_first=False):
         state = doc_type_to_state[type_]
         assert limit is not None
+        # apply limit in python as well since we may get more results than we expect
+        # if we're in a sharded environment
         return list(XFormInstanceSQL.objects.raw(
             'SELECT * from get_forms_by_state(%s, %s, %s, %s)',
             [domain, state, limit, recent_first]
-        ))
+        ))[:limit]
 
     @staticmethod
     def form_with_id_exists(form_id, domain=None):
