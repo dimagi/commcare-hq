@@ -198,7 +198,7 @@ def get_case_properties(domain, case_type=None):
 
 def get_cases_in_domain_by_external_id(domain, external_id):
     return CommCareCase.view(
-        'hqcase/by_domain_external_id',
+        'cases_by_domain_external_id/view',
         key=[domain, external_id],
         reduce=False,
         include_docs=True,
@@ -207,7 +207,7 @@ def get_cases_in_domain_by_external_id(domain, external_id):
 
 def get_one_case_in_domain_by_external_id(domain, external_id):
     return CommCareCase.view(
-        'hqcase/by_domain_external_id',
+        'cases_by_domain_external_id/view',
         key=[domain, external_id],
         reduce=False,
         include_docs=True,
@@ -220,7 +220,7 @@ def get_supply_point_case_in_domain_by_id(
         domain, supply_point_integer_id):
     from corehq.apps.commtrack.models import SupplyPointCase
     return SupplyPointCase.view(
-        'hqcase/by_domain_external_id',
+        'cases_by_domain_external_id/view',
         key=[domain, str(supply_point_integer_id)],
         reduce=False,
         include_docs=True,
