@@ -13,6 +13,7 @@ from django.db import models
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
+from dimagi.utils.couch.database import get_db
 from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
@@ -135,6 +136,11 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     error_hash = StringProperty()
 
     strict = True  # for asserts
+
+    @classmethod
+    def get(cls, doc_id):
+        doc = get_sync_log_doc(doc_id)
+        return cls.wrap(doc)
 
     def _assert(self, conditional, msg="", case_id=None):
         if not conditional:
@@ -1067,12 +1073,19 @@ def _domain_has_legacy_toggle_set():
     return LEGACY_SYNC_SUPPORT.enabled(domain) if domain else False
 
 
+def get_sync_log_doc(doc_id):
+    try:
+        return SyncLog.get_db().get(doc_id)
+    except ResourceNotFound:
+        return get_db(None).get(doc_id)
+
+
 def get_properly_wrapped_sync_log(doc_id):
     """
     Looks up and wraps a sync log, using the class based on the 'log_format' attribute.
     Defaults to the existing legacy SyncLog class.
     """
-    return properly_wrap_sync_log(SyncLog.get_db().get(doc_id))
+    return properly_wrap_sync_log(get_sync_log_doc(doc_id))
 
 
 def properly_wrap_sync_log(doc):
