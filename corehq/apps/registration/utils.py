@@ -21,7 +21,6 @@ from corehq.apps.users.models import WebUser, CouchUser, UserRole
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.tour import tours
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):

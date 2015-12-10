@@ -1,4 +1,3 @@
-import datetime
 from django.contrib.auth.models import User
 from django.core.management.base import LabelCommand
 import sys
@@ -27,4 +26,3 @@ class Command(LabelCommand):
                     GuidedTours.mark_as_seen(user, tour_slug)
                 sys.stdout.write("\n")
                 print("Complete")
-

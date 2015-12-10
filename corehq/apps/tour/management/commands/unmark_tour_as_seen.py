@@ -31,4 +31,3 @@ class Command(LabelCommand):
                         tours.save()
                 sys.stdout.write("\n")
                 print("Complete")
-
