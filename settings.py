@@ -1084,7 +1084,7 @@ NEW_DOMAINS_DB = 'domains'
 DOMAINS_DB = NEW_DOMAINS_DB
 
 NEW_CASES_DB = 'cases'
-CASES_DB = None
+CASES_DB = NEW_CASES_DB
 
 COUCHDB_APPS = [
     'api',
