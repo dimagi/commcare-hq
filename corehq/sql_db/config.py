@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 from django.conf import settings
 from .exceptions import PartitionValidationError, NotPowerOf2Error, NonContinuousShardsError, ShardOverlapError, \
     NotZeroStartError
@@ -5,6 +7,9 @@ from .exceptions import PartitionValidationError, NotPowerOf2Error, NonContinuou
 FORM_PROCESSING_GROUP = 'form_processing'
 PROXY_GROUP = 'proxy'
 MAIN_GROUP = 'main'
+
+
+DbShard = namedtuple('DbShard', ['shard_number', 'db_name'])
 
 
 class PartitionConfig(object):
@@ -68,13 +73,13 @@ class PartitionConfig(object):
             assert len(dbs) == check_len
         return dbs
 
-    def shard_mapping(self):
+    def get_shards(self):
         """Returns the shard_number mapped to database"""
-        shards = self.partition_config['shards']
-        shard_mapping = {}
-        for db, shard_range in shards.items():
-            shard_mapping.update({shard: db for shard in range(shard_range[0], shard_range[1] + 1)})
-        return shard_mapping
+        shard_config = self.partition_config['shards']
+        shards = []
+        for db, shard_range in shard_config.items():
+            shards.extend([DbShard(shard_num, db) for shard_num in range(shard_range[0], shard_range[1] + 1)])
+        return sorted(shards, key=lambda shard: shard.shard_number)
 
 
 def _is_power_of_2(num):

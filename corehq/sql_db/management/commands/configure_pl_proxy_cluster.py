@@ -55,7 +55,7 @@ def create_pl_proxy_cluster(verbose=False, drop_existing=False):
         with connections[proxy_db].cursor() as cursor:
             cursor.execute(get_drop_server_sql())
 
-    config_sql = get_pl_proxy_server_config_sql(config.shard_mapping())
+    config_sql = get_pl_proxy_server_config_sql(config.get_shards())
     user_mapping_sql = get_user_mapping_sql()
 
     if verbose:
@@ -80,8 +80,8 @@ def cluster_exists(cluster_name):
         return bool(result)
 
 
-def get_pl_proxy_server_config_sql(shard_mapping):
-    shard_configs = get_shard_config_strings(shard_mapping)
+def get_pl_proxy_server_config_sql(shards):
+    shard_configs = get_shard_config_strings(shards)
 
     server_sql = SERVER_TEMPLATE.format(
         server_name=settings.PL_PROXY_CLUSTER_NAME,
@@ -98,14 +98,13 @@ def get_user_mapping_sql():
     return USER_MAPPING_TEMPLATE.format(**proxy_db_config)
 
 
-def get_shard_config_strings(shard_mapping):
+def get_shard_config_strings(shards):
     from django.db.backends.creation import TEST_DATABASE_PREFIX
 
     shard_configs = []
-    for shard_id in sorted(shard_mapping.keys()):
-        django_db_name = shard_mapping[shard_id]
-        db_config = settings.DATABASES[django_db_name].copy()
-        db_config['SHARD_ID'] = shard_id
+    for shard in shards:
+        db_config = settings.DATABASES[shard.db_name].copy()
+        db_config['SHARD_ID'] = shard.shard_number
         if settings.UNIT_TESTING:
             db_config['NAME'] = TEST_DATABASE_PREFIX + db_config['NAME']
         shard_configs.append(

@@ -22,7 +22,7 @@ def create_update_pl_proxy_config():
     drop_server_sql = get_drop_server_sql()
     sql_statements = [
         drop_server_sql,
-        get_pl_proxy_server_config_sql(PartitionConfig().shard_mapping()),
+        get_pl_proxy_server_config_sql(PartitionConfig().get_shards()),
         get_user_mapping_sql()
     ]
 
