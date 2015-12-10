@@ -372,8 +372,6 @@ def view_user_registration(request, domain, app_id):
 
 
 def get_form_view_context_and_template(request, domain, form, langs, is_user_registration, messages=messages):
-    if toggles.GUIDED_TOUR.enabled(domain) and tours.SIMPLE_NEW_APP.is_enabled(request.couch_user):
-        request.guided_tour = tours.SIMPLE_NEW_APP.get_tour_data()
     xform_questions = []
     xform = None
     form_errors = []
@@ -480,6 +478,13 @@ def get_form_view_context_and_template(request, domain, form, langs, is_user_reg
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
     }
+
+    if toggles.GUIDED_TOUR.enabled(domain):
+        is_template_app = context['allow_cloudcare'] and form.source and not context['is_user_registration']
+        if is_template_app and tours.NEW_TEMPLATE_APP.is_enabled(request.user):
+            request.guided_tour = tours.NEW_TEMPLATE_APP.get_tour_data()
+        elif tours.NEW_BLANK_APP.is_enabled(request.user):
+            request.guided_tour = tours.NEW_BLANK_APP.get_tour_data()
 
     if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
         module = form.get_module()

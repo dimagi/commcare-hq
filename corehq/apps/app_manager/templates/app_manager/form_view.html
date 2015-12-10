@@ -88,25 +88,7 @@
         {% endif %}
         });
     </script>
-{% if request.guided_tour %}
-    <script>
-        var Tour = function(tour_data) {
-            // dummy tour demoing hook until we upgrade bootstrap 2.3.2 so that the new
-            // version of Bootstrap Tour can be used
-            var self = this;
-            self.init = function () {
-                console.log('initialize tour');
-                console.log(tour_data);
-            };
-            self.start = function () {
-                console.log('start the tour!');
-            };
-        };
-        var tour = new Tour({{ request.guided_tour|JSON }});
-        tour.init();
-        tour.start();
-    </script>
-{% endif %}
+{% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
 {% endblock %}
 
 {% block case_management_js %}{{ block.super }}
