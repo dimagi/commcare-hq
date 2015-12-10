@@ -140,7 +140,7 @@ def create_form_for_test(domain, case_id=None, attachments=None, save=True):
     :param case_id: create case with ID if supplied
     :param attachments: additional attachments dict
     :param save: if False return the unsaved form
-    :return: form_id
+    :return: form object
     """
     form_id = uuid4().hex
     user_id = 'user1'

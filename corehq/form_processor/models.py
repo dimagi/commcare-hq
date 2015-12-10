@@ -111,11 +111,15 @@ class DisabledDbMixin(object):
 
 class RestrictedManager(models.Manager):
     def get_queryset(self):
-        raise AccessRestricted('Only "raw" queries allowed')
+        if not getattr(settings, 'ALLOW_FORM_PROCESSING_QUERIES', False):
+            raise AccessRestricted('Only "raw" queries allowed')
+        else:
+            return super(RestrictedManager, self).get_queryset()
 
     def raw(self, raw_query, params=None, translations=None, using=None):
         from django.db.models.query import RawQuerySet
-        using = db_for_read_write(self.model)
+        if not using:
+            using = db_for_read_write(self.model)
         return RawQuerySet(raw_query, model=self.model,
                 params=params, translations=translations,
                 using=using)
