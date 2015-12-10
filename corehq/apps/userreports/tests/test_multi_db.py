@@ -24,7 +24,7 @@ class UCRMultiDBTest(TestCase):
         cls.db2_url = '/'.join(db_conn_parts)
 
         # setup patches
-        cls.connection_string_patch = patch('corehq.sql_db.connection_manager.get_connection_string')
+        cls.connection_string_patch = patch('corehq.sql_db.connections.connection_manager.get_connection_string')
 
         def connection_string_for_engine(engine_id):
             if engine_id == 'engine-1':
