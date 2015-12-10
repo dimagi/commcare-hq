@@ -30,8 +30,7 @@ class ReportsAnalyticsTest(TestCase):
         self.assertEqual(form_name, guess_form_name_from_submissions_using_xmlns(domain, xmlns))
 
 
-class ReportAppAnalyticsTest(TestCase):
-    dependent_apps = ['corehq.couchapps']
+class SetupSimpleAppMixin(object):
 
     @classmethod
     def setUpClass(cls):
@@ -47,6 +46,10 @@ class ReportAppAnalyticsTest(TestCase):
         app_factory.app.save()
         cls.app = app_factory.app
         update_reports_analytics_indexes()
+
+
+class ReportAppAnalyticsTest(SetupSimpleAppMixin, TestCase):
+    dependent_apps = ['corehq.couchapps']
 
     def test_get_all_form_definitions_grouped_by_app_and_xmlns_no_data(self):
         self.assertEqual([], get_all_form_definitions_grouped_by_app_and_xmlns('missing'))
