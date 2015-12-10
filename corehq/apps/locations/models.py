@@ -540,14 +540,7 @@ class Location(CachedCouchDocumentMixin, Document):
         self.is_archived = True
         self.save()
 
-        sp = self.linked_supply_point()
-        # sanity check that the supply point exists and is still open.
-        # this is important because if you archive a child, then try
-        # to archive the parent, we don't want to try to close again
-        if sp and not sp.closed:
-            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
-
-        _unassign_users_from_location(self.domain, self._id)
+        self._close_case_and_remove_users()
 
     def archive(self):
         """
@@ -588,16 +581,12 @@ class Location(CachedCouchDocumentMixin, Document):
         for loc in [self] + self.descendants:
             loc._unarchive_single_location()
 
-    def _delete_single_couch_location(self):
+    def _close_case_and_remove_users(self):
         """
-        Delete a single couch location, caller is expected to handle
-        deleting children as well.
+        Closes linked supply point cases for a location and unassigns the users
+        assigned to that location.
 
-        This is just used to prevent having to do recursive
-        couch queries in `delete()`.
-
-        The django ORM automatically does cascading deletes for the child locations,
-        so we only need to deal explicitly with children for couch.
+        Used by both archive and delete methods
         """
 
         sp = self.linked_supply_point()
@@ -608,8 +597,6 @@ class Location(CachedCouchDocumentMixin, Document):
             close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
 
         _unassign_users_from_location(self.domain, self._id)
-
-        self.delete()
 
     def full_delete(self):
         """
@@ -622,7 +609,8 @@ class Location(CachedCouchDocumentMixin, Document):
         with transaction.atomic():
             SQLLocation.objects.get(location_id=self._id).delete()
             for loc in to_delete:
-                loc._delete_single_couch_location()
+                loc._close_case_and_remove_users()
+            Location.get_db().bulk_delete(to_delete)
 
     def save(self, *args, **kwargs):
         """
