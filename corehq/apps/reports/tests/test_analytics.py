@@ -2,7 +2,7 @@ import uuid
 from django.test import TestCase
 from corehq.apps.app_manager.tests import AppFactory
 from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_submissions_using_xmlns, \
-    update_reports_analytics_indexes, get_all_form_definitions_grouped_by_app_and_xmlns, FormInfo, \
+    update_reports_analytics_indexes, get_all_form_definitions_grouped_by_app_and_xmlns, SimpleFormInfo, \
     get_all_app_structures
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import TestFormMetadata, get_simple_form_xml
@@ -53,7 +53,7 @@ class ReportAppAnalyticsTest(TestCase):
 
     def test_get_all_form_definitions_grouped_by_app_and_xmlns(self):
         self.assertEqual(
-            [FormInfo(self.app._id, self.f1_xmlns), FormInfo(self.app._id, self.f2_xmlns)],
+            [SimpleFormInfo(self.app._id, self.f1_xmlns), SimpleFormInfo(self.app._id, self.f2_xmlns)],
             get_all_form_definitions_grouped_by_app_and_xmlns(self.domain)
         )
 

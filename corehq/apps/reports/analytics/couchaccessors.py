@@ -8,7 +8,7 @@ from couchforms.models import XFormInstance
 from dimagi.ext import jsonobject
 
 
-FormInfo = namedtuple('FormInfo', ['app_id', 'xmlns'])
+SimpleFormInfo = namedtuple('FormInfo', ['app_id', 'xmlns'])
 
 
 class AppInfo(jsonobject.JsonObject):
@@ -43,7 +43,7 @@ def guess_form_name_from_submissions_using_xmlns(domain, xmlns):
 
 def get_all_form_definitions_grouped_by_app_and_xmlns(domain):
     def _row_to_form_info(row):
-        return FormInfo(app_id=row['key'][3], xmlns=row['key'][2])
+        return SimpleFormInfo(app_id=row['key'][3], xmlns=row['key'][2])
 
     startkey = ["xmlns app", domain]
     return [
