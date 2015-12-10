@@ -543,6 +543,7 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
 
     def users_by_range(self, start, end, order):
         results = get_form_counts_for_daterange_by_user(
+            self.domain,
             start,
             end,
             self.date_field,
@@ -617,6 +618,7 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
             user_ids = map(lambda user: user.user_id, self.all_users)
 
         results = get_form_counts_for_users_by_date(
+            self.domain,
             user_ids,
             self.startdate,
             self.enddate,
