@@ -209,8 +209,8 @@ class ESQuery(object):
     def terms_facet(self, term, name, size=None):
         return self.facet(facets.TermsFacet(term, name, size))
 
-    def date_histogram(self, name, datefield, interval):
-        return self.facet(facets.DateHistogram(name, datefield, interval))
+    def date_histogram(self, name, datefield, interval, timezone=None):
+        return self.facet(facets.DateHistogram(name, datefield, interval, timezone=None))
 
     @property
     def _query(self):
