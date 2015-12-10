@@ -5,6 +5,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_submissions_using_xmlns, \
     get_all_form_definitions_grouped_by_app_and_xmlns, get_all_form_details, get_form_details_for_xmlns
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseTagsFilter
+from corehq.util.soft_assert import soft_assert
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
 from dimagi.utils.decorators.memoized import memoized
 
@@ -45,6 +46,11 @@ class FormsByApplicationFilterParams(object):
     def show_active(self):
         return self.status == PARAM_VALUE_STATUS_ACTIVE
 
+    def get_module_int(self):
+        try:
+            return int(self.module)
+        except ValueError:
+            return None
 
 class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     """
@@ -422,19 +428,47 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @staticmethod
     def get_prefix_and_key_for_filter_results_and_parsed_params(domain, filter_results, parsed_params):
+        # this code path has multiple forks:
+        # 0. if status isn't set (which cory doesn't think is possible) it doesn't filter by status
+        #    otherwise it will set status to be either "active" or "deleted" apps
+        # 1. if status is set, but nothing else is, it will return all forms in apps of that status
+        # 2. if status and app_id are set, but nothing else, it will return all forms in that app
+        # 3. if status and app_id and module_id are set, it will return all forms in that module if
+        #    the module is valid, otherwise it falls back to the app
+        # 4. if status, app_id, module_id, and xmlns are set (which cory doesn't think is possible)
+        #    it returns that form.
         prefix = "app module form"
-        key = [domain]
+        _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']))
         if parsed_params.status:
             prefix = "%s %s" % ("status", prefix)
-        for f in filter_results:
-            val = f['value']
-            if f['slug'] == 'module':
-                try:
-                    val = int(val)
-                except Exception:
-                    break
-            key.append(val)
-        return prefix, key
+        else:
+            # todo: remove anytime in 2016
+            _assert(False, "status in filter wasn't set - this isn't expected to be possible")
+
+        def _get_key():
+            if parsed_params.module is not None and parsed_params.get_module_int() is None:
+                # todo: remove anytime in 2016
+                _assert(False, "module set but not a valid number!")
+                return [domain, parsed_params.status, parsed_params.app_id]
+            elif parsed_params.most_granular_filter == 'xmlns':
+                # todo: remove anytime in 2016
+                _assert(False, "got to form ID even though this shouldn't be possible")
+                return [domain, parsed_params.status, parsed_params.app_id,
+                        parsed_params.get_module_int(), parsed_params.xmlns]
+
+            elif parsed_params.most_granular_filter == 'module':
+                return [domain, parsed_params.status, parsed_params.app_id, parsed_params.get_module_int()]
+            elif parsed_params.most_granular_filter == 'app_id':
+                return [domain, parsed_params.status, parsed_params.app_id]
+            elif parsed_params.most_granular_filter == 'status':
+                return [domain, parsed_params.status]
+            else:
+                # todo: remove anytime in 2016
+                _assert(False, 'most granular filter was a surprising value ({}).'.format(
+                    parsed_params.most_granular_filter))
+                return [domain]
+
+        return prefix, _get_key()
 
     def _get_selected_forms(self, filter_results):
         """
