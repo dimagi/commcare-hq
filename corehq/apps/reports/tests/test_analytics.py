@@ -4,7 +4,7 @@ from corehq.apps.app_manager.tests import AppFactory
 from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_submissions_using_xmlns, \
     update_reports_analytics_indexes, get_all_form_definitions_grouped_by_app_and_xmlns, SimpleFormInfo, \
     get_all_form_details, get_form_details_for_xmlns, get_form_details_for_app_and_module, \
-    get_form_details_for_app_and_xmlns
+    get_form_details_for_app_and_xmlns, get_form_details_for_app
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import TestFormMetadata, get_simple_form_xml
 from corehq.form_processor.utils import convert_xform_to_json
@@ -87,6 +87,16 @@ class ReportAppAnalyticsTest(SetupSimpleAppMixin, TestCase):
         [details_2] = get_form_details_for_xmlns(self.domain, self.f2_xmlns)
         for i, details in enumerate([details_1, details_2]):
             self._assert_form_details_match(i, details)
+
+    def test_get_form_details_for_app_no_data(self):
+        self.assertEqual([], get_form_details_for_app('missing', 'missing'))
+        self.assertEqual([], get_form_details_for_app('missing', self.app.id))
+        self.assertEqual([], get_form_details_for_app(self.domain, 'missing'))
+
+    def test_get_form_details_for_app(self):
+        details = get_form_details_for_app(self.domain, self.app.id)
+        for i, detail in enumerate(details):
+            self._assert_form_details_match(i, detail)
 
     def test_get_form_details_for_app_and_module_no_data(self):
         self.assertEqual([], get_form_details_for_app_and_module('missing', self.app.id, 0))

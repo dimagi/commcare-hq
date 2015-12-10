@@ -82,6 +82,19 @@ def get_form_details_for_xmlns(domain, xmlns):
     ]
 
 
+def get_form_details_for_app(domain, app_id, deleted=False):
+    status = 'deleted' if deleted else 'active'
+    startkey = ["status app module form", domain, status, app_id]
+    return [
+        _row_to_form_details(row) for row in Application.get_db().view('reports_forms/by_app_info',
+            startkey=startkey,
+            endkey=startkey + [{}],
+            reduce=False,
+            stale=stale_ok(),
+        ).all()
+    ]
+
+
 def get_form_details_for_app_and_module(domain, app_id, module_id, deleted=False):
     status = 'deleted' if deleted else 'active'
     startkey = ["status app module form", domain, status, app_id, module_id]
