@@ -1,5 +1,6 @@
 from django.conf import settings
-from .exceptions import PartitionValidationError
+from .exceptions import PartitionValidationError, NotPowerOf2Error, NonContinuousShardsError, ShardOverlapError, \
+    NotZeroStartError
 
 FORM_PROCESSING_GROUP = 'form_processing'
 PROXY_GROUP = 'proxy'
@@ -19,16 +20,29 @@ class PartitionConfig(object):
                     raise PartitionValidationError('{} not in found in DATABASES'.format(db))
 
         shards_seen = set()
-        for group, shard_range, in self.partition_config['shards'].items():
+        previous_range = None
+        for group, shard_range, in sorted(self.partition_config['shards'].items(), key=lambda x: x[0]):
+            if not previous_range:
+                if shard_range[0] != 0:
+                    raise NotZeroStartError('Shard numbering must start at 0')
+            else:
+                if previous_range[1] + 1 != shard_range[0]:
+                    raise NonContinuousShardsError(
+                        'Shards must be numbered consecutively: {} -> {}'.format(
+                            previous_range[1], shard_range[0]
+                        ))
+
             current_shards = set(range(shard_range[0], shard_range[1] + 1))
             if shards_seen & current_shards:
-                raise PartitionValidationError('{} has shards that other dbs point to'.format(group))
+                raise ShardOverlapError('{} has shards that other dbs point to'.format(group))
             shards_seen |= current_shards
+
+            previous_range = shard_range
 
         num_shards = len(shards_seen)
 
         if not _is_power_of_2(num_shards):
-            raise PartitionValidationError('Total number of shards must be a power of 2')
+            raise NotPowerOf2Error('Total number of shards must be a power of 2')
 
     @property
     def partition_config(self):
