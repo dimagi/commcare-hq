@@ -109,6 +109,14 @@ class FormsByApplicationFilterSimpleTest(SimpleTestCase):
 class FormsByApplicationFilterDbTest(SetupSimpleAppMixin, TestCase):
     dependent_apps = ['corehq.couchapps']
 
+    def test_get_filtered_data_by_app_id_missing(self):
+        params = FormsByApplicationFilterParams([
+            _make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
+            _make_filter(PARAM_SLUG_APP_ID, 'missing')
+        ])
+        results = FormsByApplicationFilter.get_filtered_data_for_parsed_params(self.domain, params)
+        self.assertEqual(0, len(results))
+
     def test_get_filtered_data_by_app_id(self):
         params = FormsByApplicationFilterParams([
             _make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
@@ -119,6 +127,15 @@ class FormsByApplicationFilterDbTest(SetupSimpleAppMixin, TestCase):
         self.assertEqual(2, len(results))
         for i, details in enumerate(results):
             self._assert_form_details_match(i, details)
+
+    def test_get_filtered_data_by_module_id_missing(self):
+        params = FormsByApplicationFilterParams([
+            _make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
+            _make_filter(PARAM_SLUG_APP_ID, self.app.id),
+            _make_filter(PARAM_SLUG_MODULE, '3'),
+        ])
+        results = FormsByApplicationFilter.get_filtered_data_for_parsed_params(self.domain, params)
+        self.assertEqual(0, len(results))
 
     def test_get_filtered_data_by_module_id(self):
         for i in range(2):
@@ -131,6 +148,18 @@ class FormsByApplicationFilterDbTest(SetupSimpleAppMixin, TestCase):
             results = map(_row_to_form_details, results)
             self.assertEqual(1, len(results))
             details = results[0]
+            self._assert_form_details_match(i, details)
+
+    def test_get_filtered_data_by_module_id_bad(self):
+        params = FormsByApplicationFilterParams([
+            _make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
+            _make_filter(PARAM_SLUG_APP_ID, self.app.id),
+            _make_filter(PARAM_SLUG_MODULE, 'illegal'),
+        ])
+        results = FormsByApplicationFilter.get_filtered_data_for_parsed_params(self.domain, params)
+        results = map(_row_to_form_details, results)
+        self.assertEqual(2, len(results))
+        for i, details in enumerate(results):
             self._assert_form_details_match(i, details)
 
 
