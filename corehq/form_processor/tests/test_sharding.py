@@ -55,8 +55,8 @@ class ShardingTests(TestCase):
         forms_per_db = {}
         cases_per_db = {}
         for db in self.partion_config.get_form_processing_dbs():
-            forms_per_db[db] = XFormInstanceSQL.objects.using(db).count()
-            cases_per_db[db] = CommCareCaseSQL.objects.using(db).count()
+            forms_per_db[db] = XFormInstanceSQL.objects.using(db).filter(domain=DOMAIN).count()
+            cases_per_db[db] = CommCareCaseSQL.objects.using(db).filter(domain=DOMAIN).count()
 
         self.assertEqual(num_forms, sum(forms_per_db.values()), forms_per_db)
         self.assertEqual(num_forms, sum(cases_per_db.values()), cases_per_db)
