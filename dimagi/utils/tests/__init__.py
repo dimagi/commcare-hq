@@ -17,3 +17,4 @@ from .dates import *
 from .test_json_handler import *
 from .test_modules import *
 from .cache_tests import *
+from .test_rate_limit import *
