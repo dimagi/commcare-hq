@@ -36,7 +36,7 @@
 185.12.7.167
 
 [elasticsearch]
-185.12.7.167
+185.12.7.167 elasticsearch_node_name=hqes1
 
 [shared_dir_host]
 185.12.7.167
