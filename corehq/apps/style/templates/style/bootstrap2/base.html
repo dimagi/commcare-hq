@@ -128,7 +128,7 @@
                     </div>
                     {% if request.user.is_authenticated %}
                     <div class="btn-toolbar pull-right">
-                        <a data-toggle="modal" data-target="#reportIssueModal" href="#reportIssueModal" data-backdrop="static" class="btn btn-footer-highlight"><i class="icon-comment"></i> {% trans 'Report an Issue' %}</a>
+                        <a data-toggle="modal" data-target="#modalReportIssue" href="#modalReportIssue" data-backdrop="static" class="btn btn-footer-highlight"><i class="icon-comment"></i> {% trans 'Report an Issue' %}</a>
                         <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" target="_blank" class="btn btn-footer"><i class="icon-info-sign"></i> {% trans 'CommCare Help Site' %}</a>
                         <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}" target="_blank" class="btn btn-footer"><i class="icon-envelope"></i> {% trans 'Mailing List' %}</a>
                     </div>
@@ -153,7 +153,7 @@
         </footer>
         <div id="hq-modal-home">
             {% if request.user.is_authenticated %}
-            <div class="modal hide fade" id="reportIssueModal">
+            <div class="modal hide fade" id="modalReportIssue">
                 <div class="modal-header">
                     <a class="close" data-dismiss="modal">&times;</a>
                     <h3>{% trans "Report an Issue with CommCare HQ" %}</h3>

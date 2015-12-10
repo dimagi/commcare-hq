@@ -803,7 +803,7 @@ class CreditForm(forms.Form):
             raise ValidationError(mark_safe(_(
                 'Amount over maximum size.  If you need support for '
                 'quantities this large, please <a data-toggle="modal" '
-                'data-target="#reportIssueModal" href="#reportIssueModal">'
+                'data-target="#modalReportIssue" href="#modalReportIssue">'
                 'Report an Issue</a>.'
             )))
         return amount
