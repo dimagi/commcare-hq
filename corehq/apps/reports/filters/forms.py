@@ -4,7 +4,7 @@ from django.utils.safestring import mark_safe
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_submissions_using_xmlns, \
     get_all_form_definitions_grouped_by_app_and_xmlns, get_all_form_details, get_form_details_for_xmlns, \
-    get_form_details_for_app_and_xmlns, FormDetails, get_form_details_for_app_and_module, get_form_details_for_app
+    get_form_details_for_app_and_xmlns, get_form_details_for_app_and_module, get_form_details_for_app
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseTagsFilter
 from corehq.util.soft_assert import soft_assert
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
@@ -418,7 +418,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 self.domain,
                 parsed_params.app_id,
                 parsed_params.xmlns,
-                deleted=parsed_params.status==PARAM_VALUE_STATUS_DELETED,
+                deleted=parsed_params.status == PARAM_VALUE_STATUS_DELETED,
             )
         else:
             if not self._application_forms:
