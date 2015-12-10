@@ -1,0 +1,26 @@
+{% extends 'style/bootstrap3/base.html' %}
+{% load hq_shared_tags %}
+
+{% block title %}{{ section.page_name }}{% if current_page.title %}: {{ current_page.title }}{% endif %}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {% if current_page.parents %}
+        <ul class="breadcrumb">
+            {% for parent in current_page.parents %}
+                <li><a href="{{ parent.url }}">{{ parent.title }}</a> <span class="divider">&gt;</span></li>
+            {% endfor %}
+            {% if current_page.page_name %}
+            <li class="active">
+                <a href="{{ current_page.url }}">{{ current_page.page_name }}</a>
+            </li>
+            {% endif %}
+        </ul>
+        {% endif %}
+        <div class="page-header">
+            <h1>{{ current_page.page_name }}</h1>
+        </div>
+        {% block page_content %}
+        {% endblock %}
+    </div>
+{% endblock %}

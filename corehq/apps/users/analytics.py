@@ -66,4 +66,5 @@ def get_search_users_in_domain_es_query(domain, search_string, limit, offset):
             .domain(domain)
             .search_string_query(search_string, default_search_fields)
             .start(offset)
-            .size(limit))
+            .size(limit)
+            .sort('username'))

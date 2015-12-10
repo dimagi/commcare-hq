@@ -4,6 +4,8 @@ import logging
 from tempfile import NamedTemporaryFile
 from decimal import Decimal
 from couchdbkit import ResourceNotFound
+from django.db.models.manager import Manager
+
 from corehq.util.quickcache import quickcache
 from corehq.util.global_request import get_request
 from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
@@ -998,6 +1000,7 @@ class Subscription(models.Model):
     is_active = models.BooleanField(default=False)
     do_not_invoice = models.BooleanField(default=False)
     no_invoice_reason = models.CharField(blank=True, null=True, max_length=256)
+    do_not_email = models.BooleanField(default=False)
     auto_generate_credits = models.BooleanField(default=False)
     is_trial = models.BooleanField(default=False)
     service_type = models.CharField(
@@ -1176,7 +1179,7 @@ class Subscription(models.Model):
 
     def update_subscription(self, date_start=None, date_end=None,
                             date_delay_invoicing=None, do_not_invoice=False,
-                            no_invoice_reason=None,
+                            no_invoice_reason=None, do_not_email=False,
                             salesforce_contract_id=None,
                             auto_generate_credits=False,
                             web_user=None, note=None, adjustment_method=None,
@@ -1210,6 +1213,7 @@ class Subscription(models.Model):
 
         self.do_not_invoice = do_not_invoice
         self.no_invoice_reason = no_invoice_reason
+        self.do_not_email = do_not_email
         self.auto_generate_credits = auto_generate_credits
         self.salesforce_contract_id = salesforce_contract_id
         if service_type is not None:
@@ -1693,6 +1697,7 @@ class InvoiceBase(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
 
     objects = InvoiceBaseManager()
+    api_objects = Manager()
 
     class Meta:
         abstract = True
@@ -2145,7 +2150,8 @@ class BillingRecord(BillingRecordBase):
         small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD and
                             subscription.service_type == SubscriptionType.CONTRACTED)
         hidden = self.invoice.is_hidden
-        return not (autogenerate or small_contracted or hidden)
+        do_not_email = self.invoice.subscription.do_not_email
+        return not (autogenerate or small_contracted or hidden or do_not_email)
 
     def is_email_throttled(self):
         month = self.invoice.date_start.month

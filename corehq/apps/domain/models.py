@@ -22,7 +22,6 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.util.quickcache import skippable_quickcache
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import (
     iter_docs, get_safe_write_kwargs, apply_update, iter_bulk_delete
 )
@@ -415,19 +414,15 @@ class Domain(Document, SnapshotMixin):
             return []
 
     @classmethod
-    def field_by_prefix(cls, field, prefix='', is_approved=True):
+    def field_by_prefix(cls, field, prefix=''):
         # unichr(0xfff8) is something close to the highest character available
         res = cls.view("domain/fields_by_prefix",
                        group=True,
-                       startkey=[field, is_approved, prefix],
-                       endkey=[field, is_approved, "%s%c" % (prefix, unichr(0xfff8)), {}])
+                       startkey=[field, True, prefix],
+                       endkey=[field, True, "%s%c" % (prefix, unichr(0xfff8)), {}])
         vals = [(d['value'], d['key'][2]) for d in res]
         vals.sort(reverse=True)
         return [(v[1], v[0]) for v in vals]
-
-    @classmethod
-    def get_by_field(cls, field, value, is_approved=True):
-        return cls.view('domain/fields_by_prefix', key=[field, is_approved, value], reduce=False, include_docs=True).all()
 
     def add(self, model_instance, is_active=True):
         """

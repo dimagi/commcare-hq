@@ -135,6 +135,7 @@ describe('DownloadProgressController', function() {
                     DnldExpData.exportDownloadService.exportType = 'form';
                     DnldExpData.currentScope.sendAnalytics();
                     assert.isTrue(analytics.usage.lastCall.calledWith("Download Export", "Form", "Saved"));
+                    assert.isTrue(analytics.workflow.lastCall.calledWith("Clicked Download button"));
                 });
             });
         });

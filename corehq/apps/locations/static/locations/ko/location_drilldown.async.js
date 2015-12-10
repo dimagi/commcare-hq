@@ -7,14 +7,14 @@ function api_get_children(loc_uuid, callback) {
     });
 }
 
-function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_filter, func) {
+function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_filter, func, show_location_filter) {
   var model = this;
 
   this.default_caption = default_caption || 'All';
   this.auto_drill = (_.isBoolean(auto_drill) ? auto_drill : true);
   this.loc_filter = loc_filter || function(loc) { return true; };
   this.func = typeof func !== 'undefined' ? func : LocationModel;
-
+  this.show_location_filter = ko.observable((typeof show_location_filter !== 'undefined') ? show_location_filter : 'y');
 
   this.root = ko.observable();
   this.selected_path = ko.observableArray();
@@ -22,6 +22,10 @@ function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_fil
   this.location_types = $.map(hierarchy, function(e) {
           return {type: e[0], allowed_parents: e[1]};
       });
+
+  this.show_location_filter_bool = ko.computed(function() {
+    return model.show_location_filter() === 'y';
+  });
 
   // currently selected location in the tree (or null)
   this.selected_location = ko.computed(function() {
@@ -35,6 +39,9 @@ function LocationSelectViewModel(hierarchy, default_caption, auto_drill, loc_fil
     }, this);
   // uuid of currently selected location (or null)
   this.selected_locid = ko.computed(function() {
+      if(!model.show_location_filter_bool()) {
+        return null;
+      }
       return this.selected_location() ? this.selected_location().uuid() : null;
     }, this);
 

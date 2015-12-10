@@ -6,20 +6,25 @@
 # This means that replacing INSTALLED_APPS with the list of declared dependencies plus the app
 # should still allow `./manage.py test app` to pass.
 pillowtop: []
+testapps.test_elasticsearch: []
 testapps.test_pillowtop:
   - corehq.apps.users
   - couchforms
 casexml.apps.phone:
+  - auditcare
+  - django_digest
   - casexml.apps.phone
   - casexml.apps.stock
   - corehq.couchapps
   - corehq.form_processor
+  - corehq.apps.domain
   - corehq.apps.hqcase
   - corehq.apps.products
   - corehq.apps.reminders
   - corehq.apps.sms
   - corehq.apps.smsforms
   - corehq.apps.tzmigration
+  - corehq.apps.users
   - couchforms
   - phonelog
 casexml.apps.case:

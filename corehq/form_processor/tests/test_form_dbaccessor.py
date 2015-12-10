@@ -8,7 +8,7 @@ from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL
 from corehq.form_processor.parsers.form import apply_deprecation
-from corehq.form_processor.tests.utils import create_form_for_test, get_simple_form_data
+from corehq.form_processor.tests.utils import create_form_for_test, get_simple_form_xml
 from crispy_forms.tests.utils import override_settings
 
 DOMAIN = 'test-form-accessor'
@@ -62,7 +62,7 @@ class FormAccessorTestsSQL(TestCase):
 
     def test_get_attachment_by_name(self):
         form = create_form_for_test(DOMAIN)
-        form_xml = get_simple_form_data(form.form_id)
+        form_xml = get_simple_form_xml(form.form_id)
 
         with self.assertRaises(AttachmentNotFound):
             FormAccessorSQL.get_attachment_by_name(form.form_id, 'not_a_form.xml')
