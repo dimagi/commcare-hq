@@ -469,7 +469,7 @@
                 minimal: {{ minimal|JSON }}
             });
 
-            ko.applyBindings(customExportView, $('#customize-export').get(0));
+            $('#customize-export').koApplyBindings(customExportView);
         });
     </script>
 {% endblock %}

@@ -38,7 +38,7 @@
             return model.presubmit();
         });
 
-        ko.applyBindings(model, $('#settings').get(0));
+        $('#settings').koApplyBindings(model);
 
         $("form#settings").on("change input", function() {
             $(this).find(":submit").enable();

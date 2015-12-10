@@ -20,7 +20,7 @@
             is_new_exporter: true,
             export_type: "case"
         } );
-        ko.applyBindings(caseExportManager, $('#case-download')[0]);
+        $('#case-download').koApplyBindings(caseExportManager);
     </script>
 {% endblock %}
 
