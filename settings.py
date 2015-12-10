@@ -29,6 +29,18 @@ COUCHDB_DATABASES = [(app, COUCH_DATABASE) for app in ['utils', 'ext', 'couch']]
 
 TEST_RUNNER = 'couchdbkit.ext.django.testrunner.CouchDbKitTestSuiteRunner'
 
+###### Redis Config ######
+REDIS_CONFIG = {
+    'BACKEND': 'django_redis.cache.RedisCache',
+    'LOCATION': 'redis://127.0.0.1:6379/0',
+    'OPTIONS': {},
+}
+
+CACHES = {
+   'default': REDIS_CONFIG,
+   'redis': REDIS_CONFIG,
+}
+
 ####### # Email setup ########
 # Print emails to console so there is no danger of spamming, but you can still get registration URLs
 EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend'

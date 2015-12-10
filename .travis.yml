@@ -16,3 +16,4 @@ after_success:
  - coveralls
 services:
  - couchdb
+ - redis-server
