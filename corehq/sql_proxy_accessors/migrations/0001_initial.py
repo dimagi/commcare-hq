@@ -15,7 +15,7 @@ migrator = RawSQLMigration(('corehq', 'sql_proxy_accessors', 'sql_templates'), {
 
 
 def create_update_pl_proxy_config():
-    if not settings.UNIT_TESTING:
+    if not (settings.UNIT_TESTING and settings.USE_PARTITIONED_DATABASE):
         return noop_migration()
 
     drop_server_sql = get_drop_server_sql()
