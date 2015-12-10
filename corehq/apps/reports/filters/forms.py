@@ -4,7 +4,7 @@ from django.utils.safestring import mark_safe
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_submissions_using_xmlns, \
     get_all_form_definitions_grouped_by_app_and_xmlns, get_all_form_details, get_form_details_for_xmlns, \
-    get_form_details_for_app_and_xmlns, FormDetails
+    get_form_details_for_app_and_xmlns, FormDetails, get_form_details_for_app_and_module, get_form_details_for_app
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseTagsFilter
 from corehq.util.soft_assert import soft_assert
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
@@ -429,53 +429,44 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @staticmethod
     def get_filtered_data_for_parsed_params(domain, parsed_params):
-        prefix, key = FormsByApplicationFilter.get_prefix_and_key_for_parsed_params(
-            domain, parsed_params
-        )
-        return FormsByApplicationFilter._raw_data([prefix] + key)
-
-    @staticmethod
-    def get_prefix_and_key_for_parsed_params(domain, parsed_params):
         # this code path has multiple forks:
-        # 0. if status isn't set (which cory doesn't think is possible) it doesn't filter by status
-        #    otherwise it will set status to be either "active" or "deleted" apps
+        # 0. if status isn't set (which cory doesn't think is possible) it defaults to filtering by
+        #    status "active". otherwise it will set status to be "active" or "deleted" depending
+        #    on what's passed in.
         # 1. if status is set, but nothing else is, it will return all forms in apps of that status
         # 2. if status and app_id are set, but nothing else, it will return all forms in that app
         # 3. if status and app_id and module_id are set, it will return all forms in that module if
         #    the module is valid, otherwise it falls back to the app
         # 4. if status, app_id, module_id, and xmlns are set (which cory doesn't think is possible)
         #    it returns that form.
-        prefix = "app module form"
+        deleted = parsed_params.status == PARAM_VALUE_STATUS_DELETED
         _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']))
-        if parsed_params.status:
-            prefix = "%s %s" % ("status", prefix)
-        else:
+        if not parsed_params.status:
             # todo: remove anytime in 2016
             _assert(False, "status in filter wasn't set - this isn't expected to be possible")
 
-        def _get_key():
-            if parsed_params.module is not None and parsed_params.get_module_int() is None:
-                # todo: remove anytime in 2016
-                _assert(False, "module set but not a valid number!")
-                return [domain, parsed_params.status, parsed_params.app_id]
-            elif parsed_params.most_granular_filter == 'xmlns':
-                # todo: remove anytime in 2016
-                _assert(False, "got to form ID even though this shouldn't be possible")
-                return [domain, parsed_params.status, parsed_params.app_id,
-                        parsed_params.get_module_int(), parsed_params.xmlns]
-            elif parsed_params.most_granular_filter == 'module':
-                return [domain, parsed_params.status, parsed_params.app_id, parsed_params.get_module_int()]
-            elif parsed_params.most_granular_filter == 'app_id':
-                return [domain, parsed_params.status, parsed_params.app_id]
-            elif parsed_params.most_granular_filter == 'status':
-                return [domain, parsed_params.status]
-            else:
-                # todo: remove anytime in 2016
-                _assert(False, 'most granular filter was a surprising value ({}).'.format(
-                    parsed_params.most_granular_filter))
-                return [domain]
-
-        return prefix, _get_key()
+        if parsed_params.module is not None and parsed_params.get_module_int() is None:
+            # todo: remove anytime in 2016
+            _assert(False, "module set but not a valid number!")
+            return get_form_details_for_app(domain, parsed_params.app_id, deleted=deleted)
+        elif parsed_params.most_granular_filter == 'xmlns':
+            # todo: remove anytime in 2016
+            _assert(False, "got to form ID even though this shouldn't be possible")
+            return get_form_details_for_app_and_xmlns(
+                domain, parsed_params.app_id, parsed_params.xmlns, deleted=deleted)
+        elif parsed_params.most_granular_filter == 'module':
+            return get_form_details_for_app_and_module(
+                domain, parsed_params.app_id, parsed_params.get_module_int(), deleted=deleted
+            )
+        elif parsed_params.most_granular_filter == 'app_id':
+            return get_form_details_for_app(domain, parsed_params.app_id, deleted=deleted)
+        elif parsed_params.most_granular_filter == 'status':
+            return get_all_form_details(domain, deleted=deleted)
+        else:
+            # todo: remove anytime in 2016
+            _assert(False, 'most granular filter was a surprising value ({}).'.format(
+                parsed_params.most_granular_filter))
+            return get_all_form_details(domain)
 
     def _get_selected_forms(self, filter_results):
         """
@@ -535,17 +526,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @memoized
     def _get_all_forms_grouped_by_app_and_xmlns(self):
         return get_all_form_definitions_grouped_by_app_and_xmlns(self.domain)
-
-    @staticmethod
-    def _raw_data(startkey):
-        return [
-            FormDetails.wrap(row['value']) for row in Application.get_db().view(
-                'reports_forms/by_app_info',
-                startkey=startkey,
-                endkey=startkey+[{}],
-                reduce=False
-            ).all()
-        ]
 
     @classmethod
     def make_xmlns_app_key(cls, xmlns, app_id):
