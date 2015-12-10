@@ -123,7 +123,6 @@ class FormsByApplicationFilterDbTest(SetupSimpleAppMixin, TestCase):
             _make_filter(PARAM_SLUG_APP_ID, self.app.id)
         ])
         results = FormsByApplicationFilter.get_filtered_data_for_parsed_params(self.domain, params)
-        results = map(_row_to_form_details, results)
         self.assertEqual(2, len(results))
         for i, details in enumerate(results):
             self._assert_form_details_match(i, details)
@@ -145,7 +144,6 @@ class FormsByApplicationFilterDbTest(SetupSimpleAppMixin, TestCase):
                 _make_filter(PARAM_SLUG_MODULE, str(i)),
             ])
             results = FormsByApplicationFilter.get_filtered_data_for_parsed_params(self.domain, params)
-            results = map(_row_to_form_details, results)
             self.assertEqual(1, len(results))
             details = results[0]
             self._assert_form_details_match(i, details)
@@ -157,7 +155,6 @@ class FormsByApplicationFilterDbTest(SetupSimpleAppMixin, TestCase):
             _make_filter(PARAM_SLUG_MODULE, 'illegal'),
         ])
         results = FormsByApplicationFilter.get_filtered_data_for_parsed_params(self.domain, params)
-        results = map(_row_to_form_details, results)
         self.assertEqual(2, len(results))
         for i, details in enumerate(results):
             self._assert_form_details_match(i, details)
@@ -165,7 +162,3 @@ class FormsByApplicationFilterDbTest(SetupSimpleAppMixin, TestCase):
 
 def _make_filter(slug, value):
     return {'slug': slug, 'value': value}
-
-
-def _row_to_form_details(row):
-    return FormDetails.wrap(row['value'])
