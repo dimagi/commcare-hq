@@ -11,12 +11,12 @@
                 &rarr;
                 <input type="text" class="input-large enum-value" data-bind="
                     attr: {placeholder: $parent.backup(value).value},
-                    value: $parent.localizedValue(value)
+                    value: value[$parent.lang]
                 "/>
                 <a href="#" class="btn btn-inverse btn-mini lang-text"
                    style="color:#ffffff; text-decoration: none;"
                    data-bind="
-                    text: $parent.localizedValue($parent.backup(value)),
+                    text: $parent.backup(value).lang,
                     visible: $parent.localizable && !_([$parent.lang, null]).contains($parent.backup(value).lang)
                 "></a>
                 <a href="#" data-bind="click: $parent.removeItem" class="btn btn-danger">
