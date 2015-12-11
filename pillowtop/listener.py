@@ -535,9 +535,7 @@ class AliasedElasticPillow(BasicPillow):
         """
         Coarse way of deleting an index - a todo is to set aliases where need be
         """
-        es = self.get_es()
-        if self.index_exists():
-            es.delete(self.es_index)
+        self.get_es_new().indices.delete(self.es_index)
 
     def create_index(self):
         """
