@@ -27,7 +27,7 @@ class FilesystemBlobDB(object):
         assert isabs(rootdir), rootdir
         self.rootdir = rootdir
 
-    def put(self, content, basename="blob", bucket=DEFAULT_BUCKET):
+    def put(self, content, basename="", bucket=DEFAULT_BUCKET):
         """Put a blob in persistent storage
 
         :param content: A file-like object in binary read mode.
@@ -96,6 +96,8 @@ class FilesystemBlobDB(object):
 
     @staticmethod
     def get_unique_name(basename):
+        if not basename:
+            return uuid4().hex
         if SAFENAME.match(basename) and "/" not in basename:
             prefix = basename
         else:

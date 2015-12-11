@@ -104,6 +104,13 @@ class TestFilesystemBlobDB(TestCase):
         with open(path, "rb") as fh:
             self.assertEqual(fh.read(), b"content")
 
+    def test_empty_attachment_name(self):
+        info = self.db.put(StringIO(b"content"))
+        self.assertNotIn(".", info.name)
+        path = self.db.get_path(info.name)
+        with open(path, "rb") as fh:
+            self.assertEqual(fh.read(), b"content")
+
 
 @generate_cases([
     ("test.1", "\u4500.1"),
