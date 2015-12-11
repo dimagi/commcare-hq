@@ -80,8 +80,9 @@ from soil.tasks import prepare_download
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_json_response
-from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.app_manager.const import USERCASE_TYPE, USERCASE_ID
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.util import actions_use_usercase
 from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.domain.decorators import (
@@ -100,6 +101,7 @@ from corehq.apps.hqwebapp.models import ReportsTab
 from corehq.apps.locations.permissions import can_edit_form_location
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.sofabed.models import CaseData
 from corehq.apps.userreports.util import default_language as ucr_default_language
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
@@ -1440,6 +1442,11 @@ class EditFormInstance(View):
             params={'instance_id': instance._id}
         )
 
+    @staticmethod
+    def _form_uses_usercase(form):
+        actions = form.active_actions()
+        return form.form_type == 'module_form' and actions_use_usercase(actions)
+
     def get(self, request, *args, **kwargs):
         domain = request.domain
         instance_id = self.kwargs.get('instance_id', None)
@@ -1459,6 +1466,14 @@ class EditFormInstance(View):
 
         user = get_document_or_404(CommCareUser, domain, instance.metadata.userID)
         edit_session_data = get_user_contributions_to_touchforms_session(user)
+
+        # add usercase to session
+        if self._form_uses_usercase(self._get_form_from_instance(instance)):
+            try:
+                usercase_id = CaseData.objects.get(user_id=user._id, type=USERCASE_TYPE).case_id
+            except CaseData.DoesNotExist:
+                return _error(_('Could not find the user-case for this form'))
+            edit_session_data[USERCASE_ID] = usercase_id
 
         case_blocks = extract_case_blocks(instance, include_path=True)
         # a bit hacky - the app manager puts the main case directly in the form, so it won't have
