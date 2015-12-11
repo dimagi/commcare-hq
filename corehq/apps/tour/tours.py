@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from corehq.apps.tour.models import has_user_seen_tour
+from corehq.apps.tour.models import GuidedTour
 from corehq.apps.tour.views import EndTourView
 
 
@@ -17,7 +17,7 @@ class StaticGuidedTour(object):
         }
 
     def is_enabled(self, user):
-        return has_user_seen_tour(user, self.slug)
+        return GuidedTour.has_seen_tour(user, self.slug)
 
 
 NEW_BLANK_APP = StaticGuidedTour(

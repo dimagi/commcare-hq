@@ -1,33 +1,24 @@
-import datetime
 from django.contrib.auth.models import User
 from django.db import models
-import json_field
 
 
-class GuidedTours(models.Model):
+class GuidedTour(models.Model):
     user = models.ForeignKey(
         User,
-        unique=True
+        unique=True,
+        db_index=True,
     )
-    seen_tours = json_field.JSONField(
-        default={},
+    tour_slug = models.CharField(
+        max_length=255,
+        unique=True,
+        db_index=True,
     )
+    date_completed = models.DateTimeField(auto_now=True)
 
     @classmethod
     def has_seen_tour(cls, user, tour_slug):
-        guided_tour, _ = cls.objects.get_or_create(user=user)
-        return tour_slug not in guided_tour.seen_tours
+        return cls.objects.filter(user=user, tour_slug=tour_slug).count() > 0
 
     @classmethod
     def mark_as_seen(cls, user, tour_slug):
-        guided_tour, _ = cls.objects.get_or_create(user=user)
-        guided_tour.seen_tours[tour_slug] = datetime.datetime.now()
-        guided_tour.save()
-
-
-def mark_tour_as_seen_for_user(user, tour_slug):
-    GuidedTours.mark_as_seen(user, tour_slug)
-
-
-def has_user_seen_tour(user, tour_slug):
-    return GuidedTours.has_seen_tour(user, tour_slug)
+        cls.objects.create(user=user, tour_slug=tour_slug)

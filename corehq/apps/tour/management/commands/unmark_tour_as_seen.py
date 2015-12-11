@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.core.management.base import LabelCommand
 import sys
-from corehq.apps.tour.models import GuidedTours
+from corehq.apps.tour.models import GuidedTour
 
 CONFIRM_SINGLE_USER = """Unmark Tour {tour_slug} as seen for User {username}?
     Type 'yes' to continue or 'no' to cancel: """
@@ -21,18 +21,10 @@ class Command(LabelCommand):
                 tour_slug=tour_slug, username=username))
             if confirm == 'yes':
                 user = User.objects.filter(username=username).first()
-                tours, _ = GuidedTours.objects.get_or_create(user=user)
-                if tour_slug in tours.seen_tours:
-                    del tours.seen_tours[tour_slug]
-                    tours.save()
+                GuidedTour.objects.filter(tour_slug=tour_slug, user=user).delete()
                 print("Complete")
         else:
             confirm = raw_input(CONFIRM_ALL_USERS.format(tour_slug=tour_slug))
             if confirm == 'yes':
-                for tours in GuidedTours.objects.all():
-                    if tour_slug in tours.seen_tours:
-                        sys.stdout.write('.')
-                        del tours.seen_tours[tour_slug]
-                        tours.save()
-                sys.stdout.write("\n")
+                GuidedTour.objects.filter(tour_slug=tour_slug).delete()
                 print("Complete")
