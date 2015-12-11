@@ -1,9 +1,11 @@
 <div id="key_value_mapping_editable_template" class="hide">
     <form class="form-horizontal hq-enum-editor" action="">
         <fieldset data-bind="sortable: items">
+            {# TODO: remove control-group? what about the error class? #}
             <div class="control-group hq-input-map"
                  data-bind="css: {'error': $parent.isItemDuplicated(ko.utils.unwrapObservable(key))}">
                 <i class="sortable-handle icon-resize-vertical"></i>
+                {# TODO: drop input-small, input-large #}
                 <input type="text"
                        class="input-small enum-key"
                        placeholder="key"
@@ -13,15 +15,15 @@
                     attr: {placeholder: $parent.backup(value).value},
                     value: $parent.localizedValue(value)
                 "/>
-                <a href="#" class="btn btn-inverse btn-mini lang-text"
-                   style="color:#ffffff; text-decoration: none;"
+                <a href="#" class="btn btn-info btn-xs lang-text"
                    data-bind="
                     text: $parent.localizedValue($parent.backup(value)),
                     visible: $parent.localizable && !_([$parent.lang, null]).contains($parent.backup(value).lang)
                 "></a>
                 <a href="#" data-bind="click: $parent.removeItem" class="btn btn-danger">
-                    <i class="icon icon-white icon-remove"></i> Delete
+                    <i class="icon-white fa fa-remove"></i> Delete
                 </a>
+                {# TODO: remove help-inline #}
                 <span class="help-inline"
                       data-bind='visible: $parent.isItemDuplicated(ko.utils.unwrapObservable(key))'>Key is duplicated.</span>
             </div>
@@ -30,7 +32,7 @@
         <div class="control-group">
             <a href="#" class="btn btn-success"
                data-bind="click: addItem">
-                <i class="icon icon-white icon-plus"></i>
+                <i class="icon-white fa fa-plus"></i>
                 Add Key &rarr; Value Mapping
             </a>
         </div>
@@ -38,19 +40,25 @@
 </div>
 
 <div id="key_value_mapping_modal" class="hide">
-    <div class="modal hide fade hq-enum-modal">
-        <div class="modal-header">
-            <a class="close" data-dismiss="modal">×</a>
-            <h3 data-bind="text: $data.modalTitle"></h3>
-        </div>
-        <div class="modal-body" style="max-height:372px; overflow-y: scroll;"
-             data-bind="template: {name: 'key_value_mapping_editable_template', data: mapList}"></div>
-        <div class="modal-footer">
-            <button class="btn" data-dismiss="modal">Cancel</button>
-            <button class="btn btn-primary" data-dismiss="modal"
-                    data-bind="disable: ko.utils.unwrapObservable($data.mapList.duplicatedItems).length > 0,
-                    text: (ko.utils.unwrapObservable($data.mapList.duplicatedItems).length > 0) ? 'Fix errors' : 'OK',
-                    click: save"></button>
+    <div class="modal fade hq-enum-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h3 class="modal-title" data-bind="text: $data.modalTitle"></h3>
+                </div>
+                <div class="modal-body" style="max-height:372px; overflow-y: scroll;"
+                     data-bind="template: {name: 'key_value_mapping_editable_template', data: mapList}"></div>
+                <div class="modal-footer">
+                    <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" data-dismiss="modal"
+                            data-bind="disable: ko.utils.unwrapObservable($data.mapList.duplicatedItems).length > 0,
+                            text: (ko.utils.unwrapObservable($data.mapList.duplicatedItems).length > 0) ? 'Fix errors' : 'OK',
+                            click: save"></button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -61,15 +69,17 @@
             <strong data-bind="text: key"></strong>
             &rarr;
             <span data-bind="text: $parent.localizedValue(value)"></span>
-            <span data-bind="visible: !ko.utils.unwrapObservable($parent.localizedValue(value))"><i class="icon-remove-sign"></i></span>
+            <span data-bind="visible: !ko.utils.unwrapObservable($parent.localizedValue(value))">
+                <i class="fa fa-times-circle"></i>
+            </span>
         </div>
     </div>
 </div>
 
 <div id="key_value_mapping_template" class="hide">
     <div data-bind="template: 'key_value_mapping_display_template'"></div>
-    <button class="btn" data-bind="click: openModal, visible: $data.edit">
-        <i class="icon-pencil"></i>
+    <button class="btn btn-default" data-bind="click: openModal, visible: $data.edit">
+        <i class="fa fa-pencil"></i>
         <span data-bind="text: $data.buttonText"></span>
     </button>
 </div>
