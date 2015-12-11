@@ -25,6 +25,7 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.hqwebapp.models import ApplicationsTab
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.tour import tours
 from corehq.apps.translations.models import Translation
 from corehq.apps.app_manager.const import (
     APP_V1,
@@ -126,6 +127,8 @@ def default_new_app(request, domain):
         app.secure_submissions = True
     clear_app_cache(request, domain)
     app.save()
+    if toggles.GUIDED_TOUR.enabled(domain) and tours.NEW_BLANK_APP.is_enabled(request.user):
+        return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, 0, 0]))
     return HttpResponseRedirect(reverse('form_source', args=[domain, app._id, 0, 0]))
 
 
@@ -309,6 +312,8 @@ def app_from_template(request, domain, slug):
         app.get_module(module_id).get_form(form_id)
     except (ModuleNotFoundException, FormNotFoundException):
         return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
+    if toggles.GUIDED_TOUR.enabled(domain) and tours.NEW_TEMPLATE_APP.is_enabled(request.user):
+        return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, module_id, form_id]))
     return HttpResponseRedirect(reverse('form_source', args=[domain, app._id, module_id, form_id]))
 
 
