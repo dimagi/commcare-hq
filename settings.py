@@ -1097,6 +1097,9 @@ FIXTURES_DB = NEW_FIXTURES_DB
 NEW_DOMAINS_DB = 'domains'
 DOMAINS_DB = NEW_DOMAINS_DB
 
+SYNCLOGS_DB = 'synclogs'
+
+
 COUCHDB_APPS = [
     'api',
     'app_manager',
@@ -1127,7 +1130,6 @@ COUCHDB_APPS = [
     'indicators',
     'locations',
     'mobile_auth',
-    'phone',
     'pillowtop',
     'pillow_retry',
     'products',
@@ -1190,6 +1192,9 @@ COUCHDB_APPS = [
 
     # domains
     ('domain', DOMAINS_DB),
+
+    # sync logs
+    ('phone', SYNCLOGS_DB),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
