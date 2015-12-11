@@ -435,9 +435,9 @@ class AliasedElasticPillow(BasicPillow):
     # index to always have the latest version of the case based upon ALL changes done to it.
     allow_updates = True
 
-    def __init__(self, create_index=True, online=True, **kwargs):
+    def __init__(self, online=True, **kwargs):
         """
-        create_index if the index doesn't exist on the ES cluster
+        online determines whether the ES index should initialize itself on pillow creation
         """
         if 'checkpoint' not in kwargs:
             kwargs['checkpoint'] = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
@@ -445,11 +445,10 @@ class AliasedElasticPillow(BasicPillow):
         # online=False is used in unit tests
         if online:
             index_exists = pillow_index_exists(self)
-            if create_index and not index_exists:
+            if not index_exists:
                 create_index_for_pillow(self)
-            if create_index or index_exists:
-                pillow_logging.info("Pillowtop [%s] Initializing mapping in ES" % self.get_name())
-                initialize_mapping_if_necessary(self)
+            pillow_logging.info("Pillowtop [%s] Initializing mapping in ES" % self.get_name())
+            initialize_mapping_if_necessary(self)
         else:
             pillow_logging.info("Pillowtop [%s] Started with no mapping from server in memory testing mode" % self.get_name())
 
