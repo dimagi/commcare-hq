@@ -167,7 +167,7 @@ todo fix
         <div data-bind="foreach: sections">
             <fieldset data-bind="visible: notEmpty">
                 <legend>
-                    <a class="accordion-toggle" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}">
+                    <a data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}">
                         <i class="fa fa-angle-double-down"></i>
                         <span data-bind="text: title"></span>
                     </a>
@@ -213,7 +213,6 @@ todo fix
         <fieldset>
             <legend>
                 <a
-                    class="accordion-toggle"
                     data-toggle="collapse"
                     data-bind="
                         attr: { href: '#' + customPropertyType },

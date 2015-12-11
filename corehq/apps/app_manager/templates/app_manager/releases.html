@@ -355,15 +355,15 @@
                         <h3 class="modal-title">{% trans "Deploying version" %} <span data-bind="text: version"></span></h3>
                     </div>
                     <div class="modal-body">
-                        <div class="accordion" data-bind="bootstrapCollapse: true">
-                            <div class="accordion-group">
-                                <div class="accordion-heading">
-                                    <a class="accordion-toggle">
+                        <div class="panel-group" data-bind="bootstrapCollapse: true" id="deploy-accordion">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <a data-toggle="collapse" data-parent="#deploy-accordion" href="#panel-android" aria-expanded="true" aria-controls="panel-android">
                                         {% trans "Download to Android" %}
                                     </a>
                                 </div>
-                                <div class="accordion-body in collapse">
-                                    <div class="accordion-inner">
+                                <div class="panel-collapse in collapse" id="panel-android">
+                                    <div class="panel-body">
                                         <div data-bind="bootstrapTabs: true">
                                             <div class="tabbable">
                                                 <ul class="nav nav-pills">
@@ -469,16 +469,17 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="accordion-group">
-                                <div class="accordion-heading">
-                                    <a class="accordion-toggle" data-bind="
-                                        click: function() { track_deploy_type('Download to Java Phone'); },
-                                    ">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <a data-toggle="collapse"
+                                       data-parent="#deploy-accordion" href="#panel-java"
+                                       data-bind="click: function() { track_deploy_type('Download to Java Phone'); },"
+                                       aria-expanded="true" aria-controls="panel-java">
                                         {% trans "Download to Java Phone" %}
                                     </a>
                                 </div>
-                                <div class="accordion-body collapse">
-                                    <div class="accordion-inner">
+                                <div class="panel-collapse" id="panel-java'>
+                                    <div class="panel-body">
                                         <ol>
                                             <li>
                                                 {% trans "Download <strong>both</strong> of the following files:" %}
@@ -498,18 +499,21 @@
                                 </div>
                             </div>
                             {% if can_send_sms %}
-                            <div class="accordion-group">
-                                <div class="accordion-heading">
-                                    <a class="accordion-toggle" data-bind="
-                                        click: function() { track_deploy_type('Send to phone via SMS'); },
-                                        click: function() { generate_short_url('short_url'); }
-                                    ">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <a data-toggle="collapse"
+                                       data-parent="#deploy-accordion" href="#panel-sms"
+                                       data-bind="
+                                            click: function() { track_deploy_type('Send to phone via SMS'); },
+                                            click: function() { generate_short_url('short_url'); }
+                                       "
+                                       aria-expanded="true" aria-controls="panel-sms">
                                         {% trans "Send to phone via SMS" %}
                                     </a>
                                 </div>
-        
-                                <div class="accordion-body collapse">
-                                    <div class="accordion-inner">
+
+                                <div class="panel-collapse collapse" id="panel-sms">
+                                    <div class="panel-body">
                                         <div data-bind="bootstrapTabs: true">
                                             <div class="tabbable">
                                                 <ul class="nav nav-pills">
@@ -557,17 +561,20 @@
                             </div>
                             {% endif %}
                             {% if multimedia_state.has_media %}
-                                <div class="accordion-group">
-                                    <div class="accordion-heading">
-                                        <a class="accordion-toggle" data-toggle="collapse" data-bind="
-                                            click: function() { track_deploy_type('Download Multimedia'); },
-                                            attr: {href: '#' + id() + '_multimedia', 'data-target': '#' + id() + '_multimedia'}
-                                        ">
+                                <div class="panel panel-default">
+                                    <div class="panel-heading">
+                                        <a data-toggle="collapse"
+                                           data-parent="#deploy-accordion" href="#panel-multimedia"
+                                           data-bind="
+                                                click: function() { track_deploy_type('Download Multimedia'); },
+                                                attr: {href: '#' + id() + '_multimedia', 'data-target': '#' + id() + '_multimedia'}
+                                           "
+                                           aria-expanded="true" aria-controls="panel-multimedia">
                                             {% trans 'Download Multimedia' %}
                                         </a>
                                     </div>
-                                    <div class="accordion-body collapse" data-bind="attr: {id: id() + '_multimedia'}">
-                                        <div class="accordion-inner">
+                                    <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_multimedia'}">
+                                        <div class="panel-body">
                                             {% include 'hqmedia/partials/multimedia_zip_notice.html' with include_modal=False %}
                                         </div>
                                     </div>

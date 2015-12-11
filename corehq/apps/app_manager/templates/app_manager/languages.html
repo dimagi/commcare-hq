@@ -15,14 +15,14 @@
             </div>
             {% if not app.is_remote_app %}
             <div id="translations-tab" class="tab-pane">
-                <div class="accordion" id="ie-accordion">
-                    <div class="accordion-group">
-                        <div class="accordion-heading">
-                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#ie-accordion" href="#import-export">
+                <div class="panel-group" id="ie-accordion">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <a data-toggle="collapse" data-parent="#ie-accordion" href="#import-export">
                                 {% trans "Import/Export UI Translations" %}</a>
                         </div>
-                        <div id="import-export" class="accordion-body collapse">
-                            <div class="accordion-inner">
+                        <div id="import-export" class="panel-collapse collapse">
+                            <div class="panel-body">
                                 <section>
                                     {% include "style/bootstrap2/partials/bulk_upload.html" with bulk_upload=bulk_ui_translation_upload bulk_upload_form=bulk_ui_translation_form%}
                                 </section>
