@@ -1,8 +1,8 @@
 import datetime
+from casexml.apps.phone.analytics import get_sync_logs_for_user, update_analytics_indexes
 from dimagi.utils.couch.database import get_db
 from django.test import TestCase
-from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_sync_logs_for_user, \
-    get_last_synclog_for_user
+from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
 from casexml.apps.phone.models import SyncLog, SimplifiedSyncLog
 from corehq.util.test_utils import DocTestMixin
 
@@ -28,6 +28,7 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         ]
         for doc in cls.legacy_sync_logs:
             get_db(None).save_doc(doc)
+        update_analytics_indexes()
 
     @classmethod
     def tearDownClass(cls):

@@ -1,6 +1,6 @@
 # coding=utf-8
 from datetime import date, datetime, timedelta
-from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_sync_logs_for_user
+from casexml.apps.phone.analytics import get_sync_logs_for_user
 from corehq import toggles
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.urlresolvers import reverse
