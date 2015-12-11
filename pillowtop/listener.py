@@ -548,7 +548,7 @@ class AliasedElasticPillow(BasicPillow):
         """
         Rebuild an index after a delete
         """
-        self.send_robust(self.es_index, data=self.es_meta)
+        self.get_es_new().indices.create(index=self.es_index, body=self.es_meta)
         self.set_index_normal_settings()
 
     def refresh_index(self):
@@ -627,7 +627,6 @@ class AliasedElasticPillow(BasicPillow):
         self.send_bulk(bulk_payload)
         pillow_logging.info(
             "%s,send_bulk,%s" % (self.get_name(), str(ms_from_timedelta(datetime.utcnow() - send_start) / 1000.0)))
-
 
     def send_bulk(self, payload):
         es = self.get_es()
