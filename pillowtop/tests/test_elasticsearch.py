@@ -1,7 +1,7 @@
 import uuid
 from django.test import SimpleTestCase
 from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings, \
-    set_index_reindex_settings, set_index_normal_settings
+    set_index_reindex_settings, set_index_normal_settings, create_index_for_pillow
 from pillowtop.feed.interface import Change
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.pillow.interface import PillowRuntimeContext
@@ -114,7 +114,7 @@ class ElasticPillowTest(SimpleTestCase):
         self.assertFalse(pillow.index_exists())
 
         # create and check
-        pillow.create_index()
+        create_index_for_pillow(pillow)
         self.assertTrue(self.es.indices.exists(self.index))
         self.assertTrue(pillow.index_exists())
 

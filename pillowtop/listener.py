@@ -26,7 +26,7 @@ from pillowtop.couchdb import CachedCouchDB
 from django import db
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings, \
-    set_index_normal_settings, create_index_and_set_settings_normal
+    set_index_normal_settings, create_index_and_set_settings_normal, create_index_for_pillow
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
@@ -447,7 +447,7 @@ class AliasedElasticPillow(BasicPillow):
         self.online = online
         index_exists = self.index_exists()
         if create_index and not index_exists:
-            create_index_and_set_settings_normal(self.get_es_new(), self.es_index, self.es_meta)
+            create_index_for_pillow(self)
         if self.online and (index_exists or create_index):
             pillow_logging.info("Pillowtop [%s] Initializing mapping in ES" % self.get_name())
             self.initialize_mapping_if_necessary()
@@ -510,12 +510,6 @@ class AliasedElasticPillow(BasicPillow):
         Coarse way of deleting an index - a todo is to set aliases where need be
         """
         self.get_es_new().indices.delete(self.es_index)
-
-    def create_index(self):
-        """
-        Rebuild an index after a delete
-        """
-        create_index_and_set_settings_normal(self.get_es_new(), self.es_index, self.es_meta)
 
     def refresh_index(self):
         self.get_es().post("%s/_refresh" % self.es_index)

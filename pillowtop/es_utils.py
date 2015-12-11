@@ -38,6 +38,10 @@ def set_index_normal_settings(es, index):
     return update_settings(es, index, INDEX_STANDARD_SETTINGS)
 
 
+def create_index_for_pillow(pillow):
+    return create_index_and_set_settings_normal(pillow.get_es_new(), pillow.es_index, pillow.es_meta)
+
+
 def create_index_and_set_settings_normal(es, index, metadata=None):
     metadata = metadata or {}
     es.indices.create(index=index, body=metadata)
