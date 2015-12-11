@@ -481,8 +481,11 @@ class OPMCaseRow(object):
         if self.child_age % 3 == 0:
             if not self.is_service_available('stock_ors', months=3):
                 return True
+            months_before = 3
+            if self.child_has_diarhea:
+                months_before += 1
 
-            for form in self.filtered_forms(CHILDREN_FORMS, 3):
+            for form in self.filtered_forms(CHILDREN_FORMS, months_before):
                 xpath = self.child_xpath('form/child_{num}/child{num}_child_orszntreat')
                 if form.get_data(xpath) == '0':
                     return False
@@ -499,6 +502,9 @@ class OPMCaseRow(object):
             months_before = 2  # we must check forms for 2 month before
         if not self.is_service_available('stock_ors', months=months_before):
             return True
+
+        if self.child_has_diarhea:
+            months_before += 1
 
         for form in self.filtered_forms(CHILDREN_FORMS, months_before):
             xpath = self.child_xpath('form/child_{num}/child{num}_child_orszntreat')
@@ -539,7 +545,7 @@ class OPMCaseRow(object):
 
             return any(
                 _test(form)
-                for form in self.filtered_forms(CFU1_XMLNS, 3)
+                for form in self.filtered_forms(CFU1_XMLNS, 4)
             )
 
     @property
