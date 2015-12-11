@@ -1,5 +1,6 @@
 import uuid
 from django.test import SimpleTestCase
+from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS
 from pillowtop.feed.interface import Change
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.pillow.interface import PillowRuntimeContext
@@ -181,6 +182,28 @@ class ElasticPillowTest(SimpleTestCase):
         aliases = self.es.indices.get_aliases()
         self.assertEqual(0, len(aliases[new_index]['aliases']))
         self.assertEqual([pillow.es_alias], aliases[self.index]['aliases'].keys())
+
+    def test_update_settings(self):
+        pillow = TestElasticPillow()
+        pillow.update_settings(INDEX_REINDEX_SETTINGS)
+        index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
+        self._compare_es_dicts(INDEX_REINDEX_SETTINGS, index_settings_back, 'index')
+        pillow.update_settings(INDEX_STANDARD_SETTINGS)
+        index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
+        self._compare_es_dicts(INDEX_STANDARD_SETTINGS, index_settings_back, 'index')
+
+    def _compare_es_dicts(self, expected, returned, prefix):
+        if settings.ELASTICSEARCH_VERSION < 1.0:
+            for key, value in expected[prefix].items():
+                self.assertEqual(str(value), returned['{}.{}'.format(prefix, key)])
+        else:
+            sub_returned = returned[prefix]
+            for key, value in expected[prefix].items():
+                split_key = key.split('.')
+                returned_value = sub_returned[split_key[0]]
+                for sub_key in split_key[1:]:
+                    returned_value = returned_value[sub_key]
+                self.assertEqual(str(value), returned_value)
 
 
 def _send_doc_to_pillow(pillow, doc_id, doc):
