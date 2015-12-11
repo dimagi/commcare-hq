@@ -22,3 +22,17 @@ INDEX_STANDARD_SETTINGS = {
 
 def update_settings(es, index, settings_dict):
     return es.indices.put_settings(settings_dict, index=index)
+
+
+def set_index_reindex_settings(es, index):
+    """
+    Set a more optimized setting setup for fast reindexing
+    """
+    return update_settings(es, index, INDEX_REINDEX_SETTINGS)
+
+
+def set_index_normal_settings(es, index):
+    """
+    Normal indexing configuration
+    """
+    return update_settings(es, index, INDEX_STANDARD_SETTINGS)

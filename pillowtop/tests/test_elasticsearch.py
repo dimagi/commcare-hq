@@ -1,6 +1,7 @@
 import uuid
 from django.test import SimpleTestCase
-from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings
+from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings, \
+    set_index_reindex_settings, set_index_normal_settings
 from pillowtop.feed.interface import Change
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.pillow.interface import PillowRuntimeContext
@@ -184,10 +185,23 @@ class ElasticPillowTest(SimpleTestCase):
         self.assertEqual([pillow.es_alias], aliases[self.index]['aliases'].keys())
 
     def test_update_settings(self):
+        TestElasticPillow()  # hack to create the index first
         update_settings(self.es, self.index, INDEX_REINDEX_SETTINGS)
         index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
         self._compare_es_dicts(INDEX_REINDEX_SETTINGS, index_settings_back, 'index')
         update_settings(self.es, self.index, INDEX_STANDARD_SETTINGS)
+        index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
+        self._compare_es_dicts(INDEX_STANDARD_SETTINGS, index_settings_back, 'index')
+
+    def test_set_index_reindex(self):
+        TestElasticPillow()  # hack to create the index first
+        set_index_reindex_settings(self.es, self.index)
+        index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
+        self._compare_es_dicts(INDEX_REINDEX_SETTINGS, index_settings_back, 'index')
+
+    def test_set_index_normal(self):
+        TestElasticPillow()  # hack to create the index first
+        set_index_normal_settings(self.es, self.index)
         index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
         self._compare_es_dicts(INDEX_STANDARD_SETTINGS, index_settings_back, 'index')
 
