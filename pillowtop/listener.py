@@ -9,7 +9,6 @@ import hashlib
 import traceback
 import math
 import time
-from rawes.elastic_exception import ElasticException
 
 from requests import ConnectionError
 import simplejson
@@ -511,12 +510,6 @@ class AliasedElasticPillow(BasicPillow):
         Normal indexing configuration
         """
         return self.update_settings(INDEX_STANDARD_SETTINGS)
-
-    def get_index_mapping(self):
-        try:
-            return self.get_es_new().indices.get_mapping(self.es_index, self.es_type)
-        except TransportError:
-            return {}
 
     def set_mapping(self, type_string, mapping):
         if self.online:
