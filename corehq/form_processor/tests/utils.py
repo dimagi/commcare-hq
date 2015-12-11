@@ -208,6 +208,7 @@ class TestFormMetadata(jsonobject.JsonObject):
     form_name = jsonobject.StringProperty(default='New Form')
     user_id = jsonobject.StringProperty(default='cruella_deville')
     time_end = jsonobject.DateTimeProperty(default=datetime(2013, 4, 19, 16, 53, 2))
+    received_on = jsonobject.DateTimeProperty(default=datetime.utcnow())
 
 
 def get_simple_form_xml(form_id, case_id=None, metadata=None):
