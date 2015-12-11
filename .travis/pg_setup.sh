@@ -9,6 +9,8 @@ sudo apt-get update
 sudo apt-get install postgresql-9.1-plproxy
 
 # install pghashlib
+sudo /etc/init.d/postgresql stop
+
 wget https://github.com/markokr/pghashlib/archive/master.zip -O pghashlib.zip
 unzip pghashlib.zip
 cd pghashlib-master
