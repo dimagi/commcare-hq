@@ -43,8 +43,6 @@
         $(".nav-link").click(function (){
             var link = $(this);
             workbook.activateSheetAsync(link[0].textContent);
-            // TODO: Breadcrumbs to indicate current report?
-            // TODO: This should handle resetting params and setting view by to state as well (I think)
         });
 
         viz.addEventListener(tableau.TableauEventName.MARKS_SELECTION, onMarksSelection);
@@ -78,7 +76,6 @@
                 html.push("<li><b>" + pair.fieldName + "</b>: "+ pair.formattedValue + "</li>");
 
                 // Find the sheet we are navigating to
-                // TODO: Handle the case where js_sheet isn't defined
                 if(pair.fieldName === 'js_sheet' || pair.fieldName === 'ATTR(js_sheet)') {
                     sheetName = pair.formattedValue;
                 }
@@ -102,7 +99,7 @@
                 if(pair.fieldName.includes(PARAM_SUBSTRING)) {
                     var param_key = pair.fieldName.slice(PARAM_SUBSTRING.length, -1),
                         param_value = pair.formattedValue;
-                    if(param_value = PARAM_UNCHANGED) {
+                    if(param_value === PARAM_UNCHANGED) {
                         workbook.getParametersAsync()
                                 .then(function(current_parameters) {
                                     // TODO: Do I need to deal with the case where the passed in param is not in the server params? I don't think so
