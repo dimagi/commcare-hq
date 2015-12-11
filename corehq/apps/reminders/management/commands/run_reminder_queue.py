@@ -11,6 +11,9 @@ class ReminderEnqueuingOperation(GenericEnqueuingOperation):
     args = ""
     help = "Runs the Reminders Queue"
 
+    def get_fetching_interval(self):
+        return 60
+
     def get_queue_name(self):
         return "reminders-queue"
 
