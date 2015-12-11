@@ -73,10 +73,8 @@ def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission
 
     results = form_query.run().facet('date_histogram', 'entries')
     results = map(
-        lambda result: {
-            'count': result['count'],
-            'date': datetime.fromtimestamp(result['time'] / 1000, timezone),
-        },
+        lambda result:
+            (datetime.fromtimestamp(result['time'] / 1000).date().isoformat(), result['count']),
         results,
     )
-    return results
+    return dict(results)
