@@ -22,7 +22,7 @@ BEGIN
 
     EXECUTE format('SELECT ARRAY(%s)', query_expr)
         INTO form_ids
-        USING $1;
+        USING domain_name, form_user_id;
 
     DELETE FROM form_processor_xformattachmentsql where form_id = ANY(form_ids);
     DELETE FROM form_processor_xformoperationsql where form_id = ANY(form_ids);
