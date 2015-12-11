@@ -1,7 +1,7 @@
 import uuid
 from django.test import SimpleTestCase
 from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings, \
-    set_index_reindex_settings, set_index_normal_settings, create_index_for_pillow
+    set_index_reindex_settings, set_index_normal_settings, create_index_for_pillow, assume_alias_for_pillow
 from pillowtop.feed.interface import Change
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.pillow.interface import PillowRuntimeContext
@@ -161,7 +161,7 @@ class ElasticPillowTest(SimpleTestCase):
         doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
         _send_doc_to_pillow(pillow, doc_id, doc)
         self.assertEqual(1, get_doc_count(self.es, self.index))
-        pillow.assume_alias()
+        assume_alias_for_pillow(pillow)
         es_doc = self.es.get_source(pillow.es_alias, doc_id)
         for prop in doc:
             self.assertEqual(doc[prop], es_doc[prop])
@@ -179,7 +179,7 @@ class ElasticPillowTest(SimpleTestCase):
         self.assertEqual([pillow.es_alias], aliases[new_index]['aliases'].keys())
 
         # assume alias and make sure it's removed (and added to the right index)
-        pillow.assume_alias()
+        assume_alias_for_pillow(pillow)
         aliases = self.es.indices.get_aliases()
         self.assertEqual(0, len(aliases[new_index]['aliases']))
         self.assertEqual([pillow.es_alias], aliases[self.index]['aliases'].keys())

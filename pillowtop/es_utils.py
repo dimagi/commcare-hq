@@ -38,11 +38,27 @@ def set_index_normal_settings(es, index):
     return update_settings(es, index, INDEX_STANDARD_SETTINGS)
 
 
-def create_index_for_pillow(pillow):
-    return create_index_and_set_settings_normal(pillow.get_es_new(), pillow.es_index, pillow.es_meta)
-
-
 def create_index_and_set_settings_normal(es, index, metadata=None):
     metadata = metadata or {}
     es.indices.create(index=index, body=metadata)
     set_index_normal_settings(es, index)
+
+
+def create_index_for_pillow(pillow):
+    return create_index_and_set_settings_normal(pillow.get_es_new(), pillow.es_index, pillow.es_meta)
+
+
+def assume_alias_for_pillow(pillow):
+    """
+    Assigns the pillow's `es_alias` to its index in elasticsearch.
+
+    This operation removes the alias from any other indices it might be assigned to
+    """
+    es_new = pillow.get_es_new()
+    if es_new.indices.exists_alias(pillow.es_alias):
+        # this part removes the conflicting aliases
+        alias_indices = es_new.indices.get_alias(pillow.es_alias).keys()
+        for aliased_index in alias_indices:
+            es_new.indices.delete_alias(aliased_index, pillow.es_alias)
+
+    es_new.indices.put_alias(pillow.es_index, pillow.es_alias)

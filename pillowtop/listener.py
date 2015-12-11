@@ -594,22 +594,6 @@ class AliasedElasticPillow(BasicPillow):
         aliased_indexes = es[self.es_alias].get('_aliases')
         return aliased_indexes.keys()
 
-    # todo: remove from class - move to the ptop_es_manage command
-    def assume_alias(self):
-        """
-        Assigns the pillow's `es_alias` to its index in elasticsearch.
-
-        This operation removes the alias from any other indices it might be assigned to
-        """
-        es_new = self.get_es_new()
-        if es_new.indices.exists_alias(self.es_alias):
-            # this part removes the conflicting aliases
-            alias_indices = es_new.indices.get_alias(self.es_alias).keys()
-            for aliased_index in alias_indices:
-                es_new.indices.delete_alias(aliased_index, self.es_alias)
-
-        es_new.indices.put_alias(self.es_index, self.es_alias)
-
     @staticmethod
     def calc_mapping_hash(mapping):
         return hashlib.md5(simplejson.dumps(mapping, sort_keys=True)).hexdigest()
