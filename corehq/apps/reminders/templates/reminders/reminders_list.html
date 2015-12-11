@@ -12,7 +12,7 @@
     <script>
         var remindersList = new RemindersListModel({{ reminders|JSON }},
             '{% url "reminder_rule_progress" domain %}');
-        ko.applyBindings(remindersList, $('#reminders-list').get(0));
+        $('#reminders-list').koApplyBindings(remindersList);
         remindersList.init();
 
         $(function() {
