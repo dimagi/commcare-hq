@@ -468,9 +468,9 @@ class AliasedElasticPillow(BasicPillow):
 
     def mapping_exists(self):
         try:
-            return bool(self.get_index_mapping())
-        except ElasticException:
-            return False
+            return self.get_es_new().indices.get_mapping(self.es_index, self.es_type)
+        except TransportError:
+            return {}
 
     def initialize_mapping_if_necessary(self):
         """
