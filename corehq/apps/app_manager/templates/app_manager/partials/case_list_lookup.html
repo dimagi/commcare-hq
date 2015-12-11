@@ -46,13 +46,19 @@
                             </div>
                             <div class="col-sm-1">
                                 <a href="#" class="btn fd-kv-remove-pair btn-small btn-danger" data-bind="visible: ($parent.extras().length > 1 || !(key() === '' && value() === '')), click: function(item){ $parent.remove_item('extras', item) }">
-                                    <i class="icon-remove"></i>
+                                    <i class="fa fa-remove"></i>
                                 </a>
                             </div>
                         </div>
                         <!-- /ko -->
-                        <a href="#" class="btn btn-default fd-kv-add-pair" data-bind="visible: show_add_extra(), click: function(){ add_item('extras') }"><i class="icon-plus"></i> Add Key &rarr; Value Pair</a>
-                        <span class="help-inline" style="display: none;">{% trans "At least one Extra required" %}</span>
+                        <a href="#"
+                           class="btn btn-default fd-kv-add-pair"
+                           data-bind="visible: show_add_extra(), click: function(){ add_item('extras') }">
+                            <i class="fa fa-plus"></i> Add Key &rarr; Value Pair
+                        </a>
+                        <span class="help-inline" style="display: none;">
+                            {% trans "At least one Extra required" %}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -69,12 +75,16 @@
                             </div>
                             <div class="col-sm-1">
                                 <a href="#" class="btn fd-kv-remove-pair btn-small btn-danger" data-bind="visible: ($parent.responses().length > 1 || key() != ''), click: function(item){ $parent.remove_item('responses', item) }">
-                                    <i class="icon-remove"></i>
+                                    <i class="fa fa-remove"></i>
                                 </a>
                             </div>
                         </div>
                         <!-- /ko -->
-                        <a href="#" class="btn btn-default fd-kv-add-pair" data-bind="visible: show_add_response(), click: function(){ add_item('responses') }"><i class="icon-plus"></i> Add Key</a>
+                        <a href="#"
+                           class="btn btn-default fd-kv-add-pair"
+                           data-bind="visible: show_add_response(), click: function(){ add_item('responses') }">
+                            <i class="fa fa-plus"></i> Add Key
+                        </a>
                         <span class="help-inline" style="display: none;">{% trans "At least one Response required" %}</span>
                     </div>
                 </div>

@@ -45,7 +45,7 @@
                                   sortableList: phases"></tbody>
             </table>
             <button class="btn btn-default" data-bind="click: addPhase">
-                <i class="icon-plus"></i>
+                <i class="fa fa-plus"></i>
                 {% trans "Add Phase" %}
             </button>
         </fieldset>
@@ -72,7 +72,7 @@
                               visible: forms().length == 0
                               "></i>
                 <i style="cursor: pointer;"
-                   class="icon-question-sign icon-blue"
+                   class="fa fa-question-circle icon-blue"
                    title="{% trans 'You can only delete phases that have no forms' %}"
                    data-bind="visible: forms().length != 0"></i>
             </td>

@@ -115,7 +115,7 @@
     <div id="releases-table">
         <div class="alert alert-error" data-bind="visible: brokenBuilds">
             <p>
-                <span class="icon icon-exclamation-sign"></span>
+                <i class="fa fa-exclamation-circle"></i>
                 {% blocktrans %}
                     One or more of your versions is broken, please make sure it is
                     not marked as released. Make a new version if needed, and update
@@ -187,15 +187,15 @@
                             openModal: 'delete-build-modal-template',
                             visible: !_deleteState()
                         ">
-                            <span class="icon icon-remove"></span>
+                            <i class="fa fa-remove"></i>
                         </a>
                         <div class="pending" data-bind="
                             visible: _deleteState() == 'pending'
                         "></div>
 
-                        <div class="icon icon-exclamation-sign" data-bind="
+                        <i class="fa fa-exclamation-circle" data-bind="
                             visible: _deleteState() == 'error'
-                        "></div>
+                        "></i>
                     </td>
                     <td class="nowrap" data-bind="text: version"></td>
                     <td class="nowrap" data-bind="text: built_on_date"></td>
@@ -211,7 +211,7 @@
                                 css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
                                 click: clickDeploy
                             ">
-                                <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
+                                <span class="fa fa-exclamation-circle" data-bind="visible: build_broken"></span>
                                 {% trans "Deploy" %}
                             </a>
                         </div>
@@ -229,7 +229,7 @@
                             <b data-bind="visible: !build_comment()">{% trans "(No Comment)" %}</b>
                             <a class="edit-comment-pencil" href="#"
                                data-bind="click: function () {editing_comment(true);}">
-                                <span class="icon-pencil"></span>
+                                <i class="fa fa-pencil"></i>
                             </a>
                         </div>
                         <div data-bind="visible: editing_comment()">
@@ -237,10 +237,10 @@
                                 <input type="text" data-bind="value: new_comment"></input>
                                 <a href="#" data-bind="click: submit_new_comment,
                                                        visible: !pending_comment_update()">
-                                    <span class="icon-ok"></span>
+                                    <span class="fa fa-check"></span>
                                 </a>
                                 <a href="#" data-bind="click: function () {editing_comment(false);}, visible: !pending_comment_update()">
-                                    <span class="icon-remove"></span>
+                                    <i class="fa fa-remove"></i>
                                 </a>
                             </form>
                             <span data-bind="visible: pending_comment_update()">

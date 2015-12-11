@@ -10,7 +10,7 @@
         <ul class="unstyled" id="build-errors">
             {% for error in build_errors %}
                 <li>
-                    <i class="icon icon-exclamation-sign"></i>
+                    <i class="fa fa-exclamation-circle"></i>
                     <span>
                         {% case error.type "blank form" %}
                             {% if not error.message %}

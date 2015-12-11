@@ -110,7 +110,7 @@
                                            optionsCaption: 'Child case or extension case?',
                                            value: relationship"></select><br />
 
-                        <i class="icon-trash"></i>
+                        <i class="fa fa-trash"></i>
                         <a href="#" data-bind="click: $parent.removeCaseIndex">Remove index</a>
                     </li>
                 </ul>
@@ -142,7 +142,7 @@
     </h3>
     <div>
         <div>
-            <i class="icon-file"></i>
+            <i class="fa fa-file"></i>
             {% trans "Select case type:" %}
             <span class="control-group" data-bind="css: {warning: validate()}">
                 <select data-bind="
@@ -164,7 +164,7 @@
                 <input type="text" class="input-medium" data-bind="value: case_tag, disable: disable_tag" />
                 <span class="help-inline" data-bind="text: validate"></span>
                 <a href="#" data-bind="openModal: 'remove-action-modal-template', visible: true" class="pull-right">
-                    <i class="icon-trash"></i>
+                    <i class="fa fa-trash"></i>
                     {% trans "Remove action" %}
                 </a>
             </span>
@@ -220,7 +220,7 @@
     </h3>
     <div>
         <div>
-            <i class="icon-file"></i>
+            <i class="fa fa-file"></i>
             {% trans "Autoselect mode:" %}
             <span class="control-group" data-bind="css: {warning: validate()}">
                 <!-- ko with: auto_select -->
@@ -236,7 +236,7 @@
                 <input type="text" class="input-medium" data-bind="value: case_tag, disable: disable_tag" />
                 <span class="help-inline" data-bind="text: validate"></span>
                 <a href="#" data-bind="openModal: 'remove-action-modal-template', visible: true" class="pull-right">
-                    <i class="icon-trash"></i>
+                    <i class="fa fa-trash"></i>
                     {% trans "Remove action" %}
                 </a>
             </span>
@@ -255,7 +255,7 @@
     <div data-bind="with: caseConfigViewModel" class="col-sm-11">
         <div class="dropdown" data-bind="visible: actionOptions().length">
             <a href="#" data-toggle="dropdown">
-                <i class="icon-plus icon-blue"></i>
+                <i class="fa fa-plus icon-blue"></i>
                 <span>{% trans "Add Action" %}</span><span class="caret"></span>
             </a>
             <ul class="dropdown-menu" role="menu" data-bind="foreach: actionOptions">
@@ -268,12 +268,12 @@
             </ul>
         </div>
         <div data-bind="visible: !actionOptions().length">
-            <i class="icon-plus icon-muted"></i>
+            <i class="fa fa-plus icon-muted"></i>
             <span class="muted">{% trans "Add Action" %}</span>
         </div>
         <div>
             <div class="row-fluid">
-                <span data-bind="visible: load_update_cases().length"><i class="icon-asterisk"></i> {% trans "Load / Update / Close cases" %}</span>
+                <span data-bind="visible: load_update_cases().length"><i class="fa fa-asterisk"></i> {% trans "Load / Update / Close cases" %}</span>
                 <div id="case-load-accordion" data-bind="foreach: load_update_cases, accordion: {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true}">
                     <!-- ko if: auto_select -->
                     <div class="group" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
@@ -287,7 +287,7 @@
                 <hr/>
             </div>
             <div class="row-fluid">
-                <span data-bind="visible: open_cases().length"><i class="icon-asterisk"></i> {% trans "Open new cases" %}</span>
+                <span data-bind="visible: open_cases().length"><i class="fa fa-asterisk"></i> {% trans "Open new cases" %}</span>
                 <div id="case-open-accordion" data-bind="foreach: open_cases, accordion: {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true}">
                     <div class="group" data-bind="template: {name: 'case-config:case-action'}"></div>
                 </div>

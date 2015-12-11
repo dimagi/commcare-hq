@@ -45,7 +45,7 @@ var CC_DETAIL_SCREEN = {
                     var label = value;
                     if (CC_DETAIL_SCREEN.isAttachmentProperty(value)) {
                         label = (
-                            '<span class="icon-paper-clip"></span> ' +
+                            '<i class="fa fa-paperclip"></i> ' +
                             label.substring(label.indexOf(":") + 1)
                         );
                     }

@@ -244,7 +244,8 @@
             var form = $('#new-module-form');
             if (!form.data('clicked')) {
                 form.data('clicked', 'true');
-                $('.new-module-icon').removeClass().addClass("icon-refresh icon-spin");
+                // TODO: does icon-spin still work?
+                $('.new-module-icon').removeClass().addClass("fa fa-refresh icon-spin");
                 form.submit();
             }
         });
@@ -264,7 +265,7 @@
                 } else {
                     area.find('*').hide();
                     upgradeMessage.append(
-                        $('<i></i>').addClass('icon-arrow-left')
+                        $('<i></i>').addClass('fa').addClass('fa-arrow-left')
                     ).append(
                         $('<span></span>').text(' Requires CommCare ' + version)
                     ).appendTo(area);

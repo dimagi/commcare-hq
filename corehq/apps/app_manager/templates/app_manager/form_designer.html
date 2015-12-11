@@ -149,7 +149,7 @@
         };
 
         function gen_sidebar_elements() {
-            return $('.sidebar .nav-list a:not(a:has(.icon-pencil))');
+            return $('.sidebar .nav-list a:not(a:has(.fa-pencil))');
         }
         var sidebar_navigator = new KeyboardNavigator();
         sidebar_navigator.init({
@@ -275,5 +275,5 @@
         </a>
     </li>
     {% endif %}
-    <li><span class="divider">&gt;</span> <i class="icon-pencil"></i> Edit</li>
+    <li><span class="divider">&gt;</span> <i class="fa-pencil"></i> Edit</li>
 {% endblock %}

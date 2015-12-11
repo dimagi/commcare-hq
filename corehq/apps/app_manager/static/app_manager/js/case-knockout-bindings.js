@@ -1,7 +1,7 @@
 var utils = {
     getIcon: function(question) {
         if (question.tag === 'upload') {
-            return '<span class="icon-paper-clip"></span> ';
+            return '<i class="fa fa-paperclip"></i> ';
         }
         return '';
     },
@@ -88,7 +88,7 @@ ko.bindingHandlers.casePropertyTypeahead = {
             return _.map(ko.unwrap(valueAccessor()), function(value) {
                 if (value.indexOf("attachment:") === 0) {
                     var text = value.substring(11),
-                        html = '<span class="icon-paper-clip"></span> ' + text;
+                        html = '<i class="fa fa-paperclip"></i> ' + text;
                     return {value: text, label: html};
                 }
                 return {value: value, label: value};

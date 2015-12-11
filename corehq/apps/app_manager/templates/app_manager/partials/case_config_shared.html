@@ -4,10 +4,10 @@
     <!--ko with: condition -->
     <span data-bind="text: $parent.actionType"></span>
     <div data-bind="visible: type() === 'always'">
-        <a href="#" data-bind="click: function () {type('if')}"><i class="icon-plus"></i> {% trans "Only if the answer to..." %}</a>
+        <a href="#" data-bind="click: function () {type('if')}"><i class="fa fa-plus"></i> {% trans "Only if the answer to..." %}</a>
     </div>
     <div data-bind="visible: type() === 'if'">
-        <a href="#" data-bind="click: function () {type('always')}"><i class="icon-remove"></i></a>
+        <a href="#" data-bind="click: function () {type('always')}"><i class="fa fa-remove"></i></a>
         {% trans "Only if the answer to" %}
         <input class="input-large" type="hidden" data-bind="
             questionsSelect: $root.getQuestions('select select1', false, $parent.config.allow.repeats()),
@@ -85,7 +85,7 @@
                     <a href="#" data-bind="
                         click: $parent.removePreload,
                         visible: !(isBlank() && $index() === $parent.case_preload().length - 1)">
-                        <i class="icon-remove"></i>
+                        <i class="fa fa-remove"></i>
                     </a>
                 </td>
                 <td>
@@ -96,7 +96,7 @@
                     <p class="help-inline" data-bind="html: validateProperty, visible: validateProperty"></p>
                 </td>
                 <td>
-                    <i class="icon-arrow-right"></i>
+                    <i class="fa fa-arrow-right"></i>
                 </td>
                 <td>
                     <div data-bind="template: 'case-config:case-properties:question'"></div>
@@ -106,7 +106,7 @@
         </tbody>
     </table>
     <a href="#" class="firstProperty" data-bind="click: addPreload, visible: !case_preload().length">
-        <i class="icon-plus"></i>
+        <i class="fa fa-plus"></i>
         {% trans "Load properties" %}
     </a>
 </script>
@@ -133,14 +133,14 @@
                         click: $parent.removeProperty,
                         visible: !required() && !(isBlank() && $index() === $parent.case_properties().length - 1)
                     ">
-                        <i class="icon-remove"></i>
+                        <i class="fa fa-remove"></i>
                     </a>
                 </td>
                 <td>
                     <div data-bind="template: 'case-config:case-properties:question'"></div>
                 </td>
                 <td>
-                    <i class="icon-arrow-right"></i>
+                    <i class="fa fa-arrow-right"></i>
                 </td>
                 <td>
                     <div data-bind="template: {
@@ -153,7 +153,7 @@
         </tbody>
     </table>
     <a href="#" class="firstProperty" data-bind="click: addProperty, visible: !case_properties().length">
-        <i class="icon-plus"></i>
+        <i class="fa fa-plus"></i>
         {% trans "Save properties" %}
     </a>
 </script>

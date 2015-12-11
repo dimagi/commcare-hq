@@ -33,13 +33,13 @@
 <script type="text/html" id="CommcareSettings.widgets.customProperty">
     <input placeholder="Key" type="text" data-bind="value: key" />
     &nbsp;
-    <i class="icon-arrow-right"></i>
+    <i class="fa fa-arrow-right"></i>
     &nbsp;
     <input placeholder="Value" type="text" data-bind="value: value" />
     <a class="btn btn-danger" data-bind="
         click: $parent.onDestroyCustomProperty
         ">
-        <i class="icon-trash"></i>
+        <i class="fa fa-trash"></i>
     </a>
 </script>
 
@@ -63,7 +63,7 @@
             mediaUploadComplete: uploadComplete
         }
     ">
-        <i class="icon icon-cloud-upload"></i>
+        <i class="fa fa-cloud-upload"></i>
         <span data-bind="visible: url()">
             {% trans "Replace Logo" %}
         </span>
@@ -76,7 +76,7 @@
            visible: url(),
            click: removeLogo
     ">
-        <i class="icon icon-remove"></i>
+        <i class="fa fa-remove"></i>
     </a>
 </script>
 
@@ -123,7 +123,7 @@
 <script type="text/html" id="CommcareSettings.widgets.text_input">
     <span data-bind="template: 'CommcareSettings.widgets.select'"></span>
     <aside id="custom-keys-help" data-bind="visible: visibleValue() === 'custom-keys'">
-        <i class="icon-arrow-right"></i>
+        <i class="fa fa-arrow-right"></i>
         <span>Customize through
             <a href="#" data-bind="click: function () {$('#custom-keys-example').slideToggle()}">{% trans "User Interface Translations" %}</a>.
         </span>
@@ -168,7 +168,7 @@ todo fix
             <fieldset data-bind="visible: notEmpty">
                 <legend>
                     <a class="accordion-toggle" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}">
-                        <i class="icon-double-angle-down"></i>
+                        <i class="fa fa-angle-double-down"></i>
                         <span data-bind="text: title"></span>
                     </a>
                 </legend>
@@ -184,7 +184,7 @@ todo fix
                         <div class="controls">
                             <span data-bind="template: $data.widget_template || 'CommcareSettings.widgets.' + widget"></span>
                             <span data-bind="visible: disabledMessage(), css: {'text-warning': !optionOK(), 'text-success': optionOK}">
-                                <i data-bind="css: {'icon-arrow-left': !optionOK(), 'icon-ok': optionOK}"></i>
+                                <i class="fa" data-bind="css: {'fa-arrow-left': !optionOK(), 'fa-check': optionOK}"></i>
                                 <span data-bind="text: disabledMessage()"></span>
                             </span>
                             <p class="help-block" data-bind="visible: disabledButHasValue">
@@ -219,7 +219,7 @@ todo fix
                         attr: { href: '#' + customPropertyType },
                         css: { collapsed: true }
                         ">
-                    <i class="icon-double-angle-down"></i>
+                    <i class="fa fa-angle-double-down"></i>
                     <span>{% trans "Custom Properties" %}</span>
                 </a>
             </legend>

@@ -152,7 +152,7 @@
     <ul class="nav nav-list">
         <li {% if release_manager %}class="active"{% endif %}>
             <a href="{% url "release_manager" domain app.id %}">
-                <i class="icon-download-alt"></i>
+                <i class="fa fa-download"></i>
                 {% trans "Deploy" %}
             </a>
         </li>
@@ -161,14 +161,14 @@
                 {% if not copy_app_form or not copy_app_form.is_bound %}active{% endif %}"
             {% endif %}>
             <a href="{% url "view_app" domain app.id %}#app-settings" data-toggle="tab">
-                <i class="icon-cog"></i>
+                <i class="fa fa-cog"></i>
                 {% trans "Settings" %}
             </a>
         </li>
         {% if app.get_doc_type == 'Application' %}
         <li>
             <a id="multimedia-shower" href="{% url "view_app" domain app.id %}multimedia/#multimedia" data-toggle="tab">
-                <i class="icon-picture"></i>
+                <i class="fa fa-photo"></i>
                 {% trans "Multimedia" %}
             </a>
         </li>
@@ -191,13 +191,13 @@
             {% endif %}
             <a href="{% url "view_app" domain app.id %}languages/#languages-and-translations" data-toggle="tab"
                style="vertical-align: middle;">
-                <i class="icon-globe"></i>
+                <i class="fa fa-globe"></i>
                 {% trans "Languages" %}
             </a>
         </li>
         <li>
             <a href="{% url "app_summary" domain app.id %}" style="vertical-align: middle;">
-                <i class="icon-list"></i>
+                <i class="fa fa-list"></i>
                 {% trans "App Summary" %}
             </a>
         </li>
@@ -213,12 +213,12 @@
             </li>
             <li class="sort-disabled edit-form-li {% if is_user_registration %} active{% endif %}" id="user-registration-nav-link">
                 <a href="{% url "view_user_registration" domain app.id %}">
-                    <i class="icon-file-alt"></i>
+                    <i class="fa fa-file-o"></i>
                     {% trans "User Registration" %}
                 </a>
                 <div class="edit-form-pencil">
                     <a href="{% url "user_registration_source" domain app.id %}">
-                        <span class="icon icon-pencil"></span>
+                        <i class="fa fa-pencil"></i>
                     </a>
                 </div>
             </li>
@@ -229,7 +229,7 @@
                         data-index="{{ module.id }}">
                         <a href="{% url "view_module" domain app.id module.id %}">
                             <i class="drag_handle"></i>
-                            <i class="icon-folder-open"></i>
+                            <i class="fa fa-folder-open"></i>
                             <span {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
                                 {{ module.name|html_trans:langs }}
                             </span>
@@ -254,7 +254,7 @@
                                         {% if not form.no_vellum %}
                                             <div class="edit-form-pencil pull-right">
                                                 <a id="edit_pen_{{ module.id }}_{{ form.id }}" href="{% url "form_source" domain app.id module.id form.id %}">
-                                                    <i class="icon-pencil" {% ifequal form selected_form %}style="color: white"{% endifequal %}"></i>
+                                                    <i class="fa fa-pencil" {% ifequal form selected_form %}style="color: white"{% endifequal %}"></i>
                                                 </a>
                                             </div>
                                         {% endif %}
@@ -267,7 +267,7 @@
                                 </form>
                                 {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
                                 <a class="submit_on_click" href="#">
-                                    <i class="icon-plus icon-blue"></i>
+                                    <i class="fa fa-plus icon-blue"></i>
                                     <span class="muted">{% trans "Form" %}</span>
                                 </a>
                                 {% endif %}
@@ -284,7 +284,7 @@
                 {% if show_care_plan or show_advanced or show_shadow_modules %}
                     <li class="sort-disabled dropdown">
                         <a href="#" data-toggle="dropdown">
-                            <i class="new-module-icon icon-plus icon-blue"></i>
+                            <i class="new-module-icon fa fa-plus icon-blue"></i>
                             <span class="muted">{% trans "Module" %}</span><span class="caret"></span>
                         </a>
                         <ul class="dropdown-menu" role="menu">
@@ -319,7 +319,7 @@
                 {% else %}
                 <li class="sort-disabled">
                     <a href="#" class="new-module" data-type="case">
-                        <i class="new-module-icon icon-plus icon-blue"></i>
+                        <i class="new-module-icon fa fa-plus icon-blue"></i>
                         <span class="muted">{% trans "Module" %}</span>
                     </a>
                 </li>
@@ -331,13 +331,13 @@
     <li class="nav-header">Actions</li>
     <li class="app-name-div{% if copy_app_form and copy_app_form.is_bound %} active{% endif %}">
         <a href="{% url "view_app" domain app.id %}copy/#copy" data-toggle="tab">
-            <i class="icon-copy"></i>
+            <i class="fa fa-copy"></i>
             {% trans "Copy Application" %}
         </a>
     </li>
     <li>
         <a href="{% url "view_app" domain app.id %}delete/#delete" data-toggle="tab">
-            <i class="icon-trash"></i>
+            <i class="fa fa-trash"></i>
             {% trans "Delete Application" %}
         </a>
     </li>

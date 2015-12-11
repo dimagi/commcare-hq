@@ -157,7 +157,9 @@ var LangcodeValidator = (function () {
                 $("<td/>").html(this.validation.isValid[langcode] ?
                     langcode : '<strike>' + langcode + '</strike>').appendTo($row);
                 $('<td/>').append(
-                    $('<i/>').addClass(this.validation.isValid[langcode] ? 'icon-ok' : 'icon-exclamation-sign')
+                    $('<i/>')
+                        .addClass('fa')
+                        .addClass(this.validation.isValid[langcode] ? 'fa-check' : 'fa-exclamation-circle')
                 ).appendTo($row);
                 $("<td/>").html(this.validation.name[langcode] || "").appendTo($row);
                 $("<td></td>").appendTo($row).html($links);

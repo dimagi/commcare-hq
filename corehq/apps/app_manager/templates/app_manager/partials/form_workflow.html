@@ -51,7 +51,7 @@
                         value: formLink.xpath
             "></textarea>
             &nbsp;
-            <i class="icon-arrow-right"></i>
+            <i class="fa fa-arrow-right"></i>
             &nbsp;
             <select class="input-xlarge" name="form_links_form_ids" data-bind="
                 options: $parent.forms,
@@ -63,14 +63,14 @@
             <button class="btn btn-danger" data-bind="
                 click: $parent.onDestroyFormLink.bind($parent)
                 ">
-                <i class="icon-trash"></i>
+                <i class="fa fa-trash"></i>
             </button>
             <input type="hidden" name="datums_json" data-bind="value: formLink.serializedDatums"/>
             <div class="alert alert-wraning" data-bind="visible: !formLink.autoLink()">
                 <p>
                     {% trans "This form requires manual linking." %}
                     <button class="btn btn-default btn-small" data-bind="click: formLink.fetchDatums, visible: !formLink.datumsFetched()">
-                        {% trans "Continue" %}<i class="icon-tick"></i>
+                        {% trans "Continue" %}
                     </button>
                 </p>
                 <p data-bind="visible: formLink.datumsFetched() && formLink.datums().length === 0">

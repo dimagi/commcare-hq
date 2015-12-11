@@ -19,7 +19,7 @@
                                     click: passToUploadController
                                }"
                     data-target="#{{ multimedia.upload_managers.icon.slug }}">
-                <i class="icon icon-cloud-upload"></i>
+                <i class="fa fa-cloud-upload"></i>
                 <span data-bind="visible: isMediaMatched">
                     {% trans 'Replace Icon' %}
                 </span>
@@ -35,7 +35,7 @@
                             click: removeMedia
                         }
                     ">
-                <i class="icon icon-remove"></i>
+                <i class="fa fa-remove"></i>
             </button>
             <button type="button"
                     class="btn btn-default pull-right"
@@ -46,7 +46,7 @@
                             analytics.usage('App Builder', 'Click Show Path for a Form or Module', 'image');
                         }
             ">
-                <i class="icon icon-cog"></i>
+                <i class="fa fa-cog"></i>
                 {% trans 'Set Icon Path...' %}
             </button>
         </div>
@@ -73,7 +73,7 @@
                             click: setDefaultPath,
                         }
                     ">
-                <i class="icon icon-remove"></i>
+                <i class="fa fa-remove"></i>
                 {% trans 'Use Default Path' %}
             </button>
         </div>
@@ -88,7 +88,7 @@
             <a data-bind="visible: isMediaMatched, attr: {href: url}"
                class="btn btn-default"
                target="_blank">
-                <i class="icon icon-volume-up"></i>
+                <i class="fa fa-volume-up"></i>
                 {% trans "Preview" %}
             </a>
             <button type="button"
@@ -100,7 +100,7 @@
                                     click: passToUploadController
                                }"
                     data-target="#{{ multimedia.upload_managers.audio.slug }}">
-                <i class="icon icon-cloud-upload"></i>
+                <i class="fa fa-cloud-upload"></i>
                 <span data-bind="visible: isMediaMatched">
                     {% trans 'Replace Audio' %}
                 </span>
@@ -116,7 +116,7 @@
                             click: removeMedia
                         }
                     ">
-                <i class="icon icon-remove"></i>
+                <i class="fa fa-remove"></i>
             </button>
             <button type="button"
                     class="btn btn-default pull-right"
@@ -126,12 +126,12 @@
                             setCustomPath();
                             analytics.usage('App Builder', 'Click Show Path for a Form or Module', 'audio');
                         }">
-                <i class="icon icon-cog"></i>
+                <i class="fa fa-cog"></i>
                 {% trans 'Set Audio Path...' %}
             </button>
             <p data-bind="visible: isMediaMatched"
                class="help-block">
-                <i class="icon icon-info-sign"></i>
+                <i class="icon icon-info-circle"></i>
                 {% blocktrans %}
                 To hear audio on Java Phones, you must be in CommCare Sense
                 mode or Numeric Selection Mode. (On Android it will always work.)
@@ -161,7 +161,7 @@
                             click: setDefaultPath,
                         }
                     ">
-                <i class="icon icon-remove"></i>
+                <i class="fa fa-remove"></i>
                 {% trans 'Use Default Path' %}
             </button>
         </div>

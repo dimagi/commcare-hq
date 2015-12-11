@@ -148,7 +148,7 @@
                         <fieldset class="nested-fieldset">
                             <legend>
                                 <a href="#" data-bind="click: $parent.removeVisit">
-                                    <i class="icon-remove"></i>
+                                    <i class="fa fa-remove"></i>
                                 </a>
                                 <span data-bind="visible: type() === 'repeats'">{% trans "Repeat" %}</span>
                                 {% trans "Visit" %}
@@ -191,7 +191,7 @@
                         <button id="add-visit" class="btn btn-default"
                                 data-bind="click: addVisit,
                                            disable: hasRepeatVisit()">
-                            <i class="icon-plus"></i>
+                            <i class="fa fa-plus"></i>
                             {% trans "Add Visit" %}
                         </button>
                         <span class="help-inline error-text" style="display:none">

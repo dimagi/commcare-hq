@@ -315,7 +315,8 @@
         {% if app.get_doc_type == "Application" %}
             <div class="tab-pane multimedia" id="multimedia">
                 <div data-bind="if: load_state() === 'loading'">
-                    <i class="icon-large icon-refresh icon-spin" style="margin: 70px 0 0 200px;"></i>
+                    <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                    {% trans "Loading ..." %}
                 </div>
                 <div data-bind="html: multimedia_page_html"></div>
                 <div data-bind="if: load_state() === 'error'">
@@ -336,7 +337,7 @@
             <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger disable-on-submit">
-                    <i class="icon-trash"></i>
+                    <i class="fa fa-trash"></i>
                     {% trans "Delete this application" %}
                 </button>
             </form>

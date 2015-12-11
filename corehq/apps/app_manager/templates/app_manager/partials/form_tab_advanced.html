@@ -6,7 +6,7 @@
     <ul class="nav nav-pills nav-stacked">
         <li>
             <a class="dialog_opener" href="#">
-                <i class="icon-arrow-up"></i>
+                <i class="fa fa-arrow-up"></i>
                 {% trans "Upload" %}
             </a>
             <div class="dialog" title="Upload XForm">
@@ -25,7 +25,7 @@
                href="{% url "get_xform_source" domain app.id module.id form.id %}?download=true"
             {% endif %}
                     >
-                <i class="icon-arrow-down"></i>
+                <i class="fa fa-arrow-down"></i>
                 {% trans "Download" %}
             </a>
         </li>
@@ -37,7 +37,7 @@
                href="{% url "get_xform_source" domain app.id module.id form.id %}"
                     {% endif %}
                     >
-                <i class="icon-search"></i>
+                <i class="fa fa-search"></i>
                 {% trans "View" %}
             </a>
             <div class="xml-source dialog" title="XML Source">
@@ -52,7 +52,11 @@
                             {% trans "Loading..." %}
                         </textarea><br />
                         <input type="hidden" name="ajax" value="false" />
-                        <label for="cleanup">{% trans "[Beta] Clean up markup after saving (add newlines, reformat indentation, etc.): " %}</label><input type="checkbox" id="cleanup" name="cleanup" /><br/>
+                        <label for="cleanup">
+                            {% trans "[Beta] Clean up markup after saving (add newlines, reformat indentation, etc.): " %}
+                        </label>
+                        <input type="checkbox" id="cleanup" name="cleanup" />
+                        <br/>
                         <input type="submit" value="Save" />
                     </form>
                 </div>
@@ -62,7 +66,7 @@
     {% if allow_form_copy%}
     <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
         <p>
-        <i class="icon-share"></i> {% trans "Copy form to: " %}
+        <i class="fa fa-share-square-o"></i> {% trans "Copy form to: " %}
         <select name='to_module_id'>{% for mod in app.get_modules %}
             <option value={{ mod.id }}>{{ mod.name|html_trans:langs }}</option>
             {% endfor %}</select>
