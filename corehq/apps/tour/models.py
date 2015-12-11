@@ -1,16 +1,14 @@
 from django.contrib.auth.models import User
-from django.db import models
+from django.db import models, IntegrityError
 
 
 class GuidedTour(models.Model):
     user = models.ForeignKey(
         User,
-        unique=True,
         db_index=True,
     )
     tour_slug = models.CharField(
         max_length=255,
-        unique=True,
         db_index=True,
     )
     date_completed = models.DateTimeField(auto_now=True)
@@ -21,4 +19,4 @@ class GuidedTour(models.Model):
 
     @classmethod
     def mark_as_seen(cls, user, tour_slug):
-        cls.objects.create(user=user, tour_slug=tour_slug)
+        cls.objects.get_or_create(user=user, tour_slug=tour_slug)
