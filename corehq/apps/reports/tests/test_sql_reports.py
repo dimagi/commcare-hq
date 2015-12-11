@@ -3,7 +3,7 @@ from django import test as unittest
 from django.test.client import RequestFactory
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
-from corehq.db import Session
+from corehq.sql_db.connections import Session
 from corehq.util.dates import iso_string_to_date
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.parsing import json_format_date

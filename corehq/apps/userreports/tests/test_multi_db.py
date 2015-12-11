@@ -11,7 +11,7 @@ from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
     get_sample_report_config
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq import db
+from corehq.sql_db import connections
 
 
 class UCRMultiDBTest(TestCase):
@@ -24,7 +24,7 @@ class UCRMultiDBTest(TestCase):
         cls.db2_url = '/'.join(db_conn_parts)
 
         # setup patches
-        cls.connection_string_patch = patch('corehq.db.connection_manager.get_connection_string')
+        cls.connection_string_patch = patch('corehq.sql_db.connections.connection_manager.get_connection_string')
 
         def connection_string_for_engine(engine_id):
             if engine_id == 'engine-1':
@@ -97,9 +97,9 @@ class UCRMultiDBTest(TestCase):
         self.assertEqual('engine-2', get_engine_id(self.ds_2))
 
         self.assertEqual(settings.SQL_REPORTING_DATABASE_URL,
-                         db.connection_manager.get_connection_string('engine-1'))
+                         connections.connection_manager.get_connection_string('engine-1'))
         self.assertEqual(self.db2_url,
-                         db.connection_manager.get_connection_string('engine-2'))
+                         connections.connection_manager.get_connection_string('engine-2'))
 
         self.assertNotEqual(str(self.ds1_adapter.engine.url), str(self.ds2_adapter.engine.url))
         self.assertEqual(settings.SQL_REPORTING_DATABASE_URL, str(self.ds1_adapter.engine.url))

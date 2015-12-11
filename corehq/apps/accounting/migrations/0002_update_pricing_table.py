@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 from corehq.apps.hqadmin.management.commands.cchq_prbac_bootstrap import cchq_prbac_bootstrap
+from corehq.sql_db.operations import HqRunPython
 
 
 class Migration(migrations.Migration):
@@ -11,6 +12,6 @@ class Migration(migrations.Migration):
         ('accounting', '0001_initial'),
     ]
 
-    operations = [
-        migrations.RunPython(cchq_prbac_bootstrap),
-    ]
+    operations = {
+        HqRunPython(cchq_prbac_bootstrap),
+    }

@@ -60,7 +60,7 @@
             <p>There seems to be a problem loading data for the <strong>{{ report.title }}</strong> report.</p>
             <p>The report returned the following error:</p>
             <div class="alert alert-error report-error-status"></div>
-            <p>If this problem persists, we encourage you to <a href="#reportIssueModal" data-target="#reportIssueModal" data-toggle="modal">Report an Issue</a>.</p>
+            <p>If this problem persists, we encourage you to <a href="#modalReportIssue" data-target="#modalReportIssue" data-toggle="modal">Report an Issue</a>.</p>
         </div>
         <div class="modal-footer">
             <a href="#" class="btn btn-primary" onclick="$(this).parent().parent().trigger('reloadHQReport')" data-loading-text="Trying Again..." data-fail-text="Loading Failed. Try Again?">Try Again</a>

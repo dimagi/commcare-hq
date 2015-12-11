@@ -19,7 +19,7 @@ from corehq.apps.userreports.sql.columns import (
     _get_distinct_values,
     DEFAULT_MAXIMUM_EXPANSION,
 )
-from corehq.db import connection_manager, UCR_ENGINE_ID
+from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase

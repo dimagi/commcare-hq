@@ -23,9 +23,8 @@ from corehq.util.files import file_extention_from_filename
 
 from soil import DownloadBase
 
-from corehq.apps.app_manager.decorators import safe_download, require_can_edit_apps
+from corehq.apps.app_manager.decorators import safe_download
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
-from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache, BulkMultimediaStatusCacheNfs
 from corehq.apps.hqmedia.controller import (
     MultimediaBulkUploadController,
@@ -71,54 +70,6 @@ class BaseMultimediaTemplateView(BaseMultimediaView, TemplateView):
 
     def render_to_response(self, context, **response_kwargs):
         return render(self.request, self.template_name, context)
-
-
-@require_can_edit_apps
-def search_for_media(request, domain, app_id):
-    media_type = request.GET['t']
-    if media_type == 'Image':
-        files = CommCareImage.search(request.GET['q'])
-    elif media_type == 'Audio':
-        files = CommCareAudio.search(request.GET['q'])
-    else:
-        raise Http404()
-    return HttpResponse(json.dumps([
-        {'url': i.url(),
-         'licenses': [license.display_name for license in i.licenses],
-         'tags': [tag for tags in i.tags.values() for tag in tags],
-         'm_id': i._id} for i in files]))
-
-
-@require_can_edit_apps
-def choose_media(request, domain, app_id):
-    # TODO: Add error handling
-    app = get_app(domain, app_id)
-    media_type = request.POST['media_type']
-    media_id = request.POST['id']
-    if media_type == 'Image':
-        file = CommCareImage.get(media_id)
-    elif media_type == 'Audio':
-        file = CommCareImage.get(media_id)
-    else:
-        raise Http404()
-
-    if file is None or not file.is_shared:
-        return HttpResponse(json.dumps({
-            'match_found': False
-        }))
-
-    file.add_domain(domain)
-    app.create_mapping(file, request.POST['path'])
-    if media_type == 'Image':
-        return HttpResponse(json.dumps({
-            'match_found': True,
-            'image': {'m_id': file._id, 'url': file.url()},
-            'file': True
-        }))
-    elif media_type == 'Audio':
-        return HttpResponse(json.dumps({'match_found': True, 'audio': {'m_id': file._id, 'url': file.url()}}))
-    else:
-        raise Http404()
 
 
 class BaseMultimediaUploaderView(BaseMultimediaTemplateView):

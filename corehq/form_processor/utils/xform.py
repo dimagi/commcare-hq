@@ -3,13 +3,9 @@ import pytz
 import xml2json
 
 from dimagi.ext.jsonobject import re_loose_datetime
-from dimagi.utils.couch import LockManager, ReleaseOnError
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.tzmigration import phone_timezones_should_be_processed
-from couchforms.exceptions import DuplicateError
-
-from ..models import Attachment
 
 
 def extract_meta_instance_id(form):

@@ -274,3 +274,13 @@ def get_form_analytics_metadata(domain, app_id, xmlns):
     if view_results:
         return view_results['value']
     return None
+
+
+def get_exports_by_form(domain):
+    return XFormInstance.get_db().view(
+        'exports_forms/by_xmlns',
+        startkey=[domain],
+        endkey=[domain, {}],
+        group=True,
+        stale=stale_ok()
+    )

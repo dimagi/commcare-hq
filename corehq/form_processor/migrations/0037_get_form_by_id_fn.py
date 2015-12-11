@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations
 
-from corehq.form_processor.utils.migration import migrate_sql_function
+from corehq.sql_db.operations import noop_migration
 
 
 class Migration(migrations.Migration):
@@ -13,5 +13,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrate_sql_function('get_form_by_id')
+        noop_migration(),
     ]

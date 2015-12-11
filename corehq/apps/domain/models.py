@@ -1,6 +1,5 @@
 from datetime import datetime
 from itertools import imap
-import json
 import uuid
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
@@ -840,21 +839,6 @@ class Domain(Document, SnapshotMixin):
             return cls.view('domain/published_snapshots', startkey=[False, {}], include_docs=True, descending=True, limit=limit, skip=skip)
         else:
             return cls.view('domain/published_snapshots', endkey=[True], include_docs=True, descending=True, limit=limit, skip=skip)
-
-    @classmethod
-    def snapshot_search(cls, query, page=None, per_page=10):
-        skip = None
-        limit = None
-        if page:
-            skip = (page - 1) * per_page
-            limit = per_page
-        results = cls.get_db().search('domain/snapshot_search',
-            q=json.dumps(query),
-            limit=limit,
-            skip=skip,
-            #stale='ok',
-        )
-        return map(cls.get, [r['id'] for r in results]), results.total_rows
 
     def update_deployment(self, **kwargs):
         self.deployment.update(kwargs)

@@ -985,6 +985,11 @@ class Subscriber(models.Model):
             raise SubscriptionChangeError("The upgrade was not successful.")
 
 
+class SubscriptionManager(models.Manager):
+    def get_queryset(self):
+        return super(SubscriptionManager, self).get_queryset().filter(is_hidden_to_ops=False)
+
+
 class Subscription(models.Model):
     """
     Links a Subscriber to a SoftwarePlan and BillingAccount, necessary for invoicing.
@@ -1019,6 +1024,9 @@ class Subscription(models.Model):
         default=FundingSource.CLIENT
     )
     last_modified = models.DateTimeField(auto_now=True)
+    is_hidden_to_ops = models.BooleanField(default=False)
+
+    objects = SubscriptionManager()
 
     class Meta:
         app_label = 'accounting'
