@@ -1,17 +1,17 @@
 {% load i18n %}
 {% if app.application_version == '2.0' %}
     <div class="form-group">
-        <label class="control-label">
-            {% trans "End of form Navigation" %}
+        <label class="control-label col-lg-2">
+            {% trans "End of Form Navigation" %}
             <span class="hq-help-template"
-                  data-title="{% trans "End of form Navigation" %}"
+                  data-title="{% trans "End of Form Navigation" %}"
                   data-content="{% blocktrans %}After the user completes a form, your application automatically returns to the home screen.
                   Here you can set the application to navigate automatically to a different location in the app.{% endblocktrans %}"
             ></span>
         </label>
-        <div id="form-workflow" class="controls commcare-feature" data-since-version="2.10">
+        <div id="form-workflow" class="col-lg-4 commcare-feature" data-since-version="2.10">
             <div class="form-group">
-                <select name="post_form_workflow" data-bind="
+                <select name="post_form_workflow" class="form-control" data-bind="
                     optstr: workflowOptions(),
                     value: workflow
                     "></select>
