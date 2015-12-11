@@ -298,13 +298,14 @@ class RestoreState(object):
     """
     restore_class = FileRestoreResponse
 
-    def __init__(self, project, user, params):
+    def __init__(self, project, user, app, params):
         self.project = project
         self.domain = project.name if project else ''
         _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], fail_if_debug=True)
         _assert(self.domain, 'Restore for {} missing a domain!'.format(user.username))
 
         self.user = user
+        self.app = app
         self.params = params
         self.provider_log = {}  # individual data providers can log stuff here
         # get set in the start_sync() function
@@ -441,15 +442,16 @@ class RestoreConfig(object):
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).
     """
 
-    def __init__(self, project=None, user=None, params=None, cache_settings=None):
+    def __init__(self, project=None, user=None, app=None, params=None, cache_settings=None):
         self.project = project
         self.domain = project.name if project else ''
         self.user = user
+        self.app = app
         self.params = params or RestoreParams()
         self.cache_settings = cache_settings or RestoreCacheSettings()
 
         self.version = self.params.version
-        self.restore_state = RestoreState(self.project, self.user, self.params)
+        self.restore_state = RestoreState(self.project, self.user, self.app, self.params)
 
         self.force_cache = self.cache_settings.force_cache
         self.cache_timeout = self.cache_settings.cache_timeout
