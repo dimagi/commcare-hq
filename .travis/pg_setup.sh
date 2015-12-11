@@ -6,12 +6,12 @@ set -ev
 # install plproxy extension (needed until its added to the travis APT whitelist)
 # https://github.com/travis-ci/apt-package-whitelist/issues/2053
 sudo apt-get update
-sudo apt-get install postgresql-9.1-plproxy
+sudo apt-get install postgresql-9.1-plproxy postgresql-contrib-$PGVERSION postgresql-server-dev-$PGVERSION
 
 # install pghashlib
 sudo /etc/init.d/postgresql stop
 
-wget https://github.com/markokr/pghashlib/archive/master.zip -O pghashlib.zip
+wget --quiet https://github.com/markokr/pghashlib/archive/master.zip -O pghashlib.zip
 unzip pghashlib.zip
 cd pghashlib-master
 echo $PGVERSION
