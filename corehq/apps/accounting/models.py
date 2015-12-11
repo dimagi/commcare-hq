@@ -985,9 +985,9 @@ class Subscriber(models.Model):
             raise SubscriptionChangeError("The upgrade was not successful.")
 
 
-class SubscriptionBaseManager(models.Manager):
+class SubscriptionManager(models.Manager):
     def get_queryset(self):
-        return super(SubscriptionBaseManager, self).get_queryset().filter(is_hidden_to_ops=False)
+        return super(SubscriptionManager, self).get_queryset().filter(is_hidden_to_ops=False)
 
 
 class Subscription(models.Model):
@@ -1026,7 +1026,7 @@ class Subscription(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
     is_hidden_to_ops = models.BooleanField(default=False)
 
-    objects = SubscriptionBaseManager()
+    objects = SubscriptionManager()
 
     class Meta:
         app_label = 'accounting'
