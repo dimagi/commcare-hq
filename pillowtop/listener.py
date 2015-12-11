@@ -505,12 +505,6 @@ class AliasedElasticPillow(BasicPillow):
             timeout=self.es_timeout,
         )
 
-    def delete_index(self):
-        """
-        Coarse way of deleting an index - a todo is to set aliases where need be
-        """
-        self.get_es_new().indices.delete(self.es_index)
-
     def refresh_index(self):
         self.get_es().post("%s/_refresh" % self.es_index)
 
