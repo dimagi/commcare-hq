@@ -178,6 +178,7 @@
             {% if app.get_doc_type == 'Application' %}
                 <span id="langs" class="pull-right">
                     {% if not app.is_remote_app and app.langs|length > 1%}
+                        {# TODO: fix input-mini and all other sized inputs #}
                         <select name="lang" class="input-mini" style="height: 20px; margin-bottom: 0px; margin-top: 2px; padding: 0;">
                             {% for lang in app.langs %}
                                 <option value="{{ lang }}"
