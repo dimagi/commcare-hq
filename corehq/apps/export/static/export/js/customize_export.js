@@ -60,8 +60,9 @@ var CustomExportView = {
                 }
 
                 var renamed_field = field;
+                var rename_map;
                 if (self.custom_export.type() === 'form' && index === '#') {
-                    var rename_map = {
+                    rename_map = {
                         "form.case.@case_id": "form.meta.caseid",
                         "form.meta.timeEnd": "form.meta.completed_time",
                         "form.meta.timeStart": "form.meta.started_time",
@@ -74,7 +75,8 @@ var CustomExportView = {
                         {regex: /^form\.subcase_\d(.*)$/, tag: 'subcase', no_replace: true},
                         {regex: /^form\.([#@].*)$/, tag: 'tag'},
                         {regex: /^form\.(.*)$/, tag: ''}
-                    ], pattern, stripped;
+                    ];
+                    var pattern;
                     for (var i = 0; i < patterns.length; i++) {
                         pattern = patterns[i];
                         stripped = !pattern.no_replace ? field.replace(pattern.regex, '$1') : field;
@@ -124,7 +126,7 @@ var CustomExportView = {
                             return {tags: ['info'].concat(tags), field: renamed_field};
                         }
                     } else if (/#\.indices\.#$/.exec(index)) {
-                        var rename_map = {
+                        rename_map = {
                             'identifier': 'relationship',
                             'referenced_id': 'case_id',
                             'referenced_type': 'case_type'
@@ -167,7 +169,7 @@ var CustomExportView = {
             putInDefaultOrder: function (index, columns) {
                 // http://stackoverflow.com/questions/2998784/how-to-output-integers-with-leading-zeros-in-javascript
                 // [11] < [2], so have to pad numbers
-                function pad10(a){return(1e15+a+"").slice(-10)}
+                function pad10(a){return(1e15+a+"").slice(-10);}
 
                 var order = ko.utils.unwrapObservable(self.default_order[index]);
                 var order_index = {};
@@ -219,7 +221,7 @@ var CustomExportView = {
                 var niceField = self.utils.parseField(column.index, table.index, column.tag());
                 var special = ko.utils.unwrapObservable(column.special);
                 if (special) {
-                    niceField['field'] = special;
+                    niceField.field = special;
                 }
                 column._niceField = niceField;
                 column.isCaseName = ko.computed(function () {
@@ -313,7 +315,7 @@ var CustomExportView = {
                         }
                         return col;
                     })
-                }
+                };
             });
             tables = ko.mapping.toJS(tables);
             if (tables.length > 1) {
