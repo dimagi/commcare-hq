@@ -1,16 +1,14 @@
-{% extends 'style/bootstrap2/base_section.html' %}
+{% extends 'style/bootstrap3/base_section.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% block head %} {{ block.super }}
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
-    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
+{% block stylesheets %} {{ block.super }}
+    <link rel="stylesheet" href="{% new_static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
-    <script src="{% static 'sms/ko/add_gateway_form_handler.ko.js' %}"></script>
+    <script src="{% new_static 'sms/ko/add_gateway_form_handler.ko.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -24,10 +22,9 @@
         ko.applyBindings(gatewayFormHandler, $('#add-gateway-form').get(0));
         gatewayFormHandler.init();
     </script>
-
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     <div id="add-gateway-form">
         {% crispy form %}
     </div>
@@ -49,7 +46,7 @@
                                 <button type="button"
                                         class="btn btn-danger"
                                         data-bind="click: $parent.removePhoneNumber">
-                                    <i class="icon-remove"></i> {% trans 'Remove' %}
+                                    <i class="fa fa-times"></i> {% trans 'Remove' %}
                                 </button>
                             </td>
                         </tr>
@@ -64,10 +61,9 @@
                 <button type="button"
                         class="btn btn-success"
                         data-bind="click: addPhoneNumber">
-                    <i class="icon-plus"></i> {% trans 'Add Phone Number' %}
+                    <i class="fa fa-plus"></i> {% trans 'Add Phone Number' %}
                 </button>
             </div>
         </div>
-
     </script>
 {% endblock %}

@@ -17,6 +17,7 @@ from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import (
     ExportNotFound,
@@ -86,6 +87,9 @@ class ExportsPermissionsMixin(object):
         users do not have the "view reports" permission, they should only be
         able to access deid reports.
     """
+    @property
+    def form_or_case(self):
+        raise NotImplementedError("Does this view operate on forms or cases?")
 
     @property
     def has_edit_permissions(self):
@@ -93,7 +97,15 @@ class ExportsPermissionsMixin(object):
 
     @property
     def has_view_permissions(self):
-        return self.request.couch_user.can_view_reports()
+        if self.form_or_case == 'form':
+            report_to_check = 'corehq.apps.reports.standard.export.ExcelExportReport'
+        elif self.form_or_case == 'case':
+            report_to_check = 'corehq.apps.reports.standard.export.CaseExportReport'
+        return (self.request.couch_user.can_view_reports()
+                or self.request.couch_user.has_permission(
+                    self.domain,
+                    get_permission_name(Permissions.view_report),
+                    data=report_to_check))
 
     @property
     def has_deid_view_permissions(self):
@@ -397,6 +409,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     @use_daterangepicker
     @use_bootstrap3
     @use_select2
+    @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         if not (self.has_edit_permissions
                 or self.has_view_permissions
@@ -683,6 +696,7 @@ class DownloadFormExportView(BaseDownloadExportView):
     show_date_range = True
     page_title = ugettext_noop("Download Form Export")
     check_for_multimedia = True
+    form_or_case = 'form'
 
     @staticmethod
     def get_export_schema(export_id):
@@ -790,6 +804,7 @@ class DownloadCaseExportView(BaseDownloadExportView):
     """
     urlname = 'export_download_cases'
     page_title = ugettext_noop("Download Case Export")
+    form_or_case = 'case'
 
     @staticmethod
     def get_export_schema(export_id):
@@ -835,8 +850,10 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
 
     @use_bootstrap3
     @use_select2
+    @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
-        if not (self.has_edit_permissions or self.has_view_permissions):
+        if not (self.has_edit_permissions or self.has_view_permissions
+                or (self.is_deid and self.has_deid_view_permissions)):
             raise Http404()
         return super(BaseExportListView, self).dispatch(request, *args, **kwargs)
 
@@ -943,7 +960,6 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
                 _("Issue fetching list of exports: {}").format(e),
                 log_error=True,
                 exception=e,
-                request=self.request,
             )
         return format_angular_success({
             'exports': saved_exports,
@@ -1026,6 +1042,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
 class FormExportListView(BaseExportListView):
     urlname = 'list_form_exports'
     page_title = ugettext_noop("Export Forms")
+    form_or_case = 'form'
 
     @property
     def bulk_download_url(self):
@@ -1079,7 +1096,6 @@ class FormExportListView(BaseExportListView):
             rmi_helper = ApplicationDataRMIHelper(self.domain)
             response = rmi_helper.get_form_rmi_response()
         except Exception as e:
-
             return format_angular_error(
                 _("Problem getting Create Export Form: {} {}").format(
                     e.__class__, e
@@ -1114,6 +1130,7 @@ class CaseExportListView(BaseExportListView):
     urlname = 'list_case_exports'
     page_title = ugettext_noop("Export Cases")
     allow_bulk_export = False
+    form_or_case = 'case'
 
     @property
     def page_name(self):
@@ -1170,7 +1187,6 @@ class CaseExportListView(BaseExportListView):
                 _("Problem getting Create Export Form: {}").format(e.message),
                 log_error=True,
                 exception=e,
-                request=self.request,
             )
         return format_angular_success(response)
 

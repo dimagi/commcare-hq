@@ -1,0 +1,4 @@
+
+
+class UnknownDocumentStore(ValueError):
+    pass

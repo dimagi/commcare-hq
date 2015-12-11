@@ -3,13 +3,13 @@
   "version": "0.0.1",
   "dependencies": {
     "jquery": "1.11.1",
-    "jquery-1.7.1-legacy": "jquery#1.7.1",
     "underscore": "1.6.0",
     "underscore-legacy": "underscore#1.4.4",
     "jquery-form": "3.45.0",
     "jquery.cookie": "1.4.1",
     "jquery-timeago": "1.2.0",
     "jquery-ui": "1.11.4",
+    "jquery-ui-1.8.23-legacy": "jquery-ui#1.8.23",
     "angular": "1.4.4",
     "angular-route": "1.4.4",
     "angular-resource": "1.4.4",
@@ -31,7 +31,8 @@
     "d3": "3.1",
     "nvd3": "1.1.10-beta",
     "codemirror": "5.5.0",
-    "bootstrap3-typeahead": "~3.1.1"
+    "bootstrap3-typeahead": "~3.1.1",
+    "bootstrap-2.3.2-legacy": "2.3.2"
   },
   "devDependencies": {
     "chai": "3.3.0",

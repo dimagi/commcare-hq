@@ -22,6 +22,7 @@ from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
 from corehq.elastic import es_wrapper
 from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from couchdbkit.resource import ResourceNotFound
 from corehq.util.view_utils import absolute_reverse
@@ -538,7 +539,11 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 return
 
         domain_obj = Domain.get_by_name(domain, strict=True)
-        if not domain_obj:
+        # if you haven't seen any of these by Feb 2016 you should delete this code.
+        _soft_assert = soft_assert(notify_admins=True)
+        if not _soft_assert(domain_obj,
+                            "Domain membership added before domain created",
+                            {'domain': domain}):
             domain_obj = Domain(is_active=True, name=domain, date_created=datetime.utcnow())
             domain_obj.save()
 
@@ -2023,9 +2028,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
     def get_usercase_id(self):
-        from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-        usercase = get_case_by_domain_hq_user_id(self.domain, self._id, USERCASE_TYPE)
-        return usercase.case_id if usercase else None
+        from corehq.apps.hqcase.utils import get_case_id_by_domain_hq_user_id
+        return get_case_id_by_domain_hq_user_id(self.domain, self._id, USERCASE_TYPE)
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
@@ -2297,7 +2301,10 @@ class DomainRequest(models.Model):
             WebUser.get_admins_by_domain(self.domain)}
         text_content = render_to_string("users/email/request_domain_access.txt", params)
         html_content = render_to_string("users/email/request_domain_access.html", params)
-        subject = _('Request from %s to join %s') % (self.full_name, domain_name)
+        subject = _('Request from %(name)s to join %(domain)s') % {
+            'name': self.full_name,
+            'domain': domain_name,
+        }
         send_html_email_async.delay(subject, recipients, html_content, text_content=text_content,
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 

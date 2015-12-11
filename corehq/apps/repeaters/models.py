@@ -394,6 +394,7 @@ class RepeatRecord(Document, LockableMixIn):
     last_checked = DateTimeProperty()
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
+    failure_reason = StringProperty()
 
     payload_id = StringProperty()
 
@@ -431,8 +432,8 @@ class RepeatRecord(Document, LockableMixIn):
         self.last_checked = datetime.utcnow()
         self.next_check = None
         self.succeeded = True
-    
-    def update_failure(self):
+
+    def update_failure(self, reason=None):
         # we use an exponential back-off to avoid submitting to bad urls
         # too frequently.
         assert self.succeeded is False
@@ -441,12 +442,13 @@ class RepeatRecord(Document, LockableMixIn):
         window = timedelta(minutes=0)
         if self.last_checked:
             window = self.next_check - self.last_checked
-            window += (window // 2) # window *= 1.5
+            window += (window // 2)  # window *= 1.5
         if window < timedelta(minutes=60):
             window = timedelta(minutes=60)
 
         self.last_checked = now
         self.next_check = self.last_checked + window
+        self.failure_reason = reason
 
     def try_now(self):
         # try when we haven't succeeded and either we've
@@ -480,17 +482,19 @@ class RepeatRecord(Document, LockableMixIn):
             if self.try_now():
                 # we don't use celery's version of retry because
                 # we want to override the success/fail each try
+                failure_reason = None
                 for i in range(max_tries):
                     try:
                         resp = post_fn(payload, self.url, headers=headers)
                         if 200 <= resp.status < 300:
                             self.update_success()
                             break
-                    except Exception:
-                        pass  # some other connection issue probably
+                    except Exception, e:
+                        failure_reason = unicode(e)
+
                 if not self.succeeded:
                     # mark it failed for later and give up
-                    self.update_failure()
+                    self.update_failure(failure_reason)
 
 # import signals
 from corehq.apps.repeaters import signals

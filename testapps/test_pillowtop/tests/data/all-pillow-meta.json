@@ -150,21 +150,21 @@
         "name": "DefaultChangeFeedPillow"
     }, 
     "DomainPillow": {
-        "advertised_name": "corehq.pillows.domain.DomainPillow.hqdomains_20151123_1855.testhq", 
+        "advertised_name": "corehq.pillows.domain.DomainPillow.hqdomains_20151204_1053.testhq", 
         "change_feed_type": "CouchChangeFeed", 
-        "checkpoint_id": "corehq.pillows.domain.DomainPillow.hqdomains_20151123_1855.testhq", 
+        "checkpoint_id": "corehq.pillows.domain.DomainPillow.hqdomains_20151204_1053.testhq", 
         "couch_filter": "domain/domains_inclusive", 
         "couchdb_type": "Database", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq__domains_test",
         "document_class": "Domain", 
         "es_alias": "hqdomains", 
-        "es_index": "hqdomains_20151123_1855", 
+        "es_index": "hqdomains_20151204_1053", 
         "es_type": "hqdomain", 
         "extra_args": {}, 
         "full_class_name": "corehq.pillows.domain.DomainPillow", 
         "include_docs": true, 
         "name": "DomainPillow", 
-        "unique_id": "hqdomains_20151123_1855"
+        "unique_id": "hqdomains_20151204_1053"
     }, 
     "FarmerRecordFluffPillow": {
         "advertised_name": "fluff.FarmerRecordFluffPillow.testhq", 
@@ -564,23 +564,7 @@
         "full_class_name": "custom.succeed.models.UCLAPatientFluffPillow", 
         "include_docs": false, 
         "name": "UCLAPatientFluffPillow"
-    }, 
-    "UnicefMalawiFluffPillow": {
-        "advertised_name": "fluff.UnicefMalawiFluffPillow.testhq", 
-        "change_feed_type": "CouchChangeFeed", 
-        "checkpoint_id": "fluff.UnicefMalawiFluffPillow.testhq", 
-        "couch_filter": null, 
-        "couchdb_type": "CachedCouchDB", 
-        "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
-        "document_class": "XFormInstance", 
-        "extra_args": {
-            "doc_type": "XFormInstance", 
-            "domains": "cvsulive"
-        }, 
-        "full_class_name": "custom.apps.cvsu.models.UnicefMalawiFluffPillow", 
-        "include_docs": false, 
-        "name": "UnicefMalawiFluffPillow"
-    }, 
+    },
     "UnknownUsersPillow": {
         "advertised_name": "corehq.pillows.user.UnknownUsersPillow.testhq", 
         "change_feed_type": "CouchChangeFeed", 

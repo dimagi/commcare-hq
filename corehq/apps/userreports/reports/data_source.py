@@ -126,16 +126,16 @@ class ConfigurableReportDataSource(SqlData):
     def get_data(self):
         try:
             ret = super(ConfigurableReportDataSource, self).get_data()
-            for report_column in self.column_configs:
-                report_column.format_data(ret)
         except (
             ColumnNotFoundException,
             ProgrammingError,
         ) as e:
             raise UserReportsError(unicode(e))
-        except TableNotFoundException as e:
+        except TableNotFoundException:
             raise TableNotFoundWarning
 
+        for report_column in self.column_configs:
+            report_column.format_data(ret)
         return self._sort_data(ret)
 
     def _sort_data(self, data):
@@ -174,7 +174,7 @@ class ConfigurableReportDataSource(SqlData):
                                     'num_matching': len(matching_indicators),
                                 }
                             )
-                        return matching_indicators[0]['datatype']
+                        return matching_indicators[0].get('datatype')
 
                     datatype = get_datatype(matching_report_column)
 

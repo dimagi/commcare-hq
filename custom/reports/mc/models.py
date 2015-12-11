@@ -632,5 +632,6 @@ MalariaConsortiumFluffPillow = MalariaConsortiumFluff.pillow()
 
 def get_pillow():
     return MalariaConsortiumFluffPillow(
-        change_feed=KafkaChangeFeed(topic=topics.FORM, group_id='mc-fluff')
+        change_feed=KafkaChangeFeed(topic=topics.FORM, group_id='mc-fluff'),
+        preload_docs=False,
     )

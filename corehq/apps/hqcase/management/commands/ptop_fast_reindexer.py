@@ -7,6 +7,7 @@ from django.core.management.base import NoArgsCommand
 import json
 from corehq.util.couch_helpers import paginate_view
 from pillowtop.couchdb import CachedCouchDB
+from pillowtop.es_utils import set_index_reindex_settings, set_index_normal_settings, create_index_for_pillow
 from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import Change
 from pillowtop.listener import AliasedElasticPillow, PythonPillow
@@ -356,18 +357,19 @@ class ElasticReindexer(PtopReindexer):
         if not self.in_place and self.own_index_exists:
             # delete the existing index.
             self.log("Deleting index")
-            self.indexing_pillow.delete_index()
+            self.indexing_pillow.get_es_new().indices.delete(self.indexing_pillow.es_index)
             self.log("Recreating index")
-            self.indexing_pillow.create_index()
+            create_index_for_pillow(self.indexing_pillow)
             self.indexing_pillow.initialize_mapping_if_necessary()
 
     def post_load_hook(self):
         if not self.in_place:
             # configure index to indexing mode
-            self.indexing_pillow.set_index_reindex_settings()
+            set_index_reindex_settings(self.indexing_pillow.get_es_new(), self.indexing_pillow.es_index)
 
     def pre_complete_hook(self):
         if not self.in_place:
             self.log("setting index settings to normal search configuration and refreshing index")
-            self.indexing_pillow.set_index_normal_settings()
-        self.indexing_pillow.refresh_index()
+            set_index_normal_settings(self.indexing_pillow.get_es_new(), self.indexing_pillow.es_index)
+        # refresh the index
+        self.indexing_pillow.get_es_new().indices.refresh(self.indexing_pillow.es_index)

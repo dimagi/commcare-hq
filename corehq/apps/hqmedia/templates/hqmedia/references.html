@@ -4,22 +4,36 @@
 
 {% block title %}{% trans 'Multimedia Map' %}{% endblock title %}
 
+{% block head %}{{ block.super }}
+<style>
+.media-totals-list {
+    margin: 0;
+    padding: 0;
+}
+
+.media-totals {
+    list-style-type: none;
+}
+</style>
+{% endblock %}
+
 {% block js %} {{ block.super }}
     <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
     <script src="{% static 'hqwebapp/js/main.js' %}"></script>
-    <script type="text/javascript" src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script> <!-- todo add the media player back in -->
+    <!-- todo add the media player back in -->
+    <script type="text/javascript" src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
-        var reference_controller = new MultimediaReferenceController({{ references|JSON }}, {{ object_map|JSON }}, {{ totals|JSON }});
+        var reference_controller = new MultimediaReferenceController(
+            {{ references|JSON }},
+            {{ object_map|JSON }},
+            {{ totals|JSON }}
+        );
         reference_controller.render();
         ko.applyBindings(reference_controller, $("#multimedia-reference-checker").get(0));
-
-{# Commented out until search is fixed #}
-{#        var searchUrl = '{% url "hqmedia_search" domain app.get_id %}';#}
-{#        var chooseImageUrl = '{% url "hqmedia_choose_media" domain app.get_id %}';#}
 
         $('.preview-media').tooltip();
     </script>
@@ -31,39 +45,65 @@
 {% block centered-content %}
 <div id="multimedia-reference-checker">
     <ul class="breadcrumb">
-        <li><a href="{% url "view_app" domain app.get_id %}">{% trans 'Application' %} "{{ app.name }}"</a> <span class="divider">&gt;</span></li>
-        <li class="active"><a href="{% url "hqmedia_references" domain app.get_id %}">{% trans 'Multimedia Reference Checker' %}</a></li>
+        <li>
+            <a href="{% url "view_app" domain app.get_id %}">{% trans 'Application' %} "{{ app.name }}"</a>
+            <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <a href="{% url "hqmedia_references" domain app.get_id %}">
+                {% trans 'Multimedia Reference Checker' %}
+            </a>
+        </li>
     </ul>
     <div class="page-header">
         <h1>{% trans 'Multimedia Reference Checker' %}</h1>
     </div>
     <div class="row">
         <div class="span7">
-            <h2>{% trans "Manage Your Application's Media" %}</h2>
             {% if totals|length %}
-                <p>{% blocktrans %}You can manage multimedia by uploading files <strong>individually</strong> below.{% endblocktrans %}</p>
-                <p>{% blocktrans %}Alternatively, you can upload files in <strong>bulk</strong> in a ZIP file{% endblocktrans %}:</p>
-                <p><a href="{% url "hqmedia_bulk_upload" domain app.get_id %}" class="btn btn-inverse"><i class="icon icon-cloud-upload"></i> {% trans 'Go to Bulk Upload' %}</a></p>
+                <p>
+                    {% blocktrans %}
+                        You can manage multimedia by uploading files <strong>individually</strong> below.
+                    {% endblocktrans %}
+                    {% blocktrans %}
+                        Alternatively, you can upload files in <strong>bulk</strong> using
+                    {% endblocktrans %}
+                    <a href="{% url "hqmedia_bulk_upload" domain app.get_id %}">
+                        {% trans 'Multimedia Bulk Upload' %}.
+                    </a>
+                </p>
+                <p>
+                    <a href="#" data-bind="click: toggleMissingRefs, text: toggleRefsText"></a>
+                </p>
             {% else %}
                 <div class="alert alert-info">
-                    {% blocktrans %}This application references no multimedia. Add multimedia to your forms and menus to use the reference checker and manage media in bulk.{% endblocktrans %}
+                    {% blocktrans %}This application references no multimedia.{% endblocktrans %}
                 </div>
             {% endif %}
         </div>
         <div class="span5">
             {% if totals|length %}
-            <div class="alert alert-info">
-                <h3><i class="icon-cloud-download"></i> {% trans 'Download Multimedia' %}</h3>
-                <p><a class="btn btn-primary" style="color: #ffffff;" href="#multimedia-zip-modal" data-toggle="modal"><i class="icon-cloud-download"></i> {% trans 'Download ZIP' %}</a></p>
-                <ul style="margin-top:.5em;" data-bind="foreach: totals">
-                    <li class="media-totals" data-bind="event: {refMediaAdded: $parent.incrementTotals}"><i data-bind="attr: {class: icon_class}"></i> <span data-bind="text: matched"></span>/<span data-bind="text: totals"></span> <span data-bind="text: media_type"></span> {% trans 'References' %}</li>
+            <div class="well">
+                <p>
+                    <a class="btn btn-primary"
+                        href="#multimedia-zip-modal"
+                        data-toggle="modal"
+                        onclick="download_application_zip()">
+                        <i class="icon-download-alt"></i> {% trans 'Download ZIP' %}
+                    </a>
+                </p>
+                <ul class="media-totals-list" data-bind="foreach: totals">
+                    <li class="media-totals" data-bind="event: {refMediaAdded: $parent.incrementTotals}">
+                        <i data-bind="attr: {class: icon_class}"></i>
+                        <span data-bind="text: matched"></span>/<span data-bind="text: totals"></span>
+                        <span data-bind="text: media_type"></span> {% trans 'References' %}
+                    </li>
                 </ul>
             </div>
             {% endif %}
         </div>
     </div>
     {% if totals|length %}
-    <p style="text-align: center;"><a href="#" data-bind="click: toggleMissingRefs, text: toggleRefsText, attr: { class: toggleRefsClass }"></a></p>
 
     <article class="accordion accordion-multimedia" id="mm-reference-list">
     <!-- ko foreach: modules -->

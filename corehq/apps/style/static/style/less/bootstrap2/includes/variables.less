@@ -1,5 +1,3 @@
-@import "../../../lib/bootstrap/less/variables.less";
-
 //
 // Overrides of Variables & New Variables
 // --------------------------------------------------
@@ -81,11 +79,13 @@
 
 // Z-index master list
 // -------------------------
-// Used for a bird's eye view of components dependent on the z-axis
-// Try to avoid customizing these :)
-@zindexBrand:           900; // hq
-@zindexBrandHover:      950; // hq
-@zindexUIDatePicker:    1050; // display over modals
+// Also see Bootstrap 2's own master list:
+// corehq/apps/style/static/style/lib/bootstrap/less/variables.less
+@zindexDashboardSpinner:              500;
+@zindexAccountingPricingTableHeader:  800;
+@zindexBrand:                         900; // hq
+@zindexBrandHover:                    950; // hq
+@zindexUIDatePicker:                 1050; // display over modals
 
 
 // Sprite icons path

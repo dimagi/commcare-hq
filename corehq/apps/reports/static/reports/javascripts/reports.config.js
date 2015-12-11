@@ -35,7 +35,11 @@ var HQReport = function (options) {
             self.resetFilterState();
 
             if (self.needsFilters) {
-                self.filterSubmitButton.button('reset').addClass('btn-primary');
+                self.filterSubmitButton
+                    .button('reset')
+                    .addClass('btn-primary')
+                    .removeClass('disabled')
+                    .removeProp('disabled');
             }
             if (self.slug) {
                 if (self.isExportable) {
@@ -150,10 +154,18 @@ var HQReport = function (options) {
 
     self.resetFilterState = function () {
         $('#paramSelectorForm fieldset button, #paramSelectorForm fieldset span[data-dropdown="dropdown"]').click(function() {
-            $('#paramSelectorForm button[type="submit"]').button('reset').addClass('btn-primary');
+            $('#paramSelectorForm button[type="submit"]')
+                .button('reset')
+                .addClass('btn-primary')
+                .removeClass('disabled')
+                .removeProp('disabled');
         });
         $('#paramSelectorForm fieldset').change(function () {
-            $('#paramSelectorForm button[type="submit"]').button('reset').addClass('btn-primary');
+            $('#paramSelectorForm button[type="submit"]')
+                .button('reset')
+                .addClass('btn-primary')
+                .removeClass('disabled')
+                .removeProp('disabled');
         });
     };
 

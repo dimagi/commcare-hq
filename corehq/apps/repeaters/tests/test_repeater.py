@@ -1,6 +1,6 @@
 from StringIO import StringIO
 from datetime import datetime, timedelta
-from mock import MagicMock
+from mock import MagicMock, patch
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.mock import CaseFactory
@@ -241,6 +241,50 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.assertXmlHasXpath(close_payload, '//*[local-name()="case"]')
         self.assertXmlHasXpath(close_payload, '//*[local-name()="close"]')
         self.assertXmlHasXpath(close_payload, '//*[local-name()="update"]')
+
+
+class RepeaterFailureTest(BaseRepeaterTest):
+
+    def setUp(self):
+        self.domain_name = "test-domain"
+        self.domain = create_domain(self.domain_name)
+
+        self.repeater = CaseRepeater(
+            domain=self.domain_name,
+            url='case-repeater-url',
+            version=V1,
+            format='other_format'
+        )
+        self.repeater.save()
+        self.post_xml(xform_xml, self.domain)
+
+    def tearDown(self):
+        self.domain.delete()
+        self.repeater.delete()
+        repeat_records = RepeatRecord.all()
+        for repeat_record in repeat_records:
+            repeat_record.delete()
+
+    def test_failure(self):
+        payload = "some random case"
+
+        @RegisterGenerator(CaseRepeater, 'other_format', 'XML')
+        class NewCaseGenerator(BasePayloadGenerator):
+            def get_payload(self, repeat_record, payload_doc):
+                return payload
+
+        repeat_record = self.repeater.register(case_id)
+        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout', side_effect=Exception('Boom!')):
+            repeat_record.fire()
+
+        self.assertEquals(repeat_record.failure_reason, 'Boom!')
+        self.assertFalse(repeat_record.succeeded)
+
+        # Should be marked as successful after a successful run
+        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout'):
+            repeat_record.fire()
+
+        self.assertTrue(repeat_record.succeeded)
 
 
 class IgnoreDocumentTest(BaseRepeaterTest):

@@ -5,6 +5,7 @@ from django.db import models, migrations
 from django.conf import settings
 from django.core.management import call_command
 
+from corehq.sql_db.operations import HqRunPython
 from dimagi.utils.couch import sync_docs
 
 import corehq.apps.sms.models as sms_models
@@ -76,7 +77,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(sync_sms_docs),
-        migrations.RunPython(bootstrap_currency),
-        migrations.RunPython(bootstrap_sms),
+        HqRunPython(sync_sms_docs),
+        HqRunPython(bootstrap_currency),
+        HqRunPython(bootstrap_sms),
     ]

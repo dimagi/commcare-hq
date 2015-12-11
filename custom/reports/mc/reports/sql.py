@@ -86,7 +86,7 @@ def add_all(*args):
 def percent_format(x, y):
     num = float(x or 0)
     denom = float(y or 1)
-    return "%.1f%% (%s/%s)" % (num * 100 / denom, x or '--', y or '--')
+    return "%.1f%% (%s/%s)" % (num * 100 / denom, x or '0', y or '0')
 
 
 class McMixin(object):
@@ -281,51 +281,83 @@ class DistrictWeekly(BaseReport):
             DatabaseColumn(_('deaths_children'),
                            CountColumn('doc_id', alias='deaths_children',
                                        filters=self.filters + [EQ('deaths_children', 'one')])),
+            DatabaseColumn(_('patients_given_pneumonia_meds_num'),
+                           CountColumn(
+                               'doc_id',
+                               alias='patients_given_pneumonia_meds_num',
+                               filters=self.filters + [OR([
+                                   AND([EQ('has_pneumonia', 'one'), EQ('it_ari_child', 'one')]),
+                                   AND([EQ('pneumonia_ds', 'one'), EQ('it_ari_child', 'one')]),
+                                   AND([EQ('ari_adult', 'one'), EQ('it_ari_adult', 'one')])])])),
+            DatabaseColumn(_('patients_given_pneumonia_meds_denom'),
+                           CountColumn(
+                               'doc_id',
+                               alias='patients_given_pneumonia_meds_denom',
+                               filters=self.filters + [OR([
+                                   EQ('has_pneumonia', 'one'),
+                                   EQ('pneumonia_ds', 'one'),
+                                   EQ('ari_adult', 'one')])])),
             AggregateColumn(_('patients_given_pneumonia_meds'), percent_format, [
-                CountColumn('doc_id', filters=self.filters + [OR([
-                    AND([EQ('has_pneumonia', 'one'), EQ('it_ari_child', 'one')]),
-                    AND([EQ('pneumonia_ds', 'one'), EQ('it_ari_child', 'one')]),
-                    AND([EQ('ari_adult', 'one'), EQ('it_ari_adult', 'one')])
-                ])]),
-                CountColumn('doc_id', filters=self.filters + [OR([
-                    EQ('has_pneumonia', 'one'),
-                    EQ('pneumonia_ds', 'one'),
-                    EQ('ari_adult', 'one')
-                ])])
+                AliasColumn('patients_given_pneumonia_meds_num'),
+                AliasColumn('patients_given_pneumonia_meds_denom')
             ], slug='patients_given_pneumonia_meds'),
+            DatabaseColumn(_('patients_given_diarrhoea_meds_num'),
+                           CountColumn(
+                               'doc_id',
+                               alias='patients_given_diarrhoea_meds_num',
+                               filters=self.filters + [OR([
+                                   AND([OR([EQ('diarrhoea_ds', 'one'), EQ('diarrhoea', 'one')]),
+                                        EQ('it_diarrhea_child', 'one')]),
+                                   AND([EQ('diarrhea_adult', 'one'), EQ('it_diarrhea_adult', 'one')])])])),
+            DatabaseColumn(_('patients_given_diarrhoea_meds_denum'),
+                           CountColumn(
+                               'doc_id',
+                               alias='patients_given_diarrhoea_meds_denum',
+                               filters=self.filters + [OR([
+                                   EQ('diarrhoea_ds', 'one'),
+                                   EQ('diarrhoea', 'one'),
+                                   EQ('diarrhea_adult', 'one')])])),
             AggregateColumn(_('patients_given_diarrhoea_meds'), percent_format, [
-                CountColumn('doc_id', filters=self.filters + [OR([
-                    AND([OR([EQ('diarrhoea_ds', 'one'), EQ('diarrhoea', 'one')]),
-                         EQ('it_diarrhea_child', 'one')]),
-                    AND([EQ('diarrhea_adult', 'one'), EQ('it_diarrhea_adult', 'one')])
-                ])]),
-                CountColumn('doc_id', filters=self.filters + [OR([
-                    EQ('diarrhoea_ds', 'one'),
-                    EQ('diarrhoea', 'one'),
-                    EQ('diarrhea_adult', 'one')
-                ])])
+                AliasColumn('patients_given_diarrhoea_meds_num'),
+                AliasColumn('patients_given_diarrhoea_meds_denum')
             ], slug='patients_given_diarrhoea_meds'),
+            DatabaseColumn(_('patients_given_malaria_meds'),
+                           CountColumn(
+                               'doc_id',
+                               alias='patients_given_malaria_meds_num',
+                               filters=self.filters + [OR([
+                                   AND([EQ('malaria_child', 'one'), EQ('it_malaria_child', 'one')]),
+                                   AND([EQ('malaria_adult', 'one'), EQ('it_malaria_adult', 'one')])])])),
+            DatabaseColumn(_('patients_given_malaria_meds_denum'),
+                           CountColumn(
+                               'doc_id',
+                               alias='patients_given_malaria_meds_demum',
+                               filters=self.filters + [OR([
+                                   EQ('has_malaria', 'one'),
+                                   EQ('malaria_adult', 'one')])])),
             AggregateColumn(_('patients_given_malaria_meds'), percent_format, [
-                CountColumn('doc_id', filters=self.filters + [OR([
-                    AND([EQ('malaria_child', 'one'), EQ('it_malaria_child', 'one')]),
-                    AND([EQ('malaria_adult', 'one'), EQ('it_malaria_adult', 'one')])
-                ])]),
-                CountColumn('doc_id', filters=self.filters + [OR([
-                    EQ('has_malaria', 'one'),
-                    EQ('malaria_adult', 'one')
-                ])])
+                AliasColumn('patients_given_malaria_meds_num'),
+                AliasColumn('patients_given_malaria_meds_demum')
             ], slug='patients_given_malaria_meds'),
+            DatabaseColumn(_('patients_correctly_referred_num'),
+                           CountColumn(
+                               'doc_id',
+                               alias='patients_correctly_referred_num',
+                               filters=self.filters + [OR([
+                                   AND([EQ('referral_needed_newborn', 'one'), EQ('referral_given_newborn', 'one')]),
+                                   AND([EQ('referral_needed_child', 'one'), EQ('referral_given_child', 'one')]),
+                                   AND([EQ('treatment_preg_ds', 'one'), EQ('referral_given_adult', 'one')])])])),
+            DatabaseColumn(_('patients_correctly_referred_denum'),
+                           CountColumn(
+                               'doc_id',
+                               alias='patients_correctly_referred_denum',
+                               filters=self.filters + [OR([
+                                   EQ('referral_needed_newborn', 'one'),
+                                   EQ('referral_needed_child', 'one'),
+                                   EQ('treatment_preg_ds', 'one')])])),
             AggregateColumn(_('patients_correctly_referred'), percent_format, [
-                CountColumn('doc_id', filters=self.filters + [OR([
-                    AND([EQ('referral_needed_newborn', 'one'), EQ('referral_given_newborn', 'one')]),
-                    AND([EQ('referral_needed_child', 'one'), EQ('referral_given_child', 'one')]),
-                    AND([EQ('treatment_preg_ds', 'one'), EQ('referral_given_adult', 'one')]),
-                ])]),
-                CountColumn('doc_id', filters=self.filters + [OR([
-                    EQ('referral_needed_newborn', 'one'),
-                    EQ('referral_needed_child', 'one'),
-                    EQ('treatment_preg_ds', 'one'),
-                ])])
+                AliasColumn('patients_correctly_referred_num'),
+                AliasColumn('patients_correctly_referred_denum')
             ], slug='patients_correctly_referred'),
             DatabaseColumn(_('cases_rdt_not_done'),
                            CountColumn('cases_rdt_not_done',
@@ -499,8 +531,8 @@ class DistrictMonthly(BaseReport):
                            CountColumn('doc_id', alias='deaths_mothers',
                                        filters=self.filters + [EQ('deaths_mothers', 'one')])),
             DatabaseColumn(_('deaths_others'),
-                           CountColumn('doc_id', alias='deaths_other',
-                                       filters=self.filters + [EQ('deaths_others', 'one')])),
+                           SumColumn('deaths_others', alias='deaths_other',
+                                       filters=self.filters + [NOTEQ('deaths_others', 'zero')])),
             AggregateColumn(_('deaths_total'), add_all, [
                 AliasColumn('deaths_newborn'),
                 AliasColumn('deaths_children'),
@@ -508,11 +540,11 @@ class DistrictMonthly(BaseReport):
                 AliasColumn('deaths_other'),
             ], slug='deaths_total'),
             DatabaseColumn(_('heath_ed_talks'),
-                           CountColumn('doc_id', alias='heath_ed_talks',
-                                       filters=self.filters + [EQ('heath_ed_talks', 'one')])),
+                           SumColumn('heath_ed_talks', alias='heath_ed_talks',
+                                       filters=self.filters + [NOTEQ('heath_ed_talks', 'zero')])),
             DatabaseColumn(_('heath_ed_participants'),
-                           CountColumn('doc_id', alias='heath_ed_participants',
-                                       filters=self.filters + [EQ('heath_ed_participants', 'one')])),
+                           SumColumn('heath_ed_participants', alias='heath_ed_participants',
+                                     filters=self.filters + [NOTEQ('heath_ed_participants', 'zero')]))
         ]
 
 
@@ -530,6 +562,7 @@ class WeeklyForms(SqlData):
     def group_by(self):
         return [
             'date',
+            'user_id',
             'hf',
             'district',
             'stock_amox_pink',
@@ -561,6 +594,7 @@ class WeeklyForms(SqlData):
     def columns(self):
         return [
             DatabaseColumn('Date', SimpleColumn('date')),
+            DatabaseColumn('user', SimpleColumn('user_id')),
             DatabaseColumn('hf', SimpleColumn('hf')),
             DatabaseColumn('district', SimpleColumn('district')),
             DatabaseColumn(_('form/stock/stock_amox_pink'), SimpleColumn('stock_amox_pink')),
@@ -581,9 +615,19 @@ class WeeklyForms(SqlData):
 
     def get_data(self):
         data = super(WeeklyForms, self).get_data()
-        weekly = {}
+        last_submisions = {}
         for row in sorted(data, key=lambda x: x['date']):
-            weekly.update({row['hf']: row})
+            last_submisions.update({row['user_id']: row})
+        weekly = {}
+        def update_row(row1, row2):
+            for key, value in row1.iteritems():
+                if key not in ['date', 'user_id', 'hf', 'district']:
+                    row2[key] += int(value)
+        for user_data in last_submisions.values():
+            if user_data['hf'] in weekly:
+                update_row(user_data, weekly[user_data['hf']])
+            else:
+                weekly[user_data['hf']] = user_data
         return weekly
 
 
@@ -643,51 +687,83 @@ class HealthFacilityWeekly(DistrictWeekly):
                                            EQ('child_followup', 'one'),
                                            EQ('adult_followup', 'one')
                                        ])])),
+            DatabaseColumn(_('patients_given_pneumonia_meds_num'),
+                           CountColumn(
+                               'doc_id',
+                               alias='patients_given_pneumonia_meds_num',
+                               filters=self.filters + [OR([
+                                   AND([EQ('has_pneumonia', 'one'), EQ('it_ari_child', 'one')]),
+                                   AND([EQ('pneumonia_ds', 'one'), EQ('it_ari_child', 'one')]),
+                                   AND([EQ('ari_adult', 'one'), EQ('it_ari_adult', 'one')])])])),
+            DatabaseColumn(_('patients_given_pneumonia_meds_denom'),
+                           CountColumn(
+                               'doc_id',
+                               alias='patients_given_pneumonia_meds_denom',
+                               filters=self.filters + [OR([
+                                   EQ('has_pneumonia', 'one'),
+                                   EQ('pneumonia_ds', 'one'),
+                                   EQ('ari_adult', 'one')])])),
             AggregateColumn(_('patients_given_pneumonia_meds'), percent_format, [
-                CountColumn('doc_id', filters=self.filters + [OR([
-                    AND([EQ('has_pneumonia', 'one'), EQ('it_ari_child', 'one')]),
-                    AND([EQ('pneumonia_ds', 'one'), EQ('it_ari_child', 'one')]),
-                    AND([EQ('ari_adult', 'one'), EQ('it_ari_adult', 'one')])
-                ])]),
-                CountColumn('doc_id', filters=self.filters + [OR([
-                    EQ('has_pneumonia', 'one'),
-                    EQ('pneumonia_ds', 'one'),
-                    EQ('ari_adult', 'one')
-                ])])
+                AliasColumn('patients_given_pneumonia_meds_num'),
+                AliasColumn('patients_given_pneumonia_meds_denom')
             ], slug='patients_given_pneumonia_meds'),
+            DatabaseColumn(_('patients_given_diarrhoea_meds_num'),
+                           CountColumn(
+                               'doc_id',
+                               alias='patients_given_diarrhoea_meds_num',
+                               filters=self.filters + [OR([
+                                   AND([OR([EQ('diarrhoea_ds', 'one'), EQ('diarrhoea', 'one')]),
+                                        EQ('it_diarrhea_child', 'one')]),
+                                   AND([EQ('diarrhea_adult', 'one'), EQ('it_diarrhea_adult', 'one')])])])),
+            DatabaseColumn(_('patients_given_diarrhoea_meds_denum'),
+                           CountColumn(
+                               'doc_id',
+                               alias='patients_given_diarrhoea_meds_denum',
+                               filters=self.filters + [OR([
+                                   EQ('diarrhoea_ds', 'one'),
+                                   EQ('diarrhoea', 'one'),
+                                   EQ('diarrhea_adult', 'one')])])),
             AggregateColumn(_('patients_given_diarrhoea_meds'), percent_format, [
-                CountColumn('doc_id', filters=self.filters + [OR([
-                    AND([OR([EQ('diarrhoea_ds', 'one'), EQ('diarrhoea', 'one')]),
-                         EQ('it_diarrhea_child', 'one')]),
-                    AND([EQ('diarrhea_adult', 'one'), EQ('it_diarrhea_adult', 'one')])
-                ])]),
-                CountColumn('doc_id', filters=self.filters + [OR([
-                    EQ('diarrhoea_ds', 'one'),
-                    EQ('diarrhoea', 'one'),
-                    EQ('diarrhea_adult', 'one')
-                ])])
+                AliasColumn('patients_given_diarrhoea_meds_num'),
+                AliasColumn('patients_given_diarrhoea_meds_denum')
             ], slug='patients_given_diarrhoea_meds'),
+            DatabaseColumn(_('patients_given_malaria_meds'),
+                           CountColumn(
+                               'doc_id',
+                               alias='patients_given_malaria_meds_num',
+                               filters=self.filters + [OR([
+                                   AND([EQ('malaria_child', 'one'), EQ('it_malaria_child', 'one')]),
+                                   AND([EQ('malaria_adult', 'one'), EQ('it_malaria_adult', 'one')])])])),
+            DatabaseColumn(_('patients_given_malaria_meds_denum'),
+                           CountColumn(
+                               'doc_id',
+                               alias='patients_given_malaria_meds_demum',
+                               filters=self.filters + [OR([
+                                   EQ('has_malaria', 'one'),
+                                   EQ('malaria_adult', 'one')])])),
             AggregateColumn(_('patients_given_malaria_meds'), percent_format, [
-                CountColumn('doc_id', filters=self.filters + [OR([
-                    AND([EQ('malaria_child', 'one'), EQ('it_malaria_child', 'one')]),
-                    AND([EQ('malaria_adult', 'one'), EQ('it_malaria_adult', 'one')])
-                ])]),
-                CountColumn('doc_id', filters=self.filters + [OR([
-                    EQ('has_malaria', 'one'),
-                    EQ('malaria_adult', 'one')
-                ])])
+                AliasColumn('patients_given_malaria_meds_num'),
+                AliasColumn('patients_given_malaria_meds_denum')
             ], slug='patients_given_malaria_meds'),
+            DatabaseColumn(_('patients_correctly_referred_num'),
+                           CountColumn(
+                               'doc_id',
+                               alias='patients_correctly_referred_num',
+                               filters=self.filters + [OR([
+                                   AND([EQ('referral_needed_newborn', 'one'), EQ('referral_given_newborn', 'one')]),
+                                   AND([EQ('referral_needed_child', 'one'), EQ('referral_given_child', 'one')]),
+                                   AND([EQ('treatment_preg_ds', 'one'), EQ('referral_given_adult', 'one')])])])),
+            DatabaseColumn(_('patients_correctly_referred_denum'),
+                           CountColumn(
+                               'doc_id',
+                               alias='patients_correctly_referred_denum',
+                               filters=self.filters + [OR([
+                                   EQ('referral_needed_newborn', 'one'),
+                                   EQ('referral_needed_child', 'one'),
+                                   EQ('treatment_preg_ds', 'one')])])),
             AggregateColumn(_('patients_correctly_referred'), percent_format, [
-                CountColumn('doc_id', filters=self.filters + [OR([
-                    AND([EQ('referral_needed_newborn', 'one'), EQ('referral_given_newborn', 'one')]),
-                    AND([EQ('referral_needed_child', 'one'), EQ('referral_given_child', 'one')]),
-                    AND([EQ('treatment_preg_ds', 'one'), EQ('referral_given_adult', 'one')]),
-                ])]),
-                CountColumn('doc_id', filters=self.filters + [OR([
-                    EQ('referral_needed_newborn', 'one'),
-                    EQ('referral_needed_child', 'one'),
-                    EQ('treatment_preg_ds', 'one'),
-                ])])
+                AliasColumn('patients_correctly_referred_num'),
+                AliasColumn('patients_correctly_referred_denum')
             ], slug='patients_correctly_referred'),
             DatabaseColumn(_('cases_rdt_not_done'),
                            CountColumn('cases_rdt_not_done',

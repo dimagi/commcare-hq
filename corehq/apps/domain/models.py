@@ -1,6 +1,5 @@
 from datetime import datetime
 from itertools import imap
-import json
 import uuid
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
@@ -22,7 +21,6 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.util.quickcache import skippable_quickcache
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import (
     iter_docs, get_safe_write_kwargs, apply_update, iter_bulk_delete
 )
@@ -415,19 +413,15 @@ class Domain(Document, SnapshotMixin):
             return []
 
     @classmethod
-    def field_by_prefix(cls, field, prefix='', is_approved=True):
+    def field_by_prefix(cls, field, prefix=''):
         # unichr(0xfff8) is something close to the highest character available
         res = cls.view("domain/fields_by_prefix",
                        group=True,
-                       startkey=[field, is_approved, prefix],
-                       endkey=[field, is_approved, "%s%c" % (prefix, unichr(0xfff8)), {}])
+                       startkey=[field, True, prefix],
+                       endkey=[field, True, "%s%c" % (prefix, unichr(0xfff8)), {}])
         vals = [(d['value'], d['key'][2]) for d in res]
         vals.sort(reverse=True)
         return [(v[1], v[0]) for v in vals]
-
-    @classmethod
-    def get_by_field(cls, field, value, is_approved=True):
-        return cls.view('domain/fields_by_prefix', key=[field, is_approved, value], reduce=False, include_docs=True).all()
 
     def add(self, model_instance, is_active=True):
         """
@@ -845,21 +839,6 @@ class Domain(Document, SnapshotMixin):
             return cls.view('domain/published_snapshots', startkey=[False, {}], include_docs=True, descending=True, limit=limit, skip=skip)
         else:
             return cls.view('domain/published_snapshots', endkey=[True], include_docs=True, descending=True, limit=limit, skip=skip)
-
-    @classmethod
-    def snapshot_search(cls, query, page=None, per_page=10):
-        skip = None
-        limit = None
-        if page:
-            skip = (page - 1) * per_page
-            limit = per_page
-        results = cls.get_db().search('domain/snapshot_search',
-            q=json.dumps(query),
-            limit=limit,
-            skip=skip,
-            #stale='ok',
-        )
-        return map(cls.get, [r['id'] for r in results]), results.total_rows
 
     def update_deployment(self, **kwargs):
         self.deployment.update(kwargs)

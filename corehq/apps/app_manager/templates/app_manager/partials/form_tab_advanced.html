@@ -11,6 +11,7 @@
             </a>
             <div class="dialog" title="Upload XForm">
                 <form action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'xform' %}" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
                     <input type="file" id="xform_file_input" name="xform" />
                     <input type="hidden" name="ajax" value="false" />
                     <input type="submit" id="xform_file_submit" value="Upload" />

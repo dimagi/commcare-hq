@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
+from corehq.sql_db.operations import HqRunPython
+
 
 def check_no_organizations(apps, schema_editor):
     if apps.get_model('accounting', 'Subscriber').objects.exclude(organization=None):
@@ -20,7 +22,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(check_no_organizations, reverse_code=empty_func),
+        HqRunPython(check_no_organizations, reverse_code=empty_func),
         migrations.RemoveField(
             model_name='subscriber',
             name='organization',

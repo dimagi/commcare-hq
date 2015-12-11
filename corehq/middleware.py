@@ -4,6 +4,7 @@ import datetime
 from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
+from django.contrib.auth.views import logout as django_logout
 
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 
@@ -90,9 +91,13 @@ class TimingMiddleware(object):
 class TimeoutMiddleware(object):
 
     def process_request(self, request):
+        if not request.user.is_authenticated():
+            return
+
         now = datetime.datetime.utcnow()
         last_request = request.session.get('last_request')
         if last_request is not None and now - string_to_utc_datetime(last_request) > datetime.timedelta(minutes=settings.INACTIVITY_TIMEOUT):
                 del request.session['last_request']
-                return HttpResponseRedirect(reverse('logout'))
+                django_logout(request, **{"template_name": settings.BASE_TEMPLATE})
+                return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
         request.session['last_request'] = json_format_datetime(now)

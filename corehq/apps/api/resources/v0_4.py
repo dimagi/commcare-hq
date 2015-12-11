@@ -26,7 +26,7 @@ from corehq.apps.users.models import CouchUser, Permissions
 
 from corehq.apps.api.resources import v0_1, v0_3, HqBaseResource, DomainSpecificResourceMixin, \
     SimpleSortableResourceMixin
-from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
+from corehq.apps.api.es import XFormES, CaseES, ElasticAPIQuerySet, es_search
 from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
 from corehq.apps.api.serializers import CommCareCaseSerializer
 
@@ -96,9 +96,11 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
                 return doc
 
         # Note that XFormES is used only as an ES client, for `run_query` against the proper index
-        return ESQuerySet(payload=es_query,
-                          model=wrapper,
-                          es_client=self.xform_es(domain)).order_by('-received_on')
+        return ElasticAPIQuerySet(
+            payload=es_query,
+            model=wrapper,
+            es_client=self.xform_es(domain)
+        ).order_by('-received_on')
 
     class Meta(v0_3.XFormInstanceResource.Meta):
         ordering = ['received_on']
@@ -218,9 +220,11 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
             del query['size']
 
         # Note that CaseES is used only as an ES client, for `run_query` against the proper index
-        return ESQuerySet(payload=query,
-                          model=CommCareCase,
-                          es_client=self.case_es(domain)).order_by('server_modified_on')
+        return ElasticAPIQuerySet(
+            payload=query,
+            model=CommCareCase,
+            es_client=self.case_es(domain)
+        ).order_by('server_modified_on')
 
     class Meta(v0_3.CommCareCaseResource.Meta):
         max_limit = 100 # Today, takes ~25 seconds for some domains
@@ -426,9 +430,11 @@ class HOPECaseResource(CommCareCaseResource):
             del query['size']
 
         # Note that CaseES is used only as an ES client, for `run_query` against the proper index
-        return ESQuerySet(payload=query,
-                          model=HOPECase,
-                          es_client=self.case_es(domain)).order_by('server_modified_on')
+        return ElasticAPIQuerySet(
+            payload=query,
+            model=HOPECase,
+            es_client=self.case_es(domain),
+        ).order_by('server_modified_on')
 
     def alter_list_data_to_serialize(self, request, data):
 

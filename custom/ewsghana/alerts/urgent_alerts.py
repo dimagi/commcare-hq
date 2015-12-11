@@ -92,7 +92,7 @@ class UrgentNonReporting(UrgentAlert):
             last_modified_date__gte=thirty_days_ago
         ).exclude(sql_product__is_archived=True).values_list('case_id', flat=True).distinct().count()
 
-        if reported / total < 0.5:
+        if total != 0 and reported / total < 0.5:
             return URGENT_NON_REPORTING % sql_location.name
 
     def get_notifications(self):

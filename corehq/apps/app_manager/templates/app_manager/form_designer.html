@@ -96,7 +96,8 @@
                     return $('header').outerHeight() + 
                         $('.hq-page-header-container').outerHeight();
                 }
-            }
+            },
+            csrftoken: $.cookie('csrftoken'),
         };
 
         define("jquery", [], function () { return window.jQuery; });

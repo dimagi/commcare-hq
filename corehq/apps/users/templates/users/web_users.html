@@ -265,6 +265,7 @@
                                             <form class="modal-content"
                                                   action="{{ user.removeUrl }}"
                                                   method="post">
+                                                  {% csrf_token %}
                                                 <div class="modal-header">
                                                     <button type="button" class="close">
                                                         <span aria-hidden="true">&times;</span>

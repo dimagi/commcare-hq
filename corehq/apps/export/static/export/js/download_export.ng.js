@@ -13,6 +13,8 @@
 
     download_export.config(['$httpProvider', function($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
     }]);
     download_export.constant('formElement', {
         progress: function () { return null; },
@@ -121,6 +123,7 @@
         $scope.prepareExport = function () {
             $scope.prepareExportError = null;
             $scope.preparingExport = true;
+            analytics.workflow("Clicked Prepare Export");
             djangoRMI.prepare_custom_export({
                 exports: $scope.exportList,
                 max_column_size: self._maxColumnSize,
@@ -252,6 +255,7 @@
 
         $scope.sendAnalytics = function () {
             analytics.usage("Download Export", _(exportDownloadService.exportType).capitalize(), "Saved");
+            analytics.workflow("Clicked Download button");
         };
     };
     download_export.controller(exportsControllers);

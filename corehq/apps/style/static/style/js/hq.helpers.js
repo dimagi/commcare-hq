@@ -124,7 +124,7 @@ $.fn.enableButton = function () {
 
 $.fn.koApplyBindings = function (context) {
     if (!this.length) {
-        throw "No element passed to koApplyBindings";
+        throw new Error("No element passed to koApplyBindings");
     }
     return ko.applyBindings(context, this.get(0));
 };

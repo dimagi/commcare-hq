@@ -2,6 +2,7 @@ import hashlib
 import json
 import os
 import collections
+from tempfile import gettempdir
 
 from datetime import datetime
 from jsonobject import JsonObject
@@ -14,7 +15,7 @@ from django.db import models
 from uuidfield import UUIDField
 
 from corehq.form_processor.track_related import TrackRelatedChanges
-
+from corehq.sql_db.routers import db_for_read_write
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.decorators.memoized import memoized
@@ -110,26 +111,31 @@ class DisabledDbMixin(object):
 
 class RestrictedManager(models.Manager):
     def get_queryset(self):
-        raise AccessRestricted('Only "raw" queries allowed')
+        if not getattr(settings, 'ALLOW_FORM_PROCESSING_QUERIES', False):
+            raise AccessRestricted('Only "raw" queries allowed')
+        else:
+            return super(RestrictedManager, self).get_queryset()
 
     def raw(self, raw_query, params=None, translations=None, using=None):
         from django.db.models.query import RawQuerySet
-        if using is None:
-            using = self._db
+        if not using:
+            using = db_for_read_write(self.model)
         return RawQuerySet(raw_query, model=self.model,
                 params=params, translations=translations,
                 using=using)
 
 
-class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
+class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, AttachmentMixin,
+                       AbstractXFormInstance, TrackRelatedChanges):
     objects = RestrictedManager()
 
+    # states should be powers of 2
     NORMAL = 0
     ARCHIVED = 1
     DEPRECATED = 2
-    DUPLICATE = 3
-    ERROR = 4
-    SUBMISSION_ERROR_LOG = 5
+    DUPLICATE = 4
+    ERROR = 8
+    SUBMISSION_ERROR_LOG = 16
     STATES = (
         (NORMAL, 'normal'),
         (ARCHIVED, 'archived'),
@@ -270,7 +276,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         if self.is_archived:
             return
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        FormAccessorSQL.archive_form(self.form_id, user_id=user_id)
+        FormAccessorSQL.archive_form(self, user_id=user_id)
         xform_archived.send(sender="form_processor", xform=self)
 
     def unarchive(self, user_id=None):
@@ -278,7 +284,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
             return
 
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        FormAccessorSQL.unarchive_form(self.form_id, user_id=user_id)
+        FormAccessorSQL.unarchive_form(self, user_id=user_id)
         xform_unarchived.send(sender="form_processor", xform=self)
 
     def __unicode__(self):
@@ -300,9 +306,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model):
 
     @property
     def filepath(self):
-        if getattr(settings, 'IS_TRAVIS', False):
-            return os.path.join('/home/travis/', str(self.attachment_id))
-        return os.path.join('/tmp/', str(self.attachment_id))
+        return os.path.join(gettempdir(), str(self.attachment_id))
 
     def write_content(self, content):
         with open(self.filepath, 'w+') as f:
@@ -570,6 +574,7 @@ class CaseAttachmentSQL(AbstractAttachment):
 class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
     objects = RestrictedManager()
 
+    # relationship_ids should be powers of 2
     CHILD = 0
     EXTENSION = 1
     RELATIONSHIP_CHOICES = (
@@ -627,13 +632,14 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
 class CaseTransaction(DisabledDbMixin, models.Model):
     objects = RestrictedManager()
 
+    # types should be powers of 2
     TYPE_FORM = 0
     TYPE_REBUILD_WITH_REASON = 1
     TYPE_REBUILD_USER_REQUESTED = 2
-    TYPE_REBUILD_USER_ARCHIVED = 3
-    TYPE_REBUILD_FORM_ARCHIVED = 4
-    TYPE_REBUILD_FORM_EDIT = 5
-    TYPE_LEDGER = 6
+    TYPE_REBUILD_USER_ARCHIVED = 4
+    TYPE_REBUILD_FORM_ARCHIVED = 8
+    TYPE_REBUILD_FORM_EDIT = 16
+    TYPE_LEDGER = 32
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),
         (TYPE_REBUILD_WITH_REASON, 'rebuild_with_reason'),
@@ -775,7 +781,7 @@ class LedgerValue(models.Model):
     Represents the current state of a ledger. Supercedes StockState
     """
     # domain not included and assumed to be accessed through the foreign key to the case table. legit?
-    case = models.ForeignKey(CommCareCaseSQL, to_field='case_id', db_index=True)
+    case_id = models.CharField(max_length=255, db_index=True)  # remove foreign key until we're sharding this
     # can't be a foreign key to products because of sharding.
     # also still unclear whether we plan to support ledgers to non-products
     entry_id = models.CharField(max_length=100, db_index=True)

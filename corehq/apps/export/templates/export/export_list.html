@@ -26,6 +26,10 @@
 (function (angular, undefined) {
    'use strict';
     var listExportsApp = angular.module('listExportsApp', ['hq.list_exports', 'hq.app_data_drilldown']);
+    listExportsApp.config(["$httpProvider", function($httpProvider) {
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+    }]);
     listExportsApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure({% djng_current_rmi %});
     }]);
@@ -34,6 +38,12 @@
         window.location = data.url;
     });
 }(window.angular));
+</script>
+<script type="text/javascript">
+    $(function(){
+        var $new_export_button = $(".new-export-link");
+        window.analytics.trackWorkflowLink($new_export_button, "Clicked New Export");
+    });
 </script>
 {% endblock %}
 

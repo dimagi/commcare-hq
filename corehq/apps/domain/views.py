@@ -35,7 +35,7 @@ from corehq.apps.accounting.decorators import (
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui, \
-    use_jquery_ui_multiselect, use_knockout_js
+    use_jquery_ui_multiselect, use_knockout_js, use_select2
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -86,7 +86,8 @@ from corehq.apps.domain.forms import (
     SnapshotApplicationForm, DomainInternalForm, PrivacySecurityForm,
     ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
     ConfirmSubscriptionRenewalForm, SnapshotFixtureForm, TransferDomainForm,
-    SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS)
+    SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS, AdvancedExtendedTrialForm,
+    ContractedPartnerForm, DimagiOnlyEnterpriseForm)
 from corehq.apps.domain.models import Domain, LICENSES, TransferDomainRequest
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
@@ -345,6 +346,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     page_title = ugettext_lazy("Basic")
 
     @method_decorator(domain_admin_required)
+    @use_select2
     @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
@@ -1231,6 +1233,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     @property
     def page_context(self):
         return {
+            'is_form_editable': self.is_form_editable,
             'plan_name': Subscription.get_subscribed_plan_by_domain(self.domain)[0],
             'select_subscription_type_form': self.select_subscription_type_form,
             'subscription_management_forms': self.slug_to_form.values(),
@@ -1253,12 +1256,10 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     @property
     @memoized
     def select_subscription_type_form(self):
-        if self.request.method == 'POST':
-            for form_slug in self.slug_to_form:
-                if form_slug in self.request.POST:
-                    return SelectSubscriptionTypeForm({
-                        'subscription_type': form_slug,
-                    })
+        if self.request.method == 'POST' and 'slug' in self.request.POST:
+            return SelectSubscriptionTypeForm({
+                'subscription_type': self.request.POST['slug'],
+            })
 
         subscription_type = None
         subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
@@ -1267,14 +1268,21 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
         else:
             plan = subscription.plan_version.plan
             if subscription.service_type == SubscriptionType.CONTRACTED:
-                subscription_type = "contracted_partner"
+                subscription_type = ContractedPartnerForm.slug
             elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
-                subscription_type = "dimagi_only_enterprise"
+                subscription_type = DimagiOnlyEnterpriseForm.slug
             elif (plan.edition == SoftwarePlanEdition.ADVANCED
                   and plan.visibility == SoftwarePlanVisibility.TRIAL_INTERNAL):
-                subscription_type = "advanced_extended_trial"
+                subscription_type = AdvancedExtendedTrialForm.slug
 
-        return SelectSubscriptionTypeForm({'subscription_type': subscription_type})
+        return SelectSubscriptionTypeForm(
+            {'subscription_type': subscription_type},
+            disable_input=not self.is_form_editable,
+        )
+
+    @property
+    def is_form_editable(self):
+        return not self.slug_to_form[ContractedPartnerForm.slug].is_uneditable
 
 
 class SelectPlanView(DomainAccountingSettings):
@@ -2161,7 +2169,6 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
         return repeater
 
     def post(self, request, *args, **kwargs):
-        print self.add_repeater_form.errors
         if self.add_repeater_form.is_valid():
             repeater = self.make_repeater()
             repeater.save()
