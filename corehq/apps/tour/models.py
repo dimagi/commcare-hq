@@ -16,12 +16,12 @@ class GuidedTours(models.Model):
 
     @classmethod
     def has_seen_tour(cls, user, tour_slug):
-        guided_tour, _ = GuidedTours.objects.get_or_create(user=user)
+        guided_tour, _ = cls.objects.get_or_create(user=user)
         return tour_slug not in guided_tour.seen_tours
 
     @classmethod
     def mark_as_seen(cls, user, tour_slug):
-        guided_tour, _ = GuidedTours.objects.get_or_create(user=user)
+        guided_tour, _ = cls.objects.get_or_create(user=user)
         guided_tour.seen_tours[tour_slug] = datetime.datetime.now()
         guided_tour.save()
 
