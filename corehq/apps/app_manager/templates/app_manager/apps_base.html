@@ -20,22 +20,20 @@
 
 {% block stylesheets %}{{ block.super }}
     {% compress css %}
+    {# Explicitly include here because @use_jquery_ui isn't an option without class-based views #}
+    <link type="text/css" rel="stylesheet" media="screen" href="{% new_static 'jquery-ui/themes/redmond/jquery-ui.min.css' %}"/>
     {# TODO: should this still exist? #}
     <link type="text/less" rel="stylesheet" media="all" href="{% new_static 'style/less/legacy/app_manager.less' %}"/>
     {% endcompress %}
 {% endblock %}
 
-{% block head %}{{ block.super }}
-    {# TODO: drop this altogether? #}
-    {% include "imports/jqmodal.html" %}
-{% endblock %}
-
 {% block js %}{{ block.super }}
-    {# Explicitly include knockout because app manager doesn't really do class-based views #}
+    {# Explicitly include these because app manager doesn't really do class-based views, can't use the decorators #}
     <script type="text/javascript" src="{% new_static 'knockout/dist/knockout.js' %}"></script>
     <script type="text/javascript" src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
     <script type="text/javascript" src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
     <script type="text/javascript" src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
 
     {# TODO: move things to bower? Ctrl+F "Javascript Library Management" in B3 migration guide #}
     <script src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
