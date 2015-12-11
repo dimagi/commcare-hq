@@ -45,8 +45,6 @@ class TestSavedExportsMigrations(TestCase):
             doc = {d["_id"]: d for d in (json.loads(x) for x in lines)}[saved._id]
             self.assertEqual(doc["_rev"], saved._rev)
             self.assertEqual(len(lines), migrated, lines)
-            data = doc["_attachments"].values()[0]["data"].decode("base64")
-            self.assertEqual(data, payload)
 
         # verify: attachment was moved to blob db
         exp = SavedBasicExport.get(saved._id)

@@ -65,7 +65,6 @@ That's it, you're done!
 import json
 import os
 import traceback
-from cStringIO import StringIO
 from tempfile import mkdtemp
 
 from django.conf import settings
@@ -76,7 +75,7 @@ from corehq.dbaccessors.couchapps.all_docs import (
     get_all_docs_with_doc_types,
     get_doc_count_by_type,
 )
-from couchdbkit import ResourceConflict
+from couchdbkit import ResourceConflict, ResourceNotFound
 
 MIGRATION_INSTRUCTIONS = """
 There are {total} documents that may have attachments, and they must be
@@ -158,7 +157,11 @@ def migrate(slug, doc_types, filename=None):
             try:
                 with obj.atomic_blobs():
                     for name, meta in list(obj._attachments.iteritems()):
-                        content = StringIO(meta["data"].decode("base64"))
+                        try:
+                            content = obj.fetch_attachment(name, stream=True)
+                        except ResourceNotFound:
+                            # ignore attachment that has been removed
+                            continue
                         obj.put_attachment(
                             content, name, content_type=meta["content_type"])
             except ResourceConflict:
