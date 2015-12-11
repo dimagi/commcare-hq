@@ -1,5 +1,8 @@
 import uuid
 from django.test import SimpleTestCase
+from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings, \
+    set_index_reindex_settings, set_index_normal_settings, create_index_for_pillow, assume_alias_for_pillow, \
+    pillow_index_exists, pillow_mapping_exists
 from pillowtop.feed.interface import Change
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.pillow.interface import PillowRuntimeContext
@@ -77,7 +80,7 @@ class ElasticPillowTest(SimpleTestCase):
 
     def test_mapping_initialization_on_pillow_creation(self):
         pillow = TestElasticPillow()
-        self.assertTrue(pillow.mapping_exists())
+        self.assertTrue(pillow_mapping_exists(pillow))
         mapping = get_index_mapping(self.es, self.index, pillow.es_type)
         # we can't compare the whole dicts because ES adds a bunch of stuff to them
         self.assertEqual(
@@ -88,8 +91,8 @@ class ElasticPillowTest(SimpleTestCase):
     def test_create_index_false_online_true(self):
         # this test use to raise a hard error so doesn't actually test anything
         pillow = TestElasticPillow(create_index=False)
-        self.assertFalse(pillow.index_exists())
-        self.assertFalse(pillow.mapping_exists())
+        self.assertFalse(pillow_index_exists(pillow))
+        self.assertFalse(pillow_mapping_exists(pillow))
 
     def test_refresh_index(self):
         pillow = TestElasticPillow()
@@ -98,23 +101,23 @@ class ElasticPillowTest(SimpleTestCase):
         self.assertEqual(0, get_doc_count(self.es, self.index))
         self.es.create(self.index, 'case', doc, id=doc_id)
         self.assertEqual(0, get_doc_count(self.es, self.index, refresh_first=False))
-        pillow.refresh_index()
+        pillow.get_es_new().indices.refresh(pillow.es_index)
         self.assertEqual(1, get_doc_count(self.es, self.index, refresh_first=False))
 
     def test_index_operations(self):
         pillow = TestElasticPillow()
         self.assertTrue(self.es.indices.exists(self.index))
-        self.assertTrue(pillow.index_exists())
+        self.assertTrue(pillow_index_exists(pillow))
 
         # delete and check
-        pillow.delete_index()
+        pillow.get_es_new().indices.delete(self.index)
         self.assertFalse(self.es.indices.exists(self.index))
-        self.assertFalse(pillow.index_exists())
+        self.assertFalse(pillow_index_exists(pillow))
 
         # create and check
-        pillow.create_index()
+        create_index_for_pillow(pillow)
         self.assertTrue(self.es.indices.exists(self.index))
-        self.assertTrue(pillow.index_exists())
+        self.assertTrue(pillow_index_exists(pillow))
 
     def test_send_doc_to_es(self):
         pillow = TestElasticPillow()
@@ -159,7 +162,7 @@ class ElasticPillowTest(SimpleTestCase):
         doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
         _send_doc_to_pillow(pillow, doc_id, doc)
         self.assertEqual(1, get_doc_count(self.es, self.index))
-        pillow.assume_alias()
+        assume_alias_for_pillow(pillow)
         es_doc = self.es.get_source(pillow.es_alias, doc_id)
         for prop in doc:
             self.assertEqual(doc[prop], es_doc[prop])
@@ -177,10 +180,44 @@ class ElasticPillowTest(SimpleTestCase):
         self.assertEqual([pillow.es_alias], aliases[new_index]['aliases'].keys())
 
         # assume alias and make sure it's removed (and added to the right index)
-        pillow.assume_alias()
+        assume_alias_for_pillow(pillow)
         aliases = self.es.indices.get_aliases()
         self.assertEqual(0, len(aliases[new_index]['aliases']))
         self.assertEqual([pillow.es_alias], aliases[self.index]['aliases'].keys())
+
+    def test_update_settings(self):
+        TestElasticPillow()  # hack to create the index first
+        update_settings(self.es, self.index, INDEX_REINDEX_SETTINGS)
+        index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
+        self._compare_es_dicts(INDEX_REINDEX_SETTINGS, index_settings_back, 'index')
+        update_settings(self.es, self.index, INDEX_STANDARD_SETTINGS)
+        index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
+        self._compare_es_dicts(INDEX_STANDARD_SETTINGS, index_settings_back, 'index')
+
+    def test_set_index_reindex(self):
+        TestElasticPillow()  # hack to create the index first
+        set_index_reindex_settings(self.es, self.index)
+        index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
+        self._compare_es_dicts(INDEX_REINDEX_SETTINGS, index_settings_back, 'index')
+
+    def test_set_index_normal(self):
+        TestElasticPillow()  # hack to create the index first
+        set_index_normal_settings(self.es, self.index)
+        index_settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
+        self._compare_es_dicts(INDEX_STANDARD_SETTINGS, index_settings_back, 'index')
+
+    def _compare_es_dicts(self, expected, returned, prefix):
+        if settings.ELASTICSEARCH_VERSION < 1.0:
+            for key, value in expected[prefix].items():
+                self.assertEqual(str(value), returned['{}.{}'.format(prefix, key)])
+        else:
+            sub_returned = returned[prefix]
+            for key, value in expected[prefix].items():
+                split_key = key.split('.')
+                returned_value = sub_returned[split_key[0]]
+                for sub_key in split_key[1:]:
+                    returned_value = returned_value[sub_key]
+                self.assertEqual(str(value), returned_value)
 
 
 def _send_doc_to_pillow(pillow, doc_id, doc):

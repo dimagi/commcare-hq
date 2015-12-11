@@ -3,6 +3,7 @@ import sys
 from optparse import make_option
 import simplejson
 from corehq.elastic import get_es
+from pillowtop.es_utils import assume_alias_for_pillow
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.management.pillowstate import get_pillow_states
 from pillowtop import get_all_pillow_instances
@@ -63,7 +64,7 @@ class Command(LabelCommand):
                 '',
             ])).lower() == 'code red':
                 for pillow in aliased_pillows:
-                    pillow.delete_index()
+                    pillow.get_es_new().indices.delete(pillow.es_index)
                     print 'deleted elastic index: {}'.format(pillow.es_index)
                     checkpoint_id = pillow.checkpoint.checkpoint_id
                     if pillow.couch_db.doc_exist(checkpoint_id):
@@ -79,7 +80,7 @@ class Command(LabelCommand):
             print aliased_pillows
         if flip_all:
             for pillow in aliased_pillows:
-                pillow.assume_alias()
+                assume_alias_for_pillow(pillow)
             print simplejson.dumps(es.get('_aliases'), indent=4)
         if flip_single is not None:
             pillow_class_name = flip_single
@@ -90,5 +91,5 @@ class Command(LabelCommand):
                 sys.exit()
 
             target_pillow = pillow_to_use[0]
-            target_pillow.assume_alias()
+            assume_alias_for_pillow(target_pillow)
             print es.get('_aliases')

@@ -25,6 +25,7 @@ from pillowtop.couchdb import CachedCouchDB
 
 from django import db
 from pillowtop.dao.couch import CouchDocumentStore
+from pillowtop.es_utils import create_index_for_pillow, pillow_index_exists, pillow_mapping_exists
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
@@ -41,19 +42,6 @@ CHANGES_TIMEOUT = 60000
 RETRY_INTERVAL = 2  # seconds, exponentially increasing
 MAX_RETRIES = 4  # exponential factor threshold for alerts
 
-
-INDEX_REINDEX_SETTINGS = {"index": {"refresh_interval": "900s",
-                                    "merge.policy.merge_factor": 20,
-                                    "store.throttle.max_bytes_per_sec": "1mb",
-                                    "store.throttle.type": "merge",
-                                    "number_of_replicas": "0"}
-}
-INDEX_STANDARD_SETTINGS = {"index": {"refresh_interval": "1s",
-                                     "merge.policy.merge_factor": 10,
-                                     "store.throttle.max_bytes_per_sec": "5mb",
-                                     "store.throttle.type": "node",
-                                     "number_of_replicas": "0"}
-}
 
 
 class PillowtopIndexingError(Exception):
@@ -456,26 +444,21 @@ class AliasedElasticPillow(BasicPillow):
         super(AliasedElasticPillow, self).__init__(**kwargs)
         # online=False is used in unit tests
         self.online = online
-        index_exists = self.index_exists()
-        if create_index and not index_exists:
-            self.create_index()
-        if self.online and (index_exists or create_index):
-            pillow_logging.info("Pillowtop [%s] Initializing mapping in ES" % self.get_name())
-            self.initialize_mapping_if_necessary()
+        if self.online:
+            index_exists = pillow_index_exists(self)
+            if create_index and not index_exists:
+                create_index_for_pillow(self)
+            if create_index or index_exists:
+                pillow_logging.info("Pillowtop [%s] Initializing mapping in ES" % self.get_name())
+                self.initialize_mapping_if_necessary()
         else:
             pillow_logging.info("Pillowtop [%s] Started with no mapping from server in memory testing mode" % self.get_name())
-
-    def mapping_exists(self):
-        try:
-            return self.get_es_new().indices.get_mapping(self.es_index, self.es_type)
-        except TransportError:
-            return {}
 
     def initialize_mapping_if_necessary(self):
         """
         Initializes the elasticsearch mapping for this pillow if it is not found.
         """
-        if not self.mapping_exists():
+        if not pillow_mapping_exists(self):
             pillow_logging.info("Initializing elasticsearch mapping for [%s]" % self.es_type)
             mapping = copy(self.default_mapping)
             mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
@@ -486,30 +469,8 @@ class AliasedElasticPillow(BasicPillow):
         else:
             pillow_logging.info("Elasticsearch mapping for [%s] was already present." % self.es_type)
 
-    def index_exists(self):
-        if not self.online:
-            # If offline, just say the index is there and proceed along
-            return True
-
-        return self.get_es_new().indices.exists(self.es_index)
-
     def get_doc_path(self, doc_id):
         return "%s/%s/%s" % (self.es_index, self.es_type, doc_id)
-
-    def update_settings(self, settings_dict):
-        return self.send_robust("%s/_settings" % self.es_index, data=settings_dict)
-
-    def set_index_reindex_settings(self):
-        """
-        Set a more optimized setting setup for fast reindexing
-        """
-        return self.update_settings(INDEX_REINDEX_SETTINGS)
-
-    def set_index_normal_settings(self):
-        """
-        Normal indexing configuration
-        """
-        return self.update_settings(INDEX_STANDARD_SETTINGS)
 
     def set_mapping(self, type_string, mapping):
         if self.online:
@@ -530,24 +491,6 @@ class AliasedElasticPillow(BasicPillow):
             }],
             timeout=self.es_timeout,
         )
-
-    def delete_index(self):
-        """
-        Coarse way of deleting an index - a todo is to set aliases where need be
-        """
-        es = self.get_es()
-        if self.index_exists():
-            es.delete(self.es_index)
-
-    def create_index(self):
-        """
-        Rebuild an index after a delete
-        """
-        self.get_es_new().indices.create(index=self.es_index, body=self.es_meta)
-        self.set_index_normal_settings()
-
-    def refresh_index(self):
-        self.get_es().post("%s/_refresh" % self.es_index)
 
     def change_trigger(self, changes_dict):
         id = changes_dict['id']
@@ -626,30 +569,6 @@ class AliasedElasticPillow(BasicPillow):
     def send_bulk(self, payload):
         es = self.get_es()
         es.post('_bulk', data=payload)
-
-    def check_alias(self):
-        """
-        Naive means to verify the alias of the current pillow iteration is matched.
-        """
-        es = self.get_es()
-        aliased_indexes = es[self.es_alias].get('_aliases')
-        return aliased_indexes.keys()
-
-    # todo: remove from class - move to the ptop_es_manage command
-    def assume_alias(self):
-        """
-        Assigns the pillow's `es_alias` to its index in elasticsearch.
-
-        This operation removes the alias from any other indices it might be assigned to
-        """
-        es_new = self.get_es_new()
-        if es_new.indices.exists_alias(self.es_alias):
-            # this part removes the conflicting aliases
-            alias_indices = es_new.indices.get_alias(self.es_alias).keys()
-            for aliased_index in alias_indices:
-                es_new.indices.delete_alias(aliased_index, self.es_alias)
-
-        es_new.indices.put_alias(self.es_index, self.es_alias)
 
     @staticmethod
     def calc_mapping_hash(mapping):
