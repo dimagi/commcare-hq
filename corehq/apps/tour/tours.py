@@ -17,7 +17,7 @@ class StaticGuidedTour(object):
         }
 
     def is_enabled(self, user):
-        return GuidedTour.has_seen_tour(user, self.slug)
+        return not GuidedTour.has_seen_tour(user, self.slug)
 
 
 NEW_BLANK_APP = StaticGuidedTour(
