@@ -13,7 +13,7 @@
             ></span>
         </label>
         <div id="case-list-form" class="controls error">
-            <div data-bind="visible: caseListForm() || allowed, css: { 'alert alert-error': formMissing() || !allowed}">
+            <div data-bind="visible: caseListForm() || allowed, css: { 'alert alert-danger': formMissing() || !allowed}">
                 <select data-bind="
                     optstr: caseListFormOptstr,
                     value: caseListFormProxy

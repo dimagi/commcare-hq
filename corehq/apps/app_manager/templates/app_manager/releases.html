@@ -113,7 +113,7 @@
 {% endblock %}
 {% block form-view %}
     <div id="releases-table">
-        <div class="alert alert-error" data-bind="visible: brokenBuilds">
+        <div class="alert alert-danger" data-bind="visible: brokenBuilds">
             <p>
                 <i class="fa fa-exclamation-circle"></i>
                 {% blocktrans %}
@@ -247,7 +247,7 @@
                                 <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}"/>
                             </span>
                         </div>
-                        <div data-bind="visible: comment_update_error()" class="alert alert-error">
+                        <div data-bind="visible: comment_update_error()" class="alert alert-danger">
                             {% trans "Error updating comment.  Please try again" %}
                         </div>
                         {% if request|toggle_enabled:"VIEW_BUILD_SOURCE" %}
@@ -289,7 +289,7 @@
                             <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}"/>
                         </div>
                         <div data-bind="visible: fetchState() === 'error', css: {hide: false}" class="hide">
-                            <div class="alert alert-error">
+                            <div class="alert alert-danger">
                                 {% trans "Whoops, we couldn't get those versions for you. Could you try that again?" %}
                             </div>
                         </div>

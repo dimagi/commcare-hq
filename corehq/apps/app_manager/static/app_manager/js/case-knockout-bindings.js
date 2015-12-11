@@ -28,7 +28,7 @@ ko.bindingHandlers.questionsSelect = {
         ]
      */
     init: function (element, valueAccessor) {
-        $(element).after('<div class="alert alert-error"></div>');
+        $(element).after('<div class="alert alert-danger"></div>');
     },
     update: function (element, valueAccessor, allBindingsAccessor) {
         var optionObjects = ko.utils.unwrapObservable(valueAccessor());
