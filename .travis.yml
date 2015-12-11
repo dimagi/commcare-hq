@@ -12,10 +12,12 @@ env:
     - COUCHDB_USER=""
     - COUCHDB_PW=""
     - TRAVIS_INSTALL="y"
+    - PGVERSION="9.1"
   matrix:
     - MATRIX_TYPE=javascript BOWER=yes
     - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunnerCatchall BOWER=yes
     - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunner0
+    - MATRIX_TYPE=python-sharded USE_PARTITIONED_DATABASE=True
 branches:
   only:
     - master
@@ -25,6 +27,7 @@ addons:
     - moreutils
     - libblas-dev
     - liblapack-dev
+    - postgresql-9.1-plproxy
 before_install:
   - "curl http://localhost:5984/"  # print couch info
   - "uname -a"
