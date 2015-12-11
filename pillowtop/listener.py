@@ -26,7 +26,7 @@ from pillowtop.couchdb import CachedCouchDB
 from django import db
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings, \
-    set_index_normal_settings, create_index_and_set_settings_normal, create_index_for_pillow
+    set_index_normal_settings, create_index_and_set_settings_normal, create_index_for_pillow, pillow_index_exists
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
@@ -445,12 +445,13 @@ class AliasedElasticPillow(BasicPillow):
         super(AliasedElasticPillow, self).__init__(**kwargs)
         # online=False is used in unit tests
         self.online = online
-        index_exists = self.index_exists()
-        if create_index and not index_exists:
-            create_index_for_pillow(self)
-        if self.online and (index_exists or create_index):
-            pillow_logging.info("Pillowtop [%s] Initializing mapping in ES" % self.get_name())
-            self.initialize_mapping_if_necessary()
+        if self.online:
+            index_exists = pillow_index_exists(self)
+            if create_index and not index_exists:
+                create_index_for_pillow(self)
+            if create_index or index_exists:
+                pillow_logging.info("Pillowtop [%s] Initializing mapping in ES" % self.get_name())
+                self.initialize_mapping_if_necessary()
         else:
             pillow_logging.info("Pillowtop [%s] Started with no mapping from server in memory testing mode" % self.get_name())
 
@@ -474,13 +475,6 @@ class AliasedElasticPillow(BasicPillow):
                 pillow_logging.info("Mapping set: [%s] %s" % (self.es_type, mapping_res))
         else:
             pillow_logging.info("Elasticsearch mapping for [%s] was already present." % self.es_type)
-
-    def index_exists(self):
-        if not self.online:
-            # If offline, just say the index is there and proceed along
-            return True
-
-        return self.get_es_new().indices.exists(self.es_index)
 
     def get_doc_path(self, doc_id):
         return "%s/%s/%s" % (self.es_index, self.es_type, doc_id)

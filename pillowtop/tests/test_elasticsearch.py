@@ -1,7 +1,8 @@
 import uuid
 from django.test import SimpleTestCase
 from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings, \
-    set_index_reindex_settings, set_index_normal_settings, create_index_for_pillow, assume_alias_for_pillow
+    set_index_reindex_settings, set_index_normal_settings, create_index_for_pillow, assume_alias_for_pillow, \
+    pillow_index_exists
 from pillowtop.feed.interface import Change
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.pillow.interface import PillowRuntimeContext
@@ -90,7 +91,7 @@ class ElasticPillowTest(SimpleTestCase):
     def test_create_index_false_online_true(self):
         # this test use to raise a hard error so doesn't actually test anything
         pillow = TestElasticPillow(create_index=False)
-        self.assertFalse(pillow.index_exists())
+        self.assertFalse(pillow_index_exists(pillow))
         self.assertFalse(pillow.mapping_exists())
 
     def test_refresh_index(self):
@@ -106,17 +107,17 @@ class ElasticPillowTest(SimpleTestCase):
     def test_index_operations(self):
         pillow = TestElasticPillow()
         self.assertTrue(self.es.indices.exists(self.index))
-        self.assertTrue(pillow.index_exists())
+        self.assertTrue(pillow_index_exists(pillow))
 
         # delete and check
         pillow.get_es_new().indices.delete(self.index)
         self.assertFalse(self.es.indices.exists(self.index))
-        self.assertFalse(pillow.index_exists())
+        self.assertFalse(pillow_index_exists(pillow))
 
         # create and check
         create_index_for_pillow(pillow)
         self.assertTrue(self.es.indices.exists(self.index))
-        self.assertTrue(pillow.index_exists())
+        self.assertTrue(pillow_index_exists(pillow))
 
     def test_send_doc_to_es(self):
         pillow = TestElasticPillow()
