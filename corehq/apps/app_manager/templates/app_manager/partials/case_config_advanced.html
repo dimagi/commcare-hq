@@ -48,14 +48,14 @@
         <!-- ko if:  actionType === 'load' -->
             {% if app.commtrack_enabled %}
             <!-- ko if:  allow_product_stock -->
-            <div class="control-group">
+            <div class="form-group">
                 <label class="checkbox">
                     <input type="checkbox" data-bind="checked: show_product_stock_var"/>
                     {% trans "Display the Product Stock for this Supply Point after it is selected" %}
                 </label>
             </div>
             <!-- ko if: show_product_stock_var -->
-            <div class="control-group" style="margin-left: 25px;">
+            <div class="form-group" style="margin-left: 25px;">
                 <label class="control-label">{% trans "Only show products for this program:" %}</label>
                 <select data-bind="optstr: $root.programs, value: product_program">
                 </select>
@@ -65,7 +65,7 @@
             {% endif %}
 
             <!-- ko if:  !auto_select && $index() > 0 -->
-            <div class="control-group" data-bind="css: {warning: validate_subcase()}">
+            <div class="form-group" data-bind="css: {'has-warning': validate_subcase()}">
                 <label class="checkbox">
                     <input type="checkbox" data-bind="checked: subcase"/>
                     {% trans "This case is a subcase of the previous case" %}
@@ -92,7 +92,7 @@
         <!-- /ko -->
 
             <!-- ko if:  actionType === 'open' -->
-            <div class="control-group" data-bind="visible: allow_subcase, css: {warning: validate_subcase()}">
+            <div class="form-group" data-bind="visible: allow_subcase, css: {'has-warning': validate_subcase()}">
 
                 <span style="font-weight: bold;">Parent Indices</span>
                 <ul data-bind="foreach: case_indices">
@@ -120,7 +120,7 @@
             </div>
             <!-- /ko -->
 
-            <div class="control-group">
+            <div class="form-group">
                 <label class="checkbox">
                     <input type="checkbox" data-bind="checked: close_case"/>
                     {% trans "Close this case when the form is complete" %}
@@ -144,7 +144,7 @@
         <div>
             <i class="fa fa-file"></i>
             {% trans "Select case type:" %}
-            <span class="control-group" data-bind="css: {warning: validate()}">
+            <span class="form-group" data-bind="css: {'has-warning': validate()}">
                 <select data-bind="
                     options: config.caseTypes,
                     value: case_type,
@@ -222,7 +222,7 @@
         <div>
             <i class="fa fa-file"></i>
             {% trans "Autoselect mode:" %}
-            <span class="control-group" data-bind="css: {warning: validate()}">
+            <span class="form-group" data-bind="css: {'has-warning': validate()}">
                 <!-- ko with: auto_select -->
                 <select data-bind="
                     optstr: $parent.auto_select_modes,

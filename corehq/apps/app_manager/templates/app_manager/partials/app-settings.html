@@ -173,7 +173,7 @@ todo fix
                     </a>
                 </legend>
                 <div class="collapse" data-bind="foreach: settings, attr: {id: id}, css: {'in': !reallyCollapse()}">
-                    <div class="control-group" data-bind="
+                    <div class="form-group" data-bind="
                         visible: visible,
                         css: {error: hasError()}
                     ">
@@ -233,7 +233,7 @@ todo fix
                     foreach: customProperties,
                     as: 'customProperty'
                     ">
-                    <div class="control-group" data-bind="
+                    <div class="form-group" data-bind="
                         template: {
                             name: 'CommcareSettings.widgets.customProperty'
                         }
@@ -241,7 +241,7 @@ todo fix
                     </div>
 
                 </div>
-                <div class="control-group">
+                <div class="form-group">
                     <button class="btn btn-primary" data-bind="
                         click: onAddCustomProperty
                         ">

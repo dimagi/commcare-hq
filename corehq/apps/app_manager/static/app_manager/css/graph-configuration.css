@@ -30,10 +30,10 @@
        plus 20. Again, probably makes more sense to use a less variable. */
     margin-left: 114px;
 }
-.modal.graph-config .series .control-group:last-of-type {
+.modal.graph-config .series .form-group:last-of-type {
     border-bottom: 1px solid #e5e5e5;
 }
-.modal.graph-config .series .control-group:last-of-type .controls > a {
+.modal.graph-config .series .form-group:last-of-type .controls > a {
     margin-bottom: 10px;
 }
 

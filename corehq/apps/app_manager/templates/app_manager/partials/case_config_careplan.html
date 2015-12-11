@@ -25,7 +25,7 @@
             </thead>
 
             <tbody data-bind="foreach: fixedQuestions">
-                <tr class="control-group" data-bind="css: {error: validate}">
+                <tr class="form-group" data-bind="css: {'has-error': validate}">
                     <td>
                         <div><span data-bind="text: label"></span></div>
                         <p class="help-inline" data-bind="html: validateProperty, visible: validateProperty"></p>

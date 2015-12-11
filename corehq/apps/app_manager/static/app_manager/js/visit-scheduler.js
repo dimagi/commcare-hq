@@ -139,11 +139,11 @@ var VisitScheduler = (function () {
             var $add_visit_button = self.home.find("#add-visit");
 
             if (self.formSchedule.visits().length === 0){
-                $add_visit_button.closest(".control-group").addClass("error");
+                $add_visit_button.closest(".form-group").addClass("has-error");
                 $add_visit_button.siblings(".error-text").show();
                 errors += 1;
             } else {
-                $add_visit_button.closest(".control-group").removeClass("error");
+                $add_visit_button.closest(".form-group").removeClass("has-error");
                 $add_visit_button.siblings(".error-text").hide();
             }
 
@@ -151,12 +151,12 @@ var VisitScheduler = (function () {
             required.each(function(i, req){
                 var $req = $(req);
                 if ($req.val().trim().length === 0){
-                    $req.closest(".control-group").addClass("error");
+                    $req.closest(".form-group").addClass("has-error");
                     $req.siblings(".error-text").show();
                     errors += 1;
                 }
                 else{
-                    $req.closest(".control-group").removeClass("error");
+                    $req.closest(".form-group").removeClass("has-error");
                     $req.siblings(".error-text").hide();
                 }
             });

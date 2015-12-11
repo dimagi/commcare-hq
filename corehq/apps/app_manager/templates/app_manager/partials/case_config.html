@@ -92,7 +92,7 @@
             <div>
                 <i class="fa fa-check"></i>
                 {% trans "Opens a case for a different case list:" %}
-                <span class="control-group" data-bind="css: {warning: !case_type()}">
+                <span class="form-group" data-bind="css: {'has-warning': !case_type()}">
                     <select data-bind="
                         options: $parent.caseTypes,
                         optionsText: $parent.getCaseTypeLabel,

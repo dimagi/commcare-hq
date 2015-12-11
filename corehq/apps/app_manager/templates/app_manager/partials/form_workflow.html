@@ -1,6 +1,6 @@
 {% load i18n %}
 {% if app.application_version == '2.0' %}
-    <div class="control-group">
+    <div class="form-group">
         <label class="control-label">
             {% trans "End of form Navigation" %}
             <span class="hq-help-template"
@@ -10,7 +10,7 @@
             ></span>
         </label>
         <div id="form-workflow" class="controls commcare-feature" data-since-version="2.10">
-            <div class="control-group">
+            <div class="form-group">
                 <select name="post_form_workflow" data-bind="
                     optstr: workflowOptions(),
                     value: workflow
@@ -42,7 +42,7 @@
     </div>
 
     <script type="text/html" id="form-link-template">
-        <div class="control-group">
+        <div class="form-group">
             <textarea name="form_links_xpath_expressions"
                       placeholder="XPath Expression"
                       rows="1"
@@ -77,7 +77,7 @@
                     {% trans "No additional linking required." %}
                 </p>
                 <div data-bind="foreach: formLink.datums, visible: formLink.datumsFetched() && formLink.datums().length">
-                    <div class="control-group">
+                    <div class="form-group">
                         <label class="control-label">
                             <span data-bind="text: name"></span><br/>
                             <small>{% trans "Case Type: " %}</small><small data-bind="text: caseType"></small>

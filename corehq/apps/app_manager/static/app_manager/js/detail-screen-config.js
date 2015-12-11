@@ -270,13 +270,13 @@ var caseListLookupViewModel = function($el, state, saveButton){
         $el.find('input[required]').each(function(){
             var $this = $(this);
             if ($this.val().trim().length === 0){
-                $this.closest('.control-group').addClass('error');
+                $this.closest('.form-group').addClass('has-error');
                 var $help = $this.siblings('.help-inline');
                 $help.show();
                 errors.push($help.text());
             }
             else {
-                $this.closest('.control-group').removeClass('error');
+                $this.closest('.form-group').removeClass('has-error');
                 $this.siblings('.help-inline').hide();
             }
         });
@@ -535,8 +535,8 @@ var DetailScreenConfig = (function () {
                 if (that.isTab) {
                     // hack to wait until the input's there to prepend the Tab: label.
                     setTimeout(function () {
-                        that.header.ui.addClass('input-prepend').prepend($('<span class="add-on">Tab</span>'));
-                        that.nodeset.ui.addClass('input-prepend').prepend($('<span class="add-on">Nodeset</span>'));
+                        that.header.ui.addClass('input-group').prepend($('<span class="input-group-addon">Tab</span>'));
+                        that.nodeset.ui.addClass('input-group').prepend($('<span class="input-group-addon">Nodeset</span>'));
                     }, 0);
 
                     // Observe nodeset values for the sake of validation

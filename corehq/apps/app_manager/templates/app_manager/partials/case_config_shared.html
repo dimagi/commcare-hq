@@ -80,7 +80,7 @@
         </thead>
 
         <tbody data-bind="foreach: case_preload">
-            <tr class="control-group" data-bind="css: {error: validateProperty || validateQuestion}">
+            <tr class="form-group" data-bind="css: {'has-error': validateProperty || validateQuestion}">
                 <td>
                     <a href="#" data-bind="
                         click: $parent.removePreload,
@@ -127,7 +127,7 @@
         </thead>
 
         <tbody data-bind="foreach: case_properties">
-            <tr class="control-group" data-bind="css: {error: validate, warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key())}">
+            <tr class="form-group" data-bind="css: {'has-error': validate, warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key())}">
                 <td>
                     <a href="#" data-bind="
                         click: $parent.removeProperty,

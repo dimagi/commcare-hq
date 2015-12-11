@@ -20,13 +20,13 @@
 {% endblock %}
 
 {% block settings_fields %}
-    <div id="detail-screen-parent" class="control-group">
+    <div id="detail-screen-parent" class="form-group">
         <label class="control-label">{% trans "Attached to" %}</label>
         <div class="controls">
             <select name="parent_module" data-bind="optstr: moduleOptions, value: moduleId"></select>
         </div>
     </div>
-    <div class="control-group">
+    <div class="form-group">
         <label class="control-label">
             {% trans "Menu Mode" %}
         </label>

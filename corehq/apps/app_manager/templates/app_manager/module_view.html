@@ -101,10 +101,10 @@
                     $(this).val(valueNoSpaces);
                 }
                 if (!valueNoSpaces.match(/^[\w-]+$/g)) {
-                    $(this).closest('.control-group').addClass('error');
+                    $(this).closest('.form-group').addClass('has-error');
                     $('#case_type_error').css('display', 'inline');
                 } else {
-                    $(this).closest('.control-group').removeClass('error');
+                    $(this).closest('.form-group').removeClass('has-error');
                     $('#case_type_error').css('display', 'none');
                 }
             });
@@ -215,7 +215,7 @@
         <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_module_attr" domain app.id module.id 'all' %}">
             <div class="save-button-holder clearfix"></div>
             <fieldset>
-                <div class="control-group">
+                <div class="form-group">
                     <label class="control-label">{% trans "Module Name" %}</label>
                     <div class="controls">
                         {% input_trans module.name langs %}
@@ -223,7 +223,7 @@
                 </div>
                 {% block settings_fields %}
                 {% if module.module_type == 'shadow' %}
-                <div class="control-group">
+                <div class="form-group">
                     <label class="control-label">
                         {% trans "Source Module" %}
                     </label>
@@ -241,7 +241,7 @@
                     </div>
                 </div>
                 {% endif %}
-                 <div class="control-group">
+                 <div class="form-group">
                     <label class="control-label">
                         {% trans "Menu Mode" %}
                     </label>
@@ -255,7 +255,7 @@
                 {% include "app_manager/partials/module_filter.html" %}
                 {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
                 {% if child_module_enabled %}
-                <div class="control-group">
+                <div class="form-group">
                     <label class="control-label">
                         {% trans "Parent Module" %}
                     </label>
@@ -269,7 +269,7 @@
                     </div>
                 </div>
                 {% endif %}
-                <div class="control-group">
+                <div class="form-group">
                     <label class="control-label" for="comment-id">{% trans "Comment" %}</label>
                     <div class="controls">
                         <textarea id="comment-id" name="comment">{{ module.comment }}</textarea>
@@ -284,7 +284,7 @@
             <div class="save-button-holder clearfix"></div>
             <fieldset>
                 <legend>{% trans "Basic" %}</legend>
-                <div class="control-group">
+                <div class="form-group">
                     <label class="control-label">
                         {% trans "Case Type" %}
                         <span class="hq-help-template"
@@ -299,7 +299,7 @@
                         </span>
                     </div>
                 </div>
-                <div class="control-group">
+                <div class="form-group">
                     <label class="control-label">
                         {% trans "Label for Cases" %}
                         <span class="hq-help-template"
@@ -312,7 +312,7 @@
                     </div>
                 </div>
                 {% if app.application_version == '1.0' %}
-                <div class="control-group">
+                <div class="form-group">
                     <label class="control-label">
                         {% trans "Label for Referrals" %}
                     </label>

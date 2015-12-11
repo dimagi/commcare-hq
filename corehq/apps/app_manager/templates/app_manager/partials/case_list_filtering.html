@@ -2,7 +2,7 @@
 
 <div data-bind="with: filter">
 
-    <div class="control-group">
+    <div class="form-group">
         <button class="btn btn-default btn-sm" data-bind="visible: !showing(), click: function(data){data.showing(true);}">
             <i class="fa fa-plus"></i>
             {% trans "Add filter" %}
@@ -11,7 +11,7 @@
 
     <div data-bind="visible: showing">
         <form class="form-horizontal">
-            <div class="control-group">
+            <div class="form-group">
                 <label class="control-label">
                     {% trans "Filter" %}
                     <span class="hq-help-template"

@@ -1,7 +1,7 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
-<div class="control-group">
+<div class="form-group">
     <label class="control-label">
         {% trans LABEL %}
         <span class="hq-help-template"
@@ -26,10 +26,10 @@
                     var label_text = $('#{{ SLUG }}-label input').val();
                     var show = $('[name="{{ SLUG }}-show"]').val();
                     if (!label_text.length && show === 'true') {
-                        $(this).closest('.control-group').addClass('error');
+                        $(this).closest('.form-group').addClass('has-error');
                         $('#case_list_label_error').css('display', 'inline');
                     } else {
-                        $(this).closest('.control-group').removeClass('error');
+                        $(this).closest('.form-group').removeClass('has-error');
                         $('#case_list_label_error').css('display', 'none');
                     }
                 }

@@ -4,13 +4,13 @@
 <div class="tab-pane active" id="form-settings">
     <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'all' %}">
         <div class="save-button-holder clearfix"></div>
-        <div class="control-group">
+        <div class="form-group">
             <label class="control-label">{% trans "Form Name" %}</label>
             <div class="controls">
                 {% input_trans form.name langs %}
             </div>
         </div>
-        <div class="control-group">
+        <div class="form-group">
             <label class="control-label" for="comment-id">
                 {% trans "Comment" %}
                 <span class="hq-help-template"
@@ -30,7 +30,7 @@
         </a>
         </legend>
         <div class="collapse" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-multimedia" style="overflow: hidden;">
-            <div class="control-group" data-bind="
+            <div class="form-group" data-bind="
                 visible: visible,
                 css: {error: hasError()}">
                 {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
@@ -44,7 +44,7 @@
         </a>
         </legend>
         <div class="collapse" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-logic" style="overflow: hidden;">
-            <div class="control-group" data-bind="
+            <div class="form-group" data-bind="
                 visible: visible,
                 css: {error: hasError()}">
 
@@ -69,7 +69,7 @@
         </a>
         </legend>
         <div class="collapse" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-advanced" style="overflow: hidden;">
-            <div class="control-group" data-bind="
+            <div class="form-group" data-bind="
                 visible: visible,
                 css: {error: hasError()}">
 
@@ -77,7 +77,7 @@
 
             </div>
             {% if request|toggle_enabled:'NO_VELLUM' %}
-            <div class="control-group">
+            <div class="form-group">
                 <label class="control-label">
                     {% trans "Disallow editing form in Form Builder" %}
                     <span class="hq-help-template"
