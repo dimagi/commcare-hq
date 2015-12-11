@@ -1,3 +1,4 @@
+import copy
 import uuid
 from django.test import SimpleTestCase
 from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings, \
@@ -87,6 +88,14 @@ class ElasticPillowTest(SimpleTestCase):
             pillow.default_mapping['properties']['doc_type']['index'],
             mapping['properties']['doc_type']['index']
         )
+
+    def test_set_mapping(self):
+        pillow = TestElasticPillow()
+        mapping = copy.copy(pillow.default_mapping)
+        mapping['properties']['new_field'] = {'type': 'string', 'index': 'not_analyzed'}
+        pillow.set_mapping(pillow.es_type, {pillow.es_type: mapping})
+        mapping = get_index_mapping(self.es, self.index, pillow.es_type)
+        self.assertEqual('not_analyzed', mapping['properties']['new_field']['index'])
 
     def test_create_index_false_online_true(self):
         # this test use to raise a hard error so doesn't actually test anything
