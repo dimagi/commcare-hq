@@ -103,10 +103,10 @@ BEGIN
                 commcarecase.case_id, case_transaction.id;
         ELSE
             INSERT INTO form_processor_casetransaction (
-                form_id, server_date, type,
+                form_id, sync_log_id, server_date, type,
                 case_id, revoked, details
             ) VALUES (
-                case_transaction.form_id, case_transaction.server_date, case_transaction.type,
+                case_transaction.form_id, case_transaction.sync_log_id, case_transaction.server_date, case_transaction.type,
                 case_transaction.case_id, case_transaction.revoked, case_transaction.details
             );
         END IF;

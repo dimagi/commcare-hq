@@ -524,6 +524,14 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def case_attachments(self):
         return {attachment.name: attachment for attachment in self.get_attachments()}
 
+    def modified_since_sync(self, sync_log):
+        if self.server_modified_on >= sync_log.date:
+            # check all of the transactions since last sync for one that had a different sync token
+            from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+            return CaseAccessorSQL.case_has_transactions_since_sync(self.case_id, sync_log._id, sync_log.date)
+            # TODO: Should this logic really be on CaseAccessorSQL? I'm following the pattern of the
+            #       transactions method.
+        return False
 
     def get_actions_for_form(self, xform):
         from casexml.apps.case.xform import get_case_updates
@@ -671,6 +679,7 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         related_name="transaction_set", related_query_name="transaction"
     )
     form_id = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning
+    sync_log_id = models.CharField(max_length=255, null=True)
     server_date = models.DateTimeField(null=False)
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     revoked = models.BooleanField(default=False, null=False)
@@ -720,6 +729,7 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         return CaseTransaction(
             case=case,
             form_id=xform.form_id,
+            sync_log_id=xform.last_sync_token,
             server_date=xform.received_on,
             type=transaction_type,
             revoked=not xform.is_normal
@@ -739,6 +749,7 @@ class CaseTransaction(DisabledDbMixin, models.Model):
             "CaseTransaction("
             "case_id='{self.case_id}', "
             "form_id='{self.form_id}', "
+            "sync_log_id='{self.sync_log_id}', "
             "type='{self.type}', "
             "server_date='{self.server_date}', "
             "revoked='{self.revoked}'"

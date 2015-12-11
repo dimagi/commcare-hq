@@ -299,6 +299,16 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         )
 
     @staticmethod
+    def case_has_transactions_since_sync(case_id, sync_log_id, sync_log_date):
+        query = CaseTransaction.objects.filter(
+            case_id=case_id,
+            server_date__gt=sync_log_date,
+        ).exclude(
+            sync_log_id=sync_log_id
+        )
+        return query.exists()
+
+    @staticmethod
     def get_case_by_location(domain, location_id):
         try:
             return CommCareCaseSQL.objects.raw(

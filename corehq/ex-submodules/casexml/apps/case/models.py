@@ -355,7 +355,16 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
 
     def get_actions_for_form(self, xform):
         return [a for a in self.actions if a.xform_id == xform.form_id]
-        
+
+    def modified_since_sync(self, sync_log):
+        if self.server_modified_on >= sync_log.date:
+            # check all of the actions since last sync for one that had a different sync token
+            return any(filter(
+                lambda action: action.server_date > sync_log.date and action.sync_log_id != sync_log._id,
+                self.actions,
+            ))
+        return False
+
     def get_version_token(self):
         """
         A unique token for this version. 

@@ -243,11 +243,7 @@ def case_needs_to_sync(case, last_sync_log):
         # extension cases don't get synced again if they haven't changed
         return True
     elif case.server_modified_on >= last_sync_log.date:
-        # check all of the actions since last sync for one that had a different sync token
-        return any(filter(
-            lambda action: action.server_date > last_sync_log.date and action.sync_log_id != last_sync_log._id,
-            case.actions,
-        ))
+        return case.modified_since_sync(last_sync_log)
     # if the case wasn't touched since last sync, and the phone was aware of this owner_id last time
     # don't worry about it
     return False
