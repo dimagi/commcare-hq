@@ -1,7 +1,10 @@
 import hashlib
 import json
 import os
-import collections
+from collections import (
+    namedtuple,
+    OrderedDict
+)
 
 from datetime import datetime
 from jsonobject import JsonObject
@@ -36,7 +39,7 @@ CaseAttachmentSQL_DB_TABLE = 'form_processor_caseattachmentsql'
 CaseTransaction_DB_TABLE = 'form_processor_casetransaction'
 
 
-class Attachment(collections.namedtuple('Attachment', 'name raw_content content_type')):
+class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
     @property
     @memoized
     def content(self):
@@ -455,7 +458,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         return self.deleted
 
     def dynamic_case_properties(self):
-        return self.case_json
+        return OrderedDict(sorted(self.case_json.iteritems()))
 
     def to_json(self):
         from .serializers import CommCareCaseSQLSerializer
@@ -814,4 +817,4 @@ class LedgerValue(models.Model):
     balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
     last_modified = models.DateTimeField(auto_now=True)
 
-CaseAction = collections.namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])
+CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])
