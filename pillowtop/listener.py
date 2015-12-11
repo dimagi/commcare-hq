@@ -26,7 +26,7 @@ from pillowtop.couchdb import CachedCouchDB
 from django import db
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings, \
-    set_index_normal_settings
+    set_index_normal_settings, create_index_and_set_settings_normal
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
@@ -447,7 +447,7 @@ class AliasedElasticPillow(BasicPillow):
         self.online = online
         index_exists = self.index_exists()
         if create_index and not index_exists:
-            self.create_index()
+            create_index_and_set_settings_normal(self.get_es_new(), self.es_index, self.es_meta)
         if self.online and (index_exists or create_index):
             pillow_logging.info("Pillowtop [%s] Initializing mapping in ES" % self.get_name())
             self.initialize_mapping_if_necessary()
@@ -515,8 +515,7 @@ class AliasedElasticPillow(BasicPillow):
         """
         Rebuild an index after a delete
         """
-        self.get_es_new().indices.create(index=self.es_index, body=self.es_meta)
-        set_index_normal_settings(self.get_es_new(), self.es_index)
+        create_index_and_set_settings_normal(self.get_es_new(), self.es_index, self.es_meta)
 
     def refresh_index(self):
         self.get_es().post("%s/_refresh" % self.es_index)

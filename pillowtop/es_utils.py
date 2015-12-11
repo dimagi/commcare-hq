@@ -36,3 +36,9 @@ def set_index_normal_settings(es, index):
     Normal indexing configuration
     """
     return update_settings(es, index, INDEX_STANDARD_SETTINGS)
+
+
+def create_index_and_set_settings_normal(es, index, metadata=None):
+    metadata = metadata or {}
+    es.indices.create(index=index, body=metadata)
+    set_index_normal_settings(es, index)
