@@ -94,7 +94,7 @@
                                                 <div data-bind="foreach: configPairs">
                                                     <div data-bind="template: 'graph_property_value_mapping_inputs'" class="config-controls"></div>
                                                 </div>
-                                                <a class="btn btn-default btn-small" href="#" data-bind="click: addConfigPair">
+                                                <a class="btn btn-default btn-sm" href="#" data-bind="click: addConfigPair">
                                                     <i class="fa fa-plus"></i> Add Property &rarr; Value mapping
                                                 </a>
                                             </div>
@@ -158,7 +158,7 @@
                                             <span data-bind="template: 'backup_language_badge'"></span>
                                         </td>
                                         <td>
-                                            <a class="btn btn-small btn-danger" href="#" data-bind="
+                                            <a class="btn btn-sm btn-danger" href="#" data-bind="
                                                 click: $parent.removeAnnotation
                                             ">
                                                 <i class="fa fa-remove"></i> Delete
@@ -194,7 +194,7 @@
     <input type="text" class="input-small" placeholder="property" data-bind="typeahead: $parent.configPropertyOptions, value: property">
     &rarr;
     <input type="text" class="input" data-bind="value: value, attr: {placeholder: $parent.configPropertyHints[property()]}">
-    <a class="btn btn-small btn-danger" href="#" data-bind="click: $parent.removeConfigPair">
+    <a class="btn btn-sm btn-danger" href="#" data-bind="click: $parent.removeConfigPair">
         <i class="fa fa-remove"></i> Delete
     </a>
 </div>
@@ -203,7 +203,7 @@
     {# TODO: The following markup is pretty similar to the markup #}
     {#       on the key_value_mapping page... consider making it DRYer #}
     {#       ex: there could be a single class for language badges #}
-    <span class="btn btn-info btn-mini lang-text"
+    <span class="btn btn-info btn-xs lang-text"
         data-bind="
             text: getBackup().lang,
             {# language badge is only visible if the field is empty and a backup was found #}

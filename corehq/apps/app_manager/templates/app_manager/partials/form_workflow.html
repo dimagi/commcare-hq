@@ -69,7 +69,7 @@
             <div class="alert alert-wraning" data-bind="visible: !formLink.autoLink()">
                 <p>
                     {% trans "This form requires manual linking." %}
-                    <button class="btn btn-default btn-small" data-bind="click: formLink.fetchDatums, visible: !formLink.datumsFetched()">
+                    <button class="btn btn-default btn-sm" data-bind="click: formLink.fetchDatums, visible: !formLink.datumsFetched()">
                         {% trans "Continue" %}
                     </button>
                 </p>
