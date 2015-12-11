@@ -402,7 +402,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'dimagi.utils',
     'fluff',
     'fluff_filter',
-    'freddy',
     'pillowtop',
     'pillow_retry',
 )
