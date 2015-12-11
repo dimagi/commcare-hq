@@ -169,6 +169,13 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
 
+APP_AWARE_SYNC = StaticToggle(
+    'app_aware_sync',
+    'App-aware Sync',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 BOOTSTRAP3_PREVIEW = StaticToggle(
     'bootstrap3_preview',
     'Bootstrap 3 Preview',
