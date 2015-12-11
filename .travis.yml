@@ -32,13 +32,13 @@ before_install:
   - "uname -a"
   - "lsb_release -a"
 install:
+  - ".travis/matrix-installs.sh"
   - ".travis/misc-setup.sh"
   - "curl -X PUT http://localhost:5984/commcarehq_test"  # this is an auth test
   - "scripts/uninstall-requirements.sh"
   - "time (pip install --exists-action w -r requirements/requirements.txt --timeout 60)"
   - "pip install coveralls"
   - "cp .travis/localsettings.py localsettings.py"
-  - ".travis/matrix-installs.sh"
 script: ".travis/matrix-runner.sh"
 after_success:
   - coverage report
