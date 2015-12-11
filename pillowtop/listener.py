@@ -2,7 +2,7 @@ from copy import copy
 from functools import wraps
 import logging
 from couchdbkit.exceptions import ResourceNotFound
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, TransportError
 from psycopg2._psycopg import InterfaceError
 from datetime import datetime, timedelta
 import hashlib
@@ -513,8 +513,10 @@ class AliasedElasticPillow(BasicPillow):
         return self.update_settings(INDEX_STANDARD_SETTINGS)
 
     def get_index_mapping(self):
-        es = self.get_es()
-        return es.get('%s/_mapping' % self.es_index).get(self.es_index, {})
+        try:
+            return self.get_es_new().indices.get_mapping(self.es_index, self.es_type)
+        except TransportError:
+            return {}
 
     def set_mapping(self, type_string, mapping):
         if self.online:
