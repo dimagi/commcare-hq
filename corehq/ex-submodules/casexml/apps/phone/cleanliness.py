@@ -13,6 +13,8 @@ from corehq.apps.hqcase.dbaccessors import get_open_case_ids, \
     get_closed_case_ids, get_all_case_owner_ids
 from corehq.apps.users.util import WEIRD_USER_IDS
 from django.conf import settings
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.logging import notify_exception
@@ -130,15 +132,16 @@ def hint_still_valid(domain, hint):
     """
     For a given domain/owner/cleanliness hint check if it's still valid
     """
+    casedb = CaseAccessors(domain)
     try:
-        hint_case = CommCareCase.get(hint)
+        hint_case = casedb.get_case(hint)
         hint_owner = hint_case.owner_id
-    except ResourceNotFound:
+    except CaseNotFound:
         # hint was deleted
         return False
     dependent_case_ids = set(get_dependent_case_info(domain, [hint]).all_ids)
-    return any([c['owner_id'] != hint_owner and c['owner_id'] != UNOWNED_EXTENSION_OWNER_ID
-                for c in iter_docs(CommCareCase.get_db(), dependent_case_ids)])
+    return any([c.owner_id != hint_owner and c.owner_id != UNOWNED_EXTENSION_OWNER_ID
+                for c in casedb.get_cases(list(dependent_case_ids))])
 
 
 def get_cleanliness_flag_from_scratch(domain, owner_id):
@@ -156,9 +159,9 @@ def get_cleanliness_flag_from_scratch(domain, owner_id):
             unowned_dependent_cases = dependent_cases - owned_cases
             extension_cases_to_check = extension_cases_to_check - dependent_cases
             dependent_cases_owned_by_other_owners = {
-                dependent_case['_id']
-                for dependent_case in iter_docs(CommCareCase.get_db(), unowned_dependent_cases)
-                if dependent_case['owner_id'] != UNOWNED_EXTENSION_OWNER_ID
+                dependent_case.case_id
+                for dependent_case in casedb.get_cases(list(unowned_dependent_cases))
+                if dependent_case.owner_id != UNOWNED_EXTENSION_OWNER_ID
             }
             if dependent_cases_owned_by_other_owners:
                 hint_id = dependent_cases & owned_cases
@@ -175,8 +178,8 @@ def get_cleanliness_flag_from_scratch(domain, owner_id):
                 infos_for_this_owner = _get_info_by_case_id(reverse_index_infos, hint_id)
                 for info in infos_for_this_owner:
                     try:
-                        case = CommCareCase.get(info.referenced_id)
-                        if case.doc_type == 'CommCareCase':
+                        case = CaseAccessors(domain).get_case(info.referenced_id)
+                        if not case.is_deleted:
                             return CleanlinessFlag(False, hint_id)
                         else:
                             found_deleted_cases = True

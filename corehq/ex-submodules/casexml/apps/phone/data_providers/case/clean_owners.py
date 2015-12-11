@@ -2,7 +2,7 @@ from collections import defaultdict
 from copy import copy
 from functools import partial
 from datetime import datetime
-from dimagi.utils.couch.undo import is_deleted
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
@@ -78,8 +78,8 @@ class CleanOwnerCaseSyncOperation(object):
             # todo: see if we can avoid wrapping - serialization depends on it heavily for now
             case_batch = filter(
                 partial(case_needs_to_sync, last_sync_log=self.restore_state.last_sync_log),
-                [CommCareCase.wrap(doc) for doc in get_docs(CommCareCase.get_db(), ids)
-                 if not is_deleted(doc)]
+                [case for case in CaseAccessors(self.restore_state.domain).get_cases(ids)
+                 if not case.is_deleted]
             )
             updates = get_case_sync_updates(
                 self.restore_state.domain, case_batch, self.restore_state.last_sync_log

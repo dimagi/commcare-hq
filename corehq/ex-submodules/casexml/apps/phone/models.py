@@ -893,6 +893,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     owner_id_map[case_id] = owner_id_from_action
             return owner_id_map.get(case_id, None)
 
+
         all_updates = {}
         for case in case_list:
             if case.case_id not in all_updates:
