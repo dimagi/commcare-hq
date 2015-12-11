@@ -205,9 +205,9 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     @unit_testing_only
     @transaction.atomic
-    def delete_test_forms(domain=None, user_id=None):
+    def delete_all_forms(domain=None, user_id=None):
         with get_cursor(XFormInstanceSQL) as cursor:
-            cursor.execute('SELECT delete_test_forms(%s, %s)', [domain, user_id])
+            cursor.execute('SELECT delete_all_forms(%s, %s)', [domain, user_id])
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
@@ -322,9 +322,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     @unit_testing_only
-    def delete_test_cases(domain=None):
+    def delete_all_cases(domain=None):
         with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT delete_test_cases(%s)', [domain])
+            cursor.execute('SELECT delete_all_cases(%s)', [domain])
 
     @staticmethod
     @transaction.atomic

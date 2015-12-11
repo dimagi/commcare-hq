@@ -47,7 +47,7 @@ class FormProcessorTestUtils(object):
 
     @staticmethod
     def delete_all_sql_cases(domain=None):
-        CaseAccessorSQL.delete_test_cases(domain)
+        CaseAccessorSQL.delete_all_cases(domain)
 
     @classmethod
     @unit_testing_only
@@ -77,7 +77,7 @@ class FormProcessorTestUtils(object):
 
     @staticmethod
     def delete_all_sql_forms(domain=None, user_id=None):
-        FormAccessorSQL.delete_test_forms(domain, user_id)
+        FormAccessorSQL.delete_all_forms(domain, user_id)
 
     @classmethod
     @unit_testing_only

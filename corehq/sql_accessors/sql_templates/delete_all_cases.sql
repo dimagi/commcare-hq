@@ -1,7 +1,7 @@
-DROP FUNCTION IF EXISTS delete_test_cases(TEXT);
+DROP FUNCTION IF EXISTS delete_all_cases(TEXT);
 
 -- has to return SETOF for plproxy
-CREATE FUNCTION delete_test_cases(domain_name TEXT) RETURNS SETOF INTEGER AS $$
+CREATE FUNCTION delete_all_cases(domain_name TEXT) RETURNS SETOF INTEGER AS $$
 DECLARE
     query_expr    text := 'SELECT case_id FROM form_processor_commcarecasesql';
     domain_filter      text := ' domain = $1';
