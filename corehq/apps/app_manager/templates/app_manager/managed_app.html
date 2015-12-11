@@ -149,6 +149,7 @@
 {% block page_navigation %}
 {% if app %}
 <nav class="app-manager-content hide">
+    {# TODO: nav-list is deprecated, replace with list-group or panel-group #}
     <ul class="nav nav-list">
         <li {% if release_manager %}class="active"{% endif %}>
             <a href="{% url "release_manager" domain app.id %}">
@@ -328,6 +329,7 @@
         </ul>
         </li>
     {% endif %}
+    {# TODO: nav-header is deprecated, replace with list-group or panel-group #}
     <li class="nav-header">Actions</li>
     <li class="app-name-div{% if copy_app_form and copy_app_form.is_bound %} active{% endif %}">
         <a href="{% url "view_app" domain app.id %}copy/#copy" data-toggle="tab">
