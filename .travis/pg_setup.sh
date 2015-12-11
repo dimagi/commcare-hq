@@ -12,6 +12,7 @@ sudo apt-get install postgresql-9.1-plproxy
 wget https://github.com/markokr/pghashlib/archive/master.zip -O pghashlib.zip
 unzip pghashlib.zip
 cd pghashlib-master
+echo $PGVERSION
 PG_CONFIG=/usr/lib/postgresql/$PGVERSION/bin/pg_config make
 sudo PG_CONFIG=/usr/lib/postgresql/$PGVERSION/bin/pg_config make install
 sudo /etc/init.d/postgresql stop
