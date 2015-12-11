@@ -341,6 +341,18 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         query = CommCareCaseSQL.objects.filter(domain=domain, owner_id=owner_id, closed=True)
         return list(query.values_list('case_id', flat=True))
 
+    @staticmethod
+    def get_extension_case_ids(domain, case_ids): # I need like this but without the relationship id check
+        """
+        Given a base list of case ids, for those that are open, get all ids of all extension cases that reference them
+        """
+        query = CommCareCaseIndexSQL.objects.filter(
+            # domain=domain,  # TODO: Why isn't domain being used?
+            referenced_id__in=case_ids,
+            relationship_id=CommCareCaseIndexSQL.EXTENSION
+        )
+        # TODO: Filter by open cases?
+        return list(query.values_list('case_id', flat=True))
 
 def _order_list(id_list, object_list, id_property):
     # SQL won't return the rows in any particular order so we need to order them ourselves

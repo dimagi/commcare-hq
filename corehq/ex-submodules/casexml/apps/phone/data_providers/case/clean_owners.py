@@ -197,7 +197,7 @@ class CleanOwnerCaseSyncOperation(object):
                 new_case_ids = set(all_case_ids)
                 while new_case_ids:
                     all_case_ids = all_case_ids | new_case_ids
-                    extension_case_ids = set(get_extension_case_ids(self.restore_state.domain, new_case_ids))
+                    extension_case_ids = set(case_accessor.get_extension_case_ids(new_case_ids))
                     new_case_ids = extension_case_ids - all_case_ids
                 return all_case_ids
             else:
