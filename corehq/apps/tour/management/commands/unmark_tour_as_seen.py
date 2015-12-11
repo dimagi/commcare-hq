@@ -21,10 +21,14 @@ class Command(LabelCommand):
                 tour_slug=tour_slug, username=username))
             if confirm == 'yes':
                 user = User.objects.filter(username=username).first()
-                GuidedTour.objects.filter(tour_slug=tour_slug, user=user).delete()
+                query = GuidedTour.objects.filter(tour_slug=tour_slug, user=user)
+                print ("Found {} to delete".format(query.count()))
+                query.all().delete()
                 print("Complete")
         else:
             confirm = raw_input(CONFIRM_ALL_USERS.format(tour_slug=tour_slug))
             if confirm == 'yes':
-                GuidedTour.objects.filter(tour_slug=tour_slug).delete()
+                query = GuidedTour.objects.filter(tour_slug=tour_slug)
+                print ("Found {} to delete".format(query.count()))
+                query.all().delete()
                 print("Complete")
