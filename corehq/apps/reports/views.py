@@ -1410,23 +1410,6 @@ def download_form(request, domain, instance_id):
     return response
 
 
-def _form_instance_to_context_url(domain, instance):
-    try:
-        build = Application.get(instance.build_id)
-    except ResourceNotFound:
-        raise Http404(_('Application not found.'))
-
-    form = build.get_form_by_xmlns(instance.xmlns)
-    if not form:
-        raise Http404(_('Missing module or form information!'))
-
-    return reverse(
-        'cloudcare_form_context',
-        args=[domain, instance.build_id, form.get_module().id, form.id],
-        params={'instance_id': instance._id}
-    )
-
-
 class EditFormInstance(View):
 
     @use_bootstrap3
@@ -1436,17 +1419,43 @@ class EditFormInstance(View):
     def dispatch(self, request, *args, **kwargs):
         return super(EditFormInstance, self).dispatch(request, args, kwargs)
 
+    @staticmethod
+    def _get_form_from_instance(instance):
+        try:
+            build = Application.get(instance.build_id)
+        except ResourceNotFound:
+            raise Http404(_('Application not found.'))
+
+        form = build.get_form_by_xmlns(instance.xmlns)
+        if not form:
+            raise Http404(_('Missing module or form information!'))
+        return form
+
+    @staticmethod
+    def _form_instance_to_context_url(domain, instance):
+        form = EditFormInstance._get_form_from_instance(instance)
+        return reverse(
+            'cloudcare_form_context',
+            args=[domain, instance.build_id, form.get_module().id, form.id],
+            params={'instance_id': instance._id}
+        )
+
     def get(self, request, *args, **kwargs):
         domain = request.domain
         instance_id = self.kwargs.get('instance_id', None)
+
+        def _error(msg):
+            messages.error(request, msg)
+            url = reverse('render_form_data', args=[domain, instance_id])
+            return HttpResponseRedirect(url)
+
         if not (has_privilege(request, privileges.DATA_CLEANUP)) or not instance_id:
             raise Http404()
 
         instance = _get_form_to_edit(domain, request.couch_user, instance_id)
         context = _get_form_context(request, domain, instance)
         if not instance.app_id or not instance.build_id:
-            messages.error(request, _('Could not detect the application/form for this submission.'))
-            return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
+            return _error(_('Could not detect the application/form for this submission.'))
 
         user = get_document_or_404(CommCareUser, domain, instance.metadata.userID)
         edit_session_data = get_user_contributions_to_touchforms_session(user)
@@ -1474,7 +1483,7 @@ class EditFormInstance(View):
             'maps_api_key': settings.GMAPS_API_KEY,  # used by cloudcare
             'form_name': _('Edit Submission'),  # used in breadcrumbs
             'edit_context': {
-                'formUrl': _form_instance_to_context_url(domain, instance),
+                'formUrl': self._form_instance_to_context_url(domain, instance),
                 'submitUrl': reverse('receiver_secure_post_with_app_id', args=[domain, instance.build_id]),
                 'sessionData': edit_session_data,
                 'returnUrl': reverse('render_form_data', args=[domain, instance_id]),
