@@ -215,6 +215,7 @@
             <li class="sort-action">
                 <form method="post"
                       action="{% url "corehq.apps.app_manager.views.rearrange" domain app.id 'modules' %}">
+                      {% csrf_token %}
                 </form>
             </li>
             <li class="sort-disabled edit-form-li {% if is_user_registration %} active{% endif %}" id="user-registration-nav-link">
@@ -244,6 +245,7 @@
                             <li class="sort-action">
                                 <form method="post"
                                       action="{% url "corehq.apps.app_manager.views.rearrange" domain app.id 'forms' %}">
+                                      {% csrf_token %}
                                 </form>
                             </li>
                             {% with nav_form as selected_form %}
@@ -268,7 +270,7 @@
                             {% endwith %}
                             <li class="sort-disabled">
                                 <form action="{% url "corehq.apps.app_manager.views.new_form" domain app.id module.id %}"
-                                      method="post" style="display: none">
+                                      method="post" style="display: none">{% csrf_token %}
                                 </form>
                                 {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
                                 <a class="submit_on_click" href="#">
@@ -283,7 +285,7 @@
             {% endwith %}
             {% if app.get_doc_type == "Application" %}
                 <form id="new-module-form" action="{% url "corehq.apps.app_manager.views.new_module" domain app.id %}"
-                          method="post" style="display: none">
+                          method="post" style="display: none">{% csrf_token %}
                     <input id="new-module-type" type="hidden" name="module_type" />
                 </form>
                 {% if show_care_plan or show_advanced or show_shadow_modules %}

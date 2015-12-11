@@ -89,6 +89,11 @@
         {% endif %}
 
         <div class="tab-pane" id="credits">
+            {% if subscription_has_ended %}
+            <div class="alert alert-warning">
+                This subscription has ended.
+            </div>
+            {% endif %}
             {% include 'accounting/credits_tab.html' %}
         </div>
 

@@ -1,5 +1,6 @@
 describe('DownloadExportFormController - Prepare Multimedia Download', function() {
     DnldExpData.prepareTests();
+    DnldExpData.prepareDownloadController();
     DnldExpData.prepareBackends();
     var downloadId = 'uuid-multimediaTest';
 
@@ -14,7 +15,7 @@ describe('DownloadExportFormController - Prepare Multimedia Download', function(
             DnldExpData.$httpBackend.expectPOST(DnldExpData.mockBackendUrls.PREPARE_FORM_MULTIMEDIA);
         });
 
-        it('trigger downloadInProgress as and register multimedia export', function () {
+        it('trigger downloadInProgresd, register multimedia export, send analytics', function () {
             DnldExpData.createController([
                 DnldExpData.simpleFormExport
             ], true);
@@ -26,6 +27,10 @@ describe('DownloadExportFormController - Prepare Multimedia Download', function(
             assert.isFalse(DnldExpData.currentScope.preparingExport);
             assert.isFalse(DnldExpData.currentScope.preparingMultimediaExport);
             assert.isTrue(DnldExpData.currentScope.downloadInProgress);
+            var lastCallNum = analytics.usage.callCount - 1;
+            var userTypeCall = analytics.usage.getCall(lastCallNum - 1);
+            assert.isTrue(userTypeCall.calledWith("Download Export", 'Select "user type"', "mobile"));
+            assert.isTrue(analytics.usage.lastCall.calledWith("Download Export", "Form", "Regular"));
         });
 
         it('start exportDownloadService with isMultimediaDownload == true', function () {

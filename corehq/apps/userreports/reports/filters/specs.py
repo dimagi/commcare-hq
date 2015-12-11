@@ -45,16 +45,6 @@ class FilterChoice(JsonObject):
         return self.display or self.value
 
 
-def _validate_filter_slug(s):
-    if "-" in s:
-        raise Exception(_(
-            """
-            Filter slugs must be legal sqlalchemy bind parameter names.
-            '-' and other special character are prohibited
-            """
-        ))
-
-
 class FilterSpec(JsonObject):
     """
     This is the spec for a report filter - a thing that should show up as a UI filter element
@@ -62,7 +52,7 @@ class FilterSpec(JsonObject):
     """
     type = StringProperty(required=True, choices=['date', 'numeric', 'choice_list', 'dynamic_choice_list'])
     # this shows up as the ID in the filter HTML.
-    slug = StringProperty(required=True, validators=_validate_filter_slug)
+    slug = StringProperty(required=True)
     field = StringProperty(required=True)  # this is the actual column that is queried
     display = DefaultProperty()
     datatype = DataTypeProperty(default='string')

@@ -84,6 +84,9 @@
             });
             $scope.updateBulkStatus();
         };
+        $scope.sendExportAnalytics = function() {
+            analytics.workflow("Clicked Export button");
+        };
         $scope.updateEmailedExportData = function (component, exp) {
             $('#modalRefreshExportConfirm-' + exp.id + '-' + component.groupId).modal('hide');
             component.updatingData = true;
@@ -93,6 +96,8 @@
             })
                 .success(function (data) {
                     if (data.success) {
+                        var exportType = _(exp.exportType).capitalize();
+                        analytics.usage("Update Saved Export", exportType, "Saved");
                         component.updatingData = false;
                         component.updatedDataTriggered = true;
                     }

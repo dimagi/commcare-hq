@@ -8,9 +8,64 @@ DATABASES = {
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
         'HOST': 'localhost',
-        'PORT': '5432'
+        'PORT': '5432',
+        'TEST': {
+            'SERIALIZE': False,
+        },
     }
 }
+
+USE_PARTITIONED_DATABASE = False
+
+if USE_PARTITIONED_DATABASE:
+
+    PARTITION_DATABASE_CONFIG = {
+        'shards': {
+            'p1': [0, 1],
+            'p2': [2, 3]
+        },
+        'groups': {
+            'main': ['default'],
+            'proxy': ['proxy'],
+            'form_processing': ['p1', 'p2'],
+        }
+    }
+
+    DATABASES.update({
+        'proxy': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'commcarehq_proxy',
+            'USER': 'commcarehq',
+            'PASSWORD': 'commcarehq',
+            'HOST': 'localhost',
+            'PORT': '5432',
+            'TEST': {
+                'SERIALIZE': False,
+            },
+        },
+        'p1': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'commcarehq_p1',
+            'USER': 'commcarehq',
+            'PASSWORD': 'commcarehq',
+            'HOST': 'localhost',
+            'PORT': '5432',
+            'TEST': {
+                'SERIALIZE': False,
+            },
+        },
+        'p2': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'commcarehq_p2',
+            'USER': 'commcarehq',
+            'PASSWORD': 'commcarehq',
+            'HOST': 'localhost',
+            'PORT': '5432',
+            'TEST': {
+                'SERIALIZE': False,
+            },
+        },
+    })
 
 # Custom databases can be used to configure a separate database for specific UCR data sources
 # The key is what you will reference in the datasource, e.g. 'custom_ucr_database'

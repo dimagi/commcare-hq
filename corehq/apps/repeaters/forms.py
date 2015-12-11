@@ -11,6 +11,26 @@ from corehq.apps.style import crispy as hqcrispy
 
 class GenericRepeaterForm(forms.Form):
 
+    url = forms.URLField(
+        required=True,
+        label='URL to forward to',
+        help_text='Please enter the full url, like http://www.example.com/forwarding/',
+        widget=forms.TextInput(attrs={"class": "url"})
+    )
+    use_basic_auth = forms.BooleanField(
+        required=False,
+        label='Use basic authentication?',
+    )
+    username = forms.CharField(
+        required=False,
+        label='Username',
+    )
+    password = forms.CharField(
+        required=False,
+        label='Password',
+        widget=forms.PasswordInput()
+    )
+
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain')
         self.repeater_class = kwargs.pop('repeater_class')
@@ -26,12 +46,34 @@ class GenericRepeaterForm(forms.Form):
                 choices=self.formats,
             )
 
-        self.form_fields.extend(['url', twbscrispy.PrependedText('use_basic_auth', ''), 'username', 'password'])
-
         self.helper = FormHelper(self)
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
+        self.form_fields.extend([
+            'url',
+            crispy.Div(
+                crispy.Div('', css_class=self.helper.label_class),
+                crispy.Div(
+                    crispy.Div(
+                        css_id='test-forward-result',
+                        css_class='text-success hide',
+                    ),
+                    twbscrispy.StrictButton(
+                        _('Test Link'),
+                        type='button',
+                        css_id='test-forward-link',
+                        css_class='btn btn-info disabled',
+                    ),
+                    css_class=self.helper.field_class,
+                ),
+                css_class='form-group'
+            ),
+            twbscrispy.PrependedText('use_basic_auth', ''),
+            'username',
+            'password'
+        ])
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Forwarding Settings',
@@ -52,26 +94,6 @@ class GenericRepeaterForm(forms.Form):
             cleaned_data['format'] = self.formats[0][0]
 
         return cleaned_data
-
-    url = forms.URLField(
-        required=True,
-        label='URL to forward to',
-        help_text='Please enter the full url, like http://www.example.com/forwarding/',
-        widget=forms.TextInput(attrs={"class": "url"})
-    )
-    use_basic_auth = forms.BooleanField(
-        required=False,
-        label='Use basic authentication?',
-    )
-    username = forms.CharField(
-        required=False,
-        label='Username',
-    )
-    password = forms.CharField(
-        required=False,
-        label='Password',
-        widget=forms.PasswordInput()
-    )
 
 
 class FormRepeaterForm(GenericRepeaterForm):

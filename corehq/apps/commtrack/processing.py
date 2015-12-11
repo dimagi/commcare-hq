@@ -5,10 +5,10 @@ from django.db import transaction
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.log_exception import log_exception
 
-from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.exceptions import IllegalCaseId
-from casexml.apps.stock.models import StockTransaction, StockReport
+from casexml.apps.stock.models import StockTransaction
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
+from corehq.form_processor.interfaces.ledger_processor import LedgerDB
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from casexml.apps.stock import const as stockconst
 from corehq.form_processor.parsers.ledgers import get_stock_actions
@@ -31,54 +31,26 @@ class StockProcessingResult(object):
         self.relevant_cases = relevant_cases or []
         self.stock_report_helpers = stock_report_helpers or []
 
-    @transaction.atomic
-    def commit(self):
+    def get_models_to_save(self):
+        processor = FormProcessorInterface(domain=self.domain).ledger_processor
+        ledger_db = LedgerDB(processor=processor)
+        update_results = []
+
+        for stock_report_helper in self.stock_report_helpers:
+            this_result = processor.get_models_to_update(stock_report_helper, ledger_db)
+            if this_result:
+                update_results.append(this_result)
+        return update_results
+
+    def finalize(self):
         """
-        Commit changes to the database
+        Finalize anything else that needs to happen - this runs after models are saved.
         """
         # if cases were changed we should purge the sync token cache
         # this ensures that ledger updates will sync back down
         if self.relevant_cases and self.xform.get_sync_token():
             self.xform.get_sync_token().invalidate_cached_payloads()
 
-        # create the django models
-        for stock_report_helper in self.stock_report_helpers:
-            if stock_report_helper.deprecated:
-                delete_models_for_stock_report(self.domain, stock_report_helper)
-            else:
-                create_models_for_stock_report(self.domain, stock_report_helper)
-
-
-@transaction.atomic
-def delete_models_for_stock_report(domain, stock_report_helper):
-    """
-    Delete all stock reports and stock transaction models associated with the helper from the database.
-    """
-    assert stock_report_helper.domain == domain
-    StockReport.objects.filter(domain=domain, form_id=stock_report_helper.form_id).delete()
-
-
-@transaction.atomic
-def create_models_for_stock_report(domain, stock_report_helper):
-    """
-    Save stock report and stock transaction models to the database.
-    """
-    assert stock_report_helper.domain == domain
-    if stock_report_helper.tag not in stockconst.VALID_REPORT_TYPES:
-        return
-    report = _create_model_for_stock_report(domain, stock_report_helper)
-    for transaction_helper in stock_report_helper.transactions:
-        _create_model_for_stock_transaction(report, transaction_helper)
-
-
-def _create_model_for_stock_report(domain, stock_report_helper):
-    return StockReport.objects.create(
-        form_id=stock_report_helper.form_id,
-        date=stock_report_helper.timestamp,
-        type=stock_report_helper.tag,
-        domain=domain,
-        server_date=stock_report_helper.server_date,
-    )
 
 LedgerValues = namedtuple('LedgerValues', ['balance', 'delta'])
 
@@ -112,38 +84,6 @@ def compute_ledger_values(lazy_original_balance, report_type, quantity):
     return LedgerValues(new_balance, new_delta)
 
 
-def _create_model_for_stock_transaction(report, transaction_helper):
-    assert report.type in stockconst.VALID_REPORT_TYPES
-    txn = StockTransaction(
-        report=report,
-        case_id=transaction_helper.case_id,
-        section_id=transaction_helper.section_id,
-        product_id=transaction_helper.product_id,
-        type=transaction_helper.action,
-        subtype=transaction_helper.subaction,
-    )
-
-    def lazy_original_balance():
-        previous_transaction = txn.get_previous_transaction()
-        if previous_transaction:
-            return previous_transaction.stock_on_hand
-        else:
-            return None
-
-    new_ledger_values = compute_ledger_values(
-        lazy_original_balance, report.type,
-        transaction_helper.relative_quantity)
-
-    txn.stock_on_hand = new_ledger_values.balance
-    txn.quantity = new_ledger_values.delta
-
-    if report.domain:
-        # set this as a shortcut for post save signal receivers
-        txn.domain = report.domain
-    txn.save()
-    return txn
-
-
 @log_exception()
 def process_stock(xforms, case_db=None):
     """
@@ -162,7 +102,6 @@ def process_stock(xforms, case_db=None):
         stock_report_helpers += actions_for_form.stock_report_helpers
         case_action_intents += actions_for_form.case_action_intents
 
-    # omitted: normalize_transactions (used for bulk requisitions?)
     # validate the parsed transactions
     for stock_report_helper in stock_report_helpers:
         stock_report_helper.validate()
@@ -187,23 +126,11 @@ def mark_cases_changed(case_action_intents, case_db):
                 _('Ledger transaction references invalid Case ID "{}"')
                 .format(case_id))
 
-        if action_intent.is_deprecation:
-            # just remove the old stock actions for the form from the case
-            case.actions = [
-                a for a in case.actions if not
-                (a.xform_id == action_intent.form_id and a.action_type == CASE_ACTION_COMMTRACK)
-            ]
-        else:
-            case_action = action_intent.action
-            # hack: clear the sync log id so this modification always counts
-            # since consumption data could change server-side
-            case_action.sync_log_id = ''
-            case.actions.append(case_action)
-            if action_intent.form_id not in case.xform_ids:
-                case.xform_ids.append(action_intent.form_id)
-
+        case_db.apply_action_intent(case, action_intent)
         case_db.mark_changed(case)
+
     return relevant_cases
+
 
 def _compute_ledger_values(original_balance, stock_transaction):
     if stock_transaction.report.type == stockconst.REPORT_TYPE_BALANCE:

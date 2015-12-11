@@ -225,7 +225,7 @@ e.g.
 .. code-block:: python
 
   class CustomReportDataSource(ReportDataSource):
-      def get_data(self, slugs=None):
+      def get_data(self):
           startdate = self.config['start']
           enddate = self.config['end']
 

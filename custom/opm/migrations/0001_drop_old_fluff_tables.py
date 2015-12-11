@@ -4,7 +4,8 @@ from __future__ import unicode_literals
 import logging
 
 from sqlalchemy import Table, MetaData
-from corehq.db import connection_manager
+from corehq.sql_db.connections import connection_manager
+from corehq.sql_db.operations import HqRunPython
 from corehq.util.decorators import change_log_level
 from django.db import migrations
 
@@ -29,5 +30,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(drop_tables),
+        HqRunPython(drop_tables),
     ]

@@ -101,8 +101,7 @@ class SubmissionErrorTest(TestCase):
             self.assertIn('Invalid XML', res.content)
 
         # make sure we logged it
-        [log] = FormAccessors(self.domain.name).get_forms_by_type('SubmissionErrorLog',
-                                  limit=1)
+        [log] = FormAccessors(self.domain.name).get_forms_by_type('SubmissionErrorLog', limit=1)
 
         self.assertIsNotNone(log)
         self.assertIn('Invalid XML', log.problem)

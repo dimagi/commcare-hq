@@ -1,12 +1,17 @@
-from datetime import datetime
-from django.db import transaction
-from django.db.models import Prefetch
-from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
+import logging
+from itertools import groupby
+
+from django.db import connections, InternalError, transaction
+from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
 from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
-    CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL
-)
+    CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL,
+    CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE)
+from corehq.form_processor.utils.sql import fetchone_as_namedtuple, fetchall_as_namedtuple, case_adapter, \
+    case_transaction_adapter, case_index_adapter, case_attachment_adapter
+from corehq.sql_db.routers import db_for_read_write
+from corehq.util.test_utils import unit_testing_only
 
 doc_type_to_state = {
     "XFormInstance": XFormInstanceSQL.NORMAL,
@@ -18,91 +23,191 @@ doc_type_to_state = {
 }
 
 
+def get_cursor(model):
+    db = db_for_read_write(model)
+    return connections[db].cursor()
+
+
 class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_form(form_id):
         try:
-            return XFormInstanceSQL.objects.get(form_uuid=form_id)
-        except XFormInstanceSQL.DoesNotExist:
+            return XFormInstanceSQL.objects.raw('SELECT * from get_form_by_id(%s)', [form_id])[0]
+        except IndexError:
             raise XFormNotFound
+
+    @staticmethod
+    def get_forms(form_ids, ordered=False):
+        assert isinstance(form_ids, list)
+        forms = list(XFormInstanceSQL.objects.raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
+        if ordered:
+            forms = _order_list(form_ids, forms, 'form_id')
+
+        return forms
+
+    @staticmethod
+    def get_attachments(form_id):
+        return list(XFormAttachmentSQL.objects.raw('SELECT * from get_form_attachments(%s)', [form_id]))
 
     @staticmethod
     def get_with_attachments(form_id):
+        """
+        It's necessary to store these on the form rather than use a memoized property
+        since the form_id can change (in the case of a deprecated form) which breaks
+        the memoize hash.
+        """
+        form = FormAccessorSQL.get_form(form_id)
+        attachments = FormAccessorSQL.get_attachments(form_id)
+        form.cached_attachments = attachments
+        return form
+
+    @staticmethod
+    def get_attachment_by_name(form_id, attachment_name):
         try:
-            return XFormInstanceSQL.objects.prefetch_related(
-                Prefetch('attachments', to_attr='cached_attachments')
-            ).get(form_uuid=form_id)
-        except XFormInstanceSQL.DoesNotExist:
-            raise XFormNotFound
+            return XFormAttachmentSQL.objects.raw(
+                'select * from get_form_attachment_by_name(%s, %s)',
+                [form_id, attachment_name]
+            )[0]
+        except IndexError:
+            raise AttachmentNotFound(attachment_name)
 
     @staticmethod
-    def get_forms_with_attachments_meta(form_ids):
-        return XFormInstanceSQL.objects.prefetch_related(
-            Prefetch('attachments', to_attr='cached_attachments')
-        ).filter(form_uuid__in=form_ids)
+    def get_form_operations(form_id):
+        return list(XFormOperationSQL.objects.raw('SELECT * from get_form_operations(%s)', [form_id]))
 
     @staticmethod
-    def get_forms_by_type(domain, type_, recent_first=False, limit=None):
+    def get_forms_with_attachments_meta(form_ids, ordered=False):
+        assert isinstance(form_ids, list)
+        forms = FormAccessorSQL.get_forms(form_ids)
+
+        # attachments are already sorted by form_id in SQL
+        attachments = XFormAttachmentSQL.objects.raw(
+            'SELECT * from get_mulitple_forms_attachments(%s)',
+            [form_ids]
+        )
+
+        forms_by_id = {form.form_id: form for form in forms}
+        _attach_prefetch_models(forms_by_id, attachments, 'form_id', 'cached_attachments')
+
+        if ordered:
+            _order_list(form_ids, forms, 'form_id')
+
+        return forms
+
+    @staticmethod
+    def get_forms_by_type(domain, type_, limit, recent_first=False):
         state = doc_type_to_state[type_]
         assert limit is not None
-
-        order = 'received_on'
-        if recent_first:
-            order = '-{}'.format(order)
-
-        return XFormInstanceSQL.objects.filter(
-            domain=domain,
-            state=state
-        ).order_by(order)[0:limit]
+        # apply limit in python as well since we may get more results than we expect
+        # if we're in a sharded environment
+        return list(XFormInstanceSQL.objects.raw(
+            'SELECT * from get_forms_by_state(%s, %s, %s, %s)',
+            [domain, state, limit, recent_first]
+        ))[:limit]
 
     @staticmethod
     def form_with_id_exists(form_id, domain=None):
-        query = XFormInstanceSQL.objects.filter(form_uuid=form_id)
-        if domain:
-            query = query.filter(domain=domain)
-        return query.exists()
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute('SELECT * FROM check_form_exists(%s, %s)', [form_id, domain])
+            result = fetchone_as_namedtuple(cursor)
+            return result.form_exists
 
     @staticmethod
-    def hard_delete_forms(form_ids):
-        with transaction.atomic():
-            XFormAttachmentSQL.objects.filter(xform_id__in=form_ids).delete()
-            XFormOperationSQL.objects.filter(xform_id__in=form_ids).delete()
-            XFormInstanceSQL.objects.filter(form_uuid__in=form_ids).delete()
+    @transaction.atomic
+    def hard_delete_forms(domain, form_ids):
+        assert isinstance(form_ids, list)
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute('SELECT hard_delete_forms(%s, %s) AS deleted_count', [domain, form_ids])
+            results = fetchall_as_namedtuple(cursor)
+            return sum([result.deleted_count for result in results])
 
     @staticmethod
-    def archive_form(form_id, user_id=None):
-        with transaction.atomic():
-            operation = XFormOperationSQL(
-                user=user_id,
-                operation=XFormOperationSQL.ARCHIVE,
-                date=datetime.utcnow(),
-                xform_id=form_id
+    def archive_form(form, user_id=None):
+        FormAccessorSQL._archive_unarchive_form(form, user_id, True)
+
+    @staticmethod
+    def unarchive_form(form, user_id=None):
+        FormAccessorSQL._archive_unarchive_form(form, user_id, False)
+
+    @staticmethod
+    @transaction.atomic
+    def _archive_unarchive_form(form, user_id, archive):
+        from casexml.apps.case.xform import get_case_ids_from_form
+        form_id = form.form_id
+        case_ids = list(get_case_ids_from_form(form))
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
+            cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)', [case_ids, form_id, archive])
+
+    @staticmethod
+    @transaction.atomic
+    def save_new_form(form):
+        """
+        Save a previously unsaved form
+        """
+        assert not form.is_saved(), 'form already saved'
+        logging.debug('Saving new form: %s', form)
+        unsaved_attachments = getattr(form, 'unsaved_attachments', [])
+        if unsaved_attachments:
+            del form.unsaved_attachments
+            for unsaved_attachment in unsaved_attachments:
+                    unsaved_attachment.form = form
+
+        operations = form.get_tracked_models_to_create(XFormOperationSQL)
+        for operation in operations:
+            operation.form = form
+        form.clear_tracked_models()
+
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute(
+                'SELECT form_pk FROM save_new_form_and_related_models(%s, %s, %s, %s)',
+                [form.form_id, form, unsaved_attachments, operations]
             )
-            operation.save()
-            XFormInstanceSQL.objects.filter(form_uuid=form_id).update(state=XFormInstanceSQL.ARCHIVED)
-            CaseTransaction.objects.filter(form_uuid=form_id).update(revoked=True)
+            result = fetchone_as_namedtuple(cursor)
+            form.id = result.form_pk
 
     @staticmethod
-    def unarchive_form(form_id, user_id=None):
-        with transaction.atomic():
-            operation = XFormOperationSQL(
-                user=user_id,
-                operation=XFormOperationSQL.UNARCHIVE,
-                date=datetime.utcnow(),
-                xform_id=form_id
+    @transaction.atomic
+    def save_deprecated_form(form):
+        assert form.is_saved(), "Can't deprecate an unsaved form"
+        assert form.is_deprecated, 'Re-saving already saved forms not supported'
+        assert getattr(form, 'unsaved_attachments', None) is None, \
+            'Adding attachments to saved form not supported'
+
+        logging.debug('Deprecating form: %s', form)
+
+        attachments = form.get_attachments()
+        operations = form.history
+
+        form.id = None
+        for attachment in attachments:
+            attachment.id = None
+        form.unsaved_attachments = attachments
+
+        for operation in operations:
+            operation.id = None
+            form.track_create(operation)
+
+        deleted = FormAccessorSQL.hard_delete_forms(form.domain, [form.orig_id])
+        assert deleted == 1
+        FormAccessorSQL.save_new_form(form)
+
+    @staticmethod
+    @transaction.atomic
+    def update_form_problem_and_state(form):
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute(
+                'SELECT update_form_problem_and_state(%s, %s, %s)',
+                [form.form_id, form.problem, form.state]
             )
-            operation.save()
-            XFormInstanceSQL.objects.filter(form_uuid=form_id).update(state=XFormInstanceSQL.NORMAL)
-            CaseTransaction.objects.filter(form_uuid=form_id).update(revoked=False)
 
     @staticmethod
-    def get_form_history(form_id):
-        return list(XFormOperationSQL.objects.filter(xform_id=form_id).order_by('date'))
-
-    @staticmethod
-    def get_attachment(form_id, attachment_name):
-        return XFormAttachmentSQL.objects.filter(xform_id=form_id, name=attachment_name).first()
+    @unit_testing_only
+    @transaction.atomic
+    def delete_all_forms(domain=None, user_id=None):
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute('SELECT delete_all_forms(%s, %s)', [domain, user_id])
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
@@ -110,21 +215,16 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_case(case_id):
         try:
-            return CommCareCaseSQL.objects.get(case_uuid=case_id)
-        except CommCareCaseSQL.DoesNotExist:
+            return CommCareCaseSQL.objects.raw('SELECT * from get_case_by_id(%s)', [case_id])[0]
+        except IndexError:
             raise CaseNotFound
 
     @staticmethod
     def get_cases(case_ids, ordered=False):
-        cases = list(CommCareCaseSQL.objects.filter(case_uuid__in=list(case_ids)).all())
+        assert isinstance(case_ids, list)
+        cases = list(CommCareCaseSQL.objects.raw('SELECT * from get_cases_by_id(%s)', [case_ids]))
         if ordered:
-            # SQL won't return the rows in any particular order so we need to order them ourselves
-            index_map = {id_: index for index, id_ in enumerate(case_ids)}
-            ordered_cases = [None] * len(case_ids)
-            for case in cases:
-                ordered_cases[index_map[case.case_id]] = case
-
-            cases = ordered_cases
+            cases = _order_list(case_ids, cases, 'case_id')
 
         return cases
 
@@ -134,72 +234,156 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         Return True if a case has been modified since the given modification date.
         Assumes that the case exists in the DB.
         """
-        return not CommCareCaseSQL.objects.filter(
-            case_uuid=case_id,
-            server_modified_on=server_modified_on
-        ).exists()
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute('SELECT case_modified FROM case_modified_since(%s, %s)', [case_id, server_modified_on])
+            result = fetchone_as_namedtuple(cursor)
+            return result.case_modified
 
     @staticmethod
     def get_case_xform_ids(case_id):
-        return list(CaseTransaction.objects.filter(
-            case_id=case_id,
-            revoked=False,
-            form_uuid__isnull=False,
-            type=CaseTransaction.TYPE_FORM
-        ).values_list('form_uuid', flat=True))
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute('SELECT form_id FROM get_case_form_ids(%s)', [case_id])
+            results = fetchall_as_namedtuple(cursor)
+            return [result.form_id for result in results]
 
     @staticmethod
     def get_indices(case_id):
-        return list(CommCareCaseIndexSQL.objects.filter(case_id=case_id).all())
+        return list(CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_case_indices(%s)', [case_id]))
 
     @staticmethod
     def get_reverse_indices(case_id):
-        return list(CommCareCaseIndexSQL.objects.filter(referenced_id=case_id).all())
+        return list(CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_case_indices_reverse(%s)', [case_id]))
 
     @staticmethod
     def get_reverse_indexed_cases(domain, case_ids):
-        return CommCareCaseSQL.objects.filter(
-            domain=domain, index__referenced_id__in=case_ids
-        ).defer("case_json").prefetch_related('indices')
+        assert isinstance(case_ids, list)
+
+        cases = list(CommCareCaseSQL.objects.raw(
+            'SELECT * FROM get_reverse_indexed_cases(%s, %s)',
+            [domain, case_ids])
+        )
+        cases_by_id = {case.case_id: case for case in cases}
+        indices = list(CommCareCaseIndexSQL.objects.raw(
+            'SELECT * FROM get_multiple_cases_indices(%s)',
+            [cases_by_id.keys()])
+        )
+        _attach_prefetch_models(cases_by_id, indices, 'case_id', 'cached_indices')
+        return cases
 
     @staticmethod
-    def hard_delete_case(case_id):
-        with transaction.atomic():
-            CommCareCaseIndexSQL.objects.filter(case_id=case_id).delete()
-            CaseAttachmentSQL.objects.filter(case_id=case_id).delete()
-            CaseTransaction.objects.filter(case_id=case_id).delete()
-            CommCareCaseSQL.objects.filter(case_uuid=case_id).delete()
+    def hard_delete_cases(domain, case_ids):
+        assert isinstance(case_ids, list)
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute('SELECT hard_delete_cases(%s, %s) as deleted_count', [domain, case_ids])
+            results = fetchall_as_namedtuple(cursor)
+            return sum([result.deleted_count for result in results])
 
     @staticmethod
-    def get_attachment(case_id, attachment_name):
-        return CaseAttachmentSQL.objects.filter(case_id=case_id, name=attachment_name).first()
+    def get_attachment_by_name(case_id, attachment_name):
+        try:
+            return CommCareCaseSQL.objects.raw(
+                'select * from get_case_attachment_by_name(%s, %s)',
+                [case_id, attachment_name]
+            )[0]
+        except IndexError:
+            raise AttachmentNotFound(attachment_name)
 
     @staticmethod
     def get_attachments(case_id):
-        return list(CaseAttachmentSQL.objects.filter(case_id=case_id).all())
+        return list(CaseAttachmentSQL.objects.raw('SELECT * from get_case_attachments(%s)', [case_id]))
+
+    @staticmethod
+    def get_transactions(case_id):
+        return list(CaseTransaction.objects.raw('SELECT * from get_case_transactions(%s)', [case_id]))
 
     @staticmethod
     def get_transactions_for_case_rebuild(case_id):
-        return list(CaseTransaction.objects.filter(
-            case_id=case_id,
-            revoked=False,
-            type__in=CaseTransaction.TYPES_TO_PROCESS
-        ).all())
+        return list(CaseTransaction.objects.raw(
+            'SELECT * from get_case_transactions_for_rebuild(%s)',
+            [case_id])
+        )
 
     @staticmethod
     def get_case_by_location(domain, location_id):
         try:
-            return CommCareCaseSQL.objects.filter(
-                domain=domain,
-                type='supply-point',
-                location_uuid=location_id
-            ).get()
-        except CommCareCaseSQL.DoesNotExist:
+            return CommCareCaseSQL.objects.raw(
+                'SELECT * from get_case_by_location_id(%s, %s)',
+                [domain, location_id]
+            )[0]
+        except IndexError:
             return None
 
     @staticmethod
-    def get_case_ids_in_domain(domain, type=None):
-        query = CommCareCaseSQL.objects.filter(domain=domain)
-        if type:
-            query.filter(type=type)
-        return list(query.values_list('case_uuid', flat=True))
+    def get_case_ids_in_domain(domain, type_=None):
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute('SELECT case_id FROM get_case_ids_in_domain(%s, %s)', [domain, type_])
+            results = fetchall_as_namedtuple(cursor)
+            return [result.case_id for result in results]
+
+    @staticmethod
+    @unit_testing_only
+    def delete_all_cases(domain=None):
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute('SELECT delete_all_cases(%s)', [domain])
+
+    @staticmethod
+    @transaction.atomic
+    def save_case(case):
+        transactions_to_save = case.get_tracked_models_to_create(CaseTransaction)
+
+        indices_to_save_or_update = case.get_tracked_models_to_create(CommCareCaseIndexSQL)
+        indices_to_save_or_update.extend(case.get_tracked_models_to_update(CommCareCaseIndexSQL))
+        index_ids_to_delete = [index.id for index in case.get_tracked_models_to_delete(CommCareCaseIndexSQL)]
+
+        attachments_to_save = case.get_tracked_models_to_create(CaseAttachmentSQL)
+        attachment_ids_to_delete = [att.id for att in case.get_tracked_models_to_delete(CaseAttachmentSQL)]
+
+        # cast arrays that can be empty to appropriate type
+        query = """SELECT case_pk FROM save_case_and_related_models(
+            %s, %s, %s, %s::{}[], %s::{}[], %s::INTEGER[], %s::INTEGER[]
+        )"""
+        query = query.format(CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE)
+        with get_cursor(CommCareCaseSQL) as cursor:
+            try:
+                cursor.execute(query, [
+                    case.case_id,
+                    case,
+                    transactions_to_save,
+                    indices_to_save_or_update,
+                    attachments_to_save,
+                    index_ids_to_delete,
+                    attachment_ids_to_delete
+                ])
+                result = fetchone_as_namedtuple(cursor)
+                case.id = result.case_pk
+                case.clear_tracked_models()
+            except InternalError as e:
+                if logging.root.isEnabledFor(logging.DEBUG):
+                    msg = 'save_case_and_related_models called with args: \n{}, {}, {}, {} ,{} ,{}'.format(
+                        case_adapter(case).getquoted(),
+                        [case_transaction_adapter(t).getquoted() for t in transactions_to_save],
+                        [case_index_adapter(i).getquoted() for i in indices_to_save_or_update],
+                        [case_attachment_adapter(a).getquoted() for a in attachments_to_save],
+                        index_ids_to_delete,
+                        attachment_ids_to_delete
+                    )
+                    logging.debug(msg)
+                raise CaseSaveError(e)
+
+
+def _order_list(id_list, object_list, id_property):
+    # SQL won't return the rows in any particular order so we need to order them ourselves
+    index_map = {id_: index for index, id_ in enumerate(id_list)}
+    ordered_list = [None] * len(id_list)
+    for obj in object_list:
+        ordered_list[index_map[getattr(obj, id_property)]] = obj
+
+    return ordered_list
+
+
+def _attach_prefetch_models(objects_by_id, prefetched_models, link_field_name, cached_attrib_name):
+    prefetched_groups = groupby(prefetched_models, lambda x: getattr(x, link_field_name))
+    for obj_id, group in prefetched_groups:
+        obj = objects_by_id[obj_id]
+        setattr(obj, cached_attrib_name, list(group))
+

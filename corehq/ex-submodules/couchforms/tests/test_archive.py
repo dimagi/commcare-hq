@@ -35,7 +35,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(0, len(xform.history))
 
         lower_bound = datetime.utcnow() - timedelta(seconds=1)
-        xform.archive(user='mr. librarian')
+        xform.archive(user_id='mr. librarian')
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
 
         xform = self.formdb.get_form(xform.form_id)
@@ -50,7 +50,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual('mr. librarian', archival.user)
 
         lower_bound = datetime.utcnow() - timedelta(seconds=1)
-        xform.unarchive(user='mr. researcher')
+        xform.unarchive(user_id='mr. researcher')
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
 
         xform = self.formdb.get_form(xform.form_id)

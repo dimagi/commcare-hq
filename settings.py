@@ -95,7 +95,6 @@ STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
     'compressor.finders.CompressorFinder',
-    'djangobower.finders.BowerFinder',
 )
 
 STATICFILES_DIRS = (
@@ -128,14 +127,18 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.eggs.Loader',
 )
 
+CSRF_ALWAYS_OFF = True
+
 MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
+    'corehq.apps.hqwebapp.middleware.HQCsrfViewMiddleWare',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
+    'corehq.middleware.TimeoutMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
@@ -146,6 +149,9 @@ MIDDLEWARE_CLASSES = [
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+
+# time in minutes before forced logout due to inactivity
+INACTIVITY_TIMEOUT = 30
 
 PASSWORD_HASHERS = (
     # this is the default list with SHA1 moved to the front
@@ -190,7 +196,6 @@ DEFAULT_APPS = (
     'djcelery',
     'djtables',
     'django_prbac',
-    'djangobower',
     'djangular',
     'couchdbkit.ext.django',
     'crispy_forms',
@@ -236,7 +241,10 @@ HQ_APPS = (
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
     'corehq.apps.tzmigration',
-    'corehq.form_processor',
+    'corehq.form_processor.app_config.FormProcessorAppConfig',
+    'corehq.sql_db',
+    'corehq.sql_accessors',
+    'corehq.sql_proxy_accessors',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -381,7 +389,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.messaging.smsbackends.apposit',
     'crispy_forms',
     'django_extensions',
-    'djangobower',
     'django_prbac',
     'djcelery',
     'djtables',
@@ -480,6 +487,7 @@ BOOKKEEPER_CONTACT_EMAILS = []
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
+BASE_ADDRESS = 'localhost:8000'
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -742,6 +750,7 @@ LOGSTASH_HOST = 'localhost'
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
+ELASTICSEARCH_VERSION = 0.9
 
 ####### Couch Config #######
 # for production this ought to be set to true on your configured couch instance
@@ -935,6 +944,10 @@ UCR_DATABASE_URL = None
 # Override this in localsettings to specify custom reporting databases
 CUSTOM_DATABASES = {}
 
+PL_PROXY_CLUSTER_NAME = 'commcarehq'
+
+USE_PARTITIONED_DATABASE = False
+
 # number of days since last access after which a saved export is considered unused
 SAVED_EXPORT_ACCESS_CUTOFF = 35
 
@@ -1020,13 +1033,20 @@ else:
     ]
 
 ### Reporting database - use same DB as main database
+
 db_settings = DATABASES["default"].copy()
 db_settings['PORT'] = db_settings.get('PORT', '5432')
 options = db_settings.get('OPTIONS')
 db_settings['OPTIONS'] = '?{}'.format(urlencode(options)) if options else ''
 
-if UNIT_TESTING:
-    db_settings['NAME'] = 'test_{}'.format(db_settings['NAME'])
+if UNIT_TESTING and sys.argv[1] == "test":
+    # Use test database name, but only if running the test command.
+    # Django uses different database names than the ones in DATABASES
+    # when setting up for tests. However, UNIT_TESTING may be true in
+    # some cases where django is not running tests (js tests on travis),
+    # and therefore does not change the database name.
+    from django.db.backends.creation import TEST_DATABASE_PREFIX
+    db_settings['NAME'] = TEST_DATABASE_PREFIX + db_settings['NAME']
 
 if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
     SQL_REPORTING_DATABASE_URL = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
@@ -1036,6 +1056,11 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
 if not UCR_DATABASE_URL or UNIT_TESTING:
     # by default just use the reporting DB for UCRs
     UCR_DATABASE_URL = SQL_REPORTING_DATABASE_URL
+
+if USE_PARTITIONED_DATABASE:
+    DATABASE_ROUTERS = ['corehq.sql_db.routers.PartitionRouter']
+else:
+    DATABASE_ROUTERS = ['corehq.sql_db.routers.MonolithRouter']
 
 MVP_INDICATOR_DB = 'mvp-indicators'
 
@@ -1069,7 +1094,7 @@ NEW_FIXTURES_DB = 'fixtures'
 FIXTURES_DB = NEW_FIXTURES_DB
 
 NEW_DOMAINS_DB = 'domains'
-DOMAINS_DB = None
+DOMAINS_DB = NEW_DOMAINS_DB
 
 COUCHDB_APPS = [
     'api',
@@ -1240,18 +1265,17 @@ SMS_HANDLERS = [
 ]
 
 SMS_LOADED_BACKENDS = [
-    "corehq.messaging.smsbackends.unicel.api.UnicelBackend",
-    "corehq.messaging.smsbackends.mach.api.MachBackend",
-    "corehq.messaging.smsbackends.tropo.api.TropoBackend",
-    "corehq.messaging.smsbackends.http.api.HttpBackend",
-    "corehq.messaging.smsbackends.telerivet.models.TelerivetBackend",
-    "corehq.messaging.smsbackends.test.api.TestSMSBackend",
-    "corehq.apps.sms.backend.test.TestBackend",
-    "corehq.messaging.smsbackends.grapevine.api.GrapevineBackend",
-    "corehq.messaging.smsbackends.twilio.models.TwilioBackend",
-    "corehq.messaging.smsbackends.megamobile.api.MegamobileBackend",
-    "corehq.messaging.smsbackends.smsgh.models.SMSGHBackend",
-    "corehq.messaging.smsbackends.apposit.models.AppositBackend",
+    'corehq.messaging.smsbackends.unicel.models.UnicelBackend',
+    'corehq.messaging.smsbackends.mach.models.MachBackend',
+    'corehq.messaging.smsbackends.tropo.models.TropoBackend',
+    'corehq.messaging.smsbackends.http.models.HttpBackend',
+    'corehq.messaging.smsbackends.telerivet.models.TelerivetBackend',
+    'corehq.messaging.smsbackends.test.models.TestSMSBackend',
+    'corehq.messaging.smsbackends.grapevine.models.GrapevineBackend',
+    'corehq.messaging.smsbackends.twilio.models.TwilioBackend',
+    'corehq.messaging.smsbackends.megamobile.models.MegamobileBackend',
+    'corehq.messaging.smsbackends.smsgh.models.SMSGHBackend',
+    'corehq.messaging.smsbackends.apposit.models.AppositBackend',
 ]
 
 IVR_BACKEND_MAP = {
@@ -1317,8 +1341,6 @@ PILLOWTOPS = {
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
         'custom.opm.models.OpmUserFluffPillow',
-        'custom.apps.cvsu.models.UnicefMalawiFluffPillow',
-        'custom.reports.mc.models.MalariaConsortiumFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
         'custom.m4change.models.LdHmisCaseFluffPillow',
         'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
@@ -1338,6 +1360,11 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
+        {
+            'name': 'MalariaConsortiumFluffPillow',
+            'class': 'custom.reports.mc.models.MalariaConsortiumFluffPillow',
+            'instance': 'custom.reports.mc.models.get_pillow',
+        }
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
@@ -1411,7 +1438,6 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
     'corehq.apps.cachehq.cachemodels.InvitationGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
-    'corehq.apps.cachehq.cachemodels.UserReportsReportConfigCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 

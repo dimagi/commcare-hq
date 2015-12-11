@@ -61,6 +61,7 @@ def _get_config_entry(config):
                 id='report_id_{}'.format(config.uuid),
                 nodeset="instance('reports')/reports/report[@id='{}']".format(config.uuid),
                 value='./@id',
+                autoselect="true"
             ),
         ]
     )
@@ -132,6 +133,16 @@ def _get_summary_details(config):
                     )
                 )
 
+    def _get_description_text(report_config):
+        if report_config.use_xpath_description:
+            return Text(
+                xpath=Xpath(function=config.xpath_description)
+            )
+        else:
+            return Text(
+                locale=Locale(id=id_strings.report_description(report_config.uuid))
+            )
+
     return models.Detail(custom_xml=Detail(
         id='reports.{}.summary'.format(config.uuid),
         title=Text(
@@ -162,9 +173,7 @@ def _get_summary_details(config):
                             )
                         ),
                         template=Template(
-                            text=Text(
-                                xpath=Xpath(function=config.xpath_description if config.use_xpath_description else 'description')
-                            )
+                            text=_get_description_text(config)
                         ),
                     ),
                 ] + [

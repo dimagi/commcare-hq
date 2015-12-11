@@ -17,11 +17,19 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_forms_by_type(domain, type_, recent_first=False, limit=None):
+    def get_forms_by_type(domain, type_, limit, recent_first=False):
         raise NotImplementedError
 
     @abstractmethod
     def get_with_attachments(form_id):
+        raise NotImplementedError
+
+    @abstractmethod
+    def save_new_form(form):
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_form_problem_and_state(form):
         raise NotImplementedError
 
 
@@ -45,11 +53,17 @@ class FormAccessors(object):
     def get_form(self, form_id):
         return self.db_accessor.get_form(form_id)
 
-    def get_forms_by_type(self, type_, recent_first=False, limit=None):
-        return self.db_accessor.get_forms_by_type(self.domain, type_, recent_first, limit)
+    def get_forms_by_type(self, type_, limit, recent_first=False):
+        return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)
 
     def get_with_attachments(self, form_id):
         return self.db_accessor.get_with_attachments(form_id)
+
+    def save_new_form(self, form):
+        self.db_accessor.save_new_form(form)
+
+    def update_form_problem_and_state(self, form):
+        self.db_accessor.update_form_problem_and_state(form)
 
 
 class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):

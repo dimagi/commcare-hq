@@ -88,6 +88,7 @@ Language
 from collections import namedtuple
 from copy import deepcopy
 import json
+from corehq.apps.es.utils import values_list
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -302,6 +303,16 @@ class ESQuery(object):
             query._default_filters.pop(default)
         return query
 
+    def values(self, *fields):
+        """modeled after django's QuerySet.values"""
+        if fields:
+            return self.fields(fields).run().hits
+        else:
+            return self.run().hits
+
+    def values_list(self, *fields, **kwargs):
+        return values_list(self.fields(fields).run().hits, *fields, **kwargs)
+
 
 class ESQuerySet(object):
     """
@@ -368,6 +379,9 @@ class ESQuerySet(object):
         raw = self.raw.get('facets', {})
         results = namedtuple('facet_results', [f.name for f in facets])
         return results(**{f.name: f.parse_result(raw) for f in facets})
+
+    def __repr__(self):
+        return '{}({!r}, {!r})'.format(self.__class__.__name__, self.raw, self.query)
 
 
 class HQESQuery(ESQuery):

@@ -32,6 +32,8 @@ from corehq.apps.sms.api import (
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
+from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js, use_timepicker, use_typeahead, \
+    use_select2
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
@@ -41,13 +43,13 @@ from corehq.apps.sms.models import (
     LastReadMessage, MessagingEvent, SelfRegistrationInvitation
 )
 from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
-    SMSLoadBalancingMixin)
+    SMSLoadBalancingMixin, UnrecognizedBackendException)
 from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
-    InitiateAddSMSBackendForm, SubscribeSMSForm,
-    SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
-    DEFAULT, CUSTOM, SendRegistrationInviationsForm,
-    WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
-    WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL)
+                                   InitiateAddSMSBackendForm, SubscribeSMSForm,
+                                   SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
+                                   DEFAULT, CUSTOM, SendRegistrationInviationsForm,
+                                   WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
+                                   WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL, ComposeMessageForm)
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty as country_name_from_code
@@ -93,7 +95,7 @@ SMS_CHAT_HISTORY_CHOICES = (
 
 @login_and_domain_required
 def default(request, domain):
-    return HttpResponseRedirect(reverse(compose_message, args=[domain]))
+    return HttpResponseRedirect(reverse(ComposeMessageView.urlname, args=[domain]))
 
 
 class BaseMessagingSectionView(BaseDomainView):
@@ -132,16 +134,30 @@ def messaging(request, domain, template="sms/default.html"):
     return render(request, template, context)
 
 
-@require_permission(Permissions.edit_data)
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def compose_message(request, domain, template="sms/compose.html"):
-    context = get_sms_autocomplete_context(request, domain)
-    context['domain'] = domain
-    context['now'] = datetime.utcnow()
-    tz = get_timezone_for_user(request.couch_user, domain)
-    context['timezone'] = tz
-    context['timezone_now'] = datetime.now(tz=tz)
-    return render(request, template, context)
+class ComposeMessageView(BaseMessagingSectionView):
+    template_name = 'sms/compose.html'
+    urlname = 'sms_compose_message'
+    page_title = _('Compose SMS Message')
+
+    @property
+    def page_context(self):
+        page_context = super(ComposeMessageView, self).page_context
+        tz = get_timezone_for_user(self.request.couch_user, self.domain)
+        page_context.update({
+            'now': datetime.utcnow(),
+            'timezone': tz,
+            'timezone_now': datetime.now(tz=tz),
+            'form': ComposeMessageForm(domain=self.domain)
+        })
+        page_context.update(get_sms_autocomplete_context(self.request, self.domain))
+        return page_context
+
+    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    @use_typeahead
+    def dispatch(self, *args, **kwargs):
+        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
 
 def post(request, domain):
@@ -198,7 +214,7 @@ def get_sms_autocomplete_context(request, domain):
     phone_users = CouchUser.view("users/phone_users_by_domain",
         startkey=[domain], endkey=[domain, {}], include_docs=True
     )
-    groups = Group.view("groups/by_domain", key=domain, include_docs=True)
+    groups = Group.by_domain(domain)
 
     contacts = ["[send to all]"]
     contacts.extend(['%s [group]' % group.name for group in groups])
@@ -339,7 +355,7 @@ def send_to_recipients(request, domain):
 
     return HttpResponseRedirect(
         request.META.get('HTTP_REFERER') or
-        reverse(compose_message, args=[domain])
+        reverse(ComposeMessageView.urlname, args=[domain])
     )
 
 @domain_admin_required
@@ -668,7 +684,7 @@ def default_sms_admin_interface(request):
 @require_superuser
 def delete_backend(request, backend_id):
     # We need to keep this until we move over the admin sms gateway UIs
-    backend = SMSBackend.get(backend_id)
+    backend = SMSBackend.get_wrapped(backend_id)
     if not backend.is_global or backend.base_doc != "MobileBackend":
         raise Http404
     backend.retire() # Do not actually delete so that linkage always exists between SMSLog and MobileBackend
@@ -1024,6 +1040,12 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     page_title = ugettext_noop("SMS Connectivity")
     strict_domain_fetching = True
 
+    @use_bootstrap3
+    @use_knockout_js
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(DomainSmsGatewayListView, self).dispatch(request, *args, **kwargs)
+
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
@@ -1137,8 +1159,8 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
 
     def get_deleted_item_data(self, item_id):
         try:
-            backend = SMSBackend.get(item_id)
-        except ResourceNotFound:
+            backend = SMSBackend.get_wrapped(item_id)
+        except UnrecognizedBackendException:
             raise Http404()
         if (backend.is_global or backend.domain != self.domain or
             backend.base_doc != "MobileBackend"):
@@ -1173,10 +1195,6 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
             backend_type = request.POST['backend_type']
             return HttpResponseRedirect(reverse(AddDomainGatewayView.urlname, args=[self.domain, backend_type]))
         return self.paginate_crud_response
-
-    @method_decorator(domain_admin_required)
-    def dispatch(self, request, *args, **kwargs):
-        return super(DomainSmsGatewayListView, self).dispatch(request, *args, **kwargs)
 
 
 class AddDomainGatewayView(BaseMessagingSectionView):
@@ -1269,6 +1287,9 @@ class AddDomainGatewayView(BaseMessagingSectionView):
             return HttpResponseRedirect(reverse(DomainSmsGatewayListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
+    @use_bootstrap3
+    @use_knockout_js
+    @use_select2
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def dispatch(self, request, *args, **kwargs):
@@ -1337,6 +1358,11 @@ class SubscribeSMSView(BaseMessagingSectionView):
     urlname = 'subscribe_sms'
     page_title = ugettext_noop("Subscribe SMS")
 
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    def dispatch(self, *args, **kwargs):
+        return super(SubscribeSMSView, self).dispatch(*args, **kwargs)
+
     @property
     def commtrack_settings(self):
         return Domain.get_by_name(self.domain).commtrack_settings
@@ -1345,7 +1371,7 @@ class SubscribeSMSView(BaseMessagingSectionView):
     @memoized
     def form(self):
         if self.request.method == 'POST':
-             return SubscribeSMSForm(self.request.POST)
+            return SubscribeSMSForm(self.request.POST)
 
         if self.commtrack_settings and self.commtrack_settings.alert_config:
             alert_config = self.commtrack_settings.alert_config
@@ -1668,6 +1694,9 @@ class SMSSettingsView(BaseMessagingSectionView):
 
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    @use_knockout_js
+    @use_timepicker
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
 

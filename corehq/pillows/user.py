@@ -5,6 +5,7 @@ from corehq.elastic import ES_URLS, stream_es_query, get_es, doc_exists_in_es
 from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.decorators.memoized import memoized
+from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class
 from pillowtop.listener import AliasedElasticPillow, PythonPillow
 from django.conf import settings
 
@@ -38,15 +39,36 @@ class UserPillow(AliasedElasticPillow):
     es_index = USER_INDEX
     default_mapping = USER_MAPPING
 
+    @classmethod
     def get_unique_id(self):
         return USER_INDEX
+
+    def change_transform(self, doc_dict):
+        super(UserPillow, self).change_transform(doc_dict)
+        doc_dict = self._cast_user_data_to_string(doc_dict)
+        return doc_dict
+
+    def _cast_user_data_to_string(self, doc_dict):
+        """
+        Make all user_data strings
+        ES doesn't allow dynamic dicts with the same key name to have different types, so coerce everything
+        """
+        user_data = doc_dict.get('user_data', {})
+        if user_data and type(user_data) is dict:
+            for k, v in user_data.iteritems():
+                try:
+                    doc_dict['user_data'][k] = unicode(v)
+                except UnicodeDecodeError:
+                    doc_dict['user_data'][k] = v  # If we can't decode it, let elastic deal with it
+        return doc_dict
 
 
 class GroupToUserPillow(PythonPillow):
     document_class = CommCareUser
 
-    def __init__(self, **kwargs):
-        super(GroupToUserPillow, self).__init__(**kwargs)
+    def __init__(self):
+        checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
+        super(GroupToUserPillow, self).__init__(checkpoint=checkpoint)
 
     def python_filter(self, change):
         return change.document.get('doc_type', None) in ('Group', 'Group-Deleted')
@@ -73,8 +95,9 @@ class UnknownUsersPillow(PythonPillow):
     include_docs_when_preindexing = False
     es_path = USER_INDEX + "/user/"
 
-    def __init__(self, **kwargs):
-        super(UnknownUsersPillow, self).__init__(**kwargs)
+    def __init__(self):
+        checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
+        super(UnknownUsersPillow, self).__init__(checkpoint=checkpoint)
         self.user_db = CouchUser.get_db()
         self.es = get_es()
 

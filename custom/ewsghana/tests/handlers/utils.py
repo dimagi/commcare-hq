@@ -10,9 +10,9 @@ from corehq.apps.commtrack.tests.util import TEST_BACKEND, make_loc
 from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.sms.backend import test
 from corehq.apps.sms.mixin import MobileBackend
 from corehq.apps.users.models import CommCareUser
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ewsghana.utils import prepare_domain, bootstrap_user, create_backend
 from custom.logistics.tests.test_script import TestScript
@@ -104,7 +104,8 @@ class EWSScriptTest(TestScript):
         supply_point_id = loc.linked_supply_point().get_id
         supply_point_id2 = loc2.linked_supply_point().get_id
 
-        test.bootstrap(TEST_BACKEND, to_console=True)
+        cls.sms_backend = TestSMSBackend(name=TEST_BACKEND.upper(), is_global=True)
+        cls.sms_backend.save()
         cls.user1 = bootstrap_user(username='stella', first_name='test1', last_name='test1',
                                    domain=domain.name, home_loc=loc)
         cls.user2 = bootstrap_user(username='super', domain=domain.name, home_loc=loc2,
@@ -171,7 +172,7 @@ class EWSScriptTest(TestScript):
 
     @classmethod
     def tearDownClass(cls):
-        MobileBackend.load_by_name(TEST_DOMAIN, TEST_BACKEND).delete()
+        cls.sms_backend.delete()
         CommCareUser.get_by_username('stella').delete()
         CommCareUser.get_by_username('super').delete()
         delete_all_locations()

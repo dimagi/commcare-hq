@@ -4,6 +4,8 @@ import logging
 from tempfile import NamedTemporaryFile
 from decimal import Decimal
 from couchdbkit import ResourceNotFound
+from django.db.models.manager import Manager
+
 from corehq.util.quickcache import quickcache
 from corehq.util.global_request import get_request
 from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
@@ -195,26 +197,42 @@ class PaymentMethodType(object):
 
 
 class SubscriptionType(object):
-    CONTRACTED = "CONTRACTED"
-    SELF_SERVICE = "SELF_SERVICE"
+    CONTRACTED = "IMPLEMENTATION"
+    SELF_SERVICE = "PRODUCT"
+    TRIAL = "TRIAL"
+    EXTENDED_TRIAL = "EXTENDED_TRIAL"
+    SANDBOX = "SANDBOX"
+    INTERNAL = "INTERNAL"
     NOT_SET = "NOT_SET"
     CHOICES = (
-        (CONTRACTED, "Contracted"),
-        (SELF_SERVICE, "Self-service"),
-        (NOT_SET, "Not Set"),
+        (CONTRACTED, "Implementation"),
+        (SELF_SERVICE, "Product"),
+        (TRIAL, "Trial"),
+        (EXTENDED_TRIAL, "Extended Trial"),
+        (SANDBOX, "Sandbox"),
+        (INTERNAL, "Internal"),
     )
 
 
 class ProBonoStatus(object):
-    YES = "YES"
-    NO = "NO"
+    YES = "PRO_BONO"
+    NO = "FULL_PRICE"
     DISCOUNTED = "DISCOUNTED"
-    NOT_SET = "NOT_SET"
     CHOICES = (
-        (YES, "Yes"),
-        (NO, "No"),
+        (NO, "Full Price"),
         (DISCOUNTED, "Discounted"),
-        (NOT_SET, "Not Set"),
+        (YES, "Pro Bono"),
+    )
+
+
+class FundingSource(object):
+    DIMAGI = "DIMAGI"
+    CLIENT = "CLIENT"
+    EXTERNAL = "EXTERNAL"
+    CHOICES = (
+        (DIMAGI, "Dimagi"),
+        (CLIENT, "Client Funding"),
+        (EXTERNAL, "External Funding"),
     )
 
 
@@ -225,6 +243,36 @@ class EntryPoint(object):
     CHOICES = (
         (CONTRACTED, "Contracted"),
         (SELF_STARTED, "Self-started"),
+        (NOT_SET, "Not Set"),
+    )
+
+
+class LastPayment(object):
+    CC_ONE_TIME = "CC_ONE_TIME"
+    CC_AUTO = "CC_AUTO"
+    WIRE = "WIRE"
+    ACH = "ACH"
+    OTHER = "OTHER"
+    BU_PAYMENT = "BU_PAYMENT"
+    NONE = "NONE"
+    CHOICES = (
+        (CC_ONE_TIME, "Credit Card - One Time"),
+        (CC_AUTO, "Credit Card - Autopay"),
+        (WIRE, "Wire"),
+        (ACH, "ACH"),
+        (OTHER, "Other"),
+        (BU_PAYMENT, "Payment to local BU"),
+        (NONE, "None"),
+    )
+
+
+class PreOrPostPay(object):
+    PREPAY = "PREPAY"
+    POSTPAY = "POSTPAY"
+    NOT_SET = "NOT_SET"
+    CHOICES = (
+        (PREPAY, "Prepay"),
+        (POSTPAY, "Postpay"),
         (NOT_SET, "Not Set"),
     )
 
@@ -284,6 +332,16 @@ class BillingAccount(models.Model):
     )
     auto_pay_user = models.CharField(max_length=80, null=True)
     last_modified = models.DateTimeField(auto_now=True)
+    last_payment_method = models.CharField(
+        max_length=25,
+        default=LastPayment.NONE,
+        choices=LastPayment.CHOICES,
+    )
+    pre_or_post_pay = models.CharField(
+        max_length=25,
+        default=PreOrPostPay.NOT_SET,
+        choices=PreOrPostPay.CHOICES,
+    )
 
     class Meta:
         app_label = 'accounting'
@@ -301,7 +359,8 @@ class BillingAccount(models.Model):
     def get_or_create_account_by_domain(cls, domain,
                                         created_by=None, account_type=None,
                                         created_by_invoicing=False,
-                                        entry_point=None):
+                                        entry_point=None, last_payment_method=None,
+                                        pre_or_post_pay=None):
         """
         First try to grab the account used for the last subscription.
         If an account is not found, create it.
@@ -312,6 +371,8 @@ class BillingAccount(models.Model):
             is_new = True
             account_type = account_type or BillingAccountType.INVOICE_GENERATED
             entry_point = entry_point or EntryPoint.NOT_SET
+            last_payment_method = last_payment_method or LastPayment.NONE
+            pre_or_post_pay = pre_or_post_pay or PreOrPostPay.POSTPAY
             account = BillingAccount(
                 name="Account for Project %s" % domain,
                 created_by=created_by,
@@ -319,6 +380,8 @@ class BillingAccount(models.Model):
                 currency=Currency.get_default(),
                 account_type=account_type,
                 entry_point=entry_point,
+                last_payment_method=last_payment_method,
+                pre_or_post_pay=pre_or_post_pay
             )
             account.save()
         return account, is_new
@@ -922,6 +985,11 @@ class Subscriber(models.Model):
             raise SubscriptionChangeError("The upgrade was not successful.")
 
 
+class SubscriptionManager(models.Manager):
+    def get_queryset(self):
+        return super(SubscriptionManager, self).get_queryset().filter(is_hidden_to_ops=False)
+
+
 class Subscription(models.Model):
     """
     Links a Subscriber to a SoftwarePlan and BillingAccount, necessary for invoicing.
@@ -937,19 +1005,28 @@ class Subscription(models.Model):
     is_active = models.BooleanField(default=False)
     do_not_invoice = models.BooleanField(default=False)
     no_invoice_reason = models.CharField(blank=True, null=True, max_length=256)
+    do_not_email = models.BooleanField(default=False)
     auto_generate_credits = models.BooleanField(default=False)
     is_trial = models.BooleanField(default=False)
     service_type = models.CharField(
         max_length=25,
         choices=SubscriptionType.CHOICES,
-        default=SubscriptionType.NOT_SET,
+        default=SubscriptionType.NOT_SET
     )
     pro_bono_status = models.CharField(
         max_length=25,
         choices=ProBonoStatus.CHOICES,
-        default=ProBonoStatus.NOT_SET,
+        default=ProBonoStatus.NO,
+    )
+    funding_source = models.CharField(
+        max_length=25,
+        choices=FundingSource.CHOICES,
+        default=FundingSource.CLIENT
     )
     last_modified = models.DateTimeField(auto_now=True)
+    is_hidden_to_ops = models.BooleanField(default=False)
+
+    objects = SubscriptionManager()
 
     class Meta:
         app_label = 'accounting'
@@ -1110,11 +1187,11 @@ class Subscription(models.Model):
 
     def update_subscription(self, date_start=None, date_end=None,
                             date_delay_invoicing=None, do_not_invoice=False,
-                            no_invoice_reason=None,
+                            no_invoice_reason=None, do_not_email=False,
                             salesforce_contract_id=None,
                             auto_generate_credits=False,
                             web_user=None, note=None, adjustment_method=None,
-                            service_type=None, pro_bono_status=None):
+                            service_type=None, pro_bono_status=None, funding_source=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         today = datetime.date.today()
@@ -1144,12 +1221,15 @@ class Subscription(models.Model):
 
         self.do_not_invoice = do_not_invoice
         self.no_invoice_reason = no_invoice_reason
+        self.do_not_email = do_not_email
         self.auto_generate_credits = auto_generate_credits
         self.salesforce_contract_id = salesforce_contract_id
         if service_type is not None:
             self.service_type = service_type
         if pro_bono_status is not None:
             self.pro_bono_status = pro_bono_status
+        if funding_source is not None:
+            self.funding_source = funding_source
         self.save()
 
         SubscriptionAdjustment.record_adjustment(
@@ -1160,7 +1240,7 @@ class Subscription(models.Model):
     @transaction.atomic
     def change_plan(self, new_plan_version, date_end=None,
                     note=None, web_user=None, adjustment_method=None,
-                    service_type=None, pro_bono_status=None,
+                    service_type=None, pro_bono_status=None, funding_source=None,
                     transfer_credits=True, internal_change=False, account=None,
                     do_not_invoice=None, no_invoice_reason=None, **kwargs):
         """
@@ -1197,7 +1277,8 @@ class Subscription(models.Model):
             do_not_invoice=do_not_invoice if do_not_invoice else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason else self.no_invoice_reason,
             service_type=(service_type or SubscriptionType.NOT_SET),
-            pro_bono_status=(pro_bono_status or ProBonoStatus.NOT_SET),
+            pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
+            funding_source=(funding_source or FundingSource.CLIENT),
             **kwargs
         )
         new_subscription.save()
@@ -1253,7 +1334,7 @@ class Subscription(models.Model):
     def renew_subscription(self, date_end=None, note=None, web_user=None,
                            adjustment_method=None,
                            service_type=None, pro_bono_status=None,
-                           new_version=None):
+                           funding_source=None, new_version=None):
         """
         This creates a new subscription with a date_start that is
         equivalent to the current subscription's date_end.
@@ -1293,6 +1374,8 @@ class Subscription(models.Model):
             renewed_subscription.service_type = service_type
         if pro_bono_status is not None:
             renewed_subscription.pro_bono_status = pro_bono_status
+        if funding_source is not None:
+            renewed_subscription.funding_source = funding_source
         if datetime.date.today() == self.date_end:
             renewed_subscription.is_active = True
         renewed_subscription.save()
@@ -1382,7 +1465,9 @@ class Subscription(models.Model):
 
             billing_contact_emails = BillingContactInfo.objects.get(account=self.account).emails
             if billing_contact_emails is None:
-                raise SubscriptionReminderError("This billing account doesn't have any contact emails")
+                raise SubscriptionReminderError(
+                    "Billing account %d doesn't have any contact emails" % self.account.id
+                )
             billing_contact_emails = billing_contact_emails.split(',')
             emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
 
@@ -1620,6 +1705,7 @@ class InvoiceBase(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
 
     objects = InvoiceBaseManager()
+    api_objects = Manager()
 
     class Meta:
         abstract = True
@@ -1637,6 +1723,10 @@ class InvoiceBase(models.Model):
         raise NotImplementedError()
 
     @property
+    def account(self):
+        raise NotImplementedError()
+
+    @property
     def is_paid(self):
         return bool(self.date_paid)
 
@@ -1646,8 +1736,9 @@ class InvoiceBase(models.Model):
 
     @property
     def contact_emails(self):
-        contact_emails = self.account.billingcontactinfo.emails if self.account.billingcontactinfo else None
-        contact_emails = contact_emails.split(',') if contact_emails else []
+        billing_contact_info = BillingContactInfo.objects.filter(account=self.account)
+        contact_email_str = billing_contact_info[0].emails if billing_contact_info else None
+        contact_emails = contact_email_str.split(',') if contact_email_str else []
         if not contact_emails:
             admins = WebUser.get_admins_by_domain(self.get_domain())
             contact_emails = [a.email if a.email else a.username for a in admins]
@@ -2067,7 +2158,8 @@ class BillingRecord(BillingRecordBase):
         small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD and
                             subscription.service_type == SubscriptionType.CONTRACTED)
         hidden = self.invoice.is_hidden
-        return not (autogenerate or small_contracted or hidden)
+        do_not_email = self.invoice.subscription.do_not_email
+        return not (autogenerate or small_contracted or hidden or do_not_email)
 
     def is_email_throttled(self):
         month = self.invoice.date_start.month
@@ -2237,7 +2329,7 @@ class LineItem(models.Model):
     base_cost = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     unit_description = models.TextField(blank=True, null=True)
     unit_cost = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
-    quantity = models.IntegerField(default=1)
+    quantity = models.IntegerField(default=1, validators=integer_field_validators)
     last_modified = models.DateTimeField(auto_now=True)
 
     objects = LineItemManager()

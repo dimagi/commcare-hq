@@ -695,7 +695,10 @@ cloudCare.AppView = Backbone.View.extend({
                     url: self.options.renderFormRoot,
                     data: {'session_id': sessionId},
                     success: function (data) {
-                        var codeMirror = CodeMirror(function(el) {
+                        var $instanceTab = $('#debugger-xml-instance-tab'),
+                            codeMirror;
+
+                        codeMirror = CodeMirror(function(el) {
                             $('#xml-viewer-pretty').html(el);
                         }, {
                             value: data.instance_xml,
@@ -703,6 +706,11 @@ cloudCare.AppView = Backbone.View.extend({
                             viewportMargin: Infinity,
                             readOnly: true,
                             lineNumbers: true,
+                        });
+
+                        $instanceTab.off();
+                        $instanceTab.on('shown.bs.tab', function() {
+                            codeMirror.refresh();
                         });
 
                         $("#question-viewer-pretty").html(data.form_data || 'Could not render form');
@@ -722,18 +730,14 @@ cloudCare.AppView = Backbone.View.extend({
                 return '/hq/multimedia/file/' + media_type + '/' + id + '/' + name;
             }
         };
+        data.onLoading = tfLoading;
+        data.onLoadingComplete = tfLoadingComplete;
         var loadSession = function() {
             var sess = new WebFormSession(data);
             // TODO: probably shouldn't hard code these divs
-            sess.load($('#webforms'), self.options.language, {
-                onLoading: tfLoading,
-                onLoadingComplete: tfLoadingComplete
-            });
+            sess.load($('#webforms'), self.options.language);
         };
-        var promptForOffline = function(show) {
-            $('#offline-prompt')[show ? 'show' : 'hide']();
-        };
-        touchformsInit(data.xform_url, loadSession, promptForOffline);
+        loadSession();
     },
     selectForm: function (form) {
         var self = this;

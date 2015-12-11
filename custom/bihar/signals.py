@@ -24,17 +24,21 @@ def bihar_reassignment(sender, xform, cases, **kwargs):
         else:
             [owner_id] = owner_ids
             if owner_id not in DEMO_OWNER_IDS:
-                form_cases = set(c._id for c in cases)
-
+                # don't attempt to reassign the cases included in this form
+                cases_not_to_touch = set(c._id for c in cases)
                 def bihar_exclude(case):
-                    return case._id in form_cases or case.type in REASSIGN_BLACKLIST
+                    return case._id in cases_not_to_touch or case.type in REASSIGN_BLACKLIST
 
                 for case in cases:
                     if case.type in ('cc_bihar_pregnancy', 'cc_bihar_newborn'):
-
-                        assign_case(case, owner_id, BiharMockUser(),
-                                    include_subcases=True, include_parent_cases=True,
-                                    exclude_function=bihar_exclude, update={'reassignment_form_id': xform._id})
+                        reassigned = assign_case(
+                            case, owner_id, BiharMockUser(),
+                            include_subcases=True, include_parent_cases=True,
+                            exclude_function=bihar_exclude, update={'reassignment_form_id': xform._id}
+                        )
+                        # update the list of cases not to touch so we don't reassign the same
+                        # cases multiple times in the same form
+                        cases_not_to_touch = cases_not_to_touch | set(reassigned or [])
 
 
 cases_received.connect(bihar_reassignment)

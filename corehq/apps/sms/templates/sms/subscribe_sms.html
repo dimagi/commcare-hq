@@ -1,25 +1,10 @@
-{% extends 'sms/default.html' %}
+{% extends 'style/bootstrap3/base_section.html' %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load timezone_tags %}
 
-{% block title %}{% trans "Subscribe SMS" %}{% endblock %}
-
-{% block page-subtitle %}
-    <a href="{% url "subscribe_sms" domain %}">{% trans "Subscribe SMS" %}</a>
+{% block page_content %}
+    {% crispy form %}
 {% endblock %}
 
-{% block main_column %}
-    <form action="" method="post">
-        <fieldset>
-            <legend>{% trans "Subscribe settings" %}</legend>
-            {% crispy form %}
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">
-                    {% trans 'Update settings' %}
-                </button>
-            </div>
-        </fieldset>
-    </form>
-{% endblock %}

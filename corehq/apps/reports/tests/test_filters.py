@@ -1,5 +1,8 @@
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from corehq.apps.reports.filters.api import paginate_options
+from corehq.apps.reports.filters.forms import FormsByApplicationFilterParams, FormsByApplicationFilter, \
+    PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE, PARAM_SLUG_APP_ID, PARAM_SLUG_MODULE
+from corehq.apps.reports.tests import SetupSimpleAppMixin
 
 
 class TestEmwfPagination(SimpleTestCase):
@@ -53,3 +56,61 @@ class TestEmwfPagination(SimpleTestCase):
         count, options = paginate_options(self.data_sources, query, 0, 5)
         self.assertEqual(count, 0)
         self.assertEqual(options, [])
+
+
+class FormsByApplicationFilterDbTest(SetupSimpleAppMixin, TestCase):
+    dependent_apps = ['corehq.couchapps']
+
+    def test_get_filtered_data_by_app_id_missing(self):
+        params = FormsByApplicationFilterParams([
+            _make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
+            _make_filter(PARAM_SLUG_APP_ID, 'missing')
+        ])
+        results = FormsByApplicationFilter.get_filtered_data_for_parsed_params(self.domain, params)
+        self.assertEqual(0, len(results))
+
+    def test_get_filtered_data_by_app_id(self):
+        params = FormsByApplicationFilterParams([
+            _make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
+            _make_filter(PARAM_SLUG_APP_ID, self.app.id)
+        ])
+        results = FormsByApplicationFilter.get_filtered_data_for_parsed_params(self.domain, params)
+        self.assertEqual(2, len(results))
+        for i, details in enumerate(results):
+            self._assert_form_details_match(i, details)
+
+    def test_get_filtered_data_by_module_id_missing(self):
+        params = FormsByApplicationFilterParams([
+            _make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
+            _make_filter(PARAM_SLUG_APP_ID, self.app.id),
+            _make_filter(PARAM_SLUG_MODULE, '3'),
+        ])
+        results = FormsByApplicationFilter.get_filtered_data_for_parsed_params(self.domain, params)
+        self.assertEqual(0, len(results))
+
+    def test_get_filtered_data_by_module_id(self):
+        for i in range(2):
+            params = FormsByApplicationFilterParams([
+                _make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
+                _make_filter(PARAM_SLUG_APP_ID, self.app.id),
+                _make_filter(PARAM_SLUG_MODULE, str(i)),
+            ])
+            results = FormsByApplicationFilter.get_filtered_data_for_parsed_params(self.domain, params)
+            self.assertEqual(1, len(results))
+            details = results[0]
+            self._assert_form_details_match(i, details)
+
+    def test_get_filtered_data_by_module_id_bad(self):
+        params = FormsByApplicationFilterParams([
+            _make_filter(PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE),
+            _make_filter(PARAM_SLUG_APP_ID, self.app.id),
+            _make_filter(PARAM_SLUG_MODULE, 'illegal'),
+        ])
+        results = FormsByApplicationFilter.get_filtered_data_for_parsed_params(self.domain, params)
+        self.assertEqual(2, len(results))
+        for i, details in enumerate(results):
+            self._assert_form_details_match(i, details)
+
+
+def _make_filter(slug, value):
+    return {'slug': slug, 'value': value}

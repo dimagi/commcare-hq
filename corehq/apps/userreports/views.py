@@ -4,6 +4,7 @@ import functools
 import json
 import os
 import tempfile
+from django.conf import settings
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -104,6 +105,8 @@ def swallow_programming_errors(fn):
         try:
             return fn(request, domain, *args, **kwargs)
         except ProgrammingError as e:
+            if settings.DEBUG:
+                raise
             messages.error(
                 request,
                 _('There was a problem processing your request. '
@@ -696,6 +699,18 @@ def export_data_source(request, domain, config_id):
     for sql_filter in params.sql_filters:
         q = q.filter(sql_filter)
 
+    # xls format has limit of 65536 rows
+    # First row is taken up by headers
+    if params.format == 'xls' and q.count() >= 65535:
+        keyword_params = dict(**request.GET)
+        keyword_params.update(format='xlsx')
+        return HttpResponseRedirect(
+            '%s?%s' % (
+                reverse('export_configurable_data_source', args=[domain, config._id]),
+                urlencode(keyword_params)
+            )
+        )
+
     # build export
     def get_table(q):
         yield table.columns.keys()
@@ -729,15 +744,13 @@ def choice_list_api(request, domain, report_id, filter_id):
 
     if hasattr(report_filter, 'choice_provider'):
         query_context = ChoiceQueryContext(
-            report=report,
-            report_filter=report_filter,
             query=request.GET.get('q', None),
             limit=int(request.GET.get('limit', 20)),
             page=int(request.GET.get('page', 1)) - 1
         )
         return json_response([
             choice._asdict() for choice in
-            report_filter.choice_provider(query_context)
+            report_filter.choice_provider.query(query_context)
         ])
     else:
         # mobile UCR hits this API for invalid filters. Just return no choices.

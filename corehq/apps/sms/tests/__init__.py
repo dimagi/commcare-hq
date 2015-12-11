@@ -3,6 +3,7 @@ from .opt_tests import *
 from .migration import *
 from .test_dbaccessors import *
 from .test_all_backends import *
+from .test_backend_migration import *
 from .update_location_keyword_test import *
 
 from corehq.apps.domain.calculations import num_mobile_users
@@ -13,6 +14,7 @@ from corehq.apps.sms.mixin import (SMSBackend, BadSMSConfigException,
 from corehq.apps.sms.models import CommConnectCase
 from corehq.apps.sms.util import get_contact
 from corehq.apps.sms.tests.util import BaseSMSTest
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
@@ -28,7 +30,7 @@ class BackendInvocationDoc(Document):
     pass
 
 
-class TestCaseBackend(SMSBackend):
+class TestCaseBackend(TestSMSBackend):
 
     @classmethod
     def get_api_id(cls):

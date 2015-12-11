@@ -53,11 +53,10 @@ $.fn.inlineTouchform = function (options) {
                     options.onload();
                 }
             });
+            data.onLoading = onLoading;
+            data.onLoadingComplete = onLoadingComplete;
             var sess = new WebFormSession(data);
-            sess.load($target, options.lang, {
-                onLoading: onLoading,
-                onLoadingComplete: onLoadingComplete
-            });
+            sess.load($target, options.lang);
         }
     });
 };

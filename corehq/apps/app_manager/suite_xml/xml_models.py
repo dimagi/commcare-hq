@@ -4,6 +4,7 @@ from eulxml.xmlmap import (
     load_xmlobject_from_string,
 )
 from lxml import etree
+from corehq.apps.app_manager.exceptions import UnknownInstanceError
 
 
 class XPathField(StringField):
@@ -373,7 +374,7 @@ class Entry(OrderedXmlObject, XmlObject):
 
     assertions = NodeListField('assertions/assert', Assertion)
 
-    def require_instance(self, *instances):
+    def require_instances(self, instances=(), instance_ids=()):
         used = {(instance.id, instance.src) for instance in self.instances}
         for instance in instances:
             if (instance.id, instance.src) not in used:
@@ -392,6 +393,15 @@ class Entry(OrderedXmlObject, XmlObject):
                     self.node.remove(instance_node)
                     self.node.insert(self.node.index(command_node) + 1,
                                      instance_node)
+        covered_ids = {instance_id for instance_id, _ in used}
+        for instance_id in instance_ids:
+            if instance_id not in covered_ids:
+                raise UnknownInstanceError(
+                    "Instance reference not recognized: {} in xpath \"{}\""
+                    # to get xpath context to show in this error message
+                    # make instance_id a unicode subclass with an xpath property
+                    .format(instance_id, getattr(instance_id, 'xpath', "(Xpath Unknown)")))
+
         sorted_instances = sorted(self.instances,
                                   key=lambda instance: instance.id)
         if sorted_instances != self.instances:
@@ -564,17 +574,6 @@ class Detail(OrderedXmlObject, IdNode):
     details = NodeListField('detail', "self")
     _variables = NodeField('variables', DetailVariableList)
 
-    def get_all_fields(self):
-        '''
-        Return all fields under this Detail instance and all fields under
-        any details that may be under this instance.
-        :return:
-        '''
-        all_fields = []
-        for detail in [self] + list(self.details):
-            all_fields.extend(list(detail.fields))
-        return all_fields
-
     def _init_variables(self):
         if self._variables is None:
             self._variables = DetailVariableList()
@@ -591,6 +590,9 @@ class Detail(OrderedXmlObject, IdNode):
 
     def get_all_xpaths(self):
         result = set()
+
+        if self.nodeset:
+            result.add(self.nodeset)
         if self._variables:
             for variable in self.variables:
                 result.add(variable.function)
@@ -601,16 +603,26 @@ class Detail(OrderedXmlObject, IdNode):
                 for datum in getattr(frame, 'datums', []):
                     result.add(datum.value)
 
-        for field in self.get_all_fields():
+        def _get_graph_config_xpaths(configuration):
+            result = set()
+            for config in configuration.configs:
+                result.add(config.xpath_function)
+            return result
+
+        for field in self.fields:
             if field.template.form == 'graph':
                 s = etree.tostring(field.template.node)
                 template = load_xmlobject_from_string(s, xmlclass=GraphTemplate)
+                result.update(_get_graph_config_xpaths(template.graph.configuration))
                 for series in template.graph.series:
                     result.add(series.nodeset)
+                    result.update(_get_graph_config_xpaths(series.configuration))
             else:
                 result.add(field.header.text.xpath_function)
                 result.add(field.template.text.xpath_function)
 
+        for detail in self.details:
+            result.update(detail.get_all_xpaths())
         result.discard(None)
         return result
 

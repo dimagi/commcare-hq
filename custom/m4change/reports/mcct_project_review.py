@@ -10,7 +10,6 @@ from corehq.elastic import ES_URLS
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.dont_use.fields import StrongFilterUsersField
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.elastic import es_query
@@ -25,7 +24,7 @@ from dimagi.utils.parsing import json_format_date
 
 
 def _get_date_range(range):
-    if range is not None:
+    if range:
         dates = str(range).split(_(" to "))
         return (dates[0], dates[1])
     return None
@@ -116,7 +115,6 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
 
         base_template = 'm4change/report.html'
         report_template_path = 'm4change/selectTemplate.html'
-        filter_users_field_class = StrongFilterUsersField
 
         @property
         def es_results(self):

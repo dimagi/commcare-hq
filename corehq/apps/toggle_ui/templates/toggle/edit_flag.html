@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap2/base_page.html' %}
+{% extends 'style/bootstrap3/base_page.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load timezone_tags %}
@@ -6,10 +6,23 @@
 {% block title %}{% trans "Edit Feature Flag: " %}{{ toggle_meta.label }}{% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'formdesigner/js/lib/underscore-1.5.2.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/main.js' %}"></script>
+{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        .margin-vertical-sm {
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        .btn-danger {
+            display: inline;
+            border-radius: 4px !important;
+            margin-right: 10px !important;
+        }
+    </style>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -25,7 +38,7 @@
         $('.hq-help').hqHelp();
     });
     $(function(){
-        var PAD_CHAR = '&nbsp;'
+        var PAD_CHAR = '&nbsp;';
         function ToggleView() {
             var self = this;
             self.items = ko.observableArray();
@@ -38,11 +51,13 @@
                         pad = new Array(diff + 1).join(PAD_CHAR);
                     self.padded_ns[namespace] = namespace + pad;
                 });
-
-                self.init_items(config.items);
+                self.init_items(config);
+                self.latest_use = ko.observable(config.last_used._latest || '');
             };
 
-            self.init_items = function (items) {
+            self.init_items = function (config) {
+                var items = config.items,
+                    last_used = config.last_used || {};
                 self.items.removeAll();
                 _(items).each(function (item) {
                     var fields = item.split(':'),
@@ -50,7 +65,8 @@
                         value = fields.length > 1 ? fields[1] : fields[0];
                     self.items.push({
                         namespace: ko.observable(self.padded_ns[namespace]),
-                        value: ko.observable(value)
+                        value: ko.observable(value),
+                        last_used: ko.observable(last_used[value])
                     });
                 });
             };
@@ -58,7 +74,8 @@
             self.addItem = function (namespace) {
                 self.items.push({
                     namespace: ko.observable(self.padded_ns[namespace]),
-                    value: ko.observable()
+                    value: ko.observable(),
+                    last_used: ko.observable()
                 });
                 self.change();
             };
@@ -83,13 +100,13 @@
                     });
                     self.saveButton.ajax({
                         type: 'post',
-                        url: "{% url "edit_toggle" toggle.slug %}",
+                        url: "{% url "edit_toggle" toggle.slug %}" + location.search,
                         data: {
                             item_list: JSON.stringify(items)
                         },
                         dataType: 'json',
                         success: function (data) {
-                            self.init_items(data.item_list);
+                            self.init_items(data);
                         }
                     });
                 }
@@ -100,7 +117,8 @@
         var view = new ToggleView();
         view.init({
             items: {{ toggle.enabled_users|JSON }},
-            namespaces: {{ namespaces|JSON }}
+            namespaces: {{ namespaces|JSON }},
+            last_used: {{ last_used|JSON }}
         });
         ko.applyBindings(view, home.get(0));
         home.on('change', 'input', view.change);
@@ -108,6 +126,12 @@
 </script>
 {% endblock %}
 {% block page_content %}
+    {% if not usage_info %}
+        <a href="{{ page_url }}?usage_info=true" class="pull-right">
+            <i class="icon-white icon-info-sign"></i>
+            {% trans "Show usage" %}
+        </a>
+    {% endif %}
     {% if toggle_meta.description %}
         <p>{{ toggle_meta.description|safe }}</p>
     {% endif %}
@@ -137,22 +161,28 @@
             {% endif %}
         </div>
         <hr/>
-        <!-- ko foreach: items -->
-        <div class="row">
-            <div class="span1">
-                <a href="#" class="btn btn-danger" data-bind="click: $parent.removeItem"><i class="icon-trash"></i></a>
-            </div>
+        <div class="row" data-bind="visible: latest_use().name">
             <div class="span6">
-                <div class="input-append">
-                  <input class="input-medium" type="text" data-bind="value: value">
-                  <span class="add-on" data-bind="html: namespace" style="font-family:monospace;"></span>
+                Most recently updated: <strong data-bind="text:latest_use().name"></strong>: <span data-bind="text:latest_use().date"></span>
+            </div>
+        </div>
+        <!-- ko foreach: items -->
+        <div class="row margin-vertical-sm">
+            <div class="col-sm-4">
+                <div class="input-group">
+                    <div class="input-group-btn">
+                        <a href="#" class="btn btn-danger" data-bind="click: $parent.removeItem"><i class="fa fa-trash"></i></a>
+                    </div>
+                    <input class="input-medium form-control" type="text" data-bind="value: value">
+                    <span class="input-group-addon" data-bind="html: namespace" style="font-family:monospace;"></span>
+                    <span data-bind="text: last_used, visible: last_used" class="input-group-addon"></span>
                 </div>
             </div>
         </div>
         <!-- /ko -->
         {% for namespace in namespaces %}
             <button class="btn btn-success" data-bind="click: function (){ addItem('{{ namespace }}') }">
-                <i class="icon-plus"></i> {% trans "Add " %}{{ namespace }}
+                <i class="fa fa-plus"></i> {% trans "Add " %}{{ namespace }}
             </button>
         {% endfor %}
     </div>

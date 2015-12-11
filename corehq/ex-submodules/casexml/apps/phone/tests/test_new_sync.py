@@ -106,7 +106,7 @@ class TestSyncLogMigration(SimpleTestCase):
             self.assertTrue(parent in migrated.case_ids_on_phone)
             self.assertTrue(parent in migrated.dependent_case_ids_on_phone)
 
-    def test_prune_on_migrate(self):
+    def test_purge_on_migrate(self):
         sync_log = SyncLog(
             cases_on_phone=[
                 CaseState(case_id='robert'),

@@ -268,7 +268,9 @@
   force: true
 
 - name: "Auto-Resize Images"
-  description: "Automatically resizes images within forms. Choose full resize to scale to the available space on the screen, or horizontal resize to scale to the width of the screen"
+  description: "Automatically resizes images within forms. Follow 
+  <a href='https://confluence.dimagi.com/display/commcarepublic/Auto-Resize+Images+on+Android'>
+  the instructions here</a> to determine which value to use."
   id: "cc-resize-images"
   values: ["full", "half", "width", "none"]
   value_names: ["Full Resize", "Half Resize", "Horizontal Resize","None"]
@@ -303,11 +305,14 @@
   values_txt: "This will set the amount of time you will remain logged in before automatically being logged out."
   since: "2.21"
   
-- name: "Smart Image Inflation"
-  description: "When a value is selected, this feature controls the display size of any user-provided image such that it will be consistent with the size of the original image file, and consistent across devices. Follow the instructions here to determine which value you should use: https://confluence.dimagi.com/display/commcarepublic/Images+in+CommCare#ImagesinCommCare-ImageSizes"
+- name: "Image Compatibility on Multiple Devices"
+  description: "When a value is selected, this feature controls the display size of any user-provided image such
+  that it will be consistent with the size of the original image file, and consistent across devices. Follow 
+  <a href='https://confluence.dimagi.com/display/commcarepublic/Image+Sizing+with+Multiple+Android+Device+Models'>
+  the instructions here</a> to determine which value to use."
   id: "cc-inflation-target-density"
-  values: ["120", "160", "240", "280", "320", "400", "480", "none"]
-  value_names: ["Low Density", "Medium Density", "High Density", "Density 280", "XHigh Density", "Density 400", "XXHigh Density", "None"]
+  values: ["120", "160", "240", "320", "480", "640", "none"]
+  value_names: ["Low Density", "Medium Density", "High Density", "X-High Density", "XX-High Density", "XXX-High Density", "None"]
   default: "none"
   since: "2.24"
   force: true
