@@ -1,4 +1,5 @@
-from casexml.apps.case.dbaccessors import get_extension_case_ids
+from casexml.apps.case.dbaccessors import get_extension_case_ids, \
+    get_indexed_case_ids
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_case_xform_ids
 from corehq.apps.hqcase.dbaccessors import (
@@ -67,3 +68,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     @staticmethod
     def get_extension_case_ids(domain, case_ids):
         return get_extension_case_ids(domain, case_ids)
+
+    @staticmethod
+    def get_indexed_case_ids(domain, case_ids):
+        return get_indexed_case_ids(domain, case_ids)

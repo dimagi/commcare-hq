@@ -222,9 +222,9 @@ def get_dependent_case_info(domain, cases):
 
 
 def _get_direct_dependencies(domain, cases):
-    indexed_cases = set(get_indexed_case_ids(domain, cases))
     case_accessor = CaseAccessors(domain)
     extension_cases = set(case_accessor.get_extension_case_ids(cases))
+    indexed_cases = set(case_accessor.get_indexed_case_ids(cases))
     return DirectDependencies(
         all=extension_cases | indexed_cases,
         indexed_cases=indexed_cases,

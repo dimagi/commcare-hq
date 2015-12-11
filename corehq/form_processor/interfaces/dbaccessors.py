@@ -99,6 +99,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
     def get_extension_case_ids(domain, case_ids):
         raise NotImplementedError
 
+    @abstractmethod
+    def get_indexed_case_ids(domain, case_ids):
+        raise NotImplementedError
+
 
 class CaseAccessors(object):
     """
@@ -134,6 +138,9 @@ class CaseAccessors(object):
 
     def get_extension_case_ids(self, case_ids):
         return self.db_accessor.get_extension_case_ids(self.domain, case_ids)
+
+    def get_indexed_case_ids(self, case_ids):
+        return self.db_accessor.get_indexed_case_ids(self.domain, case_ids)
 
     def get_closed_case_ids(self, owner_id):
         return self.db_accessor.get_closed_case_ids(self.domain, owner_id)
