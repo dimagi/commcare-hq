@@ -21,7 +21,7 @@
 -
    icon: icon-map-marker
    name: Area Mapper
-   id: com.richard.lu.areamapper
+   id: richard.chard.lu.android.areamapper.LAUNCH
 -
    icon: icon-vellum-android-intent
    name: Breath Counter

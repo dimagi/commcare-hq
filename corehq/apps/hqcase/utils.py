@@ -16,6 +16,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.caselogic import get_related_cases
 from corehq.apps.hqcase.exceptions import CaseAssignmentError
 from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.users.util import SYSTEM_USER_ID
 from casexml.apps.case import const
 
 
@@ -71,20 +72,29 @@ def get_case_wrapper(data):
     return wrapper
 
 
-def get_case_by_domain_hq_user_id(domain, user_id, case_type):
-    """
-    Get the 'user case' for user_id. User cases are part of the call center feature.
-    """
-    cases = CommCareCase.view(
-        'hqcase/by_domain_hq_user_id',
-        key=[domain, user_id],
+def _get_cases_by_domain_hq_user_id(domain, user_id, case_type, include_docs):
+    return CommCareCase.view(
+        'case_by_domain_hq_user_id_type/view',
+        key=[domain, user_id, case_type],
         reduce=False,
-        include_docs=True
+        include_docs=include_docs
     ).all()
 
-    for case in cases:
-        if case.type == case_type:
-            return case
+
+def get_case_by_domain_hq_user_id(domain, user_id, case_type):
+    """
+    Return the first case of case_type owned by user_id
+    """
+    cases = _get_cases_by_domain_hq_user_id(domain, user_id, case_type, include_docs=True)
+    return cases[0] if cases else None
+
+
+def get_case_id_by_domain_hq_user_id(domain, user_id, case_type):
+    """
+    Return the ID of the first case of case_type owned by user_id
+    """
+    rows = _get_cases_by_domain_hq_user_id(domain, user_id, case_type, include_docs=False)
+    return rows[0]['id'] if rows else None
 
 
 def get_callcenter_case_mapping(domain, user_ids):
@@ -189,9 +199,8 @@ def assign_cases(caselist, owner_id, acting_user=None, update=None):
                 create=False,
                 case_id=c._id,
                 owner_id=owner_id,
-                version=V2,
                 update=update,
-            ).as_xml(format_datetime=json_format_datetime)) for c in filtered_cases
+            ).as_xml()) for c in filtered_cases
         ]
         # todo: this should check whether the submit_case_blocks call actually succeeds
         submit_case_blocks(caseblocks, domain, username=username,
@@ -251,3 +260,30 @@ def _process_case_block(case_block, attachments, old_case_id):
     # Add namespace back in without { } added by ET
     root.attrib['xmlns'] = xmlns
     return ET.tostring(root), ret_attachments
+
+
+def submit_case_block_from_template(domain, template, context):
+    case_block = render_to_string(template, context)
+    # Ensure the XML is formatted properly
+    # An exception is raised if not
+    case_block = ElementTree.tostring(ElementTree.XML(case_block))
+    submit_case_blocks(case_block, domain)
+
+
+def update_case(domain, case_id, case_properties=None, close=False):
+    """
+    Updates or closes a case (or both) by submitting a form.
+    domain - the case's domain
+    case_id - the case's id
+    case_properties - to update the case, pass in a dictionary of {name1: value1, ...}
+                      to ignore case updates, leave this argument out
+    close - True to close the case, False otherwise
+    """
+    context = {
+        'case_id': case_id,
+        'date_modified': json_format_datetime(datetime.datetime.utcnow()),
+        'user_id': SYSTEM_USER_ID,
+        'case_properties': case_properties,
+        'close': close,
+    }
+    submit_case_block_from_template(domain, 'hqcase/xml/update_case.xml', context)

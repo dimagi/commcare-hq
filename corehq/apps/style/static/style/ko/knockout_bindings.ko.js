@@ -355,7 +355,7 @@ ko.bindingHandlers.visibleFade = {
 
 ko.bindingHandlers.starred = {
     init: function (element) {
-        $(element).addClass('icon');
+        $(element).addClass('icon fa');
     },
     update: function (element, valueAccessor) {
         var value = ko.utils.unwrapObservable(valueAccessor()),
@@ -365,7 +365,7 @@ ko.bindingHandlers.starred = {
 
         var unselected = 'icon-star-empty';
         var selected = 'icon-star icon-large released';
-        var pending = 'icon-refresh icon-spin';
+        var pending = 'icon-refresh icon-spin fa-spin fa-spinner';
         var error = 'icon-ban-circle';
 
         var suffix = error;
@@ -490,8 +490,8 @@ function _makeClickHelper(fnName, icon) {
     };
 }
 
-ko.bindingHandlers.exitInput = _makeClickHelper('exitInput', 'icon icon-remove');
-ko.bindingHandlers.enterInput = _makeClickHelper('enterInput', 'icon icon-plus');
+ko.bindingHandlers.exitInput = _makeClickHelper('exitInput', 'icon icon-remove fa fa-remove');
+ko.bindingHandlers.enterInput = _makeClickHelper('enterInput', 'icon icon-plus fa fa-plus');
 
 ko.bindingHandlers.valueOrNoneUI = {
     init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
@@ -513,17 +513,18 @@ ko.bindingHandlers.valueOrNoneUI = {
 };
 
 ko.bindingHandlers.makeHqHelp = {
-    init: function (element, valueAccessor) {
+    update: function (element, valueAccessor) {
         var opts = valueAccessor(),
             name = ko.utils.unwrapObservable(opts.name || $(element).data('title')),
             description = ko.utils.unwrapObservable(opts.description || $(element).data('content')),
             placement = ko.utils.unwrapObservable(opts.placement || $(element).data('placement')),
             format = ko.utils.unwrapObservable(opts.format);
+        $(element).find('.hq-help').remove();
         COMMCAREHQ.makeHqHelp({
             title: name,
             content: description,
             html: format === 'html',
-            placement: placement || 'right',
+            placement: placement || 'right'
         }).appendTo(element);
     }
 };

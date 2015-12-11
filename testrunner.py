@@ -1,15 +1,19 @@
+import datetime
 from collections import defaultdict
 from functools import wraps
 from unittest.util import strclass
+from couchdbkit import Database, ResourceNotFound
+
 from couchdbkit.ext.django import loading
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
-import datetime
+from django.apps import AppConfig
 from django.conf import settings
-from django.utils import unittest
-import settingshelper
-
 from django.test import TransactionTestCase
+from django.utils import unittest
 from mock import patch, Mock
+from corehq.tests.optimizer import OptimizedTestRunnerMixin
+
+import settingshelper
 
 
 def set_db_enabled(is_enabled):
@@ -48,10 +52,14 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         settings.INSTALLED_APPS = (tuple(settings.INSTALLED_APPS) +
                                    tuple(settings.TEST_APPS))
         settings.CELERY_ALWAYS_EAGER = True
+        # keep a copy of the original PILLOWTOPS setting around in case other tests want it.
+        settings._PILLOWTOPS = settings.PILLOWTOPS
         settings.PILLOWTOPS = {}
         return super(HqTestSuiteRunner, self).setup_test_environment(**kwargs)
 
     def setup_databases(self, **kwargs):
+        from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
+        self.blob_db = TemporaryFilesystemBlobDB()
         self.newdbname = self.get_test_db_name(settings.COUCH_DATABASE_NAME)
         print "overridding the couch settings!"
         new_db_settings = settingshelper.get_dynamic_db_settings(
@@ -69,8 +77,26 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
             db_name: self.get_test_db_name(url)
             for db_name, url in settings.EXTRA_COUCHDB_DATABASES.items()
         }
-
         return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
+
+    def teardown_databases(self, old_config, **kwargs):
+        self.blob_db.close()
+        for db_uri in settings.EXTRA_COUCHDB_DATABASES.values():
+            db = Database(db_uri)
+            self._assert_is_a_test_db(db_uri)
+            self._delete_db_if_exists(db)
+        super(HqTestSuiteRunner, self).teardown_databases(old_config, **kwargs)
+
+    @staticmethod
+    def _assert_is_a_test_db(db_uri):
+        assert db_uri.endswith('_test'), db_uri
+
+    @staticmethod
+    def _delete_db_if_exists(db):
+        try:
+            db.server.delete_db(db.dbname)
+        except ResourceNotFound:
+            pass
 
     def get_all_test_labels(self):
         return [self._strip(app) for app in settings.INSTALLED_APPS
@@ -83,8 +109,9 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
             test_labels, extra_tests, **kwargs
         )
 
-    def _strip(self, app_name):
-        return app_name.split('.')[-1]
+    def _strip(self, entry):
+        app_config = AppConfig.create(entry)
+        return app_config.label
 
 
 class TimingTestSuite(unittest.TestSuite):
@@ -282,6 +309,12 @@ class TwoStageTestRunner(HqTestSuiteRunner):
             percent,
         )
 
+
+class DevTestRunner(OptimizedTestRunnerMixin, TwoStageTestRunner):
+    """
+    See OptimizedTestRunner.
+    """
+    pass
 
 class NonDbOnlyTestRunner(TwoStageTestRunner):
     """

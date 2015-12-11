@@ -103,7 +103,7 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
         return datetime(date.year, date.month, date.day, 23, 59, 59)
 
-    def get_data(self, slugs=None):
+    def get_data(self):
         if self.active_location:
             current_location = self.active_location.sql_location
 
@@ -243,7 +243,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             )
         )
 
-    def get_data(self, slugs=None):
+    def get_data(self):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
         stock_states = StockState.objects.filter(
@@ -272,7 +272,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             if self.config.get('aggregate'):
                 return self.aggregated_data(stock_states)
             else:
-                return self.raw_product_states(stock_states, slugs)
+                return self.raw_product_states(stock_states)
 
     def leaf_node_data(self, stock_states):
         for state in stock_states:
@@ -374,10 +374,10 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
             return result
 
-    def raw_product_states(self, stock_states, slugs):
+    def raw_product_states(self, stock_states):
         for state in stock_states:
             yield {
-                slug: f(state) for slug, f in self._slug_attrib_map.items() if not slugs or slug in slugs
+                slug: f(state) for slug, f in self._slug_attrib_map.items()
             }
 
 

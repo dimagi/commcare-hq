@@ -8,6 +8,7 @@ from corehq.apps.userreports.reports.view import ConfigurableReport
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 from .models import (
+    DEFAULT_REPORT_NOTIF_SUBJECT,
     ReportConfig,
     ReportNotification,
 )
@@ -77,15 +78,22 @@ class SavedReportConfigForm(forms.Form):
             )
 
         date_range = self.cleaned_data['date_range']
-        if date_range == 'last7':
-            self.cleaned_data['days'] = 7
-        elif date_range == 'last30':
-            self.cleaned_data['days'] = 30
-        elif (date_range == 'lastn' and self.cleaned_data['days'] is None
-              and self.cleaned_data['report_type'] != ConfigurableReport.prefix):
-            raise forms.ValidationError(
-                "Field 'days' was expected but not provided."
-            )
+
+        if (
+            self.cleaned_data['report_type'] == ConfigurableReport.prefix
+            and not self.cleaned_data['datespan_slug']
+        ):
+            self.cleaned_data['date_range'] = None
+        else:
+            if date_range == 'last7':
+                self.cleaned_data['days'] = 7
+            elif date_range == 'last30':
+                self.cleaned_data['days'] = 30
+            elif (date_range == 'lastn' and self.cleaned_data['days'] is None
+                  and self.cleaned_data['report_type'] != ConfigurableReport.prefix):
+                raise forms.ValidationError(
+                    "Field 'days' was expected but not provided."
+                )
 
         return self.cleaned_data
 
@@ -124,6 +132,13 @@ class ScheduledReportForm(forms.Form):
         label='Other recipients',
         required=False)
 
+    email_subject = forms.CharField(
+        required=False,
+        help_text='Translated into recipient\'s language if set to "%(default_subject)s".' % {
+            'default_subject': DEFAULT_REPORT_NOTIF_SUBJECT,
+        },
+    )
+
     language = forms.ChoiceField(
         label='Language',
         required=False,
@@ -143,6 +158,10 @@ class ScheduledReportForm(forms.Form):
                 'hour',
                 'send_to_owner',
                 'attach_excel',
+                crispy.Field(
+                    'email_subject',
+                    css_class='input-xlarge',
+                ),
                 'recipient_emails',
                 'language',
                 crispy.HTML(

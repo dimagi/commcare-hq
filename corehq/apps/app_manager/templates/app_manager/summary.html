@@ -19,7 +19,7 @@
     <script type="text/javascript" src="{% new_static 'app_manager/js/app_summary.ng.js' %}"></script>
 {% endblock js %}
 
-{% block uncompressed-js %} {{ block.super }}
+{% block js-inline %} {{ block.super }}
     <script type="text/javascript">
         (function (angular, undefined) {
             'use strict';
@@ -27,6 +27,8 @@
             var summaryApp = angular.module('summaryApp', ['ngRoute', 'summaryModule']);
             summaryApp.config(['$httpProvider', function($httpProvider) {
                 $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+                $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+                $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
             }]);
             summaryApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
                 djangoRMIProvider.configure({% djng_current_rmi %});

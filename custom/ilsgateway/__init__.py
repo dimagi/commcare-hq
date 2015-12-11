@@ -37,3 +37,11 @@ PRODUCTS_CODES_PROGRAMS_MAPPING = {
     "Essential Medicine": ['ab', 'bp', 'ca', 'cp', 'dx', 'fs', 'md', 'os', 'pc', 'zs'],
     "Safe Motherhood": ['eo', 'ff']
 }
+
+LOGISTICS_PRODUCT_ALIASES = {
+    'iucd': 'id',
+    'depo': 'dp',
+    'impl': 'ip',
+    'coc': 'cc',
+    'pop': 'pp'
+}

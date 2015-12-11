@@ -1,34 +1,26 @@
-"""
-Custom report definitions - control display of reports.
-
-The BaseReport is somewhat general, but it's
-currently specific to monthly reports.  It would be pretty simple to make
-this more general and subclass for montly reports , but I'm holding off on
-that until we actually have another use case for it.
-"""
 from collections import defaultdict, OrderedDict
+from itertools import chain
 import datetime
-import logging
 import pickle
-import json
 import re
 import urllib
 from dateutil import parser
+from dateutil.rrule import MONTHLY, rrule
 
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
 from sqlagg.filters import IN
 from corehq.const import SERVER_DATETIME_FORMAT
 from couchexport.models import Format
-from custom.common import ALL_OPTION
+from couchforms.models import XFormInstance
 from custom.opm.utils import numeric_fn
+from custom.utils.utils import clean_IN_filter_value
 
-from dimagi.utils.couch.database import iter_docs, get_db
-from dimagi.utils.dates import add_months_to_date
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
-from sqlagg.columns import SimpleColumn, SumColumn
+from sqlagg.columns import SimpleColumn
 
 from corehq.apps.es import cases as case_es, filters as es_filters
 from corehq.apps.reports.cache import request_cache
@@ -38,7 +30,10 @@ from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
-from corehq.apps.reports.util import make_form_couch_key
+from corehq.apps.reports.util import (
+    get_INFilter_bindparams,
+    make_form_couch_key,
+)
 from corehq.apps.users.models import CommCareCase, CouchUser
 from corehq.util.translation import localize
 from dimagi.utils.couch import get_redis_client
@@ -50,183 +45,6 @@ from .incentive import Worker
 from .filters import (HierarchyFilter, MetHierarchyFilter,
                       OPMSelectOpenCloseFilter as OpenCloseFilter)
 from .constants import *
-
-
-DATE_FILTER = "date between :startdate and :enddate"
-DATE_FILTER_EXTENDED = """(
-    opened_on <= :enddate AND (
-        closed_on >= :enddate OR
-        closed_on = ''
-        )
-    ) OR (
-    opened_on <= :enddate AND (
-        closed_on >= :startdate or closed_on <= :enddate
-        )
-    )
-"""
-DATE_FILTER_EXTENDED_OPENED = """(
-    opened_on <= :enddate AND (
-        closed_on >= :enddate OR
-        closed_on = ''
-        )
-    )
-"""
-DATE_FILTER_EXTENDED_CLOSED = """(
-    opened_on <= :enddate AND (
-        closed_on <= :enddate AND
-        closed_on != ''
-        )
-    )
-"""
-
-EDD_DOD_FILTER = """
-    (
-       (edd >= :edd_startdate AND edd <= :edd_enddate)
-       OR
-       (dod <= :enddate and dod != '')
-    )
-"""
-
-def ret_val(value):
-    return value
-
-
-class OpmCaseSqlData(SqlData):
-
-    table_name = "fluff_OpmCaseFluff"
-
-    def __init__(self, domain, user_id, datespan):
-        self.domain = domain
-        self.user_id = user_id
-        self.datespan = datespan
-
-    @property
-    def filter_values(self):
-        return dict(
-            domain=self.domain,
-            user_id=self.user_id,
-            startdate=str(self.datespan.startdate_utc.date()),
-            enddate=str(self.datespan.enddate_utc.date()),
-            edd_startdate=self.datespan.startdate.date().isoformat(),
-            edd_enddate=add_months_to_date(self.datespan.enddate_utc.date(), 5).isoformat(),
-            test_account='111%',
-        )
-
-    @property
-    def group_by(self):
-        return ['user_id']
-
-    @property
-    def filters(self):
-        filters = [
-            "domain = :domain",
-            "user_id = :user_id",
-            "account_number not like :test_account",
-            DATE_FILTER_EXTENDED_OPENED,
-            EDD_DOD_FILTER
-        ]
-        return filters
-
-    @property
-    def columns(self):
-        return [
-            DatabaseColumn("User ID", SimpleColumn("user_id")),
-            DatabaseColumn("Women registered", SumColumn("women_registered_total")),
-            DatabaseColumn("Children registered", SumColumn("children_registered_total"))
-        ]
-
-    @property
-    def data(self):
-        if self.user_id in super(OpmCaseSqlData, self).data:
-            return super(OpmCaseSqlData, self).data[self.user_id]
-        else:
-            return None
-
-
-class OpmFormSqlData(SqlData):
-    table_name = "fluff_OpmFormFluff"
-
-    def __init__(self, domain, user_id, datespan):
-        self.domain = domain
-        self.user_id = user_id
-        self.datespan = datespan
-
-    @property
-    def filter_values(self):
-        return dict(
-            domain=self.domain,
-            user_id=self.user_id,
-            startdate=self.datespan.startdate_utc.date(),
-            enddate=self.datespan.enddate_utc.date()
-        )
-
-    @property
-    def group_by(self):
-        return ['user_id']
-
-    @property
-    def filters(self):
-        filters = [
-            "domain = :domain",
-            "date between :startdate and :enddate"
-        ]
-        if self.user_id:
-            filters.append("user_id = :user_id")
-        return filters
-
-    @property
-    def columns(self):
-        return [
-            DatabaseColumn("User ID", SimpleColumn("user_id")),
-            DatabaseColumn("Growth Monitoring Total", SumColumn("growth_monitoring_total")),
-            DatabaseColumn("Service Forms Total", SumColumn("service_forms_total")),
-        ]
-
-    @property
-    def data(self):
-        if self.user_id is None:
-            return super(OpmFormSqlData, self).data
-        if self.user_id in super(OpmFormSqlData, self).data:
-            return super(OpmFormSqlData, self).data[self.user_id]
-        else:
-            return None
-
-
-VHND_PROPERTIES = [
-    "vhnd_available",
-    "vhnd_anm_present",
-    "vhnd_asha_present",
-    "vhnd_cmg_present",
-    "vhnd_ifa_available",
-    "vhnd_adult_scale_available",
-    "vhnd_child_scale_available",
-    "vhnd_adult_scale_functional",
-    "vhnd_child_scale_functional",
-    "vhnd_ors_available",
-    "vhnd_zn_available",
-    "vhnd_measles_vacc_available",
-]
-
-class VhndAvailabilitySqlData(SqlData):
-
-    table_name = "fluff_VhndAvailabilityFluff"
-
-    @property
-    def filter_values(self):
-        return {}
-
-    @property
-    def group_by(self):
-        return ['owner_id', 'date']
-
-    @property
-    def filters(self):
-        return []
-
-    @property
-    def columns(self):
-        return [DatabaseColumn('date', SimpleColumn("date"))] +\
-               [DatabaseColumn("", SumColumn(prop)) for prop in VHND_PROPERTIES]
 
 
 class SharedDataProvider(object):
@@ -248,9 +66,12 @@ class SharedDataProvider(object):
         'stock_zntab',
     ]
 
+    def __init__(self, cases=None):
+        self.cases = cases
+
     def get_all_vhnd_forms(self):
         key = make_form_couch_key(DOMAIN, xmlns=VHND_XMLNS)
-        return get_db().view(
+        return XFormInstance.get_db().view(
             'reports_forms/all_forms',
             startkey=key,
             endkey=key+[{}],
@@ -308,6 +129,19 @@ class SharedDataProvider(object):
             [date for date in self._service_dates[owner_id][prop]],
         )
 
+    @property
+    @memoized
+    def forms_by_case(self):
+        assert self.cases is not None, \
+            "SharedDataProvider was not instantiated with cases"
+        all_form_ids = chain(*(case.xform_ids for case in self.cases))
+        forms_by_case = defaultdict(list)
+        for form in iter_docs(XFormInstance.get_db(), all_form_ids):
+            if form['xmlns'] in OPM_XMLNSs:
+                case_id = form['form']['case']['@case_id']
+                forms_by_case[case_id].append(XFormInstance.wrap(form))
+        return forms_by_case
+
 
 class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport, ElasticTabularReport):
     """
@@ -332,6 +166,7 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     include_out_of_range_cases = False
 
     _debug_data = []
+
     @property
     def debug(self):
         return bool(self.request.GET.get('debug'))
@@ -402,7 +237,6 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
             else:
                 filter_by = [('block', 'block')]
         return filter_by
-
 
     @property
     def headers(self):
@@ -514,24 +348,10 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
 def _get_terms_list(terms):
     """
     >>> terms = ["Sahora", "Kenar Paharpur", "   ", " Patear"]
-    >>> _get_filter_list(terms)
-    [["sahora"], ["kenar", "paharpur"], ["patear"]]
+    >>> _get_terms_list(terms)
+    [['sahora'], ['kenar', 'paharpur'], ['patear']]
     """
     return filter(None, [term.lower().split() for term in terms])
-
-
-def get_nested_terms_filter(prop, terms):
-    filters = []
-
-    def make_filter(term):
-        return es_filters.term(prop, term)
-
-    for term in _get_terms_list(terms):
-        if len(term) == 1:
-            filters.append(make_filter(term[0]))
-        elif len(term) > 1:
-            filters.append(es_filters.AND(*(make_filter(t) for t in term)))
-    return es_filters.OR(*filters)
 
 
 class CaseReportMixin(object):
@@ -555,6 +375,17 @@ class CaseReportMixin(object):
         return get_matching_users(self.awcs, self.gp, self.block)
 
     def get_rows(self):
+        return self.cases
+
+    @property
+    @memoized
+    def cases(self):
+        if 'debug_case' in self.request.GET:
+            case = CommCareCase.get(self.request.GET['debug_case'])
+            if case.domain != DOMAIN:
+                raise Http404()
+            return [case]
+
         query = case_es.CaseES().domain(self.domain)\
                 .fields([])\
                 .opened_range(lte=self.datespan.enddate_utc)\
@@ -639,6 +470,11 @@ class CaseReportMixin(object):
     def set_extra_row_objects(self, row_objects):
         self.extra_row_objects = self.extra_row_objects + row_objects
 
+    @property
+    @memoized
+    def data_provider(self):
+        return SharedDataProvider(self.cases)
+
 
 class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
     name = "Beneficiary Payment Report"
@@ -689,10 +525,10 @@ class MetReport(CaseReportMixin, BaseReport):
     report_template_path = "opm/met_report.html"
     slug = "met_report"
     model = ConditionsMet
-    exportable = False
     default_rows = 5
     cache_key = 'opm-report'
     show_total = True
+    exportable = True
 
     @property
     def row_objects(self):
@@ -716,6 +552,7 @@ class MetReport(CaseReportMixin, BaseReport):
                     case_row.five = ''
                     case_row.pay = '--'
                     case_row.payment_last_month = '--'
+                    case_row.cash = '--'
                     case_row.issue = _('Reporting period incomplete')
                     rows.append(case_row)
             except InvalidRow as e:
@@ -785,8 +622,9 @@ class MetReport(CaseReportMixin, BaseReport):
         self.update_report_context()
 
         cache = get_redis_client()
-        if cache.exists(self.redis_key):
-            rows = pickle.loads(cache.get(self.redis_key))
+        value = cache.get(self.redis_key)
+        if value is not None:
+            rows = pickle.loads(value)
         else:
             rows = self.rows
 
@@ -883,7 +721,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
         return DataTablesHeader(*headers)
 
     @property
-    @request_cache("raw")
+    @request_cache()
     def print_response(self):
         self.is_rendered_as_email = True
         self.use_datatables = False
@@ -999,13 +837,18 @@ class UsersIdsData(SqlData):
 
     @property
     def filters(self):
-        if self.config.get('awc'):
-            return [IN('awc', 'awc')]
-        elif self.config.get('gp'):
-            return [IN('gp', 'gp')]
-        elif self.config.get('block'):
-            return [IN('block', 'block')]
+        for column_name in ['awc', 'gp', 'block']:
+            if self.config.get(column_name):
+                return [IN(column_name, get_INFilter_bindparams(column_name, self.config[column_name]))]
         return []
+
+    @property
+    def filter_values(self):
+        filter_values = super(UsersIdsData, self).filter_values
+        for column_name in ['awc', 'gp', 'block']:
+            if filter_values.get(column_name):
+                return clean_IN_filter_value(filter_values, column_name)
+        return filter_values
 
     @property
     def columns(self):
@@ -1069,8 +912,7 @@ class IncentivePaymentReport(CaseReportMixin, BaseReport):
         rows = []
         for user in self.users_matching_filter:
             user_case_list = self.awc_data.get(user['doc_id'], None)
-            form_sql_data = OpmFormSqlData(DOMAIN, user['doc_id'], self.datespan)
-            row = self.model(user, self, user_case_list, form_sql_data.data)
+            row = self.model(user, self, user_case_list)
             data = []
             for t in self.model.method_map:
                 data.append(getattr(row, t[0]))
@@ -1081,34 +923,6 @@ class IncentivePaymentReport(CaseReportMixin, BaseReport):
 
     def get_row_data(self, row, **kwargs):
         return OPMCaseRow(row, self)
-
-
-def this_month_if_none(month, year):
-    if month is not None:
-        assert year is not None, \
-            "You must pass either nothing or a month AND a year"
-        return month, year
-    else:
-        this_month = datetime.datetime.utcnow()
-        return this_month.month, this_month.year
-
-
-def calculate_total_row(rows):
-    regexp = re.compile('(.*?)>([0-9]+)<.*')
-    total_row = []
-    if len(rows) > 0:
-        num_cols = len(rows[0])
-        for i in range(num_cols):
-            colrows = [cr[i] for cr in rows]
-            if i == 0:
-                total_row.append("Total:")
-            else:
-                columns = [int(regexp.match(r).group(2)) for r in colrows]
-                if len(columns):
-                    total_row.append("<span style='display: block; text-align:center;'>%s</span>" % reduce(lambda x, y: x + y, columns, 0))
-                else:
-                    total_row.append('')
-    return total_row
 
 
 def _unformat_row(row):
@@ -1132,8 +946,9 @@ class HealthMapSource(NewHealthStatusReport):
     @property
     @memoized
     def get_users(self):
+        awcs = [awc.split('-')[0].strip() for awc in self.awcs]
         config = {
-            'awc': tuple(self.awcs),
+            'awc': tuple(awcs),
             'gp': tuple(self.gp),
             'block': tuple(self.blocks)
         }
@@ -1345,3 +1160,60 @@ class LongitudinalCMRReport(MetReport):
     slug = 'longitudinal_cmr'
     model = LongitudinalConditionsMet
     show_total = False
+    exportable = True
+    export_format_override = Format.XLS
+    month = None
+    year = None
+
+    @property
+    def row_objects(self):
+        """
+        Returns a list of objects, each representing a row in the report
+        """
+        rows = []
+        self._debug_data = []
+        now = datetime.datetime.now()
+        for index, row in enumerate(self.get_rows(), 1):
+            months = list(
+                rrule(MONTHLY, dtstart=datetime.date(row.opened_on.year, row.opened_on.month, 1),
+                      until=datetime.date(now.year, now.month, 1))
+            )
+            for month in months:
+                self.month = month.month
+                self.year = month.year
+                try:
+                    case_row = self.get_row_data(row, index=1)
+                    if not case_row.case_is_out_of_range:
+                        rows.append(case_row)
+                    else:
+                        case_row.one = ''
+                        case_row.two = ''
+                        case_row.three = ''
+                        case_row.four = ''
+                        case_row.five = ''
+                        case_row.pay = '--'
+                        case_row.payment_last_month = '--'
+                        case_row.issue = _('Reporting period incomplete')
+                        rows.append(case_row)
+                except InvalidRow as e:
+                    if self.debug:
+                        self.add_debug_data(row._id, e)
+        return rows
+
+    @property
+    def fields(self):
+        return [
+            MetHierarchyFilter,
+            OpenCloseFilter,
+        ]
+
+    @property
+    def redis_key(self):
+        redis_key = self.cache_key + "_" + self.slug
+        redis_key += "?blocks=%s&gps=%s&awcs=%s&is_open=%s" % (
+            self.blocks,
+            self.gp,
+            self.awcs,
+            self.request_params.get('is_open')
+        )
+        return redis_key

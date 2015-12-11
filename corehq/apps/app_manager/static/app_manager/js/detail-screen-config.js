@@ -436,6 +436,16 @@ function ParentSelect(init) {
     });
 }
 
+function FixtureSelect(init) {
+    var self = this;
+    self.active = ko.observable(init.active);
+    self.fixtureType = ko.observable(init.fixtureType);
+    self.displayColumn = ko.observable(init.displayColumn);
+    self.localize = ko.observable(init.localize);
+    self.variableColumn = ko.observable(init.variableColumn);
+    self.xpath = ko.observable(init.xpath);
+}
+
 var DetailScreenConfig = (function () {
     "use strict";
 
@@ -455,41 +465,40 @@ var DetailScreenConfig = (function () {
                 column properites: model, field, header, format
                 column extras: enum, late_flag
             */
-            var that = this, elements, i;
+            var that = this;
             eventize(this);
             this.original = JSON.parse(JSON.stringify(col));
 
-            function orDefault(value, d) {
-                if (value === undefined) {
-                    return d;
-                } else {
-                    return value;
-                }
-            }
-            this.original.model = this.original.model || screen.model;
-            this.original.field = this.original.field || "";
-            this.original.hasAutocomplete = orDefault(this.original.hasAutocomplete, true);
-            this.original.header = this.original.header || {};
-            this.original.format = this.original.format || "plain";
-            this.original['enum'] = this.original['enum'] || [];
+            // Set defaults for normal (non-tab) column attributes
+            var defaults = {
+                calc_xpath: ".",
+                enum: [],
+                field: "",
+                filter_xpath: "",
+                format: "plain",
+                graph_configuration: {},
+                hasAutocomplete: false,
+                header: {},
+                model: screen.model,
+                time_ago_interval: DetailScreenConfig.TIME_AGO.year,
+            };
+            _.defaults(this.original, defaults);
             this.original.late_flag = _.isNumber(this.original.late_flag) ? this.original.late_flag : 30;
-            this.original.filter_xpath = this.original.filter_xpath || "";
-            this.original.calc_xpath = this.original.calc_xpath || ".";
-            this.original.graph_configuration = this.original.graph_configuration || {};
+
             this.original.case_tile_field = ko.utils.unwrapObservable(this.original.case_tile_field) || "";
-
-            // Tab attributes
-            this.original.isTab = this.original.isTab !== undefined ? this.original.isTab : false;
-            this.isTab = this.original.isTab;
-
             this.case_tile_field = ko.observable(this.original.case_tile_field);
 
-
-            this.original.time_ago_interval = this.original.time_ago_interval || DetailScreenConfig.TIME_AGO.year;
+            // Set up tab attributes
+            var tabDefaults = {
+                isTab: false,
+                hasNodeset: false,
+                nodeset: "",
+            };
+            _.defaults(this.original, tabDefaults);
+            _.extend(this, _.pick(this.original, _.keys(tabDefaults)));
 
             this.screen = screen;
             this.lang = screen.lang;
-
             this.model = uiElement.select([
                 {label: "Case", value: "case"}
             ]).val(this.original.model);
@@ -506,14 +515,8 @@ var DetailScreenConfig = (function () {
                 that.field.observableVal(that.field.val());
             });
 
-            this.saveAttempted = ko.observable(false);
-            this.showWarning = ko.computed(function() {
-                // True if an invalid property name warning should be displayed.
-                return (this.field.observableVal() || this.saveAttempted()) && !DetailScreenConfig.field_val_re.test(this.field.observableVal());
-            }, this);
-
             (function () {
-                var i, lang, visibleVal = "", invisibleVal = "";
+                var i, lang, visibleVal = "", invisibleVal = "", nodesetVal;
                 if (that.original.header && that.original.header[that.lang]) {
                     visibleVal = invisibleVal = that.original.header[that.lang];
                 } else {
@@ -527,13 +530,34 @@ var DetailScreenConfig = (function () {
                 }
                 that.header = uiElement.input().val(invisibleVal);
                 that.header.setVisibleValue(visibleVal);
+
+                that.nodeset = uiElement.input().val(that.original.nodeset);
                 if (that.isTab) {
                     // hack to wait until the input's there to prepend the Tab: label.
                     setTimeout(function () {
-                        that.header.ui.addClass('input-prepend').prepend($('<span class="add-on">Tab:</span>'));
+                        that.header.ui.addClass('input-prepend').prepend($('<span class="add-on">Tab</span>'));
+                        that.nodeset.ui.addClass('input-prepend').prepend($('<span class="add-on">Nodeset</span>'));
                     }, 0);
+
+                    // Observe nodeset values for the sake of validation
+                    if (that.hasNodeset) {
+                        that.nodeset.observableVal = ko.observable(that.original.nodeset);
+                        that.nodeset.on("change", function(){
+                            that.nodeset.observableVal(that.nodeset.val());
+                        });
+                    }
                 }
             }());
+
+            this.saveAttempted = ko.observable(false);
+            this.showWarning = ko.computed(function() {
+                if (this.isTab) {
+                    // Data tab missing its nodeset
+                    return this.hasNodeset && !this.nodeset.observableVal();
+                }
+                // Invalid property name
+                return (this.field.observableVal() || this.saveAttempted()) && !DetailScreenConfig.field_val_re.test(this.field.observableVal());
+            }, this);
 
             // Add the graphing option if this is a graph so that we can set the value to graph
             var menuOptions = DetailScreenConfig.MENU_OPTIONS;
@@ -578,7 +602,6 @@ var DetailScreenConfig = (function () {
             this.calc_xpath_extra = uiElement.input().val(this.original.calc_xpath.toString());
             this.calc_xpath_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.CALC_XPATH_EXTRA_LABEL));
 
-
             this.time_ago_extra = uiElement.select([
                 {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.YEARS, value: DetailScreenConfig.TIME_AGO.year},
                 {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.MONTHS, value: DetailScreenConfig.TIME_AGO.month},
@@ -590,10 +613,14 @@ var DetailScreenConfig = (function () {
             ]).val(this.original.time_ago_interval.toString());
             this.time_ago_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.TIME_AGO_EXTRA_LABEL));
 
-            elements = [
+            function fireChange() {
+                that.fire('change');
+            }
+            _.each([
                 'model',
                 'field',
                 'header',
+                'nodeset',
                 'format',
                 'enum_extra',
                 'graph_extra',
@@ -601,15 +628,9 @@ var DetailScreenConfig = (function () {
                 'filter_xpath_extra',
                 'calc_xpath_extra',
                 'time_ago_extra'
-            ];
-
-            function fireChange() {
-                that.fire('change');
-            }
-
-            for (i = 0; i < elements.length; i += 1) {
-                this[elements[i]].on('change', fireChange);
-            }
+            ], function(element) {
+                that[element].on('change', fireChange);
+            });
             this.case_tile_field.subscribe(fireChange);
 
             this.$format = $('<div/>').append(this.format.ui);
@@ -678,6 +699,7 @@ var DetailScreenConfig = (function () {
                 var column = this.original;
                 column.field = this.field.val();
                 column.header[this.lang] = this.header.val();
+                column.nodeset = this.nodeset.val();
                 column.format = this.format.val();
                 column.enum = this.enum_extra.getItems();
                 column.graph_configuration =
@@ -689,11 +711,10 @@ var DetailScreenConfig = (function () {
                 column.case_tile_field = this.case_tile_field();
                 if (this.isTab) {
                     // Note: starting_index is added by Screen.serialize
-                    return {
+                    return _.extend({
                         starting_index: this.starting_index,
-                        header: column.header,
-                        isTab: true
-                    };
+                        has_nodeset: column.hasNodeset,
+                    }, _.pick(column, ['header', 'isTab', 'nodeset']));
                 }
                 return column;
             },
@@ -737,7 +758,7 @@ var DetailScreenConfig = (function () {
             this.properties = options.properties;
             this.childCaseTypes = options.childCaseTypes;
             this.fixtures = options.fixtures;
-            // The column key is used to retreive the columns from the spec and
+            // The column key is used to retrieve the columns from the spec and
             // as the name of the key in the data object that is sent to the
             // server on save.
             this.columnKey = options.columnKey;
@@ -748,11 +769,13 @@ var DetailScreenConfig = (function () {
             // of these configurations.
             this.containsSortConfiguration = options.containsSortConfiguration;
             this.containsParentConfiguration = options.containsParentConfiguration;
+            this.containsFixtureConfiguration = options.containsFixtureConfiguration;
             this.containsFilterConfiguration = options.containsFilterConfiguration;
             this.containsCaseListLookupConfiguration = options.containsCaseListLookupConfiguration;
             this.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
             this.allowsTabs = options.allowsTabs;
             this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
+            this.persistCaseContext = ko.observable(spec[this.columnKey].persist_case_context || false);
             this.persistTileOnForms = ko.observable(spec[this.columnKey].persist_tile_on_forms || false);
             this.enableTilePullDown = ko.observable(spec[this.columnKey].pull_down_tile || false);
             this.allowsEmptyColumns = options.allowsEmptyColumns;
@@ -791,14 +814,17 @@ var DetailScreenConfig = (function () {
                 columns.splice(
                     tabs[i].starting_index + i,
                     0,
-                    {isTab: true, header: tabs[i].header}
+                    _.extend({
+                        hasNodeset: tabs[i].has_nodeset,
+                    }, _.pick(tabs[i], ["header", "nodeset", "isTab"]))
                 );
             }
             if (this.columnKey === 'long') {
-                this.addTab = function() {
+                this.addTab = function(hasNodeset) {
                     var col = that.initColumnAsColumn(Column.init({
                         isTab: true,
-                        model: 'tab'
+                        hasNodeset: hasNodeset,
+                        model: 'tab',
                     }, that));
                     that.columns.splice(0, 0, col);
                 };
@@ -826,6 +852,9 @@ var DetailScreenConfig = (function () {
                 this.saveButton.fire('change');
             });
             this.useCaseTiles.subscribe(function(){
+                that.saveButton.fire('change');
+            });
+            this.persistCaseContext.subscribe(function(){
                 that.saveButton.fire('change');
             });
             this.persistTileOnForms.subscribe(function(){
@@ -858,6 +887,10 @@ var DetailScreenConfig = (function () {
                             return;
                         }
                     } else {
+                        if (column.showWarning()){
+                            alert("There are errors in your tabs");
+                            return;
+                        }
                         containsTab = true;
                     }
                 }
@@ -924,6 +957,7 @@ var DetailScreenConfig = (function () {
                 ));
 
                 data.useCaseTiles = this.useCaseTiles() == "yes" ? true : false;
+                data.persistCaseContext = this.persistCaseContext();
                 data.persistTileOnForms = this.persistTileOnForms();
                 data.enableTilePullDown = this.persistTileOnForms() ? this.enableTilePullDown() : false;
 
@@ -937,6 +971,20 @@ var DetailScreenConfig = (function () {
                         };
                     }
                     data.parent_select = JSON.stringify(parentSelect);
+                }
+                if (this.containsFixtureConfiguration) {
+                    var fixtureSelect;
+                    if (this.config.hasOwnProperty('fixtureSelect')) {
+                        fixtureSelect = {
+                            active: this.config.fixtureSelect.active(),
+                            fixture_type: this.config.fixtureSelect.fixtureType(),
+                            display_column: this.config.fixtureSelect.displayColumn(),
+                            localize: this.config.fixtureSelect.localize(),
+                            variable_column: this.config.fixtureSelect.variableColumn(),
+                            xpath: this.config.fixtureSelect.xpath()
+                        };
+                    }
+                    data.fixture_select = JSON.stringify(fixtureSelect);
                 }
                 if (this.containsSortConfiguration) {
                     data.sort_elements = JSON.stringify(_.map(this.config.sortRows.sortRows(), function(row){
@@ -1008,6 +1056,17 @@ var DetailScreenConfig = (function () {
                     langs: this.langs
                 });
             }
+
+            if (spec.hasOwnProperty('fixtureSelect') && spec.fixtureSelect) {
+                this.fixtureSelect = new FixtureSelect({
+                    active: spec.fixtureSelect.active,
+                    fixtureType: spec.fixtureSelect.fixture_type,
+                    displayColumn: spec.fixtureSelect.display_column,
+                    localize: spec.fixtureSelect.localize,
+                    variableColumn: spec.fixtureSelect.variable_column,
+                    xpath: spec.fixtureSelect.xpath
+                });
+            }
             this.saveUrl = spec.saveUrl;
             this.contextVariables = spec.contextVariables;
 
@@ -1033,6 +1092,7 @@ var DetailScreenConfig = (function () {
                         fixtures: spec.fixtures,
                         containsSortConfiguration: columnType == "short",
                         containsParentConfiguration: columnType == "short",
+                        containsFixtureConfiguration: (columnType == "short" && window.toggles.FIXTURE_CASE_SELECTION),
                         containsFilterConfiguration: columnType == "short",
                         containsCaseListLookupConfiguration: (columnType == "short" && window.toggles.CASE_LIST_LOOKUP),
                         containsCustomXMLConfiguration: columnType == "short",

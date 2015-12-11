@@ -1,9 +1,9 @@
-from sqlagg.base import CustomQueryColumn, QueryMeta, AliasColumn
+from sqlagg.base import CustomQueryColumn, QueryMeta, AliasColumn, TableNotFoundException
 from sqlagg.columns import CountUniqueColumn, SumWhen, SimpleColumn
 from sqlagg.filters import BETWEEN, EQ, LTE
 import sqlalchemy
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
-from corehq.apps.userreports.models import CustomDataSourceConfiguration
+from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.sql import get_table_name, get_indicator_table
 from django.utils.translation import ugettext as _
 
@@ -48,12 +48,17 @@ class FunctionalityChecklistMeta(QueryMeta):
         self.columns.append(column.sql_column)
 
     def get_asha_table(self, metadata):
-        config = CustomDataSourceConfiguration.by_id(
-            CustomDataSourceConfiguration.get_doc_id(DOMAIN, TABLE_ID)
+        config = StaticDataSourceConfiguration.by_id(
+            StaticDataSourceConfiguration.get_doc_id(DOMAIN, TABLE_ID)
         )
         return get_indicator_table(config, custom_metadata=metadata)
 
     def execute(self, metadata, connection, filter_values):
+        try:
+            table = metadata.tables[self.table_name]
+        except KeyError:
+            raise TableNotFoundException("Unable to query table, table not found: %s" % self.table_name)
+
         asha_table = self.get_asha_table(metadata)
 
         max_date_query = sqlalchemy.select([
@@ -63,7 +68,7 @@ class FunctionalityChecklistMeta(QueryMeta):
 
         if self.filters:
             for filter in self.filters:
-                max_date_query.append_whereclause(filter.build_expression())
+                max_date_query.append_whereclause(filter.build_expression(table))
 
         max_date_query.append_group_by(
             asha_table.c.case_id

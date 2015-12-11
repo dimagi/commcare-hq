@@ -1,12 +1,14 @@
+from collections import namedtuple
 from xml.etree import ElementTree
 from casexml.apps.case.models import CommCareCase
+from corehq import toggles, feature_previews
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.commtrack.models import CommtrackConfig, SupplyPointCase, CommtrackActionConfig, \
     CommtrackRequisitionConfig
+from corehq.apps.locations.dbaccessors import get_location_from_site_code
 from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program
-from corehq.apps.locations.models import Location
 import itertools
 from datetime import date, timedelta
 from calendar import monthrange
@@ -15,10 +17,13 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from django.utils.text import slugify
 from unidecode import unidecode
-from corehq.feature_previews import enable_commtrack_previews
-from dimagi.utils.parsing import json_format_datetime
 from django.utils.translation import ugettext as _
 import re
+
+from corehq.form_processor.interfaces.supply import SupplyInterface
+
+
+CaseLocationTuple = namedtuple('CaseLocationTuple', 'case location')
 
 
 def all_sms_codes(domain):
@@ -34,20 +39,14 @@ def all_sms_codes(domain):
     return dict(itertools.chain(*([(k.lower(), (type, v)) for k, v in codes.iteritems()] for type, codes in sms_codes)))
 
 
-def get_supply_point(domain, site_code=None, loc=None):
-    if loc is None:
-        loc = Location.view('commtrack/locations_by_code',
-                            key=[domain, site_code.lower()],
-                            include_docs=True).first()
-    if loc:
-        case = SupplyPointCase.get_by_location(loc)
+def get_supply_point_and_location(domain, site_code):
+    location = get_location_from_site_code(domain, site_code)
+    if location:
+        case = SupplyInterface(domain).get_by_location(location)
     else:
         case = None
 
-    return {
-        'case': case,
-        'location': loc,
-    }
+    return CaseLocationTuple(case=case, location=location)
 
 
 def make_program(domain, name, code, default=False):
@@ -74,24 +73,12 @@ def get_or_create_default_program(domain):
         )
 
 
-def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False):
-    """
-    Create a new CommtrackConfig object for a domain
-    if it does not already exist.
-
-    This adds some collection of default products, programs,
-    SMS keywords, etc.
-    """
-    def _needs_commtrack_config(domain):
-        return (domain and
-                domain.commtrack_enabled and
-                not CommtrackConfig.for_domain(domain.name))
-
-    if not _needs_commtrack_config(domain):
+def _create_commtrack_config_if_needed(domain):
+    if CommtrackConfig.for_domain(domain):
         return
 
-    config = CommtrackConfig(
-        domain=domain.name,
+    CommtrackConfig(
+        domain=domain,
         multiaction_enabled=True,
         multiaction_keyword='report',
         actions=[
@@ -122,20 +109,25 @@ def bootstrap_commtrack_settings_if_necessary(domain, requisitions_enabled=False
                 caption='Stock-out',
             ),
         ],
-    )
+    ).save()
 
-    if requisitions_enabled:
-        config.requisition_config = get_default_requisition_config()
 
-    config.save()
+def _enable_commtrack_previews(domain):
+    for toggle_class in (
+        toggles.COMMTRACK,
+        feature_previews.VELLUM_ADVANCED_ITEMSETS,
+        toggles.STOCK_TRANSACTION_EXPORT,
+    ):
+        toggle_class.set(domain, True, toggles.NAMESPACE_DOMAIN)
 
-    program = get_or_create_default_program(domain.name)
 
-    # Enable feature flags if necessary - this is required by exchange
-    # and should have no effect on changing the project settings directly
-    enable_commtrack_previews(domain)
-
-    return config
+def make_domain_commtrack(domain_object):
+    domain_object.commtrack_enabled = True
+    domain_object.locations_enabled = True
+    domain_object.save()
+    _create_commtrack_config_if_needed(domain_object.name)
+    get_or_create_default_program(domain_object.name)
+    _enable_commtrack_previews(domain_object.name)
 
 
 def get_default_requisition_config():
@@ -206,7 +198,6 @@ def submit_mapping_case_block(user, index):
         caseblock = CaseBlock(
             create=False,
             case_id=mapping._id,
-            version=V2,
             index=index
         )
     else:
@@ -214,7 +205,6 @@ def submit_mapping_case_block(user, index):
             create=True,
             case_type=const.USER_LOCATION_OWNER_MAP_TYPE,
             case_id=location_map_case_id(user),
-            version=V2,
             owner_id=user._id,
             index=index,
             case_name=const.USER_LOCATION_OWNER_MAP_TYPE.replace('-', ' '),
@@ -223,14 +213,15 @@ def submit_mapping_case_block(user, index):
 
     submit_case_blocks(
         ElementTree.tostring(
-            caseblock.as_xml(format_datetime=json_format_datetime)
+            caseblock.as_xml()
         ),
         user.domain,
     )
 
 
 def location_map_case_id(user):
-    return 'user-owner-mapping-' + user._id
+    # TODO: migrate these to use uuid5(uuid.NAMESPACE_OID, user.user_id)
+    return 'user-owner-mapping-' + user.user_id
 
 
 def get_commtrack_location_id(user, domain):

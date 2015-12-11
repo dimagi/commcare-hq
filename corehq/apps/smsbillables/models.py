@@ -9,7 +9,7 @@ from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import DIRECTION_CHOICES
 from corehq.apps.sms.phonenumbers_helper import get_country_code_and_national_number
-from corehq.apps.sms.test_backend import TestSMSBackend
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.smsbillables.exceptions import AmbiguousPrefixException
 from corehq.util.quickcache import quickcache
@@ -32,6 +32,9 @@ class SmsGatewayFeeCriteria(models.Model):
     direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
     country_code = models.IntegerField(max_length=5, null=True, blank=True, db_index=True)
     prefix = models.CharField(max_length=10, blank=True, default="", db_index=True)
+
+    class Meta:
+        app_label = 'smsbillables'
 
     @classmethod
     def get_most_specific(cls, backend_api_id, direction,
@@ -103,6 +106,9 @@ class SmsGatewayFee(models.Model):
     currency = models.ForeignKey(accounting.Currency, on_delete=models.PROTECT)
     date_created = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        app_label = 'smsbillables'
+
     @classmethod
     def create_new(cls, backend_api_id, direction, amount,
                    currency=None, backend_instance=None, country_code=None, prefix=None,
@@ -169,6 +175,9 @@ class SmsUsageFeeCriteria(models.Model):
     direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
     domain = models.CharField(max_length=25, db_index=True, null=True)
 
+    class Meta:
+        app_label = 'smsbillables'
+
     @classmethod
     def get_most_specific(cls, direction, domain=None):
         """
@@ -206,6 +215,9 @@ class SmsUsageFee(models.Model):
     criteria = models.ForeignKey(SmsUsageFeeCriteria, on_delete=models.PROTECT)
     amount = models.DecimalField(default=0.0, max_digits=10, decimal_places=4)
     date_created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = 'smsbillables'
 
     @classmethod
     def create_new(cls, direction, amount, domain=None, save=True):
@@ -254,6 +266,9 @@ class SmsBillable(models.Model):
     direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
     date_sent = models.DateField()
     date_created = models.DateField(auto_now_add=True)
+
+    class Meta:
+        app_label = 'smsbillables'
 
     @property
     def gateway_charge(self):

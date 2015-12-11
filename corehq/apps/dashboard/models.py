@@ -1,5 +1,4 @@
 from django.core.urlresolvers import reverse
-from corehq import Domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.models import ReportConfig
 from dimagi.utils.decorators.memoized import memoized
@@ -53,19 +52,22 @@ class Tile(object):
         tile_context = {
             'slug': self.tile_config.slug,
             'helpText': self.tile_config.help_text,
+            'analytics': {
+                'usage_label': self.tile_config.analytics_usage_label,
+                'workflow_label': self.tile_config.analytics_workflow_label,
+            }
         }
         tile_context.update(self.context_processor.context)
         return tile_context
 
 
 class TileConfiguration(object):
-    """This is used by
-    """
 
     def __init__(self, title, slug, icon, context_processor_class,
                  url=None, urlname=None, is_external_link=False,
                  visibility_check=None, url_generator=None,
-                 help_text=None):
+                 help_text=None, analytics_usage_label=None,
+                 analytics_workflow_label=None):
         """
         :param title: The title of the tile
         :param slug: The tile's slug
@@ -80,6 +82,10 @@ class TileConfiguration(object):
         :param url_generator: a lambda that accepts a request and returns
         a string that is the url the tile will take the user to if it's clicked
         :param help_text: (optional) text that will appear on hover of tile
+        :param analytics_usage_label: (optional) label to be used in usage
+        analytics event tracking.
+        :param analytics_workflow_label: (optional) label to be used in workflow
+        analytics event tracking.
         """
         if not issubclass(context_processor_class, BaseTileContextProcessor):
             raise TileConfigurationError(
@@ -96,6 +102,8 @@ class TileConfiguration(object):
                                  or self._default_visibility_check)
         self.url_generator = url_generator or self._default_url_generator
         self.help_text = help_text
+        self.analytics_usage_label = analytics_usage_label
+        self.analytics_workflow_label = analytics_workflow_label
 
     @property
     def ng_directive(self):

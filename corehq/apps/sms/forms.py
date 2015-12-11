@@ -4,22 +4,29 @@ from datetime import time
 from crispy_forms.bootstrap import StrictButton, InlineField, FormActions
 from crispy_forms.helper import FormHelper
 from django import forms
+from django.core.urlresolvers import reverse
 from django.forms.forms import Form
 from django.forms.fields import *
 from crispy_forms import layout as crispy
+from crispy_forms import bootstrap as twbscrispy
 from django.utils.safestring import mark_safe
-from corehq.apps.hqwebapp.crispy import (BootstrapMultiField, ErrorsOnlyField,
-    FieldWithHelpBubble, HiddenFieldWithErrors)
+from corehq.apps.hqwebapp.crispy import (BootstrapMultiField, HiddenFieldWithErrors, FieldsetAccordionGroup)
+from corehq.apps.style.crispy import FieldWithHelpBubble
+from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.app_manager.dbaccessors import get_built_app_ids
+from corehq.apps.app_manager.models import Application
 from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD
 from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.reminders.forms import RecordListField, validate_time
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from corehq.apps.sms.util import get_available_backends, validate_phone_number
+from corehq.apps.sms.util import (get_available_backends, validate_phone_number,
+    strip_plus)
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
 from dimagi.utils.django.fields import TrimmedCharField
+from dimagi.utils.couch.database import iter_docs
 from django.conf import settings
 
 FORWARDING_CHOICES = (
@@ -64,6 +71,18 @@ HIDE_ALL = "HIDE_ALL"
 TIME_BEFORE = "BEFORE"
 TIME_AFTER = "AFTER"
 TIME_BETWEEN = "BETWEEN"
+
+WELCOME_RECIPIENT_NONE = 'NONE'
+WELCOME_RECIPIENT_CASE = 'CASE'
+WELCOME_RECIPIENT_MOBILE_WORKER = 'MOBILE_WORKER'
+WELCOME_RECIPIENT_ALL = 'ALL'
+
+WELCOME_RECIPIENT_CHOICES = (
+    (WELCOME_RECIPIENT_NONE, ugettext_lazy('Nobody')),
+    (WELCOME_RECIPIENT_CASE, ugettext_lazy('Cases only')),
+    (WELCOME_RECIPIENT_MOBILE_WORKER, ugettext_lazy('Mobile Workers only')),
+    (WELCOME_RECIPIENT_ALL, ugettext_lazy('Cases and Mobile Workers')),
+)
 
 
 class ForwardingRuleForm(Form):
@@ -215,46 +234,55 @@ class SettingsForm(Form):
         required=False,
         label=ugettext_noop("Registration Submitter"),
     )
-
     sms_mobile_worker_registration_enabled = ChoiceField(
         required=False,
         choices=ENABLED_DISABLED_CHOICES,
         label=ugettext_noop("SMS Mobile Worker Registration"),
     )
-
+    registration_welcome_message = ChoiceField(
+        choices=WELCOME_RECIPIENT_CHOICES,
+        label=ugettext_lazy("Send registration welcome message to"),
+    )
 
     @property
     def section_general(self):
         fields = [
-            BootstrapMultiField(
+            hqcrispy.B3MultiField(
                 _("Default SMS Response"),
-                InlineField(
-                    "use_default_sms_response",
-                    data_bind="value: use_default_sms_response",
+                crispy.Div(
+                    InlineField(
+                        "use_default_sms_response",
+                        data_bind="value: use_default_sms_response",
+                    ),
+                    css_class='col-sm-4'
                 ),
-                InlineField(
-                    "default_sms_response",
-                    css_class="input-xxlarge",
-                    placeholder=_("Enter Default Response"),
-                    data_bind="visible: showDefaultSMSResponse",
+                crispy.Div(
+                    InlineField(
+                        "default_sms_response",
+                        css_class="input-xxlarge",
+                        placeholder=_("Enter Default Response"),
+                        data_bind="visible: showDefaultSMSResponse",
+                    ),
+                    css_class='col-sm-8'
                 ),
                 help_bubble_text=_("Enable this option to provide a "
-                    "default response when a user's incoming SMS does not "
-                    "answer an open survey or match a known keyword."),
+                                   "default response when a user's incoming SMS does not "
+                                   "answer an open survey or match a known keyword."),
                 css_id="default-sms-response-group",
+                field_class='col-sm-6 col-md-9 col-lg-9'
             ),
             FieldWithHelpBubble(
                 "use_restricted_sms_times",
                 data_bind="value: use_restricted_sms_times",
                 help_bubble_text=_("Use this option to limit the times "
-                    "that SMS messages can be sent to users. Messages that "
-                    "are sent outside these windows will remained queued "
-                    "and will go out as soon as another window opens up."),
+                                   "that SMS messages can be sent to users. Messages that "
+                                   "are sent outside these windows will remained queued "
+                                   "and will go out as soon as another window opens up."),
             ),
-            BootstrapMultiField(
+            hqcrispy.B3MultiField(
                 "",
                 HiddenFieldWithErrors("restricted_sms_times_json",
-                    data_bind="value: restricted_sms_times_json"),
+                                      data_bind="value: restricted_sms_times_json"),
                 crispy.Div(
                     data_bind="template: {"
                               " name: 'ko-template-restricted-sms-times', "
@@ -262,14 +290,15 @@ class SettingsForm(Form):
                               "}",
                 ),
                 data_bind="visible: showRestrictedSMSTimes",
+                field_class='col-md-10 col-lg-10'
             ),
             FieldWithHelpBubble(
                 "send_to_duplicated_case_numbers",
                 help_bubble_text=_("Enabling this option will send "
-                    "outgoing-only messages to phone numbers registered "
-                    "with more than one mobile worker or case. SMS surveys "
-                    "and keywords will still only work for unique phone "
-                    "numbers in your project."),
+                                   "outgoing-only messages to phone numbers registered "
+                                   "with more than one mobile worker or case. SMS surveys "
+                                   "and keywords will still only work for unique phone "
+                                   "numbers in your project."),
             ),
         ]
         return crispy.Fieldset(
@@ -316,6 +345,14 @@ class SettingsForm(Form):
                     " project space and [username] is an optional username)"
                     ", and the system will add them as a mobile worker."),
             ),
+            FieldWithHelpBubble(
+                'registration_welcome_message',
+                help_bubble_text=_("Choose whether to send an automatic "
+                    "welcome message to cases, mobile workers, or both, "
+                    "after they self-register. The welcome message can be "
+                    "configured in the SMS languages and translations page "
+                    "(Messaging -> Languages -> Messaging Translations)."),
+            ),
         ]
         return crispy.Fieldset(
             _("Registration Settings"),
@@ -325,40 +362,56 @@ class SettingsForm(Form):
     @property
     def section_chat(self):
         fields = [
-            BootstrapMultiField(
+            hqcrispy.B3MultiField(
                 _("Case Name Display"),
-                InlineField(
-                    "use_custom_case_username",
-                    data_bind="value: use_custom_case_username",
+                crispy.Div(
+                    InlineField(
+                        "use_custom_case_username",
+                        data_bind="value: use_custom_case_username",
+                    ),
+                    css_class='col-sm-4'
                 ),
-                InlineField(
-                    "custom_case_username",
-                    css_class="input-large",
-                    data_bind="visible: showCustomCaseUsername",
+                crispy.Div(
+                    InlineField(
+                        "custom_case_username",
+                        css_class="input-large",
+                        data_bind="visible: showCustomCaseUsername",
+                    ),
+                    css_class='col-sm-8'
                 ),
                 help_bubble_text=_("By default, when chatting with a case, "
                     "the chat window will use the case's \"name\" case "
                     "property when displaying the case's name. To use a "
                     "different case property, specify it here."),
                 css_id="custom-case-username-group",
+                field_class='col-sm-6 col-md-9 col-lg-9'
             ),
-            BootstrapMultiField(
+            hqcrispy.B3MultiField(
                 _("Message Counter"),
-                InlineField(
-                    "use_custom_message_count_threshold",
-                    data_bind="value: use_custom_message_count_threshold",
+                crispy.Div(
+                    InlineField(
+                        "use_custom_message_count_threshold",
+                        data_bind="value: use_custom_message_count_threshold",
+                    ),
+                    css_class='col-sm-4'
                 ),
-                InlineField(
-                    "custom_message_count_threshold",
-                    css_class="input-large",
-                    data_bind="visible: showCustomMessageCountThreshold",
+                crispy.Div(
+                    InlineField(
+                        "custom_message_count_threshold",
+                        css_class="input-large",
+                        data_bind="visible: showCustomMessageCountThreshold",
+                    ),
+                    css_class='col-sm-8'
                 ),
+
+
                 help_bubble_text=_("The chat window can use a counter to keep "
                     "track of how many messages are being sent and received "
                     "and highlight that number after a certain threshold is "
                     "reached. By default, the counter is disabled. To enable "
                     "it, enter the desired threshold here."),
                 css_id="custom-message-count-threshold-group",
+                field_class='col-sm-6 col-md-9 col-lg-9'
             ),
             FieldWithHelpBubble(
                 "use_sms_conversation_times",
@@ -367,7 +420,7 @@ class SettingsForm(Form):
                     "will not send automated SMS to chat recipients when "
                     "those recipients are in the middle of a conversation."),
             ),
-            BootstrapMultiField(
+            hqcrispy.B3MultiField(
                 "",
                 HiddenFieldWithErrors("sms_conversation_times_json",
                     data_bind="value: sms_conversation_times_json"),
@@ -378,6 +431,8 @@ class SettingsForm(Form):
                               "}",
                 ),
                 data_bind="visible: showSMSConversationTimes",
+                label_class='hide',
+                field_class='col-md-12 col-lg-10'
             ),
             crispy.Div(
                 FieldWithHelpBubble(
@@ -408,28 +463,31 @@ class SettingsForm(Form):
         ]
         if self._cchq_is_previewer:
             fields.append(
-                BootstrapMultiField(
+                hqcrispy.B3MultiField(
                     _("Chat Template"),
-                    InlineField(
-                        "use_custom_chat_template",
-                        data_bind="value: use_custom_chat_template",
+                    crispy.Div(
+                        InlineField(
+                            "use_custom_chat_template",
+                            data_bind="value: use_custom_chat_template",
+                        ),
+                        css_class='col-sm-4'
                     ),
-                    InlineField(
-                        "custom_chat_template",
-                        data_bind="visible: showCustomChatTemplate",
+                    crispy.Div(
+                        InlineField(
+                            "custom_chat_template",
+                            data_bind="visible: showCustomChatTemplate",
+                        ),
+                        css_class='col-sm-8'
                     ),
                     help_bubble_text=_("To use a custom template to render the "
                         "chat window, enter it here."),
                     css_id="custom-chat-template-group",
+                    field_class='col-sm-6 col-md-9 col-lg-9'
                 )
             )
-        attrs = {}
-        if not self._cchq_is_previewer:
-            attrs["style"] = "display: none;"
         return crispy.Fieldset(
             _("Chat Settings"),
-            *fields,
-            **attrs
+            *fields
         )
 
     def __init__(self, data=None, cchq_domain=None, cchq_is_previewer=False,
@@ -441,12 +499,14 @@ class SettingsForm(Form):
 
         self.helper = FormHelper()
         self.helper.form_class = "form form-horizontal"
+        self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
+        self.helper.field_class = 'col-sm-2 col-md-3 col-lg-3'
         self.helper.layout = crispy.Layout(
             self.section_general,
             self.section_registration,
             self.section_chat,
-            FormActions(
-                StrictButton(
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
                     _("Save"),
                     type="submit",
                     css_class="btn-primary",
@@ -469,6 +529,16 @@ class SettingsForm(Form):
             "remove_window_method": "$parent.removeSMSConversationTime",
             "add_window_method": "addSMSConversationTime",
         }
+
+    @property
+    def enable_registration_welcome_sms_for_case(self):
+        return (self.cleaned_data.get('registration_welcome_message') in
+                (WELCOME_RECIPIENT_CASE, WELCOME_RECIPIENT_ALL))
+
+    @property
+    def enable_registration_welcome_sms_for_mobile_worker(self):
+        return (self.cleaned_data.get('registration_welcome_message') in
+                (WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL))
 
     @property
     def current_values(self):
@@ -796,6 +866,75 @@ class BackendMapForm(Form):
             return value
 
 
+class SendRegistrationInviationsForm(Form):
+    phone_numbers = TrimmedCharField(
+        label=ugettext_lazy("Phone Number(s)"),
+        required=True,
+        widget=forms.Textarea,
+    )
+
+    app_id = ChoiceField(
+        label=ugettext_lazy("Application"),
+        required=True,
+    )
+
+    action = CharField(
+        initial='invite',
+        widget=forms.HiddenInput(),
+    )
+
+    def set_app_id_choices(self):
+        app_ids = get_built_app_ids(self.domain)
+        choices = []
+        for app_doc in iter_docs(Application.get_db(), app_ids):
+            # This will return both Application and RemoteApp docs, but
+            # they both have a name attribute
+            choices.append((app_doc['_id'], app_doc['name']))
+        choices.sort(key=lambda x: x[1])
+        self.fields['app_id'].choices = choices
+
+    def __init__(self, *args, **kwargs):
+        if 'domain' not in kwargs:
+            raise Exception('Expected kwargs: domain')
+        self.domain = kwargs.pop('domain')
+
+        super(SendRegistrationInviationsForm, self).__init__(*args, **kwargs)
+        self.set_app_id_choices()
+
+        self.helper = FormHelper()
+        self.helper.form_class = "form form-horizontal"
+        self.helper.layout = crispy.Layout(
+            FieldsetAccordionGroup(
+                _("Send Registration Invitation"),
+                crispy.Field('app_id'),
+                crispy.Field(
+                    'phone_numbers',
+                    placeholder=_("Enter phone number(s) in international "
+                        "format. Example: +27..., +91...,"),
+                ),
+                InlineField('action'),
+                FormActions(
+                    StrictButton(
+                        _("Send Invitation"),
+                        type="submit",
+                        css_class="btn-primary",
+                    ),
+                ),
+                active=len(args) > 0,
+            )
+        )
+
+    def clean_phone_numbers(self):
+        value = self.cleaned_data.get('phone_numbers', '')
+        phone_list = [strip_plus(s.strip()) for s in value.split(',')]
+        phone_list = [phone for phone in phone_list if phone]
+        if len(phone_list) == 0:
+            raise ValidationError(_("This field is required."))
+        for phone_number in phone_list:
+            validate_phone_number(phone_number)
+        return list(set(phone_list))
+
+
 class InitiateAddSMSBackendForm(Form):
     action = CharField(
         initial='new_backend',
@@ -869,6 +1008,29 @@ class SubscribeSMSForm(Form):
         )
     )
 
+    def __init__(self, *args, **kwargs):
+        super(SubscribeSMSForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
+        self.helper.field_class = 'col-sm-2 col-md-2 col-lg-2'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _('Subscribe settings'),
+                twbscrispy.PrependedText('stock_out_facilities', ''),
+                twbscrispy.PrependedText('stock_out_commodities', ''),
+                twbscrispy.PrependedText('stock_out_rates', ''),
+                twbscrispy.PrependedText('non_report', '')
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Update settings"),
+                    type="submit",
+                    css_class="btn-primary",
+                ),
+            )
+        )
+
     def save(self, commtrack_settings):
         alert_config = commtrack_settings.alert_config
         alert_config.stock_out_facilities = self.cleaned_data.get("stock_out_facilities", False)
@@ -877,3 +1039,30 @@ class SubscribeSMSForm(Form):
         alert_config.non_report = self.cleaned_data.get("non_report", False)
 
         commtrack_settings.save()
+
+
+class ComposeMessageForm(forms.Form):
+
+    recipients = forms.CharField(widget=forms.Textarea,
+                                 help_text=ugettext_lazy("Type a username, group name or 'send to all'"))
+    message = forms.CharField(widget=forms.Textarea, help_text=ugettext_lazy('0 characters (160 max)'))
+
+    def __init__(self, *args, **kwargs):
+        domain = kwargs.pop('domain')
+        super(ComposeMessageForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_action = reverse('send_to_recipients', args=[domain])
+        self.helper.form_class = "form form-horizontal"
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-10 col-md-10 col-lg-10'
+        self.helper.layout = crispy.Layout(
+            crispy.Field('recipients', rows=2, css_class='sms-typeahead'),
+            crispy.Field('message', rows=2),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Send Message"),
+                    type="submit",
+                    css_class="btn-primary",
+                ),
+            ),
+        )

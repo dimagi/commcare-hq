@@ -1,6 +1,6 @@
 from collections import defaultdict
 from django.core.management.base import BaseCommand, CommandError, LabelCommand
-from casexml.apps.case.util import reprocess_form_cases
+from corehq.apps.cleanup.management.commands.reprocess_error_form import reprocess_form_cases
 from corehq.apps.cleanup.xforms import iter_problem_forms
 from optparse import make_option
 from dimagi.utils.parsing import string_to_datetime
@@ -31,7 +31,7 @@ class Command(BaseCommand):
         for form in iter_problem_forms(domain, since):
             print "%s\t%s\t%s\t%s\t%s" % (form._id, form.received_on,
                               form.xmlns,
-                              form.xpath('form/meta/username'),
+                              form.get_data('form/meta/username'),
                               form.problem.strip())
             if not options["dryrun"]:
                 try:

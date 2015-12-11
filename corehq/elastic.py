@@ -3,6 +3,7 @@ from urllib import unquote
 from elasticsearch import Elasticsearch
 import rawes
 from django.conf import settings
+from rawes.elastic_exception import ElasticException
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from pillowtop.listener import send_to_elasticsearch as send_to_es
 from corehq.pillows.mappings.app_mapping import APP_INDEX
@@ -37,6 +38,18 @@ def get_es(timeout=30):
                                     settings.ELASTICSEARCH_PORT),
                          timeout=timeout)
 
+
+def doc_exists_in_es(index, doc_id):
+    path = ES_URLS[index].replace('_search', doc_id)
+    try:
+        return get_es().head(path)
+    except ElasticException as e:
+        if e.status_code == 404:
+            return False
+        else:
+            raise
+
+
 def send_to_elasticsearch(index, doc, delete=False):
     """
     Utility method to update the doc in elasticsearch.
@@ -44,7 +57,7 @@ def send_to_elasticsearch(index, doc, delete=False):
     """
     doc_id = doc['_id']
     path = ES_URLS[index].replace('_search', doc_id)
-    doc_exists = get_es().head(path)
+    doc_exists = doc_exists_in_es(index, doc_id)
     return send_to_es(
         path=path,
         es_getter=get_es,
@@ -74,6 +87,11 @@ ES_URLS = {
 ADD_TO_ES_FILTER = {
     "forms": [
         {"term": {"doc_type": "xforminstance"}},
+        {"not": {"missing": {"field": "xmlns"}}},
+        {"not": {"missing": {"field": "form.meta.userID"}}},
+    ],
+    "archived_forms": [
+        {"term": {"doc_type": "xformarchived"}},
         {"not": {"missing": {"field": "xmlns"}}},
         {"not": {"missing": {"field": "form.meta.userID"}}},
     ],

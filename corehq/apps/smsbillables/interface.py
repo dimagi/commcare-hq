@@ -45,6 +45,7 @@ class SMSBillablesInterface(GenericTabularReport):
         'corehq.apps.smsbillables.interface.ShowBillablesFilter',
         'corehq.apps.smsbillables.interface.DomainFilter',
         'corehq.apps.smsbillables.interface.HasGatewayFeeFilter',
+        'corehq.apps.smsbillables.interface.GatewayTypeFilter',
     ]
 
     @property
@@ -53,10 +54,10 @@ class SMSBillablesInterface(GenericTabularReport):
             DataTablesColumn("Date of Message"),
             DataTablesColumn("Project Space"),
             DataTablesColumn("Direction"),
+            DataTablesColumn("Gateway", sortable=False),
             DataTablesColumn("Gateway Fee", sortable=False),
             DataTablesColumn("Usage Fee", sortable=False),
             DataTablesColumn("Message Log ID", sortable=False),
-            DataTablesColumn("Phone Number"),
             DataTablesColumn("Is Valid?", sortable=False),
             DataTablesColumn("Date Created"),
         )
@@ -67,7 +68,6 @@ class SMSBillablesInterface(GenericTabularReport):
             'date_sent',
             'domain',
             'direction',
-            'phone_number',
             'date_created',
         ]
         sort_index = int(self.request.GET.get('iSortCol_0', 2))
@@ -96,6 +96,10 @@ class SMSBillablesInterface(GenericTabularReport):
                     'name': HasGatewayFeeFilter.slug,
                     'value': HasGatewayFeeFilter.get_value(self.request, self.domain)
                 },
+                {
+                    'name': GatewayTypeFilter.slug,
+                    'value': GatewayTypeFilter.get_value(self.request, self.domain)
+                },
         ]
 
     @property
@@ -122,16 +126,15 @@ class SMSBillablesInterface(GenericTabularReport):
             [
                 sms_billable.date_sent,
                 sms_billable.domain,
-                ("Incoming"
-                 if sms_billable.direction == INCOMING
-                 else ("Outgoing"
-                       if sms_billable.direction == OUTGOING
-                       else "")),
+                {
+                    INCOMING: "Incoming",
+                    OUTGOING: "Outgoing",
+                }.get(sms_billable.direction, ""),
+                sms_billable.gateway_fee.criteria.backend_api_id if sms_billable.gateway_fee else "",
                 sms_billable.gateway_charge,
                 (sms_billable.usage_fee.amount
                  if sms_billable.usage_fee is not None else ""),
                 sms_billable.log_id,
-                sms_billable.phone_number,
                 sms_billable.is_valid,
                 sms_billable.date_created,
             ]
@@ -173,6 +176,11 @@ class SMSBillablesInterface(GenericTabularReport):
                 selected_billables = selected_billables.filter(
                     gateway_fee=None
                 )
+        gateway_type = GatewayTypeFilter.get_value(self.request, self.domain)
+        if gateway_type:
+            selected_billables = selected_billables.filter(
+                gateway_fee__criteria__backend_api_id=gateway_type,
+            )
         return selected_billables
 
 

@@ -18,6 +18,7 @@ from corehq.apps.reports.formdetails.readable import get_readable_data_for_submi
 from corehq import toggles
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
+from corehq.util.xml_utils import indent_xml
 from couchforms.models import XFormInstance
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case import const
@@ -35,13 +36,8 @@ register = template.Library()
 def render_form_xml(form):
     xml = form.get_xml() or ''
     return '<pre class="fancy-code prettyprint linenums"><code class="language-xml">%s</code></pre>' \
-           % escape(xml.replace("><", ">\n<"))
+           % escape(indent_xml(xml))
 
-
-@register.simple_tag
-def render_pretty_xml(xml):
-    return '<pre class="fancy-code prettyprint linenums"><code class="language-xml">%s</code></pre>' \
-           % escape(xml.replace("><", ">\n<"))
 
 
 @register.simple_tag
@@ -93,6 +89,8 @@ def render_form(form, domain, options):
     case_id = options.get('case_id')
     side_pane = options.get('side_pane', False)
     user = options.get('user', None)
+    request = options.get('request', None)
+    support_enabled = toggle_enabled(request, toggles.SUPPORT)
 
     _get_tables_as_columns = partial(get_tables_as_columns, timezone=timezone)
 
@@ -136,6 +134,9 @@ def render_form(form, domain, options):
 
     # Form Metadata tab
     meta = form.top_level_tags().get('meta', None) or {}
+    if support_enabled:
+        meta['last_sync_token'] = form.last_sync_token
+
     definition = get_default_definition(sorted_form_metadata_keys(meta.keys()))
     form_meta_data = _get_tables_as_columns(meta, definition)
     if 'auth_context' in form:
@@ -164,7 +165,6 @@ def render_form(form, domain, options):
     else:
         user_info = get_doc_info_by_id(domain, meta_userID)
 
-    request = options.get('request', None)
     user_can_edit = (
         request and user and request.domain
         and (user.can_edit_data() or user.is_commcare_user())
@@ -180,9 +180,8 @@ def render_form(form, domain, options):
     )
 
     show_resave = (
-        user_can_edit and toggle_enabled(request, toggles.SUPPORT)
+        user_can_edit and support_enabled
     )
-
     def _get_edit_info(instance):
         info = {
             'was_edited': False,

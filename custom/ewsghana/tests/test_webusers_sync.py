@@ -5,7 +5,9 @@ from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstr
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.users.models import WebUser, UserRole, CommCareUser
+from corehq.apps.programs.models import Program
 from custom.ewsghana.api import EWSUser, EWSApi, Product, Location
+from custom.ewsghana.models import EWSExtension
 
 from custom.ewsghana.tests.mock_endpoint import MockEndpoint
 
@@ -38,6 +40,9 @@ class WebUsersSyncTest(TestCase):
         for user in WebUser.by_domain(TEST_DOMAIN):
             user.delete()
 
+        for user in CommCareUser.by_domain(TEST_DOMAIN):
+            user.delete()
+
     def test_create_webuser(self):
         with open(os.path.join(self.datapath, 'sample_webusers.json')) as f:
             webuser = EWSUser(json.loads(f.read())[0])
@@ -51,11 +56,15 @@ class WebUsersSyncTest(TestCase):
         self.assertEqual(webuser.is_active, ewsghana_webuser.is_active)
         self.assertEqual(False, ewsghana_webuser.is_superuser)
         self.assertEqual(False, ewsghana_webuser.is_staff)
-        self.assertIsNone(ewsghana_webuser.get_domain_membership(TEST_DOMAIN).location_id)
+
+        membership = ewsghana_webuser.get_domain_membership(TEST_DOMAIN)
+        self.assertIsNotNone(membership.program_id)
+        self.assertEqual(Program.get(membership.program_id).code, 'hiv')
+        self.assertIsNone(membership.location_id)
         domain_name = ewsghana_webuser.get_domains()[0]
         self.assertEqual(TEST_DOMAIN, domain_name)
         self.assertEqual(UserRole.get_read_only_role_by_domain(TEST_DOMAIN)._id,
-                         ewsghana_webuser.get_domain_membership(TEST_DOMAIN).role_id)
+                         membership.role_id)
         ewsghana_webuser.delete()
 
     def test_create_facility_manager(self):
@@ -66,12 +75,16 @@ class WebUsersSyncTest(TestCase):
         ewsghana_webuser = self.api_object.web_user_sync(webuser)
         web_users = list(WebUser.by_domain(TEST_DOMAIN))
         self.assertEqual(1, len(web_users))
-        self.assertEqual(0, len(CommCareUser.by_domain(TEST_DOMAIN)))
         facility_manager_role = UserRole.by_domain_and_name(TEST_DOMAIN, 'Facility manager')[0]
         dm = web_users[0].get_domain_membership(TEST_DOMAIN)
         self.assertEqual(facility_manager_role.get_id, dm.role_id)
         location = SQLLocation.objects.get(external_id=1, domain=TEST_DOMAIN)
         self.assertEqual(ewsghana_webuser.get_domain_membership(TEST_DOMAIN).location_id, location.location_id)
+
+        extension = EWSExtension.objects.get(user_id=ewsghana_webuser.get_id, domain=TEST_DOMAIN)
+        self.assertEqual(SQLLocation.objects.get(location_id=extension.location_id).site_code, 'rsp2')
+        self.assertListEqual(ewsghana_webuser.phone_numbers, ['1233232'])
+        self.assertEqual(ewsghana_webuser.default_phone_number, '1233232')
 
     def test_create_web_reporter(self):
         with open(os.path.join(self.datapath, 'sample_webusers.json')) as f:
@@ -83,5 +96,8 @@ class WebUsersSyncTest(TestCase):
         web_reporter_role = UserRole.by_domain_and_name(TEST_DOMAIN, 'Web Reporter')[0]
         dm = web_users[0].get_domain_membership(TEST_DOMAIN)
         self.assertEqual(web_reporter_role.get_id, dm.role_id)
-        location = SQLLocation.objects.get(external_id=620, domain=TEST_DOMAIN)
+        location = SQLLocation.objects.get(external_id=1, domain=TEST_DOMAIN)
         self.assertEqual(location.location_id, ewsghana_webuser.get_domain_membership(TEST_DOMAIN).location_id)
+
+        extension = EWSExtension.objects.get(user_id=ewsghana_webuser.get_id, domain=TEST_DOMAIN)
+        self.assertEqual(SQLLocation.objects.get(location_id=extension.location_id).site_code, 'crms')

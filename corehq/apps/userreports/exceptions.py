@@ -30,9 +30,21 @@ class TableRebuildError(UserReportsError):
     pass
 
 
+class StaleRebuildError(TableRebuildError):
+    pass
+
+
 class UserReportsFilterError(UserReportsError):
     pass
 
 
 class SortConfigurationError(UserReportsError):
+    pass
+
+
+class DataSourceConfigurationNotFoundError(BadSpecError):
+    pass
+
+
+class ReportConfigurationNotFoundError(UserReportsError):
     pass

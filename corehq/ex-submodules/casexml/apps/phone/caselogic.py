@@ -2,7 +2,7 @@ import itertools
 import logging
 from casexml.apps.case.dbaccessors import get_reverse_indices_json
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xform import CaseDbCache
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
 def get_related_cases(initial_cases, domain, strip_history=False, search_up=True):
@@ -20,14 +20,16 @@ def get_related_cases(initial_cases, domain, strip_history=False, search_up=True
     wrap = isinstance(next(iter(initial_cases)), CommCareCase)
 
     # todo: should assert that domain exists here but this breaks tests
-    case_db = CaseDbCache(domain=domain,
-                          strip_history=strip_history,
-                          deleted_ok=True,
-                          wrap=wrap,
-                          initial=initial_cases)
+    case_db = FormProcessorInterface(domain).casedb_cache(
+        domain=domain,
+        strip_history=strip_history,
+        deleted_ok=True,
+        wrap=wrap,
+        initial=initial_cases
+    )
 
     def indices(case):
-        return case['indices'] if search_up else get_reverse_indices_json(case)
+        return case['indices'] if search_up else get_reverse_indices_json(domain, case['_id'])
 
     relevant_cases = {}
     relevant_deleted_case_ids = []

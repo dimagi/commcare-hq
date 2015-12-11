@@ -1,11 +1,18 @@
-{% extends base_template %}
-{% block head %}{{ block.super }}
-    {% include "imports/bootstrap.google-prettify.html" %}
-{% endblock %}
-{% block content %}
-<div class="container-fluid">
-    <h1>Build #{{ app.version }}: {{ app.name }}</h1>
-    <p>See <a href="{% url "view_app" app.domain app.copy_of|default_if_none:app.get_id %}">original app</a> for the latest work in progress.</p>
+{% extends "app_manager/source_files.html" %}
+{% load hq_shared_tags %}
+{% load compress %}
+
+{% block stylesheets %}{{ block.super }}
+    {% compress css %}
+        <link type="text/css" rel="stylesheet" href="{% new_static 'app_manager/css/diff.css' %}"/>
+    {% endcompress %}
+{% endblock stylesheets %} 
+
+{% block page_title %}
+    Build #{{ app.version }}: {{ app.name }}
+{% endblock page_title %}
+
+{% block downloads %}
     <h2>Downloads</h2>
     <table class="table table-condensed">
         <tr>
@@ -15,48 +22,40 @@
             <td>{% url "download_jar" app.domain app.id as url %}<a href="{{ url }}">CommCare.jar</a></td>
         </tr>
         <tr>
-            <td>{% with "download_ccz" as download_ccz_id %}<a href="#{{download_ccz_id}}" data-toggle="modal">CommCare.ccz</a></td>
+            <td>
+                <a href="#download_ccz" data-toggle="modal" onclick="download_application_zip()">CommCare.ccz</a>
+            </td>
         </tr>
     </table>
-    <h2>Resource Files</h2>
-    <table class="table table-condensed">
-        {% for path, source in files %}
-            <tr>
-                <td class="span3">
-                    <a class="toggle-next" href="#">{{ path }}</a>
-                </td>
-                <td class="span9">
-                    <a href="{{ path }}" target="_blank"><i class="icon icon-external-link"></i></a>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <pre class="prettyprint linenums">{{ source|force_escape }}</pre>
-                </td>
-            </tr>
-        {% empty %}
-            <tr><th>No Files</th></tr>
-        {% endfor %}
-    </table>
-    {% if app.copy_of and not files %}
+{% endblock downloads %}
 
+{% block file_description %}
+    <a href="{{ file.name }}" target="_blank"><i class="fa fa-external-link"></i></a>
+{% endblock file_description %}
+
+{% block file_source %}
+    <pre class="prettyprint linenums">{{ file.source|force_escape }}</pre>
+{% endblock file_source %}
+
+{% block post_files %}
+    {% if app.copy_of and not files %}
         <div class="alert alert-info">
             This build was made before I knew how to save the files for a specific build.
             To see this view for the current not-yet-built version of this app,
             <a href="{% url "download_index" app.domain app.copy_of%}">click here</a>.
         </div>
     {% endif %}
-    <script>
-        $(function(){
-            $('.toggle-next').click(function(e){
-                e.preventDefault();
-                $(this).parents('tr').next('tr').toggle();
-            }).trigger('click');
-            prettyPrint();
-        });
-    </script>
-</div>
-{% url "download_ccz" app.domain app.id as ccz_url %}
-{% include 'app_manager/partials/download_async_modal.html' with element_id=download_ccz_id download_url=ccz_url%}
-{% endwith %}<!-- endwith download_ccz_id -->
+{% endblock post_files %}
+
+{% block modals %}
+    {{ block.super }}
+    {% url "download_ccz" app.domain app.id as ccz_url %}
+    {% include 'app_manager/partials/download_async_modal.html' with element_id="download_ccz" %}
 {% endblock %}
+
+{% block js-inline %}
+    {{ block.super }}
+    {% url "download_ccz" app.domain app.id as ccz_url %}
+    {% include 'app_manager/partials/download_async_modal_inline.html' with element_id="download_ccz" download_url=ccz_url %}
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?skin=default"></script>
+{% endblock js-inline %}

@@ -1,7 +1,11 @@
 import json
 from celery.schedules import crontab
 from celery.task import periodic_task
-from dimagi.utils.couch import get_redis_client
+
+from django.conf import settings
+
+from dimagi.utils.couch import release_lock
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.apps.locations.models import Location
 from custom.m4change.constants import NUMBER_OF_MONTHS_FOR_FIXTURES, M4CHANGE_DOMAINS, REDIS_FIXTURE_KEYS, \
@@ -10,7 +14,6 @@ from custom.m4change.fixtures.report_fixtures import get_last_n_months
 from custom.m4change.models import FixtureReportResult
 from custom.m4change.reports.reports import M4ChangeReportDataSource
 from dimagi.utils.parsing import json_format_date
-import settings
 
 
 @periodic_task(run_every=crontab(hour="3", minute="0", day_of_week="*"),
@@ -69,7 +72,7 @@ def generate_fixtures_for_locations():
                 location_ids = json.loads(location_ids_str if location_ids_str else "[]")
                 client.set(redis_key, '[]')
             finally:
-                lock.release()
+                release_lock(lock, True)
         for location_id in location_ids:
 
             data_source.configure(config={

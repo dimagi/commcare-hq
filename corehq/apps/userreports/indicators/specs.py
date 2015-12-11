@@ -1,4 +1,5 @@
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty, DictProperty
+from jsonobject import DefaultProperty
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.expressions.getters import TransformedGetter, getter_from_property_reference, \
     transform_from_datatype
@@ -75,7 +76,7 @@ class ExpressionIndicatorSpec(IndicatorSpecBase):
     datatype = DataTypeProperty(required=True)
     is_nullable = BooleanProperty(default=True)
     is_primary_key = BooleanProperty(default=False)
-    expression = DictProperty(required=True)
+    expression = DefaultProperty(required=True)
     transform = DictProperty(required=False)
 
     def parsed_expression(self, context):
@@ -97,3 +98,14 @@ class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
 
     def get_operator(self):
         return IN_MULTISELECT if self.select_style == 'multiple' else EQUAL
+
+
+class LedgerBalancesIndicatorSpec(IndicatorSpecBase):
+    type = TypeProperty('ledger_balances')
+    product_codes = ListProperty(required=True)
+    ledger_section = StringProperty(required=True)
+    case_id_expression = DictProperty(required=True)
+
+    def get_case_id_expression(self):
+        from corehq.apps.userreports.expressions.factory import ExpressionFactory
+        return ExpressionFactory.from_spec(self.case_id_expression)

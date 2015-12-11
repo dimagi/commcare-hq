@@ -1,9 +1,9 @@
-{% extends "settings/base_template.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load i18n %}
 
-{% block main_column %}
-    <div class="row-fluid">
-        <div class="span6">
+{% block page_content %}
+    <div class="row">
+        <div class="col-sm-6">
             <p>
                 {% blocktrans %}
                     Feature Preview lets you turn on features that we are still actively developing and are not quite ready yet.
@@ -21,13 +21,13 @@
             <br/>
         </div>
     </div>
-    <div class="row-fluid">
-        <div class="span10">
+    <div class="row">
+        <div class="col-sm-10">
             <form action="" method="post">
                 <button type="submit" class="btn btn-primary">{% trans "Update previews" %}</button>
                 <table class="table table-striped">
                     <thead>
-                        <th class="span3">{% trans "Feature Name" %}</th>
+                        <th class="col-sm-3">{% trans "Feature Name" %}</th>
                         <th>{% trans "Description" %}</th>
                         <th>{% trans "Enable" %}</th>
                     </thead>

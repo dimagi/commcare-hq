@@ -1,4 +1,3 @@
-import json
 import os
 import lxml
 from lxml.doctestcompare import LXMLOutputChecker, LHTMLOutputChecker
@@ -6,9 +5,16 @@ import mock
 from corehq.apps.builds.models import CommCareBuild, CommCareBuildConfig, \
     BuildSpec
 import difflib
+from lxml import etree
+
+import commcare_translations
+from corehq.util.test_utils import TestFileMixin
+from corehq.apps.app_manager.models import Application
 
 
-class TestXmlMixin(object):
+class TestXmlMixin(TestFileMixin):
+    root = os.path.dirname(__file__)
+
     def assertXmlPartialEqual(self, expected, actual, xpath):
         """
         Extracts a section of XML using the xpath and compares it to the expected
@@ -27,8 +33,15 @@ class TestXmlMixin(object):
 
     def assertXmlHasXpath(self, element, xpath):
         message = "Could not find xpath expression '{}' in below XML\n".format(xpath)
+        self._assertXpathHelper(element, xpath, message, should_not_exist=False)
+
+    def assertXmlDoesNotHaveXpath(self, element, xpath):
+        message = "Found xpath expression '{}' in below XML\n".format(xpath)
+        self._assertXpathHelper(element, xpath, message, should_not_exist=True)
+
+    def _assertXpathHelper(self, element, xpath, message, should_not_exist):
         element = parse_normalize(element, to_string=False)
-        if not bool(element.xpath(xpath)):
+        if bool(element.xpath(xpath)) == should_not_exist:
             raise AssertionError(message + lxml.etree.tostring(element, pretty_print=True))
 
     def assertHtmlEqual(self, expected, actual, normalize=True):
@@ -38,40 +51,38 @@ class TestXmlMixin(object):
         _check_shared(expected, actual, LHTMLOutputChecker(), "html")
 
 
-class TestFileMixin(TestXmlMixin):
+class SuiteMixin(TestFileMixin):
+    def _assertHasAllStrings(self, app, strings):
+        et = etree.XML(app)
+        locale_elems = et.findall(".//locale/[@id]")
+        locale_strings = [elem.attrib['id'] for elem in locale_elems]
 
-    file_path = ''
-    root = os.path.dirname(__file__)
+        app_strings = commcare_translations.loads(strings)
 
-    @property
-    def base(self):
-        return self.get_base()
+        for string in locale_strings:
+            if string not in app_strings:
+                raise AssertionError("App strings did not contain %s" % string)
+            if not app_strings.get(string, '').strip():
+                raise AssertionError("App strings has blank entry for %s" % string)
 
-    @classmethod
-    def get_base(cls):
-        return os.path.join(cls.root, *cls.file_path)
+    def _test_generic_suite(self, app_tag, suite_tag=None):
+        suite_tag = suite_tag or app_tag
+        app = Application.wrap(self.get_json(app_tag))
+        self.assertXmlEqual(self.get_xml(suite_tag), app.create_suite())
 
-    @classmethod
-    def get_path(cls, name, ext):
-        return os.path.join(cls.get_base(), '%s.%s' % (name, ext))
+    def _test_generic_suite_partial(self, app_tag, xpath, suite_tag=None):
+        suite_tag = suite_tag or app_tag
+        app = Application.wrap(self.get_json(app_tag))
+        self.assertXmlPartialEqual(self.get_xml(suite_tag), app.create_suite(), xpath)
 
-    @classmethod
-    def get_file(cls, name, ext):
-        with open(cls.get_path(name, ext)) as f:
-            return f.read()
+    def _test_app_strings(self, app_tag):
+        app = Application.wrap(self.get_json(app_tag))
+        app_xml = app.create_suite()
+        app_strings = app.create_app_strings('default')
 
-    @classmethod
-    def write_xml(cls, name, xml):
-        with open(cls.get_path(name, 'xml'), 'w') as f:
-            return f.write(xml)
+        self._assertHasAllStrings(app_xml, app_strings)
 
-    @classmethod
-    def get_json(cls, name):
-        return json.loads(cls.get_file(name, 'json'))
 
-    @classmethod
-    def get_xml(cls, name):
-        return cls.get_file(name, 'xml')
 
 
 def normalize_attributes(xml):
@@ -101,16 +112,19 @@ def parse_normalize(xml, to_string=True, is_html=False):
 def _check_shared(expected, actual, checker, extension):
     # snippet from http://stackoverflow.com/questions/321795/comparing-xml-in-a-unit-test-in-python/7060342#7060342
     if not checker.check_output(expected, actual, 0):
-        message = "{} mismatch\n\n".format(extension.upper())
+        original_message = message = "{} mismatch\n\n".format(extension.upper())
         diff = difflib.unified_diff(
-            expected.splitlines(1),
             actual.splitlines(1),
+            expected.splitlines(1),
             fromfile='want.{}'.format(extension),
             tofile='got.{}'.format(extension)
         )
         for line in diff:
             message += line
-        raise AssertionError(message)
+        if message != original_message:
+            # check that there was actually a diff, because checker.check_output
+            # doesn't work with unicode characters in xml node names
+            raise AssertionError(message)
 
 
 def extract_xml_partial(xml, xpath):

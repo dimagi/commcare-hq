@@ -4,17 +4,17 @@ import xlrd
 from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
-from corehq.apps.mach.api import MachBackend
+from corehq.messaging.smsbackends.mach.models import MachBackend
 from corehq.apps.sms.models import OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
 
 logger = logging.getLogger('accounting')
 
 
-def bootstrap_mach_gateway(orm):
-    currency_class = orm['accounting.Currency'] if orm else Currency
-    sms_gateway_fee_class = orm['smsbillables.SmsGatewayFee'] if orm else SmsGatewayFee
-    sms_gateway_fee_criteria_class = orm['smsbillables.SmsGatewayFeeCriteria'] if orm else SmsGatewayFeeCriteria
+def bootstrap_mach_gateway(apps):
+    currency_class = apps.get_model('accounting', 'Currency') if apps else Currency
+    sms_gateway_fee_class = apps.get_model('smsbillables', 'SmsGatewayFee') if apps else SmsGatewayFee
+    sms_gateway_fee_criteria_class = apps.get_model('smsbillables', 'SmsGatewayFeeCriteria') if apps else SmsGatewayFeeCriteria
 
     workbook = xlrd.open_workbook('corehq/apps/smsbillables/management/'
                                   'commands/pricing_data/Syniverse_coverage_list_DIAMONDplus.xls')

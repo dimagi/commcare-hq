@@ -1,6 +1,8 @@
 from collections import defaultdict
 from itertools import islice
+from logging import Filter
 import traceback
+from datetime import timedelta
 
 from pygments import highlight
 from pygments.lexers import PythonLexer
@@ -9,8 +11,9 @@ from pygments.formatters import HtmlFormatter
 from celery.utils.mail import ErrorMail
 from django.core import mail
 from django.utils.log import AdminEmailHandler
-from django.views.debug import get_exception_reporter_filter
+from django.views.debug import SafeExceptionReporterFilter, get_exception_reporter_filter
 from django.template.loader import render_to_string
+from corehq.util.view_utils import get_request
 
 
 def clean_exception(exception):
@@ -86,7 +89,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
         if request:
             context.update({
                 'get': request.GET,
-                'post': request.POST,
+                'post': SafeExceptionReporterFilter().get_post_parameters(request),
                 'method': request.method,
                 'url': request.build_absolute_uri(),
             })
@@ -102,7 +105,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
             context['request_repr'],
         ]))
         html_message = render_to_string('hqadmin/email/error_email.html', context)
-        mail.mail_admins(context['subject'], message, fail_silently=True,
+        mail.mail_admins(self._clean_subject(context['subject']), message, fail_silently=True,
                          html_message=html_message)
 
     def format_details(self, details):
@@ -110,26 +113,42 @@ class HqAdminEmailHandler(AdminEmailHandler):
             formatted = '\n'.join('{item[0]}: {item[1]}'.format(item=item) for item in details.items())
             return 'Details:\n{}'.format(formatted)
 
-    def get_code(self, extracted_tb):
-        trace = next((trace for trace in extracted_tb if 'site-packages' not in trace[0]), None)
-        if not trace:
-            return None
+    @staticmethod
+    def get_code(extracted_tb):
+        try:
+            trace = next((trace for trace in extracted_tb if 'site-packages' not in trace[0]), None)
+            if not trace:
+                return None
 
-        filename = trace[0]
-        lineno = trace[1]
-        offset = 10
-        with open(filename) as f:
-            code_context = list(islice(f, lineno - offset, lineno + offset))
+            filename = trace[0]
+            lineno = trace[1]
+            offset = 10
+            with open(filename) as f:
+                code_context = list(islice(f, lineno - offset, lineno + offset))
 
-        return highlight(''.join(code_context),
-            PythonLexer(),
-            HtmlFormatter(
-                noclasses=True,
-                linenos='table',
-                hl_lines=[offset, offset],
-                linenostart=(lineno - offset + 1),
-        )
-        )
+            return highlight(''.join(code_context),
+                PythonLexer(),
+                HtmlFormatter(
+                    noclasses=True,
+                    linenos='table',
+                    hl_lines=[offset, offset],
+                    linenostart=(lineno - offset + 1),
+                )
+            )
+        except Exception as e:
+            return u"Unable to extract code. {}".format(e)
+
+    @classmethod
+    def _clean_subject(cls, subject):
+        # Django raises BadHeaderError if subject contains following bad_strings
+        # to guard against Header Inejction.
+        # see https://docs.djangoproject.com/en/1.8/topics/email/#preventing-header-injection
+        # bad-strings list from http://nyphp.org/phundamentals/8_Preventing-Email-Header-Injection
+        bad_strings = ["\r", "\n", "%0a", "%0d", "Content-Type:", "bcc:", "to:", "cc:"]
+        replacement = "-"
+        for i in bad_strings:
+            subject = subject.replace(i, replacement)
+        return subject
 
 
 class NotifyExceptionEmailer(HqAdminEmailHandler):
@@ -149,3 +168,45 @@ class SensitiveErrorMail(ErrorMail):
         context['args'] = self.replacement
         context['kwargs'] = self.replacement
         return self.body.strip() % context
+
+
+class HQRequestFilter(Filter):
+    """
+    Filter that adds custom context to log records for HQ domain, username, and path.
+
+    This lets you add custom log formatters to include this information. For example,
+    the following format:
+
+    [%(username)s:%(domain)s] %(hq_url)s %(message)s
+
+    Will log:
+
+    [user@example.com:my-domain] /a/my-domain/apps/ [original message]
+    """
+
+    def filter(self, record):
+        request = get_request()
+        if request is not None:
+            record.domain = getattr(request, 'domain', '')
+            record.username = request.couch_user.username if getattr(request, 'couch_user', None) else ''
+            record.hq_url = request.path
+        else:
+            record.domain = record.username = record.hq_url = None
+        return True
+
+
+class SlowRequestFilter(Filter):
+    """
+    Filter that can be used to log a slow request or action.
+    Expects that LogRecords passed in will have a .duration property that is a timedelta.
+    Intended to be used primarily with the couchdbkit request_logger
+    """
+    def __init__(self, name='', duration=5):
+        self.duration_cutoff = timedelta(seconds=duration)
+        super(SlowRequestFilter, self).__init__(name)
+
+    def filter(self, record):
+        try:
+            return record.duration > self.duration_cutoff
+        except (TypeError, AttributeError):
+            return False

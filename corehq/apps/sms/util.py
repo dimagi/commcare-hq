@@ -3,14 +3,13 @@ import re
 import urllib
 import uuid
 import datetime
-
-from dimagi.utils.couch.database import get_db
-from corehq.apps.users.models import CouchUser
-from django.template.loader import render_to_string
+from couchdbkit.resource import ResourceNotFound
+from corehq.apps.users.models import CouchUser, CommCareUser
 from django.conf import settings
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.utils import submit_case_block_from_template
+from corehq.apps.sms.mixin import MobileBackend
+from corehq.util.quickcache import quickcache
 from django.core.exceptions import ValidationError
-from xml.etree.ElementTree import XML, tostring
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.modules import to_function
 from django.utils.translation import ugettext as _
@@ -44,21 +43,6 @@ def validate_phone_number(phone_number):
         not phone_number_plus_re.match(phone_number)):
         raise ValidationError(_("Invalid phone number format."))
 
-def domains_for_phone(phone):
-    """
-    Get domains attached to a phone number
-    """
-    view_results = get_db().view("sms/phones_to_domains", key=phone)
-    return [row["value"] for row in view_results]
-
-def users_for_phone(phone):
-    """
-    Get users attached to a phone number
-    """
-    view_results = get_db().view("sms/phones_to_domains", key=phone)
-    user_ids = set([row["id"] for row in view_results])
-    return [CouchUser.get(id) for id in user_ids]
-
 
 def format_message_list(message_list):
     """
@@ -78,10 +62,6 @@ def format_message_list(message_list):
     # Some gateways (yo) allow a longer message to be sent and handle splitting it up on their end, so for now just join all messages together
     return " ".join(message_list)
 
-def submit_xml(domain, template, context):
-    case_block = render_to_string(template, context)
-    case_block = tostring(XML(case_block)) # Ensure the XML is formatted properly, an exception is raised if not
-    submit_case_blocks(case_block, domain)
 
 # Creates a case by submitting system-generated casexml
 def register_sms_contact(domain, case_type, case_name, user_id, contact_phone_number, contact_phone_number_is_verified="1", contact_backend_id=None, language_code=None, time_zone=None, owner_id=None):
@@ -102,7 +82,7 @@ def register_sms_contact(domain, case_type, case_name, user_id, contact_phone_nu
         "language_code" : language_code,
         "time_zone" : time_zone
     }
-    submit_xml(domain, "sms/xml/register_contact.xml", context)
+    submit_case_block_from_template(domain, "sms/xml/register_contact.xml", context)
     return case_id
 
 def update_contact(domain, case_id, user_id, contact_phone_number=None, contact_phone_number_is_verified=None, contact_backend_id=None, language_code=None, time_zone=None):
@@ -116,7 +96,7 @@ def update_contact(domain, case_id, user_id, contact_phone_number=None, contact_
         "language_code" : language_code,
         "time_zone" : time_zone
     }
-    submit_xml(domain, "sms/xml/update_contact.xml", context)
+    submit_case_block_from_template(domain, "sms/xml/update_contact.xml", context)
 
 def create_task(parent_case, submitting_user_id, task_owner_id, form_unique_id, task_activation_datetime, task_deactivation_datetime, incentive):
     utcnow = str(datetime.datetime.utcnow())
@@ -132,7 +112,7 @@ def create_task(parent_case, submitting_user_id, task_owner_id, form_unique_id, 
         "parent" : parent_case,
         "incentive" : incentive,
     }
-    submit_xml(parent_case.domain, "sms/xml/create_task.xml", context)
+    submit_case_block_from_template(parent_case.domain, "sms/xml/create_task.xml", context)
     return subcase_guid
 
 def update_task(domain, subcase_guid, submitting_user_id, task_owner_id, form_unique_id, task_activation_datetime, task_deactivation_datetime, incentive):
@@ -146,7 +126,7 @@ def update_task(domain, subcase_guid, submitting_user_id, task_owner_id, form_un
         "task_deactivation_date" : json_format_datetime(task_deactivation_datetime),
         "incentive" : incentive,
     }
-    submit_xml(domain, "sms/xml/update_task.xml", context)
+    submit_case_block_from_template(domain, "sms/xml/update_task.xml", context)
 
 def close_task(domain, subcase_guid, submitting_user_id):
     context = {
@@ -154,7 +134,7 @@ def close_task(domain, subcase_guid, submitting_user_id):
         "user_id" : submitting_user_id,
         "date_modified" : json_format_datetime(datetime.datetime.utcnow()),
     }
-    submit_xml(domain, "sms/xml/close_task.xml", context)
+    submit_case_block_from_template(domain, "sms/xml/close_task.xml", context)
 
 
 def get_available_backends(index_by_api_id=False):
@@ -194,14 +174,27 @@ def clean_text(text):
         text = text.replace(a, b)
     return text
 
+
 def get_contact(contact_id):
     from corehq.apps.sms.models import CommConnectCase
-    contact = CommConnectCase.get(contact_id)
-    if contact.doc_type != "CommCareCase":
-        try:
-            contact = CouchUser.get_by_user_id(contact_id)
-        except CouchUser.AccountTypeError:
-            raise Exception("Unkown contact type for contact %s" % contact_id)
+    contact = None
+    try:
+        contact = CommConnectCase.get(contact_id)
+    except ResourceNotFound:
+        pass
+
+    if contact and contact.doc_type == 'CommCareCase':
+        return contact
+
+    contact = None
+    try:
+        contact = CouchUser.get_by_user_id(contact_id)
+    except CouchUser.AccountTypeError:
+        pass
+
+    if not contact:
+        raise Exception("Contact not found")
+
     return contact
 
 
@@ -224,3 +217,20 @@ def touchforms_error_is_config_error(touchforms_error):
         'XPathUnhandledException',
         'XFormParseException',
     )])
+
+
+@quickcache(['backend_id'], timeout=5 * 60)
+def get_backend_name(backend_id):
+    """
+    Returns None if the backend is not found, otherwise
+    returns the backend's name.
+    """
+    if not backend_id:
+        return None
+
+    try:
+        doc = MobileBackend.get_db().get(backend_id)
+    except ResourceNotFound:
+        return None
+
+    return doc.get('name', None)

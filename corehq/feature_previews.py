@@ -21,17 +21,30 @@ class FeaturePreview(StaticToggle):
             and has_privilege(request, privileges.BETA_FEATURE):
         # do cool thing for BETA_FEATURE
     """
-    def __init__(self, slug, label, description, help_link=None, privilege=None, save_fn=None):
+    def __init__(self, slug, label, description, help_link=None, privilege=None,
+                 save_fn=None):
         self.privilege = privilege
-        self.save_fn = save_fn
-        super(FeaturePreview, self).__init__(slug, label, TAG_PREVIEW, description=description, help_link=help_link,
-                                             namespaces=[NAMESPACE_DOMAIN])
+        super(FeaturePreview, self).__init__(
+            slug, label, TAG_PREVIEW, description=description,
+            help_link=help_link, save_fn=save_fn, namespaces=[NAMESPACE_DOMAIN]
+        )
 
     def has_privilege(self, request):
         if not self.privilege:
             return True
 
         return prbac_has_privilege(request, self.privilege)
+
+
+def all_previews():
+    for toggle_name, toggle in globals().items():
+        if not toggle_name.startswith('__'):
+            if isinstance(toggle, StaticToggle):
+                yield toggle
+
+
+def previews_dict(domain):
+    return {t.slug: True for t in all_previews() if t.enabled(domain)}
 
 
 SUBMIT_HISTORY_FILTERS = FeaturePreview(
@@ -73,34 +86,6 @@ SPLIT_MULTISELECT_CASE_EXPORT = FeaturePreview(
 )
 
 
-def enable_commtrack_previews(domain):
-    for toggle_class in [COMMTRACK, LOCATIONS]:
-        toggle_class.set(domain.name, True, NAMESPACE_DOMAIN)
-
-
-def commtrackify(domain_name, checked):
-    from corehq.apps.domain.models import Domain
-    domain = Domain.get_by_name(domain_name)
-    domain.commtrack_enabled = checked
-    if checked:
-        enable_commtrack_previews(domain)
-    domain.save()
-
-COMMTRACK = FeaturePreview(
-    slug='commtrack',
-    label=_("CommCare Supply"),
-    description=_(
-        '<a href="http://www.commtrack.org/home/">CommCare Supply</a> '
-        "is a logistics and supply chain management module. It is designed "
-        "to improve the management, transport, and resupply of a variety of "
-        "goods and materials, from medication to food to bednets. <br/>"
-        "Note: You must also enable CommCare Supply on any CommCare Supply "
-        "application's settings page."),
-    help_link='https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home',
-    save_fn=commtrackify,
-)
-
-
 def enable_callcenter(domain_name, checked):
     from corehq.apps.domain.models import Domain
     domain = Domain.get_by_name(domain_name)
@@ -123,16 +108,6 @@ CALLCENTER = FeaturePreview(
 )
 
 
-LOCATIONS = FeaturePreview(
-    slug='locations',
-    label=_("Locations"),
-    description=_(
-        'Enable locations for this project. This must be enabled for '
-        'CommCare Supply to work properly'
-    ),
-    help_link='https://help.commcarehq.org/display/commtrack/Locations',
-)
-
 MODULE_FILTER = FeaturePreview(
     slug='module_filter',
     label=_('Module Filtering'),
@@ -140,5 +115,16 @@ MODULE_FILTER = FeaturePreview(
         'Similar to form display conditions, hide your module unless the condition is met. Most commonly used'
         ' in conjunction with '
         '<a href="https://help.commcarehq.org/display/commcarepublic/Custom+User+Data">custom user data</a>.'
+    ),
+)
+
+
+# Only used in Vellum
+VELLUM_ADVANCED_ITEMSETS = FeaturePreview(
+    slug='advanced_itemsets',
+    label=_("Custom Single and Multiple Answer Questions"),
+    description=_(
+        "Allows display of custom lists, such as case sharing groups or locations as choices in Single Answer or "
+        "Multiple Answer lookup Table questions. Configuring these questions requires specifying advanced logic."
     ),
 )

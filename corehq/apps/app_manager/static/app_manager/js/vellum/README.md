@@ -64,6 +64,26 @@ and `tests/main.js` for example options usage.
 
 Vellum targets modern browsers.  IE8 and earlier are not supported.
 
+Tests
+-----
+
+Test in a browser:
+```
+$ `npm bin`/http-server -c-1
+$ chromium-browser http://localhost:8080
+```
+
+By default, the test page will load the non-built version unless a `built`
+parameter is present in the query string.
+
+Commands to run tests headlessly:
+```
+grunt test
+grunt test --grep "test grep"
+```
+
+You can also use `grunt watch` to test as file changes happen.
+
 Contributing
 ------------
 
@@ -78,49 +98,3 @@ Build optimized version (test locally by changing `useBuilt` in `tests/main.js`)
 ```
 $ make
 ```
-
-Test in a browser:
-```
-$ `npm bin`/http-server -c-1
-$ chromium-browser http://localhost:8080
-```
-
-By default, the test page will load the non-built version unless a `built`
-parameter is present in the query string.
-
-Commands to run tests headlessly:
-```
-$ npm test
-$ ./test
-$ ./test --help # for advanced usage
-```
-
-Make dependency graph image:
-```
-$ make madge
-```
-
-![](deps.png)
-
-### Testing on Heroku
-
-NOTE: this is outdated, and may not work anymore
-
-This repo can be deployed to Heroku using
-[heroku-buildpack-vellum](http://github.com/mwhite/heroku-buildpack-vellum),
-which is just a fork of
-[heroku-buildpack-static](https://github.com/pearkes/heroku-buildpack-static)
-with the build script from the standard Node.js buildpack added in order to
-install dependencies.
-
-Until [prune.io](http://prune.io/) is available, we use
-Rainforest's [fourchette](https://github.com/jipiboily/fourchette) along with a
-[slightly modified version](https://github.com/mwhite/fourchette-vellum) of
-their example fourchette app in order to create an isolated test environment for
-each Pull Request on Heroku.
-
-The latest master is also deployed to
-[vellum-master.herokuapp.com](http://vellum-master.herokuapp.com) using
-[drone.io](http://drone.io).  See
-[here](https://drone.io/github.com/mwhite/Vellum) for a list of builds.
-

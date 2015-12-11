@@ -1,4 +1,5 @@
 from couchdbkit import ResourceNotFound
+from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
@@ -6,6 +7,10 @@ from dimagi.ext.jsonobject import *
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import raw_username
 from couchforms import models as couchforms_models
+
+
+class DomainMismatchException(Exception):
+    pass
 
 
 class DocInfo(JsonObject):
@@ -23,9 +28,16 @@ def get_doc_info_by_id(domain, id):
     not_found_value = DocInfo(display=id, link=None, owner_type=None)
     if not id:
         return not_found_value
-    try:
-        doc = CouchUser.get_db().get(id)
-    except ResourceNotFound:
+
+    # todo: I think we want a better system for this
+    for db_name in (None, 'users'):
+        try:
+            doc = get_db(db_name).get(id)
+        except ResourceNotFound:
+            pass
+        else:
+            break
+    else:
         return not_found_value
 
     if doc.get('domain') != domain and domain not in doc.get('domains', ()):
@@ -48,7 +60,14 @@ def get_doc_info(doc, domain_hint=None, cache=None):
         return (doc_type == expected_doc_type or
             doc_type == ('%s%s' % (expected_doc_type, DELETED_SUFFIX)))
 
-    assert doc.get('domain') == domain or domain in doc.get('domains', ())
+    if (
+        domain_hint and
+        not (
+            doc.get('domain') == domain_hint or
+            domain_hint in doc.get('domains', ())
+        )
+    ):
+        raise DomainMismatchException("Doc '%s' does not match the domain_hint '%s'" % (doc_id, domain_hint))
 
     if cache and doc_id in cache:
         return cache[doc_id]
@@ -171,5 +190,43 @@ def get_doc_info(doc, domain_hint=None, cache=None):
 
     if cache:
         cache[doc_id] = doc_info
+
+    return doc_info
+
+
+def get_object_info(obj, cache=None):
+    """
+    This function is intended to behave just like get_doc_info, only
+    you call it with objects other than Couch docs (such as objects
+    that use the Django ORM).
+    """
+    class_name = obj.__class__.__name__
+    cache_key = '%s-%s' % (class_name, obj.pk)
+    if cache and cache_key in cache:
+        return cache[cache_key]
+
+    from corehq.apps.locations.models import SQLLocation
+    if isinstance(obj, SQLLocation):
+        from corehq.apps.locations.views import EditLocationView
+        doc_info = DocInfo(
+            type_display=_('Location'),
+            display=obj.name,
+            link=reverse(
+                EditLocationView.urlname,
+                args=[obj.domain, obj.location_id],
+            ),
+            is_deleted=False,
+        )
+    else:
+        doc_info = DocInfo(
+            is_deleted=False,
+        )
+
+    doc_info.id = str(obj.pk)
+    doc_info.domain = obj.domain if hasattr(obj, 'domain') else None
+    doc_info.type = class_name
+
+    if cache:
+        cache[cache_key] = doc_info
 
     return doc_info

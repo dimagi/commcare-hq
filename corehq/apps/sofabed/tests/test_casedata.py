@@ -22,8 +22,7 @@ class CaseDataTests(TestCase):
                 create=True,
                 case_id='mother_case_id',
                 case_type='mother-case',
-                version=V2,
-            ).as_xml(format_datetime=None)
+            ).as_xml()
         ], {'domain': TEST_DOMAIN})
 
         self.case_id = 'test_case_1'
@@ -39,10 +38,9 @@ class CaseDataTests(TestCase):
                 case_name=('a' * TEST_NAME_LEN) + '123456789',
                 external_id='external_id',
                 date_modified=self.date_modified,
-                version=V2,
                 update={'foo': 'bar'},
                 index={'mom': ('mother-case', 'mother_case_id')}
-            ).as_xml(format_datetime=None)
+            ).as_xml()
         ], {'domain': TEST_DOMAIN})
 
         instance = CommCareCase.get(self.case_id)
@@ -88,8 +86,7 @@ class CaseDataTests(TestCase):
                 case_id='grand_mother_case_id',
                 case_type='mother-case',
                 owner_id='owner',
-                version=V2,
-            ).as_xml(format_datetime=None)
+            ).as_xml()
         ], {'domain': TEST_DOMAIN})
 
         date_modified = datetime.utcnow()
@@ -99,9 +96,8 @@ class CaseDataTests(TestCase):
                 case_id=self.case_id,
                 user_id='user2',
                 date_modified=date_modified,
-                version=V2,
                 index={'gmom': ('mother-case', 'grand_mother_case_id')}
-            ).as_xml(format_datetime=None)
+            ).as_xml()
         ], {'domain': TEST_DOMAIN})
 
         instance = CommCareCase.get(self.case_id)
@@ -138,8 +134,7 @@ class CaseDataTests(TestCase):
                 create=True,
                 case_id=case_id,
                 case_type='nameless',
-                version=V2,
-            ).as_xml(format_datetime=None)
+            ).as_xml()
         ], {'domain': TEST_DOMAIN})
 
         instance = CommCareCase.get(case_id)
@@ -157,9 +152,8 @@ class CaseDataTests(TestCase):
                 case_type='c_type',
                 case_name='bob',
                 date_modified=self.date_modified,
-                version=V2,
                 update={'foo': 'bar'},
-            ).as_xml(format_datetime=None)
+            ).as_xml()
         ], {'domain': TEST_DOMAIN})
 
         instance = CommCareCase.get(case_id)

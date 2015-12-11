@@ -11,6 +11,7 @@
 
     var WebUser = function (data) {
         var self = this;
+        self.id = data.id;
         self.email = data.email;
         self.name = data.name;
         self.role = data.role;
@@ -49,6 +50,9 @@
                     $scope.notLoaded = false;
                 }
             }
+            else {
+                throw data.error;
+            }
         };
 
         self.retry = function () {
@@ -77,6 +81,12 @@
 
         $scope.filterUsers = function () {
             self.getUsers();
+        };
+
+        $scope.updateOnEnter = function (keyEvent) {
+            if (keyEvent.keyCode === 13) {
+                self.getUsers();
+            }
         };
     };
     users.controller(usersControllers);

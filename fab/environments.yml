@@ -43,6 +43,10 @@ development:
         concurrency: 1
       email_queue:
         concurrency: 1
+      logistics_reminder_queue:
+        concurrency: 1
+      logistics_background_queue:
+        concurrency: 1
       flower: {}
 
 india:
@@ -86,9 +90,9 @@ production:
   should_migrate: True
 
   new_relic_enabled:
-    - hqdjango3.internal.commcarehq.org
-    - hqdjango4.internal.commcarehq.org
-    - hqdjango5.internal.commcarehq.org
+    - hqdjango12.internal.commcarehq.org
+    - hqdjango13.internal.commcarehq.org
+    - hqdjango14.internal.commcarehq.org
     - hqcelery1.internal.commcarehq.org
     - hqcelery0.internal.commcarehq.org
 
@@ -117,6 +121,10 @@ production:
         concurrency: 8
       ucr_queue:
         concurrency: 4
+      logistics_reminder_queue:
+        concurrency: 2
+      logistics_background_queue:
+        concurrency: 2
       flower: {}
 
 staging:
@@ -140,7 +148,7 @@ staging:
       flower: {}
 
 zambia:
-  environment: production
+  environment: zambia
   should_migrate: True
 
   celery_processes:

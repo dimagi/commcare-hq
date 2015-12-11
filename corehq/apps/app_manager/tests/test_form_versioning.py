@@ -1,5 +1,5 @@
 from django.test.testcases import TestCase, SimpleTestCase
-from corehq.apps.app_manager import suite_xml
+from corehq.apps.app_manager.suite_xml import xml_models as suite_models
 from corehq.apps.app_manager.models import Application, Module, Form, import_app, FormLink
 from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
 from corehq.apps.builds.models import BuildSpec
@@ -107,7 +107,7 @@ class FormVersioningTest(TestCase):
     def get_form_versions(build):
         from lxml import etree
 
-        suite = suite_xml.Suite(
+        suite = suite_models.Suite(
             etree.fromstring(build.fetch_attachment('files/suite.xml').encode('utf-8'))
         )
         return [r.version for r in suite.xform_resources]

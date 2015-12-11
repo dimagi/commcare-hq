@@ -1,6 +1,6 @@
 from django.dispatch import receiver, Signal
 from casexml.apps.case.xform import get_case_updates
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.const import RequisitionStatus, SUPPLY_POINT_CASE_TYPE, is_supply_point_form
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.programs.models import Program
@@ -16,7 +16,7 @@ def raise_supply_point_events(xform, cases):
     supply_points = [SupplyPointCase.wrap(c._doc) for c in cases if c.type == SUPPLY_POINT_CASE_TYPE]
     case_updates = get_case_updates(xform)
     for sp in supply_points:
-        created = any(filter(lambda update: update.id == sp._id and update.creates_case(), case_updates))
+        created = any(filter(lambda update: update.id == sp.case_id and update.creates_case(), case_updates))
         supply_point_modified.send(sender=None, supply_point=sp, created=created)
 
 

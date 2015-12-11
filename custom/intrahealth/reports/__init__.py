@@ -31,9 +31,9 @@ class IntraHealthReportConfigMixin(object):
     def config_update(self, config):
         if self.request.GET.get('location_id', ''):
             if self.location.location_type.lower() == 'district':
-                config.update(dict(district_id=self.location._id))
+                config.update(dict(district_id=self.location.location_id))
             else:
-                config.update(dict(region_id=self.location._id))
+                config.update(dict(region_id=self.location.location_id))
 
     @property
     def report_config(self):
@@ -112,19 +112,18 @@ class IntraHealtMixin(IntraHealthLocationMixin, IntraHealthReportConfigMixin):
                 for localization in localizations:
                     for pps in ppss:
                         for group in self.groups:
-                            if(group.code, localization) in result_sum:
-                                r = result_sum[(group.code, localization)]
+                            if(group.product_id, localization) in result_sum:
+                                r = result_sum[(group.product_id, localization)]
                                 cols = self.data_source.sum_cols
                                 for col in cols:
-                                    r[col] += result.get((group.code, pps, localization), {col: 0})[col]
+                                    r[col] += result.get((group.product_id, pps, localization), {col: 0})[col]
                             else:
                                 helper_dict = {}
                                 for col in self.data_source.sum_cols:
                                     helper_dict[col] = 0
                                 helper_dict['district_name'] = localization
-                                result_sum[(group.code, localization)] = result.get((group.code,
-                                                                                     pps, localization),
-                                                                                    helper_dict)
+                                result_sum[(group.product_id, localization)] = result.get(
+                                    (group.product_id, pps, localization), helper_dict)
                 result = result_sum
 
             data = dict(formatter.format(result, keys=self.model.keys, group_by=self.model.group_by))
@@ -135,11 +134,11 @@ class IntraHealtMixin(IntraHealthLocationMixin, IntraHealthReportConfigMixin):
         for localization in localizations:
             row = [localization]
             for group in self.groups:
-                if (group.code, localization) in data:
-                    product = data[(group.code, localization)]
+                if (group.product_id, localization) in data:
+                    product = data[(group.product_id, localization)]
                     row.extend([product[p] for p in self.model.col_names])
-                elif (self._safe_get(reversed_map, group.code), localization) in data:
-                    product = data[(reversed_map[group.code], localization)]
+                elif (self._safe_get(reversed_map, group.product_id), localization) in data:
+                    product = data[(reversed_map[group.product_id], localization)]
                     row.extend([product[p] for p in self.model.col_names])
                 else:
                     row.extend([self.no_value for p in self.model.col_names])

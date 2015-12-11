@@ -25,7 +25,7 @@ def requires_privilege_with_fallback(slug, **assignment):
             try:
                 if (hasattr(request, 'subscription')
                     and request.subscription is not None
-                    and (request.subscription.is_trial or request.subscription.plan_version.plan.visibility == SoftwarePlanVisibility.TRIAL_INTERNAL)
+                    and request.subscription.is_trial_or_internal_trial
                     and request.subscription.date_end is not None
                 ):
                     edition_req = DefaultProductPlan.get_lowest_edition_by_domain(
@@ -83,7 +83,7 @@ def requires_privilege_json_response(slug, http_status_code=None,
                                      get_response=None, **assignment):
     """
     A version of the requires privilege decorator which returns an
-    HttpResponse object with an HTTP Status Code of 405 by default
+    HttpResponse object with an HTTP Status Code of 401 by default
     and content_type application/json if the privilege is not found.
 
     `get_response` is an optional parameter where you can specify the
@@ -97,7 +97,7 @@ def requires_privilege_json_response(slug, http_status_code=None,
     ```
     todo accounting for API requests
     """
-    http_status_code = http_status_code or 405
+    http_status_code = http_status_code or 401
     if get_response is None:
         get_response = lambda msg, code: {'code': code, 'message': msg}
 
@@ -111,7 +111,7 @@ def requires_privilege_json_response(slug, http_status_code=None,
                 error_message = "You have lost access to this feature."
                 response = get_response(error_message, http_status_code)
                 return HttpResponse(json.dumps(response),
-                                    content_type="application/json")
+                                    content_type="application/json", status=401)
         return wrapped
     return decorate
 

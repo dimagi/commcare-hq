@@ -2,7 +2,7 @@ from datetime import datetime
 import logging
 from django.core.management.base import BaseCommand
 from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
-from corehq.apps.receiverwrapper.models import CaseRepeater
+from corehq.apps.repeaters.models import CaseRepeater
 
 
 class Command(BaseCommand):

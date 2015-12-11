@@ -1,11 +1,12 @@
 from collections import defaultdict
 import re
+from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop
 import os
 import yaml
 
 
-def load_custom_commcare_settings():
+def _load_custom_commcare_settings():
     path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
     settings = []
     with open(os.path.join(path,
@@ -28,10 +29,10 @@ def load_custom_commcare_settings():
     return settings
 
 
-def load_commcare_settings_layout(doc_type):
+def _load_commcare_settings_layout(doc_type):
     settings = dict([
         ('{0}.{1}'.format(setting.get('type'), setting.get('id')), setting)
-        for setting in load_custom_commcare_settings()
+        for setting in _load_custom_commcare_settings()
     ])
     path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
     with open(os.path.join(path, 'commcare-settings-layout.yaml')) as f:
@@ -60,16 +61,27 @@ def load_commcare_settings_layout(doc_type):
         )
     return layout
 
-SETTINGS = load_custom_commcare_settings()
 
-LAYOUT = dict(
-    (doc_type, load_commcare_settings_layout(doc_type))
-    for doc_type in ('Application', 'RemoteApp')
-)
+@memoized
+def get_custom_commcare_settings():
+    return _load_custom_commcare_settings()
 
-SETTINGS_LOOKUP = defaultdict(lambda: defaultdict(dict))
-for setting in SETTINGS:
-    SETTINGS_LOOKUP[setting['type']][setting['id']] = setting
+
+@memoized
+def get_commcare_settings_layout():
+    return {
+        doc_type: _load_commcare_settings_layout(doc_type)
+        for doc_type in ('Application', 'RemoteApp')
+    }
+
+
+@memoized
+def get_commcare_settings_lookup():
+    settings_lookup = defaultdict(lambda: defaultdict(dict))
+    for setting in get_custom_commcare_settings():
+        settings_lookup[setting['type']][setting['id']] = setting
+    return settings_lookup
+
 
 def parse_condition_string(condition_str):
     pattern = re.compile("{(?P<type>[\w-]+?)\.(?P<id>[\w-]+?)}=(?P<equals>true|false|'[\w-]+')")

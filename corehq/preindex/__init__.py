@@ -1,7 +1,6 @@
 from couchdbkit.ext.django import syncdb
 from django.db.models import signals, get_app
 import os
-from south.signals import post_migrate
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch import sync_docs
 from dimagi.utils.couch.sync_docs import DesignInfo
@@ -14,12 +13,17 @@ def register_preindex_plugin(plugin):
     PREINDEX_PLUGINS[plugin.app_label] = plugin
 
 
+def get_preindex_plugin(app_label):
+    return PREINDEX_PLUGINS[app_label]
+
+
 class PreindexPlugin(object):
 
     def __init__(self, app_label, dir, app_db_map=None):
         self.app_label = app_label
         self.dir = dir
         self.app_db_map = app_db_map
+        self.synced = False
 
     @classmethod
     def register(cls, app_label, file, app_db_map=None):
@@ -36,6 +40,12 @@ class PreindexPlugin(object):
         raise NotImplementedError()
 
     def sync_design_docs(self, temp=None):
+        if self.synced:
+            # workaround emit_post_sync_signal called twice
+            # https://code.djangoproject.com/ticket/17977
+            # this is to speed up test initialization
+            return
+        self.synced = True
         synced = set()
         for design in self.get_designs():
             key = (design.db.uri, design.app_label)
@@ -67,6 +77,19 @@ class PreindexPlugin(object):
             self=self,
         )
 
+    def get_dbs(self, app_label):
+        return get_dbs_from_app_label_and_map(app_label, self.app_db_map)
+
+
+def get_dbs_from_app_label_and_map(app_label, app_db_map):
+    if app_db_map and app_label in app_db_map:
+        db_names = app_db_map[app_label]
+        if not isinstance(db_names, (list, tuple, set)):
+            db_names = [db_names]
+
+        return [get_db(db_name) for db_name in set(db_names)]
+    return [get_db()]
+
 
 class CouchAppsPreindexPlugin(PreindexPlugin):
     """
@@ -76,13 +99,6 @@ class CouchAppsPreindexPlugin(PreindexPlugin):
                         e.g. {'my_app': 'meta'} will result in 'my_app' being synced
                         to the '{main_db}__meta' database.
     """
-    def __init__(self, app_label, dir, app_db_map=None):
-        super(CouchAppsPreindexPlugin, self).__init__(app_label, dir, app_db_map)
-
-    def db(self, app_label):
-        if self.app_db_map and app_label in self.app_db_map:
-            return get_db(self.app_db_map[app_label])
-        return get_db()
 
     def get_couchapps(self):
         return [d for d in os.listdir(self.dir)
@@ -90,30 +106,41 @@ class CouchAppsPreindexPlugin(PreindexPlugin):
 
     def get_designs(self):
         return [
-            DesignInfo(app_label=app_label, db=self.db(app_label), design_path=os.path.join(self.dir, app_label))
+            DesignInfo(app_label=app_label, db=db,
+                       design_path=os.path.join(self.dir, app_label))
             for app_label in self.get_couchapps()
+            for db in self.get_dbs(app_label)
         ]
+
+
+class ExtraPreindexPlugin(PreindexPlugin):
+
+    def get_designs(self):
+        return [
+            DesignInfo(
+                app_label=self.app_label,
+                db=db,
+                design_path=os.path.join(self.dir, "_design")
+            )
+            for db in self.get_dbs(self.app_label)
+        ]
+
+    @classmethod
+    def register(cls, app_label, file, db_names):
+        super(ExtraPreindexPlugin, cls).register(app_label, file, {app_label: db_names})
 
 
 def get_preindex_plugins():
     return PREINDEX_PLUGINS.values()
 
 
-def catch_signal(app, **kwargs):
+def catch_signal(sender, **kwargs):
     """Function used by syncdb signal"""
-    app_name = app.__name__.rsplit('.', 1)[0]
+    app_name = sender.label.rsplit('.', 1)[0]
     app_label = app_name.split('.')[-1]
     if app_label in PREINDEX_PLUGINS:
         PREINDEX_PLUGINS[app_label].sync_design_docs()
+    syncdb(get_app(sender.label), None, **kwargs)
 
 
-signals.post_syncdb.connect(catch_signal)
-
-# and totally unrelatedly...
-
-
-def sync_south_app(app, **kwargs):
-    syncdb(get_app(app), None, **kwargs)
-
-
-post_migrate.connect(sync_south_app)
+signals.post_migrate.connect(catch_signal)

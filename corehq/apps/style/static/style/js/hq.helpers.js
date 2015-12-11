@@ -48,11 +48,11 @@ $.fn.popover.Constructor.prototype.hide = function() {
     if (this.options.trigger === "hover" && this.tip().is(":hover")) {
         var that = this;
         setTimeout(function() {
-            return that.hide.call(that, arguments);
+            return that.hide.apply(that, arguments);
         }, that.options.delay.hide);
         return;
     }
-    oldHide.call(this, arguments);
+    oldHide.apply(this, arguments);
 };
 
 $.fn.hqHelp = function () {
@@ -76,6 +76,7 @@ $.fn.hqHelp = function () {
 
         // Prevent jumping to the top of the page when link is clicked
         $helpElem.find('a').click(function(event) {
+            ga_track_event("Clicked Help Bubble", $(this).data('title'), '-');
             event.preventDefault();
         });
     });
@@ -93,7 +94,7 @@ $.showMessage = function (message, level) {
 
 
 $.fn.addSpinnerToButton = function () {
-    $(this).prepend('<i class="icon-refresh icon-spin"></i> ');
+    $(this).prepend('<i class="fa fa-refresh fa-spin icon-refresh icon-spin"></i> ');
 };
 
 
@@ -121,3 +122,9 @@ $.fn.enableButton = function () {
 };
 
 
+$.fn.koApplyBindings = function (context) {
+    if (!this.length) {
+        throw new Error("No element passed to koApplyBindings");
+    }
+    return ko.applyBindings(context, this.get(0));
+};

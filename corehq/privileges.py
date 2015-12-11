@@ -33,7 +33,10 @@ COMMCARE_LOGO_UPLOADER = 'commcare_logo_uploader'
 LOCATIONS = 'locations'
 
 USER_CASE = 'user_case'
-DATA_CLEANUP = 'data_cleanup'  # bulk archive cases, edit submissions, etc.
+DATA_CLEANUP = 'data_cleanup'  # bulk archive cases, edit submissions, auto update cases, etc.
+
+TEMPLATED_INTENTS = 'templated_intents'
+CUSTOM_INTENTS = 'custom_intents'
 
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
@@ -58,6 +61,8 @@ MAX_PRIVILEGES = [
     REPORT_BUILDER,
     USER_CASE,
     DATA_CLEANUP,
+    TEMPLATED_INTENTS,
+    CUSTOM_INTENTS,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -91,5 +96,8 @@ class Titles(object):
             HIPAA_COMPLIANCE_ASSURANCE: _("HIPAA Compliance Assurance"),
             COMMCARE_LOGO_UPLOADER: _("Custom CommCare Logo Uploader"),
             LOCATIONS: _("Locations"),
-            REPORT_BUILDER: _('User Configurable Report Builder')
+            REPORT_BUILDER: _('User Configurable Report Builder'),
+            TEMPLATED_INTENTS: _('Built-in Integration'),
+            CUSTOM_INTENTS: _('External Integration Framework'),
+            DATA_CLEANUP: _('Data Management'),
         }.get(privilege, privilege)

@@ -6,9 +6,11 @@ from celery.utils.log import get_task_logger
 import datetime
 from couchdbkit import ResourceNotFound
 from django.conf import settings
+from django.db import transaction
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.accounting import utils
 from corehq.apps.accounting.exceptions import (
@@ -29,6 +31,7 @@ from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     get_change_status,
 )
+from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.users.models import FakeUser, WebUser
 from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
 from couchexport.export import export_from_tables
@@ -48,13 +51,14 @@ def activate_subscriptions(based_on_date=None):
     starting_subscriptions = Subscription.objects.filter(date_start=starting_date)
     for subscription in starting_subscriptions:
         if not has_subscription_already_ended(subscription) and not subscription.is_active:
-            subscription.is_active = True
-            subscription.save()
-            _, _, upgraded_privs = get_change_status(None, subscription.plan_version)
-            subscription.subscriber.apply_upgrades_and_downgrades(
-                upgraded_privileges=upgraded_privs,
-                new_subscription=subscription,
-            )
+            with transaction.atomic():
+                subscription.is_active = True
+                subscription.save()
+                upgraded_privs = get_change_status(None, subscription.plan_version).upgraded_privs
+                subscription.subscriber.activate_subscription(
+                    upgraded_privileges=upgraded_privs,
+                    subscription=subscription,
+                )
 
 
 def deactivate_subscriptions(based_on_date=None):
@@ -64,22 +68,23 @@ def deactivate_subscriptions(based_on_date=None):
     ending_date = based_on_date or datetime.date.today()
     ending_subscriptions = Subscription.objects.filter(date_end=ending_date)
     for subscription in ending_subscriptions:
-        subscription.is_active = False
-        subscription.save()
-        next_subscription = subscription.next_subscription
-        if next_subscription and next_subscription.date_start == ending_date:
-            new_plan_version = next_subscription.plan_version
-            next_subscription.is_active = True
-            next_subscription.save()
-        else:
-            new_plan_version = None
-        _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
-        subscription.subscriber.apply_upgrades_and_downgrades(
-            downgraded_privileges=downgraded_privs,
-            upgraded_privileges=upgraded_privs,
-            old_subscription=subscription,
-            new_subscription=next_subscription,
-        )
+        with transaction.atomic():
+            subscription.is_active = False
+            subscription.save()
+            next_subscription = subscription.next_subscription
+            if next_subscription and next_subscription.date_start == ending_date:
+                new_plan_version = next_subscription.plan_version
+                next_subscription.is_active = True
+                next_subscription.save()
+            else:
+                new_plan_version = None
+            _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
+            subscription.subscriber.deactivate_subscription(
+                downgraded_privileges=downgraded_privs,
+                upgraded_privileges=upgraded_privs,
+                old_subscription=subscription,
+                new_subscription=next_subscription,
+            )
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0))
@@ -227,9 +232,12 @@ def send_subscription_reminder_emails(num_days, exclude_trials=True):
     if exclude_trials:
         ending_subscriptions = ending_subscriptions.filter(is_trial=False)
     for subscription in ending_subscriptions:
-        # only send reminder emails if the subscription isn't renewed
-        if not subscription.is_renewed:
-            subscription.send_ending_reminder_email()
+        try:
+            # only send reminder emails if the subscription isn't renewed
+            if not subscription.is_renewed:
+                subscription.send_ending_reminder_email()
+        except Exception as e:
+            logger.error("[BILLING] %s" % e)
 
 
 def send_subscription_reminder_emails_dimagi_contact(num_days):
@@ -276,7 +284,7 @@ def create_wire_credits_invoice(domain_name,
 
 
 @task(ignore_result=True)
-def send_purchase_receipt(payment_record, core_product,
+def send_purchase_receipt(payment_record, core_product, domain,
                           template_html, template_plaintext,
                           additional_context):
     email = payment_record.payment_method.web_user
@@ -294,7 +302,7 @@ def send_purchase_receipt(payment_record, core_product,
     context = {
         'name': name,
         'amount': fmt_dollar_amount(payment_record.amount),
-        'project': payment_record.creditadjustment_set.last().credit_line.account.created_by_domain,
+        'project': domain,
         'date_paid': payment_record.date_created.strftime(USER_DATE_FORMAT),
         'product': core_product,
         'transaction_id': payment_record.public_transaction_id,
@@ -406,3 +414,9 @@ def weekly_digest():
         "[BILLING] Sent summary of ending subscriptions from %(today)s" % {
             'today': today.isoformat(),
         })
+
+
+@periodic_task(run_every=crontab(hour=01, minute=0,))
+def pay_autopay_invoices():
+    """ Check for autopayable invoices every day and pay them """
+    AutoPayInvoicePaymentHandler().pay_autopayable_invoices(datetime.datetime.today())

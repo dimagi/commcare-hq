@@ -7,6 +7,7 @@ try:
     from .test_loadtest_users import *
     from .test_object_cache import *
     from .test_dbaccessors import *
+    from .test_get_case import *
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
     # otherwise debugging is a pain

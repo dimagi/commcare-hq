@@ -1,22 +1,28 @@
 from decimal import Decimal
+from dateutil.relativedelta import relativedelta
 from django.db.models.query_utils import Q
-from corehq import Domain
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
-from corehq.apps.commtrack.models import StockState, SupplyPointCase
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.commtrack.models import StockState
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.locations.models import SQLLocation, LocationType, Location
 from datetime import timedelta, datetime
 from dateutil import rrule
 from dateutil.rrule import MO
 from django.utils import html
+from corehq.apps.sms.mixin import VerifiedNumber, BackendMapping
+from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.sms.api import add_msg_tags
+from corehq.apps.sms.api import add_msg_tags, send_sms_to_verified_number, send_sms as core_send_sms
 from corehq.apps.sms.models import SMSLog, OUTGOING
-from corehq.apps.users.models import CommCareUser
-from custom.ewsghana.models import EWSGhanaConfig
+from corehq.apps.users.models import CommCareUser, WebUser
+from custom.ewsghana.models import EWSGhanaConfig, EWSExtension
+from custom.ewsghana.reminders.const import DAYS_UNTIL_LATE
 
 TEST_DOMAIN = 'ewsghana-receipts-test'
+TEST_BACKEND = 'MOBILE_BACKEND_TEST'
 
 
 def get_descendants(location_id):
@@ -48,6 +54,7 @@ def make_url(report_class, domain, string_params, args):
 # Calculate last full period (Friday - Thursday)
 def calculate_last_period(enddate):
     # checking if Thursday was already in this week
+    enddate = enddate.replace(hour=0, minute=0, second=0, microsecond=0)
     i = enddate.weekday() - 3
     if i < 0:
         # today is Monday, Tuesday or Wednesday -> calculate Thursday from previous week
@@ -56,7 +63,7 @@ def calculate_last_period(enddate):
         # today is Thursday, Friday, Saturday or Sunday -> calculate Thursday from this week
         last_th = enddate - timedelta(days=i)
     fr_before = last_th - timedelta(days=6)
-    return fr_before, last_th
+    return fr_before, last_th + timedelta(days=1)
 
 
 def send_test_message(verified_number, text, metadata=None):
@@ -101,9 +108,48 @@ def get_products_ids_assigned_to_rel_sp(domain, active_location=None):
         return filter_relevant(SQLLocation.objects.filter(domain=domain, is_archived=False))
 
 
+def make_loc(code, name, domain, type, parent=None):
+    name = name or code
+    sql_type, _ = LocationType.objects.get_or_create(domain=domain, name=type)
+    loc = Location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
+    loc.save()
+
+    if not sql_type.administrative:
+        SupplyInterface.create_from_location(domain, loc)
+        loc.save()
+
+    sql_location = loc.sql_location
+    sql_location.products = []
+    sql_location.save()
+    return loc
+
+
+def assign_products_to_location(location, products):
+    sql_location = location.sql_location
+    sql_location.products = [SQLProduct.objects.get(product_id=product.get_id) for product in products]
+    sql_location.save()
+
+
+def create_backend():
+    backend = TestSMSBackend(
+        domain=None,
+        name=TEST_BACKEND,
+        authorized_domains=[],
+        is_global=True,
+    )
+    backend._id = backend.name
+    backend.save()
+    sms_backend_mapping = BackendMapping(is_global=True, prefix="*", backend_id=backend.get_id)
+    sms_backend_mapping.save()
+    return sms_backend_mapping, backend
+
+
 def prepare_domain(domain_name):
-    from corehq.apps.commtrack.tests import bootstrap_domain
-    domain = bootstrap_domain(domain_name)
+    domain = create_domain(domain_name)
+    domain.convert_to_commtrack()
+
+    domain.default_sms_backend_id = TEST_BACKEND
+    domain.save()
 
     def _make_loc_type(name, administrative=False, parent_type=None):
         return LocationType.objects.get_or_create(
@@ -154,16 +200,13 @@ TEST_LOCATION_TYPE = 'outlet'
 TEST_USER = 'commtrack-user'
 TEST_NUMBER = '5551234'
 TEST_PASSWORD = 'secret'
-TEST_BACKEND = 'test-backend'
 
 
 def bootstrap_user(username=TEST_USER, domain=TEST_DOMAIN,
                    phone_number=TEST_NUMBER, password=TEST_PASSWORD,
                    backend=TEST_BACKEND, first_name='', last_name='',
-                   home_loc=None, user_data=None,
+                   home_loc=None, user_data=None, program_id=None
                    ):
-    from corehq.apps.commtrack.helpers import make_supply_point
-
     user_data = user_data or {}
     user = CommCareUser.create(
         domain,
@@ -174,14 +217,36 @@ def bootstrap_user(username=TEST_USER, domain=TEST_DOMAIN,
         first_name=first_name,
         last_name=last_name
     )
-
-    if not SupplyPointCase.get_by_location(home_loc):
-        make_supply_point(domain, home_loc)
-        home_loc.save()
-    user.set_location(home_loc)
+    if home_loc:
+        user.set_location(home_loc)
+    dm = user.get_domain_membership(domain)
+    dm.program_id = program_id
+    user.save()
 
     user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
     return CommCareUser.wrap(user.to_json())
+
+
+def bootstrap_web_user(domain, username, password, email, location, user_data=None, phone_number="", first_name="",
+                       last_name="", program_id=None):
+    web_user = WebUser.create(
+        domain=domain,
+        username=username,
+        password=password,
+        email=email
+    )
+
+    web_user.first_name = first_name
+    web_user.last_name = last_name
+
+    web_user.user_data = user_data or {}
+    web_user.set_location(domain, location)
+    dm = web_user.get_domain_membership(domain)
+    dm.program_id = program_id
+    if phone_number:
+        web_user.phone_numbers = [phone_number]
+    web_user.save()
+    return web_user
 
 REORDER_LEVEL = Decimal("1.5")
 
@@ -234,7 +299,13 @@ class ProductsReportHelper(object):
             if monthly_consumption is None:
                 reorders.append((stockout.sql_product.code, None))
             else:
-                reorders.append((stockout.sql_product.code, int(monthly_consumption * REORDER_LEVEL)))
+                reorders.append(
+                    (
+                        stockout.sql_product.code,
+                        int(monthly_consumption * Decimal(stockout.sql_location.location_type.overstock_threshold)
+                            - stockout.stock_on_hand)
+                    )
+                )
         return reorders
 
     def _get_facilities_with_stock_category(self, category):
@@ -254,7 +325,7 @@ class ProductsReportHelper(object):
         return [
             transaction
             for transaction in self.transactions
-            if transaction.action == 'receipts' and transaction.quantity != '0'
+            if transaction.action == 'receipts' and transaction.quantity != 0
         ]
 
 
@@ -269,8 +340,19 @@ def get_country_id(domain):
 
 def has_input_stock_permissions(couch_user, location, domain):
     domain_membership = couch_user.get_domain_membership(domain)
-    if not couch_user.is_web_user() or not domain_membership or not domain_membership.location_id:
+    if not couch_user.is_web_user():
         return False
+
+    try:
+        location_id = EWSExtension.objects.get(user_id=couch_user.get_id, domain=domain).location_id
+        if location_id == location.location_id:
+            return True
+    except EWSExtension.DoesNotExist:
+        pass
+
+    if not domain_membership or not domain_membership.location_id:
+        return False
+
     try:
         user_location = SQLLocation.objects.get(location_id=domain_membership.location_id)
     except SQLLocation.DoesNotExist:
@@ -374,3 +456,46 @@ def get_supply_points(domain, location_id):
                 location_type__administrative=False,
             ).order_by('name').exclude(supply_point_id__isnull=True)
     return supply_points
+
+
+def report_status(sql_location, days_until_late=DAYS_UNTIL_LATE):
+    commodities_stocked = sql_location.products
+    latest_stocks = StockState.objects.filter(
+        case_id=sql_location.supply_point_id, sql_product__in=commodities_stocked
+    )
+
+    if not latest_stocks:
+        return [], commodities_stocked
+
+    pks = [stock_state.sql_product.pk for stock_state in latest_stocks]
+    missing_products = list(commodities_stocked.exclude(pk__in=pks))
+
+    deadline = datetime.now() + relativedelta(days=-days_until_late)
+    on_time_stocks = latest_stocks.filter(last_modified_date__gte=deadline)
+    missing_stocks = [
+        stock_state.sql_product for stock_state in latest_stocks.filter(last_modified_date__lt=deadline)
+    ]
+    return [stock_state.sql_product for stock_state in on_time_stocks], missing_products + missing_stocks
+
+
+def send_sms(domain, recipient, phone_number, message):
+    if isinstance(phone_number, VerifiedNumber):
+        send_sms_to_verified_number(phone_number, message)
+    else:
+        core_send_sms(domain, recipient, phone_number, message)
+
+
+def has_notifications_enabled(domain, web_user):
+    try:
+        return EWSExtension.objects.get(domain=domain, user_id=web_user.get_id).sms_notifications
+    except EWSExtension.DoesNotExist:
+        return False
+
+
+def set_sms_notifications(domain, web_user, sms_notifications):
+    try:
+        extension = EWSExtension.objects.get(domain=domain, user_id=web_user.get_id)
+        extension.sms_notifications = sms_notifications
+        extension.save()
+    except EWSExtension.DoesNotExist:
+        EWSExtension.objects.create(domain=domain, user_id=web_user.get_id, sms_notifications=sms_notifications)

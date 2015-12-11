@@ -4,6 +4,13 @@
 {% load humanize %}
 {% block report-title %}System Info{% endblock %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+{% endblock %}
+
 {% block js-inline %} {{ block.super }}
     <script>
         function format_date(datestring) {
@@ -41,14 +48,35 @@
             }
         }
 
-        function RefreshableViewModel(url, model, sort_by) {
+        function RefreshableViewModel(url, model, interval, sort_by) {
             var self = this;
             self.error = ko.observable();
             self.models = ko.observableArray();
-            self.autoRefreshModel = null;
+            self.autoRefresh = ko.observable(false);
+            self.loading = ko.observable(false);
+            self.timer = null;
+            self.interval = interval;
+
+            self.autoRefresh.subscribe(function (newVal) {
+                if (newVal) {
+                    self.refresh();
+                } else {
+                    self.clearTimer();
+                }
+            });
+
+            self.clearTimer = function () {
+                if (self.timer) {
+                    clearTimeout(self.timer);
+                    self.timer = null;
+                }
+            };
 
             self.refresh = function () {
+                self.clearTimer();
+                self.loading(true);
                 $.getJSON(url, function (data) {
+                    self.error(null);
                     var objects = _(data).map(function (item) {
                         return new model(item);
                     });
@@ -56,6 +84,9 @@
                         objects = _(objects).sortBy(function (x) { return x[sort_by]; })
                     }
                     self.models(objects);
+                    if (self.autoRefresh()) {
+                        self.timer = setTimeout(self.refresh, self.interval);
+                    }
                 })
                 .fail(function (jqxhr, textStatus, error) {
                     var err = 'Unknown server error';
@@ -63,15 +94,12 @@
                         err = JSON.parse(jqxhr.responseText).error;
                     } catch (e) {}
                     self.error("Error: " + err);
-                    if (self.autoRefreshModel) {
-                        self.autoRefreshModel.removeModel(self);
-                    }
+                    self.autoRefresh(false);
+                    self.timer = null;
+                })
+                .always(function (){
+                    self.loading(false);
                 });
-            };
-            self.refresh();
-
-            self.setAutoRefreshModel = function(autoRefreshModel) {
-                 self.autoRefreshModel = autoRefreshModel;
             };
         }
 
@@ -122,13 +150,66 @@
             }
         }
 
+        function PillowOperationViewModel(pillow_model, operation) {
+            var self = this;
+            self.pillow_model = pillow_model;
+            self.operation = operation;
+            self.title = operation + ' for ' + pillow_model.name();
+
+            self.go = function () {
+                self.pillow_model.perform_operation(operation);
+            }
+        }
+
         function PillowModel(pillow) {
             var self = this;
-            self.name = pillow.name;
-            self.seq = pillow.seq;
-            self.db_seq = pillow.db_seq;
-            self.time_since_last = pillow.time_since_last;
-            self.status = (function() {
+            self.name = ko.observable();
+            self.seq = ko.observable();
+            self.db_seq = ko.observable();
+            self.time_since_last = ko.observable();
+            self.show_supervisor_info = ko.observable();
+            self.supervisor_state = ko.observable();
+            self.supervisor_message = ko.observable();
+            self.operation_in_progress = ko.observable(false);
+
+            self.update = function (data) {
+                self.name(data.name);
+                self.seq(data.seq);
+                self.db_seq(data.db_seq);
+                self.time_since_last(data.time_since_last);
+                self.show_supervisor_info(!!data.supervisor_state);
+                self.supervisor_state(data.supervisor_state||'(unavailable)');
+                self.supervisor_message(data.supervisor_message);
+            };
+
+            self.update(pillow);
+
+            self.process_running = ko.computed(function () {
+                return self.supervisor_state() === 'RUNNING';
+            });
+
+            self.start_stop_text = ko.computed(function () {
+                return self.process_running() ? '{% trans "Stop" %}' : '{% trans "Start" %}';
+            });
+
+            self.disabled = ko.computed(function() {
+                return self.operation_in_progress() || (self.supervisor_state() !== 'RUNNING' && self.supervisor_state() !== 'STOPPED');
+            });
+
+            self.supervisor_state_css = ko.computed(function() {
+                switch (self.supervisor_state()) {
+                    case ('(unavailable)'):
+                        return '';
+                    case ('RUNNING'):
+                        return 'label-success';
+                    case ('STOPPED'):
+                        return 'label-warning';
+                    default:
+                        return 'label-important';
+                }
+            });
+
+            self.checkpoint_status_css = ko.computed(function() {
                 var hours = pillow.hours_since_last;
                 switch (true) {
                     case (hours <= 1):
@@ -140,10 +221,75 @@
                     default:
                         return 'label-important';
                 }
-            })();
+            });
+
+            self.overall_status = ko.computed(function() {
+                var status_combined = self.checkpoint_status_css() + self.supervisor_state_css();
+                if (status_combined.indexOf('important') !== -1) {
+                    return 'error';
+                } else if (status_combined.indexOf('warning') !== -1) {
+                    return 'warning';
+                } else if (status_combined.indexOf('info') !== -1) {
+                    return 'info';
+                } else if (status_combined.indexOf('success') !== -1) {
+                    return 'success';
+                }
+            });
+
             self.show_progress = function () {
-                    return (self.seq * 100) / self.db_seq <= 99;
+                return (self.seq() * 100) / self.db_seq() <= 99;
             };
+
+            self.show_pillow_dialog = function (operation) {
+                var element = $('#pillow_operation_modal').get(0);
+                ko.cleanNode(element);
+                ko.applyBindings(new PillowOperationViewModel(self, operation), element);
+                $('#pillow_operation_modal').modal({
+                    backdrop: 'static',
+                    keyboard: false,
+                    show: true
+                });
+            };
+
+            self.reset_checkpoint = function () {
+                self.show_pillow_dialog('reset_checkpoint');
+            };
+
+            self.start_stop = function () {
+                self.show_pillow_dialog(self.process_running() ? 'stop' : 'start');
+            };
+
+            self.refresh = function () {
+                self.perform_operation('refresh');
+            };
+
+            self.perform_operation = function(operation) {
+                self.operation_in_progress(true);
+                $.post('{% url "pillow_operation_api" %}', {
+                    'pillow_name': self.name,
+                    'operation': operation
+                }, function( data ) {
+                    self.operation_in_progress(false);
+                    self.update(data);
+
+                    if (!data.success) {
+                        alert_user("Operation failed: " + data.operation + " on "
+                                + data.pillow_name + ', ' + data.message, 'error');
+                    }
+                }, "json")
+                .fail(function (jqxhr, textStatus, error) {
+                    var err = 'Unknown server error';
+                    try {
+                        err = JSON.parse(jqxhr.responseText).error;
+                    } catch (e) {}
+                    self.operation_in_progress(false);
+                    self.supervisor_state('(unavailable)');
+                    self.supervisor_message(err);
+                }).always(function() {
+                    $('#pillow_operation_modal').modal('hide');
+                    $("#" + self.name() +" td").effect("highlight", {}, 2000);
+                });
+            }
         }
 
         function DbComparisons(data) {
@@ -154,55 +300,37 @@
             self.sql_rows = data.sql_rows;
         }
 
-        var celeryViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=flower_poll", CeleryTaskModel);
+        var celeryViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=flower_poll", CeleryTaskModel, {{ celery_update }});
         {% if is_bigcouch %}
-        var couchViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=_active_tasks", DesignDocModel, 'design_document');
+        var couchViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=_active_tasks", DesignDocModel, {{ couch_update }}, 'design_document');
         {% else %}
-        var couchViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=_active_tasks", ActiveTaskModel);
+        var couchViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=_active_tasks", ActiveTaskModel, {{ couch_update }});
         {% endif %}
-        var pillowtopViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=pillowtop", PillowModel, 'name');
-        var dbComparisonsViewModel = new RefreshableViewModel("{% url "db_comparisons" %}", DbComparisons, 'description');
+        var pillowtopViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=pillowtop", PillowModel, {{ couch_update }}, 'name');
+        var dbComparisonsViewModel = new RefreshableViewModel("{% url "db_comparisons" %}", DbComparisons, {{ db_update }}, 'description');
 
         var AutoRefreshModel = function () {
             var self = this;
             self.refreshStatus = ko.observable(false);
             self.refreshStatusText = ko.observable('off');
             self.models = [];
-            self.timers = [];
 
-            self.addModel = function (model, refreshInterval) {
-                model.setAutoRefreshModel(self);
-                self.models.push({
-                    'model': model,
-                    'interval': refreshInterval,
-                    'timer': null
-                });
-            };
-
-            self.removeModel = function (to_remove) {
-                var model = _.findWhere(self.models, {'model': to_remove});
-                if (model.timer) {
-                    clearInterval(model.timer);
-                }
-                self.models = _.without(self.models, model);
+            self.addModel = function (model) {
+                self.models.push(model);
             };
 
             self.toggleRefresh = function () {
                 self.refreshStatus(!self.refreshStatus());
                 self.refreshStatusText(self.refreshStatus() ? 'on' : 'off');
-                if (self.refreshStatus()) {
-                    $.each(self.models, function (index, model) {
-                        if (!model.timer) {
-                            model.timer = setInterval(function () { model.model.refresh(); }, model.interval);
-                        }
-                    });
-                } else {
-                    $.each(self.models, function (index, model) {
-                        if (model.timer) {
-                            clearInterval(model.timer);
-                        }
-                    });
-                }
+                $.each(self.models, function (index, model) {
+                    model.autoRefresh(self.refreshStatus());
+                });
+            };
+
+            self.refreshAll = function () {
+                $.each(self.models, function (index, model) {
+                    model.refresh();
+                });
             };
         };
 
@@ -212,20 +340,15 @@
             ko.applyBindings(couchViewModel, $("#couchblock").get(0));
             ko.applyBindings(pillowtopViewModel, $('#pillowtop-status').get(0));
             ko.applyBindings(dbComparisonsViewModel, $('#elastic-vs-couch').get(0));
-            autoRefresh.addModel(celeryViewModel, {{ celery_update }});
-            autoRefresh.addModel(couchViewModel, {{ couch_update }});
-            autoRefresh.addModel(pillowtopViewModel, {{ couch_update }});
-            autoRefresh.addModel(dbComparisonsViewModel, {{ db_update }});
+            autoRefresh.addModel(celeryViewModel);
+            autoRefresh.addModel(couchViewModel);
+            autoRefresh.addModel(pillowtopViewModel);
+            autoRefresh.addModel(dbComparisonsViewModel);
 
-            autoRefresh.toggleRefresh();
+            autoRefresh.refreshAll();
             ko.applyBindings(autoRefresh, $('#autorefresh').get(0));
         });
 
-        $(document).on("click", ".reset_pillow_checkpoint_btn", function () {
-            var pillowName = $(this).val();
-            $(".modal-header h3").text(pillowName);
-            $(".modal-body #pillow_name").val(pillowName);
-        });
     </script>
 
 
@@ -259,6 +382,9 @@
                             <div id="autorefresh">
                                 Auto refresh <a href="#" data-bind="click: toggleRefresh, text: refreshStatusText"></a></span>
                             </div>
+                        </li>
+                        <li>
+                            <a href="{% url "raw_couch" %}">Look for a doc in couch</a>
                         </li>
                     </ul>
                 </td>
@@ -323,42 +449,66 @@
         </table>
     </div>
     <div class="row-fluid" id="pillowtop-status">
-        <h3>Pillowtop Status</h3>
+        <h3>
+            Pillowtop Status
+            <small data-bind="if: loading()">
+                <i class="icon-refresh icon-spin"></i>
+            </small>
+            <small data-bind="if: !loading() && !autoRefresh()">
+                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
+            </small>
+        </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>
         <table class="table table-striped" data-bind="visible: !error()">
             <thead>
                 <tr>
                     <th>Name</th>
+                    <th>Supervisor Status</th>
                     <th>Time since last checkpoint</th>
                     <th title="seq / db_seq">Reindex Progress</th>
                     <th title="db_seq - seq"># Changes behind</th>
                     <th title="seq / db_seq">Seq / Total Seq</th>
-                    <th>Reset pillow checkpoint</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody data-bind="foreach: models">
-                <tr>
+                <tr data-bind="css: overall_status, attr: {id: name}">
                     <td><code data-bind="text: name"></code></td>
-                    <td><label data-bind="text: time_since_last, css: status" class="label"></label></td>
+                    <td>
+                            <label data-bind="text: supervisor_state, css: supervisor_state_css" class="label"></label>
+                            <span data-bind="makeHqHelp: { name: 'Info', description: supervisor_message, format: 'html'}, visible: supervisor_message"></span>
+                    </td>
+                    <td><label data-bind="text: time_since_last, css: checkpoint_status_css" class="label"></label></td>
                     <td>
                         <div class="progress progress-striped progress-mini active" data-bind="visible: show_progress()">
-                            <div class="bar" data-bind="style: {width: ((seq * 100)/db_seq) + '%'}"></div>
+                            <div class="bar" data-bind="style: {width: ((seq() * 100)/db_seq()) + '%'}"></div>
                         </div>
                         <div data-bind="visible: !show_progress()">
                             <span>All caught up</span>
                         </div>
                     </td>
                     <td>
-                        <span data-bind="text: db_seq - seq"></span>
+                        <span data-bind="text: db_seq() - seq()"></span>
                     </td>
                     <td>
                         <span data-bind="text: seq"></span>
                         / <span data-bind="text: db_seq"></span>
                     </td>
                     <td>
-                        <a class="btn btn-info pull-right reset_pillow_checkpoint_btn" data-bind="value: name" data-toggle="modal" href="#reset_pillow_checkpoint_modal">
-                            {% trans "Reset" %}
-                        </a>
+                        {% if user_is_support %}
+                        <button class="btn" type="button" data-bind="
+                            click: reset_checkpoint,
+                            disable: disabled">{% trans "Reset" %}</button>
+                        <button class="btn" type="button" data-bind="
+                            click: start_stop,
+                            text: start_stop_text,
+                            disable: disabled"></button>
+                        {% endif %}
+                        <button class="btn" type="button" data-bind="
+                            click: refresh,
+                            disable: disabled">
+                            <i class="icon-refresh" data-bind="css: {'icon-spin': operation_in_progress}"></i>
+                        </button>
                     </td>
                 </tr>
             </tbody>
@@ -366,7 +516,15 @@
     </div>
 
     <div class="row-fluid" id="elastic-vs-couch">
-        <h3>Elasticsearch/Couch/Postgres comparison</h3>
+        <h3>
+            Elasticsearch/Couch/Postgres comparison
+            <small data-bind="if: loading()">
+                <i class="icon-refresh icon-spin"></i>
+            </small>
+            <small data-bind="if: !loading() && !autoRefresh()">
+                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
+            </small>
+        </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>
         <table class="table table-striped" data-bind="visible: !error()">
             <thread>
@@ -389,7 +547,15 @@
     </div>
     {% if is_bigcouch %}
     <div class="row-fluid" id="couchblock">
-        <h3>Couch Tasks</h3>
+        <h3>
+            Couch Tasks
+            <small data-bind="if: loading()">
+                <i class="icon-refresh icon-spin"></i>
+            </small>
+            <small data-bind="if: !loading() && !autoRefresh()">
+                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
+            </small>
+        </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>
         <div class="row" data-bind="visible: !error(), foreach: models">
             <strong data-bind="text: design_document"></strong>
@@ -423,7 +589,15 @@
     </div>
     {% else %}
     <div class="row-fluid" id="couchblock">
-        <h3>Couch Tasks</h3>
+        <h3>
+            Couch Tasks
+            <small data-bind="if: loading()">
+                <i class="icon-refresh icon-spin"></i>
+            </small>
+            <small data-bind="if: !loading() && !autoRefresh()">
+                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
+            </small>
+        </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>
         <table class="table table-striped" data-bind="visible: !error()">
             <thead>
@@ -461,7 +635,15 @@
     {% endif %}
 
     <div class="row-fluid" id="celeryblock">
-        <h3>Celery Monitor <small><a href="{{ celery_flower_url }}">Flower</a> (must be vpn'd in)</small></h3>
+        <h3>
+            Celery Monitor <small><a href="{{ celery_flower_url }}">Flower</a> (must be vpn'd in)</small>
+            <small data-bind="if: loading()">
+                <i class="icon-refresh icon-spin"></i>
+            </small>
+            <small data-bind="if: !loading() && !autoRefresh()">
+                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
+            </small>
+        </h3>
         <p class="text-error" data-bind="visible: error, text: error"></p>
         <table class="table table-striped" data-bind="visible: !error()">
             <thead>
@@ -503,5 +685,5 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    {% include "hqadmin/partials/reset-pillow-checkpoint-modal.html" %}
+    {% include "hqadmin/partials/pillow-operation-modal.html" %}
 {% endblock %}

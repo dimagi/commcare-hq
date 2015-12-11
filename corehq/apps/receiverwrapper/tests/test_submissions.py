@@ -1,3 +1,5 @@
+import json
+
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
@@ -6,13 +8,11 @@ from corehq.apps.domain.shortcuts import create_domain
 from django.test.client import Client
 from django.core.urlresolvers import reverse
 import os
-from couchforms.models import XFormInstance
+
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
-# bit of a hack, but the tests optimize around this flag to run faster
-# so when we actually want to test this functionality we need to set
-# the flag to False explicitly
-@override_settings(UNIT_TESTING=False)
 class SubmissionTest(TestCase):
     maxDiff = None
 
@@ -25,6 +25,8 @@ class SubmissionTest(TestCase):
         self.client.login(**{'username': 'test', 'password': 'foobar'})
         self.url = reverse("receiver_post", args=[self.domain])
 
+        self.use_sql = getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False)
+
     def tearDown(self):
         self.couch_user.delete()
         self.domain.delete()
@@ -36,85 +38,72 @@ class SubmissionTest(TestCase):
                 "xml_submission_file": f
             }, **extra)
 
-    def _test(self, form, response_contains, xmlns, msg=None):
+    def _get_expected_json(self, form_id, xmlns):
+        filename = 'expected_form_{}.json'.format(
+            'sql' if self.use_sql else 'couch'
+        )
+        file_path = os.path.join(os.path.dirname(__file__), "data", filename)
+        with open(file_path, "rb") as f:
+            expected = json.load(f)
 
-        response = self._submit(form,
-                                HTTP_DATE='Mon, 11 Apr 2011 18:24:43 GMT')
+        if '_id' in expected:
+            expected['_id'] = form_id
+        else:
+            expected['form_id'] = unicode(form_id)
+        expected['xmlns'] = unicode(xmlns)
+
+        return expected
+
+    def _test(self, form, xmlns):
+        response = self._submit(form, HTTP_DATE='Mon, 11 Apr 2011 18:24:43 GMT')
         xform_id = response['X-CommCareHQ-FormID']
-        foo = XFormInstance.get(xform_id).to_json()
-        n_times_saved = int(foo['_rev'].split('-')[0])
+        foo = FormAccessors(self.domain.name).get_form(xform_id).to_json()
         self.assertTrue(foo['received_on'])
-        for key in ['form', '_attachments', '_rev', 'received_on']:
-            del foo[key]
-        self.assertEqual(n_times_saved, 1)
-        self.assertEqual(foo, {
-            "#export_tag": [
-                "domain",
-                "xmlns"
-            ],
-            "_id": xform_id,
-            "app_id": None,
-            "auth_context": {
-                "authenticated": False,
-                "doc_type": "AuthContext",
-                "domain": "submit",
-                "user_id": None
-            },
-            "build_id": None,
-            "computed_": {},
-            "computed_modified_on_": None,
-            "date_header": '2011-04-11T18:24:43.000000Z',
-            "doc_type": "XFormInstance",
-            "domain": "submit",
-            "history": [],
-            "initial_processing_complete": True,
-            "last_sync_token": None,
-            "openrosa_headers": {
-                "HTTP_DATE": "Mon, 11 Apr 2011 18:24:43 GMT",
-            },
-            "partial_submission": False,
-            "path": "/a/submit/receiver",
-            "submit_ip": "127.0.0.1",
-            "xmlns": xmlns,
-        })
-        self.assertIn(response_contains, str(response), msg)
 
+        if not self.use_sql:
+            n_times_saved = int(foo['_rev'].split('-')[0])
+            self.assertEqual(n_times_saved, 1)
+
+        for key in ['form', '_attachments', '_rev', 'received_on', 'user_id']:
+            if key in foo:
+                del foo[key]
+
+        # normalize the json
+        foo = json.loads(json.dumps(foo))
+        expected = self._get_expected_json(xform_id, xmlns)
+        self.assertEqual(foo, expected)
+
+    @run_with_all_backends
     def test_submit_simple_form(self):
         self._test(
             form='simple_form.xml',
-            response_contains="Thanks for submitting!",
             xmlns='http://commcarehq.org/test/submit',
         )
 
+    @run_with_all_backends
     def test_submit_bare_form(self):
         self._test(
             form='bare_form.xml',
-            response_contains="Thanks for submitting!",
             xmlns='http://commcarehq.org/test/submit',
-            msg="Bare form successfully parsed",
         )
 
+    @run_with_all_backends
     def test_submit_user_registration(self):
         self._test(
             form='user_registration.xml',
-            response_contains="Thanks for registering! "
-                              "Your username is mealz@",
             xmlns='http://openrosa.org/user/registration',
-            msg="User registration form successfully parsed",
         )
 
+    @run_with_all_backends
     def test_submit_with_case(self):
         self._test(
             form='form_with_case.xml',
-            response_contains="Thanks for submitting!",
             xmlns='http://commcarehq.org/test/submit',
-            msg="Form with case successfully parsed",
         )
 
+    @run_with_all_backends
     def test_submit_with_namespaced_meta(self):
         self._test(
             form='namespace_in_meta.xml',
-            response_contains="Thanks for submitting!",
             xmlns='http://bihar.commcarehq.org/pregnancy/new',
-            msg="Form with namespace in meta successfully parsed",
         )

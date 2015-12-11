@@ -4,8 +4,8 @@ from decimal import Decimal
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from casexml.apps.stock.models import StockTransaction, StockReport
-from corehq.apps.accounting import generator
-from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from corehq.apps.domain.utils import DOMAIN_MODULE_KEY
@@ -15,6 +15,7 @@ from corehq.apps.users.models import WebUser, UserRole
 from django.test.client import Client
 from custom.ewsghana import StockLevelsReport
 from custom.ewsghana.api import EWSApi, Product, Location
+from custom.ewsghana.models import EWSExtension
 from custom.ewsghana.tests.mock_endpoint import MockEndpoint
 from custom.ewsghana.utils import make_url
 from dimagi.utils.couch.database import get_db
@@ -22,7 +23,7 @@ from dimagi.utils.couch.database import get_db
 TEST_DOMAIN = 'ewsghana-test-input-stock'
 
 
-class TestInputStockView(TestCase):
+class TestInputStockView(TestCase, DomainSubscriptionMixin):
 
     @classmethod
     def setUpClass(cls):
@@ -45,21 +46,9 @@ class TestInputStockView(TestCase):
                 }
             )
         db.save_doc(module_config)
-        generator.instantiate_accounting_for_tests()
-        account = BillingAccount.get_or_create_account_by_domain(
-            cls.domain.name,
-            created_by="automated-test",
-        )[0]
-        plan = DefaultProductPlan.get_default_plan_by_domain(
-            cls.domain, edition=SoftwarePlanEdition.ENTERPRISE
-        )
-        subscription = Subscription.new_domain_subscription(
-            account,
-            cls.domain.name,
-            plan
-        )
-        subscription.is_active = True
-        subscription.save()
+
+        cls.setup_subscription(TEST_DOMAIN, SoftwarePlanEdition.ENTERPRISE)
+
         cls.endpoint = MockEndpoint('http://test-api.com/', 'dummy', 'dummy')
         cls.api_object = EWSApi(TEST_DOMAIN, cls.endpoint)
         cls.api_object.prepare_commtrack_config()
@@ -120,6 +109,21 @@ class TestInputStockView(TestCase):
         cls.web_user5.eula.signed = True
         cls.web_user5.save()
 
+        cls.username6 = 'ews_user6'
+        cls.password6 = 'dummy'
+        cls.web_user6 = WebUser.create(TEST_DOMAIN, cls.username6, cls.password6)
+        domain_membership = cls.web_user6.get_domain_membership(TEST_DOMAIN)
+        domain_membership.role_id = UserRole.get_read_only_role_by_domain(cls.domain.name).get_id
+
+        cls.web_user6.eula.signed = True
+        cls.web_user6.save()
+
+        EWSExtension.objects.create(
+            user_id=cls.web_user6.get_id,
+            domain=TEST_DOMAIN,
+            location_id=cls.test_facility3.get_id
+        )
+
         cls.ad = SQLProduct.objects.get(domain=TEST_DOMAIN, code='ad')
         cls.al = SQLProduct.objects.get(domain=TEST_DOMAIN, code='al')
 
@@ -170,6 +174,12 @@ class TestInputStockView(TestCase):
         self.assertIsNotNone(formset)
         self.assertEqual(tsactive.products.count(), 2)
         self.assertEqual(len(list(formset)), tsactive.products.count())
+
+    def test_web_user_with_extension(self):
+        self.client.login(username=self.username6, password=self.password6)
+        view_url = reverse('input_stock', kwargs={'domain': TEST_DOMAIN, 'site_code': 'tsactive'})
+        response = self.client.get(view_url, follow=True)
+        self.assertEqual(response.status_code, 200)
 
     def test_web_user_with_valid_parent_location_access(self):
         self.client.login(username=self.username5, password=self.password5)
@@ -284,3 +294,4 @@ class TestInputStockView(TestCase):
     def tearDownClass(cls):
         cls.web_user1.delete()
         cls.domain.delete()
+        cls.teardown_subscription()

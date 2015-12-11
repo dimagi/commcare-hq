@@ -16,8 +16,9 @@ from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.app_manager import util as app_manager_util
-from corehq.apps.app_manager.models import get_apps_in_domain, Application, RemoteApp, Form, get_app
-from corehq.apps.receiverwrapper.models import Repeater, repeater_types
+from corehq.apps.app_manager.models import Application, RemoteApp
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.repeaters.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.users.util import format_username
@@ -216,9 +217,10 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         if 'size' in query:
             del query['size']
 
-        return ESQuerySet(payload = query,
-                          model = CommCareCase,
-                          es_client = self.case_es(domain)).order_by('server_modified_on') # Not that CaseES is used only as an ES client, for `run_query` against the proper index
+        # Note that CaseES is used only as an ES client, for `run_query` against the proper index
+        return ESQuerySet(payload=query,
+                          model=CommCareCase,
+                          es_client=self.case_es(domain)).order_by('server_modified_on')
 
     class Meta(v0_3.CommCareCaseResource.Meta):
         max_limit = 100 # Today, takes ~25 seconds for some domains

@@ -6,7 +6,7 @@ from couchdbkit import ResourceNotFound
 import itertools
 
 from casexml.apps.case.models import CommCareCase
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.dbaccessors import iter_all_forms_most_recent_first, \
     iter_all_cases_most_recent_first
 from corehq.elastic import get_es

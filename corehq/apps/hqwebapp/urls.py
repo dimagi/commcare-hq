@@ -29,14 +29,12 @@ urlpatterns = patterns(
         name='dropbox_upload'),
 )
 
-urlpatterns += patterns('corehq.apps.orgs.views', url(r'^search_orgs/', 'search_orgs', name='search_orgs'))
-
 domain_specific = patterns('corehq.apps.hqwebapp.views',
     url(r'^$', 'redirect_to_default', name='domain_homepage'),
     url(r'^login/$', 'domain_login', name='domain_login'),
     url(r'^login/mobile/$', 'domain_login', name='domain_mobile_login', 
         kwargs={'template_name': 'login_and_password/mobile_login.html'}),
     url(r'^retreive_download/(?P<download_id>[0-9a-fA-Z]{25,32})/$', 
-        'retrieve_download', {'template': 'hqwebapp/file_download.html' },
+        'retrieve_download', {'template': 'style/includes/file_download.html' },
         name='hq_soil_download')
 )

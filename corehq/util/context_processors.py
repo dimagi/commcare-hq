@@ -2,16 +2,14 @@ from django.conf import settings
 from django.core.urlresolvers import resolve, reverse
 from django.http import Http404
 from django.utils.translation import ugettext as _
+from ws4redis.context_processors import default
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 
 COMMCARE = 'commcare'
-
 COMMTRACK = 'commtrack'
-
-RAVEN = bool(getattr(settings, 'SENTRY_DSN', None))
 
 
 def base_template(request):
@@ -22,8 +20,6 @@ def base_template(request):
         'login_template': settings.LOGIN_TEMPLATE,
         'less_debug': settings.LESS_DEBUG,
         'less_watch': settings.LESS_WATCH,
-        'use_knockout_js': (request.use_knockout_js
-                            if hasattr(request, 'use_knockout_js') else False),
     }
 
 
@@ -101,8 +97,16 @@ def analytics_js(request):
     d.update({"ANALYTICS_CONFIG": settings.ANALYTICS_CONFIG})
     return d
 
-def raven(request):
-    """lets you know whether raven is being used"""
-    return {
-        'RAVEN': RAVEN
-    }
+
+def websockets_override(request):
+    # for some reason our proxy setup doesn't properly detect these things, so manually override them
+    try:
+        context = default(request)
+        context['WEBSOCKET_URI'] = context['WEBSOCKET_URI'].replace(request.get_host(), settings.BASE_ADDRESS)
+        if settings.DEFAULT_PROTOCOL == 'https':
+            context['WEBSOCKET_URI'] = context['WEBSOCKET_URI'].replace('ws://', 'wss://')
+        return context
+    except Exception:
+        # it's very unlikely this was needed, and some workflows (like scheduled reports) aren't
+        # able to generate this, so don't worry about it.
+        return {}

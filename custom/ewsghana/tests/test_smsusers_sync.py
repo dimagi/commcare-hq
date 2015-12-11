@@ -4,7 +4,7 @@ from django.test import TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.users.models import CommCareUser
-from custom.ewsghana.api import EWSApi, SMSUser
+from custom.ewsghana.api import EWSApi, SMSUser, Connection
 
 from custom.ilsgateway.tests.mock_endpoint import MockEndpoint
 
@@ -42,6 +42,7 @@ class SMSUsersSyncTest(TestCase):
         verified_number = ewsghana_smsuser.get_verified_number()
         self.assertIsNotNone(verified_number)
         self.assertEqual(verified_number.phone_number, '2222222222')
+        self.assertEqual(ewsghana_smsuser.phone_numbers, ['2222222222'])
         domain_name = ewsghana_smsuser.get_domains()[0]
         self.assertEqual(TEST_DOMAIN, domain_name)
         self.assertIsInstance(ewsghana_smsuser.user_data['role'], list)
@@ -58,7 +59,7 @@ class SMSUsersSyncTest(TestCase):
         self.assertIsNotNone(verified_number)
         user_id = ewsghana_smsuser.get_id
         self.assertIsNotNone(user_id)
-        smsuser.phone_numbers = ['111111111']
+        smsuser.phone_numbers = [Connection(phone_number='111111111', backend='smsgh', default=True)]
         ewsghana_smsuser = self.api_object.sms_user_sync(smsuser)
         self.assertEqual(user_id, ewsghana_smsuser.get_id)
         self.assertEqual(ewsghana_smsuser.default_phone_number, '111111111')
@@ -97,7 +98,7 @@ class SMSUsersSyncTest(TestCase):
         ewsghana_smsuser = self.api_object.sms_user_sync(smsuser)
         verified_number = ewsghana_smsuser.get_verified_number()
         self.assertIsNone(verified_number)
-        smsuser.phone_numbers = ['111111111']
+        smsuser.phone_numbers = [Connection(phone_number='111111111', backend='smsgh', default=True)]
         ewsghana_smsuser = self.api_object.sms_user_sync(smsuser)
         self.assertIsNotNone(ewsghana_smsuser.default_phone_number)
         self.assertListEqual(ewsghana_smsuser.phone_numbers, ['111111111'])
@@ -116,7 +117,7 @@ class SMSUsersSyncTest(TestCase):
         verified_number = ewsghana_smsuser.get_verified_number()
         self.assertIsNotNone(verified_number)
         self.assertEqual(verified_number.phone_number, '2222222222')
-        smsuser.phone_numbers = ['111111111']
+        smsuser.phone_numbers = [Connection(phone_number='111111111', backend='smsgh', default=True)]
         ewsghana_smsuser = self.api_object.sms_user_sync(smsuser)
         self.assertIsNotNone(ewsghana_smsuser.default_phone_number)
         self.assertListEqual(ewsghana_smsuser.phone_numbers, ['111111111'])
@@ -139,3 +140,13 @@ class SMSUsersSyncTest(TestCase):
         verified_number = ewsghana_smsuser.get_verified_number()
         self.assertIsNotNone(verified_number)
         self.assertEqual(verified_number.phone_number, '2222222222')
+
+    def test_message_tester_backend(self):
+        with open(os.path.join(self.datapath, 'sample_smsusers.json')) as f:
+            smsuser = SMSUser(json.loads(f.read())[1])
+        ewsghana_smsuser = self.api_object.sms_user_sync(smsuser)
+        self.assertEqual(len(CommCareUser.by_domain(TEST_DOMAIN)), 1)
+        verified_number = ewsghana_smsuser.get_verified_number()
+        self.assertIsNotNone(verified_number)
+        self.assertEqual(verified_number.phone_number, '22223333')
+        self.assertEqual(verified_number.backend_id, 'MOBILE_BACKEND_TEST')

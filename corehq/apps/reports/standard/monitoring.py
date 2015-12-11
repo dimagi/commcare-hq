@@ -4,26 +4,27 @@ from urllib import urlencode
 import math
 from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import operator
+import pytz
 from corehq.apps.es import filters
-from corehq.apps.es.cases import CaseES
+from corehq.apps.es import cases as case_es
 from corehq.apps.es.forms import FormES
 from corehq.apps.reports import util
+from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport
-from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter, SingleFormByApplicationFilter, MISSING_APP_ID
+from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
+from corehq.apps.sofabed.dbaccessors import get_form_counts_by_user_xmlns
 from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.elastic import es_query
-from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.couch.database import get_db
+from couchforms.models import XFormInstance
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_datetime, json_format_date
@@ -109,7 +110,6 @@ class CompletionOrSubmissionTimeMixin(object):
 
 class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     """
-    todo move this to the cached version when ready
     User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
     danny   5 (25%)         10 (50%)        20 (100%)       17                          6
     (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
@@ -143,39 +143,36 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             self.report = report
             self.user = user
 
-        @memoized
-        def active_count(self):
+        def active_count(self, startdate=None):
             """Open clients seen in the last 120 days"""
             return self.report.get_number_cases(
                 user_id=self.user.user_id,
-                modified_after=self.report.utc_now - self.report.milestone,
+                modified_after=startdate,
                 modified_before=self.report.utc_now,
                 closed=False,
             )
 
-        @memoized
-        def inactive_count(self):
+        def inactive_count(self, startdate=None):
             """Open clients not seen in the last 120 days"""
             return self.report.get_number_cases(
                 user_id=self.user.user_id,
-                modified_before=self.report.utc_now - self.report.milestone,
+                modified_after=startdate,
+                modified_before=self.report.utc_now,
                 closed=False,
             )
 
-        def modified_count(self, startdate=None, enddate=None):
-            enddate = enddate or self.report.utc_now
+        def modified_count(self, startdate=None):
             return self.report.get_number_cases(
                 user_id=self.user.user_id,
                 modified_after=startdate,
-                modified_before=enddate,
+                modified_before=self.report.utc_now,
             )
 
-        def closed_count(self, startdate=None, enddate=None):
-            enddate = enddate or self.report.utc_now
+        def closed_count(self, startdate=None):
             return self.report.get_number_cases(
                 user_id=self.user.user_id,
                 modified_after=startdate,
-                modified_before=enddate,
+                modified_before=self.report.utc_now,
                 closed=True
             )
 
@@ -187,17 +184,17 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             self.rows = rows
             self._header = header
 
-        def active_count(self):
-            return sum([row.active_count() for row in self.rows])
+        def active_count(self, startdate=None):
+            return sum([row.active_count(startdate) for row in self.rows])
 
-        def inactive_count(self):
-            return sum([row.inactive_count() for row in self.rows])
+        def inactive_count(self, startdate=None):
+            return sum([row.inactive_count(startdate) for row in self.rows])
 
-        def modified_count(self, startdate=None, enddate=None):
-            return sum([row.modified_count(startdate, enddate) for row in self.rows])
+        def modified_count(self, startdate=None):
+            return sum([row.modified_count(startdate) for row in self.rows])
 
-        def closed_count(self, startdate=None, enddate=None):
-            return sum([row.closed_count(startdate, enddate) for row in self.rows])
+        def closed_count(self, startdate=None):
+            return sum([row.closed_count(startdate) for row in self.rows])
 
         def header(self):
             return self._header
@@ -244,7 +241,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 help_text=_("The number of cases that have been modified between %d days ago and today.") % landmark.days
             )
             num_active = DataTablesColumn(_("# Active"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of cases created or modified in the last 120 days.")
+                help_text=_("The number of cases created or modified in the last %d days.") % landmark.days
             )
             num_closed = DataTablesColumn(_("# Closed"), sort_type=DTSortType.NUMERIC,
                 help_text=_("The number of cases that have been closed between %d days ago and today.") % landmark.days
@@ -286,9 +283,10 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 cells.append(util.format_datatables_data(text=text, sort_key=value))
 
             for landmark in self.landmarks:
-                value = row.modified_count(self.utc_now - landmark)
-                active = row.active_count()
-                closed = row.closed_count(self.utc_now - landmark)
+                startdate = self.utc_now - landmark
+                value = row.modified_count(startdate)
+                active = row.active_count(startdate)
+                closed = row.closed_count(startdate)
                 total = active + closed
 
                 try:
@@ -302,8 +300,9 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 add_numeric_cell(closed, closed)
                 add_numeric_cell(proportion, p_val)
 
-            add_numeric_cell(row.active_count())
-            add_numeric_cell(row.inactive_count())
+            startdate = self.utc_now - self.milestone
+            add_numeric_cell(row.active_count(startdate))
+            add_numeric_cell(row.inactive_count(startdate))
             return cells
 
         self.total_row = format_row(total_row)
@@ -329,12 +328,14 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
 
 class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
-                              MultiFormDrilldownMixin, DatespanMixin):
+                              MultiFormDrilldownMixin, DatespanMixin,
+                              CompletionOrSubmissionTimeMixin):
     name = ugettext_noop("Submissions By Form")
     slug = "submissions_by_form"
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
+        'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter'
     ]
     fix_left_col = True
@@ -381,19 +382,22 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
         return headers
 
     @property
+    @memoized
+    def selected_users(self):
+        users_data = EMWF.pull_users_and_groups(self.domain, self.request, True, True)
+        return users_data.combined_users
+
+    @property
     def rows(self):
         rows = []
         totals = [0] * (len(self.all_relevant_forms) + 1)
-        users_data = EMWF.pull_users_and_groups(
-            self.domain, self.request, True, True)
-        for user in users_data.combined_users:
+        for user in self.selected_users:
             row = []
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
-                    row.append(
-                        self._get_num_submissions(
-                            user.user_id, form['xmlns'], form['app_id'])
-                    )
+                    row.append(self._form_counts[
+                        (user.user_id, form['xmlns'], form['app_id'])
+                    ])
                 row_sum = sum(row)
                 row = (
                     [self.get_user_link(user)] +
@@ -409,32 +413,22 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             self.total_row = [_("All Users")] + totals
         return rows
 
-    def _get_num_submissions(self, user_id, xmlns, app_id):
-        key = make_form_couch_key(self.domain, user_id=user_id, xmlns=xmlns,
-                                  app_id=app_id)
-        data = get_db().view(
-            'reports_forms/all_forms',
-            reduce=True,
-            startkey=key + [self.datespan.startdate_param_utc],
-            endkey=key + [self.datespan.enddate_param_utc],
-        ).first()
-        return data['value'] if data else 0
-
+    @property
     @memoized
-    def forms_per_user(self, app_id, xmlns):
-        # todo: this seems to not work properly
-        # needs extensive QA before being used
-        query = (FormES()
-                 .domain(self.domain)
-                 .xmlns(xmlns)
-                 .submitted(gt=self.datespan.startdate_utc,
-                            lte=self.datespan.enddate_utc)
-                 .size(0)
-                 .user_facet())
-        if app_id and app_id != MISSING_APP_ID:
-            query = query.app(app_id)
-        res = query.run()
-        return res.facets.user.counts_by_term()
+    def _form_counts(self):
+        if EMWF.show_all_mobile_workers(self.request):
+            user_ids = []
+        else:
+            # Don't query ALL mobile workers
+            user_ids = [u.user_id for u in self.selected_users]
+        return get_form_counts_by_user_xmlns(
+            domain=self.domain,
+            startdate=self.datespan.startdate_utc.replace(tzinfo=pytz.UTC),
+            enddate=self.datespan.enddate_utc.replace(tzinfo=pytz.UTC),
+            user_ids=user_ids,
+            xmlnss=[f['xmlns'] for f in self.all_relevant_forms.values()],
+            by_submission_time=self.by_submission_time,
+        )
 
 
 class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
@@ -455,6 +449,7 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
     is_cacheable = False
     ajax_pagination = True
     exportable_all = True
+    datespan_max_days = 90
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
@@ -473,11 +468,14 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
 
     @property
     def headers(self):
-        headers = DataTablesHeader(DataTablesColumn(_("Username"), span=3))
-        for d in self.dates:
-            headers.add_column(DataTablesColumn(json_format_date(d), sort_type=DTSortType.NUMERIC))
-        headers.add_column(DataTablesColumn(_("Total"), sort_type=DTSortType.NUMERIC))
-        return headers
+        if self.datespan.is_valid():
+            headers = DataTablesHeader(DataTablesColumn(_("Username"), span=3))
+            for d in self.dates:
+                headers.add_column(DataTablesColumn(json_format_date(d), sort_type=DTSortType.NUMERIC))
+            headers.add_column(DataTablesColumn(_("Total"), sort_type=DTSortType.NUMERIC))
+            return headers
+        else:
+            return DataTablesHeader(DataTablesColumn(_("Error")))
 
     @property
     def date_field(self):
@@ -572,21 +570,23 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
 
     @property
     def rows(self):
-        self.sort_col = self.request_params.get('iSortCol_0', 0)
-        totals_col = self.column_count - 1
-        order = self.request_params.get('sSortDir_0')
-        if self.sort_col == totals_col:
-            users = self.users_by_range(self.startdate, self.enddate, order)
-        elif 0 < self.sort_col < totals_col:
-            start = self.dates[self.sort_col-1]
-            end = start + datetime.timedelta(days=1)
-            users = self.users_by_range(start, end, order)
-        else:
-            users = self.users_by_username(order)
+        if self.datespan.is_valid():
+            self.sort_col = self.request_params.get('iSortCol_0', 0)
+            totals_col = self.column_count - 1
+            order = self.request_params.get('sSortDir_0')
+            if self.sort_col == totals_col:
+                users = self.users_by_range(self.startdate, self.enddate, order)
+            elif 0 < self.sort_col < totals_col:
+                start = self.dates[self.sort_col-1]
+                end = start + datetime.timedelta(days=1)
+                users = self.users_by_range(start, end, order)
+            else:
+                users = self.users_by_username(order)
 
-        rows = [self.get_row(user) for user in users]
-        self.total_row = self.get_row()
-        return rows
+            rows = [self.get_row(user) for user in users]
+            self.total_row = self.get_row()
+            return rows
+        return [[self.datespan.get_validation_reason()]]
 
     @property
     def get_all_rows(self):
@@ -628,6 +628,14 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
         from corehq.apps.reports.standard.inspect import SubmitHistory
         return SubmitHistory.get_url(domain=self.domain)
 
+    @property
+    def template_context(self):
+        context = super(DailyFormStatsReport, self).template_context
+        context.update({
+            'hide_lastyear': True,
+        })
+        return context
+
 
 class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixin,
                                CompletionOrSubmissionTimeMixin):
@@ -643,12 +651,14 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
 
     @property
     @memoized
-    def selected_xmlns(self):
-        return SingleFormByApplicationFilter.get_value(self.request, self.domain)
+    def selected_form_data(self):
+        data = FormsByApplicationFilter.get_value(self.request, self.domain)
+        if len(data) == 1 and data.values()[0]['xmlns']:
+            return data.values()[0]
 
     @property
     def headers(self):
-        if self.selected_xmlns['xmlns'] is None:
+        if not self.selected_form_data:
             return DataTablesHeader(DataTablesColumn(_("No Form Selected"), sortable=False))
         return DataTablesHeader(DataTablesColumn(_("User")),
             DataTablesColumn(_("Average"), sort_type=DTSortType.NUMERIC),
@@ -660,7 +670,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
     @property
     def rows(self):
         rows = []
-        if self.selected_xmlns['xmlns'] is None:
+        if not self.selected_form_data:
             rows.append([_("You must select a specific form to view data.")])
             return rows
 
@@ -695,7 +705,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
             return format_datatables_data(to_minutes(timestamp), timestamp, to_minutes_raw(timestamp))
 
         def get_data(users, group_by_user=True):
-            query = FormData.objects.filter(xmlns=self.selected_xmlns['xmlns'])
+            query = FormData.objects.filter(xmlns=self.selected_form_data['xmlns'])
 
             date_field = 'received_on' if self.by_submission_time else 'time_end'
             date_filter = {
@@ -706,8 +716,8 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
             if users:
                 query = query.filter(user_id__in=users)
 
-            if self.selected_xmlns['app_id'] is not None:
-                query = query.filter(app_id=self.selected_xmlns['app_id'])
+            if self.selected_form_data['app_id'] is not None:
+                query = query.filter(app_id=self.selected_form_data['app_id'])
 
             if group_by_user:
                 query = query.values('user_id')
@@ -776,6 +786,12 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
     @property
     def rows(self):
+        try:
+            return self._get_rows()
+        except TooMuchDataError as e:
+            return [['<span class="label label-important">{}</span>'.format(e)] + ['--'] * 5]
+
+    def _get_rows(self):
         rows = []
         total = 0
         total_seconds = 0
@@ -801,7 +817,10 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                 .extra(
                     where=[where], params=params
                 )
-
+            if results.count() > 5000:
+                raise TooMuchDataError(
+                    _('The filters you selected include too much data. Please change your filters and try again')
+                )
             for row in results:
                 completion_time = (PhoneTime(row['time_end'], self.timezone)
                                    .server_time().done())
@@ -911,7 +930,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
                     app_id=info['app_id'],
                     by_submission_time=self.by_submission_time,
                 )
-                data = get_db().view("reports_forms/all_forms",
+                data = XFormInstance.get_db().view("reports_forms/all_forms",
                     reduce=False,
                     startkey=key+[self.datespan.startdate_param_utc],
                     endkey=key+[self.datespan.enddate_param_utc],
@@ -1088,9 +1107,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
         return dict([(u["user_id"], convert_date(es_q(u["user_id"]))) for u in self.users_to_iterate])
 
-    def es_case_queries(self, date_field, user_field='user_id', datespan=None):
+    def es_case_queries(self, date_field, user_field, datespan=None):
         datespan = datespan or self.datespan
-        case_query = CaseES() \
+        case_query = case_es.CaseES() \
             .domain(self.domain) \
             .filter(filters.date_range(date_field, gte=datespan.startdate.date(), lte=datespan.enddate.date())) \
             .terms_facet(user_field, user_field, size=100000) \
@@ -1101,44 +1120,28 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
         return case_query.run()
 
-    def es_active_cases(self, datespan=None, dict_only=False):
-        """
-            Open cases that haven't been modified within time range
-        """
-        datespan = datespan or self.datespan
-        q = {"query": {
-                "bool": {
-                    "must": [
-                        {"match": {"domain.exact": self.domain}},
-                        {"nested": {
-                            "path": "actions",
-                            "query": {
-                                "range": {
-                                    "actions.date": {
-                                        "from": datespan.startdate_param,
-                                        "to": datespan.enddate_display,
-                                        "include_upper": True}}}}}]}}}
+    def _case_count_query(self):
+        q = (case_es.CaseES()
+             .domain(self.domain)
+             .opened_range(lte=self.datespan.enddate)
+             .NOT(case_es.closed_range(lt=self.datespan.startdate))
+             .terms_facet('owner_id', 'owner_id')
+             .size(0))
 
         if self.case_types_filter:
-            q["query"]["bool"]["must"].append(self.case_types_filter)
+            q = q.filter(self.case_types_filter)
 
-        facets = ['owner_id']
-        return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
+        return q
 
-    def es_total_cases(self, datespan=None, dict_only=False):
-        datespan = datespan or self.datespan
-        q = {"query": {
-                "bool": {
-                    "must": [
-                        {"match": {"domain.exact": self.domain}},
-                        {"range": {"opened_on": {"lte": datespan.enddate_display}}}],
-                    "must_not": {"range": {"closed_on": {"lt": datespan.startdate_param}}}}}}
+    def get_active_cases_by_owner(self):
+        q = (self._case_count_query()
+             .active_in_range(gte=self.datespan.startdate,
+                              lte=self.datespan.enddate))
+        return q.run().facets.owner_id.counts_by_term()
 
-        if self.case_types_filter:
-            q["query"]["bool"]["must"].append(self.case_types_filter)
-
-        facets = ['owner_id']
-        return es_query(q=q, facets=facets, es_url=CASE_INDEX + '/case/_search', size=1, dict_only=dict_only)
+    def get_total_cases_by_owner(self):
+        q = self._case_count_query()
+        return q.run().facets.owner_id.counts_by_term()
 
     @property
     def rows(self):
@@ -1173,17 +1176,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             t["term"].lower(): t["count"]
             for t in case_closure_data.facet("closed_by", "terms")
         }
-        active_case_data = self.es_active_cases()
-        actives_by_owner = {
-            t["term"].lower(): t["count"]
-            for t in active_case_data["facets"]["owner_id"]["terms"]
-        }
-
-        total_case_data = self.es_total_cases()
-        totals_by_owner = {
-            t["term"].lower(): t["count"]
-            for t in total_case_data["facets"]["owner_id"]["terms"]
-        }
+        actives_by_owner = self.get_active_cases_by_owner()
+        totals_by_owner = self.get_total_cases_by_owner()
 
         def dates_for_linked_reports(case_list=False):
             start_date = self.datespan.startdate_param

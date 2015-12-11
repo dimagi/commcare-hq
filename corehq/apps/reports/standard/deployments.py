@@ -5,21 +5,20 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log
-from corehq.apps.receiverwrapper.util import get_meta_appversion_text, get_build_version, \
-    BuildVersionSource
+from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log, SyncLogAssertionError
+from corehq.apps.receiverwrapper.util import get_meta_appversion_text, BuildVersionSource, get_app_version_info
 from couchdbkit import ResourceNotFound
 from couchexport.export import SCALAR_NEVER_WAS
-from corehq.apps.app_manager.models import get_app
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
+from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CommCareUser
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
-from couchforms.models import XFormInstance
+from couchforms.analytics import get_last_form_submission_for_user_for_app
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
@@ -39,9 +38,8 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
         return super(DeploymentsReport, cls).show_in_navigation(domain, project, user)
 
 
-def _build_html(version, version_source):
-    version = version or _("Unknown")
-
+def _build_html(version_info):
+    version = version_info.build_version or _("Unknown")
     def fmt(title, extra_class=u'', extra_text=u''):
         return format_html(
             u'<span class="label{extra_class}" title="{title}">'
@@ -51,15 +49,15 @@ def _build_html(version, version_source):
             extra_class=extra_class,
             extra_text=extra_text,
         )
-    if version_source == BuildVersionSource.BUILD_ID:
+    if version_info.source == BuildVersionSource.BUILD_ID:
         return fmt(title=_("This was taken from build id"),
                    extra_class=u' label-success')
-    elif version_source == BuildVersionSource.APPVERSION_TEXT:
+    elif version_info.source == BuildVersionSource.APPVERSION_TEXT:
         return fmt(title=_("This was taken from appversion text"))
-    elif version_source == BuildVersionSource.XFORM_VERSION:
+    elif version_info.source == BuildVersionSource.XFORM_VERSION:
         return fmt(title=_("This was taken from xform version"),
                    extra_text=u'≥ ')
-    elif version_source == BuildVersionSource.NONE:
+    elif version_info.source == BuildVersionSource.NONE:
         return fmt(title=_("Unable to determine the build version"))
     else:
         raise AssertionError('version_source must be '
@@ -93,26 +91,16 @@ class ApplicationStatusReport(DeploymentsReport):
     @property
     def rows(self):
         rows = []
-        selected_app = self.request_params.get(SelectApplicationFilter.slug, '')
+        selected_app = self.request_params.get(SelectApplicationFilter.slug, None)
 
         for user in self.users:
             last_seen = last_sync = app_name = None
 
-            key = make_form_couch_key(self.domain, user_id=user.user_id,
-                                      app_id=selected_app or None)
-            xform = XFormInstance.view(
-                "reports_forms/all_forms",
-                startkey=key+[{}],
-                endkey=key,
-                include_docs=True,
-                descending=True,
-                reduce=False,
-                limit=1,
-            ).first()
+            xform = get_last_form_submission_for_user_for_app(
+                self.domain, user.user_id, selected_app)
 
             if xform:
                 last_seen = xform.received_on
-                build_version, build_version_source = get_build_version(xform)
 
                 if xform.app_id:
                     try:
@@ -124,10 +112,19 @@ class ApplicationStatusReport(DeploymentsReport):
                 else:
                     app_name = get_meta_appversion_text(xform)
 
-                build_html = _build_html(build_version, build_version_source)
+                app_version_info = get_app_version_info(xform)
+                build_html = _build_html(app_version_info)
+                commcare_version = (
+                    'CommCare {}'.format(app_version_info.commcare_version)
+                    if app_version_info.commcare_version
+                    else _("Unknown CommCare Version")
+                )
+                commcare_version_html = mark_safe('<span class="label label-info">{}</span>'.format(
+                    commcare_version)
+                )
                 app_name = app_name or _("Unknown App")
                 app_name = format_html(
-                    u'{} {}', app_name, mark_safe(build_html),
+                    u'{} {} {}', app_name, mark_safe(build_html), commcare_version_html
                 )
 
             if app_name is None and selected_app:
@@ -164,6 +161,7 @@ class SyncHistoryReport(DeploymentsReport):
     MAX_LIMIT = 1000
     name = ugettext_noop("User Sync History")
     slug = "sync_history"
+    emailable = True
     fields = ['corehq.apps.reports.filters.users.AltPlaceholderMobileWorkerFilter']
 
     @property
@@ -186,6 +184,9 @@ class SyncHistoryReport(DeploymentsReport):
             headers.add_column(DataTablesColumn(_("Sync Log Type")))
             headers.add_column(DataTablesColumn(_("Previous Sync Log")))
             headers.add_column(DataTablesColumn(_("Error Info")))
+            headers.add_column(DataTablesColumn(_("State Hash")))
+            headers.add_column(DataTablesColumn(_("Last Submitted")))
+            headers.add_column(DataTablesColumn(_("Last Cached")))
 
         headers.custom_sort = [[0, 'desc']]
         return headers
@@ -239,9 +240,18 @@ class SyncHistoryReport(DeploymentsReport):
                 if not sync_log.had_state_error:
                     return u'<span class="label label-success">&#10003;</span>'
                 else:
-                    return u'<span class="label label-important">X</span> State error {}'.format(
-                        naturaltime(sync_log.error_date),
+                    return (u'<span class="label label-important">X</span>'
+                            u'State error {}<br>Expected hash: {:.10}...').format(
+                        _naturaltime_with_hover(sync_log.error_date),
+                        sync_log.error_hash,
                     )
+
+            def _get_state_hash_display(sync_log):
+                try:
+                    return u'{:.10}...'.format(sync_log.get_state_hash())
+                except SyncLogAssertionError as e:
+                    return _(u'Error computing hash! {}').format(e)
+
 
             num_cases = sync_log.case_count()
             columns = [
@@ -254,6 +264,10 @@ class SyncHistoryReport(DeploymentsReport):
                 columns.append(sync_log.log_format)
                 columns.append(_fmt_id(sync_log.previous_log_id) if sync_log.previous_log_id else '---')
                 columns.append(_fmt_error_info(sync_log))
+                columns.append(_get_state_hash_display(sync_log))
+                columns.append(_naturaltime_with_hover(sync_log.last_submitted))
+                columns.append(u'{}<br>{:.10}'.format(_naturaltime_with_hover(sync_log.last_cached),
+                                                      sync_log.hash_at_last_cached))
 
             return columns
 
@@ -284,10 +298,14 @@ def _fmt_date(date):
         return format_datatables_data(
             u'<span class="{cls}">{text}</span>'.format(
                 cls=_timedelta_class(datetime.utcnow() - date),
-                text=_(naturaltime(date)),
+                text=_(_naturaltime_with_hover(date)),
             ),
             date.toordinal(),
         )
+
+
+def _naturaltime_with_hover(date):
+    return u'<span title="{}">{}</span>'.format(date, naturaltime(date) or '---')
 
 
 def _bootstrap_class(obj, severe, warn):

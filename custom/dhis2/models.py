@@ -22,7 +22,7 @@ class Dhis2Settings(Document):
     def for_domain(cls, domain):
         res = cache_core.cached_view(
             cls.get_db(),
-            "domain/docs",
+            "by_domain_doc_type_date/view",
             key=[domain, 'Dhis2Settings', None],
             reduce=False,
             include_docs=True,

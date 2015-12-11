@@ -49,11 +49,11 @@ class CommCareUserMemoizer(object):
     def get_by_user_id(self, user_id):
         return CommCareUser.get_by_user_id(user_id)
 
+
 class ProjectReportParametersMixin(object):
     """
     All the parameters necessary for the project reports.
     Intended to be mixed in with a GenericReportView object.
-
     """
 
     default_case_type = None
@@ -292,6 +292,7 @@ class DatespanMixin(object):
     """
     datespan_field = 'corehq.apps.reports.filters.dates.DatespanFilter'
     datespan_default_days = 7
+    datespan_max_days = None
     inclusive = True
 
     _datespan = None
@@ -314,6 +315,7 @@ class DatespanMixin(object):
     @property
     def default_datespan(self):
         datespan = DateSpan.since(self.datespan_default_days, timezone=self.timezone, inclusive=self.inclusive)
+        datespan.max_days = self.datespan_max_days
         datespan.is_default = True
         return datespan
 

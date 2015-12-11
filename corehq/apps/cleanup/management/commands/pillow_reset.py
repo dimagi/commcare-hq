@@ -5,7 +5,7 @@ from django.core.management.base import LabelCommand, CommandError
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.parsing import json_format_datetime
-from pillowtop.utils import import_pillow_string
+from pillowtop.utils import get_pillow_instance
 
 
 class Command(LabelCommand):
@@ -23,7 +23,7 @@ class Command(LabelCommand):
         with open(file_path) as f:
             config = PillowResetConfig.wrap(json.loads(f.read()))
             for pillow in config.pillows:
-                checkpoint_doc_name = pillow.get_checkpoint_doc_name()
+                checkpoint_doc_name = pillow.checkpoint.checkpoint_id
                 try:
                     checkpoint_doc = db.get(checkpoint_doc_name)
                 except ResourceNotFound:
@@ -59,4 +59,4 @@ class PillowResetConfig(JsonObject):
 
     @property
     def pillows(self):
-        return [import_pillow_string(name) for name in self.pillow_names]
+        return [get_pillow_instance(name) for name in self.pillow_names]

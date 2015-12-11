@@ -12,6 +12,7 @@ from django.views.decorators.http import require_POST
 
 from couchdbkit import ResourceNotFound, MultipleResultsFound
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
+from corehq.util.files import file_extention_from_filename
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
@@ -21,8 +22,10 @@ from soil.util import expose_cached_download, get_download_context
 from corehq import toggles
 from corehq.apps.commtrack.exceptions import MultipleSupplyPointException
 from corehq.apps.commtrack.tasks import import_locations_async
+from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.facilities.models import FacilityRegistry
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -31,6 +34,8 @@ from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse, get_document_or_404
 from custom.openlmis.tasks import bootstrap_domain_task
 
+from .analytics import users_have_locations
+from .dbaccessors import get_users_assigned_to_locations
 from .permissions import (
     locations_access_required,
     is_locations_admin,
@@ -64,7 +69,7 @@ class BaseLocationView(BaseDomainView):
         context.update({
             'hierarchy': location_hierarchy_config(self.domain),
             'api_root': reverse('api_dispatch_list', kwargs={'domain': self.domain,
-                                                             'resource_name': 'location',
+                                                             'resource_name': 'location_internal',
                                                              'api_name': 'v0.3'}),
         })
         return context
@@ -72,7 +77,7 @@ class BaseLocationView(BaseDomainView):
 
 class LocationsListView(BaseLocationView):
     urlname = 'manage_locations'
-    page_title = ugettext_noop("Locations")
+    page_title = ugettext_noop("Organization Structure")
     template_name = 'locations/manage/locations.html'
 
     @property
@@ -109,8 +114,8 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
 
 class LocationTypesView(BaseLocationView):
     urlname = 'location_types'
-    page_title = ugettext_noop("Location Types")
-    template_name = 'locations/settings.html'
+    page_title = ugettext_noop("Organization Levels")
+    template_name = 'locations/location_types.html'
 
     @method_decorator(can_edit_location_types)
     def dispatch(self, request, *args, **kwargs):
@@ -119,29 +124,21 @@ class LocationTypesView(BaseLocationView):
     @property
     def page_context(self):
         return {
-            'settings': self.settings_context,
+            'location_types': self._get_loc_types(),
             'commtrack_enabled': self.domain_object.commtrack_enabled,
         }
 
-    @property
-    def settings_context(self):
-        return {
-            'loc_types': map(
-                self._get_loctype_info,
-                LocationType.objects.by_domain(self.domain)
-            )
-        }
-
-    def _get_loctype_info(self, loctype):
-        return {
-            'pk': loctype.pk,
-            'name': loctype.name,
-            'parent_type': (loctype.parent_type.pk
-                            if loctype.parent_type else None),
-            'administrative': loctype.administrative,
-            'shares_cases': loctype.shares_cases,
-            'view_descendants': loctype.view_descendants
-        }
+    def _get_loc_types(self):
+        return [{
+            'pk': loc_type.pk,
+            'name': loc_type.name,
+            'parent_type': (loc_type.parent_type.pk
+                            if loc_type.parent_type else None),
+            'administrative': loc_type.administrative,
+            'shares_cases': loc_type.shares_cases,
+            'view_descendants': loc_type.view_descendants,
+            'code': loc_type.code,
+        } for loc_type in LocationType.objects.by_domain(self.domain)]
 
     def post(self, request, *args, **kwargs):
         payload = json.loads(request.POST.get('json'))
@@ -151,7 +148,7 @@ class LocationTypesView(BaseLocationView):
             return isinstance(pk, basestring) and pk.startswith("fake-pk-")
 
         def mk_loctype(name, parent_type, administrative,
-                       shares_cases, view_descendants, pk):
+                       shares_cases, view_descendants, pk, code):
             parent = sql_loc_types[parent_type] if parent_type else None
 
             loc_type = None
@@ -167,6 +164,7 @@ class LocationTypesView(BaseLocationView):
             loc_type.parent_type = parent
             loc_type.shares_cases = shares_cases
             loc_type.view_descendants = view_descendants
+            loc_type.code = unicode_slug(code)
             loc_type.save()
             sql_loc_types[pk] = loc_type
 
@@ -175,7 +173,7 @@ class LocationTypesView(BaseLocationView):
         for loc_type in loc_types:
             for prop in ['name', 'parent_type', 'administrative',
                          'shares_cases', 'view_descendants', 'pk']:
-                assert prop in loc_type, "Missing a location type property!"
+                assert prop in loc_type, "Missing an organization level property!"
             pk = loc_type['pk']
             if not _is_fake_pk(pk):
                 pks.append(loc_type['pk'])
@@ -199,7 +197,7 @@ class LocationTypesView(BaseLocationView):
                 if (SQLLocation.objects.filter(domain=self.domain,
                                                location_type=pk)
                                        .exists()):
-                    msg = _("You cannot delete location types that have locations")
+                    msg = _("You cannot delete organization levels that have locations")
                     messages.warning(self.request, msg)
                     return False
                 to_delete.append(pk)
@@ -266,7 +264,7 @@ class NewLocationView(BaseLocationView):
 
     @property
     def parent_pages(self):
-        selected = self.location._id or self.location.parent_id
+        selected = self.location.location_id or self.location.parent_id
         breadcrumbs = [{
             'title': LocationsListView.page_title,
             'url': reverse(
@@ -335,7 +333,7 @@ class NewLocationView(BaseLocationView):
         messages.success(self.request, _('Location saved!'))
         return HttpResponseRedirect(
             reverse(EditLocationView.urlname,
-                    args=[self.domain, self.location_form.location._id]),
+                    args=[self.domain, self.location_form.location.location_id]),
         )
 
     def settings_form_post(self, request, *args, **kwargs):
@@ -441,7 +439,7 @@ class EditLocationView(NewLocationView):
                 self.location.location_type,
                 # FIXME accessing this value from the sql location
                 # would be faster
-                self.supply_point._id if self.supply_point else None,
+                self.supply_point.case_id if self.supply_point else None,
             )
             if consumption:
                 consumptions.append((product.name, consumption))
@@ -580,7 +578,7 @@ class FacilitySyncView(BaseSyncView):
 
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
-    page_title = ugettext_noop('Location Import Status')
+    page_title = ugettext_noop('Organization Structure Import Status')
     template_name = 'style/bootstrap2/soil_status_full.html'
 
     def get(self, request, *args, **kwargs):
@@ -589,7 +587,7 @@ class LocationImportStatusView(BaseLocationView):
             'domain': self.domain,
             'download_id': kwargs['download_id'],
             'poll_url': reverse('location_importer_job_poll', args=[self.domain, kwargs['download_id']]),
-            'title': _("Location Import Status"),
+            'title': _("Organization Structure Import Status"),
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
         })
@@ -601,7 +599,7 @@ class LocationImportStatusView(BaseLocationView):
 
 class LocationImportView(BaseLocationView):
     urlname = 'location_import'
-    page_title = ugettext_noop('Upload Locations from Excel')
+    page_title = ugettext_noop('Upload Organization Structure From Excel')
     template_name = 'locations/manage/import.html'
 
     @method_decorator(can_edit_any_location)
@@ -620,8 +618,8 @@ class LocationImportView(BaseLocationView):
             'bulk_upload': {
                 "download_url": reverse(
                     "location_export", args=(self.domain,)),
-                "adjective": _("location"),
-                "plural_noun": _("locations"),
+                "adjective": _("Organization Structure"),
+                "plural_noun": _("Organization Structure"),
             },
             "manage_consumption": _get_manage_consumption(),
         }
@@ -642,8 +640,11 @@ class LocationImportView(BaseLocationView):
         domain = args[0]
 
         # stash this in soil to make it easier to pass to celery
-        file_ref = expose_cached_download(upload.read(),
-                                   expiry=1*60*60)
+        file_ref = expose_cached_download(
+            upload.read(),
+            expiry=1*60*60,
+            file_extension=file_extention_from_filename(upload.name),
+        )
         task = import_locations_async.delay(
             domain,
             file_ref.download_id,
@@ -658,7 +659,8 @@ class LocationImportView(BaseLocationView):
 
 
 @locations_access_required
-def location_importer_job_poll(request, domain, download_id, template="hqwebapp/partials/download_status.html"):
+def location_importer_job_poll(request, domain, download_id,
+                               template="style/bootstrap2/partials/download_status.html"):
     try:
         context = get_download_context(download_id, check_state=True)
     except TaskFailedError:
@@ -666,7 +668,7 @@ def location_importer_job_poll(request, domain, download_id, template="hqwebapp/
 
     context.update({
         'on_complete_short': _('Import complete.'),
-        'on_complete_long': _('Location importing has finished'),
+        'on_complete_long': _('Organization Structure importing has finished'),
 
     })
     return render(request, template, context)
@@ -675,7 +677,7 @@ def location_importer_job_poll(request, domain, download_id, template="hqwebapp/
 @locations_access_required
 def location_export(request, domain):
     if not LocationType.objects.filter(domain=domain).exists():
-        messages.error(request, _("You need to define location types before "
+        messages.error(request, _("You need to define organization levels before "
                                   "you can do a bulk import or export."))
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
@@ -763,6 +765,7 @@ def sync_openlmis(request, domain):
 @locations_access_required
 def child_locations_for_select2(request, domain):
     id = request.GET.get('id')
+    ids = request.GET.get('ids')
     query = request.GET.get('name', '').lower()
     user = request.couch_user
 
@@ -772,6 +775,8 @@ def child_locations_for_select2(request, domain):
     if id:
         try:
             loc = SQLLocation.objects.get(location_id=id)
+            if loc.domain != domain:
+                raise SQLLocation.DoesNotExist()
         except SQLLocation.DoesNotExist:
             return json_response(
                 {'message': 'no location with id %s found' % id},
@@ -779,12 +784,23 @@ def child_locations_for_select2(request, domain):
             )
         else:
             return json_response(loc_to_payload(loc))
+    elif ids:
+        from corehq.apps.locations.util import get_locations_from_ids
+        ids = json.loads(ids)
+        try:
+            locations = get_locations_from_ids(ids, domain)
+        except SQLLocation.DoesNotExist:
+            return json_response(
+                {'message': 'one or more locations not found'},
+                status_code=404,
+            )
+        return json_response([loc_to_payload(loc) for loc in locations])
     else:
         locs = []
         user_loc = user.get_sql_location(domain)
 
         if user_can_edit_any_location(user, request.project):
-            locs = SQLLocation.objects.filter(domain=domain)
+            locs = SQLLocation.objects.filter(domain=domain, is_archived=False)
         elif user_loc:
             locs = user_loc.get_descendants(include_self=True)
 
@@ -792,3 +808,39 @@ def child_locations_for_select2(request, domain):
             locs = locs.filter(name__icontains=query)
 
         return json_response(map(loc_to_payload, locs[:10]))
+
+
+class DowngradeLocationsView(BaseDomainView):
+    """
+    This page takes the place of the location pages if a domain gets
+    downgraded, but still has users assigned to locations.
+    """
+    template_name = 'locations/downgrade_locations.html'
+    urlname = 'downgrade_locations'
+
+    def dispatch(self, *args, **kwargs):
+        if not users_have_locations(self.domain):  # irrelevant, redirect
+            redirect_url = reverse('users_default', args=[self.domain])
+            return HttpResponseRedirect(redirect_url)
+        return super(DowngradeLocationsView, self).dispatch(*args, **kwargs)
+
+    @property
+    def section_url(self):
+        return self.page_url
+
+
+@domain_admin_required
+def unassign_users(request, domain):
+    """
+    Unassign all users from their locations.  This is for downgraded domains.
+    """
+    for user in get_users_assigned_to_locations(domain):
+        if user.is_web_user():
+            user.unset_location(domain)
+        elif user.is_commcare_user():
+            user.unset_location()
+
+    messages.success(request,
+                     _("All users have been unassigned from their locations"))
+    fallback_url = reverse('users_default', args=[domain])
+    return HttpResponseRedirect(request.POST.get('redirect', fallback_url))

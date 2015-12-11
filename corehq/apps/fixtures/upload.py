@@ -1,15 +1,17 @@
+from collections import namedtuple
 from couchdbkit import ResourceNotFound
+from openpyxl.utils.exceptions import InvalidFileException
 from corehq.apps.fixtures.exceptions import FixtureUploadError, ExcelMalformatException, \
     DuplicateFixtureTagException, FixtureAPIException
 from django.core.validators import ValidationError
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.fixtures.models import FixtureTypeField, FixtureDataType, FixtureDataItem, FixtureItemField, \
     FieldList
-from corehq.apps.users.bulkupload import GroupMemoizer
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
+from corehq.util.spreadsheets.excel import WorksheetNotFound, \
+    WorkbookJSONReader
 from dimagi.utils.couch.bulk import CouchTransaction
-from dimagi.utils.excel import WorkbookJSONReader, WorksheetNotFound
 from soil import DownloadBase
 from corehq.apps.locations.models import SQLLocation
 
@@ -141,9 +143,8 @@ class FixtureWorkbook(object):
             self.workbook = WorkbookJSONReader(file_or_filename)
         except AttributeError:
             raise FixtureUploadError(_("Error processing your Excel (.xlsx) file"))
-        except Exception:
+        except InvalidFileException:
             raise FixtureUploadError(_("Invalid file-format. Please upload a valid xlsx file."))
-
 
     def get_types_sheet(self):
         try:
@@ -209,22 +210,39 @@ def get_workbook(file_or_filename):
     return FixtureWorkbook(file_or_filename)
 
 
-def pre_populate_location_groups(group_memoizer, domain):
+LocationCache = namedtuple("LocationCache", "is_error location message")
+
+
+def get_memoized_location(domain):
     """
-    We have to pre load the memoizer with
-    fake location groups so that it doesn't
-    try to look them up for us later.
+    Returns a memoized location getter containing error information.
     """
-    for loc in SQLLocation.objects.filter(domain=domain):
-        group_memoizer.add_group(loc.case_sharing_group_object())
-        group_memoizer.add_group(loc.reporting_group_object())
+    locations = {}
+    def get_location(user_input):
+        user_input = user_input.lower()
+        if user_input not in locations:
+            try:
+                loc = SQLLocation.objects.get_from_user_input(domain, user_input)
+                locations[user_input] = LocationCache(False, loc, None)
+            except SQLLocation.DoesNotExist:
+                locations[user_input] = LocationCache(True, None, _(
+                    "Unknown location: '%(name)s'. But the row is "
+                    "successfully added"
+                ) % {'name': user_input})
+            except SQLLocation.MultipleObjectsReturned:
+                locations[user_input] = LocationCache(True, None, _(
+                    "Multiple locations found with the name: '%(name)s'.  "
+                    "Try using site code. But the row is successfully added"
+                ) % {'name': user_input})
+        return locations[user_input]
+    return get_location
 
 
 def run_upload(domain, workbook, replace=False, task=None):
+    from corehq.apps.users.bulkupload import GroupMemoizer
     return_val = FixtureUploadResult()
     group_memoizer = GroupMemoizer(domain)
-
-    pre_populate_location_groups(group_memoizer, domain)
+    get_location = get_memoized_location(domain)
 
     def diff_lists(list_a, list_b):
         set_a = set(list_a)
@@ -405,6 +423,9 @@ def run_upload(domain, workbook, replace=False, task=None):
                 old_users = old_data_item.users
                 for user in old_users:
                     old_data_item.remove_user(user)
+                old_locations = old_data_item.locations
+                for location in old_locations:
+                    old_data_item.remove_location(location)
 
                 for group_name in di.get('group', []):
                     group = group_memoizer.by_name(group_name)
@@ -424,5 +445,13 @@ def run_upload(domain, workbook, replace=False, task=None):
                         old_data_item.add_user(user)
                     else:
                         return_val.errors.append(_("Unknown user: '%(name)s'. But the row is successfully added") % {'name': raw_username})
+
+                for name in di.get('location', []):
+                    location_cache = get_location(name)
+                    if location_cache.is_error:
+                        return_val.errors.append(location_cache.message)
+                    else:
+                        old_data_item.add_location(location_cache.location,
+                                                   transaction=transaction)
 
     return return_val

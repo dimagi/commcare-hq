@@ -5,11 +5,15 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver, Signal
 from django.contrib.auth.signals import user_logged_in
 from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.elastic import es_wrapper, send_to_elasticsearch
+from corehq.elastic import send_to_elasticsearch
 
-from corehq.apps.users import xml
-from couchforms.signals import successful_form_received, ReceiverResult, Certainty
+from couchforms.signals import successful_form_received
 from casexml.apps.phone.xml import VALID_USER_REGISTRATION_XMLNSES
+
+
+commcare_user_post_save = Signal(providing_args=["couch_user"])
+couch_user_post_save = Signal(providing_args=["couch_user"])
+
 
 @receiver(user_logged_in)
 def set_language(sender, **kwargs):
@@ -23,14 +27,10 @@ def set_language(sender, **kwargs):
     if couch_user and couch_user.language:
         kwargs['request'].session['django_language'] = couch_user.language
 
+
 # Signal that syncs django_user => couch_user
 def django_user_post_save_signal(sender, instance, created, **kwargs):
     return CouchUser.django_user_post_save_signal(sender, instance, created)
-
-post_save.connect(django_user_post_save_signal, User)
-
-commcare_user_post_save = Signal(providing_args=["couch_user"])
-couch_user_post_save = Signal(providing_args=["couch_user"])
 
 
 def update_user_in_es(sender, couch_user, **kwargs):
@@ -40,19 +40,11 @@ def update_user_in_es(sender, couch_user, **kwargs):
     send_to_elasticsearch("users", couch_user.to_json(),
                           delete=couch_user.to_be_deleted())
 
-couch_user_post_save.connect(update_user_in_es)
-
-
-"""
-This section automatically creates Couch users whenever a registration xform is received
-
-Question: is it possible to receive registration data from the phone after Case 3?
-If so, we need to check for a user created via Case 3 and link them to this account
-automatically
-"""
 
 def create_user_from_commcare_registration(sender, xform, **kwargs):
     """
+    Automatically create Couch users whenever a registration xform is received
+
     # this comes in as xml that looks like:
     # <n0:registration xmlns:n0="openrosa.org/user-registration">
     # <username>user</username>
@@ -64,15 +56,18 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
     """
     if xform.xmlns not in VALID_USER_REGISTRATION_XMLNSES:
         return False
-    
+
     try:
-        couch_user, created = CommCareUser.create_or_update_from_xform(xform)
+        CommCareUser.create_or_update_from_xform(xform)
     except Exception, e:
-        #import traceback, sys
-        #exc_type, exc_value, exc_traceback = sys.exc_info()
-        #traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
         logging.exception(e)
         raise
-    return ReceiverResult(xml.get_response(couch_user, created), Certainty.CERTAIN)
 
-successful_form_received.connect(create_user_from_commcare_registration)
+
+# This gets called by UsersAppConfig when the module is set up
+def connect_user_signals():
+    post_save.connect(django_user_post_save_signal, User,
+                      dispatch_uid="django_user_post_save_signal")
+    successful_form_received.connect(create_user_from_commcare_registration,
+                                     dispatch_uid="create_user_from_commcare_registration")
+    couch_user_post_save.connect(update_user_in_es, dispatch_uid="update_user_in_es")

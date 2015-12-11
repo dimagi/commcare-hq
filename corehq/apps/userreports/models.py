@@ -1,6 +1,7 @@
-from copy import copy
+from copy import copy, deepcopy
 import json
-from couchdbkit import ResourceNotFound
+from corehq.db import UCR_ENGINE_ID
+from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -11,20 +12,29 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.ext.couchdbkit import StringProperty, DictProperty, ListProperty, IntegerProperty
 from dimagi.ext.jsonobject import JsonObject
-from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+from corehq.apps.cachehq.mixins import (
+    CachedCouchDocumentMixin,
+    QuickCachedDocumentMixin,
+)
 from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
-    get_report_configs_for_domain, get_all_report_configs
-from corehq.apps.userreports.exceptions import BadSpecError
+    get_report_configs_for_domain
+from corehq.apps.userreports.exceptions import (
+    BadSpecError,
+    DataSourceConfigurationNotFoundError,
+    ReportConfigurationNotFoundError,
+)
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.indicators import CompoundIndicator
-from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, ReportFilterFactory, \
+from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
+from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, \
     ReportColumnFactory, ReportOrderByFactory
-from corehq.apps.userreports.reports.specs import FilterSpec
+from corehq.apps.userreports.reports.filters.specs import FilterSpec
 from django.utils.translation import ugettext as _
-from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.pillows.utils import get_deleted_doc_types
+from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
@@ -58,14 +68,20 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     Each data source can back an arbitrary number of reports.
     """
     domain = StringProperty(required=True)
+    engine_id = StringProperty(default=UCR_ENGINE_ID)
     referenced_doc_type = StringProperty(required=True)
     table_id = StringProperty(required=True)
     display_name = StringProperty()
     base_item_expression = DictProperty()
     configured_filter = DictProperty()
     configured_indicators = ListProperty()
+    named_expressions = DictProperty()
     named_filters = DictProperty()
     meta = SchemaProperty(DataSourceMeta)
+
+    class Meta(object):
+        # prevent JsonObject from auto-converting dates etc.
+        string_conversions = ()
 
     def __unicode__(self):
         return u'{} - {}'.format(self.domain, self.display_name)
@@ -84,15 +100,15 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     @memoized
     def _get_deleted_filter(self):
-        return self._get_filter(get_deleted_doc_types(self.referenced_doc_type))
+        return self._get_filter(get_deleted_doc_types(self.referenced_doc_type), include_configured=False)
 
-    def _get_filter(self, doc_types):
+    def _get_filter(self, doc_types, include_configured=True):
         if not doc_types:
             return None
 
         extras = (
             [self.configured_filter]
-            if self.configured_filter else []
+            if include_configured and self.configured_filter else []
         )
         built_in_filters = [
             self._get_domain_filter_spec(),
@@ -113,7 +129,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                 'type': 'and',
                 'filters': built_in_filters + extras,
             },
-            context=self.named_filter_objects,
+            context=self._get_factory_context(),
         )
 
     def _get_domain_filter_spec(self):
@@ -125,11 +141,21 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     @property
     @memoized
-    def named_filter_objects(self):
-        return {name: FilterFactory.from_spec(filter, {})
-                for name, filter in self.named_filters.items()}
+    def named_expression_objects(self):
+        return {name: ExpressionFactory.from_spec(expression, FactoryContext.empty())
+                for name, expression in self.named_expressions.items()}
 
     @property
+    @memoized
+    def named_filter_objects(self):
+        return {name: FilterFactory.from_spec(filter, FactoryContext.empty())
+                for name, filter in self.named_filters.items()}
+
+    def _get_factory_context(self):
+        return FactoryContext(self.named_expression_objects, self.named_filter_objects)
+
+    @property
+    @memoized
     def indicators(self):
         default_indicators = [IndicatorFactory.from_spec({
             "column_id": "doc_id",
@@ -145,28 +171,29 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                     "property_name": "_id"
                 }
             }
-        }, self.named_filter_objects)]
+        }, self._get_factory_context())]
 
         default_indicators.append(IndicatorFactory.from_spec({
             "type": "inserted_at",
-        }, self.named_filter_objects))
+        }, self._get_factory_context()))
 
         if self.base_item_expression:
             default_indicators.append(IndicatorFactory.from_spec({
                 "type": "repeat_iteration",
-            }, self.named_filter_objects))
+            }, self._get_factory_context()))
         return CompoundIndicator(
             self.display_name,
             default_indicators + [
-                IndicatorFactory.from_spec(indicator, self.named_filter_objects)
+                IndicatorFactory.from_spec(indicator, self._get_factory_context())
                 for indicator in self.configured_indicators
             ]
         )
 
     @property
+    @memoized
     def parsed_expression(self):
         if self.base_item_expression:
-            return ExpressionFactory.from_spec(self.base_item_expression, context=self.named_filter_objects)
+            return ExpressionFactory.from_spec(self.base_item_expression, context=self._get_factory_context())
         return None
 
     def get_columns(self):
@@ -197,14 +224,22 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         """
         Return the number of ReportConfigurations that reference this data source.
         """
-        return get_number_of_report_configs_by_data_source(self.domain, self._id)
+        return ReportConfiguration.count_by_data_source(self.domain, self._id)
 
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
         # these two properties implicitly call other validation
         self._get_main_filter()
         self._get_deleted_filter()
-        self.indicators
+
+        # validate indicators and column uniqueness
+        columns = [c.id for c in self.indicators.get_columns()]
+        unique_columns = set(columns)
+        if len(columns) != len(unique_columns):
+            for column in set(columns):
+                columns.remove(column)
+            raise BadSpecError(_('Report contains duplicate column ids: {}').format(', '.join(set(columns))))
+
         self.parsed_expression
 
 
@@ -222,10 +257,13 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         )
 
     @classmethod
+    def all_ids(cls):
+        return [res['id'] for res in cls.get_db().view('userreports/data_sources_by_build_info',
+                                                       reduce=False, include_docs=False)]
+
+    @classmethod
     def all(cls):
-        ids = [res['id'] for res in cls.get_db().view('userreports/data_sources_by_build_info',
-                                                      reduce=False, include_docs=False)]
-        for result in iter_docs(cls.get_db(), ids):
+        for result in iter_docs(cls.get_db(), cls.all_ids()):
             yield cls.wrap(result)
 
 
@@ -235,7 +273,7 @@ class ReportMeta(DocumentSchema):
     builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker'])
 
 
-class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
+class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     """
     A report configuration. These map 1:1 with reports that show up in the UI.
     """
@@ -257,10 +295,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def config(self):
-        try:
-            return DataSourceConfiguration.get(self.config_id)
-        except ResourceNotFound:
-            raise BadSpecError(_('The data source referenced by this report could not be found.'))
+        return get_datasource_config(self.config_id, self.domain)[0]
 
     @property
     @memoized
@@ -270,7 +305,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def ui_filters(self):
-        return [ReportFilterFactory.from_spec(f) for f in self.filters]
+        return [ReportFilterFactory.from_spec(f, self) for f in self.filters]
 
     @property
     @memoized
@@ -334,22 +369,30 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         self.sort_order
 
     @classmethod
+    @quickcache(['cls.__name__', 'domain'])
     def by_domain(cls, domain):
         return get_report_configs_for_domain(domain)
 
     @classmethod
-    def all(cls):
-        return get_all_report_configs()
+    @quickcache(['cls.__name__', 'domain', 'data_source_id'])
+    def count_by_data_source(cls, domain, data_source_id):
+        return get_number_of_report_configs_by_data_source(domain, data_source_id)
+
+    def clear_caches(self):
+        super(ReportConfiguration, self).clear_caches()
+        self.by_domain.clear(self.__class__, self.domain)
+        self.count_by_data_source.clear(self.__class__, self.domain, self.config_id)
 
 
-CUSTOM_PREFIX = 'custom-'
+STATIC_PREFIX = 'static-'
+CUSTOM_REPORT_PREFIX = 'custom-'
 
 
-class CustomDataSourceConfiguration(JsonObject):
+class StaticDataSourceConfiguration(JsonObject):
     """
     For custom data sources maintained in the repository
     """
-    _datasource_id_prefix = CUSTOM_PREFIX
+    _datasource_id_prefix = STATIC_PREFIX
     domains = ListProperty()
     config = DictProperty()
 
@@ -359,11 +402,11 @@ class CustomDataSourceConfiguration(JsonObject):
 
     @classmethod
     def all(cls):
-        for path in settings.CUSTOM_DATA_SOURCES:
+        for path in settings.STATIC_DATA_SOURCES:
             with open(path) as f:
-                wrapped = cls.wrap(json.load(f))
-                for domain in wrapped.domains:
-                    doc = copy(wrapped.config)
+                custom_data_source_obj = cls.wrap(json.load(f)).to_json()
+                for domain in custom_data_source_obj['domains']:
+                    doc = deepcopy(custom_data_source_obj['config'])
                     doc['domain'] = domain
                     doc['_id'] = cls.get_doc_id(domain, doc['table_id'])
                     yield DataSourceConfiguration.wrap(doc)
@@ -372,7 +415,7 @@ class CustomDataSourceConfiguration(JsonObject):
     def by_domain(cls, domain):
         """
         Returns a list of DataSourceConfiguration objects,
-        NOT CustomDataSourceConfigurations.
+        NOT StaticDataSourceConfigurations.
         """
         return [ds for ds in cls.all() if ds.domain == domain]
 
@@ -380,7 +423,7 @@ class CustomDataSourceConfiguration(JsonObject):
     def by_id(cls, config_id):
         """
         Returns a DataSourceConfiguration object,
-        NOT a CustomDataSourceConfiguration.
+        NOT a StaticDataSourceConfiguration.
         """
         for ds in cls.all():
             if ds.get_id == config_id:
@@ -389,7 +432,7 @@ class CustomDataSourceConfiguration(JsonObject):
                              'not be found.'))
 
 
-class CustomReportConfiguration(JsonObject):
+class StaticReportConfiguration(JsonObject):
     """
     For statically defined reports based off of custom data sources
     """
@@ -397,37 +440,90 @@ class CustomReportConfiguration(JsonObject):
     report_id = StringProperty()
     data_source_table = StringProperty()
     config = DictProperty()
+    custom_configurable_report = StringProperty()
 
     @classmethod
-    def get_doc_id(cls, domain, report_id):
-        return '{}{}-{}'.format(CUSTOM_PREFIX, domain, report_id)
+    def get_doc_id(cls, domain, report_id, custom_configurable_report):
+        return '{}{}-{}'.format(
+            STATIC_PREFIX if not custom_configurable_report else CUSTOM_REPORT_PREFIX,
+            domain,
+            report_id,
+        )
+
+    @classmethod
+    def _all(cls):
+        for path in settings.STATIC_UCR_REPORTS:
+            with open(path) as f:
+                yield cls.wrap(json.load(f))
 
     @classmethod
     def all(cls):
-        for path in settings.CUSTOM_UCR_REPORTS:
-            with open(path) as f:
-                wrapped = cls.wrap(json.load(f))
-                for domain in wrapped.domains:
-                    doc = copy(wrapped.config)
-                    doc['domain'] = domain
-                    doc['_id'] = cls.get_doc_id(domain, wrapped.report_id)
-                    doc['config_id'] = CustomDataSourceConfiguration.get_doc_id(domain, wrapped.data_source_table)
-                    yield ReportConfiguration.wrap(doc)
+        for wrapped in StaticReportConfiguration._all():
+            for domain in wrapped.domains:
+                doc = copy(wrapped.to_json()['config'])
+                doc['domain'] = domain
+                doc['_id'] = cls.get_doc_id(domain, wrapped.report_id, wrapped.custom_configurable_report)
+                doc['config_id'] = StaticDataSourceConfiguration.get_doc_id(domain, wrapped.data_source_table)
+                yield ReportConfiguration.wrap(doc)
 
     @classmethod
     def by_domain(cls, domain):
         """
-        Returns a list of ReportConfiguration objects, NOT CustomReportConfigurations.
+        Returns a list of ReportConfiguration objects, NOT StaticReportConfigurations.
         """
         return [ds for ds in cls.all() if ds.domain == domain]
 
     @classmethod
     def by_id(cls, config_id):
         """
-        Returns a ReportConfiguration object, NOT CustomReportConfigurations.
+        Returns a ReportConfiguration object, NOT StaticReportConfigurations.
         """
         for ds in cls.all():
             if ds.get_id == config_id:
                 return ds
         raise BadSpecError(_('The report configuration referenced by this report could '
                              'not be found.'))
+
+    @classmethod
+    def report_class_by_domain_and_id(cls, domain, config_id):
+        for wrapped in cls._all():
+            if cls.get_doc_id(domain, wrapped.report_id, wrapped.custom_configurable_report) == config_id:
+                return wrapped.custom_configurable_report
+        raise BadSpecError(_('The report configuration referenced by this report could '
+                             'not be found.'))
+
+
+def get_datasource_config(config_id, domain):
+    def _raise_not_found():
+        raise DataSourceConfigurationNotFoundError(_(
+            'The data source referenced by this report could not be found.'
+        ))
+
+    is_static = config_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
+    if is_static:
+        config = StaticDataSourceConfiguration.by_id(config_id)
+        if not config or config.domain != domain:
+            _raise_not_found()
+    else:
+        try:
+            config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
+        except DocumentNotFound:
+            _raise_not_found()
+    return config, is_static
+
+
+def get_report_config(config_id, domain):
+    is_static = any(
+        config_id.startswith(prefix)
+        for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]
+    )
+    if is_static:
+        config = StaticReportConfiguration.by_id(config_id)
+        if not config or config.domain != domain:
+            raise ReportConfigurationNotFoundError
+    else:
+        try:
+            config = get_document_or_not_found(ReportConfiguration, domain, config_id)
+        except DocumentNotFound:
+            raise ReportConfigurationNotFoundError
+    return config, is_static

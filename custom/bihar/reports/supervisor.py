@@ -1,6 +1,7 @@
 from copy import copy
 import urllib
 from datetime import datetime, timedelta
+from corehq.util.spreadsheets.excel import alphanumeric_sort_key
 from dimagi.utils.couch.database import iter_docs
 
 from django.template.loader import render_to_string
@@ -17,7 +18,6 @@ from corehq.apps.reports.generic import GenericTabularReport,\
     SummaryTablularReport, summary_context
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
-from dimagi.utils.excel import alphanumeric_sort_key
 from dimagi.utils.html import format_html
 from corehq.apps.groups.models import Group
 from dimagi.utils.decorators.memoized import memoized

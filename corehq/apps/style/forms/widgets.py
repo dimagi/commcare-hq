@@ -1,11 +1,14 @@
 from django import forms
 from django.forms.fields import MultiValueField, CharField
-from django.forms.util import flatatt
+from django.forms.utils import flatatt
 from django.forms.widgets import CheckboxInput, HiddenInput, Input, RadioSelect, RadioFieldRenderer, RadioInput, TextInput, MultiWidget
 from django.utils.encoding import force_unicode
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
 import json
+from django.utils.translation import ugettext_noop
+from dimagi.utils.dates import DateSpan
+
 
 class BootstrapCheckboxInput(CheckboxInput):
 
@@ -47,6 +50,7 @@ class BootstrapRadioFieldRenderer(RadioFieldRenderer):
     def __iter__(self):
         for i, choice in enumerate(self.choices):
             yield BootstrapRadioInput(self.name, self.value, self.attrs.copy(), choice, i)
+
 
 class BootstrapRadioSelect(RadioSelect):
     renderer = BootstrapRadioFieldRenderer
@@ -158,4 +162,72 @@ class Select2MultipleChoiceWidget(forms.SelectMultiple):
                 });
             </script>
         """ % final_attrs.get('id')
+        return mark_safe(output)
+
+
+class DateRangePickerWidget(Input):
+    """SUPPORTS BOOTSTRAP 3 ONLY
+    Extends the standard input widget to render a Date Range Picker Widget.
+    Documentation and Demo here: http://www.daterangepicker.com/
+
+    usage:
+    apply the following decorator to your view's dispatch method
+
+    @use_daterangepicker
+    def dispatch(self, request, *args, **kwargs):
+        super(self, MyView).dispatch(request, *args, **kwargs)
+    """
+
+    class Range(object):
+        LAST_7 = 'last_7_days'
+        LAST_MONTH = 'last_month'
+        LAST_30_DAYS = 'last_30_days'
+
+    range_labels = {
+        Range.LAST_7: ugettext_noop('Last 7 Days'),
+        Range.LAST_MONTH: ugettext_noop('Last Month'),
+        Range.LAST_30_DAYS: ugettext_noop('Last 30 Days'),
+    }
+    separator = ugettext_noop(' to ')
+
+    def __init__(self, attrs=None, range_labels=None, separator=None,
+                 default_datespan=None):
+        self.range_labels = range_labels or self.range_labels
+        self.separator = separator or self.separator
+        self.default_datespan = default_datespan
+        super(DateRangePickerWidget, self).__init__(attrs=attrs)
+
+    def render(self, name, value, attrs=None):
+        final_attrs = self.build_attrs(attrs)
+        output = super(DateRangePickerWidget, self).render(name, value, attrs)
+        # yes, I know inline html in python is gross, but this is what the
+        # built in django widgets are doing. :|
+        output += """
+            <script type="text/javascript">
+                $(function () {
+                    var separator = '%(separator)s';
+                    var report_labels = JSON.parse('%(range_labels_json)s');
+                    $('#%(elem_id)s').createBootstrap3DateRangePicker(
+                        report_labels, separator, '%(startdate)s',
+                        '%(enddate)s'
+                    );
+                });
+            </script>
+        """ % {
+            'elem_id': final_attrs.get('id'),
+            'separator': self.separator,
+            'range_labels_json': json.dumps(self.range_labels),
+            'startdate': (self.default_datespan.startdate.strftime('%m/%d/%Y')
+                          if (isinstance(self.default_datespan, DateSpan)
+                              and self.default_datespan.startdate is not None)
+                          else ''),
+            'enddate': (self.default_datespan.enddate.strftime('%m/%d/%Y')
+                        if (isinstance(self.default_datespan, DateSpan)
+                            and self.default_datespan.enddate is not None)
+                        else ''),
+        }
+        output = """
+            <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+        """ + output
+        output = '<div class="input-group">{}</div>'.format(output)
         return mark_safe(output)

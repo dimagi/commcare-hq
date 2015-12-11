@@ -62,6 +62,8 @@ class CaseXMLGeneratorBase(object):
     def get_index_element(self, index):
         elem = safe_element(index.identifier, index.referenced_id)
         elem.attrib = {"case_type": index.referenced_type}
+        if getattr(index, 'relationship') and index.relationship == "extension":
+            elem.attrib.update({"relationship": index.relationship})
         return elem
 
     def get_case_type_element(self):
@@ -81,7 +83,7 @@ class CaseXMLGeneratorBase(object):
         element.append(self.get_case_name_element())
 
     def add_custom_properties(self, element):
-        for k, v, in self.case.dynamic_case_properties():
+        for k, v, in self.case.dynamic_case_properties().items():
             element.append(get_dynamic_element(k, v))
 
     def add_indices(self, element):
@@ -92,9 +94,10 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
     def get_root_element(self):
         root = safe_element("case")
         # moved to attrs in v2
-        root.append(safe_element("case_id", self.case.get_id))
-        root.append(safe_element("date_modified",
-                                 json_format_datetime(self.case.modified_on)))
+        root.append(safe_element("case_id", self.case.case_id))
+        if self.case.modified_on:
+            root.append(safe_element("date_modified",
+                                     json_format_datetime(self.case.modified_on)))
         return root
 
     def get_case_type_element(self):
@@ -127,11 +130,12 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
         root = safe_element("case")
         root.attrib = {
             "xmlns": V2_NAMESPACE,
-            "case_id": self.case.get_id,
+            "case_id": self.case.case_id,
             "user_id": self.case.user_id or '',
-            "date_modified": json_format_datetime(self.case.modified_on)}
+        }
+        if self.case.modified_on:
+            root.attrib["date_modified"] = json_format_datetime(self.case.modified_on)
         return root
-
 
     def get_case_type_element(self):
         # case_type_id --> case_type
@@ -139,9 +143,8 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
 
     def add_base_properties(self, element):
         super(V2CaseXMLGenerator, self).add_base_properties(element)
-        # owner id introduced in v2
-        # default to user_id for 1.3 compatibility
-        element.append(safe_element('owner_id', self.case.owner_id or self.case.user_id))
+        from corehq.apps.users.cases import get_owner_id
+        element.append(safe_element('owner_id', get_owner_id(self.case)))
 
     def add_custom_properties(self, element):
         if self.case.external_id:

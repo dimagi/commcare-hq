@@ -2,8 +2,7 @@ import math
 from datetime import datetime, timedelta
 from celery.task import task
 from time import sleep
-from redis_cache.cache import RedisCache
-from corehq.apps.sms.mixin import SMSLoadBalancingMixin
+from corehq.apps.sms.mixin import SMSLoadBalancingMixin, VerifiedNumber
 from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING, SMS)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
     log_sms_exception)
@@ -11,7 +10,10 @@ from django.conf import settings
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.util.timezones.conversions import ServerTime
-from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.bulk import soft_delete_docs
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.couch import release_lock
 from threading import Thread
 
 
@@ -89,11 +91,8 @@ def message_is_stale(msg, utcnow):
 def _wait_and_release_lock(lock, timeout, start_timestamp):
     while (datetime.utcnow() - start_timestamp) < timedelta(seconds=timeout):
         sleep(0.1)
-    try:
-        lock.release()
-    except:
-        # The lock could have timed out in the meantime
-        pass
+    release_lock(lock, True)
+
 
 def wait_and_release_lock(lock, timeout):
     timestamp = datetime.utcnow()
@@ -113,7 +112,7 @@ def handle_outgoing(msg):
         len(backend.phone_numbers) > 1)
 
     if use_rate_limit or use_load_balancing:
-        client = cache_core.get_redis_client()
+        client = get_redis_client()
 
     lbi = None
     orig_phone_number = None
@@ -171,17 +170,7 @@ def process_sms(message_id):
     """
     message_id - _id of an SMSLog entry
     """
-    # Note that Redis error/exception notifications go out from the
-    # run_sms_queue command, so no need to send them out here
-    # otherwise we'd get too many emails.
-    rcache = cache_core.get_redis_default_cache()
-    if not isinstance(rcache, RedisCache):
-        return
-    try:
-        client = rcache.raw_client
-    except NotImplementedError:
-        return
-
+    client = get_redis_client()
     utcnow = datetime.utcnow()
     # Prevent more than one task from processing this SMS, just in case
     # the message got enqueued twice.
@@ -192,7 +181,7 @@ def process_sms(message_id):
 
         if message_is_stale(msg, utcnow):
             msg.set_system_error(SMS.ERROR_MESSAGE_IS_STALE)
-            message_lock.release()
+            release_lock(message_lock, True)
             return
 
         if msg.direction == OUTGOING:
@@ -201,7 +190,7 @@ def process_sms(message_id):
             else:
                 domain_object = None
             if domain_object and handle_domain_specific_delays(msg, domain_object, utcnow):
-                message_lock.release()
+                release_lock(message_lock, True)
                 return
 
         requeue = False
@@ -224,8 +213,9 @@ def process_sms(message_id):
                 msg.set_system_error(SMS.ERROR_INVALID_DIRECTION)
 
             if recipient_block:
-                recipient_lock.release()
-        message_lock.release()
+                release_lock(recipient_lock, True)
+
+        release_lock(message_lock, True)
         if requeue:
             process_sms.delay(message_id)
 
@@ -242,3 +232,14 @@ def store_billable(msg):
             msg_length = 70
         for _ in range(int(math.ceil(float(len(msg.text)) / msg_length))):
             SmsBillable.create(msg)
+
+
+@task(queue='background_queue', ignore_result=True, acks_late=True)
+def delete_phone_numbers_for_owners(owner_ids):
+    for ids in chunked(owner_ids, 50):
+        results = VerifiedNumber.get_db().view(
+            'sms/verified_number_by_owner_id',
+            keys=ids,
+            include_docs=True
+        )
+        soft_delete_docs([row['doc'] for row in results], VerifiedNumber)

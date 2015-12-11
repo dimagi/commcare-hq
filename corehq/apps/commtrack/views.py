@@ -30,11 +30,14 @@ from .util import all_sms_codes
 
 @domain_admin_required
 def default(request, domain):
-    from corehq.apps.products.views import ProductListView
     if not (request.project and request.project.commtrack_enabled):
         raise Http404()
-    return HttpResponseRedirect(reverse(ProductListView.urlname,
-                                        args=[domain]))
+    return HttpResponseRedirect(default_commtrack_url(domain))
+
+
+def default_commtrack_url(domain):
+    from corehq.apps.products.views import ProductListView
+    return reverse(ProductListView.urlname, args=[domain])
 
 
 class BaseCommTrackManageView(BaseDomainView):
@@ -43,6 +46,11 @@ class BaseCommTrackManageView(BaseDomainView):
     @property
     def section_url(self):
         return reverse('default_commtrack_setup', args=[self.domain])
+
+    def get(self, *args, **kwargs):
+        if self.domain_object.commtrack_settings is None:
+            raise Http404()
+        return super(BaseCommTrackManageView, self).get(*args, **kwargs)
 
     @method_decorator(domain_admin_required)  # TODO: will probably want less restrictive permission?
     def dispatch(self, request, *args, **kwargs):

@@ -102,21 +102,31 @@
     </script>
     {% endif %}
     <script>
-        $(function () {
-            setTimeout(function () {
-                // https://github.com/twitter/bootstrap/issues/6122
-                // this is necessary to get popovers to be able to extend
-                // outside the borders of their containing div
-                $('.tab-content').css('overflow', 'visible');
-                $('.collapse').hover(
-                        function () {
-                            $(this).css('overflow','visible');
-                        },
-                        function () {
-                            $(this).css('overflow','hidden');
-                        }
-                );
-            }, 0);
+        $(document).ready(function () {
+            // https://github.com/twitter/bootstrap/issues/6122
+            // this is necessary to get popovers to be able to extend
+            // outside the borders of their containing div
+            //
+            // http://manage.dimagi.com/default.asp?183618
+            // Firefox 40 considers hovering on a select a mouseleave event and thus kills the select
+            // dropdown. The focus and blur events are to ensure that we do not trigger overflow hidden
+            // if we are in a select
+            var inSelectElement = false,
+                $tabContent = $('.tab-content');
+            $tabContent.css('overflow', 'visible');
+            $tabContent.on('mouseenter', '.collapse', function () {
+                $(this).css('overflow','visible');
+            });
+            $tabContent.on('mouseleave', '.collapse', function () {
+                if (inSelectElement) { return; }
+                $(this).css('overflow','hidden');
+            });
+            $tabContent.on('focus', '.collapse', function() {
+                inSelectElement = true;
+            })
+            $tabContent.on('blur', '.collapse', function() {
+                inSelectElement = false;
+            })
         });
     </script>
     <script>
@@ -258,9 +268,9 @@
                             {% endwith %}
                             <li class="sort-disabled">
                                 <form action="{% url "corehq.apps.app_manager.views.new_form" domain app.id module.id %}"
-                                      method="post" style="display: none">
+                                      method="post" style="display: none">{% csrf_token %}
                                 </form>
-                                {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule'%}
+                                {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
                                 <a class="submit_on_click" href="#">
                                     <i class="icon-plus icon-blue"></i>
                                     <span class="muted">{% trans "Form" %}</span>
@@ -273,10 +283,10 @@
             {% endwith %}
             {% if app.get_doc_type == "Application" %}
                 <form id="new-module-form" action="{% url "corehq.apps.app_manager.views.new_module" domain app.id %}"
-                          method="post" style="display: none">
+                          method="post" style="display: none">{% csrf_token %}
                     <input id="new-module-type" type="hidden" name="module_type" />
                 </form>
-                {% if show_care_plan or show_advanced %}
+                {% if show_care_plan or show_advanced or show_shadow_modules %}
                     <li class="sort-disabled dropdown">
                         <a href="#" data-toggle="dropdown">
                             <i class="new-module-icon icon-plus icon-blue"></i>
@@ -295,7 +305,18 @@
                             </li>
                             {% endif %}
                             {% if request|toggle_enabled:'MOBILE_UCR' %}
-                                <li><a href="#" class="new-module" data-type="report">{% trans "New Report Module" %}</a></li>
+                            <li>
+                                <a href="#" class="new-module" data-type="report">
+                                    {% trans "New Report Module" %}
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% if show_shadow_modules %}
+                            <li>
+                                <a href="#" class="new-module" data-type="shadow">
+                                    {% trans "New Shadow Module" %}
+                                </a>
+                            </li>
                             {% endif %}
                         </ul>
                     </li>

@@ -5,7 +5,7 @@ from django.dispatch import receiver
 from casexml.apps.stock import const
 from casexml.apps.stock.consumption import compute_daily_consumption
 from casexml.apps.stock.models import StockTransaction
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 
 
 @receiver(pre_save, sender=StockTransaction)

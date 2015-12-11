@@ -5,8 +5,7 @@ from django.utils.translation import ugettext_noop, ugettext as _
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
-from corehq.apps.reports.filters.base import (BaseSingleOptionFilter,
-                                              BaseDrilldownOptionFilter)
+from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
 from .utils import user_sql_data
 
 
@@ -91,16 +90,6 @@ class MetHierarchyFilter(OpmBaseDrilldownOptionFilter):
         met_hierarchy = [x for x in hierarchy
                          if x['val'].lower() in ['atri', 'wazirganj']]
         return met_hierarchy
-
-
-class SelectBlockFilter(BaseSingleOptionFilter):
-    slug = "block"
-    label = "Block"
-    default_text = None
-
-    @property
-    def options(self):
-        return [('Atri', 'Atri'), ('Wazirganj', 'Wazirganj')]
 
 
 class OPMSelectOpenCloseFilter(SelectOpenCloseFilter):

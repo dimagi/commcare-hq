@@ -1,136 +1,32 @@
 import logging
-import mailchimp
+from django.utils.translation import ugettext
 import uuid
 from datetime import datetime, date, timedelta
 from django.contrib.auth.models import User
+from django.template.loader import render_to_string
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
+    SubscriptionType, PreOrPostPay
 )
 from corehq.apps.registration.models import RegistrationRequest
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.name_to_url import name_to_url
 from dimagi.utils.web import get_ip, get_url_base, get_site_domain
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser, CouchUser
+from corehq.apps.users.models import WebUser, CouchUser, UserRole
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.couch.database import get_safe_write_kwargs
-from corehq.feature_previews import enable_commtrack_previews
 from corehq.apps.hqwebapp.tasks import send_mail_async
-
-
-DEFAULT_MAILCHIMP_FIRST_NAME = "CommCare User"
-
-
-class MailChimpNotConfiguredError(Exception):
-    pass
-
-
-class MailChimpListNotSetError(MailChimpNotConfiguredError):
-    pass
-
-
-def get_mailchimp_api():
-    if settings.MAILCHIMP_APIKEY:
-        return mailchimp.Mailchimp(settings.MAILCHIMP_APIKEY)
-    raise MailChimpNotConfiguredError('Mailchimp is not configured')
-
-
-def subscribe_user_to_mailchimp_list(user, list_id, email=None):
-    if not list_id:
-        raise MailChimpListNotSetError()
-
-    api = get_mailchimp_api()
-    api.lists.subscribe(
-        list_id,
-        {'email': email or user.email},
-        double_optin=False,
-        merge_vars={
-            'FNAME': user.first_name.title(),
-            'LNAME': user.last_name.title() if user.last_name else "",
-        } if user.first_name else {
-            'FNAME': (user.last_name.title()
-                      if user.last_name else DEFAULT_MAILCHIMP_FIRST_NAME),
-        },
-    )
-
-
-def safe_subscribe_user_to_mailchimp_list(user, list_id, email=None):
-    try:
-        subscribe_user_to_mailchimp_list(user, list_id, email)
-    except (
-        mailchimp.ListAlreadySubscribedError,
-        mailchimp.ListInvalidImportError,
-        mailchimp.ValidationError,
-        MailChimpNotConfiguredError,
-    ):
-        pass
-    except mailchimp.Error as e:
-        logging.error(e.message)
-
-
-def unsubscribe_user_from_mailchimp_list(user, list_id, email=None):
-    if not list_id:
-        raise MailChimpListNotSetError()
-
-    get_mailchimp_api().lists.unsubscribe(
-        list_id,
-        {'email': email or user.email},
-        send_goodbye=False,
-        send_notify=False,
-    )
-
-
-def safe_unsubscribe_user_from_mailchimp_list(user, list_id, email=None):
-    try:
-        unsubscribe_user_from_mailchimp_list(user, list_id, email)
-    except (
-        mailchimp.ListNotSubscribedError,
-        MailChimpNotConfiguredError,
-    ):
-        pass
-    except mailchimp.Error as e:
-        logging.error(e.message)
-
-
-def handle_changed_mailchimp_email(user, old_email, new_email):
-    """
-        Checks whether there are other users with old_email who are also subscribed to any mailchimp lists.
-        If not, it safely unsubscribes that email from mailchimp. Then, adds new_email to mailchimp.
-    """
-    users_with_old_email = User.objects.filter(email=old_email).values_list('username', flat=True)
-
-    couch_users = CouchUser.view('users/by_username',
-                                 keys=list(users_with_old_email),
-                                 include_docs=True,
-                                 reduce=False,
-                                 ).all()
-
-    if user.subscribed_to_commcare_users:
-        users_subscribed_with_old_email = [couch_user.get_id for couch_user in couch_users
-                                           if couch_user.subscribed_to_commcare_users]
-        if (len(users_subscribed_with_old_email) == 1 and users_subscribed_with_old_email[0] == user.get_id):
-            safe_unsubscribe_user_from_mailchimp_list(user, settings.MAILCHIMP_COMMCARE_USERS_ID, email=old_email)
-
-    if not user.email_opt_out:
-        users_subscribed_with_old_email = [couch_user.get_id for couch_user in couch_users
-                                           if not couch_user.email_opt_out]
-        if (len(users_subscribed_with_old_email) == 1 and users_subscribed_with_old_email[0] == user.get_id):
-            safe_unsubscribe_user_from_mailchimp_list(user, settings.MAILCHIMP_MASS_EMAIL_ID, email=old_email)
-
-    # subscribe new_email to lists
-    if user.subscribed_to_commcare_users:
-        safe_subscribe_user_to_mailchimp_list(user, settings.MAILCHIMP_COMMCARE_USERS_ID, email=new_email)
-    if not user.email_opt_out:
-        safe_subscribe_user_to_mailchimp_list(user, settings.MAILCHIMP_MASS_EMAIL_ID, email=new_email)
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     username = form.cleaned_data['email']
     password = form.cleaned_data['password']
     full_name = form.cleaned_data['full_name']
-    email_opt_in = form.cleaned_data['email_opt_in']
     now = datetime.utcnow()
 
     new_user = WebUser.create(domain, username, password, is_admin=is_domain_admin)
@@ -138,31 +34,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     new_user.last_name = full_name[1]
     new_user.email = username
     new_user.email_opt_out = False  # auto add new users
-
-    def _log_mailchimp_error(e):
-        logging.exception(
-            'unable to subscribe {0} to mailchimp. Is your configuration broken? {1}'.format(
-                username, e
-            ))
-    try:
-        safe_subscribe_user_to_mailchimp_list(
-            new_user,
-            settings.MAILCHIMP_MASS_EMAIL_ID
-        )
-    except Exception as e:
-        _log_mailchimp_error(e)
-
     new_user.subscribed_to_commcare_users = False
-    if email_opt_in:
-        try:
-            safe_subscribe_user_to_mailchimp_list(
-                new_user,
-                settings.MAILCHIMP_COMMCARE_USERS_ID
-            )
-            new_user.subscribed_to_commcare_users = True
-        except Exception as e:
-            _log_mailchimp_error(e)
-
     new_user.eula.signed = True
     new_user.eula.date = now
     new_user.eula.type = 'End User License Agreement'
@@ -177,11 +49,10 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
 
     return new_user
 
-def request_new_domain(request, form, org, domain_type=None, new_user=True):
+
+def request_new_domain(request, form, domain_type=None, new_user=True):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user)
-
-    commtrack_enabled = domain_type == 'commtrack'
 
     dom_req = RegistrationRequest()
     if new_user:
@@ -189,7 +60,7 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         dom_req.request_ip = get_ip(request)
         dom_req.activation_guid = uuid.uuid1().hex
 
-    name = form.cleaned_data['hr_name']
+    name = name_to_url(form.cleaned_data['hr_name'], "project")
     with CriticalSection(['request_domain_name_{}'.format(name)]):
         name = Domain.generate_name(name)
         new_domain = Domain(
@@ -197,20 +68,12 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
             hr_name=form.cleaned_data['hr_name'],
             is_active=False,
             date_created=datetime.utcnow(),
-            commtrack_enabled=commtrack_enabled,
             creating_user=current_user.username,
             secure_submissions=True,
         )
 
-        if commtrack_enabled:
-            enable_commtrack_previews(new_domain)
-
         if form.cleaned_data.get('domain_timezone'):
             new_domain.default_timezone = form.cleaned_data['domain_timezone']
-
-        if org:
-            new_domain.organization = org
-            new_domain.hr_name = request.POST.get('domain_hrname', None) or new_domain.name
 
         if not new_user:
             new_domain.is_active = True
@@ -218,11 +81,15 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         # ensure no duplicate domain documents get created on cloudant
         new_domain.save(**get_safe_write_kwargs())
 
+    if domain_type == 'commtrack':
+        new_domain.convert_to_commtrack()
+
     if not new_domain.name:
         new_domain.name = new_domain._id
         new_domain.save() # we need to get the name from the _id
 
     create_30_day_trial(new_domain)
+    UserRole.init_domain_with_presets(new_domain.name)
 
     dom_req.domain = new_domain.name
 
@@ -240,7 +107,8 @@ def request_new_domain(request, form, org, domain_type=None, new_user=True):
         dom_req.save()
         send_domain_registration_email(request.user.email,
                                        dom_req.domain,
-                                       dom_req.activation_guid)
+                                       dom_req.activation_guid,
+                                       request.user.get_full_name())
     else:
         send_global_domain_registration_email(request.user, new_domain.name)
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=new_user)
@@ -294,42 +162,23 @@ USERS_LINK = 'http://groups.google.com/group/commcare-users'
 PRICING_LINK = 'https://www.commcarehq.org/pricing'
 
 
-def send_domain_registration_email(recipient, domain_name, guid):
+def send_domain_registration_email(recipient, domain_name, guid, full_name):
     DNS_name = get_site_domain()
     registration_link = 'http://' + DNS_name + reverse('registration_confirm_domain') + guid + '/'
-
-    message_plaintext = u"""
-Welcome to CommCareHQ!
-
-Please click this link:
-{registration_link}
-to activate your new project.  You will not be able to use your project until you have confirmed this email address.
-
-Project name: "{domain}"
-
-Username:  "{username}"
-
-""" + REGISTRATION_EMAIL_BODY_PLAINTEXT
-
-    message_html = u"""
-<h1>Welcome to CommCare HQ!</h1>
-<p>Please <a href="{registration_link}">go here to activate your new project</a>.  You will not be able to use your project until you have confirmed this email address.</p>
-<p><strong>Project name:</strong> {domain}</p>
-<p><strong>Username:</strong> {username}</p>
-""" + REGISTRATION_EMAIL_BODY_HTML
 
     params = {
         "domain": domain_name,
         "pricing_link": PRICING_LINK,
         "registration_link": registration_link,
-        "username": recipient,
+        "full_name": full_name,
         "users_link": USERS_LINK,
         "wiki_link": WIKI_LINK,
+        'url_prefix': 'http://' + DNS_name,
     }
-    message_plaintext = message_plaintext.format(**params)
-    message_html = message_html.format(**params)
+    message_plaintext = render_to_string('registration/email/confirm_account.txt', params)
+    message_html = render_to_string('registration/email/confirm_account.html', params)
 
-    subject = 'Welcome to CommCare HQ!'.format(**locals())
+    subject = ugettext('Please Confirm your CommCare HQ Account')
 
     try:
         send_html_email_async.delay(subject, recipient, message_html,
@@ -422,12 +271,14 @@ def create_30_day_trial(domain_obj):
         currency=Currency.get_default(),
         created_by_domain=domain_obj.name,
         account_type=BillingAccountType.TRIAL,
+        pre_or_post_pay=PreOrPostPay.POSTPAY,
     )[0]
     trial_subscription = Subscription.new_domain_subscription(
         trial_account, domain_obj.name, advanced_plan_version,
         date_end=expiration_date,
         adjustment_method=SubscriptionAdjustmentMethod.TRIAL,
         is_trial=True,
+        service_type=SubscriptionType.TRIAL
     )
     trial_subscription.is_active = True
     trial_subscription.save()

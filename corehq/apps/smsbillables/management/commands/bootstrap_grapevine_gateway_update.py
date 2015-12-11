@@ -3,17 +3,17 @@ import logging
 from django.core.management.base import LabelCommand
 from corehq.apps.accounting.models import Currency
 
-from corehq.apps.grapevine.api import GrapevineBackend
+from corehq.messaging.smsbackends.grapevine.models import GrapevineBackend
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
 
 logger = logging.getLogger('accounting')
 
 
-def bootstrap_grapevine_gateway_update(orm):
-    currency_class = orm['accounting.Currency'] if orm else Currency
-    sms_gateway_fee_class = orm['smsbillables.SmsGatewayFee'] if orm else SmsGatewayFee
-    sms_gateway_fee_criteria_class = orm['smsbillables.SmsGatewayFeeCriteria'] if orm else SmsGatewayFeeCriteria
+def bootstrap_grapevine_gateway_update(apps):
+    currency_class = apps.get_model('accounting', 'Currency') if apps else Currency
+    sms_gateway_fee_class = apps.get_model('smsbillables', 'SmsGatewayFee') if apps else SmsGatewayFee
+    sms_gateway_fee_criteria_class = apps.get_model('smsbillables', 'SmsGatewayFeeCriteria') if apps else SmsGatewayFeeCriteria
 
     currency = currency_class.objects.get_or_create(code="ZAR")[0]
 

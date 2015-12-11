@@ -3,19 +3,19 @@ import tempfile
 
 from django.test import SimpleTestCase
 from StringIO import StringIO
+from corehq.util.spreadsheets.excel import WorkbookJSONReader
 
 from couchexport.export import export_raw
 from couchexport.models import Format
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
-from corehq.apps.app_manager.tests.util import TestFileMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.translations import \
     process_bulk_app_translation_upload, expected_bulk_app_sheet_rows, \
     expected_bulk_app_sheet_headers
-from dimagi.utils.excel import WorkbookJSONReader
 
 
-class BulkAppTranslationTestBase(SimpleTestCase, TestFileMixin):
+class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
 
     def setUp(self):
         """
@@ -111,7 +111,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
     upload_headers = (
         ("Modules_and_forms", (
-            "Type", "sheet_name", "default_en", "default_fra", "label_for_cases_en", "label_for_cases_fra", "icon_filepath", "audio_filepath", "unique_id"
+            "Type", "sheet_name", "default_en", "default_fra", "label_for_cases_en", "label_for_cases_fra", 'icon_filepath_en', 'icon_filepath_fra', 'audio_filepath_en', 'audio_filepath_fra', "unique_id"
         )),
         ("module1", (
             "case_property", "list_or_detail", "default_en", "default_fra"
@@ -124,8 +124,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
     upload_headers_bad_column = (  # bad column is default-fra
         ("Modules_and_forms", (
             "Type", "sheet_name", "default_en", "default_fra",
-            "label_for_cases_en", "label_for_cases_fra", "icon_filepath",
-            "audio_filepath", "unique_id"
+            "label_for_cases_en", "label_for_cases_fra", "icon_filepath_en", "icon_filepath_fra",
+            "audio_filepath_en", "audio_filepath_fra" , "unique_id"
         )),
         ("module1", (
             "case_property", "list_or_detail", "default_en", "default_fra"
@@ -138,8 +138,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
     upload_data = (
         ("Modules_and_forms", (
-          ("Module", "module1", "My & awesome module", "", "Cases", "Cases", "", "", "8f4f7085a93506cba4295eab9beae8723c0cee2a"),
-          ("Form", "module1_form1", "My more & awesome form", "", "", "", "", "", "93ea2a40df57d8f33b472f5b2b023882281722d4")
+          ("Module", "module1", "My & awesome module", "", "Cases", "Cases", "", "", "", "", "8f4f7085a93506cba4295eab9beae8723c0cee2a"),
+          ("Form", "module1_form1", "My more & awesome form", "", "", "", "", "", "", "", "93ea2a40df57d8f33b472f5b2b023882281722d4")
         )),
         ("module1", (
           ("name", "list", "Name", "Nom"),
@@ -154,22 +154,27 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
           ("question2-item1-label", "item1", "item1", "", "", "", "", "", ""),
           ("question2-item2-label", "item2", "item2", "", "", "", "", "", ""),
           ("question3-label", "question3", "question3&#39;s label", "", "", "", "", "", ""),
+          ("blank_value_node-label", "", "", "en-audio.mp3", "fra-audio.mp3", "", "", "", ""),
           ("question3/question4-label", 'question6: <output value="/data/question6"/>', 'question6: <output value="/data/question6"/>', "", "", "", "", "", ""),
           ("question3/question5-label", "English Label", "English Label", "", "", "", "", "", ""),
-          ("question7-label", 'question1: <output value="/data/question1"/> &lt; 5', "question7", "", "", "", "", "", "")
+          ("question7-label", 'question1: <output value="/data/question1"/> &lt; 5', "question7", "", "", "", "", "", ""),
+          ('add_markdown-label', 'add_markdown: ~~new \u0939\u093f markdown~~', 'add_markdown: ~~new \u0939\u093f markdown~~', '', '', '', '', '', ''),
+          ('remove_markdown-label', 'remove_markdown', 'remove_markdown', '', '', '', '', '', ''),
+          ('update_markdown-label', '## smaller_markdown', '## smaller_markdown', '', '', '', '', '', ''),
+          ('vetoed_markdown-label', '*i just happen to like stars a lot*', '*i just happen to like stars a lot*', '', '', '', '', '', ''),
         ))
     )
 
     upload_no_change_headers = (
-        ('Modules_and_forms', ('Type', 'sheet_name', 'default_en', 'default_fra', 'label_for_cases_en', 'label_for_cases_fra', 'icon_filepath', 'audio_filepath', 'unique_id')),
+        ('Modules_and_forms', ('Type', 'sheet_name', 'default_en', 'default_fra', 'label_for_cases_en', 'label_for_cases_fra', 'icon_filepath_en', 'icon_filepath_fra', 'audio_filepath_en', 'audio_filepath_fra', 'unique_id')),
         ('module1', ('case_property', 'list_or_detail', 'default_en', 'default_fra')),
         ('module1_form1', ('label', 'default_en', 'default_fra', 'audio_en', 'audio_fra', 'image_en', 'image_fra', 'video_en', 'video_fra'))
     )
 
     upload_no_change_data = (
         ('Modules_and_forms',
-         (('Module', 'module1', 'My & awesome module', '', 'Cases', 'Cases', '', '', '8f4f7085a93506cba4295eab9beae8723c0cee2a'),
-          ('Form', 'module1_form1', 'My more & awesome form', '', '', '', '', '', '93ea2a40df57d8f33b472f5b2b023882281722d4'))),
+         (('Module', 'module1', 'My & awesome module', '', 'Cases', 'Cases', '', '', '', '', '8f4f7085a93506cba4295eab9beae8723c0cee2a'),
+          ('Form', 'module1_form1', 'My more & awesome form', '', '', '', '', '', '', '', '93ea2a40df57d8f33b472f5b2b023882281722d4'))),
         ('module1',
          (('name', 'list', 'Name', ''),
           ('name', 'detail', 'Name', ''),
@@ -184,7 +189,12 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
           ('question3-label', 'question3', 'question3', '', '', '', '', '', ''),
           ('question3/question4-label', 'question4', 'question4', '', '', '', '', '', ''),
           ('question3/question5-label', 'question5', 'question5', '', '', '', '', '', ''),
-          ('question7-label', 'question7', 'question7', '', '', '', '', '', '')))
+          ('question7-label', 'question7', 'question7', '', '', '', '', '', ''),
+          ('add_markdown-label', 'add_markdown', 'add_markdown', '', '', '', '', '', ''),
+          ('remove_markdown-label', 'remove_markdown: ~~remove this~~', 'remove_markdown: ~~remove this~~', '', '', '', '', '', ''),
+          ('update_markdown-label', '# update_markdown', '# update_markdown', '', '', '', '', '', ''),
+          ('vetoed_markdown-label', '*i just happen to like stars*', '*i just happen to like stars*', '', '', '', '', '', ''),
+        ))
      )
     def test_set_up(self):
         self._shared_test_initial_set_up()
@@ -224,6 +234,15 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
         self.assert_question_label("question3's label", 0, 0, "fra", "/data/question3")
         self.assert_question_label("question6: ____", 0, 0, "en", "/data/question3/question4")
         self.assert_question_label("question1: ____ < 5", 0, 0, "en", "/data/question7")
+        self.assert_question_label("", 0, 0, "en", "/data/blank_value_node")
+
+        # Test markdown
+        self.assert_question_label("add_markdown: ~~new \u0939\u093f markdown~~", 0, 0, "en", "/data/add_markdown")
+        self.assert_question_label("remove_markdown", 0, 0, "en", "/data/remove_markdown")
+        self.assert_question_label("## smaller_markdown", 0, 0, "en", "/data/update_markdown")
+        self.assert_question_label("*i just happen to like stars a lot*", 0, 0, "en", "/data/vetoed_markdown")
+        form = self.app.get_module(0).get_form(0)
+        self.assertXmlEqual(self.get_xml("change_upload_form"), form.render_xform())
 
     def test_missing_itext(self):
         self.app = Application.wrap(self.get_json("app_no_itext"))
@@ -272,13 +291,13 @@ class BulkAppTranslationFormTest(BulkAppTranslationTestBase):
         self.assertXmlEqual(self.get_xml("expected_form"), form.render_xform())
 
 
-class BulkAppTranslationDownloadTest(SimpleTestCase, TestFileMixin):
+class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
 
     file_path = ('data', 'bulk_app_translation', 'download')
     maxDiff = None
 
     excel_headers = (
-        ('Modules_and_forms', ('Type', 'sheet_name', 'default_en', 'label_for_cases_en', 'icon_filepath', 'audio_filepath', 'unique_id')),
+        ('Modules_and_forms', ('Type', 'sheet_name', 'default_en', 'label_for_cases_en', 'icon_filepath_en', 'audio_filepath_en', 'unique_id')),
         ('module1', ('case_property', 'list_or_detail', 'default_en')),
         ('module1_form1', ('label', 'default_en', 'audio_en', 'image_en', 'video_en'))
     )
@@ -297,7 +316,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestFileMixin):
         ('module1_form1',
          (('What_does_this_look_like-label', 'What does this look like?', '', 'jr://file/commcare/image/data/What_does_this_look_like.png', ''),
           ('no_media-label', 'No media', '', '', ''),
-          ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text and bad &lt; xml.', '', '', '')))
+          ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.', '', '', '')))
     )
 
 

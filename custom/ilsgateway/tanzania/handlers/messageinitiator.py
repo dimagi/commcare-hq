@@ -10,7 +10,7 @@ from custom.ilsgateway.tanzania.reminders import TEST_HANDLER_HELP, TEST_HANDLER
     SUPERVISION_REMINDER, SUBMITTED_REMINDER_DISTRICT, SUBMITTED_REMINDER_FACILITY, \
     DELIVERY_REMINDER_FACILITY, DELIVERY_REMINDER_DISTRICT, DELIVERY_LATE_DISTRICT, TEST_HANDLER_CONFIRM, \
     REMINDER_MONTHLY_RANDR_SUMMARY, reports, REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
-    SOH_THANK_YOU
+    SOH_THANK_YOU, LOSS_ADJUST_HELP
 
 
 class MessageInitiatior(KeywordHandler):
@@ -36,7 +36,7 @@ class MessageInitiatior(KeywordHandler):
 
         command = self.args[0]
         rest = " ".join(self.args[1:])
-        msd_code = self.args[1]
+        msd_code = self.args[1].lower()
         fw_message = " ".join(self.args[2:])
 
         try:
@@ -53,6 +53,13 @@ class MessageInitiatior(KeywordHandler):
             now = datetime.utcnow()
             SupplyPointStatus.objects.create(location_id=sql_location.location_id,
                                              status_type=SupplyPointStatusTypes.SOH_FACILITY,
+                                             status_value=SupplyPointStatusValues.REMINDER_SENT,
+                                             status_date=now)
+        elif command in ['la']:
+            self.send_message(sql_location, LOSS_ADJUST_HELP)
+            now = datetime.utcnow()
+            SupplyPointStatus.objects.create(location_id=sql_location.location_id,
+                                             status_type=SupplyPointStatusTypes.LOSS_ADJUSTMENT_FACILITY,
                                              status_value=SupplyPointStatusValues.REMINDER_SENT,
                                              status_date=now)
         elif command in ['supervision']:
@@ -92,7 +99,6 @@ class MessageInitiatior(KeywordHandler):
         elif command in ["latedelivery"]:
             self.send_message(sql_location, DELIVERY_LATE_DISTRICT, group_name="changeme", group_total=1,
                               not_responded_count=2, not_received_count=3)
-            self.respond(TEST_HANDLER_CONFIRM)
         elif command in ["randr_report"]:
             now = datetime.utcnow()
             self.respond(REMINDER_MONTHLY_RANDR_SUMMARY, **reports.construct_summary(
@@ -122,4 +128,6 @@ class MessageInitiatior(KeywordHandler):
                                                      SupplyPointStatusValues.NOT_RECEIVED],
                                                      get_business_day_of_month_before(now.year, now.month, 15)))
         elif command in ["soh_thank_you"]:
-            self.respond(SOH_THANK_YOU)
+            self.send_message(sql_location, SOH_THANK_YOU)
+
+        self.respond(TEST_HANDLER_CONFIRM)

@@ -1,10 +1,10 @@
+from corehq.apps.locations.dbaccessors import get_location_from_site_code
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from custom.ewsghana.reminders import REGISTER_HELP, REGISTRATION_CONFIRM
 from django.contrib.auth.models import User
 from corehq.apps.users.models import CommCareUser
 from custom.logistics.commtrack import add_location
 from custom.ilsgateway.models import ILSGatewayConfig
-from custom.ilsgateway.tanzania.handlers import get_location
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.tanzania.reminders import Languages
 
@@ -14,8 +14,7 @@ class RegistrationHandler(KeywordHandler):
         self.respond(REGISTER_HELP)
 
     def _get_facility_location(self, domain, msd_code):
-        sp = get_location(domain, None, msd_code)
-        return sp['location']
+        return get_location_from_site_code(domain, msd_code)
 
     def handle(self):
         words = self.args
@@ -69,8 +68,8 @@ class RegistrationHandler(KeywordHandler):
                 })
 
                 dm = user.get_domain_membership(domain)
-                dm.location_id = loc._id
+                dm.location_id = loc.location_id
                 user.save()
-                add_location(user, loc._id)
+                add_location(user, loc.location_id)
 
         self.respond(REGISTRATION_CONFIRM, **params)

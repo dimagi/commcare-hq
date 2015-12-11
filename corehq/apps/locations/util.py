@@ -1,14 +1,11 @@
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
-from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.domain.models import Domain
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.quickcache import quickcache
-from dimagi.utils.couch.database import iter_bulk_delete
+from corehq.util.spreadsheets.excel import flatten_json, json_to_headers
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.excel import flatten_json, json_to_headers
-from couchdbkit import ResourceNotFound
 from dimagi.utils.couch.loosechange import map_reduce
 from couchexport.writers import Excel2007ExportWriter
 from StringIO import StringIO
@@ -71,8 +68,15 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
             children = loc.child_locations(include_archive_ancestors=include_archived)
             if only_administrative:
                 children = children.filter(location_type__administrative=True)
+
             # find existing entry in the json tree that corresponds to this loc
-            this_loc = [k for k in parent['children'] if k['uuid'] == loc.location_id][0]
+            try:
+                this_loc = [k for k in parent['children'] if k['uuid'] == loc.location_id][0]
+            except IndexError:
+                # if we couldn't find this location the view just break out of the loop.
+                # there are some instances in viewing archived locations where we don't actually
+                # support drilling all the way down.
+                pass
             this_loc['children'] = [
                 loc_to_json(loc, project) for loc in children
                 if user is None or user_can_view_location(user, loc, project)
@@ -152,12 +156,12 @@ class LocationExporter(object):
             not self.consumption_dict
         ):
             return {}
-        if loc._id in self.supply_point_map:
-            sp_id = self.supply_point_map[loc._id]
+        if loc.location_id in self.supply_point_map:
+            sp_id = self.supply_point_map[loc.location_id]
         else:
             # this only happens if the supply point case did
             # not already exist
-            sp_id = SupplyPointCase.get_or_create_by_location(loc)._id
+            sp_id = SupplyInterface(self.domain).get_or_create_by_location(loc).location_id
         return {
             p.code: get_loaded_default_monthly_consumption(
                 self.consumption_dict,
@@ -261,3 +265,42 @@ def get_xform_location(xform):
     elif hasattr(user, 'sql_location'):
         return user.sql_location
     return None
+
+
+def get_locations_and_children(location_ids):
+    """
+    Takes a set of location ids and returns a django queryset of those
+    locations and their children.
+    """
+    return SQLLocation.objects.get_queryset_descendants(
+        SQLLocation.objects.filter(location_id__in=location_ids),
+        include_self=True
+    )
+
+
+def get_locations_from_ids(location_ids, domain):
+    """
+    Returns the SQLLocations with the given location_ids, ensuring
+    that they belong to the given domain. Raises SQLLocation.DoesNotExist
+    if any of the locations do not match the given domain or are not
+    found.
+    """
+    location_ids = list(set(location_ids))
+    expected_count = len(location_ids)
+
+    locations = SQLLocation.objects.filter(
+        domain=domain,
+        is_archived=False,
+        location_id__in=location_ids,
+    )
+    if len(locations) != expected_count:
+        raise SQLLocation.DoesNotExist('One or more of the locations was not found.')
+    return locations
+
+
+def get_lineage_from_location_id(location_id):
+    return get_lineage_from_location(Location.get(location_id))
+
+
+def get_lineage_from_location(location):
+    return list(reversed(location.path))

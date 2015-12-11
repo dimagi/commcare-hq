@@ -4,62 +4,13 @@ import calendar
 from django.conf import settings
 from django.utils.translation import ugettext_lazy, ugettext as _
 from corehq.apps.casegroups.dbaccessors import get_case_group_meta_in_domain
+from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 
 from corehq.apps.app_manager.models import Application
-from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.groups.models import Group
-from corehq.apps.orgs.models import Organization
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseMultipleOptionFilter
-
-
-class SelectRegionFilter(BaseSingleOptionFilter):
-    slug = "region"
-    label = ugettext_lazy("Region")
-    default_text = ugettext_lazy("All Regions")
-
-    @property
-    def options(self):
-        if hasattr(Domain, 'regions'):
-            available_regions = [(d.replace(' ', '+'), d) for d in Domain.regions()]
-        else:
-            available_regions = []
-        return available_regions
-
-
-class SelectLicenseFilter(BaseSingleOptionFilter):
-    slug = "license"
-    label = ugettext_lazy("License")
-    default_text = ugettext_lazy("All Licenses")
-
-    @property
-    def options(self):
-        return [(code, license_name) for code, license_name in LICENSES.items()]
-
-
-class SelectCategoryFilter(BaseSingleOptionFilter):
-    slug = "category"
-    label = ugettext_lazy("Category")
-    default_text = ugettext_lazy("All Categories")
-
-    @property
-    def options(self):
-        if hasattr(Domain, 'categories'):
-            available_categories = [(d.replace(' ', '+'), d) for d in Domain.categories()]
-        else:
-            available_categories = []
-        return available_categories
-
-
-class SelectOrganizationFilter(BaseSingleOptionFilter):
-    slug = "org"
-    label = ugettext_lazy("Organization")
-    default_text = ugettext_lazy("All Organizations")
-
-    @property
-    def options(self):
-        return [(o.name, o.title) for o in  Organization.get_all()]
 
 
 class GroupFilterMixin(object):
@@ -111,7 +62,8 @@ class CaseTypeMixin(object):
     @property
     def options(self):
         case_types = get_case_types_for_domain(self.domain)
-        return [(case, "%s" % case) for case in case_types]
+        return [(case, "%s" % case) for case in case_types
+                if case != USER_LOCATION_OWNER_MAP_TYPE]
 
 
 class CaseTypeFilter(CaseTypeMixin, BaseSingleOptionFilter):

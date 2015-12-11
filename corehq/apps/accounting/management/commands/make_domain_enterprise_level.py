@@ -1,5 +1,5 @@
 from django.core.management import BaseCommand
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.accounting.exceptions import NewSubscriptionError
 from corehq.apps.accounting.models import (
     BillingAccount,

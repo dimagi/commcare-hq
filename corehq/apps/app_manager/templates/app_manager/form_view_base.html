@@ -57,6 +57,15 @@
         .bigdrop {
             width: 600px !important;
         }
+        .nested-fieldset{
+            margin-left: 50px;
+        }
+        .nested-fieldset .controls{
+            margin-left: 50px;
+        }
+        .nested-fieldset legend{
+            font-size: 1rem;
+        }
     </style>
     {% if app.application_version == '2.0' %}
     <style>
@@ -74,9 +83,10 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
     <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% static 'style/ko/knockout_subscribables.ko.js' %}"></script>
     <script src="{% static 'style/lib/jquery/plugins/jquery.caret-1.5.2.min.js' %}"></script>
 
     {% if app.application_version == '2.0' %}
@@ -89,11 +99,10 @@
         <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
         <script src="{% static 'app_manager/js/case-config-ui-1.js' %}"></script>
     {% endif %}
-    <script src="{% static 'cloudcare/js/util.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    {% include "hqwebapp/ko/value-or-none-ui.html" %}
+    {% include "style/bootstrap2/ko/value-or-none-ui.html" %}
     {% if not is_user_registration %}
         {% include "app_manager/partials/nav_menu_media_js_common.html" %}
         {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
@@ -159,13 +168,13 @@
             {% if app.application_version == '2.0' %}
                 {% if allow_form_filtering %}
                 var putInRoot = {{ module.put_in_root|BOOL }};
-                var usercaseonlyModule = {{ module.is_usercaseonly|BOOL }}
+                var isUserCaseInUse = {{ is_usercase_in_use|BOOL }};
                 var formFilter = {{ form.form_filter|JSON }};
                 var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
                 var formFilterAllowed = ko.computed(function () {
-                    return (allOtherFormsRequireACase &&
-                            form_requires() === 'case' ||
-                            usercaseonlyModule) && !putInRoot;
+                    return ((allOtherFormsRequireACase &&
+                             form_requires() === 'case') ||
+                            isUserCaseInUse) && !putInRoot;
                 });
                 ko.applyBindings({
                         formFilter: ko.observable(formFilter),
@@ -180,21 +189,23 @@
                     labels[FormWorkflow.Values.DEFAULT] = "{% trans "Home Screen" %}";
                     labels[FormWorkflow.Values.ROOT] = "{% trans "Module Menu" %}";
                     labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module.name|trans:langs }}";
+                    {% if module.root_module_id %}
+                    labels[FormWorkflow.Values.PARENT_MODULE] = "{% trans "Parent Module:" %} {{ module.root_module.name|trans:langs }}";
+                    {% endif %}
                     labels[FormWorkflow.Values.PREVIOUS_SCREEN] = "{% trans "Previous Screen" %}";
 
                     var options = {
                         labels: labels,
                         workflow: '{{ form.post_form_workflow }}',
                     };
-                {% endif %}
 
-                {% if allow_form_workflow and request|toggle_enabled:"FORM_LINK_WORKFLOW"%}
+                    {% if request|toggle_enabled:"FORM_LINK_WORKFLOW"%}
                     labels[FormWorkflow.Values.FORM] = "{% trans "Link to other form" %}";
                     options.forms = {{ linkable_forms|JSON}}
                     options.formLinks = {{ form.form_links|JSON }}
-                {% endif %}
+                    options.formDatumsUrl = '{% url 'get_form_datums' domain app.id %}'
+                    {% endif %}
 
-                {% if allow_form_workflow %}
                     ko.applyBindings(new FormWorkflow(options), $('#form-workflow').get(0))
                 {% endif %}
 
@@ -214,11 +225,27 @@
             {% if allow_cloudcare %}
                 // tag the 'preview in cloudcare' button with the right url
                 // unfortunately, has to be done in javascript
+                var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
+                    var url = urlRoot;
+                    if (appId !== undefined) {
+                        url = url + "view/" + appId;
+                        if (moduleId !== undefined) {
+                            url = url + "/" + moduleId;
+                            if (formId !== undefined) {
+                                url = url + "/" + formId;
+                                if (caseId !== undefined) {
+                                    url = url + "/" + caseId;
+                                }
+                            }
+                        }
+                    }
+                    return url;
+                };
                 var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
                 $("#cloudcare-preview-url").attr("href", cloudCareUrl);
                 $('#cloudcare-preview-url').click(function(e) {
-                    ga_track_event('CloudCare', 'Click "Try in CloudCare"');
-                    analytics.workflow("Clicked Try in CloudCare");
+                    ga_track_event('CloudCare', 'Click "Preview Form"');
+                    analytics.workflow("Clicked Preview Form");
                 });
             {% endif %}
         {% endif %}
@@ -234,9 +261,11 @@
 
 {% block form-view %}
     <div id="build_errors"></div>
+    <div id="form_short_comment" class="app-comment">{{ form.short_comment }}</div>
     {% if not is_user_registration %}
         <div class="delete-me">
             <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
+                {% csrf_token %}
                 <button type="submit" class="disable-on-submit btn btn-danger">
                     <i class="icon-trash"></i>
                     {% trans "Delete Form" %}
@@ -268,7 +297,7 @@
             {% if form.source and not is_user_registration %}
             <a id="cloudcare-preview-url" href="#" target="_blank" class="btn">
                 <i class="icon-play"></i>
-                {% trans "Try in CloudCare" %}
+                {% trans "Preview Form" %}
             </a>
             {% endif %}
         {% endif %}
@@ -291,7 +320,7 @@
                     {% trans "Case Management" %}
                 </a>
             </li>
-            {%  if allow_usercase and form.form_type == 'module_form' %}
+            {%  if allow_usercase or form.uses_usercase and form.form_type == 'module_form' %}
             <li>
                 <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
                     {% trans "User Case Management" %}
@@ -366,6 +395,32 @@
                     </header>
                     <div class="casexml" id="usercasexml_home">
                         {% block usercase_management_content %}
+                            {%  if form.uses_usercase and not allow_usercase %}
+                                <div class="container-fluid span6">
+                                <p>{% blocktrans %}
+                                    The User Case feature is no longer available because of the change in your
+                                    CommCare subscription. Although currently-deployed applications will still
+                                    function properly, it will not be possible to update or redeploy them unless
+                                    the User Case functionality is removed, or you upgrade your CommCare
+                                    subscription.
+                                {% endblocktrans %}</p>
+
+                                <p class="alert alert-danger">{% blocktrans %}
+                                    WARNING: By clicking "Remove User Case Properties" you will lose User Case
+                                    functionality if you redeploy your application. However, you will still be
+                                    able to see all previously collected data.
+                                {% endblocktrans %}</p>
+
+                                <p>
+                                    <a href="{% url 'domain_select_plan' domain %}" class="btn btn-primary span6">
+                                        {% trans "Change your subscription" %}
+                                    </a>
+                                    <a href="{% url 'drop_user_case' domain app.id %}" class="btn btn-danger span6">
+                                        {% trans "Remove User Case Properties" %}
+                                    </a>
+                                </p>
+                                </div>
+                            {% endif %}
                             {% include 'app_manager/partials/usercase_config.html' %}
                         {% endblock %}
                     </div>

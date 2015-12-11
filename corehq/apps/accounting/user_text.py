@@ -1,6 +1,6 @@
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_noop, ugettext_lazy as _
+from django.utils.translation import ugettext_noop, ugettext_lazy as _, ugettext
 from corehq.apps.accounting.models import SoftwarePlanEdition as Edition, SoftwareProductType as Product, FeatureType
 
 DESC_BY_EDITION = {
@@ -54,8 +54,15 @@ def get_feature_name(feature_type, product):
             Product.COMMCONNECT: _("Mobile Users"),
             Product.COMMTRACK: _("Facilities"),
         }[product],
-        FeatureType.SMS: _("Monthly SMS"),
+        FeatureType.SMS: _("SMS"),
     }[feature_type]
+
+
+def get_feature_recurring_interval(feature_type):
+    if feature_type == FeatureType.SMS:
+        return _("Monthly")
+    else:
+        return None
 
 
 class PricingTableCategories(object):
@@ -85,11 +92,7 @@ class PricingTableCategories(object):
             cls.MOBILE: _("Mobile"),
             cls.WEB: _("Web"),
             cls.ANALYTICS: _("Analytics"),
-            cls.SMS: {
-                Product.COMMCARE: _("SMS (CommConnect)"),
-                Product.COMMCONNECT: _("SMS"),
-                Product.COMMTRACK: _("SMS"),
-            }[product],
+            cls.SMS: _("SMS"),
             cls.USER_MANAGEMENT_AND_SECURITY: _("User Management and Security"),
             cls.SUPPORT: _("Support"),
         }.get(category)
@@ -128,8 +131,7 @@ class PricingTableCategories(object):
                 f.ANDROID_GATEWAY,
                 f.SMS_DATA_COLLECTION,
                 f.INBOUND_SMS,
-                f.INCLUDED_SMS_DIMAGI,
-                f.INCLUDED_SMS_CUSTOM,
+                f.SMS_PRICING,
             ),
             cls.USER_MANAGEMENT_AND_SECURITY: (
                 f.USER_GROUPS,
@@ -175,8 +177,7 @@ class PricingTableFeatures(object):
     ANDROID_GATEWAY = 'android_gateway'
     SMS_DATA_COLLECTION = 'sms_data_collection'
     INBOUND_SMS = 'inbound_sms'
-    INCLUDED_SMS_DIMAGI = 'included_sms_dimagi'
-    INCLUDED_SMS_CUSTOM = 'included_sms_custom'
+    SMS_PRICING = 'sms_pricing'
 
     USER_GROUPS = 'user_groups'
     DATA_SECURITY_PRIVACY = 'data_security_privacy'
@@ -229,8 +230,7 @@ class PricingTableFeatures(object):
             cls.ANDROID_GATEWAY: _("Android-based SMS Gateway"),
             cls.SMS_DATA_COLLECTION: _("SMS Data Collection"),
             cls.INBOUND_SMS: _("Inbound SMS (where available)"),
-            cls.INCLUDED_SMS_DIMAGI: _("Free Messages (Dimagi Gateway)**"),
-            cls.INCLUDED_SMS_CUSTOM: _("Messages (Your Gateway)"),
+            cls.SMS_PRICING: _("SMS Pricing"),
             cls.USER_GROUPS: _("User Groups"),
             cls.DATA_SECURITY_PRIVACY: _("Data Security and Privacy"),
             cls.ADVANCED_ROLES: _("Advanced Role-Based Access"),
@@ -250,6 +250,7 @@ class PricingTableFeatures(object):
 
     @classmethod
     def get_columns(cls, feature):
+        from corehq.apps.domain.views import PublicSMSRatesView
         return {
             cls.SOFTWARE_PLANS: (Edition.COMMUNITY, Edition.STANDARD, Edition.PRO, Edition.ADVANCED, Edition.ENTERPRISE),
             cls.PRICING: (_("Free"), _("$100 /month"), _("$500 /month"), _("$1,000 /month"), _('(<a href="http://www.dimagi.com/collaborate/contact-us/" target="_blank">Contact Us</a>)')),
@@ -273,8 +274,14 @@ class PricingTableFeatures(object):
             cls.ANDROID_GATEWAY: (False, True, True, True, True),
             cls.SMS_DATA_COLLECTION: (False, False, True, True, True),
             cls.INBOUND_SMS: (False, False, True, True, True),
-            cls.INCLUDED_SMS_DIMAGI: (False, _("100 /month"), _("500 /month"), _("1,000 /month"), _("2,000 /month")),
-            cls.INCLUDED_SMS_CUSTOM: (False, _("1 cent/SMS"), _("1 cent/SMS"), _("1 cent/SMS"), _("1 cent/SMS")),
+            cls.SMS_PRICING: (
+                False,
+            ) + (
+                mark_safe('<a target="_blank" href="%(url)s">%(click_here)s</a>.' % {
+                    'url': reverse(PublicSMSRatesView.urlname),
+                    'click_here': ugettext('Click Here'),
+                }),
+            ) * 4,
             cls.USER_GROUPS: (True, True, True, True, True),
             cls.DATA_SECURITY_PRIVACY: (True, True, True, True, True),
             cls.ADVANCED_ROLES: (False, True, True, True, True),

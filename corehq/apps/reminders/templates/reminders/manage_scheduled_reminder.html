@@ -5,8 +5,9 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'reminders/ko/reminders.manage.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
     <script src="{% static 'hqwebapp/js/main.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/select2/select2.js' %}"></script>
+    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
 {% endblock %}
@@ -66,4 +67,6 @@
             </strong>
           </span>
     </script>
+
+    {% include 'reminders/partial/email_trial_message_modal.html' with email_trial_message=form.current_values.email_trial_message %}
 {% endblock %}

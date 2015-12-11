@@ -42,7 +42,7 @@
             keyboard: false,
             show: true
         }).on('hide', function () {
-            window.location = "{% url "corehq.apps.app_manager.views.default" domain %}";
+            window.location = "{% url "corehq.apps.app_manager.views.view_app" domain %}";
         });
     });
     $(function () {

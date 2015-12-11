@@ -53,7 +53,10 @@ class DistrictFunctionalityReport(GenericTabularReport, DatespanMixin, CustomPro
     @property
     def rows(self):
         def percent(v1, v2):
-            return float(v1) * 100.0 / float(v2)
+            try:
+                return float(v1) * 100.0 / float(v2)
+            except ZeroDivisionError:
+                return 0
 
         def get_grade(v):
             return 'D' if v < 25 else 'C' if v < 50 else 'B' if v < 75 else 'A'

@@ -1,7 +1,8 @@
-from django.core.mail import mail_admins, send_mail
+from django.conf import settings
+
+from corehq.apps.hqwebapp.tasks import send_mail_async, mail_admins_async
 from corehq.util.global_request import get_request
 from corehq.util.soft_assert.core import SoftAssert
-import settings
 
 
 def _send_message(info, backend):
@@ -56,7 +57,7 @@ def soft_assert(to=None, notify_admins=False,
         to = [to]
 
     def send_to_recipients(subject, message):
-        send_mail(
+        send_mail_async.delay(
             # this prefix is automatically added in mail_admins
             # but not send mail
             subject=settings.EMAIL_SUBJECT_PREFIX + subject,
@@ -65,16 +66,24 @@ def soft_assert(to=None, notify_admins=False,
             recipient_list=to,
         )
 
+    def send_to_admins(subject, message):
+        mail_admins_async.delay(
+            subject=subject,
+            message=message,
+        )
+
     if to and notify_admins:
         def send(info):
-            _send_message(info, backend=mail_admins)
+            if not settings.DEBUG:
+                _send_message(info, backend=send_to_admins)
             _send_message(info, backend=send_to_recipients)
     elif to:
         def send(info):
             _send_message(info, backend=send_to_recipients)
     elif notify_admins:
         def send(info):
-            _send_message(info, backend=mail_admins)
+            if not settings.DEBUG:
+                _send_message(info, backend=send_to_admins)
     else:
         raise ValueError('You must call soft assert with either a '
                          'list of recipients or notify_admins=True')

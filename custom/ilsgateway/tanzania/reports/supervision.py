@@ -140,7 +140,7 @@ class DistrictSupervisionData(ILSData):
                     total=1
                 )
 
-                if not group_summaries.exists():
+                if not group_summaries:
                     continue
 
                 for group_summary in group_summaries:

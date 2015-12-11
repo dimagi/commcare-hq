@@ -45,41 +45,44 @@
 trunk: master
 name: autostaging
 branches:
+  - validate-xpath  # Danny 12/05
+#  - jquery-ui-1.8.23-legacy  # Danny 11/23
   - vellum-staging # J$ 11/13
-  - fixtures-spike  # cz 1/29
-  - update-submodules # TS 5/6
-  - languageMedia # Sravan 6/10
-  - web-user-requests # Jenny, July 16
-  - template-apps+icds/scheduler # Farid 8/6
-  - template-apps # Jenny, July 20
-  - FormArchive # Sravan 7/22
-  # - due-list+icds/scheduler # TS 7/30
-  - icds/scheduler # Farid 8/6
-  - ckeditor # J$ 7/24
-#  - due-list # TS 7/30
-  - fixture-locations  # Ethan 8/3
-  - hide-report-locations  # Ethan 8/4
-  - django17 # J$ 8/5
-  - ota-basic # Nick P 8/6
-  - one-true-commtrack  # Ethan 8/6
+  - two-factor+websockets
+  - fix-toggle+two-factor-otp-only #wsp 11/17
+  - two-factor-otp-only+add-tableau-dashboard  # Ethan 11/24
+  - two-factor-otp-only # j$ 10/2
+  - requests #Simon 11/3
+  - add-tableau-dashboard # TS 11/5
+  - fix-toggle #wsp 11/17
+  - csrf # sravan 11/24
+  - extended-trial-metadata # Cal 11/25
+  - cache-control # Cal 11/30
+  - migrate-domains  # Ethan 12/2
+  - bootstrap2-upgrade  # Biyeun 12/2
+  - saved-export-blobs # Daniel 12/3
+  - es-fix # Noah 12/7
+  - use-strict-apply-bindings # Jenny 12/7
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
+    branches:
+      - sqlite-backend #wsp 1117
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
+      #- 2.24-validator  # Will 11/12
   submodules/ctable-src:
     branches: []
   submodules/django-digest-src:
     branches: []
   submodules/pillowtop-src:
     branches: []
-  submodules/django-soil-src:
+  submodules/dimagi-utils-src:
     branches: []
   submodules/django-prbac-src:
-    branches:
-      - django18
-
+    branches: []
+  submodules/fluff-src:
+    branches: []

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 from StringIO import StringIO
+import base64
 import logging
 from datetime import datetime, timedelta, time
 import re
@@ -14,10 +15,11 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from casexml.apps.case.models import CommCareCase
 from corehq import privileges
-from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
 from corehq.apps.reminders.util import can_use_survey_reminders
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege_plaintext_response
-from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS
+from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS, ApiUser
 from corehq.apps.commtrack.models import AlertConfig
 from corehq.apps.sms.api import (
     send_sms,
@@ -27,23 +29,26 @@ from corehq.apps.sms.api import (
     DomainScopeValidationError,
     MessageMetadata,
 )
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
+from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js, use_timepicker, use_typeahead
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.apps.sms.models import (
     SMSLog, INCOMING, OUTGOING, ForwardingRule,
-    LastReadMessage, MessagingEvent
+    LastReadMessage, MessagingEvent, SelfRegistrationInvitation
 )
 from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
-    SMSLoadBalancingMixin)
+    SMSLoadBalancingMixin, UnrecognizedBackendException)
 from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
-    InitiateAddSMSBackendForm, SubscribeSMSForm,
-    SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
-    DEFAULT, CUSTOM)
+                                   InitiateAddSMSBackendForm, SubscribeSMSForm,
+                                   SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
+                                   DEFAULT, CUSTOM, SendRegistrationInviationsForm,
+                                   WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
+                                   WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL, ComposeMessageForm)
 from corehq.apps.sms.util import get_available_backends, get_contact
 from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty as country_name_from_code
@@ -56,19 +61,21 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.spreadsheets.excel import WorkbookJSONReader
 from corehq.util.timezones.conversions import ServerTime, UserTime
-from dimagi.utils.couch.database import get_db
 from django.contrib import messages
 from corehq.util.timezones.utils import get_timezone_for_user
 from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import View
 from corehq.apps.domain.models import Domain
-from django.utils.translation import ugettext as _, ugettext_noop
+from corehq.const import SERVER_DATETIME_FORMAT, SERVER_DATE_FORMAT
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
-from dimagi.utils.excel import WorkbookJSONReader
+from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.cache import cache_core
 from django.conf import settings
@@ -87,7 +94,7 @@ SMS_CHAT_HISTORY_CHOICES = (
 
 @login_and_domain_required
 def default(request, domain):
-    return HttpResponseRedirect(reverse(compose_message, args=[domain]))
+    return HttpResponseRedirect(reverse(ComposeMessageView.urlname, args=[domain]))
 
 
 class BaseMessagingSectionView(BaseDomainView):
@@ -100,6 +107,16 @@ class BaseMessagingSectionView(BaseDomainView):
     @property
     def section_url(self):
         return reverse("sms_default", args=[self.domain])
+
+
+class BaseAdvancedMessagingSectionView(BaseMessagingSectionView):
+    """
+    Just like BaseMessagingSectionView, only requires access to inbound SMS
+    as well.
+    """
+    @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
+    def dispatch(self, *args, **kwargs):
+        return super(BaseAdvancedMessagingSectionView, self).dispatch(*args, **kwargs)
 
 
 @login_and_domain_required
@@ -116,16 +133,30 @@ def messaging(request, domain, template="sms/default.html"):
     return render(request, template, context)
 
 
-@require_permission(Permissions.edit_data)
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def compose_message(request, domain, template="sms/compose.html"):
-    context = get_sms_autocomplete_context(request, domain)
-    context['domain'] = domain
-    context['now'] = datetime.utcnow()
-    tz = get_timezone_for_user(request.couch_user, domain)
-    context['timezone'] = tz
-    context['timezone_now'] = datetime.now(tz=tz)
-    return render(request, template, context)
+class ComposeMessageView(BaseMessagingSectionView):
+    template_name = 'sms/compose.html'
+    urlname = 'sms_compose_message'
+    page_title = _('Compose SMS Message')
+
+    @property
+    def page_context(self):
+        page_context = super(ComposeMessageView, self).page_context
+        tz = get_timezone_for_user(self.request.couch_user, self.domain)
+        page_context.update({
+            'now': datetime.utcnow(),
+            'timezone': tz,
+            'timezone_now': datetime.now(tz=tz),
+            'form': ComposeMessageForm(domain=self.domain)
+        })
+        page_context.update(get_sms_autocomplete_context(self.request, self.domain))
+        return page_context
+
+    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    @use_typeahead
+    def dispatch(self, *args, **kwargs):
+        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
 
 def post(request, domain):
@@ -182,7 +213,7 @@ def get_sms_autocomplete_context(request, domain):
     phone_users = CouchUser.view("users/phone_users_by_domain",
         startkey=[domain], endkey=[domain, {}], include_docs=True
     )
-    groups = Group.view("groups/by_domain", key=domain, include_docs=True)
+    groups = Group.by_domain(domain)
 
     contacts = ["[send to all]"]
     contacts.extend(['%s [group]' % group.name for group in groups])
@@ -246,8 +277,9 @@ def send_to_recipients(request, domain):
             else:
                 unknown_usernames.append(recipient)
 
-
-        login_ids = dict([(r['key'], r['id']) for r in get_db().view("users/by_username", keys=usernames, reduce=False).all()])
+        login_ids = {
+            r['key']: r['id'] for r in CommCareUser.get_db().view(
+                "users/by_username", keys=usernames, reduce=False).all()}
         for username in usernames:
             if username not in login_ids:
                 unknown_usernames.append(username)
@@ -322,7 +354,7 @@ def send_to_recipients(request, domain):
 
     return HttpResponseRedirect(
         request.META.get('HTTP_REFERER') or
-        reverse(compose_message, args=[domain])
+        reverse(ComposeMessageView.urlname, args=[domain])
     )
 
 @domain_admin_required
@@ -369,22 +401,35 @@ def api_send_sms(request, domain):
     Expected post parameters:
         phone_number - the phone number to send to
         contact_id - the _id of a contact to send to (overrides phone_number)
+        vn_id - the _id of a VerifiedNumber to send to (overrides contact_id)
         text - the text of the message
         backend_id - the name of the MobileBackend to use while sending
     """
     if request.method == "POST":
         phone_number = request.POST.get("phone_number", None)
         contact_id = request.POST.get("contact_id", None)
+        vn_id = request.POST.get("vn_id", None)
         text = request.POST.get("text", None)
         backend_id = request.POST.get("backend_id", None)
         chat = request.POST.get("chat", None)
         contact = None
 
-        if (phone_number is None and contact_id is None) or (text is None):
+        if (phone_number is None and contact_id is None and not vn_id) or (text is None):
             return HttpResponseBadRequest("Not enough arguments.")
 
         vn = None
-        if contact_id is not None:
+        if vn_id:
+            try:
+                vn = VerifiedNumber.get(vn_id)
+            except ResourceNotFound:
+                return HttpResponseBadRequest("VerifiedNumber not found.")
+
+            if vn.domain != domain:
+                return HttpResponseBadRequest("VerifiedNumber not found.")
+
+            phone_number = vn.phone_number
+            contact = vn.owner
+        elif contact_id is not None:
             try:
                 contact = get_contact(contact_id)
                 assert contact is not None
@@ -638,7 +683,7 @@ def default_sms_admin_interface(request):
 @require_superuser
 def delete_backend(request, backend_id):
     # We need to keep this until we move over the admin sms gateway UIs
-    backend = SMSBackend.get(backend_id)
+    backend = SMSBackend.get_wrapped(backend_id)
     if not backend.is_global or backend.base_doc != "MobileBackend":
         raise Http404
     backend.retire() # Do not actually delete so that linkage always exists between SMSLog and MobileBackend
@@ -755,6 +800,7 @@ def get_contact_info(domain):
                 'case',
                 doc['phone_number'],
                 owner_id,
+                doc['_id'],
             ])
         elif doc['owner_doc_type'] == 'CommCareUser':
             mobile_worker_ids.append(owner_id)
@@ -763,6 +809,7 @@ def get_contact_info(domain):
                 'mobile_worker',
                 doc['phone_number'],
                 owner_id,
+                doc['_id'],
             ])
     contact_data = get_case_contact_info(domain_obj, case_ids)
     contact_data.update(get_mobile_worker_contact_info(domain_obj, mobile_worker_ids))
@@ -783,15 +830,16 @@ def get_contact_info(domain):
 def format_contact_data(domain, data):
     for row in data:
         contact_id = row[3]
+        vn_id = row[4]
         if row[1] == 'case':
             row[1] = _('Case')
-            row.append(reverse('case_details', args=[domain, contact_id]))
+            row[4] = reverse('case_details', args=[domain, contact_id])
         elif row[1] == 'mobile_worker':
             row[1] = _('Mobile Worker')
-            row.append(reverse(EditCommCareUserView.urlname, args=[domain, contact_id]))
+            row[4] = reverse(EditCommCareUserView.urlname, args=[domain, contact_id])
         else:
-            row.append('#')
-        row.append(reverse('sms_chat', args=[domain, contact_id]))
+            row[4] = '#'
+        row.append(reverse('sms_chat', args=[domain, contact_id, vn_id]))
 
 
 @require_permission(Permissions.edit_data)
@@ -825,7 +873,7 @@ def chat_contact_list(request, domain):
 
 @require_permission(Permissions.edit_data)
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def chat(request, domain, contact_id):
+def chat(request, domain, contact_id, vn_id=None):
     domain_obj = Domain.get_by_name(domain, strict=True)
     timezone = get_timezone_for_user(None, domain)
 
@@ -855,6 +903,7 @@ def chat(request, domain, contact_id):
         "message_count_threshold": domain_obj.chat_message_count_threshold or 0,
         "custom_case_username": domain_obj.custom_case_username,
         "history_choices": history_choices,
+        "vn_id": vn_id,
     }
     template = settings.CUSTOM_CHAT_TEMPLATES.get(domain_obj.custom_chat_template) or "sms/chat.html"
     return render(request, template, context)
@@ -960,7 +1009,7 @@ def api_history(request, domain):
                 entry.message_id = last_sms._id
                 entry.message_timestamp = last_sms.date
                 entry.save()
-            lock.release()
+            release_lock(lock, True)
         except:
             logging.exception("Could not create/save LastReadMessage for message %s" % last_sms._id)
             # Don't let this block returning of the data
@@ -1103,8 +1152,8 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
 
     def get_deleted_item_data(self, item_id):
         try:
-            backend = SMSBackend.get(item_id)
-        except ResourceNotFound:
+            backend = SMSBackend.get_wrapped(item_id)
+        except UnrecognizedBackendException:
             raise Http404()
         if (backend.is_global or backend.domain != self.domain or
             backend.base_doc != "MobileBackend"):
@@ -1303,6 +1352,11 @@ class SubscribeSMSView(BaseMessagingSectionView):
     urlname = 'subscribe_sms'
     page_title = ugettext_noop("Subscribe SMS")
 
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    def dispatch(self, *args, **kwargs):
+        return super(SubscribeSMSView, self).dispatch(*args, **kwargs)
+
     @property
     def commtrack_settings(self):
         return Domain.get_by_name(self.domain).commtrack_settings
@@ -1311,7 +1365,7 @@ class SubscribeSMSView(BaseMessagingSectionView):
     @memoized
     def form(self):
         if self.request.method == 'POST':
-             return SubscribeSMSForm(self.request.POST)
+            return SubscribeSMSForm(self.request.POST)
 
         if self.commtrack_settings and self.commtrack_settings.alert_config:
             alert_config = self.commtrack_settings.alert_config
@@ -1379,7 +1433,7 @@ def edit_sms_languages(request, domain):
     with StandaloneTranslationDoc.get_locked_obj(domain, "sms",
         create=True) as tdoc:
         try:
-            from corehq.apps.app_manager.views import validate_langs
+            from corehq.apps.app_manager.views.utils import validate_langs
             langs, rename, build = validate_langs(request, tdoc.langs,
                 validate_build=False)
         except AssertionError:
@@ -1481,6 +1535,19 @@ class SMSSettingsView(BaseMessagingSectionView):
     def previewer(self):
         return self.request.couch_user.is_previewer()
 
+    def get_welcome_message_recipient(self, domain_obj):
+        if (
+            domain_obj.enable_registration_welcome_sms_for_case and
+            domain_obj.enable_registration_welcome_sms_for_mobile_worker
+        ):
+            return WELCOME_RECIPIENT_ALL
+        elif domain_obj.enable_registration_welcome_sms_for_case:
+            return WELCOME_RECIPIENT_CASE
+        elif domain_obj.enable_registration_welcome_sms_for_mobile_worker:
+            return WELCOME_RECIPIENT_MOBILE_WORKER
+        else:
+            return WELCOME_RECIPIENT_NONE
+
     @property
     @memoized
     def form(self):
@@ -1539,6 +1606,8 @@ class SMSSettingsView(BaseMessagingSectionView):
                     domain_obj.sms_case_registration_user_id,
                 "sms_mobile_worker_registration_enabled":
                     enabled_disabled(domain_obj.sms_mobile_worker_registration_enabled),
+                "registration_welcome_message":
+                    self.get_welcome_message_recipient(domain_obj),
             }
             form = SettingsForm(initial=initial, cchq_domain=self.domain,
                 cchq_is_previewer=self.previewer)
@@ -1607,11 +1676,201 @@ class SMSSettingsView(BaseMessagingSectionView):
             else:
                 domain_obj.sms_case_registration_enabled = False
 
+            domain_obj.enable_registration_welcome_sms_for_case = \
+                form.enable_registration_welcome_sms_for_case
+
+            domain_obj.enable_registration_welcome_sms_for_mobile_worker = \
+                form.enable_registration_welcome_sms_for_mobile_worker
+
             domain_obj.save()
             messages.success(request, _("Changes Saved."))
         return self.get(request, *args, **kwargs)
 
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    @use_knockout_js
+    @use_timepicker
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
+
+
+class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPaginatedViewMixin):
+    template_name = 'sms/manage_registration_invitations.html'
+    urlname = 'sms_manage_registration_invitations'
+    page_title = ugettext_lazy('Manage Registration Invitations')
+
+    limit_text = ugettext_noop("invitations per page")
+    empty_notification = ugettext_noop("No registration invitations sent yet.")
+    loading_message = ugettext_noop("Loading invitations...")
+    strict_domain_fetching = True
+
+    @property
+    @memoized
+    def invitations_form(self):
+        if self.request.method == 'POST':
+            return SendRegistrationInviationsForm(self.request.POST, domain=self.domain)
+        else:
+            return SendRegistrationInviationsForm(domain=self.domain)
+
+    @property
+    @memoized
+    def project_timezone(self):
+        return get_timezone_for_user(None, self.domain)
+
+    @property
+    def parameters(self):
+        return self.request.POST if self.request.method == 'POST' else self.request.GET
+
+    @property
+    def page_context(self):
+        context = self.pagination_context
+        context.update({
+            'form': self.invitations_form,
+            'sms_mobile_worker_registration_enabled':
+                self.domain_object.sms_mobile_worker_registration_enabled,
+        })
+        return context
+
+    @property
+    def total(self):
+        return SelfRegistrationInvitation.objects.filter(domain=self.domain).count()
+
+    @property
+    def column_names(self):
+        return [
+            _('Created On'),
+            _('Phone Number'),
+            _('Status'),
+            _('Expiration Date'),
+            _('Application'),
+            _('Phone Type'),
+        ]
+
+    def format_status(self, invitation):
+        if invitation.status == SelfRegistrationInvitation.STATUS_REGISTERED:
+            registered_date = (ServerTime(invitation.registered_date)
+                               .user_time(self.project_timezone)
+                               .done()
+                               .strftime(SERVER_DATETIME_FORMAT))
+            return _("Registered on %(date)s") % {'date': registered_date}
+        else:
+            return {
+                SelfRegistrationInvitation.STATUS_PENDING: _("Pending"),
+                SelfRegistrationInvitation.STATUS_EXPIRED: _("Expired"),
+            }.get(invitation.status)
+
+    @property
+    def paginated_list(self):
+        invitations = SelfRegistrationInvitation.objects.filter(
+            domain=self.domain
+        ).order_by('-created_date')
+        doc_info_cache = {}
+        for invitation in invitations[self.skip:self.skip + self.limit]:
+            if invitation.app_id in doc_info_cache:
+                doc_info = doc_info_cache[invitation.app_id]
+            else:
+                doc_info = get_doc_info_by_id(self.domain, invitation.app_id)
+                doc_info_cache[invitation.app_id] = doc_info
+            yield {
+                'itemData': {
+                    'id': invitation.pk,
+                    'created_date': (ServerTime(invitation.created_date)
+                                     .user_time(self.project_timezone)
+                                     .done()
+                                     .strftime(SERVER_DATETIME_FORMAT)),
+                    'phone_number': '+%s' % invitation.phone_number,
+                    'status': self.format_status(invitation),
+                    'expiration_date': invitation.expiration_date.strftime(SERVER_DATE_FORMAT),
+                    'app_name': doc_info.display,
+                    'app_link': doc_info.link,
+                    'phone_type': dict(SelfRegistrationInvitation.PHONE_TYPE_CHOICES).get(invitation.phone_type),
+                },
+                'template': 'invitations-template',
+            }
+
+    def post(self, *args, **kwargs):
+        if self.request.POST.get('action') == 'invite':
+            if not self.domain_object.sms_mobile_worker_registration_enabled:
+                return self.get(*args, **kwargs)
+            if self.invitations_form.is_valid():
+                phone_numbers = self.invitations_form.cleaned_data.get('phone_numbers')
+                app_id = self.invitations_form.cleaned_data.get('app_id')
+                result = SelfRegistrationInvitation.initiate_workflow(
+                    self.domain,
+                    phone_numbers,
+                    app_id=app_id
+                )
+                success_numbers, invalid_format_numbers, numbers_in_use = result
+                if success_numbers:
+                    messages.success(
+                        self.request,
+                        _("Invitations sent to: %(phone_numbers)s") % {
+                            'phone_numbers': ','.join(success_numbers),
+                        }
+                    )
+                if invalid_format_numbers:
+                    messages.error(
+                        self.request,
+                        _("Invitations could not be sent to: %(phone_numbers)s. "
+                          "These number(s) are in an invalid format.") % {
+                            'phone_numbers': ','.join(invalid_format_numbers)
+                        }
+                    )
+                if numbers_in_use:
+                    messages.error(
+                        self.request,
+                        _("Invitations could not be sent to: %(phone_numbers)s. "
+                          "These number(s) are already in use.") % {
+                            'phone_numbers': ','.join(numbers_in_use)
+                        }
+                    )
+            return self.get(*args, **kwargs)
+        else:
+            if not self.domain_object.sms_mobile_worker_registration_enabled:
+                raise Http404()
+            return self.paginate_crud_response
+
+
+class InvitationAppInfoView(View, DomainViewMixin):
+    urlname = 'sms_registration_invitation_app_info'
+
+    @property
+    @memoized
+    def token(self):
+        token = self.kwargs.get('token')
+        if not token:
+            raise Http404()
+        return token
+
+    @property
+    @memoized
+    def invitation(self):
+        invitation = SelfRegistrationInvitation.by_token(self.token)
+        if not invitation:
+            raise Http404()
+        return invitation
+
+    def get(self, *args, **kwargs):
+        if not self.invitation.odk_url:
+            raise Http404()
+        url = str(self.invitation.odk_url).strip()
+        response = 'ccapp: %s signature: %s' % (url, sign(url))
+        response = base64.b64encode(response)
+        return HttpResponse(response)
+
+    def post(self, *args, **kwargs):
+        return self.get(*args, **kwargs)
+
+
+class IncomingBackendView(View):
+    def dispatch(self, request, api_key, *args, **kwargs):
+        try:
+            api_user = ApiUser.get('ApiUser-%s' % api_key)
+        except ResourceNotFound:
+            return HttpResponse(status=401)
+
+        if api_user.doc_type != 'ApiUser' or not api_user.has_permission(PERMISSION_POST_SMS):
+            return HttpResponse(status=401)
+
+        return super(IncomingBackendView, self).dispatch(request, api_key, *args, **kwargs)

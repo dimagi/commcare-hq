@@ -1,6 +1,6 @@
 var filter_id = "#{{ filter.css_id }}-input";
-$(filter_id).createDefaultDateRangePicker();
-$(filter_id).on('apply', function(ev, picker) {
+$(filter_id).createBootstrap3DefaultDateRangePicker();
+$(filter_id).on('apply change', function(ev, picker) {
     var separator = $().getDateRangeSeparator();
     var dates = $(this).val().split(separator);
     $('#{{ filter.css_id }}-start').val(dates[0]);

@@ -5,8 +5,8 @@ from django.utils.safestring import mark_safe
 
 from corehq.apps.domain.models import Domain
 import corehq.apps.style.utils as style_utils
-import corehq
 from corehq.apps.hqwebapp.models import MaintenanceAlert
+from corehq.tabs import MENU_TABS
 
 register = template.Library()
 
@@ -37,7 +37,7 @@ class MainMenuNode(template.Node):
         except (ValueError, AttributeError):
             module = None
 
-        tabs = getattr(module, 'TABS', corehq.TABS)
+        tabs = getattr(module, 'TABS', MENU_TABS)
         visible_tabs = []
         for tab_class in tabs:
             t = tab_class(
@@ -74,7 +74,7 @@ def format_subtab_menu(context):
     else:
         subtabs = None
 
-    return mark_safe(render_to_string("hqwebapp/partials/subtab_menu.html", {
+    return mark_safe(render_to_string("style/bootstrap2/partials/subtab_menu.html", {
         'subtabs': subtabs if subtabs and len(subtabs) > 1 else None
     }))
 
@@ -121,6 +121,7 @@ def format_sidebar(context):
                                 actual_context = {}
                                 for d in context.dicts:
                                     actual_context.update(d)
+                                subpage['is_active'] = True
                                 subpage['title'] = subpage['title'](**actual_context)
                             nav['subpage'] = subpage
                             break

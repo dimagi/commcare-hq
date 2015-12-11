@@ -10,8 +10,9 @@ from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
 from django.shortcuts import render
 from django.contrib import messages
+from dimagi.utils.name_to_url import name_to_url
 from django.utils.translation import ugettext as _, ugettext_lazy
-from corehq.apps.app_manager.views import _clear_app_cache
+from corehq.apps.app_manager.views.apps import clear_app_cache
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.exceptions import NameUnavailableException
@@ -178,12 +179,6 @@ def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time"):
     return es_query(params, facets, terms, q)
 
 
-def appstore_default(request):
-    from corehq.apps.appstore.dispatcher import AppstoreDispatcher
-
-    return HttpResponseRedirect(reverse(AppstoreDispatcher.name(), args=['advanced']))
-
-
 @require_superuser
 def approve_app(request, domain):
     domain = Domain.get(domain)
@@ -220,7 +215,7 @@ def import_app(request, domain):
         assert full_apps, 'Bad attempt to copy apps from a project without any!'
         for app in full_apps:
             new_doc = from_project.copy_component(app['doc_type'], app.get_id, to_project_name, user)
-        _clear_app_cache(request, to_project_name)
+        clear_app_cache(request, to_project_name)
 
         from_project.downloads += 1
         from_project.save()
@@ -261,12 +256,15 @@ def copy_snapshot(request, domain):
                 messages.error(request, form.errors)
                 return project_info(request, domain)
 
-            new_domain_name = form.cleaned_data['hr_name']
+            new_domain_name = name_to_url(form.cleaned_data['hr_name'], "project")
             with CriticalSection(['copy_domain_snapshot_{}_to_{}'.format(dom.name, new_domain_name)]):
                 try:
                     new_domain = dom.save_copy(new_domain_name,
                                                new_hr_name=form.cleaned_data['hr_name'],
                                                user=user)
+                    if new_domain.commtrack_enabled:
+                        new_domain.convert_to_commtrack()
+
                 except NameUnavailableException:
                     messages.error(request, _("A project by that name already exists"))
                     return project_info(request, domain)

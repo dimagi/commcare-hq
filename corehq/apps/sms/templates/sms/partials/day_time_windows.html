@@ -2,9 +2,9 @@
 
 <script type="text/html" id="{{ context.template_name }}">
     <p>
-        <i class="icon-info-sign"></i> {{ context.explanation_text }}
+        <i class="fa fa-info-circle"></i> {{ context.explanation_text }}
     </p>
-    <table class="table table-bordered table-striped" class="span6">
+    <table class="table table-bordered table-striped col-md-10 col-lg-10">
         <thead>
             <tr>
                 <th>{% trans "When the day is..." %}</th>
@@ -15,36 +15,45 @@
         <tbody data-bind="foreach: {{ context.ko_array_name }}">
             <tr>
                 <td>
-                    <select class="input-medium" data-bind="value: day">
-                        <option value="-1">{% trans "Any Day" %}</option>
-                        <option value="0">{% trans "Monday" %}</option>
-                        <option value="1">{% trans "Tuesday" %}</option>
-                        <option value="2">{% trans "Wednesday" %}</option>
-                        <option value="3">{% trans "Thursday" %}</option>
-                        <option value="4">{% trans "Friday" %}</option>
-                        <option value="5">{% trans "Saturday" %}</option>
-                        <option value="6">{% trans "Sunday" %}</option>
-                    </select>
+                    <div>
+                        <select class="form-control" data-bind="value: day" style="width: auto">
+                            <option value="-1">{% trans "Any Day" %}</option>
+                            <option value="0">{% trans "Monday" %}</option>
+                            <option value="1">{% trans "Tuesday" %}</option>
+                            <option value="2">{% trans "Wednesday" %}</option>
+                            <option value="3">{% trans "Thursday" %}</option>
+                            <option value="4">{% trans "Friday" %}</option>
+                            <option value="5">{% trans "Saturday" %}</option>
+                            <option value="6">{% trans "Sunday" %}</option>
+                        </select>
+                    </div>
+
+                </td>
                 <td>
-                    <select class="input-medium" data-bind="value: time_input_relationship">
-                        <option value="BEFORE">{% trans "Before" %}</option>
-                        <option value="AFTER">{% trans "After" %}</option>
-                        <option value="BETWEEN">{% trans "Between" %}</option>
-                    </select>
-                    {% include "sms/partials/time_picker.html" with div_data_bind="visible: time_input_relationship() !== 'BEFORE'" input_data_bind="value: start_time" only %}
-                    <span data-bind="visible: time_input_relationship() === 'BETWEEN'">{% trans "and" %}</span>
-                    {% include "sms/partials/time_picker.html" with div_data_bind="visible: time_input_relationship() !== 'AFTER'" input_data_bind="value: end_time" only %}
+                    <div class="row">
+                        <div class="controls col-lg-3" data-bind="css: { 'col-md-3': time_input_relationship() === 'BETWEEN', 'col-md-4': time_input_relationship() !== 'BETWEEN' }" style="width: auto; max-width: 150px">
+                            <select class="form-control" data-bind="value: time_input_relationship">
+                                <option value="BEFORE">{% trans "Before" %}</option>
+                                <option value="AFTER">{% trans "After" %}</option>
+                                <option value="BETWEEN">{% trans "Between" %}</option>
+                            </select>
+                        </div>
+                        {% include "sms/partials/time_picker.html" with div_data_bind="visible: time_input_relationship() !== 'BEFORE'" input_data_bind="value: start_time" only %}
+                        <div class="col-md-1 col-lg-1 text-center" data-bind="visible: time_input_relationship() === 'BETWEEN'"><span>{% trans "and" %}</span></div>
+                        {% include "sms/partials/time_picker.html" with div_data_bind="visible: time_input_relationship() !== 'AFTER'" input_data_bind="value: end_time" only %}
+                    </div>
+
                 </td>
                 <td><button type="button"
                             class="btn btn-danger"
                             data-bind="click: {{ context.remove_window_method }}">
-                    <i class="icon-remove"></i> {% trans "Remove" %}</button></td>
+                    <i class="fa fa-remove"></i> {% trans "Remove" %}</button></td>
             </tr>
         </tbody>
     </table>
     <button class="btn btn-success"
             type="button"
             data-bind="click: {{ context.add_window_method }}">
-        <i class="icon-plus"></i> {% trans 'Add Day and Time Window' %}
+        <i class="fa fa-plus"></i> {% trans 'Add Day and Time Window' %}
     </button>
 </script>

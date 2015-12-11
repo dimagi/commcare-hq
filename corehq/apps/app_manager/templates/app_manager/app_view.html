@@ -33,26 +33,13 @@
                 },
                 permissions: {
                     cloudcare: {{ is_cloudcare_allowed|BOOL }}
-                }
+                },
+                warning: '{% trans "This is not an allowed value for this field" %}'
             }
         };
         $(function () {
             COMMCAREHQ.appView.settings = new CommcareSettings(COMMCAREHQ.appView.settings);
-            COMMCAREHQ.appView.settings.enableSuccessMessage = function () {
-                var properties = COMMCAREHQ.appView.settings.settingsIndex.properties;
-                if (properties) {
-                    var cc_send_unsent = properties['cc-send-unsent'];
-                    return cc_send_unsent.value() === 'cc-su-man';
-                } else {
-                    return true;
-                }
-            };
             ko.applyBindings(COMMCAREHQ.appView.settings, $('#commcare-settings').get(0));
-
-            {% if not app.is_remote_app %}
-            ko.applyBindings(COMMCAREHQ.appView.settings, $('#success-message').get(0));
-            {% endif %}
-
             var multimedia_tab = (function () {
                 var self = {};
                 self.load_state = ko.observable(null);
@@ -349,7 +336,7 @@
         <div class="tab-pane" id="delete">
             <h3>{% trans "Delete Application" %}</h3>
             <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
-
+                {% csrf_token %}
                 <button type="submit" class="btn btn-danger disable-on-submit">
                     <i class="icon-trash"></i>
                     {% trans "Delete this application" %}

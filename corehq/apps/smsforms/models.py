@@ -36,6 +36,9 @@ class SQLXFormsSession(models.Model):
     workflow = models.CharField(null=True, blank=True, max_length=20)
     reminder_id = models.CharField(null=True, blank=True, max_length=50)
 
+    class Meta:
+        app_label = 'smsforms'
+
     def __unicode__(self):
         return 'Form %(form)s in domain %(domain)s. Last modified: %(mod)s' % \
             {"form": self.form_xmlns,
@@ -52,6 +55,11 @@ class SQLXFormsSession(models.Model):
         """
         self.completed = completed
         self.modified_time = self.end_time = datetime.utcnow()
+
+    @property
+    def related_subevent(self):
+        subevents = self.messagingsubevent_set.all()
+        return subevents[0] if subevents else None
 
     @property
     def status(self):

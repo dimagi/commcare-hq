@@ -196,7 +196,7 @@ function(doc) {
             if (indicators.handwashing && indicators.handwashing.value) {
                 indicator_entries['household handwashing'] = case_id;
                 var handwashing_area = indicators.handwashing.value;
-                if (handwashing_area.indexOf("latrine") >= 0) {
+                if (handwashing_area.indexOf("latrine") >= 0 || handwashing_area.indexOf("handwashing-latrine") >= 0) {
                     indicator_entries['household handwashing10metres'] = case_id;
                 }
             }

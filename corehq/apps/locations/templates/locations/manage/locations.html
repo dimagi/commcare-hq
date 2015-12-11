@@ -1,10 +1,9 @@
-{% extends "settings/base_template.html" %}
+{% extends "settings/bootstrap2/base_template.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
-    <script src="{% static 'users/js/key_filters.js' %}"></script>
     <script src="{% static 'locations/ko/location_tree.async.js' %}"></script>
     <link rel="stylesheet" href="{% static 'locations/style/manage.css' %}">
 {% endblock %}
@@ -99,19 +98,18 @@ $(function() {
 <header>
     <div class="row-fluid">
         <div class="span8">
-            <h2>{% trans "Manage Locations" %}</h2>
+            <h2>{% trans "Manage Organization Structure" %}</h2>
             <p>
                 {% blocktrans %}
-                    Locations allow you to represent the real-world hierarchy
-                    of locations (districts, facilities, frontline workers,
-                    etc.) of your project. Once this hierarchy has been
-                    defined, you can use it for reporting and case sharing.
-                    Learn more about locations on our <a href="https://confluence.dimagi.com/display/commtrack/Locations">Help Site</a>.
+                    The Organization feature allows you to represent the real-world 
+                    structure of your project (districts, facilities, frontline workers, etc.). 
+                    Once this structure has been defined, you can use it for reporting and 
+                    case sharing. Learn more about Organizations on our <a href="https://confluence.dimagi.com/display/commtrack/Locations">Help Site</a>.
                 {% endblocktrans %}
             </p>
             {% if show_inactive %}
             <p class="alert alert-info">
-                {% if show_inactive %}{% trans 'Showing the Inactive Location List.' %}{% endif %}
+                {% if show_inactive %}{% trans 'Showing the Archived Location List.' %}{% endif %}
             </p>
             {% endif %}
         </div>
@@ -133,17 +131,16 @@ $(function() {
 <div class="row-fluid">
     <div class="span12">
         <div class="btn-toolbar">
-            {% if has_location_types and can_edit_any_location %}
-                <a class="btn btn-info" href="{% url "location_import" domain %}">
-                    <i class="icon-upload"></i> {% trans 'Bulk Import Locations' %}
-                </a>
-            {% else %}
-                <div class="btn btn-info disabled">
-                    <i class="icon-upload"></i> {% trans 'Bulk Import Locations' %}
-                </div>
-            {% endif %}
+            <a class="btn btn-primary"
+               href="{% url "location_import" domain %}"
+               {% if not has_location_types or not can_edit_any_location %}
+                   disabled
+               {% endif %}
+            >
+                <i class="icon-upload"></i> {% trans 'Bulk Import' %}
+            </a>
             <a class="btn" href="{% url "location_types" domain %}">
-                {% trans "Edit Location Types" %}
+                {% trans "Edit Organization Levels" %}
             </a>
             <a class="btn" href="{% url "location_fields_view" domain %}">
                 {% trans "Edit Location Fields" %}
@@ -233,7 +230,7 @@ $(function() {
   <div class="loc_child no_children alert alert-info">
     {% url "location_types" domain as location_types_url %}
     {% blocktrans %}
-    Please define the location types
+    Please define the organization levels
     <a href="{{ location_types_url }}">here</a>
     for your project before creating any locations.
     {% endblocktrans %}

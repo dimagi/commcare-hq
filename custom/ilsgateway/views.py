@@ -29,26 +29,22 @@ from custom.ilsgateway.comparison_reports import ProductAvailabilityReport
 from custom.ilsgateway.forms import SupervisionDocumentForm
 from custom.ilsgateway.stock_data import ILSStockDataSynchronization
 from custom.ilsgateway.tanzania import make_url
-from custom.ilsgateway.tanzania.reminders.delivery import send_delivery_reminder
-from custom.ilsgateway.tanzania.reminders.randr import send_ror_reminder
-from custom.ilsgateway.tanzania.reminders.stockonhand import send_soh_reminder
-from custom.ilsgateway.tanzania.reminders.supervision import send_supervision_reminder
 from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
 from custom.ilsgateway.tanzania.reports.randr import RRreport
 from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
 from custom.ilsgateway.tanzania.reports.supervision import SupervisionReport
-from custom.ilsgateway.tasks import clear_report_data
+from custom.ilsgateway.tasks import clear_report_data, fix_stock_data_task
 from casexml.apps.stock.models import StockTransaction
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import fix_groups_in_location_task, resync_web_users
 from custom.ilsgateway.api import ILSGatewayAPI
 from custom.logistics.tasks import stock_data_task
 from custom.ilsgateway.api import ILSGatewayEndpoint
-from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, DeliveryGroups, ILSNotes, \
+from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, ILSNotes, \
     ProductAvailabilityData
 from custom.ilsgateway.tasks import report_run, ils_clear_stock_data_task, \
     ils_bootstrap_domain_task
-from custom.logistics.views import BaseConfigView, BaseRemindersTester
+from custom.logistics.views import BaseConfigView
 
 
 class GlobalStats(BaseDomainView):
@@ -224,45 +220,6 @@ class SupervisionDocumentDeleteView(TemplateView, DomainViewMixin):
         )
 
 
-class RemindersTester(BaseRemindersTester):
-    post_url = 'ils_reminders_tester'
-    template_name = 'ilsgateway/reminders_tester.html'
-
-    reminders = {
-        'delivery_reminder': send_delivery_reminder,
-        'randr_reminder': send_ror_reminder,
-        'soh_reminder': send_soh_reminder,
-        'supervision_reminder': send_supervision_reminder
-    }
-
-    def get_context_data(self, **kwargs):
-        context = super(RemindersTester, self).get_context_data(**kwargs)
-        context['current_groups'] = "Submiting group: %s, Processing group: %s, Delivering group: %s" % (
-            DeliveryGroups().current_submitting_group(),
-            DeliveryGroups().current_processing_group(),
-            DeliveryGroups().current_delivering_group(),
-        )
-        return context
-
-    def post(self, request, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-
-        reminder = request.POST.get('reminder')
-        phone_number = context.get('phone_number')
-
-        if reminder and phone_number:
-            phone_number = clean_phone_number(phone_number)
-            v = VerifiedNumber.by_phone(phone_number, include_pending=True)
-            if v and v.verified:
-                user = v.owner
-                if not user:
-                    return self.get(request, *args, **kwargs)
-                reminder_function = self.reminders.get(reminder)
-                reminder_function(self.domain, datetime.utcnow(), test_list=[user])
-        messages.success(request, "Reminder was sent successfully")
-        return self.get(request, *args, **kwargs)
-
-
 @domain_admin_required
 @require_POST
 def sync_ilsgateway(request, domain):
@@ -291,6 +248,13 @@ def ils_clear_stock_data(request, domain):
 @require_POST
 def run_warehouse_runner(request, domain):
     report_run.delay(domain)
+    return HttpResponse('OK')
+
+
+@domain_admin_required
+@require_POST
+def fix_stock_data_view(request, domain):
+    fix_stock_data_task.delay(domain)
     return HttpResponse('OK')
 
 

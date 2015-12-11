@@ -1,15 +1,18 @@
 from collections import defaultdict
+from copy import deepcopy
 import functools
 import json
 import itertools
+import os
 import uuid
+import yaml
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from couchdbkit.exceptions import DocTypeError
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.const import (
     CT_REQUISITION_MODE_3,
     CT_LEDGER_STOCK,
@@ -27,6 +30,7 @@ import re
 from dimagi.utils.decorators.memoized import memoized
 from django.core.cache import cache
 import logging
+from dimagi.utils.make_uuid import random_hex
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +139,7 @@ class ParentCasePropertyBuilder(object):
 
     @memoized
     def get_other_case_sharing_apps_in_domain(self):
-        from corehq.apps.app_manager.models import get_apps_in_domain
+        from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
         apps = get_apps_in_domain(self.app.domain, include_remote=False)
         return [a for a in apps if a.case_sharing and a.id != self.app.id]
 
@@ -164,7 +168,6 @@ class ParentCasePropertyBuilder(object):
                 for property in get_properties_recursive(parent_type[0]):
                     case_properties.add('%s/%s' % (parent_type[1], property))
         if self.app.case_sharing and include_shared_properties:
-            from corehq.apps.app_manager.models import get_apps_in_domain
             for app in self.get_other_case_sharing_apps_in_domain():
                 case_properties.update(
                     get_case_properties(
@@ -284,7 +287,11 @@ def get_session_schema(form):
     """
     structure = {}
     # TODO handle advanced modules with more than one case
-    case_type = form.get_module().case_type
+    if hasattr(form, 'get_module'):
+        case_type = form.get_module().case_type
+    else:
+        case_type = None
+
     if case_type:
         structure["case_id"] = {
             "reference": {
@@ -453,7 +460,7 @@ def version_key(ver):
     >>> version_key('2.9B')
     Traceback (most recent call last):
       ...
-    ValueError: invalid literal for int() ...
+    ValueError: invalid literal for int() with base 10: '9B'
 
     """
     padded = ver + '.0.0'
@@ -479,6 +486,8 @@ def advanced_actions_use_usercase(actions):
 def enable_usercase(domain_name):
     with CriticalSection(['enable_usercase_' + domain_name]):
         domain = Domain.get_by_name(domain_name, strict=True)
+        if not domain:  # copying domains passes in an id before name is saved
+            domain = Domain.get(domain_name)
         if not domain.usercase_enabled:
             domain.usercase_enabled = True
             domain.save()
@@ -499,20 +508,75 @@ def prefix_usercase_properties(properties):
 
 
 def get_cloudcare_session_data(domain_name, form, couch_user):
-    from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-    from corehq.apps.app_manager.suite_xml import SuiteGenerator
+    from corehq.apps.hqcase.utils import get_case_id_by_domain_hq_user_id
+    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 
-    datums = SuiteGenerator.get_new_case_id_datums_meta(form)
-    session_data = {datum['datum'].id: uuid.uuid4().hex for datum in datums}
+    datums = EntriesHelper.get_new_case_id_datums_meta(form)
+    session_data = {datum.datum.id: uuid.uuid4().hex for datum in datums}
     if couch_user.doc_type == 'CommCareUser':  # smsforms.app.start_session could pass a CommCareCase
         try:
-            extra_datums = SuiteGenerator.get_extra_case_id_datums(form)
+            extra_datums = EntriesHelper.get_extra_case_id_datums(form)
         except SuiteError as err:
             _assert = soft_assert(['nhooper_at_dimagi_dot_com'.replace('_at_', '@').replace('_dot_', '.')])
             _assert(False, 'Domain "%s": %s' % (domain_name, err))
         else:
-            if SuiteGenerator.any_usercase_datums(extra_datums):
-                usercase = get_case_by_domain_hq_user_id(domain_name, couch_user.get_id, USERCASE_TYPE)
-                if usercase:
-                    session_data[USERCASE_ID] = usercase.get_id
+            if EntriesHelper.any_usercase_datums(extra_datums):
+                usercase_id = get_case_id_by_domain_hq_user_id(domain_name, couch_user.get_id, USERCASE_TYPE)
+                if usercase_id:
+                    session_data[USERCASE_ID] = usercase_id
     return session_data
+
+
+def update_unique_ids(app_source):
+    from corehq.apps.app_manager.models import form_id_references, jsonpath_update
+
+    app_source = deepcopy(app_source)
+
+    def change_form_unique_id(form):
+        unique_id = form['unique_id']
+        new_unique_id = random_hex()
+        form['unique_id'] = new_unique_id
+        if ("%s.xml" % unique_id) in app_source['_attachments']:
+            app_source['_attachments']["%s.xml" % new_unique_id] = app_source['_attachments'].pop("%s.xml" % unique_id)
+        return new_unique_id
+
+    change_form_unique_id(app_source['user_registration'])
+    id_changes = {}
+    for m, module in enumerate(app_source['modules']):
+        for f, form in enumerate(module['forms']):
+            old_id = form['unique_id']
+            new_id = change_form_unique_id(app_source['modules'][m]['forms'][f])
+            id_changes[old_id] = new_id
+
+    for reference_path in form_id_references:
+        for reference in reference_path.find(app_source):
+            if reference.value in id_changes:
+                jsonpath_update(reference, id_changes[reference.value])
+
+    for module in app_source['modules']:
+        if module['module_type'] == 'report':
+            for report_config in module['report_configs']:
+                report_config['uuid'] = random_hex()
+
+    return app_source
+
+
+def _app_callout_templates():
+    """Load app callout templates from config file on disk
+
+    Generator function defers file access until needed, acts like a
+    constant thereafter.
+    """
+    path = os.path.join(
+        os.path.dirname(__file__),
+        'static', 'app_manager', 'json', 'vellum-app-callout-templates.yaml'
+    )
+    if os.path.exists(path):
+        with open(path) as f:
+            data = yaml.load(f)
+    else:
+        logger.info("not found: %s", path)
+        data = []
+    while True:
+        yield data
+app_callout_templates = _app_callout_templates()

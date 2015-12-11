@@ -84,8 +84,33 @@ class CommCareFeatureSupportMixin(object):
         return self._require_minimum_version('2.20')
 
     @property
+    def enable_localized_menu_media(self):
+        """
+        Forms/Modules can have language-specific icon/audio for apps
+        version 2.21 or higher
+        """
+        return self._require_minimum_version('2.21')
+
+    @property
     def enable_case_list_icon_dynamic_width(self):
         """
         In 2.22 and higher, case list icon column is sized based on actual image width.
         """
-        return self._require_minimum_version('2.22')
+        # temporarily disabled due to issue on mobile side handling exact pixel widths.
+        # will look into it when there is a little more time. @orangejenny
+        # return self._require_minimum_version('2.22')
+        return False
+
+    @property
+    def enable_image_resize(self):
+        """
+        Image resize only supported > 2.23
+        """
+        return self._require_minimum_version('2.23')
+
+    @property
+    def enable_markdown_in_groups(self):
+        """
+        Markdown in groups only supported > 2.23
+        """
+        return self._require_minimum_version('2.23')

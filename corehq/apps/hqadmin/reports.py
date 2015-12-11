@@ -1,26 +1,20 @@
 import copy
 from datetime import datetime
 import json
-from corehq import Domain
+from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
-    Subscription,
 )
 from corehq.apps.app_manager.models import Application
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import ElasticTabularReport, GenericTabularReport
 from corehq.apps.reports.standard.domains import DomainStatsReport, es_domain_query
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq.apps.users.models import WebUser
 from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
-from corehq.apps.app_manager.commcare_settings import SETTINGS as CC_SETTINGS
-from corehq.toggles import IS_DEVELOPER
+from corehq.apps.app_manager.commcare_settings import get_custom_commcare_settings
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
-from django.utils.safestring import mark_safe
-from django.core.urlresolvers import reverse
 
 
 INDICATOR_DATA = {
@@ -533,7 +527,7 @@ FACET_MAPPING = [
     ]),
     ("Eula", False, [
         {"facet": "internal.can_use_data", "name": "Public Data", "expanded": True},
-        {"facet": "custom_eula", "name": "Custom Eula", "expanded": False},
+        {"facet": "internal.custom_eula", "name": "Custom Eula", "expanded": True},
     ]),
 ]
 
@@ -665,7 +659,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn("Project", prop_name="name.exact"),
+            DataTablesColumn(_("Project"), prop_name="name.exact"),
+            DataTablesColumn(_("Date Created"), prop_name="date_created"),
             DataTablesColumn(_("Organization"), prop_name="internal.organization_name.exact"),
             DataTablesColumn(_("Deployment Date"), prop_name="deployment.date"),
             DataTablesColumn(_("Deployment Country"), prop_name="deployment.countries.exact"),
@@ -712,8 +707,12 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                 prop_name="cp_n_in_sms"),
             DataTablesColumn(_("# SMS Ever"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_sms_ever"),
-            DataTablesColumn(_("# SMS in last 30"), sort_type=DTSortType.NUMERIC,
-                prop_name="cp_n_sms_30_d"),
+            DataTablesColumn(_("# Incoming SMS in last 30 days"), sort_type=DTSortType.NUMERIC,
+                prop_name="cp_n_sms_in_30_d"),
+            DataTablesColumn(_("# Outgoing SMS in last 30 days"), sort_type=DTSortType.NUMERIC,
+                prop_name="cp_n_sms_out_30_d"),
+            DataTablesColumn(_("Custom EULA?"), prop_name="internal.custom_eula"),
+            DataTablesColumn(_("HIPAA Compliant"), prop_name="hipaa_compliant"),
         )
         return headers
 
@@ -725,19 +724,20 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             return self.es_results.get('facets', {}).get('%s-STATS' % prop, {}).get(what_to_get)
 
         CALCS_ROW_INDEX = {
-            4: "cp_n_active_cc_users",
-            5: "cp_n_cc_users",
-            6: "cp_n_users_submitted_form",
-            7: "cp_n_60_day_cases",
-            8: "cp_n_active_cases",
-            9: "cp_n_inactive_cases",
-            10: "cp_n_cases",
-            11: "cp_n_forms",
-            14: "cp_n_web_users",
-            27: "cp_n_out_sms",
-            28: "cp_n_in_sms",
-            29: "cp_n_sms_ever",
-            30: "cp_n_sms_30_d",
+            5: "cp_n_active_cc_users",
+            6: "cp_n_cc_users",
+            7: "cp_n_users_submitted_form",
+            8: "cp_n_60_day_cases",
+            9: "cp_n_active_cases",
+            10: "cp_n_inactive_cases",
+            11: "cp_n_cases",
+            12: "cp_n_forms",
+            15: "cp_n_web_users",
+            28: "cp_n_out_sms",
+            29: "cp_n_in_sms",
+            30: "cp_n_sms_ever",
+            31: "cp_n_sms_in_30_d",
+            32: "cp_n_sms_out_30_d",
         }
 
         def stat_row(name, what_to_get, type='float'):
@@ -767,8 +767,13 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
 
         for dom in domains:
             if dom.has_key('name'):  # for some reason when using the statistical facet, ES adds an empty dict to hits
+                first_form_default_message = _("No Forms")
+                if dom.get("cp_last_form", None):
+                    first_form_default_message = _("Unable to parse date")
+
                 yield [
                     self.get_name_or_link(dom, internal_settings=True),
+                    format_date((dom.get("date_created")), _('No date')),
                     dom.get("internal", {}).get('organization_name') or _('No org'),
                     format_date((dom.get('deployment') or {}).get('date'), _('No date')),
                     (dom.get("deployment") or {}).get('countries') or _('No countries'),
@@ -780,7 +785,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get("cp_n_inactive_cases", _("Not yet calculated")),
                     dom.get("cp_n_cases", _("Not yet calculated")),
                     dom.get("cp_n_forms", _("Not yet calculated")),
-                    format_date(dom.get("cp_first_form"), _("No forms")),
+                    format_date(dom.get("cp_first_form"), first_form_default_message),
                     format_date(dom.get("cp_last_form"), _("No forms")),
                     dom.get("cp_n_web_users", _("Not yet calculated")),
                     dom.get('internal', {}).get('notes') or _('No notes'),
@@ -799,7 +804,10 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get('cp_n_out_sms', _("Not yet calculated")),
                     dom.get('cp_n_in_sms', _("Not yet calculated")),
                     dom.get('cp_n_sms_ever', _("Not yet calculated")),
-                    dom.get('cp_n_sms_30_d', _("Not yet calculated")),
+                    dom.get('cp_n_sms_in_30_d', _("Not yet calculated")),
+                    dom.get('cp_n_sms_out_30_d', _("Not yet calculated")),
+                    format_bool(dom.get('internal', {}).get('custom_eula')),
+                    dom.get('hipaa_compliant', _('false'))
                 ]
 
 
@@ -881,7 +889,14 @@ class AdminAppReport(AdminFacetedReport):
 
     excluded_properties = ["_id", "_rev", "_attachments", "admin_password_charset", "short_odk_url", "version",
                            "admin_password", "built_on", ]
-    profile_list = ["profile.%s.%s" % (c['type'], c['id']) for c in CC_SETTINGS if c['type'] != 'hq']
+
+    @property
+    @memoized
+    def profile_list(self):
+        return [
+            "profile.%s.%s" % (c['type'], c['id'])
+            for c in get_custom_commcare_settings() if c['type'] != 'hq'
+        ]
     calculated_properties_mapping = ("Calculations", True,
                                      [{"facet": "cp_is_active", "name": "Active", "expanded": True}])
 

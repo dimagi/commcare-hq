@@ -138,6 +138,9 @@ class FormData(BaseDataIndex):
             self.app_id == (instance.app_id or MISSING_APP_ID)
         )
 
+    class Meta:
+        app_label = 'sofabed'
+
 
 class CaseData(BaseDataIndex):
     """
@@ -244,6 +247,9 @@ class CaseData(BaseDataIndex):
 
         return True
 
+    class Meta:
+        app_label = 'sofabed'
+
 
 class CaseActionData(models.Model):
     """
@@ -302,6 +308,7 @@ class CaseActionData(models.Model):
         )
 
     class Meta:
+        app_label = 'sofabed'
         unique_together = ("case", "index")
 
 
@@ -329,3 +336,6 @@ class CaseIndexData(models.Model):
         ret.referenced_type = index.referenced_type
         ret.referenced_id = index.referenced_id
         return ret
+
+    class Meta:
+        app_label = 'sofabed'

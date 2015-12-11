@@ -86,7 +86,10 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
                     default_row_data[idx].append(data[p].strftime('%Y-%m-%d %H:%M'))
                 else:
                     default_row_data[idx].append(data[p] if data[p] != 88 else 'NA')
-            percent = total * 100 / denominator
+            try:
+                percent = total * 100 / denominator
+            except ZeroDivisionError:
+                percent = 0
             if percent >= 60:
                 total_of_functional += 1
             default_row_data[-3].append(total)

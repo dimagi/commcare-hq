@@ -1,17 +1,18 @@
-import datetime
-from django.utils.datastructures import SortedDict
+from collections import OrderedDict
+
 from sqlagg import (
     ColumnNotFoundException,
     TableNotFoundException,
 )
+from sqlagg.columns import SimpleColumn
 from sqlalchemy.exc import ProgrammingError
-from corehq.apps.reports.sqlreport import SqlData
+
+from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from corehq.apps.userreports.exceptions import (
     UserReportsError, TableNotFoundWarning,
     SortConfigurationError)
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.reports.sorting import get_default_sort_value
-from corehq.apps.userreports.reports.specs import DESCENDING
+from corehq.apps.userreports.reports.sorting import get_default_sort_value, DESCENDING
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.views import get_datasource_config_or_404
@@ -20,7 +21,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 class ConfigurableReportDataSource(SqlData):
 
-    def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns):
+    def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by):
         self.lang = None
         self.domain = domain
         if isinstance(config_or_config_id, DataSourceConfiguration):
@@ -33,9 +34,10 @@ class ConfigurableReportDataSource(SqlData):
 
         self._filters = {f.slug: f for f in filters}
         self._filter_values = {}
-        self._order_by = []
-        self.aggregation_columns = aggregation_columns
-        self._column_configs = SortedDict()
+        self._deferred_filters = {}
+        self._order_by = order_by
+        self._aggregation_columns = aggregation_columns
+        self._column_configs = OrderedDict()
         for column in columns:
             # should be caught in validation prior to reaching this
             assert column.column_id not in self._column_configs, \
@@ -43,6 +45,12 @@ class ConfigurableReportDataSource(SqlData):
                     self._config_id, self.domain, column.column_id,
                 )
             self._column_configs[column.column_id] = column
+
+    @property
+    def aggregation_columns(self):
+        return self._aggregation_columns + [
+            deferred_filter.field for deferred_filter in self._deferred_filters.values()
+            if deferred_filter.field not in self._aggregation_columns]
 
     @property
     def config(self):
@@ -64,11 +72,15 @@ class ConfigurableReportDataSource(SqlData):
 
     @property
     def filters(self):
-        return [fv.to_sql_filter() for fv in self._filter_values.values()]
+        return filter(None, [fv.to_sql_filter() for fv in self._filter_values.values()])
 
     def set_filter_values(self, filter_values):
         for filter_slug, value in filter_values.items():
             self._filter_values[filter_slug] = self._filters[filter_slug].create_filter_value(value)
+
+    def defer_filters(self, filter_slugs):
+        self._deferred_filters.update({
+            filter_slug: self._filters[filter_slug] for filter_slug in filter_slugs})
 
     def set_order_by(self, columns):
         self._order_by = columns
@@ -83,7 +95,7 @@ class ConfigurableReportDataSource(SqlData):
             # ask each column for its group_by contribution and combine to a single list
             # if the column isn't found just treat it as a normal field
             if column_id in self._column_configs:
-                return self._column_configs[col_id].get_group_by_columns()
+                return self._column_configs[column_id].get_group_by_columns()
             else:
                 return [column_id]
 
@@ -94,7 +106,13 @@ class ConfigurableReportDataSource(SqlData):
 
     @property
     def columns(self):
-        return [c for sql_conf in self.sql_column_configs for c in sql_conf.columns]
+        db_columns = [c for sql_conf in self.sql_column_configs for c in sql_conf.columns]
+        fields = {c.slug for c in db_columns}
+
+        return db_columns + [
+            DatabaseColumn('', SimpleColumn(deferred_filter.field))
+            for deferred_filter in self._deferred_filters.values()
+            if deferred_filter.field not in fields]
 
     @property
     def sql_column_configs(self):
@@ -105,18 +123,22 @@ class ConfigurableReportDataSource(SqlData):
         return [w for sql_conf in self.sql_column_configs for w in sql_conf.warnings]
 
     @memoized
-    def get_data(self, slugs=None):
+    def get_data(self):
         try:
-            ret = super(ConfigurableReportDataSource, self).get_data(slugs)
+            ret = super(ConfigurableReportDataSource, self).get_data()
             for report_column in self.column_configs:
                 report_column.format_data(ret)
         except (
             ColumnNotFoundException,
             ProgrammingError,
         ) as e:
-            raise UserReportsError(e.message)
+            raise UserReportsError(unicode(e))
         except TableNotFoundException as e:
             raise TableNotFoundWarning
+
+        return self._sort_data(ret)
+
+    def _sort_data(self, data):
         # TODO: Should sort in the database instead of memory, but not currently supported by sqlagg.
         try:
             # If a sort order is specified, sort by it.
@@ -158,22 +180,31 @@ class ConfigurableReportDataSource(SqlData):
 
                     def sort_by(row):
                         value = row.get(sort_column_id, None)
-                        return value or get_default_sort_value(datatype)
+                        if value is not None:
+                            return value
+                        else:
+                            return get_default_sort_value(datatype)
 
-                    ret.sort(
+                    data.sort(
                         key=sort_by,
                         reverse=is_descending
                     )
-                return ret
-            # Otherwise sort by the first column
-            else:
-                return sorted(ret, key=lambda x: x.get(
+                return data
+            # Otherwise sort by the first column (if the report has columns)
+            elif self.column_configs:
+                return sorted(data, key=lambda x: x.get(
                     self.column_configs[0].column_id,
                     next(x.itervalues())
                 ))
+            return data
         except (SortConfigurationError, TypeError):
-            # if the first column isn't sortable just return the data in the order we got it
-            return ret
+            # if the data isn't sortable according to the report spec
+            # just return the data in the order we got it
+            return data
+
+    @property
+    def has_total_row(self):
+        return any(column_config.calculate_total for column_config in self.column_configs)
 
     def get_total_records(self):
         return len(self.get_data())

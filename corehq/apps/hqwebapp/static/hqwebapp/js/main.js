@@ -6,6 +6,7 @@ $.prototype.iconify = function (icon) {
     $(this).css('width', "16px").prepend($icon);
 };
 
+
 var eventize = function (that) {
     'use strict';
     var events = {};
@@ -27,6 +28,7 @@ var eventize = function (that) {
     };
     return that;
 };
+
 
 var SaveButton = {
     /*
@@ -80,9 +82,10 @@ var SaveButton = {
                     success = options.success || function () {},
                     error = options.error || function () {},
                     that = this;
-                options.beforeSend = function () {
+                options.beforeSend = function (jqXHR, settings) {
                     that.setState('saving');
                     that.nextState = 'saved';
+                    $.ajaxSettings.beforeSend(jqXHR, settings);
                     beforeSend.apply(this, arguments);
                 };
                 options.success = function (data) {
@@ -184,23 +187,26 @@ var COMMCAREHQ = (function () {
     'use strict';
     return {
         icons: {
-            GRIP:   'icon-resize-vertical icon-blue',
-            ADD:    'icon-plus icon-blue',
-            COPY:   'icon-copy icon-blue',
-            DELETE: 'icon-remove icon-blue',
-            PAPERCLIP: 'icon-paper-clip'
+            GRIP:   'fa fa-sort icon-resize-vertical icon-blue',
+            ADD:    'fa fa-plus icon-plus icon-blue',
+            COPY:   'fa fa-copy icon-copy icon-blue',
+            DELETE: 'fa fa-remove icon-remove icon-blue',
+            PAPERCLIP: 'fa fa-paperclip icon-paper-clip'
         },
         makeHqHelp: function (opts, wrap) {
             wrap = wrap === undefined ? true : wrap;
+            var iconClass = "icon-question-sign";
+            if (opts.bootstrap3){
+                iconClass = "fa fa-question-circle";
+            }
             var el = $(
                 '<div class="hq-help">' + 
                     '<a href="#">' +
-                        '<i class="icon-question-sign"></i></a></div>'
+                        '<i class="' + iconClass + '"></i></a></div>'
                 ),
                 attrs = ['content', 'title', 'placement'];
-
             attrs.map(function (attr) {
-                el.find('a').data(attr, opts[attr]);
+                el.find('a').attr("data-"+attr, opts[attr]);
             });
             if (wrap) {
                 el.hqHelp();
@@ -217,7 +223,7 @@ var COMMCAREHQ = (function () {
                 e.preventDefault();
                 if (!$(this).data('clicked')) {
                     $(this).prev('form').submit();
-                    $(this).data('clicked', 'true').children('i').removeClass().addClass("icon-refresh icon-spin");
+                    $(this).data('clicked', 'true').children('i').removeClass().addClass("fa fa-refresh fa-spin icon-refresh icon-spin");
                 }
             });
 
@@ -322,84 +328,18 @@ var COMMCAREHQ = (function () {
     };
 }());
 
-function setUpIeWarning() {
-    'use strict';
-    var $warning;
-    if ($.browser.msie) {
-        $warning = $('<div/>').addClass('ie-warning');
-        $('<span>This application does not work well on Microsoft Internet Explorer. ' +
-            'Please use <a href="http://www.google.com/chrome/">Google Chrome</a> instead.</span>').appendTo($warning);
-        $('body').prepend($warning);
-    }
-}
-
 $(function () {
     'use strict';
-    $('.delete_link').iconify('icon-remove');
+    $('.delete_link').iconify('fa fa-remove icon-remove');
     $(".delete_link").addClass("dialog_opener");
     $(".delete_dialog").addClass("dialog");
-    $('.new_link').iconify('icon-plus');
-    $('.edit_link').iconify('icon-pencil');
+    $('.new_link').iconify('fa fa-plus icon-plus');
+    $('.edit_link').iconify('fa fa-pencil icon-pencil');
 
     $(".message").addClass('ui-state-highlight ui-corner-all').addClass("shadow");
 
     COMMCAREHQ.initBlock($("body"));
-    setUpIeWarning();
 
     $(window).bind('beforeunload', COMMCAREHQ.beforeUnloadCallback);
 
 });
-
-// thanks to http://stackoverflow.com/questions/1149454/non-ajax-get-post-using-jquery-plugin
-// thanks to http://stackoverflow.com/questions/1131630/javascript-jquery-param-inverse-function#1131658
-
-(function () {
-    'use strict';
-    $.extend({
-        getGo: function (url, params) {
-            document.location = url + '?' + $.param(params);
-        },
-        postGo: function (url, params) {
-            var $form = $("<form>")
-                .attr("method", "post")
-                .attr("action", url);
-            $.each(params, function (name, value) {
-                $("<input type='hidden'>")
-                    .attr("name", name)
-                    .attr("value", value)
-                    .appendTo($form);
-            });
-            $form.appendTo("body");
-            $form.submit();
-        },
-        unparam: function (value) {
-            var
-            // Object that holds names => values.
-                params = {},
-            // Get query string pieces (separated by &)
-                pieces = value.split('&'),
-            // Temporary variables used in loop.
-                pair, i, l;
-
-            // Loop through query string pieces and assign params.
-            for (i = 0, l = pieces.length; i < l; i += 1) {
-                pair = pieces[i].split('=', 2);
-                // Repeated parameters with the same name are overwritten. Parameters
-                // with no value get set to boolean true.
-                params[decodeURIComponent(pair[0])] = (pair.length === 2 ?
-                    decodeURIComponent(pair[1].replace(/\+/g, ' ')) : true);
-            }
-
-            return params;
-        }
-    });
-
-    $.fn.closest_form = function () {
-        return this.closest('form, .form');
-    };
-    $.fn.my_serialize = function () {
-        var data = this.find('[name]').serialize();
-        return data;
-    };
-
-}());

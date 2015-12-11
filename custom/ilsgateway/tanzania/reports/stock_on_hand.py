@@ -105,17 +105,15 @@ class SohPercentageTableData(ILSData):
             date__range=(self.config['startdate'], self.config['enddate']),
             location_id=location.location_id
         )
-        soh_rows = SohSubmissionData(config={'org_summary': org_summary}).rows
-        soh_data = soh_rows[0] if soh_rows else None
-        if soh_data and facs_count > 0:
-            soh_on_time = soh_data.on_time * 100 / facs_count
-            soh_late = soh_data.late * 100 / facs_count
-            soh_not_responding = soh_data.not_responding * 100 / facs_count
-        else:
-            soh_on_time = None
-            soh_late = None
-            soh_not_responding = None
-        return soh_late, soh_not_responding, soh_on_time
+        if facs_count > 0:
+            soh_rows = SohSubmissionData(config={'org_summary': org_summary}).rows
+            soh_data = soh_rows[0] if soh_rows else None
+            if soh_data:
+                soh_on_time = soh_data.on_time * 100 / facs_count
+                soh_late = soh_data.late * 100 / facs_count
+                soh_not_responding = soh_data.not_responding * 100 / facs_count
+                return soh_late, soh_not_responding, soh_on_time
+        return None, None, None
 
     def get_previous_month(self, enddate):
         month = enddate.month - 1 if enddate.month != 1 else 12
@@ -124,22 +122,23 @@ class SohPercentageTableData(ILSData):
 
     def get_stockouts(self, facs):
         facs_count = facs.count()
-        if facs_count > 0:
-            fac_ids = facs.exclude(supply_point_id__isnull=True).values_list('supply_point_id', flat=True)
-            enddate = self.config['enddate']
-            month, year = self.get_previous_month(enddate)
-            stockouts = StockTransaction.objects.filter(
-                case_id__in=list(fac_ids),
-                stock_on_hand__lte=0,
-                report__domain=self.config['domain'],
-                report__date__range=[
-                    datetime(year, month, 1),
-                    datetime(enddate.year, enddate.month, 1)
-                ]
-            ).order_by('case_id').distinct('case_id').count()
-            percent_stockouts = (stockouts or 0) * 100 / float(facs_count)
-        else:
-            percent_stockouts = 0
+        if facs_count == 0:
+            return 0
+
+        fac_ids = facs.exclude(supply_point_id__isnull=True).values_list('supply_point_id', flat=True)
+        enddate = self.config['enddate']
+        month, year = self.get_previous_month(enddate)
+        stockouts = StockTransaction.objects.filter(
+            case_id__in=list(fac_ids),
+            stock_on_hand__lte=0,
+            report__domain=self.config['domain'],
+            report__date__range=[
+                datetime(year, month, 1),
+                datetime(enddate.year, enddate.month, 1)
+            ]
+        ).order_by('case_id').distinct('case_id').count()
+        percent_stockouts = (stockouts or 0) * 100 / float(facs_count)
+
         return percent_stockouts
 
     def get_products_ids(self):
@@ -306,13 +305,17 @@ class DistrictSohPercentageTableData(ILSData):
             return 'Inventory'
         return 'Month of Stock'
 
+    @memoized
+    def get_products(self):
+        if self.config['products']:
+            return SQLProduct.objects.filter(product_id__in=self.config['products'],
+                                             domain=self.config['domain']).order_by('code')
+        else:
+            return SQLProduct.objects.filter(domain=self.config['domain']).order_by('code')
+
     @property
     def headers(self):
-        if self.config['products']:
-            products = SQLProduct.objects.filter(product_id__in=self.config['products'],
-                                                 domain=self.config['domain']).order_by('code')
-        else:
-            products = SQLProduct.objects.filter(domain=self.config['domain']).order_by('code')
+        products = self.get_products()
         headers = DataTablesHeader(
             DataTablesColumn(_('MSD Code')),
             DataTablesColumn(_('Facility Name')),
@@ -331,11 +334,7 @@ class DistrictSohPercentageTableData(ILSData):
         rows = []
         enddate = self.config['enddate']
 
-        if not self.config['products']:
-            products = SQLProduct.objects.filter(domain=self.config['domain'], is_archived=False).order_by('code')
-        else:
-            products = SQLProduct.objects.filter(product_id__in=self.config['products'],
-                                                 domain=self.config['domain']).order_by('code')
+        products = self.get_products()
 
         if self.config['location_id']:
             locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])

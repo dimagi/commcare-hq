@@ -2,18 +2,15 @@ import os
 import json
 from django.test import LiveServerTestCase
 from django.conf import settings
-from corehq.apps.accounting import generator
-from corehq.apps.accounting.models import (
-    BillingAccount,
-    DefaultProductPlan,
-    SoftwarePlanEdition,
-    Subscription,
-    SubscriptionAdjustment,
-)
+
+from casexml.apps.case.util import post_case_blocks
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.accounting.tests import BaseAccountingTest
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.dbaccessors import \
     get_one_case_in_domain_by_external_id
-from corehq.apps.sms.test_backend import TestSMSBackend
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from corehq.apps.sms.mixin import BackendMapping
 from corehq.apps.sms.models import SMSLog, CallLog
 from corehq.apps.smsforms.models import SQLXFormsSession
@@ -23,24 +20,34 @@ from corehq.apps.reminders.models import (SurveyKeyword, SurveyKeywordAction,
 from corehq.apps.app_manager.models import import_app
 from corehq.apps.users.models import CommCareUser, WebUser
 from django.contrib.sites.models import Site
-from casexml.apps.case.models import CommCareCase
 from couchforms.dbaccessors import get_forms_by_type
 from time import sleep
 from dateutil.parser import parse
 import uuid
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.mock import CaseBlock
-from dimagi.utils.parsing import json_format_datetime
-from casexml.apps.case.xml import V2
 
 
 def time_parser(value):
     return parse(value).time()
 
 
-class TouchformsTestCase(LiveServerTestCase):
+class BaseSMSTest(BaseAccountingTest, DomainSubscriptionMixin):
+    def setUp(self):
+        super(BaseSMSTest, self).setUp()
+        self.account = None
+        self.subscription = None
+
+    def create_account_and_subscription(self, domain_name):
+        self.setup_subscription(domain_name, SoftwarePlanEdition.ADVANCED)
+
+    def tearDown(self):
+        self.teardown_subscription()
+        super(BaseSMSTest, self).tearDown()
+
+
+class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
     """
-    For now, these test cases need to be run manually. Before running, the 
+    For now, these test cases need to be run manually. Before running, the
     following dependencies must be met:
         1. touchforms/backend/localsettings.py:
             URL_ROOT = "http://localhost:8081/a/{{DOMAIN}}"
@@ -61,22 +68,7 @@ class TouchformsTestCase(LiveServerTestCase):
         domain_obj.default_sms_response = "Default SMS Response"
         domain_obj.save()
 
-        generator.instantiate_accounting_for_tests()
-        self.account = BillingAccount.get_or_create_account_by_domain(
-            domain_obj.name,
-            created_by="automated-test",
-        )[0]
-        plan = DefaultProductPlan.get_default_plan_by_domain(
-            domain_obj, edition=SoftwarePlanEdition.ADVANCED
-        )
-        self.subscription = Subscription.new_domain_subscription(
-            self.account,
-            domain_obj.name,
-            plan
-        )
-        self.subscription.is_active = True
-        self.subscription.save()
-
+        self.setup_subscription(domain_obj.name, SoftwarePlanEdition.ADVANCED)
         return domain_obj
 
     def create_mobile_worker(self, username, password, phone_number, save_vn=True):
@@ -94,8 +86,7 @@ class TouchformsTestCase(LiveServerTestCase):
             case_type='participant',
             owner_id=owner._id,
             user_id=owner._id,
-            version=V2
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
         post_case_blocks([case_block], {'domain': self.domain})
 
     def add_parent_access(self, user, case):
@@ -104,9 +95,8 @@ class TouchformsTestCase(LiveServerTestCase):
             case_id=uuid.uuid4().hex,
             case_type='magic_map',
             owner_id=user._id,
-            version=V2,
             index={'parent': ('participant', case._id)}
-        ).as_xml(format_datetime=json_format_datetime)
+        ).as_xml()
         post_case_blocks([case_block], {'domain': self.domain})
 
     def create_web_user(self, username, password):
@@ -322,6 +312,4 @@ class TouchformsTestCase(LiveServerTestCase):
         self.site.delete()
         self.backend.delete()
         self.backend_mapping.delete()
-        SubscriptionAdjustment.objects.all().delete()
-        self.subscription.delete()
-        self.account.delete()
+        self.teardown_subscription()

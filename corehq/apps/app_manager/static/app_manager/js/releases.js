@@ -1,11 +1,10 @@
-function SavedApp(o, r) {
-    var $root = r;
-    var self = ko.mapping.fromJS(o);
+function SavedApp(app_data, releasesMain) {
+    var self = ko.mapping.fromJS(app_data);
     $.each(['comment_user_name', '_deleteState'], function (i, attr) {
         self[attr] = self[attr] || ko.observable();
     });
     if (!self.include_media) {
-        self.include_media = ko.observable(false);
+        self.include_media = ko.observable(self.doc_type() !== "RemoteApp");
     }
     if(!self.generating_url){
         self.generating_url = ko.observable(false);
@@ -68,7 +67,7 @@ function SavedApp(o, r) {
 
     self.get_odk_install_url = ko.computed(function() {
         var slug = self.include_media() ? 'odk_media' : 'odk';
-        return $root.url(slug, self.id());
+        return releasesMain.url(slug, self.id());
     });
 
     self.sms_url = function(index) {
@@ -91,7 +90,7 @@ function SavedApp(o, r) {
     self.submit_new_comment = function () {
         self.pending_comment_update(true);
         $.ajax({
-            url: r.options.urls.update_build_comment,
+            url: releasesMain.options.urls.update_build_comment,
             type: 'POST',
             dataType: 'JSON',
             data: {"build_id": self.id(), "comment": self.new_comment()},
@@ -108,14 +107,15 @@ function SavedApp(o, r) {
         });
     };
 
-    self.download_application_zip = function (url) {
-        var modal = $('#download-zip-modal');
-        url = url.replace('_____', self.id());
-        new COMMCAREHQ.AsyncDownloader(modal, url);
-        // Not so nice... Hide the open modal so we don't get bootstrap recursion errors
-        // http://stackoverflow.com/questions/13649459/twitter-bootstrap-multiple-modal-error
-        $('.modal.fade.in').modal('hide')
-        modal.modal({show: true});
+    self.download_application_zip = function (multimedia_only) {
+        releasesMain.download_application_zip(self.id(), multimedia_only);
+    };
+
+    self.clickDeploy = function () {
+        self.generate_short_url('short_odk_url');
+        ga_track_event('App Manager', 'Deploy Button', self.id());
+        analytics.workflow('Clicked Deploy');
+        $.post(releasesMain.options.urls.hubspot_click_deploy);
     };
 
     return self;
@@ -135,6 +135,22 @@ function ReleasesMain(o) {
     self.deployAnyway = {};
     self.currentAppVersion = ko.observable(self.options.currentAppVersion);
     self.lastAppVersion = ko.observable();
+    self.selectingVersion = ko.observable("");
+
+    self.download_modal = $(self.options.download_modal_id);
+    self.async_downloader = new AsyncDownloader(self.download_modal);
+
+    self.download_application_zip = function(appId, multimedia_only) {
+        var url_slug = multimedia_only ? 'download_multimedia' : 'download_zip';
+        var url = self.url(url_slug, appId);
+        message = "Your application download is ready";
+        self.async_downloader.generateDownload(url, message);
+        // Not so nice... Hide the open modal so we don't get bootstrap recursion errors
+        // http://stackoverflow.com/questions/13649459/twitter-bootstrap-multiple-modal-error
+        $('.modal.fade.in').modal('hide');
+        self.download_modal.modal({show: true});
+    };
+
     self.buildButtonEnabled = ko.computed(function () {
         if (self.buildState() === 'pending' || self.fetchState() === 'pending') {
             return false;
@@ -167,6 +183,7 @@ function ReleasesMain(o) {
             }
         }
     });
+
     self.addSavedApp = function (savedApp, toBeginning) {
         if (toBeginning) {
             self.savedApps.unshift(savedApp);
@@ -175,6 +192,23 @@ function ReleasesMain(o) {
         }
         self.deployAnyway[savedApp.id()] = ko.observable(false);
     };
+
+    self.addSavedApps = function (savedApps) {
+        var i, savedApp;
+        for (i = 0; i < savedApps.length; i++) {
+            savedApp = SavedApp(savedApps[i], self);
+            self.addSavedApp(savedApp);
+        }
+        if (i) {
+            self.nextVersionToFetch = savedApps[i - 1].version - 1;
+        }
+        if (savedApps.length < self.fetchLimit) {
+            self.doneFetching(true);
+        } else {
+            self.doneFetching(false);
+        }
+    };
+
     self.getMoreSavedApps = function () {
         self.fetchState('pending');
         $.ajax({
@@ -183,26 +217,17 @@ function ReleasesMain(o) {
             data: {
                 start_build: self.nextVersionToFetch,
                 limit: self.fetchLimit
+            },
+            success: function (savedApps) {
+                self.addSavedApps(savedApps);
+                self.fetchState('');
+            },
+            error: function () {
+                self.fetchState('error');
             }
-        }).success(function (savedApps) {
-            var i, savedApp;
-            for (i = 0; i < savedApps.length; i++) {
-                savedApp = SavedApp(savedApps[i], self);
-                self.addSavedApp(savedApp);
-            }
-            if (i) {
-                self.nextVersionToFetch = savedApps[i-1].version - 1;
-            }
-            if (savedApps.length < self.fetchLimit) {
-                self.doneFetching(true);
-            } else {
-                self.doneFetching(false);
-            }
-            self.fetchState('');
-        }).error(function () {
-            self.fetchState('error');
         });
     };
+
     self.toggleRelease = function (savedApp) {
         var is_released = savedApp.is_released();
         var saved_app_id = savedApp.id();
@@ -296,8 +321,4 @@ function ReleasesMain(o) {
             self.buildState('error');
         });
     };
-    // init
-    setTimeout(function () {
-        self.getMoreSavedApps();
-    }, 0);
 }

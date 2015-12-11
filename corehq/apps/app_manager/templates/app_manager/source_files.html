@@ -1,0 +1,53 @@
+{% extends "style/bootstrap3/full_screen.html" %}
+
+{% block page_content %}
+    <p>
+      See
+      <a href="{% url "view_app" app.domain app.copy_of|default_if_none:app.get_id %}">
+        current app
+      </a> for the latest work in progress.
+    </p>
+
+    {% block downloads %}{% endblock %}
+
+    <h2>Resource Files</h2>
+
+    <table class="table table-condensed">
+        {% for file in files %}
+            <tr>
+                <td class="col-md-3">
+                    {% if file.source %}
+                        <a class="toggle-next" href="#">{{ file.name }}</a>
+                    {% else %}
+                        {{ file.name }}
+                    {% endif %}
+                </td>
+                <td class="col-md-9">
+                    {% block file_description %}{% endblock %}
+                </td>
+            </tr>
+
+            {% if file.source %}
+                <tr class="hide">
+                    <td colspan="2">
+                    {% block file_source %}{% endblock %}
+                    </td>
+                </tr>
+            {% endif %}
+        {% empty %}
+            <tr><th>No Files</th></tr>
+        {% endfor %}
+    </table>
+    {% block post_files %}{% endblock %}
+{% endblock page_content %}
+
+{% block js-inline %}
+<script>
+    $(function(){
+        $('.toggle-next').click(function(e){
+            e.preventDefault();
+            $(this).parents('tr').next('tr').toggleClass("hide");
+        });
+    });
+</script>
+{% endblock js-inline %}

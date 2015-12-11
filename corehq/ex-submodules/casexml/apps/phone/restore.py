@@ -4,23 +4,24 @@ from uuid import uuid4
 import shutil
 import hashlib
 from couchdbkit import ResourceConflict, ResourceNotFound
+from casexml.apps.phone.cache_utils import copy_payload_and_synclog_and_get_new_file
 from casexml.apps.phone.data_providers import get_restore_providers, get_long_running_providers
 from casexml.apps.phone.data_providers.case.load_testing import get_loadtest_factor
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
 )
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, OWNERSHIP_CLEANLINESS_RESTORE
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, LOG_FORMAT_SIMPLIFIED, \
-    LOG_FORMAT_LEGACY, get_sync_log_class_by_format
+    get_sync_log_class_by_format
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml
 from datetime import datetime, timedelta
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
-from couchforms.xml import (
+from couchforms.openrosa_response import (
     ResponseNature,
     get_simple_response_xml,
 )
@@ -185,8 +186,10 @@ class FileRestoreResponse(RestoreResponse):
         return stream_response(open(self.get_filename(), 'r'), headers)
 
 
-class CachedResponse(object):
-    def __init__(self, payload):
+class CachedPayload(object):
+
+    def __init__(self, payload, is_initial):
+        self.is_initial = is_initial
         self.payload = payload
         self.payload_path = None
         if isinstance(payload, dict):
@@ -198,7 +201,7 @@ class CachedResponse(object):
         elif payload:
             assert hasattr(payload, 'read'), 'expected file like object'
 
-    def exists(self):
+    def __nonzero__(self):
         return bool(self.payload)
 
     def as_string(self):
@@ -207,11 +210,45 @@ class CachedResponse(object):
         finally:
             self.payload.close()
 
+    def get_content_length(self):
+        if self.payload_path:
+            return os.path.getsize(self.payload_path)
+        return None
+
+    def as_file(self):
+        return self.payload
+
+    def finalize(self):
+        # When serving a cached initial payload we should still generate a new sync log
+        # This is to avoid issues with multiple devices ending up syncing to the same
+        # sync log, which causes all kinds of assertion errors when the two devices
+        # touch the same cases
+        if self and self.is_initial:
+            try:
+                file_reference = copy_payload_and_synclog_and_get_new_file(self.payload)
+                self.payload = file_reference.file
+                self.payload_path = file_reference.path
+            except Exception, e:
+                # don't fail hard if anything goes wrong since this is an edge case optimization
+                soft_assert(to=['czue' + '@' + 'dimagi.com'])(False, u'Error finalizing cached log: {}'.format(e))
+
+
+class CachedResponse(object):
+    def __init__(self, payload):
+        self.payload = payload
+
+    def exists(self):
+        return bool(self.payload)
+
+    def as_string(self):
+        return self.payload.as_string()
+
     def get_http_response(self):
         headers = {}
-        if self.payload_path:
-            headers['Content-Length'] = os.path.getsize(self.payload_path)
-        return stream_response(self.payload, headers)
+        content_length = self.payload.get_content_length()
+        if content_length is not None:
+            headers['Content-Length'] = content_length
+        return stream_response(self.payload.as_file(), headers)
 
 
 class RestoreParams(object):
@@ -294,8 +331,16 @@ class RestoreState(object):
                         case_ids=self.last_sync_log.get_footprint_of_cases_on_phone()
                     )
                     if self.last_sync_log.log_format == LOG_FORMAT_SIMPLIFIED:
+                        from corehq.apps.reports.standard.deployments import SyncHistoryReport
+                        last_bugfix_date = datetime(2015, 10, 20)
                         _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'])
-                        _assert(False, str(exception))
+                        sync_history_url = '{}?individual={}'.format(
+                            SyncHistoryReport.get_url(self.domain),
+                            self.user.user_id
+                        )
+                        _assert(self.last_sync_log.date < last_bugfix_date, '{}, sync history report: {}'.format(
+                            exception, sync_history_url
+                        ))
                     raise exception
 
     @property
@@ -332,24 +377,6 @@ class RestoreState(object):
         return self.params.version
 
     @property
-    def use_clean_restore(self):
-        def should_use_clean_restore(domain):
-            if settings.UNIT_TESTING:
-                override = getattr(
-                    settings, 'TESTS_SHOULD_USE_CLEAN_RESTORE', None)
-                if override is not None:
-                    return override
-            return OWNERSHIP_CLEANLINESS_RESTORE.enabled(domain)
-
-        # this can be overridden explicitly in the params but will default to the domain setting
-        if self.params.force_restore_mode == 'clean':
-            return True
-        elif self.params.force_restore_mode == 'legacy':
-            return False
-
-        return should_use_clean_restore(self.domain)
-
-    @property
     @memoized
     def owner_ids(self):
         return set(self.user.get_owner_ids())
@@ -362,6 +389,14 @@ class RestoreState(object):
         else:
             return StockSettings()
 
+    @property
+    def is_first_extension_sync(self):
+        extension_toggle_enabled = EXTENSION_CASES_SYNC_ENABLED.enabled(self.domain)
+        try:
+            return extension_toggle_enabled and not self.last_sync_log.extensions_checked
+        except AttributeError:
+            return extension_toggle_enabled
+
     def start_sync(self):
         self.start_time = datetime.utcnow()
         self.current_sync_log = self.create_sync_log()
@@ -373,21 +408,22 @@ class RestoreState(object):
 
     def create_sync_log(self):
         previous_log_id = None if self.is_initial else self.last_sync_log._id
+        previous_log_rev = None if self.is_initial else self.last_sync_log._rev
         last_seq = str(get_db().info()["update_seq"])
         new_synclog = SyncLog(
             user_id=self.user.user_id,
             last_seq=last_seq,
             owner_ids_on_phone=list(self.owner_ids),
             date=datetime.utcnow(),
-            previous_log_id=previous_log_id
+            previous_log_id=previous_log_id,
+            previous_log_rev=previous_log_rev,
         )
         new_synclog.save(**get_safe_write_kwargs())
         return new_synclog
 
     @property
     def sync_log_class(self):
-        format = LOG_FORMAT_SIMPLIFIED if self.use_clean_restore else LOG_FORMAT_LEGACY
-        return get_sync_log_class_by_format(format)
+        return get_sync_log_class_by_format(LOG_FORMAT_SIMPLIFIED)
 
     @property
     @memoized
@@ -494,10 +530,11 @@ class RestoreConfig(object):
             return CachedResponse(None)
 
         if self.sync_log:
-            payload = self.sync_log.get_cached_payload(self.version, stream=True)
+            payload = CachedPayload(self.sync_log.get_cached_payload(self.version, stream=True), is_initial=False)
         else:
-            payload = self.cache.get(self._initial_cache_key())
+            payload = CachedPayload(self.cache.get(self._initial_cache_key()), is_initial=True)
 
+        payload.finalize()
         return CachedResponse(payload)
 
     def set_cached_payload_if_necessary(self, resp, duration):
@@ -506,6 +543,9 @@ class RestoreConfig(object):
             # if there is a sync token, always cache
             try:
                 data = cache_payload['data']
+                self.sync_log.last_cached = datetime.utcnow()
+                self.sync_log.hash_at_last_cached = str(self.sync_log.get_state_hash())
+                self.sync_log.save()
                 self.sync_log.set_cached_payload(data, self.version)
                 try:
                     data.close()

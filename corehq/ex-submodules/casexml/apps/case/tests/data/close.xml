@@ -1,17 +1,14 @@
 <?xml version='1.0' ?>
 <registration version="1" uiVersion="1" xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://openrosa.org/case/test/close">
 <meta>
-    <DeviceID>Chalimbana</DeviceID>
-    <TimeStart>2010-06-29T13:42:50.137</TimeStart>
-    <TimeEnd />
+    <deviceID>Chalimbana</deviceID>
+    <timeStart>2010-06-29T13:42:50.137</timeStart>
+    <timeEnd />
     <username>admin</username>
-    <chw_id>c2c253a1-7d82-11df-a037-005056c00008</chw_id>
-    <uid>REPLACE_UID</uid>
+    <userID>c2c253a1-7d82-11df-a037-005056c00008</userID>
+    <instanceID>REPLACE_UID</instanceID>
 </meta>
-<case>
-    <case_id>REPLACE_CASEID</case_id>
-    <user_id>BXPKZLP49P3DDTJH3W0BRM2HVABA</user_id>
-    <date_modified>2010-07-01T13:42:50</date_modified>
+<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="REPLACE_CASEID" user_id="someuser" date_modified="2010-07-01T13:42:50" >
     <update>
         <someprop>abcde</someprop>
         <someclosedprop>case closed</someclosedprop>

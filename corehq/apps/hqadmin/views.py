@@ -1,15 +1,14 @@
 import HTMLParser
 import json
-import logging
 import socket
 from datetime import timedelta, datetime, date
 from collections import defaultdict
 from StringIO import StringIO
+
 import dateutil
 from django.core.mail import EmailMessage
 from django.utils.datastructures import SortedDict
 from django.views.decorators.csrf import csrf_exempt
-
 from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
 from django.contrib import messages
@@ -17,7 +16,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login
 from django.core import management, cache
 from django.core.urlresolvers import reverse
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.views.decorators.cache import cache_page
 from django.views.generic import FormView
 from django.utils.decorators import method_decorator
@@ -32,19 +31,24 @@ from django.http import (
 )
 from restkit import Resource
 from restkit.errors import Unauthorized
+from couchdbkit import ResourceNotFound, Database
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
-from couchdbkit import ResourceNotFound, Database
 from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-from couchforms.const import DEVICE_LOG_XMLNS
+from corehq.toggles import any_toggle_enabled, SUPPORT
+from corehq.util.couchdb_management import couch_config
+from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorException, all_pillows_supervisor_status, \
+    pillow_supervisor_status
 from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
 from couchforms.models import XFormInstance
-from pillowtop import get_all_pillows_json, get_pillow_by_name
-
+from pillowtop.exceptions import PillowNotFoundError
+from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
+from corehq.apps.data_analytics.models import MALTRow
+from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
@@ -52,7 +56,6 @@ from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.users import UserES
@@ -69,21 +72,19 @@ from corehq.apps.hqadmin.reporting.reports import (
     get_stats_data,
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.graph_models import Axis, LineChart
-from corehq.apps.reports.util import make_form_couch_key
-from corehq.apps.sms.models import SMSLog
 from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.db import Session
 from corehq.elastic import parse_args_for_es, ES_URLS, run_query
 from dimagi.utils.couch.database import get_db, is_bigcouch
+from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_response, get_url_base
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-
 from .multimech import GlobalConfig
 from .forms import AuthenticateAsForm
 
@@ -107,107 +108,11 @@ def get_rabbitmq_management_url():
     else:
         return None
 
+
 def get_hqadmin_base_context(request):
     return {
         "domain": None,
     }
-
-
-@require_superuser
-def active_users(request):
-    keys = []
-    number_threshold = 15
-    date_threshold_days_ago = 90
-    date_threshold = json_format_datetime(datetime.utcnow() - timedelta(days=date_threshold_days_ago))
-    key = make_form_couch_key(None, user_id="")
-    for line in get_db().view("reports_forms/all_forms",
-        startkey=key,
-        endkey=key+[{}],
-        group_level=3):
-        if line['value'] >= number_threshold:
-            keys.append(line["key"])
-
-    final_count = defaultdict(int)
-
-    def is_valid_user_id(user_id):
-        if not user_id: return False
-        try:
-            get_db().get(user_id)
-            return True
-        except Exception:
-            return False
-
-    for time_type, domain, user_id in keys:
-        if get_db().view("reports_forms/all_forms",
-            reduce=False,
-            startkey=[time_type, domain, user_id, date_threshold],
-            limit=1):
-            if True or is_valid_user_id(user_id):
-                final_count[domain] += 1
-
-    return json_response({"break_down": final_count, "total": sum(final_count.values())})
-
-
-@require_superuser
-def commcare_version_report(request, template="hqadmin/commcare_version.html"):
-    apps = get_db().view('app_manager/applications_brief').all()
-    menu = CommCareBuildConfig.fetch().menu
-    builds = [item.build.to_string() for item in menu]
-    by_build = dict([(item.build.to_string(), {"label": item.label, "apps": []}) for item in menu])
-
-    for app in apps:
-        app = app['value']
-        app['id'] = app['_id']
-        if app.get('build_spec'):
-            build_spec = BuildSpec.wrap(app['build_spec'])
-            build = build_spec.to_string()
-            if by_build.has_key(build):
-                by_build[build]['apps'].append(app)
-            else:
-                by_build[build] = {"label": build_spec.get_label(), "apps": [app]}
-                builds.append(build)
-
-    tables = []
-    for build in builds:
-        by_build[build]['build'] = build
-        tables.append(by_build[build])
-    context = get_hqadmin_base_context(request)
-    context.update({'tables': tables})
-    context['hide_filters'] = True
-    return render(request, template, context)
-
-
-@datespan_default
-@require_superuser
-def message_log_report(request):
-    show_dates = True
-    datespan = request.datespan
-    domains = Domain.get_all()
-
-    for dom in domains:
-        dom.sms_incoming = SMSLog.count_incoming_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
-        dom.sms_outgoing = SMSLog.count_outgoing_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
-        dom.sms_total = SMSLog.count_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
-
-    context = get_hqadmin_base_context(request)
-
-    headers = DataTablesHeader(
-        DataTablesColumn("Domain"),
-        DataTablesColumn("Incoming Messages", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("Outgoing Messages", sort_type=DTSortType.NUMERIC),
-        DataTablesColumn("Total Messages", sort_type=DTSortType.NUMERIC)
-    )
-    context["headers"] = headers
-    context["aoColumns"] = headers.render_aoColumns
-
-    context.update({
-        "domains": domains,
-        "show_dates": show_dates,
-        "datespan": datespan
-    })
-
-    context['layout_flush_content'] = True
-    return render(request, "hqadmin/message_log_report.html", context)
 
 
 @require_POST
@@ -382,7 +287,11 @@ def system_ajax(request):
     elif type == "_logs":
         pass
     elif type == 'pillowtop':
-        return json_response(get_all_pillows_json())
+        pillow_meta = get_all_pillows_json()
+        supervisor_status = all_pillows_supervisor_status([meta['name'] for meta in pillow_meta])
+        for meta in pillow_meta:
+            meta.update(supervisor_status[meta['name']])
+        return json_response(sorted(pillow_meta, key=lambda m: m['name']))
     elif type == 'stale_pillows':
         es_index_status = [
             check_case_es_index(interval=3),
@@ -429,6 +338,8 @@ def system_info(request):
     context['hide_filters'] = True
     context['current_system'] = socket.gethostname()
     context['deploy_history'] = HqDeploy.get_latest(environment, limit=5)
+
+    context['user_is_support'] = hasattr(request, 'user') and SUPPORT.enabled(request.user.username)
 
     context.update(check_redis())
     context.update(check_rabbitmq())
@@ -486,12 +397,70 @@ def db_comparisons(request):
 
 @require_POST
 @require_superuser_or_developer
-def reset_pillow_checkpoint(request):
-    pillow = get_pillow_by_name(request.POST["pillow_name"])
-    if pillow:
-        pillow.reset_checkpoint()
+def pillow_operation_api(request):
+    pillow_name = request.POST["pillow_name"]
+    operation = request.POST["operation"]
+    try:
+        pillow_config = get_pillow_config_by_name(pillow_name)
+        pillow = pillow_config.get_instance()
+    except PillowNotFoundError:
+        pillow_config = None
+        pillow = None
 
-    return redirect("system_info")
+    def get_response(error=None):
+        response = {
+            'pillow_name': pillow_name,
+            'operation': operation,
+            'success': error is None,
+            'message': error,
+        }
+        response.update(pillow_supervisor_status(pillow_name))
+        if pillow_config:
+            response.update(get_pillow_json(pillow_config))
+        return json_response(response)
+
+    @any_toggle_enabled(SUPPORT)
+    def reset_pillow(request):
+        pillow.reset_checkpoint()
+        if supervisor.restart_pillow(pillow_name):
+            return get_response()
+        else:
+            return get_response("Checkpoint reset but failed to restart pillow. "
+                                "Restart manually to complete reset.")
+
+    @any_toggle_enabled(SUPPORT)
+    def start_pillow(request):
+        if supervisor.start_pillow(pillow_name):
+            return get_response()
+        else:
+            return get_response('Unknown error')
+
+    @any_toggle_enabled(SUPPORT)
+    def stop_pillow(request):
+        if supervisor.stop_pillow(pillow_name):
+            return get_response()
+        else:
+            return get_response('Unknown error')
+
+    if pillow:
+        try:
+            supervisor = PillowtopSupervisorApi()
+        except Exception as e:
+            return get_response(str(e))
+
+        try:
+            if operation == 'reset_checkpoint':
+                reset_pillow(request)
+            if operation == 'start':
+                start_pillow(request)
+            if operation == 'stop':
+                stop_pillow(request)
+            if operation == 'refresh':
+                return get_response()
+        except SupervisorException as e:
+                return get_response(str(e))
+    else:
+        return get_response("No pillow found with name '{}'".format(pillow_name))
 
 @require_superuser
 def noneulized_users(request, template="hqadmin/noneulized_users.html"):
@@ -719,29 +688,42 @@ def loadtest(request):
     template = "hqadmin/loadtest.html"
     return render(request, template, context)
 
+
+def _lookup_id_in_couch(doc_id, db_name=None):
+    if db_name:
+        dbs = [couch_config.get_db(db_name)]
+    else:
+        dbs = couch_config.all_dbs_by_slug.values()
+
+    for db in dbs:
+        try:
+            doc = db.get(doc_id)
+        except ResourceNotFound:
+            pass
+        else:
+            return {
+                "doc": json.dumps(doc, indent=4, sort_keys=True),
+                "doc_id": doc_id,
+                "doc_type": doc.get('doc_type', 'Unknown'),
+                "dbname": db.dbname,
+            }
+    return {
+        "doc": "NOT FOUND",
+        "doc_id": doc_id,
+    }
+
+
 @require_superuser
 def doc_in_es(request):
     doc_id = request.GET.get("id")
     if not doc_id:
         return render(request, "hqadmin/doc_in_es.html", {})
 
-    couch_doc = {}
-    db_urls = [settings.COUCH_DATABASE] + settings.EXTRA_COUCHDB_DATABASES.values()
-    for url in db_urls:
-        try:
-            couch_doc = Database(url).get(doc_id)
-            break
-        except ResourceNotFound:
-            pass
-    query = {"filter":
-                {"ids": {
-                    "values": [doc_id]}}}
-
     def to_json(doc):
         return json.dumps(doc, indent=4, sort_keys=True) if doc else "NOT FOUND!"
 
+    query = {"filter": {"ids": {"values": [doc_id]}}}
     found_indices = {}
-    doc_type = couch_doc.get('doc_type')
     es_doc_type = None
     for index, url in ES_URLS.items():
         res = run_query(url, query)
@@ -750,16 +732,25 @@ def doc_in_es(request):
             found_indices[index] = to_json(es_doc)
             es_doc_type = es_doc_type or es_doc.get('doc_type')
 
-    doc_type = doc_type or es_doc_type or 'Unknown'
-
     context = {
         "doc_id": doc_id,
-        "status": "found" if found_indices else "NOT FOUND!",
-        "doc_type": doc_type,
-        "couch_doc": to_json(couch_doc),
-        "found_indices": found_indices,
+        "es_info": {
+            "status": "found" if found_indices else "NOT FOUND IN ELASTICSEARCH!",
+            "doc_type": es_doc_type,
+            "found_indices": found_indices,
+        },
+        "couch_info": _lookup_id_in_couch(doc_id),
     }
     return render(request, "hqadmin/doc_in_es.html", context)
+
+
+@require_superuser
+def raw_couch(request):
+    doc_id = request.GET.get("id")
+    db_name = request.GET.get("db_name", None)
+    context = _lookup_id_in_couch(doc_id, db_name) if doc_id else {}
+    context['all_databases'] = couch_config.all_dbs_by_slug.keys()
+    return render(request, "hqadmin/raw_couch.html", context)
 
 
 @require_superuser
@@ -815,7 +806,7 @@ def callcenter_test(request):
         }
 
     if user or user_case:
-        custom_cache = None if enable_caching else cache.get_cache('django.core.cache.backends.dummy.DummyCache')
+        custom_cache = None if enable_caching else cache.caches['dummy']
         cci = CallCenterIndicators(
             domain.name,
             domain.default_timezone,
@@ -838,3 +829,25 @@ def callcenter_test(request):
         "doc_id": doc_id
     }
     return render(request, "hqadmin/callcenter_test.html", context)
+
+
+@require_superuser
+def malt_as_csv(request):
+    from django.core.exceptions import ValidationError
+
+    if 'year_month' in request.GET:
+        try:
+            year, month = request.GET['year_month'].split('-')
+            year, month = int(year), int(month)
+            return _malt_csv_response(month, year)
+        except (ValueError, ValidationError):
+            messages.error(request, "Enter a valid year-month. e.g. 2015-09 (for December 2015)")
+            return render(request, "hqadmin/malt_downloader.html")
+    else:
+        return render(request, "hqadmin/malt_downloader.html")
+
+
+def _malt_csv_response(month, year):
+    query_month = "{year}-{month}-01".format(year=year, month=month)
+    queryset = MALTRow.objects.filter(month=query_month)
+    return export_as_csv_action(exclude=['id'])(MALTRowAdmin, None, queryset)

@@ -48,6 +48,12 @@ SPACING_PROMPT_Y = 'birth_spacing_prompt_y.png'
 SPACING_PROMPT_N = 'birth_spacing_prompt_n.png'
 VHND_NO = 'VHND_no.png'
 
+BONUS = {
+    0: EMPTY_FIELD,
+    2: TWO_YEAR_AMT,
+    3: THREE_YEAR_AMT,
+}
+
 
 class OPMCaseRow(object):
 
@@ -259,6 +265,12 @@ class OPMCaseRow(object):
         self.village = self.case_property('village_name', EMPTY_FIELD)
         self.closed = self.case_property('closed', False)
 
+        cash_html = '<span style="color: {color};">Rs. {amt}</span>'
+        self.cash = cash_html.format(
+            color="red" if self.cash_amt == 0 else "green",
+            amt=self.cash_amt,
+        )
+
         account = self.case_property('bank_account_number', None)
         if isinstance(account, Decimal):
             account = int(account)
@@ -320,7 +332,7 @@ class OPMCaseRow(object):
                     else:
                         kwargs = {'months_before': 1}
                     return any(
-                        form.xpath('form/pregnancy_questions/attendance_vhnd') == '1'
+                        form.get_data('form/pregnancy_questions/attendance_vhnd') == '1'
                         for form in self.filtered_forms(BIRTH_PREP_XMLNS, **kwargs)
                     )
                 return _legacy_method() or _new_method()
@@ -336,7 +348,7 @@ class OPMCaseRow(object):
                 return True
             else:
                 return any(
-                    form.xpath(self.child_xpath('form/child_{num}/child{num}_attendance_vhnd')) == '1'
+                    form.get_data(self.child_xpath('form/child_{num}/child{num}_attendance_vhnd')) == '1'
                     for form in self.filtered_forms(CHILDREN_FORMS, 1)
                 )
 
@@ -350,7 +362,7 @@ class OPMCaseRow(object):
 
         def _from_forms(filter_kwargs):
             return any(
-                form.xpath('form/pregnancy_questions/mother_weight') == '1'
+                form.get_data('form/pregnancy_questions/mother_weight') == '1'
                 for form in self.filtered_forms(BIRTH_PREP_XMLNS, **filter_kwargs)
             )
 
@@ -411,7 +423,7 @@ class OPMCaseRow(object):
 
             xpath = self.child_xpath('form/child_{num}/child{num}_child_growthmon')
             return any(
-                form.xpath(xpath) == '1'
+                form.get_data(xpath) == '1'
                 for form in self.filtered_forms(CHILDREN_FORMS, 3)
             )
 
@@ -422,7 +434,7 @@ class OPMCaseRow(object):
         """
         xpath = self.child_xpath('form/child_{num}/child{num}_child_growthmon')
         return any(
-            form.xpath(xpath) == '1'
+            form.get_data(xpath) == '1'
             for form in self.filtered_forms(CHILDREN_FORMS, 1)
         )
 
@@ -442,7 +454,7 @@ class OPMCaseRow(object):
 
             xpath = self.child_xpath('form/child_{num}/child{num}_child_growthmon')
             return any(
-                form.xpath(xpath) == '1'
+                form.get_data(xpath) == '1'
                 for form in self.filtered_forms(CHILDREN_FORMS, months_in_window)
             )
 
@@ -458,7 +470,7 @@ class OPMCaseRow(object):
 
                 def _from_forms():
                     return any(
-                        form.xpath('form/pregnancy_questions/ifa_receive') == '1'
+                        form.get_data('form/pregnancy_questions/ifa_receive') == '1'
                         for form in self.filtered_forms(BIRTH_PREP_XMLNS,
                                                         explicit_start=self.preg_first_eligible_datetime)
                     )
@@ -472,15 +484,41 @@ class OPMCaseRow(object):
 
             for form in self.filtered_forms(CHILDREN_FORMS, 3):
                 xpath = self.child_xpath('form/child_{num}/child{num}_child_orszntreat')
-                if form.xpath(xpath) == '0':
+                if form.get_data(xpath) == '0':
                     return False
             return True
 
     @property
-    def child_with_diarhea_received_ors(self):
-        for form in self.filtered_forms(CHILDREN_FORMS):
+    def child_received_ors_in_this_window(self):
+        months = self.child_age % 3
+        if months == 0:  # child age is multiple of three
+            months_before = 3  # then we must check forms for 3 months before
+        elif months == 1:  # child age is 1, 4, 7 etc
+            months_before = 1  # then we must check forms for 1 month before
+        else:  # child age is 2, 5, 8 etc
+            months_before = 2  # we must check forms for 2 month before
+        if not self.is_service_available('stock_ors', months=months_before):
+            return True
+
+        for form in self.filtered_forms(CHILDREN_FORMS, months_before):
             xpath = self.child_xpath('form/child_{num}/child{num}_child_orszntreat')
-            if form.xpath(xpath) and form.xpath(xpath) == '1':
+            if form.get_data(xpath) == '0':
+                return False
+        return True
+
+    @property
+    def child_has_diarhea_in_this_month(self):
+        for form in self.filtered_forms(CHILDREN_FORMS, 1):
+            xpath = self.child_xpath('form/child_{num}/child{num}_suffer_diarrhea')
+            if form.get_data(xpath) == '1':
+                return True
+        return False
+
+    @property
+    def child_with_diarhea_received_ors(self):
+        for form in self.filtered_forms(CHILDREN_FORMS, 1):
+            xpath = self.child_xpath('form/child_{num}/child{num}_child_orszntreat')
+            if form.get_data(xpath) and form.get_data(xpath) == '1':
                 return True
         return False
 
@@ -488,7 +526,7 @@ class OPMCaseRow(object):
     def child_has_diarhea(self):
         for form in self.filtered_forms(CHILDREN_FORMS):
             xpath = self.child_xpath('form/child_{num}/child{num}_suffer_diarrhea')
-            if form.xpath(xpath) == '1':
+            if form.get_data(xpath) == '1':
                 return True
         return False
 
@@ -497,7 +535,7 @@ class OPMCaseRow(object):
         if self.child_age == 3 and self.block == 'atri':
             # This doesn't depend on a VHND - it should happen at the hospital
             def _test(form):
-                return form.xpath(self.child_xpath('form/child_{num}/child{num}_child_weight')) == '1'
+                return form.get_data(self.child_xpath('form/child_{num}/child{num}_child_weight')) == '1'
 
             return any(
                 _test(form)
@@ -507,14 +545,11 @@ class OPMCaseRow(object):
     @property
     def child_birth_registered(self):
         if self.child_age == 6 and self.block == 'atri':
-            if not self.is_vhnd_last_three_months:
-                return True
-
             def _test(form):
-                return form.xpath(self.child_xpath('form/child_{num}/child{num}_child_register')) == '1'
+                return form.get_data(self.child_xpath('form/child_{num}/child{num}_child_register')) == '1'
             return any(
                 _test(form)
-                for form in self.filtered_forms(CFU1_XMLNS, 3)
+                for form in self.filtered_forms(CFU1_XMLNS, 6)
             )
 
     @property
@@ -524,7 +559,7 @@ class OPMCaseRow(object):
                 return True
 
             def _test(form):
-                return form.xpath(self.child_xpath('form/child_{num}/child{num}_child_measlesvacc')) == '1'
+                return form.get_data(self.child_xpath('form/child_{num}/child{num}_child_measlesvacc')) == '1'
 
             return any(
                 _test(form)
@@ -557,7 +592,7 @@ class OPMCaseRow(object):
         if self.child_age == 6 and self.block == 'atri':
             xpath = self.child_xpath("form/child_{num}/child{num}_child_excbreastfed")
             forms = self.filtered_forms(CHILDREN_FORMS)
-            return bool(forms) and all([form.xpath(xpath) == '1' for form in forms])
+            return bool(forms) and all([form.get_data(xpath) == '1' for form in forms])
 
     @property
     def weight_grade_normal(self):
@@ -646,6 +681,10 @@ class OPMCaseRow(object):
         return self.raw_num_children
 
     @property
+    def num_children_disp(self):
+        return {'sort_key': self.num_children, 'html': self.num_children}
+
+    @property
     def raw_num_children(self):
         # the raw number of children, regardless of pregnancy status
         return int(self.case_property("live_birth_amount", 0))
@@ -655,16 +694,21 @@ class OPMCaseRow(object):
             # app supports up to three children only
             num_children = min(self.num_children, 3)
             if num_children > 1:
-                extra_child_objects = [
-                    self.__class__(self.case, self.report, child_index=num + 2, is_secondary=True)
-                    for num in range(num_children - 1)
-                ]
+                extra_child_objects = []
+                for num in range(num_children - 1):
+                    try:
+                        extra_child_objects.append(
+                            self.__class__(self.case, self.report,
+                                           child_index=num + 2, is_secondary=True)
+                        )
+                    except InvalidRow:
+                        pass
                 self.report.set_extra_row_objects(extra_child_objects)
 
     @property
     @memoized
     def forms(self):
-        return self.case.get_forms()
+        return self.data_provider.forms_by_case[self.case_id]
 
     @property
     def all_conditions_met(self):
@@ -688,14 +732,6 @@ class OPMCaseRow(object):
     @property
     def cash_amt(self):
         return self.month_amt + self.year_end_bonus_cash
-
-    @property
-    def cash(self):
-        cash_html = '<span style="color: {color};">Rs. {amt}</span>'
-        return cash_html.format(
-            color="red" if self.cash_amt == 0 else "green",
-            amt=self.cash_amt,
-        )
 
     @property
     def bp1(self):
@@ -838,8 +874,14 @@ class ConditionsMet(OPMCaseRow):
                                             "पोषण दिवस में उपस्थित नही", self.child_attended_vhnd)
             self.two = self.condition_image(C_WEIGHT_Y, C_WEIGHT_N, "बच्चे का वज़न लिया गया",
                                             "बच्चे का वज़न लिया गया", self.child_growth_calculated)
-            self.three = self.condition_image(ORSZNTREAT_Y, ORSZNTREAT_N, "दस्त होने पर ओ.आर.एस एवं जिंक लिया",
-                                              "दस्त होने पर ओ.आर.एस एवं जिंक नहीं लिया", self.child_received_ors)
+            if self.child_has_diarhea and self.child_received_ors_in_this_window:
+                self.three = self.img_elem % (ORSZNTREAT_Y, "दस्त होने पर ओ.आर.एस एवं जिंक लिया")
+            elif self.child_has_diarhea and not self.child_received_ors_in_this_window:
+                self.three = self.img_elem % (ORSZNTREAT_N, "दस्त होने पर ओ.आर.एस एवं जिंक नहीं लिया")
+            elif not self.child_has_diarhea:
+                self.three = self.img_elem % (ORSZNTREAT_Y, "बच्चे को दस्त नहीं हुआ")
+            else:
+                self.three = ""
             if self.child_condition_four is not None:
                 self.four = self.condition_image(self.child_image_four[0], self.child_image_four[1],
                                                  self.child_image_four[2], self.child_image_four[3],
@@ -890,7 +932,7 @@ class Beneficiary(OPMCaseRow):
         ('account_number', ugettext_lazy("Bank Account Number"), True, None),
         ('block_name', ugettext_lazy("Block Name"), True, None),
         ('village', ugettext_lazy("Village Name"), True, None),
-        ('num_children', ugettext_lazy("Number of Children"), True, DTSortType.NUMERIC),
+        ('num_children_disp', ugettext_lazy("Number of Children"), True, DTSortType.NUMERIC),
         ('bp1_cash', ugettext_lazy("Birth Preparedness Form 1"), True, None),
         ('bp2_cash', ugettext_lazy("Birth Preparedness Form 2"), True, None),
         ('child_cash', ugettext_lazy("Child Followup Form"), True, None),
@@ -937,7 +979,7 @@ class LongitudinalConditionsMet(ConditionsMet):
         ('bank_name', ugettext_lazy("Bank Name"), True, None),
         ('account_number', ugettext_lazy("Bank Account Number"), True, None),
         ('bank_branch_name', ugettext_lazy("Bank Branch Name"), True, None),
-        ('bank_branch_code', ugettext_lazy("Bank Branch Code"), True, None),
+        ('brank_branch_code', ugettext_lazy("Brank Branch Code"), True, None),
         ('ifs_code', ugettext_lazy("IFS Code"), True, None),
         ('readable_status', ugettext_lazy("Current status"), True, None),
         ('lmp', ugettext_lazy("Lmp Date"), True, None),
@@ -965,9 +1007,14 @@ class LongitudinalConditionsMet(ConditionsMet):
         ('eight', ugettext_lazy("Condition 8 /child weight monitored this month"), True, None),
         ('nine', ugettext_lazy("Condition 9 /ORS administered if child had diarrhea"), True, None),
         ('ten', ugettext_lazy("Condition 10/ Measles vaccine given before child turns 1"), True, None),
-        ('year_end_bonus_cash', ugettext_lazy("Birth Spacing Bonus"), True, None),
-        ('weight_this_month', ugettext_lazy("Weight This Month"), True, None),
-        ('nutritional_status_this_month', ugettext_lazy("Nutritional Status This Month"), True, None),
+        ('incidence_of_diarrhea', ugettext_lazy("Incidence Of Diarrhea"), True, None),
+        ('birth_spacing_bonus', ugettext_lazy("Birth Spacing Bonus"), True, None),
+        ('weight_this_month_1', ugettext_lazy("Weight This Month - Child 1"), True, None),
+        ('weight_this_month_2', ugettext_lazy("Weight This Month - Child 2"), True, None),
+        ('weight_this_month_3', ugettext_lazy("Weight This Month - Child 3"), True, None),
+        ('interpret_grade', ugettext_lazy("Nutritional Status This Month - Child 1"), True, None),
+        ('interpret_grade_2', ugettext_lazy("Nutritional Status This Month - Child 2"), True, None),
+        ('interpret_grade_3', ugettext_lazy("Nutritional Status This Month - Child 3"), True, None),
         ('nutritional_status_bonus', ugettext_lazy("Nutritional Status Bonus"), True, None),
         ('payment_last_month', ugettext_lazy("Payment amount for the month"), True, None),
         ('cash_received_last_month', ugettext_lazy("Cash received last month"), True, None),
@@ -980,7 +1027,7 @@ class LongitudinalConditionsMet(ConditionsMet):
         ('leave_program', ugettext_lazy("Leave program"), True, None),
         ('close_mother_dead', ugettext_lazy("Close mother dead"), True, None),
         ('year', ugettext_lazy("Calendar year"), True, None),
-        ('month', ugettext_lazy("Calendar month"), True, None)
+        ('disp_month', ugettext_lazy("Calendar month"), True, None)
     ]
 
     def __init__(self, case, report, child_index=1, **kwargs):
@@ -989,7 +1036,7 @@ class LongitudinalConditionsMet(ConditionsMet):
                                                         **kwargs)
         awc_data = user_sql_data().data_by_doc_id.get(self.owner_id, None)
         self.gp = awc_data[1] if awc_data else EMPTY_FIELD
-        self.bank_branch_code = self.case_property('bank_branch_code', EMPTY_FIELD)
+        self.brank_branch_code = self.case_property('brank_branch_code', EMPTY_FIELD)
         self.caste_tribe_status = self.get_value_from_form(PREG_REG_XMLNS, 'form/caste_tribe_status')
         self.prev_pregnancies = self.get_value_from_form(PREG_REG_XMLNS, 'form/prev_pregnancies')
         self.prev_live_births = self.get_value_from_form(PREG_REG_XMLNS, 'form/prev_live_births')
@@ -997,6 +1044,7 @@ class LongitudinalConditionsMet(ConditionsMet):
         self.daughters_alive = self.get_value_from_form(PREG_REG_XMLNS, 'form/daughters_alive')
         self.sum_children = self.get_value_from_form(PREG_REG_XMLNS, 'form/sum_children')
         self.contact_phone_number = self.get_value_from_form(PREG_REG_XMLNS, 'form/contact_phone_number')
+        forms = self.filtered_forms(CHILDREN_FORMS, 3)
         for idx in range(1, 4):
             child_name = self.case_property('child%s_name' % str(idx), None)
             child_age = self.child_age
@@ -1007,6 +1055,21 @@ class LongitudinalConditionsMet(ConditionsMet):
             setattr(self, 'child%s_age' % str(idx), child_age)
             setattr(self, 'child%s_sex' % str(idx),
                     self.case_property('child%s_sex' % str(idx), EMPTY_FIELD))
+
+            if idx == 1:
+                form_prop = 'interpret_grade'
+            else:
+                form_prop = 'interpret_grade_{}'.format(idx)
+            if len(forms) == 0:
+                setattr(self, form_prop, EMPTY_FIELD)
+                setattr(self, "weight_this_month_%s" % str(idx), EMPTY_FIELD)
+            else:
+                form = sorted(forms, key=lambda form: form.received_on)[-1]
+                setattr(self, form_prop, form.form.get(form_prop, EMPTY_FIELD))
+                weight = EMPTY_FIELD
+                if "child_%s" % str(idx) in form.form:
+                    weight = form.form["child_%s" % str(idx)].get('child%s_weight' % str(idx), EMPTY_FIELD)
+                setattr(self, "weight_this_month_%s" % str(idx), weight)
         self.one = format_bool(self.preg_attended_vhnd)
         self.two = format_bool(self.preg_weighed_trimestered(6))
         self.two_two = format_bool(self.preg_weighed_trimestered(9))
@@ -1024,24 +1087,22 @@ class LongitudinalConditionsMet(ConditionsMet):
         self.close_mother_mo = self.get_value_from_form(CLOSE_FORM, 'form/close_mother_mo')
         self.leave_program = self.get_value_from_form(CLOSE_FORM, 'form/leave_program')
         self.close_mother_dead = self.get_value_from_form(CLOSE_FORM, 'form/close_mother_dead')
-        # TODO Add correct values
-        self.weight_this_month = EMPTY_FIELD
-        self.nutritional_status_this_month = EMPTY_FIELD
-        self.nutritional_status_bonus = EMPTY_FIELD
+        # set year 1900 and day 1 because we want only month name.
+        self.disp_month = datetime.date(year=1900, month=self.month, day=1).strftime("%B")
 
     def get_first_or_empty(self, list):
         return (list[0] or EMPTY_FIELD) if list else EMPTY_FIELD
 
     def get_value_from_form(self, form_xmlns, path):
         return self.get_first_or_empty([
-            form.xpath(path)
+            form.get_data(path)
             for form in self.filtered_forms(form_xmlns)
         ])
 
     @property
     def dob_known(self):
         return any(
-            form.xpath('form/dob_known') == 1
+            form.get_data('form/dob_known') == 1
             for form in self.filtered_forms(PREG_REG_XMLNS)
         )
 
@@ -1053,13 +1114,23 @@ class LongitudinalConditionsMet(ConditionsMet):
             path = 'form/age_unknown'
         return self.get_value_from_form(PREG_REG_XMLNS, path)
 
+    @property
+    def nutritional_status_bonus(self):
+        year_value = self.weight_grade_normal or 0
+        return BONUS.get(year_value, 0)
+
+    @property
+    def birth_spacing_bonus(self):
+        year_value = self.birth_spacing_years or 0
+        return BONUS.get(year_value, 0)
+
     def preg_weighed_trimestered(self, query_preg_month):
         def _from_case(property):
             return self.case_property(property, 0) == 'received'
 
         def _from_forms(filter_kwargs):
             return any(
-                form.xpath('form/pregnancy_questions/mother_weight') == '1'
+                form.get_data('form/pregnancy_questions/mother_weight') == '1'
                 for form in self.filtered_forms(BIRTH_PREP_XMLNS, **filter_kwargs)
             )
 
@@ -1073,3 +1144,7 @@ class LongitudinalConditionsMet(ConditionsMet):
                 return True
 
             return _from_case('weight_tri_2') or _from_forms({'months_before': 3})
+
+    @property
+    def incidence_of_diarrhea(self):
+        return "Yes" if self.child_has_diarhea else "No"

@@ -1,7 +1,4 @@
-from casexml.apps.case.xform import get_case_updates
 from corehq.apps.receiverwrapper import submit_form_locally
-from couchforms import convert_xform_to_json
-from dimagi.utils.couch.database import get_db
 from casexml.apps.case.models import CommCareCase
 from lxml import etree
 import os
@@ -25,7 +22,7 @@ def scan_case(scanner_serial, scan_id):
     # but has them on the file itself
     scan_id = scan_id.lstrip('0')
 
-    return get_db().view(
+    return CommCareCase.get_db().view(
         'uth/uth_lookup',
         startkey=[UTH_DOMAIN, scanner_serial, scan_id],
         endkey=[UTH_DOMAIN, scanner_serial, scan_id, {}],
@@ -177,17 +174,12 @@ def create_case(case_id, files, patient_case_id=None):
     for f in files:
         file_dict[f] = UploadedFile(files[f], f)
 
-    submit_form_locally(
+    _, _, cases = submit_form_locally(
         instance=xform,
         attachments=file_dict,
         domain=UTH_DOMAIN,
     )
-    # this is a bit of a hack / abstraction violation
-    # would be nice if submit_form_locally returned info about cases updated
-    case_ids = {
-        case_update.id
-        for case_update in get_case_updates(convert_xform_to_json(xform))
-    }
+    case_ids = {case.case_id for case in cases}
     return [CommCareCase.get(case_id) for case_id in case_ids]
 
 

@@ -81,7 +81,7 @@
 {% endblock %}
 
 {% block main_column %}
-{% include "hqwebapp/partials/time-notice.html" %}
+{% include "style/bootstrap2/partials/time_notice.html" %}
 <h4>{% trans 'Broadcast Message' %}</h4>
 <form id="one_time_reminder_form" action="{% if handler_id %}{% url "edit_one_time_reminder" domain handler_id %}{% else %}{% url "add_one_time_reminder" domain %}{% endif %}" method="post">
     <div class="form-block">

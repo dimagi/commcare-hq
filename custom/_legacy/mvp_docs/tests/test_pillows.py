@@ -44,6 +44,10 @@ class IndicatorPillowTests(TestCase):
         # memoization across tests can break things
         IndicatorDefinition.get_all.reset_cache()
 
+    @classmethod
+    def tearDownClass(cls):
+        get_db().delete_doc('INDICATOR_CONFIGURATION')
+
     def _save_doc_to_db(self, docname, doc_class):
         doc_dict = _get_doc_data(docname)
         try:
@@ -76,7 +80,7 @@ class IndicatorPillowTests(TestCase):
             xmlns='http://openrosa.org/formdesigner/indicator-create-xmlns',
         )
         form_alias.save()
-        self.form_pillow.run_burst()
+        self.form_pillow.process_changes(since=None, forever=False)
 
         indicator_form = IndicatorXForm.get(form_id)
         self.assertNotEqual(
@@ -100,7 +104,7 @@ class IndicatorPillowTests(TestCase):
         )
         forgotten_property.save()
 
-        self.case_pillow.run_burst()
+        self.case_pillow.process_changes(since=None, forever=False)
 
         indicator_case = IndicatorCase.get(case_id)
 

@@ -15,8 +15,8 @@ class Command(SupervisorConfCommand):
 
         configs = []
         all_pillows = get_pillows_for_env(environment, settings.PILLOWTOPS)
-        for full_name in all_pillows:
-            pillow_name = full_name.split('.')[-1]
+        for pillow_config in all_pillows:
+            pillow_name = pillow_config.name
             pillow_params = {
                 'pillow_name': pillow_name,
                 'pillow_option': ' --pillow-name %s' % pillow_name

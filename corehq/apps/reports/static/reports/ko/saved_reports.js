@@ -70,6 +70,9 @@ var ReportConfig = function (data) {
             } else if (date_range === 'lastn') {
                 days = self.days();
             } else {
+                if (self.report_slug() === 'case_list') {
+                    return '';
+                }
                 throw "Invalid date range.";
             }
 
@@ -89,6 +92,17 @@ var ReportConfig = function (data) {
 
         return "startdate=" + start_date + "&enddate=" + end_date + "&";
     };
+
+    self.dateRangeSubs = self.date_range.subscribe(function(newValue) {
+        if (newValue === 'since' || newValue === 'range') {
+            $('.date-picker').datepicker({
+                changeMonth: true,
+                changeYear: true,
+                showButtonPanel: true,
+                dateFormat: 'yy-mm-dd'
+            });
+        }
+    });
 
     return self;
 };
@@ -118,18 +132,16 @@ var ReportConfigsViewModel = function (options) {
         return text;
     });
 
-    self.addOrReplaceConfig = function (data) {
-        var newConfig = new ReportConfig(data);
-
+    self.addOrReplaceConfig = function (config) {
         for (var i = 0; i < self.reportConfigs().length; i++) {
-            if (ko.utils.unwrapObservable(self.reportConfigs()[i]._id) === newConfig._id()) {
-                self.reportConfigs.splice(i, 1, newConfig);
+            if (ko.utils.unwrapObservable(self.reportConfigs()[i]._id) === config._id()) {
+                self.reportConfigs.splice(i, 1, config);
                 return;
             }
         }
 
         // todo: alphabetize
-        self.reportConfigs.push(newConfig);
+        self.reportConfigs.push(config);
     };
 
     self.deleteConfig = function (config) {
@@ -227,12 +239,12 @@ var ReportConfigsViewModel = function (options) {
         self.configBeingEdited(self.configBeingViewed());
         self.modalSaveButton.state('save');
 
-        $(".save-date-picker").removeClass('hasDatepicker').datepicker({
+        // Required to initialise datepicker if modal opened with date_range in ('since', 'range')
+        $(".date-picker").datepicker({
             changeMonth: true,
             changeYear: true,
             showButtonPanel: true,
-            dateFormat: 'yy-mm-dd',
-            numberOfMonths: 2
+            dateFormat: 'yy-mm-dd'
         });
     };
 
@@ -269,8 +281,14 @@ var ReportConfigsViewModel = function (options) {
                 data: JSON.stringify(config_data),
                 dataType: 'json',
                 success: function (data) {
-                    self.addOrReplaceConfig(data);
+                    var newConfig = new ReportConfig(data);
+                    self.addOrReplaceConfig(newConfig);
                     self.unsetConfigBeingEdited();
+                    if (newConfig.report_slug == 'configurable') {
+                        self.setUserConfigurableConfigBeingViewed(newConfig);
+                    } else {
+                        self.setConfigBeingViewed(newConfig);
+                    }
                 },
                 beforeSend: function(jqXHR) {
                     var valid = self.validate();

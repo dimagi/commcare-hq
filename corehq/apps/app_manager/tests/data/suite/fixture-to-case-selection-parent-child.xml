@@ -1,0 +1,176 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<suite descriptor="Suite File">
+  <xform>
+    <resource descriptor="Form: (Module parent module) - parent form 0" id="parent_form_0">
+      <location authority="local">./modules-0/forms-0.xml</location>
+      <location authority="remote">./modules-0/forms-0.xml</location>
+    </resource>
+  </xform>
+  <xform>
+    <resource descriptor="Form: (Module child module) - child form 0" id="child_form_0">
+      <location authority="local">./modules-1/forms-0.xml</location>
+      <location authority="remote">./modules-1/forms-0.xml</location>
+    </resource>
+  </xform>
+  <locale language="default">
+    <resource descriptor="Translations: Default Language" id="app_default_strings">
+      <location authority="local">./default/app_strings.txt</location>
+      <location authority="remote">./default/app_strings.txt</location>
+    </resource>
+  </locale>
+  <locale language="en">
+    <resource descriptor="Translations: English" id="app_en_strings">
+      <location authority="local">./en/app_strings.txt</location>
+      <location authority="remote">./en/app_strings.txt</location>
+    </resource>
+  </locale>
+  <detail id="m0_case_short">
+    <title>
+      <text>
+        <locale id="m0.case_short.title"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_short.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+  <detail id="m0_case_long">
+    <title>
+      <text>
+        <locale id="m0.case_long.title"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_long.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+  <detail id="m0_fixture_select">
+    <title>
+      <text/>
+    </title>
+    <field>
+      <header>
+        <text/>
+      </header>
+      <template>
+        <text>
+          <xpath function="display_name"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+  <detail id="m1_case_short">
+    <title>
+      <text>
+        <locale id="m1.case_short.title"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m1.case_short.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+  <detail id="m1_case_long">
+    <title>
+      <text>
+        <locale id="m1.case_long.title"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m1.case_long.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+  <detail id="m1_fixture_select">
+    <title>
+      <text/>
+    </title>
+    <field>
+      <header>
+        <text/>
+      </header>
+      <template>
+        <text>
+          <xpath function="display_name"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+  <entry>
+    <command id="m0-f0">
+      <text>
+        <locale id="forms.m0f0"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
+    <instance id="item-list:province" src="jr://fixture/item-list:province"/>
+    <session>
+      <datum id="fixture_value_m0" nodeset="instance('item-list:province')/province_list/province" value="var_name" detail-select="m0_fixture_select"/>
+      <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='parent'][@status='open'][province = instance('commcaresession')/session/data/fixture_value_m0]" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+    </session>
+  </entry>
+  <entry>
+    <command id="m1-f0">
+      <text>
+        <locale id="forms.m1f0"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
+    <instance id="item-list:city" src="jr://fixture/item-list:city"/>
+    <instance id="item-list:province" src="jr://fixture/item-list:province"/>
+    <session>
+      <datum id="fixture_value_m0" nodeset="instance('item-list:province')/province_list/province" value="var_name" detail-select="m0_fixture_select"/>
+      <datum id="parent_id" nodeset="instance('casedb')/casedb/case[@case_type='parent'][@status='open'][province = instance('commcaresession')/session/data/fixture_value_m0]" value="./@case_id" detail-select="m0_case_short"/>
+      <datum id="fixture_value_m1" nodeset="instance('item-list:city')/city_list/city" value="var_name" detail-select="m1_fixture_select"/>
+      <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='child'][@status='open'][index/parent=instance('commcaresession')/session/data/parent_id][city = instance('commcaresession')/session/data/fixture_value_m1]" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
+    </session>
+  </entry>
+  <menu id="m0">
+    <text>
+      <locale id="modules.m0"/>
+    </text>
+    <command id="m0-f0"/>
+  </menu>
+  <menu id="m1">
+    <text>
+      <locale id="modules.m1"/>
+    </text>
+    <command id="m1-f0"/>
+  </menu>
+</suite>

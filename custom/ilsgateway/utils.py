@@ -1,6 +1,11 @@
 from datetime import datetime
+from decimal import Decimal
+from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.locations.models import LocationType, Location
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, ILSGatewayConfig
 from dimagi.utils.dates import get_business_day_of_month_before
@@ -22,24 +27,24 @@ def get_current_group():
     return GROUPS[(month + 2) % 3]
 
 
-def send_for_all_domains(date, fn, **kwargs):
+def send_for_all_domains(date, reminder_class, **kwargs):
     for domain in ILSGatewayConfig.get_all_enabled_domains():
-        fn(domain, date, **kwargs)
+        reminder_class(domain=domain, date=date, **kwargs).send()
 
 
-def send_for_day(date, cutoff, f, **kwargs):
+def send_for_day(date, cutoff, reminder_class, **kwargs):
     now = datetime.utcnow()
     date = get_business_day_of_month_before(now.year, now.month, date)
     cutoff = get_business_day_of_month_before(now.year, now.month, cutoff)
     if now.day == date.day:
-        send_for_all_domains(cutoff, f, **kwargs)
+        send_for_all_domains(cutoff, reminder_class, **kwargs)
 
 
-def supply_points_with_latest_status_by_datespan(sps, status_type, status_value, datespan):
+def supply_points_with_latest_status_by_datespan(locations, status_type, status_value, datespan):
     """
     This very similar method is used by the reminders.
     """
-    ids = [sp._id for sp in sps]
+    ids = [loc.location_id for loc in locations]
     inner = SupplyPointStatus.objects.filter(location_id__in=ids,
                                              status_type=status_type,
                                              status_date__gte=datespan.startdate,
@@ -55,6 +60,7 @@ def ils_bootstrap_domain_test_task(domain, endpoint):
     from custom.logistics.commtrack import bootstrap_domain
     from custom.ilsgateway.api import ILSGatewayAPI
     return bootstrap_domain(ILSGatewayAPI(domain, endpoint))
+ils_bootstrap_domain_test_task.__test__ = False
 
 
 def send_translated_message(user, message, **kwargs):
@@ -64,3 +70,34 @@ def send_translated_message(user, message, **kwargs):
     with localize(user.get_language_code()):
         send_sms_to_verified_number(verified_number, message % kwargs)
         return True
+
+
+def make_loc(code, name, domain, type, metadata=None, parent=None):
+    name = name or code
+    location_type, _ = LocationType.objects.get_or_create(domain=domain, name=type)
+    loc = Location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
+    loc.metadata = metadata or {}
+    loc.save()
+    if not location_type.administrative:
+        SupplyInterface.create_from_location(domain, loc)
+        loc.save()
+    return loc
+
+
+def create_stock_report(location, products_quantities, date=datetime.utcnow()):
+    sql_location = location.sql_location
+    report = StockReport.objects.create(
+        form_id='test-form-id',
+        domain=sql_location.domain,
+        type='balance',
+        date=date
+    )
+    for product_code, quantity in products_quantities.iteritems():
+        StockTransaction(
+            stock_on_hand=Decimal(quantity),
+            report=report,
+            type='stockonhand',
+            section_id='stock',
+            case_id=sql_location.supply_point_id,
+            product_id=SQLProduct.objects.get(domain=sql_location.domain, code=product_code).product_id
+        ).save()

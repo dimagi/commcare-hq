@@ -2,9 +2,10 @@ from django.test import TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser
+from ..analytics import users_have_locations
 from ..dbaccessors import (get_users_by_location_id, get_user_ids_by_location,
                            get_one_user_at_location, get_user_docs_by_location,
-                           get_all_users_by_location)
+                           get_all_users_by_location, get_users_assigned_to_locations)
 from .util import make_loc, delete_all_locations
 
 
@@ -63,3 +64,18 @@ class TestUsersByLocation(TestCase):
             [u._id for u in users],
             [self.tyrion._id, self.daenerys._id, self.george._id]
         )
+
+    def test_users_have_locations(self):
+        self.assertTrue(users_have_locations(self.domain))
+        domain2 = create_domain('no-locations')
+        self.assertFalse(users_have_locations('no-locations'))
+        domain2.delete()
+
+    def test_get_users_assigned_to_locations(self):
+        other_user = CommCareUser.create(self.domain, 'other', 'password')
+        users = get_users_assigned_to_locations(self.domain)
+        self.assertItemsEqual(
+            [u._id for u in users],
+            [self.varys._id, self.tyrion._id, self.daenerys._id, self.george._id]
+        )
+        other_user.delete()

@@ -1,0 +1,11 @@
+{% load hq_shared_tags %}
+
+<script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
+<script type="text/javascript">
+    $(function() {
+        var downloader = new AsyncDownloader($("#{{element_id}}"));
+        window.download_application_zip = function() {
+            downloader.generateDownload("{{download_url}}");
+        };
+    });
+</script>

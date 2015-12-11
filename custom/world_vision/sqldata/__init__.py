@@ -3,7 +3,8 @@ from sqlagg.filters import IN, AND, GTE, OR
 from sqlagg.filters import EQ, BETWEEN, LTE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, DataFormatter, TableDataFormat, calculate_total_row
-
+from corehq.apps.reports.util import get_INFilter_bindparams
+from custom.utils.utils import clean_IN_filter_value
 
 LOCATION_HIERARCHY = {
     "lvl_1": {
@@ -60,8 +61,17 @@ class BaseSqlData(SqlData):
 
         for k, v in LOCATION_HIERARCHY.iteritems():
             if v['prop'] in self.config and self.config[v['prop']]:
-                filters.append(IN(k, v['prop']))
+                filters.append(IN(k, get_INFilter_bindparams(k, self.config[v['prop']])))
         return filters
+
+    @property
+    def filter_values(self):
+        filter_values = super(BaseSqlData, self).filter_values
+
+        for k, v in LOCATION_HIERARCHY.iteritems():
+            clean_IN_filter_value(filter_values, v['prop'])
+
+        return filter_values
 
     @property
     def headers(self):

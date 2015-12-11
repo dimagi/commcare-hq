@@ -1,46 +1,28 @@
 from django.test import TestCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from corehq.apps.accounting.models import (
-    BillingAccount,
-    DefaultProductPlan,
-    SoftwarePlanEdition,
-    Subscription,
-    SubscriptionAdjustment,
-)
-from corehq.apps.accounting.tests import BaseAccountingTest
-from corehq.apps.reminders.dbaccessors import get_surveys_in_domain
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.reminders.models import *
 from corehq.apps.reminders.event_handlers import get_message_template_params
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.models import CallLog, ExpectedCallbackEventLog, CALLBACK_RECEIVED, CALLBACK_PENDING, CALLBACK_MISSED
 from corehq.apps.sms.mixin import BackendMapping
-from corehq.apps.sms.test_backend import TestSMSBackend
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.couch import LOCK_EXPIRATION
 from corehq.apps.domain.models import Domain
+from corehq.apps.reminders.tests.test_util import *
 
 
-class BaseReminderTestCase(BaseAccountingTest):
+class BaseReminderTestCase(BaseAccountingTest, DomainSubscriptionMixin):
     def setUp(self):
         super(BaseReminderTestCase, self).setUp()
         self.domain_obj = Domain(name="test")
         self.domain_obj.save()
         # Prevent resource conflict
         self.domain_obj = Domain.get(self.domain_obj._id)
-
-        self.account, _ = BillingAccount.get_or_create_account_by_domain(
-            self.domain_obj.name,
-            created_by="tests"
-        )
-        advanced_plan_version = DefaultProductPlan.get_default_plan_by_domain(
-            self.domain_obj, edition=SoftwarePlanEdition.ADVANCED)
-        self.subscription = Subscription.new_domain_subscription(
-            self.account,
-            self.domain_obj.name,
-            advanced_plan_version
-        )
-        self.subscription.is_active = True
-        self.subscription.save()
+        self.setup_subscription(self.domain_obj.name, SoftwarePlanEdition.ADVANCED)
 
         self.sms_backend = TestSMSBackend(named="MOBILE_BACKEND_TEST", is_global=True)
         self.sms_backend.save()
@@ -51,9 +33,7 @@ class BaseReminderTestCase(BaseAccountingTest):
     def tearDown(self):
         self.sms_backend_mapping.delete()
         self.sms_backend.delete()
-        SubscriptionAdjustment.objects.all().delete()
-        self.subscription.delete()
-        self.account.delete()
+        self.teardown_subscription()
         self.domain_obj.delete()
 
 
@@ -1156,31 +1136,3 @@ class MessageTestCase(BaseReminderTestCase):
         parent_result["case"]["parent"] = {}
         self.assertEqual(
             get_message_template_params(self.parent_case), parent_result)
-
-
-class DBAccessorsTest(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.domain = 'reminders-dbaccessor'
-        cls.surveys = [
-            Survey(domain=cls.domain, name='B'),
-            Survey(domain=cls.domain, name='D'),
-            Survey(domain=cls.domain, name='E'),
-            Survey(domain=cls.domain, name='C'),
-            Survey(domain=cls.domain, name='A'),
-            Survey(domain='other', name='FOO'),
-        ]
-        Survey.get_db().bulk_save(cls.surveys)
-
-    @classmethod
-    def tearDownClass(cls):
-        Survey.get_db().bulk_delete(cls.surveys)
-
-    def test_get_surveys_in_domain(self):
-        self.assertEqual(
-            [survey.to_json()
-             for survey in get_surveys_in_domain(self.domain)],
-            [survey.to_json()
-             for survey in sorted(self.surveys, key=lambda s: s.name)
-             if survey.domain == self.domain],
-        )

@@ -1,4 +1,6 @@
 from datetime import timedelta
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.fluff.calculators.xform import IntegerPropertyReference, FormPropertyFilter
 from couchforms.models import XFormInstance
 import fluff
@@ -43,6 +45,7 @@ def _and_alias(calculators):
         filter=ANDFilter([calc._filter for calc in calculators if calc._filter]),
         window=timedelta(days=1)
     )
+
 
 class MalariaConsortiumFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
@@ -620,8 +623,15 @@ class MalariaConsortiumFluff(fluff.IndicatorDocument):
         internal_adult_referral_given,
     ])
 
-
     class Meta:
         app_label = 'mc'
 
+
 MalariaConsortiumFluffPillow = MalariaConsortiumFluff.pillow()
+
+
+def get_pillow():
+    return MalariaConsortiumFluffPillow(
+        change_feed=KafkaChangeFeed(topic=topics.FORM, group_id='mc-fluff'),
+        preload_docs=False,
+    )

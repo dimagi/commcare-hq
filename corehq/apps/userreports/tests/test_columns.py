@@ -1,26 +1,29 @@
 import uuid
 
-from jsonobject.exceptions import BadValueError
 from sqlagg import SumWhen
 from django.test import SimpleTestCase, TestCase
-from corehq.db import Session
 
+from casexml.apps.case.util import post_case_blocks
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
+from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.factory import ReportFactory, ReportColumnFactory
 from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn, AggregateDateColumn
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.apps.userreports.sql.columns import _expand_column, _get_distinct_values
+from corehq.apps.userreports.sql.columns import (
+    _expand_column,
+    _get_distinct_values,
+    DEFAULT_MAXIMUM_EXPANSION,
+)
+from corehq.db import connection_manager, UCR_ENGINE_ID
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
-from casexml.apps.case.util import post_case_blocks
-from casexml.apps.case.xml import V2
 
 
 class TestFieldColumn(SimpleTestCase):
@@ -44,7 +47,7 @@ class TestFieldColumn(SimpleTestCase):
         self.assertEqual('doc_id', field.column_id)
 
     def testBadAggregation(self):
-        with self.assertRaises(BadValueError):
+        with self.assertRaises(BadSpecError):
             ReportColumnFactory.from_spec({
                 "aggregation": "simple_",
                 "field": "doc_id",
@@ -66,7 +69,7 @@ class TestFieldColumn(SimpleTestCase):
             ))
 
     def testBadFormat(self):
-        with self.assertRaises(BadValueError):
+        with self.assertRaises(BadSpecError):
             ReportColumnFactory.from_spec({
                 "aggregation": "simple",
                 "field": "doc_id",
@@ -107,7 +110,7 @@ class ChoiceListColumnDbTest(TestCase):
             'long_column': 'duplicate_choice_1',
         })
         # and query it back
-        q = Session.query(adapter.get_table())
+        q = adapter.get_query_object()
         self.assertEqual(1, q.count())
 
 
@@ -121,7 +124,6 @@ class TestExpandedColumn(TestCase):
             create=True,
             case_id=id,
             case_type=self.case_type,
-            version=V2,
             update=properties,
         ).as_xml()
         post_case_blocks([case_block], {'domain': self.domain})
@@ -170,6 +172,7 @@ class TestExpandedColumn(TestCase):
         )
         data_source_config.validate()
         data_source_config.save()
+        self.addCleanup(data_source_config.delete)
         if build_data_source:
             tasks.rebuild_indicators(data_source_config._id)
 
@@ -188,12 +191,17 @@ class TestExpandedColumn(TestCase):
             configured_charts=[]
         )
         report_config.save()
+        self.addCleanup(report_config.delete)
         data_source = ReportFactory.from_spec(report_config)
 
         return data_source, data_source.column_configs[0]
 
     def setUp(self):
         delete_all_cases()
+
+    def tearDown(self):
+        delete_all_cases()
+        connection_manager.dispose_engine(UCR_ENGINE_ID)
 
     def test_getting_distinct_values(self):
         data_source, column = self._build_report([
@@ -211,12 +219,24 @@ class TestExpandedColumn(TestCase):
         self.assertListEqual(distinct_vals, [])
 
     def test_too_large_expansion(self):
-        vals = ['foo' + str(i) for i in range(11)]
-        # Maximum expansion width is 10
+        vals = ['foo' + str(i) for i in range(DEFAULT_MAXIMUM_EXPANSION + 1)]
         data_source, column = self._build_report(vals)
         distinct_vals, too_many_values = _get_distinct_values(data_source.config, column)
         self.assertTrue(too_many_values)
-        self.assertEqual(len(distinct_vals), 10)
+        self.assertEqual(len(distinct_vals), DEFAULT_MAXIMUM_EXPANSION)
+
+    def test_allowed_expansion(self):
+        num_columns = DEFAULT_MAXIMUM_EXPANSION + 1
+        vals = ['foo' + str(i) for i in range(num_columns)]
+        data_source, column = self._build_report(vals)
+        column.max_expansion = num_columns
+        distinct_vals, too_many_values = _get_distinct_values(
+            data_source.config,
+            column,
+            expansion_limit=num_columns,
+        )
+        self.assertFalse(too_many_values)
+        self.assertEqual(len(distinct_vals), num_columns)
 
     def test_unbuilt_data_source(self):
         data_source, column = self._build_report(['apple'], build_data_source=False)
@@ -261,6 +281,10 @@ class TestAggregateDateColumn(SimpleTestCase):
         wrapped = ReportColumnFactory.from_spec(self._spec)
         self.assertEqual('2015-03', wrapped.get_format_fn()({'year': 2015, 'month': 3}))
 
+    def test_format_missing(self):
+        wrapped = ReportColumnFactory.from_spec(self._spec)
+        self.assertEqual('Unknown Date', wrapped.get_format_fn()({'year': None, 'month': None}))
+
 
 class TestPercentageColumn(SimpleTestCase):
 
@@ -291,18 +315,18 @@ class TestPercentageColumn(SimpleTestCase):
             "field": "is_pregnant",
             "type": "field",
         }
-        with self.assertRaises(BadValueError):
+        with self.assertRaises(BadSpecError):
             ReportColumnFactory.from_spec({
                 'type': 'percent',
                 'column_id': 'pct',
             })
-        with self.assertRaises(BadValueError):
+        with self.assertRaises(BadSpecError):
             ReportColumnFactory.from_spec({
                 'type': 'percent',
                 'column_id': 'pct',
                 'numerator': field_spec,
             })
-        with self.assertRaises(BadValueError):
+        with self.assertRaises(BadSpecError):
             ReportColumnFactory.from_spec({
                 'type': 'percent',
                 'column_id': 'pct',
@@ -316,7 +340,7 @@ class TestPercentageColumn(SimpleTestCase):
             "field": "is_pregnant",
             "type": "percent",
         }
-        with self.assertRaises(BadValueError):
+        with self.assertRaises(BadSpecError):
             ReportColumnFactory.from_spec({
                 'type': 'percent',
                 'column_id': 'pct',

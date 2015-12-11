@@ -3,7 +3,6 @@
 var select2Separator = "\u001F";
 
 var ReportModule = (function () {
-
     function Config(dict) {
         var self = this;
 
@@ -19,7 +18,7 @@ var ReportModule = (function () {
         };
     }
 
-    function GraphConfig(report_id, reportId, availableReportIds, reportCharts, graph_configs) {
+    function GraphConfig(report_id, reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton) {
         var self = this;
 
         graph_configs = graph_configs || {};
@@ -34,7 +33,7 @@ var ReportModule = (function () {
                 var series_configs = {};
                 var chart_series = [];
                 for(var k = 0; k < currentChart.y_axis_columns.length; k++) {
-                    var series = currentChart.y_axis_columns[k];
+                    var series = currentChart.y_axis_columns[k].column_id;
                     chart_series.push(series);
                     series_configs[series] = new Config(
                         currentReportId === report_id ? (graph_config.series_configs || {})[series] || {} : {}
@@ -89,6 +88,26 @@ var ReportModule = (function () {
             return chartsToConfigs;
         };
 
+        this.addSubscribersToSaveButton = function() {
+            var addSubscriberToSaveButton = function(observable) {
+                observable.subscribe(changeSaveButton);
+            };
+            var addConfigToSaveButton = function(config) {
+                addSubscriberToSaveButton(config.keyValuePairs);
+                _.each(config.keyValuePairs(), function(keyValuePair) {
+                    addSubscriberToSaveButton(keyValuePair[0]);
+                    addSubscriberToSaveButton(keyValuePair[1]);
+                });
+            };
+            _.each(self.graphConfigs, function(reportGraphConfigs) {
+                _.each(reportGraphConfigs, function(graphConfig) {
+                    addSubscriberToSaveButton(graphConfig.graph_type);
+                    addConfigToSaveButton(graphConfig.config);
+                    _.each(graphConfig.series_configs, addConfigToSaveButton);
+                });
+            });
+        };
+
         this.allGraphTypes = ['bar', 'time', 'xy'];
     }
 
@@ -120,7 +139,10 @@ var ReportModule = (function () {
                     'custom_data_property',
                     'date_range',
                     'filter_type',
-                    'select_value'
+                    'select_value',
+                    'operator',
+                    'date_number',
+                    'date_number2'
                 ];
                 for(var filterFieldsIndex = 0; filterFieldsIndex < filterFields.length; filterFieldsIndex++) {
                     filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(filter.selectedValue[filterFields[filterFieldsIndex]] || '');
@@ -151,14 +173,17 @@ var ReportModule = (function () {
                     selectedFilterValues[filter.slug].doc_type = filter.selectedValue.doc_type();
                     // Depending on doc_type, pull the correct observables' values
                     var docTypeToField = {
-                        AutoFilter: 'filter_type',
-                        CustomDataAutoFilter: 'custom_data_property',
-                        StaticChoiceFilter: 'select_value',
-                        StaticDatespanFilter: 'date_range'
+                        AutoFilter: ['filter_type'],
+                        CustomDataAutoFilter: ['custom_data_property'],
+                        StaticChoiceFilter: ['select_value'],
+                        StaticDatespanFilter: ['date_range'],
+                        CustomDatespanFilter: ['operator', 'date_number', 'date_number2']
                     };
                     _.each(docTypeToField, function(field, docType) {
                         if(filter.selectedValue.doc_type() === docType) {
-                            selectedFilterValues[filter.slug][field] = filter.selectedValue[field]();
+                            _.each(field, function(value) {
+                                selectedFilterValues[filter.slug][value] = filter.selectedValue[value]();
+                            });
                         }
                     });
                     if(filter.selectedValue.doc_type() === 'StaticChoiceListFilter') {
@@ -182,31 +207,52 @@ var ReportModule = (function () {
         };
 
         // TODO - add user-friendly text
-        this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDataAutoFilter', 'StaticChoiceListFilter', 'StaticChoiceFilter'];
+        this.filterDocTypes = [null, 'AutoFilter', 'StaticDatespanFilter', 'CustomDatespanFilter', 'CustomDataAutoFilter', 'StaticChoiceListFilter', 'StaticChoiceFilter', 'MobileSelectFilter'];
         this.autoFilterTypes = ['case_sharing_group', 'location_id', 'username', 'user_id'];
-        this.date_range_options = ['last7', 'last30', 'lastmonth'];
+        this.date_range_options = ['last7', 'last30', 'lastmonth', 'lastyear'];
+        this.date_operators = ['=', '<', '<=', '>', '>=', 'between'];
     }
 
-    function ReportConfig(report_id, display, availableReportIds,
+    function ReportConfig(report_id, display,
+                          localizedDescription, xpathDescription, useXpathDescription,
+                          uuid, availableReportIds,
                           reportCharts, graph_configs,
                           filterValues, reportFilters,
                           language, changeSaveButton) {
         var self = this;
         this.lang = language;
         this.fullDisplay = display || {};
+        this.fullLocalizedDescription = localizedDescription || {};
+        this.uuid = uuid;
         this.availableReportIds = availableReportIds;
-        this.display = ko.observable(this.fullDisplay[this.lang]);
+
         this.reportId = ko.observable(report_id);
-        this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs);
+        this.display = ko.observable(this.fullDisplay[this.lang]);
+        this.localizedDescription = ko.observable(this.fullLocalizedDescription[this.lang]);
+        this.xpathDescription = ko.observable(xpathDescription);
+        this.useXpathDescription = ko.observable(useXpathDescription);
+
+        this.reportId.subscribe(changeSaveButton);
+        this.display.subscribe(changeSaveButton);
+        this.localizedDescription.subscribe(changeSaveButton);
+        this.xpathDescription.subscribe(changeSaveButton);
+        this.useXpathDescription.subscribe(changeSaveButton);
+
+        this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton);
         this.filterConfig = new FilterConfig(report_id, this.reportId, filterValues, reportFilters, changeSaveButton);
 
         this.toJSON = function () {
             self.fullDisplay[self.lang] = self.display();
+            self.fullLocalizedDescription[self.lang] = self.localizedDescription();
             return {
                 report_id: self.reportId(),
                 graph_configs: self.graphConfig.toJSON(),
                 filters: self.filterConfig.toJSON(),
-                header: self.fullDisplay
+                header: self.fullDisplay,
+                localized_description: self.fullLocalizedDescription,
+                xpath_description: self.xpathDescription(),
+                use_xpath_description: self.useXpathDescription(),
+                uuid: self.uuid
             };
         };
     }
@@ -218,8 +264,13 @@ var ReportModule = (function () {
         var saveURL = options.saveURL;
         self.lang = options.lang;
         self.moduleName = options.moduleName;
+        self.moduleFilter = options.moduleFilter === "None" ? "" : options.moduleFilter;
         self.currentModuleName = ko.observable(options.moduleName[self.lang]);
+        self.currentModuleFilter = ko.observable(self.moduleFilter);
+        self.menuImage = options.menuImage;
+        self.menuAudio = options.menuAudio;
         self.reportTitles = {};
+        self.reportDescriptions = {};
         self.reportCharts = {};
         self.reportFilters = {};
         self.reports = ko.observableArray([]);
@@ -227,6 +278,7 @@ var ReportModule = (function () {
             var report = availableReports[i];
             var report_id = report.report_id;
             self.reportTitles[report_id] = report.title;
+            self.reportDescriptions[report_id] = report.description;
             self.reportCharts[report_id] = report.charts;
             self.reportFilters[report_id] = report.filter_structure;
         }
@@ -235,6 +287,18 @@ var ReportModule = (function () {
 
         self.defaultReportTitle = function (reportId) {
             return self.reportTitles[reportId];
+        };
+        self.defaultReportDescription = function (reportId) {
+            return self.reportDescriptions[reportId];
+        };
+
+        self.multimedia = function () {
+            var multimedia = {};
+            multimedia.mediaImage = {};
+            multimedia.mediaImage[self.lang] = self.menuImage.ref().path;
+            multimedia.mediaAudio = {};
+            multimedia.mediaAudio[self.lang] = self.menuAudio.ref().path;
+            return multimedia;
         };
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
@@ -248,41 +312,54 @@ var ReportModule = (function () {
                     }
                 }
                 self.moduleName[self.lang] = self.currentModuleName();
+
+                var filter = self.currentModuleFilter().trim();
+                self.moduleFilter = filter === '' ? undefined : filter;
+
                 self.saveButton.ajax({
                     url: saveURL,
                     type: 'post',
                     dataType: 'json',
                     data: {
                         name: JSON.stringify(self.moduleName),
-                        reports: JSON.stringify(_.map(self.reports(), function (r) { return r.toJSON(); }))
+                        module_filter: self.moduleFilter,
+                        reports: JSON.stringify(_.map(self.reports(), function (r) { return r.toJSON(); })),
+                        multimedia: JSON.stringify(self.multimedia())
                     }
                 });
             }
         });
 
-        var changeSaveButton = function () {
+        self.changeSaveButton = function () {
             self.saveButton.fire('change');
         };
 
-        self.currentModuleName.subscribe(changeSaveButton);
+        self.currentModuleName.subscribe(self.changeSaveButton);
+        self.currentModuleFilter.subscribe(self.changeSaveButton);
+        $(options.containerId + ' input').on('textchange', self.changeSaveButton);
 
         function newReport(options) {
             options = options || {};
             var report = new ReportConfig(
                 options.report_id,
                 options.header,
+                options.localized_description,
+                options.xpath_description,
+                options.use_xpath_description,
+                options.uuid,
                 self.availableReportIds,
                 self.reportCharts,
                 options.graph_configs,
                 options.filters,
                 self.reportFilters,
                 self.lang,
-                changeSaveButton
+                self.changeSaveButton
             );
-            report.display.subscribe(changeSaveButton);
-            report.reportId.subscribe(changeSaveButton);
             report.reportId.subscribe(function (reportId) {
                 report.display(self.defaultReportTitle(reportId));
+            });
+            report.reportId.subscribe(function (reportId) {
+                report.localizedDescription(self.defaultReportDescription(reportId));
             });
 
             return report;
@@ -292,7 +369,7 @@ var ReportModule = (function () {
         };
         this.removeReport = function (report) {
             self.reports.remove(report);
-            changeSaveButton();
+            self.changeSaveButton();
         };
 
         // add existing reports to UI

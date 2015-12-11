@@ -1,8 +1,14 @@
 from django.test import SimpleTestCase, TestCase
+
 from jsonobject.exceptions import BadValueError
+
+from corehq.apps.domain.models import Domain
+from corehq.apps.userreports.dbaccessors import get_all_report_configs, \
+    delete_all_report_configs
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.util import get_total_row
 from corehq.apps.userreports.tests.utils import get_sample_report_config
 
 
@@ -72,21 +78,268 @@ class ReportConfigurationTest(SimpleTestCase):
         data_source = ReportFactory.from_spec(report_config)
         self.assertEqual(['doc_id'], data_source.group_by)
 
+    def test_fall_back_display_to_column_id(self):
+        config = ReportConfiguration(
+            domain='somedomain',
+            config_id='someconfig',
+            aggregation_columns=['doc_id'],
+            columns=[{
+                "type": "field",
+                "column_id": "my_column",
+                "field": "somefield",
+                "format": "default",
+                "aggregation": "sum"
+            }],
+            filters=[],
+            configured_charts=[]
+        )
+        self.assertEqual(config.report_columns[0].display, 'my_column')
+
+    def test_missing_column_id(self):
+        config = ReportConfiguration(
+            domain='somedomain',
+            config_id='someconfig',
+            aggregation_columns=['doc_id'],
+            columns=[{
+                'type': 'percent',
+                #  'column_id': 'pct',
+                'numerator': {
+                    "aggregation": "sum",
+                    "field": "pct_numerator",
+                    "type": "field",
+                    "column_id": "pct_numerator",
+                },
+                'denominator': {
+                    "aggregation": "sum",
+                    "field": "pct_denominator",
+                    "type": "field",
+                },
+            }],
+            filters=[],
+            configured_charts=[]
+        )
+        with self.assertRaises(BadSpecError):
+            config.validate()
+
+
+class ReportConfigurationTotalRowTest(SimpleTestCase):
+
+    def test_totaling_with_aggregation(self):
+        config_agg = ReportConfiguration(
+            aggregation_columns=['agg_col'],
+            columns=[
+                {
+                    "field": "agg_col",
+                    "aggregation": "simple",
+                    "type": "field",
+                    "calculate_total": False,
+                },
+                {
+                    "field": 'col_1',
+                    "aggregation": "simple",
+                    "type": "field",
+                    "calculate_total": False,
+                },
+                {
+                    "field": 'col_2',
+                    "aggregation": "simple",
+                    "type": "field",
+                    "calculate_total": True,
+                },
+            ],
+        )
+        self.assertEqual(
+            ['Total', '', 8],
+            get_total_row(
+                [
+                    {
+                        'agg_col': 'agg1',
+                        'col_1': 2,
+                        'col_2': 3,
+                    },
+                    {
+                        'agg_col': 'agg2',
+                        'col_1': 4,
+                        'col_2': 5,
+                    },
+                ],
+                config_agg.aggregation_columns,
+                config_agg.report_columns,
+                {}
+            )
+        )
+
+    def test_totaling_without_aggregation(self):
+        config_agg = ReportConfiguration(
+            columns=[
+                {
+                    "field": "agg_col",
+                    "aggregation": "simple",
+                    "type": "field",
+                    "calculate_total": False,
+                },
+                {
+                    "field": 'col_1',
+                    "aggregation": "simple",
+                    "type": "field",
+                    "calculate_total": False,
+                },
+                {
+                    "field": 'col_2',
+                    "aggregation": "simple",
+                    "type": "field",
+                    "calculate_total": True,
+                },
+            ],
+        )
+        self.assertEqual(
+            ['', '', 8],
+            get_total_row(
+                [
+                    {
+                        'agg_col': 'agg1',
+                        'col_1': 2,
+                        'col_2': 3,
+                    },
+                    {
+                        'agg_col': 'agg2',
+                        'col_1': 4,
+                        'col_2': 5,
+                    },
+                ],
+                config_agg.aggregation_columns,
+                config_agg.report_columns,
+                {}
+            )
+        )
+
+    def test_totaling_with_noninteger(self):
+        config_agg = ReportConfiguration(
+            columns=[
+                {
+                    "field": "agg_col",
+                    "aggregation": "simple",
+                    "type": "field",
+                    "calculate_total": False,
+                },
+                {
+                    "field": 'col_1',
+                    "aggregation": "simple",
+                    "type": "field",
+                    "calculate_total": True,
+                },
+            ],
+        )
+        self.assertEqual(
+            ['', ''],
+            get_total_row(
+                [
+                    {
+                        'agg_col': 'agg1',
+                        'col_1': '',
+                    },
+                    {
+                        'agg_col': 'agg2',
+                        'col_1': 4,
+                    },
+                ],
+                config_agg.aggregation_columns,
+                config_agg.report_columns,
+                {}
+            )
+        )
+        self.assertEqual(
+            ['', ''],
+            get_total_row(
+                [
+                    {
+                        'agg_col': 'agg1',
+                        'col_1': 2,
+                    },
+                    {
+                        'agg_col': 'agg2',
+                        'col_1': '',
+                    },
+                ],
+                config_agg.aggregation_columns,
+                config_agg.report_columns,
+                {}
+            )
+        )
+
+    def test_totaling_with_expanded_column(self):
+        config_agg = ReportConfiguration(
+            aggregation_columns=['agg_col'],
+            columns=[
+                {
+                    "field": "agg_col",
+                    "aggregation": "simple",
+                    "type": "field",
+                    "calculate_total": False,
+                },
+                {
+                    "field": 'col_1',
+                    "aggregation": "simple",
+                    "type": "field",
+                    "calculate_total": False,
+                },
+                {
+                    "field": 'col_2',
+                    "aggregation": "simple",
+                    "type": "expanded",
+                    "calculate_total": True,
+                },
+            ],
+        )
+        self.assertEqual(
+            ['Total', '', 8, 13],
+            get_total_row(
+                [
+                    {
+                        'agg_col': 'agg1',
+                        'col_1': 2,
+                        'col_2-A': 3,
+                        'col_2-B': 6,
+                    },
+                    {
+                        'agg_col': 'agg2',
+                        'col_1': 4,
+                        'col_2-A': 5,
+                        'col_2-B': 7,
+                    },
+                ],
+                config_agg.aggregation_columns,
+                config_agg.report_columns,
+                {
+                    "col_2": [
+                        "col_2-A",
+                        "col_2-B",
+                    ],
+                }
+            )
+        )
+
 
 class ReportConfigurationDbTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        ReportConfiguration(domain='foo', config_id='foo1').save()
-        ReportConfiguration(domain='foo', config_id='foo2').save()
-        ReportConfiguration(domain='bar', config_id='bar1').save()
+        domain_foo = Domain(name='foo')
+        domain_foo.save()
+        domain_bar = Domain(name='bar')
+        domain_bar.save()
+
+        ReportConfiguration(domain=domain_foo.name, config_id='foo1').save()
+        ReportConfiguration(domain=domain_foo.name, config_id='foo2').save()
+        ReportConfiguration(domain=domain_bar.name, config_id='bar1').save()
 
     @classmethod
     def tearDownClass(cls):
         for config in DataSourceConfiguration.all():
             config.delete()
-        for config in ReportConfiguration.all():
-            config.delete()
+        delete_all_report_configs()
+        for domain in Domain.get_all():
+            domain.delete()
 
     def test_get_by_domain(self):
         results = ReportConfiguration.by_domain('foo')
@@ -98,7 +351,7 @@ class ReportConfigurationDbTest(TestCase):
         self.assertEqual(0, len(results))
 
     def test_get_all(self):
-        self.assertEqual(3, len(list(ReportConfiguration.all())))
+        self.assertEqual(3, len(list(get_all_report_configs())))
 
     def test_domain_is_required(self):
         with self.assertRaises(BadValueError):
@@ -150,8 +403,7 @@ class ReportTranslationTest(TestCase):
     def tearDownClass(cls):
         for config in DataSourceConfiguration.all():
             config.delete()
-        for config in ReportConfiguration.all():
-            config.delete()
+        delete_all_report_configs()
 
     def setUp(self):
         report = ReportConfiguration.by_domain(self.DOMAIN)[0]

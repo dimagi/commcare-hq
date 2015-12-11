@@ -15,7 +15,7 @@
         var exportManager = new ExportManager( {
             domain: '{{ domain }}',
             exportFilters: '{{ get_filter_params.urlencode|safe }}',
-            downloadUrl: '{% url "download_cases" domain %}',
+            downloadUrl: '{% url "download_cases_internal" domain %}',
             export_type: "case"
         } );
         $('#full-case-export').one().each(function () {
@@ -26,6 +26,11 @@
         $(".daily-saved-download").click(function(){
             var caseType = $(this).attr("data-typeIdentifier");
             ga_track_event("Download Case Export","Download Saved Case Export", caseType);
+        });
+
+        $(".daily-saved-update").click(function(){
+            var caseType = $(this).attr("data-typeIdentifier");
+            ga_track_event("Update Case Export","Update Saved Case Export", caseType);
         });
 
     </script>

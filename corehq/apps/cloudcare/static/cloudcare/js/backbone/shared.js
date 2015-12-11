@@ -19,20 +19,21 @@ var Selectable = Backbone.View.extend({
         "click": "toggle"
     },
     toggle: function () {
+        var dialog = true;
         if (this.disabled) {
             return;
         }
-        if (this.selected) {
-            if (window.mainView.router.view.dirty) {
-                var dialog = confirm(translatedStrings.dirty);
-                if (dialog == true) {
-                    this.deselect();
-                    this.trigger("deselected");
-                }
+        if (window.mainView.router.view && window.mainView.router.view.dirty) {
+            dialog = confirm(translatedStrings.sidebarDirty);
+            if (dialog) {
+                window.mainView.router.view.dirty = false;
             } else {
-                this.deselect();
-                this.trigger("deselected");
+                return;
             }
+        }
+        if (this.selected) {
+            this.deselect();
+            this.trigger("deselected");
         } else {
             this.select();
         }
@@ -41,7 +42,8 @@ var Selectable = Backbone.View.extend({
         if (!this.selected) {
             window.mainView.router.setView(this);
             this.selected = true;
-            this.$el.addClass("active");
+            this.$el.addClass(this.$el.is('li') ? "active" : "info");
+
             if (typeof options === 'undefined' || !options.noEvents) {
                 this.trigger("selected");
             }
@@ -50,7 +52,7 @@ var Selectable = Backbone.View.extend({
     
     deselect: function () {
         this.selected = false;
-        this.$el.removeClass("active");
+        this.$el.removeClass(this.$el.is('li') ? "active" : "info");
     },
 
     disable: function () {

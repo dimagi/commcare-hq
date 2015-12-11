@@ -54,35 +54,41 @@ class StockSummaryReportData(EmailReportData):
 
         locations = self.get_locations(self.config['location_id'], self.config['domain'])
 
-        products = self.unique_products(locations)
-        row_data = {product.name: defaultdict(lambda: 0) for product in products}
+        row_data = {}
+
+        for product in SQLProduct.by_domain(self.domain).exclude(is_archived=True):
+            row_data[product.name] = {'total_fac': 0, 'reported_fac': 0,
+                                      'stockout': 0, 'low': 0, 'overstock': 0, 'adequate': 0}
 
         for location in locations:
+            location_products = list(location.products)
             stock_states = StockState.objects.filter(
                 case_id=location.supply_point_id,
                 section_id=STOCK_SECTION_TYPE,
-                sql_product__in=products
+                sql_product__in=location_products
             )
+
+            for product in location_products:
+                row_data[product.name]['total_fac'] += 1
 
             for state in stock_states:
                 p_name = state.sql_product.name
-                if location.products.filter(code=state.sql_product.code):
-                    row_data[p_name]['total_fac'] += 1
                 row_data[p_name]['reported_fac'] += 1
                 s = _stock_status(state, location)
                 row_data[p_name][s] += 1
 
         rows = []
         for k, v in row_data.iteritems():
-            rows.append([
-                k,
-                v['total_fac'],
-                v['reported_fac'],
-                percent(v['stockout'], v['reported_fac']),
-                percent(v['adequate'], v['reported_fac']),
-                percent(v['low'], v['reported_fac']),
-                percent(v['overstock'], v['reported_fac']),
-            ])
+            if v['total_fac'] > 0:
+                rows.append([
+                    k,
+                    v['total_fac'],
+                    v['reported_fac'],
+                    percent(v['stockout'], v['reported_fac']),
+                    percent(v['adequate'], v['reported_fac']),
+                    percent(v['low'], v['reported_fac']),
+                    percent(v['overstock'], v['reported_fac']),
+                ])
         return rows
 
     def get_locations(self, loc_id, domain):
@@ -118,21 +124,25 @@ class CMSRMSReportData(EmailReportData):
         row_data = {product.name: defaultdict(lambda: 0) for product in products}
 
         for location in locations:
-            stock_states = StockState.objects.filter(
+            stock_transactions = StockTransaction.objects.filter(
                 case_id=location.supply_point_id,
                 section_id=STOCK_SECTION_TYPE,
-                sql_product__in=products
-            )
+                sql_product__in=products,
+                report__date__range=[
+                    self.config['startdate'],
+                    self.config['enddate']
+                ]
+            ).distinct('product_id').order_by('product_id', '-report__date')
 
-            for state in stock_states:
-                p_name = state.sql_product.name
-                if location.products.filter(code=state.sql_product.code):
-                    row_data[p_name]['total_fac'] += 1
+            for stock_transaction in stock_transactions:
+                p_name = stock_transaction.sql_product.name
                 row_data[p_name]['reported_fac'] += 1
-                if not state.stock_on_hand:
+                if not stock_transaction.stock_on_hand:
                     row_data[p_name]['fac_with_stockout'] += 1
-                row_data[p_name][location.pk] = int(state.stock_on_hand)
-                row_data[p_name]['total'] += int(state.stock_on_hand)
+                row_data[p_name][location.pk] = int(stock_transaction.stock_on_hand)
+                row_data[p_name]['total'] += int(stock_transaction.stock_on_hand)
+            for product in location.products:
+                row_data[product.name]['total_fac'] += 1
 
         rows = []
         for k, v in row_data.iteritems():

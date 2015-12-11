@@ -68,11 +68,8 @@ class LocationFixtureProvider(object):
         There is an admin feature flag that will make this generate
         a fixture with ALL locations for the domain.
         """
-        if not user.project.uses_locations:
-            return []
-
         if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
-            locations = SQLLocation.objects.filter(domain=user.domain)
+            locations = SQLLocation.active_objects.filter(domain=user.domain)
         else:
             locations = []
             user_location = user.sql_location
@@ -81,12 +78,13 @@ class LocationFixtureProvider(object):
                 locations.append(user_location)
 
                 # add all descendants as well
-                locations += user_location.get_descendants()
+                locations += (user_location.get_descendants()
+                                           .filter(is_archived=False))
 
             if user.project.supports_multiple_locations_per_user:
                 # this might add duplicate locations but we filter that out later
-                location_ids = [loc._id for loc in user.locations]
-                locations += SQLLocation.objects.filter(
+                location_ids = [loc.location_id for loc in user.locations]
+                locations += SQLLocation.active_objects.filter(
                     location_id__in=location_ids
                 )
 
@@ -183,6 +181,7 @@ def _location_to_fixture(location_db, location, type):
         'latitude',
         'longitude',
         'location_type',
+        'supply_point_id',
     ]
     for field in fixture_fields:
         field_node = Element(field)

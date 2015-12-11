@@ -1,11 +1,9 @@
 import json
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_noop
-from corehq import Domain
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
 from corehq.apps.reports.filters.base import BaseReportFilter
-from corehq.apps.users.models import CouchUser
 
 
 class AsyncDrillableFilter(BaseReportFilter):
@@ -37,8 +35,8 @@ class AsyncDrillableFilter(BaseReportFilter):
     @property
     def api_root(self):
         return reverse('api_dispatch_list', kwargs={'domain': self.domain,
-                                                        'resource_name': 'fixture',
-                                                        'api_name': 'v0.1'})
+                                                    'resource_name': 'fixture_internal',
+                                                    'api_name': 'v0.5'})
 
     @property
     def full_hierarchy(self):
@@ -109,7 +107,7 @@ class AsyncLocationFilter(BaseReportFilter):
     @property
     def filter_context(self):
         api_root = reverse('api_dispatch_list', kwargs={'domain': self.domain,
-                                                        'resource_name': 'location',
+                                                        'resource_name': 'location_internal',
                                                         'api_name': 'v0.3'})
         user = self.request.couch_user
         loc_id = self.request.GET.get('location_id')

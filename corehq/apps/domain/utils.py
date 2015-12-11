@@ -1,11 +1,11 @@
 import re
+
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
-
 from dimagi.utils.couch.database import get_db
 
 
@@ -13,7 +13,7 @@ DOMAIN_MODULE_KEY = 'DOMAIN_MODULE_CONFIG'
 ADM_DOMAIN_KEY = 'ADM_ENABLED_DOMAINS'
 
 new_domain_re = r"(?:[a-z0-9]+\-)*[a-z0-9]+" # lowercase letters, numbers, and '-' (at most one between "words")
-new_org_re = r"(?:[a-z0-9]+\-)*[a-zA-Z0-9]+" # lowercase and uppercase letters, numbers, and '-' (at most one between "words")
+
 grandfathered_domain_re = r"[a-z0-9\-\.:]+"
 legacy_domain_re = r"[\w\.:-]+"
 commcare_public_domain_url = '/a/public/'
@@ -65,20 +65,6 @@ def get_dummy_domain(domain_type=None):
     dummy_domain = Domain()
     dummy_domain.commtrack_enabled = (domain_type == 'commtrack')
     return dummy_domain
-
-
-def get_doc_ids(domain, doc_type, database=None):
-    """
-    Given a domain and doc type, get all docs matching that domain and type
-    """
-    if not database:
-        database = get_db()
-    return [row['id'] for row in database.view('domain/docs',
-        startkey=[domain, doc_type],
-        endkey=[domain, doc_type, {}],
-        reduce=False,
-        include_docs=False,
-    )]
 
 
 def user_has_custom_top_menu(domain_name, couch_user):

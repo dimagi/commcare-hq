@@ -15,7 +15,8 @@ class MALTRow(models.Model):
     user_id = models.TextField()
     username = models.TextField()
     email = models.EmailField()
-    is_web_user = models.BooleanField(default=False)
+    user_type = models.TextField()
+
     domain_name = models.TextField(db_index=True)
     num_of_forms = models.PositiveIntegerField()
     app_id = models.TextField()
@@ -31,6 +32,7 @@ class MALTRow(models.Model):
         AMPLIFIES_NO: NO,
         AMPLIFIES_NOT_SET: NOT_SET
     }
+    threshold = models.PositiveSmallIntegerField(default=15)
 
     class Meta:
         unique_together = ('month', 'domain_name', 'user_id', 'app_id')

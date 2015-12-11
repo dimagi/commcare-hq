@@ -154,7 +154,7 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
             search_url=reverse("global_quick_find"),
             doc_id=error.doc_id,
             search_title=_("Search HQ for this document: %(doc_id)s") % {'doc_id': error.doc_id},
-            raw_url=reverse("doc_in_es"),
+            raw_url=reverse("raw_couch"),
             raw_title=_("Open the raw document: %(doc_id)s") % {'doc_id': error.doc_id},
             error_url=reverse(EditPillowError.urlname),
             error_id=error.id,

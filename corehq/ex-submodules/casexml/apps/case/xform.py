@@ -1,26 +1,22 @@
 from collections import namedtuple
-import copy
 import logging
-import warnings
 
 from couchdbkit import ResourceNotFound
-import datetime
 from django.db.models import Q
-import redis
-from casexml.apps.case.dbaccessors import get_reverse_indexed_cases
-from casexml.apps.case.signals import cases_received, case_post_save
-from casexml.apps.phone.cleanliness import should_track_cleanliness, should_create_flags_on_submission
+from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID, CASE_INDEX_EXTENSION
+from casexml.apps.case.dbaccessors import get_extension_chain
+from casexml.apps.case.signals import cases_received
+from casexml.apps.case.util import validate_phone_datetime
+from casexml.apps.phone.cleanliness import should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
-from casexml.apps.case.util import iter_cases
+from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
+from corehq.apps.users.util import SYSTEM_USER_ID
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from couchforms.models import XFormInstance
 from casexml.apps.case.exceptions import (
-    IllegalCaseId,
     NoDomainProvided,
-    ReconciliationError,
 )
 from django.conf import settings
-from couchforms.util import is_deprecation
 from dimagi.utils.couch.database import iter_docs
 
 from casexml.apps.case import const
@@ -37,11 +33,13 @@ class CaseProcessingResult(object):
     """
     Lightweight class used to collect results of case processing
     """
-    def __init__(self, domain, cases, dirtiness_flags, track_cleanliness):
+    def __init__(self, domain, cases, dirtiness_flags, extensions_to_close=None):
         self.domain = domain
         self.cases = cases
         self.dirtiness_flags = dirtiness_flags
-        self.track_cleanliness = track_cleanliness
+        if extensions_to_close is None:
+            extensions_to_close = set()
+        self.extensions_to_close = extensions_to_close
 
     def get_clean_owner_ids(self):
         dirty_flags = self.get_flags_to_save()
@@ -53,11 +51,17 @@ class CaseProcessingResult(object):
     def get_flags_to_save(self):
         return {f.owner_id: f.case_id for f in self.dirtiness_flags}
 
+    def close_extensions(self):
+        from casexml.apps.case.cleanup import close_cases
+        extensions_to_close = list(self.extensions_to_close)
+        if extensions_to_close:
+            return close_cases(list(self.extensions_to_close), self.domain, SYSTEM_USER_ID)
+
     def commit_dirtiness_flags(self):
         """
         Updates any dirtiness flags in the database.
         """
-        if self.track_cleanliness and self.domain:
+        if self.domain:
             flags_to_save = self.get_flags_to_save()
             if should_create_flags_on_submission(self.domain):
                 assert settings.UNIT_TESTING  # this is currently only true when unit testing
@@ -94,55 +98,11 @@ class CaseProcessingResult(object):
                     flag.save()
 
 
-def process_cases(xform, config=None):
-    """
-    Creates or updates case objects which live outside of the form.
-
-    If reconcile is true it will perform an additional step of
-    reconciling the case update history after the case is processed.
-    """
-    warnings.warn(
-        'This function is deprecated. You should be using SubmissionPost.',
-        DeprecationWarning,
-    )
-
-    assert getattr(settings, 'UNIT_TESTING', False)
-    domain = get_and_check_xform_domain(xform)
-
-    with CaseDbCache(domain=domain, lock=True, deleted_ok=True) as case_db:
-        case_result = process_cases_with_casedb([xform], case_db, config=config)
-
-    cases = case_result.cases
-    docs = [xform] + cases
-    now = datetime.datetime.utcnow()
-    for case in cases:
-        case.server_modified_on = now
-    XFormInstance.get_db().bulk_save(docs)
-
-    for case in cases:
-        case_post_save.send(CommCareCase, case=case)
-
-    case_result.commit_dirtiness_flags()
-    return cases
-
-
 def process_cases_with_casedb(xforms, case_db, config=None):
     config = config or CaseProcessingConfig()
     case_processing_result = _get_or_update_cases(xforms, case_db)
     cases = case_processing_result.cases
     xform = xforms[0]
-
-    # attach domain and export tag
-    domain = xform.domain
-
-    def attach_extras(case):
-        case.domain = domain
-        if domain:
-            assert hasattr(case, 'type')
-            case['#export_tag'] = ["domain", "type"]
-        return case
-
-    cases = [attach_extras(case) for case in cases]
 
     # handle updating the sync records for apps that use sync mode
     try:
@@ -167,26 +127,12 @@ def process_cases_with_casedb(xforms, case_db, config=None):
         notify_exception(
             None,
             'something went wrong sending the cases_received signal '
-            'for form %s: %s' % (xform._id, e)
+            'for form %s: %s' % (xform.form_id, e)
         )
 
     for case in cases:
-        if not case.check_action_order():
-            try:
-                case.reconcile_actions(rebuild=True, xforms={xform._id: xform})
-            except ReconciliationError:
-                pass
+        case_db.post_process_case(case, xform)
         case_db.mark_changed(case)
-
-        action_xforms = {action.xform_id for action in case.actions if action.xform_id}
-        mismatched_forms = action_xforms ^ set(case.xform_ids)
-        if mismatched_forms:
-            logging.warning(
-                "CASE XFORM MISMATCH /a/{},{}".format(
-                    domain,
-                    case.case_id
-                )
-            )
 
     case_processing_result.set_cases(cases)
     return case_processing_result
@@ -202,118 +148,6 @@ class CaseProcessingConfig(object):
             strict=self.strict_asserts,
             ids=", ".join(self.case_id_blacklist)
         )
-
-
-class CaseDbCache(object):
-    """
-    A temp object we use to keep a cache of in-memory cases around
-    so we can get the latest updates even if they haven't been saved
-    to the database. Also provides some type checking safety.
-    """
-    def __init__(self, domain=None, strip_history=False, deleted_ok=False,
-                 lock=False, wrap=True, initial=None, xforms=None):
-        if initial:
-            self.cache = {case['_id']: case for case in initial}
-        else:
-            self.cache = {}
-
-        self.domain = domain
-        self.xforms = xforms if xforms is not None else []
-        self.strip_history = strip_history
-        self.deleted_ok = deleted_ok
-        self.lock = lock
-        self.wrap = wrap
-        if self.lock and not self.wrap:
-            raise ValueError('Currently locking only supports explicitly wrapping cases!')
-        self.locks = []
-        self._changed = set()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        for lock in self.locks:
-            if lock:
-                try:
-                    lock.release()
-                except redis.ConnectionError:
-                    pass
-
-    def validate_doc(self, doc):
-        if self.domain and doc['domain'] != self.domain:
-            raise IllegalCaseId("Bad case id")
-        elif doc['doc_type'] == 'CommCareCase-Deleted':
-            if not self.deleted_ok:
-                raise IllegalCaseId("Case [%s] is deleted " % doc['_id'])
-        elif doc['doc_type'] != 'CommCareCase':
-            raise IllegalCaseId(
-                'Bad case doc type! '
-                'This usually means you are using a bad value for case_id.'
-                'The offending ID is {}'.format(doc['_id'])
-            )
-
-    def get(self, case_id):
-        if not case_id:
-            raise IllegalCaseId('case_id must not be empty')
-        if case_id in self.cache:
-            return self.cache[case_id]
-
-        try:
-            if self.strip_history:
-                case_doc = CommCareCase.get_lite(case_id, wrap=self.wrap)
-            elif self.lock:
-                try:
-                    case_doc, lock = CommCareCase.get_locked_obj(_id=case_id)
-                except redis.ConnectionError:
-                    case_doc = CommCareCase.get(case_id)
-                else:
-                    self.locks.append(lock)
-            else:
-                if self.wrap:
-                    case_doc = CommCareCase.get(case_id)
-                else:
-                    case_doc = CommCareCase.get_db().get(case_id)
-        except ResourceNotFound:
-            return None
-
-        self.validate_doc(case_doc)
-        self.cache[case_id] = case_doc
-        return case_doc
-
-    def set(self, case_id, case):
-        self.cache[case_id] = case
-        
-    def doc_exist(self, case_id):
-        return case_id in self.cache or CommCareCase.get_db().doc_exist(case_id)
-
-    def in_cache(self, case_id):
-        return case_id in self.cache
-
-    def populate(self, case_ids):
-        """
-        Populates a set of IDs in the cache in bulk.
-        Use this if you know you are going to need to access these later for performance gains.
-        Does NOT overwrite what is already in the cache if there is already something there.
-        """
-        case_ids = set(case_ids) - set(self.cache.keys())
-        for case in iter_cases(case_ids, self.strip_history, self.wrap):
-            self.set(case['_id'], case)
-
-    def mark_changed(self, case):
-        assert self.cache.get(case.case_id) is case
-        self._changed.add(case['_id'])
-
-    def get_changed(self):
-        return [self.cache[case_id] for case_id in self._changed]
-
-    def clear_changed(self):
-        self._changed = set()
-
-    def get_cached_forms(self):
-        """
-        Get any in-memory forms being processed.
-        """
-        return {xform._id: xform for xform in self.xforms}
 
 
 def get_and_check_xform_domain(xform):
@@ -334,90 +168,123 @@ def _get_or_update_cases(xforms, case_db):
     returning a dictionary mapping the case ids affected to the
     couch case document objects
     """
-    # have to apply the deprecations before the updates
-    sorted_forms = sorted(xforms, key=lambda f: 0 if is_deprecation(f) else 1)
-    touched_cases = {}
-    for xform in sorted_forms:
-        for case_update in get_case_updates(xform):
-            case_doc = _get_or_update_model(case_update, xform, case_db)
-            touched_cases[case_doc['_id']] = case_doc
-            if case_doc:
-                # todo: legacy behavior, should remove after new case processing
-                # is fully enabled.
-                if xform._id not in case_doc.xform_ids:
-                    case_doc.xform_ids.append(xform.get_id)
-            else:
-                logging.error(
-                    "XForm %s had a case block that wasn't able to create a case! "
-                    "This usually means it had a missing ID" % xform.get_id
-                )
+    domain = getattr(case_db, 'domain', None)
+    touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
 
     # once we've gotten through everything, validate all indices
     # and check for new dirtiness flags
     def _validate_indices(case):
-        dirtiness_flags = []
-        is_dirty = False
         if case.indices:
             for index in case.indices:
                 # call get and not doc_exists to force domain checking
-                # see CaseDbCache.validate_doc
+                # see CaseDbCache._validate_case
                 referenced_case = case_db.get(index.referenced_id)
                 if not referenced_case:
                     # just log, don't raise an error or modify the index
                     logging.error(
                         "Case '%s' references non-existent case '%s'",
-                        case.get_id,
+                        case.case_id,
                         index.referenced_id,
                     )
-                else:
-                    if referenced_case.owner_id != case.owner_id:
-                        is_dirty = True
-        if is_dirty:
-            dirtiness_flags.append(DirtinessFlag(case._id, case.owner_id))
-        return dirtiness_flags
 
-    def _get_dirtiness_flags_for_child_cases(domain, cases):
-        child_cases = get_reverse_indexed_cases(domain, [c['_id'] for c in cases])
-        case_owner_map = dict((case._id, case.owner_id) for case in cases)
+    def _get_dirtiness_flags_for_outgoing_indices(case, tree_owners=None):
+        """ if the outgoing indices touch cases owned by another user this cases owner is dirty """
+        if tree_owners is None:
+            tree_owners = set()
+
+        extension_indices = [index for index in case.indices if index.relationship == CASE_INDEX_EXTENSION]
+
+        unowned_host_cases = []
+        for index in extension_indices:
+            host_case = case_db.get(index.referenced_id)
+            if (
+                host_case
+                and host_case.owner_id == UNOWNED_EXTENSION_OWNER_ID
+                and host_case not in unowned_host_cases
+            ):
+                unowned_host_cases.append(host_case)
+
+        owner_ids = {case_db.get(index.referenced_id).owner_id
+                     for index in case.indices if case_db.get(index.referenced_id)} | tree_owners
+        potential_clean_owner_ids = owner_ids | set([UNOWNED_EXTENSION_OWNER_ID])
+        more_than_one_owner_touched = len(owner_ids) > 1
+        touches_different_owner = len(owner_ids) == 1 and case.owner_id not in potential_clean_owner_ids
+
+        if (more_than_one_owner_touched or touches_different_owner):
+            yield DirtinessFlag(case._id, case.owner_id)
+            if extension_indices:
+                # If this case is an extension, each of the touched cases is also dirty
+                for index in case.indices:
+                    referenced_case = case_db.get(index.referenced_id)
+                    yield DirtinessFlag(referenced_case._id, referenced_case.owner_id)
+
+        if case.owner_id != UNOWNED_EXTENSION_OWNER_ID:
+            tree_owners.add(case.owner_id)
+        for unowned_host_case in unowned_host_cases:
+            # A host case of this extension is unowned, which means it could potentially touch an owned case
+            # Check these unowned cases' outgoing indices and mark dirty if appropriate
+            for dirtiness_flag in _get_dirtiness_flags_for_outgoing_indices(unowned_host_case,
+                                                                            tree_owners=tree_owners):
+                yield dirtiness_flag
+
+    def _get_dirtiness_flags_for_child_cases(cases):
+        child_cases = case_db.get_reverse_indexed_cases([c.case_id for c in cases])
+        case_owner_map = dict((case.case_id, case.owner_id) for case in cases)
         for child_case in child_cases:
             for index in child_case.indices:
                 if (index.referenced_id in case_owner_map
                         and child_case.owner_id != case_owner_map[index.referenced_id]):
-                    yield DirtinessFlag(child_case._id, child_case.owner_id)
+                    yield DirtinessFlag(child_case.case_id, child_case.owner_id)
 
-    dirtiness_flags = [flag for case in touched_cases.values() for flag in _validate_indices(case)]
-    domain = getattr(case_db, 'domain', None)
-    track_cleanliness = should_track_cleanliness(domain)
-    if track_cleanliness:
-        # only do this extra step if the toggle is enabled since we know we aren't going to
-        # care about the dirtiness flags otherwise.
-        dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(domain, touched_cases.values()))
+    def _get_dirtiness_flags_for_reassigned_case(case_metas):
+        # for reassigned cases, we mark them temporarily dirty to allow phones to sync
+        # the latest changes. these will get cleaned up when the weekly rebuild triggers
+        for case_update_meta in case_metas:
+            if _is_change_of_ownership(case_update_meta.previous_owner_id, case_update_meta.case.owner_id):
+                yield DirtinessFlag(case_update_meta.case.case_id, case_update_meta.previous_owner_id)
 
-    return CaseProcessingResult(domain, touched_cases.values(), dirtiness_flags, track_cleanliness)
+    dirtiness_flags = []
+    extensions_to_close = set()
+
+    # process the temporary dirtiness flags first so that any hints for real dirtiness get overridden
+    dirtiness_flags += list(_get_dirtiness_flags_for_reassigned_case(touched_cases.values()))
+    for case_update_meta in touched_cases.values():
+        _validate_indices(case_update_meta.case)
+        extensions_to_close = extensions_to_close | get_extensions_to_close(case_update_meta.case, domain)
+        dirtiness_flags += list(_get_dirtiness_flags_for_outgoing_indices(case_update_meta.case))
+    dirtiness_flags += list(_get_dirtiness_flags_for_child_cases([meta.case for meta in touched_cases.values()]))
+
+    return CaseProcessingResult(
+        domain,
+        [update.case for update in touched_cases.values()],
+        dirtiness_flags,
+        extensions_to_close
+    )
 
 
-def _get_or_update_model(case_update, xform, case_db):
-    """
-    Gets or updates an existing case, based on a block of data in a
-    submitted form.  Doesn't save anything.
-    """
-    case = case_db.get(case_update.id)
-    if case is None:
-        case = CommCareCase.from_case_update(case_update, xform)
-        case_db.set(case['_id'], case)
-        return case
+def _is_change_of_ownership(previous_owner_id, next_owner_id):
+    return (
+        previous_owner_id
+        and previous_owner_id != UNOWNED_EXTENSION_OWNER_ID
+        and previous_owner_id != next_owner_id
+    )
+
+
+def get_extensions_to_close(case, domain):
+    outgoing_indices = case.indices
+    if not outgoing_indices and case.closed and EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
+        return get_extension_chain([case], domain)
     else:
-        case.update_from_case_update(case_update, xform, case_db.get_cached_forms())
-        return case
+        return set()
 
 
 def is_device_report(doc):
     """exclude device reports"""
     device_report_xmlns = "http://code.javarosa.org/devicereport"
     def _from_form_dict(doc):
-        return "@xmlns" in doc and doc["@xmlns"] == device_report_xmlns
+        return isinstance(doc, dict) and "@xmlns" in doc and doc["@xmlns"] == device_report_xmlns
     def _from_xform_instance(doc):
-        return "xmlns" in doc and doc["xmlns"] == device_report_xmlns
+        return getattr(doc, 'xmlns', None) == device_report_xmlns
 
     return _from_form_dict(doc) or _from_xform_instance(doc)
 
@@ -448,9 +315,13 @@ def extract_case_blocks(doc, include_path=False):
     Repeat nodes will all share the same path.
     """
     if isinstance(doc, XFormInstance):
-        doc = doc.form
+        form = doc.to_json()['form']
+    elif isinstance(doc, dict):
+        form = doc
+    else:
+        form = doc.form_data
 
-    return [struct if include_path else struct.caseblock for struct in _extract_case_blocks(doc)]
+    return [struct if include_path else struct.caseblock for struct in _extract_case_blocks(form)]
 
 
 def _extract_case_blocks(data, path=None):
@@ -476,6 +347,8 @@ def _extract_case_blocks(data, path=None):
 
                 for case_block in case_blocks:
                     if has_case_id(case_block):
+                        validate_phone_datetime(
+                            case_block.get('@date_modified'), none_ok=True)
                         yield CaseBlockWithPath(caseblock=case_block, path=path)
             else:
                 for case_block in _extract_case_blocks(value, path=new_path):

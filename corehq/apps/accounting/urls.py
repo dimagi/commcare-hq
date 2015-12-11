@@ -1,5 +1,5 @@
 from django.conf.urls import *
-from corehq import AccountingAdminInterfaceDispatcher
+from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.views import *
 
 

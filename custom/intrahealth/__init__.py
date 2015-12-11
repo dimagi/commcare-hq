@@ -65,7 +65,8 @@ PRODUCT_MAPPING = {
     "microlut": "Microlut/Ovrette",
     "preservatif_feminin": "Preservatif Feminin",
     "preservatif_masculin": "Preservatif Masculin",
-    "sayana_press": "Sayana Press"
+    "sayana_press": "Sayana Press",
+    "implanon": "IMPLANON"
 }
 
 
@@ -78,7 +79,7 @@ def get_products(form, property):
     return products
 
 
-def get_products_code(form, property):
+def get_products_id(form, property):
     products = []
     if 'products' in form.form:
         for product in form.form['products']:
@@ -87,7 +88,7 @@ def get_products_code(form, property):
                 if k is not None:
                     try:
                         code = SQLProduct.objects.get(name__iexact=k,
-                                                      domain=get_domain(form)).code
+                                                      domain=get_domain(form)).product_id
                         products.append(code)
                     except SQLProduct.DoesNotExist:
                         pass
@@ -102,7 +103,7 @@ def get_rupture_products(form):
     return result
 
 
-def get_rupture_products_code(form):
+def get_rupture_products_ids(form):
     result = []
     for k, v in form.form.iteritems():
         if re.match("^rupture.*hv$", k):
@@ -111,7 +112,7 @@ def get_rupture_products_code(form):
                 try:
                     prd = SQLProduct.objects.get(name__iexact=product_name,
                                                  domain=get_domain(form))
-                    result.append(prd.code)
+                    result.append(prd.product_id)
                 except SQLProduct.DoesNotExist:
                     pass
     return result
@@ -150,7 +151,7 @@ def get_location_id(form):
     loc = _get_location(form)
     if not loc:
         return None
-    return loc._id
+    return loc.location_id
 
 
 def get_location_id_by_type(form, type):
@@ -158,7 +159,7 @@ def get_location_id_by_type(form, type):
         loc = get_location_by_type(form, type)
     except SQLLocation.DoesNotExist:
         loc = None
-    return loc._id if loc else None
+    return loc.location_id if loc else None
 
 
 def get_location_by_type(form, type):
@@ -238,7 +239,7 @@ class IsExistFormPropertyFilter(FormPropertyFilter):
         return (
             form.xmlns == self.xmlns and (
                 self.property_path is None or
-                self.operator(self.property_value, form.xpath(self.property_path))
+                self.operator(self.property_value, form.get_data(self.property_path))
             )
         )
 

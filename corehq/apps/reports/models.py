@@ -1,44 +1,66 @@
-from collections import defaultdict
+import calendar
+from collections import defaultdict, namedtuple
 from datetime import datetime
+import functools
+import json
 import logging
 from urllib import urlencode
+
 from django.http import Http404
 from django.utils import html
 from django.utils.safestring import mark_safe
-from corehq import Domain
-from corehq.apps import reports
-from corehq.apps.app_manager.models import get_app, Form, RemoteApp
-from corehq.apps.app_manager.util import get_case_properties
-from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
-from corehq.apps.domain.middleware import CCHQPRBACMiddleware
-from .exceptions import UnsupportedSavedReportError, UnsupportedScheduledReportError
-from corehq.apps.export.models import FormQuestionSchema
-from corehq.apps.reports.daterange import get_daterange_start_end_dates
-from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.exceptions import InvalidDaterangeException
-from dimagi.ext.couchdbkit import *
-from corehq.apps.reports.exportfilters import form_matches_users, is_commconnect_form, default_form_filter, \
-    default_case_filter
-from corehq.apps.users.dbaccessors import get_user_docs_by_username
-from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
-from corehq.util.translation import localize
-from corehq.util.view_utils import absolute_reverse
-from couchexport.models import SavedExportSchema, GroupExportConfiguration, FakeSavedExportSchema, SplitColumn
-from couchexport.transforms import couch_to_excel_datetime, identity
-from couchexport.util import SerializableFunction
-import couchforms
-from dimagi.utils.couch.cache import cache_core
-from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from django.core.validators import validate_email
-from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
-import json
-import calendar
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+
+from sqlalchemy.util import immutabledict
+
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import Form, RemoteApp
+from corehq.apps.app_manager.util import get_case_properties
+from corehq.apps.cachehq.mixins import (
+    CachedCouchDocumentMixin,
+    QuickCachedDocumentMixin,
+)
+from corehq.apps.domain.middleware import CCHQPRBACMiddleware
+from corehq.apps.domain.models import Domain
+from corehq.apps.export.models import FormQuestionSchema
+from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_all_daterange_slugs
+from corehq.apps.reports.dbaccessors import (
+    hq_group_export_configs_by_domain,
+    stale_get_exports_json,
+)
+from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
+from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.exceptions import (
+    InvalidDaterangeException,
+    UnsupportedSavedReportError,
+    UnsupportedScheduledReportError,
+)
+from corehq.apps.reports.exportfilters import (
+    default_case_filter,
+    default_form_filter,
+    form_matches_users,
+    is_commconnect_form,
+)
+from corehq.apps.userreports.util import default_language as ucr_default_language, localize as ucr_localize
+from corehq.apps.users.dbaccessors import get_user_docs_by_username
+from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
+from corehq.util.quickcache import quickcache
+from corehq.util.translation import localize
+from corehq.util.view_utils import absolute_reverse
+
+from couchexport.models import SavedExportSchema, GroupExportConfiguration, DefaultExportSchema, SplitColumn
+from couchexport.transforms import couch_to_excel_datetime, identity
+from couchexport.util import SerializableFunction
+from couchforms.filters import instances
+from dimagi.ext.couchdbkit import *
+from dimagi.utils.couch.cache import cache_core
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
-from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
 class HQUserType(object):
@@ -163,7 +185,7 @@ class TempCommCareUser(CommCareUser):
         app_label = 'reports'
 
 
-DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'lastmonth', 'since', 'range', '']
+ReportContent = namedtuple('ReportContent', ['text', 'attachment'])
 
 
 class ReportConfig(CachedCouchDocumentMixin, Document):
@@ -182,7 +204,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     filters = DictProperty()
 
-    date_range = StringProperty(choices=DATE_RANGE_CHOICES)
+    date_range = StringProperty(choices=get_all_daterange_slugs())
     days = IntegerProperty(default=None)
     start_date = DateProperty(default=None)
     end_date = DateProperty(default=None)
@@ -244,13 +266,16 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             'filters': {}
         }
 
-    def to_complete_json(self):
+    def to_complete_json(self, lang=None):
         result = super(ReportConfig, self).to_json()
         result.update({
             'url': self.url,
             'report_name': self.report_name,
             'date_description': self.date_description,
-            'datespan_filters': self.datespan_filters,
+            'datespan_filters': self.datespan_filter_choices(
+                self.datespan_filters,
+                lang or ucr_default_language()
+            ),
             'has_ucr_datespan': self.has_ucr_datespan,
         })
         return result
@@ -258,25 +283,37 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def _dispatcher(self):
-        from corehq.apps.userreports.reports.view import ConfigurableReport
+        from corehq.apps.userreports.models import CUSTOM_REPORT_PREFIX
+        from corehq.apps.userreports.reports.view import (
+            ConfigurableReport,
+            CustomConfigurableReportDispatcher,
+        )
 
         dispatchers = [
             ProjectReportDispatcher,
             CustomProjectReportDispatcher,
-            ConfigurableReport,
         ]
 
         for dispatcher in dispatchers:
             if dispatcher.prefix == self.report_type:
                 return dispatcher()
 
-        notify_exception(
-            None,
-            "This saved-report (id: %s) is unknown (report_type: %s). Might be a legacy report" % (
-                self._id,
-                self.report_type
+        if self.report_type == 'configurable':
+            if self.subreport_slug.startswith(CUSTOM_REPORT_PREFIX):
+                return CustomConfigurableReportDispatcher()
+            else:
+                return ConfigurableReport()
+
+        if self.doc_type != 'ReportConfig-Deleted':
+            self.doc_type += '-Deleted'
+            self.save()
+            notify_exception(
+                None,
+                "This saved-report (id: %s) is unknown (report_type: %s) and so we have archived it" % (
+                    self._id,
+                    self.report_type
+                )
             )
-        )
         raise UnsupportedSavedReportError("Unknown dispatcher: %s" % self.report_type)
 
     def get_date_range(self):
@@ -329,28 +366,41 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     @property
     @memoized
-    def view_kwargs(self):
-        kwargs = {'domain': self.domain,
-                  'report_slug': self.report_slug}
+    def url_kwargs(self):
+        kwargs = {
+            'domain': self.domain,
+            'report_slug': self.report_slug,
+        }
 
         if self.subreport_slug:
             kwargs['subreport_slug'] = self.subreport_slug
 
-        return kwargs
+        return immutabledict(kwargs)
+
+    @property
+    @memoized
+    def view_kwargs(self):
+        if not self.is_configurable_report:
+            return self.url_kwargs.union({
+                'permissions_check': self._dispatcher.permissions_check,
+            })
+        return self.url_kwargs
 
     @property
     @memoized
     def url(self):
         try:
-            from django.core.urlresolvers import reverse
             from corehq.apps.userreports.reports.view import ConfigurableReport
 
             if self.is_configurable_report:
-                url_base = reverse(ConfigurableReport.slug, args=[self.domain, self.subreport_slug])
+                url_base = absolute_reverse(self.report_slug, args=[self.domain, self.subreport_slug])
             else:
-                url_base = reverse(self._dispatcher.name(), kwargs=self.view_kwargs)
+                url_base = absolute_reverse(self._dispatcher.name(), kwargs=self.url_kwargs)
             return url_base + '?' + self.query_string
-        except Exception:
+        except UnsupportedSavedReportError:
+            return "#"
+        except Exception as e:
+            logging.exception(e.message)
             return "#"
 
     @property
@@ -362,9 +412,12 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         case.
 
         """
-        return self._dispatcher.get_report(
-            self.domain, self.report_slug, self.subreport_slug
-        )
+        try:
+            return self._dispatcher.get_report(
+                self.domain, self.report_slug, self.subreport_slug
+            )
+        except UnsupportedSavedReportError:
+            return None
 
     @property
     def report_name(self):
@@ -412,85 +465,93 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         """
         try:
             if self.report is None:
-                return _("The report used to create this scheduled report is no"
-                         " longer available on CommCare HQ.  Please delete this"
-                         " scheduled report and create a new one using an available"
-                         " report."), None
+                return ReportContent(
+                    _("The report used to create this scheduled report is no"
+                      " longer available on CommCare HQ.  Please delete this"
+                      " scheduled report and create a new one using an available"
+                      " report."),
+                    None,
+                )
         except Exception:
             pass
 
         from django.http import HttpRequest, QueryDict
-        request = HttpRequest()
-        request.couch_user = self.owner
-        request.user = self.owner.get_django_user()
-        request.domain = self.domain
-        request.couch_user.current_domain = self.domain
-        request.couch_user.language = lang
+        mock_request = HttpRequest()
+        mock_request.couch_user = self.owner
+        mock_request.user = self.owner.get_django_user()
+        mock_request.domain = self.domain
+        mock_request.couch_user.current_domain = self.domain
+        mock_request.couch_user.language = lang
+        mock_request.method = 'GET'
 
-        request.GET = QueryDict(
-            self.query_string
-            + '&filterSet=true'
-            + ('&'
-               + urlencode(self.filters, True)
-               + '&'
-               + urlencode(self.get_date_range(), True)
-               if self.is_configurable_report else '')
-        )
+        mock_query_string_parts = [self.query_string, 'filterSet=true']
+        if self.is_configurable_report:
+            mock_query_string_parts.append(urlencode(self.filters, True))
+            mock_query_string_parts.append(urlencode(self.get_date_range(), True))
+        mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
 
         # Make sure the request gets processed by PRBAC Middleware
-        CCHQPRBACMiddleware.apply_prbac(request)
+        CCHQPRBACMiddleware.apply_prbac(mock_request)
 
         try:
-            if self.is_configurable_report:
-                response = self._dispatcher.dispatch(
-                    request,
-                    self.subreport_slug,
-                    render_as='email',
-                    **self.view_kwargs
+            dispatch_func = functools.partial(self._dispatcher.__class__.as_view(), mock_request, **self.view_kwargs)
+            email_response = dispatch_func(render_as='email')
+            if email_response.status_code == 302:
+                return ReportContent(
+                    _(
+                        "We are sorry, but your saved report '%(config_name)s' "
+                        "is no longer accessible because the owner %(username)s "
+                        "is no longer active."
+                    ) % {
+                        'config_name': self.name,
+                        'username': self.owner.username
+                    },
+                    None,
                 )
-            else:
-                response = self._dispatcher.dispatch(
-                    request,
-                    render_as='email',
-                    permissions_check=self._dispatcher.permissions_check,
-                    **self.view_kwargs
-                )
-            if attach_excel is True:
-                if self.is_configurable_report:
-                    file_obj = self._dispatcher.dispatch(
-                        request, self.subreport_slug,
-                        render_as='excel',
-                        **self.view_kwargs
-                    )
-                else:
-                    file_obj = self._dispatcher.dispatch(
-                        request,
-                        render_as='excel',
-                        permissions_check=self._dispatcher.permissions_check,
-                        **self.view_kwargs
-                    )
-            else:
-                file_obj = None
-            return json.loads(response.content)['report'], file_obj
+            return ReportContent(
+                json.loads(email_response.content)['report'],
+                dispatch_func(render_as='excel') if attach_excel else None,
+            )
         except PermissionDenied:
-            return _(
-                "We are sorry, but your saved report '%(config_name)s' "
-                "is no longer accessible because your subscription does "
-                "not allow Custom Reporting. Please talk to your Project "
-                "Administrator about enabling Custom Reports. If you "
-                "want CommCare HQ to stop sending this message, please "
-                "visit %(saved_reports_url)s to remove this "
-                "Emailed Report."
-            ) % {
-                'config_name': self.name,
-                'saved_reports_url': absolute_reverse('saved_reports',
-                                                      args=[request.domain]),
-            }, None
+            return ReportContent(
+                _(
+                    "We are sorry, but your saved report '%(config_name)s' "
+                    "is no longer accessible because your subscription does "
+                    "not allow Custom Reporting. Please talk to your Project "
+                    "Administrator about enabling Custom Reports. If you "
+                    "want CommCare HQ to stop sending this message, please "
+                    "visit %(saved_reports_url)s to remove this "
+                    "Emailed Report."
+                ) % {
+                    'config_name': self.name,
+                    'saved_reports_url': absolute_reverse(
+                        'saved_reports', args=[mock_request.domain]
+                    ),
+                },
+                None,
+            )
         except Http404:
-            return _("We are sorry, but your saved report '%(config_name)s' "
-                     "can not be generated since you do not have the correct permissions. "
-                     "Please talk to your Project Administrator about getting permissions for this"
-                     "report.") % {'config_name': self.name}, None
+            return ReportContent(
+                _(
+                    "We are sorry, but your saved report '%(config_name)s' "
+                    "can not be generated since you do not have the correct permissions. "
+                    "Please talk to your Project Administrator about getting permissions for this"
+                    "report."
+                ) % {
+                    'config_name': self.name,
+                },
+                None,
+            )
+        except UnsupportedSavedReportError:
+            return ReportContent(
+                _(
+                    "We are sorry, but your saved report '%(config_name)s' "
+                    "is no longer available. If you think this is a mistake, please report an issue."
+                ) % {
+                    'config_name': self.name,
+                },
+                None,
+            )
         except Exception:
             notify_exception(None, "Error generating report: {}".format(self.report_slug), details={
                 'domain': self.domain,
@@ -498,7 +559,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 'report': self.report_slug,
                 'report config': self.get_id
             })
-            return _("An error occurred while generating this report."), None
+            return ReportContent(_("An error occurred while generating this report."), None)
 
     @property
     def is_configurable_report(self):
@@ -509,8 +570,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @memoized
     def languages(self):
         if self.is_configurable_report:
-            return self.report.spec.get_languages()
-        return set()
+            return frozenset(self.report.spec.get_languages())
+        return frozenset()
 
     @property
     @memoized
@@ -529,6 +590,22 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     def has_ucr_datespan(self):
         return self.is_configurable_report and self.datespan_filters
 
+    @staticmethod
+    def datespan_filter_choices(datespan_filters, lang):
+        localized_datespan_filters = []
+        for f in datespan_filters:
+            copy = dict(f)
+            copy['display'] = ucr_localize(copy['display'], lang)
+            localized_datespan_filters.append(copy)
+
+        with localize(lang):
+            return [{
+                'display': _('Choose a date filter...'),
+                'slug': None,
+            }] + localized_datespan_filters
+
+DEFAULT_REPORT_NOTIF_SUBJECT = "Scheduled report from CommCare HQ"
+
 
 class ReportNotification(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
@@ -540,6 +617,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     attach_excel = BooleanProperty()
     # language is only used if some of the config_ids refer to UCRs.
     language = StringProperty()
+    email_subject = StringProperty(default=DEFAULT_REPORT_NOTIF_SUBJECT)
 
     hour = IntegerProperty(default=8)
     minute = IntegerProperty(default=0)
@@ -572,12 +650,11 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     def all_recipient_emails(self):
         # handle old documents
         if not self.owner_id:
-            return [self.owner.get_email()]
+            return frozenset([self.owner.get_email()])
 
-        emails = []
+        emails = frozenset(self.recipient_emails)
         if self.send_to_owner and self.owner_email:
-            emails.append(self.owner_email)
-        emails.extend(self.recipient_emails)
+            emails |= {self.owner_email}
         return emails
 
     @property
@@ -639,7 +716,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             config.owner_id = self.owner_id
             configs = [config]
 
-        return configs
+        return tuple(configs)
 
     @property
     def day_name(self):
@@ -674,7 +751,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         for email in self.all_recipient_emails:
             language = user_languages.get(email, fallback_language)
             recipients[language].append(email)
-        return recipients
+        return immutabledict(recipients)
 
     def send(self):
         # Scenario: user has been removed from the domain that they
@@ -691,7 +768,11 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         from corehq.apps.reports.views import get_scheduled_report_response
 
         with localize(language):
-            title = _("Scheduled report from CommCare HQ")
+            title = (
+                _(DEFAULT_REPORT_NOTIF_SUBJECT)
+                if self.email_subject == DEFAULT_REPORT_NOTIF_SUBJECT
+                else self.email_subject
+            )
             attach_excel = getattr(self, 'attach_excel', False)
             body, excel_files = get_scheduled_report_response(
                 self.owner, self.domain, self._id, attach_excel=attach_excel
@@ -727,12 +808,21 @@ class HQExportSchema(SavedExportSchema):
             self.domain = self.index[0]
         return self
 
+    @classmethod
+    def get_stale_exports(cls, domain):
+        return [
+            cls.wrap(export)
+            for export in stale_get_exports_json(domain)
+            if export['type'] == cls._default_type
+        ]
+
 
 class FormExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
     include_errors = BooleanProperty(default=False)
     split_multiselects = BooleanProperty(default=False)
+    _default_type = 'form'
 
     def update_schema(self):
         super(FormExportSchema, self).update_schema()
@@ -789,9 +879,10 @@ class FormExportSchema(HQExportSchema):
 
         f = SerializableFunction(_top_level_filter)
         if self.app_id is not None:
-            f.add(reports.util.app_export_filter, app_id=self.app_id)
+            from corehq.apps.reports import util as reports_util
+            f.add(reports_util.app_export_filter, app_id=self.app_id)
         if not self.include_errors:
-            f.add(couchforms.filters.instances)
+            f.add(instances)
         actual = SerializableFunction(default_form_filter, filter=f)
         return actual
 
@@ -857,6 +948,7 @@ class FormDeidExportSchema(FormExportSchema):
 
 class CaseExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
+    _default_type = 'case'
 
     @property
     def filter(self):
@@ -889,7 +981,7 @@ class CaseExportSchema(HQExportSchema):
         return props
 
 
-class FakeFormExportSchema(FakeSavedExportSchema):
+class DefaultFormExportSchema(DefaultExportSchema):
 
     def remap_tables(self, tables):
         # kill the weird confusing stuff, and rename the main table to something sane
@@ -911,7 +1003,7 @@ def _apply_removal(export_tables, removal_list):
     return [tabledata for tabledata in export_tables if not tabledata[0] in removal_list]
 
 
-class HQGroupExportConfiguration(CachedCouchDocumentMixin, GroupExportConfiguration):
+class HQGroupExportConfiguration(QuickCachedDocumentMixin, GroupExportConfiguration):
     """
     HQ's version of a group export, tagged with a domain
     """
@@ -950,13 +1042,9 @@ class HQGroupExportConfiguration(CachedCouchDocumentMixin, GroupExportConfigurat
         return self.exports_of_type('case')
 
     @classmethod
+    @quickcache(['cls.__name__', 'domain'])
     def by_domain(cls, domain):
-        return cache_core.cached_view(cls.get_db(), "groupexport/by_domain",
-            key=domain,
-            reduce=False,
-            include_docs=True,
-            wrapper=cls.wrap,
-        )
+        return hq_group_export_configs_by_domain(domain)
 
     @classmethod
     def get_for_domain(cls, domain):
@@ -989,3 +1077,7 @@ class HQGroupExportConfiguration(CachedCouchDocumentMixin, GroupExportConfigurat
         if updated:
             group.save()
         return group
+
+    def clear_caches(self):
+        super(HQGroupExportConfiguration, self).clear_caches()
+        self.by_domain.clear(self.__class__, self.domain)

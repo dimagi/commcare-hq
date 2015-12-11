@@ -110,7 +110,7 @@ class LocationImporter(object):
                 if 'site_code' in loc:
                     # overwrite this value in the dict so we don't
                     # ever accidentally use a randomly capitalized veersion
-                    loc['site_code'] = loc['site_code'].lower()
+                    loc['site_code'] = str(loc['site_code']).lower()
 
                 if 'site_code' in loc and loc['site_code'] in self.seen_site_codes:
                     self.results.append(_(
@@ -241,7 +241,7 @@ class LocationImporter(object):
 
     def submit_form(self, parent, form_data, existing, location_type, consumption):
         location = existing or Location(domain=self.domain, parent=parent)
-        form = LocationForm(location, form_data)
+        form = LocationForm(location, form_data, is_new=not bool(existing))
         form.strict = False  # optimization hack to turn off strict validation
         if form.is_valid():
             # don't save if there is nothing to save
@@ -273,7 +273,7 @@ class LocationImporter(object):
                             set_default_consumption_for_supply_point(
                                 self.domain,
                                 product._id,
-                                sp._id,
+                                sp.case_id,
                                 amount
                             )
                     except (TypeError, InvalidOperation):
@@ -288,7 +288,7 @@ class LocationImporter(object):
                 message = 'created %s %s' % (location_type, loc.name)
 
             return {
-                'id': loc._id,
+                'id': loc.location_id,
                 'message': message
             }
         else:

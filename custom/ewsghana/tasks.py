@@ -2,20 +2,30 @@ from celery.schedules import crontab
 from celery.task import task, periodic_task
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.users.models import CommCareUser
-from custom.ewsghana.api import EWSApi
+from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
+from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts, OnGoingStockoutsRMS
+from custom.ewsghana.alerts.urgent_alerts import UrgentNonReporting, UrgentStockoutAlert
+from custom.ewsghana.api import EWSApi, EmailSettingsSync
 
 from corehq.apps.commtrack.models import StockState, Product
 
 from custom.ewsghana.api import GhanaEndpoint
+from custom.ewsghana.balance import BalanceMigration
 from custom.ewsghana.extensions import ews_location_extension, ews_smsuser_extension, ews_webuser_extension, \
     ews_product_extension
 from custom.ewsghana.models import EWSGhanaConfig
+from custom.ewsghana.reminders.first_soh_reminder import FirstSOHReminder
+from custom.ewsghana.reminders.rrirv_reminder import RRIRVReminder
+from custom.ewsghana.reminders.second_soh_reminder import SecondSOHReminder
+from custom.ewsghana.reminders.stockout_reminder import StockoutReminder
+from custom.ewsghana.reminders.third_soh_reminder import ThirdSOHReminder
+from custom.ewsghana.reminders.visit_website_reminder import VisitWebsiteReminder
 from custom.ewsghana.stock_data import EWSStockDataSynchronization
 from custom.logistics.commtrack import bootstrap_domain as ews_bootstrap_domain, \
     bootstrap_domain
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task
-import settings
+from dimagi.utils.couch.database import iter_docs
 
 
 EXTENSIONS = {
@@ -39,23 +49,104 @@ EWS_FACILITIES = [304, 324, 330, 643, 327, 256, 637, 332, 326, 338, 340, 331, 34
                   526, 4, 30, 1, 14, 23, 521, 532, 516, 461, 520, 525, 961, 641, 257, 348]
 
 
-@periodic_task(run_every=crontab(hour="23", minute="55", day_of_week="*"),
-               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-def migration_task():
-    for config in EWSGhanaConfig.get_all_steady_sync_configs():
-        if config.enabled:
-            endpoint = GhanaEndpoint.from_config(config)
-            ews_bootstrap_domain(EWSApi(config.domain, endpoint))
-            stock_data_task.delay(EWSStockDataSynchronization(config.domain, endpoint))
+# Alert when facilities have not been reported continuously for 3 weeks
+@periodic_task(run_every=crontab(hour=10, minute=00),
+               queue='logistics_reminder_queue')
+def on_going_non_reporting():
+    domains = EWSGhanaConfig.get_all_enabled_domains()
+    for domain in domains:
+        OnGoingNonReporting(domain).send()
 
 
-@task(queue='background_queue')
+# Ongoing STOCKOUTS at SDP and RMS
+@periodic_task(run_every=crontab(hour=10, minute=25),
+               queue='logistics_reminder_queue')
+def on_going_stockout():
+    domains = EWSGhanaConfig.get_all_enabled_domains()
+    for domain in domains:
+        OnGoingStockouts(domain).send()
+        OnGoingStockoutsRMS(domain).send()
+
+
+# Urgent Non-Reporting
+# First monday of month
+@periodic_task(run_every=crontab(day_of_week=1, day_of_month="1-7", hour=8, minute=20),
+               queue='logistics_reminder_queue')
+def urgent_non_reporting():
+    domains = EWSGhanaConfig.get_all_enabled_domains()
+    for domain in domains:
+        UrgentNonReporting(domain).send()
+
+
+# Urgent Stockout
+# First monday of month
+@periodic_task(run_every=crontab(day_of_week=1, day_of_month="1-7", hour=8, minute=20),
+               queue='logistics_reminder_queue')
+def urgent_stockout():
+    domains = EWSGhanaConfig.get_all_enabled_domains()
+    for domain in domains:
+        UrgentStockoutAlert(domain).send()
+
+
+# Thursday 13:54
+@periodic_task(run_every=crontab(day_of_week=4, hour=13, minute=58),
+               queue='logistics_reminder_queue')
+def first_soh_reminder():
+    domains = EWSGhanaConfig.get_all_enabled_domains()
+    for domain in domains:
+        FirstSOHReminder(domain).send()
+
+
+# Monday 13:57
+@periodic_task(run_every=crontab(day_of_week=1, hour=13, minute=57),
+               queue='logistics_reminder_queue')
+def second_soh_reminder():
+    domains = EWSGhanaConfig.get_all_enabled_domains()
+    for domain in domains:
+        SecondSOHReminder(domain).send()
+
+
+# Wednesday 13:54
+@periodic_task(run_every=crontab(day_of_week=3, hour=13, minute=54),
+               queue='logistics_reminder_queue')
+def third_soh_to_super():
+    domains = EWSGhanaConfig.get_all_enabled_domains()
+    for domain in domains:
+        ThirdSOHReminder(domain).send()
+
+
+# Wednesday 14:06
+@periodic_task(run_every=crontab(day_of_week=3, hour=14, minute=6),
+               queue='logistics_reminder_queue')
+def stockout_notification_to_web_supers():
+    domains = EWSGhanaConfig.get_all_enabled_domains()
+    for domain in domains:
+        StockoutReminder(domain).send()
+
+
+@periodic_task(run_every=crontab(day_of_month="28", hour=14, minute=15),
+               queue='logistics_reminder_queue')
+def reminder_to_submit_rrirv():
+    domains = EWSGhanaConfig.get_all_enabled_domains()
+    for domain in domains:
+        RRIRVReminder(domain).send()
+
+
+@periodic_task(run_every=crontab(month_of_year='1,4,7,10', day_of_month=4, hour=10, minute=3),
+               queue='logistics_reminder_queue')
+def reminder_to_visit_website():
+    domains = EWSGhanaConfig.get_all_enabled_domains()
+    for domain in domains:
+        VisitWebsiteReminder(domain).send()
+
+
+@task(queue='logistics_background_queue', acks_late=True)
 def ews_bootstrap_domain_task(domain):
     ews_config = EWSGhanaConfig.for_domain(domain)
     return bootstrap_domain(EWSApi(domain, GhanaEndpoint.from_config(ews_config)))
 
 
-@task(queue='background_queue', ignore_result=True)
+@task(queue='logistics_background_queue', ignore_result=True)
 def ews_clear_stock_data_task(domain):
     StockTransaction.objects.filter(report__domain=domain).delete()
     StockReport.objects.filter(domain=domain).delete()
@@ -63,7 +154,7 @@ def ews_clear_stock_data_task(domain):
     StockState.objects.filter(product_id__in=products).delete()
 
 
-@task(queue='background_queue', ignore_result=True)
+@task(queue='logistics_background_queue', ignore_result=True)
 def delete_last_migrated_stock_data(domain):
     checkpoint = StockDataCheckpoint.objects.get(domain=domain)
     StockReport.objects.filter(domain=domain, date__gte=checkpoint.date).delete()
@@ -74,9 +165,46 @@ def delete_last_migrated_stock_data(domain):
     checkpoint.save()
 
 
-@task(queue='background_queue', ignore_result=True)
+@task(queue='logistics_background_queue', ignore_result=True)
 def convert_user_data_fields_task(domain):
     for user in CommCareUser.by_domain(domain):
         if isinstance(user.user_data.get('role'), basestring):
             user.user_data['role'] = [user.user_data['role']]
             user.save()
+
+
+@task(queue='background_queue', ignore_result=True)
+def migrate_email_settings(domain):
+    config = EWSGhanaConfig.for_domain(domain)
+    endpoint = GhanaEndpoint.from_config(config)
+    migrate_email = EmailSettingsSync(domain)
+
+    for report in endpoint.get_daily_reports(limit=1000)[1]:
+        migrate_email.daily_report_sync(report)
+
+    for report in endpoint.get_weekly_reports(limit=1000)[1]:
+        migrate_email.weekly_report_sync(report)
+
+    for report in endpoint.get_monthly_reports(limit=1000)[1]:
+        migrate_email.monthly_report_sync(report)
+
+
+@task(queue='logistics_background_queue', ignore_result=True)
+def delete_connections_field_task(domain):
+    to_save = []
+    for user in iter_docs(CommCareUser.get_db(), CommCareUser.ids_by_domain(domain)):
+        if 'connections' in user['user_data']:
+            del user['user_data']['connections']
+            to_save.append(user)
+            if len(to_save) > 500:
+                CommCareUser.get_db().bulk_save(to_save)
+                to_save = []
+
+    if to_save:
+        CommCareUser.get_db().bulk_save(to_save)
+
+
+@task(queue='logistics_background_queue', ignore_result=True, acks_late=True)
+def balance_migration_task(domain, date):
+    endpoint = GhanaEndpoint.from_config(EWSGhanaConfig.for_domain(domain))
+    BalanceMigration(domain, endpoint).balance_migration(date)

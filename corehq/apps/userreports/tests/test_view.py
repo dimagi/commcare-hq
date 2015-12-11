@@ -3,19 +3,22 @@ import uuid
 from django.test import TestCase
 
 from corehq.apps.userreports import tasks
-from corehq import ConfigurableReport, ReportConfiguration, Session
-from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.dbaccessors import delete_all_report_configs
+from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
+from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.db import Session
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
-class ConfigurableReportViewTest(TestCase):
-    domain = 'my_domain'
-    case_type = 'my_case_type'
+class ConfigurableReportTestMixin(object):
+    domain = "TEST_DOMAIN"
+    case_type = "CASE_TYPE"
 
     @classmethod
     def _new_case(cls, properties):
@@ -24,11 +27,20 @@ class ConfigurableReportViewTest(TestCase):
             create=True,
             case_id=id,
             case_type=cls.case_type,
-            version=V2,
             update=properties,
         ).as_xml()
         post_case_blocks([case_block], {'domain': cls.domain})
         return CommCareCase.get(id)
+
+    @classmethod
+    def _delete_everything(cls):
+        delete_all_cases()
+        for config in DataSourceConfiguration.all():
+            config.delete()
+        delete_all_report_configs()
+
+
+class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def _build_report(cls):
@@ -122,13 +134,6 @@ class ConfigurableReportViewTest(TestCase):
         report_config.save()
         return report_config
 
-    @classmethod
-    def _delete_everything(cls):
-        delete_all_cases()
-        for config in DataSourceConfiguration.all():
-            config.delete()
-        for config in ReportConfiguration.all():
-            config.delete()
 
     @classmethod
     def tearDownClass(cls):
@@ -148,9 +153,9 @@ class ConfigurableReportViewTest(TestCase):
         """
         # Create a configurable report
         view = ConfigurableReport()
-        view.domain = self.domain
-        view.lang = "en"
-        view.report_config_id = self.report._id
+        view._domain = self.domain
+        view._lang = "en"
+        view._report_config_id = self.report._id
 
         self.assertEqual(
             view.export_table,

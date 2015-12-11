@@ -1,11 +1,12 @@
+from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.reminders.models import (Message, METHOD_SMS,
     METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,
-    METHOD_EMAIL, CaseReminderHandler)
+    METHOD_EMAIL, CaseReminderHandler, EmailUsage)
 from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.reminders.util import get_unverified_number_for_recipient
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import get_session_by_session_id, SQLXFormsSession
-from corehq.apps.sms.mixin import (VerifiedNumber, apply_leniency,
-    CommCareMobileContactMixin, InvalidFormatException)
+from corehq.apps.sms.mixin import VerifiedNumber
 from touchforms.formplayer.api import current_question, TouchformsError
 from corehq.apps.sms.api import (
     send_sms, send_sms_to_verified_number, MessageMetadata
@@ -29,6 +30,7 @@ from django.utils.translation import ugettext_noop
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.modules import to_function
 
+TRIAL_MAX_EMAILS = 50
 ERROR_RENDERING_MESSAGE = ugettext_noop("Error rendering templated message for language '%s'. Please check message syntax.")
 ERROR_NO_VERIFIED_NUMBER = ugettext_noop("Recipient has no phone number.")
 ERROR_NO_OTHER_NUMBERS = ugettext_noop("Recipient has no phone number.")
@@ -74,25 +76,8 @@ def get_workflow(handler):
 def get_recipient_phone_number(reminder, recipient, verified_numbers):
     verified_number = verified_numbers.get(recipient.get_id, None)
     unverified_number = None
-
     if verified_number is None:
-        if isinstance(recipient, CouchUser):
-            try:
-                unverified_number = recipient.phone_number
-            except Exception:
-                unverified_number = None
-        elif isinstance(recipient, CommCareCase):
-            unverified_number = recipient.get_case_property("contact_phone_number")
-            unverified_number = apply_leniency(unverified_number)
-            if unverified_number:
-                try:
-                    CommCareMobileContactMixin.validate_number_format(
-                        unverified_number)
-                except InvalidFormatException:
-                    unverified_number = None
-            else:
-                unverified_number = None
-
+        unverified_number = get_unverified_number_for_recipient(recipient)
     return (verified_number, unverified_number)
 
 
@@ -152,6 +137,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, logged_event
     if uses_custom_content_handler and not content_handler:
         return
 
+    domain_obj = Domain.get_by_name(reminder.domain, strict=True)
     for recipient in recipients:
         logged_subevent = logged_event.create_subevent(handler, reminder, recipient)
 
@@ -173,7 +159,6 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, logged_event
         verified_number, unverified_number = get_recipient_phone_number(
             reminder, recipient, verified_numbers)
 
-        domain_obj = Domain.get_by_name(reminder.domain, strict=True)
         if message:
             metadata = MessageMetadata(
                 workflow=workflow or get_workflow(handler),
@@ -182,7 +167,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, logged_event
             )
             if verified_number is not None:
                 send_sms_to_verified_number(verified_number,
-                    message, metadata)
+                    message, metadata, logged_subevent=logged_subevent)
             elif isinstance(recipient, CouchUser) and unverified_number:
                 send_sms(reminder.domain, recipient, unverified_number,
                     message, metadata)
@@ -271,7 +256,8 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
                             xforms_session_couch_id=session._id,
                         )
                         resp = current_question(session_id)
-                        send_sms_to_verified_number(vn, resp.event.text_prompt, metadata)
+                        send_sms_to_verified_number(vn, resp.event.text_prompt, metadata,
+                            logged_subevent=session.related_subevent)
     else:
         reminder.xforms_session_ids = []
         domain_obj = Domain.get_by_name(reminder.domain, strict=True)
@@ -357,7 +343,8 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
                     xforms_session_couch_id=session._id,
                 )
                 if verified_number:
-                    send_sms_to_verified_number(verified_number, message, metadata)
+                    send_sms_to_verified_number(verified_number, message, metadata,
+                        logged_subevent=logged_subevent)
                 else:
                     send_sms(reminder.domain, recipient, unverified_number,
                         message, metadata)
@@ -421,6 +408,8 @@ def fire_email_event(reminder, handler, recipients, verified_numbers, logged_eve
     current_event = reminder.current_event
     case = reminder.case
     template_params = get_message_template_params(case)
+    email_usage = EmailUsage.get_or_create_usage_record(reminder.domain)
+    is_trial = domain_is_on_trial(reminder.domain)
 
     uses_custom_content_handler, content_handler = get_custom_content_handler(handler, logged_event)
     if uses_custom_content_handler and not content_handler:
@@ -454,7 +443,11 @@ def fire_email_event(reminder, handler, recipients, verified_numbers, logged_eve
                 email_address = None
 
             if email_address:
+                if is_trial and EmailUsage.get_total_count(reminder.domain) >= TRIAL_MAX_EMAILS:
+                    logged_subevent.error(MessagingEvent.ERROR_TRIAL_EMAIL_LIMIT_REACHED)
+                    continue
                 send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [email_address])
+                email_usage.update_count()
             else:
                 logged_subevent.error(MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
                 continue

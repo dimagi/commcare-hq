@@ -1,0 +1,60 @@
+{% extends "performance_sms/performance_sms_base.html" %}
+g{% load i18n %}
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        $(function () {
+            $('.send-message').click(function (event) {
+                var configId = $(this).data('config');
+                $('form#' + configId).submit();
+            });
+        });
+    </script>
+{% endblock %}
+{% block main_column %}
+    <h2>{% trans 'Performance Messages' %}</h2>
+    <p>{% trans 'Performance messages allow you to setup scheduled performance-based messages to your workforce in a few simple steps.' %}</p>
+    <a class="btn btn-success" href="{% url "performance_sms.add_performance_config" domain %}">
+        <i class="icon icon-white icon-plus"></i> {% trans 'New Performance Message' %}
+    </a>
+    <hr>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>{% trans 'Recipient Group' %}</th>
+                <th>{% trans 'Frequency' %}</th>
+                <th>{% trans 'Message' %}</th>
+                <th>{% trans 'Actions' %}</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for performance_config in performance_configs %}
+            <tr>
+                <td>{{ performance_config.group.name }}</td>
+                <td>{{ performance_config.schedule.interval }}</td>
+                <td>{{ performance_config.template }}</td>
+                <td class="btn-group">
+                    <a class="btn btn-success" href="{% url "performance_sms.edit_performance_config" domain performance_config.get_id %}">
+                        <i class="icon icon-white icon-edit"></i> {% trans 'Edit' %}
+                    </a>
+                    <a type="button" class="btn btn-info" href="{% url "performance_sms.sample_performance_messages" domain performance_config.get_id %}">
+                        <i class="icon icon-white icon-envelope"></i> {% trans "Sample" %}
+                    </a>
+                    <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="caret"></span>
+                        <span class="sr-only"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a href="{% url "performance_sms.sample_performance_messages" domain performance_config.get_id %}">{% trans "Show Sample" %}</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li><a class="send-message" href="#" data-config="{{ performance_config.get_id }}">{% trans "Send Real Messages Now" %}</a></li>
+                    </ul>
+                    <form id="{{ performance_config.get_id }}" action="{% url "performance_sms.send_performance_messages" domain performance_config.get_id %}" method="POST" class="hidden" >
+                    </form>
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="3">{% trans "No performance messages setup yet." %}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

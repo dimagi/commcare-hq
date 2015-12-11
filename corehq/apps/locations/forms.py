@@ -18,7 +18,7 @@ from corehq.apps.users.util import raw_username, user_display_string
 
 from .models import Location, SQLLocation
 from .signals import location_created, location_edited
-from .util import allowed_child_types
+from .util import allowed_child_types, get_lineage_from_location_id
 
 
 class ParentLocWidget(forms.Widget):
@@ -47,9 +47,17 @@ class LocationForm(forms.Form):
         required=False,
         widget=ParentLocWidget(),
     )
-    name = forms.CharField(max_length=100)
-    location_type = forms.CharField(widget=LocTypeWidget(), required=False)
+    name = forms.CharField(
+        label=_('Name'),
+        max_length=100,
+    )
+    location_type = forms.CharField(
+        label=_('Organization Level'),
+        required=False,
+        widget=LocTypeWidget(),
+    )
     coordinates = forms.CharField(
+        label=_('Coordinates'),
         max_length=30,
         required=False,
         help_text=_("enter as 'lat lon' or 'lat, lon' "
@@ -78,6 +86,8 @@ class LocationForm(forms.Form):
 
         # seed form data from couch doc
         kwargs['initial'] = dict(self.location._doc)
+        if not self.is_new_location:
+            kwargs['initial']['location_type'] = self.location.location_type
         kwargs['initial']['parent_id'] = self.location.parent_id
         lat, lon = (getattr(self.location, k, None)
                     for k in ('latitude', 'longitude'))
@@ -158,10 +168,10 @@ class LocationForm(forms.Form):
         parent = Location.get(parent_id) if parent_id else None
         self.cleaned_data['parent'] = parent
 
-        if self.location._id is not None and self.location.parent_id != parent_id:
+        if self.location.location_id is not None and self.location.parent_id != parent_id:
             # location is being re-parented
 
-            if parent and self.location._id in parent.path:
+            if parent and self.location.location_id in parent.path:
                 assert False, 'location being re-parented to self or descendant'
 
             if self.location.descendants:
@@ -194,7 +204,7 @@ class LocationForm(forms.Form):
 
         if (SQLLocation.objects.filter(domain=self.location.domain,
                                        site_code__iexact=site_code)
-                               .exclude(location_id=self.location._id)
+                               .exclude(location_id=self.location.location_id)
                                .exists()):
             raise forms.ValidationError(
                 'another location already uses this site code'
@@ -242,16 +252,15 @@ class LocationForm(forms.Form):
             raise ValueError('form does not validate')
 
         location = instance or self.location
-        is_new = location._id is None
+        is_new = location.location_id is None
 
         for field in ('name', 'location_type', 'site_code'):
             setattr(location, field, self.cleaned_data[field])
         coords = self.cleaned_data['coordinates']
         setattr(location, 'latitude', coords[0] if coords else None)
         setattr(location, 'longitude', coords[1] if coords else None)
-        location.lineage = Location(
-            parent=self.cleaned_data['parent_id']
-        ).lineage
+        if self.cleaned_data['parent_id']:
+            location.lineage = get_lineage_from_location_id(self.cleaned_data['parent_id'])
         location.metadata = self.custom_data.get_data_to_save()
 
         for k, v in self.cleaned_data.iteritems():
@@ -262,9 +271,10 @@ class LocationForm(forms.Form):
         orig_parent_id = self.cleaned_data.get('orig_parent_id')
         reparented = orig_parent_id is not None
         if reparented:
+            # todo: this property isn't used. could be deleted if we aren't expecting
+            # to do anything more with the data
             location.flag_post_move = True
             location.previous_parents.append(orig_parent_id)
-
         if commit:
             location.save()
 
@@ -274,11 +284,6 @@ class LocationForm(forms.Form):
             location_edited.send(sender='loc_mgmt',
                                  loc=location,
                                  moved=reparented)
-
-        if reparented:
-            # post-location move processing here
-            # (none for now; do it as a batch job)
-            pass
 
         return location
 
@@ -311,7 +316,7 @@ class UsersAtLocationForm(MultipleSelectionForm):
         user_query = (UserES()
                       .domain(self.domain_object.name)
                       .mobile_users()
-                      .location(self.location._id)
+                      .location(self.location.location_id)
                       .fields([]))
         return user_query.run().doc_ids
 

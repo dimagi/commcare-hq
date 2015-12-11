@@ -2,7 +2,12 @@ from django.test import TestCase
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_all_commcare_users_by_domain,
-    get_user_docs_by_username
+    get_user_docs_by_username,
+    delete_all_users,
+    get_all_user_ids,
+)
+from corehq.apps.users.dbaccessors.couch_users import (
+    get_user_id_by_username,
 )
 from corehq.apps.domain.models import Domain
 
@@ -10,6 +15,7 @@ from corehq.apps.domain.models import Domain
 class AllCommCareUsersTest(TestCase):
     @classmethod
     def setUpClass(cls):
+        delete_all_users()
         cls.ccdomain = Domain(name='cc_user_domain')
         cls.ccdomain.save()
         cls.other_domain = Domain(name='other_domain')
@@ -42,9 +48,7 @@ class AllCommCareUsersTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.ccdomain.delete()
-        cls.other_domain.delete()
-        cls.web_user.delete()
+        delete_all_users()
 
     def test_get_all_commcare_users_by_domain(self):
         expected_users = [self.ccuser_2, self.ccuser_1]
@@ -74,3 +78,13 @@ class AllCommCareUsersTest(TestCase):
             get_user_docs_by_username(usernames),
             [u.to_json() for u in users]
         )
+
+    def test_get_all_ids(self):
+        all_ids = get_all_user_ids()
+        self.assertEqual(4, len(all_ids))
+        for id in [self.ccuser_1._id, self.ccuser_2._id, self.web_user._id, self.ccuser_other_domain._id]:
+            self.assertTrue(id in all_ids)
+
+    def test_get_id_by_username(self):
+        user_id = get_user_id_by_username(self.ccuser_1.username)
+        self.assertEqual(user_id, self.ccuser_1._id)

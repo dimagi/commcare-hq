@@ -3,7 +3,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Fieldset, Hidden, Layout, Submit
 from django import forms
 from django.utils.translation import ugettext as _
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 
 
 class CopyApplicationForm(forms.Form):

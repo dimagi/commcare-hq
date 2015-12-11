@@ -1,5 +1,5 @@
 from django.test import TestCase
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from custom.logistics.models import StockDataCheckpoint, MigrationCheckpoint
 
 

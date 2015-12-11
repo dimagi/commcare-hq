@@ -18,15 +18,13 @@ from corehq.apps.analytics.tasks import (
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.exceptions import NameUnavailableException
-from corehq.apps.orgs.views import orgs_landing
 from corehq.apps.registration.models import RegistrationRequest
-from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm, OrganizationRegistrationForm
+from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm
 from corehq.apps.registration.utils import activate_new_user, send_new_request_update_email, request_new_domain, \
     send_domain_registration_email
 from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import get_ip
-from corehq.apps.orgs.models import Organization
 from corehq.util.context_processors import get_per_domain_context
 
 DOMAIN_TYPES = (
@@ -71,20 +69,25 @@ def register_user(request, domain_type=None):
                 activate_new_user(form, ip=get_ip(request))
                 new_user = authenticate(username=form.cleaned_data['email'],
                                         password=form.cleaned_data['password'])
-                login(request, new_user)
-                track_workflow.delay(new_user.email, "Requested new account")
+
                 meta = {
                     'HTTP_X_FORWARDED_FOR': request.META.get('HTTP_X_FORWARDED_FOR'),
                     'REMOTE_ADDR': request.META.get('REMOTE_ADDR'),
-                    'opt_into_emails': form.cleaned_data['email_opt_in'],
-                }
-                track_created_hq_account_on_hubspot.delay(new_user, request.COOKIES, meta)
+                }  # request.META can't be pickled for use by the task, so we copy the pertinent properties
+                track_created_hq_account_on_hubspot.delay(
+                    CouchUser.get_by_username(new_user.username),
+                    request.COOKIES,
+                    meta
+                )
+                track_workflow(new_user.email, "Requested new account")
+
+                login(request, new_user)
+
                 requested_domain = form.cleaned_data['hr_name']
                 if form.cleaned_data['create_domain']:
-                    org = None
                     try:
                         requested_domain = request_new_domain(
-                            request, form, org, new_user=True, domain_type=domain_type)
+                            request, form, new_user=True, domain_type=domain_type)
                     except NameUnavailableException:
                         context.update({
                             'error_msg': _('Project name already taken - please try another'),
@@ -98,9 +101,11 @@ def register_user(request, domain_type=None):
                     'track_domain_registration': True,
                 })
                 return render(request, 'registration/confirmation_sent.html', context)
+            context.update({'create_domain': form.cleaned_data['create_domain']})
         else:
             form = NewWebUserRegistrationForm(
                 initial={'domain_type': domain_type, 'email': prefilled_email, 'create_domain': True})
+            context.update({'create_domain': True})
 
         context.update({
             'form': form,
@@ -111,43 +116,9 @@ def register_user(request, domain_type=None):
 
 @transaction.atomic
 @login_required
-def register_org(request, template="registration/org_request.html"):
-    referer_url = request.GET.get('referer', '')
-    if request.method == "POST":
-        form = OrganizationRegistrationForm(request.POST, request.FILES)
-        if form.is_valid():
-            name = form.cleaned_data["org_name"]
-            title = form.cleaned_data["org_title"]
-            email = form.cleaned_data["email"]
-            url = form.cleaned_data["url"]
-            location = form.cleaned_data["location"]
-
-            org = Organization(name=name, title=title, location=location, email=email, url=url)
-            org.save()
-
-            request.couch_user.add_org_membership(org.name, is_admin=True)
-            request.couch_user.save()
-
-            send_new_request_update_email(request.couch_user, get_ip(request), org.name, entity_type="org")
-
-            if referer_url:
-                return redirect(referer_url)
-            messages.info(request, render_to_string('orgs/partials/landing_notification.html',
-                                                       {"org": org, "user": request.couch_user}), extra_tags="html")
-            return HttpResponseRedirect(reverse("orgs_landing", args=[name]))
-    else:
-        form = OrganizationRegistrationForm()
-
-    return render(request, template, {
-        'form': form,
-    })
-
-
-@transaction.atomic
-@login_required
 def register_domain(request, domain_type=None):
     domain_type = domain_type or 'commcare'
-    if domain_type not in DOMAIN_TYPES or request.couch_user.is_commcare_user():
+    if domain_type not in DOMAIN_TYPES or (not request.couch_user) or request.couch_user.is_commcare_user():
         raise Http404()
 
     context = get_domain_context(domain_type)
@@ -166,7 +137,6 @@ def register_domain(request, domain_type=None):
 
     if request.method == 'POST':
         nextpage = request.POST.get('next')
-        org = request.POST.get('org')
         form = DomainRegistrationForm(request.POST)
         if form.is_valid():
             reqs_today = RegistrationRequest.get_requests_today()
@@ -182,7 +152,7 @@ def register_domain(request, domain_type=None):
 
             try:
                 domain_name = request_new_domain(
-                    request, form, org, new_user=is_new, domain_type=domain_type)
+                    request, form, new_user=is_new, domain_type=domain_type)
             except NameUnavailableException:
                 context.update({
                     'error_msg': _('Project name already taken - please try another'),
@@ -204,9 +174,6 @@ def register_domain(request, domain_type=None):
                 if referer_url:
                     return redirect(referer_url)
                 return HttpResponseRedirect(reverse("domain_homepage", args=[domain_name]))
-        else:
-            if nextpage:
-                return orgs_landing(request, org, form=form)
     else:
         form = DomainRegistrationForm(initial={'domain_type': domain_type})
 
@@ -237,7 +204,9 @@ def resend_confirmation(request):
 
     if request.method == 'POST':
         try:
-            send_domain_registration_email(dom_req.new_user_username, dom_req.domain, dom_req.activation_guid)
+            send_domain_registration_email(dom_req.new_user_username,
+                    dom_req.domain, dom_req.activation_guid,
+                    request.user.get_full_name())
         except Exception:
             context.update({
                 'error_msg': _('There was a problem with your request'),
@@ -307,7 +276,7 @@ def confirm_domain(request, guid=None):
             'Your account has been successfully activated.  Thank you for taking '
             'the time to confirm your email address: %s.'
         % (requesting_user.username))
-    track_workflow.delay(requesting_user.email, "Confirmed new project")
+    track_workflow(requesting_user.email, "Confirmed new project")
     track_confirmed_account_on_hubspot.delay(requesting_user)
     return HttpResponseRedirect(reverse("dashboard_default", args=[requested_domain]))
 

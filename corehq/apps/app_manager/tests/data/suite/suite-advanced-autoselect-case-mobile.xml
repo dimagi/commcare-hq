@@ -1,0 +1,15 @@
+<partial>
+  <entry>
+    <form>http://openrosa.org/formdesigner/5FBED77B-E327-495D-97E8-0733B97D8EA5</form>
+    <command id="m1-f0">
+      <text>
+        <locale id="forms.m1f0"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <session>
+      <datum id="case_id_case_clinic" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open']"
+      value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long" autoselect="true"/>
+    </session>
+  </entry>
+</partial>

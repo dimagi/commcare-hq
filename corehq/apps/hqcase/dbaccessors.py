@@ -1,5 +1,6 @@
+from corehq.util.soft_assert.api import soft_assert
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.database import iter_docs, get_db
+from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case.models import CommCareCase
 
 
@@ -29,6 +30,9 @@ def get_case_ids_in_domain(domain, type=None):
     if type is None:
         type_keys = [[]]
     elif isinstance(type, (list, tuple)):
+        soft_assert('skelly@{}'.format('dimagi.com'))(
+            False, 'get_case_ids_in_domain called with typle / list arg for type'
+        )
         type_keys = [[t] for t in type]
     elif isinstance(type, basestring):
         type_keys = [[type]]
@@ -154,27 +158,10 @@ def get_number_of_cases_in_domain_by_owner(domain, owner_id):
     return res['value'] if res else 0
 
 
-def get_n_case_ids_in_domain_by_owner(domain, owner_id, n,
-                                      start_after_case_id=None):
-    view_kwargs = {}
-    if start_after_case_id:
-        view_kwargs['startkey_docid'] = start_after_case_id
-        view_kwargs['skip'] = 1
-
-    return [row['id'] for row in CommCareCase.get_db().view(
-        "hqcase/by_owner",
-        reduce=False,
-        startkey=[domain, owner_id, False],
-        endkey=[domain, owner_id, False],
-        limit=n,
-        **view_kwargs
-    )]
-
-
 def iter_lite_cases_json(case_ids, chunksize=100):
     for case_id_chunk in chunked(case_ids, chunksize):
         rows = CommCareCase.get_db().view(
-            'case/get_lite',
+            'cases_get_lite/get_lite',
             keys=case_id_chunk,
             reduce=False,
         )
@@ -184,7 +171,7 @@ def iter_lite_cases_json(case_ids, chunksize=100):
 
 def get_lite_case_json(case_id):
     return CommCareCase.get_db().view(
-        "case/get_lite",
+        "cases_get_lite/get_lite",
         key=case_id,
         include_docs=False,
     ).one()
@@ -198,7 +185,7 @@ def get_case_properties(domain, case_type=None):
     key = [domain]
     if case_type:
         key.append(case_type)
-    keys = [row['key'] for row in get_db().view(
+    keys = [row['key'] for row in CommCareCase.get_db().view(
         'hqcase/all_case_properties',
         startkey=key,
         endkey=key + [{}],

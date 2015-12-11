@@ -12,7 +12,10 @@ DATABASES = {
         'USER': 'postgres',
         'PASSWORD': '',
         'HOST': 'localhost',
-        'PORT': '5432'
+        'PORT': '5432',
+        'TEST': {
+            'SERIALIZE': False,  # https://docs.djangoproject.com/en/1.8/ref/settings/#serialize
+        },
     }
 }
 
@@ -36,7 +39,6 @@ EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend'
 BITLY_LOGIN = None
 BITLY_APIKEY = '*******'
 
-
 ####### Jar signing config ########
 
 _ROOT_DIR  = os.path.dirname(os.path.abspath(__file__))
@@ -48,18 +50,17 @@ JAR_SIGN = dict(
     key_pass = "onetwothreefourfive",
 )
 
-# prod settings
+# soil settings
 SOIL_DEFAULT_CACHE = "redis"
-SOIL_BACKEND = "soil.CachedDownload"
 
 redis_cache = {
-    'BACKEND': 'redis_cache.cache.RedisCache',
-    'LOCATION': 'localhost:6379:0',
+    'BACKEND': 'django_redis.cache.RedisCache',
+    'LOCATION': 'redis://127.0.0.1:6379/0',
     'OPTIONS': {},
 }
 CACHES = {
     'default': redis_cache,
-    'redis': redis_cache
+    'redis': redis_cache,
 }
 
 AUDIT_MODEL_SAVE = ['django.contrib.auth.models.User']
@@ -102,3 +103,12 @@ LOGGING = {
 SOUTH_TESTS_MIGRATE = True
 PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = True
 PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
+
+
+ENABLE_PRELOGIN_SITE = True
+
+TESTS_SHOULD_TRACK_CLEANLINESS = True
+
+IS_TRAVIS = True
+
+PILLOWTOP_MACHINE_ID = 'testhq'

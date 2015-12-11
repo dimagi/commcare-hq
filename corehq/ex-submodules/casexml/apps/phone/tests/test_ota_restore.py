@@ -2,12 +2,11 @@ from django.test import TestCase, SimpleTestCase
 import os
 import time
 from django.test.utils import override_settings
-from casexml.apps.phone.data_providers.case.batched import BatchedCaseSyncOperation
-from casexml.apps.phone.tests.utils import generate_restore_payload
-from couchforms.tests.testutils import post_xform_to_couch
-from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
-from casexml.apps.phone.restore import RestoreConfig, RestoreState, RestoreParams
-from casexml.apps.case.xform import process_cases
+from casexml.apps.phone.tests.utils import generate_restore_payload, get_restore_config
+from corehq.apps.receiverwrapper import submit_form_locally
+from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs, \
+    delete_all_xforms
+from casexml.apps.phone.restore import RestoreConfig, CachedResponse
 from datetime import datetime, date
 from casexml.apps.phone.models import User, SyncLog
 from casexml.apps.phone import xml
@@ -63,6 +62,7 @@ class OtaRestoreTest(TestCase):
         cls.project = Domain(name='ota-restore-tests')
 
     def tearDown(self):
+        delete_all_xforms()
         delete_all_cases()
         delete_all_sync_logs()
         restore_config = RestoreConfig(project=self.project, user=dummy_user())
@@ -97,31 +97,33 @@ class OtaRestoreTest(TestCase):
         )
 
     def testOverwriteCache(self):
-        restore_payload = generate_restore_payload(
+        restore_config = get_restore_config(
             self.project, dummy_user(), items=True, force_cache=True
         )
-        restore_payload_cached = generate_restore_payload(
+        restore_config_cached = get_restore_config(
             self.project, dummy_user(), items=True
         )
-        restore_payload_overwrite = generate_restore_payload(
+        restore_config_overwrite = get_restore_config(
             self.project, dummy_user(), items=True, overwrite_cache=True
         )
-        self.assertEqual(restore_payload, restore_payload_cached)
-        self.assertNotEqual(restore_payload, restore_payload_overwrite)
+        self.assertNotIsInstance(restore_config.get_payload(), CachedResponse)
+        self.assertIsInstance(restore_config_cached.get_payload(), CachedResponse)
+        self.assertNotIsInstance(restore_config_overwrite.get_payload(), CachedResponse)
+
+        # even cached responses change the sync log id so they are not the same
+        restore_payload = restore_config.get_payload().as_string()
+        self.assertNotEqual(restore_payload, restore_config_cached.get_payload().as_string())
+        self.assertNotEqual(restore_payload, restore_config_overwrite.get_payload().as_string())
 
     def testUserRestoreWithCase(self):
         file_path = os.path.join(os.path.dirname(__file__),
                                  "data", "create_short.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = post_xform_to_couch(xml_data, domain=self.project.name)
-        # implicit length assertion
-        [newcase] = process_cases(form)
-        user = dummy_user()
 
-        self.assertEqual(1, len(list(
-            BatchedCaseSyncOperation(RestoreState(self.project, user, RestoreParams())).get_all_case_updates()
-        )))
+        # implicit length assertion
+        _, _, [newcase] = submit_form_locally(xml_data, domain=self.project.name)
+
         expected_case_block = """
         <case>
             <case_id>asdf</case_id>
@@ -188,8 +190,7 @@ class OtaRestoreTest(TestCase):
                                  "data", "create_short.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = post_xform_to_couch(xml_data, domain=self.project.name)
-        process_cases(form)
+        submit_form_locally(xml_data, domain=self.project.name)
 
         time.sleep(1)
         restore_payload = generate_restore_payload(self.project, dummy_user(), items=items)
@@ -234,8 +235,7 @@ class OtaRestoreTest(TestCase):
                                  "data", "update_short.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = post_xform_to_couch(xml_data, domain=self.project.name)
-        process_cases(form)
+        submit_form_locally(xml_data, domain=self.project.name)
 
         time.sleep(1)
         sync_restore_payload = generate_restore_payload(
@@ -267,15 +267,14 @@ class OtaRestoreTest(TestCase):
                                  "data", "attributes.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
-        form = post_xform_to_couch(xml_data, domain=self.project.name)
-        [newcase] = process_cases(form)
-        
+        _, _, [newcase] = submit_form_locally(xml_data, domain=self.project.name)
+
         self.assertTrue(isinstance(newcase.adate, dict))
-        self.assertEqual(date(2012,02,01), newcase.adate["#text"])
+        self.assertEqual(date(2012, 02, 01), newcase.adate["#text"])
         self.assertEqual("i am an attribute", newcase.adate["@someattr"])
         self.assertTrue(isinstance(newcase.dateattr, dict))
         self.assertEqual("this shouldn't break", newcase.dateattr["#text"])
-        self.assertEqual(date(2012,01,01), newcase.dateattr["@somedate"])
+        self.assertEqual(date(2012, 01, 01), newcase.dateattr["@somedate"])
         self.assertTrue(isinstance(newcase.stringattr, dict))
         self.assertEqual("neither should this", newcase.stringattr["#text"])
         self.assertEqual("i am a string", newcase.stringattr["@somestring"])

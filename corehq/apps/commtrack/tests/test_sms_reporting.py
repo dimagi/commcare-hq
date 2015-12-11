@@ -4,6 +4,7 @@ from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.tests.util import CommTrackTest, FIXED_USER, ROAMING_USER
 from corehq.apps.commtrack.sms import handle
 from corehq.toggles import STOCK_AND_RECEIPT_SMS_HANDLER, NAMESPACE_DOMAIN
+from couchforms.dbaccessors import get_commtrack_forms
 
 
 class SMSTests(CommTrackTest):
@@ -12,7 +13,7 @@ class SMSTests(CommTrackTest):
 
     def check_stock(self, code, amount, case_id=None, section_id='stock'):
         if not case_id:
-            case_id = self.sp._id
+            case_id = self.sp.case_id
 
         [product] = filter(lambda p: p.code_ == code, self.products)
 
@@ -35,7 +36,7 @@ class StockReportTest(SMSTests):
     user_definitions = [ROAMING_USER, FIXED_USER]
 
     def testStockReportRoaming(self):
-        self.assertEqual(0, len(self.get_commtrack_forms(self.domain.name)))
+        self.assertEqual(0, len(get_commtrack_forms(self.domain.name)))
         amounts = {
             'pp': 10,
             'pq': 20,
@@ -47,7 +48,7 @@ class StockReportTest(SMSTests):
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
         ))
         self.assertTrue(handled)
-        forms = list(self.get_commtrack_forms(self.domain.name))
+        forms = list(get_commtrack_forms(self.domain.name))
         self.assertEqual(1, len(forms))
         self.assertEqual(_get_location_from_sp(self.sp), _get_location_from_form(forms[0]))
 
@@ -60,12 +61,12 @@ class StockReportTest(SMSTests):
         for code, amt in amounts.items():
             [product] = filter(lambda p: p.code_ == code, self.products)
             trans = StockTransaction.objects.get(product_id=product._id)
-            self.assertEqual(self.sp._id, trans.case_id)
+            self.assertEqual(self.sp.case_id, trans.case_id)
             self.assertEqual(0, trans.quantity)
             self.assertEqual(amt, trans.stock_on_hand)
 
     def testStockReportFixed(self):
-        self.assertEqual(0, len(self.get_commtrack_forms(self.domain.name)))
+        self.assertEqual(0, len(get_commtrack_forms(self.domain.name)))
 
         amounts = {
             'pp': 10,
@@ -77,14 +78,14 @@ class StockReportTest(SMSTests):
             report=' '.join('%s %s' % (k, v) for k, v in amounts.items())
         ))
         self.assertTrue(handled)
-        forms = list(self.get_commtrack_forms(self.domain.name))
+        forms = list(get_commtrack_forms(self.domain.name))
         self.assertEqual(1, len(forms))
         self.assertEqual(_get_location_from_sp(self.sp), _get_location_from_form(forms[0]))
 
         for code, amt in amounts.items():
             [product] = filter(lambda p: p.code_ == code, self.products)
             trans = StockTransaction.objects.get(product_id=product._id)
-            self.assertEqual(self.sp._id, trans.case_id)
+            self.assertEqual(self.sp.case_id, trans.case_id)
             self.assertEqual(0, trans.quantity)
             self.assertEqual(amt, trans.stock_on_hand)
 

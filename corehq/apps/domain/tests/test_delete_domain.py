@@ -1,10 +1,10 @@
 from datetime import datetime
 from django.test import TestCase
 from casexml.apps.stock.models import DocDomainMapping, StockReport, StockTransaction
-from corehq import Domain
-from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location, LocationType, SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
+from corehq.form_processor.interfaces.supply import SupplyInterface
 
 
 class TestDeleteDomain(TestCase):
@@ -20,7 +20,7 @@ class TestDeleteDomain(TestCase):
             location_type='facility'
         )
         location.save()
-        SupplyPointCase.create_from_location(domain_name, location)
+        SupplyInterface.create_from_location(domain_name, location)
         report = StockReport.objects.create(
             type='balance',
             domain=domain_name,

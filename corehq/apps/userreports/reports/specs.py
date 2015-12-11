@@ -1,18 +1,24 @@
 import json
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
-from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, ListProperty, DictProperty, ObjectProperty
+from corehq.apps.userreports.sql.columns import DEFAULT_MAXIMUM_EXPANSION
+from dimagi.ext.jsonobject import (
+    BooleanProperty,
+    DictProperty,
+    IntegerProperty,
+    JsonObject,
+    ListProperty,
+    ObjectProperty,
+    StringProperty,
+)
 from jsonobject.base import DefaultProperty
-from sqlagg import CountUniqueColumn, SumColumn
+from sqlagg import CountUniqueColumn, SumColumn, CountColumn, MinColumn, MaxColumn, MeanColumn
 from sqlagg.columns import (
     MonthColumn,
     SimpleColumn,
     YearColumn,
 )
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
-from corehq.apps.userreports.indicators.specs import DataTypeProperty
-from corehq.apps.userreports.reports.filters import DateFilterValue, ChoiceListFilterValue, \
-    NumericFilterValue
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.sql import get_expanded_column_config, SqlColumnConfig
 from corehq.apps.userreports.transforms.factory import TransformFactory
@@ -20,28 +26,16 @@ from corehq.apps.userreports.util import localize
 
 
 SQLAGG_COLUMN_MAP = {
+    'avg': MeanColumn,
     'count_unique': CountUniqueColumn,
+    'count': CountColumn,
+    'min': MinColumn,
+    'max': MaxColumn,
     'month': MonthColumn,
     'sum': SumColumn,
     'simple': SimpleColumn,
     'year': YearColumn,
 }
-
-
-class ReportFilter(JsonObject):
-    type = StringProperty(required=True)
-    slug = StringProperty(required=True)
-    field = StringProperty(required=True)
-    display = DefaultProperty()
-    compare_as_string = BooleanProperty(default=False)
-
-    def create_filter_value(self, value):
-        return {
-            'date': DateFilterValue,
-            'numeric': NumericFilterValue,
-            'choice_list': ChoiceListFilterValue,
-            'dynamic_choice_list': ChoiceListFilterValue,
-        }[self.type](self, value)
 
 
 class ReportColumn(JsonObject):
@@ -50,6 +44,13 @@ class ReportColumn(JsonObject):
     display = DefaultProperty()
     description = StringProperty()
     transform = DictProperty()
+    calculate_total = BooleanProperty(default=False)
+
+    @classmethod
+    def wrap(cls, obj):
+        if 'display' not in obj and 'column_id' in obj:
+            obj['display'] = obj['column_id']
+        return super(ReportColumn, cls).wrap(obj)
 
     def format_data(self, data):
         """
@@ -93,6 +94,7 @@ class FieldColumn(ReportColumn):
         'default',
         'percent_of_total',
     ])
+    sortable = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, obj):
@@ -122,7 +124,7 @@ class FieldColumn(ReportColumn):
             DatabaseColumn(
                 header=self.get_header(lang),
                 agg_column=SQLAGG_COLUMN_MAP[self.aggregation](self.field, alias=self.column_id),
-                sortable=False,
+                sortable=self.sortable,
                 data_slug=self.column_id,
                 format_fn=self.get_format_fn(),
                 help_text=self.description
@@ -136,6 +138,7 @@ class FieldColumn(ReportColumn):
 class ExpandedColumn(ReportColumn):
     type = TypeProperty('expanded')
     field = StringProperty(required=True)
+    max_expansion = IntegerProperty(default=DEFAULT_MAXIMUM_EXPANSION)
 
     @classmethod
     def wrap(cls, obj):
@@ -178,7 +181,11 @@ class AggregateDateColumn(ReportColumn):
 
     def get_format_fn(self):
         # todo: support more aggregation/more formats
-        return lambda data: '{}-{:02d}'.format(int(data['year']), int(data['month']))
+        def _format(data):
+            if not data.get('year', None) or not data.get('month', None):
+                return _('Unknown Date')
+            return '{}-{:02d}'.format(int(data['year']), int(data['month']))
+        return _format
 
     def get_group_by_columns(self):
         return [self._year_column_alias(), self._month_column_alias()]
@@ -273,55 +280,6 @@ def _add_column_id_if_missing(obj):
         obj['column_id'] = obj.get('alias') or obj['field']
 
 
-class FilterChoice(JsonObject):
-    value = DefaultProperty()
-    display = StringProperty()
-
-    def get_display(self):
-        return self.display or self.value
-
-
-class FilterSpec(JsonObject):
-    """
-    This is the spec for a report filter - a thing that should show up as a UI filter element
-    in a report (like a date picker or a select list).
-    """
-    type = StringProperty(required=True, choices=['date', 'numeric', 'choice_list', 'dynamic_choice_list'])
-    slug = StringProperty(required=True)  # this shows up as the ID in the filter HTML
-    field = StringProperty(required=True)  # this is the actual column that is queried
-    display = DefaultProperty()
-    required = BooleanProperty(default=False)
-    datatype = DataTypeProperty(default='string')
-
-    def get_display(self):
-        return self.display or self.slug
-
-
-class DateFilterSpec(FilterSpec):
-    compare_as_string = BooleanProperty(default=False)
-
-
-class ChoiceListFilterSpec(FilterSpec):
-    type = TypeProperty('choice_list')
-    show_all = BooleanProperty(default=True)
-    datatype = DataTypeProperty(default='string')
-    choices = ListProperty(FilterChoice)
-
-
-class DynamicChoiceListFilterSpec(FilterSpec):
-    type = TypeProperty('dynamic_choice_list')
-    show_all = BooleanProperty(default=True)
-    datatype = DataTypeProperty(default='string')
-
-    @property
-    def choices(self):
-        return []
-
-
-class NumericFilterSpec(FilterSpec):
-    type = TypeProperty('numeric')
-
-
 class ChartSpec(JsonObject):
     type = StringProperty(required=True)
     title = StringProperty()
@@ -340,12 +298,35 @@ class PieChartSpec(ChartSpec):
     value_column = StringProperty(required=True)
 
 
+class GraphDisplayColumn(JsonObject):
+    column_id = StringProperty(required=True)
+    display = StringProperty(required=True)
+
+    @classmethod
+    def wrap(cls, obj):
+        # automap column_id to display if display isn't set
+        if isinstance(obj, dict) and 'column_id' in obj and 'display' not in obj:
+            obj['display'] = obj['column_id']
+        return super(GraphDisplayColumn, cls).wrap(obj)
+
+
 class MultibarChartSpec(ChartSpec):
     type = TypeProperty('multibar')
     aggregation_column = StringProperty()
     x_axis_column = StringProperty(required=True)
-    y_axis_columns = ListProperty(unicode)
+    y_axis_columns = ListProperty(GraphDisplayColumn)
     is_stacked = BooleanProperty(default=False)
+
+    @classmethod
+    def wrap(cls, obj):
+        def _convert_columns_to_properly_dicts(cols):
+            for column in cols:
+                if isinstance(column, basestring):
+                    yield {'column_id': column, 'display': column}
+                else:
+                    yield column
+        obj['y_axis_columns'] = list(_convert_columns_to_properly_dicts(obj.get('y_axis_columns', [])))
+        return super(MultibarChartSpec, cls).wrap(obj)
 
 
 class MultibarAggregateChartSpec(ChartSpec):

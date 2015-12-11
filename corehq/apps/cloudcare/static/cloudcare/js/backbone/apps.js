@@ -60,8 +60,8 @@ cloudCare.AppListView = Backbone.View.extend({
 
     render: function () {
         var self = this;
-        var ul = $("<ul />").addClass("nav nav-list").appendTo($(self.el));
-        $("<li />").addClass("nav-header").text("Apps").appendTo(ul);
+        var ul = $("<ul />").addClass("nav nav-hq-sidebar").appendTo($(self.el));
+        $("<li />").addClass("text-hq-nav-header").text("Apps").appendTo(ul);
         _(self.appList.models).each(function(item){
             self.appendItem(item);
         });
@@ -244,8 +244,8 @@ cloudCare.SessionListView = Backbone.View.extend({
         var self = this;
         $(self.el).html('');
         if (self.sessionList.length) {
-            var ul = $("<ul />").addClass("nav nav-list").appendTo($(self.el));
-            $("<li />").addClass("nav-header").text("Incomplete Forms").appendTo(ul);
+            var ul = $("<ul />").addClass("nav nav-hq-sidebar").appendTo($(self.el));
+            $("<li />").addClass("text-hq-nav-header").text("Incomplete Forms").appendTo(ul);
             _(self.sessionList.models).each(function(item){
                 self.appendItem(item);
             });
@@ -367,8 +367,8 @@ cloudCare.ModuleListView = Backbone.View.extend({
         this._moduleViews = {};
 
         var self = this;
-        var ul = $("<ul />").addClass("nav nav-list").appendTo($(this.el));
-        $("<li />").addClass("nav-header").text("Modules").appendTo(ul);
+        var ul = $("<ul />").addClass("nav nav-hq-sidebar").appendTo($(this.el));
+        $("<li />").addClass("text-hq-nav-header").text("Modules").appendTo(ul);
         _(this.moduleList.models).each(function(item){
             self.appendItem(item);
         });
@@ -421,8 +421,8 @@ cloudCare.FormListView = Backbone.View.extend({
         var taskListOnly = self.model ? self.model.taskListOnly : false;
         $(self.el).html("");
         if (self.model) {
-	        var formUl = $("<ul />").addClass("nav nav-list").appendTo($(self.el));
-	        $("<li />").addClass("nav-header").text("Forms").appendTo(formUl);
+	        var formUl = $("<ul />").addClass("nav nav-hq-sidebar").appendTo($(self.el));
+	        $("<li />").addClass("text-hq-nav-header").text("Forms").appendTo(formUl);
 	        _(self.model.forms).each(function (form) {
                 if (!taskListOnly || form.get('index') === 'task-list') {
                     self.appendForm(form);
@@ -517,7 +517,8 @@ cloudCare.AppView = Backbone.View.extend({
         this.model = app;
     },
     selectCase: function (caseModel) {
-        var self = this;
+        var self = this,
+            buttonUrl;
         self.formListView.caseView.selectCase(caseModel);
         if (caseModel) {
             var module = self.selectedModule;
@@ -527,7 +528,7 @@ cloudCare.AppView = Backbone.View.extend({
                 // Construct a button which will take the user to the form
 
                 var buttonText = "Enter " + form.getLocalized("name", self.options.language);
-                var buttonUrl = getFormEntryUrl(self.options.urlRoot,
+                buttonUrl = getFormEntryUrl(self.options.urlRoot,
                                                         form.get("app_id"),
                                                         form.get("module_index"),
                                                         form.get("index"),
@@ -541,7 +542,7 @@ cloudCare.AppView = Backbone.View.extend({
                 //       But, in the currently selected case heading we want a singular version
                 //       e.g. "Mother: Mary"
                 var buttonText = "View " + self.selectedModule.get("case_label")[self.options.language];
-                var buttonUrl = getChildSelectUrl(self.options.urlRoot,
+                buttonUrl = getChildSelectUrl(self.options.urlRoot,
                                                         form.get("app_id"),
                                                         form.get("module_index"),
                                                         form.get("index"),
@@ -556,9 +557,9 @@ cloudCare.AppView = Backbone.View.extend({
             ).addClass("btn btn-primary").appendTo(
                 self.formListView.caseView.detailsView.el
             );
-            $('<a />').attr('href', buttonUrl).attr('target', '_blank').text(translatedStrings.newWindow).appendTo(
+            $('<a class="btn btn-default"/>').attr('href', buttonUrl).attr('target', '_blank').text(translatedStrings.newWindow).appendTo(
                 self.formListView.caseView.detailsView.el
-            ).css("padding-left", "2em");
+            ).css("margin-left", "5px");
             self.formListView.enterForm.click(buttonOnClick);
         } else {
             if (self.formListView.enterForm) {
@@ -694,8 +695,25 @@ cloudCare.AppView = Backbone.View.extend({
                     url: self.options.renderFormRoot,
                     data: {'session_id': sessionId},
                     success: function (data) {
-                        showRenderedForm(data.instance_xml, $("#xml-viewer-pretty"));
-                        showRenderedForm(data.form_data, $("#question-viewer-pretty"));
+                        var $instanceTab = $('#debugger-xml-instance-tab'),
+                            codeMirror;
+
+                        codeMirror = CodeMirror(function(el) {
+                            $('#xml-viewer-pretty').html(el);
+                        }, {
+                            value: data.instance_xml,
+                            mode: 'xml',
+                            viewportMargin: Infinity,
+                            readOnly: true,
+                            lineNumbers: true,
+                        });
+
+                        $instanceTab.off();
+                        $instanceTab.on('shown.bs.tab', function() {
+                            codeMirror.refresh();
+                        });
+
+                        $("#question-viewer-pretty").html(data.form_data || 'Could not render form');
                     }
                 });
             }

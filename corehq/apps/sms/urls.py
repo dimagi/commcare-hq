@@ -1,18 +1,20 @@
 from django.conf.urls import patterns, url
-from corehq import SMSAdminInterfaceDispatcher
 from corehq.apps.sms.views import (
     DomainSmsGatewayListView,
     SubscribeSMSView,
     AddDomainGatewayView,
     EditDomainGatewayView,
     SMSSettingsView,
-)
+    ManageRegistrationInvitationsView,
+    InvitationAppInfoView,
+    ComposeMessageView)
+from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 
 urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^$', 'default', name='sms_default'),
     url(r'^post/?$', 'post', name='sms_post'),
-    url(r'^send_to_recipients/$', 'send_to_recipients'),
-    url(r'^compose/$', 'compose_message', name='sms_compose_message'),
+    url(r'^send_to_recipients/$', 'send_to_recipients', name='send_to_recipients'),
+    url(r'^compose/$', ComposeMessageView.as_view(), name=ComposeMessageView.urlname),
     url(r'^message_test/(?P<phone_number>\d+)/$', 'message_test', name='message_test'),
     url(r'^api/send_sms/$', 'api_send_sms', name='api_send_sms'),
     url(r'^history/$', 'messaging', name='messaging'),
@@ -29,7 +31,8 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^gateways/$', DomainSmsGatewayListView.as_view(), name=DomainSmsGatewayListView.urlname),
     url(r'^chat_contacts/$', 'chat_contacts', name='chat_contacts'),
     url(r'^chat_contact_list/$', 'chat_contact_list', name='chat_contact_list'),
-    url(r'^chat/(?P<contact_id>[\w-]+)/$', 'chat', name='sms_chat'),
+    url(r'^chat/(?P<contact_id>[\w-]+)/(?P<vn_id>[\w-]+)/$', 'chat', name='sms_chat'),
+    url(r'^chat/(?P<contact_id>[\w-]+)/?$', 'chat', name='sms_chat'),
     url(r'^api/history/$', 'api_history', name='api_history'),
     url(r'^api/last_read_message/$', 'api_last_read_message', name='api_last_read_message'),
     url(r'^settings/$', SMSSettingsView.as_view(), name=SMSSettingsView.urlname),
@@ -38,6 +41,10 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^languages/edit/$', 'edit_sms_languages', name='edit_sms_languages'),
     url(r'^translations/download/$', 'download_sms_translations', name='download_sms_translations'),
     url(r'^translations/upload/$', 'upload_sms_translations', name='upload_sms_translations'),
+    url(r'^invitations/$', ManageRegistrationInvitationsView.as_view(),
+        name=ManageRegistrationInvitationsView.urlname),
+    url(r'^app_info/(?P<token>[\w-]+)/$', InvitationAppInfoView.as_view(),
+        name=InvitationAppInfoView.urlname),
 )
 
 sms_admin_interface_urls = patterns('corehq.apps.sms.views',

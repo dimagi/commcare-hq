@@ -1,16 +1,18 @@
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests import delete_all_cases
+from casexml.apps.case.tests.util import delete_all_cases
 
-from corehq.apps.commtrack.tests.util import bootstrap_location_types, make_loc
+from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain, \
     get_cases_in_domain
 from corehq.apps.importer.tasks import do_import
-from corehq.apps.importer.util import ImporterConfig
-from corehq.apps.users.models import WebUser
+from corehq.apps.importer.util import ImporterConfig, is_valid_owner
+from corehq.apps.locations.models import LocationType
+from corehq.apps.users.models import WebUser, CommCareUser, DomainMembership
 
 from .const import ImportErrors
+
 
 class MockExcelFile(object):
     """
@@ -89,12 +91,12 @@ class ImporterTest(TestCase):
 
     def testImportNone(self):
         res = do_import(None, self._config(), self.domain)
-        self.assertEqual('EXPIRED', res['error'])
+        self.assertEqual('EXPIRED', res['errors'])
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
     def testImporterErrors(self):
         res = do_import(MockExcelFile(has_errors=True), self._config(), self.domain)
-        self.assertEqual('HAS_ERRORS', res['error'])
+        self.assertEqual('HAS_ERRORS', res['errors'])
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
     def testImportBasic(self):
@@ -301,10 +303,16 @@ class ImporterTest(TestCase):
     def testLocationOwner(self):
         # This is actually testing several different things, but I figure it's
         # worth it, as each of these tests takes a non-trivial amount of time.
-        bootstrap_location_types(self.domain)
-        location = make_loc('loc-1', name='Loc 1', domain=self.domain)
-        make_loc('loc-2', name='Loc 2', domain=self.domain)
-        duplicate_loc = make_loc('loc-3', name='Loc 2', domain=self.domain)
+        non_case_sharing = LocationType.objects.create(
+            domain=self.domain, name='lt1', shares_cases=False
+        )
+        case_sharing = LocationType.objects.create(
+            domain=self.domain, name='lt2', shares_cases=True
+        )
+        location = make_loc('loc-1', 'Loc 1', self.domain, case_sharing)
+        make_loc('loc-2', 'Loc 2', self.domain, case_sharing)
+        duplicate_loc = make_loc('loc-3', 'Loc 2', self.domain, case_sharing)
+        improper_loc = make_loc('loc-4', 'Loc 4', self.domain, non_case_sharing)
 
         res = self.import_mock_file([
             ['case_id', 'name', 'owner_id', 'owner_name'],
@@ -312,6 +320,7 @@ class ImporterTest(TestCase):
             ['', 'location-owner-code', '', location.site_code],
             ['', 'location-owner-name', '', location.name],
             ['', 'duplicate-location-name', '', duplicate_loc.name],
+            ['', 'non-case-owning-name', '', improper_loc.name],
         ])
         cases = {c.name: c for c in list(get_cases_in_domain(self.domain))}
 
@@ -322,3 +331,31 @@ class ImporterTest(TestCase):
         error_message = ImportErrors.DuplicateLocationName
         self.assertIn(error_message, res['errors'])
         self.assertEqual(res['errors'][error_message]['rows'], [4])
+
+        error_message = ImportErrors.InvalidOwnerId
+        self.assertIn(error_message, res['errors'])
+        self.assertEqual(res['errors'][error_message]['rows'], [5])
+
+
+class ImporterUtilsTest(SimpleTestCase):
+
+    def test_user_owner_match(self):
+        self.assertTrue(is_valid_owner(_mk_user(domain='match'), 'match'))
+
+    def test_user_owner_nomatch(self):
+        self.assertFalse(is_valid_owner(_mk_user(domain='match'), 'nomatch'))
+
+    def test_web_user_owner_match(self):
+        self.assertTrue(is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'match'))
+        self.assertTrue(is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'match2'))
+
+    def test_web_user_owner_nomatch(self):
+        self.assertFalse(is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'nomatch'))
+
+
+def _mk_user(domain):
+    return CommCareUser(domain=domain, domain_membership=DomainMembership(domain=domain))
+
+
+def _mk_web_user(domains):
+    return WebUser(domains=domains, domain_memberships=[DomainMembership(domain=domain) for domain in domains])

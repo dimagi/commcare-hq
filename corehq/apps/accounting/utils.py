@@ -1,11 +1,14 @@
 import calendar
+from collections import namedtuple
 import datetime
 from decimal import Decimal
 from django.conf import settings
 from django.template.loader import render_to_string
+from corehq.util.view_utils import absolute_reverse
 from django.utils.translation import ugettext_lazy as _
+from corehq import privileges
 
-from corehq import Domain, privileges
+from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from corehq.apps.accounting.exceptions import (
     AccountingError,
@@ -81,6 +84,9 @@ def get_privileges(plan_version):
     return set([grant.to_role.slug for grant in role.memberships_granted.all()])
 
 
+ChangeStatusResult = namedtuple('ChangeStatusResult', ['adjustment_reason', 'downgraded_privs', 'upgraded_privs'])
+
+
 def get_change_status(from_plan_version, to_plan_version):
     from_privs = (
         get_privileges(from_plan_version)
@@ -101,7 +107,7 @@ def get_change_status(from_plan_version, to_plan_version):
             adjustment_reason = Reason.UPGRADE
         elif len(upgraded_privs) == 0 and len(downgraded_privs) > 0:
             adjustment_reason = Reason.DOWNGRADE
-    return adjustment_reason, downgraded_privs, upgraded_privs
+    return ChangeStatusResult(adjustment_reason, downgraded_privs, upgraded_privs)
 
 
 def domain_has_privilege_cache_args(domain, privilege_slug, **assignment):
@@ -126,6 +132,13 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
     except AccountingError:
         pass
     return False
+
+
+@quickcache(['domain'], timeout=15 * 60)
+def domain_is_on_trial(domain):
+    from corehq.apps.accounting.models import Subscription
+    subscription = Subscription.get_subscribed_plan_by_domain(domain)[1]
+    return subscription.is_trial_or_internal_trial
 
 
 def is_active_subscription(date_start, date_end):
@@ -185,7 +198,7 @@ def get_dimagi_from_email_by_product(product):
 
 
 def quantize_accounting_decimal(decimal_value):
-    return decimal_value.quantize(Decimal(10) ** -2)
+    return "%0.2f" % decimal_value
 
 
 def fmt_dollar_amount(decimal_value):
@@ -194,17 +207,16 @@ def fmt_dollar_amount(decimal_value):
 
 def get_customer_cards(account, username, domain):
     from corehq.apps.accounting.models import (
-        PaymentMethod, PaymentMethodType,
+        StripePaymentMethod, PaymentMethodType,
     )
-    from corehq.apps.accounting.payment_handlers import get_or_create_stripe_customer
     try:
-        payment_method = PaymentMethod.objects.get(
+        payment_method = StripePaymentMethod.objects.get(
             web_user=username,
             method_type=PaymentMethodType.STRIPE
         )
-        stripe_customer = get_or_create_stripe_customer(payment_method)
+        stripe_customer = payment_method.customer
         return stripe_customer.cards
-    except (PaymentMethod.DoesNotExist):
+    except (StripePaymentMethod.DoesNotExist):
         pass
     return None
 
@@ -250,3 +262,11 @@ def make_anchor_tag(href, name, attrs={}):
         'attrs': attrs,
     }
     return render_to_string('accounting/partials/anchor_tag.html', context)
+
+
+def get_default_domain_url(domain):
+    from corehq.apps.domain.views import DefaultProjectSettingsView
+    return absolute_reverse(
+        DefaultProjectSettingsView.urlname,
+        args=[domain],
+    )

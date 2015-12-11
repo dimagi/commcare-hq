@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
+import json_field
 import logging
+import uuid
+import uuidfield
 from dimagi.ext.couchdbkit import *
 
-from datetime import datetime
-from django.db import models
+from datetime import datetime, timedelta
+from django.db import models, transaction
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
@@ -13,11 +17,17 @@ from dimagi.utils.couch.migration import (SyncCouchToSQLMixin,
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.signals import case_post_save
-from .mixin import CommCareMobileContactMixin, MobileBackend, PhoneNumberInUseException, InvalidFormatException
+from corehq.apps.sms.mixin import (CommCareMobileContactMixin, MobileBackend,
+    PhoneNumberInUseException, InvalidFormatException, VerifiedNumber,
+    apply_leniency, BackendMapping)
 from corehq.apps.sms import util as smsutil
+from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
+    MSG_MOBILE_WORKER_ANDROID_INVITATION, MSG_MOBILE_WORKER_JAVA_INVITATION,
+    get_message)
+from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch import CouchDocLockableMixIn
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, ugettext_lazy
 
 INCOMING = "I"
 OUTGOING = "O"
@@ -27,6 +37,7 @@ WORKFLOW_REMINDER = "REMINDER"
 WORKFLOW_KEYWORD = "KEYWORD"
 WORKFLOW_FORWARD = "FORWARD"
 WORKFLOW_BROADCAST = "BROADCAST"
+WORKFLOW_PERFORMANCE = "PERFORMANCE"
 WORKFLOW_DEFAULT = 'default'
 
 DIRECTION_CHOICES = (
@@ -253,6 +264,7 @@ class SMS(SyncSQLToCouchMixin, models.Model):
     ERROR_MESSAGE_IS_STALE = 'MESSAGE_IS_STALE'
     ERROR_INVALID_DIRECTION = 'INVALID_DIRECTION'
     ERROR_PHONE_NUMBER_OPTED_OUT = 'PHONE_NUMBER_OPTED_OUT'
+    ERROR_INVALID_DESTINATION_NUMBER = 'INVALID_DESTINATION_NUMBER'
 
     ERROR_MESSAGES = {
         ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:
@@ -263,6 +275,8 @@ class SMS(SyncSQLToCouchMixin, models.Model):
             ugettext_noop('Unknown message direction.'),
         ERROR_PHONE_NUMBER_OPTED_OUT:
             ugettext_noop('Phone number has opted out of receiving SMS.'),
+        ERROR_INVALID_DESTINATION_NUMBER:
+            ugettext_noop("The gateway can't reach the destination number."),
     }
 
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
@@ -335,6 +349,9 @@ class SMS(SyncSQLToCouchMixin, models.Model):
     fri_message_bank_message_id = models.CharField(max_length=126, null=True)
     fri_id = models.CharField(max_length=126, null=True)
     fri_risk_profile = models.CharField(max_length=1, null=True)
+
+    class Meta:
+        app_label = 'sms'
 
     @classmethod
     def _migration_get_fields(cls):
@@ -522,35 +539,6 @@ class ForwardingRule(Document):
         self.doc_type += "-Deleted"
         self.save()
 
-class MessageLogOld(models.Model):
-    couch_recipient    = models.TextField()
-    phone_number       = models.TextField()
-    direction          = models.CharField(max_length=1, choices=DIRECTION_CHOICES)
-    date               = models.DateTimeField()
-    text               = models.TextField()
-    # hm, this data is duplicate w/ couch, but will make the query much more
-    # efficient to store here rather than doing a couch query for each couch user
-    domain             = models.TextField()
-
-    class Meta(): 
-        db_table = "sms_messagelog"
-        managed = False
-         
-    def __unicode__(self):
-
-        # crop the text (to avoid exploding the admin)
-        if len(self.text) < 60: str = self.text
-        else: str = "%s..." % (self.text[0:57])
-
-        to_from = (self.direction == INCOMING) and "from" or "to"
-        return "%s (%s %s)" % (str, to_from, self.phone_number)
-    
-    @property
-    def username(self):
-        if self.couch_recipient:
-            return CouchUser.get_by_user_id(self.couch_recipient).username
-        return self.phone_number
-
 
 class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
 
@@ -633,6 +621,9 @@ class PhoneNumber(models.Model):
 
     # True to allow this phone number to opt back in, False if not
     can_opt_in = models.BooleanField(null=False, default=True)
+
+    class Meta:
+        app_label = 'sms'
 
     @classmethod
     def get_by_phone_number(cls, phone_number):
@@ -779,6 +770,10 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     RECIPIENT_USER_GROUP = 'UGP'
     RECIPIENT_CASE_GROUP = 'CGP'
     RECIPIENT_VARIOUS = 'MUL'
+    RECIPIENT_LOCATION = 'LOC'
+    RECIPIENT_LOCATION_PLUS_DESCENDANTS = 'LC+'
+    RECIPIENT_VARIOUS_LOCATIONS = 'VLC'
+    RECIPIENT_VARIOUS_LOCATIONS_PLUS_DESCENDANTS = 'VL+'
     RECIPIENT_UNKNOWN = 'UNK'
 
     RECIPIENT_CHOICES = (
@@ -788,6 +783,12 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (RECIPIENT_USER_GROUP, ugettext_noop('User Group')),
         (RECIPIENT_CASE_GROUP, ugettext_noop('Case Group')),
         (RECIPIENT_VARIOUS, ugettext_noop('Multiple Recipients')),
+        (RECIPIENT_LOCATION, ugettext_noop('Location')),
+        (RECIPIENT_LOCATION_PLUS_DESCENDANTS,
+            ugettext_noop('Location (including child locations)')),
+        (RECIPIENT_VARIOUS_LOCATIONS, ugettext_noop('Multiple Locations')),
+        (RECIPIENT_VARIOUS_LOCATIONS_PLUS_DESCENDANTS,
+            ugettext_noop('Multiple Locations (including child locations)')),
         (RECIPIENT_UNKNOWN, ugettext_noop('Unknown Contact')),
     )
 
@@ -810,7 +811,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR'
     ERROR_GATEWAY_ERROR = 'GATEWAY_ERROR'
     ERROR_NO_SUITABLE_GATEWAY = 'NO_SUITABLE_GATEWAY'
+    ERROR_GATEWAY_NOT_FOUND = 'GATEWAY_NOT_FOUND'
     ERROR_NO_EMAIL_ADDRESS = 'NO_EMAIL_ADDRESS'
+    ERROR_TRIAL_EMAIL_LIMIT_REACHED = 'TRIAL_EMAIL_LIMIT_REACHED'
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
@@ -853,8 +856,13 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             ugettext_noop('Gateway error.'),
         ERROR_NO_SUITABLE_GATEWAY:
             ugettext_noop('No suitable gateway could be found.'),
+        ERROR_GATEWAY_NOT_FOUND:
+            ugettext_noop('Gateway could not be found.'),
         ERROR_NO_EMAIL_ADDRESS:
             ugettext_noop('Recipient has no email address.'),
+        ERROR_TRIAL_EMAIL_LIMIT_REACHED:
+            ugettext_noop("Cannot send any more reminder emails. The limit for "
+                "sending reminder emails on a Trial plan has been reached."),
     }
 
     domain = models.CharField(max_length=126, null=False, db_index=True)
@@ -875,6 +883,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     additional_error_text = models.TextField(null=True)
     recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=True, db_index=True)
     recipient_id = models.CharField(max_length=126, null=True, db_index=True)
+
+    class Meta:
+        app_label = 'sms'
 
     @classmethod
     def get_recipient_type_from_doc_type(cls, recipient_doc_type):
@@ -898,6 +909,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             MessagingEvent.RECIPIENT_CASE: 'CommCareCase',
             MessagingEvent.RECIPIENT_USER_GROUP: 'Group',
             MessagingEvent.RECIPIENT_CASE_GROUP: 'CommCareCaseGroup',
+            MessagingEvent.RECIPIENT_LOCATION: 'SQLLocation',
+            MessagingEvent.RECIPIENT_LOCATION_PLUS_DESCENDANTS: 'SQLLocation',
         }.get(recipient_type, None)
 
     def get_recipient_doc_type(self):
@@ -971,7 +984,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         )
         return obj
 
-    def create_subevent_for_single_sms(self, recipient_doc_type=None, recipient_id=None, case=None):
+    def create_subevent_for_single_sms(self, recipient_doc_type=None,
+            recipient_id=None, case=None, completed=False):
         obj = MessagingSubEvent.objects.create(
             parent=self,
             date=datetime.utcnow(),
@@ -979,7 +993,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             recipient_id=recipient_id,
             content_type=MessagingEvent.CONTENT_SMS,
             case_id=case.get_id if case else None,
-            status=MessagingEvent.STATUS_IN_PROGRESS,
+            status=(MessagingEvent.STATUS_COMPLETED
+                    if completed
+                    else MessagingEvent.STATUS_IN_PROGRESS),
         )
         return obj
 
@@ -1058,7 +1074,23 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         content_type, form_unique_id, form_name = cls.get_content_info_from_reminder(
             reminder_definition, reminder)
 
-        if isinstance(recipient, list):
+        if recipient and reminder_definition.recipient_is_list_of_locations(recipient):
+            if len(recipient) == 1:
+                recipient_type = (cls.RECIPIENT_LOCATION_PLUS_DESCENDANTS
+                                  if reminder_definition.include_child_locations
+                                  else cls.RECIPIENT_LOCATION)
+                recipient_id = recipient[0].location_id
+            elif len(recipient) > 1:
+                recipient_type = (cls.RECIPIENT_VARIOUS_LOCATIONS_PLUS_DESCENDANTS
+                                  if reminder_definition.include_child_locations
+                                  else cls.RECIPIENT_VARIOUS_LOCATIONS)
+                recipient_id = None
+            else:
+                # len(recipient) should never be 0 when we invoke this method,
+                # but catching this situation here just in case
+                recipient_type = cls.RECIPIENT_UNKNOWN
+                recipient_id = None
+        elif isinstance(recipient, list):
             recipient_type = cls.RECIPIENT_VARIOUS
             recipient_id = None
         elif recipient is None:
@@ -1160,6 +1192,9 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     error_code = models.CharField(max_length=126, null=True)
     additional_error_text = models.TextField(null=True)
 
+    class Meta:
+        app_label = 'sms'
+
     def save(self, *args, **kwargs):
         super(MessagingSubEvent, self).save(*args, **kwargs)
         parent = self.parent
@@ -1179,6 +1214,10 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
                     MessagingEvent.RECIPIENT_USER_GROUP,
                     MessagingEvent.RECIPIENT_CASE_GROUP,
                     MessagingEvent.RECIPIENT_VARIOUS,
+                    MessagingEvent.RECIPIENT_LOCATION,
+                    MessagingEvent.RECIPIENT_LOCATION_PLUS_DESCENDANTS,
+                    MessagingEvent.RECIPIENT_VARIOUS_LOCATIONS,
+                    MessagingEvent.RECIPIENT_VARIOUS_LOCATIONS_PLUS_DESCENDANTS,
                 ) and len(parent.subevents) > 1):
             parent.recipient_type = MessagingEvent.RECIPIENT_VARIOUS
             parent.recipient_id = None
@@ -1186,3 +1225,421 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
 
     def get_recipient_doc_type(self):
         return MessagingEvent._get_recipient_doc_type(self.recipient_type)
+
+
+class SelfRegistrationInvitation(models.Model):
+    PHONE_TYPE_ANDROID = 'android'
+    PHONE_TYPE_OTHER = 'other'
+    PHONE_TYPE_CHOICES = (
+        (PHONE_TYPE_ANDROID, ugettext_lazy('Android')),
+        (PHONE_TYPE_OTHER, ugettext_lazy('Other')),
+    )
+
+    STATUS_PENDING = 'pending'
+    STATUS_REGISTERED = 'registered'
+    STATUS_EXPIRED = 'expired'
+
+    domain = models.CharField(max_length=126, null=False, db_index=True)
+    phone_number = models.CharField(max_length=30, null=False, db_index=True)
+    token = models.CharField(max_length=126, null=False, unique=True, db_index=True)
+    app_id = models.CharField(max_length=126, null=True)
+    expiration_date = models.DateField(null=False)
+    created_date = models.DateTimeField(null=False)
+    odk_url = models.CharField(max_length=126, null=True)
+    phone_type = models.CharField(max_length=20, null=True, choices=PHONE_TYPE_CHOICES)
+    registered_date = models.DateTimeField(null=True)
+
+    @property
+    def already_registered(self):
+        return self.registered_date is not None
+
+    @property
+    def expired(self):
+        """
+        The invitation is valid until 11:59pm UTC on the expiration date.
+        """
+        return datetime.utcnow().date() > self.expiration_date
+
+    @property
+    def status(self):
+        if self.already_registered:
+            return self.STATUS_REGISTERED
+        elif self.expired:
+            return self.STATUS_EXPIRED
+        else:
+            return self.STATUS_PENDING
+
+    def completed(self):
+        self.registered_date = datetime.utcnow()
+        self.save()
+
+    def send_step1_sms(self):
+        from corehq.apps.sms.api import send_sms
+        send_sms(
+            self.domain,
+            None,
+            self.phone_number,
+            get_message(MSG_MOBILE_WORKER_INVITATION_START, domain=self.domain)
+        )
+
+    def send_step2_java_sms(self):
+        from corehq.apps.sms.api import send_sms
+        send_sms(
+            self.domain,
+            None,
+            self.phone_number,
+            get_message(MSG_MOBILE_WORKER_JAVA_INVITATION, context=(self.domain,), domain=self.domain)
+        )
+
+    def send_step2_android_sms(self):
+        from corehq.apps.sms.api import send_sms
+        from corehq.apps.sms.views import InvitationAppInfoView
+        from corehq.apps.users.views.mobile.users import CommCareUserSelfRegistrationView
+
+        registration_url = absolute_reverse(CommCareUserSelfRegistrationView.urlname,
+            args=[self.domain, self.token])
+        send_sms(
+            self.domain,
+            None,
+            self.phone_number,
+            get_message(MSG_MOBILE_WORKER_ANDROID_INVITATION, context=(registration_url,), domain=self.domain)
+        )
+
+        """
+        # Until odk 2.24 gets released to the Google Play store, this part won't work
+        if self.odk_url:
+            app_info_url = absolute_reverse(InvitationAppInfoView.urlname,
+                args=[self.domain, self.token])
+            message = '[commcare app - do not delete] %s' % app_info_url
+            send_sms(
+                self.domain,
+                None,
+                self.phone_number,
+                message,
+            )
+        """
+
+    def expire(self):
+        self.expiration_date = datetime.utcnow().date() - timedelta(days=1)
+        self.save()
+
+    @classmethod
+    def get_unexpired_invitations(cls, phone_number):
+        current_date = datetime.utcnow().date()
+        return cls.objects.filter(
+            phone_number=phone_number,
+            expiration_date__gte=current_date,
+            registered_date__isnull=True
+        )
+
+    @classmethod
+    def expire_invitations(cls, phone_number):
+        """
+        Expire all invitations for the given phone number that have not
+        yet expired.
+        """
+        for invitation in cls.get_unexpired_invitations(phone_number):
+            invitation.expire()
+
+    @classmethod
+    def by_token(cls, token):
+        try:
+            return cls.objects.get(token=token)
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
+    def by_phone(cls, phone_number, expire_duplicates=True):
+        """
+        Look up the unexpired invitation for the given phone number.
+        In the case of duplicates, only the most recent invitation
+        is returned.
+        If expire_duplicates is True, then any duplicates are automatically
+        expired.
+        Returns the invitation, or None if no unexpired invitations exist.
+        """
+        phone_number = apply_leniency(phone_number)
+        result = cls.get_unexpired_invitations(phone_number).order_by('-created_date')
+
+        if len(result) == 0:
+            return None
+
+        invitation = result[0]
+        if expire_duplicates and len(result) > 1:
+            for i in result[1:]:
+                i.expire()
+
+        return invitation
+
+    @classmethod
+    def get_app_odk_url(cls, domain, app_id):
+        """
+        Get the latest starred build (or latest build if none are
+        starred) for the app and return it's odk install url.
+        """
+        app = get_app(domain, app_id, latest=True)
+
+        if not app.copy_of:
+            # If latest starred build is not found, use the latest build
+            app = get_app(domain, app_id, latest=True, target='build')
+
+        if not app.copy_of:
+            # If no build is found, return None
+            return None
+
+        return app.get_short_odk_url(with_media=True)
+
+    @classmethod
+    def initiate_workflow(cls, domain, phone_numbers, app_id=None,
+            days_until_expiration=30):
+        """
+        If app_id is passed in, then an additional SMS will be sent to Android
+        phones containing a link to the latest starred build (or latest
+        build if no starred build exists) for the app. Once ODK is installed,
+        it will automatically search for this SMS and install this app.
+
+        If app_id is left blank, the additional SMS is not sent, and once
+        ODK is installed it just skips the automatic app install step.
+        """
+        success_numbers = []
+        invalid_format_numbers = []
+        numbers_in_use = []
+
+        odk_url = None
+        if app_id:
+            odk_url = cls.get_app_odk_url(domain, app_id)
+
+        for phone_number in phone_numbers:
+            phone_number = apply_leniency(phone_number)
+            try:
+                CommCareMobileContactMixin.validate_number_format(phone_number)
+            except InvalidFormatException:
+                invalid_format_numbers.append(phone_number)
+                continue
+
+            if VerifiedNumber.by_phone(phone_number, include_pending=True):
+                numbers_in_use.append(phone_number)
+                continue
+
+            cls.expire_invitations(phone_number)
+
+            expiration_date = (datetime.utcnow().date() +
+                timedelta(days=days_until_expiration))
+
+            invitation = cls.objects.create(
+                domain=domain,
+                phone_number=phone_number,
+                token=uuid.uuid4().hex,
+                app_id=app_id,
+                expiration_date=expiration_date,
+                created_date=datetime.utcnow(),
+                odk_url=odk_url,
+            )
+
+            invitation.send_step1_sms()
+            success_numbers.append(phone_number)
+
+        return (success_numbers, invalid_format_numbers, numbers_in_use)
+
+
+class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
+    SMS = 'SMS'
+    IVR = 'IVR'
+
+    TYPE_CHOICES = (
+        (SMS, ugettext_lazy('SMS')),
+        (IVR, ugettext_lazy('IVR')),
+    )
+
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+    backend_type = models.CharField(max_length=3, choices=TYPE_CHOICES, default=SMS)
+
+    # This is an api key that the gateway uses when making inbound requests to hq.
+    # This enforces gateway security and also allows us to tie every inbound request
+    # to a specific backend.
+    inbound_api_key = uuidfield.UUIDField(auto=True, unique=True)
+
+    # This tells us which type of backend this is
+    hq_api_id = models.CharField(max_length=126, null=True)
+
+    # Global backends are system owned and can be used by anyone
+    is_global = models.BooleanField(default=False)
+
+    # This is the domain that the backend belongs to, or None for
+    # global backends
+    domain = models.CharField(max_length=126, null=True, db_index=True)
+
+    # A short name for a backend instance which is referenced when
+    # setting a case contact's preferred backend
+    name = models.CharField(max_length=126)
+
+    # Simple name to display to users - e.g. "Twilio"
+    display_name = models.CharField(max_length=126, null=True)
+
+    # Optionally, a description of this backend
+    description = models.TextField(null=True)
+
+    # A JSON list of countries that this backend supports.
+    # This information is displayed in the gateway list UI.
+    # If this backend represents an international gateway,
+    # set this to: ["*"]
+    supported_countries = json_field.JSONField(default=[])
+
+    # To avoid having many tables with so few records in them, all
+    # SMS backends are stored in this same table. This field is a
+    # JSON dict which stores any additional fields that the SMS
+    # backend subclasses need.
+    # NOTE: Do not access this field directly, instead use get_extra_fields()
+    # and set_extra_fields()
+    extra_fields = json_field.JSONField(default={})
+
+    # For a historical view of sms data, we can't delete backends.
+    # Instead, set a deleted flag when a backend should no longer be used.
+    deleted = models.BooleanField(default=False)
+
+    # If the backend uses load balancing, this is a JSON list of the
+    # phone numbers to load balance over.
+    load_balancing_numbers = json_field.JSONField(default=[])
+
+    # The phone number which you can text to or call in order to reply
+    # to this backend
+    reply_to_phone_number = models.CharField(max_length=126, null=True)
+
+    class Meta:
+        db_table = 'messaging_mobilebackend'
+        unique_together = ('domain', 'name')
+
+    @classmethod
+    def get_available_extra_fields(cls):
+        """
+        Should return a list of field names that are the keys in
+        the extra_fields dict.
+        """
+        raise NotImplementedError("Please implement this method")
+
+    def get_extra_fields(self):
+        result = {field: None for field in self.get_available_extra_fields()}
+        result.update(self.extra_fields)
+        return result
+
+    def set_extra_fields(self, **kwargs):
+        """
+        Only updates the fields that are passed as kwargs, and leaves
+        the rest untouched.
+        """
+        result = self.get_extra_fields()
+        for k, v in kwargs.iteritems():
+            if k not in self.get_available_extra_fields():
+                raise Exception("Field %s is not an available extra field for %s"
+                    % (k, self.__class__.__name__))
+            result[k] = v
+
+        self.extra_fields = result
+
+    def set_shared_domains(self, domains):
+        if self.id is None:
+            raise Exception("Please call .save() on the backend before "
+                "calling set_shared_domains()")
+        with transaction.atomic():
+            self.mobilebackendinvitation_set.all().delete()
+            self.mobilebackendinvitation_set = [
+                MobileBackendInvitation(
+                    domain=domain,
+                    accepted=True,
+                ) for domain in domains
+            ]
+        # TODO: Remove the below line once the two-way sync with
+        # couch is no longer necessary.
+        self.save()
+
+    def soft_delete(self):
+        with transaction.atomic():
+            self.deleted = True
+            self.mobilebackendinvitation_set.all().delete()
+            for mapping in self.sqlmobilebackendmapping_set.all():
+                # TODO: Can do a bulk delete once the two-way sync
+                # with couch is no longer necessary
+                mapping.delete()
+            self.save()
+
+    def _migration_sync_to_couch(self, couch_obj):
+        couch_obj.domain = self.domain
+        couch_obj.name = self.name
+        couch_obj.display_name = self.display_name
+        couch_obj.authorized_domains = [
+            i.domain for i in self.mobilebackendinvitation_set.all()
+        ]
+        couch_obj.is_global = self.is_global
+        couch_obj.description = self.description
+        couch_obj.supported_countries = self.supported_countries
+        couch_obj.reply_to_phone_number = self.reply_to_phone_number
+        couch_obj.backend_type = self.backend_type
+        couch_obj.reply_to_phone_number = self.reply_to_phone_number
+        for k, v in self.get_extra_fields().iteritems():
+            setattr(couch_obj, k, v)
+
+        if self.load_balancing_numbers:
+            couch_obj.x_phone_numbers = self.load_balancing_numbers
+
+        if self.deleted:
+            if not couch_obj.base_doc.endswith('-Deleted'):
+                couch_obj.base_doc += '-Deleted'
+
+        couch_obj.save(sync_to_sql=False)
+
+
+class SQLSMSBackend(SQLMobileBackend):
+    class Meta:
+        proxy = True
+
+
+class SQLMobileBackendMapping(SyncSQLToCouchMixin, models.Model):
+    """
+    A SQLMobileBackendMapping instance is used to map SMS or IVR traffic
+    to a given backend based on phone prefix.
+    """
+    class Meta:
+        db_table = 'messaging_mobilebackendmapping'
+
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+
+    # True if this mapping applies globally (system-wide). False if it only applies
+    # to a domain
+    is_global = models.BooleanField(default=False)
+
+    # The domain for which this mapping is valid; ignored if is_global is True
+    domain = models.CharField(max_length=126, null=True)
+
+    # Specifies whether this mapping is valid for SMS or IVR backends
+    backend_type = models.CharField(max_length=3, choices=SQLMobileBackend.TYPE_CHOICES)
+
+    # The phone prefix, or '*' for catch-all
+    prefix = models.CharField(max_length=25)
+
+    # The backend to use for the given phone prefix
+    backend = models.ForeignKey('SQLMobileBackend')
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return BackendMapping
+
+    def _migration_sync_to_couch(self, couch_obj):
+        couch_obj.domain = self.domain
+        couch_obj.is_global = self.is_global
+        couch_obj.prefix = self.prefix
+        couch_obj.backend_type = self.backend_type
+        couch_obj.backend_id = self.backend.couch_id
+        couch_obj.save(sync_to_sql=False)
+
+
+class MobileBackendInvitation(models.Model):
+    class Meta:
+        db_table = 'messaging_mobilebackendinvitation'
+        unique_together = ('backend', 'domain')
+
+    # The domain that is being invited to share another domain's backend
+    domain = models.CharField(max_length=126, null=True, db_index=True)
+
+    # The backend that is being shared
+    backend = models.ForeignKey('SQLMobileBackend')
+    accepted = models.BooleanField(default=False)

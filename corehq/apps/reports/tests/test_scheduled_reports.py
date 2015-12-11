@@ -1,8 +1,10 @@
 from datetime import datetime
 from django.test import SimpleTestCase, TestCase
-from corehq.apps.reports.models import ReportNotification
+from corehq.apps.reports.models import ReportNotification, ReportConfig
 from corehq.apps.reports.scheduled import guess_reporting_minute, get_scheduled_reports
 from corehq.apps.reports.tasks import get_report_queue
+from corehq.apps.reports.views import get_scheduled_report_response
+from corehq.apps.users.models import WebUser
 
 
 class GuessReportingMinuteTest(SimpleTestCase):
@@ -19,12 +21,25 @@ class GuessReportingMinuteTest(SimpleTestCase):
     def testAfterTheHalfHour(self):
         self.assertEqual(30, guess_reporting_minute(datetime(2014, 10, 31, 12, 35)))
 
+    def testOnQuarterAfter(self):
+        self.assertEqual(15, guess_reporting_minute(datetime(2014, 10, 31, 12, 15)))
+
+    def testAfterQuarterAfter(self):
+        self.assertEqual(15, guess_reporting_minute(datetime(2014, 10, 31, 12, 20)))
+
+    def testOnQuarterOf(self):
+        self.assertEqual(45, guess_reporting_minute(datetime(2014, 10, 31, 12, 45)))
+
+    def testAfterQuarterOf(self):
+        self.assertEqual(45, guess_reporting_minute(datetime(2014, 10, 31, 12, 50)))
+
     def testOutOfBounds(self):
-        for minute in (6, 15, 29, 36, 45, 59):
+        for minute in (6, 14, 21, 29, 36, 44, 51, 59):
             self.assertRaises(ValueError, guess_reporting_minute, datetime(2014, 10, 31, 12, minute))
 
 
 class ScheduledReportTest(TestCase):
+    dependent_apps = ['corehq.couchapps']
 
     def setUp(self):
         for report in ReportNotification.view(
@@ -39,8 +54,9 @@ class ScheduledReportTest(TestCase):
 
     def testDefaultValue(self):
         now = datetime.utcnow()
-        ReportNotification(hour=now.hour, minute=(now.minute / 30) * 30, interval='daily').save()
-        if now.minute % 30 <= 5:
+        # This line makes sure that the date of the ReportNotification is an increment of 15 minutes
+        ReportNotification(hour=now.hour, minute=(now.minute / 15) * 15, interval='daily').save()
+        if now.minute % 15 <= 5:
             self._check('daily', None, 1)
         else:
             self.assertRaises(
@@ -143,6 +159,43 @@ class ScheduledReportTest(TestCase):
         ReportNotification(hour=12, minute=None, day=31, interval='monthly').save()
         ReportNotification(hour=12, minute=None, day=32, interval='monthly').save()
         self._check('monthly', datetime(2014, 10, 31, 12, 0), 1)
+
+
+class ScheduledReportSendingTest(TestCase):
+    dependent_apps = [
+        'django_digest', 'auditcare', 'django_prbac',
+        'corehq.apps.accounting',
+        'corehq.apps.domain',
+        'corehq.apps.users',
+        'corehq.apps.tzmigration',
+        'corehq.apps.userreports',
+    ]
+
+    def test_get_scheduled_report_response(self):
+        domain = 'test-scheduled-reports'
+        user = WebUser.create(
+            domain=domain,
+            username='dummy@example.com',
+            password='secret',
+        )
+        report_config = ReportConfig.wrap({
+            "date_range": "last30",
+            "days": 30,
+            "domain": domain,
+            "report_slug": "worker_activity",
+            "report_type": "project_report",
+            "owner_id": user._id,
+        })
+        report_config.save()
+        report = ReportNotification(
+            hour=12, minute=None, day=30, interval='monthly', config_ids=[report_config._id]
+        )
+        report.save()
+        response = get_scheduled_report_response(
+            couch_user=user, domain=domain, scheduled_report_id=report._id
+        )[0]
+        self.assertEqual(200, response.status_code)
+        self.assertTrue(user.username in response.serialize())
 
 
 class TestMVPCeleryQueueHack(SimpleTestCase):

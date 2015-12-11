@@ -8,9 +8,11 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.datatables import DTSortType
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn, SqlTabularReport, DataFormatter, \
     TableDataFormat
+from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.util.dates import iso_string_to_datetime
 from custom.succeed.reports.patient_interactions import PatientInteractionsReport
 from custom.succeed.reports.patient_task_list import PatientTaskListReport
+from custom.utils.utils import clean_IN_filter_value
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
@@ -161,8 +163,12 @@ class PatientListReport(SqlTabularReport, CustomProjectReport, ProjectReportPara
         if 'care_site' in self.config and self.config['care_site']:
             filters.append(EQ('care_site', 'care_site'))
         if 'owner_id' in self.config and self.config['owner_id']:
-            filters.append(IN('owner_id', 'owner_id'))
+            filters.append(IN('owner_id', get_INFilter_bindparams('owner_id', self.config['owner_id'])))
         return filters
+
+    @property
+    def filter_values(self):
+        return clean_IN_filter_value(super(PatientListReport, self).filter_values, 'owner_id')
 
     @property
     def columns(self):

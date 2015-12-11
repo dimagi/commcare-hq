@@ -2,8 +2,11 @@ import calendar
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import *
+
+from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext_noop
+
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.util import location_hierarchy_config, load_locs_json
 from corehq.apps.products.models import SQLProduct
@@ -13,9 +16,8 @@ from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSing
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.util import reverse
 from custom.common import ALL_OPTION
-from corehq import Domain
+from corehq.apps.domain.models import Domain
 from custom.ewsghana.utils import ews_date_format
-import settings
 
 
 class ProductByProgramFilter(BaseDrilldownOptionFilter):

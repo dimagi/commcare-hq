@@ -6,6 +6,7 @@ class localize(object):
     Switch django's localization to some other language temporarily
     Usage:
 
+    >>> _ = lambda a: 'hola' # fake for doctest
     >>> with localize('es'):
     ...     print _('hello')
     hola

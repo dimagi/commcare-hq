@@ -25,6 +25,7 @@
   default: "-1"
   values_txt: "Any positive integer. Represents period of purging in days." 
   since: "2.8"
+  force: true
 
 - name: "Logging Enabled"
   description: "Whether logging of incidents should be activated on the client."
@@ -274,6 +275,7 @@
   default: "none"
   values_txt: "This will determine how images you select for your questions will be resized to fit the screen. Horizontal will stretch/compress the image to fit perfectly horizontally while scaling to height to maintain the aspect ratio. Full Resize will try to be clever and find the ideal vertical/horizontal scaling for the screen. Half Resize will do the same but with half the area."
   since: "2.11"
+  force: true
 
 - name: "Fuzzy Search"
   description: "Whether searches on the phone will match similar strings. IE: 'Jhon' will match 'John'"
@@ -285,11 +287,30 @@
   values_txt: "Whether searches can match similar strings"
   since: "2.15"
 
+- name: "Log Case Detail Views"
+  description: "Whether to log each time a user views case details. May reduce mobile performance."
+  id: "cc-log-entity-detail-enabled"
+  widget: bool
+  default: false
+  since: "2.24"
+
 - name: "Login Duration"
-  description: "Amount of time after which you will be logged out automatically"
+  description: "Length of time after which you will be logged out automatically"
   id: "cc-login-duration-seconds"
   values:      [   "86400",    "43200",   "28800",    "7200",   "3600",       "1800",        "900"]
   value_names: ["24 hours", "12 hours", "8 hours", "2 hours", "1 hour", "30 minutes", "15 minutes"]
   default: "86400"
   values_txt: "This will set the amount of time you will remain logged in before automatically being logged out."
   since: "2.21"
+  
+- name: "Smart Image Inflation"
+  description: "When a value is selected, this feature controls the display size of any user-provided image such
+  that it will be consistent with the size of the original image file, and consistent across devices. Follow 
+  <a href='https://confluence.dimagi.com/display/commcarepublic/Images+in+CommCare#ImagesinCommCare-ImageSize'>
+  the instructions here</a> to determine which value to use."
+  id: "cc-inflation-target-density"
+  values: ["120", "160", "240", "320", "480", "640", "none"]
+  value_names: ["Low Density", "Medium Density", "High Density", "X-High Density", "XX-High Density", "XXX-High Density", "None"]
+  default: "none"
+  since: "2.24"
+  force: true

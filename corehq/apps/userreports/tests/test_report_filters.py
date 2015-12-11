@@ -4,10 +4,10 @@ from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, \
     NumericFilter, DynamicChoiceListFilter, Choice
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.reports.factory import ReportFilterFactory
-from corehq.apps.userreports.reports.filters import SHOW_ALL_CHOICE, \
+from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, \
     CHOICE_DELIMITER, NumericFilterValue
-from corehq.apps.userreports.reports.specs import ReportFilter
+from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
+from corehq.apps.userreports.reports.filters.specs import ReportFilter
 
 
 class FilterTestCase(SimpleTestCase):
@@ -97,16 +97,19 @@ class DateFilterTestCase(SimpleTestCase):
             reports_core_value = reports_core_filter.get_value({
                 "my_slug-start": "2015-06-07",
                 "my_slug-end": "2015-06-08",
+                "date_range_inclusive": True,
             })
 
             filter = ReportFilter.wrap(spec)
             return filter.create_filter_value(reports_core_value).to_sql_values()
 
         val = get_query_value(compare_as_string=False)
-        self.assertEqual(type(val['startdate']), datetime)
+        self.assertEqual(type(val['my_slug_startdate']), datetime)
+        self.assertEqual(type(val['my_slug_enddate']), datetime)
 
         val = get_query_value(compare_as_string=True)
-        self.assertEqual(type(val['startdate']), str)
+        self.assertEqual(type(val['my_slug_startdate']), str)
+        self.assertEqual(type(val['my_slug_enddate']), str)
 
 
 class NumericFilterTestCase(SimpleTestCase):

@@ -12,6 +12,11 @@ DATABASES = {
     }
 }
 
+# Custom databases can be used to configure a separate database for specific UCR data sources
+# The key is what you will reference in the datasource, e.g. 'custom_ucr_database'
+# The value is the sql connection string "postgresql://%(USER)s:%(PASSWORD)s@%(HOST)s:%(PORT)s/commcarehq_reporting" % DATABASES['default']
+CUSTOM_DATABASES = {}
+
 ####### Couch Config ######
 COUCH_HTTPS = False # recommended production value is True if enabling https
 COUCH_SERVER_ROOT = '127.0.0.1:5984' #6984 for https couch
@@ -80,34 +85,11 @@ BITLY_APIKEY = '*******'
 _ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 # Uncomment below when signing the JAR
 # JAR_SIGN = {
-#     'jad_tool': os.path.join(_ROOT_DIR, "corehq", "apps", "app_manager", "JadTool.jar"),
 #     'key_store': os.path.join(os.path.dirname(os.path.dirname(_ROOT_DIR)), "DimagiKeyStore"),
 #     'key_alias': "javarosakey",
 #     'store_pass': "*******",
 #     'key_pass': "*******",
 # }
-
-####### SMS Config ########
-
-# Mach
-
-SMS_GATEWAY_URL = "http://gw1.promessaging.com/sms.php"
-SMS_GATEWAY_PARAMS = "id=******&pw=******&dnr=%(phone_number)s&msg=%(message)s&snr=DIMAGI"
-
-# Unicel
-UNICEL_CONFIG = {"username": "Dimagi",
-                 "password": "******",
-                 "sender": "Promo" }
-
-####### Domain sync / de-id ########
-
-DOMAIN_SYNCS = { 
-    "domain_name": { 
-        "target": "target_db_name",
-        "transform": "corehq.apps.domainsync.transforms.deidentify_domain" 
-    }
-}
-DOMAIN_SYNC_APP_NAME_MAP = {"app_name": "new_app_name"}
 
 ####### Touchforms config - for CloudCare #######
 
@@ -130,9 +112,8 @@ BASE_ADDRESS = 'localhost:8000'
 
 # Set your analytics IDs here for GA and pingdom RUM
 ANALYTICS_IDS = {
-    'GOOGLE_ANALYTICS_ID': '*******',
-    'PINGDOM_ID': '*****',
-    'ANALYTICS_ID_PUBLIC_COMMCARE': '*****',
+    'GOOGLE_ANALYTICS_API_ID': '*******',
+    'ANALYTICS_API_ID_PUBLIC_COMMCARE': '*****',
     'KISSMETRICS_KEY': '*****',
     'HUBSPOT_API_KEY': '*****',
 }
@@ -177,14 +158,13 @@ ADM_ENABLED_PROJECTS = []
 
 # prod settings
 SOIL_DEFAULT_CACHE = "redis"
-SOIL_BACKEND = "soil.CachedDownload"
 
 # reports cache
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
 redis_cache = {
-    'BACKEND': 'redis_cache.cache.RedisCache',
-    'LOCATION': 'localhost:6379:0',
+    'BACKEND': 'django_redis.cache.RedisCache',
+    'LOCATION': 'redis://127.0.0.1:6379/0',
     'OPTIONS': {},
 }
 CACHES = {
@@ -225,54 +205,7 @@ CCHQ_API_THROTTLE_TIMEFRAME = 10  # seconds
 COVERAGE_REPORT_HTML_OUTPUT_DIR='coverage-html'
 COVERAGE_MODULE_EXCLUDES= ['tests$', 'settings$', 'urls$', 'locale$',
                            'common.views.test', '^django', 'management', 'migrations',
-                           '^south', '^djcelery', '^debug_toolbar', '^rosetta']
-
-####### Selenium tests config ########
-
-SELENIUM_SETUP = {
-    # Firefox, Chrome, Ie, or Remote
-    'BROWSER': 'Chrome',
-    
-    # Necessary if using Remote selenium driver
-    'REMOTE_URL': None,
-    
-    # If not using Remote, allows you to open browsers in a hidden virtual X Server
-    'USE_XVFB': True,
-    'XVFB_DISPLAY_SIZE': (1024, 768),
-}
-
-SELENIUM_USERS = {
-    # 'WEB_USER' is optional; if not set, some tests that want a web user will
-    # try to use ADMIN instead
-    'ADMIN': {
-        'USERNAME': 'foo@example.com',
-        'PASSWORD': 'password',
-        'URL': 'http://localhost:8000',
-        'PROJECT': 'project_name',
-        'IS_SUPERUSER': False
-    },
-
-    'WEB_USER': {
-        'USERNAME': 'foo@example.com',
-        'PASSWORD': 'password',
-        'URL': 'http://localhost:8000',
-        'PROJECT': 'mike',
-        'IS_SUPERUSER': False
-    },
-
-    'MOBILE_WORKER': {
-        'USERNAME': 'user@project_name.commcarehq.org',
-        'PASSWORD': 'password',
-        'URL': 'http://localhost:8000'
-    }
-}
-
-SELENIUM_APP_SETTINGS = {
-    'reports': {
-        'MAX_PRELOAD_TIME': 20,
-        'MAX_LOAD_TIME': 30,
-    },
-}
+                           '^south', '^djcelery', '^debug_toolbar']
 
 INTERNAL_DATA = {
     "business_unit": [],

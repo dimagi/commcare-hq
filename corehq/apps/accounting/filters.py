@@ -51,11 +51,10 @@ class DomainFilter(BaseAccountingSingleOptionFilter):
 
 
 def clean_options(options):
-    cleaned_options = []
-    for option in options:
-        if option[1] is not None and option[1].strip() != '':
-            cleaned_options.append(option)
-    return sorted([_ for _ in set(cleaned_options)])
+    return sorted(set(filter(
+        lambda option: option[1] and option[1].strip(),
+        options
+    )))
 
 
 class SalesforceAccountIDFilter(BaseAccountingSingleOptionFilter):
@@ -109,14 +108,13 @@ class EntryPointFilter(BaseSingleOptionFilter):
     options = EntryPoint.CHOICES
 
 
-INVOICE = "SEND_INVOICE"
-DO_NOT_INVOICE = "DO_NOT_INVOICE"
-
-
 class DoNotInvoiceFilter(BaseSingleOptionFilter):
     slug = 'do_not_invoice'
     label = _('Invoicing Status')
     default_text = _('Any')
+
+    INVOICE = "SEND_INVOICE"
+    DO_NOT_INVOICE = "DO_NOT_INVOICE"
     options = [
         (INVOICE, _('Send invoice')),
         (DO_NOT_INVOICE, _('Do not invoice')),
@@ -144,7 +142,7 @@ class SubscriptionTypeFilter(BaseSingleOptionFilter):
 
 class ProBonoStatusFilter(BaseSingleOptionFilter):
     slug = 'pro_bono_status'
-    label = _("Pro-Bono")
+    label = _("Discounted")
     default_text = _("Any")
     options = ProBonoStatus.CHOICES
 
@@ -279,6 +277,10 @@ class OptionalDateRangeFilter(DateRangeFilter, OptionalFilterMixin):
             (super(OptionalDateRangeFilter, cls).get_start_date(request).date() <= date
                 and super(OptionalDateRangeFilter, cls).get_end_date(request).date() >= date))
 
+
+class DateFilter(OptionalDateRangeFilter):
+    slug = 'date'
+    label = "Date"
 
 class DateCreatedFilter(OptionalDateRangeFilter):
     slug = 'date_created'

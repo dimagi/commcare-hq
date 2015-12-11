@@ -1,9 +1,10 @@
 from django.db import transaction
 from corehq.apps.hqcase.dbaccessors import \
     get_supply_point_case_in_domain_by_id
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty,\
     FloatProperty, DictProperty
-from corehq.apps.commtrack.models import SupplyPointCase, CommtrackConfig, CommtrackActionConfig
+from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.programs.models import Program
 from corehq.apps.users.models import UserRole
@@ -132,7 +133,6 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
     def get_supplypointstatuses(self, domain, facility=None, **kwargs):
         meta, supplypointstatuses = self.get_objects(self.supplypointstatuses_url, **kwargs)
         location = None
-
         if facility:
             try:
                 location = SQLLocation.objects.get(domain=domain, external_id=facility)
@@ -143,11 +143,10 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
         for supplypointstatus in supplypointstatuses:
             if not location:
                 try:
-                    location = SQLLocation.objects.get(
+                    statuses.append(SupplyPointStatus.wrap_from_json(supplypointstatus, SQLLocation.objects.get(
                         domain=domain,
                         external_id=supplypointstatus['supply_point']
-                    )
-                    statuses.append(SupplyPointStatus.wrap_from_json(supplypointstatus, location))
+                    )))
                 except SQLLocation.DoesNotExist:
                     continue
             else:
@@ -167,11 +166,10 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
         for deliverygroupreport in deliverygroupreports:
             if not location:
                 try:
-                    location = SQLLocation.objects.get(
+                    reports.append(DeliveryGroupReport.wrap_from_json(deliverygroupreport, SQLLocation.objects.get(
                         domain=domain,
                         external_id=deliverygroupreport['supply_point']
-                    )
-                    reports.append(DeliveryGroupReport.wrap_from_json(deliverygroupreport, location))
+                    )))
                 except SQLLocation.DoesNotExist:
                     continue
             else:
@@ -187,8 +185,6 @@ class ILSGatewayEndpoint(LogisticsEndpoint):
 
     def get_stocktransactions(self, filters=None, **kwargs):
         filters = filters or {}
-        if 'date__lte' in filters:
-            filters.pop('date__lte')
         meta, stock_transactions = self.get_objects(self.stocktransactions_url, filters=filters, **kwargs)
         return meta, [(self.models_map['stock_transaction'])(stock_transaction)
                       for stock_transaction in stock_transactions]
@@ -411,8 +407,9 @@ class ILSGatewayAPI(APISynchronization):
             location.external_id = unicode(ilsgateway_location.id)
             location.save()
 
-            if ilsgateway_location.type == 'FACILITY' and not SupplyPointCase.get_by_location(location):
-                SupplyPointCase.create_from_location(self.domain, location)
+            interface = SupplyInterface(self.domain)
+            if ilsgateway_location.type == 'FACILITY' and not interface.get_by_location(location):
+                interface.create_from_location(self.domain, location)
                 location.save()
         else:
             location_dict = {
@@ -426,13 +423,13 @@ class ILSGatewayAPI(APISynchronization):
             }
             if ilsgateway_location.groups:
                 location_dict['metadata']['group'] = ilsgateway_location.groups[0]
-            case = SupplyPointCase.get_by_location(location)
+            case = SupplyInterface(self.domain).get_by_location(location)
             if apply_updates(location, location_dict):
                 location.save()
                 if case:
                     case.update_from_location(location)
                 else:
-                    SupplyPointCase.create_from_location(self.domain, location)
+                    SupplyInterface.create_from_location(self.domain, location)
         return location
 
     def location_groups_sync(self, location_groups):

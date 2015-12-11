@@ -9,6 +9,12 @@ from custom.utils.utils import flat_field
 from fluff.filters import CustomFilter
 
 
+LAST_VISIT = {
+    'visit_name': 'last',
+    'days': -1
+}
+
+
 class _(Document):
     pass
 
@@ -23,7 +29,12 @@ def get_next_visit(case):
     for visit_key, visit in enumerate(VISIT_SCHEDULE):
         is_ignored = case.get_case_property(visit['ignored_field'])
         completed = case.get_case_property(visit['completion_field'])
-        if completed or is_ignored is None or is_ignored.lower() != 'yes':
+        if completed != '' and is_ignored is not None and is_ignored.lower() == 'yes':
+            try:
+                next_visit = VISIT_SCHEDULE[visit_key + 1]
+            except IndexError:
+                next_visit = LAST_VISIT
+        else:
             for key, action in enumerate(actions):
                 if visit['xmlns'] == action['xform_xmlns']:
                     try:
@@ -31,10 +42,7 @@ def get_next_visit(case):
                         del actions[key]
                         break
                     except IndexError:
-                        next_visit = {
-                            'visit_name': 'last',
-                            'days': -1
-                        }
+                        next_visit = LAST_VISIT
     return next_visit
 
 

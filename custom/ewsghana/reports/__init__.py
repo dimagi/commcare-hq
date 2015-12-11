@@ -4,7 +4,6 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
-from corehq import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.generic import GenericTabularReport
@@ -107,6 +106,9 @@ class EWSData(object):
 
 
 class ReportingRatesData(EWSData):
+
+    default_rows = 50
+
     def get_supply_points(self, location_id=None):
         location = SQLLocation.objects.get(location_id=location_id) if location_id else self.location
 
@@ -162,17 +164,14 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
 
     @property
     @memoized
-    def active_location(self):
+    def location(self):
         loc_id = self.request_params.get('location_id')
         if loc_id:
-            return SQLLocation.objects.get(location_id=loc_id)
+            return get_object_or_404(SQLLocation, location_id=loc_id, is_archived=False)
         else:
-            return get_object_or_404(SQLLocation, location_type__name='country', domain=self.domain)
-
-    @property
-    @memoized
-    def report_location(self):
-        return SQLLocation.objects.get(location_id=self.report_config['location_id'])
+            return get_object_or_404(
+                SQLLocation, location_type__name='country', domain=self.domain, is_archived=False
+            )
 
     @property
     def report_subtitles(self):
@@ -186,7 +185,7 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
             Product: {2}<br>
             Date range: {3} - {4}
             """.format(
-                self.report_location.name,
+                self.location.name,
                 Program.get(program).name if program != ALL_OPTION else ALL_OPTION.title(),
                 ", ".join(
                     [p.name for p in SQLProduct.objects.filter(product_id__in=products)]
@@ -199,12 +198,16 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
     def get_stock_transactions(self):
         return StockTransaction.objects.filter(
             case_id__in=list(
-                self.report_location.get_descendants().exclude(
+                self.location.get_descendants().exclude(
                     supply_point_id__isnull=True
                 ).values_list('supply_point_id', flat=True)),
             report__date__range=[self.report_config['startdate'], self.report_config['enddate']],
             report__domain=self.domain
         ).order_by('report__date', 'pk')
+
+    @classmethod
+    def get_raw_url(cls, domain=None, render_as=None, **kwargs):
+        return super(MultiReport, cls).get_url(domain=domain, render_as=None, kwargs=kwargs)
 
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):
@@ -318,15 +321,7 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
         return context
 
     def is_reporting_type(self):
-        if not self.report_config.get('location_id'):
-            return False
-        sql_location = SQLLocation.objects.get(location_id=self.report_config['location_id'], is_archived=False)
-        reporting_types = [
-            location_type.name
-            for location_type in Domain.get_by_name(self.domain).location_types
-            if not location_type.administrative
-        ]
-        return sql_location.location_type.name in reporting_types
+        return not self.location.location_type.administrative
 
     @property
     def export_table(self):
@@ -364,7 +359,7 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
             ['Title of report', 'Location', 'Date range', 'Program'],
             [
                 self.title,
-                self.active_location.name if self.active_location else 'NATIONAL',
+                self.location.name if self.location else 'NATIONAL',
                 '{} - {}'.format(
                     ews_date_format(self.datespan.startdate),
                     ews_date_format(self.datespan.enddate)

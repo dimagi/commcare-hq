@@ -1,7 +1,6 @@
 import warnings
 from functools import partial
 from couchdbkit import ResourceNotFound
-from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from dimagi.ext.couchdbkit import *
 import itertools
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
@@ -16,8 +15,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
-
-from .dbaccessors import get_all_users_by_location
 
 
 LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
@@ -87,6 +84,9 @@ class LocationType(models.Model):
 
     objects = LocationTypeManager()
 
+    class Meta:
+        app_label = 'locations'
+
     def _populate_stock_levels(self):
         from corehq.apps.commtrack.models import CommtrackConfig
         ct_config = CommtrackConfig.for_domain(self.domain)
@@ -149,6 +149,42 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         return (self._get_base_queryset()
                 .order_by(self.tree_id_attr, self.left_attr))  # mptt default
 
+    def get_from_user_input(self, domain, user_input):
+        """
+        First check by site-code, if that fails, fall back to name.
+        Note that name lookup may raise MultipleObjectsReturned.
+        """
+        try:
+            return self.get(domain=domain, site_code=user_input)
+        except self.model.DoesNotExist:
+            return self.get(domain=domain, name__iexact=user_input)
+
+    def filter_by_user_input(self, domain, user_input):
+        """
+        Accepts partial matches, matches against name and site_code.
+        """
+        return (self.filter(domain=domain)
+                    .filter(models.Q(name__icontains=user_input) |
+                            models.Q(site_code__icontains=user_input)))
+
+    def filter_path_by_user_input(self, domain, user_input):
+        """
+        Returns a queryset including all locations matching the user input
+        and their children. This means "Middlesex" will match:
+            Massachusetts/Middlesex
+            Massachusetts/Middlesex/Boston
+            Massachusetts/Middlesex/Cambridge
+        It matches by name or site-code
+        """
+        direct_matches = self.filter_by_user_input(domain, user_input)
+        return self.get_queryset_descendants(direct_matches, include_self=True)
+
+
+class OnlyUnarchivedLocationManager(LocationManager):
+    def get_queryset(self):
+        return (super(OnlyUnarchivedLocationManager, self).get_query_set()
+                .filter(is_archived=False))
+
 
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
@@ -175,6 +211,12 @@ class SQLLocation(MPTTModel):
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
 
     objects = LocationManager()
+    # This should really be the default location manager
+    active_objects = OnlyUnarchivedLocationManager()
+
+    @property
+    def get_id(self):
+        return self.location_id
 
     @property
     def products(self):
@@ -197,6 +239,7 @@ class SQLLocation(MPTTModel):
         self._products = value
 
     class Meta:
+        app_label = 'locations'
         unique_together = ('domain', 'site_code',)
 
     def __unicode__(self):
@@ -230,13 +273,11 @@ class SQLLocation(MPTTModel):
         roots = cls.objects.root_nodes().filter(domain=domain)
         return _filter_for_archived(roots, include_archive_ancestors)
 
-    def _make_group_object(self, user_id, case_sharing):
-        def group_name():
-            return '/'.join(
-                list(self.get_ancestors().values_list('name', flat=True)) +
-                [self.name]
-            )
+    def get_path_display(self):
+        return '/'.join(self.get_ancestors(include_self=True)
+                            .values_list('name', flat=True))
 
+    def _make_group_object(self, user_id, case_sharing):
         from corehq.apps.groups.models import UnsavableGroup
 
         g = UnsavableGroup()
@@ -245,13 +286,13 @@ class SQLLocation(MPTTModel):
         g.last_modified = datetime.utcnow()
 
         if case_sharing:
-            g.name = group_name() + '-Cases'
+            g.name = self.get_path_display() + '-Cases'
             g._id = self.location_id
             g.case_sharing = True
             g.reporting = False
         else:
             # reporting groups
-            g.name = group_name()
+            g.name = self.get_path_display()
             g._id = LOCATION_REPORTING_PREFIX + self.location_id
             g.case_sharing = False
             g.reporting = True
@@ -264,6 +305,13 @@ class SQLLocation(MPTTModel):
             g.metadata['commcare_location_' + key] = val
 
         return g
+
+    def get_case_sharing_groups(self, for_user_id=None):
+        if self.location_type.shares_cases:
+            yield self.case_sharing_group_object(for_user_id)
+        if self.location_type.view_descendants:
+            for sql_loc in self.get_descendants().filter(location_type__shares_cases=True):
+                yield sql_loc.case_sharing_group_object(for_user_id)
 
     def case_sharing_group_object(self, user_id=None):
         """
@@ -311,6 +359,12 @@ class SQLLocation(MPTTModel):
         return list(self.get_ancestors(include_self=True)
                     .values_list('location_id', flat=True))
 
+    @classmethod
+    def by_location_id(cls, location_id):
+        try:
+            return cls.objects.get(location_id=location_id)
+        except cls.DoesNotExist:
+            return None
 
 
 def _filter_for_archived(locations, include_archive_ancestors):
@@ -363,13 +417,15 @@ class Location(CachedCouchDocumentMixin, Document):
         return super(Location, cls).wrap(data)
 
     def __init__(self, *args, **kwargs):
+        from corehq.apps.locations.util import get_lineage_from_location, get_lineage_from_location_id
         if 'parent' in kwargs:
             parent = kwargs['parent']
             if parent:
-                if not isinstance(parent, Document):
+                if isinstance(parent, Document):
+                    lineage = get_lineage_from_location(parent)
+                else:
                     # 'parent' is a doc id
-                    parent = Location.get(parent)
-                lineage = list(reversed(parent.path))
+                    lineage = get_lineage_from_location_id(parent)
             else:
                 lineage = []
             kwargs['lineage'] = lineage
@@ -381,7 +437,8 @@ class Location(CachedCouchDocumentMixin, Document):
             self.location_type = location_type
 
     def __repr__(self):
-        return "%s (%s)" % (self.name, self.location_type)
+        val = u"%s (%s)" % (self.name, self.location_type)
+        return val.encode('utf-8')
 
     def __eq__(self, other):
         if isinstance(other, Location):
@@ -435,13 +492,14 @@ class Location(CachedCouchDocumentMixin, Document):
         # sync supply point id
         sp = self.linked_supply_point()
         if sp:
-            sql_location.supply_point_id = sp._id
+            sql_location.supply_point_id = sp.case_id
 
         # sync parent connection
         parent_id = self.parent_id
         if parent_id:
             sql_location.parent = SQLLocation.objects.get(location_id=parent_id)
-
+        else:
+            sql_location.parent = None
         return sql_location
 
     @property
@@ -452,6 +510,10 @@ class Location(CachedCouchDocumentMixin, Document):
     @property
     def location_type(self):
         return self.location_type_object.name
+
+    @property
+    def location_id(self):
+        return self._id
 
     _sql_location_type = None
     @location_type.setter
@@ -483,7 +545,7 @@ class Location(CachedCouchDocumentMixin, Document):
         # this is important because if you archive a child, then try
         # to archive the parent, we don't want to try to close again
         if sp and not sp.closed:
-            close_case(sp._id, self.domain, COMMTRACK_USERNAME)
+            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
 
         _unassign_users_from_location(self.domain, self._id)
 
@@ -515,7 +577,7 @@ class Location(CachedCouchDocumentMixin, Document):
         if sp and sp.closed:
             for action in sp.actions:
                 if action.action_type == 'close':
-                    action.xform.archive(user=COMMTRACK_USERNAME)
+                    action.xform.archive(user_id=COMMTRACK_USERNAME)
                     break
 
     def unarchive(self):
@@ -636,7 +698,7 @@ class Location(CachedCouchDocumentMixin, Document):
         if not parent:
             parent = self.parent
         locs = (parent.children if parent else self.root_locations(self.domain))
-        return [loc for loc in locs if loc._id != self._id]
+        return [loc for loc in locs if loc.location_id != self._id]
 
     @property
     def path(self):
@@ -656,6 +718,7 @@ class Location(CachedCouchDocumentMixin, Document):
                                        .couch_locations())
 
     def linked_supply_point(self):
+        from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
         return get_supply_point_case_by_location(self)
 
     @property
@@ -675,6 +738,7 @@ def _unassign_users_from_location(domain, location_id):
     """
     Unset location for all users assigned to that location.
     """
+    from corehq.apps.locations.dbaccessors import get_all_users_by_location
     for user in get_all_users_by_location(domain, location_id):
         if user.is_web_user():
             user.unset_location(domain)

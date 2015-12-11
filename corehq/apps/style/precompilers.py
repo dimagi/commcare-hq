@@ -1,6 +1,7 @@
+from django.conf import settings
+
 from compressor.filters import CompilerFilter
 from compressor.filters.css_default import CssAbsoluteFilter
-import settings
 
 
 class LessFilter(CompilerFilter):

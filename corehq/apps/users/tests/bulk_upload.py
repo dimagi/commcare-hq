@@ -1,9 +1,15 @@
+from django.test import TestCase
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.users.bulkupload import UserLocMapping, SiteCodeToSupplyPointCache
+from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.models import CommCareUser
-from mock import patch
+from corehq.apps.domain.models import Domain
 from corehq.toggles import MULTIPLE_LOCATIONS_PER_USER, NAMESPACE_DOMAIN
+from dimagi.utils.decorators.memoized import memoized
+from mock import patch
 
 
 class UserLocMapTest(CommTrackTest):
@@ -74,7 +80,70 @@ class UserLocMapTest(CommTrackTest):
         self.mapping.to_add.add(self.loc.site_code)
         mapping2.to_add.add(self.loc.site_code)
 
-        with patch('corehq.apps.commtrack.util.SupplyPointCase.get_by_location') as get_supply_point:
+        with patch('corehq.form_processor.interfaces.supply.SupplyInterface.get_by_location') as get_supply_point:
             self.mapping.save()
             mapping2.save()
             self.assertEqual(get_supply_point.call_count, 1)
+
+
+class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.domain_name = 'mydomain'
+        cls.domain = Domain(name=cls.domain_name)
+        cls.domain.save()
+        cls.user_specs = [{
+            u'username': u'hello',
+            u'user_id': u'should not update',
+            u'name': u'Another One',
+            u'language': None,
+            u'is_active': u'True',
+            u'phone-number': u'23424123',
+            u'password': 123,
+            u'email': None
+        }]
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.teardown_subscription()
+        cls.domain.delete()
+
+    @property
+    @memoized
+    def user(self):
+        return CommCareUser.get_by_username('{}@{}.commcarehq.org'.format(
+            self.user_specs[0]['username'],
+            self.domain.name))
+
+    def test_upload_with_user_id(self):
+        bulk_upload_async(
+            self.domain.name,
+            list(self.user_specs),
+            list([]),
+            list([])
+        )
+
+        self.assertNotEqual(self.user_specs[0]['user_id'], self.user._id)
+        self.assertEqual(self.user_specs[0]['phone-number'], self.user.phone_number)
+        self.assertEqual(self.user_specs[0]['name'], self.user.name)
+
+    def test_location_update(self):
+        self.setup_location()
+        from copy import deepcopy
+        updated_user_spec = deepcopy(self.user_specs[0])
+        updated_user_spec["location-sms-code"] = self.state_code
+
+        bulk_upload_async(
+            self.domain.name,
+            list([updated_user_spec]),
+            list([]),
+            list([])
+        )
+        self.assertEqual(self.user.location_id, self.location._id)
+        self.assertEqual(self.user.location_id, self.user.user_data.get('commcare_location_id'))
+
+    def setup_location(self):
+        self.setup_subscription(self.domain_name, SoftwarePlanEdition.ADVANCED)
+        self.state_code = 'my_state'
+        self.location = make_loc(self.state_code, type='state', domain=self.domain_name)

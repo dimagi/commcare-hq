@@ -1,12 +1,13 @@
 <?xml version='1.0' ?>
-<system version="1" uiVersion="1" xmlns="{{ xmlns }}">
-    <meta xmlns="http://openrosa.org/jr/xforms">
-        <deviceID />
-        <timeStart>{{ time }}</timeStart>
-        <timeEnd>{{ time }}</timeEnd>
-        <username>{{ username }}</username>
-        <userID>{{ user_id }}</userID>
-        <uid>{{ uid }}</uid>
-    </meta>
+<system version="1" uiVersion="1" xmlns="{{ xmlns }}" xmlns:orx="http://openrosa.org/jr/xforms">
+    <orx:meta xmlns:cc="http://commcarehq.org/xforms">
+        <orx:deviceID />
+        <orx:timeStart>{{ time }}</orx:timeStart>
+        <orx:timeEnd>{{ time }}</orx:timeEnd>
+        <orx:username>{{ username }}</orx:username>
+        <orx:userID>{{ user_id }}</orx:userID>
+        <orx:instanceID>{{ uid }}</orx:instanceID>
+        <cc:appVersion />
+    </orx:meta>
     {{ case_block|safe }}
 </system>

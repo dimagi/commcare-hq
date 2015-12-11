@@ -7,9 +7,10 @@ from sqlalchemy.exc import ProgrammingError
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.pillow import ConfigurableIndicatorPillow
 from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
     get_sample_report_config
-from corehq.apps.userreports.sql import connection, IndicatorSqlAdapter
+from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq import db
 
 
@@ -23,16 +24,7 @@ class UCRMultiDBTest(TestCase):
         cls.db2_url = '/'.join(db_conn_parts)
 
         # setup patches
-        cls.engine_id_patches = (
-            # unfortunately we need to patch this directly in modules that import it as well
-            patch('corehq.apps.userreports.sql.connection.get_engine_id'),
-            patch('corehq.apps.userreports.sql.adapter.get_engine_id'),
-            patch('corehq.apps.userreports.reports.data_source.get_engine_id'),
-        )
         cls.connection_string_patch = patch('corehq.db.connection_manager.get_connection_string')
-        for engine_id_patch in cls.engine_id_patches:
-            mock_engine_id_method = engine_id_patch.start()
-            mock_engine_id_method.side_effect = lambda x: x.engine_id
 
         def connection_string_for_engine(engine_id):
             if engine_id == 'engine-1':
@@ -76,8 +68,6 @@ class UCRMultiDBTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         # unpatch
-        for engine_id_patch in cls.engine_id_patches:
-            engine_id_patch.stop()
         cls.connection_string_patch.stop()
 
         # delete data sources
@@ -102,9 +92,9 @@ class UCRMultiDBTest(TestCase):
         self.ds1_adapter.drop_table()
         self.ds2_adapter.drop_table()
 
-    def test_patches(self):
-        self.assertEqual('engine-1', connection.get_engine_id(self.ds_1))
-        self.assertEqual('engine-2', connection.get_engine_id(self.ds_2))
+    def test_patches_and_setup(self):
+        self.assertEqual('engine-1', get_engine_id(self.ds_1))
+        self.assertEqual('engine-2', get_engine_id(self.ds_2))
 
         self.assertEqual(settings.SQL_REPORTING_DATABASE_URL,
                          db.connection_manager.get_connection_string('engine-1'))

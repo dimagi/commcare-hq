@@ -7,8 +7,8 @@ The project space <a href="{{ domain_url }}">{{ domain }}</a> has changed its su
 </p>
 
 <p>
-{% if request %}
-Initiated by: {{ request.couch_user.username }}<br/>
+{% if username %}
+Initiated by: {{ username }}<br/>
 From the following web page</b>: {{ referer }}<br/>
 {% endif %}
 </p>

@@ -1,5 +1,9 @@
+import re
 from django.views.decorators.debug import sensitive_post_parameters
+from corehq.apps.hqwebapp.models import MySettingsTab
+from corehq.apps.settings.forms import HQPasswordChangeForm
 from corehq.apps.style.decorators import use_bootstrap3, use_select2
+from corehq.apps.users.forms import AddPhoneNumberForm
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages
 from django.contrib.auth.forms import PasswordChangeForm
@@ -9,7 +13,6 @@ import langcodes
 from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from corehq import MySettingsTab
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
                                            login_required)
 from django.core.urlresolvers import reverse
@@ -92,7 +95,14 @@ class MyAccountSettingsView(BaseMyAccountView):
     urlname = 'my_account_settings'
     page_title = ugettext_lazy("My Information")
     api_key = None
-    template_name = 'settings/edit_my_account.b2.html'
+    template_name = 'settings/edit_my_account.b3.html'
+
+    @use_bootstrap3
+    @use_select2
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        # this is only here to add the login_required decorator
+        return super(MyAccountSettingsView, self).dispatch(request, *args, **kwargs)
 
     def get_or_create_api_key(self):
         if not self.api_key:
@@ -127,12 +137,64 @@ class MyAccountSettingsView(BaseMyAccountView):
 
     @property
     def page_context(self):
+        user = self.request.couch_user
         return {
             'form': self.settings_form,
+            'add_phone_number_form': AddPhoneNumberForm(),
             'api_key': self.get_or_create_api_key(),
+            'phonenumbers': user.phone_numbers_extended(user),
+            'user_type': 'mobile' if user.is_commcare_user() else 'web',
         }
 
+    def phone_number_is_valid(self):
+        return (
+            isinstance(self.phone_number, basestring) and
+            re.compile('^\d+$').match(self.phone_number) is not None
+        )
+
+    def process_add_phone_number(self):
+        if self.phone_number_is_valid():
+            user = self.request.couch_user
+            user.add_phone_number(self.phone_number)
+            user.save()
+            messages.success(self.request, _("Phone number added."))
+        else:
+            messages.error(self.request, _("Invalid phone number format entered. "
+                "Please enter number, including country code, in digits only."))
+        return HttpResponseRedirect(reverse(MyAccountSettingsView.urlname))
+
+    def process_delete_phone_number(self):
+        self.request.couch_user.delete_phone_number(self.phone_number)
+        messages.success(self.request, _("Phone number deleted."))
+        return HttpResponseRedirect(reverse(MyAccountSettingsView.urlname))
+
+    def process_make_phone_number_default(self):
+        self.request.couch_user.set_default_phone_number(self.phone_number)
+        messages.success(self.request, _("Primary phone number updated."))
+        return HttpResponseRedirect(reverse(MyAccountSettingsView.urlname))
+
+    @property
+    @memoized
+    def phone_number(self):
+        return self.request.POST.get('phone_number')
+
+    @property
+    @memoized
+    def form_actions(self):
+        return {
+            'add-phonenumber': self.process_add_phone_number,
+            'delete-phone-number': self.process_delete_phone_number,
+            'make-phone-number-default': self.process_make_phone_number_default,
+        }
+
+    @property
+    @memoized
+    def form_type(self):
+        return self.request.POST.get('form_type')
+
     def post(self, request, *args, **kwargs):
+        if self.form_type and self.form_type in self.form_actions:
+            return self.form_actions[self.form_type]()
         if self.settings_form.is_valid():
             old_lang = self.request.couch_user.language
             self.settings_form.update_user(existing_user=self.request.couch_user)
@@ -147,6 +209,12 @@ class MyProjectsList(BaseMyAccountView):
     urlname = 'my_projects'
     page_title = ugettext_lazy("My Projects")
     template_name = 'settings/my_projects.html'
+
+    @method_decorator(login_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        # this is only here to add the login_required decorator
+        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
 
     @property
     def all_domains(self):
@@ -188,12 +256,18 @@ class ChangeMyPasswordView(BaseMyAccountView):
     template_name = 'settings/change_my_password.html'
     page_title = ugettext_lazy("Change My Password")
 
+    @method_decorator(login_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        # this is only here to add the login_required decorator
+        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def password_change_form(self):
         if self.request.method == 'POST':
-            return PasswordChangeForm(user=self.request.user, data=self.request.POST)
-        return PasswordChangeForm(user=self.request.user)
+            return HQPasswordChangeForm(user=self.request.user, data=self.request.POST)
+        return HQPasswordChangeForm(user=self.request.user)
 
     @property
     def page_context(self):

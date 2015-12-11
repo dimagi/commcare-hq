@@ -1,0 +1,14 @@
+<div class="form-group {{ multifield.css_class }}" {{ multifield.flat_attrs|safe }}>
+    <label class="control-label {{ label_class }}">
+        {{ label_html }}
+    </label>
+    <div class="controls {{ field_class }} controls-multiple">
+        <div class="row">
+            {{ field_html }}
+        </div>
+        {% for error in error_list %}
+            <div id="error_{{ forloop.counter }}" class="text-danger">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+</div>

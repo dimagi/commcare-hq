@@ -2,37 +2,13 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block head %}{{ block.super }}
-    {# needed for the sortable knockout of binding #}
-    {% include "imports/hq-oldstyle-js.html" %}
-    {# needed for the knockout typeahead binding #}
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
-    <style>
-        {% comment %}
-            This style gets applied to elements in this template:
-                apps/userreports/templates/userreports/partials/report_filter_configuration.html
-            This might not be imediately obvious because that snippet is injected into the page
-            through crispy forms.
-        {% endcomment %}
-        .table tbody + tbody.add-prop,
-        tbody.add-prop td
-        {
-            border-top-width: 0px;
-        }
-        legend div.subtext
-        {
-            {# These values are sort of arbitrary. Would be good to base off of less variables #}
-            line-height: 18px;
-            margin-bottom: 8px;
-        }
-    </style>
+{% block js %}{{ block.super }}
+    <script src="{% new_static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/main.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/case-knockout-bindings.js' %}"></script>
 {% endblock %}
 
-{% block js %}{{ block.super }}
-    {# needed for the sortable and typeahead knockout of binding #}
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
-{% endblock %}
+{% block page_title %}{% trans "Configure Report Settings" %}{% endblock page_title %}
 
 {% block js-inline %}{{ block.super }}
     <script>
@@ -104,9 +80,11 @@
             this.propertyHelpText = options.propertyHelpText !== undefined ? options.propertyHelpText : null;
             this.displayHelpText = options.displayHelpText !== undefined ? options.displayHelpText : null;
             this.formatHelpText = options.formatHelpText !== undefined ? options.formatHelpText : null;
+            this.analyticsAction = options.analyticsAction !== undefined ? options.analyticsAction : null;
+            this.analyticsLabel = options.analyticsLabel !== undefined ? options.analyticsLabel : '{{ report_type }}';
 
             this.hasFormatCol = ko.observable(options.hasFormatCol !== undefined ? options.hasFormatCol : true);
-            this.formatOptions = ko.observableArray(["Choice", "Date", "Numeric"]);
+            this.formatOptions = ko.observableArray(["Choice", "Date"]);
             this.propertyOptions = ko.observableArray({{ property_options|JSON }});
             var rawOptions = {{ property_options|JSON }};
             this.optionsContainQuestions = _.any(rawOptions, function (o) {
@@ -142,6 +120,13 @@
                 that.showWarnings(true);
                 return !_.contains(_.map(that.columns(), function(c){return c.isValid()}), false);
             };
+            this.buttonHandler = function(){
+                this.columns.push(new PropertyListItem());
+                if (!_.isEmpty(this.analyticsAction) && !_.isEmpty(this.analyticsLabel)){
+                    window.analytics.usage("Report Builder", this.analyticsAction, this.analyticsLabel);
+                    window.analytics.workflow("Clicked " + this.analyticsAction + " in Report Builder");
+                }
+            }
         };
 
         var configForm = function(){
@@ -154,9 +139,10 @@
             });
             // TODO: Pass help texts from template so that they can be translated.
             this.filtersList = new propertyList({
-                hasFormatCol: true,
+                hasFormatCol: {% if form.source_type == "case" %}true{% else %}false{% endif %},
                 initialCols: initialFilters,
                 buttonText: 'Add Filter',
+                analyticsAction: 'Add Filter',
                 propertyHelpText: '{{ filter_property_help_text|escapejs}}',
                 displayHelpText: '{{ filter_display_help_text|escapejs }}',
                 formatHelpText: '{{ filter_format_help_text|escapejs }}'
@@ -164,14 +150,21 @@
             this.columnsList = new propertyList({
                 hasFormatCol: false,
                 initialCols: initialColumns,
-                buttonText: 'Add Column'
+                buttonText: 'Add Column',
+                analyticsAction: 'Add Column'
             });
-            this.submitHandler = function(){
+            this.submitHandler = function(formElement){
                 var isValid = true;
                 isValid = that.filtersList.validate() && isValid;
                 isValid = that.columnsList.validate() && isValid;
                 if (!isValid){
                     alert('Invalid report configuration. Please fix the issues and try again.');
+                    // The event handler that disables the button is triggered
+                    // after this handler is invoked. Therefore, we use _.defer()
+                    // to re-enable it immediately after the call stack clears.
+                    _.defer(function(el){
+                        $(el).find('.disable-on-submit').enableButton();
+                    }, formElement);
                 }
                 return isValid;
             }
