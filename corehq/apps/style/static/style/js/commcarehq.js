@@ -170,8 +170,8 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                 $retry: $('<div/>').text(SaveButton.message.RETRY).click(function () {
                     button.fire('save');
                 }).addClass(cssClass),
-                $saving: $('<div/>').text(SaveButton.message.SAVING).addClass('btn disabled'),
-                $saved: $('<div/>').text(SaveButton.message.SAVED).addClass('btn disabled'),
+                $saving: $('<div/>').text(SaveButton.message.SAVING).addClass('btn btn-default disabled'),
+                $saved: $('<div/>').text(SaveButton.message.SAVED).addClass('btn btn-default disabled'),
                 ui: $('<div/>').addClass('pull-right'),
                 setStateWhenReady: function (state) {
                     if (this.state === 'saving') {
