@@ -1,7 +1,9 @@
-DROP FUNCTION IF EXISTS get_reverse_indexed_cases(text, text[]);
+DROP FUNCTION IF EXISTS get_reverse_indexed_cases(TEXT, TEXT[]);
 
-CREATE FUNCTION get_reverse_indexed_cases(domain_name text, case_ids text[]) RETURNS SETOF form_processor_commcarecasesql AS $$
+CREATE FUNCTION get_reverse_indexed_cases(domain_name TEXT, case_ids TEXT[]) RETURNS SETOF form_processor_commcarecasesql AS $$
+BEGIN
     -- TODO exclude case_json
+    RETURN QUERY
     SELECT form_processor_commcarecasesql.*
 --         form_processor_commcarecasesql.id,
 --         form_processor_commcarecasesql.case_id,
@@ -24,6 +26,7 @@ CREATE FUNCTION get_reverse_indexed_cases(domain_name text, case_ids text[]) RET
         INNER JOIN form_processor_commcarecaseindexsql
             ON ( form_processor_commcarecasesql.case_id = form_processor_commcarecaseindexsql.case_id )
     WHERE
-        form_processor_commcarecasesql.domain = $1
-        AND form_processor_commcarecaseindexsql.referenced_id = ANY($2);
-$$ LANGUAGE SQL;
+        form_processor_commcarecasesql.domain = domain_name
+        AND form_processor_commcarecaseindexsql.referenced_id = ANY(case_ids);
+END;
+$$ LANGUAGE plpgsql;

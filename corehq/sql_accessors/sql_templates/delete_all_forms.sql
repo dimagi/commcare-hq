@@ -3,10 +3,10 @@ DROP FUNCTION IF EXISTS delete_all_forms(TEXT, TEXT);
 -- has to return SETOF for plproxy
 CREATE FUNCTION delete_all_forms(domain_name TEXT, form_user_id TEXT) RETURNS SETOF INTEGER AS $$
 DECLARE
-    query_expr    text := 'SELECT form_id FROM form_processor_xforminstancesql';
-    domain_filter      text := ' domain = $1';
-    type_filter        text := ' user_id = $2';
-    form_ids           text[];
+    query_expr    TEXT := 'SELECT form_id FROM form_processor_xforminstancesql';
+    domain_filter      TEXT := ' domain = $1';
+    type_filter        TEXT := ' user_id = $2';
+    form_ids           TEXT[];
 BEGIN
     IF $1 <> '' THEN
         query_expr := query_expr || ' WHERE' || domain_filter;

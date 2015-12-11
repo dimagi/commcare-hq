@@ -1,7 +1,7 @@
-DROP FUNCTION IF EXISTS update_form_problem_and_state(text, text, INTEGER);
+DROP FUNCTION IF EXISTS update_form_problem_and_state(TEXT, TEXT, INTEGER);
 
 CREATE FUNCTION update_form_problem_and_state(
-    p_form_id text, updated_problem text, update_state INTEGER
+    p_form_id TEXT, updated_problem TEXT, update_state INTEGER
 ) RETURNS VOID AS $$
 BEGIN
     UPDATE form_processor_xforminstancesql SET

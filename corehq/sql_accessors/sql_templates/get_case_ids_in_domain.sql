@@ -1,9 +1,9 @@
-DROP FUNCTION IF EXISTS get_case_ids_in_domain(text, text);
+DROP FUNCTION IF EXISTS get_case_ids_in_domain(TEXT, TEXT);
 
-CREATE FUNCTION get_case_ids_in_domain(domain_name text, case_type text DEFAULT NULL) RETURNS TABLE (case_id VARCHAR(255)) AS $$
+CREATE FUNCTION get_case_ids_in_domain(domain_name TEXT, case_type TEXT DEFAULT NULL) RETURNS TABLE (case_id VARCHAR(255)) AS $$
 DECLARE
-    query_expr  text := 'SELECT case_id FROM form_processor_commcarecasesql WHERE domain = $1';
-    type_filter text := ' AND type = $2';
+    query_expr  TEXT := 'SELECT case_id FROM form_processor_commcarecasesql WHERE domain = $1';
+    type_filter TEXT := ' AND type = $2';
 BEGIN
     IF $2 <> '' THEN
         query_expr := query_expr || type_filter;
@@ -11,6 +11,6 @@ BEGIN
 
     RETURN QUERY
     EXECUTE query_expr
-        USING $1, $2;
+        USING domain_name, case_type;
 END;
 $$ LANGUAGE plpgsql;
