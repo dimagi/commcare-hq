@@ -275,6 +275,7 @@ HQ_APPS = (
     'corehq.apps.importer',
     'corehq.apps.reminders',
     'corehq.apps.translations',
+    'corehq.apps.tour',
     'corehq.apps.users',
     'corehq.apps.settings',
     'corehq.apps.ota',
