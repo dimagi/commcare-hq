@@ -639,7 +639,7 @@ REMINDERS_QUEUE_ENABLED = False
 
 # If a reminder still has not been processed in this number of minutes, enqueue it
 # again.
-REMINDERS_QUEUE_ENQUEUING_TIMEOUT = 60
+REMINDERS_QUEUE_ENQUEUING_TIMEOUT = 180
 
 # Number of minutes a celery task will alot for itself (via lock timeout)
 REMINDERS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
@@ -654,6 +654,12 @@ REMINDERS_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
 # The number of hours to wait before counting a reminder as stale. Stale
 # reminders will not be processed.
 REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
+
+# Reminders rate limiting settings. A single project will only be allowed to
+# fire REMINDERS_RATE_LIMIT_COUNT reminders every REMINDERS_RATE_LIMIT_PERIOD
+# seconds.
+REMINDERS_RATE_LIMIT_COUNT = 30
+REMINDERS_RATE_LIMIT_PERIOD = 60
 
 
 ####### Pillow Retry Queue Settings #######
