@@ -268,7 +268,7 @@
                                 {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
                                 <a class="submit_on_click" href="#">
                                     <i class="fa fa-plus icon-blue"></i>
-                                    <span class="muted">{% trans "Form" %}</span>
+                                    <span class="text-muted">{% trans "Form" %}</span>
                                 </a>
                                 {% endif %}
                             </li>
@@ -285,7 +285,7 @@
                     <li class="sort-disabled dropdown">
                         <a href="#" data-toggle="dropdown">
                             <i class="new-module-icon fa fa-plus icon-blue"></i>
-                            <span class="muted">{% trans "Module" %}</span><span class="caret"></span>
+                            <span class="text-muted">{% trans "Module" %}</span><span class="caret"></span>
                         </a>
                         <ul class="dropdown-menu" role="menu">
                             <li><a href="#" class="new-module" data-type="case">{% trans "New Case Module" %}</a></li>
@@ -320,7 +320,7 @@
                 <li class="sort-disabled">
                     <a href="#" class="new-module" data-type="case">
                         <i class="new-module-icon fa fa-plus icon-blue"></i>
-                        <span class="muted">{% trans "Module" %}</span>
+                        <span class="text-muted">{% trans "Module" %}</span>
                     </a>
                 </li>
                 {% endif %}

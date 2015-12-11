@@ -512,7 +512,7 @@ var AdvancedCase = (function () {
         header: function (action) {
             var nameSnip = "<%= action.case_tag() %> (<%= action.case_type() %>)";
             var closeSnip = "<% if (action.close_case()) { %> : close<% }%>";
-            var spanSnip = '<span class="muted" style="font-weight: normal;">';
+            var spanSnip = '<span class="text-muted" style="font-weight: normal;">';
             if (action.actionType === 'open') {
                 return _.template(
                     nameSnip + spanSnip +
