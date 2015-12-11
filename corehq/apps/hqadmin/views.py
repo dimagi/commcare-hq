@@ -31,17 +31,17 @@ from django.http import (
 )
 from restkit import Resource
 from restkit.errors import Unauthorized
-from couchdbkit import ResourceNotFound, Database
+from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
+from corehq.apps.hqadmin.dbaccessors import get_number_of_forms_in_all_domains
 from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.couchdb_management import couch_config
 from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorException, all_pillows_supervisor_status, \
     pillow_supervisor_status
-from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
 from couchforms.models import XFormInstance
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
@@ -370,8 +370,8 @@ def db_comparisons(request):
             'sql_rows': None,
         },
         {
-            'description': 'Forms (doc_type is "XFormInstance")',
-            'couch_docs': get_number_of_forms_all_domains_in_couch(),
+            'description': 'Forms (doc_type is "XFormInstance", couch includes logs)',
+            'couch_docs': get_number_of_forms_in_all_domains(),
             'es_query': FormES().remove_default_filter('has_xmlns')
                 .remove_default_filter('has_user')
                 .size(0),
