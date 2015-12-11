@@ -331,6 +331,7 @@ HQ_APPS = (
     'corehq.util',
     'dimagi.ext',
     'corehq.doctypemigrations',
+    'corehq.blobs',
 
     # custom reports
     'a5288',
@@ -535,12 +536,10 @@ FIXTURE_GENERATORS = {
 ### Shared drive settings ###
 # Also see section after localsettings import
 SHARED_DRIVE_ROOT = None
-
-# name of the directory within SHARED_DRIVE_ROOT
+# names of directories within SHARED_DRIVE_ROOT
 RESTORE_PAYLOAD_DIR_NAME = None
-
-# name of the directory within SHARED_DRIVE_ROOT
 SHARED_TEMP_DIR_NAME = None
+SHARED_BLOB_DIR_NAME = 'blobdb'
 
 ## django-transfer settings
 # These settings must match the apache / nginx config
@@ -1236,7 +1235,8 @@ SHARED_DRIVE_CONF = SharedDriveConfiguration(
     SHARED_DRIVE_ROOT,
     RESTORE_PAYLOAD_DIR_NAME,
     TRANSFER_FILE_DIR_NAME,
-    SHARED_TEMP_DIR_NAME
+    SHARED_TEMP_DIR_NAME,
+    SHARED_BLOB_DIR_NAME
 )
 TRANSFER_MAPPINGS = {
     SHARED_DRIVE_CONF.transfer_dir: '/{}'.format(TRANSFER_FILE_DIR_NAME),  # e.g. '/mnt/shared/downloads': '/downloads',
@@ -1407,7 +1407,11 @@ PILLOWTOPS = {
             'class': 'corehq.apps.change_feed.consumer.pillow.LoggingPythonPillow',
             'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_python_pillow_consumer',
         },
-
+        {
+            'name': 'BlobDeletionPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.blobs.pillow.get_blob_deletion_pillow',
+        },
     ]
 }
 
