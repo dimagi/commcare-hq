@@ -445,8 +445,6 @@ class AliasedElasticPillow(BasicPillow):
         # online=False is used in unit tests
         if online:
             completely_initialize_pillow_index(self)
-        else:
-            pillow_logging.info("Pillowtop [%s] Started with no mapping from server in memory testing mode" % self.get_name())
 
     def get_doc_path(self, doc_id):
         return "%s/%s/%s" % (self.es_index, self.es_type, doc_id)
