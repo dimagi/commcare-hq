@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 
@@ -39,3 +40,68 @@ def rate_limit(key, actions_allowed=60, how_often=60):
         client.expire(key, how_often)
 
     return value <= actions_allowed
+
+
+class DomainRateLimiter(object):
+    """
+    A util for rate limiting by domain.
+    For example, to allow a domain to only send 100 SMS every 60 seconds:
+
+    limiter = DomainRateLimiter('send-sms-for-', 100, 60)
+    ...
+    if limiter.can_perform_action('my-domain'):
+        <perform action>
+    else:
+        <delay action>
+    """
+    def __init__(self, key, actions_allowed, how_often):
+        """
+        key - the beginning of the redis key that will be used to rate limit on;
+        the actual key that is used will be key + domain
+
+        actions_allowed - see rate_limit()
+
+        how_often - see rate_limit()
+        """
+        self.key = key
+        self.actions_allowed = actions_allowed
+        self.how_often = how_often
+
+        """
+        Dictionary of {domain: datetime}
+        When a domain exceeds its allowed actions, an entry is put here to
+        note the timestamp when the domain should be allowed to perform
+        actions again. This is meant to save calls to redis when we know
+        a domain is in a "cool down" phase.
+
+        NOTE: Multiple processes might all have their own instance of a
+        DomainRateLimiter with the same key, and that's ok, it just means
+        each process will make 1 extra call to redis and then stop after that.
+        This also doesn't have to be thread safe since dirty reads won't
+        affect the overall function of the rate limiter.
+        """
+        self.cooldown = {}
+
+    def can_perform_action(self, domain):
+        """
+        Returns True if the action can be performed, False if the action should
+        be delayed because the number of allowed actions has been exceeded.
+        """
+        if domain in self.cooldown and datetime.utcnow() < self.cooldown[domain]:
+            return False
+
+        key = self.key + domain
+        if rate_limit(key, actions_allowed=self.actions_allowed, how_often=self.how_often):
+            return True
+        else:
+            # Add an entry to self.cooldown so that next time we don't have to
+            # make a call to redis
+            client = get_redis_client().client.get_client()
+            time_remaining = client.ttl(key)
+            if time_remaining < 0:
+                # If we just happened to time it so that the key just expired or
+                # a key was just created but doesn't have a timeout yet, then use a
+                # value of 0 here and the cool down will be ignored.
+                time_remaining = 0
+            self.cooldown[domain] = datetime.utcnow() + timedelta(seconds=time_remaining)
+            return False
