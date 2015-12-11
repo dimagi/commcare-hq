@@ -101,3 +101,12 @@ class TimeoutMiddleware(object):
                 django_logout(request, **{"template_name": settings.BASE_TEMPLATE})
                 return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
         request.session['last_request'] = json_format_datetime(now)
+
+
+class NoCacheMiddleware(object):
+
+    def process_response(self, request, response):
+        response['Cache-Control'] = "no-cache, no-store, must-revalidate"
+        response['Expires'] = "-1"
+        response['Pragma'] = "no-cache"
+        return response
