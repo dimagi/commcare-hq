@@ -40,8 +40,8 @@ if USE_PARTITIONED_DATABASE:
         'proxy': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
             'NAME': 'commcarehq_proxy',
-            'USER': 'commcarehq',
-            'PASSWORD': 'commcarehq',
+            'USER': 'postgres',
+            'PASSWORD': '',
             'HOST': 'localhost',
             'PORT': '5432',
             'TEST': {
@@ -51,8 +51,8 @@ if USE_PARTITIONED_DATABASE:
         'p1': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
             'NAME': 'commcarehq_p1',
-            'USER': 'commcarehq',
-            'PASSWORD': 'commcarehq',
+            'USER': 'postgres',
+            'PASSWORD': '',
             'HOST': 'localhost',
             'PORT': '5432',
             'TEST': {
@@ -62,8 +62,8 @@ if USE_PARTITIONED_DATABASE:
         'p2': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
             'NAME': 'commcarehq_p2',
-            'USER': 'commcarehq',
-            'PASSWORD': 'commcarehq',
+            'USER': 'postgres',
+            'PASSWORD': '',
             'HOST': 'localhost',
             'PORT': '5432',
             'TEST': {

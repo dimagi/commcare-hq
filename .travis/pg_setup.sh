@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Install extensions for PostgreSQL
 
+set -ev
+
 # install plproxy extension (needed until its added to the travis APT whitelist)
 # https://github.com/travis-ci/apt-package-whitelist/issues/2053
 sudo apt-get update
