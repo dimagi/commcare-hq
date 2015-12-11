@@ -485,7 +485,7 @@ class AliasedElasticPillow(BasicPillow):
         return "%s/%s/%s" % (self.es_index, self.es_type, doc_id)
 
     def update_settings(self, settings_dict):
-        return self.send_robust("%s/_settings" % self.es_index, data=settings_dict)
+        return self.get_es_new().indices.put_settings(settings_dict, index=self.es_index)
 
     def set_index_reindex_settings(self):
         """
