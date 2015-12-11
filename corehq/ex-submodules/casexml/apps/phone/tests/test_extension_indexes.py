@@ -8,6 +8,7 @@ from casexml.apps.case.tests.util import assert_user_doesnt_have_cases, \
     assert_user_has_cases
 from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
+from corehq.form_processor.tests import run_with_all_backends
 
 
 def get_test_file_json(filename):
@@ -43,7 +44,7 @@ class TestSequenceMeta(type):
 
         for test in [(test['name'], test.get('skip', False)) for test in tests_to_run]:
             # Create a new testcase that the test runner is able to find
-            dict["test_%s" % re.sub("\s", "_", test[0])] = test_generator(test[0], test[1])
+            dict["test_%s" % re.sub("\s", "_", test[0])] = run_with_all_backends(test_generator(test[0], test[1]))
 
         return type.__new__(mcs, name, bases, dict)
 

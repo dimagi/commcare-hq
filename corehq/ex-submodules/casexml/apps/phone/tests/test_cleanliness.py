@@ -10,6 +10,7 @@ from casexml.apps.phone.data_providers.case.clean_owners import pop_ids
 from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
+from corehq.form_processor.tests import run_with_all_backends
 
 
 @override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=None)
@@ -102,12 +103,14 @@ class OwnerCleanlinessTest(SyncBaseTest):
         )[0]
         self.assertEqual(owner_id, case.owner_id)
 
+    @run_with_all_backends
     def test_add_normal_case_stays_clean(self):
         """Owned case with no indices remains clean"""
         self.factory.create_case()
         self.assert_owner_clean()
         self._verify_set_cleanliness_flags()
 
+    @run_with_all_backends
     def test_change_owner_stays_clean(self):
         """change the owner ID of a normal case, should remain clean"""
         new_owner = uuid.uuid4().hex
@@ -115,6 +118,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assert_owner_temporarily_dirty()
         self._verify_set_cleanliness_flags()
 
+    @run_with_all_backends
     def test_change_owner_child_case_stays_clean(self):
         """change the owner ID of a child case, should remain clean"""
         new_owner = uuid.uuid4().hex
@@ -122,12 +126,14 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assert_owner_temporarily_dirty()
         self._verify_set_cleanliness_flags()
 
+    @run_with_all_backends
     def test_add_clean_parent_stays_clean(self):
         """add a parent with the same owner, should remain clean"""
         self.factory.create_or_update_case(CaseStructure(indices=[CaseIndex()]))
         self.assert_owner_clean()
         self._verify_set_cleanliness_flags()
 
+    @run_with_all_backends
     def test_create_dirty_makes_dirty(self):
         """create a case and a parent case with a different owner at the same time
         make sure the owner becomes dirty.
@@ -144,6 +150,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assertEqual(child.case_id, self.owner_cleanliness.hint)
         self._verify_set_cleanliness_flags()
 
+    @run_with_all_backends
     def test_add_dirty_parent_makes_dirty(self):
         """add parent with a different owner and make sure the owner becomes dirty"""
         new_owner = uuid.uuid4().hex
@@ -159,6 +166,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assertEqual(child.case_id, self.owner_cleanliness.hint)
         self._verify_set_cleanliness_flags()
 
+    @run_with_all_backends
     def test_change_parent_owner_makes_dirty(self):
         """change the owner id of a parent case and make sure the owner becomes dirty"""
         new_owner = uuid.uuid4().hex
@@ -167,6 +175,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assertEqual(self.child.case_id, self.owner_cleanliness.hint)
         self._verify_set_cleanliness_flags()
 
+    @run_with_all_backends
     def test_change_host_owner_remains_clean(self):
         """change owner for unowned extension, owner remains clean"""
         new_owner = uuid.uuid4().hex
@@ -177,6 +186,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assertTrue(self._owner_cleanliness_for_id(new_owner).is_clean)
         self._verify_set_cleanliness_flags()
 
+    @run_with_all_backends
     def test_change_host_owner_makes_both_owners_dirty(self):
         """change owner for extension, both owners dirty"""
         new_owner = uuid.uuid4().hex
@@ -185,13 +195,16 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assert_owner_dirty()
         self.assertFalse(self._owner_cleanliness_for_id(new_owner).is_clean)
 
+    @run_with_all_backends
     def test_set_flag_clean_no_data(self):
         unused_owner_id = uuid.uuid4().hex
         set_cleanliness_flags(self.domain, unused_owner_id)
         self.assertTrue(OwnershipCleanlinessFlag.objects.get(owner_id=unused_owner_id).is_clean)
 
+    @run_with_all_backends
     def test_hint_invalidation(self):
-        self.test_change_parent_owner_makes_dirty()
+        new_owner = uuid.uuid4().hex
+        self._set_owner(self.parent.case_id, new_owner)
         self._set_owner(self.parent.case_id, self.owner_id)
         # after the submission the dirtiness flag should still be set
         # since it isn't invalidated right away
@@ -203,6 +216,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assert_owner_clean()
         self.assertEqual(None, self.owner_cleanliness.hint)
 
+    @run_with_all_backends
     def test_hint_invalidation_extensions(self):
         other_owner_id = uuid.uuid4().hex
         [extension, host] = self.factory.create_or_update_case(
@@ -223,6 +237,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self._set_owner(extension.case_id, UNOWNED_EXTENSION_OWNER_ID)
         self.assertFalse(hint_still_valid(self.domain, self.owner_cleanliness.hint))
 
+    @run_with_all_backends
     def test_hint_invalidation_extension_chain(self):
         other_owner_id = uuid.uuid4().hex
         self._owner_cleanliness_for_id(other_owner_id)
@@ -253,6 +268,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self._set_owner(extension_2.case_id, UNOWNED_EXTENSION_OWNER_ID)
         self.assertFalse(hint_still_valid(self.domain, self.owner_cleanliness.hint))
 
+    @run_with_all_backends
     def test_cross_domain_on_submission(self):
         """create a form that makes a dirty owner with the same ID but in a different domain
         make sure the original owner stays clean"""
@@ -273,6 +289,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
             OwnershipCleanlinessFlag.objects.get(owner_id=self.owner_id, domain=new_domain).is_clean,
         )
 
+    @run_with_all_backends
     def test_cross_domain_both_clean(self):
         new_domain = uuid.uuid4().hex
         self.factory.domain = new_domain
@@ -287,6 +304,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assertTrue(get_cleanliness_flag_from_scratch(self.domain, self.owner_id).is_clean)
         self.assertTrue(get_cleanliness_flag_from_scratch(new_domain, self.owner_id).is_clean)
 
+    @run_with_all_backends
     def test_cross_domain_dirty(self):
         new_domain = uuid.uuid4().hex
         new_owner = uuid.uuid4().hex
@@ -302,6 +320,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assertTrue(get_cleanliness_flag_from_scratch(self.domain, self.owner_id).is_clean)
         self.assertFalse(get_cleanliness_flag_from_scratch(new_domain, self.owner_id).is_clean)
 
+    @run_with_all_backends
     def test_non_existent_parent(self):
         self.factory.create_or_update_case(
             CaseStructure(
@@ -314,6 +333,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assertTrue(get_cleanliness_flag_from_scratch(self.domain, self.owner_id).is_clean)
 
     @override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=False)
+    @run_with_all_backends
     def test_autocreate_flag_off(self):
         new_owner = uuid.uuid4().hex
         self.factory.create_or_update_case(
@@ -322,6 +342,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assertFalse(OwnershipCleanlinessFlag.objects.filter(domain=self.domain, owner_id=new_owner).exists())
 
     @override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=True)
+    @run_with_all_backends
     def test_autocreate_flag_on(self):
         new_owner = uuid.uuid4().hex
         self.factory.create_or_update_case(
@@ -330,6 +351,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         flag = OwnershipCleanlinessFlag.objects.get(domain=self.domain, owner_id=new_owner)
         self.assertEqual(True, flag.is_clean)
 
+    @run_with_all_backends
     def test_simple_unowned_extension(self):
         """Simple unowned extensions should be clean"""
         self.factory.create_or_update_case(
@@ -347,6 +369,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assert_owner_clean()
         self._verify_set_cleanliness_flags()
 
+    @run_with_all_backends
     def test_owned_extension(self):
         """Extension owned by another owner should be dirty"""
         other_owner_id = uuid.uuid4().hex
@@ -370,6 +393,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self._verify_set_cleanliness_flags(self.owner_id)
         self._verify_set_cleanliness_flags(other_owner_id)
 
+    @run_with_all_backends
     def test_extension_chain_with_other_owner_makes_dirty(self):
         """An extension chain of unowned extensions that ends at a case owned by a different owner is dirty"""
         other_owner_id = uuid.uuid4().hex
@@ -404,6 +428,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self._verify_set_cleanliness_flags(self.owner_id)
         self._verify_set_cleanliness_flags(other_owner_id)
 
+    @run_with_all_backends
     def test_multiple_indices_multiple_owners(self):
         """Extension that indexes a case with another owner should make all owners dirty"""
         other_owner_id = uuid.uuid4().hex
@@ -436,6 +461,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self._verify_set_cleanliness_flags(self.owner_id)
         self._verify_set_cleanliness_flags(other_owner_id)
 
+    @run_with_all_backends
     def test_long_extension_chain_with_branches(self):
         """An extension chain of unowned extensions that ends at an owned case is dirty"""
         owner_1 = uuid.uuid4().hex
@@ -483,12 +509,14 @@ class OwnerCleanlinessTest(SyncBaseTest):
 
 class SetCleanlinessFlagsTest(TestCase):
 
+    @run_with_all_backends
     def test_set_bad_domains(self):
         test_cases = [None, '', 'something-too-long' * 10]
         for invalid_domain in test_cases:
             with self.assertRaises(InvalidDomainError):
                 set_cleanliness_flags(invalid_domain, 'whatever')
 
+    @run_with_all_backends
     def test_set_bad_owner_ids(self):
         test_cases = [None, '', 'something-too-long' * 10]
         for invalid_owner in test_cases:
@@ -525,6 +553,7 @@ class GetCaseFootprintInfoTest(TestCase):
         self.other_owner_id = uuid.uuid4().hex
         self.factory = CaseFactory(self.domain)
 
+    @run_with_all_backends
     def test_simple_footprint(self):
         """ should only return open cases from user """
         case = CaseStructure(case_id=uuid.uuid4().hex, attrs={'owner_id': self.owner_id})
@@ -535,6 +564,7 @@ class GetCaseFootprintInfoTest(TestCase):
         footprint_info = get_case_footprint_info(self.domain, self.owner_id)
         self.assertEqual(footprint_info.all_ids, set([case.case_id]))
 
+    @run_with_all_backends
     def test_footprint_with_parent(self):
         """ should return open cases with parents """
         parent = CaseStructure(
@@ -553,6 +583,7 @@ class GetCaseFootprintInfoTest(TestCase):
         self.assertEqual(footprint_info.all_ids, set([child.case_id, parent.case_id]))
         self.assertEqual(footprint_info.base_ids, set([child.case_id]))
 
+    @run_with_all_backends
     def test_footprint_with_extension(self):
         """
         Extensions are brought in if the host case is owned;
@@ -577,6 +608,7 @@ class GetCaseFootprintInfoTest(TestCase):
         self.assertEqual(footprint_info.all_ids, set([extension.case_id, host.case_id]))
         self.assertEqual(footprint_info.base_ids, set([extension.case_id]))
 
+    @run_with_all_backends
     def test_footprint_with_extension_of_parent(self):
         """ Extensions of parents should be included """
         parent = CaseStructure(
@@ -597,6 +629,7 @@ class GetCaseFootprintInfoTest(TestCase):
         footprint_info = get_case_footprint_info(self.domain, self.owner_id)
         self.assertEqual(footprint_info.all_ids, set([extension.case_id, parent.case_id, child.case_id]))
 
+    @run_with_all_backends
     def test_footprint_with_extension_of_child(self):
         """ Extensions of children should be included """
         parent = CaseStructure(
@@ -629,11 +662,13 @@ class GetDependentCasesTest(TestCase):
         self.other_owner_id = uuid.uuid4().hex
         self.factory = CaseFactory(self.domain)
 
+    @run_with_all_backends
     def test_returns_nothing_with_no_dependencies(self):
         case = CaseStructure()
         self.factory.create_or_update_case(case)
         self.assertEqual(set(), get_dependent_case_info(self.domain, case.case_id).all_ids)
 
+    @run_with_all_backends
     def test_returns_simple_extension(self):
         host = CaseStructure(
             case_id=uuid.uuid4().hex,
@@ -652,6 +687,7 @@ class GetDependentCasesTest(TestCase):
         self.assertEqual(set([extension.case_id]),
                          get_dependent_case_info(self.domain, [host.case_id]).extension_ids)
 
+    @run_with_all_backends
     def test_returns_extension_of_extension(self):
         host = CaseStructure(
             case_id=uuid.uuid4().hex,
@@ -675,6 +711,7 @@ class GetDependentCasesTest(TestCase):
         self.assertEqual(set([extension.case_id, extension_2.case_id]),
                          get_dependent_case_info(self.domain, [host.case_id]).extension_ids)
 
+    @run_with_all_backends
     def test_children_and_extensions(self):
         parent = CaseStructure(
             case_id=uuid.uuid4().hex,
