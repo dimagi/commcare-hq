@@ -172,8 +172,8 @@ class CleanOwnerCaseSyncOperation(object):
                 return set(CaseAccessors(domain).get_open_case_ids(owner_id))
             else:
                 # for a clean owner's steady state sync, the base set is anything modified since last sync
-                return set(get_case_ids_modified_with_owner_since(
-                    self.restore_state.domain, owner_id, self.restore_state.last_sync_log.date
+                return set(CaseAccessors(domain).get_case_ids_modified_with_owner_since(
+                    owner_id, self.restore_state.last_sync_log.date
                 ))
         else:
             # TODO: we may want to be smarter than this
@@ -202,8 +202,8 @@ class CleanOwnerCaseSyncOperation(object):
                 return all_case_ids
             else:
                 # for a clean owner's steady state sync, the base set is anything modified since last sync
-                modified_non_extension_cases = set(get_case_ids_modified_with_owner_since(
-                    self.restore_state.domain, owner_id, self.restore_state.last_sync_log.date
+                modified_non_extension_cases = set(case_accessor.get_case_ids_modified_with_owner_since(
+                    owner_id, self.restore_state.last_sync_log.date
                 ))
                 # we also need to fetch unowned extension cases that have been modified
                 extension_case_ids = self.restore_state.last_sync_log.extension_index_tree.indices.keys()

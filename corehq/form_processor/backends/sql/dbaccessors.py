@@ -353,6 +353,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return list(query.values_list('case_id', flat=True))
 
     @staticmethod
+    def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
+        raise NotImplementedError
+
+    @staticmethod
     def get_extension_case_ids(domain, case_ids): # I need like this but without the relationship id check
         """
         Given a base list of case ids, for those that are open, get all ids of all extension cases that reference them

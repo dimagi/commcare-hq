@@ -96,6 +96,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
+    def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
+        raise NotImplementedError
+
+    @abstractmethod
     def get_extension_case_ids(domain, case_ids):
         raise NotImplementedError
 
@@ -135,6 +139,9 @@ class CaseAccessors(object):
 
     def get_open_case_ids(self, owner_id):
         return self.db_accessor.get_open_case_ids(self.domain, owner_id)
+
+    def get_case_ids_modified_with_owner_since(self, owner_id, reference_date):
+        return self.db_accessor.get_case_ids_modified_with_owner_since(self.domain, owner_id, reference_date)
 
     def get_extension_case_ids(self, case_ids):
         return self.db_accessor.get_extension_case_ids(self.domain, case_ids)
