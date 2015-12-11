@@ -356,7 +356,7 @@ class ElasticReindexer(PtopReindexer):
         if not self.in_place and self.own_index_exists:
             # delete the existing index.
             self.log("Deleting index")
-            self.indexing_pillow.delete_index()
+            self.indexing_pillow.get_es_new().indices.delete(self.indexing_pillow.es_index)
             self.log("Recreating index")
             self.indexing_pillow.create_index()
             self.indexing_pillow.initialize_mapping_if_necessary()
