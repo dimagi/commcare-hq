@@ -7,6 +7,8 @@ from corehq.apps.hqcase.dbaccessors import (
     get_closed_case_ids)
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
     get_case_ids_modified_with_owner_since
+from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
+    get_last_modified_dates
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
 from couchforms.dbaccessors import get_forms_by_type
 from couchforms.models import XFormInstance, doc_types

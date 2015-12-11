@@ -226,7 +226,7 @@ def filter_cases_modified_since(domain, case_ids, reference_date):
     Given a domain, case_ids, and a reference date, filter the case ids to only those
     that have been modified since that reference date.
     """
-    last_modified_date_dict = get_last_modified_dates(domain, case_ids)
+    last_modified_date_dict = CaseAccessors(domain).get_last_modified_dates(case_ids)
     for case_id in case_ids:
         if last_modified_date_dict.get(case_id, datetime(1900, 1, 1)) > reference_date:
             yield case_id

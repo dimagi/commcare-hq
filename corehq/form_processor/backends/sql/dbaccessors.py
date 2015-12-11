@@ -386,6 +386,19 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         # TODO: Filter by open cases?
         return list(query.values_list('case_id', flat=True))
 
+    @staticmethod
+    def get_last_modified_dates(domain, case_ids):
+        """
+        Given a list of case IDs, return a dict where the ids are keys and the
+        values are the last server modified date of that case.
+        """
+        query = CommCareCaseSQL.objects.filter(
+            domain=domain,
+            case_id__in=case_ids
+        )
+        return dict(query.values_list("case_id", "server_modified_on"))
+
+
 def _order_list(id_list, object_list, id_property):
     # SQL won't return the rows in any particular order so we need to order them ourselves
     index_map = {id_: index for index, id_ in enumerate(id_list)}
