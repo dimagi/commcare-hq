@@ -26,7 +26,7 @@ from pillowtop.couchdb import CachedCouchDB
 from django import db
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.es_utils import create_index_for_pillow, pillow_index_exists, pillow_mapping_exists, \
-    initialize_mapping_if_necessary
+    initialize_mapping_if_necessary, completely_initialize_pillow_index
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
@@ -444,11 +444,7 @@ class AliasedElasticPillow(BasicPillow):
         super(AliasedElasticPillow, self).__init__(**kwargs)
         # online=False is used in unit tests
         if online:
-            index_exists = pillow_index_exists(self)
-            if not index_exists:
-                create_index_for_pillow(self)
-            pillow_logging.info("Pillowtop [%s] Initializing mapping in ES" % self.get_name())
-            initialize_mapping_if_necessary(self)
+            completely_initialize_pillow_index(self)
         else:
             pillow_logging.info("Pillowtop [%s] Started with no mapping from server in memory testing mode" % self.get_name())
 

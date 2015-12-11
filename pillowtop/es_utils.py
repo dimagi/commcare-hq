@@ -48,6 +48,16 @@ def create_index_and_set_settings_normal(es, index, metadata=None):
     set_index_normal_settings(es, index)
 
 
+def completely_initialize_pillow_index(pillow):
+    """
+    This utility can be used to initialize the elastic index and mapping for a pillow
+    """
+    index_exists = pillow_index_exists(pillow)
+    if not index_exists:
+        create_index_for_pillow(pillow)
+    pillow_logging.info("Pillowtop [%s] Initializing mapping in ES" % pillow.get_name())
+    initialize_mapping_if_necessary(pillow)
+
 def pillow_index_exists(pillow):
     return pillow.get_es_new().indices.exists(pillow.es_index)
 
