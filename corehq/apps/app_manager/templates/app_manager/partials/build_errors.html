@@ -7,7 +7,7 @@
         {% else %}
             <p>{% trans "Build Failed!" %}</p>
         {% endif %}
-        <ul class="unstyled" id="build-errors">
+        <ul class="list-unstyled" id="build-errors">
             {% for error in build_errors %}
                 <li>
                     <i class="fa fa-exclamation-circle"></i>
