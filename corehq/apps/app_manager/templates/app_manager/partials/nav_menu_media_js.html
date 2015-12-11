@@ -22,10 +22,10 @@
         });
 
         if ($mediaImage.length) {
-            ko.applyBindings(menuImage, $mediaImage.get(0));
+            $mediaImage.koApplyBindings(menuImage);
         }
         if ($mediaAudio.length) {
-            ko.applyBindings(menuAudio, $mediaAudio.get(0));
+          $mediaAudio.koApplyBindings(menuAudio);
         }
 
     });
