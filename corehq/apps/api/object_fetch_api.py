@@ -1,3 +1,4 @@
+from couchdbkit.exceptions import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, StreamingHttpResponse, HttpResponseForbidden
 from django.utils.decorators import method_decorator
@@ -99,7 +100,11 @@ class FormAttachmentAPI(View):
 
         attachment_key = kwargs.get('attachment_id', None)
 
-        resp = XFormInstance.get_db().fetch_attachment(form_id, attachment_key, stream=True)
+        try:
+            resp = XFormInstance.get_db().fetch_attachment(form_id, attachment_key, stream=True)
+        except ResourceNotFound:
+            raise Http404
+        
         headers = resp.resp.headers
         content_type = headers.get('Content-Type', None)
 
