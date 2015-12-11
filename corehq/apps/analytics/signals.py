@@ -29,7 +29,7 @@ def user_save_callback(sender, **kwargs):
     if couch_user and couch_user.is_web_user():
         properties = {}
         properties.update(_get_subscription_properties_by_user(couch_user))
-        properties.update(_get_user_domain_memberships(couch_user))
+        properties.update(_get_domain_membership_properties(couch_user))
         identify.delay(couch_user.username, properties)
         update_hubspot_properties(couch_user, properties)
 
@@ -108,9 +108,10 @@ def _get_subscription_properties_by_user(couch_user):
     }
 
 
-def _get_user_domain_memberships(couch_user):
+def _get_domain_membership_properties(couch_user):
     return {
-        "number_of_project_spaces": len(couch_user.domains)
+        "number_of_project_spaces": len(couch_user.domains),
+        "project_spaces_list": '\n'.join(couch_user.domains),
     }
 
 
