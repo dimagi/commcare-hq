@@ -25,6 +25,7 @@ from pillowtop.couchdb import CachedCouchDB
 
 from django import db
 from pillowtop.dao.couch import CouchDocumentStore
+from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
@@ -41,19 +42,6 @@ CHANGES_TIMEOUT = 60000
 RETRY_INTERVAL = 2  # seconds, exponentially increasing
 MAX_RETRIES = 4  # exponential factor threshold for alerts
 
-
-INDEX_REINDEX_SETTINGS = {"index": {"refresh_interval": "900s",
-                                    "merge.policy.merge_factor": 20,
-                                    "store.throttle.max_bytes_per_sec": "1mb",
-                                    "store.throttle.type": "merge",
-                                    "number_of_replicas": "0"}
-}
-INDEX_STANDARD_SETTINGS = {"index": {"refresh_interval": "1s",
-                                     "merge.policy.merge_factor": 10,
-                                     "store.throttle.max_bytes_per_sec": "5mb",
-                                     "store.throttle.type": "node",
-                                     "number_of_replicas": "0"}
-}
 
 
 class PillowtopIndexingError(Exception):
