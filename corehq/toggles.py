@@ -717,3 +717,10 @@ GRID_MENUS = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
+
+TWO_FACTOR_AUTH = StaticToggle(
+    'two_factor_auth',
+    "Enforce two factor auth before accessing the domain",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
