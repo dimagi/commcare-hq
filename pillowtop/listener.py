@@ -25,7 +25,7 @@ from pillowtop.couchdb import CachedCouchDB
 
 from django import db
 from pillowtop.dao.couch import CouchDocumentStore
-from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS
+from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
@@ -484,20 +484,17 @@ class AliasedElasticPillow(BasicPillow):
     def get_doc_path(self, doc_id):
         return "%s/%s/%s" % (self.es_index, self.es_type, doc_id)
 
-    def update_settings(self, settings_dict):
-        return self.get_es_new().indices.put_settings(settings_dict, index=self.es_index)
-
     def set_index_reindex_settings(self):
         """
         Set a more optimized setting setup for fast reindexing
         """
-        return self.update_settings(INDEX_REINDEX_SETTINGS)
+        return update_settings(self.get_es_new(), self.es_index, INDEX_REINDEX_SETTINGS)
 
     def set_index_normal_settings(self):
         """
         Normal indexing configuration
         """
-        return self.update_settings(INDEX_STANDARD_SETTINGS)
+        return update_settings(self.get_es_new(), self.es_index, INDEX_STANDARD_SETTINGS)
 
     def set_mapping(self, type_string, mapping):
         if self.online:

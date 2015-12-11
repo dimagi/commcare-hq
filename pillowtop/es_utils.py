@@ -18,3 +18,7 @@ INDEX_STANDARD_SETTINGS = {
         "number_of_replicas": "0"
     }
 }
+
+
+def update_settings(es, index, settings_dict):
+    return es.indices.put_settings(settings_dict, index=index)
