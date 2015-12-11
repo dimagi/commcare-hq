@@ -7,7 +7,6 @@ import json_field
 class GuidedTours(models.Model):
     user = models.ForeignKey(
         User,
-        on_delete=models.PROTECT,
         unique=True
     )
     seen_tours = json_field.JSONField(
