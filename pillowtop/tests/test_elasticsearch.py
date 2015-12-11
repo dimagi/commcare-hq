@@ -71,7 +71,6 @@ class ElasticPillowTest(SimpleTestCase):
             self.assertEqual('whitespace', settings_back['index.analysis.analyzer.default.tokenizer'])
             self.assertEqual('lowercase', settings_back['index.analysis.analyzer.default.filter.0'])
         else:
-
             self.assertEqual(
                 pillow.es_meta['settings']['analysis'],
                 settings_back['index']['analysis'],
@@ -81,7 +80,12 @@ class ElasticPillowTest(SimpleTestCase):
 
     def test_mapping_initialization_on_pillow_creation(self):
         pillow = TestElasticPillow()
-        mapping = pillow.get_index_mapping()[pillow.es_type]
+        self.assertTrue(pillow.mapping_exists())
+        mapping = pillow.get_index_mapping()
+        if ES_VERSION < 1.0:
+            mapping = mapping[pillow.es_type]
+        else:
+            mapping = mapping[self.index]['mappings'][pillow.es_type]
         # we can't compare the whole dicts because ES adds a bunch of stuff to them
         self.assertEqual(
             pillow.default_mapping['properties']['doc_type']['index'],
