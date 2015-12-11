@@ -16,6 +16,6 @@ unzip pghashlib.zip
 cd pghashlib-master
 echo $PGVERSION
 PG_CONFIG=/usr/lib/postgresql/$PGVERSION/bin/pg_config make
-sudo PG_CONFIG=/usr/lib/postgresql/$PGVERSION/bin/pg_config make install
+! sudo PG_CONFIG=/usr/lib/postgresql/$PGVERSION/bin/pg_config make install
 sudo /etc/init.d/postgresql stop
 sudo /etc/init.d/postgresql start $PGVERSION
