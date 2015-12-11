@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
-# Install pghashlib extension for PostgreSQL
+# Install extensions for PostgreSQL
 
+# install plproxy extension (needed until its added to the travis APT whitelist)
+# https://github.com/travis-ci/apt-package-whitelist/issues/2053
+sudo apt-get update
+sudo apt-get install postgresql-9.1-plproxy
+
+# install pghashlib
 wget https://github.com/markokr/pghashlib/archive/master.zip -O pghashlib.zip
 unzip pghashlib.zip
 cd pghashlib-master

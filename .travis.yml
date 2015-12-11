@@ -27,7 +27,6 @@ addons:
     - moreutils
     - libblas-dev
     - liblapack-dev
-    - postgresql-9.1-plproxy
 before_install:
   - "curl http://localhost:5984/"  # print couch info
   - "uname -a"
