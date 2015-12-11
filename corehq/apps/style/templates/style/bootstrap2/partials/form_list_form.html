@@ -111,6 +111,6 @@ $(document).ready(function() {
     }
 
     var tableModel = new TableModel({{ row_spec|JSON }}, {{ rows|JSON }});
-    ko.applyBindings(tableModel, $('#table-form').get(0));
+    $('#table-form').koApplyBindings(tableModel);
 });
 </script>

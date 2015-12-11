@@ -1,5 +1,5 @@
 $(function () {
-    ko.applyBindings(new XFormListViewModel(), $("#history")[0]);
+    $("#history").koApplyBindings(new XFormListViewModel());
 });
 
 function pad_zero(val) {

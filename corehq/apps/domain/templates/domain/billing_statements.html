@@ -53,9 +53,9 @@
         {% endif %}
 
         $(function () {
-            ko.applyBindings(bulkPaymentHandler, $('#bulkPaymentModal').get(0));
-            ko.applyBindings(bulkWirePaymentHandler, $('#bulkWirePaymentModal').get(0));
-            ko.applyBindings(paymentHandler, $('#paymentModal').get(0));
+            $('#bulkPaymentModal').koApplyBindings(bulkPaymentHandler);
+            $('#bulkWirePaymentModal').koApplyBindings(bulkWirePaymentHandler);
+            $('#paymentModal').koApplyBindings(paymentHandler);
         });
 
         $('#bulkPaymentBtn').click(function () {

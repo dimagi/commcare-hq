@@ -36,11 +36,11 @@
             }
             return forms;
         });
-        ko.applyBindings({
+        $("#create-export-form").koApplyBindings({
             appId: appId,
             moduleOptions: moduleOptions,
             formOptions: formOptions
-        }, $("#create-export-form").get(0));
+        });
     </script>
 {% endblock %}
 

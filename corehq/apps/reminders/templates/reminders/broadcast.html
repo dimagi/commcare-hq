@@ -12,7 +12,7 @@
 <script>
     $(function () {
         var bvm = new BroadcastViewModel({{ form.current_values|JSON }});
-        ko.applyBindings(bvm, $('#broadcast-form').get(0));
+        $('#broadcast-form').koApplyBindings(bvm);
         bvm.init();
     });
 </script>
@@ -24,9 +24,9 @@
             margin-left: 0 !important;
         }
 
-    .bootstrap-timepicker {
-        padding-left: 10px;
-    }
+        .bootstrap-timepicker {
+            padding-left: 10px;
+        }
     </style>
 {% endblock %}
 
