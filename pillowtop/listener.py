@@ -473,10 +473,7 @@ class AliasedElasticPillow(BasicPillow):
         return "%s/%s/%s" % (self.es_index, self.es_type, doc_id)
 
     def set_mapping(self, type_string, mapping):
-        if self.online:
-            return self.get_es_new().indices.put_mapping(self.es_index, type_string, mapping)
-        else:
-            return {"ok": True, "acknowledged": True}
+        return self.get_es_new().indices.put_mapping(self.es_index, type_string, mapping)
 
     @memoized
     def get_es(self):
