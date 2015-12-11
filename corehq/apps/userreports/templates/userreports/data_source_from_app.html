@@ -6,11 +6,11 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function () {
-            ko.applyBindings({
+            $("#data-source-config").koApplyBindings({
                 application: ko.observable(""),
                 sourceType: ko.observable(""),
                 sourcesMap: {{ sources_map|JSON }}
-            }, $("#data-source-config").get(0));
+            });
         });
     </script>
 {% endblock %}

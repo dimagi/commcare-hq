@@ -105,8 +105,10 @@
 
 <script src="{% static 'ewsghana/ko/ewsghana.users_view_model.js' %}"></script>
 <script>
-    ko.applyBindings(
-        new UsersViewModel(ko.toJS({{ users | JSON }}), ko.toJS({{ district_in_charges | JSON }}), '{{ location_id }}', '{% url 'configure_in_charge' domain %}'),
-        document.getElementById('users-tables')
-    );
+    $('#users-tables').koApplyBindings(new UsersViewModel(
+        ko.toJS({{ users | JSON }}),
+        ko.toJS({{ district_in_charges | JSON }}),
+        '{{ location_id }}',
+        '{% url 'configure_in_charge' domain %}'
+    ));
 </script>
