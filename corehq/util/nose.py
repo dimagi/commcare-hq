@@ -213,7 +213,7 @@ class HqdbContext(DatabaseContext):
             log.info("skipped deleting %s app databases that were already deleted", skipcount)
 
         # HACK clean up leaked database connections
-        from corehq.db import connection_manager
+        from corehq.sql_db.connections import connection_manager
         connection_manager.dispose_all()
 
         super(HqdbContext, self).teardown()

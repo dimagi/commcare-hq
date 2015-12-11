@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 from django.core.management import call_command
 from django.db import migrations
 
+from corehq.sql_db.operations import HqRunPython
+
 
 def cchq_software_plan_bootstrap(*args):
     call_command('cchq_software_plan_bootstrap')
@@ -16,5 +18,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(cchq_software_plan_bootstrap),
+        HqRunPython(cchq_software_plan_bootstrap),
     ]

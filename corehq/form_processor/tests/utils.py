@@ -7,10 +7,9 @@ from datetime import datetime
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
-from corehq.apps.domain.dbaccessors import get_all_domain_names
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.parsers.form import process_xform_xml
 from couchforms.models import XFormInstance
 from dimagi.ext import jsonobject
@@ -44,14 +43,11 @@ class FormProcessorTestUtils(object):
                 query.filter(domain_filter)
             query.all().delete()
 
-        if domain:
-            domains = [domain]
-        else:
-            domains = get_all_domain_names()
+        FormProcessorTestUtils.delete_all_sql_cases(domain)
 
-        for domain in domains:
-            case_ids = CaseAccessorSQL.get_case_ids_in_domain(domain)
-            CaseAccessorSQL.hard_delete_cases(domain, case_ids)
+    @staticmethod
+    def delete_all_sql_cases(domain=None):
+        CaseAccessorSQL.delete_all_cases(domain)
 
     @classmethod
     @unit_testing_only
@@ -77,15 +73,11 @@ class FormProcessorTestUtils(object):
             **view_kwargs
         )
 
-        if domain:
-            domains = [domain]
-        else:
-            assert user_id is None, 'domain must be specified with user_id'
-            domains = get_all_domain_names()
+        FormProcessorTestUtils.delete_all_sql_forms(domain, user_id)
 
-        for domain in domains:
-            form_ids = FormAccessorSQL.get_form_ids_in_domain(domain, user_id)
-            FormAccessorSQL.hard_delete_forms(domain, form_ids)
+    @staticmethod
+    def delete_all_sql_forms(domain=None, user_id=None):
+        FormAccessorSQL.delete_all_forms(domain, user_id)
 
     @classmethod
     @unit_testing_only
@@ -137,7 +129,7 @@ def post_xform(instance_xml, attachments=None, domain='test-domain'):
     """
     result = process_xform_xml(domain, instance_xml, attachments=attachments)
     with result.get_locked_forms() as xforms:
-        FormProcessorInterface(domain).save_processed_models(xforms[0], xforms)
+        FormProcessorInterface(domain).save_processed_models(xforms)
         return xforms[0]
 
 
@@ -148,7 +140,7 @@ def create_form_for_test(domain, case_id=None, attachments=None, save=True):
     :param case_id: create case with ID if supplied
     :param attachments: additional attachments dict
     :param save: if False return the unsaved form
-    :return: form_id
+    :return: form object
     """
     form_id = uuid4().hex
     user_id = 'user1'
@@ -189,7 +181,7 @@ def create_form_for_test(domain, case_id=None, attachments=None, save=True):
         cases = [case]
 
     if save:
-        FormProcessorSQL.save_processed_models([form], cases)
+        FormProcessorSQL.save_processed_models(ProcessedForms(form, None), cases)
     return form
 
 

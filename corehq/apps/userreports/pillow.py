@@ -6,7 +6,7 @@ from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildEr
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
 from corehq.apps.userreports.sql import IndicatorSqlAdapter, metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.db import connection_manager
+from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 from fluff.signals import get_migration_context, get_tables_to_rebuild
 from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoint_store

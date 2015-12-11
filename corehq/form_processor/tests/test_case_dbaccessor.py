@@ -6,8 +6,11 @@ from django.test import TestCase
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError
+from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
     CaseTransaction, CommCareCaseIndexSQL, CaseAttachmentSQL, SupplyPointCaseMixin
+from corehq.form_processor.tests import FormProcessorTestUtils
+from corehq.sql_db.routers import db_for_read_write
 from crispy_forms.tests.utils import override_settings
 
 DOMAIN = 'test-case-accessor'
@@ -15,11 +18,15 @@ DOMAIN = 'test-case-accessor'
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class CaseAccessorTestsSQL(TestCase):
-    dependent_apps = []
+    dependent_apps = ['corehq.sql_accessors', 'corehq.sql_proxy_accessors']
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
+        FormProcessorTestUtils.delete_all_sql_cases(DOMAIN)
 
     def test_get_case_by_id(self):
         case = _create_case()
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(1, using=db_for_read_write(CommCareCaseSQL)):
             case = CaseAccessorSQL.get_case(case.case_id)
         self.assertIsNotNone(case)
         self.assertIsInstance(case, CommCareCaseSQL)
@@ -177,7 +184,7 @@ class CaseAccessorTestsSQL(TestCase):
         with self.assertRaises(AttachmentNotFound):
             CaseAccessorSQL.get_attachment_by_name(case.case_id, 'missing')
 
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(1, using=db_for_read_write(CaseAttachmentSQL)):
             attachment_meta = CaseAccessorSQL.get_attachment_by_name(case.case_id, 'pic.jpg')
 
         self.assertEqual(case.case_id, attachment_meta.case_id)
@@ -204,7 +211,7 @@ class CaseAccessorTestsSQL(TestCase):
         with self.assertRaises(AttachmentNotFound):
             CaseAccessorSQL.get_attachment_by_name(case.case_id, 'missing')
 
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(1, using=db_for_read_write(CaseAttachmentSQL)):
             attachments = CaseAccessorSQL.get_attachments(case.case_id)
 
         self.assertEqual(2, len(attachments))
@@ -391,7 +398,7 @@ def _create_case(domain=None, form_id=None, case_type=None):
         case.track_create(CaseTransaction.form_transaction(case, form))
         cases = [case]
 
-    FormProcessorSQL.save_processed_models([form], cases)
+    FormProcessorSQL.save_processed_models(ProcessedForms(form, None), cases)
     return CaseAccessorSQL.get_case(case_id)
 
 

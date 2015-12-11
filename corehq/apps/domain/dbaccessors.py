@@ -58,12 +58,3 @@ def get_domain_ids_by_names(names):
         reduce=False,
         include_docs=False
     )]
-
-
-@unit_testing_only
-def get_all_domain_names():
-    return [result['key'] for result in Domain.view(
-        "domain/domains",
-        reduce=False,
-        include_docs=False
-    )]

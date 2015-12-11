@@ -242,6 +242,9 @@ HQ_APPS = (
     'corehq.apps.consumption',
     'corehq.apps.tzmigration',
     'corehq.form_processor.app_config.FormProcessorAppConfig',
+    'corehq.sql_db',
+    'corehq.sql_accessors',
+    'corehq.sql_proxy_accessors',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -941,6 +944,10 @@ UCR_DATABASE_URL = None
 # Override this in localsettings to specify custom reporting databases
 CUSTOM_DATABASES = {}
 
+PL_PROXY_CLUSTER_NAME = 'commcarehq'
+
+USE_PARTITIONED_DATABASE = False
+
 # number of days since last access after which a saved export is considered unused
 SAVED_EXPORT_ACCESS_CUTOFF = 35
 
@@ -1026,6 +1033,7 @@ else:
     ]
 
 ### Reporting database - use same DB as main database
+
 db_settings = DATABASES["default"].copy()
 db_settings['PORT'] = db_settings.get('PORT', '5432')
 options = db_settings.get('OPTIONS')
@@ -1048,6 +1056,11 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
 if not UCR_DATABASE_URL or UNIT_TESTING:
     # by default just use the reporting DB for UCRs
     UCR_DATABASE_URL = SQL_REPORTING_DATABASE_URL
+
+if USE_PARTITIONED_DATABASE:
+    DATABASE_ROUTERS = ['corehq.sql_db.routers.PartitionRouter']
+else:
+    DATABASE_ROUTERS = ['corehq.sql_db.routers.MonolithRouter']
 
 MVP_INDICATOR_DB = 'mvp-indicators'
 

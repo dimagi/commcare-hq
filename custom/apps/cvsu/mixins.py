@@ -5,7 +5,7 @@ from sqlagg.filters import IN
 
 from corehq.apps.reports.sqlreport import SqlReportException, AggregateColumn, DatabaseColumn
 from corehq.apps.reports.util import format_datatables_data
-from corehq.db import connection_manager
+from corehq.sql_db.connections import connection_manager
 
 
 def combine_month_year(year, month):
