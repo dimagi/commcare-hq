@@ -31,6 +31,12 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
+    {# Explicitly include knockout because app manager doesn't really do class-based views #}
+    <script type="text/javascript" src="{% new_static 'knockout/dist/knockout.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
+
     {# TODO: move things to bower? Ctrl+F "Javascript Library Management" in B3 migration guide #}
     <script src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% new_static 'langcodes/js/langcodes.js' %}"></script>
