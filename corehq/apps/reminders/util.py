@@ -10,6 +10,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.mixin import apply_leniency, CommCareMobileContactMixin, InvalidFormatException
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.util.quickcache import quickcache
 from casexml.apps.case.models import CommCareCase
 from django_prbac.utils import has_privilege
 

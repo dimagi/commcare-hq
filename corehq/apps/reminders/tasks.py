@@ -8,7 +8,14 @@ from casexml.apps.case.models import CommCareCase
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.bulk import soft_delete_docs
-from dimagi.utils.rate_limit import rate_limit
+from dimagi.utils.rate_limit import DomainRateLimiter
+
+
+reminder_rate_limiter = DomainRateLimiter(
+    'process-reminder-for-',
+    settings.REMINDERS_RATE_LIMIT_COUNT,
+    settings.REMINDERS_RATE_LIMIT_PERIOD
+)
 
 
 # In minutes
@@ -81,11 +88,7 @@ def process_reminder_rule(handler, schedule_changed, prev_definition,
 @task(queue=CELERY_REMINDERS_QUEUE, ignore_result=True)
 def fire_reminder(reminder_id, domain):
     try:
-        if rate_limit(
-            'process-reminder-rate-limit-%s' % domain,
-            actions_allowed=settings.REMINDERS_RATE_LIMIT_COUNT,
-            how_often=settings.REMINDERS_RATE_LIMIT_PERIOD
-        ):
+        if reminder_rate_limiter.can_perform_action(domain):
             _fire_reminder(reminder_id)
         else:
             fire_reminder.apply_async(args=[reminder_id, domain], countdown=60)
