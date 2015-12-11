@@ -505,9 +505,6 @@ class AliasedElasticPillow(BasicPillow):
             timeout=self.es_timeout,
         )
 
-    def refresh_index(self):
-        self.get_es().post("%s/_refresh" % self.es_index)
-
     def change_trigger(self, changes_dict):
         id = changes_dict['id']
         if changes_dict.get('deleted', False):

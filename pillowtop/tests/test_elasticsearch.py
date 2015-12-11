@@ -100,7 +100,7 @@ class ElasticPillowTest(SimpleTestCase):
         self.assertEqual(0, get_doc_count(self.es, self.index))
         self.es.create(self.index, 'case', doc, id=doc_id)
         self.assertEqual(0, get_doc_count(self.es, self.index, refresh_first=False))
-        pillow.refresh_index()
+        pillow.get_es_new().indices.refresh(pillow.es_index)
         self.assertEqual(1, get_doc_count(self.es, self.index, refresh_first=False))
 
     def test_index_operations(self):
