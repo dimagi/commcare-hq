@@ -262,7 +262,6 @@ HQ_APPS = (
     'corehq.apps.repeaters',
     'corehq.apps.app_manager',
     'corehq.apps.es',
-    'corehq.apps.facilities',
     'corehq.apps.fixtures',
     'corehq.apps.importer',
     'corehq.apps.reminders',
