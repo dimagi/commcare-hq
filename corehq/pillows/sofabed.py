@@ -1,5 +1,6 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.sofabed.exceptions import InvalidDataException
+from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.read_only import ReadOnlyObject
 from pillowtop.listener import SQLPillow
 from couchforms.models import XFormInstance
@@ -22,8 +23,12 @@ class FormDataPillow(SQLPillow):
                 pass
             return
 
+        if doc_dict.get('xmlns') == DEVICE_LOG_XMLNS:
+            return
+
         doc = self.document_class.wrap(doc_dict)
         doc = ReadOnlyObject(doc)
+
         try:
             FormData.create_or_update_from_instance(doc)
         except InvalidDataException, e:

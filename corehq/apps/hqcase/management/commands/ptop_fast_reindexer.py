@@ -78,7 +78,7 @@ class PtopReindexer(NoArgsCommand):
                     type='int',
                     dest='chunk_size',
                     default=CHUNK_SIZE,
-                    help='Previous run input file prefix',),
+                    help='Number of docs to save at a time',),
     )
 
     doc_class = None
