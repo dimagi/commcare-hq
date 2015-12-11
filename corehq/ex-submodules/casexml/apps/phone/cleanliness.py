@@ -2,8 +2,7 @@ from collections import namedtuple
 from datetime import datetime
 from couchdbkit import ResourceNotFound
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
-from casexml.apps.case.dbaccessors import get_indexed_case_ids, \
-    get_all_reverse_indices_info, get_extension_case_ids
+from casexml.apps.case.dbaccessors import get_all_reverse_indices_info
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
@@ -170,7 +169,7 @@ def get_cleanliness_flag_from_scratch(domain, owner_id):
 
         if cases_to_check:
             # it wasn't in any of the open or closed IDs - it must be dirty
-            reverse_index_infos = get_all_reverse_indices_info(domain, list(cases_to_check))
+            reverse_index_infos = casedb.get_all_reverse_indices_info(list(cases_to_check))
             reverse_index_ids = set([r.case_id for r in reverse_index_infos])
             indexed_with_right_owner = (reverse_index_ids & (owned_cases | closed_owned_case_ids))
             found_deleted_cases = False

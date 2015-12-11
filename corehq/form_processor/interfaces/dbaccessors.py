@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from collections import namedtuple
 
 import six
 
@@ -107,6 +108,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
     def get_indexed_case_ids(domain, case_ids):
         raise NotImplementedError
 
+    @abstractmethod
+    def get_all_reverse_indices_info(domain, case_ids):
+        raise NotImplementedError
+
 
 class CaseAccessors(object):
     """
@@ -152,3 +157,7 @@ class CaseAccessors(object):
     def get_closed_case_ids(self, owner_id):
         return self.db_accessor.get_closed_case_ids(self.domain, owner_id)
 
+    def get_all_reverse_indices_info(self, case_ids):
+        return self.db_accessor.get_all_reverse_indices_info(self.domain, case_ids)
+
+CaseIndexInfo = namedtuple('CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship'])

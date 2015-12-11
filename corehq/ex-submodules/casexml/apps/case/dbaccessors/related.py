@@ -1,6 +1,7 @@
 from collections import namedtuple
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION
+from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo
 
 
 def get_indexed_case_ids(domain, case_ids):
@@ -45,9 +46,6 @@ def get_reverse_indexed_cases(domain, case_ids, relationship=CASE_INDEX_CHILD):
     )
 
 
-IndexInfo = namedtuple('IndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship'])
-
-
 def get_all_reverse_indices_info(domain, case_ids, relationship=None):
     from casexml.apps.case.models import CommCareCase
     if relationship is None:
@@ -57,7 +55,7 @@ def get_all_reverse_indices_info(domain, case_ids, relationship=None):
         keys = [[domain, case_id, 'reverse_index', relationship] for case_id in case_ids]
 
     def _row_to_index_info(row):
-        return IndexInfo(
+        return CaseIndexInfo(
             case_id=row['id'],
             identifier=row['value']['identifier'],
             referenced_id=row['key'][1],

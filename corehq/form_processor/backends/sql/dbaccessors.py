@@ -4,7 +4,8 @@ from itertools import groupby
 from django.db import connection, InternalError
 from django.db.models import Q
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError
-from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
+from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor, \
+    CaseIndexInfo
 from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL,
@@ -220,6 +221,22 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_reverse_indices(case_id):
         return list(CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_case_indices_reverse(%s)', [case_id]))
+
+    @staticmethod
+    def get_all_reverse_indices_info(domain, case_ids):
+        query = CommCareCaseIndexSQL.objects.filter(
+            # domain=domain,  # TODO: Why isn't domain being saved on CommCareCaseIndexSQL objects?
+            referenced_id__in=case_ids
+        )
+        return [
+            CaseIndexInfo(
+                case_id=index.case_id,
+                identifier=index.identifier,
+                referenced_id=index.referenced_id,
+                referenced_type=index.referenced_type,
+                relationship=index.relationship_id
+            ) for index in query
+        ]
 
     @staticmethod
     def get_indexed_case_ids(domain, case_ids):
