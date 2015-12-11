@@ -1,3 +1,4 @@
+from elasticsearch import TransportError
 
 INDEX_REINDEX_SETTINGS = {
     "index": {
@@ -51,6 +52,12 @@ def pillow_index_exists(pillow):
 def create_index_for_pillow(pillow):
     return create_index_and_set_settings_normal(pillow.get_es_new(), pillow.es_index, pillow.es_meta)
 
+
+def pillow_mapping_exists(pillow):
+    try:
+        return pillow.get_es_new().indices.get_mapping(pillow.es_index, pillow.es_type)
+    except TransportError:
+        return {}
 
 def assume_alias_for_pillow(pillow):
     """

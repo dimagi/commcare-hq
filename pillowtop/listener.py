@@ -25,7 +25,7 @@ from pillowtop.couchdb import CachedCouchDB
 
 from django import db
 from pillowtop.dao.couch import CouchDocumentStore
-from pillowtop.es_utils import create_index_for_pillow, pillow_index_exists
+from pillowtop.es_utils import create_index_for_pillow, pillow_index_exists, pillow_mapping_exists
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
@@ -454,17 +454,11 @@ class AliasedElasticPillow(BasicPillow):
         else:
             pillow_logging.info("Pillowtop [%s] Started with no mapping from server in memory testing mode" % self.get_name())
 
-    def mapping_exists(self):
-        try:
-            return self.get_es_new().indices.get_mapping(self.es_index, self.es_type)
-        except TransportError:
-            return {}
-
     def initialize_mapping_if_necessary(self):
         """
         Initializes the elasticsearch mapping for this pillow if it is not found.
         """
-        if not self.mapping_exists():
+        if not pillow_mapping_exists(self):
             pillow_logging.info("Initializing elasticsearch mapping for [%s]" % self.es_type)
             mapping = copy(self.default_mapping)
             mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())

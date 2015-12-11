@@ -2,7 +2,7 @@ import uuid
 from django.test import SimpleTestCase
 from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings, \
     set_index_reindex_settings, set_index_normal_settings, create_index_for_pillow, assume_alias_for_pillow, \
-    pillow_index_exists
+    pillow_index_exists, pillow_mapping_exists
 from pillowtop.feed.interface import Change
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.pillow.interface import PillowRuntimeContext
@@ -80,7 +80,7 @@ class ElasticPillowTest(SimpleTestCase):
 
     def test_mapping_initialization_on_pillow_creation(self):
         pillow = TestElasticPillow()
-        self.assertTrue(pillow.mapping_exists())
+        self.assertTrue(pillow_mapping_exists(pillow))
         mapping = get_index_mapping(self.es, self.index, pillow.es_type)
         # we can't compare the whole dicts because ES adds a bunch of stuff to them
         self.assertEqual(
@@ -92,7 +92,7 @@ class ElasticPillowTest(SimpleTestCase):
         # this test use to raise a hard error so doesn't actually test anything
         pillow = TestElasticPillow(create_index=False)
         self.assertFalse(pillow_index_exists(pillow))
-        self.assertFalse(pillow.mapping_exists())
+        self.assertFalse(pillow_mapping_exists(pillow))
 
     def test_refresh_index(self):
         pillow = TestElasticPillow()
