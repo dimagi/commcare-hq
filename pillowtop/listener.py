@@ -430,7 +430,6 @@ class AliasedElasticPillow(BasicPillow):
     es_timeout = 3  # in seconds
     default_mapping = None  # the default elasticsearch mapping to use for this
     bulk = False
-    online = True  # online=False is for in memory (no ES) connectivity for testing purposes or for admin operations
 
     # Note - we allow for for existence because we do not care - we want the ES
     # index to always have the latest version of the case based upon ALL changes done to it.
@@ -444,8 +443,7 @@ class AliasedElasticPillow(BasicPillow):
             kwargs['checkpoint'] = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
         super(AliasedElasticPillow, self).__init__(**kwargs)
         # online=False is used in unit tests
-        self.online = online
-        if self.online:
+        if online:
             index_exists = pillow_index_exists(self)
             if create_index and not index_exists:
                 create_index_for_pillow(self)
