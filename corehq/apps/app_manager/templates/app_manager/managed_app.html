@@ -138,7 +138,6 @@
 {% block breadcrumbs %}
     {% if app %}
     <li>
-        <span class="divider">&gt;</span>
         <a href="{% url "view_app" domain app.id %}">
             <span class="app-manager-title variable-app_name">{{ app.name|html_name }}</span>
         </a>

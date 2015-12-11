@@ -269,11 +269,10 @@
     {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
     {% if form.id != None %}
     <li>
-        <span class="divider">&gt;</span>
         <a href="{% url "view_form" domain app.id module.id form.id %}">
             {{ form.name|trans:app.langs }}
         </a>
     </li>
     {% endif %}
-    <li><span class="divider">&gt;</span> <i class="fa-pencil"></i> Edit</li>
+    <li><i class="fa-pencil"></i> Edit</li>
 {% endblock %}

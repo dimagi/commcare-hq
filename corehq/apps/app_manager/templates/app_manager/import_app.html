@@ -32,7 +32,7 @@
 {% endblock %}
 
 {% block breadcrumbs %}
-    <li><span class="divider">&gt;</span> {% trans 'Import Application' %}</li>
+    <li>{% trans 'Import Application' %}</li>
 {% endblock %}
 
 {% block page_content %}
@@ -53,7 +53,7 @@
                 <td><textarea name="source" data-bind="value: source"></textarea></td>
             </tr>
         </table>
-        <a href="#" class="historyBack">No, take me back.</a>
+        <a href="#" class="btn btn-default historyBack">No, take me back.</a>
         <button class="btn btn-primary" type="submit">{% trans 'Yes, import application' %}</button>
     </form>
 {% endblock %}

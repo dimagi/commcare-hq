@@ -445,7 +445,6 @@
     {{ block.super }}
     {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
     <li>
-        <span class="divider">&gt;</span>
         {% if is_user_registration %}
             <span class="app-manager-title">{% trans "User Registration" %}</span>
         {% else %}
