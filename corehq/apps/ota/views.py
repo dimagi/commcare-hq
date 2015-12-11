@@ -4,7 +4,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from casexml.apps.case.xml import V2
 from corehq import toggles
-from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic
+from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
@@ -20,7 +20,7 @@ from soil import DownloadBase
 
 
 @json_error
-@login_or_digest_or_basic()
+@login_or_digest_or_basic_or_apikey()
 def restore(request, domain):
     """
     We override restore because we have to supply our own 

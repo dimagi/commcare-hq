@@ -7,11 +7,11 @@ from corehq.apps.reports.views import can_view_attachments
 from couchforms.models import XFormInstance
 from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.domain.decorators import login_or_digest_or_basic
+from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 
 
 class CaseAttachmentAPI(View):
-    @method_decorator(login_or_digest_or_basic())
+    @method_decorator(login_or_digest_or_basic_or_apikey())
     def get(self, *args, **kwargs):
         """
         https://github.com/dimagi/commcare/wiki/CaseAttachmentAPI
@@ -92,7 +92,7 @@ class CaseAttachmentAPI(View):
 
 
 class FormAttachmentAPI(View):
-    @method_decorator(login_or_digest_or_basic())
+    @method_decorator(login_or_digest_or_basic_or_apikey())
     def get(self, *args, **kwargs):
         form_id = kwargs.get('form_id', None)
         if not form_id or not XFormInstance.get_db().doc_exist(form_id):

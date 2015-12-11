@@ -6,13 +6,13 @@ from corehq.util.view_utils import absolute_reverse, json_error
 from corehq.apps.domain.models import Domain
 from dimagi.utils.web import json_response
 from corehq.apps.domain.decorators import (
-    login_or_digest_or_basic,
+    login_or_digest_or_basic_or_apikey,
 )
 from corehq.apps.app_manager.dbaccessors import get_app
 
 
 @json_error
-@login_or_digest_or_basic()
+@login_or_digest_or_basic_or_apikey()
 def list_apps(request, domain):
     def app_to_json(app):
         return {

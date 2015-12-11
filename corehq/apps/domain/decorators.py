@@ -156,13 +156,14 @@ def login_or_basic_ex(allow_cc_users=False):
 login_or_basic = login_or_basic_ex()
 
 
-def login_or_digest_or_basic(default='basic'):
+def login_or_digest_or_basic_or_apikey(default='basic'):
     def decorator(fn):
         @wraps(fn)
         def _inner(request, *args, **kwargs):
             function_wrapper = {
                 'basic': login_or_basic_ex(allow_cc_users=True),
                 'digest': login_or_digest_ex(allow_cc_users=True),
+                'api_key': login_or_api_key_ex(allow_cc_users=True)
             }[determine_authtype_from_request(request, default=default)]
             if not function_wrapper:
                 return HttpResponseForbidden()
