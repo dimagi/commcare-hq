@@ -48,7 +48,7 @@ def item_lists_by_domain(domain):
 class ItemListsProvider(object):
     id = 'item-list'
 
-    def __call__(self, user, version, last_sync=None):
+    def __call__(self, user, version, last_sync=None, app=None):
         assert isinstance(user, CommCareUser)
 
         all_types = dict([(t._id, t) for t in FixtureDataType.by_domain(user.domain)])

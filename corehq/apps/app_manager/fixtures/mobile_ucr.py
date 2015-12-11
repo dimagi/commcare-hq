@@ -23,7 +23,7 @@ from corehq.apps.userreports.reports.util import (
 class ReportFixturesProvider(object):
     id = 'commcare:reports'
 
-    def __call__(self, user, version, last_sync=None):
+    def __call__(self, user, version, last_sync=None, app=None):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
