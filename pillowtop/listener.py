@@ -474,7 +474,7 @@ class AliasedElasticPillow(BasicPillow):
 
     def set_mapping(self, type_string, mapping):
         if self.online:
-            return self.send_robust("%s/%s/_mapping" % (self.es_index, type_string), data=mapping)
+            return self.get_es_new().indices.put_mapping(self.es_index, type_string, mapping)
         else:
             return {"ok": True, "acknowledged": True}
 
