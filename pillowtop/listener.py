@@ -25,8 +25,7 @@ from pillowtop.couchdb import CachedCouchDB
 
 from django import db
 from pillowtop.dao.couch import CouchDocumentStore
-from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings, \
-    set_index_normal_settings, create_index_and_set_settings_normal, create_index_for_pillow, pillow_index_exists
+from pillowtop.es_utils import create_index_for_pillow, pillow_index_exists
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
