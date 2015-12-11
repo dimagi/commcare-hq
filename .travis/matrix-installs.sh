@@ -5,10 +5,10 @@ echo "Matrix params: MATRIX_TYPE=${MATRIX_TYPE:?Empty value for MATRIX_TYPE}, BO
 
 if [ "${MATRIX_TYPE}" = "python" ]; then
     pip install coverage unittest2 mock
-    kafka_setup.sh
+    .travis/kafka_setup.sh
 elif [ "${MATRIX_TYPE}" = "python-sharded" ]; then
     pip install coverage unittest2 mock
-    pg_setup.sh
+    .travis/pg_setup.sh
     psql -c 'create database commcarehq' -U postgres
     psql -c 'create database commcarehq_proxy' -U postgres
     psql -c 'create database commcarehq_p1' -U postgres
