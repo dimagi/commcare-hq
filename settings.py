@@ -639,7 +639,7 @@ REMINDERS_QUEUE_ENABLED = False
 
 # If a reminder still has not been processed in this number of minutes, enqueue it
 # again.
-REMINDERS_QUEUE_ENQUEUING_TIMEOUT = 60
+REMINDERS_QUEUE_ENQUEUING_TIMEOUT = 180
 
 # Number of minutes a celery task will alot for itself (via lock timeout)
 REMINDERS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
