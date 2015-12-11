@@ -524,6 +524,23 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def case_attachments(self):
         return {attachment.name: attachment for attachment in self.get_attachments()}
 
+
+    def get_actions_for_form(self, xform):
+        from casexml.apps.case.xform import get_case_updates
+        # Will this import cause atrocious performance?
+        updates = [u for u in get_case_updates(xform) if u.id == self.case_id]
+        actions = [a for update in updates for a in update.actions]
+        normalized_actions = [
+            CaseAction(
+                action_type=a.action_type_slug,
+                updated_known_properties=a.get_known_properties(),
+                #indices=[CommCareCaseIndex.from_case_index_update(i) for i in action.indices]
+                indices=a.indices
+            ) for a in actions
+        ]
+        return normalized_actions
+
+
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)
 
@@ -785,3 +802,5 @@ class LedgerValue(models.Model):
     section_id = models.CharField(max_length=100, db_index=True)
     balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
     last_modified = models.DateTimeField(auto_now=True)
+
+CaseAction = collections.namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])

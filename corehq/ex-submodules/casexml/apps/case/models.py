@@ -353,8 +353,8 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     def case_properties(self):
         return self.to_json()
 
-    def get_actions_for_form(self, form_id):
-        return [a for a in self.actions if a.xform_id == form_id]
+    def get_actions_for_form(self, xform):
+        return [a for a in self.actions if a.xform_id == xform.form_id]
         
     def get_version_token(self):
         """

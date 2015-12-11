@@ -358,7 +358,7 @@ class SyncLog(AbstractSyncLog):
         removed_states = {}
         new_indices = set()
         for case in case_list:
-            actions = case.get_actions_for_form(xform.form_id)
+            actions = case.get_actions_for_form(xform)
             for action in actions:
                 logger.debug('OLD {}: {}'.format(case.case_id, action.action_type))
                 if action.action_type == const.CASE_ACTION_CREATE:
@@ -903,7 +903,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
             case_update = all_updates[case.case_id]
             case_update.was_live_previously = case.case_id in self.primary_case_ids
-            actions = case.get_actions_for_form(xform.form_id)
+            actions = case.get_actions_for_form(xform)
             for action in actions:
                 logger.debug('{}: {}'.format(case.case_id, action.action_type))
                 owner_id = get_latest_owner_id(case.case_id, action)
