@@ -1,7 +1,5 @@
-from django.conf import settings
-
 from casexml.apps.phone.models import SyncLog
-from dimagi.utils.couch.database import iter_docs, get_db
+from dimagi.utils.couch.database import get_db
 
 
 def get_last_synclog_for_user(user_id):
@@ -19,15 +17,6 @@ def get_last_synclog_for_user(user_id):
         return SyncLog.wrap(row['doc'])
     else:
         return None
-
-
-def get_all_sync_logs_docs():
-    assert settings.UNIT_TESTING
-    all_sync_log_ids = [row['id'] for row in SyncLog.view(
-        "phone/sync_logs_by_user",
-        reduce=False,
-    )]
-    return iter_docs(SyncLog.get_db(), all_sync_log_ids)
 
 
 def synclog_view(view_name, **params):
