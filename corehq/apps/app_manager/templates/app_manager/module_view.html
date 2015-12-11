@@ -216,19 +216,19 @@
             <div class="save-button-holder clearfix"></div>
             <fieldset>
                 <div class="form-group">
-                    <label class="control-label">{% trans "Module Name" %}</label>
-                    <div class="controls">
-                        {% input_trans module.name langs %}
+                    <label class="col-lg-2 control-label">{% trans "Module Name" %}</label>
+                    <div class="col-lg-4">
+                        {% input_trans module.name langs cssClass='form-control' %}
                     </div>
                 </div>
                 {% block settings_fields %}
                 {% if module.module_type == 'shadow' %}
                 <div class="form-group">
-                    <label class="control-label">
+                    <label class="col-lg-2 control-label">
                         {% trans "Source Module" %}
                     </label>
-                    <div class="controls">
-                        <select type="text" name="source_module_id" data-value="{{ module.source_module_id}}">
+                    <div class="col-lg-4">
+                        <select type="text" name="source_module_id" data-value="{{ module.source_module_id}}" class="form-control">
                         <option value="">{% trans "None" %}</option>
                         {% for mod in app.modules %}
                             {% if mod.module_type == 'basic' %}
@@ -242,11 +242,12 @@
                 </div>
                 {% endif %}
                  <div class="form-group">
-                    <label class="control-label">
+                    <label class="col-lg-2 control-label">
                         {% trans "Menu Mode" %}
                     </label>
-                    <div class="controls">
-                        <select type="text" name="put_in_root" data-value="{% if module.put_in_root %}true{% else %}false{% endif %}">
+                    <div class="col-lg-4">
+                        <select type="text" name="put_in_root" class="form-control"
+                                data-value="{% if module.put_in_root %}true{% else %}false{% endif %}">
                             <option value="false">{% trans "Display module and then forms" %}</option>
                             <option value="true">{% trans "Display only forms" %}</option>
                         </select>
@@ -256,11 +257,11 @@
                 {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
                 {% if child_module_enabled %}
                 <div class="form-group">
-                    <label class="control-label">
+                    <label class="col-lg-2 control-label">
                         {% trans "Parent Module" %}
                     </label>
-                    <div class="controls">
-                        <select type="text" name="root_module_id" data-value="{{ module.root_module_id}}">
+                    <div class="col-lg-4 controls">
+                        <select type="text" name="root_module_id" data-value="{{ module.root_module_id}}" class="form-control">
                         <option value="">{% trans "No Parent" %}</option>
                         {% for mod in valid_parent_modules %}
                             <option value="{{mod.unique_id}}">{{ mod.name|trans:langs }}</option>
@@ -270,9 +271,9 @@
                 </div>
                 {% endif %}
                 <div class="form-group">
-                    <label class="control-label" for="comment-id">{% trans "Comment" %}</label>
-                    <div class="controls">
-                        <textarea id="comment-id" name="comment">{{ module.comment }}</textarea>
+                    <label class="col-lg-2 control-label" for="comment-id">{% trans "Comment" %}</label>
+                    <div class="col-lg-4">
+                        <textarea id="comment-id" name="comment" class="form-control">{{ module.comment }}</textarea>
                     </div>
                 </div>
                 {% endblock %}
@@ -285,39 +286,39 @@
             <fieldset>
                 <legend>{% trans "Basic" %}</legend>
                 <div class="form-group">
-                    <label class="control-label">
+                    <label class="col-lg-2 control-label">
                         {% trans "Case Type" %}
                         <span class="hq-help-template"
                               data-title="{% trans "Case Type" %}"
                               data-content="{% trans "e.g. &quot;pregnancy&quot;. The name for the type of case you are tracking. All cases you register in this module will have this case type, and only cases of this type will show in the case list. Modules with the same case type will have the same cases in their case lists." %}"
                                 ></span>
                     </label>
-                    <div class="controls">
-                        <input class="code" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
+                    <div class="col-lg-4">
+                        <input class="code" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" class="form-control" />
                         <span class="help-inline" id="case_type_error" style="display: none;">
                             {% trans "Case types can only include the characters a-z, 0-9, '-' and '_'" %}
                         </span>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="control-label">
+                    <label class="control-label col-lg-4">
                         {% trans "Label for Cases" %}
                         <span class="hq-help-template"
                               data-title="{% trans "Label for Cases" %}"
                               data-content="{% trans "This label will appear at the top of the phone's case select screen." %}"
                         ></span>
                     </label>
-                    <div class="controls">
-                        <input type="text" name="case_label" value="{{ module.case_label|trans:langs }}" />
+                    <div class="col-lg-4">
+                        <input type="text" name="case_label" value="{{ module.case_label|trans:langs }}" class="form-control" />
                     </div>
                 </div>
                 {% if app.application_version == '1.0' %}
                 <div class="form-group">
-                    <label class="control-label">
+                    <label class="control-label col-lg-2">
                         {% trans "Label for Referrals" %}
                     </label>
-                    <div class="controls">
-                        <input type="text" name="referral_label" value="{{ module.referral_label|trans:langs }}" />
+                    <div class="col-lg-4">
+                        <input type="text" name="referral_label" value="{{ module.referral_label|trans:langs }}" class="form-control" />
                     </div>
                 </div>
                 {% endif %}

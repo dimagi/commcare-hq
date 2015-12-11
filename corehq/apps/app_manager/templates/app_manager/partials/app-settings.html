@@ -177,11 +177,11 @@ todo fix
                         visible: visible,
                         css: {error: hasError()}
                     ">
-                        <div class="control-label">
+                        <div class="control-label col-lg-2">
                             <label data-bind="text: name, attr: {for: inputId}" class="inner-control-label"></label>
                             <span data-bind="makeHqHelp: { name: name, description: $data.description, format: $data.description_format}, visible: $data.description"></span>
                         </div>
-                        <div class="controls">
+                        <div class="col-lg-10">
                             <span data-bind="template: $data.widget_template || 'CommcareSettings.widgets.' + widget"></span>
                             <span data-bind="visible: disabledMessage(), css: {'text-warning': !optionOK(), 'text-success': optionOK}">
                                 <i class="fa" data-bind="css: {'fa-arrow-left': !optionOK(), 'fa-check': optionOK}"></i>

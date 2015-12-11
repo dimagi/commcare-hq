@@ -20,7 +20,7 @@
                     "></select>
                 <input type="hidden" name="case_list_form_id" data-bind="value: caseListForm" />
                 <span id="case_list_form-label">
-                    with label: {% input_trans module.case_list_form.label langs input_name='case_list_form_label' %}
+                    with label: {% input_trans module.case_list_form.label langs input_name='case_list_form_label' cssClass='form-control' %}
                 </span>
                 <div data-bind="visible: !allowed">
                     {%  trans "Error! Registration form will be ignored since this module is not allowed to have one for the following reason:" %}<br/>

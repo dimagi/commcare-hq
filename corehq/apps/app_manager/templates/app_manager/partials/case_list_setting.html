@@ -15,7 +15,7 @@
             <option value="true">Show</option>
         </select>
         <span id="{{ SLUG }}-label">
-            with label: {% input_trans case_list.label langs %}
+            with label: {% input_trans case_list.label langs cssClass='form-control' %}
         </span>
         <span class="help-inline" id="case_list_label_error" style="display: none;">
             {% trans "Case list requires a label" %}

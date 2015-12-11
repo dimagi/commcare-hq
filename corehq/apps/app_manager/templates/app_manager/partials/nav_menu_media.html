@@ -2,8 +2,8 @@
 {% load hq_shared_tags %}
 <div id="{{ qualifier|default_if_none:"" }}media_image">
     <div class="form-group">
-        <label class="control-label" for="menu_image_path">{% trans ICON_LABEL %}</label>
-        <div class="controls commcare-feature"
+        <label class="control-label col-lg-2" for="menu_image_path">{% trans ICON_LABEL %}</label>
+        <div class="col-lg-10 commcare-feature"
              data-since-version="1.3">
             {# must use "if" here instead of "visible" #}
             {# otherwise src will be "#" which makes an unneccessary request for the current page #}
@@ -53,12 +53,12 @@
     </div>
     <div class="form-group"
          data-bind="visible: showCustomPath">
-        <label for="image_custom_path" class="control-label">
+        <label for="image_custom_path" class="control-label col-lg-2">
             {% trans "Icon Path" %}:
         </label>
-        <div class="controls">
+        <div class="col-lg-10">
             <input type="text"
-                   class="col-sm-6"
+                   class="col-sm-6 form-control"
                    data-bind="value: customPath,
                               valueUpdate: 'textchange'" />
             <input type="hidden"
@@ -82,8 +82,8 @@
 {% if not EXCLUDE_AUDIO %}
 <div id="{{ qualifier|default_if_none:"" }}media_audio">
     <div class="form-group">
-        <label class="control-label" for="menu_audio_path">{% trans AUDIO_LABEL %}</label>
-        <div class="controls commcare-feature"
+        <label class="control-label col-lg-2" for="menu_audio_path">{% trans AUDIO_LABEL %}</label>
+        <div class="col-lg-10 commcare-feature"
              data-since-version="1.3">
             <a data-bind="visible: isMediaMatched, attr: {href: url}"
                class="btn btn-default"
@@ -141,10 +141,10 @@
     </div>
     <div class="form-group"
          data-bind="visible: showCustomPath">
-        <label for="image_custom_path" class="control-label">
+        <label for="image_custom_path" class="control-label col-lg-2">
             {% trans "Audio Path" %}:
         </label>
-        <div class="controls">
+        <div class="col-lg-10">
             <input type="text"
                    class="col-sm-6"
                    data-bind="value: customPath,
