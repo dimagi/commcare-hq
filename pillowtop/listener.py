@@ -586,14 +586,6 @@ class AliasedElasticPillow(BasicPillow):
         es = self.get_es()
         es.post('_bulk', data=payload)
 
-    def check_alias(self):
-        """
-        Naive means to verify the alias of the current pillow iteration is matched.
-        """
-        es = self.get_es()
-        aliased_indexes = es[self.es_alias].get('_aliases')
-        return aliased_indexes.keys()
-
     @staticmethod
     def calc_mapping_hash(mapping):
         return hashlib.md5(simplejson.dumps(mapping, sort_keys=True)).hexdigest()
