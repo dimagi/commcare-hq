@@ -748,6 +748,7 @@ LOGSTASH_HOST = 'localhost'
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
+ELASTICSEARCH_VERSION = 0.9
 
 ####### Couch Config #######
 # for production this ought to be set to true on your configured couch instance
