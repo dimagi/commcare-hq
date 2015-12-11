@@ -895,9 +895,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         all_updates = {}
         for case in case_list:
-            if case._id not in all_updates:
+            if case.case_id not in all_updates:
                 logger.debug('initializing update for case {}'.format(case.case_id))
-                all_updates[case._id] = CaseUpdate(case_id=case.case_id,
+                all_updates[case.case_id] = CaseUpdate(case_id=case.case_id,
                                                    owner_ids_on_phone=self.owner_ids_on_phone)
 
             case_update = all_updates[case.case_id]

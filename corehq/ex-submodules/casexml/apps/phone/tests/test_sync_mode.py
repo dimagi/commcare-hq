@@ -514,40 +514,40 @@ class SyncTokenUpdateTest(SyncBaseTest):
         # override the setting on a per-test level and should be removed when the new
         # sync is fully rolled out.
         if isinstance(sync_log, SimplifiedSyncLog):
-            self.assertTrue(sync_log.phone_is_holding_case(case._id))
+            self.assertTrue(sync_log.phone_is_holding_case(case.case_id))
 
     def test_create_relevant_owner_and_update_to_empty_owner_in_same_form(self):
         case = self.factory.create_case(owner_id=USER_ID, update={'owner_id': ''}, strict=False)
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
         if isinstance(sync_log, SimplifiedSyncLog):
-            self.assertFalse(sync_log.phone_is_holding_case(case._id))
+            self.assertFalse(sync_log.phone_is_holding_case(case.case_id))
 
     def test_create_irrelevant_owner_and_update_to_empty_owner_in_same_form(self):
         case = self.factory.create_case(owner_id='irrelevant_1', update={'owner_id': ''}, strict=False)
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertFalse(sync_log.phone_is_holding_case(case._id))
+        self.assertFalse(sync_log.phone_is_holding_case(case.case_id))
 
     def test_create_relevant_owner_then_submit_again_with_no_owner(self):
         case = self.factory.create_case()
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertTrue(sync_log.phone_is_holding_case(case._id))
+        self.assertTrue(sync_log.phone_is_holding_case(case.case_id))
         self.factory.create_or_update_case(CaseStructure(
-            case_id=case._id,
+            case_id=case.case_id,
             attrs={'owner_id': None}
         ))
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertTrue(sync_log.phone_is_holding_case(case._id))
+        self.assertTrue(sync_log.phone_is_holding_case(case.case_id))
 
     def test_create_irrelevant_owner_then_submit_again_with_no_owner(self):
         case = self.factory.create_case(owner_id='irrelevant_1')
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertFalse(sync_log.phone_is_holding_case(case._id))
+        self.assertFalse(sync_log.phone_is_holding_case(case.case_id))
         self.factory.create_or_update_case(CaseStructure(
-            case_id=case._id,
+            case_id=case.case_id,
             attrs={'owner_id': None}
         ))
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertFalse(sync_log.phone_is_holding_case(case._id))
+        self.assertFalse(sync_log.phone_is_holding_case(case.case_id))
 
     def test_create_irrelevant_child_case_and_close_parent_in_same_form(self):
         # create the parent
@@ -575,7 +575,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
 
     def test_create_closed_child_case_and_close_parent_in_same_form(self):
         # create the parent
-        parent_id = self.factory.create_case()._id
+        parent_id = self.factory.create_case().case_id
         # create an irrelevent child and close the parent
         child_id = uuid.uuid4().hex
         self.factory.create_or_update_cases([
@@ -613,7 +613,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         )
 
     def test_index_after_close(self):
-        parent_id = self.factory.create_case()._id
+        parent_id = self.factory.create_case().case_id
         case_id = uuid.uuid4().hex
         case_xml = self.factory.get_case_block(case_id, create=True, close=True)
         # hackily insert an <index> block after the close
@@ -681,7 +681,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
             ),
             form_extras={'last_sync_token': None}
         )
-        assert_user_has_case(self, self.user, case._id, restore_id=self.sync_log._id)
+        assert_user_has_case(self, self.user, case.case_id, restore_id=self.sync_log._id)
         payload = generate_restore_payload(self.project, self.user, restore_id=self.sync_log._id, version=V2)
         next_sync_log = synclog_from_restore_payload(payload)
         self.assertFalse(next_sync_log.phone_is_holding_case(case.case_id))
@@ -692,7 +692,7 @@ class SyncDeletedCasesTest(SyncBaseTest):
     def test_deleted_case_doesnt_sync(self):
         case = self.factory.create_case()
         case.soft_delete()
-        assert_user_doesnt_have_case(self, self.user, case._id)
+        assert_user_doesnt_have_case(self, self.user, case.case_id)
 
     def test_deleted_parent_doesnt_sync(self):
         parent_id = uuid.uuid4().hex

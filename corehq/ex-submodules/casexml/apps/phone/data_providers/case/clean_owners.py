@@ -86,29 +86,29 @@ class CleanOwnerCaseSyncOperation(object):
             )
             for update in updates:
                 case = update.case
-                all_synced.add(case._id)
+                all_synced.add(case.case_id)
                 potential_updates_to_sync.append(update)
 
                 # update the indices in the new sync log
                 if case.indices:
                     # and double check footprint for non-live cases
-                    extension_indices[case._id] = {index.identifier: index.referenced_id for index in case.indices
+                    extension_indices[case.case_id] = {index.identifier: index.referenced_id for index in case.indices
                                                    if index.relationship == CASE_INDEX_EXTENSION}
-                    child_indices[case._id] = {index.identifier: index.referenced_id for index in case.indices
+                    child_indices[case.case_id] = {index.identifier: index.referenced_id for index in case.indices
                                                if index.relationship == CASE_INDEX_CHILD}
                     for index in case.indices:
                         if index.referenced_id not in all_maybe_syncing:
                             case_ids_to_sync.add(index.referenced_id)
 
                 if not _is_live(case, self.restore_state):
-                    all_dependencies_syncing.add(case._id)
+                    all_dependencies_syncing.add(case.case_id)
                     if case.closed:
-                        closed_cases.add(case._id)
+                        closed_cases.add(case.case_id)
 
             # commtrack ledger sections for this batch
             commtrack_elements = get_stock_payload(
                 self.restore_state.project, self.restore_state.stock_settings,
-                [CaseStub(update.case._id, update.case.type) for update in updates]
+                [CaseStub(update.case.case_id, update.case.type) for update in updates]
             )
             response.extend(commtrack_elements)
 
@@ -153,7 +153,7 @@ class CleanOwnerCaseSyncOperation(object):
             irrelevant_cases = purged_cases - self.restore_state.last_sync_log.case_ids_on_phone
 
         for update in potential_updates_to_sync:
-            if update.case._id not in irrelevant_cases:
+            if update.case.case_id not in irrelevant_cases:
                 append_update_to_response(response, update, self.restore_state)
 
         return response
@@ -235,7 +235,7 @@ def case_needs_to_sync(case, last_sync_log):
                        if index.relationship == CASE_INDEX_EXTENSION]
     if (not last_sync_log or
         (owner_id not in last_sync_log.owner_ids_on_phone and
-         not (extension_cases and case._id in last_sync_log.case_ids_on_phone))):
+         not (extension_cases and case.case_id in last_sync_log.case_ids_on_phone))):
         # initial sync or new owner IDs always sync down everything
         # extension cases don't get synced again if they haven't changed
         return True

@@ -141,7 +141,7 @@ class OwnerCleanlinessTest(SyncBaseTest):
             )
         )
         self.assert_owner_dirty()
-        self.assertEqual(child._id, self.owner_cleanliness.hint)
+        self.assertEqual(child.case_id, self.owner_cleanliness.hint)
         self._verify_set_cleanliness_flags()
 
     def test_add_dirty_parent_makes_dirty(self):
@@ -365,8 +365,8 @@ class OwnerCleanlinessTest(SyncBaseTest):
         )
         self.assert_owner_dirty()
         self.assertFalse(self._owner_cleanliness_for_id(other_owner_id).is_clean)
-        self.assertEqual(host._id, self.owner_cleanliness.hint)
-        self.assertEqual(extension._id, self._owner_cleanliness_for_id(other_owner_id).hint)
+        self.assertEqual(host.case_id, self.owner_cleanliness.hint)
+        self.assertEqual(extension.case_id, self._owner_cleanliness_for_id(other_owner_id).hint)
         self._verify_set_cleanliness_flags(self.owner_id)
         self._verify_set_cleanliness_flags(other_owner_id)
 
