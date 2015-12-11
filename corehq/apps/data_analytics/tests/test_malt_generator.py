@@ -66,16 +66,14 @@ class MaltGeneratorTest(TestCase):
 
         def _form_data(instance_id,
                        app_id,
-                       domain=cls.DOMAIN_NAME,
                        received_on=cls.correct_date,
-                       device_id=cls.DEVICE_ID,
-                       user_id=cls.user_id):
+                       device_id=cls.DEVICE_ID):
             return FormData(
-                domain=domain,
+                domain=cls.DOMAIN_NAME,
                 received_on=received_on,
                 instance_id=instance_id,
                 device_id=device_id,
-                user_id=user_id,
+                user_id=cls.user_id,
                 app_id=app_id,
                 **common_args
             )
