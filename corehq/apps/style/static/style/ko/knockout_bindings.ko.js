@@ -799,3 +799,10 @@ ko.bindingHandlers.stopBinding = {
     }
 };
 ko.virtualElements.allowedBindings.stopBinding = true;
+
+ko.bindingHandlers.popover = {
+    update: function(element, valueAccessor) {
+        var options = ko.utils.unwrapObservable(valueAccessor());
+        $(element).popover(options);
+    }
+};
