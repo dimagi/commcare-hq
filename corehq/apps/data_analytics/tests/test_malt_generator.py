@@ -28,7 +28,7 @@ class MaltGeneratorTest(TestCase):
     def setUpClass(cls):
         cls._setup_domain_user()
         cls._setup_apps()
-        cls._setup_sofa_forms()
+        cls._setup_sofabed_forms()
         cls.run_malt_generation()
 
     @classmethod
@@ -56,7 +56,7 @@ class MaltGeneratorTest(TestCase):
         cls.wam_app_id = cls.wam_app._id
 
     @classmethod
-    def _setup_sofa_forms(cls):
+    def _setup_sofabed_forms(cls):
         form_data_rows = []
         common_args = {  # values don't matter
             'time_start': cls.correct_date,
@@ -99,8 +99,6 @@ class MaltGeneratorTest(TestCase):
             ('wam_app_form1', cls.wam_app_id),
             ('wam_app_form2', cls.wam_app_id),
             ('missing_app_form', MISSING_APP_ID),
-            # should not be included
-            ("unknown_appId", cls.UNKNOWN_ID),
         ]
 
         _append_forms(out_of_range_forms, cls.out_of_range_date)
@@ -116,19 +114,21 @@ class MaltGeneratorTest(TestCase):
         generator = MALTTableGenerator([cls.malt_month])
         generator.build_table()
 
-    def test_per_user_per_app_counts(self):
-        def _assert_app_row_extists(app_id, num_forms=None, wam_value=None, count=1):
-            app_rows = MALTRow.objects.filter(
-                username=self.USERNAME,
-                app_id=app_id,
-            )
-            self.assertEqual(app_rows.count(), count)  # 1 row per app
-            if count:
-                row = app_rows.all()[0]
-                self.assertEqual(int(row.num_of_forms), num_forms)
-                self.assertEqual(row.wam, wam_value)
+    def _check_malt_rows(self, app_id, num_forms=None, wam_value=None, malt_row_count=1):
+        app_rows = MALTRow.objects.filter(
+            username=self.USERNAME,
+            app_id=app_id,
+        )
+        self.assertEqual(app_rows.count(), malt_row_count)  # 1 row per app
+        row = app_rows.all()[0]
+        self.assertEqual(int(row.num_of_forms), num_forms)
+        self.assertEqual(row.wam, wam_value)
 
-        _assert_app_row_extists(self.wam_app_id, 2, MALTRow.YES)
-        _assert_app_row_extists(self.app_id, 3, MALTRow.NOT_SET)
-        _assert_app_row_extists(MISSING_APP_ID, 1, MALTRow.NOT_SET)
-        _assert_app_row_extists(self.UNKNOWN_ID, count=0)
+    def test_two_wam_yes_apps(self):
+        self._check_malt_rows(self.wam_app_id, 2, MALTRow.YES)
+
+    def test_three_wam_not_set_apps(self):
+        self._check_malt_rows(self.app_id, 3, MALTRow.NOT_SET)
+
+    def test_missing_app_id_is_included(self):
+        self._check_malt_rows(MISSING_APP_ID, 1, MALTRow.NOT_SET)
