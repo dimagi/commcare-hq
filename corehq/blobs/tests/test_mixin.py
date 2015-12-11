@@ -52,6 +52,7 @@ class TestBlobMixin(BaseTestCase):
         content.name = "test.1"
         self.obj.put_attachment(content)
         self.assertEqual(self.obj.fetch_attachment(content.name), "content")
+        self.assertTrue(self.obj.saved)
 
     def test_fetch_attachment_with_unicode(self):
         name = "test.1"
@@ -70,7 +71,9 @@ class TestBlobMixin(BaseTestCase):
         name = "test.\u4500"
         content = "\u4500 is not ascii"
         self.obj.put_attachment(content, name)
+        self.obj.saved = False
         self.obj.delete_attachment(name)
+        self.assertTrue(self.obj.saved)
         with self.assertRaises(mod.ResourceNotFound):
             self.obj.fetch_attachment(name)
 
@@ -258,6 +261,10 @@ class FallbackToCouchDocument(mod.BlobMixin, AttachmentFallback, Document):
     def get_db(cls):
         class fake_db:
             dbname = "commcarehq_test"
+
+            @staticmethod
+            def save_doc(doc, **params):
+                pass
         return fake_db
 
 

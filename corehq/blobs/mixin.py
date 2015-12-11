@@ -37,6 +37,8 @@ class BlobMixin(Document):
     # methods on this mixin will not touch couchdb.
     migrating_blobs_from_couch = False
 
+    _auto_save_on_mutate_attachment = True
+
     def _blobdb_bucket(self):
         if self._id is None:
             raise ResourceNotFound(
@@ -89,6 +91,8 @@ class BlobMixin(Document):
         )
         if self.migrating_blobs_from_couch and self._attachments:
             self._attachments.pop(name, None)
+        if self._auto_save_on_mutate_attachment:
+            self.save()
         return True
 
     def fetch_attachment(self, name, stream=False):
@@ -126,9 +130,12 @@ class BlobMixin(Document):
         else:
             deleted = False
         meta = self.external_blobs.pop(name, None)
-        if meta is None:
-            return deleted
-        return get_blob_db().delete(meta.id, self._blobdb_bucket()) or deleted
+        should_save = meta is not None or deleted
+        if meta is not None:
+            deleted = get_blob_db().delete(meta.id, self._blobdb_bucket()) or deleted
+        if should_save and self._auto_save_on_mutate_attachment:
+            self.save()
+        return deleted
 
     def atomic_blobs(self):
         """Return a context manager to atomically save doc + blobs
@@ -153,6 +160,8 @@ class BlobMixin(Document):
                     old_attachments = dict(self._attachments)
                 else:
                     old_attachments = None
+            auto = self._auto_save_on_mutate_attachment
+            self._auto_save_on_mutate_attachment = False
             try:
                 yield
                 self.save()
@@ -166,6 +175,8 @@ class BlobMixin(Document):
                 if self.migrating_blobs_from_couch:
                     self._attachments = old_attachments
                 raise typ, exc, tb
+            finally:
+                self._auto_save_on_mutate_attachment = auto
         return atomic_blobs_context()
 
 
