@@ -2,20 +2,16 @@ from collections import namedtuple
 from datetime import datetime
 from couchdbkit import ResourceNotFound
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
-from casexml.apps.case.dbaccessors import get_all_reverse_indices_info
 from casexml.apps.case.exceptions import IllegalCaseId
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqcase.dbaccessors import get_open_case_ids, \
-    get_closed_case_ids, get_all_case_owner_ids
+from corehq.apps.hqcase.dbaccessors import get_all_case_owner_ids
 from corehq.apps.users.util import WEIRD_USER_IDS
 from django.conf import settings
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.logging import notify_exception
 
 

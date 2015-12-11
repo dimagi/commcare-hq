@@ -6,7 +6,6 @@ http://bitbucket.org/javarosa/javarosa/wiki/casexml
 """
 from __future__ import absolute_import
 from StringIO import StringIO
-import base64
 from collections import OrderedDict
 import re
 from datetime import datetime
@@ -21,15 +20,11 @@ from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.dbaccessors import get_reverse_indices
 from corehq.form_processor.abstract_models import AbstractCommCareCase
 from dimagi.ext.couchdbkit import *
-from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.django.cached_object import (
     CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
 )
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
-from casexml.apps.case.util import (
-    get_case_xform_ids,
-)
 from casexml.apps.case import const
 from dimagi.utils.modules import to_function
 from dimagi.utils import web

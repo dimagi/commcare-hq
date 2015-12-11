@@ -3,6 +3,7 @@ from casexml.apps.case.dbaccessors import get_extension_case_ids, \
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_case_xform_ids
 from corehq.apps.hqcase.dbaccessors import (
+    get_case_ids_in_domain,
     get_open_case_ids,
     get_closed_case_ids,
     get_case_ids_in_domain_by_owner

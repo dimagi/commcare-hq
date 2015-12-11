@@ -23,6 +23,7 @@ casexml.apps.phone:
   - corehq.apps.tzmigration
   - couchforms
   - phonelog
+  - corehq.apps.domain
 casexml.apps.case:
   - casexml.apps.phone
   - casexml.apps.stock

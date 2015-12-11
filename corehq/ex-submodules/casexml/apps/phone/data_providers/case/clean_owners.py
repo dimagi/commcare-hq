@@ -4,20 +4,13 @@ from functools import partial
 from datetime import datetime
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
-from casexml.apps.case.dbaccessors import get_extension_case_ids
 from casexml.apps.phone.cleanliness import get_case_footprint_info
 from casexml.apps.phone.data_providers.case.load_testing import append_update_to_response
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates, CaseStub
 from casexml.apps.phone.models import OwnershipCleanlinessFlag, LOG_FORMAT_SIMPLIFIED, IndexTree, SimplifiedSyncLog
-from corehq.apps.hqcase.dbaccessors import get_open_case_ids, get_case_ids_in_domain_by_owner
 from corehq.apps.users.cases import get_owner_id
-from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
-    get_case_ids_modified_with_owner_since
-from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import get_last_modified_dates
-from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.decorators.memoized import memoized
 
 
