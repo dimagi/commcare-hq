@@ -1599,7 +1599,7 @@ class MultiUserSyncTest(SyncBaseTest):
         files = ["reg1.xml", "reg2.xml", "cf.xml", "close.xml"]
         for f in files:
             form = self._postWithSyncToken(os.path.join(folder_path, f), self.sync_log.get_id)
-            self.assertFalse(hasattr(form, "problem"))
+            self.assertFalse(hasattr(form, "problem") and form.problem)
             synclog_from_restore_payload(
                 generate_restore_payload(self.project, self.user, version="2.0")
             )
