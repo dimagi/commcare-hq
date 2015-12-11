@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.management import call_command
 from corehq.preindex import get_preindex_plugin
 
+from corehq.sql_db.operations import HqRunPython
 from corehq.apps.smsbillables.management.commands.bootstrap_grapevine_gateway import \
     bootstrap_grapevine_gateway
 from corehq.apps.smsbillables.management.commands.bootstrap_mach_gateway import \
@@ -74,7 +75,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(sync_sms_docs),
-        migrations.RunPython(bootstrap_currency),
-        migrations.RunPython(bootstrap_sms),
+        HqRunPython(sync_sms_docs),
+        HqRunPython(bootstrap_currency),
+        HqRunPython(bootstrap_sms),
     ]

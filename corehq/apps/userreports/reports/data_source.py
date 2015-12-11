@@ -5,7 +5,6 @@ from sqlagg import (
     TableNotFoundException,
 )
 from sqlagg.columns import SimpleColumn
-from sqlagg.exceptions import ColumnWithNameNotFoundException
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
@@ -129,7 +128,6 @@ class ConfigurableReportDataSource(SqlData):
             ret = super(ConfigurableReportDataSource, self).get_data()
         except (
             ColumnNotFoundException,
-            ColumnWithNameNotFoundException,
             ProgrammingError,
         ) as e:
             raise UserReportsError(unicode(e))

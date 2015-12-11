@@ -10,6 +10,7 @@ from ..utils import should_use_sql_backend
 
 
 CaseUpdateMetadata = namedtuple('CaseUpdateMetadata', ['case', 'is_creation', 'previous_owner_id'])
+ProcessedForms = namedtuple('ProcessedForms', ['submitted', 'deprecated'])
 
 
 class FormProcessorInterface(object):
@@ -107,22 +108,27 @@ class FormProcessorInterface(object):
     def xformerror_from_xform_instance(self, instance, error_message, with_new_id=False):
         return self.processor.xformerror_from_xform_instance(instance, error_message, with_new_id=with_new_id)
 
-    def save_processed_models(self, instance, xforms, cases=None, stock_updates=None):
+    def save_processed_models(self, forms, cases=None, stock_updates=None):
+        forms = _list_to_processed_forms_tuple(forms)
         try:
-            return self.processor.save_processed_models(xforms, cases=cases, stock_updates=stock_updates)
+            return self.processor.save_processed_models(
+                forms,
+                cases=cases,
+                stock_updates=stock_updates,
+            )
         except BulkSaveError as e:
             logging.error('BulkSaveError saving forms', exc_info=1,
                           extra={'details': {'errors': e.errors}})
             raise
         except Exception as e:
-            xforms_being_saved = [xform.form_id for xform in xforms]
+            xforms_being_saved = [form.form_id for form in forms if form]
             error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
                 type(e).__name__,
                 unicode(e),
                 ', '.join(xforms_being_saved)
             )
             from corehq.form_processor.submission_post import handle_unexpected_error
-            handle_unexpected_error(self, instance, error_message)
+            handle_unexpected_error(self, forms.submitted, error_message)
             raise
 
     def hard_delete_case_and_forms(self, case, xforms):
@@ -152,3 +158,15 @@ class FormProcessorInterface(object):
 
     def submission_error_form_instance(self, instance, message):
         return self.processor.submission_error_form_instance(self.domain, instance, message)
+
+
+def _list_to_processed_forms_tuple(forms):
+    """
+    :param forms: List of forms (either 1 or 2)
+    :return: tuple with main form first and deprecated form second
+    """
+    if len(forms) == 1:
+        return ProcessedForms(forms[0], None)
+    else:
+        assert len(forms) == 2
+        return ProcessedForms(*sorted(forms, key=lambda form: form.is_deprecated))

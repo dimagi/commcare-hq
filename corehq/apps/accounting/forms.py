@@ -591,13 +591,14 @@ class SubscriptionForm(forms.Form):
                 }))
 
         start_date = self.cleaned_data.get('start_date')
-        if start_date is None and self.subscription is not None:
-            start_date = self.subscription.date_start
-        elif start_date is None:
-            raise ValidationError(_("You must specify a start date"))
+        if not start_date:
+            if self.subscription:
+                start_date = self.subscription.date_start
+            else:
+                raise ValidationError(_("You must specify a start date"))
 
         end_date = self.cleaned_data.get('end_date')
-        if end_date is not None and start_date > end_date:
+        if end_date and start_date > end_date:
             raise ValidationError(_("End date must be after start date."))
 
         if end_date and end_date <= datetime.date.today():
@@ -802,7 +803,7 @@ class CreditForm(forms.Form):
             raise ValidationError(mark_safe(_(
                 'Amount over maximum size.  If you need support for '
                 'quantities this large, please <a data-toggle="modal" '
-                'data-target="#reportIssueModal" href="#reportIssueModal">'
+                'data-target="#modalReportIssue" href="#modalReportIssue">'
                 'Report an Issue</a>.'
             )))
         return amount

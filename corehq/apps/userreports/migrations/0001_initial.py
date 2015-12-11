@@ -4,8 +4,9 @@ from django.conf import settings
 
 from django.db import migrations
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.db import DEFAULT_ENGINE_ID
 from corehq.preindex import get_preindex_plugin
+from corehq.sql_db.connections import DEFAULT_ENGINE_ID
+from corehq.sql_db.operations import HqRunPython
 from corehq.util.couch import IterDB
 from dimagi.utils.couch.database import iter_docs
 
@@ -27,5 +28,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(set_default_engine_ids),
+        HqRunPython(set_default_engine_ids),
     ]

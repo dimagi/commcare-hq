@@ -522,7 +522,8 @@
                            "x-max":"10",
                            "y-max":"10",
                            "x-min":"0",
-                           "y-min":"0"
+                           "y-min":"0",
+                           "x-labels":"concat('{5:\"',instance('commcaresession')/session/context/username,'\"}')"
                         },
                         "annotations":[
 

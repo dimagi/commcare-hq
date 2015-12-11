@@ -97,21 +97,6 @@ def get_case_id_by_domain_hq_user_id(domain, user_id, case_type):
     return rows[0]['id'] if rows else None
 
 
-def get_callcenter_case_mapping(domain, user_ids):
-    """
-    Get the mapping from user_id to 'user case id' for each user in user_ids.
-    """
-    keys = [[domain, user_id] for user_id in user_ids]
-    rows = CommCareCase.view(
-        'hqcase/by_domain_hq_user_id',
-        keys=keys,
-        reduce=False,
-        include_docs=False
-    )
-
-    return {r['key'][1]: r['id'] for r in rows}
-
-
 def get_case_by_identifier(domain, identifier):
     # circular import
     from corehq.apps.api.es import CaseES

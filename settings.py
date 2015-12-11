@@ -242,6 +242,9 @@ HQ_APPS = (
     'corehq.apps.consumption',
     'corehq.apps.tzmigration',
     'corehq.form_processor.app_config.FormProcessorAppConfig',
+    'corehq.sql_db',
+    'corehq.sql_accessors',
+    'corehq.sql_proxy_accessors',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -636,7 +639,7 @@ REMINDERS_QUEUE_ENABLED = False
 
 # If a reminder still has not been processed in this number of minutes, enqueue it
 # again.
-REMINDERS_QUEUE_ENQUEUING_TIMEOUT = 60
+REMINDERS_QUEUE_ENQUEUING_TIMEOUT = 180
 
 # Number of minutes a celery task will alot for itself (via lock timeout)
 REMINDERS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
@@ -651,6 +654,12 @@ REMINDERS_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
 # The number of hours to wait before counting a reminder as stale. Stale
 # reminders will not be processed.
 REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
+
+# Reminders rate limiting settings. A single project will only be allowed to
+# fire REMINDERS_RATE_LIMIT_COUNT reminders every REMINDERS_RATE_LIMIT_PERIOD
+# seconds.
+REMINDERS_RATE_LIMIT_COUNT = 30
+REMINDERS_RATE_LIMIT_PERIOD = 60
 
 
 ####### Pillow Retry Queue Settings #######
@@ -748,6 +757,7 @@ LOGSTASH_HOST = 'localhost'
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
+ELASTICSEARCH_VERSION = 0.9
 
 ####### Couch Config #######
 # for production this ought to be set to true on your configured couch instance
@@ -941,6 +951,10 @@ UCR_DATABASE_URL = None
 # Override this in localsettings to specify custom reporting databases
 CUSTOM_DATABASES = {}
 
+PL_PROXY_CLUSTER_NAME = 'commcarehq'
+
+USE_PARTITIONED_DATABASE = False
+
 # number of days since last access after which a saved export is considered unused
 SAVED_EXPORT_ACCESS_CUTOFF = 35
 
@@ -1026,6 +1040,7 @@ else:
     ]
 
 ### Reporting database - use same DB as main database
+
 db_settings = DATABASES["default"].copy()
 db_settings['PORT'] = db_settings.get('PORT', '5432')
 options = db_settings.get('OPTIONS')
@@ -1048,6 +1063,11 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
 if not UCR_DATABASE_URL or UNIT_TESTING:
     # by default just use the reporting DB for UCRs
     UCR_DATABASE_URL = SQL_REPORTING_DATABASE_URL
+
+if USE_PARTITIONED_DATABASE:
+    DATABASE_ROUTERS = ['corehq.sql_db.routers.PartitionRouter']
+else:
+    DATABASE_ROUTERS = ['corehq.sql_db.routers.MonolithRouter']
 
 MVP_INDICATOR_DB = 'mvp-indicators'
 

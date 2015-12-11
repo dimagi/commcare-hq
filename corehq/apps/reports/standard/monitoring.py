@@ -373,9 +373,6 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                 help_text = None
                 if info['is_fuzzy']:
                     help_text = _("This column shows Fuzzy Submissions.")
-                elif info['is_remote']:
-                    help_text = _("These forms came from "
-                                  "a Remote CommCare HQ Application.")
                 headers.add_column(
                     DataTablesColumn(
                         info['name'],

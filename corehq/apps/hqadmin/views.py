@@ -77,7 +77,7 @@ from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
-from corehq.db import Session
+from corehq.sql_db.connections import Session
 from corehq.elastic import parse_args_for_es, ES_URLS, run_query
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.django.management import export_as_csv_action

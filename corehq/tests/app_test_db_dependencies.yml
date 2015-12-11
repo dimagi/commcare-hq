@@ -11,16 +11,22 @@ testapps.test_pillowtop:
   - corehq.apps.users
   - couchforms
 casexml.apps.phone:
+  - auditcare
+  - django_digest
   - casexml.apps.phone
   - casexml.apps.stock
   - corehq.couchapps
   - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
+  - corehq.apps.domain
   - corehq.apps.hqcase
   - corehq.apps.products
   - corehq.apps.reminders
   - corehq.apps.sms
   - corehq.apps.smsforms
   - corehq.apps.tzmigration
+  - corehq.apps.users
   - couchforms
   - phonelog
 casexml.apps.case:
@@ -28,6 +34,8 @@ casexml.apps.case:
   - casexml.apps.stock
   - corehq.couchapps
   - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
   - corehq.apps.hqcase
   - corehq.apps.products
   - corehq.apps.reminders
@@ -41,6 +49,8 @@ casexml.apps.stock:
   - casexml.apps.stock
   - corehq.couchapps
   - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
   - corehq.apps.commtrack
   - corehq.apps.hqcase
   - corehq.apps.locations
@@ -61,6 +71,8 @@ corehq.apps.commtrack:
   - casexml.apps.stock
   - corehq.couchapps
   - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
   - corehq.apps.consumption
   - corehq.apps.domain
   - corehq.apps.hqcase
@@ -87,6 +99,8 @@ corehq.apps.userreports:
   - casexml.apps.stock
   - corehq.couchapps
   - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
   - corehq.apps.app_manager
   - corehq.apps.commtrack
   - corehq.apps.domain
@@ -116,6 +130,8 @@ couchforms:
   - corehq.apps.tzmigration
   - corehq.couchapps
   - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
   - phonelog
 corehq.apps.receiverwrapper:
   - auditcare
@@ -133,6 +149,8 @@ corehq.apps.receiverwrapper:
   - corehq.apps.users
   - corehq.couchapps
   - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
   - couchforms
   - django.contrib.admin
   - django_digest
@@ -162,6 +180,8 @@ corehq.form_processor:
   - corehq.apps.smsforms
   - corehq.apps.tzmigration
   - corehq.couchapps
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
   - couchforms
 corehq.apps.toggle_ui: []
 corehq.doctypemigrations:
@@ -185,3 +205,4 @@ corehq.apps.repeaters:
   - django_prbac
   - corehq.apps.accounting
   - corehq.apps.smsforms
+corehq.sql_db: []

@@ -253,7 +253,7 @@ class TwoStageTestRunner(HqTestSuiteRunner):
         old_config = self.setup_databases()
         result = self.run_suite(suite)
 
-        from corehq.db import Session, connection_manager
+        from corehq.sql_db.connections import Session, connection_manager
         Session.remove()
         connection_manager.dispose_all()
 

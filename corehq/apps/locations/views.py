@@ -681,9 +681,11 @@ def location_export(request, domain):
                                   "you can do a bulk import or export."))
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
+    include_ids = request.GET.get('include_ids') == 'true'
     response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="locations.xlsx"'
-    dump_locations(response, domain, include_consumption)
+    dump_locations(response, domain, include_consumption=include_consumption,
+                   include_ids=include_ids)
     return response
 
 

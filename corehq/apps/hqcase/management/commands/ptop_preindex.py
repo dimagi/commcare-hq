@@ -1,4 +1,6 @@
 from gevent import monkey; monkey.patch_all()
+from pillowtop.es_utils import pillow_index_exists
+
 from cStringIO import StringIO
 import traceback
 from datetime import datetime
@@ -83,8 +85,8 @@ class Command(BaseCommand):
         else:
             print ("Reindexing master pillows that do not exist yet "
                    "(ones with aliases skipped)")
-            preindexable_pillows = filter(lambda x: not x.index_exists(),
-                                          aliasable_pillows)
+
+            preindexable_pillows = filter(pillow_index_exists, aliasable_pillows)
 
         reindex_pillows = filter(lambda x: x.es_index in unmapped_indices,
                                  preindexable_pillows)
