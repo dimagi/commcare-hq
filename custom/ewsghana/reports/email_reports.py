@@ -61,7 +61,7 @@ class StockSummaryReportData(EmailReportData):
                                       'stockout': 0, 'low': 0, 'overstock': 0, 'adequate': 0}
 
         for location in locations:
-            location_products = list(location.products)
+            location_products = filter(lambda product: not product.is_archived, location.products)
             stock_states = StockState.objects.filter(
                 case_id=location.supply_point_id,
                 section_id=STOCK_SECTION_TYPE,
