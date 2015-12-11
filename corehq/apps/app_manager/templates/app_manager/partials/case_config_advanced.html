@@ -29,7 +29,7 @@
         data: {condition: open_condition, config: $data},
     }"></div>
     <!-- /ko -->
-    <div data-bind="if: actionType == 'load'" class="row-fluid">
+    <div data-bind="if: actionType == 'load'" class="row">
         <div class="well well-small col-sm-6">
             <div data-bind="template: 'case-config:case-transaction:case-preload'"></div>
         </div>
@@ -37,7 +37,7 @@
             <div data-bind="template: 'case-config:case-transaction:case-properties'"></div>
         </div>
     </div>
-    <div data-bind="if: actionType == 'open'" class="row-fluid">
+    <div data-bind="if: actionType == 'open'" class="row">
         <div class="well well-small">
             <div data-bind="template: 'case-config:case-transaction:case-properties'"></div>
         </div>
@@ -272,7 +272,7 @@
             <span class="muted">{% trans "Add Action" %}</span>
         </div>
         <div>
-            <div class="row-fluid">
+            <div class="row">
                 <span data-bind="visible: load_update_cases().length"><i class="fa fa-asterisk"></i> {% trans "Load / Update / Close cases" %}</span>
                 <div id="case-load-accordion" data-bind="foreach: load_update_cases, accordion: {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true}">
                     <!-- ko if: auto_select -->
@@ -286,7 +286,7 @@
             <div class="row" data-bind="visible: open_cases().length && load_update_cases().length">
                 <hr/>
             </div>
-            <div class="row-fluid">
+            <div class="row">
                 <span data-bind="visible: open_cases().length"><i class="fa fa-asterisk"></i> {% trans "Open new cases" %}</span>
                 <div id="case-open-accordion" data-bind="foreach: open_cases, accordion: {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true}">
                     <div class="group" data-bind="template: {name: 'case-config:case-action'}"></div>
