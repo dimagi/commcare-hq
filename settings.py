@@ -110,4 +110,5 @@ COUCHDB_DATABASES = [ (app, COUCH_DATABASE) for app in [
     # otherwise breaks tests
 ]]
 
+ELASTICSEARCH_VERSION = 0.9
 ALLOW_ELASTICSEARCH_TESTS = True

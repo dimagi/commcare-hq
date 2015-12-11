@@ -2,14 +2,13 @@ from copy import copy
 from functools import wraps
 import logging
 from couchdbkit.exceptions import ResourceNotFound
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, TransportError
 from psycopg2._psycopg import InterfaceError
 from datetime import datetime, timedelta
 import hashlib
 import traceback
 import math
 import time
-from rawes.elastic_exception import ElasticException
 
 from requests import ConnectionError
 import simplejson
@@ -468,9 +467,9 @@ class AliasedElasticPillow(BasicPillow):
 
     def mapping_exists(self):
         try:
-            return bool(self.get_index_mapping())
-        except ElasticException:
-            return False
+            return self.get_es_new().indices.get_mapping(self.es_index, self.es_type)
+        except TransportError:
+            return {}
 
     def initialize_mapping_if_necessary(self):
         """
@@ -512,10 +511,6 @@ class AliasedElasticPillow(BasicPillow):
         """
         return self.update_settings(INDEX_STANDARD_SETTINGS)
 
-    def get_index_mapping(self):
-        es = self.get_es()
-        return es.get('%s/_mapping' % self.es_index).get(self.es_index, {})
-
     def set_mapping(self, type_string, mapping):
         if self.online:
             return self.send_robust("%s/%s/_mapping" % (self.es_index, type_string), data=mapping)
@@ -548,7 +543,7 @@ class AliasedElasticPillow(BasicPillow):
         """
         Rebuild an index after a delete
         """
-        self.send_robust(self.es_index, data=self.es_meta)
+        self.get_es_new().indices.create(index=self.es_index, body=self.es_meta)
         self.set_index_normal_settings()
 
     def refresh_index(self):
@@ -627,7 +622,6 @@ class AliasedElasticPillow(BasicPillow):
         self.send_bulk(bulk_payload)
         pillow_logging.info(
             "%s,send_bulk,%s" % (self.get_name(), str(ms_from_timedelta(datetime.utcnow() - send_start) / 1000.0)))
-
 
     def send_bulk(self, payload):
         es = self.get_es()

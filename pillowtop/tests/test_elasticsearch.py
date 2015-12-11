@@ -3,7 +3,8 @@ from django.test import SimpleTestCase
 from pillowtop.feed.interface import Change
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.pillow.interface import PillowRuntimeContext
-from .utils import require_explicit_elasticsearch_testing, get_doc_count
+from django.conf import settings
+from .utils import require_explicit_elasticsearch_testing, get_doc_count, get_index_mapping
 
 
 class TestElasticPillow(AliasedElasticPillow):
@@ -12,6 +13,20 @@ class TestElasticPillow(AliasedElasticPillow):
     es_alias = 'pillowtop_tests'
     es_type = 'test_doc'
     es_index = 'pillowtop_test_index'
+    # just for the sake of something being here
+    es_meta = {
+        "settings": {
+            "analysis": {
+                "analyzer": {
+                    "default": {
+                        "type": "custom",
+                        "tokenizer": "whitespace",
+                        "filter": ["lowercase"]
+                    },
+                }
+            }
+        }
+    }
     default_mapping = {
         '_meta': {
             'comment': 'You know, for tests',
@@ -45,13 +60,25 @@ class ElasticPillowTest(SimpleTestCase):
     def test_create_index_on_pillow_creation(self):
         pillow = TestElasticPillow()
         self.assertEqual(self.index, pillow.es_index)
+        # make sure it was created
         self.assertTrue(self.es.indices.exists(self.index))
+        # check the subset of settings we expected to set
+        settings_back = self.es.indices.get_settings(self.index)[self.index]['settings']
+        if settings.ELASTICSEARCH_VERSION < 1.0:
+            self.assertEqual('whitespace', settings_back['index.analysis.analyzer.default.tokenizer'])
+            self.assertEqual('lowercase', settings_back['index.analysis.analyzer.default.filter.0'])
+        else:
+            self.assertEqual(
+                pillow.es_meta['settings']['analysis'],
+                settings_back['index']['analysis'],
+            )
         self.es.indices.delete(pillow.es_index)
         self.assertFalse(self.es.indices.exists(self.index))
 
     def test_mapping_initialization_on_pillow_creation(self):
         pillow = TestElasticPillow()
-        mapping = pillow.get_index_mapping()[pillow.es_type]
+        self.assertTrue(pillow.mapping_exists())
+        mapping = get_index_mapping(self.es, self.index, pillow.es_type)
         # we can't compare the whole dicts because ES adds a bunch of stuff to them
         self.assertEqual(
             pillow.default_mapping['properties']['doc_type']['index'],
