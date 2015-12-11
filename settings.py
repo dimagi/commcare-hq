@@ -655,7 +655,7 @@ REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 # Reminders rate limiting settings. A single project will only be allowed to
 # fire REMINDERS_RATE_LIMIT_COUNT reminders every REMINDERS_RATE_LIMIT_PERIOD
 # seconds.
-REMINDERS_RATE_LIMIT_COUNT = 60
+REMINDERS_RATE_LIMIT_COUNT = 30
 REMINDERS_RATE_LIMIT_PERIOD = 60
 
 
