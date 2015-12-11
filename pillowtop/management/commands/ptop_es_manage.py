@@ -63,7 +63,7 @@ class Command(LabelCommand):
                 '',
             ])).lower() == 'code red':
                 for pillow in aliased_pillows:
-                    pillow.delete_index()
+                    pillow.get_es_new().indices.delete(pillow.es_index)
                     print 'deleted elastic index: {}'.format(pillow.es_index)
                     checkpoint_id = pillow.checkpoint.checkpoint_id
                     if pillow.couch_db.doc_exist(checkpoint_id):

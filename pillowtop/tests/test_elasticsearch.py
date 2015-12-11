@@ -107,7 +107,7 @@ class ElasticPillowTest(SimpleTestCase):
         self.assertTrue(pillow.index_exists())
 
         # delete and check
-        pillow.delete_index()
+        pillow.get_es_new().indices.delete(self.index)
         self.assertFalse(self.es.indices.exists(self.index))
         self.assertFalse(pillow.index_exists())
 
