@@ -14,9 +14,9 @@ env:
     - TRAVIS_INSTALL="y"
     - PGVERSION="9.1"
   matrix:
-    - MATRIX_TYPE=javascript BOWER=yes
-    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunnerCatchall BOWER=yes
-    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunner0
+#    - MATRIX_TYPE=javascript BOWER=yes
+#    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunnerCatchall BOWER=yes
+#    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunner0
     - MATRIX_TYPE=python-sharded USE_PARTITIONED_DATABASE=True
 branches:
   only:
