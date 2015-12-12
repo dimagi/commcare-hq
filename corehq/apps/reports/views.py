@@ -88,7 +88,7 @@ from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
-    login_or_digest_or_basic,
+    login_or_digest_or_basic_or_apikey,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
@@ -462,7 +462,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             return HttpResponseRedirect(next)
 
 
-@login_or_digest_or_basic(default='digest')
+@login_or_digest_or_basic_or_apikey(default='digest')
 @require_form_export_permission
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
