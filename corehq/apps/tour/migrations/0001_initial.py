@@ -24,4 +24,8 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model,),
         ),
+        migrations.AlterUniqueTogether(
+            name='guidedtour',
+            unique_together=set([('user', 'tour_slug')]),
+        ),
     ]

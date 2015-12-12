@@ -13,6 +13,9 @@ class GuidedTour(models.Model):
     )
     date_completed = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        unique_together = ('user', 'tour_slug')
+
     @classmethod
     def has_seen_tour(cls, user, tour_slug):
         return cls.objects.filter(user=user, tour_slug=tour_slug).count() > 0
