@@ -262,7 +262,6 @@ HQ_APPS = (
     'corehq.apps.repeaters',
     'corehq.apps.app_manager',
     'corehq.apps.es',
-    'corehq.apps.facilities',
     'corehq.apps.fixtures',
     'corehq.apps.importer',
     'corehq.apps.reminders',
@@ -403,7 +402,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'dimagi.utils',
     'fluff',
     'fluff_filter',
-    'freddy',
     'pillowtop',
     'pillow_retry',
 )
