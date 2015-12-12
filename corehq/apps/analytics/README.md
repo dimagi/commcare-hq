@@ -1,5 +1,5 @@
 ## Analytics
-We use multiple Analytics platforms. Google Analytics and Kissmetrics calls are done mainly using respective Javascript APIs. For Hubspot we use their REST API from server side as well.
+We use multiple Analytics platforms. Google Analytics and Kissmetrics calls are done mainly using respective Javascript APIs. We track few aggregated user properties on [Kissmetrics from server side](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/tasks.py#L210). For Hubspot we use their REST API from server side as well.
 
 [Directory of events and properties we track in these platforms](https://docs.google.com/spreadsheets/d/1frMdFeznNcMAIyMW3pG3zes6mmY03UG67HyMUHXlb-s/edit#gid=1804103672)
 
