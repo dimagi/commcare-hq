@@ -26,6 +26,8 @@ from django.utils.translation import override, ugettext as _, ugettext
 from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
+from corehq.apps.app_manager.xpath_validator import validate_xpath
+from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -1941,6 +1943,14 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
                         'module': self.get_module_info(),
                         'form': form,
                     })
+        if self.module_filter:
+            is_valid, message = validate_xpath(self.module_filter)
+            if not is_valid:
+                errors.append({
+                    'type': 'module filter has xpath error',
+                    'xpath_error': message,
+                    'module': self.get_module_info(),
+                })
 
         return errors
 
