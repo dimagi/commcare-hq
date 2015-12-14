@@ -205,6 +205,22 @@ class BooleanExpressionFilterTest(SimpleTestCase):
         self.assertFalse(filter_with_date({'visit_date': '2015-05-04'}))
         self.assertTrue(filter_with_date({'visit_date': '2015-05-06'}))
 
+    def test_literal_in_expression(self):
+        filter_with_literal = FilterFactory.from_spec({
+            'type': 'boolean_expression',
+            'expression': 1,
+            'operator': 'gt',
+            'property_value': 2
+        })
+        self.assertFalse(filter_with_literal({}))
+        filter_with_literal = FilterFactory.from_spec({
+            'type': 'boolean_expression',
+            'expression': 2,
+            'operator': 'gt',
+            'property_value': 1
+        })
+        self.assertTrue(filter_with_literal({}))
+
     def test_expression_in_value(self):
         filter_with_exp = FilterFactory.from_spec({
             'type': 'boolean_expression',
