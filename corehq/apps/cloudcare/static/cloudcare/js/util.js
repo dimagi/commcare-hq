@@ -138,7 +138,6 @@ var tfSyncComplete = function (isError) {
     } else {
         $('#save-indicator').text(translatedStrings.synced).removeClass('alert-warning alert-danger').addClass('alert-success').show();
     }
-
 };
 
 var hideLoading = function (selector) {
