@@ -39,6 +39,12 @@
     });
 }(window.angular));
 </script>
+<script type="text/javascript">
+    $(function(){
+        var $new_export_button = $(".new-export-link");
+        window.analytics.trackWorkflowLink($new_export_button, "Clicked New Export");
+    });
+</script>
 {% endblock %}
 
 {% block page_content %}

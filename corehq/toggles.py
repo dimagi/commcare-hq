@@ -724,3 +724,10 @@ SECURE_SESSIONS_CHECKBOX = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
+
+GUIDED_TOUR = StaticToggle(
+    'guided_tour',
+    'Show Guided Tour on new application',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)

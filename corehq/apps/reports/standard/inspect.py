@@ -10,7 +10,6 @@ from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import FormDisplay
-from corehq.apps.reports.dont_use.fields import StrongFilterUsersField
 from corehq.apps.reports.filters.forms import MISSING_APP_ID, FormsByApplicationFilter
 from corehq.apps.reports.generic import (GenericTabularReport,
                                          ProjectInspectionReportParamsMixin,
@@ -47,7 +46,6 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
         'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
     ajax_pagination = True
-    filter_users_field_class = StrongFilterUsersField
     include_inactive = True
 
     # Feature preview flag for Submit History Filters

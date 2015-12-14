@@ -27,7 +27,6 @@ from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.facilities.models import FacilityRegistry
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
@@ -681,77 +680,12 @@ def location_export(request, domain):
                                   "you can do a bulk import or export."))
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
+    include_ids = request.GET.get('include_ids') == 'true'
     response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
     response['Content-Disposition'] = 'attachment; filename="locations.xlsx"'
-    dump_locations(response, domain, include_consumption)
+    dump_locations(response, domain, include_consumption=include_consumption,
+                   include_ids=include_ids)
     return response
-
-
-@is_locations_admin
-@require_POST
-def sync_facilities(request, domain):
-    # TODO this is believed to be obsolete and should
-    # likely be removed, just need to make sure it isn't
-    # magically used by ils/ews first..
-    # create Facility Registry and Facility LocationTypes if they don't exist
-    facility_registry, is_new = LocationType.objects.get_or_create(
-        domain=domain,
-        name='Facility Registry',
-    )
-    if is_new:
-        LocationType.objects.get_or_create(
-            domain=domain,
-            name='Facility',
-            defaults={
-                'parent_type': facility_registry,
-            },
-        )
-
-    registry_locs = {
-        l.external_id: l
-        for l in Location.filter_by_type(domain, 'Facility Registry')
-    }
-
-    # sync each registry and add/update Locations for each Facility
-    for registry in FacilityRegistry.by_domain(domain):
-        registry.sync_with_remote()
-
-        try:
-            registry_loc = registry_locs[registry.url]
-        except KeyError:
-            registry_loc = Location(
-                domain=domain, location_type='Facility Registry',
-                external_id=registry.url)
-        registry_loc.name = registry.name
-        registry_loc.save()
-        registry_loc._seen = True
-
-        facility_locs = {
-            l.external_id: l
-            for l in Location.filter_by_type(domain, 'Facility', registry_loc)
-        }
-
-        for facility in registry.get_facilities():
-            uuid = facility.data['uuid']
-            try:
-                facility_loc = facility_locs[uuid]
-            except KeyError:
-                facility_loc = Location(
-                    domain=domain, location_type='Facility', external_id=uuid,
-                    parent=registry_loc)
-            facility_loc.name = facility.data.get('name', 'Unnamed Facility')
-            facility_loc.save()
-            facility_loc._seen = True
-
-        for id, f in facility_locs.iteritems():
-            if not hasattr(f, '_seen'):
-                f.delete()
-
-    for id, r in registry_locs.iteritems():
-        if not hasattr(r, '_seen'):
-            r.delete()
-
-    return HttpResponse('OK')
 
 
 @is_locations_admin

@@ -455,7 +455,7 @@ class testReportCaseProcessing(TestCase):
         Test that xform pillow can process and cleanup a single xform with a case submission
         """
         xform = XFORM_SINGLE_CASE
-        pillow = XFormPillow(create_index=False, online=False)
+        pillow = XFormPillow(online=False)
         changed = pillow.change_transform(xform)
 
         self.assertIsNone(changed['form']['case'].get('@date_modified'))
@@ -467,7 +467,7 @@ class testReportCaseProcessing(TestCase):
         Test that xform pillow can process and cleanup a single xform with a list of cases in it
         """
         xform = XFORM_MULTI_CASES
-        pillow = XFormPillow(create_index=False, online=False)
+        pillow = XFormPillow(online=False)
         changed = pillow.change_transform(xform)
 
 
@@ -485,7 +485,7 @@ class testReportCaseProcessing(TestCase):
         case_owner_id = CASE_WITH_OWNER_ID
         case_no_owner_id = CASE_NO_OWNER_ID
 
-        pillow = CasePillow(create_index=False, online=False)
+        pillow = CasePillow(online=False)
         changed_with_owner_id = pillow.change_transform(case_owner_id)
         changed_with_no_owner_id = pillow.change_transform(case_no_owner_id)
 

@@ -2,10 +2,8 @@
 <div class="hq-graphic-report">
 <div class="hq-graph">
     <h2>{{ report.title }}<br /><small>{% trans "Hour vs. Weekday" %}</small></h2>
-    {% if no_data %}
-        <div class="alert alert-info">
-            {% trans "Note: No submissions matched your filters." %}
-        </div>
+    {% if error %}
+        <div class="alert alert-info">{{ error }}</div>
     {% endif %}
     {% if chart_url %}
         <img class="{{ report.title }}" src="{{chart_url}}" />

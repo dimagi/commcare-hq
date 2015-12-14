@@ -34,6 +34,8 @@ from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.userreports.util import has_report_builder_access
+from corehq.apps.users.decorators import get_permission_name
+from corehq.apps.users.models import Permissions
 from django_prbac.utils import has_privilege
 from corehq.util.markup import mark_up_urls
 
@@ -594,6 +596,18 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
+    def can_only_see_deid_exports(self):
+        from corehq.apps.export.views import user_can_view_deid_exports
+        return (not self.couch_user.can_view_reports()
+                and not self.couch_user.has_permission(
+                    self.domain,
+                    get_permission_name(Permissions.view_report),
+                    data='corehq.apps.reports.standard.export.ExcelExportReport'
+                )
+                and user_can_view_deid_exports(self.domain, self.couch_user))
+
+    @property
+    @memoized
     def can_use_lookup_tables(self):
         return domain_has_privilege(self.domain, privileges.LOOKUP_TABLES)
 
@@ -611,7 +625,20 @@ class ProjectDataTab(UITab):
         }
 
         export_data_views = []
-        if self.can_export_data:
+        if self.can_only_see_deid_exports:
+            from corehq.apps.export.views import DeIdFormExportListView, DownloadFormExportView
+            export_data_views.append({
+                'title': DeIdFormExportListView.page_title,
+                'url': reverse(DeIdFormExportListView.urlname,
+                               args=(self.domain,)),
+                'subpages': [
+                    {
+                        'title': DownloadFormExportView.page_title,
+                        'urlname': DownloadFormExportView.urlname,
+                    },
+                ]
+            })
+        elif self.can_export_data:
             from corehq.apps.export.views import (
                 FormExportListView,
                 CaseExportListView,
@@ -672,20 +699,6 @@ class ProjectDataTab(UITab):
                 },
             ])
 
-        from corehq.apps.export.views import user_can_view_deid_exports
-        if user_can_view_deid_exports(self.domain, self.couch_user):
-            from corehq.apps.export.views import DeIdFormExportListView, DownloadFormExportView
-            export_data_views.append({
-                'title': DeIdFormExportListView.page_title,
-                'url': reverse(DeIdFormExportListView.urlname,
-                               args=(self.domain,)),
-                'subpages': [
-                    {
-                        'title': DownloadFormExportView.page_title,
-                        'urlname': DownloadFormExportView.urlname,
-                    },
-                ]
-            })
         if export_data_views:
             items.append([_("Export Data"), export_data_views])
 
@@ -718,7 +731,7 @@ class ProjectDataTab(UITab):
 
     @property
     def dropdown_items(self):
-        if not self.can_export_data:
+        if self.can_only_see_deid_exports or not self.can_export_data:
             return []
         from corehq.apps.export.views import (
             FormExportListView,
@@ -1526,6 +1539,8 @@ class AdminReportsTab(UITab):
             (_('Administrative Reports'), [
                 {'title': _('Project Space List'),
                  'url': reverse('admin_report_dispatcher', args=('domains',))},
+                {'title': _('Submission Map'),
+                 'url': reverse('dimagisphere')},
                 {'title': _('User List'),
                  'url': reverse('admin_report_dispatcher', args=('user_list',))},
                 {'title': _('Application List'),
@@ -1662,6 +1677,7 @@ class AdminTab(UITab):
             dropdown_dict(_("Reports"), is_header=True),
             dropdown_dict(_("Admin Reports"), url=reverse("default_admin_report")),
             dropdown_dict(_("System Info"), url=reverse("system_info")),
+            dropdown_dict(_("Submission Map"), url=reverse("dimagisphere")),
             dropdown_dict(_("Management"), is_header=True),
             dropdown_dict(mark_for_escaping(_("Commands")),
                           url=reverse("management_commands")),

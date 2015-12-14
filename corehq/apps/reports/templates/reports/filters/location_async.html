@@ -1,8 +1,20 @@
 {% load hq_shared_tags %}
+{% load i18n %}
 
 {# todo: fix template to properly inherit from filters/base.html #}
-<label class="control-label">{{ control_name }}</label> {# this is wrong, see filters/single_option.html for a proper implementation #}
+{% if make_optional %}
+<label class="control-label">{% trans "Location Filter" %}</label>
 <div class="controls">
+    <div>
+        <select data-bind="value: show_location_filter">
+            <option value="y">{% trans "On" %}</option>
+            <option value="n">{% trans "Off" %}</option>
+        </select>
+    </div>
+</div>
+{% endif %}
+<label class="control-label" data-bind="visible: show_location_filter_bool()">{{ control_name }}</label> {# this is wrong, see filters/single_option.html for a proper implementation #}
+<div class="controls" data-bind="visible: show_location_filter_bool()">
   <div data-bind="foreach: selected_path" style="display: inline-block;">
       {% block location_select %}
         <select data-bind="options: children,
@@ -26,7 +38,8 @@ $(function() {
   var selected = '{{ loc_id }}';
   var hierarchy = {{ hierarchy|JSON }};
 
-  var model = new LocationSelectViewModel(hierarchy);
+  var show_location_filter = {% if make_optional and not loc_id %}'n'{% else %}'y'{% endif%};
+  var model = new LocationSelectViewModel(hierarchy, undefined, undefined, undefined, undefined, show_location_filter);
   ko.applyBindings(model, $('#group_{{ control_slug }}')[0]);
   model.load(locs, selected);
 

@@ -1,4 +1,7 @@
-from custom.apps.cvsu.models import REPORT_INCIDENT_XMLNS, FOLLOWUP_FORM_XMLNS
+REPORT_INCIDENT_XMLNS = 'http://openrosa.org/formdesigner/A12E46B1-7ED8-4DE3-B7BB-358219CC6994'
+FOLLOWUP_FORM_XMLNS = 'http://openrosa.org/formdesigner/9457DE46-E640-4F6E-AD9A-F9AC9FDA35E6'
+IGA_FORM_XMLNS = 'http://openrosa.org/formdesigner/B4BAF20B-4337-409D-A446-FD4A0C8D5A9A'
+OUTREACH_FORM_XMLNS = 'http://openrosa.org/formdesigner/B5C415BB-456B-49BE-A7AF-C5E7C9669E34'
 
 
 class CVSUFilters(object):

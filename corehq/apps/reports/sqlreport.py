@@ -8,7 +8,7 @@ from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.basic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, \
     DataTablesColumn, DTSortType
-from corehq.db import DEFAULT_ENGINE_ID, connection_manager
+from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.util import format_datatables_data
 

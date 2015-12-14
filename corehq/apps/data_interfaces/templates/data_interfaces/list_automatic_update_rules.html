@@ -79,15 +79,31 @@
     <div class="btn-toolbar" style="margin-bottom: 20px;">
         <a href="{% url "add_automatic_update_rule" domain %}">
             <button type="button" class="btn btn-success">
-                <i class="fa fa-plus"></i> {% trans "Add Automatic Update Rule" %}
+                <i class="fa fa-plus"></i> {% trans "Add Automatic Case Close Rule" %}
             </button>
         </a>
+    </div>
+    <div class="row">
+        <div class="col-sm-8">
+            <p class="lead">
+                {% blocktrans %}
+                Automatically update and close cases from CommCareHQ
+                {% endblocktrans %}
+            </p>
+            <p>
+                {% blocktrans %}
+                This allows you to define rules that will update or close cases from CommCareHQ.
+                These rules will be run every Friday at Midnight GMT.
+                To reverse any changes, use the "Manage Forms" page.
+                {% endblocktrans %}
+            </p>
+        </div>
     </div>
     <div class="panel panel-default"
          ng-controller="PaginatedListController as paginationController"
          ng-cloak>
         <div class="panel-heading">
-            <h3 class="panel-title">{% trans 'Automatic Update Rules' %}</h3>
+            <h3 class="panel-title">{% trans 'Automatic Case Close Rules' %}</h3>
         </div>
         <div class="panel-body">
             <div class="alert alert-info" ng-hide="paginatedItems.length > 0 || notLoaded || hasError">

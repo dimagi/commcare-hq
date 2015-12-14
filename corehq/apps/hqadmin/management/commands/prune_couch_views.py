@@ -3,10 +3,8 @@ from optparse import make_option
 from couchdbkit import Database
 
 from django.core.management.base import BaseCommand
-from django.db.models import get_apps
 from corehq.preindex import get_preindex_plugins
 from dimagi.utils.couch.database import get_design_docs
-from dimagi.utils.couch.sync_docs import get_app_sync_info
 
 
 class Command(BaseCommand):
@@ -20,13 +18,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # build a data structure indexing databases to relevant design docs
         db_label_map = defaultdict(lambda: set())
-
-        # pull design docs from normal couchbkit apps
-        app_infos = [get_app_sync_info(app) for app in get_apps()]
-        for info in app_infos:
-            for design in info.designs:
-                if design.design_path:
-                    db_label_map[design.db.uri].add(design.app_label)
 
         # pull design docs from preindex plugins
         plugins = get_preindex_plugins()

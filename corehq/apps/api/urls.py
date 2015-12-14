@@ -1,7 +1,6 @@
 from corehq.apps.api.accounting import *
 from corehq.apps.api.domain_metadata import DomainMetadataResource
-from corehq.apps.api.object_fetch_api import CaseAttachmentAPI
-
+from corehq.apps.api.object_fetch_api import CaseAttachmentAPI, FormAttachmentAPI
 from corehq.apps.api.domainapi import DomainAPI
 from corehq.apps.api.redis_assets import RedisAssetsAPI
 from corehq.apps.api.resources import v0_1, v0_2, v0_3, v0_4, v0_5
@@ -103,6 +102,7 @@ def api_url_patterns():
     for view_class in DomainAPI.__subclasses__():
         yield url(r'^custom/%s/v%s/$' % (view_class.api_name(), view_class.api_version()), view_class.as_view(), name="%s_%s" % (view_class.api_name(), view_class.api_version()))
     yield url(r'^case/attachment/(?P<case_id>[\w\-]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(), name="api_case_attachment")
+    yield url(r'^form/attachment/(?P<form_id>[\w\-]+)/(?P<attachment_id>.*)$', FormAttachmentAPI.as_view(), name="api_form_attachment")
     yield url(r'^redis_assets/$', RedisAssetsAPI.as_view())
 
 

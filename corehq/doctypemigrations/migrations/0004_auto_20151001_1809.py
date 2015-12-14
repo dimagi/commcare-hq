@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.db import models, migrations
 from corehq.doctypemigrations.djangomigrations import assert_initial_complete
 from corehq.doctypemigrations.migrator_instances import users_migration
+from corehq.sql_db.operations import HqRunPython
 
 
 class Migration(migrations.Migration):
@@ -13,5 +14,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(assert_initial_complete(users_migration))
+        HqRunPython(assert_initial_complete(users_migration))
     ]

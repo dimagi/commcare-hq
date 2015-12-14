@@ -1,13 +1,13 @@
 from abc import ABCMeta, abstractmethod
+
 from sqlalchemy.exc import ProgrammingError
 from corehq.apps.es import GroupES, UserES
-from corehq.apps.es.filters import doc_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
+from corehq.apps.userreports.exceptions import ColumnNotFoundError
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
-
 
 DATA_SOURCE_COLUMN = 'data_source_column'
 LOCATION = 'location'
@@ -57,11 +57,11 @@ class ChoiceProvider(object):
         pass
 
     def get_choices_for_values(self, values):
-        choices = self.get_choices_for_known_values(values)
+        choices = set(self.get_choices_for_known_values(values))
         used_values = {value for value, _ in choices}
         for value in values:
             if value not in used_values:
-                choices.append(Choice(value, value))
+                choices.add(Choice(value, value))
                 used_values.add(value)
         return choices
 
@@ -89,8 +89,11 @@ class ChainableChoiceProvider(ChoiceProvider):
 class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     def query(self, query_context):
-        return [Choice(value, value)
-                for value in self.get_values_for_query(query_context)]
+        try:
+            return [Choice(value, value)
+                    for value in self.get_values_for_query(query_context)]
+        except ColumnNotFoundError:
+            return []
 
     def query_count(self, query):
         # this isn't (currently) used externally, and no other choice provider relies on
@@ -103,12 +106,15 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     @property
     def _sql_column(self):
-        return self._adapter.get_table().c[self.report_filter.field]
+        try:
+            return self._adapter.get_table().c[self.report_filter.field]
+        except KeyError as e:
+            raise ColumnNotFoundError(e.message)
 
     def get_values_for_query(self, query_context):
         query = self._adapter.session_helper.Session.query(self._sql_column)
         if query_context.query:
-            query = query.filter(self._sql_column.contains(query_context.query))
+            query = query.filter(self._sql_column.ilike(u"%{}%".format(query_context.query)))
 
         query = query.distinct().order_by(self._sql_column).limit(query_context.limit).offset(query_context.offset)
         try:
@@ -134,7 +140,7 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         # todo: does this need fancier permission restrictions and what not?
         # see e.g. locations.views.child_locations_for_select2
 
-        locations = self._locations_query(query_context.query)
+        locations = self._locations_query(query_context.query).order_by('name')
 
         return [
             Choice(loc.location_id, loc.display_name) for loc in
@@ -145,9 +151,9 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         return self._locations_query(query).count()
 
     def get_choices_for_known_values(self, values):
-        return (
+        return [
             Choice(loc.location_id, loc.display_name) for loc in
-            SQLLocation.active_objects.filter(location_id__in=values))
+            SQLLocation.active_objects.filter(location_id__in=values)]
 
 
 class UserChoiceProvider(ChainableChoiceProvider):
@@ -162,7 +168,7 @@ class UserChoiceProvider(ChainableChoiceProvider):
         return user_es.run().total
 
     def get_choices_for_known_values(self, values):
-        user_es = UserES().domain(self.domain).filter(doc_id(values))
+        user_es = UserES().domain(self.domain).doc_id(values)
         return self.get_choices_from_es_query(user_es)
 
     @staticmethod
@@ -176,7 +182,7 @@ class GroupChoiceProvider(ChainableChoiceProvider):
         group_es = (
             GroupES().domain(self.domain).is_case_sharing()
             .search_string_query(query_context.query, default_fields=['name'])
-            .size(query_context.limit).start(query_context.offset)
+            .size(query_context.limit).start(query_context.offset).sort('name')
         )
         return self.get_choices_from_es_query(group_es)
 
@@ -188,7 +194,7 @@ class GroupChoiceProvider(ChainableChoiceProvider):
         return group_es.size(0).run().total
 
     def get_choices_for_known_values(self, values):
-        group_es = GroupES().domain(self.domain).is_case_sharing().filter(doc_id(values))
+        group_es = GroupES().domain(self.domain).is_case_sharing().doc_id(values)
         return self.get_choices_from_es_query(group_es)
 
     @staticmethod
@@ -215,7 +221,6 @@ class AbstractMultiProvider(ChoiceProvider):
         limit = query_context.limit
         offset = query_context.offset
         query = query_context.query
-
         choices = []
         for choice_provider in self.choice_providers:
             if limit <= 0:
@@ -225,6 +230,7 @@ class AbstractMultiProvider(ChoiceProvider):
             choices.extend(new_choices)
             if len(new_choices):
                 limit -= len(new_choices)
+                offset = 0
             else:
                 offset -= choice_provider.query_count(query)
         return choices

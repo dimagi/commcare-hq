@@ -4,8 +4,9 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard.forms.filters import SubmissionTypeFilter, SubmissionErrorType
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
-from couchforms.dbaccessors import get_forms_by_type, \
-    get_number_of_forms_by_type, get_number_of_forms_of_all_types
+from couchforms.analytics import get_number_of_forms_of_all_types, get_number_of_forms_by_type
+from couchforms.dbaccessors import get_forms_by_type
+
 from dimagi.utils.couch.pagination import FilteredPaginator, CouchFilter
 from corehq.apps.reports.display import xmlns_to_name
 from django.utils.translation import ugettext_noop

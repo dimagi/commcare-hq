@@ -1,7 +1,7 @@
 $.fn.bootstrapButton = $.fn.button;
 
 $(function () {
-    var $hqwebappBugReportModal = $('#reportIssueModal'),
+    var $hqwebappBugReportModal = $('#modalReportIssue'),
         $hqwebappBugReportForm = $('#hqwebapp-bugReportForm'),
         $hqwebappBugReportCancel = $('#bug-report-cancel'),
         isBugReportSubmitting = false;
