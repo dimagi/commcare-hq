@@ -1,6 +1,6 @@
 <script>
-    var viz = {};
-    var workbook = {};
+    var viz = {},
+        workbook = {};
     function initializeViz() {
         var placeholderDiv = document.getElementById("tableauPlaceholder");
         var url = "https://icds.commcarehq.org/#/views/{{ report_workbook }}/{{ report_worksheet }}";
@@ -10,26 +10,24 @@
             hideTabs: true,
             hideToolbar: true,
             onFirstInteractive: function () {
-                setUpNav(viz)
+                setUpWorkbook(viz);
+                setUpInitialTableauParams();
+                setUpNav(viz);
             }
         };
         viz = new tableau.Viz(placeholderDiv, url, options);
         // I am envisioning the history object possibly containing things like the base params for filtering
         var historyObject = {
-            'location': '{{ report_worksheet }}'
+            'sheetName': '{{ report_worksheet }}'
         };
         history.pushState(historyObject, '', '{{ report_worksheet }}')
     }
 
-    function setUpNav(viz) {
+    function setUpWorkbook(viz) {
         workbook = viz.getWorkbook();
-        var sheets = workbook.getPublishedSheetsInfo();
-        _.each(sheets, function(sheet) {
-            // TODO: This is a bit hacky, $0 was the only item in the sheet object though (maybe has to do with dashboards vs sheets?)
-            addNavigationLink(sheet.$0.name, sheet.$0.isActive)
-        });
+    }
 
-        // Apply inital params for user level filtering
+    function setUpInitialTableauParams() {
         var params = {
             'user_view_by': '{{ user_view_by }}',
             'user_state': '{{ user_state|default:'' }}',
@@ -39,6 +37,13 @@
             'user_awc': '{{ user_awc|default:'' }}'
         };
         applyParams(workbook, params);
+    }
+
+    function setUpNav(viz) {
+        var sheets = workbook.getPublishedSheetsInfo();
+        _.each(sheets, function(sheet) {
+            addNavigationLink(sheet.getName(), sheet.getIsActive())
+        });
 
         $(".nav-link").click(function (){
             var link = $(this);
@@ -49,8 +54,6 @@
     }
 
     function addNavigationLink(sheetName, isActive) {
-        var btnColor = isActive  ? 'success' : 'default';
-        // var html = "<div class='row'><button class='btn btn-block btn-" + btnColor + "'>" + sheetName + "</btn></div>";
         var html = "<li><a href='#' class='nav-link'>" + sheetName + "</a></li>";
         $(".dropdown-menu").append(html);
     }
@@ -62,90 +65,78 @@
     function activateDrilldown(marks) {
         clearDrilldown();
         // marks is an array of what the user has clicked
-        var html = [],
-            sheetName = '',
-            filters = {},
-            params = {},
-            filter_key,
-            filter_value;
-        for (var markIndex = 0; markIndex < marks.length; markIndex++) {
-            // TODO: Handle more than 1 better
-            var pairs = marks[markIndex].getPairs();
-            for (var pairIndex = 0; pairIndex < pairs.length; pairIndex++) {
-                var pair = pairs[pairIndex];
-                html.push("<li><b>" + pair.fieldName + "</b>: "+ pair.formattedValue + "</li>");
+        var html = ["<ul>"],
+            // default the sheet to navigate to to the current one
+            sheetName = history.state.sheetName,
+            params = {};
 
-                // Find the sheet we are navigating to
-                if(pair.fieldName === 'js_sheet' || pair.fieldName === 'ATTR(js_sheet)') {
-                    sheetName = pair.formattedValue;
-                }
-                if(sheetName === '') {
-                    // If we haven't specified the sheet to navigate to, take the current one
-                    sheetName = history.state.location;
-                }
+        function buildParams(current_parameters) {
+            for (var markIndex = 0; markIndex < marks.length; markIndex++) {
+                // TODO: Handle more than 1 better
+                var pairs = marks[markIndex].getPairs();
+                for (var pairIndex = 0; pairIndex < pairs.length; pairIndex++) {
+                    var pair = pairs[pairIndex];
+                    html.push("<li><b>" + pair.fieldName + "</b>: "+ pair.formattedValue + "</li>");
 
-                // Split out params and filters to be applied
-                var FILTER_KEY_SUBSTRING = 'ATTR(js_key_Location Key',
-                    FILTER_VALUE_SUBSTRING = 'ATTR(js_key_Location Name',
-                    PARAM_SUBSTRING = 'ATTR(js_param_',
-                    PARAM_UNCHANGED = 'CURRENT';
-                if(pair.fieldName.includes(FILTER_KEY_SUBSTRING)) {
-                    filter_key = pair.formattedValue;
-                }
-                if(pair.fieldName.includes(FILTER_VALUE_SUBSTRING)) {
-                    filter_value = pair.formattedValue;
-                    filters[filter_key] = filter_value;
-                }
-                if(pair.fieldName.includes(PARAM_SUBSTRING)) {
-                    var param_key = pair.fieldName.slice(PARAM_SUBSTRING.length, -1),
-                        param_value = pair.formattedValue;
-                    if(param_value === PARAM_UNCHANGED) {
-                        workbook.getParametersAsync()
-                                .then(function(current_parameters) {
-                                    // TODO: Do I need to deal with the case where the passed in param is not in the server params? I don't think so
-                                    _.each(current_parameters, function(current_param) {
-                                        if (current_param.getName() === param_key) {
-                                            params[param_key] = current_param.getCurrentValue()
-                                        }
-                                    })
-                                })
-                                .otherwise(function(err) {
-                                    alert(err);
-                                });
-                    } else {
-                        params[param_key] = param_value;
+                    sheetName = getSheetName(pair, sheetName);
+
+                    // Split out params and filters to be applied
+                    var PARAM_SUBSTRING = 'ATTR(js_param_',
+                            PARAM_UNCHANGED = 'CURRENT';
+                    if(pair.fieldName.includes(PARAM_SUBSTRING)) {
+                        var param_key = pair.fieldName.slice(PARAM_SUBSTRING.length, -1),
+                                param_value = pair.formattedValue;
+                        if(param_value === PARAM_UNCHANGED) {
+                            // TODO: Do I need to deal with the case where the passed in param is not in the server params? I don't think so
+                            // TODO: Use _.filter
+                            _.each(current_parameters, function(current_param) {
+                                if (current_param.getName() === param_key) {
+                                    params[param_key] = current_param.getCurrentValue()
+                                }
+                            })
+                        } else {
+                            params[param_key] = param_value;
+                        }
                     }
-                }
 
+                }
+                html.push("</ul>");
             }
-            html.push("</ul>");
+            html = html.join("");
+            $("#drilldown").append(html);
+
+            // Add inspect button listener
+            $("#inspectButton").unbind('click').click(function() {
+                switchVisualization(sheetName, workbook, params);
+            }).prop('disabled', false);
+
         }
 
-
-        html = html.join("");
-
-        $("#drilldown").append(html);
-
-        // Add inspect button listener
-        $("#inspectButton").unbind('click').click(function() {
-            switchVisualization(sheetName, workbook, filters, params);
-        }).prop('disabled', false);
+        workbook.getParametersAsync()
+            .then(buildParams)
+            .otherwise(function(err) {
+                // TODO: Better error rendering
+                alert(err);
+            });
     }
 
-    function switchVisualization(sheetName, workbook, filters, params) {
-        // TODO: Handle the case where we are in the same sheet, might just need to apply filters then?
-        var dashboard,
-            worksheets;
+    function getSheetName(pair, sheetName) {
+        // Find the sheet we are navigating to
+        if(pair.fieldName === 'js_sheet' || pair.fieldName === 'ATTR(js_sheet)') {
+            return pair.formattedValue;
+        }
+        return sheetName;
+    }
 
+    function switchVisualization(sheetName, workbook, params) {
+        // TODO: Handle the case where we are in the same sheet, might just need to apply filters then?
+        var worksheets;
         workbook.activateSheetAsync(sheetName)
-                .then(function(dash) {
-                    dashboard = dash;
+                .then(function(dashboard) {
                     worksheets = dashboard.getWorksheets();
-                })
-                .then(function(){
+
                     // I need the last worksheet to return a promise like object when all the iteration is complete
-                    var lastWorksheet = applyFilters(worksheets, filters);
-                    lastWorksheet = applyParams(workbook, params, lastWorksheet);
+                    var lastWorksheet = applyParams(workbook, params, lastWorksheet);
 
                     // TODO: historyObject should be an actual object
                     var historyObject = {
@@ -155,24 +146,16 @@
                     history.pushState(historyObject, sheetName, sheetName);
                     return lastWorksheet;
                 }).otherwise(function(err){
+                    // TODO: same thing with this alert as above
                     alert(err);
                 });
 
         enableResetFiltersButton();
     }
 
-    function applyFilters(worksheets, filters) {
-        var lastWorksheet;
-        _.each(worksheets, function (worksheet) {
-            _.each(filters, function(value, key) {
-                lastWorksheet = worksheet.applyFilterAsync(key, value, tableau.FilterUpdateType.REPLACE);
-            })
-        });
-        return lastWorksheet;
-    }
-
     function applyParams(workbook, params, lastWorksheet) {
         _.each(params, function(value, key) {
+            // TODO: This is the last param to be set, not the last to finish executing. Need to only run when last param is set (something like _.join())
             lastWorksheet = workbook.changeParameterValueAsync(key, value);
         });
         return lastWorksheet;
@@ -186,6 +169,7 @@
 
     function enableResetFiltersButton() {
         $("#resetFilters").prop('disabled', false).click(function () {
+            // TODO: Only bind to this button once
             viz.revertAllAsync();
             disableResetFiltersButton();
         })
@@ -198,16 +182,18 @@
     initializeViz();
 
     window.onpopstate = function (event) {
-        if(!event.state.location) {
+        if(!event.state.sheetName) {
             alert('History object needs a location to navigate to')
         }
-        if(event.state.location === 'base') {
+        if(event.state.sheetName === 'base') {
             viz.revertAllAsync();
             clearDrilldown();
         } else {
-            // TODO: Switch sheet
-            // TODO: Apply filters
-            applyParams(workbook, event.state.params);
+            workbook.activateSheetAsync(event.state.sheetName).then(function() {
+                applyParams(workbook, event.state.params);
+            }).otherwise(function(err) {
+                alert(err);
+            });
         }
     }
 </script>
