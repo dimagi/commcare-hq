@@ -18,6 +18,7 @@ from corehq.apps.userreports.reports.util import (
     get_expanded_columns,
     get_total_row,
 )
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 
 
 class ReportFixturesProvider(object):
@@ -27,8 +28,6 @@ class ReportFixturesProvider(object):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
-        # delay import so that get_apps_in_domain is mockable
-        from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
         if not toggles.MOBILE_UCR.enabled(user.domain):
             return []
 
