@@ -113,7 +113,11 @@ class FormattedDetailColumn(object):
         )
         return header
 
-    variables = None
+    @property
+    def variables(self):
+        variables = {}
+        variables['lang'] = self.id_strings.current_language()
+        return variables
 
     @property
     def template(self):
@@ -317,7 +321,7 @@ class Enum(FormattedDetailColumn):
 
     @property
     def variables(self):
-        variables = {}
+        variables = super(Enum, self).variables
         for item in self.column.enum:
             v_key = item.key_as_variable
             v_val = self.id_strings.detail_column_enum_variable(
