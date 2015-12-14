@@ -1350,7 +1350,13 @@ PILLOWTOPS = {
     ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
-        'custom.opm.models.OpmUserFluffPillow',
+        'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
+        {
+            'name': 'OpmUserFluffPillow',
+            'class': 'custom.opm.models.OpmUserFluffPillow',
+            'instance': 'custom.opm.models.get_pillow',
+        },
+
         'custom.m4change.models.AncHmisCaseFluffPillow',
         'custom.m4change.models.LdHmisCaseFluffPillow',
         'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
