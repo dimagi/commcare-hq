@@ -1164,6 +1164,29 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         end_date = end_date.strftime(self.datespan.format)
         return start_date, end_date
 
+    def _submit_history_link(self, owner_id, val, type):
+        """
+        takes a row, and converts certain cells in the row to links that link to the submit history report
+        """
+        fs_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
+        if type == 'user':
+            url_args = EMWF.for_user(owner_id)
+        else:
+            assert type == 'group'
+            url_args = EMWF.for_reporting_group(owner_id)
+
+        start_date, end_date = self._dates_for_linked_reports()
+        url_args.update({
+            "startdate": start_date,
+            "enddate": end_date,
+        })
+
+        return util.numcell(u'<a href="{report}?{params}" target="_blank">{display}</a>'.format(
+            report=fs_url,
+            params=urlencode(url_args, True),
+            display=val,
+        ), val)
+
     @property
     def rows(self):
         duration = (self.datespan.enddate - self.datespan.startdate) + datetime.timedelta(days=1) # adjust bc inclusive
@@ -1198,28 +1221,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         actives_by_owner = self.get_active_cases_by_owner()
         totals_by_owner = self.get_total_cases_by_owner()
 
-        def submit_history_link(owner_id, val, type):
-            """
-            takes a row, and converts certain cells in the row to links that link to the submit history report
-            """
-            fs_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
-            if type == 'user':
-                url_args = EMWF.for_user(owner_id)
-            else:
-                assert type == 'group'
-                url_args = EMWF.for_reporting_group(owner_id)
-
-            start_date, end_date = self._dates_for_linked_reports()
-            url_args.update({
-                "startdate": start_date,
-                "enddate": end_date,
-            })
-
-            return util.numcell(u'<a href="{report}?{params}" target="_blank">{display}</a>'.format(
-                report=fs_url,
-                params=urlencode(url_args, True),
-                display=val,
-            ), val)
 
         def add_case_list_links(owner_id, row):
             """
@@ -1290,7 +1291,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
                 rows.append([
                     group_cell(group_id, group_name),
-                    submit_history_link(group_id,
+                    self._submit_history_link(group_id,
                                         sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users]),
                                         type='group'),
                     util.numcell(sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
@@ -1313,7 +1314,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
                 rows.append(add_case_list_links(user['user_id'], [
                     user["username_in_report"],
-                    submit_history_link(user['user_id'],
+                    self._submit_history_link(user['user_id'],
                                         submissions_by_user.get(user["user_id"], 0),
                                         type='user'),
                     util.numcell(int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
