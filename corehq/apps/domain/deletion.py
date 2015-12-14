@@ -40,9 +40,9 @@ class ModelDeletion(BaseDeletion):
         self.domain_filter_kwarg = domain_filter_kwarg
         self.model_name = model_name
 
-    def get_model_class(self, model_name=None):
+    def get_model_class(self):
         try:
-            return apps.get_model(self.app_label, model_name or self.model_name)
+            return apps.get_model(self.app_label, self.model_name)
         except LookupError:
             return None
 
