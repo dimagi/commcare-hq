@@ -12,6 +12,7 @@ from corehq.apps.app_manager.xpath import (
     dot_interpolate,
     UserCaseXPath)
 from corehq.apps.hqmedia.models import CommCareMultimedia
+import re
 
 CASE_PROPERTY_MAP = {
     # IMPORTANT: if you edit this you probably want to also edit
@@ -113,11 +114,7 @@ class FormattedDetailColumn(object):
         )
         return header
 
-    @property
-    def variables(self):
-        variables = {}
-        variables['lang'] = self.id_strings.current_language()
-        return variables
+    variables = {}
 
     @property
     def template(self):
@@ -380,6 +377,13 @@ class Filter(HideShortColumn):
 
 @register_format_type('calculate')
 class Calculate(FormattedDetailColumn):
+
+    @property
+    def variables(self):
+        variables = {}
+        if re.search(r'\$lang', self.column.calc_xpath):
+            variables['lang'] = self.id_strings.current_language()
+        return variables
 
     @property
     def xpath_function(self):
