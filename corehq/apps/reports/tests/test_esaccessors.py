@@ -111,3 +111,23 @@ class TestESAccessors(SimpleTestCase):
             pytz.utc
         )
         self.assertEquals(results['2013-07-15'], 1)
+
+    def test_timezone_differences(self):
+        """
+        Our received_on dates are always in UTC, so if we submit a form right at midnight UTC, then the report
+        should show that form being submitted the day before if viewing from an earlier timezone like New York
+        """
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+        received_on = datetime(2013, 7, 15, 0, 0, 0)
+        timezone = pytz.timezone('America/New_York')
+
+        self._send_form_to_es(received_on=received_on)
+
+        results = get_submission_counts_by_date(
+            self.domain,
+            ['cruella_deville'],
+            DateSpan(start, end),
+            timezone
+        )
+        self.assertEquals(results['2013-07-14'], 1)
