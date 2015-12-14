@@ -591,6 +591,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('minimum_use_threshold', None),
         ('use_grid_menus', None),
         ('comment', None),
+        ('custom_base_url', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):

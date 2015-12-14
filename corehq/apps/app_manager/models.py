@@ -4440,6 +4440,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     # ended up not using a schema because properties is a reserved word
     profile = DictProperty()
     use_custom_suite = BooleanProperty(default=False)
+    custom_base_url = StringProperty()
     cloudcare_enabled = BooleanProperty(default=False)
     translation_strategy = StringProperty(default='select-known',
                                           choices=app_strings.CHOICES.keys())

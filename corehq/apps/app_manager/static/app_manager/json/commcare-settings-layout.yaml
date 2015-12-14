@@ -10,6 +10,7 @@
     - hq.commtrack_requisition_mode
     - hq.use_custom_suite
     - hq.custom_suite
+    - hq.custom_base_url
     # RemoteApp
     - hq.profile_url
     - hq.manage_urls
