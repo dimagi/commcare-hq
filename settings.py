@@ -1350,7 +1350,6 @@ PILLOWTOPS = {
     ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
-        'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
         {
             'name': 'OpmUserFluffPillow',
             'class': 'custom.opm.models.OpmUserFluffPillow',
