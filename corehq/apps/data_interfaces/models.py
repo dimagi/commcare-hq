@@ -8,6 +8,7 @@ from corehq.apps.hqcase.utils import update_case
 
 
 ALLOWED_DATE_REGEX = re.compile('^\d{4}-\d{2}-\d{2}')
+AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
 
 
 class AutomaticUpdateRule(models.Model):
@@ -80,7 +81,7 @@ class AutomaticUpdateRule(models.Model):
                 close = True
 
         update_case(case.domain, case.get_id, case_properties=properties, close=close,
-            xmlns='http://commcarehq.org/hq_case_update_rule')
+            xmlns=AUTO_UPDATE_XMLNS)
         return close
 
     def apply_rule(self, case, now):
