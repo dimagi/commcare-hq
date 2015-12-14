@@ -8,6 +8,7 @@
 pillowtop: []
 testapps.test_elasticsearch: []
 testapps.test_pillowtop:
+  - corehq.apps.domain
   - corehq.apps.users
   - couchforms
 casexml.apps.phone:
