@@ -43,18 +43,12 @@ class ModelDeletion(BaseDeletion):
         self.model_name = model_name
 
     def get_model_class(self):
-        try:
-            return apps.get_model(self.app_label, self.model_name)
-        except LookupError:
-            return None
+        return apps.get_model(self.app_label, self.model_name)
 
     def execute(self, domain_name):
         if self.is_app_installed():
             model = self.get_model_class()
-            if model:
-                model.objects.filter(**{self.domain_filter_kwarg: domain_name}).delete()
-            else:
-                logging.warn('Unable to find model %s.%s', self.app_label, self.model_name)
+            model.objects.filter(**{self.domain_filter_kwarg: domain_name}).delete()
 
 
 # We use raw queries instead of ORM because Django queryset delete needs to
