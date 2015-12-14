@@ -4075,13 +4075,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return '/a/%s/api/custom/pact_formdata/v1/' % self.domain
 
     @absolute_url_property
-    def hq_profile_url(self):
+    def profile_url(self):
         return "%s?latest=true" % (
             reverse('download_profile', args=[self.domain, self._id])
         )
 
     @absolute_url_property
-    def hq_media_profile_url(self):
+    def media_profile_url(self):
         return "%s?latest=true" % (
             reverse('download_media_profile', args=[self.domain, self._id])
         )
@@ -4504,18 +4504,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         app.build_broken = False
 
         return app
-
-    @property
-    def profile_url(self):
-        return self.hq_profile_url
-
-    @property
-    def media_profile_url(self):
-        return self.hq_media_profile_url
-
-    @property
-    def url_base(self):
-        return get_url_base()
 
     @absolute_url_property
     def suite_url(self):
