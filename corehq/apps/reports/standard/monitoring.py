@@ -9,8 +9,13 @@ import pytz
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
 from corehq.apps.reports import util
-from corehq.apps.reports.analytics.esaccessors import get_last_submission_time_for_user, \
-    get_submission_counts_by_user
+from corehq.apps.reports.analytics.esaccessors import (
+    get_last_submission_time_for_user,
+    get_submission_counts_by_user,
+    get_completed_counts_by_user,
+    get_submission_counts_by_date,
+    get_completed_counts_by_date,
+)
 from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
@@ -493,6 +498,10 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
     def enddate(self):
         return self.datespan.enddate_utc if self.by_submission_time else self.datespan.enddate_adjusted
 
+    @property
+    def is_submission_time(self):
+        return self.date_field == 'received_on'
+
     def date_filter(self, start, end):
         return {'%s__range' % self.date_field: (start, end)}
 
@@ -537,14 +546,18 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
             users.reverse()
         return self.paginate_list(users)
 
-    def users_by_range(self, start, end, order):
-        results = FormData.objects \
-            .filter(**self.date_filter(start, end)) \
-            .values('user_id') \
-            .annotate(Count('user_id'))
+    def users_by_range(self, datespan, order):
+        if self.is_submission_time:
+            get_counts_by_user = get_submission_counts_by_user
+        else:
+            get_counts_by_user = get_completed_counts_by_user
 
-        count_dict = dict((result['user_id'], result['user_id__count']) for result in results)
-        return self.users_sorted_by_count(count_dict, order)
+        results = get_counts_by_user(
+            self.domain,
+            datespan,
+        )
+
+        return self.users_sorted_by_count(results, order)
 
     def users_sorted_by_count(self, count_dict, order):
         # Split all_users into those in count_dict and those not.
@@ -574,23 +587,25 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
 
     @property
     def rows(self):
-        if self.datespan.is_valid():
-            self.sort_col = self.request_params.get('iSortCol_0', 0)
-            totals_col = self.column_count - 1
-            order = self.request_params.get('sSortDir_0')
-            if self.sort_col == totals_col:
-                users = self.users_by_range(self.startdate, self.enddate, order)
-            elif 0 < self.sort_col < totals_col:
-                start = self.dates[self.sort_col-1]
-                end = start + datetime.timedelta(days=1)
-                users = self.users_by_range(start, end, order)
-            else:
-                users = self.users_by_username(order)
+        if not self.datespan.is_valid():
+            return [[self.datespan.get_validation_reason()]]
 
-            rows = [self.get_row(user) for user in users]
-            self.total_row = self.get_row()
-            return rows
-        return [[self.datespan.get_validation_reason()]]
+        self.sort_col = self.request_params.get('iSortCol_0', 0)
+        totals_col = self.column_count - 1
+        order = self.request_params.get('sSortDir_0')
+
+        if self.sort_col == totals_col:
+            users = self.users_by_range(self.datespan, order)
+        elif 0 < self.sort_col < totals_col:
+            start = self.dates[self.sort_col - 1]
+            end = start + datetime.timedelta(days=1)
+            users = self.users_by_range(DateSpan(start, end), order)
+        else:
+            users = self.users_by_username(order)
+
+        rows = [self.get_row(user) for user in users]
+        self.total_row = self.get_row()
+        return rows
 
     @property
     def get_all_rows(self):
@@ -603,24 +618,22 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
         Assemble a row for a given user.
         If no user is passed, assemble a totals row.
         """
-        values = ['date']
-        results = FormData.objects.filter(**self.date_filter(self.startdate, self.enddate))
+        user_ids = map(lambda user: user.user_id, [user] if user else self.all_users)
 
-        if user:
-            results = results.filter(user_id=user.user_id)
-            values.append('user_id')
+        if self.is_submission_time:
+            get_counts_by_date = get_submission_counts_by_date
         else:
-            user_ids = [user_a.user_id for user_a in self.all_users]
-            results = results.filter(user_id__in=user_ids)
+            get_counts_by_date = get_completed_counts_by_date
 
-        results = results.extra({'date': "date(%s AT TIME ZONE '%s')" % (self.date_field, self.timezone)}) \
-            .values(*values) \
-            .annotate(Count(self.date_field))
+        results = get_counts_by_date(
+            self.domain,
+            user_ids,
+            self.datespan,
+            self.timezone,
+        )
 
-        count_field = '%s__count' % self.date_field
-        counts_by_date = dict((result['date'].isoformat(), result[count_field]) for result in results)
         date_cols = [
-            counts_by_date.get(json_format_date(date), 0)
+            results.get(json_format_date(date), 0)
             for date in self.dates
         ]
         styled_date_cols = ['<span class="muted">0</span>' if c == 0 else c for c in date_cols]
