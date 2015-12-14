@@ -31,7 +31,8 @@
     "nvd3": "1.1.10-beta",
     "codemirror": "5.5.0",
     "bootstrap3-typeahead": "~3.1.1",
-    "bootstrap-2.3.2-legacy": "2.3.2"
+    "bootstrap-2.3.2-legacy": "2.3.2",
+    "zxcvbn": "4.2.0"
   },
   "devDependencies": {
     "chai": "3.3.0",

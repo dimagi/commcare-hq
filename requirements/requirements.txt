@@ -82,3 +82,4 @@ django-uuidfield==0.5.0
 # required by ctable
 SQLAlchemy==1.0.9
 alembic==0.6.4
+zxcvbn==1.0
