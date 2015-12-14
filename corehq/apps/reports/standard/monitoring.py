@@ -1187,6 +1187,42 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             display=val,
         ), val)
 
+    def _add_case_list_links(self, owner_id, row):
+        """
+            takes a row, and converts certain cells in the row to links that link to the case list page
+        """
+        cl_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'case_list'))
+        url_args = EMWF.for_user(owner_id)
+
+        start_date, end_date = self._dates_for_linked_reports(case_list=True)
+        start_date_sub1 = self.datespan.startdate - datetime.timedelta(days=1)
+        start_date_sub1 = start_date_sub1.strftime(self.datespan.format)
+        search_strings = {
+            4: "opened_by: %s AND opened_on: [%s TO %s]" % (owner_id, start_date, end_date), # cases created
+            5: "closed_by: %s AND closed_on: [%s TO %s]" % (owner_id, start_date, end_date), # cases closed
+            7: "opened_on: [* TO %s] AND NOT closed_on: [* TO %s]" % (end_date, start_date_sub1), # total cases
+        }
+        if today_or_tomorrow(self.datespan.enddate):
+            search_strings[6] = "modified_on: [%s TO %s]" % (start_date, end_date) # active cases
+
+        if self.case_type:
+            for index, search_string in search_strings.items():
+                search_strings[index] = search_string + " AND type.exact: %s" % self.case_type
+
+        def create_case_url(index):
+            """
+                Given an index for a cell in a the row, creates the link to the case list page for that cell
+            """
+            url_params = {}
+            url_params.update(url_args)
+            url_params.update({"search_query": search_strings[index]})
+            return util.numcell('<a href="%s?%s" target="_blank">%s</a>' % (cl_url, urlencode(url_params, True), row[index]), row[index])
+
+        for i in search_strings:
+            row[i] = create_case_url(i)
+        return row
+
+
     @property
     def rows(self):
         duration = (self.datespan.enddate - self.datespan.startdate) + datetime.timedelta(days=1) # adjust bc inclusive
@@ -1221,41 +1257,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         actives_by_owner = self.get_active_cases_by_owner()
         totals_by_owner = self.get_total_cases_by_owner()
 
-
-        def add_case_list_links(owner_id, row):
-            """
-                takes a row, and converts certain cells in the row to links that link to the case list page
-            """
-            cl_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'case_list'))
-            url_args = EMWF.for_user(owner_id)
-
-            start_date, end_date = self._dates_for_linked_reports(case_list=True)
-            start_date_sub1 = self.datespan.startdate - datetime.timedelta(days=1)
-            start_date_sub1 = start_date_sub1.strftime(self.datespan.format)
-            search_strings = {
-                4: "opened_by: %s AND opened_on: [%s TO %s]" % (owner_id, start_date, end_date), # cases created
-                5: "closed_by: %s AND closed_on: [%s TO %s]" % (owner_id, start_date, end_date), # cases closed
-                7: "opened_on: [* TO %s] AND NOT closed_on: [* TO %s]" % (end_date, start_date_sub1), # total cases
-            }
-            if today_or_tomorrow(self.datespan.enddate):
-                search_strings[6] = "modified_on: [%s TO %s]" % (start_date, end_date) # active cases
-
-            if self.case_type:
-                for index, search_string in search_strings.items():
-                    search_strings[index] = search_string + " AND type.exact: %s" % self.case_type
-
-            def create_case_url(index):
-                """
-                    Given an index for a cell in a the row, creates the link to the case list page for that cell
-                """
-                url_params = {}
-                url_params.update(url_args)
-                url_params.update({"search_query": search_strings[index]})
-                return util.numcell('<a href="%s?%s" target="_blank">%s</a>' % (cl_url, urlencode(url_params, True), row[index]), row[index])
-
-            for i in search_strings:
-                row[i] = create_case_url(i)
-            return row
 
         def group_cell(group_id, group_name):
             """
@@ -1312,7 +1313,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 total_cases = int(totals_by_owner.get(user["user_id"].lower(), 0)) + \
                     sum([int(totals_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
 
-                rows.append(add_case_list_links(user['user_id'], [
+                rows.append(self._add_case_list_links(user['user_id'], [
                     user["username_in_report"],
                     self._submit_history_link(user['user_id'],
                                         submissions_by_user.get(user["user_id"], 0),
