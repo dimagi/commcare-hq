@@ -50,12 +50,12 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
 
     def _selected_group_entries(self, mobile_user_and_group_slugs):
         query_results = self._selected_groups_query(mobile_user_and_group_slugs)
-        reporting = [self.utils.reporting_group_tuple(group['fields'])
+        reporting = [self.utils.reporting_group_tuple(group)
                      for group in query_results
-                     if group['fields'].get("reporting", False)]
-        sharing = [self.utils.sharing_group_tuple(group['fields'])
+                     if group.get("reporting", False)]
+        sharing = [self.utils.sharing_group_tuple(group)
                    for group in query_results
-                   if group['fields'].get("case_sharing", False)]
+                   if group.get("case_sharing", False)]
         return reporting + sharing
 
     def get_default_selections(self):
