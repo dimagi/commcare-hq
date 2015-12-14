@@ -1158,6 +1158,12 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         q = self._case_count_query()
         return q.run().facets.owner_id.counts_by_term()
 
+    def _dates_for_linked_reports(self, case_list=False):
+        start_date = self.datespan.startdate_param
+        end_date = self.datespan.enddate if not case_list else self.datespan.enddate + datetime.timedelta(days=1)
+        end_date = end_date.strftime(self.datespan.format)
+        return start_date, end_date
+
     @property
     def rows(self):
         duration = (self.datespan.enddate - self.datespan.startdate) + datetime.timedelta(days=1) # adjust bc inclusive
@@ -1192,12 +1198,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         actives_by_owner = self.get_active_cases_by_owner()
         totals_by_owner = self.get_total_cases_by_owner()
 
-        def dates_for_linked_reports(case_list=False):
-            start_date = self.datespan.startdate_param
-            end_date = self.datespan.enddate if not case_list else self.datespan.enddate + datetime.timedelta(days=1)
-            end_date = end_date.strftime(self.datespan.format)
-            return start_date, end_date
-
         def submit_history_link(owner_id, val, type):
             """
             takes a row, and converts certain cells in the row to links that link to the submit history report
@@ -1209,7 +1209,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 assert type == 'group'
                 url_args = EMWF.for_reporting_group(owner_id)
 
-            start_date, end_date = dates_for_linked_reports()
+            start_date, end_date = self._dates_for_linked_reports()
             url_args.update({
                 "startdate": start_date,
                 "enddate": end_date,
@@ -1228,7 +1228,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             cl_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'case_list'))
             url_args = EMWF.for_user(owner_id)
 
-            start_date, end_date = dates_for_linked_reports(case_list=True)
+            start_date, end_date = self._dates_for_linked_reports(case_list=True)
             start_date_sub1 = self.datespan.startdate - datetime.timedelta(days=1)
             start_date_sub1 = start_date_sub1.strftime(self.datespan.format)
             search_strings = {
@@ -1261,7 +1261,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 takes group info, and creates a cell that links to the user status report focused on the group
             """
             us_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'worker_activity'))
-            start_date, end_date = dates_for_linked_reports()
+            start_date, end_date = self._dates_for_linked_reports()
             url_args = {
                 "group": group_id,
                 "startdate": start_date,
