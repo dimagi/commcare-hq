@@ -281,12 +281,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return context
 
     @classmethod
-    def pull_groups(cls, domain, request):
-        group_ids = cls.selected_group_ids(request)
-        if not group_ids:
-            return Group.get_reporting_groups(domain)
-        return [Group.get(g) for g in group_ids]
-
     def user_es_query(cls, domain, mobile_user_and_group_slugs):
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
         user_types = cls.selected_user_types(mobile_user_and_group_slugs)
