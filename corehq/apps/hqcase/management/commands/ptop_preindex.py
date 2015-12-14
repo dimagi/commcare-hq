@@ -69,7 +69,7 @@ class Command(BaseCommand):
         pillow_classes = get_all_pillow_classes()
         aliased_classes = filter(lambda x: issubclass(x, AliasedElasticPillow),
                                  pillow_classes)
-        aliasable_pillows = [p(create_index=False) for p in aliased_classes]
+        aliasable_pillows = [p(online=False) for p in aliased_classes]
 
         reindex_all = options['replace']
 
