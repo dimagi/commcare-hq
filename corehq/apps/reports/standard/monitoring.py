@@ -1373,23 +1373,17 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             cases_opened_by_user=get_case_counts_opened_by_user(self.domain, self.datespan, self.case_types),
         )
 
-    @property
-    def rows(self):
-        report_data = self._report_data()
-
-        rows = []
-        if self.view_by_groups:
-            rows = self._rows_by_group(report_data)
-        else:
-            rows = self._rows_by_user(report_data)
-
-        self.total_row = [_("Total")]
+    def _total_row(self, rows):
+        total_row = [_("Total")]
         summing_cols = [1, 2, 4, 5, 6, 7]
+
         for col in range(1, len(self.headers)):
             if col in summing_cols:
-                self.total_row.append(sum(filter(lambda x: not math.isnan(x), [row[col].get('sort_key', 0) for row in rows])))
+                total_row.append(
+                    sum(filter(lambda x: not math.isnan(x), [row[col].get('sort_key', 0) for row in rows]))
+                )
             else:
-                self.total_row.append('---')
+                total_row.append('---')
 
         if self.view_by_groups:
             def parse(str):
@@ -1402,9 +1396,22 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 num, denom = parse(str)
                 return num + result_tuple[0], denom + result_tuple[1]
 
-            self.total_row[3] = '%s / %s' % reduce(add, [row[3]["html"] for row in rows], (0, 0))
+            total_row[3] = '%s / %s' % reduce(add, [row[3]["html"] for row in rows], (0, 0))
         else:
             num = len(filter(lambda row: row[3] != self.NO_FORMS_TEXT, rows))
-            self.total_row[3] = '%s / %s' % (num, len(rows))
+            total_row[3] = '%s / %s' % (num, len(rows))
 
+        return total_row
+
+    @property
+    def rows(self):
+        report_data = self._report_data()
+
+        rows = []
+        if self.view_by_groups:
+            rows = self._rows_by_group(report_data)
+        else:
+            rows = self._rows_by_user(report_data)
+
+        self.total_row = self._total_row(rows)
         return rows
