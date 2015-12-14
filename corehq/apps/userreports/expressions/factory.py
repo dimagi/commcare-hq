@@ -7,6 +7,7 @@ from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, Pr
     ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
     IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
     NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec
+from dimagi.utils.web import json_handler
 
 
 def _make_filter(spec, context):
@@ -148,7 +149,7 @@ class ExpressionFactory(object):
             ))
         except (TypeError, BadValueError) as e:
             raise BadSpecError(_('Problem creating getter: {}. Message is: {}').format(
-                json.dumps(spec, indent=2),
+                json.dumps(spec, indent=2, default=json_handler),
                 str(e),
             ))
 
