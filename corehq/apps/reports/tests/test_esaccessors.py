@@ -4,7 +4,7 @@ from datetime import datetime
 from django.test import SimpleTestCase
 from dimagi.utils.dates import DateSpan
 
-from corehq.elastic import get_es_new
+from corehq.util.elastic import delete_es_index
 from corehq.form_processor.tests.utils import TestFormMetadata
 from corehq.pillows.xform import XFormPillow
 from corehq.apps.reports.analytics.esaccessors import (
@@ -20,10 +20,9 @@ class TestESAccessors(SimpleTestCase):
     def setUp(self):
         self.domain = 'esdomain'
         self.pillow = XFormPillow()
-        self.es = get_es_new()
 
     def tearDown(self):
-        self.es.indices.delete(index=self.pillow.es_index)
+        delete_es_index(self.pillow.es_index)
 
     def _send_form_to_es(self, domain=None, completion_time=None, received_on=None):
         metadata = TestFormMetadata(
