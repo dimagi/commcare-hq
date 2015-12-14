@@ -132,7 +132,7 @@ class MediaSuiteGenerator(object):
                 local=(local_path
                        if self.app.enable_local_resource
                        else None),
-                remote=get_url_base() + reverse(
+                remote=self.app.url_base + reverse(
                     'hqmedia_download',
                     args=[m.media_type, m.multimedia_id]
                 ) + urllib.quote(name.encode('utf-8')) if name else name

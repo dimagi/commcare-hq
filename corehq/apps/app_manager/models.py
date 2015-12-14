@@ -4051,7 +4051,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @property
     def url_base(self):
-        return get_url_base()
+        custom_base_url = getattr(self, 'custom_base_url', None)
+        return custom_base_url or get_url_base()
 
     @absolute_url_property
     def post_url(self):
@@ -4290,7 +4291,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             if settings.BITLY_LOGIN:
                 view_name = 'corehq.apps.app_manager.views.{}'.format(url_type)
-                long_url = "{}{}".format(get_url_base(), reverse(view_name, args=[self.domain, self._id]))
+                long_url = "{}{}".format(self.url_base, reverse(view_name, args=[self.domain, self._id]))
                 shortened_url = bitly.shorten(long_url)
             else:
                 shortened_url = None
