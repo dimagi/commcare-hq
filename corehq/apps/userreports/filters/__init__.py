@@ -58,10 +58,10 @@ class CustomFilter(Filter):
 
 class SinglePropertyValueFilter(Filter):
 
-    def __init__(self, expression, operator, reference_value):
+    def __init__(self, expression, operator, reference_expression):
         self.expression = expression
         self.operator = operator
-        self.reference_value = reference_value
+        self.reference_expression = reference_expression
 
     def __call__(self, item, context=None):
-        return self.operator(self.expression(item, context), self.reference_value)
+        return self.operator(self.expression(item, context), self.reference_expression(item, context))
