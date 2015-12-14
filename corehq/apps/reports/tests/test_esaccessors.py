@@ -1,28 +1,40 @@
 import pytz
+import uuid
 
 from datetime import datetime
 from django.test import SimpleTestCase
 from dimagi.utils.dates import DateSpan
 
 from corehq.util.elastic import delete_es_index
+from corehq.apps.users.models import CommCareUser
+from corehq.apps.groups.models import Group
 from corehq.form_processor.tests.utils import TestFormMetadata
 from corehq.pillows.xform import XFormPillow
+from corehq.pillows.user import UserPillow
+from corehq.pillows.group import GroupPillow
 from corehq.apps.reports.analytics.esaccessors import (
     get_submission_counts_by_user,
     get_completed_counts_by_user,
     get_submission_counts_by_date,
+    get_users,
+    get_groups,
 )
 from corehq.util.test_utils import make_es_ready_form
 
 
-class TestESAccessors(SimpleTestCase):
+class BaseESAccessorsTest(SimpleTestCase):
 
     def setUp(self):
         self.domain = 'esdomain'
-        self.pillow = XFormPillow()
+        self.pillow = self.pillow_class()
 
     def tearDown(self):
         delete_es_index(self.pillow.es_index)
+
+
+class TestFormESAccessors(BaseESAccessorsTest):
+
+    pillow_class = XFormPillow
 
     def _send_form_to_es(self, domain=None, completion_time=None, received_on=None):
         metadata = TestFormMetadata(
@@ -130,3 +142,52 @@ class TestESAccessors(SimpleTestCase):
             timezone
         )
         self.assertEquals(results['2013-07-14'], 1)
+
+
+class TestUserESAccessors(BaseESAccessorsTest):
+
+    pillow_class = UserPillow
+
+    def _send_user_to_es(self, _id=None, is_active=True):
+        user = CommCareUser(
+            domain=self.domain,
+            username='superman',
+            _id=_id or uuid.uuid4().hex,
+            is_active=is_active,
+        )
+        self.pillow.change_transport(user.to_json())
+        self.pillow.get_es_new().indices.refresh(self.pillow.es_index)
+        return user
+
+    def test_active_user_query(self):
+        self._send_user_to_es('123')
+        results = get_users(['123'])
+
+        self.assertEquals(len(results), 1)
+
+    def test_inactive_user_query(self):
+        self._send_user_to_es('123', is_active=False)
+        results = get_users(['123'])
+
+        self.assertEquals(len(results), 1)
+
+
+class TestGroupESAccessors(BaseESAccessorsTest):
+
+    pillow_class = GroupPillow
+
+    def _send_group_to_es(self, _id=None):
+        group = Group(
+            domain=self.domain,
+            name='justice league',
+            _id=_id or uuid.uuid4().hex,
+        )
+        self.pillow.change_transport(group.to_json())
+        self.pillow.get_es_new().indices.refresh(self.pillow.es_index)
+        return group
+
+    def test_group_query(self):
+        self._send_group_to_es('123')
+        results = get_groups(['123'])
+
+        self.assertEquals(len(results), 1)

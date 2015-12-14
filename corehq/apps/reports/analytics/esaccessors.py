@@ -92,5 +92,6 @@ def get_groups(group_ids):
 def get_users(user_ids):
     user_query = (UserES()
         .user_ids(user_ids)
+        .show_inactive()
         .fields(['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active']))
     return user_query.run().hits
