@@ -262,11 +262,15 @@ def _process_case_block(case_block, attachments, old_case_id):
     return ET.tostring(root), ret_attachments
 
 
-def submit_case_block_from_template(domain, template, context, **kwargs):
+def submit_case_block_from_template(domain, template, context, xmlns=None):
     case_block = render_to_string(template, context)
     # Ensure the XML is formatted properly
     # An exception is raised if not
     case_block = ElementTree.tostring(ElementTree.XML(case_block))
+
+    kwargs = {}
+    if xmlns:
+        kwargs['xmlns'] = xmlns
     submit_case_blocks(case_block, domain, **kwargs)
 
 
@@ -287,7 +291,4 @@ def update_case(domain, case_id, case_properties=None, close=False, xmlns=None):
         'case_properties': case_properties,
         'close': close,
     }
-    kwargs = {}
-    if xmlns:
-        kwargs['xmlns'] = xmlns
-    submit_case_block_from_template(domain, 'hqcase/xml/update_case.xml', context, **kwargs)
+    submit_case_block_from_template(domain, 'hqcase/xml/update_case.xml', context, xmlns=xmlns)
