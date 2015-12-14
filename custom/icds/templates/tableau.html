@@ -22,20 +22,22 @@
     <div class="row">
         <div class="col-md-2">
             <button id="resetFilters" class="btn btn-block btn-primary" disabled="disabled">Reset Filtering</button>
-            <button id="inspectButton" class="btn btn-block btn-primary" disabled="disabled">Inspect</button>
-            <div id="drilldown" class="well">
-            </div>
-            <div class="well">
-                USER FILTERING DEBUG INFO (inital values):
-                <ul>
-                    <li>view_by = {{ view_by }}</li>
-                    <li>user_state = {{ user_state|default:'not set' }}</li>
-                    <li>user_district = {{ user_district|default:'not set' }}</li>
-                    <li>user_block = {{ user_block|default:'not set' }}</li>
-                    <li>user_supervisor = {{ user_supervisor|default:'not set' }}</li>
-                    <li>user_awc = {{ user_awc|default:'not set' }}</li>
-                </ul>
-            </div>
+            {% if debug %}
+                <button id="inspectButton" class="btn btn-block btn-primary" disabled="disabled">Inspect</button>
+                <div id="drilldown" class="well">
+                </div>
+                <div class="well">
+                    USER FILTERING DEBUG INFO (inital values):
+                    <ul>
+                        <li>view_by = {{ view_by }}</li>
+                        <li>user_state = {{ user_state|default:'not set' }}</li>
+                        <li>user_district = {{ user_district|default:'not set' }}</li>
+                        <li>user_block = {{ user_block|default:'not set' }}</li>
+                        <li>user_supervisor = {{ user_supervisor|default:'not set' }}</li>
+                        <li>user_awc = {{ user_awc|default:'not set' }}</li>
+                    </ul>
+                </div>
+            {% endif %}
         </div>
         <div class="col-md-10">
             {#    TODO: update this div to use B3 spacing that is the right size.#}

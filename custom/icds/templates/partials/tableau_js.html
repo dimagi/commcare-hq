@@ -107,9 +107,13 @@
             $("#drilldown").append(html);
 
             // Add inspect button listener
-            $("#inspectButton").unbind('click').click(function() {
+            if( {{ debug|yesno:"true,false" }} ) {
+                $("#inspectButton").unbind('click').click(function() {
+                    switchVisualization(sheetName, workbook, params);
+                }).prop('disabled', false);
+            } else {
                 switchVisualization(sheetName, workbook, params);
-            }).prop('disabled', false);
+            }
 
         }
 
