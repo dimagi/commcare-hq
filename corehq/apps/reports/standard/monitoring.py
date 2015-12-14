@@ -1077,7 +1077,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return bool(project and project.commtrack_enabled)
 
     @property
-    @memoized
     def case_types(self):
         return filter(None, self.request.GET.getlist('case_type'))
 
