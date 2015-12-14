@@ -1264,18 +1264,24 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     def _group_cell(self, group_id, group_name):
         """
-            takes group info, and creates a cell that links to the user status report focused on the group
+        takes group info, and creates a cell that links to the user status report focused on the group
         """
-        us_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'worker_activity'))
+        base_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'worker_activity'))
         start_date, end_date = self._dates_for_linked_reports()
-        url_args = {
+        params = {
             "group": group_id,
             "startdate": start_date,
             "enddate": end_date,
         }
+
+        url = '{base_url}?{params}'.format(
+            base_url=base_url,
+            params=urlencode(params),
+        )
+
         return util.format_datatables_data(
-            '<a href="%s?%s" target="_blank">%s</a>' % (us_url, urlencode(url_args, True), group_name),
-            group_name
+            self._html_anchor_tag(url, group_name),
+            group_name,
         )
 
     def _rows_by_group(self, report_data):
@@ -1344,7 +1350,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             else:
                 active_cases_cell = util.numcell(active_cases)
 
-            
             rows.append([
                 # Username
                 user["username_in_report"],
