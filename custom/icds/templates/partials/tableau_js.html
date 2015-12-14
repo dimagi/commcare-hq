@@ -16,11 +16,6 @@
             }
         };
         viz = new tableau.Viz(placeholderDiv, url, options);
-        // I am envisioning the history object possibly containing things like the base params for filtering
-        var historyObject = {
-            'sheetName': '{{ report_worksheet }}'
-        };
-        history.pushState(historyObject, '', '{{ report_worksheet }}')
     }
 
     function setUpWorkbook(viz) {
@@ -37,6 +32,12 @@
             'user_awc': '{{ user_awc|default:'' }}'
         };
         applyParams(workbook, params);
+
+        var historyObject = {
+            'sheetName': '{{ report_worksheet }}',
+            'params': params
+        };
+        history.pushState(historyObject, '', '{{ report_worksheet }}')
     }
 
     function setUpNav(viz) {
@@ -140,7 +141,7 @@
 
                     // TODO: historyObject should be an actual object
                     var historyObject = {
-                            'location': sheetName,
+                            'sheetName': sheetName,
                             'params': params
                         };
                     history.pushState(historyObject, sheetName, sheetName);

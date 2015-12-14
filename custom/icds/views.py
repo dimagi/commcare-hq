@@ -18,6 +18,7 @@ def tableau(request, domain, workbook, worksheet):
         'report_worksheet': worksheet,
         'user_view_by': location_type_name,
         user_location_level_key: location_name,
+        'debug': request.GET.get('debug', False),
     }
 
     response = render_to_string('tableau.html', context)
