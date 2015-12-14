@@ -4,6 +4,13 @@ import requests
 from corehq import toggles
 from corehq.apps.locations.models import SQLLocation
 
+LOCATIONS_MAP = {
+    'state': 1,
+    'district': 2,
+    'block': 3,
+    'supervisor': 4,
+    'awc': 5,
+}
 
 @toggles.ICDS_REPORTS.required_decorator()
 def tableau(request, domain, workbook, worksheet):
@@ -16,7 +23,7 @@ def tableau(request, domain, workbook, worksheet):
     context = {
         'report_workbook': workbook,
         'report_worksheet': worksheet,
-        'user_view_by': location_type_name,
+        'view_by': LOCATIONS_MAP[location_type_name],
         user_location_level_key: location_name,
         'debug': request.GET.get('debug', False),
     }
