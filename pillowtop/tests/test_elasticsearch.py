@@ -1,3 +1,4 @@
+import copy
 import uuid
 from django.test import SimpleTestCase
 from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings, \
@@ -53,7 +54,7 @@ class ElasticPillowTest(SimpleTestCase):
 
     @require_explicit_elasticsearch_testing
     def setUp(self):
-        pillow = TestElasticPillow(create_index=False, online=False)
+        pillow = TestElasticPillow(online=False)
         self.index = pillow.es_index
         self.es = pillow.get_es_new()
         if self.es.indices.exists(self.index):
@@ -87,12 +88,6 @@ class ElasticPillowTest(SimpleTestCase):
             pillow.default_mapping['properties']['doc_type']['index'],
             mapping['properties']['doc_type']['index']
         )
-
-    def test_create_index_false_online_true(self):
-        # this test use to raise a hard error so doesn't actually test anything
-        pillow = TestElasticPillow(create_index=False)
-        self.assertFalse(pillow_index_exists(pillow))
-        self.assertFalse(pillow_mapping_exists(pillow))
 
     def test_refresh_index(self):
         pillow = TestElasticPillow()

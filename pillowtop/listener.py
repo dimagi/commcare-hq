@@ -25,7 +25,8 @@ from pillowtop.couchdb import CachedCouchDB
 
 from django import db
 from pillowtop.dao.couch import CouchDocumentStore
-from pillowtop.es_utils import create_index_for_pillow, pillow_index_exists, pillow_mapping_exists
+from pillowtop.es_utils import create_index_for_pillow, pillow_index_exists, pillow_mapping_exists, \
+    initialize_mapping_if_necessary, completely_initialize_pillow_index
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
@@ -429,54 +430,24 @@ class AliasedElasticPillow(BasicPillow):
     es_timeout = 3  # in seconds
     default_mapping = None  # the default elasticsearch mapping to use for this
     bulk = False
-    online = True  # online=False is for in memory (no ES) connectivity for testing purposes or for admin operations
 
     # Note - we allow for for existence because we do not care - we want the ES
     # index to always have the latest version of the case based upon ALL changes done to it.
     allow_updates = True
 
-    def __init__(self, create_index=True, online=True, **kwargs):
+    def __init__(self, online=True, **kwargs):
         """
-        create_index if the index doesn't exist on the ES cluster
+        online determines whether the ES index should initialize itself on pillow creation
         """
         if 'checkpoint' not in kwargs:
             kwargs['checkpoint'] = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
         super(AliasedElasticPillow, self).__init__(**kwargs)
         # online=False is used in unit tests
-        self.online = online
-        if self.online:
-            index_exists = pillow_index_exists(self)
-            if create_index and not index_exists:
-                create_index_for_pillow(self)
-            if create_index or index_exists:
-                pillow_logging.info("Pillowtop [%s] Initializing mapping in ES" % self.get_name())
-                self.initialize_mapping_if_necessary()
-        else:
-            pillow_logging.info("Pillowtop [%s] Started with no mapping from server in memory testing mode" % self.get_name())
-
-    def initialize_mapping_if_necessary(self):
-        """
-        Initializes the elasticsearch mapping for this pillow if it is not found.
-        """
-        if not pillow_mapping_exists(self):
-            pillow_logging.info("Initializing elasticsearch mapping for [%s]" % self.es_type)
-            mapping = copy(self.default_mapping)
-            mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
-            mapping_res = self.set_mapping(self.es_type, {self.es_type: mapping})
-            if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
-                # API confirms OK, trust it.
-                pillow_logging.info("Mapping set: [%s] %s" % (self.es_type, mapping_res))
-        else:
-            pillow_logging.info("Elasticsearch mapping for [%s] was already present." % self.es_type)
+        if online:
+            completely_initialize_pillow_index(self)
 
     def get_doc_path(self, doc_id):
         return "%s/%s/%s" % (self.es_index, self.es_type, doc_id)
-
-    def set_mapping(self, type_string, mapping):
-        if self.online:
-            return self.send_robust("%s/%s/_mapping" % (self.es_index, type_string), data=mapping)
-        else:
-            return {"ok": True, "acknowledged": True}
 
     @memoized
     def get_es(self):
