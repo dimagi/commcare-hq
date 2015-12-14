@@ -15,6 +15,10 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_completed_counts_by_user,
     get_submission_counts_by_date,
     get_completed_counts_by_date,
+    get_case_counts_closed_by_user,
+    get_case_counts_opened_by_user,
+    get_active_case_counts_by_owner,
+    get_total_case_counts_by_owner,
 )
 from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
@@ -1074,6 +1078,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     @memoized
+    def case_types(self):
+        return filter(None, self.request.GET.getlist('case_type'))
+
+    @property
     def case_types_filter(self):
         case_types = filter(None, self.request.GET.getlist('case_type'))
         if case_types:
@@ -1132,42 +1140,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             u["user_id"]: get_last_submission_time_for_user(self.domain, u["user_id"], datespan)
             for u in self.users_to_iterate
         }
-
-    def es_case_queries(self, date_field, user_field, datespan=None):
-        datespan = datespan or self.datespan
-        case_query = case_es.CaseES() \
-            .domain(self.domain) \
-            .filter(filters.date_range(date_field, gte=datespan.startdate.date(), lte=datespan.enddate.date())) \
-            .terms_facet(user_field, user_field, size=100000) \
-            .size(1)
-
-        if self.case_types_filter:
-            case_query = case_query.filter(self.case_types_filter)
-
-        return case_query.run()
-
-    def _case_count_query(self):
-        q = (case_es.CaseES()
-             .domain(self.domain)
-             .opened_range(lte=self.datespan.enddate)
-             .NOT(case_es.closed_range(lt=self.datespan.startdate))
-             .terms_facet('owner_id', 'owner_id')
-             .size(0))
-
-        if self.case_types_filter:
-            q = q.filter(self.case_types_filter)
-
-        return q
-
-    def get_active_cases_by_owner(self):
-        q = (self._case_count_query()
-             .active_in_range(gte=self.datespan.startdate,
-                              lte=self.datespan.enddate))
-        return q.run().facets.owner_id.counts_by_term()
-
-    def get_total_cases_by_owner(self):
-        q = self._case_count_query()
-        return q.run().facets.owner_id.counts_by_term()
 
     def _dates_for_linked_reports(self, case_list=False):
         start_date = self.datespan.startdate_param
@@ -1390,28 +1362,16 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         avg_datespan = DateSpan(self.datespan.startdate - (duration * self.num_avg_intervals),
                                 self.datespan.startdate - datetime.timedelta(days=1))
 
-        case_creation_data = self.es_case_queries('opened_on', 'opened_by')
-        creations_by_user = {
-            t["term"].lower(): t["count"]
-            for t in case_creation_data.facet("opened_by", "terms")
-        }
-
-        case_closure_data = self.es_case_queries('closed_on', 'closed_by')
-        closures_by_user = {
-            t["term"].lower(): t["count"]
-            for t in case_closure_data.facet("closed_by", "terms")
-        }
-
         if avg_datespan.startdate.year < 1900:  # srftime() doesn't work for dates below 1900
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
 
         return WorkerActivityReportData(
             avg_submissions_by_user=get_submission_counts_by_user(self.domain, self.datespan),
             submissions_by_user=get_submission_counts_by_user(self.domain, avg_datespan),
-            active_cases_by_owner=self.get_active_cases_by_owner(),
-            total_cases_by_owner=self.get_total_cases_by_owner(),
-            cases_closed_by_user=closures_by_user,
-            cases_opened_by_user=creations_by_user,
+            active_cases_by_owner=get_active_case_counts_by_owner(self.domain, self.datespan, self.case_types),
+            total_cases_by_owner=get_total_case_counts_by_owner(self.domain, self.datespan, self.case_types),
+            cases_closed_by_user=get_case_counts_closed_by_user(self.domain, self.datespan, self.case_types),
+            cases_opened_by_user=get_case_counts_opened_by_user(self.domain, self.datespan, self.case_types),
         )
 
     @property
