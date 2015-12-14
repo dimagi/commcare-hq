@@ -111,12 +111,6 @@ corehq.apps.userreports:
   - corehq.apps.tzmigration
   - corehq.apps.users
   - couchforms
-  # unfortunately domain.delete() needs all of these - otherwise they could be removed
-  - custom.logistics
-  - custom.ilsgateway
-  - custom.ewsghana
-  - django_prbac
-  - corehq.apps.accounting
   - corehq.apps.smsforms
 couchforms:
   - casexml.apps.case
@@ -157,15 +151,9 @@ corehq.apps.receiverwrapper:
   - django_prbac
   - phonelog
   - tastypie
-  - touchforms.formplayer # required by user.delete()
-  # unfortunately domain.delete() needs all of these - otherwise they could be removed
-  - casexml.apps.stock
-  - corehq.apps.accounting
-  - corehq.apps.commtrack
-  - corehq.apps.smsforms
-  - custom.logistics
-  - custom.ilsgateway
-  - custom.ewsghana
+  # required by user.delete()
+  - touchforms.formplayer
+  - corehq.apps.tour
 corehq.form_processor:
   - casexml.apps.case
   - casexml.apps.phone
