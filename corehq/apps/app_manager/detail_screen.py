@@ -114,7 +114,7 @@ class FormattedDetailColumn(object):
         )
         return header
 
-    variables = {}
+    variables = None
 
     @property
     def template(self):
@@ -318,7 +318,7 @@ class Enum(FormattedDetailColumn):
 
     @property
     def variables(self):
-        variables = super(Enum, self).variables
+        variables = {}
         for item in self.column.enum:
             v_key = item.key_as_variable
             v_val = self.id_strings.detail_column_enum_variable(
