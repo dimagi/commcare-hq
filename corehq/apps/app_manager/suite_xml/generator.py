@@ -17,7 +17,6 @@ from corehq.apps.app_manager.suite_xml.xml_models import Suite, MediaResource
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.util import split_path
 from corehq.apps.hqmedia.models import HQMediaMapItem
-from dimagi.utils.web import get_url_base
 
 
 class SuiteGenerator(object):
