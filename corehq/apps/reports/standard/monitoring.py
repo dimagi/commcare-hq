@@ -1270,18 +1270,27 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             total_users = len(self.users_by_group.get(group, []))
 
             rows.append([
+                # Group Name
                 self._group_cell(group_id, group_name),
+                # Forms Submitted
                 self._submit_history_link(group_id,
                                     sum([int(report_data.submissions_by_user.get(user["user_id"], 0)) for user in users]),
                                     type='group'),
+                # Avg forms submitted
                 util.numcell(sum([int(report_data.submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
+                # Active users
                 util.numcell("%s / %s" % (active_users, total_users),
                              value=int((float(active_users) / total_users) * 10000) if total_users else -1,
                              raw="%s / %s" % (active_users, total_users)),
+                # Cases opened
                 util.numcell(sum([int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0)) for user in users])),
+                # Cases closed
                 util.numcell(sum([int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0)) for user in users])),
+                # Active cases
                 util.numcell(active_cases),
+                # Total Cases
                 util.numcell(total_cases),
+                # Percent active cases
                 util.numcell((float(active_cases)/total_cases) * 100 if total_cases else 'nan', convert='float'),
             ])
         return rows
@@ -1295,19 +1304,33 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             total_cases = int(report_data.total_cases_by_owner.get(user["user_id"].lower(), 0)) + \
                 sum([int(report_data.total_cases_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
 
-            rows.append(self._add_case_list_links(user['user_id'], [
+            row = [
+                # Username
                 user["username_in_report"],
+                # Forms Submitted
                 self._submit_history_link(user['user_id'],
-                                    report_data.submissions_by_user.get(user["user_id"], 0),
-                                    type='user'),
+                    report_data.submissions_by_user.get(user["user_id"], 0),
+                    type='user'),
+                # Average Forms submitted
                 util.numcell(int(report_data.avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
+                # Last Form submission
                 last_form_by_user.get(user["user_id"]) or self.NO_FORMS_TEXT,
+                # Cases opened
                 int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0)),
+                # Cases Closed
                 int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0)),
+                # Active Cases
                 util.numcell(active_cases) if not today_or_tomorrow(self.datespan.enddate) else active_cases,
+                # Total Cases
                 total_cases,
+                # Percent active
                 util.numcell((float(active_cases)/total_cases) * 100 if total_cases else 'nan', convert='float'),
-            ]))
+
+            ]
+
+            rows.append(
+                self._add_case_list_links(user['user_id'], row)
+            )
         return rows
 
     def _report_data(self):
