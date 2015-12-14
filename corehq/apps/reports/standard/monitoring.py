@@ -1066,6 +1066,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     fix_left_col = True
     emailable = True
 
+    NO_FORMS_TEXT = ugettext_noop('None')
+
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
         return bool(project and project.commtrack_enabled)
@@ -1299,7 +1301,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                                     report_data.submissions_by_user.get(user["user_id"], 0),
                                     type='user'),
                 util.numcell(int(report_data.avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
-                last_form_by_user.get(user["user_id"]) or NO_FORMS_TEXT,
+                last_form_by_user.get(user["user_id"]) or self.NO_FORMS_TEXT,
                 int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0)),
                 int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0)),
                 util.numcell(active_cases) if not today_or_tomorrow(self.datespan.enddate) else active_cases,
@@ -1342,7 +1344,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         report_data = self._report_data()
 
         rows = []
-        NO_FORMS_TEXT = _('None')
         if self.view_by_groups:
             rows = self._rows_by_group(report_data)
         else:
@@ -1369,7 +1370,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
             self.total_row[3] = '%s / %s' % reduce(add, [row[3]["html"] for row in rows], (0, 0))
         else:
-            num = len(filter(lambda row: row[3] != NO_FORMS_TEXT, rows))
+            num = len(filter(lambda row: row[3] != self.NO_FORMS_TEXT, rows))
             self.total_row[3] = '%s / %s' % (num, len(rows))
 
         return rows
