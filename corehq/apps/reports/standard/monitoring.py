@@ -1131,13 +1131,12 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         else:
             return self.combined_users
 
-    def es_last_submissions(self, datespan=None):
+    def es_last_submissions(self):
         """
         Creates a dict of userid => date of last submission
         """
-        datespan = datespan or self.datespan
         return {
-            u["user_id"]: get_last_submission_time_for_user(self.domain, u["user_id"], datespan)
+            u["user_id"]: get_last_submission_time_for_user(self.domain, u["user_id"], self.datespan)
             for u in self.users_to_iterate
         }
 
