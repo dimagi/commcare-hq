@@ -239,7 +239,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         if not user_ids:
             return []
         results = get_users(user_ids)
-        return [self.utils.user_tuple(hit['fields']) for hit in results]
+        return [self.utils.user_tuple(hit) for hit in results]
 
     def _selected_groups_query(self, mobile_user_and_group_slugs):
         group_ids = self.selected_group_ids(mobile_user_and_group_slugs)
@@ -249,9 +249,9 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
     def _selected_group_entries(self, mobile_user_and_group_slugs):
         groups = self._selected_groups_query(mobile_user_and_group_slugs)
-        return [self.utils.reporting_group_tuple(group['fields'])
+        return [self.utils.reporting_group_tuple(group)
                 for group in groups
-                if group['fields'].get("reporting", False)]
+                if group.get("reporting", False)]
 
     def _selected_location_entries(self, mobile_user_and_group_slugs):
         location_ids = self.selected_location_ids(mobile_user_and_group_slugs)
