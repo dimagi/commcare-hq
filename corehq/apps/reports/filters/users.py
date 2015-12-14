@@ -158,6 +158,7 @@ _UserData = namedtupledict('_UserData', (
 class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     """
     To get raw filter results:
+        mobile_user_and_group_slugs = request.GET.getlist(ExpandedMobileWorkerFilter.slug)
 
         user_ids = emwf.selected_user_ids(mobile_user_and_group_slugs)
         user_types = emwf.selected_user_types(mobile_user_and_group_slugs)
