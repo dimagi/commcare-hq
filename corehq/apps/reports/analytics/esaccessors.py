@@ -83,15 +83,13 @@ def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission
 
 
 def get_groups(group_ids):
-    group_query = (GroupES()
+    return (GroupES()
         .group_ids(group_ids)
-        .fields(['_id', 'name', 'case_sharing', 'reporting']))
-    return group_query.run().hits
+        .values(['_id', 'name', 'case_sharing', 'reporting']))
 
 
 def get_users(user_ids):
-    user_query = (UserES()
+    return (UserES()
         .user_ids(user_ids)
         .show_inactive()
-        .fields(['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active']))
-    return user_query.run().hits
+        .values(['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active']))
