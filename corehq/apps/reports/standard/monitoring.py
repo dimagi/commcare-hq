@@ -1222,6 +1222,21 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             row[i] = create_case_url(i)
         return row
 
+    def _group_cell(self, group_id, group_name):
+        """
+            takes group info, and creates a cell that links to the user status report focused on the group
+        """
+        us_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'worker_activity'))
+        start_date, end_date = self._dates_for_linked_reports()
+        url_args = {
+            "group": group_id,
+            "startdate": start_date,
+            "enddate": end_date,
+        }
+        return util.format_datatables_data(
+            '<a href="%s?%s" target="_blank">%s</a>' % (us_url, urlencode(url_args, True), group_name),
+            group_name
+        )
 
     @property
     def rows(self):
@@ -1258,22 +1273,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         totals_by_owner = self.get_total_cases_by_owner()
 
 
-        def group_cell(group_id, group_name):
-            """
-                takes group info, and creates a cell that links to the user status report focused on the group
-            """
-            us_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'worker_activity'))
-            start_date, end_date = self._dates_for_linked_reports()
-            url_args = {
-                "group": group_id,
-                "startdate": start_date,
-                "enddate": end_date,
-            }
-            return util.format_datatables_data(
-                '<a href="%s?%s" target="_blank">%s</a>' % (us_url, urlencode(url_args, True), group_name),
-                group_name
-            )
-
         rows = []
         NO_FORMS_TEXT = _('None')
         if self.view_by_groups:
@@ -1291,7 +1290,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 total_users = len(self.users_by_group.get(group, []))
 
                 rows.append([
-                    group_cell(group_id, group_name),
+                    self._group_cell(group_id, group_name),
                     self._submit_history_link(group_id,
                                         sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users]),
                                         type='group'),
