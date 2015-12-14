@@ -33,7 +33,7 @@ class TestESAccessors(SimpleTestCase):
         )
         form_pair = make_es_ready_form(metadata)
         self.pillow.change_transport(form_pair.json_form)
-        self.pillow.refresh_index()
+        self.pillow.get_es_new().indices.refresh(self.pillow.es_index)
         return form_pair
 
     def test_basic_completed_by_user(self):
