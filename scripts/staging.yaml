@@ -50,7 +50,6 @@ branches:
   - synclogs-db  # Danny 12/10
   - validate-xpath  # Danny 12/05
   - vellum-staging # J$ 11/13
-  - two-factor+websockets
   #- fix-toggle+two-factor-otp-only #wsp 11/17
   - two-factor-otp-only+add-tableau-dashboard  # Ethan 11/24
   - two-factor-otp-only # j$ 10/2
