@@ -819,7 +819,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
             instance.day = calculate_day(instance.interval, instance.day, day_change)
 
         if instance.owner_id != user_id or instance.domain != domain:
-            raise HttpResponseBadRequest()
+            return HttpResponseBadRequest()
     else:
         instance = ReportNotification(
             owner_id=user_id,
@@ -1054,7 +1054,7 @@ def case_forms(request, domain, case_id):
         start_range = int(request.GET['start_range'])
         end_range = int(request.GET['end_range'])
     except (KeyError, ValueError):
-        raise HttpResponseBadRequest()
+        return HttpResponseBadRequest()
 
     def form_to_json(form):
         return {
