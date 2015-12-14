@@ -8,6 +8,7 @@ import re
 import io
 from PIL import Image
 import uuid
+from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import get_current_site
 from django.utils.http import urlsafe_base64_encode
@@ -73,6 +74,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
 import django
+import zxcvbn
 
 if django.VERSION < (1, 6):
     from django.contrib.auth.hashers import UNUSABLE_PASSWORD as UNUSABLE_PASSWORD_PREFIX
@@ -944,12 +946,9 @@ max_pwd = 20
 pwd_pattern = re.compile( r"([-\w]){"  + str(min_pwd) + ',' + str(max_pwd) + '}' )
 
 def clean_password(txt):
-    if len(txt) < min_pwd:
-        raise forms.ValidationError('Password is too short; must be at least %s characters' % min_pwd )
-    if len(txt) > max_pwd:
-        raise forms.ValidationError('Password is too long; must be less than %s characters' % max_pwd )
-    if not pwd_pattern.match(txt):
-        raise forms.ValidationError('Password may only contain letters, numbers, hyphens, and underscores')
+    strength = zxcvbn.password_strength(txt)
+    if strength['score'] < 3:
+        raise forms.ValidationError('Password is too weak. Try making your password more complex.')
     return txt
 
 
@@ -1042,6 +1041,16 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
             # we can pretend all is well since the save() method is safe for missing users.
             return self.cleaned_data['email']
 
+class HQSetPasswordForm(SetPasswordForm):
+    new_password1 = forms.CharField(label=ugettext_lazy("New password"),
+                                    widget=forms.PasswordInput(
+                                        attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
+                                    help_text=mark_safe("""
+                                    <span data-bind="text: passwordHelp, css: color">
+                                    """))
+
+    def clean_new_password1(self):
+        clean_password(self.cleaned_data.get('new_password1'))
 
 class EditBillingAccountInfoForm(forms.ModelForm):
 

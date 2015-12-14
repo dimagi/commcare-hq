@@ -1,16 +1,26 @@
+from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
 
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.domain.forms import clean_password
 
 from django.utils.translation import ugettext as _
+from django.utils.safestring import mark_safe
 
 
 class HQPasswordChangeForm(PasswordChangeForm):
 
+    new_password1 = forms.CharField(label=_("New password"),
+                                        widget=forms.PasswordInput(),
+                                        help_text=mark_safe("""
+                                        <span data-bind="text: passwordHelp, css: color">
+                                        """))
+
     def __init__(self, user, *args, **kwargs):
+
         super(HQPasswordChangeForm, self).__init__(user, *args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
@@ -20,7 +30,7 @@ class HQPasswordChangeForm(PasswordChangeForm):
             crispy.Fieldset(
                 _('Specify New Password'),
                 'old_password',
-                'new_password1',
+                crispy.Field('new_password1', data_bind="value: password, valueUpdate: 'input'"),
                 'new_password2'
             ),
             hqcrispy.FormActions(
@@ -31,3 +41,6 @@ class HQPasswordChangeForm(PasswordChangeForm):
                 )
             )
         )
+
+    def clean_new_password1(self):
+        return clean_password(self.cleaned_data.get('new_password1'))
