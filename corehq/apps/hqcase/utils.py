@@ -270,7 +270,7 @@ def submit_case_block_from_template(domain, template, context, **kwargs):
     submit_case_blocks(case_block, domain, **kwargs)
 
 
-def update_case(domain, case_id, case_properties=None, close=False, **kwargs):
+def update_case(domain, case_id, case_properties=None, close=False, xmlns=None):
     """
     Updates or closes a case (or both) by submitting a form.
     domain - the case's domain
@@ -278,6 +278,7 @@ def update_case(domain, case_id, case_properties=None, close=False, **kwargs):
     case_properties - to update the case, pass in a dictionary of {name1: value1, ...}
                       to ignore case updates, leave this argument out
     close - True to close the case, False otherwise
+    xmlns - pass in an xmlns to use it instead of the default
     """
     context = {
         'case_id': case_id,
@@ -286,4 +287,7 @@ def update_case(domain, case_id, case_properties=None, close=False, **kwargs):
         'case_properties': case_properties,
         'close': close,
     }
+    kwargs = {}
+    if xmlns:
+        kwargs['xmlns'] = xmlns
     submit_case_block_from_template(domain, 'hqcase/xml/update_case.xml', context, **kwargs)
