@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import datetime
 from urllib import urlencode
 import math
@@ -42,6 +42,15 @@ from django.utils.translation import ugettext_noop
 TOO_MUCH_DATA = ugettext_noop(
     'The filters you selected include too much data. Please change your filters and try again'
 )
+
+WorkerActivityReportData = namedtuple('WorkerActivityReportData', [
+    'avg_submissions_by_user',
+    'submissions_by_user',
+    'active_cases_by_owner',
+    'total_cases_by_owner',
+    'cases_closed_by_user',
+    'cases_opened_by_user',
+])
 
 
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -1238,25 +1247,71 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             group_name
         )
 
-    @property
-    def rows(self):
+    def _rows_by_group(self, report_data):
+        rows = []
+        active_users_by_group = {
+            g: len(filter(lambda u: report_data.submissions_by_user.get(u['user_id']), users))
+            for g, users in self.users_by_group.iteritems()
+        }
+
+        for group, users in self.users_by_group.iteritems():
+            group_name, group_id = tuple(group.split('|'))
+            if group_name == 'no_group':
+                continue
+
+            case_sharing_groups = set(reduce(operator.add, [u['group_ids'] for u in users], []))
+            active_cases = sum([int(report_data.active_cases_by_owner.get(u["user_id"].lower(), 0)) for u in users]) + \
+                sum([int(report_data.active_cases_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
+            total_cases = sum([int(report_data.total_cases_by_owner.get(u["user_id"].lower(), 0)) for u in users]) + \
+                sum([int(report_data.total_cases_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
+            active_users = int(active_users_by_group.get(group, 0))
+            total_users = len(self.users_by_group.get(group, []))
+
+            rows.append([
+                self._group_cell(group_id, group_name),
+                self._submit_history_link(group_id,
+                                    sum([int(report_data.submissions_by_user.get(user["user_id"], 0)) for user in users]),
+                                    type='group'),
+                util.numcell(sum([int(report_data.submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
+                util.numcell("%s / %s" % (active_users, total_users),
+                             value=int((float(active_users) / total_users) * 10000) if total_users else -1,
+                             raw="%s / %s" % (active_users, total_users)),
+                util.numcell(sum([int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0)) for user in users])),
+                util.numcell(sum([int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0)) for user in users])),
+                util.numcell(active_cases),
+                util.numcell(total_cases),
+                util.numcell((float(active_cases)/total_cases) * 100 if total_cases else 'nan', convert='float'),
+            ])
+        return rows
+
+    def _rows_by_user(self, report_data):
+        rows = []
+        last_form_by_user = self.es_last_submissions()
+        for user in self.users_to_iterate:
+            active_cases = int(report_data.active_cases_by_owner.get(user["user_id"].lower(), 0)) + \
+                sum([int(report_data.active_cases_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
+            total_cases = int(report_data.total_cases_by_owner.get(user["user_id"].lower(), 0)) + \
+                sum([int(report_data.total_cases_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
+
+            rows.append(self._add_case_list_links(user['user_id'], [
+                user["username_in_report"],
+                self._submit_history_link(user['user_id'],
+                                    report_data.submissions_by_user.get(user["user_id"], 0),
+                                    type='user'),
+                util.numcell(int(report_data.avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
+                last_form_by_user.get(user["user_id"]) or NO_FORMS_TEXT,
+                int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0)),
+                int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0)),
+                util.numcell(active_cases) if not today_or_tomorrow(self.datespan.enddate) else active_cases,
+                total_cases,
+                util.numcell((float(active_cases)/total_cases) * 100 if total_cases else 'nan', convert='float'),
+            ]))
+        return rows
+
+    def _report_data(self):
         duration = (self.datespan.enddate - self.datespan.startdate) + datetime.timedelta(days=1) # adjust bc inclusive
         avg_datespan = DateSpan(self.datespan.startdate - (duration * self.num_avg_intervals),
                                 self.datespan.startdate - datetime.timedelta(days=1))
-
-        if avg_datespan.startdate.year < 1900:  # srftime() doesn't work for dates below 1900
-            avg_datespan.startdate = datetime.datetime(1900, 1, 1)
-
-        submissions_by_user = get_submission_counts_by_user(self.domain, self.datespan)
-        avg_submissions_by_user = get_submission_counts_by_user(self.domain, avg_datespan)
-
-        if self.view_by_groups:
-            active_users_by_group = {
-                g: len(filter(lambda u: submissions_by_user.get(u['user_id']), users))
-                for g, users in self.users_by_group.iteritems()
-            }
-        else:
-            last_form_by_user = self.es_last_submissions()
 
         case_creation_data = self.es_case_queries('opened_on', 'opened_by')
         creations_by_user = {
@@ -1269,62 +1324,29 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             t["term"].lower(): t["count"]
             for t in case_closure_data.facet("closed_by", "terms")
         }
-        actives_by_owner = self.get_active_cases_by_owner()
-        totals_by_owner = self.get_total_cases_by_owner()
 
+        if avg_datespan.startdate.year < 1900:  # srftime() doesn't work for dates below 1900
+            avg_datespan.startdate = datetime.datetime(1900, 1, 1)
+
+        return WorkerActivityReportData(
+            avg_submissions_by_user=get_submission_counts_by_user(self.domain, self.datespan),
+            submissions_by_user=get_submission_counts_by_user(self.domain, avg_datespan),
+            active_cases_by_owner=self.get_active_cases_by_owner(),
+            total_cases_by_owner=self.get_total_cases_by_owner(),
+            cases_closed_by_user=closures_by_user,
+            cases_opened_by_user=creations_by_user,
+        )
+
+    @property
+    def rows(self):
+        report_data = self._report_data()
 
         rows = []
         NO_FORMS_TEXT = _('None')
         if self.view_by_groups:
-            for group, users in self.users_by_group.iteritems():
-                group_name, group_id = tuple(group.split('|'))
-                if group_name == 'no_group':
-                    continue
-
-                case_sharing_groups = set(reduce(operator.add, [u['group_ids'] for u in users], []))
-                active_cases = sum([int(actives_by_owner.get(u["user_id"].lower(), 0)) for u in users]) + \
-                    sum([int(actives_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
-                total_cases = sum([int(totals_by_owner.get(u["user_id"].lower(), 0)) for u in users]) + \
-                    sum([int(totals_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
-                active_users = int(active_users_by_group.get(group, 0))
-                total_users = len(self.users_by_group.get(group, []))
-
-                rows.append([
-                    self._group_cell(group_id, group_name),
-                    self._submit_history_link(group_id,
-                                        sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users]),
-                                        type='group'),
-                    util.numcell(sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
-                    util.numcell("%s / %s" % (active_users, total_users),
-                                 value=int((float(active_users) / total_users) * 10000) if total_users else -1,
-                                 raw="%s / %s" % (active_users, total_users)),
-                    util.numcell(sum([int(creations_by_user.get(user["user_id"].lower(), 0)) for user in users])),
-                    util.numcell(sum([int(closures_by_user.get(user["user_id"].lower(), 0)) for user in users])),
-                    util.numcell(active_cases),
-                    util.numcell(total_cases),
-                    util.numcell((float(active_cases)/total_cases) * 100 if total_cases else 'nan', convert='float'),
-                ])
-
+            rows = self._rows_by_group(report_data)
         else:
-            for user in self.users_to_iterate:
-                active_cases = int(actives_by_owner.get(user["user_id"].lower(), 0)) + \
-                    sum([int(actives_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
-                total_cases = int(totals_by_owner.get(user["user_id"].lower(), 0)) + \
-                    sum([int(totals_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
-
-                rows.append(self._add_case_list_links(user['user_id'], [
-                    user["username_in_report"],
-                    self._submit_history_link(user['user_id'],
-                                        submissions_by_user.get(user["user_id"], 0),
-                                        type='user'),
-                    util.numcell(int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
-                    last_form_by_user.get(user["user_id"]) or NO_FORMS_TEXT,
-                    int(creations_by_user.get(user["user_id"].lower(),0)),
-                    int(closures_by_user.get(user["user_id"].lower(), 0)),
-                    util.numcell(active_cases) if not today_or_tomorrow(self.datespan.enddate) else active_cases,
-                    total_cases,
-                    util.numcell((float(active_cases)/total_cases) * 100 if total_cases else 'nan', convert='float'),
-                ]))
+            rows = self._rows_by_user(report_data)
 
         self.total_row = [_("Total")]
         summing_cols = [1, 2, 4, 5, 6, 7]
