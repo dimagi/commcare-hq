@@ -191,6 +191,36 @@ class BooleanExpressionFilterTest(SimpleTestCase):
         for non_match in (-10, 0, 2):
             self.assertFalse(filter({'foo': non_match}))
 
+    def test_date_conversion(self):
+        filter_with_date = FilterFactory.from_spec({
+            "type": "boolean_expression",
+            "expression": {
+                "datatype": "date",
+                "property_name": "visit_date",
+                "type": "property_name"
+            },
+            "operator": "gt",
+            "property_value": "2015-05-05"
+        })
+        self.assertFalse(filter_with_date({'visit_date': '2015-05-04'}))
+        self.assertTrue(filter_with_date({'visit_date': '2015-05-06'}))
+
+    def test_expression_in_value(self):
+        filter_with_exp = FilterFactory.from_spec({
+            'type': 'boolean_expression',
+            'expression': {
+                'type': 'property_name',
+                'property_name': 'foo',
+            },
+            'operator': 'gt',
+            'property_value': {
+                'type': 'property_name',
+                'property_name': 'bar',
+            },
+        })
+        self.assertTrue(filter_with_exp({'foo': 4, 'bar': 2}))
+        self.assertFalse(filter_with_exp({'foo': 2, 'bar': 4}))
+
 
 class ConfigurableANDFilterTest(SimpleTestCase):
 

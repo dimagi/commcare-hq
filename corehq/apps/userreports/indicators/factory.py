@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.expressions import ExpressionFactory
 from corehq.apps.userreports.filters import SinglePropertyValueFilter, CustomFilter
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators import (
@@ -85,7 +86,7 @@ def _build_choice_list_indicator(spec, context):
             filter=SinglePropertyValueFilter(
                 expression=wrapped_spec.getter,
                 operator=wrapped_spec.get_operator(),
-                reference_value=choice,
+                reference_expression=ExpressionFactory.from_spec(choice),
             )
         ) for choice in spec['choices']
     ]

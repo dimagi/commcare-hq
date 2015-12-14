@@ -1,5 +1,6 @@
 import functools
 import json
+import datetime
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -7,6 +8,7 @@ from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, Pr
     ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
     IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
     NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec
+from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_handler
 
 
@@ -138,7 +140,7 @@ class ExpressionFactory(object):
 
     @classmethod
     def from_spec(cls, spec, context=None):
-        if _is_constant(spec):
+        if _is_literal(spec):
             return cls.from_spec(_convert_constant_to_expression_spec(spec), context)
         try:
             return cls.spec_map[spec['type']](spec, context)
@@ -154,9 +156,15 @@ class ExpressionFactory(object):
             ))
 
 
-def _is_constant(value):
-    return isinstance(value, (basestring, int, bool, float))
+def _is_literal(value):
+    return not isinstance(value, dict)
 
 
 def _convert_constant_to_expression_spec(value):
+    # this is a hack to reconvert these to json-strings in case they were already
+    # converted to dates (e.g. because this was a sub-part of a filter or expression)
+    if isinstance(value, datetime.datetime):
+        value = json_format_datetime(value)
+    elif isinstance(value, datetime.date):
+        value = json_format_date(value)
     return {'type': 'constant', 'constant': value}

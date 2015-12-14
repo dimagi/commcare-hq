@@ -62,7 +62,7 @@ class ConstantExpressionTest(SimpleTestCase):
         self.assertEqual(datetime(2015, 2, 4, 11, 5, 24), ExpressionFactory.from_spec('2015-02-04T11:05:24Z')({}))
 
     def test_constant_auto_detection_invalid_types(self):
-        for invalid_constant in ([], {}):
+        for invalid_constant in ({}):
             with self.assertRaises(BadSpecError):
                 ExpressionFactory.from_spec(invalid_constant)
 
