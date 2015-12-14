@@ -32,7 +32,8 @@ from corehq.apps.sms.api import (
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
-from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js, use_timepicker, use_typeahead
+from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js, use_timepicker, use_typeahead, \
+    use_select2
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
@@ -1039,6 +1040,12 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     page_title = ugettext_noop("SMS Connectivity")
     strict_domain_fetching = True
 
+    @use_bootstrap3
+    @use_knockout_js
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(DomainSmsGatewayListView, self).dispatch(request, *args, **kwargs)
+
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
@@ -1189,10 +1196,6 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
             return HttpResponseRedirect(reverse(AddDomainGatewayView.urlname, args=[self.domain, backend_type]))
         return self.paginate_crud_response
 
-    @method_decorator(domain_admin_required)
-    def dispatch(self, request, *args, **kwargs):
-        return super(DomainSmsGatewayListView, self).dispatch(request, *args, **kwargs)
-
 
 class AddDomainGatewayView(BaseMessagingSectionView):
     urlname = 'add_domain_gateway'
@@ -1284,6 +1287,9 @@ class AddDomainGatewayView(BaseMessagingSectionView):
             return HttpResponseRedirect(reverse(DomainSmsGatewayListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
+    @use_bootstrap3
+    @use_knockout_js
+    @use_select2
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def dispatch(self, request, *args, **kwargs):

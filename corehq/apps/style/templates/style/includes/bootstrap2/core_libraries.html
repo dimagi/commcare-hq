@@ -1,12 +1,8 @@
 {% load hq_shared_tags %}
 
 {# this should eventually be moved to the end of the page #}
-{% if formdesigner %}
 <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
 <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
-{% else %}
-<script src="{% static 'jquery-1.7.1-legacy/jquery.js' %}"></script>
-{% endif %}
 
 {% if request.upgrade_knockout_js %}
 <script type="text/javascript" src="{% new_static 'knockout/dist/knockout.js' %}"></script>

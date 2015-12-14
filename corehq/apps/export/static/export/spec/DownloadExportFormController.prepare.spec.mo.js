@@ -29,6 +29,7 @@ describe('DownloadExportFormController - Prepare Download', function() {
             var userTypeCall = analytics.usage.getCall(lastCallNum - 1);
             assert.isTrue(userTypeCall.calledWith("Download Export", 'Select "user type"', "mobile"));
             assert.isTrue(analytics.usage.lastCall.calledWith("Download Export", "Form", "Regular"));
+            assert.isTrue(analytics.workflow.lastCall.calledWith("Clicked Prepare Export"));
         });
 
         it('user type analytics', function () {
@@ -45,6 +46,7 @@ describe('DownloadExportFormController - Prepare Download', function() {
                 var userTypeCall = analytics.usage.getCall(lastCallNum - i);
                 assert.isTrue(userTypeCall.calledWith("Download Export", 'Select "user type"', testUserTypes[testUserTypes.length - i]));
             }
+            assert.isTrue(analytics.workflow.lastCall.calledWith("Clicked Prepare Export"));
         });
 
         it('bulk form analytics', function () {
@@ -55,6 +57,7 @@ describe('DownloadExportFormController - Prepare Download', function() {
             DnldExpData.currentScope.prepareExport();
             DnldExpData.$httpBackend.flush();
             assert.isTrue(analytics.usage.lastCall.calledWith("Download Export", "Form", "Bulk"));
+            assert.isTrue(analytics.workflow.lastCall.calledWith("Clicked Prepare Export"));
         });
 
         it('start exportDownloadService', function () {
@@ -69,6 +72,7 @@ describe('DownloadExportFormController - Prepare Download', function() {
             assert.isTrue(DnldExpData.currentScope.downloadInProgress);
             assert.isFalse(DnldExpData.exportDownloadService.isMultimediaDownload);
             assert.equal(DnldExpData.exportDownloadService.downloadId, downloadId);
+            assert.isTrue(analytics.workflow.lastCall.calledWith("Clicked Prepare Export"));
         });
 
         it('poll download progress', function () {

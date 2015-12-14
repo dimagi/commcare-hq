@@ -25,7 +25,7 @@
     <p ng-show="!_.isEmpty(exports) || !hasLoaded">
         <a href="#createExportOptionsModal"
            data-toggle="modal"
-           class="btn btn-success">
+           class="btn btn-success new-export-link">
             <i class="fa fa-plus"></i>
             {% trans "Create New Export" %}
         </a>
@@ -37,7 +37,7 @@
         {% endblocktrans %}</strong></p>
         <p><a href="#createExportOptionsModal"
               data-toggle="modal"
-              class="btn btn-success">
+              class="btn btn-success new-export-link">
             <i class="fa fa-plus"></i>
             {% trans "Create New Export" %}
         </a></p>
@@ -73,7 +73,7 @@
                 </strong>
                 {% blocktrans %}
                     If this problem persists, please
-                    <a href="#reportIssueModal"
+                    <a href="#modalReportIssue"
                        data-toggle="modal">Report an Issue</a>.
                 {% endblocktrans %}
             </div>
@@ -226,7 +226,8 @@
                         {% angularjs %}
                         <td>
                             <a href="{{ export.downloadUrl }}"
-                               class="btn btn-primary">
+                               class="btn btn-primary"
+                               ng-click="sendExportAnalytics()">
                                 {% trans 'Export' %}</a>
                         </td>
                         {% endangularjs %}

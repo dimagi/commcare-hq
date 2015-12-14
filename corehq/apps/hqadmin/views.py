@@ -31,17 +31,17 @@ from django.http import (
 )
 from restkit import Resource
 from restkit.errors import Unauthorized
-from couchdbkit import ResourceNotFound, Database
+from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
+from corehq.apps.hqadmin.dbaccessors import get_number_of_forms_in_all_domains
 from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.couchdb_management import couch_config
 from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorException, all_pillows_supervisor_status, \
     pillow_supervisor_status
-from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
 from couchforms.models import XFormInstance
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
@@ -72,17 +72,16 @@ from corehq.apps.hqadmin.reporting.reports import (
     get_stats_data,
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
-from corehq.db import Session
+from corehq.sql_db.connections import Session
 from corehq.elastic import parse_args_for_es, ES_URLS, run_query
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.decorators.datespan import datespan_in_request
-from dimagi.utils.parsing import json_format_datetime, json_format_date
+from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response, get_url_base
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from .multimech import GlobalConfig
@@ -370,8 +369,8 @@ def db_comparisons(request):
             'sql_rows': None,
         },
         {
-            'description': 'Forms (doc_type is "XFormInstance")',
-            'couch_docs': get_number_of_forms_all_domains_in_couch(),
+            'description': 'Forms (doc_type is "XFormInstance", couch includes logs)',
+            'couch_docs': get_number_of_forms_in_all_domains(),
             'es_query': FormES().remove_default_filter('has_xmlns')
                 .remove_default_filter('has_user')
                 .size(0),
@@ -461,35 +460,6 @@ def pillow_operation_api(request):
                 return get_response(str(e))
     else:
         return get_response("No pillow found with name '{}'".format(pillow_name))
-
-@require_superuser
-def noneulized_users(request, template="hqadmin/noneulized_users.html"):
-    context = get_hqadmin_base_context(request)
-
-    days = request.GET.get("days", None)
-    days = int(days) if days else 60
-    days_ago = datetime.utcnow() - timedelta(days=days)
-
-    users = WebUser.view(
-        "eula_report/noneulized_users",
-        reduce=False,
-        include_docs=True,
-        startkey=["WebUser", json_format_datetime(days_ago)],
-        endkey=["WebUser", {}]
-    ).all()
-
-    context.update({"users": filter(lambda user: not user.is_dimagi, users), "days": days})
-
-    headers = DataTablesHeader(
-        DataTablesColumn("Username"),
-        DataTablesColumn("Date of Last Login"),
-        DataTablesColumn("couch_id"),
-    )
-    context['layout_flush_content'] = True
-    context["headers"] = headers
-    context["aoColumns"] = headers.render_aoColumns
-
-    return render(request, template, context)
 
 
 @require_superuser

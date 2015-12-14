@@ -123,6 +123,13 @@
         {% endcompress %}
         {% endif %}
 
+        {% if request.guided_tour %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% new_static 'bootstrap-tour/build/css/bootstrap-tour.min.css' %}" />
+        {% endif %}
+
         {# Core Libraries #}
         {% compress js %}
         {% include "style/includes/bootstrap3/core_libraries.html" %}
@@ -389,6 +396,13 @@
         {% if request.use_timepicker %}
         {% compress js %}
         <script type="text/javascript" src="{% new_static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
+
+        {% if request.guided_tour %}
+        {% compress js %}
+        <script src="{% static 'tour/js/tour.utils.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'bootstrap-tour/build/js/bootstrap-tour.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 

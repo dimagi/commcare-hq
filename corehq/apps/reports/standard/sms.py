@@ -9,7 +9,7 @@ from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
+from corehq.apps.reports.filters.fixtures import OptionalAsyncLocationFilter
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
@@ -265,18 +265,13 @@ class MessageLogReport(BaseCommConnectLogReport):
         return lambda message_types: True
 
     def get_location_filter(self):
-        locations = []
-        location_id = AsyncLocationFilter.get_value(self.request, self.domain)
-        if location_id:
-            locations = SQLLocation.objects.get(
-                location_id=location_id
-            ).get_descendants(
-                include_self=True
-            ).filter(
-                location_type__administrative=False
-            ).values_list('location_id', flat=True)
+        locations_ids = []
+        if self.location_id:
+            locations_ids = SQLLocation.objects.get(location_id=self.location_id)\
+                .get_descendants(include_self=True)\
+                .values_list('location_id', flat=True)
 
-        return locations
+        return locations_ids
 
     @staticmethod
     def _get_message_types(message):
@@ -301,7 +296,7 @@ class MessageLogReport(BaseCommConnectLogReport):
     def fields(self):
         fields = [DatespanFilter, MessageTypeFilter]
         if self.uses_locations:
-            fields.insert(0, AsyncLocationFilter)
+            fields.append(OptionalAsyncLocationFilter)
         return fields
 
     @property
@@ -322,6 +317,13 @@ class MessageLogReport(BaseCommConnectLogReport):
     def uses_locations(self):
         return (toggles.LOCATIONS_IN_REPORTS.enabled(self.domain)
                 and Domain.get_by_name(self.domain).uses_locations)
+
+    @property
+    @memoized
+    def location_id(self):
+        if self.uses_locations:
+            return OptionalAsyncLocationFilter.get_value(self.request, self.domain)
+        return None
 
     def _get_queryset(self):
 
@@ -356,7 +358,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             return data_.filter(filters)
 
         def filter_by_location(data):
-            if not self.uses_locations:
+            if not self.location_id:
                 return data
             location_ids = self.get_location_filter()
             # location_ids is a list of strings because SMS.location_id is a CharField, not a foreign key
@@ -439,7 +441,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             {'name': 'startdate', 'value': start_date},
             {'name': 'enddate', 'value': end_date},
             {'name': 'log_type', 'value': MessageTypeFilter.get_value(self.request, self.domain)},
-            {'name': 'location_id', 'value': AsyncLocationFilter.get_value(self.request, self.domain)},
+            {'name': 'location_id', 'value': self.location_id},
         ]
 
     @property

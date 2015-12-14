@@ -45,7 +45,10 @@ from corehq.apps.accounting.utils import domain_has_privilege
 
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
-from corehq.apps.app_manager.xpath import dot_interpolate, LocationXpath
+from corehq.apps.app_manager.xpath import (
+    interpolate_xpath,
+    LocationXpath,
+)
 from corehq.apps.builds import get_default_build_spec
 from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.cache import cache_core
@@ -3498,7 +3501,11 @@ class ReportModule(ModuleBase):
         from .suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
         return ReportModuleSuiteHelper(self).get_custom_entries()
 
-    def get_menus(self):
+    def get_menus(self, supports_module_filter=False):
+        kwargs = {}
+        if supports_module_filter:
+            kwargs['relevant'] = interpolate_xpath(self.module_filter)
+
         menu = suite_models.LocalizedMenu(
             id=id_strings.menu_id(self),
             menu_locale_id=id_strings.module_locale(self),
@@ -3506,6 +3513,7 @@ class ReportModule(ModuleBase):
             media_audio=bool(len(self.all_audio_paths())),
             image_locale_id=id_strings.module_icon_locale(self),
             audio_locale_id=id_strings.module_audio_locale(self),
+            **kwargs
         )
         menu.commands.extend([
             suite_models.Command(id=id_strings.report_command(config.uuid))

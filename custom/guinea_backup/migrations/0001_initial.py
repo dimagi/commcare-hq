@@ -4,6 +4,8 @@ from datetime import date
 
 from django.db import models, migrations
 
+from corehq.sql_db.operations import HqRunPython
+
 
 def add_dummy_row(apps, schema_editor):
     BackupRecord = apps.get_model("guinea_backup", "BackupRecord")
@@ -27,5 +29,5 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model,),
         ),
-        migrations.RunPython(add_dummy_row),
+        HqRunPython(add_dummy_row),
     ]

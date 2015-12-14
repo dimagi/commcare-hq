@@ -61,6 +61,7 @@ def _get_config_entry(config):
                 id='report_id_{}'.format(config.uuid),
                 nodeset="instance('reports')/reports/report[@id='{}']".format(config.uuid),
                 value='./@id',
+                autoselect="true"
             ),
         ]
     )

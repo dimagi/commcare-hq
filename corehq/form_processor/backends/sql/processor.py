@@ -56,16 +56,14 @@ class FormProcessorSQL(object):
         CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
 
     @classmethod
-    def save_processed_models(cls, xforms, cases=None, stock_updates=None):
+    def save_processed_models(cls, processed_forms, cases=None, stock_updates=None):
         with transaction.atomic():
             logging.debug('Beginning atomic commit\n')
-            # Ensure already saved forms get saved first to avoid ID conflicts
-            is_deprecation = len(xforms) > 1
-            for xform in sorted(xforms, key=lambda xform: not xform.is_saved()):
-                if is_deprecation and xform.is_deprecated:
-                    FormAccessorSQL.save_deprecated_form(xform)
-                else:
-                    FormAccessorSQL.save_new_form(xform)
+            # Save deprecated form first to avoid ID conflicts
+            if processed_forms.deprecated:
+                FormAccessorSQL.save_deprecated_form(processed_forms.deprecated)
+
+            FormAccessorSQL.save_new_form(processed_forms.submitted)
 
             if cases:
                 for case in cases:
