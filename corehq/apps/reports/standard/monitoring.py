@@ -1049,7 +1049,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     is_cacheable = True
 
     fields = [
-        'corehq.apps.reports.dont_use.fields.MultiSelectGroupField',
+        'corehq.apps.reports.filters.select.MultiGroupFilter',
         'corehq.apps.reports.dont_use.fields.UserOrGroupField',
         'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',

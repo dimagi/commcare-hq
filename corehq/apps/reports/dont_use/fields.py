@@ -152,19 +152,3 @@ class ReportMultiSelectField(ReportSelectField):
 
     def update_params(self):
         self.selected = self.request.GET.getlist(self.slug) or self.default_option
-
-
-class MultiSelectGroupField(ReportMultiSelectField):
-    slug = "group"
-    name = ugettext_noop("Group")
-    cssId = "group_select"
-    default_option = ['_all']
-    placeholder = 'Click to select groups'
-    help_text = "Start typing to select one or more groups"
-
-    @property
-    def options(self):
-        self.groups = Group.get_reporting_groups(self.domain)
-        opts = [dict(val=group.get_id, text=group.name) for group in self.groups]
-        opts.insert(0, {'text': 'All', 'val': '_all'})
-        return opts
