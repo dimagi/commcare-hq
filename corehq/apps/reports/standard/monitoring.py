@@ -1198,40 +1198,69 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             display=val,
         ), val)
 
-    def _add_case_list_links(self, owner_id, row):
-        """
-            takes a row, and converts certain cells in the row to links that link to the case list page
-        """
-        cl_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'case_list'))
-        url_args = EMWF.for_user(owner_id)
+    def _html_anchor_tag(self, href, value):
+        return '<a href="{}" target="_blank">{}</a>'.format(href, value)
 
+    def _case_query(self, case_type):
+        if not case_type:
+            return ''
+        return ' AND type.exact: {}'.format(case_type)
+
+    def _case_list_url_params(self, query, owner_id):
+        params = {}
+        params.update(EMWF.for_user(owner_id))  # Get user slug for Users or Groups Filter
+        params.update({'search_query': query})
+        return params
+
+    @property
+    def _case_list_base_url(self):
+        return absolute_reverse('project_report_dispatcher', args=(self.domain, 'case_list'))
+
+    def _case_list_url(self, query, owner_id):
+        params = self._case_list_url_params(query, owner_id)
+        return '{base_url}?{params}'.format(
+            base_url=self._case_list_base_url,
+            params=urlencode(params, True),
+        )
+
+    def _case_list_url_cases_opened_by(self, owner_id):
+        return self._case_list_url_cases_by(owner_id, is_closed=False)
+
+    def _case_list_url_cases_closed_by(self, owner_id):
+        return self._case_list_url_cases_by(owner_id, is_closed=True)
+
+    def _case_list_url_cases_by(self, owner_id, is_closed=False):
         start_date, end_date = self._dates_for_linked_reports(case_list=True)
-        start_date_sub1 = self.datespan.startdate - datetime.timedelta(days=1)
-        start_date_sub1 = start_date_sub1.strftime(self.datespan.format)
-        search_strings = {
-            4: "opened_by: %s AND opened_on: [%s TO %s]" % (owner_id, start_date, end_date), # cases created
-            5: "closed_by: %s AND closed_on: [%s TO %s]" % (owner_id, start_date, end_date), # cases closed
-            7: "opened_on: [* TO %s] AND NOT closed_on: [* TO %s]" % (end_date, start_date_sub1), # total cases
-        }
-        if today_or_tomorrow(self.datespan.enddate):
-            search_strings[6] = "modified_on: [%s TO %s]" % (start_date, end_date) # active cases
+        prefix = 'closed' if is_closed else 'opened'
 
-        if self.case_type:
-            for index, search_string in search_strings.items():
-                search_strings[index] = search_string + " AND type.exact: %s" % self.case_type
+        query = "{prefix}_by: {owner_id} AND {prefix}_on: [{start_date} TO {end_date}] {case_query}".format(
+            prefix=prefix,
+            owner_id=owner_id,
+            start_date=start_date,
+            end_date=end_date,
+            case_query=self._case_query(self.case_type),
+        )
 
-        def create_case_url(index):
-            """
-                Given an index for a cell in a the row, creates the link to the case list page for that cell
-            """
-            url_params = {}
-            url_params.update(url_args)
-            url_params.update({"search_query": search_strings[index]})
-            return util.numcell('<a href="%s?%s" target="_blank">%s</a>' % (cl_url, urlencode(url_params, True), row[index]), row[index])
+        return self._case_list_url(query, owner_id)
 
-        for i in search_strings:
-            row[i] = create_case_url(i)
-        return row
+    def _case_list_url_total_cases(self, owner_id):
+        start_date, end_date = self._dates_for_linked_reports(case_list=True)
+        # Subtract a day for inclusiveness
+        start_date = (self.datespan.startdate - datetime.timedelta(days=1)).strftime(self.datespan.format)
+
+        query = 'opened_on: [* TO {end_date}] AND NOT closed_on: [* TO {start_date}]'.format(
+            end_date=end_date,
+            start_date=start_date,
+        )
+        return self._case_list_url(query, owner_id)
+
+    def _case_list_url_active_cases(self, owner_id):
+        start_date, end_date = self._dates_for_linked_reports(case_list=True)
+        query = "modified_on: [{start_date} TO {end_date}]".format(
+            start_date=start_date,
+            end_date=end_date
+        )
+        return self._case_list_url(query, owner_id)
 
     def _group_cell(self, group_id, group_name):
         """
@@ -1304,7 +1333,19 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             total_cases = int(report_data.total_cases_by_owner.get(user["user_id"].lower(), 0)) + \
                 sum([int(report_data.total_cases_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
 
-            row = [
+            cases_opened = int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0))
+            cases_closed = int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0))
+
+            if today_or_tomorrow(self.datespan.enddate):
+                active_cases_cell = util.numcell(
+                    self._html_anchor_tag(self._case_list_url_active_cases(user['user_id']), active_cases),
+                    active_cases,
+                )
+            else:
+                active_cases_cell = util.numcell(active_cases)
+
+            
+            rows.append([
                 # Username
                 user["username_in_report"],
                 # Forms Submitted
@@ -1316,21 +1357,27 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 # Last Form submission
                 last_form_by_user.get(user["user_id"]) or self.NO_FORMS_TEXT,
                 # Cases opened
-                int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0)),
+                util.numcell(
+                    self._html_anchor_tag(self._case_list_url_cases_opened_by(user['user_id']), cases_opened),
+                    cases_opened,
+                ),
                 # Cases Closed
-                int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0)),
+                util.numcell(
+                    self._html_anchor_tag(self._case_list_url_cases_closed_by(user['user_id']), cases_closed),
+                    cases_closed,
+                ),
                 # Active Cases
-                util.numcell(active_cases) if not today_or_tomorrow(self.datespan.enddate) else active_cases,
+                active_cases_cell,
                 # Total Cases
-                total_cases,
+                util.numcell(
+                    self._html_anchor_tag(self._case_list_url_total_cases(user['user_id']), total_cases),
+                    total_cases,
+                ),
                 # Percent active
                 util.numcell((float(active_cases)/total_cases) * 100 if total_cases else 'nan', convert='float'),
 
-            ]
+            ])
 
-            rows.append(
-                self._add_case_list_links(user['user_id'], row)
-            )
         return rows
 
     def _report_data(self):
