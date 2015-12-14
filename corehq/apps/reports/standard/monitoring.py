@@ -1059,10 +1059,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
-        if project and project.commtrack_enabled:
-            return False
-        else:
-            return True
+        return bool(project and project.commtrack_enabled)
 
     @property
     @memoized
