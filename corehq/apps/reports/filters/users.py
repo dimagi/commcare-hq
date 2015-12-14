@@ -7,13 +7,13 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import namedtupledict
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import es_query, ES_URLS
 from corehq.util import remove_dups
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.models import SQLLocation
 
 from .. import util
 from ..models import HQUserType, HQUserToggle
+from ..analytics.esaccessors import get_users, get_groups
 from .base import (
     BaseDrilldownOptionFilter,
     BaseMultipleOptionFilter,
@@ -238,28 +238,14 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         user_ids = self.selected_user_ids(mobile_user_and_group_slugs)
         if not user_ids:
             return []
-        q = {"query": {"filtered": {"filter": {
-            "ids": {"values": user_ids}
-        }}}}
-        res = es_query(
-            es_url=ES_URLS["users"],
-            q=q,
-            fields=['_id', 'username', 'first_name', 'last_name', 'doc_type'],
-        )
-        return [self.utils.user_tuple(hit['fields']) for hit in res['hits']['hits']]
+        results = get_users(user_ids)
+        return [self.utils.user_tuple(hit['fields']) for hit in results]
 
     def _selected_groups_query(self, mobile_user_and_group_slugs):
         group_ids = self.selected_group_ids(mobile_user_and_group_slugs)
         if not group_ids:
             return []
-        q = {"query": {"filtered": {"filter": {
-            "ids": {"values": group_ids}
-        }}}}
-        return es_query(
-            es_url=ES_URLS["groups"],
-            q=q,
-            fields=['_id', 'name', "case_sharing", "reporting"],
-        )['hits']['hits']
+        return get_groups(group_ids)
 
     def _selected_group_entries(self, mobile_user_and_group_slugs):
         groups = self._selected_groups_query(mobile_user_and_group_slugs)

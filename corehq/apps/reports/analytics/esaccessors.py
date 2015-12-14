@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from corehq.apps.es import FormES
+from corehq.elastic import es_query, ES_URLS
 from dimagi.utils.parsing import string_to_datetime
 
 
@@ -80,3 +81,26 @@ def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission
         results,
     )
     return dict(results)
+
+
+def get_groups(group_ids):
+    q = {"query": {"filtered": {"filter": {
+        "ids": {"values": group_ids}
+    }}}}
+    return es_query(
+        es_url=ES_URLS["groups"],
+        q=q,
+        fields=['_id', 'name', "case_sharing", "reporting"],
+    )['hits']['hits']
+
+
+def get_users(user_ids):
+    q = {"query": {"filtered": {"filter": {
+        "ids": {"values": user_ids}
+    }}}}
+    res = es_query(
+        es_url=ES_URLS["users"],
+        q=q,
+        fields=['_id', 'username', 'first_name', 'last_name', 'doc_type'],
+    )
+    return res['hits']['hits']
