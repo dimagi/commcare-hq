@@ -1,11 +1,20 @@
 {% extends "registration/base.html" %}
-{% load i18n %}
+{% load i18n %}{% load hq_shared_tags %}
 
 {% block title %}{% trans "Create an Account" %}{% endblock title %}
 {% block step-title %}{% trans "Create an Account" %}{% endblock %}
 {% block js-inline  %}{{ block.super }}
     {% url "eula_basic" as eula_url %}
     {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
+    <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
+    <script src="{% static 'registration/js/password.js' %}"></script>
+    <script type="text/javascript">
+        PASSWORD_WEAK = "{% trans "Your password is too weak!" %}";
+        PASSWORD_BETTER = "{% trans "Your password is almost strong enough!" %}";
+        PASSWORD_STRONG = "{% trans  "Good Job! Your password is strong!" %}";
+        var passwordModel = new PasswordModel(PASSWORD_WEAK, PASSWORD_BETTER, PASSWORD_STRONG);
+        $('fieldset').koApplyBindings(passwordModel);
+    </script>
 {% endblock %}
 
 {% block registration-content %}
