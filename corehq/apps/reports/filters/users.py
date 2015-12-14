@@ -315,8 +315,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 return q.filter(id_filter)
 
     @classmethod
-    def pull_users_and_groups(cls, domain, mobile_user_and_group_slugs, simplified_users=False,
-            combined=False, CommCareUser=CommCareUser, include_inactive=False):
+    def pull_users_and_groups(cls, domain, mobile_user_and_group_slugs, include_inactive=False):
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
         user_types = cls.selected_user_types(mobile_user_and_group_slugs)
         group_ids = cls.selected_group_ids(mobile_user_and_group_slugs)
@@ -325,27 +324,30 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             users = util.get_all_users_by_domain(
                 domain=domain,
                 user_ids=user_ids,
-                simplified=simplified_users,
+                simplified=True,
                 CommCareUser=CommCareUser,
             )
         user_filter = tuple([HQUserToggle(id, id in user_types) for id in range(4)])
-        other_users = util.get_all_users_by_domain(domain=domain, user_filter=user_filter, simplified=simplified_users,
-                                                   CommCareUser=CommCareUser, include_inactive=include_inactive)
+        other_users = util.get_all_users_by_domain(
+            domain=domain,
+            user_filter=user_filter,
+            simplified=True,
+            CommCareUser=CommCareUser,
+            include_inactive=include_inactive
+        )
         groups = [Group.get(g) for g in group_ids]
         all_users = users + other_users
-        if combined:
-            user_dict = {}
-            for group in groups:
-                user_dict["%s|%s" % (group.name, group._id)] = util.get_all_users_by_domain(
-                    group=group,
-                    simplified=simplified_users
-                )
-            users_in_groups = [user for sublist in user_dict.values() for user in sublist]
-            users_by_group = user_dict
-            combined_users = remove_dups(all_users + users_in_groups, "user_id")
-        else:
-            users_by_group = None
-            combined_users = None
+
+        user_dict = {}
+        for group in groups:
+            user_dict["%s|%s" % (group.name, group._id)] = util.get_all_users_by_domain(
+                group=group,
+                simplified=True
+            )
+        users_in_groups = [user for sublist in user_dict.values() for user in sublist]
+        users_by_group = user_dict
+        combined_users = remove_dups(all_users + users_in_groups, "user_id")
+
         return _UserData(
             users=all_users,
             admin_and_demo_users=other_users,

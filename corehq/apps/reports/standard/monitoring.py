@@ -281,8 +281,6 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         users_data = EMWF.pull_users_and_groups(
             self.domain,
             mobile_user_and_group_slugs,
-            simplified_users=True,
-            combined=True
         )
         rows = [self.Row(self, user) for user in users_data.combined_users]
 
@@ -402,8 +400,6 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
         users_data = EMWF.pull_users_and_groups(
             self.domain,
             mobile_user_and_group_slugs,
-            simplified_users=True,
-            combined=True,
         )
         return users_data.combined_users
 
@@ -769,8 +765,6 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
         users_data = EMWF.pull_users_and_groups(
             self.domain,
             mobile_user_and_group_slugs,
-            simplified_users=True,
-            combined=True,
         )
         user_ids = [user.user_id for user in users_data.combined_users]
 
@@ -835,8 +829,6 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
             users_data = EMWF.pull_users_and_groups(
                 self.domain,
                 mobile_user_and_group_slugs,
-                simplified_users=True,
-                combined=True,
             )
 
             placeholders = []
@@ -961,8 +953,6 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         users_data = EMWF.pull_users_and_groups(
             self.domain,
             mobile_user_and_group_slugs,
-            simplified_users=True,
-            combined=True,
         )
         for user in users_data.combined_users:
             for form, info in self.all_relevant_forms.items():
