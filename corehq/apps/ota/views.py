@@ -63,13 +63,13 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     restore_config = RestoreConfig(
         project=project,
         user=couch_user.to_casexml_user(),
-        app=app,
         params=RestoreParams(
             sync_log_id=since,
             version=version,
             state_hash=state,
             include_item_count=items,
             force_restore_mode=force_restore_mode,
+            app=app,
         ),
         cache_settings=RestoreCacheSettings(
             force_cache=force_cache,
