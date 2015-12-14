@@ -1070,13 +1070,13 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return {}
 
     @property
-    def view_by(self):
-        return self.request.GET.get('view_by', None)
+    def view_by_groups(self):
+        return self.request.GET.get('view_by', None) == 'groups'
 
     @property
     def headers(self):
         CASE_TYPE_MSG = "The case type filter doesn't affect this column."
-        by_group = self.view_by == 'groups'
+        by_group = self.view_by_groups
         columns = [DataTablesColumn(_("Group"))] if by_group else [DataTablesColumn(_("User"))]
         columns.append(DataTablesColumnGroup(_("Form Data"),
             DataTablesColumn(_("# Forms Submitted"), sort_type=DTSortType.NUMERIC,
@@ -1170,7 +1170,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         submissions_by_user = get_submission_counts_by_user(self.domain, self.datespan)
         avg_submissions_by_user = get_submission_counts_by_user(self.domain, avg_datespan)
 
-        if self.view_by == 'groups':
+        if self.view_by_groups:
             active_users_by_group = {
                 g: len(filter(lambda u: submissions_by_user.get(u['user_id']), users))
                 for g, users in self.users_by_group.iteritems()
@@ -1274,7 +1274,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
         rows = []
         NO_FORMS_TEXT = _('None')
-        if self.view_by == 'groups':
+        if self.view_by_groups:
             for group, users in self.users_by_group.iteritems():
                 group_name, group_id = tuple(group.split('|'))
                 if group_name == 'no_group':
@@ -1333,7 +1333,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             else:
                 self.total_row.append('---')
 
-        if self.view_by == 'groups':
+        if self.view_by_groups:
             def parse(str):
                 num, denom = tuple(str.split('/'))
                 num = int(num.strip())
