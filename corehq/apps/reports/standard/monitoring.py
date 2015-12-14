@@ -277,8 +277,13 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def rows(self):
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
         users_data = EMWF.pull_users_and_groups(
-            self.domain, self.request, True, True)
+            self.domain,
+            mobile_user_and_group_slugs,
+            simplified_users=True,
+            combined=True
+        )
         rows = [self.Row(self, user) for user in users_data.combined_users]
 
         total_row = self.TotalRow(rows, _("All Users"))
@@ -393,7 +398,13 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
     @property
     @memoized
     def selected_users(self):
-        users_data = EMWF.pull_users_and_groups(self.domain, self.request, True, True)
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        users_data = EMWF.pull_users_and_groups(
+            self.domain,
+            mobile_user_and_group_slugs,
+            simplified_users=True,
+            combined=True,
+        )
         return users_data.combined_users
 
     @property
@@ -425,7 +436,8 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
     @property
     @memoized
     def _form_counts(self):
-        if EMWF.show_all_mobile_workers(self.request):
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        if EMWF.show_all_mobile_workers(mobile_user_and_group_slugs):
             user_ids = []
         else:
             # Don't query ALL mobile workers
@@ -527,7 +539,8 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
     @memoized
     def all_users(self):
         fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'email']
-        users = EMWF.user_es_query(self.domain, self.request).fields(fields)\
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        users = EMWF.user_es_query(self.domain, mobile_user_and_group_slugs).fields(fields)\
                 .run().hits
         users = map(util._report_user_dict, users)
         return sorted(users, key=lambda u: u['username_in_report'])
@@ -752,8 +765,13 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
                     Count('duration')
                 )
 
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
         users_data = EMWF.pull_users_and_groups(
-            self.domain, self.request, True, True)
+            self.domain,
+            mobile_user_and_group_slugs,
+            simplified_users=True,
+            combined=True,
+        )
         user_ids = [user.user_id for user in users_data.combined_users]
 
         data_map = dict([(row['user_id'], row) for row in get_data(user_ids)])
@@ -813,8 +831,13 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
         total = 0
         total_seconds = 0
         if self.all_relevant_forms:
+            mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
             users_data = EMWF.pull_users_and_groups(
-                self.domain, self.request, True, True)
+                self.domain,
+                mobile_user_and_group_slugs,
+                simplified_users=True,
+                combined=True,
+            )
 
             placeholders = []
             params = []
@@ -934,7 +957,13 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     @memoized
     def activity_times(self):
         all_times = []
-        users_data = EMWF.pull_users_and_groups(self.domain, self.request, True, True)
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        users_data = EMWF.pull_users_and_groups(
+            self.domain,
+            mobile_user_and_group_slugs,
+            simplified_users=True,
+            combined=True,
+        )
         for user in users_data.combined_users:
             for form, info in self.all_relevant_forms.items():
                 key = make_form_couch_key(

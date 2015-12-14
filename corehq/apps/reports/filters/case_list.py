@@ -32,27 +32,24 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
         return CaseListFilterUtils(self.domain)
 
     @classmethod
-    def show_all_data(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return 'all_data' in emws
+    def show_all_data(cls, mobile_user_and_group_slugs):
+        return 'all_data' in mobile_user_and_group_slugs
 
     @classmethod
-    def show_project_data(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return 'project_data' in emws
+    def show_project_data(cls, mobile_user_and_group_slugs):
+        return 'project_data' in mobile_user_and_group_slugs
 
     @classmethod
-    def selected_sharing_group_ids(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return [g[4:] for g in emws if g.startswith("sg__")]
+    def selected_sharing_group_ids(cls, mobile_user_and_group_slugs):
+        return [g[4:] for g in mobile_user_and_group_slugs if g.startswith("sg__")]
 
     @classmethod
-    def selected_group_ids(cls, request):
-        return (super(CaseListFilter, cls).selected_group_ids(request) +
-                cls.selected_sharing_group_ids(request))
+    def selected_group_ids(cls, mobile_user_and_group_slugs):
+        return (super(CaseListFilter, cls).selected_group_ids(mobile_user_and_group_slugs) +
+                cls.selected_sharing_group_ids(mobile_user_and_group_slugs))
 
-    def selected_group_entries(self, request):
-        query_results = self.selected_groups_query(request)
+    def _selected_group_entries(self, mobile_user_and_group_slugs):
+        query_results = self._selected_groups_query(mobile_user_and_group_slugs)
         reporting = [self.utils.reporting_group_tuple(group['fields'])
                      for group in query_results
                      if group['fields'].get("reporting", False)]

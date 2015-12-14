@@ -80,8 +80,14 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                 yield {'or': [form_filter(f) for f in form_values]}
 
         truthy_only = functools.partial(filter, None)
+        mobile_user_and_group_slugs = self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
         users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
-            self.domain, self.request, True, True, include_inactive=True)
+            self.domain,
+            mobile_user_and_group_slugs,
+            simplified_users=True,
+            combined=True,
+            include_inactive=True
+        )
         all_mobile_workers_selected = 't__0' in self.request.GET.getlist('emw')
         if not all_mobile_workers_selected or users_data.admin_and_demo_users:
             yield {

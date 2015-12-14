@@ -159,9 +159,9 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     """
     To get raw filter results:
 
-        user_ids = emwf.selected_user_ids(request)
-        user_types = emwf.selected_user_types(request)
-        group_ids = emwf.selected_group_ids(request)
+        user_ids = emwf.selected_user_ids(mobile_user_and_group_slugs)
+        user_types = emwf.selected_user_types(mobile_user_and_group_slugs)
+        group_ids = emwf.selected_group_ids(mobile_user_and_group_slugs)
     """
     slug = "emw"
     label = ugettext_lazy("Groups or Users")
@@ -177,37 +177,32 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return EmwfUtils(self.domain)
 
     @classmethod
-    def selected_user_ids(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return [u[3:] for u in emws if u.startswith("u__")]
+    def selected_user_ids(cls, mobile_user_and_group_slugs):
+        return [u[3:] for u in mobile_user_and_group_slugs if u.startswith("u__")]
 
     @classmethod
-    def selected_user_types(cls, request):
+    def selected_user_types(cls, mobile_user_and_group_slugs):
         """
         usage: ``HQUserType.DEMO_USER in selected_user_types``
         """
-        emws = request.GET.getlist(cls.slug)
-        return [int(t[3:]) for t in emws
+        return [int(t[3:]) for t in mobile_user_and_group_slugs
                 if t.startswith("t__") and t[3:].isdigit()]
 
     @classmethod
-    def selected_group_ids(cls, request):
-        return cls.selected_reporting_group_ids(request)
+    def selected_group_ids(cls, mobile_user_and_group_slugs):
+        return cls.selected_reporting_group_ids(mobile_user_and_group_slugs)
 
     @classmethod
-    def selected_reporting_group_ids(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return [g[3:] for g in emws if g.startswith("g__")]
+    def selected_reporting_group_ids(cls, mobile_user_and_group_slugs):
+        return [g[3:] for g in mobile_user_and_group_slugs if g.startswith("g__")]
 
     @classmethod
-    def selected_location_ids(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return [l[3:] for l in emws if l.startswith("l__")]
+    def selected_location_ids(cls, mobile_user_and_group_slugs):
+        return [l[3:] for l in mobile_user_and_group_slugs if l.startswith("l__")]
 
     @classmethod
-    def show_all_mobile_workers(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return 't__0' in emws
+    def show_all_mobile_workers(cls, mobile_user_and_group_slugs):
+        return 't__0' in mobile_user_and_group_slugs
 
     def get_default_selections(self):
         defaults = [('t__0', _("[All mobile workers]"))]
@@ -223,10 +218,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             return [{'id': url_id, 'text': text}
                     for url_id, text in self.get_default_selections()]
 
-        selected = (self.selected_static_options(self.request) +
-                    self.selected_user_entries(self.request) +
-                    self.selected_group_entries(self.request) +
-                    self.selected_location_entries(self.request))
+        selected = (self.selected_static_options(selected_ids) +
+                    self._selected_user_entries(selected_ids) +
+                    self._selected_group_entries(selected_ids) +
+                    self._selected_location_entries(selected_ids))
         known_ids = dict(selected)
         return [
             {'id': id, 'text': known_ids[id]}
@@ -234,13 +229,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             if id in known_ids
         ]
 
-    def selected_static_options(self, request):
-        selected_ids = self.request.GET.getlist(self.slug)
+    def selected_static_options(self, mobile_user_and_group_slugs):
         return [option for option in self.utils.static_options
-                if option[0] in selected_ids]
+                if option[0] in mobile_user_and_group_slugs]
 
-    def selected_user_entries(self, request):
-        user_ids = self.selected_user_ids(request)
+    def _selected_user_entries(self, mobile_user_and_group_slugs):
+        user_ids = self.selected_user_ids(mobile_user_and_group_slugs)
         if not user_ids:
             return []
         q = {"query": {"filtered": {"filter": {
@@ -253,8 +247,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         )
         return [self.utils.user_tuple(hit['fields']) for hit in res['hits']['hits']]
 
-    def selected_groups_query(self, request):
-        group_ids = self.selected_group_ids(request)
+    def _selected_groups_query(self, mobile_user_and_group_slugs):
+        group_ids = self.selected_group_ids(mobile_user_and_group_slugs)
         if not group_ids:
             return []
         q = {"query": {"filtered": {"filter": {
@@ -266,13 +260,14 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             fields=['_id', 'name', "case_sharing", "reporting"],
         )['hits']['hits']
 
-    def selected_group_entries(self, request):
+    def _selected_group_entries(self, mobile_user_and_group_slugs):
+        groups = self._selected_groups_query(mobile_user_and_group_slugs)
         return [self.utils.reporting_group_tuple(group['fields'])
-                for group in self.selected_groups_query(request)
+                for group in groups
                 if group['fields'].get("reporting", False)]
 
-    def selected_location_entries(self, request):
-        location_ids = self.selected_location_ids(request)
+    def _selected_location_entries(self, mobile_user_and_group_slugs):
+        location_ids = self.selected_location_ids(mobile_user_and_group_slugs)
         if not location_ids:
             return []
         return map(self.utils.location_tuple,
@@ -292,11 +287,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             return Group.get_reporting_groups(domain)
         return [Group.get(g) for g in group_ids]
 
-    @classmethod
-    def user_es_query(cls, domain, request):
-        user_ids = cls.selected_user_ids(request)
-        user_types = cls.selected_user_types(request)
-        group_ids = cls.selected_group_ids(request)
+    def user_es_query(cls, domain, mobile_user_and_group_slugs):
+        user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
+        user_types = cls.selected_user_types(mobile_user_and_group_slugs)
+        group_ids = cls.selected_group_ids(mobile_user_and_group_slugs)
 
         user_type_filters = []
         if HQUserType.ADMIN in user_types:
@@ -326,14 +320,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             else:
                 return q.filter(id_filter)
 
-
     @classmethod
-    @memoized
-    def pull_users_and_groups(cls, domain, request, simplified_users=False,
+    def pull_users_and_groups(cls, domain, mobile_user_and_group_slugs, simplified_users=False,
             combined=False, CommCareUser=CommCareUser, include_inactive=False):
-        user_ids = cls.selected_user_ids(request)
-        user_types = cls.selected_user_types(request)
-        group_ids = cls.selected_group_ids(request)
+        user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
+        user_types = cls.selected_user_types(mobile_user_and_group_slugs)
+        group_ids = cls.selected_group_ids(mobile_user_and_group_slugs)
         users = []
         if user_ids or HQUserType.REGISTERED in user_types:
             users = util.get_all_users_by_domain(
