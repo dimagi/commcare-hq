@@ -1,3 +1,5 @@
+import logging
+
 from django.apps import apps
 from django.core.exceptions import ImproperlyConfigured
 from django.db import connection
@@ -51,6 +53,8 @@ class ModelDeletion(BaseDeletion):
             model = self.get_model_class()
             if model:
                 model.objects.filter(**{self.domain_filter_kwarg: domain_name}).delete()
+            else:
+                logging.warn('Unable to find model %s.%s', self.app_label, self.model_name)
 
 
 # We use raw queries instead of ORM because Django queryset delete needs to
