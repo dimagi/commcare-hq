@@ -208,6 +208,7 @@ class TestFormMetadata(jsonobject.JsonObject):
     form_name = jsonobject.StringProperty(default='New Form')
     user_id = jsonobject.StringProperty(default='cruella_deville')
     time_end = jsonobject.DateTimeProperty(default=datetime(2013, 4, 19, 16, 53, 2))
+    # Set this property to fake the submission time
     received_on = jsonobject.DateTimeProperty(default=datetime.utcnow())
 
 
