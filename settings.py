@@ -1369,7 +1369,11 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionMotherFluffPillow',
         'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
-        'custom.succeed.models.UCLAPatientFluffPillow',
+        {
+            'name': 'UCLAPatientFluffPillow',
+            'class': 'custom.succeed.models.UCLAPatientFluffPillow',
+            'instance': 'custom.succeed.models.get_pillow',
+        },
         {
             'name': 'MalariaConsortiumFluffPillow',
             'class': 'custom.reports.mc.models.MalariaConsortiumFluffPillow',
