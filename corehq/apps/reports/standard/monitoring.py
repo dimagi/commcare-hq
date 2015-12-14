@@ -1146,31 +1146,35 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         end_date = end_date.strftime(self.datespan.format)
         return start_date, end_date
 
-    def _submit_history_link(self, owner_id, val, type):
+    def _submit_history_link(self, owner_id, value):
         """
-        takes a row, and converts certain cells in the row to links that link to the submit history report
+        returns a cell that is linked to the submit history report
         """
-        fs_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
-        if type == 'user':
-            url_args = EMWF.for_user(owner_id)
+        base_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
+        if self.view_by_groups:
+            params = EMWF.for_reporting_group(owner_id)
         else:
-            assert type == 'group'
-            url_args = EMWF.for_reporting_group(owner_id)
+            params = EMWF.for_user(owner_id)
 
         start_date, end_date = self._dates_for_linked_reports()
-        url_args.update({
+        params.update({
             "startdate": start_date,
             "enddate": end_date,
         })
 
-        return util.numcell(u'<a href="{report}?{params}" target="_blank">{display}</a>'.format(
-            report=fs_url,
-            params=urlencode(url_args, True),
-            display=val,
-        ), val)
+        return util.numcell(
+            self._html_anchor_tag(self._make_url(base_url, params), value),
+            value,
+        )
 
     def _html_anchor_tag(self, href, value):
         return '<a href="{}" target="_blank">{}</a>'.format(href, value)
+
+    def _make_url(self, base_url, params):
+        return '{base_url}?{params}'.format(
+            base_url=base_url,
+            params=urlencode(params, True),
+        )
 
     def _case_query(self, case_type):
         if not case_type:
@@ -1189,10 +1193,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     def _case_list_url(self, query, owner_id):
         params = self._case_list_url_params(query, owner_id)
-        return '{base_url}?{params}'.format(
-            base_url=self._case_list_base_url,
-            params=urlencode(params, True),
-        )
+        return self._make_url(self._case_list_base_url, params)
 
     def _case_list_url_cases_opened_by(self, owner_id):
         return self._case_list_url_cases_by(owner_id, is_closed=False)
@@ -1245,10 +1246,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             "enddate": end_date,
         }
 
-        url = '{base_url}?{params}'.format(
-            base_url=base_url,
-            params=urlencode(params),
-        )
+        url = self._make_url(base_url, params)
 
         return util.format_datatables_data(
             self._html_anchor_tag(url, group_name),
@@ -1279,9 +1277,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 # Group Name
                 self._group_cell(group_id, group_name),
                 # Forms Submitted
-                self._submit_history_link(group_id,
-                                    sum([int(report_data.submissions_by_user.get(user["user_id"], 0)) for user in users]),
-                                    type='group'),
+                self._submit_history_link(
+                    group_id,
+                    sum([int(report_data.submissions_by_user.get(user["user_id"], 0)) for user in users]),
+                ),
                 # Avg forms submitted
                 util.numcell(sum([int(report_data.submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
                 # Active users
@@ -1325,9 +1324,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 # Username
                 user["username_in_report"],
                 # Forms Submitted
-                self._submit_history_link(user['user_id'],
+                self._submit_history_link(
+                    user['user_id'],
                     report_data.submissions_by_user.get(user["user_id"], 0),
-                    type='user'),
+                ),
                 # Average Forms submitted
                 util.numcell(int(report_data.avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
                 # Last Form submission
