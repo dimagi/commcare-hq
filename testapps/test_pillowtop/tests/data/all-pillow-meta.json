@@ -391,7 +391,7 @@
     }, 
     "OpmUserFluffPillow": {
         "advertised_name": "fluff.OpmUserFluffPillow.testhq", 
-        "change_feed_type": "CouchChangeFeed", 
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.OpmUserFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
@@ -551,7 +551,7 @@
     }, 
     "UCLAPatientFluffPillow": {
         "advertised_name": "fluff.UCLAPatientFluffPillow.testhq", 
-        "change_feed_type": "CouchChangeFeed", 
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.UCLAPatientFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
@@ -597,7 +597,7 @@
     }, 
     "WorldVisionChildFluffPillow": {
         "advertised_name": "fluff.WorldVisionChildFluffPillow.testhq", 
-        "change_feed_type": "CouchChangeFeed", 
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.WorldVisionChildFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
@@ -629,7 +629,7 @@
     }, 
     "WorldVisionMotherFluffPillow": {
         "advertised_name": "fluff.WorldVisionMotherFluffPillow.testhq", 
-        "change_feed_type": "CouchChangeFeed", 
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.WorldVisionMotherFluffPillow.testhq", 
         "couch_filter": null, 
         "couchdb_type": "CachedCouchDB", 
