@@ -5,7 +5,7 @@ setup_elasticsearch() {
 
     wget "https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-${es_version}.tar.gz" -O elasticsearch.tar.gz
 
-    tar xvzf elasticsearch.tar.gz -C elasticsearch
+    tar xvzf elasticsearch.tar.gz
     nohup bash -c "cd elasticsearch-${es_version} && bin/elasticsearch &"
     sleep 5
 }
