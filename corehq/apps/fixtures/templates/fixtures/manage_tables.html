@@ -134,7 +134,7 @@
         </div>
 </div>
 <div class="row-fluid" id="fixture-upload">
-        <form class="form form-horizontal span10" id="uploadForm" action="{% url "upload_fixtures" domain %}" method="post" enctype="multipart/form-data">
+        <form class="form form-horizontal span10" id="uploadForm" action="{% url "upload_fixtures" domain %}" method="post" enctype="multipart/form-data">{% csrf_token %}
             <div class="form-actions" style="padding-left: 1em;">
                 <fieldset class="modal-body">
                     <label for="bulk_upload_file" class="control-label">{% trans "Lookup Tables File" %}</label>
