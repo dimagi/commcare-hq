@@ -178,6 +178,11 @@ class DefaultConsumptionView(BaseCommTrackManageView):
             )
         return self.get(request, *args, **kwargs)
 
+    @use_bootstrap3
+    @use_knockout_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(DefaultConsumptionView, self).dispatch(request, *args, **kwargs)
+
 
 class SMSSettingsView(BaseCommTrackManageView):
     urlname = 'commtrack_sms_settings'
