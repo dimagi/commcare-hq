@@ -150,6 +150,11 @@ class CommTrackSettingsView(BaseCommTrackManageView):
             return HttpResponseRedirect(self.page_url)
         return self.get(request, *args, **kwargs)
 
+    @use_bootstrap3
+    @use_knockout_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseCommTrackManageView, self).dispatch(request, *args, **kwargs)
+
 
 class DefaultConsumptionView(BaseCommTrackManageView):
     urlname = 'update_default_consumption'
