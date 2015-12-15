@@ -345,8 +345,7 @@ def _get_importer_error_message(e):
         return _('The session containing the file you uploaded has expired '
                  '- please upload a new one.')
     elif isinstance(e, ImporterExcelFileEncrypted):
-        return _('The file you want to import is password-protected. '
-                 'In order to upload it correctly you will have to select a copy '
-                 'of the file that does not use password protection.')
+        return _('The file you want to import is password protected. '
+                 'Please choose a file that is not password protected.')
     elif isinstance(e, ImporterExcelError):
         return _("The file uploaded has the following error: ").format(unicode(e))
