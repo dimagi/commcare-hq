@@ -45,8 +45,10 @@ var archive_success_message = _.template(
 );
 
 var delete_success_message = _.template(
-    '{% trans "You have successfully deleted the location <%=name%>" %}'
+    '{% trans "You have successfully deleted the location <%=name%> and all of its child locations" %}'
 );
+
+var delete_error_message = '{% trans "An error occurred while deleting your location. If the problem persists, please report an issue" %}'
 
 archive_loc = function(button, name, loc_id) {
     var archive_location_modal = $('#archive-location-modal')[0];
@@ -99,7 +101,10 @@ delete_loc = function(button, name, loc_id) {
             type: 'POST',
             url: loc_delete_url(loc_id),
             dataType: 'json',
-            error: 'error',
+            error: function (response, status, error) {
+                alert_user(delete_error_message);
+                $(button).enableButton();
+            },
             success: function (response) {
                 alert_user(delete_success_message({"name": name}), "success");
                 remove_elements_after_action(button);
