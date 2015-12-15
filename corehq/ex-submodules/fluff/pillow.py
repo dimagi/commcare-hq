@@ -102,15 +102,18 @@ class FluffPillow(PythonPillow):
 
         diff = indicators.diff(None)  # pass in None for old_doc to force diff with ALL indicators
         if self.save_direct_to_sql:
+            engine = self.get_sql_engine()
             if not data['delete']:
-                indicators.save_to_sql(diff, self.get_sql_engine())
+                indicators.save_to_sql(diff, engine)
             else:
-                indicators.delete_from_sql(self.get_sql_engine())
+                indicators.delete_from_sql(engine)
+            engine.dispose()
         else:
             if not data['delete']:
                 indicators.save()
             else:
                 indicators.delete()
+
 
         backend = BACKEND_SQL if self.save_direct_to_sql else BACKEND_COUCH
         indicator_document_updated.send(
