@@ -205,9 +205,9 @@ LOCAL_APPS = (
 #    'couchdebugpanel', # Adds couch info to said toolbar
 #    'devserver',       # Adds improved dev server that also prints SQL on the console (for AJAX, etc, when you cannot use debug_toolbar)
 #    'django_cpserver', # Another choice for a replacement server
-#    'dimagi.utils'
-#     'testapps.test_elasticsearch',
-#     'testapps.test_pillowtop',
+#    'dimagi.utils',
+#    'testapps.test_elasticsearch',
+#    'testapps.test_pillowtop',
 )
 
 # list of domains to enable ADM reporting on
