@@ -20,7 +20,9 @@
         <div class="page-header">
             <h1>{{ current_page.page_name }}</h1>
         </div>
-        {% block page_content %}
-        {% endblock %}
+        <div class="container" id="hq-content">
+            {% block page_content %}
+            {% endblock %}
+        </div>
     </div>
 {% endblock %}
