@@ -16,8 +16,8 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_submission_counts_by_user,
     get_completed_counts_by_user,
     get_submission_counts_by_date,
-    get_users,
-    get_groups,
+    get_user_stubs,
+    get_group_stubs,
 )
 from corehq.util.test_utils import make_es_ready_form
 
@@ -148,12 +148,21 @@ class TestUserESAccessors(BaseESAccessorsTest):
 
     pillow_class = UserPillow
 
+    def setUp(self):
+        super(TestUserESAccessors, self).setUp()
+        self.username = 'superman'
+        self.first_name = 'clark'
+        self.last_name = 'kent'
+        self.doc_type = 'CommCareUser'
+
     def _send_user_to_es(self, _id=None, is_active=True):
         user = CommCareUser(
             domain=self.domain,
-            username='superman',
+            username=self.username,
             _id=_id or uuid.uuid4().hex,
             is_active=is_active,
+            first_name=self.first_name,
+            last_name=self.last_name,
         )
         self.pillow.change_transport(user.to_json())
         self.pillow.get_es_new().indices.refresh(self.pillow.es_index)
@@ -161,25 +170,49 @@ class TestUserESAccessors(BaseESAccessorsTest):
 
     def test_active_user_query(self):
         self._send_user_to_es('123')
-        results = get_users(['123'])
+        results = get_user_stubs(['123'])
 
         self.assertEquals(len(results), 1)
+        self.assertEquals(results[0], {
+            '_id': '123',
+            'username': self.username,
+            'is_active': True,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'doc_type': self.doc_type,
+        })
 
     def test_inactive_user_query(self):
         self._send_user_to_es('123', is_active=False)
-        results = get_users(['123'])
+        results = get_user_stubs(['123'])
 
         self.assertEquals(len(results), 1)
+        self.assertEquals(results[0], {
+            '_id': '123',
+            'username': self.username,
+            'is_active': False,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'doc_type': self.doc_type,
+        })
 
 
 class TestGroupESAccessors(BaseESAccessorsTest):
 
     pillow_class = GroupPillow
 
+    def setUp(self):
+        super(TestGroupESAccessors, self).setUp()
+        self.group_name = 'justice league'
+        self.reporting = True
+        self.case_sharing = False
+
     def _send_group_to_es(self, _id=None):
         group = Group(
             domain=self.domain,
-            name='justice league',
+            name=self.group_name,
+            case_sharing=self.case_sharing,
+            reporting=self.reporting,
             _id=_id or uuid.uuid4().hex,
         )
         self.pillow.change_transport(group.to_json())
@@ -188,6 +221,12 @@ class TestGroupESAccessors(BaseESAccessorsTest):
 
     def test_group_query(self):
         self._send_group_to_es('123')
-        results = get_groups(['123'])
+        results = get_group_stubs(['123'])
 
         self.assertEquals(len(results), 1)
+        self.assertEquals(results[0], {
+            '_id': '123',
+            'name': self.group_name,
+            'case_sharing': self.case_sharing,
+            'reporting': self.reporting,
+        })

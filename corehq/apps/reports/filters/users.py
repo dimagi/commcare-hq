@@ -13,7 +13,7 @@ from corehq.apps.commtrack.models import SQLLocation
 
 from .. import util
 from ..models import HQUserType, HQUserToggle
-from ..analytics.esaccessors import get_users, get_groups
+from ..analytics.esaccessors import get_user_stubs, get_group_stubs
 from .base import (
     BaseDrilldownOptionFilter,
     BaseMultipleOptionFilter,
@@ -238,14 +238,14 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         user_ids = self.selected_user_ids(mobile_user_and_group_slugs)
         if not user_ids:
             return []
-        results = get_users(user_ids)
+        results = get_user_stubs(user_ids)
         return [self.utils.user_tuple(hit) for hit in results]
 
     def _selected_groups_query(self, mobile_user_and_group_slugs):
         group_ids = self.selected_group_ids(mobile_user_and_group_slugs)
         if not group_ids:
             return []
-        return get_groups(group_ids)
+        return get_group_stubs(group_ids)
 
     def _selected_group_entries(self, mobile_user_and_group_slugs):
         groups = self._selected_groups_query(mobile_user_and_group_slugs)

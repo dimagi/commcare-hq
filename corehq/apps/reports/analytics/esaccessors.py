@@ -82,13 +82,13 @@ def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission
     return dict(results)
 
 
-def get_groups(group_ids):
+def get_group_stubs(group_ids):
     return (GroupES()
         .group_ids(group_ids)
         .values(['_id', 'name', 'case_sharing', 'reporting']))
 
 
-def get_users(user_ids):
+def get_user_stubs(user_ids):
     return (UserES()
         .user_ids(user_ids)
         .show_inactive()
