@@ -9,7 +9,7 @@
 
 {% block js-inline %}{{ block.super }}
 <script type="text/javascript">
-    ko.applyBindings(new MediaManager({{ media|JSON }}, {{ licenses|JSON }}));
+    $('body').koApplyBindings(new MediaManager({{ media|JSON }}, {{ licenses|JSON }}));
 </script>
 {% endblock %}
 

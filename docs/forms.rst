@@ -174,7 +174,7 @@ The template `people/person_form.html`:
             var personFormModel = new PersonFormModel(
                 {{ form.current_values|JSON }},
             );
-            ko.applyBindings(personFormModel, $('#person-form').get(0));
+            $('#person-form').koApplyBindings(personFormModel);
             personFormModel.init();
         </script>
     {% endblock %}
