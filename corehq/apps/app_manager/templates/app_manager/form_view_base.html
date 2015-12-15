@@ -131,7 +131,7 @@
                         $(".source-readonly").hide();
                         $(".source-edit").show();
                         $.get($(this).data('href'), function (data) {
-                            $("#xform-source-edit").text(data);
+                            $("#xform-source-edit").text(data).caret(0);
                         }, 'json');
                     } else {
                         // Plain click: view form source
