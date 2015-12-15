@@ -64,7 +64,7 @@ from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, Domain, TransferDomainRequest)
 from corehq.apps.reminders.models import CaseReminderHandler
 
-from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import TextField
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
@@ -74,7 +74,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
 import django
-import zxcvbn
+from pyzxcvbn import zxcvbn
 
 if django.VERSION < (1, 6):
     from django.contrib.auth.hashers import UNUSABLE_PASSWORD as UNUSABLE_PASSWORD_PREFIX
@@ -946,9 +946,9 @@ max_pwd = 20
 pwd_pattern = re.compile( r"([-\w]){"  + str(min_pwd) + ',' + str(max_pwd) + '}' )
 
 def clean_password(txt):
-    strength = zxcvbn.password_strength(txt)
+    strength = zxcvbn(txt)
     if strength['score'] < 3:
-        raise forms.ValidationError('Password is too weak. Try making your password more complex.')
+        raise forms.ValidationError(_('Password is not strong enough. Try making your password more complex.'))
     return txt
 
 
@@ -1041,6 +1041,7 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
             # we can pretend all is well since the save() method is safe for missing users.
             return self.cleaned_data['email']
 
+
 class HQSetPasswordForm(SetPasswordForm):
     new_password1 = forms.CharField(label=ugettext_lazy("New password"),
                                     widget=forms.PasswordInput(
@@ -1050,7 +1051,16 @@ class HQSetPasswordForm(SetPasswordForm):
                                     """))
 
     def clean_new_password1(self):
-        clean_password(self.cleaned_data.get('new_password1'))
+        return clean_password(self.cleaned_data.get('new_password1'))
+
+    def save(self, commit=True):
+        user = super(HQSetPasswordForm, self).save(commit)
+        couch_user = CouchUser.from_django_user(user)
+        couch_user.last_password_set = datetime.datetime.utcnow()
+        if commit:
+            couch_user.save()
+        return user
+
 
 class EditBillingAccountInfoForm(forms.ModelForm):
 

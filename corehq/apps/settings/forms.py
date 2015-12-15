@@ -6,9 +6,12 @@ from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.domain.forms import clean_password
+from corehq.apps.users.models import CouchUser
 
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
+
+from datetime import datetime
 
 
 class HQPasswordChangeForm(PasswordChangeForm):
@@ -44,3 +47,11 @@ class HQPasswordChangeForm(PasswordChangeForm):
 
     def clean_new_password1(self):
         return clean_password(self.cleaned_data.get('new_password1'))
+
+    def save(self, commit=True):
+        user = super(HQPasswordChangeForm, self).save(commit)
+        couch_user = CouchUser.from_django_user(user)
+        couch_user.last_password_set = datetime.utcnow()
+        if commit:
+            couch_user.save()
+        return user
