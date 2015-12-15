@@ -13,7 +13,6 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.util.files import file_extention_from_filename
-from corehq.util.soft_assert import soft_assert
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 from soil import DownloadBase
