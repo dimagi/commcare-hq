@@ -1,1 +1,1 @@
-from .tests import Test
+from .tests import FluffTest

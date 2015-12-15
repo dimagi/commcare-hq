@@ -1,17 +1,15 @@
 from django.conf import settings
+from django.test import TestCase
 from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.pillow.interface import PillowRuntimeContext
 
-settings.configure(DEBUG=True, SQL_REPORTING_DATABASE_URL="postgresql://postgres:postgres@localhost/fluff_test")
-
 import sqlalchemy
-from fluff.signals import rebuild_table
+from fluff.signals import rebuild_table, indicator_document_updated
 
 if not settings.configured:
     settings.configure(DEBUG=True)
 
 import fluff
-from unittest2 import TestCase
 from couchdbkit import Document
 from datetime import date, datetime, timedelta
 from fakecouch import FakeCouchDb
@@ -75,9 +73,12 @@ class Indicators2(fluff.IndicatorDocument):
     base2 = Base2(window=WEEK)
 
 
-class Test(TestCase):
+class FluffTest(TestCase):
     @classmethod
     def setUpClass(cls):
+        # hack - force disconnecting the signals because ctable doesn't play nice with mocks
+        cls.previous_signal_receivers = indicator_document_updated.receivers
+        indicator_document_updated.receivers = []
         cls.engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
 
     def setUp(self):
@@ -89,6 +90,10 @@ class Test(TestCase):
         MockIndicatorsSql.set_db(self.fakedb)
         rebuild_table(self.engine, None, MockIndicatorsSql)
         rebuild_table(self.engine, None, MockIndicatorsSqlWithFlatFields)
+
+    @classmethod
+    def tearDownClass(cls):
+        indicator_document_updated.receivers = cls.previous_signal_receivers
 
     def tearDown(self):
         with self.engine.begin() as connection:
@@ -554,6 +559,7 @@ class Test(TestCase):
                 rows = connection.execute(sqlalchemy.select([cls._table]))
                 self.assertEqual(rows.rowcount, 6)
 
+
         doc['doc_type'] = 'MockArchive'
         for cls in [MockIndicatorsSql]:
             pillow = cls.pillow()(chunk_size=0, checkpoint=mock_checkpoint())
@@ -628,7 +634,7 @@ class MockIndicators(fluff.IndicatorDocument):
     value_week = ValueCalculator(window=WEEK)
 
     class Meta:
-        app_label = 'Mock'
+        app_label = 'fluff'
 
 
 class MockIndicatorsWithGetters(fluff.IndicatorDocument):
@@ -645,7 +651,7 @@ class MockIndicatorsWithGetters(fluff.IndicatorDocument):
     value_week = ValueCalculator(window=WEEK)
 
     class Meta:
-        app_label = 'Mock'
+        app_label = 'fluff'
 
 
 class MockIndicatorsSql(fluff.IndicatorDocument):
@@ -660,7 +666,7 @@ class MockIndicatorsSql(fluff.IndicatorDocument):
     value_week = ValueCalculator(window=WEEK)
 
     class Meta:
-        app_label = 'Mock'
+        app_label = 'fluff'
 
 
 class MockIndicatorsSqlWithFlatFields(fluff.IndicatorDocument):
@@ -676,4 +682,4 @@ class MockIndicatorsSqlWithFlatFields(fluff.IndicatorDocument):
     value_week = ValueCalculator(window=WEEK)
 
     class Meta:
-        app_label = 'Mock'
+        app_label = 'fluff'
