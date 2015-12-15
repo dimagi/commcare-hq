@@ -3,7 +3,7 @@ from casexml.apps.phone.analytics import get_sync_logs_for_user, update_analytic
 from dimagi.utils.couch.database import get_db
 from django.test import TestCase
 from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
-from casexml.apps.phone.models import SyncLog, SimplifiedSyncLog
+from casexml.apps.phone.models import SyncLog, SimplifiedSyncLog, get_properly_wrapped_sync_log
 from corehq.util.test_utils import DocTestMixin
 
 
@@ -44,3 +44,13 @@ class DBAccessorsTest(TestCase, DocTestMixin):
     def test_get_last_synclog_for_user(self):
         self.assert_docs_equal(
             get_last_synclog_for_user(self.user_id), self.sync_logs[0])
+
+    def get_and_save_legacy_synclog(self):
+        legacy_sync_log = self.legacy_sync_logs[0]
+        get_db(None).put_attachment(legacy_sync_log._doc, 'test', 'test_attach', 'text/plain')
+
+        sync_log = get_properly_wrapped_sync_log(legacy_sync_log._id)
+        self.assertIn('test_attach', sync_log._attachments)
+
+        # this used to fail for docs with attachments
+        sync_log.save()
