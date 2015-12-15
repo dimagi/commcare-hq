@@ -404,8 +404,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'dimagi.utils',
     'fluff',
     'fluff_filter',
-    'pillowtop',
-    'pillow_retry',
 )
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
