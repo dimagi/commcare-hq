@@ -166,6 +166,7 @@
                     <h3>{% trans "Report an Issue with CommCare HQ" %}</h3>
                 </div>
                 <form id="hqwebapp-bugReportForm" class="form-horizontal" action="{% url "bug_report" %}" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
                     <input type="hidden" id="bug-report-url" name="url"/>
                     <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
                     <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
@@ -254,6 +255,7 @@
                             {% trans "To continue using Commcare HQ, please agree to our new End User License Agreement" %}
                         </div>
                         <form id="eula-agree" action="{% url "agree_to_eula" %}" method="POST">
+                            {% csrf_token %}
                             <input name="next" type="hidden" value="{{ request.path }}" />
                             <button type="submit" class="btn btn-primary">Agree</button>
                             <a href="#" data-dismiss="modal" class="btn">Disagree</a>
@@ -268,6 +270,7 @@
                 </div>
                 <div class="modal-body">
                     <form id="keyboard-shortcuts-config-form" method="POST" action="{% url "keyboard_config" %}?next={{ request.get_full_path|urlencode }}">
+                        {% csrf_token %}
                         <div class="control-group">
                             <div class="controls">
                                 <label class="checkbox">

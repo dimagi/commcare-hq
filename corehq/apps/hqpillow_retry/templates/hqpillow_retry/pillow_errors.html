@@ -18,6 +18,7 @@
 {% block reporttable %}
 {% if not report.needs_filters %}
     <form class="form-inline" action="{% url "pillow_errors" %}" method="post">
+    {% csrf_token %}
     <div style="text-align:right;">
         <select name="action">
             <option value="">{% trans "Select Action..." %}</option>

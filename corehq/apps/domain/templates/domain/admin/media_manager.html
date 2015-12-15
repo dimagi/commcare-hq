@@ -23,6 +23,7 @@
 
 {% block page_content %}
 <form id="update-media-sharing-settings" class="disable-on-submit" method="post">
+    {% csrf_token %}
     <fieldset>
         <legend>{% trans 'Change Multimedia Sharing Settings' %}</legend>
         <p>

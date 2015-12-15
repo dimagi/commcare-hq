@@ -48,6 +48,7 @@
                 <div id="source-edit">
                     {% trans "You can edit your XForm here." %}<br />
                     <form action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'xform' %}" method="POST">
+                        {% csrf_token %}
                         <textarea name="xform" id="xform-source-edit" style="height:550px;width:90%;font-family:Monospace;">
                             {% trans "Loading..." %}
                         </textarea><br />
@@ -61,6 +62,7 @@
     </ul>
     {% if allow_form_copy%}
     <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
+        {% csrf_token %}
         <p>
         <i class="icon-share"></i> {% trans "Copy form to: " %}
         <select name='to_module_id'>{% for mod in app.get_modules %}
