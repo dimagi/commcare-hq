@@ -589,7 +589,8 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
         return CommConnectCase.wrap(case.to_json())
 
     class Meta:
-        app_label = "sms" # This is necessary otherwise syncdb will confuse the sms app with casexml
+        # This is necessary otherwise couchdbkit will confuse the sms app with casexml
+        app_label = "sms"
 
 
 def case_changed_receiver(sender, case, **kwargs):

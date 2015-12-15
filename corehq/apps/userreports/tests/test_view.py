@@ -12,7 +12,7 @@ from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from corehq.apps.userreports.reports.view import ConfigurableReport
-from corehq.db import Session
+from corehq.sql_db.connections import Session
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 

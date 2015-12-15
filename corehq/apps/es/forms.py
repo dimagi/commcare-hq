@@ -26,6 +26,12 @@ class FormES(HQESQuery):
     def user_facet(self, size=None):
         return self.terms_facet('form.meta.userID', 'user', size=size)
 
+    def completed_histogram(self, timezone=None):
+        return self.date_histogram('date_histogram', 'form.meta.timeEnd', 'day', timezone=timezone)
+
+    def submitted_histogram(self, timezone=None):
+        return self.date_histogram('date_histogram', 'received_on', 'day', timezone=timezone)
+
     def domain_facet(self):
         return self.terms_facet('domain', 'domain', 1000000)
 

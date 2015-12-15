@@ -23,7 +23,7 @@
             is_custom: true,
             is_deid_form_report: {{ is_deid_form_report|JSON }}
         } );
-        ko.applyBindings(customExportManager, $('#custom-form-export')[0]);
+        $('#custom-form-export').koApplyBindings(customExportManager);
 
         var exportManager = new ExportManager( {
             domain: '{{ domain }}',
@@ -35,7 +35,7 @@
         } );
 
         $('#full-form-export').one().each(function () {
-            ko.applyBindings(exportManager, this);
+            $(this).koApplyBindings(exportManager);
         });
 
         var metadataExportManager = new ExportManager( {
@@ -47,7 +47,7 @@
         } );
 
         $('#all-forms-metadata').one().each(function () {
-            ko.applyBindings(metadataExportManager, this);
+            $(this).koApplyBindings(metadataExportManager);
         });
 
         $('.daily-saved-download').click(function(){

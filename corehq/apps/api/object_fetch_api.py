@@ -1,15 +1,17 @@
+from couchdbkit.exceptions import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, StreamingHttpResponse, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.views.generic import View
 from corehq.apps.reports.views import can_view_attachments
+from couchforms.models import XFormInstance
 from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.domain.decorators import login_or_digest_ex
+from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 
 
 class CaseAttachmentAPI(View):
-    @method_decorator(login_or_digest_ex(allow_cc_users=True))
+    @method_decorator(login_or_digest_or_basic_or_apikey())
     def get(self, *args, **kwargs):
         """
         https://github.com/dimagi/commcare/wiki/CaseAttachmentAPI
@@ -88,3 +90,22 @@ class CaseAttachmentAPI(View):
                 content_type=mime_type)
         return response
 
+
+class FormAttachmentAPI(View):
+    @method_decorator(login_or_digest_or_basic_or_apikey())
+    def get(self, *args, **kwargs):
+        form_id = kwargs.get('form_id', None)
+        if not form_id or not XFormInstance.get_db().doc_exist(form_id):
+            raise Http404
+
+        attachment_key = kwargs.get('attachment_id', None)
+
+        try:
+            resp = XFormInstance.get_db().fetch_attachment(form_id, attachment_key, stream=True)
+        except ResourceNotFound:
+            raise Http404
+        
+        headers = resp.resp.headers
+        content_type = headers.get('Content-Type', None)
+
+        return StreamingHttpResponse(streaming_content=resp, content_type=content_type)

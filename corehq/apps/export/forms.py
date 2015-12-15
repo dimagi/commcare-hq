@@ -3,6 +3,7 @@ import dateutil
 from django import forms
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _, ugettext_lazy
+from unidecode import unidecode
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import (
@@ -344,7 +345,7 @@ class FilterFormExportDownloadForm(FilterExportDownloadForm):
             'app_id': export.app_id,
             'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
             'export_id': export.get_id,
-            'zip_name': 'multimedia-{}'.format(export.name),
+            'zip_name': 'multimedia-{}'.format(unidecode(export.name)),
             'download_id': download_id
         }
 

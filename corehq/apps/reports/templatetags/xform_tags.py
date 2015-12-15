@@ -34,9 +34,10 @@ register = template.Library()
 
 @register.simple_tag
 def render_form_xml(form):
-    xml = form.get_xml() or ''
+    xml = form.get_xml()
+    formatted_xml = indent_xml(xml) if xml else ''
     return '<pre class="fancy-code prettyprint linenums"><code class="language-xml">%s</code></pre>' \
-           % escape(indent_xml(xml))
+           % escape(formatted_xml)
 
 
 

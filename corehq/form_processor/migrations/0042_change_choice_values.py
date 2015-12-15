@@ -3,8 +3,6 @@ from __future__ import unicode_literals
 
 from django.db import models, migrations
 
-from corehq.form_processor.utils.migration import migrate_sql_function
-
 
 class Migration(migrations.Migration):
 
@@ -25,5 +23,4 @@ class Migration(migrations.Migration):
             field=models.PositiveSmallIntegerField(default=0, choices=[(0, b'normal'), (1, b'archived'), (2, b'deprecated'), (4, b'duplicate'), (8, b'error'), (16, b'submission_error')]),
             preserve_default=True,
         ),
-        migrate_sql_function('get_case_form_ids')
     ]

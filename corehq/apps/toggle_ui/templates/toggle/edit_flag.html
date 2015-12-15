@@ -113,15 +113,15 @@
             });
         }
 
-        var home = $('#toggle_editing_ko');
+        var $home = $('#toggle_editing_ko');
         var view = new ToggleView();
         view.init({
             items: {{ toggle.enabled_users|JSON }},
             namespaces: {{ namespaces|JSON }},
             last_used: {{ last_used|JSON }}
         });
-        ko.applyBindings(view, home.get(0));
-        home.on('change', 'input', view.change);
+        $home.koApplyBindings(view);
+        $home.on('change', 'input', view.change);
     });
 </script>
 {% endblock %}

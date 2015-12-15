@@ -1,5 +1,4 @@
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
-from corehq.util.couch import stale_ok
 from corehq.util.test_utils import unit_testing_only
 from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.models import XFormInstance, doc_types
@@ -68,14 +67,4 @@ def get_commtrack_forms(domain):
         endkey=key + [{}],
         reduce=False,
         include_docs=True
-    )
-
-
-def get_exports_by_form(domain):
-    return XFormInstance.get_db().view(
-        'exports_forms/by_xmlns',
-        startkey=[domain],
-        endkey=[domain, {}],
-        group=True,
-        stale=stale_ok()
     )

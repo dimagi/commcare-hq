@@ -1,6 +1,7 @@
 import json
 from kafka import KeyedProducer
-from kafka.common import KafkaUnavailableError
+from kafka.common import KafkaUnavailableError, LeaderNotAvailableError
+import time
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed.connection import get_kafka_client
@@ -36,11 +37,16 @@ class ChangeFeedPillow(PythonPillow):
                 domain=change.document.get('domain', None),
                 is_deletion=change.deleted,
             )
-            self._producer.send_messages(
-                bytes(get_topic(document_type)),
-                bytes(change_meta.domain),
-                bytes(json.dumps(change_meta.to_json())),
-            )
+            try:
+                self._producer.send_messages(
+                    bytes(get_topic(document_type)),
+                    bytes(change_meta.domain),
+                    bytes(json.dumps(change_meta.to_json())),
+                )
+            except LeaderNotAvailableError:
+                # kafka seems to be down. sleep a bit to avoid crazy amounts of error spam
+                time.sleep(15)
+                raise
 
 
 def get_default_couch_db_change_feed_pillow():

@@ -31,34 +31,31 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
     def utils(self):
         return CaseListFilterUtils(self.domain)
 
-    @classmethod
-    def show_all_data(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return 'all_data' in emws
+    @staticmethod
+    def show_all_data(mobile_user_and_group_slugs):
+        return 'all_data' in mobile_user_and_group_slugs
+
+    @staticmethod
+    def show_project_data(mobile_user_and_group_slugs):
+        return 'project_data' in mobile_user_and_group_slugs
+
+    @staticmethod
+    def selected_sharing_group_ids(mobile_user_and_group_slugs):
+        return [g[4:] for g in mobile_user_and_group_slugs if g.startswith("sg__")]
 
     @classmethod
-    def show_project_data(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return 'project_data' in emws
+    def selected_group_ids(cls, mobile_user_and_group_slugs):
+        return (super(CaseListFilter, cls).selected_group_ids(mobile_user_and_group_slugs) +
+                cls.selected_sharing_group_ids(mobile_user_and_group_slugs))
 
-    @classmethod
-    def selected_sharing_group_ids(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return [g[4:] for g in emws if g.startswith("sg__")]
-
-    @classmethod
-    def selected_group_ids(cls, request):
-        return (super(CaseListFilter, cls).selected_group_ids(request) +
-                cls.selected_sharing_group_ids(request))
-
-    def selected_group_entries(self, request):
-        query_results = self.selected_groups_query(request)
-        reporting = [self.utils.reporting_group_tuple(group['fields'])
+    def _selected_group_entries(self, mobile_user_and_group_slugs):
+        query_results = self._selected_groups_query(mobile_user_and_group_slugs)
+        reporting = [self.utils.reporting_group_tuple(group)
                      for group in query_results
-                     if group['fields'].get("reporting", False)]
-        sharing = [self.utils.sharing_group_tuple(group['fields'])
+                     if group.get("reporting", False)]
+        sharing = [self.utils.sharing_group_tuple(group)
                    for group in query_results
-                   if group['fields'].get("case_sharing", False)]
+                   if group.get("case_sharing", False)]
         return reporting + sharing
 
     def get_default_selections(self):
