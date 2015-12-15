@@ -441,7 +441,7 @@
                 });
                 var element = $('#keyboard-shortcuts-config-form').get(0);
                 ko.cleanNode(element);
-                ko.applyBindings(new KBConfigFormModel(), element);
+                $(element).koApplyBindings(new KBConfigFormModel());
             });
         </script>
 
@@ -601,10 +601,9 @@
 
             var message_element = $("#message-alerts").get(0);
             ko.cleanNode(message_element);
-            ko.applyBindings(
-                {alerts: message_alerts},
-                message_element
-            );
+            $(message_element).koApplyBindings({
+                alerts: message_alerts,
+            });
 
         </script>
     </body>

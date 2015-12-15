@@ -63,7 +63,7 @@ var HQReport = function (options) {
 
                 if (self.isEmailable) {
                     self.emailReportViewModel = new EmailReportViewModel(self);
-                    ko.applyBindings(self.emailReportViewModel, $(self.emailReportModal).get(0));
+                    $(self.emailReportModal).koApplyBindings(self.emailReportViewModel);
                 }
 
                 $(self.printReportButton).click(function (e) {
