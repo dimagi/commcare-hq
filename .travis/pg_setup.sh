@@ -20,7 +20,7 @@ sudo apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-co
 # Install packages
 # ------------------------------------------------------------------------------
 echo "Installing packages ... this may take some time."
-sudo apt-get install -y postgresql-$PGVERSION-plproxy postgresql-contrib-$PGVERSION postgresql-server-dev-$PGVERSION
+sudo apt-get install -y postgresql-$PGVERSION-plproxy postgresql-contrib-$PGVERSION postgresql-server-dev-$PGVERSION python-docutils
 
 # Build and compile pghashlib
 wget --quiet https://github.com/markokr/pghashlib/archive/master.zip -O pghashlib.zip
