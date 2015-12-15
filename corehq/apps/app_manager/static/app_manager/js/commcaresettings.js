@@ -146,11 +146,13 @@ function CommcareSettings(options) {
             var optionOK = setting.optionOK();
             if (!setting.enabled() || !optionOK) {
                 if (!optionOK) {
+                    var upgrade_text;
                     if (setting.versionOK()) {
-                        return 'Upgrade to CommCare ' + setting.requiredVersion().option + ' for this option!';
+                        upgrade_text = gettext('Upgrade to CommCare %s for this option!');
                     } else {
-                        return 'Upgrade to CommCare ' + setting.requiredVersion().option + '!';
+                        upgrade_text = gettext('Upgrade to CommCare %s!');
                     }
+                    return interpolate(upgrade_text, [setting.requiredVersion().option]);
                 } else {
                     var condition = setting.parsedCondition();
                     var names = _(condition.settings).map(function (setting) {
