@@ -40,7 +40,7 @@ $(function() {
 
   var show_location_filter = {% if make_optional and not loc_id %}'n'{% else %}'y'{% endif%};
   var model = new LocationSelectViewModel(hierarchy, undefined, undefined, undefined, undefined, show_location_filter);
-  ko.applyBindings(model, $('#group_{{ control_slug }}')[0]);
+  $('#group_{{ control_slug }}').koApplyBindings(model);
   model.load(locs, selected);
 
 });

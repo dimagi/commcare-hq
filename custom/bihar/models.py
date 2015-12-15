@@ -138,46 +138,4 @@ class CareBiharFluff(fluff.IndicatorDocument):
 CareBiharFluffPillow = CareBiharFluff.pillow()
 
 
-class BirthPreparednessForm(models.Model):
-    """Testing only"""
-    _id = models.CharField(primary_key=True, max_length=40)
-
-    date_modified = models.DateField()
-    date_next_bp = models.DateField(null=True)
-    days_visit_overdue = models.IntegerField(null=True)
-
-    @classmethod
-    def from_couch(cls, form):
-        assert form.xmlns == VISIT_TYPES['bp']
-
-        return cls(
-            _id=form._id,
-            date_modified=getters.date_modified(form),
-            date_next_bp=getters.date_next_bp(form),
-            days_visit_overdue=getters.days_visit_overdue(form),
-        )
-
-
-class CareBiharFormPillow(BasicPillow):
-    """
-    Run this as a way to validate/debug form data
-    by saving it to SQL it validates a schema
-    and lets you look through the data to make sure it seems reasonable
-    """
-    couch_filter = 'fluff_filter/domain_type'
-    extra_args = {
-        'domains': list(BIHAR_DOMAINS),
-        'doc_type': 'XFormInstance'
-    }
-    document_class = XFormInstance
-
-    def change_transform(self, doc_dict):
-        form = self.document_class.wrap(doc_dict)
-        if form.xmlns == VISIT_TYPES['bp']:
-            return BirthPreparednessForm.from_couch(form)
-
-    def change_transport(self, form_model):
-        form_model.save()
-
-
 from .signals import *

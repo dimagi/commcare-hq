@@ -1077,7 +1077,9 @@ def get_sync_log_doc(doc_id):
     try:
         return SyncLog.get_db().get(doc_id)
     except ResourceNotFound:
-        return get_db(None).get(doc_id)
+        legacy_doc = get_db(None).get(doc_id, attachments=True)
+        del legacy_doc['_rev']  # remove the rev so we can save this to the new DB
+        return legacy_doc
 
 
 def get_properly_wrapped_sync_log(doc_id):

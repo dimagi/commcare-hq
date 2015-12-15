@@ -1,4 +1,6 @@
-GROUP_INDEX = "hqgroups_20150403_1501"
+from corehq.util.elastic import es_index
+
+GROUP_INDEX = es_index("hqgroups_20150403_1501")
 GROUP_MAPPING = {
     "date_formats": [
         "yyyy-MM-dd",

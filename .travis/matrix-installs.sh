@@ -1,11 +1,15 @@
 #!/bin/bash
 set -ev
 
+source .travis/utils.sh
+
 echo "Matrix params: MATRIX_TYPE=${MATRIX_TYPE:?Empty value for MATRIX_TYPE}, BOWER=${BOWER:-no}"
 
 if [ "${MATRIX_TYPE}" = "python" ]; then
     pip install coverage unittest2 mock
-    .travis/kafka_setup.sh
+
+    setup_elasticsearch
+    setup_kafka
 elif [ "${MATRIX_TYPE}" = "python-sharded" ]; then
     pip install coverage unittest2 mock
     .travis/pg_setup.sh

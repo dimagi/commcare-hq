@@ -441,10 +441,6 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         #    it returns that form.
         deleted = parsed_params.status == PARAM_VALUE_STATUS_DELETED
         _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']))
-        if not parsed_params.status:
-            # todo: remove anytime in 2016
-            _assert(False, "status in filter wasn't set - this isn't expected to be possible")
-
         if parsed_params.module is not None and parsed_params.get_module_int() is None:
             # todo: remove anytime in 2016
             _assert(False, "module set but not a valid number!")

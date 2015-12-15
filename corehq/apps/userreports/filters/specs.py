@@ -15,7 +15,7 @@ class BooleanExpressionFilterSpec(BaseFilterSpec):
     type = TypeProperty('boolean_expression')
     operator = StringProperty(choices=OPERATORS.keys(), required=True)
     property_value = DefaultProperty()
-    expression = DictProperty(required=True)
+    expression = DefaultProperty(required=True)
 
     @classmethod
     def wrap(cls, obj):

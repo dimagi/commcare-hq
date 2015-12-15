@@ -17,7 +17,6 @@ from corehq.apps.app_manager.suite_xml.xml_models import Suite, MediaResource
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.util import split_path
 from corehq.apps.hqmedia.models import HQMediaMapItem
-from dimagi.utils.web import get_url_base
 
 
 class SuiteGenerator(object):
@@ -132,7 +131,7 @@ class MediaSuiteGenerator(object):
                 local=(local_path
                        if self.app.enable_local_resource
                        else None),
-                remote=get_url_base() + reverse(
+                remote=self.app.url_base + reverse(
                     'hqmedia_download',
                     args=[m.media_type, m.multimedia_id]
                 ) + urllib.quote(name.encode('utf-8')) if name else name
