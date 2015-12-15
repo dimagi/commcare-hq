@@ -29,12 +29,13 @@
         width: 100%;
         height: 100%;
         background-color: rgba(255, 255, 255, 0.6);
-        z-index: 4999;
+        /*The z-index is set to cover date input text-box with class .input-group .form-control */
+        /*Its z-index is set to 2 by bootstrap, so making this 3 */
+        z-index: 3;
 
     }
     .form-notice .label {
         display: block;
-        z-index: 50;
     }
     .progress-exports {
         margin-bottom: 2px;
