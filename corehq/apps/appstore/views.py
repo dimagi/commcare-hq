@@ -1,5 +1,6 @@
 import json
 from urllib import urlencode
+from corehq.apps.appstore.exceptions import CopiedFromDeletedException
 from corehq.apps.registration.utils import create_30_day_trial
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
@@ -10,6 +11,7 @@ from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
 from django.shortcuts import render
 from django.contrib import messages
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.name_to_url import name_to_url
 from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.app_manager.views.apps import clear_app_cache
@@ -109,7 +111,19 @@ def appstore(request, template="appstore/appstore_base.html"):
     results = es_snapshot_query(params, SNAPSHOT_FACETS)
     hits = results.get('hits', {}).get('hits', [])
     hits = deduplicate(hits)
-    d_results = [Domain.wrap(res['_source']) for res in hits]
+    d_results = []
+    for res in hits:
+        try:
+            domain = Domain.wrap(res['_source'])
+            if domain.copied_from is not None:
+                # this avoids putting in snapshots in the list where the
+                # copied_from domain has been deleted.
+                d_results.append(domain)
+        except CopiedFromDeletedException as e:
+            notify_exception(
+                "Fetched Exchange Snapshot Error: {}. The problem snapshot id: {}".format(
+                e.message, res['_source']['_id']
+            ))
 
     starter_apps = request.GET.get('is_starter_app', None)
     sort_by = request.GET.get('sort_by', None)
