@@ -186,7 +186,7 @@ class LocationSyncTest(TestCase):
 
         ewsghana_location = self.api_object.location_sync(location)
         self.assertEqual(ewsghana_location.name, "Test country")
-        self.assertEqual(ewsghana_location.site_code, "testcountry")
+        self.assertEqual(ewsghana_location.site_code, "ghana")
 
         location.name = "edited"
         location.code = "edited"
