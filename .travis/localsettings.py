@@ -111,4 +111,9 @@ TESTS_SHOULD_TRACK_CLEANLINESS = True
 
 UNIT_TESTING = True
 
+LOCAL_APPS = (
+    'testapps.test_elasticsearch',
+    'testapps.test_pillowtop',
+)
+
 PILLOWTOP_MACHINE_ID = 'testhq'
