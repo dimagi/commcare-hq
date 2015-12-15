@@ -161,7 +161,7 @@ function CommcareSettings(options) {
                     uniqueNames = names.filter(function(elem, pos) {
                         return names.indexOf(elem) == pos;
                     })
-                    return 'Auto-set by ' + uniqueNames.join(', ')
+                    return gettext('Auto-set by ') + uniqueNames.join(', ')
                 }
             } else {
                 return '';
