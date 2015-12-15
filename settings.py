@@ -366,6 +366,7 @@ HQ_APPS = (
 
     # tests only
     # todo: figure out how to not put these into INSTALLED_APPS, TEST_APPS doesn't seem to work
+    'testapps.test_elasticsearch',
     'testapps.test_pillowtop',
 )
 
