@@ -31,16 +31,16 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
     def utils(self):
         return CaseListFilterUtils(self.domain)
 
-    @classmethod
-    def show_all_data(cls, mobile_user_and_group_slugs):
+    @staticmethod
+    def show_all_data(mobile_user_and_group_slugs):
         return 'all_data' in mobile_user_and_group_slugs
 
-    @classmethod
-    def show_project_data(cls, mobile_user_and_group_slugs):
+    @staticmethod
+    def show_project_data(mobile_user_and_group_slugs):
         return 'project_data' in mobile_user_and_group_slugs
 
-    @classmethod
-    def selected_sharing_group_ids(cls, mobile_user_and_group_slugs):
+    @staticmethod
+    def selected_sharing_group_ids(mobile_user_and_group_slugs):
         return [g[4:] for g in mobile_user_and_group_slugs if g.startswith("sg__")]
 
     @classmethod

@@ -177,12 +177,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     def utils(self):
         return EmwfUtils(self.domain)
 
-    @classmethod
-    def selected_user_ids(cls, mobile_user_and_group_slugs):
+    @staticmethod
+    def selected_user_ids(mobile_user_and_group_slugs):
         return [u[3:] for u in mobile_user_and_group_slugs if u.startswith("u__")]
 
-    @classmethod
-    def selected_user_types(cls, mobile_user_and_group_slugs):
+    @staticmethod
+    def selected_user_types(mobile_user_and_group_slugs):
         """
         usage: ``HQUserType.DEMO_USER in selected_user_types``
         """
@@ -193,16 +193,16 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     def selected_group_ids(cls, mobile_user_and_group_slugs):
         return cls.selected_reporting_group_ids(mobile_user_and_group_slugs)
 
-    @classmethod
-    def selected_reporting_group_ids(cls, mobile_user_and_group_slugs):
+    @staticmethod
+    def selected_reporting_group_ids(mobile_user_and_group_slugs):
         return [g[3:] for g in mobile_user_and_group_slugs if g.startswith("g__")]
 
-    @classmethod
-    def selected_location_ids(cls, mobile_user_and_group_slugs):
+    @staticmethod
+    def selected_location_ids(mobile_user_and_group_slugs):
         return [l[3:] for l in mobile_user_and_group_slugs if l.startswith("l__")]
 
-    @classmethod
-    def show_all_mobile_workers(cls, mobile_user_and_group_slugs):
+    @staticmethod
+    def show_all_mobile_workers(mobile_user_and_group_slugs):
         return 't__0' in mobile_user_and_group_slugs
 
     def get_default_selections(self):
