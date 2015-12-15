@@ -45,12 +45,21 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         self.assert_docs_equal(
             get_last_synclog_for_user(self.user_id), self.sync_logs[0])
 
-    def get_and_save_legacy_synclog(self):
+    def test_get_and_save_legacy_synclog_with_attachm(self):
         legacy_sync_log = self.legacy_sync_logs[0]
-        get_db(None).put_attachment(legacy_sync_log._doc, 'test', 'test_attach', 'text/plain')
+        attachment_name = 'test_attach'
+        get_db(None).put_attachment(legacy_sync_log._doc, 'test', attachment_name, 'text/plain')
 
         sync_log = get_properly_wrapped_sync_log(legacy_sync_log._id)
-        self.assertIn('test_attach', sync_log._attachments)
+        self.assertIn(attachment_name, sync_log._attachments)
 
         # this used to fail for docs with attachments
         sync_log.save()
+
+        # cleanup
+        def del_attachment():
+            get_db(None).delete_attachment(legacy_sync_log._doc, attachment_name)
+            del legacy_sync_log._attachments
+
+        self.addCleanup(del_attachment)
+        self.addCleanup(sync_log.delete)
