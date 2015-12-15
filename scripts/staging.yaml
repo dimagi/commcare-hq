@@ -46,7 +46,6 @@ trunk: master
 name: autostaging
 branches:
   - kill-x_over_time  # Danny 12/11
-  - kill-facilities  # Danny 12/11
   - synclogs-db  # Danny 12/10
   - validate-xpath  # Danny 12/05
   - vellum-staging # J$ 11/13
