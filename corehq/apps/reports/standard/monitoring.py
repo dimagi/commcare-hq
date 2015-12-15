@@ -1281,21 +1281,38 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                     sum([int(report_data.submissions_by_user.get(user["user_id"], 0)) for user in users]),
                 ),
                 # Avg forms submitted
-                util.numcell(sum([int(report_data.submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
+                util.numcell(
+                    sum(
+                        [int(report_data.submissions_by_user.get(user["user_id"], 0))
+                        for user in users]
+                    ) / self.num_avg_intervals
+                ),
                 # Active users
                 util.numcell("%s / %s" % (active_users, total_users),
                              value=int((float(active_users) / total_users) * 10000) if total_users else -1,
                              raw="%s / %s" % (active_users, total_users)),
                 # Cases opened
-                util.numcell(sum([int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0)) for user in users])),
+                util.numcell(
+                    sum(
+                        [int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0))
+                        for user in users]
+                    )
+                ),
                 # Cases closed
-                util.numcell(sum([int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0)) for user in users])),
+                util.numcell(
+                    sum(
+                        [int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0))
+                        for user in users]
+                    )
+                ),
                 # Active cases
                 util.numcell(active_cases),
                 # Total Cases
                 util.numcell(total_cases),
                 # Percent active cases
-                util.numcell((float(active_cases)/total_cases) * 100 if total_cases else 'nan', convert='float'),
+                util.numcell(
+                    (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
+                ),
             ])
         return rows
 
@@ -1328,7 +1345,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                     report_data.submissions_by_user.get(user["user_id"], 0),
                 ),
                 # Average Forms submitted
-                util.numcell(int(report_data.avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
+                util.numcell(
+                    int(report_data.avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals
+                ),
                 # Last Form submission
                 last_form_by_user.get(user["user_id"]) or self.NO_FORMS_TEXT,
                 # Cases opened
@@ -1349,14 +1368,17 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                     total_cases,
                 ),
                 # Percent active
-                util.numcell((float(active_cases)/total_cases) * 100 if total_cases else 'nan', convert='float'),
+                util.numcell(
+                    (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
+                ),
 
             ])
 
         return rows
 
     def _report_data(self):
-        duration = (self.datespan.enddate - self.datespan.startdate) + datetime.timedelta(days=1) # adjust bc inclusive
+        # Adjust to be have inclusive dates
+        duration = (self.datespan.enddate - self.datespan.startdate) + datetime.timedelta(days=1)
         avg_datespan = DateSpan(self.datespan.startdate - (duration * self.num_avg_intervals),
                                 self.datespan.startdate - datetime.timedelta(days=1))
 
