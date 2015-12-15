@@ -5,6 +5,7 @@ from django.db import migrations
 
 from corehq.apps.smsbillables.management.commands.bootstrap_twilio_gateway import \
     bootstrap_twilio_gateway
+from corehq.sql_db.operations import HqRunPython
 
 
 def update_twilio_rates_outgoing(apps, schema_editor):
@@ -20,6 +21,6 @@ class Migration(migrations.Migration):
         ('smsbillables', '0002_bootstrap'),
     ]
 
-    operations = [
-        migrations.RunPython(update_twilio_rates_outgoing),
-    ]
+    operations = {
+        HqRunPython(update_twilio_rates_outgoing),
+    }

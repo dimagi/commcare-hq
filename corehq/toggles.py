@@ -717,3 +717,10 @@ GRID_MENUS = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
+
+GUIDED_TOUR = StaticToggle(
+    'guided_tour',
+    'Show Guided Tour on new application',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)

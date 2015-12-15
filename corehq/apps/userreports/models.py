@@ -1,6 +1,6 @@
 from copy import copy, deepcopy
 import json
-from corehq.db import UCR_ENGINE_ID
+from corehq.sql_db.connections import UCR_ENGINE_ID
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     BooleanProperty,

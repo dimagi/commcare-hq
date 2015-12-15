@@ -29,6 +29,13 @@
 
         {% include "style/includes/bootstrap2/core_libraries.html" %}
 
+        {% if request.guided_tour %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% static 'bootstrap-tour/build/css/bootstrap-tour.min.css' %}" />
+        {% endif %}
+
         {% block oldstyle_imports %}
             <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
             {% compress css %}
@@ -359,6 +366,11 @@
         {% include 'style/bootstrap2/partials/bootstrap2_js.html' %}
         <script src="{% static 'hqstyle/js/jquery/plugins/jquery.form.js' %}"></script>
 
+        {% if request.guided_tour %}
+            <script src="{% static 'tour/js/tour.utils.js' %}"></script>
+            <script src="{% static 'tour/js/bootstrap-tour-2.3.2-patch.js' %}"></script>
+        {% endif %}
+
         {% block js %}
         <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
         <script src="{% static 'hqwebapp/js-custom/hqhandler.form.bugReport.js' %}"></script>
@@ -429,7 +441,7 @@
                 });
                 var element = $('#keyboard-shortcuts-config-form').get(0);
                 ko.cleanNode(element);
-                ko.applyBindings(new KBConfigFormModel(), element);
+                $(element).koApplyBindings(new KBConfigFormModel());
             });
         </script>
 
@@ -589,10 +601,9 @@
 
             var message_element = $("#message-alerts").get(0);
             ko.cleanNode(message_element);
-            ko.applyBindings(
-                {alerts: message_alerts},
-                message_element
-            );
+            $(message_element).koApplyBindings({
+                alerts: message_alerts,
+            });
 
         </script>
     </body>

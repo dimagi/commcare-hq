@@ -80,14 +80,15 @@ from soil.tasks import prepare_download
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_json_response
-from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.app_manager.const import USERCASE_TYPE, USERCASE_ID
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.util import actions_use_usercase
 from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
-    login_or_digest_or_basic,
+    login_or_digest_or_basic_or_apikey,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
@@ -100,6 +101,7 @@ from corehq.apps.hqwebapp.models import ReportsTab
 from corehq.apps.locations.permissions import can_edit_form_location
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.sofabed.models import CaseData
 from corehq.apps.userreports.util import default_language as ucr_default_language
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
@@ -460,7 +462,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             return HttpResponseRedirect(next)
 
 
-@login_or_digest_or_basic(default='digest')
+@login_or_digest_or_basic_or_apikey(default='digest')
 @require_form_export_permission
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
@@ -1410,23 +1412,6 @@ def download_form(request, domain, instance_id):
     return response
 
 
-def _form_instance_to_context_url(domain, instance):
-    try:
-        build = Application.get(instance.build_id)
-    except ResourceNotFound:
-        raise Http404(_('Application not found.'))
-
-    form = build.get_form_by_xmlns(instance.xmlns)
-    if not form:
-        raise Http404(_('Missing module or form information!'))
-
-    return reverse(
-        'cloudcare_form_context',
-        args=[domain, instance.build_id, form.get_module().id, form.id],
-        params={'instance_id': instance._id}
-    )
-
-
 class EditFormInstance(View):
 
     @use_bootstrap3
@@ -1436,20 +1421,59 @@ class EditFormInstance(View):
     def dispatch(self, request, *args, **kwargs):
         return super(EditFormInstance, self).dispatch(request, args, kwargs)
 
+    @staticmethod
+    def _get_form_from_instance(instance):
+        try:
+            build = Application.get(instance.build_id)
+        except ResourceNotFound:
+            raise Http404(_('Application not found.'))
+
+        form = build.get_form_by_xmlns(instance.xmlns)
+        if not form:
+            raise Http404(_('Missing module or form information!'))
+        return form
+
+    @staticmethod
+    def _form_instance_to_context_url(domain, instance):
+        form = EditFormInstance._get_form_from_instance(instance)
+        return reverse(
+            'cloudcare_form_context',
+            args=[domain, instance.build_id, form.get_module().id, form.id],
+            params={'instance_id': instance._id}
+        )
+
+    @staticmethod
+    def _form_uses_usercase(form):
+        actions = form.active_actions()
+        return form.form_type == 'module_form' and actions_use_usercase(actions)
+
     def get(self, request, *args, **kwargs):
         domain = request.domain
         instance_id = self.kwargs.get('instance_id', None)
+
+        def _error(msg):
+            messages.error(request, msg)
+            url = reverse('render_form_data', args=[domain, instance_id])
+            return HttpResponseRedirect(url)
+
         if not (has_privilege(request, privileges.DATA_CLEANUP)) or not instance_id:
             raise Http404()
 
         instance = _get_form_to_edit(domain, request.couch_user, instance_id)
         context = _get_form_context(request, domain, instance)
         if not instance.app_id or not instance.build_id:
-            messages.error(request, _('Could not detect the application/form for this submission.'))
-            return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
+            return _error(_('Could not detect the application/form for this submission.'))
 
         user = get_document_or_404(CommCareUser, domain, instance.metadata.userID)
         edit_session_data = get_user_contributions_to_touchforms_session(user)
+
+        # add usercase to session
+        if self._form_uses_usercase(self._get_form_from_instance(instance)):
+            try:
+                usercase_id = CaseData.objects.get(user_id=user._id, type=USERCASE_TYPE).case_id
+            except CaseData.DoesNotExist:
+                return _error(_('Could not find the user-case for this form'))
+            edit_session_data[USERCASE_ID] = usercase_id
 
         case_blocks = extract_case_blocks(instance, include_path=True)
         # a bit hacky - the app manager puts the main case directly in the form, so it won't have
@@ -1474,7 +1498,7 @@ class EditFormInstance(View):
             'maps_api_key': settings.GMAPS_API_KEY,  # used by cloudcare
             'form_name': _('Edit Submission'),  # used in breadcrumbs
             'edit_context': {
-                'formUrl': _form_instance_to_context_url(domain, instance),
+                'formUrl': self._form_instance_to_context_url(domain, instance),
                 'submitUrl': reverse('receiver_secure_post_with_app_id', args=[domain, instance.build_id]),
                 'sessionData': edit_session_data,
                 'returnUrl': reverse('render_form_data', args=[domain, instance_id]),

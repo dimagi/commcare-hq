@@ -2,43 +2,28 @@
 
 /**
  * A MapList is an ordered list of objects, where each object has the keys "key" and "value".
- * If a lang and/or langs are provided, the MapList will be localizable, and the
- * "value" in each item will itself be an object, mapping language codes to strings.
- * If the MapList is not localizable, each item's value will be a string.
+ * The "value" in each item is itself be an object, mapping language codes to strings.
  */
 
 function MapList(o) {
     var self = this;
-    self.localizable = o.lang || o.langs;
-    if (self.localizable) {
-        self.lang = o.lang;
-        self.langs = [o.lang].concat(o.langs);
-    }
+    self.lang = o.lang;
+    self.langs = [o.lang].concat(o.langs);
     self.items = ko.observableArray();
     self.duplicatedItems = ko.observableArray();
 
     self.setItems = function (items) {
         self.items(_(items).map(function (item) {
-            var value = item.value;
-            if (self.localizable) {
-                value = _.object(_(value).map(function (v, lang) {
-                    return [lang, ko.observable(v)];
-                }));
-            } else {
-                value = ko.observable(value);
-            }
             return {
                 key: ko.observable(item.key),
-                value: value,
+                value: _.object(_(item.value).map(function (value, lang) {
+                    return [lang, ko.observable(value)];
+                }))
             };
         }));
     };
     self.setItems(o.items);
     self.backup = function (value) {
-        if (!self.localizable) {
-            return value;
-        }
-
         var backup;
         for (var i = 0; i < self.langs.length; i += 1) {
             var lang = self.langs[i];
@@ -48,12 +33,6 @@ function MapList(o) {
             }
         }
         return {lang: null, value: null};
-    };
-    self.localizedValue = function(value) {
-        if (!self.localizable) {
-            return value;
-        }
-        return value[self.lang];
     };
     self.removeItem = function (item) {
         self.items.remove(item);
@@ -75,11 +54,7 @@ function MapList(o) {
                 self.duplicatedItems.remove(oldValue);
             }
         }, null, "beforeChange");
-        if (self.localizable) {
-            item.value[self.lang] = ko.observable('');
-        } else {
-            item.value = ko.observable('');
-        }
+        item.value[self.lang] = ko.observable('');
         self.items.push(item);
         if(self.duplicatedItems.indexOf('') === -1 && self._isItemDuplicated('')) {
             self.duplicatedItems.push('');
@@ -106,17 +81,11 @@ function MapList(o) {
 
     self.getItems = function () {
         return _(self.items()).map(function (item) {
-            var value = item.value;
-            if (self.localizable) {
-                value = _.object(_(value).map(function (v, lang) {
-                    return [lang, ko.utils.unwrapObservable(v)];
-                }));
-            } else {
-                value = ko.utils.unwrapObservable(value);
-            }
             return {
                 key: ko.utils.unwrapObservable(item.key),
-                value: value,
+                value: _.object(_(item.value).map(function (value, lang) {
+                    return [lang, ko.utils.unwrapObservable(value)];
+                }))
             };
         });
 
@@ -131,14 +100,12 @@ uiElement.key_value_mapping = function (o) {
         // create a throw-away modal every time
         // lets us create a sandbox for editing that you can cancel
         var $modalDiv = $('<div data-bind="template: \'key_value_mapping_modal\'"></div>');
-        var copy = new MapList(
-            {
-                lang: o.lang,
-                langs: o.langs,
-                items: m.getItems()
-
-            });
-        ko.applyBindings({
+        var copy = new MapList({
+            lang: o.lang,
+            langs: o.langs,
+            items: m.getItems(),
+        });
+        $modalDiv.koApplyBindings({
             modalTitle: o.modalTitle,
             mapList: copy,
             save: function (data, e) {
@@ -147,9 +114,8 @@ uiElement.key_value_mapping = function (o) {
                 } else {
                     m.setItems(copy.getItems());
                 }
-
             }
-        }, $modalDiv.get(0));
+        });
 
         var $modal = $modalDiv.find('.modal');
         $modal.appendTo('body');
@@ -162,7 +128,7 @@ uiElement.key_value_mapping = function (o) {
         m.edit(edit);
     };
     var $div = $('<div data-bind="template: \'key_value_mapping_template\'"></div>');
-    ko.applyBindings(m, $div.get(0));
+    $div.koApplyBindings(m);
     m.ui = $div;
     eventize(m);
     m.items.subscribe(function () {

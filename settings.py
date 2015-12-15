@@ -139,6 +139,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.common.BrokenLinkEmailsMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.middleware.TimeoutMiddleware',
+    'corehq.middleware.NoCacheMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
@@ -242,6 +243,9 @@ HQ_APPS = (
     'corehq.apps.consumption',
     'corehq.apps.tzmigration',
     'corehq.form_processor.app_config.FormProcessorAppConfig',
+    'corehq.sql_db',
+    'corehq.sql_accessors',
+    'corehq.sql_proxy_accessors',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -259,11 +263,11 @@ HQ_APPS = (
     'corehq.apps.repeaters',
     'corehq.apps.app_manager',
     'corehq.apps.es',
-    'corehq.apps.facilities',
     'corehq.apps.fixtures',
     'corehq.apps.importer',
     'corehq.apps.reminders',
     'corehq.apps.translations',
+    'corehq.apps.tour',
     'corehq.apps.users',
     'corehq.apps.settings',
     'corehq.apps.ota',
@@ -400,7 +404,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'dimagi.utils',
     'fluff',
     'fluff_filter',
-    'freddy',
     'pillowtop',
     'pillow_retry',
 )
@@ -636,7 +639,7 @@ REMINDERS_QUEUE_ENABLED = False
 
 # If a reminder still has not been processed in this number of minutes, enqueue it
 # again.
-REMINDERS_QUEUE_ENQUEUING_TIMEOUT = 60
+REMINDERS_QUEUE_ENQUEUING_TIMEOUT = 180
 
 # Number of minutes a celery task will alot for itself (via lock timeout)
 REMINDERS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
@@ -651,6 +654,12 @@ REMINDERS_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
 # The number of hours to wait before counting a reminder as stale. Stale
 # reminders will not be processed.
 REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
+
+# Reminders rate limiting settings. A single project will only be allowed to
+# fire REMINDERS_RATE_LIMIT_COUNT reminders every REMINDERS_RATE_LIMIT_PERIOD
+# seconds.
+REMINDERS_RATE_LIMIT_COUNT = 30
+REMINDERS_RATE_LIMIT_PERIOD = 60
 
 
 ####### Pillow Retry Queue Settings #######
@@ -748,6 +757,7 @@ LOGSTASH_HOST = 'localhost'
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
+ELASTICSEARCH_VERSION = 0.9
 
 ####### Couch Config #######
 # for production this ought to be set to true on your configured couch instance
@@ -941,6 +951,10 @@ UCR_DATABASE_URL = None
 # Override this in localsettings to specify custom reporting databases
 CUSTOM_DATABASES = {}
 
+PL_PROXY_CLUSTER_NAME = 'commcarehq'
+
+USE_PARTITIONED_DATABASE = False
+
 # number of days since last access after which a saved export is considered unused
 SAVED_EXPORT_ACCESS_CUTOFF = 35
 
@@ -1026,6 +1040,7 @@ else:
     ]
 
 ### Reporting database - use same DB as main database
+
 db_settings = DATABASES["default"].copy()
 db_settings['PORT'] = db_settings.get('PORT', '5432')
 options = db_settings.get('OPTIONS')
@@ -1048,6 +1063,11 @@ if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
 if not UCR_DATABASE_URL or UNIT_TESTING:
     # by default just use the reporting DB for UCRs
     UCR_DATABASE_URL = SQL_REPORTING_DATABASE_URL
+
+if USE_PARTITIONED_DATABASE:
+    DATABASE_ROUTERS = ['corehq.sql_db.routers.PartitionRouter']
+else:
+    DATABASE_ROUTERS = ['corehq.sql_db.routers.MonolithRouter']
 
 MVP_INDICATOR_DB = 'mvp-indicators'
 
@@ -1083,6 +1103,9 @@ FIXTURES_DB = NEW_FIXTURES_DB
 NEW_DOMAINS_DB = 'domains'
 DOMAINS_DB = NEW_DOMAINS_DB
 
+SYNCLOGS_DB = 'synclogs'
+
+
 COUCHDB_APPS = [
     'api',
     'app_manager',
@@ -1113,7 +1136,6 @@ COUCHDB_APPS = [
     'indicators',
     'locations',
     'mobile_auth',
-    'phone',
     'pillowtop',
     'pillow_retry',
     'products',
@@ -1176,13 +1198,16 @@ COUCHDB_APPS = [
 
     # domains
     ('domain', DOMAINS_DB),
+
+    # sync logs
+    ('phone', SYNCLOGS_DB),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
 COUCH_SETTINGS_HELPER = CouchSettingsHelper(COUCH_DATABASE, COUCHDB_APPS, [
     NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB,
-])
+], is_test=False)
 COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.make_couchdb_tuples()
 EXTRA_COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.get_extra_couchdbs()
 
@@ -1326,7 +1351,12 @@ PILLOWTOPS = {
     ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
-        'custom.opm.models.OpmUserFluffPillow',
+        {
+            'name': 'OpmUserFluffPillow',
+            'class': 'custom.opm.models.OpmUserFluffPillow',
+            'instance': 'custom.opm.models.get_pillow',
+        },
+
         'custom.m4change.models.AncHmisCaseFluffPillow',
         'custom.m4change.models.LdHmisCaseFluffPillow',
         'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
@@ -1342,10 +1372,22 @@ PILLOWTOPS = {
         'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
-        'custom.world_vision.models.WorldVisionMotherFluffPillow',
-        'custom.world_vision.models.WorldVisionChildFluffPillow',
+        {
+            'name': 'WorldVisionMotherFluffPillow',
+            'class': 'custom.world_vision.models.WorldVisionMotherFluffPillow',
+            'instance': 'custom.world_vision.models.get_mother_pillow',
+        },
+        {
+            'name': 'WorldVisionChildFluffPillow',
+            'class': 'custom.world_vision.models.WorldVisionChildFluffPillow',
+            'instance': 'custom.world_vision.models.get_child_pillow',
+        },
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
-        'custom.succeed.models.UCLAPatientFluffPillow',
+        {
+            'name': 'UCLAPatientFluffPillow',
+            'class': 'custom.succeed.models.UCLAPatientFluffPillow',
+            'instance': 'custom.succeed.models.get_pillow',
+        },
         {
             'name': 'MalariaConsortiumFluffPillow',
             'class': 'custom.reports.mc.models.MalariaConsortiumFluffPillow',

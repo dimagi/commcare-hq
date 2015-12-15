@@ -302,30 +302,20 @@ var ReportConfigsViewModel = function (options) {
 };
 
 $.fn.reportConfigEditor = function (options) {
-    this.each(function(i, v) {
-        options.filterForm = options.filterForm || $(v);
-        var viewModel = new ReportConfigsViewModel(options);
-
-        ko.applyBindings(viewModel, $(this).get(i));
-
-        viewModel.setConfigBeingViewed(new ReportConfig(options.defaultItem));
-    });
+    options.filterForm = options.filterForm || $(v);
+    var viewModel = new ReportConfigsViewModel(options);
+    $(this).koApplyBindings(viewModel);
+    viewModel.setConfigBeingViewed(new ReportConfig(options.defaultItem));
 };
 
 $.fn.reportUserConfigurableConfigEditor = function (options) {
-    this.each(function(i, v) {
-        options.filterForm = options.filterForm || $(v);
-        var viewModel = new ReportConfigsViewModel(options);
-
-        ko.applyBindings(viewModel, $(this).get(i));
-
-        viewModel.setUserConfigurableConfigBeingViewed(new ReportConfig(options.defaultItem));
-    });
+    options.filterForm = options.filterForm || $(v);
+    var viewModel = new ReportConfigsViewModel(options);
+    $(this).koApplyBindings(viewModel);
+    viewModel.setUserConfigurableConfigBeingViewed(new ReportConfig(options.defaultItem));
 };
 
 $.fn.reportConfigList = function (options) {
-    this.each(function(i, v) {
-        var viewModel = new ReportConfigsViewModel(options);
-        ko.applyBindings(viewModel, $(this).get(i));
-    });
+    var viewModel = new ReportConfigsViewModel(options);
+    $(this).koApplyBindings(viewModel);
 };
