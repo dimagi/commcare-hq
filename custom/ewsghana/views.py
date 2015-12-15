@@ -6,14 +6,12 @@ from django.forms.formsets import formset_factory
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404
 from django.shortcuts import get_object_or_404
-from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST, require_GET
 from django.views.generic.base import RedirectView
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.sms import process
 from corehq.apps.commtrack.views import BaseCommTrackManageView
-from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.permissions import locations_access_required, user_can_edit_any_location
 from corehq.apps.products.models import Product, SQLProduct
@@ -21,42 +19,16 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
 from custom.common import ALL_OPTION
-from custom.ewsghana.api import GhanaEndpoint, EWSApi
 from custom.ewsghana.filters import EWSDateFilter
+
 from custom.ewsghana.forms import InputStockForm, EWSUserSettings
-from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge, EWSExtension, EWSMigrationStats, \
-    EWSMigrationProblem
+from custom.ewsghana.models import FacilityInCharge, EWSExtension, EWSMigrationStats, EWSMigrationProblem
 from custom.ewsghana.reports.specific_reports.dashboard_report import DashboardReport
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct, StockStatus
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData, StockLevelsReport
-from custom.ewsghana.stock_data import EWSStockDataSynchronization
-from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \
-    delete_last_migrated_stock_data, convert_user_data_fields_task, migrate_email_settings, \
-    delete_connections_field_task
 from custom.ewsghana.utils import make_url, has_input_stock_permissions
-from custom.ilsgateway.views import GlobalStats
-from custom.logistics.tasks import add_products_to_loc, locations_fix, resync_web_users
-from custom.logistics.tasks import stock_data_task
-from custom.logistics.views import BaseConfigView
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.web import json_handler, json_response
-
-
-class EWSGlobalStats(GlobalStats):
-    template_name = "ewsghana/global_stats.html"
-    show_supply_point_types = True
-    root_name = 'Country'
-
-
-class EWSConfigView(BaseConfigView):
-    config = EWSGhanaConfig
-    urlname = 'ews_config'
-    sync_urlname = 'sync_ewsghana'
-    sync_stock_url = 'ews_sync_stock_data'
-    clear_stock_url = 'ews_clear_stock_data'
-    page_title = ugettext_noop("EWS Ghana")
-    template_name = 'ewsghana/ewsconfig.html'
-    source = 'ewsghana'
 
 
 class InputStockView(BaseDomainView):
@@ -197,80 +169,6 @@ class EWSUserExtensionView(BaseCommTrackManageView):
             messages.add_message(request, messages.SUCCESS, 'Settings updated successfully!')
         return self.get(request, *args, **kwargs)
 
-
-@domain_admin_required
-@require_POST
-def sync_ewsghana(request, domain):
-    ews_bootstrap_domain_task.delay(domain)
-    return HttpResponse('OK')
-
-
-@domain_admin_required
-@require_POST
-def ews_sync_stock_data(request, domain):
-    config = EWSGhanaConfig.for_domain(domain)
-    domain = config.domain
-    endpoint = GhanaEndpoint.from_config(config)
-    stock_data_task.delay(EWSStockDataSynchronization(domain, endpoint))
-    return HttpResponse('OK')
-
-
-@domain_admin_required
-@require_POST
-def ews_clear_stock_data(request, domain):
-    ews_clear_stock_data_task.delay(domain)
-    return HttpResponse('OK')
-
-
-@domain_admin_required
-@require_POST
-def ews_resync_web_users(request, domain):
-    config = EWSGhanaConfig.for_domain(domain)
-    endpoint = GhanaEndpoint.from_config(config)
-    resync_web_users.delay(EWSApi(domain=domain, endpoint=endpoint))
-    return HttpResponse('OK')
-
-
-@domain_admin_required
-@require_POST
-def ews_fix_locations(request, domain):
-    locations_fix.delay(domain=domain)
-    return HttpResponse('OK')
-
-
-@domain_admin_required
-@require_POST
-def ews_add_products_to_locs(request, domain):
-    config = EWSGhanaConfig.for_domain(domain)
-    endpoint = GhanaEndpoint.from_config(config)
-    add_products_to_loc.delay(EWSApi(domain=domain, endpoint=endpoint))
-    return HttpResponse('OK')
-
-
-@domain_admin_required
-@require_POST
-def migrate_email_settings_view(request, domain):
-    migrate_email_settings.delay(domain)
-    return HttpResponse('OK')
-
-
-@domain_admin_required
-@require_POST
-def delete_connections_field(request, domain):
-    delete_connections_field_task.delay(domain)
-    return HttpResponse('OK')
-
-
-@domain_admin_required
-@require_POST
-def delete_last_stock_data(request, domain):
-    delete_last_migrated_stock_data.delay(domain)
-    return HttpResponse('OK')
-
-
-def convert_user_data_fields(request, domain):
-    convert_user_data_fields_task.delay(domain)
-    return HttpResponse('OK')
 
 
 @require_GET
