@@ -17,7 +17,9 @@ var PasswordModel = function (weak, better, strong) {
         }
     });
     self.passwordHelp = ko.computed(function() {
-        if (self.strength() < 2) {
+        if (!self.password()) {
+            return '';
+        } else if (self.strength() < 2) {
             return self.weakMessage;
         } else if (self.strength() == 2) {
             return self.betterMessage;
