@@ -139,6 +139,5 @@ def bootstrap_domain(api_object, **kwargs):
         save_checkpoint(checkpoint, 'product', 100, 0, checkpoint.start_date, False)
         checkpoint.start_date = None
         checkpoint.save()
-        api_object.balance_migration(date)
     except ConnectionError as e:
         logging.error(e)

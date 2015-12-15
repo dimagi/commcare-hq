@@ -32,7 +32,7 @@ from custom.ewsghana.reports.stock_levels_report import InventoryManagementData,
 from custom.ewsghana.stock_data import EWSStockDataSynchronization
 from custom.ewsghana.tasks import ews_bootstrap_domain_task, ews_clear_stock_data_task, \
     delete_last_migrated_stock_data, convert_user_data_fields_task, migrate_email_settings, \
-    delete_connections_field_task
+    delete_connections_field_task, balance_migration_task
 from custom.ewsghana.utils import make_url, has_input_stock_permissions
 from custom.ilsgateway.views import GlobalStats
 from custom.logistics.tasks import add_products_to_loc, locations_fix, resync_web_users
@@ -196,6 +196,13 @@ class EWSUserExtensionView(BaseCommTrackManageView):
             form.save(self.web_user, self.domain)
             messages.add_message(request, messages.SUCCESS, 'Settings updated successfully!')
         return self.get(request, *args, **kwargs)
+
+
+@domain_admin_required
+@require_POST
+def balance_email_reports_migration(request, domain):
+    balance_migration_task.delay(domain)
+    return HttpResponse('OK')
 
 
 @domain_admin_required
@@ -374,6 +381,19 @@ class BalanceMigrationView(BaseDomainView):
             ).exclude(is_archived=True).count(),
             'web_users_count': WebUser.by_domain(self.domain, reduce=True)[0]['value'],
             'sms_users_count': CommCareUser.by_domain(self.domain, reduce=True)[0]['value'],
+            'problems': EWSMigrationProblem.objects.filter(domain=self.domain)
+        }
+
+
+class BalanceEmailMigrationView(BaseDomainView):
+
+    template_name = 'ewsghana/email_balance.html'
+    section_name = 'Email Balance'
+    section_url = ''
+
+    @property
+    def page_context(self):
+        return {
             'problems': EWSMigrationProblem.objects.filter(domain=self.domain)
         }
 
