@@ -209,19 +209,6 @@
             $(document).attr('location', window.location.href + (window.location.search ? '&' : '?') + 'lang=' + lang);
         });
 
-        $("#ic_file").button();
-        $("#error").dialog();
-
-        $(".dialog_opener").each(function () {
-            this.my_dialog = $(this).next('.dialog').get();
-            this.my_dialog.my_opener = this;
-        });
-        $(".dialog").dialog({autoOpen: false, modal: true});
-        $(".dialog_opener").click(function (e) {
-            e.preventDefault();
-            $(this.my_dialog).dialog('open');
-        });
-
         // Auto set input and select values according to the following 'div.immutable'
         $('select').each(function () {
             var val = $(this).next('div.immutable').text();
