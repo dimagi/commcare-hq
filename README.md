@@ -211,6 +211,7 @@ Populate your database:
     $ ./manage.py sync_couch_views
     $ ./manage.py migrate --noinput
     $ ./manage.py collectstatic --noinput
+    $ ./manage.py compilejsi18n
 
 Create a project. The following command will do some basic setup, create a superuser, and create a project. The 
 project-name, email, and password given here are specific to your local development environment. Ignore warnings 
@@ -370,6 +371,7 @@ Notice that `COMPRESS_MINT_DELAY`, `COMPRESS_MTIME_DELAY`, and
 For all STATICFILES changes, run:
 
     $ manage.py collectstatic
+    $ manage.py compilejsi18n
     $ manage.py fix_less_imports_collectstatic
     $ manage.py compress
 
