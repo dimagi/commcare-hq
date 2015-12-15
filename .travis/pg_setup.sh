@@ -32,6 +32,14 @@ PG_CONFIG=/usr/lib/postgresql/$PGVERSION/bin/pg_config make
 sudo ldconfig
 
 # ------------------------------------------------------------------------------
+# Setup postgres config
+# ------------------------------------------------------------------------------
+sudo cp $TRAVIS_BUILD_DIR/.travis/pg_hba.conf /etc/postgresql/$PGVERSION/main/pg_hba.conf
+
+# ------------------------------------------------------------------------------
 # Restart once
 # ------------------------------------------------------------------------------
 sudo /etc/init.d/postgresql restart
+
+# Disable password
+sudo -u postgres psql -c "ALTER ROLE postgres WITH PASSWORD '';"
