@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from corehq.apps.es import FormES
+from corehq.apps.es import FormES, UserES, GroupES
 from dimagi.utils.parsing import string_to_datetime
 
 
@@ -80,3 +80,16 @@ def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission
         results,
     )
     return dict(results)
+
+
+def get_group_stubs(group_ids):
+    return (GroupES()
+        .group_ids(group_ids)
+        .values(['_id', 'name', 'case_sharing', 'reporting']))
+
+
+def get_user_stubs(user_ids):
+    return (UserES()
+        .user_ids(user_ids)
+        .show_inactive()
+        .values(['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active']))

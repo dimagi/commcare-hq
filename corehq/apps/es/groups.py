@@ -24,8 +24,15 @@ class GroupES(HQESQuery):
 
     @property
     def builtin_filters(self):
-        return [is_case_sharing] + super(GroupES, self).builtin_filters
+        return [
+            is_case_sharing,
+            group_ids,
+        ] + super(GroupES, self).builtin_filters
 
 
 def is_case_sharing(value=True):
     return filters.term("case_sharing", value)
+
+
+def group_ids(group_ids):
+    return filters.term("_id", list(group_ids))
