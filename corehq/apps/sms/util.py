@@ -137,9 +137,16 @@ def close_task(domain, subcase_guid, submitting_user_id):
     submit_case_block_from_template(domain, "sms/xml/close_task.xml", context)
 
 
-def get_available_backends(index_by_api_id=False):
+def get_available_backends(index_by_api_id=False, backend_type='SMS'):
     result = {}
-    for backend_class in settings.SMS_LOADED_BACKENDS:
+    if backend_type == 'SMS':
+        backend_classes = settings.SMS_LOADED_BACKENDS
+    elif backend_type == 'IVR':
+        backend_classes = settings.IVR_LOADED_BACKENDS
+    else:
+        raise Exception("Unknown backend_type %s requested" % backend_type)
+
+    for backend_class in backend_classes:
         klass = to_function(backend_class)
         if index_by_api_id:
             api_id = klass.get_api_id()

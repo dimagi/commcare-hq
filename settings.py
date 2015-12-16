@@ -1289,6 +1289,10 @@ SMS_LOADED_BACKENDS = [
     'corehq.messaging.smsbackends.apposit.models.AppositBackend',
 ]
 
+IVR_LOADED_BACKENDS = [
+    'corehq.messaging.ivrbackends.kookoo.models.KooKooBackend',
+]
+
 IVR_BACKEND_MAP = {
     "91": "MOBILE_BACKEND_KOOKOO",
 }
