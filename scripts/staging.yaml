@@ -58,7 +58,7 @@ branches:
   - cache-control # Cal 11/30
   - saved-export-blobs # Daniel 12/3
   - es-fix # Noah 12/7
-  #- chat-window-ko #jenny 12/16
+  - chat-window-ko #jenny 12/16
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
