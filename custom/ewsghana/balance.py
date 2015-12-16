@@ -3,8 +3,11 @@ from django.core.validators import validate_email
 from django.db import transaction
 from corehq.apps.commtrack.dbaccessors.supply_point_case_by_domain_external_id import \
     get_supply_point_case_by_domain_external_id
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.models import ReportNotification, ReportConfig
 from corehq.apps.sms.mixin import apply_leniency, VerifiedNumber
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
+from custom.ewsghana.api import EmailSettingsSync
 from custom.ewsghana.models import EWSMigrationStats, EWSMigrationProblem, EWSExtension
 from custom.logistics.mixin import UserMigrationMixin
 from custom.logistics.utils import iterate_over_api_objects
@@ -243,3 +246,94 @@ class BalanceMigration(UserMigrationMixin):
         self.validate_supply_points(date)
         self.validate_web_users(date)
         self.validate_sms_users()
+
+    def _check_report(self, report, reports, day, interval):
+        if report.report not in EmailSettingsSync.REPORT_MAP or not report.users:
+            return False
+        username = report.users[0].lower()
+        location_code = report.view_args.split()[1][1:-2]
+        desc = "Report not migrated; "
+        report_tuple = (username, day, report.hours, location_code,
+                        EmailSettingsSync.REPORT_MAP[report.report], interval)
+        external_id = '{}-{}-{}-{}-{}-{}'.format(*report_tuple)
+        if report_tuple not in reports:
+            web_user = WebUser.get_by_username(username)
+            if not web_user or self.domain not in web_user.domains:
+                desc += 'User {} is not active; '.format(username)
+            try:
+                sql_location = SQLLocation.objects.get(domain=self.domain, site_code=location_code)
+                if sql_location.is_archived:
+                    desc += 'Location {} is not active; '.format(location_code)
+            except SQLLocation.DoesNotExist:
+                desc += 'Location {} does not exist; '.format(location_code)
+
+            migration_problem, _ = EWSMigrationProblem.objects.get_or_create(
+                domain=self.domain,
+                object_id=username,
+                object_type='email_report',
+                external_id=external_id
+            )
+            migration_problem.description = desc
+            migration_problem.save()
+        return True
+
+    def balance_email_reports(self):
+        EWSMigrationProblem.objects.filter(domain=self.domain).delete()
+        reports = set()
+        reports_count = 0
+        for web_user in WebUser.by_domain(self.domain):
+            notifications = ReportNotification.by_domain_and_owner(self.domain, web_user.get_id)
+            for notification in notifications:
+                config_id = notification.config_ids[0] if notification.config_ids else None
+
+                if not config_id:
+                    continue
+
+                config = ReportConfig.get(config_id)
+                location_id = config.filters.get('location_id')
+                if not location_id:
+                    # report is not migrated from ews
+                    continue
+                reports_count += 1
+                report_slug = config.report_slug
+                code = SQLLocation.objects.get(location_id=location_id).site_code
+                report_tuple = (
+                    web_user.username, notification.day, notification.hour,
+                    code, report_slug, notification.interval
+                )
+                external_id = '{}-{}-{}-{}-{}-{}'.format(*report_tuple)
+                if not notification.send_to_owner and not notification.recipient_emails:
+                    migration_problem, _ = EWSMigrationProblem.objects.get_or_create(
+                        domain=self.domain,
+                        object_id=web_user.username,
+                        object_type='email_report_send_to_owner',
+                        external_id=external_id
+                    )
+                    migration_problem.description = 'send_to_owner not set to true'
+                    migration_problem.save()
+
+                reports.add(report_tuple)
+
+        total_count = 0
+
+        for report in self.endpoint.get_daily_reports(limit=1000)[1]:
+            if self._check_report(report, reports, 1, 'daily'):
+                total_count += 1
+
+        for report in self.endpoint.get_weekly_reports(limit=1000)[1]:
+            if self._check_report(report, reports, report.day_of_week, 'weekly'):
+                total_count += 1
+
+        for report in self.endpoint.get_monthly_reports(limit=1000)[1]:
+            if self._check_report(report, reports, report.day_of_month, 'monthly'):
+                total_count += 1
+
+        if total_count != reports_count:
+            migration_problem, _ = EWSMigrationProblem.objects.get_or_create(
+                domain=self.domain,
+                object_id=None,
+                object_type='email_report',
+                external_id='email-report-count'
+            )
+            migration_problem.description = '{} / {}'.format(reports_count, total_count)
+            migration_problem.save()
