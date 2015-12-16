@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap3/two_column.html' %}
+{% extends 'style/bootstrap3/base_section.html' %} {# TODO: fix breadcrumbs - compare with prod #}
 {% load xforms_extras %}
 {% load url_extras %}
 {% load hq_shared_tags %}
@@ -7,16 +7,6 @@
 {% load compress %}
 
 {% block title %}{% trans "Applications" %}{% endblock %}
-
-{% block page_title %}
-    <ul class="breadcrumb">
-        <li>
-            <strong>{% trans "Applications" %}</strong>
-        </li>
-        {% block breadcrumbs %}
-        {% endblock %}
-    </ul>
-{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
     {% compress css %}
