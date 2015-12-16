@@ -38,7 +38,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
-from corehq.apps.users.analytics import get_count_of_active_commcare_users_in_domain
+from corehq.apps.users.dbaccessors.all_commcare_users import get_count_of_commcare_users_in_domain
 
 
 @cache_control(no_cache=True, no_store=True)
@@ -77,7 +77,7 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     context.update({
         'release_manager': True,
         'can_send_sms': can_send_sms,
-        'has_mobile_workers': bool(get_count_of_active_commcare_users_in_domain(domain)),
+        'has_mobile_workers': get_count_of_commcare_users_in_domain(domain) > 0,
         'sms_contacts': (
             get_sms_autocomplete_context(request, domain)['sms_contacts']
             if can_send_sms else []
