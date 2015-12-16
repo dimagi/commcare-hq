@@ -786,7 +786,7 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
     flag_name_fr: "Old déchets stockés ?"
     warning: "Problem reported: More than one season of accumulated solid waste in store."
     warning_fr: "Problème signalé : Pesticides excédentaires dans l’inventaire."
-  - question: [q31_action]m
+  - question: [q31_action]
     flag_name: "Waste Management plan?"
     flag_name_fr: "Plan de gestion des déchets ?"
     warning: "Problem reported: Deficient waste management planning."
