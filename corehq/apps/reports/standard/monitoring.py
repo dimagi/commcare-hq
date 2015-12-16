@@ -1379,8 +1379,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
 
         return WorkerActivityReportData(
-            avg_submissions_by_user=get_submission_counts_by_user(self.domain, self.datespan),
-            submissions_by_user=get_submission_counts_by_user(self.domain, avg_datespan),
+            avg_submissions_by_user=get_submission_counts_by_user(self.domain, avg_datespan),
+            submissions_by_user=get_submission_counts_by_user(self.domain, self.datespan),
             active_cases_by_owner=get_active_case_counts_by_owner(self.domain, self.datespan, self.case_types),
             total_cases_by_owner=get_total_case_counts_by_owner(self.domain, self.datespan, self.case_types),
             cases_closed_by_user=get_case_counts_closed_by_user(self.domain, self.datespan, self.case_types),
