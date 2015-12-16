@@ -104,11 +104,12 @@ class TimeoutMiddleware(object):
 
     @staticmethod
     @quickcache(['domain_name', 'secure_session'], timeout=10 * 60)
-    def _secure_domain_not_session(secure_session, domain_name):
+    def _session_insecure_and_domain_requires_secure_session(secure_session, domain_name):
         if secure_session:
             return False
         else:
-            return Domain.get_by_name(domain_name).secure_sessions
+            domain = Domain.get_by_name(domain_name)
+            return domain and domain.secure_sessions
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         if not request.user.is_authenticated():
@@ -117,7 +118,8 @@ class TimeoutMiddleware(object):
         secure_session = request.session.get('secure_session')
         now = datetime.datetime.utcnow()
 
-        if hasattr(request, 'domain') and self._secure_domain_not_session(secure_session, request.domain):
+        if hasattr(request, 'domain') and \
+                self._session_insecure_and_domain_requires_secure_session(secure_session, request.domain):
             if self._session_expired(settings.SECURE_TIMEOUT, request.user.last_login, now):
                 django_logout(request, template_name=settings.BASE_TEMPLATE)
                 # this must be after logout so it is attached to the new session
