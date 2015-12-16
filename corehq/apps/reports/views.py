@@ -98,6 +98,7 @@ from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.export import export_cases
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.hqwebapp.models import ReportsTab
+from corehq.apps.hqwebapp.utils import csrf_inline
 from corehq.apps.locations.permissions import can_edit_form_location
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper import submit_form_locally
@@ -1154,11 +1155,13 @@ def close_case_view(request, domain, case_id):
             You can also reopen the case in the future by archiving the last form in the case history.
             <form id="{html_form_id}" action="{url}" method="POST">
                 <input type="hidden" name="closing_form" value="{xform_id}" />
+                {csrf_inline}
             </form>
         '''.format(
             name=case.name,
             html_form_id='undo-close-case',
             xform_id=form_id,
+            csrf_inline=csrf_inline(request),
             url=reverse('undo_close_case', args=[domain, case_id]),
         ))
         messages.success(request, mark_safe(msg), extra_tags='html')
@@ -1562,11 +1565,13 @@ def archive_form(request, domain, instance_id):
         "notif": notif_msg,
         "undo": _("Undo"),
         "url": reverse('unarchive_form', args=[domain, instance_id]),
-        "id": "restore-%s" % instance_id
+        "id": "restore-%s" % instance_id,
+        "csrf_inline": csrf_inline(request)
     }
+
     msg_template = u"""{notif} <a href="javascript:document.getElementById('{id}').submit();">{undo}</a>
-        <form id="{id}" action="{url}" method="POST"></form>""" if instance.doc_type == "XFormArchived" \
-        else u'{notif}'
+        <form id="{id}" action="{url}" method="POST">{csrf_inline}</form>""" \
+        if instance.doc_type == "XFormArchived" else u'{notif}'
     msg = msg_template.format(**params)
     messages.success(request, mark_safe(msg), extra_tags='html')
 

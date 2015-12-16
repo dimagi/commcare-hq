@@ -190,6 +190,7 @@
     <h3>{% trans 'Move Location?' %}</h3>
   </div>
   <form class="form form-horizontal hq-form" name="verify_move_location" action="" method="post">
+    {% csrf_token %}
     <div class="modal-body">
       <p>{% blocktrans %}You've changed this location's parent.{% endblocktrans %}</p>
       <p>{% blocktrans %}If you move this location, all the data submitted for this location must be updated as well.

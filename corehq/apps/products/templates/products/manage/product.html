@@ -11,6 +11,7 @@
 
 {% block main_column %}
     <form class="form form-horizontal" name="product" method="post">
+        {% csrf_token %}
         {% bootstrap_form_errors form %}
         {% bootstrap_fieldset form "Product Information" %}
 

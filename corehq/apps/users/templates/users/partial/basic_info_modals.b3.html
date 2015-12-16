@@ -17,7 +17,7 @@
                       action="{% url "delete_phone_number" domain couch_user.couch_id %}"
                       {% endif %}
                       method="POST">
-
+                    {% csrf_token %}
                     <input type="hidden" name="form_type" value="delete-phone-number"/>
                     <input type="hidden" name="phone_number" value="{{ phone_number.number }}"/>
 
