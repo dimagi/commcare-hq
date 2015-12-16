@@ -64,11 +64,13 @@ $.fn.hqHelp = function () {
 
         var options = {
             html: true,
-            trigger: 'focus',
-            content: function() {
-                return $('#popover_content_wrapper').html();
-            }
+            trigger: 'focus'
         };
+        if (!$link.data('content')) {
+            options.content = function() {
+                return $('#popover_content_wrapper').html();
+            };
+        }
         if (!$link.data("title")) {
             options.template = '<div class="popover"><div class="arrow"></div><div class="popover-inner"><div class="popover-content"><p></p></div></div></div>';
         }
