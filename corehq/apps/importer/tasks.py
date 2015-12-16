@@ -37,6 +37,8 @@ def bulk_import_async(import_id, config, domain, excel_id):
 
 
 def do_import(spreadsheet_or_error, config, domain, task=None, chunksize=CASEBLOCK_CHUNKSIZE):
+    # todo: trace where these errors are used and how they can be triggered,
+    # and move this error handling to a more appropriate place
     if isinstance(spreadsheet_or_error, Exception):
         spreadsheet_error = spreadsheet_or_error
         if isinstance(spreadsheet_error, ImporterRefError):
