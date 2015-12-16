@@ -32,7 +32,7 @@ def test_generator(test_name, skip=False):
         self.assertEqual(sync_log.case_ids_on_phone, set(desired_cases))
         assert_user_has_cases(self, self.user, desired_cases)
         assert_user_doesnt_have_cases(self, self.user, undesired_cases)
-    return test
+    return run_with_all_backends(test)
 
 
 class TestSequenceMeta(type):
@@ -44,7 +44,7 @@ class TestSequenceMeta(type):
 
         for test in [(test['name'], test.get('skip', False)) for test in tests_to_run]:
             # Create a new testcase that the test runner is able to find
-            dict["test_%s" % re.sub("\s", "_", test[0])] = run_with_all_backends(test_generator(test[0], test[1]))
+            dict["test_%s" % re.sub("\s", "_", test[0])] = test_generator(test[0], test[1])
 
         return type.__new__(mcs, name, bases, dict)
 
