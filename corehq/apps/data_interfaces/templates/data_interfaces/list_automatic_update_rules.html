@@ -172,6 +172,7 @@
                                     <form class="modal-content"
                                           method="post"
                                           ng-submit="deleteRule(rule, djangoRMI, paginationController);">
+                                        {% csrf_token %}
                                         <div class="modal-header">
                                             <button type="button"
                                                     class="close"

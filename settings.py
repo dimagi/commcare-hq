@@ -138,10 +138,10 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
-    'corehq.middleware.TimeoutMiddleware',
     'corehq.middleware.NoCacheMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
+    'corehq.middleware.TimeoutMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
     'corehq.apps.domain.middleware.DomainHistoryMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
@@ -152,7 +152,8 @@ MIDDLEWARE_CLASSES = [
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
 # time in minutes before forced logout due to inactivity
-INACTIVITY_TIMEOUT = 30
+INACTIVITY_TIMEOUT = 60 * 24 * 14
+SECURE_TIMEOUT = 30
 
 PASSWORD_HASHERS = (
     # this is the default list with SHA1 moved to the front
@@ -323,6 +324,7 @@ HQ_APPS = (
     'corehq.util',
     'dimagi.ext',
     'corehq.doctypemigrations',
+    'corehq.blobs',
 
     # custom reports
     'a5288',
@@ -519,12 +521,10 @@ FIXTURE_GENERATORS = {
 ### Shared drive settings ###
 # Also see section after localsettings import
 SHARED_DRIVE_ROOT = None
-
-# name of the directory within SHARED_DRIVE_ROOT
+# names of directories within SHARED_DRIVE_ROOT
 RESTORE_PAYLOAD_DIR_NAME = None
-
-# name of the directory within SHARED_DRIVE_ROOT
 SHARED_TEMP_DIR_NAME = None
+SHARED_BLOB_DIR_NAME = 'blobdb'
 
 ## django-transfer settings
 # These settings must match the apache / nginx config
@@ -1226,7 +1226,8 @@ SHARED_DRIVE_CONF = SharedDriveConfiguration(
     SHARED_DRIVE_ROOT,
     RESTORE_PAYLOAD_DIR_NAME,
     TRANSFER_FILE_DIR_NAME,
-    SHARED_TEMP_DIR_NAME
+    SHARED_TEMP_DIR_NAME,
+    SHARED_BLOB_DIR_NAME
 )
 TRANSFER_MAPPINGS = {
     SHARED_DRIVE_CONF.transfer_dir: '/{}'.format(TRANSFER_FILE_DIR_NAME),  # e.g. '/mnt/shared/downloads': '/downloads',
@@ -1414,7 +1415,11 @@ PILLOWTOPS = {
             'class': 'corehq.apps.change_feed.consumer.pillow.LoggingPythonPillow',
             'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_python_pillow_consumer',
         },
-
+        {
+            'name': 'BlobDeletionPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.blobs.pillow.get_blob_deletion_pillow',
+        },
     ]
 }
 

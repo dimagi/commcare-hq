@@ -24,6 +24,7 @@
 
     <p>
         <form action="{% url "unassign_users" request.domain %}" method="POST">
+            {% csrf_token %}
             <input type="hidden" name="redirect" value="{{ request.path }}">
             <input value="{% trans "Remove Mobile Workers From Locations" %}"
                    type="submit" class="btn btn-danger"></input>

@@ -66,7 +66,6 @@ from corehq.apps.app_manager.models import (
     str_to_cls,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
-from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from django_prbac.utils import has_privilege
@@ -245,7 +244,6 @@ def get_apps_base_context(request, domain, app):
         'langs': langs,
         'domain': domain,
         'app': app,
-        'URL_BASE': get_url_base(),
         'timezone': timezone,
     }
 
@@ -591,6 +589,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('minimum_use_threshold', None),
         ('use_grid_menus', None),
         ('comment', None),
+        ('custom_base_url', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):

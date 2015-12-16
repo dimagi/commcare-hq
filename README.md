@@ -451,18 +451,10 @@ Then run the following separately:
     # run the Django server
     $ ./manage.py runserver 0.0.0.0:8000
 
-If you want to use CloudCare you will also need to run the Touchforms server and be running a multi-threaded
+If you want to use CloudCare you will also need to run the Touchforms server.
 
     # run Touchforms server
     > jython submodules/touchforms-src/touchforms/backend/xformserver.py
-
-    # On Mac / Linux use Gunicorn as the multi-threaded server
-    $ gunicorn deployment.gunicorn.commcarehq_wsgi:application \
-        -c deployment/gunicorn/gunicorn_conf.py \
-        -k gevent --bind 0.0.0.0:8000
-
-    # on Windows use CherryPy
-    > manage.py runcpserver port=8000
 
 Running Formdesigner in Development mode
 ----------------------------------------
