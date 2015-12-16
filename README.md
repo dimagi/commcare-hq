@@ -208,7 +208,7 @@ that you have a 32bit version of Python installed.
 
 Populate your database:
 
-    $ ./manage.py syncdb --noinput  # you may have to run syncdb twice to get past a transient error
+    $ ./manage.py sync_couch_views
     $ ./manage.py migrate --noinput
     $ ./manage.py collectstatic --noinput
 
@@ -406,7 +406,7 @@ URL_ROOT = 'http://localhost:8000/a/{{DOMAIN}}'
 
 + On Mac OS X, if Pillow complains that it can't find freetype, make sure freetype is installed with `brew install freetype`. Then create a symlink with: `ln -s /usr/local/include/freetype2 /usr/local/include/freetype`.
 
-+ If you have an authentication error running `./manage.py syncdb` the first
++ If you have an authentication error running `./manage.py migrate` the first
   time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
   and change the line "local all all peer" to "local all all md5".
 

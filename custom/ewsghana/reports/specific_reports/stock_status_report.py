@@ -251,7 +251,7 @@ class StockoutsProduct(EWSData):
                                  y_axis=Axis(self.chart_y_label, 'd'))
             chart.x_axis_uses_dates = True
             chart.tooltipFormat = True
-            chart.is_rendered_as_email = self.config['is_rendered_as_email']
+            chart.is_rendered_as_email = self.config.get('is_rendered_as_email')
             for key, value in rows.iteritems():
                 chart.add_dataset(key, value)
             return [chart]

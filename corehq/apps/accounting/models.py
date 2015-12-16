@@ -985,6 +985,11 @@ class Subscriber(models.Model):
             raise SubscriptionChangeError("The upgrade was not successful.")
 
 
+class SubscriptionManager(models.Manager):
+    def get_queryset(self):
+        return super(SubscriptionManager, self).get_queryset().filter(is_hidden_to_ops=False)
+
+
 class Subscription(models.Model):
     """
     Links a Subscriber to a SoftwarePlan and BillingAccount, necessary for invoicing.
@@ -1019,6 +1024,9 @@ class Subscription(models.Model):
         default=FundingSource.CLIENT
     )
     last_modified = models.DateTimeField(auto_now=True)
+    is_hidden_to_ops = models.BooleanField(default=False)
+
+    objects = SubscriptionManager()
 
     class Meta:
         app_label = 'accounting'
@@ -1179,7 +1187,7 @@ class Subscription(models.Model):
 
     def update_subscription(self, date_start=None, date_end=None,
                             date_delay_invoicing=None, do_not_invoice=False,
-                            no_invoice_reason=None,
+                            no_invoice_reason=None, do_not_email=False,
                             salesforce_contract_id=None,
                             auto_generate_credits=False,
                             web_user=None, note=None, adjustment_method=None,
@@ -1213,6 +1221,7 @@ class Subscription(models.Model):
 
         self.do_not_invoice = do_not_invoice
         self.no_invoice_reason = no_invoice_reason
+        self.do_not_email = do_not_email
         self.auto_generate_credits = auto_generate_credits
         self.salesforce_contract_id = salesforce_contract_id
         if service_type is not None:

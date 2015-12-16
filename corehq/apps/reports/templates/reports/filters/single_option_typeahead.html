@@ -13,7 +13,9 @@
 {% block filter_js %}
 <script type="text/javascript">
     $(function () {
-        ko.applyBindings({current_selection: ko.observable('{{ select.selected|safe|default:'' }}')}, $('#{{ css_id }}').parent().get(0));
+        $('#{{ css_id }}').parent().koApplyBindings({
+            current_selection: ko.observable('{{ select.selected|safe|default:'' }}'),
+        });
         $('#{{ css_id }}').combobox({
             placeholder: '{{ select.default_text|safe }}'
         });

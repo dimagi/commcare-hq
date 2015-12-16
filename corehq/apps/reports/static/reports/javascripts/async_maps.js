@@ -37,7 +37,7 @@ MetricsControl = L.Control.extend({
         var koModel = new MetricsViewModel(this);
         var metrics = $('#metrics')[0];
         ko.cleanNode(metrics);
-        ko.applyBindings(koModel, metrics);
+        $(metrics).koApplyBindings(koModel);
         koModel.load(this.options.metrics);
     },
 

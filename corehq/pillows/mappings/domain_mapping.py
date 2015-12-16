@@ -1,4 +1,6 @@
-DOMAIN_INDEX = "hqdomains_20151204_1053"
+from corehq.util.elastic import es_index
+
+DOMAIN_INDEX = es_index("hqdomains_20151204_1053")
 DOMAIN_MAPPING = {'_meta': {'comment': 'farid modified on 2015/11/23',
                             'created': None},
  'date_detection': False,

@@ -724,3 +724,24 @@ GRID_MENUS = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
+
+SECURE_SESSIONS_CHECKBOX = StaticToggle(
+    'secure_sessions_checkbox',
+    'Show secure sessions checkbox',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+GUIDED_TOUR = StaticToggle(
+    'guided_tour',
+    'Show Guided Tour on new application',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+CUSTOM_APP_BASE_URL = StaticToggle(
+    'custom_app_base_url',
+    'Allow specifying a custom base URL for an application. Main use case is to allow migrating ICDS to a new cluster.',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)

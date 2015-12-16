@@ -9,7 +9,7 @@
     <script src="{% static 'hqwebapp/js/main.js' %}"></script>
     <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+    <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
 {% endblock %}
 
 {% block head %}{{ block.super }}
@@ -26,7 +26,7 @@
             {{ available_languages|JSON }},
             {{ form.initial_event|JSON }}
         );
-        ko.applyBindings(manageRemindersModel, $('#manage-reminders-form').get(0));
+        $('#manage-reminders-form').koApplyBindings(manageRemindersModel);
         manageRemindersModel.init();
     </script>
 {% endblock %}

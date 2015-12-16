@@ -24,7 +24,7 @@ from dimagi.utils.parsing import json_format_date
 
 
 def _get_date_range(range):
-    if range is not None:
+    if range:
         dates = str(range).split(_(" to "))
         return (dates[0], dates[1])
     return None

@@ -176,12 +176,10 @@
                              form_requires() === 'case') ||
                             isUserCaseInUse) && !putInRoot;
                 });
-                ko.applyBindings({
+                $('#form-filter').koApplyBindings({
                         formFilter: ko.observable(formFilter),
-                        formFilterAllowed: formFilterAllowed
-                    },
-                    $('#form-filter').get(0)
-                );
+                        formFilterAllowed: formFilterAllowed,
+                });
                 {% endif %}
 
                 {% if allow_form_workflow %}
@@ -206,16 +204,16 @@
                     options.formDatumsUrl = '{% url 'get_form_datums' domain app.id %}'
                     {% endif %}
 
-                    ko.applyBindings(new FormWorkflow(options), $('#form-workflow').get(0))
+                    $('#form-workflow').koApplyBindings(new FormWorkflow(options))
                 {% endif %}
 
-                ko.applyBindings({
+                $('#auto-gps-capture').koApplyBindings({
                     auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }})
-                }, $('#auto-gps-capture').get(0));
+                });
                 {% if request|toggle_enabled:'NO_VELLUM' %}
-                ko.applyBindings({
+                $('#no-vellum').koApplyBindings({
                     no_vellum: ko.observable({{ form.no_vellum|JSON }})
-                }, $('#no-vellum').get(0));
+                });
                 {% endif %}
 
                 gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
@@ -313,7 +311,7 @@
     <div class="tabbable">
         <ul class="nav nav-tabs">
             <li class="active">
-                <a href="#form-settings" data-toggle="tab">{% trans "Settings" %}</a>
+                <a href="#form-settings" id="tour-form-settings-tab" data-toggle="tab">{% trans "Settings" %}</a>
             </li>
             <li>
                 <a id="case-configuration-tab" href="#case-configuration" data-toggle="tab">

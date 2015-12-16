@@ -1365,11 +1365,14 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "restrict_superusers": self.domain_object.restrict_superusers,
             "allow_domain_requests": self.domain_object.allow_domain_requests,
             "hipaa_compliant": self.domain_object.hipaa_compliant,
+            "secure_sessions": self.domain_object.secure_sessions,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial,
-                                       user_name=self.request.couch_user.username)
-        return PrivacySecurityForm(initial=initial, user_name=self.request.couch_user.username)
+                                       user_name=self.request.couch_user.username,
+                                       domain=self.request.domain)
+        return PrivacySecurityForm(initial=initial, user_name=self.request.couch_user.username,
+                                   domain=self.request.domain)
 
     @property
     def page_context(self):

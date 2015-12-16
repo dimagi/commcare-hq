@@ -33,7 +33,7 @@
             {{ totals|JSON }}
         );
         reference_controller.render();
-        ko.applyBindings(reference_controller, $("#multimedia-reference-checker").get(0));
+        $("#multimedia-reference-checker").koApplyBindings(reference_controller);
 
         $('.preview-media').tooltip();
     </script>
