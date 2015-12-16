@@ -8,9 +8,11 @@ def get_all_commcare_users_by_domain(domain):
     """Returns all CommCareUsers by domain regardless of their active status"""
     return imap(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), _get_ids_by_domain(domain)))
 
+
 def get_count_of_commcare_users_in_domain(domain):
     """Returns count of all CommCareUsers by domain regardless of their active status"""
     return len(list(_get_ids_by_domain(domain)))
+
 
 def _get_ids_by_domain(domain):
     from corehq.apps.users.models import CommCareUser
