@@ -138,10 +138,10 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
-    'corehq.middleware.TimeoutMiddleware',
     'corehq.middleware.NoCacheMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
+    'corehq.middleware.TimeoutMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
     'corehq.apps.domain.middleware.DomainHistoryMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
@@ -152,7 +152,8 @@ MIDDLEWARE_CLASSES = [
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
 # time in minutes before forced logout due to inactivity
-INACTIVITY_TIMEOUT = 30
+INACTIVITY_TIMEOUT = 60 * 24 * 14
+SECURE_TIMEOUT = 30
 
 PASSWORD_HASHERS = (
     # this is the default list with SHA1 moved to the front
