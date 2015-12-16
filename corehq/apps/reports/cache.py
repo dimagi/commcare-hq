@@ -13,7 +13,7 @@ class _ReportQuickCache(QuickCache):
     """
     def __call__(self, *args, **kwargs):
         report = args[0]
-        if report.is_cacheable and _is_valid(report) and getattr(settings, 'CACHE_REPORTS', True):
+        if report.is_cacheable and _is_valid(report) and settings.CACHE_REPORTS:
             return super(_ReportQuickCache, self).__call__(*args, **kwargs)
         else:
             return self.fn(*args, **kwargs)
