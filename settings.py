@@ -420,6 +420,9 @@ LOGIN_REDIRECT_URL = '/'
 
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
+# When set to False, HQ will not cache any reports using is_cacheable
+CACHE_REPORTS = True
+
 ####### Domain settings  #######
 
 DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY = 99
