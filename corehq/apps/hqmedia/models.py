@@ -229,19 +229,6 @@ class CommCareMultimedia(SafeSaveDocument):
         return cls.get_by_hash(file_hash)
 
     @classmethod
-    def all_tags(cls):
-        return [d['key'] for d in cls.view('hqmedia/tags', group=True).all()]
-
-    @classmethod
-    def search(cls, query, limit=10):
-        results = get_db().search(cls.Config.search_view,
-            q=query,
-            limit=limit,
-            #stale='ok',
-        )
-        return map(cls.get, [r['id'] for r in results])
-
-    @classmethod
     def get_doc_class(cls, doc_type):
         return {
             'CommCareImage': CommCareImage,

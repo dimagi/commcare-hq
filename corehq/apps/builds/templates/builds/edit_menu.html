@@ -4,12 +4,14 @@
 
 <html>
 <head>
+    {% if less_debug %}
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core-debug.less' %}"/>
+        <script src="{% static 'style/lib/lessjs/less-1.3.1.min.js' %}"></script>
+        {% if less_watch %}<script>less.watch();</script>{% endif %}
+    {% else %}
     {% compress css %}
     <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
     {% endcompress %}
-    {% if less_debug %}
-        <script src="{% static 'style/lib/lessjs/less-1.3.1.min.js' %}"></script>
-        {% if less_watch %}<script>less.watch();</script>{% endif %}
     {% endif %}
     <title>Edit Builds Menu</title>
 </head>
@@ -87,7 +89,7 @@
             <li>Click Submit</li>
             <li>Wait until the page loads. If successful click back and refresh to see your new build.</li>
         </ol>
-        <form action="{% url 'corehq.apps.builds.views.import_build' %}" method="post">
+        <form action="{% url 'corehq.apps.builds.views.import_build' %}" method="post">% csrf_token %}
             <label for="import_build_name">Source for artifacts.zip</label>
             <input id="import_build_name" type="text" name="source"/>
             <br/>
@@ -102,9 +104,10 @@
     </div>
     <div style="height:150px;"></div>
 
-    <script src="{% static 'jquery-1.7.1-legacy/jquery.js' %}"></script>
-    <script src="{% static 'style/lib/bootstrap2/bootstrap.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+    <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+    <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
+    {% include 'style/bootstrap2/partials/bootstrap2_js.html' %}
+    <script type="text/javascript" src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'knockout-2.3.0-legacy/knockout.js' %}"></script>
     <script type="text/javascript" src="{% static 'underscore-legacy/underscore-min.js' %}"></script>
     <script type="text/javascript" src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
@@ -183,7 +186,7 @@
         }
 
         var buildsMenu = new Menu();
-        ko.applyBindings(buildsMenu, $("#menu-form").get(0));
+        $("#menu-form").koApplyBindings(buildsMenu);
 
         function postGo(url, params) {
             var $form = $("<form>")
@@ -195,6 +198,7 @@
                     .attr("value", value)
                     .appendTo($form);
             });
+            $("{% csrf_token %}").appendTo($form);
             $form.appendTo("body");
             $form.submit();
         }

@@ -22,7 +22,8 @@
         {% compress css %}
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
         {% endcompress %}
-        <script src="{% static 'jquery-1.7.1-legacy/jquery.js' %}"></script>
+        <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+        <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'knockout-2.3.0-legacy/knockout.js' %}"></script>
         <style>
             html, body {
@@ -437,7 +438,7 @@
                     }, 60000);
                 }
                 chat_window_view_model = new ChatWindowViewModel();
-                ko.applyBindings(chat_window_view_model);
+                $('body').koApplyBindings(chat_window_view_model);
                 $(window).resize(resize_messages);
                 $(window).focus(chat_window_view_model.enter_focus);
                 $(window).blur(chat_window_view_model.leave_focus);

@@ -4,11 +4,19 @@ from urllib import urlencode
 import math
 from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import operator
+from pygooglechart import ScatterChart
 import pytz
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
-from corehq.apps.es.forms import FormES
 from corehq.apps.reports import util
+from corehq.apps.reports.analytics.esaccessors import (
+    get_last_submission_time_for_user,
+    get_submission_counts_by_user,
+    get_completed_counts_by_user,
+    get_submission_counts_by_date,
+    get_completed_counts_by_date,
+)
+from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport
@@ -26,9 +34,14 @@ from corehq.util.view_utils import absolute_reverse
 from couchforms.models import XFormInstance
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.parsing import string_to_datetime, json_format_date
+from dimagi.utils.parsing import json_format_date
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+
+
+TOO_MUCH_DATA = ugettext_noop(
+    'The filters you selected include too much data. Please change your filters and try again'
+)
 
 
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -109,7 +122,6 @@ class CompletionOrSubmissionTimeMixin(object):
 
 class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     """
-    todo move this to the cached version when ready
     User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
     danny   5 (25%)         10 (50%)        20 (100%)       17                          6
     (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
@@ -366,9 +378,6 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                 help_text = None
                 if info['is_fuzzy']:
                     help_text = _("This column shows Fuzzy Submissions.")
-                elif info['is_remote']:
-                    help_text = _("These forms came from "
-                                  "a Remote CommCare HQ Application.")
                 headers.add_column(
                     DataTablesColumn(
                         info['name'],
@@ -489,6 +498,10 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
     def enddate(self):
         return self.datespan.enddate_utc if self.by_submission_time else self.datespan.enddate_adjusted
 
+    @property
+    def is_submission_time(self):
+        return self.date_field == 'received_on'
+
     def date_filter(self, start, end):
         return {'%s__range' % self.date_field: (start, end)}
 
@@ -533,14 +546,18 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
             users.reverse()
         return self.paginate_list(users)
 
-    def users_by_range(self, start, end, order):
-        results = FormData.objects \
-            .filter(**self.date_filter(start, end)) \
-            .values('user_id') \
-            .annotate(Count('user_id'))
+    def users_by_range(self, datespan, order):
+        if self.is_submission_time:
+            get_counts_by_user = get_submission_counts_by_user
+        else:
+            get_counts_by_user = get_completed_counts_by_user
 
-        count_dict = dict((result['user_id'], result['user_id__count']) for result in results)
-        return self.users_sorted_by_count(count_dict, order)
+        results = get_counts_by_user(
+            self.domain,
+            datespan,
+        )
+
+        return self.users_sorted_by_count(results, order)
 
     def users_sorted_by_count(self, count_dict, order):
         # Split all_users into those in count_dict and those not.
@@ -570,23 +587,25 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
 
     @property
     def rows(self):
-        if self.datespan.is_valid():
-            self.sort_col = self.request_params.get('iSortCol_0', 0)
-            totals_col = self.column_count - 1
-            order = self.request_params.get('sSortDir_0')
-            if self.sort_col == totals_col:
-                users = self.users_by_range(self.startdate, self.enddate, order)
-            elif 0 < self.sort_col < totals_col:
-                start = self.dates[self.sort_col-1]
-                end = start + datetime.timedelta(days=1)
-                users = self.users_by_range(start, end, order)
-            else:
-                users = self.users_by_username(order)
+        if not self.datespan.is_valid():
+            return [[self.datespan.get_validation_reason()]]
 
-            rows = [self.get_row(user) for user in users]
-            self.total_row = self.get_row()
-            return rows
-        return [[self.datespan.get_validation_reason()]]
+        self.sort_col = self.request_params.get('iSortCol_0', 0)
+        totals_col = self.column_count - 1
+        order = self.request_params.get('sSortDir_0')
+
+        if self.sort_col == totals_col:
+            users = self.users_by_range(self.datespan, order)
+        elif 0 < self.sort_col < totals_col:
+            start = self.dates[self.sort_col - 1]
+            end = start + datetime.timedelta(days=1)
+            users = self.users_by_range(DateSpan(start, end), order)
+        else:
+            users = self.users_by_username(order)
+
+        rows = [self.get_row(user) for user in users]
+        self.total_row = self.get_row()
+        return rows
 
     @property
     def get_all_rows(self):
@@ -599,24 +618,22 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
         Assemble a row for a given user.
         If no user is passed, assemble a totals row.
         """
-        values = ['date']
-        results = FormData.objects.filter(**self.date_filter(self.startdate, self.enddate))
+        user_ids = map(lambda user: user.user_id, [user] if user else self.all_users)
 
-        if user:
-            results = results.filter(user_id=user.user_id)
-            values.append('user_id')
+        if self.is_submission_time:
+            get_counts_by_date = get_submission_counts_by_date
         else:
-            user_ids = [user_a.user_id for user_a in self.all_users]
-            results = results.filter(user_id__in=user_ids)
+            get_counts_by_date = get_completed_counts_by_date
 
-        results = results.extra({'date': "date(%s AT TIME ZONE '%s')" % (self.date_field, self.timezone)}) \
-            .values(*values) \
-            .annotate(Count(self.date_field))
+        results = get_counts_by_date(
+            self.domain,
+            user_ids,
+            self.datespan,
+            self.timezone,
+        )
 
-        count_field = '%s__count' % self.date_field
-        counts_by_date = dict((result['date'].isoformat(), result[count_field]) for result in results)
         date_cols = [
-            counts_by_date.get(json_format_date(date), 0)
+            results.get(json_format_date(date), 0)
             for date in self.dates
         ]
         styled_date_cols = ['<span class="muted">0</span>' if c == 0 else c for c in date_cols]
@@ -786,6 +803,12 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
     @property
     def rows(self):
+        try:
+            return self._get_rows()
+        except TooMuchDataError as e:
+            return [['<span class="label label-important">{}</span>'.format(e)] + ['--'] * 5]
+
+    def _get_rows(self):
         rows = []
         total = 0
         total_seconds = 0
@@ -811,7 +834,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                 .extra(
                     where=[where], params=params
                 )
-
+            if results.count() > 5000:
+                raise TooMuchDataError(_(TOO_MUCH_DATA))
             for row in results:
                 completion_time = (PhoneTime(row['time_end'], self.timezone)
                                    .server_time().done())
@@ -910,8 +934,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     @memoized
     def activity_times(self):
         all_times = []
-        users_data = EMWF.pull_users_and_groups(
-            self.domain, self.request, True, True)
+        users_data = EMWF.pull_users_and_groups(self.domain, self.request, True, True)
         for user in users_data.combined_users:
             for form, info in self.all_relevant_forms.items():
                 key = make_form_couch_key(
@@ -928,6 +951,8 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
                 ).all()
                 all_times.extend([iso_string_to_datetime(d['key'][-1])
                                   for d in data])
+                if len(all_times) > 5000:
+                    raise TooMuchDataError()
         if self.by_submission_time:
             all_times = [ServerTime(t).user_time(self.timezone).done()
                          for t in all_times]
@@ -935,16 +960,25 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             all_times = [PhoneTime(t, self.timezone).user_time(self.timezone).done()
                          for t in all_times]
 
-        return [(t.weekday(), t.hour) for t in all_times]
+        aggregated_times = defaultdict(int)
+        for t in all_times:
+            aggregated_times[(t.weekday(), t.hour)] += 1
+        return aggregated_times
 
     @property
     def report_context(self):
-        chart_data = defaultdict(int)
-        for time in self.activity_times:
-            chart_data[time] += 1
+        error = None
+        try:
+            activity_times = self.activity_times
+            if len(activity_times) == 0:
+                error = _("Note: No submissions matched your filters.")
+        except TooMuchDataError:
+            activity_times = defaultdict(int)
+            error = _(TOO_MUCH_DATA)
+
         return dict(
-            chart_url=self.generate_chart(chart_data, timezone=self.timezone),
-            no_data=not self.activity_times,
+            chart_url=self.generate_chart(activity_times, timezone=self.timezone),
+            error=error,
             timezone=self.timezone,
         )
 
@@ -955,11 +989,6 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             Hat tip: http://github.com/dustin/bindir/blob/master/gitaggregates.py
         """
         no_data = not data
-        try:
-            from pygooglechart import ScatterChart
-        except ImportError:
-            raise Exception("WorkerActivityTimes requires pygooglechart.")
-
         chart = ScatterChart(width, height, x_range=(-1, 24), y_range=(-1, 7))
 
         chart.add_data([(h % 24) for h in range(24 * 8)])
@@ -1067,36 +1096,15 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         else:
             return self.combined_users
 
-    def es_form_submissions(self, datespan=None):
-        datespan = datespan or self.datespan
-        form_query = (FormES()
-                      .domain(self.domain)
-                      .completed(gte=datespan.startdate.date(),
-                                 lte=datespan.enddate.date())
-                      .user_facet()
-                      .size(1))
-        return form_query.run()
-
     def es_last_submissions(self, datespan=None):
         """
-            Creates a dict of userid => date of last submission
+        Creates a dict of userid => date of last submission
         """
         datespan = datespan or self.datespan
-
-        def es_q(user_id):
-            form_query = FormES() \
-                .domain(self.domain) \
-                .user_id([user_id]) \
-                .completed(gte=datespan.startdate.date(), lte=datespan.enddate.date()) \
-                .sort("form.meta.timeEnd", desc=True) \
-                .size(1)
-            results = form_query.run().raw_hits
-            return results[0]['_source']['form']['meta']['timeEnd'] if results else None
-
-        def convert_date(date):
-            return string_to_datetime(date).date() if date else None
-
-        return dict([(u["user_id"], convert_date(es_q(u["user_id"]))) for u in self.users_to_iterate])
+        return {
+            u["user_id"]: get_last_submission_time_for_user(self.domain, u["user_id"], datespan)
+            for u in self.users_to_iterate
+        }
 
     def es_case_queries(self, date_field, user_field, datespan=None):
         datespan = datespan or self.datespan
@@ -1143,10 +1151,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         if avg_datespan.startdate.year < 1900:  # srftime() doesn't work for dates below 1900
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
 
-        form_data = self.es_form_submissions()
-        submissions_by_user = form_data.facets.user.counts_by_term()
-        avg_form_data = self.es_form_submissions(datespan=avg_datespan)
-        avg_submissions_by_user = avg_form_data.facets.user.counts_by_term()
+        submissions_by_user = get_submission_counts_by_user(self.domain, self.datespan)
+        avg_submissions_by_user = get_submission_counts_by_user(self.domain, avg_datespan)
 
         if self.view_by == 'groups':
             active_users_by_group = {

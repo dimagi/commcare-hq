@@ -125,7 +125,7 @@ var charts = (function() {
                     record = valuesDict[config.y_axis_columns[j].column_id];
                     record.values.push({
                         x: current[config.x_axis_column] || '',
-                        y: current[config.y_axis_columns[j].column_id]
+                        y: parseFloat(current[config.y_axis_columns[j].column_id])
                     });
                 }
             }

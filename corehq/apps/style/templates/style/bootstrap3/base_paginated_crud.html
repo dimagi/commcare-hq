@@ -63,7 +63,7 @@
                     }
                 ">
                 <div class="row" data-bind="visible: isPaginationActive">
-                    <div class="col-md-12">
+                    <div class="col-md-8">
                         <div class="form-inline" style="margin: 1.6em 0;">
                             <label for="pagination-limit">{% trans 'Show' %}</label>
                             <select class="form-control" id="pagination-limit" data-bind="event: {change: updateListLimit}">
@@ -75,7 +75,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-12">
+                    <div class="col-md-4">
                         {% include 'style/bootstrap3/partials/pagination.html' %}
                     </div>
                 </div>

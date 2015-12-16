@@ -22,7 +22,10 @@
 </div>
 <script type="text/javascript">
     $(function () {
-        ko.applyBindings({select_params: {{ select.options|JSON }}, current_selection: ko.observableArray({{ select.selected|JSON }})}, $('#{{ select.cssId }}').parent().get(0));
+        $('#{{ select.cssId }}').parent().koApplyBindings({
+          select_params: {{ select.options|JSON }},
+          current_selection: ko.observableArray({{ select.selected|JSON }})},
+        );
         $('#{{ select.cssId }}').select2();
 
         $('.hq-help-template').each(function () {

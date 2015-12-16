@@ -141,9 +141,17 @@ var HQAsyncReport = function (o) {
                 self.hqLoading.fadeOut();
 
                 if (!initial_load || !self.standardReport.needsFilters) {
-                    self.standardReport.filterSubmitButton.removeClass('btn-primary').button('standard');
+                    self.standardReport.filterSubmitButton
+                        .removeClass('btn-primary')
+                        .button('standard')
+                        .addClass('disabled')
+                        .prop('disabled', true);
                 } else {
-                    self.standardReport.filterSubmitButton.button('reset').addClass('btn-primary');
+                    self.standardReport.filterSubmitButton
+                        .button('reset')
+                        .addClass('btn-primary')
+                        .removeClass('disabled')
+                        .removeProp('disabled');
                 }
             },
             error: function (data) {

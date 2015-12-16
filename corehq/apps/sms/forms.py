@@ -1,8 +1,8 @@
 import re
 import json
-from datetime import time
 from crispy_forms.bootstrap import StrictButton, InlineField, FormActions
 from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Div
 from django import forms
 from django.core.urlresolvers import reverse
 from django.forms.forms import Form
@@ -20,8 +20,7 @@ from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.reminders.forms import RecordListField, validate_time
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from corehq.apps.sms.util import (get_available_backends, validate_phone_number,
-    strip_plus)
+from corehq.apps.sms.util import (get_available_backends, validate_phone_number, strip_plus)
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
@@ -751,16 +750,19 @@ class BackendForm(Form):
         super(BackendForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_method = 'POST'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-               _('General Settings'),
+                _('General Settings'),
                 crispy.Field('name', css_class='input-xxlarge'),
                 crispy.Field('description', css_class='input-xxlarge', rows="3"),
                 crispy.Field('reply_to_phone_number', css_class='input-xxlarge'),
                 crispy.Field(
-                    'give_other_domains_access',
-                    data_bind="checked: share_backend"
+                    twbscrispy.PrependedText(
+                        'give_other_domains_access', '', data_bind="checked: share_backend"
+                    )
                 ),
                 crispy.Div(
                     'authorized_domains',
@@ -778,7 +780,7 @@ class BackendForm(Form):
                 ),
                 data_bind="visible: use_load_balancing",
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 StrictButton(
                     button_text,
                     type="submit",
@@ -838,6 +840,7 @@ class BackendForm(Form):
                 return None
             else:
                 return value
+
 
 class BackendMapForm(Form):
     catchall_backend_id = CharField(required=False)
@@ -959,20 +962,23 @@ class InitiateAddSMSBackendForm(Form):
         self.fields['backend_type'].choices = backend_choices
 
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_class = "form form-horizontal"
         self.helper.layout = crispy.Layout(
-            BootstrapMultiField(
+            hqcrispy.B3MultiField(
                 _("Create Another Connection"),
                 InlineField('action'),
-                InlineField('backend_type'),
-                StrictButton(
-                    mark_safe('<i class="icon-plus"></i> %s' % "Add Another Gateway"),
+                Div(InlineField('backend_type'), css_class='col-sm-6 col-md-6 col-lg-4'),
+                Div(StrictButton(
+                    mark_safe('<i class="fa fa-plus"></i> Add Another Gateway'),
                     css_class='btn-success',
                     type='submit',
                     style="margin-left:5px;"
-                ),
+                ), css_class='col-sm-3 col-md-2 col-lg-2'),
             ),
         )
+
 
 class SubscribeSMSForm(Form):
     stock_out_facilities = BooleanField(

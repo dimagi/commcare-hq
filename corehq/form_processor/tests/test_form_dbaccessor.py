@@ -6,9 +6,11 @@ from django.test import TestCase
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
-from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL
+from corehq.form_processor.interfaces.processor import ProcessedForms
+from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
 from corehq.form_processor.parsers.form import apply_deprecation
-from corehq.form_processor.tests.utils import create_form_for_test, get_simple_form_data
+from corehq.form_processor.tests.utils import create_form_for_test, get_simple_form_xml, FormProcessorTestUtils
+from corehq.sql_db.routers import db_for_read_write
 from crispy_forms.tests.utils import override_settings
 
 DOMAIN = 'test-form-accessor'
@@ -16,11 +18,15 @@ DOMAIN = 'test-form-accessor'
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class FormAccessorTestsSQL(TestCase):
-    dependent_apps = []
+    dependent_apps = ['corehq.sql_accessors', 'corehq.sql_proxy_accessors']
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
+        FormProcessorTestUtils.delete_all_sql_cases(DOMAIN)
 
     def test_get_form_by_id(self):
         form = create_form_for_test(DOMAIN)
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(1, using=db_for_read_write(XFormInstanceSQL)):
             form = FormAccessorSQL.get_form(form.form_id)
         self._check_simple_form(form)
 
@@ -46,14 +52,14 @@ class FormAccessorTestsSQL(TestCase):
 
     def test_get_with_attachments(self):
         form = create_form_for_test(DOMAIN)
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(1, using=db_for_read_write(XFormAttachmentSQL)):
             form.get_attachment_meta('form.xml')
 
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(2, using=db_for_read_write(XFormAttachmentSQL)):
             form = FormAccessorSQL.get_with_attachments(form.form_id)
 
         self._check_simple_form(form)
-        with self.assertNumQueries(0):
+        with self.assertNumQueries(0, using=db_for_read_write(XFormAttachmentSQL)):
             attachment_meta = form.get_attachment_meta('form.xml')
 
         self.assertEqual(form.form_id, attachment_meta.form_id)
@@ -62,12 +68,12 @@ class FormAccessorTestsSQL(TestCase):
 
     def test_get_attachment_by_name(self):
         form = create_form_for_test(DOMAIN)
-        form_xml = get_simple_form_data(form.form_id)
+        form_xml = get_simple_form_xml(form.form_id)
 
         with self.assertRaises(AttachmentNotFound):
             FormAccessorSQL.get_attachment_by_name(form.form_id, 'not_a_form.xml')
 
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(1, using=db_for_read_write(XFormAttachmentSQL)):
             attachment_meta = FormAccessorSQL.get_attachment_by_name(form.form_id, 'form.xml')
 
         self.assertEqual(form.form_id, attachment_meta.form_id)
@@ -85,8 +91,8 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual([], operations)
 
         # don't call form.archive to avoid sending the signals
-        FormAccessorSQL.archive_form(form.form_id, user_id='user1')
-        FormAccessorSQL.unarchive_form(form.form_id, user_id='user2')
+        FormAccessorSQL.archive_form(form, user_id='user1')
+        FormAccessorSQL.unarchive_form(form, user_id='user2')
 
         operations = FormAccessorSQL.get_form_operations(form.form_id)
         self.assertEqual(2, len(operations))
@@ -109,7 +115,7 @@ class FormAccessorTestsSQL(TestCase):
         forms = FormAccessorSQL.get_forms_with_attachments_meta([form_with_pic.form_id, plain_form.form_id])
         self.assertEqual(2, len(forms))
         self.assertEqual(form_with_pic.form_id, forms[0].form_id)
-        with self.assertNumQueries(0):
+        with self.assertNumQueries(0, using=db_for_read_write(XFormAttachmentSQL)):
             expected = {
                 'form.xml': 'text/xml',
                 'pic.jpg': 'image/jpeg',
@@ -118,7 +124,7 @@ class FormAccessorTestsSQL(TestCase):
             self.assertEqual(2, len(attachments))
             self.assertEqual(expected, {att.name: att.content_type for att in attachments})
 
-        with self.assertNumQueries(0):
+        with self.assertNumQueries(0, using=db_for_read_write(XFormAttachmentSQL)):
             expected = {
                 'form.xml': 'text/xml',
             }
@@ -133,12 +139,12 @@ class FormAccessorTestsSQL(TestCase):
         # basic check
         forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormInstance', 5)
         self.assertEqual(2, len(forms))
-        self.assertEqual([form1.form_id, form2.form_id], [f.form_id for f in forms])
+        self.assertEqual({form1.form_id, form2.form_id}, {f.form_id for f in forms})
 
         # check reverse ordering
         forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormInstance', 5, recent_first=True)
         self.assertEqual(2, len(forms))
-        self.assertEqual([form2.form_id, form1.form_id], [f.form_id for f in forms])
+        self.assertEqual({form2.form_id, form1.form_id}, {f.form_id for f in forms})
 
         # check limit
         forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormInstance', 1)
@@ -146,7 +152,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(form1.form_id, forms[0].form_id)
 
         # change state of form1
-        FormAccessorSQL.archive_form(form1.form_id, 'user1')
+        FormAccessorSQL.archive_form(form1, 'user1')
 
         # check filtering by state
         forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormArchived', 2)
@@ -189,7 +195,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(1, len(transactions))
         self.assertFalse(transactions[0].revoked)
 
-        FormAccessorSQL.archive_form(form.form_id, 'user1')
+        FormAccessorSQL.archive_form(form, 'user1')
         form = FormAccessorSQL.get_form(form.form_id)
         self.assertEqual(XFormInstanceSQL.ARCHIVED, form.state)
         operations = form.history
@@ -201,7 +207,7 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(1, len(transactions))
         self.assertTrue(transactions[0].revoked)
 
-        FormAccessorSQL.unarchive_form(form.form_id, 'user2')
+        FormAccessorSQL.unarchive_form(form, 'user2')
         form = FormAccessorSQL.get_form(form.form_id)
         self.assertEqual(XFormInstanceSQL.NORMAL, form.state)
         operations = form.history
@@ -232,7 +238,7 @@ class FormAccessorTestsSQL(TestCase):
     def test_save_processed_models_deprecated(self):
         existing_form, new_form = _simulate_form_edit()
 
-        FormProcessorSQL.save_processed_models([new_form, existing_form])
+        FormProcessorSQL.save_processed_models(ProcessedForms(new_form, existing_form))
 
         self._validate_deprecation(existing_form, new_form)
 
@@ -277,5 +283,5 @@ def _simulate_form_edit():
     new_form.form_id = existing_form.form_id
 
     existing_form, new_form = apply_deprecation(existing_form, new_form)
-    assert existing_form.form_id  != new_form.form_id
+    assert existing_form.form_id != new_form.form_id
     return existing_form, new_form

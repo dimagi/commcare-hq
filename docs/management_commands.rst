@@ -131,7 +131,6 @@ Complete list of available subcommands:
     | loaddata
     | mail_admins
     | mail_debug
-    | make_hqstyle
     | make_supervisor_conf
     | makemessages
     | migrate

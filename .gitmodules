@@ -37,9 +37,6 @@
 [submodule "submodules/couchdbkit-aggregate"]
 	path = submodules/couchdbkit-aggregate
 	url = git://github.com/dimagi/couchdbkit-aggregate.git
-[submodule "submodules/freddy"]
-	path = submodules/freddy
-	url = git://github.com/dimagi/freddy.git
 [submodule "submodules/fluff-src"]
 	path = submodules/fluff-src
 	url = git://github.com/dimagi/fluff.git

@@ -3,11 +3,16 @@ from django.conf import settings
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.reminders.models import CaseReminderHandler, CaseReminder
 from corehq.apps.reminders.tasks import fire_reminder
+from corehq.apps.reminders.util import get_reminder_domain
 from hqscripts.generic_queue import GenericEnqueuingOperation
+
 
 class ReminderEnqueuingOperation(GenericEnqueuingOperation):
     args = ""
     help = "Runs the Reminders Queue"
+
+    def get_fetching_interval(self):
+        return 60
 
     def get_queue_name(self):
         return "reminders-queue"
@@ -28,7 +33,8 @@ class ReminderEnqueuingOperation(GenericEnqueuingOperation):
         return settings.REMINDERS_QUEUE_ENABLED
 
     def enqueue_item(self, _id):
-        fire_reminder.delay(_id)
+        domain = get_reminder_domain(_id)
+        fire_reminder.delay(_id, domain)
 
     def enqueue_directly(self, reminder):
         """

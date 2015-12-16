@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 from django.db import models, migrations
 
+from corehq.sql_db.operations import HqRunSQL
+
 
 class Migration(migrations.Migration):
 
@@ -11,7 +13,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(
+        HqRunSQL(
             """
                 CREATE INDEX form_processor_commcarecasesql_supply_point_location
                 ON form_processor_commcarecasesql(domain, location_uuid) WHERE type = 'supply-point'

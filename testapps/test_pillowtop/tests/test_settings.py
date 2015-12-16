@@ -45,7 +45,7 @@ def _pillow_meta_from_config(pillow_config):
     pillow_class = pillow_config.get_class()
     is_elastic = issubclass(pillow_class, AliasedElasticPillow)
     if pillow_config.instance_generator == pillow_config.class_name:
-        kwargs = {'create_index': False, 'online': False} if is_elastic else {}
+        kwargs = {'online': False} if is_elastic else {}
         pillow_instance = pillow_class(**kwargs)
     else:
         # if we have a custom instance generator just use it
