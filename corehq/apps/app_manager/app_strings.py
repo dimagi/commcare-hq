@@ -30,11 +30,12 @@ def _create_custom_app_strings(app, lang, for_default=False):
     yield 'cchq.case', "Case"
     yield 'cchq.referral', "Referral"
 
-    # include language code names
+    # include language code names and current language
     for lc in app.langs:
         name = langcodes.get_name(lc) or lc
         if name:
             yield lc, name
+    yield id_strings.current_language(), lang
 
     for module in app.get_modules():
         for detail_type, detail, _ in module.get_details():

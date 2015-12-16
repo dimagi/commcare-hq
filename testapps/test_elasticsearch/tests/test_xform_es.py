@@ -3,11 +3,9 @@ import uuid
 import datetime
 from django.test import SimpleTestCase
 from corehq.apps.es import FormES
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests import get_simple_form_xml
 from corehq.form_processor.tests.utils import TestFormMetadata
-from corehq.form_processor.utils import convert_xform_to_json
 from corehq.pillows.xform import XFormPillow
+from corehq.util.test_utils import make_es_ready_form
 from pillowtop.tests import require_explicit_elasticsearch_testing
 
 
@@ -29,7 +27,8 @@ class XFormESTestCase(SimpleTestCase):
     @classmethod
     def _ship_forms_to_es(cls, metadatas):
         for form_metadata in metadatas:
-            form_pair = _make_es_ready_form(form_metadata)
+            form_metadata = form_metadata or TestFormMetadata()
+            form_pair = make_es_ready_form(form_metadata)
             cls.forms.append(form_pair)
             cls.pillow.change_transport(form_pair.json_form)
         # have to refresh the index to make sure changes show up
@@ -99,18 +98,3 @@ class XFormESTestCase(SimpleTestCase):
         self.assertEqual(0, base_qs.completed(lt=early).run().total)
         # test both
         self.assertEqual(0, base_qs.completed(gt=early, lt=later).run().total)
-
-
-def _make_es_ready_form(metadata=None):
-    # this is rather complicated due to form processor abstractions and ES restrictions
-    # on what data needs to be in the index and is allowed in the index
-    metadata = metadata or TestFormMetadata()
-    metadata.domain = metadata.domain or uuid.uuid4().hex
-    form_id = uuid.uuid4().hex
-    form_xml = get_simple_form_xml(form_id=form_id, metadata=metadata)
-    form_json = convert_xform_to_json(form_xml)
-    wrapped_form = FormProcessorInterface(domain=metadata.domain).new_xform(form_json)
-    wrapped_form.domain = metadata.domain
-    json_form = wrapped_form.to_json()
-    json_form['form']['meta'].pop('appVersion')  # hack - ES chokes on this
-    return WrappedJsonFormPair(wrapped_form, json_form)

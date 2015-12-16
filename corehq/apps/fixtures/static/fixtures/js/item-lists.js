@@ -332,7 +332,7 @@ $(function () {
         };
     }
     var app = new App();
-    ko.applyBindings(app, el.get(0));
+    el.koApplyBindings(app);
     el.show();
     app.loadData();
 });

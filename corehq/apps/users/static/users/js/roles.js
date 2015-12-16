@@ -143,6 +143,6 @@ var RolesViewModel = function (o) {
 
 $.fn.userRoles = function (o) {
     this.each(function () {
-            ko.applyBindings(new RolesViewModel(o), $(this).get(0));
+        $(this).koApplyBindings(new RolesViewModel(o));
     });
 };

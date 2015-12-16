@@ -148,9 +148,7 @@ var DrilldownOption = function (select, drilldown_map) {
 };
 
 $.fn.drilldownOptionFilter = function (options) {
-    this.each(function(i) {
-        var viewModel = new DrilldownOptionFilterControl(options);
-        ko.applyBindings(viewModel, $(this).get(i));
-        viewModel.init();
-    });
+    var viewModel = new DrilldownOptionFilterControl(options);
+    $(this).koApplyBindings(viewModel);
+    viewModel.init();
 };

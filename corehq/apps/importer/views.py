@@ -5,6 +5,8 @@ from corehq.apps.hqcase.dbaccessors import get_case_properties, \
     get_case_types_for_domain
 from corehq.apps.importer import base
 from corehq.apps.importer import util as importer_util
+from corehq.apps.importer.exceptions import ImporterExcelFileEncrypted, \
+    ImporterFileNotFound, ImporterExcelError, ImporterError, ImporterRefError
 from corehq.apps.importer.tasks import bulk_import_async
 from django.views.decorators.http import require_POST
 from corehq.apps.users.decorators import require_permission
@@ -74,10 +76,10 @@ def excel_config(request, domain):
         file_extension=file_extention_from_filename(uploaded_file_handle.name),
     )
     request.session[EXCEL_SESSION_ID] = file_ref.download_id
-    spreadsheet = importer_util.get_spreadsheet(file_ref, named_columns)
-
-    if not spreadsheet:
-        return _spreadsheet_expired(request, domain)
+    try:
+        spreadsheet = importer_util.get_spreadsheet(file_ref, named_columns)
+    except ImporterError as e:
+        return render_error(request, domain, _get_importer_error_message(e))
 
     columns = spreadsheet.get_header_columns()
     row_count = spreadsheet.get_num_rows()
@@ -184,9 +186,10 @@ def excel_fields(request, domain):
 
     download_ref = DownloadBase.get(request.session.get(EXCEL_SESSION_ID))
 
-    spreadsheet = importer_util.get_spreadsheet(download_ref, named_columns)
-    if not spreadsheet:
-        return _spreadsheet_expired(request, domain)
+    try:
+        spreadsheet = importer_util.get_spreadsheet(download_ref, named_columns)
+    except ImporterError as e:
+        return render_error(request, domain, _get_importer_error_message(e))
 
     columns = spreadsheet.get_header_columns()
 
@@ -270,16 +273,10 @@ def excel_commit(request, domain):
     excel_id = request.session.get(EXCEL_SESSION_ID)
 
     excel_ref = DownloadBase.get(excel_id)
-    spreadsheet = importer_util.get_spreadsheet(excel_ref, config.named_columns)
-
-    if not spreadsheet:
-        return _spreadsheet_expired(request, domain)
-
-    if spreadsheet.has_errors:
-        messages.error(request, _('The session containing the file you '
-                                  'uploaded has expired - please upload '
-                                  'a new one.'))
-        return HttpResponseRedirect(base.ImportCases.get_url(domain=domain) + "?error=cache")
+    try:
+        importer_util.get_spreadsheet(excel_ref, config.named_columns)
+    except ImporterError as e:
+        return render_error(request, domain, _get_importer_error_message(e))
 
     download = DownloadBase()
     download.set_task(bulk_import_async.delay(
@@ -334,3 +331,20 @@ def importer_job_poll(request, domain, download_id, template="importer/partials/
 def _spreadsheet_expired(req, domain):
     messages.error(req, _('Sorry, your session has expired. Please start over and try again.'))
     return HttpResponseRedirect(base.ImportCases.get_url(domain))
+
+
+def _get_importer_error_message(e):
+    if isinstance(e, ImporterRefError):
+        # I'm not totally sure this is the right error, but it's what was being
+        # used before. (I think people were just calling _spreadsheet_expired
+        # or otherwise blaming expired sessions whenever anything unexpected
+        # happened though...)
+        return _('Sorry, your session has expired. Please start over and try again.')
+    elif isinstance(e, ImporterFileNotFound):
+        return _('The session containing the file you uploaded has expired '
+                 '- please upload a new one.')
+    elif isinstance(e, ImporterExcelFileEncrypted):
+        return _('The file you want to import is password protected. '
+                 'Please choose a file that is not password protected.')
+    elif isinstance(e, ImporterExcelError):
+        return _("The file uploaded has the following error: ").format(unicode(e))

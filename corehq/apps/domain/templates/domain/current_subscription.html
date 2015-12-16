@@ -27,7 +27,7 @@
             paymentHandler.loadCards({{ plan.cards|JSON }});
         {% endif %}
         $(function () {
-            ko.applyBindings(paymentHandler, $('#paymentModal').get(0));
+            $('#paymentModal').koApplyBindings(paymentHandler);
         });
 
         var creditsHandler = new CreditsManager(
@@ -35,7 +35,7 @@
             paymentHandler, {{ can_purchase_credits|BOOL }}, {{ plan.is_trial|BOOL }}
         );
         $(function () {
-            ko.applyBindings(creditsHandler, $('#subscriptionSummary').get(0));
+            $('#subscriptionSummary').koApplyBindings(creditsHandler);
             creditsHandler.init();
         });
 

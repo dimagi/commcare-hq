@@ -247,15 +247,19 @@ def _process_case_block(case_block, attachments, old_case_id):
     return ET.tostring(root), ret_attachments
 
 
-def submit_case_block_from_template(domain, template, context):
+def submit_case_block_from_template(domain, template, context, xmlns=None):
     case_block = render_to_string(template, context)
     # Ensure the XML is formatted properly
     # An exception is raised if not
     case_block = ElementTree.tostring(ElementTree.XML(case_block))
-    submit_case_blocks(case_block, domain)
+
+    kwargs = {}
+    if xmlns:
+        kwargs['xmlns'] = xmlns
+    submit_case_blocks(case_block, domain, **kwargs)
 
 
-def update_case(domain, case_id, case_properties=None, close=False):
+def update_case(domain, case_id, case_properties=None, close=False, xmlns=None):
     """
     Updates or closes a case (or both) by submitting a form.
     domain - the case's domain
@@ -263,6 +267,7 @@ def update_case(domain, case_id, case_properties=None, close=False):
     case_properties - to update the case, pass in a dictionary of {name1: value1, ...}
                       to ignore case updates, leave this argument out
     close - True to close the case, False otherwise
+    xmlns - pass in an xmlns to use it instead of the default
     """
     context = {
         'case_id': case_id,
@@ -271,4 +276,4 @@ def update_case(domain, case_id, case_properties=None, close=False):
         'case_properties': case_properties,
         'close': close,
     }
-    submit_case_block_from_template(domain, 'hqcase/xml/update_case.xml', context)
+    submit_case_block_from_template(domain, 'hqcase/xml/update_case.xml', context, xmlns=xmlns)

@@ -45,6 +45,7 @@
 
 {% block main_column %}
     <form action="" method="post">
+        {% csrf_token %}
         <table>
             <tr>
                 <th><label for="id_forward_type">{% trans "Forward type" %}</label></th>

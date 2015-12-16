@@ -327,6 +327,9 @@ class Domain(Document, SnapshotMixin):
     default_mobile_worker_redirect = StringProperty(default=None)
     last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
+    # when turned on, users who enter the domain are logged out after 30 minutes of inactivity
+    secure_sessions = BooleanProperty(default=False)
+
     @property
     def domain_type(self):
         """
@@ -873,21 +876,30 @@ class Domain(Document, SnapshotMixin):
         return Domain.view('domain/copied_from_snapshot', keys=[s._id for s in self.copied_from.snapshots()], include_docs=True)
 
     def delete(self):
-        from corehq.apps.domain.signals import commcare_domain_pre_delete
+        self._pre_delete()
+        super(Domain, self).delete()
+        Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
+    def _pre_delete(self):
+        from corehq.apps.domain.signals import commcare_domain_pre_delete
+        from corehq.apps.domain.deletion import apply_deletion_operations
+
+        dynamic_deletion_operations = []
         results = commcare_domain_pre_delete.send_robust(sender='domain', domain=self)
         for result in results:
-            if result[1]:
-                raise DomainDeleteException(
-                    u"Error occurred during domain pre_delete {}: {}".format(self.name, str(result[1]))
-                )
+            response = result[1]
+            if isinstance(response, Exception):
+                raise DomainDeleteException(u"Error occurred during domain pre_delete {}: {}".format(self.name, str(response)))
+            elif response:
+                assert isinstance(response, list)
+                dynamic_deletion_operations.extend(response)
+
         # delete all associated objects
         for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):
             iter_bulk_delete(db, related_doc_ids, chunksize=500)
+
         self._delete_web_users_from_domain()
-        self._delete_sql_objects()
-        super(Domain, self).delete()
-        Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
+        apply_deletion_operations(self.name, dynamic_deletion_operations)
 
     def _delete_web_users_from_domain(self):
         from corehq.apps.users.models import WebUser
@@ -896,52 +908,6 @@ class Domain(Document, SnapshotMixin):
         for web_user in list(active_web_users) + list(inactive_web_users):
             web_user.delete_domain_membership(self.name)
             web_user.save()
-
-    def _delete_sql_objects(self):
-        from casexml.apps.stock.models import DocDomainMapping
-        from corehq.apps.locations.models import SQLLocation, LocationType
-        from corehq.apps.products.models import SQLProduct
-
-        with connection.cursor() as cursor:
-
-            """
-                We use raw queries instead of ORM because Django queryset delete needs to
-                fetch objects into memory to send signals and handle cascades. It makes deletion very slow
-                if we have a millions of rows in stock data tables.
-            """
-            cursor.execute(
-                "DELETE FROM stock_stocktransaction "
-                "WHERE report_id IN (SELECT id FROM stock_stockreport WHERE domain=%s)", [self.name]
-            )
-
-            cursor.execute(
-                "DELETE FROM stock_stockreport WHERE domain=%s", [self.name]
-            )
-
-            cursor.execute(
-                "DELETE FROM commtrack_stockstate"
-                " WHERE product_id IN (SELECT product_id FROM products_sqlproduct WHERE domain=%s)", [self.name]
-            )
-
-        SQLProduct.objects.filter(domain=self.name).delete()
-        SQLLocation.objects.filter(domain=self.name).delete()
-        LocationType.objects.filter(domain=self.name).delete()
-        DocDomainMapping.objects.filter(domain_name=self.name).delete()
-
-        from corehq.apps.accounting.models import Subscription, Subscriber, SubscriptionAdjustment, Invoice, \
-            BillingRecord, LineItem, CreditAdjustment, CreditLine
-
-        SubscriptionAdjustment.objects.filter(subscription__subscriber__domain=self.name).delete()
-        BillingRecord.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
-        CreditAdjustment.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
-        CreditAdjustment.objects.filter(credit_line__subscription__subscriber__domain=self.name).delete()
-        CreditAdjustment.objects.filter(related_credit__subscription__subscriber__domain=self.name).delete()
-        LineItem.objects.filter(invoice__subscription__subscriber__domain=self.name).delete()
-
-        CreditLine.objects.filter(subscription__subscriber__domain=self.name).delete()
-        Invoice.objects.filter(subscription__subscriber__domain=self.name).delete()
-        Subscription.objects.filter(subscriber__domain=self.name).delete()
-        Subscriber.objects.filter(domain=self.name).delete()
 
     def all_media(self, from_apps=None):  # todo add documentation or refactor
         from corehq.apps.hqmedia.models import CommCareMultimedia

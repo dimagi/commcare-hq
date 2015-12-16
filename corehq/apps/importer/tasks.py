@@ -1,5 +1,6 @@
 from celery.task import task
 from xml.etree import ElementTree
+from corehq.apps.importer.exceptions import ImporterRefError
 from dimagi.utils.couch.database import is_bigcouch
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from casexml.apps.case.models import CommCareCase
@@ -22,7 +23,13 @@ CASEBLOCK_CHUNKSIZE = 100
 @task
 def bulk_import_async(import_id, config, domain, excel_id):
     excel_ref = DownloadBase.get(excel_id)
-    spreadsheet = importer_util.get_spreadsheet(excel_ref, config.named_columns)
+    try:
+        spreadsheet = importer_util.get_spreadsheet(excel_ref, config.named_columns)
+    except ImporterRefError:
+        # this just preserves previous behavior.
+        # if you think it doesn't make sense, and something else is better,
+        # you're probably right. Refactor away!
+        spreadsheet = None
     result = do_import(spreadsheet, config, domain, task=bulk_import_async)
 
     # return compatible with soil

@@ -100,14 +100,12 @@ uiElement.key_value_mapping = function (o) {
         // create a throw-away modal every time
         // lets us create a sandbox for editing that you can cancel
         var $modalDiv = $('<div data-bind="template: \'key_value_mapping_modal\'"></div>');
-        var copy = new MapList(
-            {
-                lang: o.lang,
-                langs: o.langs,
-                items: m.getItems()
-
-            });
-        ko.applyBindings({
+        var copy = new MapList({
+            lang: o.lang,
+            langs: o.langs,
+            items: m.getItems(),
+        });
+        $modalDiv.koApplyBindings({
             modalTitle: o.modalTitle,
             mapList: copy,
             save: function (data, e) {
@@ -116,9 +114,8 @@ uiElement.key_value_mapping = function (o) {
                 } else {
                     m.setItems(copy.getItems());
                 }
-
             }
-        }, $modalDiv.get(0));
+        });
 
         var $modal = $modalDiv.find('.modal');
         $modal.appendTo('body');
@@ -131,7 +128,7 @@ uiElement.key_value_mapping = function (o) {
         m.edit(edit);
     };
     var $div = $('<div data-bind="template: \'key_value_mapping_template\'"></div>');
-    ko.applyBindings(m, $div.get(0));
+    $div.koApplyBindings(m);
     m.ui = $div;
     eventize(m);
     m.items.subscribe(function () {

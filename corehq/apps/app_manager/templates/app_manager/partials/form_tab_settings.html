@@ -3,6 +3,7 @@
 {% load hq_shared_tags %}
 <div class="tab-pane active" id="form-settings">
     <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'all' %}">
+        {% csrf_token %}
         <div class="save-button-holder clearfix"></div>
         <div class="control-group">
             <label class="control-label">{% trans "Form Name" %}</label>

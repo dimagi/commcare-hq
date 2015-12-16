@@ -68,7 +68,7 @@
             "sPaginationType": "bootstrap"
         });
         var filterViewModel = new FilterViewModel();
-        ko.applyBindings(filterViewModel, $('#id_filter').get(0));
+        $('#id_filter').koApplyBindings(filterViewModel);
     });
 </script>
 {% endblock %}
