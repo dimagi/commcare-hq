@@ -334,7 +334,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     flag_name: "SOs fed and hydrated? "
     flag_name_fr: "Operateurs nourri et hydraté ?"
     answer: []
-    warning: " Problem reported: Spray operator(s) not properly fed or hydrated prior to donning PPE."
+    warning: " Problem reported: Spray operators not properly fed or hydrated prior to donning PPE."
     warning_fr: "Problème signalé : Le ou les opérateurs de pulvérisation ne sont pas alimentés ou hydratés de manière appropriée avant de revêtir leur EPI."
     warning_question: ~
     # answer and warning_question are optional
@@ -719,12 +719,12 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
   - question: [q17_action]
     flag_name: "Stock card recording system?"
     flag_name_fr: "Stock carte de système d'enregistrement ?"
-    warning: "Problem reported: Deficient stock record-keeping."
+    warning: "Problem reported: Deficient stock record-keeping: No system for recording stock cards.”
     warning_fr: "Problème signalé : Tenue des documents liés au stock insatisfaisante."
   - question: [q18_action]
     flag_name: "Up to date stock cards?"
     flag_name_fr: "Jusqu'à ce jour, les cartes d'achat d'actions ?"
-    warning: "Problem reported: Deficient stock record-keeping."
+    warning: "Problem reported: Deficient stock record-keeping: Stock cards not up-to-date.”
     warning_fr: "Problème signalé : Tenue des documents liés au stock insatisfaisante."
   - question: [q19_action]
     flag_name: "Waste stock recorded?"
@@ -734,7 +734,7 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
   - question: [q20_action]
     flag_name: "Adequate filing system?"
     flag_name_fr: "Système de classement adéquat ?"
-    warning: "Problem reported: Deficient record-keeping: filing."
+    warning: "Problem reported: Deficient record-keeping: filing: Filing system.”
     warning_fr: "Problème signalé : Tenue des documents insatisfaisante : classement."
   - question: [q21_action]
     flag_name: "Quantity and age of stock known? "
@@ -779,14 +779,14 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
   - question: [q29_action]
     flag_name: "Pesticide usage inventory?"
     flag_name_fr: "Pesticide inventaire d'utilisation?"
-    warning: "Problem reported: Pesticide inventory does not balance."
+    warning: "Problem reported: Pesticide packaging waste inventory does not balance."
     warning_fr: "Problème signalé : L’inventaire du ou des pesticides ne s’équilibre pas."
   - question: [q30_action]
     flag_name: "Old waste stored?"
     flag_name_fr: "Old déchets stockés ?"
-    warning: "Problem reported: Surplus pesticide in inventory."
+    warning: "Problem reported: More than one season of accumulated solid waste in store.”
     warning_fr: "Problème signalé : Pesticides excédentaires dans l’inventaire."
-  - question: [q31_action]
+  - question: [q31_action]m
     flag_name: "Waste Management plan?"
     flag_name_fr: "Plan de gestion des déchets ?"
     warning: "Problem reported: Deficient waste management planning."
@@ -794,7 +794,7 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
   - question: [q32_action]
     flag_name: "Waste disposal issue?"
     flag_name_fr: "Élimination problème des déchets ?"
-    warning: "Problem reported: problems with waste management planning."
+    warning: "Problem reported: problems in identifying waste disposal system.”
     warning_fr: "Problème signalé : problèmes liés à la planification de la gestion des déchets."
   - question: [q36_action]
     flag_name: "Spray Tracking Sheet use?"
@@ -916,7 +916,7 @@ http://openrosa.org/formdesigner/89F60CF0-C6A7-4AD8-A48E-AA0F7A7A9B4D:
   - question: [q14_action]
     flag_name: "Empties counted?"
     flag_name_fr: "Sachets/bouteilles vides compté?"
-    warning: "Problem reported: Need for strict accounting for sachet/bottless, for labeled containers for all contaminated waste, and for storekeeper training."
+    warning: "Problem reported: Need for strict accounting for sachets/bottles, for labeled containers for all contaminated waste, and for storekeeper training."
     warning_fr: "Problème signalé : Il est nécessaire d’instaurer une comptabilité rigoureuse en ce qui concerne les sachets/bouteilles, les contenants étiquetés destinés aux déchets contaminés et la formation du magasinier."
   - question: [q15_action]
     flag_name: "Daily reports?"
