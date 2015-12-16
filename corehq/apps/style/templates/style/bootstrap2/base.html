@@ -392,6 +392,39 @@
         {% endif %}
         {% endblock %}
 
+        <script src="{% new_static 'hqwebapp/js/lib/require.js' %}"></script>
+        <script type="text/javascript">
+            requirejs.config({
+                paths: {
+                    {% comment %}
+                    Note that there's no trailing `.js`
+
+                    hquery is jquery with various plugins included. Ideally we'd
+                    call it jquery, but other libs expect the plain, unmodified
+                    jquery to be called "jquery", so that gets confusing. For
+                    more, see: http://requirejs.org/docs/jquery.html#modulename
+                    {% endcomment %}
+                    "hquery": "{% new_static 'hqwebapp/js/hquery' %}",
+                    "jquery": "{% new_static 'jquery/dist/jquery.min' %}",
+                    "bootstrap": "{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min' %}",
+                    "jquery.form": "{% new_static 'jquery-form/jquery.form' %}",
+                    "jquery.cookie": "{% new_static 'jquery.cookie/jquery.cookie' %}",
+                    "jquery.hq": "{% new_static 'style/js/hq_extensions.jquery' %}",
+
+                    "jquery17": "{% new_static 'jquery-1.7.1-legacy/jquery' %}",
+                    "knockout": "{% new_static 'knockout/dist/knockout' %}",
+                    "underscore": "{% new_static 'underscore/underscore' %}",
+                    "underscore-mixins": "{% new_static 'style/js/underscore-mixins' %}",
+                },
+                shim: {
+                    "jquery.form": ["jquery"],
+                    "bootstrap": ["jquery"],
+                    "jquery.cookie": ["jquery"],
+                    "jquery.hq": ["jquery"],
+                },
+            });
+        </script>
+
         {% block js-inline %}
         <script>
             $(function () {

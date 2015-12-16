@@ -6,16 +6,13 @@
 {% block js %}{{ block.super }}
 <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
 <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-
-<script src="{% new_static 'hqwebapp/js/lib/require.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
 <script type="text/javascript">
 
-require(["{% new_static 'hqwebapp/js/hq_paths.js' %}"], function() {
-    require(['hquery',  'knockout', '{% new_static "locations/ko/location_types.js" %}'],
-            function($, ko, location_types) {
+require(['hquery',  'knockout', '{% new_static "locations/ko/location_types.js" %}'],
+        function($, ko, location_types) {
 
     $(function() {
         var loc_types = {{ location_types|JSON }};
@@ -26,7 +23,9 @@ require(["{% new_static 'hqwebapp/js/hq_paths.js' %}"], function() {
             return model.presubmit();
         });
 
-        $('#settings').koApplyBindings(model);
+        {# TODO figure out why this isn't working #}
+        {# $('#settings').koApplyBindings(model); #}
+        ko.applyBindings(model, $('#settings').get(0));
 
         // These 'enable' things don't exist, probably 'cause of manipulations to $
         $("form#settings").on("change input", function() {
@@ -38,7 +37,6 @@ require(["{% new_static 'hqwebapp/js/hq_paths.js' %}"], function() {
         });
     });
 
-    });
 });
 </script>
 {% endblock %}

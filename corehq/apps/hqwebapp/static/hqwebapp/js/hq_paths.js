@@ -5,8 +5,9 @@ requirejs.config({
 
         // jQuery and friends
         // hquery is jquery with various plugins included
-        // ideally we'd call it jquery, but http://requirejs.org/docs/jquery.html#modulename
-        // (other libs expect it to be called `jquery`, so that gets confusing
+        // ideally we'd call it jquery, but other libs expect the plain,
+        // unmodified jquery to be called "jquery", so that gets confusing
+        // for more, see: http://requirejs.org/docs/jquery.html#modulename
         "hquery": "/static/hqwebapp/js/hquery",
         "jquery": "/static/jquery/dist/jquery.min",
         "bootstrap": "/static/style/lib/bootstrap-3.2.0/dist/js/bootstrap.min",
