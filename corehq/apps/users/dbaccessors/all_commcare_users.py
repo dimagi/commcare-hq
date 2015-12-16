@@ -6,26 +6,21 @@ from dimagi.utils.couch.database import iter_docs, iter_bulk_delete
 
 def get_all_commcare_users_by_domain(domain):
     """Returns all CommCareUsers by domain regardless of their active status"""
-    return imap(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), _get_ids_by_domain(domain)))
-
-
-def get_count_of_commcare_users_in_domain(domain):
-    """Returns count of all CommCareUsers by domain regardless of their active status"""
-    return len(list(_get_ids_by_domain(domain)))
-
-
-def _get_ids_by_domain(domain):
     from corehq.apps.users.models import CommCareUser
-    for flag in ['active', 'inactive']:
-        key = [flag, domain, CommCareUser.__name__]
-        for user in CommCareUser.get_db().view(
-            'users/by_domain',
-            startkey=key,
-            endkey=key + [{}],
-            reduce=False,
-            include_docs=False
-        ):
-            yield user['id']
+
+    def get_ids():
+        for flag in ['active', 'inactive']:
+            key = [flag, domain, CommCareUser.__name__]
+            for user in CommCareUser.get_db().view(
+                'users/by_domain',
+                startkey=key,
+                endkey=key + [{}],
+                reduce=False,
+                include_docs=False
+            ):
+                yield user['id']
+
+    return imap(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), _get_ids_by_domain(domain)))
 
 
 def get_user_docs_by_username(usernames):
