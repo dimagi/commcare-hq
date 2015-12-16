@@ -198,3 +198,15 @@ def submenu_dropdown_dict(title, url, menu):
 def divider_and_more_menu(url):
     return [dropdown_dict('placeholder', is_divider=True),
             dropdown_dict(_('View All'), url=url)]
+
+
+def csrf_inline(request):
+    """
+    Returns "<input type='hidden' name='csrfmiddlewaretoken' value='<csrf-token-value>' />",
+    same as csrf_token template tag, but a shortcut without needing a Template or Context explicitly.
+
+    Useful for adding inline forms in messages for e.g. while showing an "'undo' Archive Form" message
+    """
+    from django.template import Template, RequestContext
+    node = "{% csrf_token %}"
+    return Template(node).render(RequestContext(request))

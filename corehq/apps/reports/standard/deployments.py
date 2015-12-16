@@ -1,5 +1,6 @@
 # coding=utf-8
 from datetime import date, datetime, timedelta
+from casexml.apps.phone.analytics import get_sync_logs_for_user
 from corehq import toggles
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.urlresolvers import reverse
@@ -202,15 +203,6 @@ class SyncHistoryReport(DeploymentsReport):
         # security check
         get_document_or_404(CommCareUser, self.domain, user_id)
 
-        sync_log_ids = [row['id'] for row in SyncLog.view(
-            "phone/sync_logs_by_user",
-            startkey=[user_id, {}],
-            endkey=[user_id],
-            descending=True,
-            reduce=False,
-            limit=self.limit,
-        )]
-
         def _sync_log_to_row(sync_log):
             def _fmt_duration(duration):
                 if isinstance(duration, int):
@@ -271,10 +263,8 @@ class SyncHistoryReport(DeploymentsReport):
 
             return columns
 
-        return [
-            _sync_log_to_row(properly_wrap_sync_log(sync_log_json))
-            for sync_log_json in iter_docs(SyncLog.get_db(), sync_log_ids)
-        ]
+        return [_sync_log_to_row(sync_log)
+                for sync_log in get_sync_logs_for_user(user_id, self.limit)]
 
     @property
     def show_extra_columns(self):

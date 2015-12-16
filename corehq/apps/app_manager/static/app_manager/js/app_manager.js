@@ -75,7 +75,7 @@
                 var $form = $(this),
                     $buttonHolder = $form.find('.save-button-holder'),
                     button = COMMCAREHQ.SaveButton.initForm($form, {
-                        unsavedMessage: "You have unsaved changes",
+                        unsavedMessage: gettext("You have unsaved changes"),
                         success: function (data) {
                             var key;
                             COMMCAREHQ.app_manager.updateDOM(data.update);

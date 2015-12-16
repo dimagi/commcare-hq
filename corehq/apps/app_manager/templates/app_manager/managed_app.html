@@ -151,7 +151,7 @@
     {# TODO: nav-list is deprecated, replace with list-group or panel-group #}
     <ul class="nav nav-list">
         <li {% if release_manager %}class="active"{% endif %}>
-            <a href="{% url "release_manager" domain app.id %}">
+            <a href="{% url "release_manager" domain app.id %}" id="tour-deploy-link">
                 <i class="fa fa-download"></i>
                 {% trans "Deploy" %}
             </a>

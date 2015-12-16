@@ -31,3 +31,5 @@ CUSTOM_REPORTS = (
         SMSUsersCompareReport,
     ))
 )
+
+ROOT_SITE_CODE = 'ghana'

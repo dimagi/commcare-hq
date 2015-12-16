@@ -15,6 +15,58 @@ DATABASES = {
     }
 }
 
+USE_PARTITIONED_DATABASE = False
+
+if USE_PARTITIONED_DATABASE:
+
+    PARTITION_DATABASE_CONFIG = {
+        'shards': {
+            'p1': [0, 1],
+            'p2': [2, 3]
+        },
+        'groups': {
+            'main': ['default'],
+            'proxy': ['proxy'],
+            'form_processing': ['p1', 'p2'],
+        }
+    }
+
+    DATABASES.update({
+        'proxy': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'commcarehq_proxy',
+            'USER': 'commcarehq',
+            'PASSWORD': 'commcarehq',
+            'HOST': 'localhost',
+            'PORT': '5432',
+            'TEST': {
+                'SERIALIZE': False,
+            },
+        },
+        'p1': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'commcarehq_p1',
+            'USER': 'commcarehq',
+            'PASSWORD': 'commcarehq',
+            'HOST': 'localhost',
+            'PORT': '5432',
+            'TEST': {
+                'SERIALIZE': False,
+            },
+        },
+        'p2': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'commcarehq_p2',
+            'USER': 'commcarehq',
+            'PASSWORD': 'commcarehq',
+            'HOST': 'localhost',
+            'PORT': '5432',
+            'TEST': {
+                'SERIALIZE': False,
+            },
+        },
+    })
+
 # Custom databases can be used to configure a separate database for specific UCR data sources
 # The key is what you will reference in the datasource, e.g. 'custom_ucr_database'
 # The value is the sql connection string "postgresql://%(USER)s:%(PASSWORD)s@%(HOST)s:%(PORT)s/commcarehq_reporting" % DATABASES['default']
@@ -153,7 +205,9 @@ LOCAL_APPS = (
 #    'couchdebugpanel', # Adds couch info to said toolbar
 #    'devserver',       # Adds improved dev server that also prints SQL on the console (for AJAX, etc, when you cannot use debug_toolbar)
 #    'django_cpserver', # Another choice for a replacement server
-#    'dimagi.utils'     
+#    'dimagi.utils',
+#    'testapps.test_elasticsearch',
+#    'testapps.test_pillowtop',
 )
 
 # list of domains to enable ADM reporting on

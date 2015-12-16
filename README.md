@@ -208,9 +208,10 @@ that you have a 32bit version of Python installed.
 
 Populate your database:
 
-    $ ./manage.py syncdb --noinput  # you may have to run syncdb twice to get past a transient error
+    $ ./manage.py sync_couch_views
     $ ./manage.py migrate --noinput
     $ ./manage.py collectstatic --noinput
+    $ ./manage.py compilejsi18n
 
 Create a project. The following command will do some basic setup, create a superuser, and create a project. The 
 project-name, email, and password given here are specific to your local development environment. Ignore warnings 
@@ -370,6 +371,7 @@ Notice that `COMPRESS_MINT_DELAY`, `COMPRESS_MTIME_DELAY`, and
 For all STATICFILES changes, run:
 
     $ manage.py collectstatic
+    $ manage.py compilejsi18n
     $ manage.py fix_less_imports_collectstatic
     $ manage.py compress
 
@@ -406,7 +408,7 @@ URL_ROOT = 'http://localhost:8000/a/{{DOMAIN}}'
 
 + On Mac OS X, if Pillow complains that it can't find freetype, make sure freetype is installed with `brew install freetype`. Then create a symlink with: `ln -s /usr/local/include/freetype2 /usr/local/include/freetype`.
 
-+ If you have an authentication error running `./manage.py syncdb` the first
++ If you have an authentication error running `./manage.py migrate` the first
   time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
   and change the line "local all all peer" to "local all all md5".
 
@@ -451,18 +453,10 @@ Then run the following separately:
     # run the Django server
     $ ./manage.py runserver 0.0.0.0:8000
 
-If you want to use CloudCare you will also need to run the Touchforms server and be running a multi-threaded
+If you want to use CloudCare you will also need to run the Touchforms server.
 
     # run Touchforms server
     > jython submodules/touchforms-src/touchforms/backend/xformserver.py
-
-    # On Mac / Linux use Gunicorn as the multi-threaded server
-    $ gunicorn deployment.gunicorn.commcarehq_wsgi:application \
-        -c deployment/gunicorn/gunicorn_conf.py \
-        -k gevent --bind 0.0.0.0:8000
-
-    # on Windows use CherryPy
-    > manage.py runcpserver port=8000
 
 Running Formdesigner in Development mode
 ----------------------------------------

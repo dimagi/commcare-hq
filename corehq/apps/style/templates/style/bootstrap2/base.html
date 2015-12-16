@@ -1,4 +1,4 @@
-{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}<!DOCTYPE html>
+{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
 <html lang="{{ LANGUAGE_CODE }}">
     <head>
@@ -27,7 +27,15 @@
         {% endcompress %}
         {% block stylesheets %}{% endblock %}
 
+        <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
         {% include "style/includes/bootstrap2/core_libraries.html" %}
+
+        {% if request.guided_tour %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% static 'bootstrap-tour/build/css/bootstrap-tour.min.css' %}" />
+        {% endif %}
 
         {% block oldstyle_imports %}
             <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
@@ -128,7 +136,7 @@
                     </div>
                     {% if request.user.is_authenticated %}
                     <div class="btn-toolbar pull-right">
-                        <a data-toggle="modal" data-target="#reportIssueModal" href="#reportIssueModal" data-backdrop="static" class="btn btn-footer-highlight"><i class="icon-comment"></i> {% trans 'Report an Issue' %}</a>
+                        <a data-toggle="modal" data-target="#modalReportIssue" href="#modalReportIssue" data-backdrop="static" class="btn btn-footer-highlight"><i class="icon-comment"></i> {% trans 'Report an Issue' %}</a>
                         <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" target="_blank" class="btn btn-footer"><i class="icon-info-sign"></i> {% trans 'CommCare Help Site' %}</a>
                         <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}" target="_blank" class="btn btn-footer"><i class="icon-envelope"></i> {% trans 'Mailing List' %}</a>
                     </div>
@@ -153,12 +161,13 @@
         </footer>
         <div id="hq-modal-home">
             {% if request.user.is_authenticated %}
-            <div class="modal hide fade" id="reportIssueModal">
+            <div class="modal hide fade" id="modalReportIssue">
                 <div class="modal-header">
                     <a class="close" data-dismiss="modal">&times;</a>
                     <h3>{% trans "Report an Issue with CommCare HQ" %}</h3>
                 </div>
                 <form id="hqwebapp-bugReportForm" class="form-horizontal" action="{% url "bug_report" %}" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
                     <input type="hidden" id="bug-report-url" name="url"/>
                     <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
                     <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
@@ -247,6 +256,7 @@
                             {% trans "To continue using Commcare HQ, please agree to our new End User License Agreement" %}
                         </div>
                         <form id="eula-agree" action="{% url "agree_to_eula" %}" method="POST">
+                            {% csrf_token %}
                             <input name="next" type="hidden" value="{{ request.path }}" />
                             <button type="submit" class="btn btn-primary">Agree</button>
                             <a href="#" data-dismiss="modal" class="btn">Disagree</a>
@@ -261,6 +271,7 @@
                 </div>
                 <div class="modal-body">
                     <form id="keyboard-shortcuts-config-form" method="POST" action="{% url "keyboard_config" %}?next={{ request.get_full_path|urlencode }}">
+                        {% csrf_token %}
                         <div class="control-group">
                             <div class="controls">
                                 <label class="checkbox">
@@ -359,6 +370,11 @@
         {% include 'style/bootstrap2/partials/bootstrap2_js.html' %}
         <script src="{% static 'hqstyle/js/jquery/plugins/jquery.form.js' %}"></script>
 
+        {% if request.guided_tour %}
+            <script src="{% static 'tour/js/tour.utils.js' %}"></script>
+            <script src="{% static 'tour/js/bootstrap-tour-2.3.2-patch.js' %}"></script>
+        {% endif %}
+
         {% block js %}
         <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
         <script src="{% static 'hqwebapp/js-custom/hqhandler.form.bugReport.js' %}"></script>
@@ -429,7 +445,7 @@
                 });
                 var element = $('#keyboard-shortcuts-config-form').get(0);
                 ko.cleanNode(element);
-                ko.applyBindings(new KBConfigFormModel(), element);
+                $(element).koApplyBindings(new KBConfigFormModel());
             });
         </script>
 
@@ -589,10 +605,9 @@
 
             var message_element = $("#message-alerts").get(0);
             ko.cleanNode(message_element);
-            ko.applyBindings(
-                {alerts: message_alerts},
-                message_element
-            );
+            $(message_element).koApplyBindings({
+                alerts: message_alerts,
+            });
 
         </script>
     </body>

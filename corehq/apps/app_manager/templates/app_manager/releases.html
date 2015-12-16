@@ -49,7 +49,7 @@
         var el = $('#releases-table');
         var releasesMain = new ReleasesMain(o);
         _.defer(function(){ releasesMain.getMoreSavedApps(); });
-        ko.applyBindings(releasesMain, el.get(0));
+        el.koApplyBindings(releasesMain);
         el.show();
     });
 

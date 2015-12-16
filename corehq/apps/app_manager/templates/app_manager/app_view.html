@@ -37,7 +37,7 @@
         };
         $(function () {
             COMMCAREHQ.appView.settings = new CommcareSettings(COMMCAREHQ.appView.settings);
-            ko.applyBindings(COMMCAREHQ.appView.settings, $('#commcare-settings').get(0));
+            $('#commcare-settings').koApplyBindings(COMMCAREHQ.appView.settings);
             var multimedia_tab = (function () {
                 var self = {};
                 self.load_state = ko.observable(null);
@@ -58,7 +58,7 @@
                 };
                 return self;
             }());
-            ko.applyBindings(multimedia_tab, $("#multimedia").get(0));
+            $("#multimedia").koApplyBindings(multimedia_tab);
             $('#multimedia-shower').on('show.bs.tab', function () {
                 if (multimedia_tab.load_state() === null) {
                     multimedia_tab.load_if_necessary();
@@ -116,12 +116,12 @@
             var buildLangs = {{ app.build_langs|JSON }};
             var saveURL = "{% url "edit_app_langs" domain app.id %}";
             var validate = !{{ app.is_remote_app|BOOL }};
-            ko.applyBindings(new SupportedLanguages({
+            $("#supported-languages").koApplyBindings(new SupportedLanguages({
                 langs: langs,
                 buildLangs: buildLangs,
                 saveURL: saveURL,
                 validate: validate
-            }), $("#supported-languages").get(0));
+            }));
         });
     </script>
     {% endif %}

@@ -1,5 +1,6 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
-REPORT_XFORM_INDEX = "report_xforms_20150406_1136"
+from corehq.util.elastic import es_index
+REPORT_XFORM_INDEX = es_index("report_xforms_20150406_1136")
 
 CASE_MAPPING_FRAGMENT = {
     'type': 'nested',

@@ -18,6 +18,7 @@
 
 {% block main_column %}
     <form id="settings" class="form form-horizontal" method="post">
+        {% csrf_token %}
         <fieldset>
             <legend>{% trans 'SMS Keywords' %}</legend>
             <div class="control-group" data-bind="css: { 'error': keyword_error }">

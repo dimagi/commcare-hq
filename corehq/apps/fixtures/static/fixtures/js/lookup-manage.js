@@ -350,10 +350,10 @@ $(function () {
 
     var el = $('#fixtures-ui');
     var app = new App();
-    ko.applyBindings(app, el.get(0));
+    el.koApplyBindings(app);
     el.show();
     app.loadData();
-    ko.applyBindings(app, $('#fixture-upload')[0]);
+    $('#fixture-upload').koApplyBindings(app);
     $("#fixture-download").on("hidden", function(){
                     $("#downloading").show();
                     $("#download-progress").hide();

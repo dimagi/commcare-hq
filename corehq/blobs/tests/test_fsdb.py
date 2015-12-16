@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 import os
-from hashlib import md5
 from os.path import isdir, join
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -26,73 +25,89 @@ class TestFilesystemBlobDB(TestCase):
 
     def test_put_and_get(self):
         name = "test.1"
-        self.db.put(StringIO(b"content"), name)
-        with self.db.get(name) as fh:
+        info = self.db.put(StringIO(b"content"), name)
+        with self.db.get(info.name) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_and_get_with_unicode_names(self):
         name = "test.\u4500"
         bucket = "doc.4500"
-        self.db.put(StringIO(b"content"), name, bucket)
-        with self.db.get(name, bucket) as fh:
+        info = self.db.put(StringIO(b"content"), name, bucket)
+        with self.db.get(info.name, bucket) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_and_get_with_bucket(self):
         name = "test.2"
         bucket = "doc.2"
-        self.db.put(StringIO(b"content"), name, bucket)
-        with self.db.get(name, bucket) as fh:
+        info = self.db.put(StringIO(b"content"), name, bucket)
+        with self.db.get(info.name, bucket) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_with_bucket_and_get_without_bucket(self):
         name = "test.3"
         bucket = "doc.3"
-        self.db.put(StringIO(b"content"), name, bucket)
+        info = self.db.put(StringIO(b"content"), name, bucket)
         with self.assertRaises(mod.NotFound):
-            self.db.get(name)
+            self.db.get(info.name)
 
     def test_delete(self):
         name = "test.4"
         bucket = "doc.4"
-        self.db.put(StringIO(b"content"), name, bucket)
+        info = self.db.put(StringIO(b"content"), name, bucket)
 
-        assert self.db.delete(name, bucket), 'delete failed'
+        self.assertTrue(self.db.delete(info.name, bucket), 'delete failed')
 
         with self.assertRaises(mod.NotFound):
-            self.db.get(name, bucket)
+            self.db.get(info.name, bucket)
 
-        assert not self.db.delete(name, bucket), 'delete should fail'
+        self.assertFalse(self.db.delete(info.name, bucket), 'delete should fail')
 
     def test_delete_bucket(self):
-        name = "test.1"
         bucket = join("doctype", "ys7v136b")
-        self.db.put(StringIO(b"content"), name, bucket)
-        assert self.db.delete(bucket=bucket)
+        self.db.put(StringIO(b"content"), bucket=bucket)
+        self.assertTrue(self.db.delete(bucket=bucket))
 
-        names = os.listdir(join(self.rootdir, "doctype"))
-        assert "ys7v136b" not in names, "bucket not deleted"
+        names = os.listdir(self.db.get_path(bucket="doctype"))
+        self.assertNotIn("ys7v136b", names, "bucket not deleted")
 
     def test_bucket_path(self):
-        name = "test.1"
         bucket = join("doctype", "8cd98f0")
-        self.db.put(StringIO(b"content"), name, bucket)
-        path = join(self.rootdir, bucket)
-        assert isdir(path), path
-        assert os.listdir(path)
+        self.db.put(StringIO(b"content"), bucket=bucket)
+        path = self.db.get_path(bucket=bucket)
+        self.assertTrue(isdir(path), path)
+        self.assertTrue(os.listdir(path))
 
     def test_safe_attachment_path(self):
         name = "test.1"
         bucket = join("doctype", "8cd98f0")
-        self.db.put(StringIO(b"content"), name, bucket)
-        path = join(self.rootdir, bucket, name + "." + md5(name).hexdigest())
+        info = self.db.put(StringIO(b"content"), name, bucket)
+        self.assertTrue(info.name.startswith(name + "."), info.name)
+        path = self.db.get_path(info.name, bucket)
         with open(path, "rb") as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_unsafe_attachment_path(self):
         name = "\u4500.1"
         bucket = join("doctype", "8cd98f0")
-        self.db.put(StringIO(b"content"), name, bucket)
-        path = join(self.rootdir, bucket, "unsafe." + md5(name.encode("utf-8")).hexdigest())
+        info = self.db.put(StringIO(b"content"), name, bucket)
+        self.assertTrue(info.name.startswith("unsafe."), info.name)
+        path = self.db.get_path(info.name, bucket)
+        with open(path, "rb") as fh:
+            self.assertEqual(fh.read(), b"content")
+
+    def test_unsafe_attachment_name(self):
+        name = "test/1"  # name with directory separator
+        bucket = join("doctype", "8cd98f0")
+        info = self.db.put(StringIO(b"content"), name, bucket)
+        self.assertTrue(info.name.startswith("unsafe."), info.name)
+        path = self.db.get_path(info.name, bucket)
+        with open(path, "rb") as fh:
+            self.assertEqual(fh.read(), b"content")
+
+    def test_empty_attachment_name(self):
+        info = self.db.put(StringIO(b"content"))
+        self.assertNotIn(".", info.name)
+        path = self.db.get_path(info.name)
         with open(path, "rb") as fh:
             self.assertEqual(fh.read(), b"content")
 

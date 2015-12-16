@@ -58,6 +58,11 @@ def app_display_name():
     return "app.display.name"
 
 
+@pattern('lang.current')
+def current_language():
+    return "lang.current"
+
+
 @pattern('m%d.%s.title')
 def detail_title_locale(module, detail_type):
     return u"m{module.id}.{detail_type}.title".format(module=module,

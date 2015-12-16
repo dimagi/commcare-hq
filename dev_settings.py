@@ -9,6 +9,9 @@ import os
 
 LOCAL_APPS = (
     'django_extensions',
+    # for tests
+    'testapps.test_elasticsearch',
+    'testapps.test_pillowtop',
 )
 
 TEST_RUNNER = 'testrunner.DevTestRunner'

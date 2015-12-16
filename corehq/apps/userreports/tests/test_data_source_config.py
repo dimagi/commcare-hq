@@ -5,7 +5,7 @@ from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
-from corehq.db import UCR_ENGINE_ID
+from corehq.sql_db.connections import UCR_ENGINE_ID
 
 
 class DataSourceConfigurationTest(SimpleTestCase):

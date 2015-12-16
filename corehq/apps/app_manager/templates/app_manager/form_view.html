@@ -88,6 +88,7 @@
         {% endif %}
         });
     </script>
+{% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
 {% endblock %}
 
 {% block case_management_js %}{{ block.super }}

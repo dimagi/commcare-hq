@@ -85,11 +85,11 @@
                     contextVariables: COMMCAREHQ.app_manager.module_view
                 });
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
-                ko.applyBindings(detailScreenConfig, $list_home.get(0));
+                $list_home.koApplyBindings(detailScreenConfig);
 
                 if (detail.long !== undefined) {
                     var $detail_home = $("#" + detail.type + "-detail-screen-detail-config-tab");
-                    ko.applyBindings(detailScreenConfig, $detail_home.get(0));
+                    $detail_home.koApplyBindings(detailScreenConfig);
                 }
             }
         });
@@ -169,7 +169,7 @@
                     {{ case_list_form_not_allowed_reason.allow|JSON }},
                     {{ case_list_form_not_allowed_reason.message|JSON }}
                 );
-                ko.applyBindings(caseListForm, $('#case-list-form').get(0));
+                $('#case-list-form').koApplyBindings(caseListForm);
                 // Reset save button after bindings
                 // see http://manage.dimagi.com/default.asp?145851
                 var $form = $('#case-list-form').closest('form'),
@@ -214,6 +214,7 @@
     {% block tab-content %}
     <div class="tab-pane active" id="module-settings">
         <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_module_attr" domain app.id module.id 'all' %}">
+            {% csrf_token %}
             <div class="save-button-holder clearfix"></div>
             <fieldset>
                 <div class="form-group">
@@ -283,6 +284,7 @@
     </div>
     <div class="tab-pane" id="case-settings">
         <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_module_attr" domain app.id module.id 'all' %}">
+            {% csrf_token %}
             <div class="save-button-holder clearfix"></div>
             <fieldset>
                 <legend>{% trans "Basic" %}</legend>

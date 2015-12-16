@@ -28,7 +28,7 @@
         }
         var source = {{ app.export_json|JSON }};
         var post_url = "{% url "corehq.apps.app_manager.views.import_app" domain %}";
-        ko.applyBindings(new CompressionViewModel(source, post_url), $('#app-import-form').get(0));
+        $('#app-import-form').koApplyBindings(new CompressionViewModel(source, post_url));
     </script>
 {% endblock %}
 
@@ -38,6 +38,7 @@
 
 {% block page_content %}
     <form action="{% url "corehq.apps.app_manager.views.import_app" domain %}" id="app-import-form" method="post" data-bind="submit: save">
+        {% csrf_token %}
 {% if app %}
         <p>Import application <strong>{{ app.name }}</strong> from domain <strong>{{ app.domain }}</strong>?</p>
 {% else %}
