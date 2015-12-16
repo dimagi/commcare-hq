@@ -1,4 +1,4 @@
-{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}<!DOCTYPE html>
+{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
 <html lang="{{ LANGUAGE_CODE }}">
     <head>
@@ -307,6 +307,7 @@
         </script>
 
         {# HQ Specific Libraries #}
+        <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
         {% compress js %}
         <script type="text/javascript" src="{% new_static 'style/js/hq-bug-report.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/layout.js' %}"></script>
