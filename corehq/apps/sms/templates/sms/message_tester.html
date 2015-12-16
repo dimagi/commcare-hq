@@ -3,6 +3,7 @@
 
 {% block main_column %}
     <form class="form form-horizontal" action="{% url "corehq.apps.sms.views.message_test" domain phone_number %}" method="post">
+        {% csrf_token %}
         <fieldset>
             <legend>{% trans "Simulate Inbound Message from" %} +{{ phone_number }}</legend>
             <div class="control-group">

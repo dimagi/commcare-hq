@@ -10,7 +10,7 @@
             bindings = {
                 showFilterName: ko.observable({{ showFilterName|BOOL }})
             }
-            ko.applyBindings(bindings, $('#{{ css_id }}_container').get(0));
+            $('#{{ css_id }}_container').koApplyBindings(bindings);
         });
      </script>
 {% endblock %}

@@ -35,8 +35,6 @@ from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
-from corehq.apps.hqadmin.dbaccessors import get_number_of_forms_in_all_domains
-from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.couchdb_management import couch_config
@@ -49,16 +47,12 @@ from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.admin import MALTRowAdmin
-from corehq.apps.es.cases import CaseES
-from corehq.apps.es.domains import DomainES
-from corehq.apps.es.forms import FormES
 from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
-from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.escheck import (
     check_es_cluster_health,
     check_xform_es_index,
@@ -347,52 +341,6 @@ def system_info(request):
 
     return render(request, "hqadmin/system_info.html", context)
 
-
-@cache_page(60 * 5)
-@require_superuser_or_developer
-def db_comparisons(request):
-
-    def _simple_view_couch_query(db, view_name):
-        return db.view(view_name, reduce=True).one()['value']
-
-    comparison_config = [
-        {
-            'description': 'Users (base_doc is "CouchUser")',
-            'couch_docs': _simple_view_couch_query(CommCareUser.get_db(), 'users/by_username'),
-            'es_query': UserES().remove_default_filter('active').size(0),
-            'sql_rows': User.objects.count(),
-        },
-        {
-            'description': 'Domains (doc_type is "Domain")',
-            'couch_docs': _simple_view_couch_query(Domain.get_db(), 'domain/by_status'),
-            'es_query': DomainES().size(0),
-            'sql_rows': None,
-        },
-        {
-            'description': 'Forms (doc_type is "XFormInstance", couch includes logs)',
-            'couch_docs': get_number_of_forms_in_all_domains(),
-            'es_query': FormES().remove_default_filter('has_xmlns')
-                .remove_default_filter('has_user')
-                .size(0),
-            'sql_rows': FormData.objects.exclude(domain__isnull=True).count(),
-        },
-        {
-            'description': 'Cases (doc_type is "CommCareCase")',
-            'couch_docs': get_total_case_count(),
-            'es_query': CaseES().size(0),
-            'sql_rows': CaseData.objects.exclude(domain__isnull=True).count(),
-        }
-    ]
-
-    comparisons = []
-    for comp in comparison_config:
-        comparisons.append({
-            'description': comp['description'],
-            'couch_docs': comp['couch_docs'],
-            'es_docs': comp['es_query'].run().total,
-            'sql_rows': comp['sql_rows'] if comp['sql_rows'] else 'n/a',
-        })
-    return json_response(comparisons)
 
 @require_POST
 @require_superuser_or_developer

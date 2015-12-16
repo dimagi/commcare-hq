@@ -9,7 +9,7 @@
 
 {% block js-inline %}{{ block.super }}
 <script type="text/javascript">
-    ko.applyBindings(new MediaManager({{ media|JSON }}, {{ licenses|JSON }}));
+    $('body').koApplyBindings(new MediaManager({{ media|JSON }}, {{ licenses|JSON }}));
 </script>
 {% endblock %}
 
@@ -23,6 +23,7 @@
 
 {% block page_content %}
 <form id="update-media-sharing-settings" class="disable-on-submit" method="post">
+    {% csrf_token %}
     <fieldset>
         <legend>{% trans 'Change Multimedia Sharing Settings' %}</legend>
         <p>

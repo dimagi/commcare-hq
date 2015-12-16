@@ -54,6 +54,14 @@
 
 
 # Application only
+- id: custom_base_url
+  name: "Custom Base URL"
+  description: 'Use a different base URL for all app URLs. This makes the phone send forms, sync and look for updates from a differnent URL. Main use case is to allow migrating ICDS to a new cluster.'
+  requires: "{$parent.doc_type}='Application'"
+  hide_if_not_enabled: true
+  widget: text
+  toggle: CUSTOM_APP_BASE_URL
+
 - id: case_sharing
   name: "Case Sharing"
   description: 'Allow mobile workers in the same case sharing group to share case lists.  Read more on the <a href="https://confluence.dimagi.com/display/commcarepublic/Case+Sharing"/>Help Site</a>'

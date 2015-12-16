@@ -1,6 +1,7 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
+from corehq.util.elastic import es_index
 
-XFORM_INDEX = "xforms_20150403-1728"
+XFORM_INDEX = es_index("xforms_20150403-1728")
 
 
 XFORM_MAPPING = {

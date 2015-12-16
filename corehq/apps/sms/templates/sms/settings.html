@@ -12,7 +12,7 @@
         var settingsViewModel = new SettingsViewModel(
             {{ form.current_values|JSON }}
         );
-        ko.applyBindings(settingsViewModel, $('#sms-settings-form').get(0));
+        $('#sms-settings-form').koApplyBindings(settingsViewModel);
         settingsViewModel.init();
     </script>
 {% endblock %}

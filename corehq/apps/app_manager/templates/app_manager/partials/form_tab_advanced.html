@@ -55,6 +55,7 @@
             </a>
             <div class="xml-source modal hide fade">
                 <form action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'xform' %}" method="POST">
+                {% csrf_token %}
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                     <h3 class="source-readonly">{% trans "XML Source" %}</h3>
@@ -88,6 +89,7 @@
     </ul>
     {% if allow_form_copy%}
     <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
+        {% csrf_token %}
         <p>
         {% trans "Copy form to " %}
         <select name='to_module_id'>{% for mod in app.get_modules %}

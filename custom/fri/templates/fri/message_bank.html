@@ -16,6 +16,7 @@
 {{ block.super }}
 {% if is_previewer %}
     <form action="{% url "fri_upload_message_bank" domain %}" method="post" enctype="multipart/form-data" style="padding: 10px;">
+        {% csrf_token %}
         <h4>Upload Additional Messages</h4>
         <div style="border-bottom: 1px solid #CCC; padding: 10px;">
             <input type="file" name="message_bank_file" /> <input type="submit" class="btn btn-primary" value="Upload" />

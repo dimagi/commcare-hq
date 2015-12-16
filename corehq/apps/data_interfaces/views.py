@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.core.cache import cache
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.app_manager.util import all_case_properties_by_domain
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain, \
     get_number_of_case_groups_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
@@ -32,7 +33,7 @@ from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemExce
 from corehq.apps.reports.standard.export import ExcelExportReport
 from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, EditDataInterfaceDispatcher,
                                                     require_can_edit_data)
-from corehq.apps.style.decorators import use_bootstrap3
+from corehq.apps.style.decorators import use_bootstrap3, use_typeahead
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
 from .interfaces import FormManagementMode, BulkFormManagementInterface, CaseReassignmentInterface
@@ -554,7 +555,7 @@ def xform_management_job_poll(request, domain, download_id,
 class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
     template_name = 'data_interfaces/list_automatic_update_rules.html'
     urlname = 'automatic_update_rule_list'
-    page_title = ugettext_lazy("Automatically Update Cases")
+    page_title = ugettext_lazy("Automatically Close Cases")
 
     ACTION_ACTIVATE = 'activate'
     ACTION_DEACTIVATE = 'deactivate'
@@ -673,10 +674,10 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
         }
 
 
-class AddAutomaticUpdateRuleView(DataInterfaceSection):
+class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
     template_name = 'data_interfaces/add_automatic_update_rule.html'
     urlname = 'add_automatic_update_rule'
-    page_title = ugettext_lazy("Add Automatic Update Rule")
+    page_title = ugettext_lazy("Add Automatic Case Close Rule")
 
     @property
     def page_url(self):
@@ -685,6 +686,7 @@ class AddAutomaticUpdateRuleView(DataInterfaceSection):
     @property
     def initial_rule_form(self):
         return AddAutomaticCaseUpdateRuleForm(
+            domain=self.domain,
             initial={
                 'action': AddAutomaticCaseUpdateRuleForm.ACTION_CLOSE,
             }
@@ -694,7 +696,7 @@ class AddAutomaticUpdateRuleView(DataInterfaceSection):
     @memoized
     def rule_form(self):
         if self.request.method == 'POST':
-            return AddAutomaticCaseUpdateRuleForm(self.request.POST)
+            return AddAutomaticCaseUpdateRuleForm(self.request.POST, domain=self.domain)
         else:
             return self.initial_rule_form
 
@@ -704,7 +706,17 @@ class AddAutomaticUpdateRuleView(DataInterfaceSection):
             'form': self.rule_form,
         }
 
+    @allow_remote_invocation
+    def get_case_property_map(self):
+        data = all_case_properties_by_domain(self.domain,
+            include_parent_properties=False)
+        return {
+            'data': data,
+            'success': True,
+        }
+
     @use_bootstrap3
+    @use_typeahead
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
     def dispatch(self, *args, **kwargs):
         return super(AddAutomaticUpdateRuleView, self).dispatch(*args, **kwargs)
@@ -747,12 +759,16 @@ class AddAutomaticUpdateRuleView(DataInterfaceSection):
         if self.rule_form.is_valid():
             self.create_rule()
             return HttpResponseRedirect(reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]))
-        return self.get(request, *args, **kwargs)
+        # We can't call self.get() because JSONResponseMixin gets confused
+        # since we're processing a post request. So instead we have to call
+        # .get() directly on super(JSONResponseMixin, self), which correctly
+        # is DataInterfaceSection in this case
+        return super(JSONResponseMixin, self).get(request, *args, **kwargs)
 
 
 class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
     urlname = 'edit_automatic_update_rule'
-    page_title = ugettext_lazy("Edit Automatic Update Rule")
+    page_title = ugettext_lazy("Edit Automatic Case Close Rule")
 
     @property
     @memoized
@@ -809,11 +825,36 @@ class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
             'update_property_name': update_property_name,
             'update_property_value': update_property_value,
         }
-        return AddAutomaticCaseUpdateRuleForm(initial=initial)
+        return AddAutomaticCaseUpdateRuleForm(domain=self.domain, initial=initial)
+
+    @property
+    @memoized
+    def rule_form(self):
+        if self.request.method == 'POST':
+            return AddAutomaticCaseUpdateRuleForm(
+                self.request.POST,
+                domain=self.domain,
+                # Pass the original case_type so that we can always continue to
+                # properly display and edit rules based off of deleted case types
+                initial={'case_type': self.rule.case_type}
+            )
+        else:
+            return self.initial_rule_form
+
+    def update_rule(self, rule):
+        with transaction.atomic():
+            rule.name = self.rule_form.cleaned_data['name']
+            rule.case_type = self.rule_form.cleaned_data['case_type']
+            rule.server_modified_boundary = self.rule_form.cleaned_data['server_modified_boundary']
+            rule.last_run = None
+            rule.save()
+            rule.automaticupdaterulecriteria_set.all().delete()
+            rule.automaticupdateaction_set.all().delete()
+            self.create_criteria(rule)
+            self.create_actions(rule)
 
     def post(self, request, *args, **kwargs):
         if self.rule_form.is_valid():
-            self.rule.soft_delete()
-            self.create_rule()
+            self.update_rule(self.rule)
             return HttpResponseRedirect(reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]))
-        return self.get(request, *args, **kwargs)
+        return super(JSONResponseMixin, self).get(request, *args, **kwargs)

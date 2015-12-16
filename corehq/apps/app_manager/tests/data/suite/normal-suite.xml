@@ -284,6 +284,34 @@
             </text>
         </template>
     </field>
+    <field>
+        <header>
+            <text>
+                <locale id="m0.case_long.case_plain_10.header"/>
+            </text>
+        </header>
+        <template>
+            <text>
+                <xpath function="concat(plain, plain)"/>
+            </text>
+        </template>
+    </field>
+    <field>
+        <header>
+            <text>
+                <locale id="m0.case_long.case_plain_11.header"/>
+            </text>
+        </header>
+        <template>
+            <text>
+                <xpath function="if($lang = 'en', plain, 'nope')">
+                    <variable name="lang">
+                        <locale id="lang.current"/>
+                    </variable>
+                </xpath>
+            </text>
+        </template>
+    </field>
 </detail>
 <entry>
     <form>http://openrosa.org/formdesigner/0260EE34-0345-490B-A1ED-B32361750D36</form>

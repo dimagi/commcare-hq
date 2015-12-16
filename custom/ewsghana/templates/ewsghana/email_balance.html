@@ -1,0 +1,28 @@
+{% extends 'style/bootstrap2/two_column.html' %}
+{% load static %}
+{% block main_column %}
+    <table id="problems-table" class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Object type</th>
+                <th>Object url</th>
+                <th>Object description</th>
+                <th>Object external id</th>
+                <th>Last modified</th>
+            </tr>
+        </thead>
+        {% for problem in problems %}
+            <tr>
+                <td>{{ problem.object_type }}</td>
+                <td><a href="{{ problem.object_url }}">{{ problem.object_id }}</a></td>
+                <td>{{ problem.description }}</td>
+                <td>{{ problem.external_id }}</td>
+                <td>{{ problem.last_modified }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    {% include 'imports/datatables.html' %}
+    <script>
+        $('#problems-table').dataTable();
+    </script>
+{% endblock %}

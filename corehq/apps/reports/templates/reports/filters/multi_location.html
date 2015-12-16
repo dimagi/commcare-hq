@@ -45,7 +45,7 @@
         });
 
         var model = new FixtureSelectViewModel();
-        ko.applyBindings(model, $('#group_{{ control_slug }}')[0]);
+        $('#group_{{ control_slug }}').koApplyBindings(model);
         model.load(fdis, null);
     });
 

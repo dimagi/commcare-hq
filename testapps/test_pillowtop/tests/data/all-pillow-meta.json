@@ -40,13 +40,20 @@
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
         "document_class": "ApplicationBase", 
         "es_alias": "hqapps", 
-        "es_index": "hqapps_12f505392bcec1a43d1c2c9ef9e0cb51", 
+        "es_index": "test_hqapps_12f505392bcec1a43d1c2c9ef9e0cb51", 
         "es_type": "app", 
         "extra_args": {}, 
         "full_class_name": "corehq.pillows.application.AppPillow", 
         "include_docs": true, 
         "name": "AppPillow", 
         "unique_id": "93d8007a66254463abc4f8938811eea9"
+    }, 
+    "BlobDeletionPillow": {
+        "advertised_name": "BlobDeletionPillow", 
+        "change_feed_type": "KafkaChangeFeed", 
+        "checkpoint_id": "kafka-blob-deletion-pillow-checkpoint", 
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow", 
+        "name": "BlobDeletionPillow"
     }, 
     "CacheInvalidatePillow": {
         "advertised_name": "corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq", 
@@ -99,7 +106,7 @@
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
         "document_class": "CommCareCase", 
         "es_alias": "hqcases", 
-        "es_index": "hqcases_7a8d2b81335e0a8cef1de718313a23b9", 
+        "es_index": "test_hqcases_7a8d2b81335e0a8cef1de718313a23b9", 
         "es_type": "case", 
         "extra_args": {}, 
         "full_class_name": "corehq.pillows.case.CasePillow", 
@@ -150,21 +157,21 @@
         "name": "DefaultChangeFeedPillow"
     }, 
     "DomainPillow": {
-        "advertised_name": "corehq.pillows.domain.DomainPillow.hqdomains_20151204_1053.testhq", 
+        "advertised_name": "corehq.pillows.domain.DomainPillow.test_hqdomains_20151204_1053.testhq", 
         "change_feed_type": "CouchChangeFeed", 
-        "checkpoint_id": "corehq.pillows.domain.DomainPillow.hqdomains_20151204_1053.testhq", 
+        "checkpoint_id": "corehq.pillows.domain.DomainPillow.test_hqdomains_20151204_1053.testhq", 
         "couch_filter": "domain/domains_inclusive", 
         "couchdb_type": "Database", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq__domains_test",
         "document_class": "Domain", 
         "es_alias": "hqdomains", 
-        "es_index": "hqdomains_20151204_1053", 
+        "es_index": "test_hqdomains_20151204_1053", 
         "es_type": "hqdomain", 
         "extra_args": {}, 
         "full_class_name": "corehq.pillows.domain.DomainPillow", 
         "include_docs": true, 
         "name": "DomainPillow", 
-        "unique_id": "hqdomains_20151204_1053"
+        "unique_id": "test_hqdomains_20151204_1053"
     }, 
     "FarmerRecordFluffPillow": {
         "advertised_name": "fluff.FarmerRecordFluffPillow.testhq", 
@@ -212,21 +219,21 @@
         "name": "GeographyFluffPillow"
     }, 
     "GroupPillow": {
-        "advertised_name": "corehq.pillows.group.GroupPillow.hqgroups_20150403_1501.testhq", 
+        "advertised_name": "corehq.pillows.group.GroupPillow.test_hqgroups_20150403_1501.testhq", 
         "change_feed_type": "CouchChangeFeed", 
-        "checkpoint_id": "corehq.pillows.group.GroupPillow.hqgroups_20150403_1501.testhq", 
+        "checkpoint_id": "corehq.pillows.group.GroupPillow.test_hqgroups_20150403_1501.testhq", 
         "couch_filter": "groups/all_groups", 
         "couchdb_type": "Database", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq__users_test", 
         "document_class": "Group", 
         "es_alias": "hqgroups", 
-        "es_index": "hqgroups_20150403_1501", 
+        "es_index": "test_hqgroups_20150403_1501", 
         "es_type": "group", 
         "extra_args": {}, 
         "full_class_name": "corehq.pillows.group.GroupPillow", 
         "include_docs": true, 
         "name": "GroupPillow", 
-        "unique_id": "hqgroups_20150403_1501"
+        "unique_id": "test_hqgroups_20150403_1501"
     }, 
     "GroupToUserPillow": {
         "advertised_name": "corehq.pillows.user.GroupToUserPillow.testhq", 
@@ -462,7 +469,7 @@
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
         "document_class": "CommCareCase", 
         "es_alias": "report_cases", 
-        "es_index": "report_cases_czei39du507m9mmpqk3y01x72a3ux4p0", 
+        "es_index": "test_report_cases_czei39du507m9mmpqk3y01x72a3ux4p0", 
         "es_type": "report_case", 
         "extra_args": {}, 
         "full_class_name": "corehq.pillows.reportcase.ReportCasePillow", 
@@ -471,21 +478,21 @@
         "unique_id": "8c10a7564b6af5052f8b86693bf6ac07"
     }, 
     "ReportXFormPillow": {
-        "advertised_name": "corehq.pillows.reportxform.ReportXFormPillow.report_xforms_20150406_1136.testhq", 
+        "advertised_name": "corehq.pillows.reportxform.ReportXFormPillow.test_report_xforms_20150406_1136.testhq", 
         "change_feed_type": "CouchChangeFeed", 
-        "checkpoint_id": "corehq.pillows.reportxform.ReportXFormPillow.report_xforms_20150406_1136.testhq", 
+        "checkpoint_id": "corehq.pillows.reportxform.ReportXFormPillow.test_report_xforms_20150406_1136.testhq", 
         "couch_filter": "couchforms/xforms", 
         "couchdb_type": "Database", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
         "document_class": "XFormInstance", 
         "es_alias": "report_xforms", 
-        "es_index": "report_xforms_20150406_1136", 
+        "es_index": "test_report_xforms_20150406_1136", 
         "es_type": "report_xform", 
         "extra_args": {}, 
         "full_class_name": "corehq.pillows.reportxform.ReportXFormPillow", 
         "include_docs": false, 
         "name": "ReportXFormPillow", 
-        "unique_id": "report_xforms_20150406_1136"
+        "unique_id": "test_report_xforms_20150406_1136"
     }, 
     "SMSPillow": {
         "advertised_name": "corehq.pillows.sms.SMSPillow.708c77f8e5fe00286fa5791e9fa7d45f.testhq", 
@@ -496,7 +503,7 @@
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
         "document_class": "SMSLog", 
         "es_alias": "smslogs", 
-        "es_index": "smslogs_708c77f8e5fe00286fa5791e9fa7d45f", 
+        "es_index": "test_smslogs_708c77f8e5fe00286fa5791e9fa7d45f", 
         "es_type": "sms", 
         "extra_args": {}, 
         "full_class_name": "corehq.pillows.sms.SMSPillow", 
@@ -579,21 +586,21 @@
         "name": "UnknownUsersPillow"
     }, 
     "UserPillow": {
-        "advertised_name": "corehq.pillows.user.UserPillow.hqusers_2015-11-12_1638.testhq", 
+        "advertised_name": "corehq.pillows.user.UserPillow.test_hqusers_2015-11-12_1638.testhq", 
         "change_feed_type": "CouchChangeFeed", 
-        "checkpoint_id": "corehq.pillows.user.UserPillow.hqusers_2015-11-12_1638.testhq", 
+        "checkpoint_id": "corehq.pillows.user.UserPillow.test_hqusers_2015-11-12_1638.testhq", 
         "couch_filter": "users/all_users", 
         "couchdb_type": "Database", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq__users_test", 
         "document_class": "CommCareUser", 
         "es_alias": "hqusers", 
-        "es_index": "hqusers_2015-11-12_1638", 
+        "es_index": "test_hqusers_2015-11-12_1638", 
         "es_type": "user", 
         "extra_args": {}, 
         "full_class_name": "corehq.pillows.user.UserPillow", 
         "include_docs": true, 
         "name": "UserPillow", 
-        "unique_id": "hqusers_2015-11-12_1638"
+        "unique_id": "test_hqusers_2015-11-12_1638"
     }, 
     "WorldVisionChildFluffPillow": {
         "advertised_name": "fluff.WorldVisionChildFluffPillow.testhq", 
@@ -644,20 +651,20 @@
         "name": "WorldVisionMotherFluffPillow"
     }, 
     "XFormPillow": {
-        "advertised_name": "corehq.pillows.xform.XFormPillow.xforms_20150403-1728.testhq", 
+        "advertised_name": "corehq.pillows.xform.XFormPillow.test_xforms_20150403-1728.testhq", 
         "change_feed_type": "CouchChangeFeed", 
-        "checkpoint_id": "corehq.pillows.xform.XFormPillow.xforms_20150403-1728.testhq", 
+        "checkpoint_id": "corehq.pillows.xform.XFormPillow.test_xforms_20150403-1728.testhq", 
         "couch_filter": "couchforms/xforms", 
         "couchdb_type": "Database", 
         "couchdb_uri": "http://127.0.0.1:5984/commcarehq_test", 
         "document_class": "XFormInstance", 
         "es_alias": "xforms", 
-        "es_index": "xforms_20150403-1728", 
+        "es_index": "test_xforms_20150403-1728", 
         "es_type": "xform", 
         "extra_args": {}, 
         "full_class_name": "corehq.pillows.xform.XFormPillow", 
         "include_docs": false, 
         "name": "XFormPillow", 
-        "unique_id": "xforms_20150403-1728"
+        "unique_id": "test_xforms_20150403-1728"
     }
 }
