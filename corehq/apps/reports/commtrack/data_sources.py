@@ -149,11 +149,7 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 'product_id'
             )
 
-            # take a pass over the data to format the stock on hand
-            # values properly
-            stock_results = [(p, format_decimal(soh)) for p, soh in stock_results]
-
-            yield (loc.name, stock_results)
+            yield (loc.name, {p: format_decimal(soh) for p, soh in stock_results})
 
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):

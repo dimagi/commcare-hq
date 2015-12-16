@@ -223,19 +223,13 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
         'corehq.apps.reports.filters.dates.SingleDateFilter',
     ]
 
-    def __init__(self, *args, **kwargs):
-        super(SimplifiedInventoryReport, self).__init__(*args, **kwargs)
+    @property
+    @memoized
+    def products(self):
         products = SQLProduct.objects.filter(domain=self.domain)
-
         if self.program_id:
             products = products.filter(program_id=self.program_id)
-
-        # product names used for columns are sorted by product name
-        self.product_names = dict([(p.product_id, p.name) for p in products])
-
-        self.product_dict = {
-            p: None for p in products.values_list('product_id', flat=True)
-        }
+        return list(products.order_by('name'))
 
     @property
     def headers(self):
@@ -243,7 +237,7 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
             DataTablesColumn(_('Location')),
         ]
 
-        columns += [DataTablesColumn(p) for p in sorted(self.product_names.values())]
+        columns += [DataTablesColumn(p.name) for p in self.products]
 
         return DataTablesHeader(*columns)
 
@@ -260,10 +254,10 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
         data = SimplifiedInventoryDataSource(config).get_data()
 
         for loc_name, loc_data in data:
-            row_dict = dict(self.product_dict, **dict(loc_data))
             yield [loc_name] + [
-                v if v is not None else _('No data')
-                for k, v in sorted(row_dict.items(), key=lambda(k, v): self.product_names[k])]
+                loc_data.get(p.product_id, _('No data'))
+                for p in self.products
+            ]
 
 
 class InventoryReport(GenericTabularReport, CommtrackReportMixin):
