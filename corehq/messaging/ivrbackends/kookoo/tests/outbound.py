@@ -26,7 +26,7 @@ class KooKooTestCase(TouchformsTestCase):
             outbound_module="corehq.messaging.ivrbackends.kookoo.api",
             outbound_params={"is_test": True, "api_key": "xyz"},
         )
-        self.ivr_backend.save()
+        self.ivr_backend.save(sync_to_sql=False)
 
         self.user1 = self.create_mobile_worker("user1", "123", "91001", save_vn=False)
         self.user2 = self.create_mobile_worker("user2", "123", "91002", save_vn=False)
@@ -411,7 +411,7 @@ class KooKooTestCase(TouchformsTestCase):
         self.assertEqual(case.user_id, self.user2._id)
 
     def tearDown(self):
-        self.ivr_backend.delete()
+        self.ivr_backend.delete(sync_to_sql=False)
         super(KooKooTestCase, self).tearDown()
 
 

@@ -518,9 +518,13 @@ class ILSNotes(models.Model):
 
 @receiver(commcare_domain_pre_delete)
 def domain_pre_delete_receiver(domain, **kwargs):
-    domain_name = domain.name
-    locations_ids = SQLLocation.objects.filter(domain=domain_name).values_list('location_id', flat=True)
-    if locations_ids:
+    from corehq.apps.domain.deletion import ModelDeletion, CustomDeletion
+
+    def _delete_ilsgateway_data(domain_name):
+        locations_ids = SQLLocation.objects.filter(domain=domain_name).values_list('location_id', flat=True)
+        if not locations_ids:
+            return
+
         DeliveryGroupReport.objects.filter(location_id__in=locations_ids).delete()
         SupplyPointWarehouseRecord.objects.filter(supply_point__in=locations_ids).delete()
 
@@ -555,9 +559,12 @@ def domain_pre_delete_receiver(domain, **kwargs):
                 "(SELECT id FROM locations_sqllocation WHERE domain=%s)", [domain_name]
             )
 
-    ReportRun.objects.filter(domain=domain_name).delete()
-    ILSNotes.objects.filter(domain=domain_name).delete()
-    SupervisionDocument.objects.filter(domain=domain_name).delete()
+    return [
+        CustomDeletion('ilsgateway', _delete_ilsgateway_data),
+        ModelDeletion('ilsgateway', 'ReportRun', 'domain'),
+        ModelDeletion('ilsgateway', 'ILSNotes', 'domain'),
+        ModelDeletion('ilsgateway', 'SupervisionDocument', 'domain'),
+    ]
 
 
 @receiver(location_edited)

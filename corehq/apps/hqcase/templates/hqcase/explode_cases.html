@@ -2,10 +2,10 @@
 {% block js-inline %} {{ block.super }}
     <script>
         $(function () {
-            ko.applyBindings({
+            $('#explode').koApplyBindings({
                 factor: ko.observable(''),
-                user_id: ko.observable('')
-            }, $('#explode').get(0));
+                user_id: ko.observable(''),
+            });
         }());
     </script>
 {% endblock %}

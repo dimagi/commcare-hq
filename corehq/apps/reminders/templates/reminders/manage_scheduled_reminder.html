@@ -26,7 +26,7 @@
             {{ available_languages|JSON }},
             {{ form.initial_event|JSON }}
         );
-        ko.applyBindings(manageRemindersModel, $('#manage-reminders-form').get(0));
+        $('#manage-reminders-form').koApplyBindings(manageRemindersModel);
         manageRemindersModel.init();
     </script>
 {% endblock %}

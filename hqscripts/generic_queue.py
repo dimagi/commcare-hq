@@ -13,6 +13,9 @@ class GenericEnqueuingOperation(BaseCommand):
     args = ""
     help = ""
 
+    def get_fetching_interval(self):
+        return 15
+
     def handle(self, *args, **options):
         if self.use_queue():
             self.validate_args(**options)
@@ -33,7 +36,7 @@ class GenericEnqueuingOperation(BaseCommand):
             except:
                 notify_exception(None,
                     message="Could not populate %s." % self.get_queue_name())
-            sleep(15)
+            sleep(self.get_fetching_interval())
 
     def populate_queue(self):
         client = get_redis_client()

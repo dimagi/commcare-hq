@@ -7,3 +7,28 @@
   line-height: 18px;
   font-size: @baseFontSize;
 }
+
+.popover.guided-tour {
+  border-color: @cc-brand-mid;
+  background-color: lighten(@cc-brand-hi, 10);
+  padding: 0;
+
+  &.bottom .arrow, &.bottom .arrow:after {
+    border-bottom-color: @cc-brand-mid;
+  }
+  &.right .arrow, &.right .arrow:after {
+    border-right-color: @cc-brand-mid;
+  }
+  &.left .arrow, &.left .arrow:after {
+    border-left-color: @cc-brand-mid;
+  }
+  &.top .arrow, &.top .arrow:after {
+    border-top-color: @cc-brand-mid;
+  }
+
+  .popover-title {
+    background-color: @cc-brand-mid;
+    color: #ffffff;
+    font-weight: bold;
+  }
+}

@@ -278,7 +278,7 @@
         var providerView = new ProviderListViewModel();
 
         $(function () {
-            ko.applyBindings(providerView, $("#providerblock")[0]);
+            $("#providerblock").koApplyBindings(providerView);
         });
 
     </script>

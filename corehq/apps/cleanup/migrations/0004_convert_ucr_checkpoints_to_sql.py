@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import models, migrations
 from corehq.apps.cleanup.pillow_migrations import migrate_legacy_pillows, noop_reverse_migration
+from corehq.sql_db.operations import HqRunPython
 
 
 def migrate_ucr_pillows(apps, schema_editor):
@@ -19,6 +20,6 @@ class Migration(migrations.Migration):
         ('cleanup', '0003_convert_fluff_checkpoints_to_sql'),
     ]
 
-    operations = [
-        migrations.RunPython(migrate_ucr_pillows, noop_reverse_migration)
-    ]
+    operations = {
+        HqRunPython(migrate_ucr_pillows, noop_reverse_migration)
+    }

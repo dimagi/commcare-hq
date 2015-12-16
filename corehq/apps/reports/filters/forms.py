@@ -1,11 +1,12 @@
-import copy
 from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.utils.safestring import mark_safe
-import re
 from corehq.apps.app_manager.models import Application
-from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_submissions_using_xmlns
+from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_submissions_using_xmlns, \
+    get_all_form_definitions_grouped_by_app_and_xmlns, get_all_form_details, get_form_details_for_xmlns, \
+    get_form_details_for_app_and_xmlns, get_form_details_for_app_and_module, get_form_details_for_app
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseTagsFilter
+from corehq.util.soft_assert import soft_assert
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
 from dimagi.utils.decorators.memoized import memoized
 
@@ -25,6 +26,7 @@ PARAM_VALUE_STATUS_DELETED = 'deleted'
 
 
 class FormsByApplicationFilterParams(object):
+
     def __init__(self, params):
         self.app_id = self.status = self.module = self.xmlns = self.most_granular_filter = None
         for param in params:
@@ -46,6 +48,11 @@ class FormsByApplicationFilterParams(object):
     def show_active(self):
         return self.status == PARAM_VALUE_STATUS_ACTIVE
 
+    def get_module_int(self):
+        try:
+            return int(self.module)
+        except ValueError:
+            return None
 
 class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     """
@@ -196,12 +203,11 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @memoized
     def _application_forms(self):
         """
-            These are forms with an xmlns that can be matched to an Application or Application-Deleted
-            id with certainty.
+        These are forms with an xmlns that can be matched to an Application or Application-Deleted
+        id with certainty.
         """
-        data = self._raw_data(["xmlns app", self.domain], group=True)
-        all_forms = self.get_xmlns_app_keys(data)
-        return all_forms
+        data = self._get_all_forms_grouped_by_app_and_xmlns()
+        return [self.make_xmlns_app_key(d.xmlns, d.app_id) for d in data]
 
     @property
     @memoized
@@ -237,27 +243,21 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 'next_app_id': {...},
             }
         """
-        data = self._raw_data(["app module form", self.domain])
+        data = get_all_form_details(self.domain)
         default_module = lambda num: {'module': None, 'forms': []}
         app_forms = {}
-        for line in data:
-            app_info = line.get('value')
-            if not app_info:
-                continue
-
-            index_offset = 1 if app_info.get('is_user_registration', False) else 0
-
-            app_id = app_info['app']['id']
-
+        for app_structure in data:
+            index_offset = 1 if app_structure.is_user_registration else 0
+            app_id = app_structure.app.id
             if not app_id in app_forms:
                 app_forms[app_id] = {
-                    'app': app_info['app'],
-                    'is_user_registration': app_info.get('is_user_registration', False),
-                    'is_deleted': app_info['is_deleted'],
+                    'app': app_structure.app,
+                    'is_user_registration': app_structure.is_user_registration,
+                    'is_deleted': app_structure.is_deleted,
                     'modules': []
                 }
 
-            module_id = app_info['module']['id'] + index_offset
+            module_id = app_structure.module.id + index_offset
 
             new_modules = module_id - len(app_forms[app_id]['modules']) + 1
             if new_modules > 0:
@@ -265,11 +265,11 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 # these 'filler modules' are eventually ignored when rendering the drilldown map.
                 app_forms[app_id]['modules'].extend([default_module(module_id - m) for m in range(0, new_modules)])
 
-            if not app_info.get('is_user_registration'):
-                app_forms[app_id]['modules'][module_id]['module'] = app_info['module']
+            if not app_structure.is_user_registration:
+                app_forms[app_id]['modules'][module_id]['module'] = app_structure.module
                 app_forms[app_id]['modules'][module_id]['forms'].append({
-                    'form': app_info['form'],
-                    'xmlns': app_info['xmlns'],
+                    'form': app_structure.form,
+                    'xmlns': app_structure.xmlns,
                 })
         return app_forms
 
@@ -289,15 +289,15 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @memoized
     def _fuzzy_forms(self):
         matches = {}
-        app_data = self._raw_data(["xmlns app", self.domain], group=True)
-        app_xmlns = [d['key'][-2] for d in app_data]
+        app_data = self._get_all_forms_grouped_by_app_and_xmlns()
+        app_xmlns = [d.xmlns for d in app_data]
         for form in self._nonmatching_app_forms:
             xmlns = self.split_xmlns_app_key(form, only_xmlns=True)
             if xmlns in app_xmlns:
                 matches[form] = {
-                    'app_ids': [d['key'][-1] for d in app_data if d['key'][-2] == xmlns],
+                    'app_ids': [d.app_id for d in app_data if d.xmlns == xmlns],
                     'xmlns': xmlns,
-                    }
+                }
         return matches
 
     @property
@@ -306,10 +306,8 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         fuzzy = {}
         for form in self._fuzzy_forms:
             xmlns, unknown_id = self.split_xmlns_app_key(form)
-            key = ["xmlns", self.domain, xmlns]
-            info = self._raw_data(key)
             fuzzy[xmlns] = {
-                'apps': [i['value'] for i in info],
+                'apps': [detail for detail in get_form_details_for_xmlns(self.domain, xmlns)],
                 'unknown_id': unknown_id,
             }
         return fuzzy
@@ -389,7 +387,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         app_name = FormsByApplicationFilter.get_translated_value(display_lang, langs, app['app']['names'])
         module_name = FormsByApplicationFilter.get_translated_value(display_lang, langs, app['module']['names'])
         form_name = FormsByApplicationFilter.get_translated_value(display_lang, langs, app['form']['names'])
-        is_deleted = app.get('is_deleted', False)
+        is_deleted = app['is_deleted']
         if is_deleted:
             app_name = "%s [Deleted]" % app_name
         return "%s > %s > %s" % (app_name, module_name, form_name)
@@ -409,66 +407,92 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         Returns the raw form data based on the current filter selection.
         """
         if not filter_results:
-            data = []
             if self._application_forms:
-                key = ["app module form", self.domain]
-                data.extend(self._raw_data(key))
-            return data
-
-        parsed_params = FormsByApplicationFilterParams(filter_results)
-        if parsed_params.xmlns:
-            status = parsed_params.status or PARAM_VALUE_STATUS_ACTIVE
-            key = ["status xmlns app", self.domain, status, parsed_params.xmlns, parsed_params.app_id]
-            return self._raw_data(key)
-        else:
-            if self._application_forms:
-                prefix = "app module form"
-                key = [self.domain]
-                if parsed_params.status:
-                    prefix = "%s %s" % ("status", prefix)
-                for f in filter_results:
-                    val = f['value']
-                    if f['slug'] == 'module':
-                        try:
-                            val = int(val)
-                        except Exception:
-                            break
-                    key.append(val)
-                return self._raw_data([prefix] + key)
+                return get_all_form_details(self.domain)
             else:
                 return []
 
+        parsed_params = FormsByApplicationFilterParams(filter_results)
+        if parsed_params.xmlns:
+            return get_form_details_for_app_and_xmlns(
+                self.domain,
+                parsed_params.app_id,
+                parsed_params.xmlns,
+                deleted=parsed_params.status == PARAM_VALUE_STATUS_DELETED,
+            )
+        else:
+            if not self._application_forms:
+                return []
+            return self.get_filtered_data_for_parsed_params(
+                self.domain, parsed_params
+            )
+
+    @staticmethod
+    def get_filtered_data_for_parsed_params(domain, parsed_params):
+        # this code path has multiple forks:
+        # 0. if status isn't set (which cory doesn't think is possible) it defaults to filtering by
+        #    status "active". otherwise it will set status to be "active" or "deleted" depending
+        #    on what's passed in.
+        # 1. if status is set, but nothing else is, it will return all forms in apps of that status
+        # 2. if status and app_id are set, but nothing else, it will return all forms in that app
+        # 3. if status and app_id and module_id are set, it will return all forms in that module if
+        #    the module is valid, otherwise it falls back to the app
+        # 4. if status, app_id, module_id, and xmlns are set (which cory doesn't think is possible)
+        #    it returns that form.
+        deleted = parsed_params.status == PARAM_VALUE_STATUS_DELETED
+        _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']))
+        if parsed_params.module is not None and parsed_params.get_module_int() is None:
+            # todo: remove anytime in 2016
+            _assert(False, "module set but not a valid number!")
+            return get_form_details_for_app(domain, parsed_params.app_id, deleted=deleted)
+        elif parsed_params.most_granular_filter == 'xmlns':
+            # todo: remove anytime in 2016
+            _assert(False, "got to form ID even though this shouldn't be possible")
+            return get_form_details_for_app_and_xmlns(
+                domain, parsed_params.app_id, parsed_params.xmlns, deleted=deleted)
+        elif parsed_params.most_granular_filter == 'module':
+            return get_form_details_for_app_and_module(
+                domain, parsed_params.app_id, parsed_params.get_module_int(), deleted=deleted
+            )
+        elif parsed_params.most_granular_filter == 'app_id':
+            return get_form_details_for_app(domain, parsed_params.app_id, deleted=deleted)
+        elif parsed_params.most_granular_filter == 'status':
+            return get_all_form_details(domain, deleted=deleted)
+        else:
+            # todo: remove anytime in 2016
+            _assert(False, 'most granular filter was a surprising value ({}).'.format(
+                parsed_params.most_granular_filter))
+            return get_all_form_details(domain)
+
     def _get_selected_forms(self, filter_results):
         """
-            Returns the appropriate form information based on the current filter selection.
+        Returns the appropriate form information based on the current filter selection.
         """
         if self._show_unknown:
             return self._get_selected_forms_for_unknown_apps()
         else:
             result = {}
             data = self._get_filtered_data(filter_results)
-            for line in data:
-                app = line['value']
-                app_id = app['app']['id']
-                xmlns_app = self.make_xmlns_app_key(app['xmlns'], app_id)
+            for form_details in data:
+                xmlns_app = self.make_xmlns_app_key(form_details.xmlns, form_details.app.id)
                 if xmlns_app not in result:
                     result[xmlns_app] = self._generate_report_app_info(
-                        app['xmlns'],
-                        app_id,
-                        self._formatted_name_from_app(self.display_lang, app),
+                        form_details.xmlns,
+                        form_details.app.id,
+                        self._formatted_name_from_app(self.display_lang, form_details),
                     )
 
             if not self._hide_fuzzy_results and self._fuzzy_forms:
                 selected_xmlns = [r['xmlns'] for r in result.values()]
                 selected_apps = [r['app_id'] for r in result.values()]
                 for xmlns, info in self._fuzzy_form_data.items():
-                    for app_map in info['apps']:
-                        if xmlns in selected_xmlns and app_map['app']['id'] in selected_apps:
+                    for form_details in info['apps']:
+                        if xmlns in selected_xmlns and form_details.app.id in selected_apps:
                             result["%s %s" % (xmlns, self.fuzzy_slug)] = self._generate_report_app_info(
                                 xmlns,
                                 info['unknown_id'],
                                 "%s [Fuzzy Submissions]" % self._formatted_name_from_app(
-                                    self.display_lang, app_map),
+                                    self.display_lang, form_details),
                                 is_fuzzy=True,
                             )
             return result
@@ -495,19 +519,9 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 )
         return result
 
-    def _raw_data(self, startkey, endkey=None, reduce=False, group=False):
-        if endkey is None:
-            endkey = startkey
-        kwargs = dict(group=group) if group else dict(reduce=reduce)
-        return Application.get_db().view('reports_forms/by_app_info',
-            startkey=startkey,
-            endkey=endkey+[{}],
-            **kwargs
-        ).all()
-
-    @classmethod
-    def get_xmlns_app_keys(cls, data):
-        return [cls.make_xmlns_app_key(d['key'][-2], d['key'][-1]) for d in data]
+    @memoized
+    def _get_all_forms_grouped_by_app_and_xmlns(self):
+        return get_all_form_definitions_grouped_by_app_and_xmlns(self.domain)
 
     @classmethod
     def make_xmlns_app_key(cls, xmlns, app_id):

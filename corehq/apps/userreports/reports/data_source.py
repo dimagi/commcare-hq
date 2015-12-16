@@ -174,7 +174,7 @@ class ConfigurableReportDataSource(SqlData):
                                     'num_matching': len(matching_indicators),
                                 }
                             )
-                        return matching_indicators[0]['datatype']
+                        return matching_indicators[0].get('datatype')
 
                     datatype = get_datatype(matching_report_column)
 
