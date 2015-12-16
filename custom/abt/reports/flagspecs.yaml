@@ -719,12 +719,12 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
   - question: [q17_action]
     flag_name: "Stock card recording system?"
     flag_name_fr: "Stock carte de système d'enregistrement ?"
-    warning: "Problem reported: Deficient stock record-keeping: No system for recording stock cards.”
+    warning: "Problem reported: Deficient stock record-keeping: No system for recording stock cards."
     warning_fr: "Problème signalé : Tenue des documents liés au stock insatisfaisante."
   - question: [q18_action]
     flag_name: "Up to date stock cards?"
     flag_name_fr: "Jusqu'à ce jour, les cartes d'achat d'actions ?"
-    warning: "Problem reported: Deficient stock record-keeping: Stock cards not up-to-date.”
+    warning: "Problem reported: Deficient stock record-keeping: Stock cards not up-to-date."
     warning_fr: "Problème signalé : Tenue des documents liés au stock insatisfaisante."
   - question: [q19_action]
     flag_name: "Waste stock recorded?"
@@ -734,7 +734,7 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
   - question: [q20_action]
     flag_name: "Adequate filing system?"
     flag_name_fr: "Système de classement adéquat ?"
-    warning: "Problem reported: Deficient record-keeping: filing: Filing system.”
+    warning: "Problem reported: Deficient record-keeping: filing: Filing system."
     warning_fr: "Problème signalé : Tenue des documents insatisfaisante : classement."
   - question: [q21_action]
     flag_name: "Quantity and age of stock known? "
@@ -784,7 +784,7 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
   - question: [q30_action]
     flag_name: "Old waste stored?"
     flag_name_fr: "Old déchets stockés ?"
-    warning: "Problem reported: More than one season of accumulated solid waste in store.”
+    warning: "Problem reported: More than one season of accumulated solid waste in store."
     warning_fr: "Problème signalé : Pesticides excédentaires dans l’inventaire."
   - question: [q31_action]m
     flag_name: "Waste Management plan?"
@@ -794,7 +794,7 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
   - question: [q32_action]
     flag_name: "Waste disposal issue?"
     flag_name_fr: "Élimination problème des déchets ?"
-    warning: "Problem reported: problems in identifying waste disposal system.”
+    warning: "Problem reported: problems in identifying waste disposal system."
     warning_fr: "Problème signalé : problèmes liés à la planification de la gestion des déchets."
   - question: [q36_action]
     flag_name: "Spray Tracking Sheet use?"
