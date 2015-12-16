@@ -5,7 +5,7 @@ var PasswordModel = function (weak, better, strong) {
     self.strongMessage = strong;
     self.password = ko.observable('');
     self.strength = ko.computed(function() {
-        return zxcvbn(self.password()).score
+        return zxcvbn(self.password(), ['dimagi', 'commcare', 'hq']).score
     });
     self.color = ko.computed(function() {
         if (self.strength() < 2) {
