@@ -4,7 +4,6 @@ cache:
   directories:
     - $HOME/.cache/pip
     - $HOME/virtualenv/python$TRAVIS_PYTHON_VERSION.9
-    - $HOME/downloads
 python:
   - "2.7"
 env:
@@ -30,7 +29,6 @@ before_install:
   - "curl http://localhost:5984/"  # print couch info
   - "uname -a"
   - "lsb_release -a"
-  - "mkdir -p $HOME/downloads"
 install:
   - ".travis/misc-setup.sh"
   - "curl -X PUT http://localhost:5984/commcarehq_test"  # this is an auth test
