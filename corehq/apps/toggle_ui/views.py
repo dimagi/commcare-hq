@@ -200,7 +200,10 @@ def _get_usage_info(toggle):
                 active_domains += 1
         else:
             try:
-                last_used[name] = _format_date(CouchUser.get_by_username(name).last_login)
+                user = CouchUser.get_by_username(name)
+                if not user:
+                    raise ResourceNotFound
+                last_used[name] = _format_date(user.last_login)
             except ResourceNotFound:
                 last_used[name] = NOT_FOUND
     last_used["_latest"] = _get_most_recently_used(last_used)
