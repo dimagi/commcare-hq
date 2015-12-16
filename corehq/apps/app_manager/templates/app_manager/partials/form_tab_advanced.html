@@ -12,7 +12,7 @@
             <div class="modal hide fade" id="upload-xform">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h3>Upload XForm</h3>
+                    <h3>{% trans "Upload XForm" %}</h3>
                 </div>
                 <div class="modal-body">
                     <form method="POST"
@@ -21,11 +21,13 @@
                         {% csrf_token %}
                         <input type="file" id="xform_file_input" name="xform" />
                         <input type="hidden" name="ajax" value="false" />
-                        <input type="submit" id="xform_file_submit" value="Upload" class="btn btn-primary" />
+                        <input type="submit" id="xform_file_submit" value="{% trans "Upload" %}" class="btn btn-primary" />
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal" aria-hidden="true">Close</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal" aria-hidden="true">
+                        {% trans "Close" %}
+                    </button>
                 </div>
             </div>
         </li>
@@ -41,7 +43,7 @@
             </a>
         </li>
         <li>
-            <a id="xform-source-opener" class="{% if not form.source %}disabled{% endif %}" href="#"
+            <a id="xform-source-opener" class="{% if not form.source %}disabled{% endif %}"
                     {% if is_user_registration %}
                data-href="{% url "get_user_registration_source" domain app.id %}"
                     {% else %}
@@ -55,7 +57,8 @@
                 <form action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'xform' %}" method="POST">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h3><span class="source-edit">Edit </span>XML Source</h3>
+                    <h3 class="source-readonly">XML Source</h3>
+                    <h3 class="source-edit">Edit XML Source</h3>
                 </div>
                 <div class="modal-body">
                     <div class="source-readonly">
@@ -70,8 +73,10 @@
                 </div>
                 <div class="modal-footer">
                     <input type="hidden" name="ajax" value="false" class="source-edit" />
-                    <input type="submit" value="Save" class="btn btn-primary source-edit" />
-                    <button type="button" class="btn btn-default" data-dismiss="modal" aria-hidden="true">Close</button>
+                    <input type="submit" value="{% trans "Save" %}" class="btn btn-primary source-edit" />
+                    <button type="button" class="btn btn-default" data-dismiss="modal" aria-hidden="true">
+                        {% trans "Close" %}
+                    </button>
                     <label for="cleanup" class="checkbox source-edit pull-left">
                         <input type="checkbox" id="cleanup" name="cleanup" />
                         {% trans "Clean up markup after saving (add newlines, reformat indentation, etc.) " %}
