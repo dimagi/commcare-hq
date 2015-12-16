@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.utils.cache import _generate_cache_header_key
 from corehq.util.quickcache import quickcache, QuickCache
 
@@ -12,7 +13,7 @@ class _ReportQuickCache(QuickCache):
     """
     def __call__(self, *args, **kwargs):
         report = args[0]
-        if report.is_cacheable and _is_valid(report):
+        if report.is_cacheable and _is_valid(report) and settings.CACHE_REPORTS:
             return super(_ReportQuickCache, self).__call__(*args, **kwargs)
         else:
             return self.fn(*args, **kwargs)
