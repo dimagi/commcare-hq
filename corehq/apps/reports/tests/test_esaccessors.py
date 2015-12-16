@@ -9,13 +9,20 @@ from corehq.util.elastic import delete_es_index
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.form_processor.tests.utils import TestFormMetadata
+from casexml.apps.case.models import CommCareCase, CommCareCaseAction
+from casexml.apps.case.const import CASE_ACTION_CREATE, CASE_ACTION_CLOSE
 from corehq.pillows.xform import XFormPillow
 from corehq.pillows.user import UserPillow
 from corehq.pillows.group import GroupPillow
+from corehq.pillows.case import CasePillow
 from corehq.apps.reports.analytics.esaccessors import (
     get_submission_counts_by_user,
     get_completed_counts_by_user,
     get_submission_counts_by_date,
+    get_active_case_counts_by_owner,
+    get_total_case_counts_by_owner,
+    get_case_counts_closed_by_user,
+    get_case_counts_opened_by_user,
     get_user_stubs,
     get_group_stubs,
 )
@@ -230,3 +237,153 @@ class TestGroupESAccessors(BaseESAccessorsTest):
             'case_sharing': self.case_sharing,
             'reporting': self.reporting,
         })
+
+
+class TestCaseESAccessors(BaseESAccessorsTest):
+
+    pillow_class = CasePillow
+
+    def setUp(self):
+        super(TestCaseESAccessors, self).setUp()
+        self.owner_id = 'batman'
+        self.user_id = 'robin'
+        self.case_type = 'heroes'
+
+    def _send_case_to_es(self,
+            domain=None,
+            owner_id=None,
+            user_id=None,
+            case_type=None,
+            opened_on=None,
+            closed_on=None):
+
+        actions = [CommCareCaseAction(
+            action_type=CASE_ACTION_CREATE,
+            date=opened_on,
+        )]
+
+        case = CommCareCase(
+            _id=uuid.uuid4().hex,
+            domain=domain or self.domain,
+            owner_id=owner_id or self.owner_id,
+            user_id=user_id or self.user_id,
+            type=case_type or self.case_type,
+            opened_on=opened_on or datetime.now(),
+            opened_by=user_id or self.user_id,
+            closed_on=closed_on,
+            closed_by=user_id or self.user_id,
+            actions=actions,
+        )
+        self.pillow.change_transport(case.to_json())
+        self.pillow.get_es_new().indices.refresh(self.pillow.es_index)
+        return case
+
+    def test_get_active_case_counts(self):
+        datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))
+        opened_on = datetime(2013, 7, 15)
+        opened_on_not_active_range = datetime(2013, 6, 15)
+
+        self._send_case_to_es(opened_on=opened_on)
+        self._send_case_to_es(opened_on=opened_on_not_active_range)
+
+        results = get_active_case_counts_by_owner(self.domain, datespan)
+        self.assertEqual(results[self.owner_id], 1)
+
+    def test_get_total_case_counts(self):
+        datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))
+        opened_on = datetime(2013, 7, 15)
+        opened_on_not_active_range = datetime(2013, 6, 15)
+
+        self._send_case_to_es(opened_on=opened_on)
+        self._send_case_to_es(opened_on=opened_on_not_active_range)
+
+        results = get_total_case_counts_by_owner(self.domain, datespan)
+        self.assertEqual(results[self.owner_id], 2)
+
+    def test_get_active_case_counts_case_type(self):
+        """Ensures that you can get cases by type"""
+        datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))
+        opened_on = datetime(2013, 7, 15)
+
+        self._send_case_to_es(opened_on=opened_on, case_type='villians')
+        self._send_case_to_es(opened_on=opened_on, case_type=self.case_type)
+
+        results = get_active_case_counts_by_owner(self.domain, datespan, [self.case_type])
+        self.assertEqual(results[self.owner_id], 1)
+
+    def test_get_active_case_counts_domain(self):
+        """Ensure that cases only get grabbed if in the domain"""
+        datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))
+        opened_on = datetime(2013, 7, 15)
+
+        self._send_case_to_es(opened_on=opened_on, domain='villians')
+        self._send_case_to_es(opened_on=opened_on, domain=self.domain)
+
+        results = get_active_case_counts_by_owner(self.domain, datespan)
+        self.assertEqual(results[self.owner_id], 1)
+
+    def test_get_total_case_counts_closed(self):
+        """Test a case closure before the startdate"""
+
+        datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))
+        opened_on = datetime(2013, 7, 15)
+        opened_on_early = datetime(2013, 6, 14)
+        closed_on = datetime(2013, 6, 15)
+
+        self._send_case_to_es(opened_on=opened_on)
+        self._send_case_to_es(opened_on=opened_on_early, closed_on=closed_on)
+
+        results = get_total_case_counts_by_owner(self.domain, datespan)
+        self.assertEqual(results[self.owner_id], 1)
+
+    def test_get_total_case_counts_opened_after(self):
+        """Test a case opened after the startdate datespan"""
+
+        datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))
+        opened_on = datetime(2013, 8, 15)
+
+        self._send_case_to_es(opened_on=opened_on)
+
+        results = get_total_case_counts_by_owner(self.domain, datespan)
+        self.assertEqual(results, {})
+
+    def test_get_case_counts_opened_by_user(self):
+        datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))
+        opened_on = datetime(2013, 7, 15)
+
+        self._send_case_to_es(opened_on=opened_on)
+
+        results = get_case_counts_opened_by_user(self.domain, datespan)
+        self.assertEqual(results[self.user_id], 1)
+
+    def test_get_case_counts_closed_by_user(self):
+        datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))
+        opened_on = datetime(2013, 7, 15)
+
+        self._send_case_to_es(opened_on=opened_on)
+
+        results = get_case_counts_closed_by_user(self.domain, datespan)
+        self.assertEqual(results, {})
+
+        self._send_case_to_es(opened_on=opened_on, closed_on=opened_on)
+
+        results = get_case_counts_closed_by_user(self.domain, datespan)
+        self.assertEqual(results[self.user_id], 1)
+
+    def test_get_case_counts_opened_domain(self):
+        datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))
+        opened_on = datetime(2013, 7, 15)
+
+        self._send_case_to_es(opened_on=opened_on, domain='not here')
+
+        results = get_case_counts_opened_by_user(self.domain, datespan)
+        self.assertEqual(results, {})
+
+    def test_get_case_counts_opened_case_type(self):
+        datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))
+        opened_on = datetime(2013, 7, 15)
+
+        self._send_case_to_es(opened_on=opened_on)
+
+        results = get_case_counts_opened_by_user(self.domain, datespan, case_types=['not-here'])
+        self.assertEqual(results, {})
