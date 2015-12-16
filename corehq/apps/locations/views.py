@@ -359,6 +359,20 @@ def archive_location(request, domain, loc_id):
         )
     })
 
+@can_edit_location
+def delete_location(request, domain, loc_id):
+    loc = Location.get(loc_id)
+    if loc.domain != domain:
+        raise Http404()
+    loc.full_delete()
+    return json_response({
+        'success': True,
+        'message': _("Location '{location_name}' has successfully been {action}.").format(
+            location_name=loc.name,
+            action=_("deleted"),
+        )
+    })
+
 
 @can_edit_location
 def unarchive_location(request, domain, loc_id):
