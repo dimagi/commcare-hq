@@ -121,9 +121,13 @@ def appstore(request, template="appstore/appstore_base.html"):
                 d_results.append(domain)
         except CopiedFromDeletedException as e:
             notify_exception(
-                "Fetched Exchange Snapshot Error: {}. The problem snapshot id: {}".format(
-                e.message, res['_source']['_id']
-            ))
+                request,
+                message=(
+                    "Fetched Exchange Snapshot Error: {}. "
+                    "The problem snapshot id: {}".format(
+                    e.message, res['_source']['_id'])
+                )
+            )
 
     starter_apps = request.GET.get('is_starter_app', None)
     sort_by = request.GET.get('sort_by', None)
