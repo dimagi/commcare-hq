@@ -1,8 +1,5 @@
 Fluff
 =====
-[![Build Status](https://travis-ci.org/dimagi/fluff.png)](https://travis-ci.org/dimagi/fluff)
-[![Test coverage](https://coveralls.io/repos/dimagi/fluff/badge.png?branch=master)](https://coveralls.io/r/dimagi/fluff)
-
 Fluff is a library that works with pillowtop and couchdbkit and
 lets you define a set of computations to do
 on all docs of a `doc_type`, i.e. perform a map over them, and then use
