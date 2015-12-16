@@ -17,11 +17,12 @@ setup_elasticsearch() {
 }
 
 setup_kafka() {
-    kafka_dir=${DOWNLOAD_DIR}/kafka
+    kafka_version=0.8.2.2
+    kafka_dir=${DOWNLOAD_DIR}/kafka_2.10-${kafka_version}
     # kafka install, copied from https://github.com/wvanbergen/kafka/blob/master/.travis.yml
     if [ ! -d ${kafka_dir} ]; then
-        wget http://www.us.apache.org/dist/kafka/0.8.2.1/kafka_2.10-0.8.2.1.tgz -O ${DOWNLOAD_DIR}/kafka.tgz
-        mkdir -p ${kafka_dir} && tar xzf ${DOWNLOAD_DIR}/kafka.tgz -C ${kafka_dir} --strip-components 1
+        wget http://www.us.apache.org/dist/kafka/${kafka_version}/kafka_2.10-${kafka_version}.tgz -O ${DOWNLOAD_DIR}/kafka.tgz
+        tar xzf ${DOWNLOAD_DIR}/kafka.tgz -C ${DOWNLOAD_DIR}
     fi
 
     nohup bash -c "cd ${kafka_dir} && bin/zookeeper-server-start.sh config/zookeeper.properties &"
