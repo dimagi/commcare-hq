@@ -69,9 +69,7 @@ class TestSubscriptionProperties(TestCase):
         properties = _get_subscription_properties_by_user(self.user)
         self.assertEqual(properties['is_on_community_plan'], 'yes')
         self.assertEqual(properties['is_on_standard_plan'], 'no')
-        self.assertEqual(properties['is_on_advanced_plan'], 'no')
         self.assertEqual(properties['is_on_pro_plan'], 'no')
-        self.assertEqual(properties['is_on_enterprise_plan'], 'yes')
         self.assertEqual(properties['max_edition_of_paying_plan'], SoftwarePlanEdition.ENTERPRISE)
 
     def test_probono_properties(self):
