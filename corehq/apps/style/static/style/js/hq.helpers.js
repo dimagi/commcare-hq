@@ -64,11 +64,13 @@ $.fn.hqHelp = function () {
 
         var options = {
             html: true,
-            trigger: 'focus',
-            content: function() {
-                return $('#popover_content_wrapper').html();
-            }
+            trigger: 'focus'
         };
+        if (!$link.data('content')) {
+            options.content = function() {
+                return $('#popover_content_wrapper').html();
+            };
+        }
         if (!$link.data("title")) {
             options.template = '<div class="popover"><div class="arrow"></div><div class="popover-inner"><div class="popover-content"><p></p></div></div></div>';
         }
@@ -125,6 +127,9 @@ $.fn.enableButton = function () {
 $.fn.koApplyBindings = function (context) {
     if (!this.length) {
         throw new Error("No element passed to koApplyBindings");
+    }
+    if (this.length > 1) {
+        throw new Error("Multiple elements passed to koApplyBindings");
     }
     return ko.applyBindings(context, this.get(0));
 };

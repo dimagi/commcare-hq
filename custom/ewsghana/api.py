@@ -827,7 +827,7 @@ class EWSApi(APISynchronization):
 
     def balance_migration(self, date=None):
         from custom.ewsghana.tasks import balance_migration_task
-        balance_migration_task.delay(self.domain, date)
+        balance_migration_task.delay(self.domain)
 
 
 class EmailSettingsSync(object):

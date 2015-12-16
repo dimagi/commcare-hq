@@ -2,28 +2,27 @@
 $(function () {
     "use strict";
     if ($("#bulk_upload_form").get(0)) {
-        ko.applyBindings(
-            {
-                file: ko.observable(null)
-            },
-            $("#bulk_upload_form").get(0)
-        );
-    }
-
-    // modify download url to pass extra option
-    function ConsumptionOptionsViewModel(base_url) {
-        this.base_url = base_url;
-        this.include_consumption = ko.observable(false);
-        self = this;
-        this.url = ko.computed(function() {
-            // ternary prevents adding include_consumption=false to other
-            // bulk pages
-            return self.base_url + (self.include_consumption() ? "?include_consumption=true" : "");
+        $("#bulk_upload_form").koApplyBindings({
+            file: ko.observable(null),
         });
     }
 
-    ko.applyBindings(
+    // modify download url to pass extra options
+    function ConsumptionOptionsViewModel(base_url) {
+        this.base_url = base_url;
+        this.include_consumption = ko.observable(false);
+        this.include_ids = ko.observable(false);
+        self = this;
+        this.url = ko.computed(function() {
+            return (
+                self.base_url
+                + (self.include_consumption() ? "?include_consumption=true" : "")
+                + (self.include_ids() ? "?include_ids=true" : "")
+            );
+        });
+    }
+
+    $("#download_block").koApplyBindings(
         new ConsumptionOptionsViewModel($("#download_link").get(0).href),
-        $("#download_block").get(0)
     );
 });

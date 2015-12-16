@@ -38,6 +38,7 @@
                             <h3>{% trans "Delete Forwarding Rule?" %}</h3>
                         </div>
                         <form class="form form-horizontal" name="delete_forwarding_rule" action="{% url "delete_forwarding_rule" domain rule.get_id %}" method="post">
+                            {% csrf_token %}
                             <div class="modal-body">
                                 <p>{% trans "Are you sure you want to delete this forwarding rule?" %}</p>
                             </div>

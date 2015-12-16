@@ -57,6 +57,24 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
     cases = UseIfRequested(ToManyDocumentsField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
                                                 attribute=lambda xform: casexml_xform.cases_referenced_by_xform(xform)))
 
+    attachments = fields.DictField(readonly=True, null=True)
+
+    def dehydrate_attachments(self, bundle):
+        attachments_dict = getattr(bundle.obj, '_attachments', None)
+        if not attachments_dict:
+            return {}
+
+        def _normalize_meta(meta):
+            noramlized = {}
+            for atrib in ('length', 'content_type'):
+                if atrib in meta:
+                    noramlized[atrib] = meta[atrib]
+            return noramlized
+
+        return {
+            name: _normalize_meta(meta) for name, meta in attachments_dict.items()
+        }
+
     is_phone_submission = fields.BooleanField(readonly=True)
 
     def dehydrate_is_phone_submission(self, bundle):

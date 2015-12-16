@@ -7,6 +7,7 @@
                   method="post"
                   enctype="multipart/form-data"
                   role="form">
+                {% csrf_token %}
                 <input type="hidden" id="bug-report-url" name="url"/>
                 <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
                 <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>

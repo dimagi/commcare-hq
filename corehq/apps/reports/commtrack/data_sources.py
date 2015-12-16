@@ -9,11 +9,12 @@ from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
 from dateutil import parser
+from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from casexml.apps.stock.models import StockTransaction, StockReport
+from casexml.apps.stock.utils import months_of_stock_remaining, stock_category, state_stock_category
 from couchforms.models import XFormInstance
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
-from casexml.apps.stock.utils import months_of_stock_remaining, stock_category, state_stock_category
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from decimal import Decimal
 from django.db.models import Sum
@@ -130,6 +131,7 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
         for loc in locations[:self.config.get('max_rows', 100)]:
             transactions = StockTransaction.objects.filter(
                 case_id=loc.supply_point_id,
+                section_id=SECTION_TYPE_STOCK,
             )
 
             if self.program_id:
@@ -147,11 +149,7 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 'product_id'
             )
 
-            # take a pass over the data to format the stock on hand
-            # values properly
-            stock_results = [(p, format_decimal(soh)) for p, soh in stock_results]
-
-            yield (loc.name, stock_results)
+            yield (loc.name, {p: format_decimal(soh) for p, soh in stock_results})
 
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):

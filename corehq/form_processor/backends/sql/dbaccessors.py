@@ -1,7 +1,7 @@
 import logging
 from itertools import groupby
 
-from django.db import connection, InternalError
+from django.db import connections, InternalError, transaction
 from django.db.models import Q
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor, \
@@ -12,6 +12,7 @@ from corehq.form_processor.models import (
     CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE)
 from corehq.form_processor.utils.sql import fetchone_as_namedtuple, fetchall_as_namedtuple, case_adapter, \
     case_transaction_adapter, case_index_adapter, case_attachment_adapter
+from corehq.sql_db.routers import db_for_read_write
 from corehq.util.test_utils import unit_testing_only
 
 doc_type_to_state = {
@@ -22,6 +23,11 @@ doc_type_to_state = {
     "XFormArchived": XFormInstanceSQL.ARCHIVED,
     "SubmissionErrorLog": XFormInstanceSQL.SUBMISSION_ERROR_LOG
 }
+
+
+def get_cursor(model):
+    db = db_for_read_write(model)
+    return connections[db].cursor()
 
 
 class FormAccessorSQL(AbstractFormAccessor):
@@ -95,41 +101,49 @@ class FormAccessorSQL(AbstractFormAccessor):
     def get_forms_by_type(domain, type_, limit, recent_first=False):
         state = doc_type_to_state[type_]
         assert limit is not None
+        # apply limit in python as well since we may get more results than we expect
+        # if we're in a sharded environment
         return list(XFormInstanceSQL.objects.raw(
             'SELECT * from get_forms_by_state(%s, %s, %s, %s)',
             [domain, state, limit, recent_first]
-        ))
+        ))[:limit]
 
     @staticmethod
     def form_with_id_exists(form_id, domain=None):
-        with connection.cursor() as cursor:
+        with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT * FROM check_form_exists(%s, %s)', [form_id, domain])
             result = fetchone_as_namedtuple(cursor)
             return result.form_exists
 
     @staticmethod
+    @transaction.atomic
     def hard_delete_forms(domain, form_ids):
         assert isinstance(form_ids, list)
-        with connection.cursor() as cursor:
-            cursor.execute('SELECT * FROM hard_delete_forms(%s, %s)', [domain, form_ids])
-            result = fetchone_as_namedtuple(cursor)
-            return result.deleted_count
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute('SELECT hard_delete_forms(%s, %s) AS deleted_count', [domain, form_ids])
+            results = fetchall_as_namedtuple(cursor)
+            return sum([result.deleted_count for result in results])
 
     @staticmethod
-    def archive_form(form_id, user_id=None):
-        FormAccessorSQL._archive_unarchive_form(form_id, user_id, True)
+    def archive_form(form, user_id=None):
+        FormAccessorSQL._archive_unarchive_form(form, user_id, True)
 
     @staticmethod
-    def unarchive_form(form_id, user_id=None):
-        FormAccessorSQL._archive_unarchive_form(form_id, user_id, False)
+    def unarchive_form(form, user_id=None):
+        FormAccessorSQL._archive_unarchive_form(form, user_id, False)
 
     @staticmethod
-    def _archive_unarchive_form(form_id, user_id, archive):
-        with connection.cursor() as cursor:
+    @transaction.atomic
+    def _archive_unarchive_form(form, user_id, archive):
+        from casexml.apps.case.xform import get_case_ids_from_form
+        form_id = form.form_id
+        case_ids = list(get_case_ids_from_form(form))
+        with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
-            cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s)', [form_id, archive])
+            cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)', [case_ids, form_id, archive])
 
     @staticmethod
+    @transaction.atomic
     def save_new_form(form):
         """
         Save a previously unsaved form
@@ -141,15 +155,22 @@ class FormAccessorSQL(AbstractFormAccessor):
             del form.unsaved_attachments
             for unsaved_attachment in unsaved_attachments:
                     unsaved_attachment.form = form
-        with connection.cursor() as cursor:
+
+        operations = form.get_tracked_models_to_create(XFormOperationSQL)
+        for operation in operations:
+            operation.form = form
+        form.clear_tracked_models()
+
+        with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
-                'SELECT form_pk FROM save_new_form_with_attachments(%s, %s)',
-                [form, unsaved_attachments]
+                'SELECT form_pk FROM save_new_form_and_related_models(%s, %s, %s, %s)',
+                [form.form_id, form, unsaved_attachments, operations]
             )
             result = fetchone_as_namedtuple(cursor)
             form.id = result.form_pk
 
     @staticmethod
+    @transaction.atomic
     def save_deprecated_form(form):
         assert form.is_saved(), "Can't deprecate an unsaved form"
         assert form.is_deprecated, 'Re-saving already saved forms not supported'
@@ -158,12 +179,26 @@ class FormAccessorSQL(AbstractFormAccessor):
 
         logging.debug('Deprecating form: %s', form)
 
-        with connection.cursor() as cursor:
-            cursor.execute('SELECT deprecate_form(%s, %s, %s)', [form.form_id, form.orig_id, form.edited_on])
+        attachments = form.get_attachments()
+        operations = form.history
+
+        form.id = None
+        for attachment in attachments:
+            attachment.id = None
+        form.unsaved_attachments = attachments
+
+        for operation in operations:
+            operation.id = None
+            form.track_create(operation)
+
+        deleted = FormAccessorSQL.hard_delete_forms(form.domain, [form.orig_id])
+        assert deleted == 1
+        FormAccessorSQL.save_new_form(form)
 
     @staticmethod
+    @transaction.atomic
     def update_form_problem_and_state(form):
-        with connection.cursor() as cursor:
+        with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
                 'SELECT update_form_problem_and_state(%s, %s, %s)',
                 [form.form_id, form.problem, form.state]
@@ -171,11 +206,10 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     @unit_testing_only
-    def get_form_ids_in_domain(domain, user_id=None):
-        with connection.cursor() as cursor:
-            cursor.execute('SELECT form_id FROM get_form_ids_in_domain(%s, %s)', [domain, user_id])
-            results = fetchall_as_namedtuple(cursor)
-            return [result.form_id for result in results]
+    @transaction.atomic
+    def delete_all_forms(domain=None, user_id=None):
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute('SELECT delete_all_forms(%s, %s)', [domain, user_id])
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
@@ -202,14 +236,14 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         Return True if a case has been modified since the given modification date.
         Assumes that the case exists in the DB.
         """
-        with connection.cursor() as cursor:
+        with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute('SELECT case_modified FROM case_modified_since(%s, %s)', [case_id, server_modified_on])
             result = fetchone_as_namedtuple(cursor)
             return result.case_modified
 
     @staticmethod
     def get_case_xform_ids(case_id):
-        with connection.cursor() as cursor:
+        with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute('SELECT form_id FROM get_case_form_ids(%s)', [case_id])
             results = fetchall_as_namedtuple(cursor)
             return [result.form_id for result in results]
@@ -268,10 +302,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def hard_delete_cases(domain, case_ids):
         assert isinstance(case_ids, list)
-        with connection.cursor() as cursor:
-            cursor.execute('SELECT * FROM hard_delete_cases(%s, %s)', [domain, case_ids])
-            result = fetchone_as_namedtuple(cursor)
-            return result.deleted_count
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute('SELECT hard_delete_cases(%s, %s) as deleted_count', [domain, case_ids])
+            results = fetchall_as_namedtuple(cursor)
+            return sum([result.deleted_count for result in results])
 
     @staticmethod
     def get_attachment_by_name(case_id, attachment_name):
@@ -320,7 +354,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_ids_in_domain(domain, type_=None):
-        with connection.cursor() as cursor:
+        with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute('SELECT case_id FROM get_case_ids_in_domain(%s, %s)', [domain, type_])
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
@@ -334,6 +368,13 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return list(query.values_list('case_id', flat=True))
 
     @staticmethod
+    @unit_testing_only
+    def delete_all_cases(domain=None):
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute('SELECT delete_all_cases(%s)', [domain])
+
+    @staticmethod
+    @transaction.atomic
     def save_case(case):
         transactions_to_save = case.get_tracked_models_to_create(CaseTransaction)
 
@@ -346,12 +387,13 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
         # cast arrays that can be empty to appropriate type
         query = """SELECT case_pk FROM save_case_and_related_models(
-            %s, %s, %s::{}[], %s::{}[], %s::INTEGER[], %s::INTEGER[]
+            %s, %s, %s, %s::{}[], %s::{}[], %s::INTEGER[], %s::INTEGER[]
         )"""
         query = query.format(CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE)
-        with connection.cursor() as cursor:
+        with get_cursor(CommCareCaseSQL) as cursor:
             try:
                 cursor.execute(query, [
+                    case.case_id,
                     case,
                     transactions_to_save,
                     indices_to_save_or_update,

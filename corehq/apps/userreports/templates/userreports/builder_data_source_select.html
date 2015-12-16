@@ -10,11 +10,11 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function () {
-            ko.applyBindings({
+            $("#report-builder-form").koApplyBindings({
                 application: ko.observable(""),
                 sourceType: ko.observable(""),
                 sourcesMap: {{ sources_map|JSON }}
-            }, $("#report-builder-form").get(0));
+            });
         });
     </script>
 {% endblock %}

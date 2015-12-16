@@ -22,7 +22,7 @@
                 currentValue: ''
             }
         });
-        ko.applyBindings(smsRateCalculator, $('#sms-rate-calculator').get(0));
+        $('#sms-rate-calculator').koApplyBindings(smsRateCalculator);
         $("#id_country_code").select2()
     </script>
 {% endblock %}

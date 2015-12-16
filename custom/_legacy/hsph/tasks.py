@@ -224,7 +224,7 @@ def iter_cases_to_modify():
                 }, domain
             # Assign cases to field (automatically)
             elif (
-                curr_assignment in ("cati", "cati_tl") and
+                curr_assignment in ("cati", "cati_tl", "cati-tl") and
                 past_42_date <= case.date_admission < past_21_date
             ):
                 if not cati_owner_username or not fida_group:
@@ -244,7 +244,7 @@ def iter_cases_to_modify():
                 }, domain
             # Assign Cases to Lost to Follow Up
             elif (
-                curr_assignment in ("cati", "cati_tl") and
+                curr_assignment in ("cati", "cati_tl", "cati-tl") and
                 case.date_admission < past_42_date
             ):
                 if not get_owner_username(domain, curr_assignment, facility_id) or not cati_owner_username:

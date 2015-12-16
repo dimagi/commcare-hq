@@ -26,7 +26,7 @@
                 return tag === viewModel.tagFilter();
             }
         );
-        ko.applyBindings(viewModel, $('#table-filters')[0]);
+        $('#table-filters').koApplyBindings(viewModel);
         var table = new HQReportDataTables({
             dataTableElem: dataTableElem,
             showAllRowsOption: true
@@ -64,7 +64,10 @@
             <th>{% trans "Name" %}</th>
             {% if show_usage %}
                 <th>{% trans "Domains" %}</th>
+                <th>{% trans "Active Domains" %}</th>
                 <th>{% trans "Users" %}</th>
+                <th>{% trans "Last Modified" %}</th>
+                <th>{% trans "Last Usage" %}</th>
             {% endif %}
             <th></th>
         </thead>
@@ -81,7 +84,16 @@
                 </td>
                 {% if show_usage %}
                     <td>{{ domain_counts|dict_lookup:toggle.slug }}</td>
+                    <td>{{ active_domain_count|dict_lookup:toggle.slug }}</td>
                     <td>{{ user_counts|dict_lookup:toggle.slug }}</td>
+                    <td>{{ last_modified|dict_lookup:toggle.slug }}</td>
+                    {% with lu=last_used|dict_lookup:toggle.slug %}
+                        {% if lu %}
+                            <td>{{ lu|dict_lookup:'date' }}: {{ lu|dict_lookup:'name'}}</td>
+                        {% else %}
+                            <td></td>
+                        {% endif %}
+                    {% endwith %}
                 {% endif %}
                 <td>
                     <a href="{% url "edit_toggle" toggle.slug %}" role="button" data-toggle="modal" class="btn btn-primary">{% trans "Edit" %}</a>

@@ -6,7 +6,7 @@
 
 {% block js %}
 {{ block.super }}
-    <script type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script type="text/javascript" src="{% static 'custom_data_fields/js/custom_data_fields.js' %}"></script>
 {% endblock %}
@@ -20,7 +20,7 @@
             $("#save-custom-fields").prop("disabled", false);
         });
 
-        ko.applyBindings(customDataFieldsModel, $('#custom-fields-form').get(0));
+        $('#custom-fields-form').koApplyBindings(customDataFieldsModel);
 
         $('form[id="custom-fields-form"]').on("change", null, null, function() {
             $("#save-custom-fields").prop("disabled", false);

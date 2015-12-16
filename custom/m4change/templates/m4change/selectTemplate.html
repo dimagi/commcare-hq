@@ -26,7 +26,7 @@
         function applyBindings() {
             var $mcctProjectReviewPageManagement = $('#mcct_project_review_page_management');
             var element = $mcctProjectReviewPageManagement[0];
-            ko.applyBindings(managementModel, element);
+            element.koApplyBindings(managementModel);
 
             $mcctProjectReviewPageManagement.find('a.select-all').click(function () {
                 $mcctProjectReviewPageManagement.find('input.selected-element').prop('checked', true).change();

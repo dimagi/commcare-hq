@@ -205,6 +205,6 @@ def delete_connections_field_task(domain):
 
 
 @task(queue='logistics_background_queue', ignore_result=True, acks_late=True)
-def balance_migration_task(domain, date):
+def balance_migration_task(domain):
     endpoint = GhanaEndpoint.from_config(EWSGhanaConfig.for_domain(domain))
-    BalanceMigration(domain, endpoint).balance_migration(date)
+    BalanceMigration(domain, endpoint).balance_email_reports()

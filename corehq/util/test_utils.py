@@ -1,16 +1,21 @@
 from __future__ import absolute_import
+import uuid
 import functools
 import json
 import logging
 import mock
 import os
 from unittest import TestCase
+from collections import namedtuple
 
 from fakecouch import FakeCouchDb
 from functools import wraps
 from django.conf import settings
 import sys
 from corehq.util.decorators import ContextDecorator
+
+
+WrappedJsonFormPair = namedtuple('WrappedJsonFormPair', ['wrapped_form', 'json_form'])
 
 
 class UnitTestingRequired(Exception):
@@ -249,3 +254,23 @@ def generate_cases(argsets, cls=None):
             return Test
 
     return add_cases
+
+
+def make_es_ready_form(metadata):
+    # this is rather complicated due to form processor abstractions and ES restrictions
+    # on what data needs to be in the index and is allowed in the index
+    from corehq.form_processor.interfaces.processor import FormProcessorInterface
+    from corehq.form_processor.tests.utils import get_simple_form_xml
+    from corehq.form_processor.utils import convert_xform_to_json
+
+    assert metadata is not None
+    metadata.domain = metadata.domain or uuid.uuid4().hex
+    form_id = uuid.uuid4().hex
+    form_xml = get_simple_form_xml(form_id=form_id, metadata=metadata)
+    form_json = convert_xform_to_json(form_xml)
+    wrapped_form = FormProcessorInterface(domain=metadata.domain).new_xform(form_json)
+    wrapped_form.domain = metadata.domain
+    wrapped_form.received_on = metadata.received_on
+    json_form = wrapped_form.to_json()
+    json_form['form']['meta'].pop('appVersion')  # hack - ES chokes on this
+    return WrappedJsonFormPair(wrapped_form, json_form)

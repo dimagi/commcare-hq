@@ -7,7 +7,7 @@ from casexml.apps.case.models import CommCareCase
 def get_number_of_cases_in_domain(domain, type=None):
     type_key = [type] if type else []
     row = CommCareCase.get_db().view(
-        "hqcase/types_by_domain",
+        "case_types_by_domain/view",
         startkey=[domain] + type_key,
         endkey=[domain] + type_key + [{}],
         reduce=True,
@@ -19,7 +19,7 @@ def get_number_of_cases_per_domain():
     return {
         row["key"][0]: row["value"]
         for row in CommCareCase.get_db().view(
-            "hqcase/types_by_domain",
+            "case_types_by_domain/view",
             group=True,
             group_level=1,
         ).all()
@@ -44,7 +44,7 @@ def get_case_ids_in_domain(domain, type=None):
     return [
         res['id'] for type_key in type_keys
         for res in CommCareCase.get_db().view(
-            'hqcase/types_by_domain',
+            'case_types_by_domain/view',
             startkey=[domain] + type_key,
             endkey=[domain] + type_key + [{}],
             reduce=False,
@@ -62,7 +62,7 @@ def get_cases_in_domain(domain, type=None):
 def get_case_types_for_domain(domain):
     key = [domain]
     rows = CommCareCase.get_db().view(
-        'hqcase/types_by_domain',
+        'case_types_by_domain/view',
         startkey=key,
         endkey=key + [{}],
         group_level=2,
@@ -99,7 +99,7 @@ def get_case_ids_in_domain_by_owner(domain, owner_id=None, owner_id__in=None,
     if owner_id:
         owner_id__in = [owner_id]
     return [res["id"] for res in CommCareCase.view(
-        'hqcase/by_owner',
+        'cases_by_owner/view',
         keys=[[domain, owner_id, closed_flag]
               for owner_id in owner_id__in
               for closed_flag in closed_flags],
@@ -130,7 +130,7 @@ def _get_case_ids(domain, owner_id, is_closed):
         key = [domain, owner_id, is_closed]
 
     return [row['id'] for row in CommCareCase.get_db().view(
-        'hqcase/by_owner',
+        'cases_by_owner/view',
         reduce=False,
         key=key,
     )]
@@ -142,7 +142,7 @@ def get_total_case_count():
     """
     from casexml.apps.case.models import CommCareCase
     results = CommCareCase.get_db().view(
-        'hqcase/by_owner',
+        'cases_by_owner/view',
         reduce=True,
     ).one()
     return results['value'] if results else 0
@@ -150,7 +150,7 @@ def get_total_case_count():
 
 def get_number_of_cases_in_domain_by_owner(domain, owner_id):
     res = CommCareCase.get_db().view(
-        'hqcase/by_owner',
+        'cases_by_owner/view',
         startkey=[domain, owner_id],
         endkey=[domain, owner_id, {}],
         reduce=True,
@@ -186,7 +186,7 @@ def get_case_properties(domain, case_type=None):
     if case_type:
         key.append(case_type)
     keys = [row['key'] for row in CommCareCase.get_db().view(
-        'hqcase/all_case_properties',
+        'all_case_properties/view',
         startkey=key,
         endkey=key + [{}],
         reduce=True,
@@ -198,7 +198,7 @@ def get_case_properties(domain, case_type=None):
 
 def get_cases_in_domain_by_external_id(domain, external_id):
     return CommCareCase.view(
-        'hqcase/by_domain_external_id',
+        'cases_by_domain_external_id/view',
         key=[domain, external_id],
         reduce=False,
         include_docs=True,
@@ -207,7 +207,7 @@ def get_cases_in_domain_by_external_id(domain, external_id):
 
 def get_one_case_in_domain_by_external_id(domain, external_id):
     return CommCareCase.view(
-        'hqcase/by_domain_external_id',
+        'cases_by_domain_external_id/view',
         key=[domain, external_id],
         reduce=False,
         include_docs=True,
@@ -220,7 +220,7 @@ def get_supply_point_case_in_domain_by_id(
         domain, supply_point_integer_id):
     from corehq.apps.commtrack.models import SupplyPointCase
     return SupplyPointCase.view(
-        'hqcase/by_domain_external_id',
+        'cases_by_domain_external_id/view',
         key=[domain, str(supply_point_integer_id)],
         reduce=False,
         include_docs=True,
@@ -235,7 +235,7 @@ def get_all_case_owner_ids(domain):
     from casexml.apps.case.models import CommCareCase
     key = [domain]
     submitted = CommCareCase.get_db().view(
-        'hqcase/by_owner',
+        'cases_by_owner/view',
         group_level=2,
         startkey=key,
         endkey=key + [{}],

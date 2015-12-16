@@ -45,7 +45,10 @@ from corehq.apps.accounting.utils import domain_has_privilege
 
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
-from corehq.apps.app_manager.xpath import dot_interpolate, LocationXpath
+from corehq.apps.app_manager.xpath import (
+    interpolate_xpath,
+    LocationXpath,
+)
 from corehq.apps.builds import get_default_build_spec
 from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.cache import cache_core
@@ -3498,7 +3501,11 @@ class ReportModule(ModuleBase):
         from .suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
         return ReportModuleSuiteHelper(self).get_custom_entries()
 
-    def get_menus(self):
+    def get_menus(self, supports_module_filter=False):
+        kwargs = {}
+        if supports_module_filter:
+            kwargs['relevant'] = interpolate_xpath(self.module_filter)
+
         menu = suite_models.LocalizedMenu(
             id=id_strings.menu_id(self),
             menu_locale_id=id_strings.module_locale(self),
@@ -3506,6 +3513,7 @@ class ReportModule(ModuleBase):
             media_audio=bool(len(self.all_audio_paths())),
             image_locale_id=id_strings.module_icon_locale(self),
             audio_locale_id=id_strings.module_audio_locale(self),
+            **kwargs
         )
         menu.commands.extend([
             suite_models.Command(id=id_strings.report_command(config.uuid))
@@ -4043,7 +4051,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @property
     def url_base(self):
-        return get_url_base()
+        custom_base_url = getattr(self, 'custom_base_url', None)
+        return custom_base_url or get_url_base()
 
     @absolute_url_property
     def post_url(self):
@@ -4066,13 +4075,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return '/a/%s/api/custom/pact_formdata/v1/' % self.domain
 
     @absolute_url_property
-    def hq_profile_url(self):
+    def profile_url(self):
         return "%s?latest=true" % (
             reverse('download_profile', args=[self.domain, self._id])
         )
 
     @absolute_url_property
-    def hq_media_profile_url(self):
+    def media_profile_url(self):
         return "%s?latest=true" % (
             reverse('download_media_profile', args=[self.domain, self._id])
         )
@@ -4282,7 +4291,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             if settings.BITLY_LOGIN:
                 view_name = 'corehq.apps.app_manager.views.{}'.format(url_type)
-                long_url = "{}{}".format(get_url_base(), reverse(view_name, args=[self.domain, self._id]))
+                long_url = "{}{}".format(self.url_base, reverse(view_name, args=[self.domain, self._id]))
                 shortened_url = bitly.shorten(long_url)
             else:
                 shortened_url = None
@@ -4432,6 +4441,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     # ended up not using a schema because properties is a reserved word
     profile = DictProperty()
     use_custom_suite = BooleanProperty(default=False)
+    custom_base_url = StringProperty()
     cloudcare_enabled = BooleanProperty(default=False)
     translation_strategy = StringProperty(default='select-known',
                                           choices=app_strings.CHOICES.keys())
@@ -4494,18 +4504,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         app.build_broken = False
 
         return app
-
-    @property
-    def profile_url(self):
-        return self.hq_profile_url
-
-    @property
-    def media_profile_url(self):
-        return self.hq_media_profile_url
-
-    @property
-    def url_base(self):
-        return get_url_base()
 
     @absolute_url_property
     def suite_url(self):

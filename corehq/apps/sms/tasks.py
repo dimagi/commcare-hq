@@ -165,7 +165,8 @@ def handle_incoming(msg):
         log_sms_exception(msg)
         handle_unsuccessful_processing_attempt(msg)
 
-@task(queue="sms_queue", ignore_result=True)
+
+@task(queue="sms_queue", ignore_result=True, acks_late=True)
 def process_sms(message_id):
     """
     message_id - _id of an SMSLog entry

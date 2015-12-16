@@ -5,15 +5,17 @@ import uuid
 
 
 class SharedDriveConfiguration(object):
-    def __init__(self, shared_drive_path, restore_dir, transfer_dir, temp_dir):
+    def __init__(self, shared_drive_path, restore_dir, transfer_dir, temp_dir, blob_dir):
         self.shared_drive_path = shared_drive_path
         self.restore_dir_name = restore_dir
         self.transfer_dir_name = transfer_dir
         self.temp_dir_name = temp_dir
+        self.blob_dir_name = blob_dir
 
         self._restore_dir = self._init_dir(restore_dir)
         self.transfer_dir = self._init_dir(transfer_dir)
         self.temp_dir = self._init_dir(temp_dir)
+        self.blob_dir = self._init_dir(blob_dir)
         self.tzmigration_planning_dir = self._init_dir('tzmigration-planning')
 
     def _init_dir(self, name):
@@ -78,7 +80,8 @@ def get_dynamic_db_settings(server_root, username, password, dbname,
 
 
 class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
-                          ['couch_database_url', 'couchdb_apps', 'extra_db_names'])):
+                          ['couch_database_url', 'couchdb_apps', 'extra_db_names',
+                           'is_test'])):
     def make_couchdb_tuples(self):
         """
         Helper function to generate couchdb tuples
@@ -87,15 +90,21 @@ class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
         """
         return [self._make_couchdb_tuple(row) for row in self.couchdb_apps]
 
+    def _format_db_uri(self, db_uri):
+        if self.is_test:
+            return '{}_test'.format(db_uri)
+        else:
+            return db_uri
+
     def _make_couchdb_tuple(self, row):
         if isinstance(row, basestring):
             app_label, postfix = row, None
         else:
             app_label, postfix = row
         if postfix:
-            return app_label, '%s__%s' % (self.couch_database_url, postfix)
+            return app_label, self._format_db_uri('%s__%s' % (self.couch_database_url, postfix))
         else:
-            return app_label, self.couch_database_url
+            return app_label, self._format_db_uri(self.couch_database_url)
 
     def get_extra_couchdbs(self):
         """
@@ -112,7 +121,7 @@ class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
 
         postfixes.extend(self.extra_db_names)
         for postfix in postfixes:
-            extra_dbs[postfix] = '%s__%s' % (self.couch_database_url, postfix)
+            extra_dbs[postfix] = self._format_db_uri('%s__%s' % (self.couch_database_url, postfix))
 
         return extra_dbs
 

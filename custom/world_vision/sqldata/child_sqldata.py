@@ -188,7 +188,7 @@ class ChildrenDeaths(BaseSqlData):
         return [
             DatabaseColumn("Total births",
                            CountUniqueColumn('doc_id',
-                                             filters=[AND([IN('mother_id', get_INFilter_bindparams('mother_id', self.config['mother_ids'])),
+                                             filters=[AND([IN('mother_id', get_INFilter_bindparams('mother_ids', self.config['mother_ids'])),
                                                            OR([EQ('gender', 'female'), EQ('gender', 'male')])])],
                                              alias='total_births')),
             DatabaseColumn("Newborn deaths (< 1 m)",
@@ -381,7 +381,7 @@ class NutritionBirthWeightDetails(BaseSqlData):
                                              filters=self.filters + [NOTEQ('weight_birth', 'empty')])),
             DatabaseColumn("Total births",
                            CountUniqueColumn('doc_id',
-                                             filters=[AND([IN('mother_id', get_INFilter_bindparams('mother_id', self.config['mother_ids'])),
+                                             filters=[AND([IN('mother_id', get_INFilter_bindparams('mother_ids', self.config['mother_ids'])),
                                                            OR([EQ('gender', 'female'), EQ('gender', 'male')])])],
                                              alias='total_births'))]
 

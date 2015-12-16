@@ -76,6 +76,7 @@
                                 <h3>{% trans 'Delete Broadcast Message?' %}</h3>
                             </div>
                             <form class="form form-horizontal" name="delete_handler" action="{% url "delete_reminder" domain handler.handler.get_id %}" method="post">
+                                {% csrf_token %}
                                 <div class="modal-body">
                                     <p>{% trans 'Are you sure you want to delete this broadcast message?' %}</p>
                                 </div>

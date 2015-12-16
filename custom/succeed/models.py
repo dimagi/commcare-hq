@@ -1,4 +1,6 @@
 # Stub models file
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from dimagi.ext.couchdbkit import Document
 # ensure our signals get loaded at django bootstrap time
 from . import signals
@@ -117,3 +119,10 @@ class UCLAPatientFluff(fluff.IndicatorDocument):
 
 
 UCLAPatientFluffPillow = UCLAPatientFluff.pillow()
+
+
+def get_pillow():
+    return UCLAPatientFluffPillow(
+        change_feed=KafkaChangeFeed(topic=topics.CASE, group_id='ucla-fluff'),
+        preload_docs=False,
+    )

@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+    <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
     <script src="{% static 'locations/ko/location_tree.async.js' %}"></script>
     <link rel="stylesheet" href="{% static 'locations/style/manage.css' %}">
 {% endblock %}
@@ -63,7 +63,7 @@ archive_loc = function(button, name, loc_id) {
         "archive_fn": archive_fn,
     };
     ko.cleanNode(archive_location_modal);
-    ko.applyBindings(modal_context, archive_location_modal);
+    $(archive_location_modal).koApplyBindings(modal_context);
     $(archive_location_modal).modal('show');
 
 }
@@ -87,7 +87,7 @@ remove_elements_after_action = function(button) {
 
 $(function() {
     var model = new LocationTreeViewModel(hierarchy);
-    ko.applyBindings(model, $('#location_tree')[0]);
+    $('#location_tree').koApplyBindings(model);
     model.load(locs, selected_loc);
 });
 

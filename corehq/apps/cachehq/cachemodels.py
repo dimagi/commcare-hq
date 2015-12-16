@@ -9,10 +9,8 @@ class DomainGenerationCache(GenerationCache):
         "domain/published_snapshots",
         "domain/not_snapshots",
         "domain/copied_from_snapshot",
-        "domain/with_deployment",
         "domain/domains",
         "domain/fields_by_prefix",
-        "domain/by_organization",
     ]
 
 class UserGenerationCache(GenerationCache):
@@ -31,7 +29,6 @@ class UserGenerationCache(GenerationCache):
         "users/mailing_list_emails",
         "domain/old_users",
         "users_extra/phones_to_domains",
-        "eula_reports/non_eulized_users"
     ]
 
 

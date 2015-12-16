@@ -170,7 +170,7 @@
             }
         };
         var formViewModel = new configForm();
-        ko.applyBindings(formViewModel, $("#report-config-form").get(0));
+        $("#report-config-form").koApplyBindings(formViewModel);
 
     </script>
 {% endblock %}

@@ -40,6 +40,7 @@
                                         <form class="form form-horizontal"
                                               name="delete_domain_membership"
                                               method="post">
+                                            {% csrf_token %}
                                             <input type="hidden" value="{{ domain.name }}" name="domain"/>
 
                                             <div class="modal-body">
