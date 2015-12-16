@@ -20,7 +20,7 @@ def get_all_commcare_users_by_domain(domain):
             ):
                 yield user['id']
 
-    return imap(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), get_ids(domain)))
+    return imap(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), get_ids()))
 
 
 def get_user_docs_by_username(usernames):
