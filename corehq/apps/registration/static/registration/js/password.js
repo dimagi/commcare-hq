@@ -3,9 +3,10 @@ var PasswordModel = function (weak, better, strong) {
     self.weakMessage = weak;
     self.betterMessage = better;
     self.strongMessage = strong;
+    self.penalizedWords = ['dimagi', 'commcare', 'hq', 'commcarehq'];
     self.password = ko.observable('');
     self.strength = ko.computed(function() {
-        return zxcvbn(self.password(), ['dimagi', 'commcare', 'hq']).score
+        return zxcvbn(self.password(), self.penalizedWords).score;
     });
     self.color = ko.computed(function() {
         if (self.strength() < 2) {

@@ -17,10 +17,10 @@ from datetime import datetime
 class HQPasswordChangeForm(PasswordChangeForm):
 
     new_password1 = forms.CharField(label=_("New password"),
-                                        widget=forms.PasswordInput(),
-                                        help_text=mark_safe("""
-                                        <span data-bind="text: passwordHelp, css: color">
-                                        """))
+                                    widget=forms.PasswordInput(),
+                                    help_text=mark_safe("""
+                                    <span data-bind="text: passwordHelp, css: color">
+                                    """))
 
     def __init__(self, user, *args, **kwargs):
 
