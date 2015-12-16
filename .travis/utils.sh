@@ -9,7 +9,7 @@ setup_elasticsearch() {
     if [ ! -d ${es_dir} ]; then
         wget "https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-${es_version}.tar.gz" -O ${DOWNLOAD_DIR}/elasticsearch.tar.gz
 
-        tar xvzf ${DOWNLOAD_DIR}/elasticsearch.tar.gz
+        tar xvzf ${DOWNLOAD_DIR}/elasticsearch.tar.gz -C ${DOWNLOAD_DIR}
     fi
 
     nohup bash -c "cd ${es_dir} && bin/elasticsearch &"
