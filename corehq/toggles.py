@@ -729,6 +729,8 @@ TF_USES_SQLITE_BACKEND = StaticToggle(
 SECURE_SESSIONS_CHECKBOX = StaticToggle(
     'secure_sessions_checkbox',
     'Show secure sessions checkbox',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
 )
 
 GUIDED_TOUR = StaticToggle(
