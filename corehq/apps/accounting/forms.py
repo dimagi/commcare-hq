@@ -22,7 +22,8 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from django_countries.data import COUNTRIES
 from corehq import privileges, toggles
-from corehq.apps.accounting.exceptions import CreateAccountingAdminError
+from corehq.apps.accounting.exceptions import CreateAccountingAdminError, \
+    InvoiceError
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.tasks import send_subscription_reminder_emails
 from corehq.apps.users.models import WebUser
@@ -1598,42 +1599,28 @@ class TriggerInvoiceForm(forms.Form):
         invoice_factory.create_invoices()
 
     def clean_previous_invoices(self, invoice_start, invoice_end, domain_name):
-        last_generated_invoices = Invoice.objects.filter(
+        prev_invoices = Invoice.objects.filter(
             date_start__lte=invoice_end, date_end__gte=invoice_start,
             subscription__subscriber__domain=domain_name
-        ).all()
-        for invoice in last_generated_invoices:
-            for record in invoice.billingrecord_set.all():
-                record.pdf.delete()
-                record.delete()
-            invoice.subscriptionadjustment_set.all().delete()
-            invoice.creditadjustment_set.all().delete()
-            try:
-                invoice.lineitem_set.all().delete()
-            except ProtectedError:
-                # this will happen if there were any credits generated.
-                # Leave in for now, as it's just for testing purposes.
-                pass
-            try:
-                # we want to get rid of as many old community subscriptions from that month
-                # as testing will allow.
-                if invoice.subscription.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
-                    community_sub = invoice.subscription
-                    community_sub.subscriptionadjustment_set.all().delete()
-                    community_sub.subscriptionadjustment_related.all().delete()
-                    community_sub.creditline_set.all().delete()
-                    invoice.delete()
-                    try:
-                        community_sub.delete()
-                    except ProtectedError:
-                        pass
-                else:
-                    invoice.delete()
-            except ProtectedError:
-                # this will happen for credit lines applied to invoices' line items. We don't
-                # want to throw away the credit lines, as that will affect testing totals
-                invoice.is_hidden = True
-                invoice.save()
+        )
+        if prev_invoices.count() > 0:
+            from corehq.apps.accounting.views import InvoiceSummaryView
+            raise InvoiceError(
+                "Invoices exist that were already generated with this same "
+                "criteria. You must manually suppress these invoices: "
+                "{invoice_list}".format(
+                    num_invoices=prev_invoices.count(),
+                    invoice_list=', '.join(
+                        map(
+                            lambda x: '<a href="{edit_url}">{name}</a>'.format(
+                                edit_url=reverse(InvoiceSummaryView.urlname,
+                                                 args=(x.id,)),
+                                name=x.invoice_number
+                            ), prev_invoices.all()
+                        )
+                    ),
+                )
+            )
 
 
 class TriggerBookkeeperEmailForm(forms.Form):
