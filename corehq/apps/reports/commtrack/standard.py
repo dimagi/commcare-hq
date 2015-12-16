@@ -168,16 +168,17 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                 }
                 product_grouping[state.product_id][status] = 1
 
-        for product in product_grouping.values():
-            yield [
-                product['obj'].name,
-                product['facility_count'],
-                100.0 * product['stockout'] / product['facility_count'],
-                100.0 * product['understock'] / product['facility_count'],
-                100.0 * product['adequate'] / product['facility_count'],
-                100.0 * product['overstock'] / product['facility_count'],
-                100.0 * product['nodata'] / product['facility_count'],
-            ]
+        rows = [[
+            product['obj'].name,
+            product['facility_count'],
+            100.0 * product['stockout'] / product['facility_count'],
+            100.0 * product['understock'] / product['facility_count'],
+            100.0 * product['adequate'] / product['facility_count'],
+            100.0 * product['overstock'] / product['facility_count'],
+            100.0 * product['nodata'] / product['facility_count'],
+        ] for product in product_grouping.values()]
+
+        return sorted(rows, key=lambda r: r[0].lower())
 
     @property
     def rows(self):
