@@ -401,10 +401,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'ctable',
     'ctable_view',
     'dimagi.utils',
-    'fluff',
-    'fluff_filter',
-    'pillowtop',
-    'pillow_retry',
 )
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
