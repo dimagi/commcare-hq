@@ -332,6 +332,18 @@
                 ERROR_SAVING: '{% trans "There was an error deleting"|escapejs %}'
             }, 'btn btn-danger');
         </script>
+        <script>
+            window.onerror = function(message, file, line, col, error) {
+                $.post('/jserror/', {
+                    message: message,
+                    page: window.location.href,
+                    file: file,
+                    line: line,
+                    stack: error ? error.stack : null
+                });
+                return false; // let default handler run
+            }
+        </script>
 
         {# JavaScript Display Logic Libaries #}
 
