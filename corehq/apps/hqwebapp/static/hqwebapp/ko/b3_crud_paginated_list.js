@@ -6,6 +6,7 @@ var B3PaginatedItem = function (itemSpec, initRow) {
         var $modals = this.getItemRow().find('.modal');
         if ($modals) {
             $modals.modal('hide');
+            $('body').removeClass('modal-open');
             $('.modal-backdrop').remove(); //fix for b3
         }
     };
