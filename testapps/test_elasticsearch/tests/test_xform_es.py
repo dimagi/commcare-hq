@@ -27,6 +27,7 @@ class XFormESTestCase(SimpleTestCase):
     @classmethod
     def _ship_forms_to_es(cls, metadatas):
         for form_metadata in metadatas:
+            form_metadata = form_metadata or TestFormMetadata()
             form_pair = make_es_ready_form(form_metadata)
             cls.forms.append(form_pair)
             cls.pillow.change_transport(form_pair.json_form)
