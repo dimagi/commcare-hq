@@ -1276,7 +1276,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 # Avg forms submitted
                 util.numcell(
                     sum(
-                        [int(report_data.submissions_by_user.get(user["user_id"], 0))
+                        [int(report_data.avg_submissions_by_user.get(user["user_id"], 0))
                         for user in users]
                     ) / self.num_avg_intervals
                 ),
