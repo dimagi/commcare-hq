@@ -125,7 +125,7 @@ class RestrictedManager(models.Manager):
 
 
 class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, AttachmentMixin, AbstractXFormInstance):
-    objects = RestrictedManager()
+    #objects = RestrictedManager()
 
     # states should be powers of 2
     NORMAL = 0
@@ -322,7 +322,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model):
 
 
 class XFormAttachmentSQL(AbstractAttachment):
-    objects = RestrictedManager()
+    #objects = RestrictedManager()
 
     form = models.ForeignKey(
         XFormInstanceSQL, to_field='form_id',
@@ -334,7 +334,7 @@ class XFormAttachmentSQL(AbstractAttachment):
 
 
 class XFormOperationSQL(DisabledDbMixin, models.Model):
-    objects = RestrictedManager()
+    #objects = RestrictedManager()
 
     ARCHIVE = 'archive'
     UNARCHIVE = 'unarchive'
@@ -408,7 +408,7 @@ class SupplyPointCaseMixin(object):
 class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
                       SupplyPointCaseMixin):
-    objects = RestrictedManager()
+    #objects = RestrictedManager()
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255)
@@ -585,7 +585,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
 
 
 class CaseAttachmentSQL(AbstractAttachment):
-    objects = RestrictedManager()
+    #objects = RestrictedManager()
 
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=True,
@@ -597,7 +597,7 @@ class CaseAttachmentSQL(AbstractAttachment):
 
 
 class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
-    objects = RestrictedManager()
+    #objects = RestrictedManager()
 
     # relationship_ids should be powers of 2
     CHILD = 0
@@ -655,7 +655,7 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
 
 
 class CaseTransaction(DisabledDbMixin, models.Model):
-    objects = RestrictedManager()
+    #objects = RestrictedManager()
 
     # types should be powers of 2
     TYPE_FORM = 0
