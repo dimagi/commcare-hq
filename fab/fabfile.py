@@ -1018,6 +1018,7 @@ def _do_collectstatic(use_current_release=False):
     with cd(env.code_root if not use_current_release else env.code_current):
         sudo('{}/bin/python manage.py collectstatic --noinput -v 0'.format(venv))
         sudo('{}/bin/python manage.py fix_less_imports_collectstatic'.format(venv))
+        sudo('{}/bin/python manage.py compilejsi18n'.format(venv))
 
 
 @parallel

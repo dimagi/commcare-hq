@@ -182,6 +182,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     "corehq.util.context_processors.base_template",
     "corehq.util.context_processors.analytics_js",
     'corehq.util.context_processors.websockets_override',
+    'django.core.context_processors.i18n',
 ]
 
 TEMPLATE_DIRS = []
@@ -206,6 +207,7 @@ DEFAULT_APPS = (
     'mptt',
     'tastypie',
     'ws4redis',
+    'statici18n',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap'
