@@ -1,10 +1,5 @@
 pillowtop
 =========
-[![Build Status](https://travis-ci.org/dimagi/pillowtop.png)](https://travis-ci.org/dimagi/pillowtop)
-[![Test coverage](https://coveralls.io/repos/dimagi/pillowtop/badge.png?branch=master)](https://coveralls.io/r/dimagi/pillowtop)
-[![PyPi version](https://pypip.in/v/pillowtop/badge.png)](https://pypi.python.org/pypi/pillowtop)
-[![PyPi downloads](https://pypip.in/d/pillowtop/badge.png)](https://pypi.python.org/pypi/pillowtop)
-
 A couchdb listening framework to transform and process changes.
 
 Django Config
