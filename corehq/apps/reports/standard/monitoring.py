@@ -1081,13 +1081,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return filter(None, self.request.GET.getlist('case_type'))
 
     @property
-    def case_types_filter(self):
-        case_types = filter(None, self.request.GET.getlist('case_type'))
-        if case_types:
-            return {"terms": {"type.exact": case_types}}
-        return {}
-
-    @property
     def view_by_groups(self):
         return self.request.GET.get('view_by', None) == 'groups'
 
