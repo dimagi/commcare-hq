@@ -10,7 +10,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.form_processor.tests.utils import TestFormMetadata
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
-from casexml.apps.case.const import CASE_ACTION_CREATE, CASE_ACTION_CLOSE
+from casexml.apps.case.const import CASE_ACTION_CREATE
 from corehq.pillows.xform import XFormPillow
 from corehq.pillows.user import UserPillow
 from corehq.pillows.group import GroupPillow
