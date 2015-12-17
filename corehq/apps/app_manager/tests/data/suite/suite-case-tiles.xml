@@ -45,9 +45,6 @@
       </stack>
     </action>
 
-    <variables>
-        <ageindays function="today() - date(dob)"/>
-    </variables>
     <field>
       <style horz-align="center" vert-align="center" font-size="medium">
       	<grid grid-height="3" grid-width="2" grid-x="0" grid-y="0"/>
@@ -74,12 +71,12 @@
       </header>
       <template>
         <text>
-          &lt;b&gt; &lt;/b&gt; <xpath function="case_name"/>
+          &lt;b&gt; &lt;/b&gt; <xpath function="if(today() - date(dob) &gt; 30, concat(name, ' (', int((today() - date(dob)) div 30.25), ' Mois)'), concat(name, ' (',int(today() - date(dob)), ' Jours)'))"/>
         </text>
       </template>
       <sort type="string" order="-2" direction="ascending">
         <text>
-          <xpath function="case_name"/>
+          <xpath function="if(today() - date(dob) &gt; 30, concat(name, ' (', int((today() - date(dob)) div 30.25), ' Mois)'), concat(name, ' (',int(today() - date(dob)), ' Jours)'))"/>
         </text>
       </sort>
     </field>
@@ -149,7 +146,7 @@
         </text>
       </header>
       <template>
-        <text>&lt;b&gt; &lt;/b&gt; <xpath function="if($ageindays &gt; 30, concat(int($ageindays div 30.25), ' Mois'), concat(int($ageindays), ' Jours'))"/></text>
+        <text>&lt;b&gt; &lt;/b&gt; <xpath function="format-date(date(dob), '%e/%n/%Y')"/></text>
       </template>
     </field>
   </detail>
