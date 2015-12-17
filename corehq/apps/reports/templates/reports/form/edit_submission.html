@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
+{% block head %}{{ block.super }}
     {% include 'cloudcare/includes/touchforms-inline.html' %}
     <script src="{% new_static 'cloudcare/js/util.js' %}"></script>
     <script>
