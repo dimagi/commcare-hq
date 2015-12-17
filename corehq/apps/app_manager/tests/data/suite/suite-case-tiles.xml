@@ -146,7 +146,7 @@
         </text>
       </header>
       <template>
-        <text>&lt;b&gt; &lt;/b&gt; <xpath function="format-date(date(dob), '%e/%n/%Y')"/></text>
+        <text>&lt;b&gt; &lt;/b&gt; <xpath function="format-date(date(dob), &quot;%e/%n/%Y&quot;)"/></text>
       </template>
     </field>
   </detail>

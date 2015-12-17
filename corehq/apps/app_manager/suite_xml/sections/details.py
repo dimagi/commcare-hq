@@ -427,8 +427,9 @@ class CaseTileHelper(object):
     def _get_column_context(self, column):
         from corehq.apps.app_manager.detail_screen import get_column_generator
         context = {
-            "xpath_function": get_column_generator(
+            "xpath_function": escape(get_column_generator(
                 self.app, self.module, self.detail, column).xpath_function,
+                {'"': '&quot;'}),
             "locale_id": id_strings.detail_column_header_locale(
                 self.module, self.detail_type, column,
             ),
