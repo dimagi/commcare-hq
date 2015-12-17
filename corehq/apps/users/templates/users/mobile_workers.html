@@ -199,14 +199,6 @@ $(function () {
                                        There will be an additional charge of {{ u }} per month per additional Mobile Worker over this limit.
                                        {% endblocktrans %}
                                     </p>
-                                    {% if show_inactive %}
-                                    <p>
-                                       {% blocktrans %}
-                                       You may not Reactivate any Mobile Workers until you Deactivate or delete existing Mobile Workers or
-                                       confirm your project's billing information.
-                                       {% endblocktrans %}
-                                    </p>
-                                    {% endif %}
                                     <p>
                                     {% if not can_edit_billing_info %}
                                        {% blocktrans %}
