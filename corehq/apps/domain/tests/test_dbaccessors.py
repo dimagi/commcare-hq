@@ -22,7 +22,7 @@ class DBAccessorsTest(TestCase):
         cls.domain = 'domain-domain'
         cls.db = get_db()
 
-    def get_doc_count_in_domain_by_class(self):
+    def test_get_doc_count_in_domain_by_class(self):
         group = Group(domain=self.domain)
         group.save()
         self.addCleanup(group.delete)
