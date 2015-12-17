@@ -284,13 +284,15 @@ def fixture_session_var(module):
     return u'fixture_value_m{module.id}'.format(module=module)
 
 
-def menu_id(module):
+def menu_id(module, suffix=""):
     put_in_root = getattr(module, 'put_in_root', False)
     if put_in_root:
         # handle circular calls, if bad module workflow setup
         return menu_id(module.root_module) if getattr(module, 'root_module', False) else ROOT
     else:
-        return u"m{module.id}".format(module=module)
+        if suffix:
+            suffix = ".{}".format(suffix)
+        return u"m{module.id}{suffix}".format(module=module, suffix=suffix)
 
 
 def form_command(form, module=None):
