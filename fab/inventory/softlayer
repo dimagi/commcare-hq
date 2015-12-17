@@ -2,18 +2,30 @@
 #10.162.36.196
 localhost ansible_connection=local
 
+[celery0]
+10.162.36.233
+
+[django0]
+10.162.36.250
+
+[django1]
+10.162.36.238
+
 [db0]
 10.162.36.205
 
 [es0]
 10.162.36.214
 
+[pillow0]
+10.162.36.248
 
 [proxy:children]
 _test1
 
 [webworkers:children]
-_test1
+django0
+django1
 
 [couchdb:children]
 _test1
@@ -31,10 +43,10 @@ es0
 es0
 
 [celery:children]
-_test1
+celery0
 
 [pillowtop:children]
-_test1
+pillow0
 
 [touchforms:children]
 _test1
