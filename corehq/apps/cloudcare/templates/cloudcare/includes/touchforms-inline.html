@@ -1,11 +1,5 @@
 {% load hq_shared_tags %}
 
-<!--
-This file uses jquery-ui.js. When you include this in any of your templates, there might be a jquery-ui and bootstrap conflict that will result in console errors and some broken UI. Make sure you resolve such errors by one of following methods
-1. Order jquery-ui first and bootstrap latter (http://stackoverflow.com/a/13539923)
-2. If 1 is not possible put jquery-ui in the body, bootstrap in the head (HQ's bootstrap3/base.html follows this)
--->
-
 {# touchforms includes #}
 <link rel="stylesheet" href="{% new_static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
 <link rel="stylesheet" href="{% new_static 'nprogress/nprogress.css' %}">
