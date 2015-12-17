@@ -211,6 +211,13 @@ def india():
 
 
 @task
+def swiss():
+    env.inventory = os.path.join('fab', 'inventory', 'swiss')
+    load_env('swiss')
+    execute(env_common)
+
+
+@task
 def zambia():
     """Our production server in wv zambia."""
     load_env('zambia')
