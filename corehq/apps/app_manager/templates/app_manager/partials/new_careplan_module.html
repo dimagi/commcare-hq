@@ -1,10 +1,10 @@
 {% load i18n %}
 {% load xforms_extras %}
 {% if show_care_plan %}
-    <div id="careplan-module-dialog" class="modal hide fade">
+    <div id="careplan-module-modal" class="modal hide fade">
         <div class="modal-header">
-            <a class="close" data-dismiss="modal">×</a>
-            <h4>{% trans "New Careplan module" %}</h4>
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h3>{% trans "New Careplan Module" %}</h3>
         </div>
         <form name="new_careplan_module" action="{% url "corehq.apps.app_manager.views.new_module" domain app.id %}" method="post">
             {% csrf_token %}
@@ -26,7 +26,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-success" type="submit">{% trans "Create New Module" %}</button>
+                <button class="btn btn-primary" type="submit">{% trans "Create New Module" %}</button>
                 <a href="#" class="btn" data-dismiss="modal">{% trans "Cancel" %}</a>
             </div>
         </form>
