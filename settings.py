@@ -356,7 +356,6 @@ HQ_APPS = (
 
     'custom.uth',
 
-    'custom.colalife',
     'custom.intrahealth',
     'custom.world_vision',
     'custom.up_nrhm',
@@ -1585,7 +1584,7 @@ TRAVIS_TEST_GROUPS = (
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
-        'care_pathways', 'colalife', 'common', 'compressor', 'smsbillables',
+        'care_pathways', 'common', 'compressor', 'smsbillables',
     ),
 )
 
