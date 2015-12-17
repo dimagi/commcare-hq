@@ -559,6 +559,54 @@ class SubscriptionForm(forms.Form):
             )
         )
 
+    @transaction.atomic
+    def create_subscription(self):
+        account = BillingAccount.objects.get(id=self.cleaned_data['account'])
+        domain = self.cleaned_data['domain']
+        plan_version = SoftwarePlanVersion.objects.get(id=self.cleaned_data['plan_version'])
+        sub = Subscription.new_domain_subscription(
+            account, domain, plan_version,
+            web_user=self.web_user,
+            internal_change=True,
+            **self.shared_keywords
+        )
+        return sub
+
+    @transaction.atomic
+    def update_subscription(self):
+        self.subscription.update_subscription(
+            web_user=self.web_user,
+            **self.shared_keywords
+        )
+        transfer_account = self.cleaned_data.get('active_accounts')
+        if transfer_account:
+            acct = BillingAccount.objects.get(id=transfer_account)
+            self.subscription.account = acct
+            self.subscription.save()
+
+    @property
+    def shared_keywords(self):
+        return dict(
+            date_start=self.cleaned_data['start_date'],
+            date_end=self.cleaned_data['end_date'],
+            date_delay_invoicing=self.cleaned_data['delay_invoice_until'],
+            do_not_invoice=self.cleaned_data['do_not_invoice'],
+            no_invoice_reason=self.cleaned_data['no_invoice_reason'],
+            do_not_email=self.cleaned_data['do_not_email'],
+            auto_generate_credits=self.cleaned_data['auto_generate_credits'],
+            salesforce_contract_id=self.cleaned_data['salesforce_contract_id'],
+            service_type=self.cleaned_data['service_type'],
+            pro_bono_status=self.cleaned_data['pro_bono_status'],
+            funding_source=self.cleaned_data['funding_source'],
+        )
+
+    def clean_active_accounts(self):
+        transfer_account = self.cleaned_data.get('active_accounts')
+        if transfer_account and transfer_account == self.subscription.account.id:
+            raise ValidationError(_("Please select an account other than the "
+                                    "current account to transfer to."))
+        return transfer_account
+
     def clean_domain(self):
         domain_name = self.cleaned_data['domain']
         if self.fields['domain'].required:
@@ -599,76 +647,16 @@ class SubscriptionForm(forms.Form):
                 raise ValidationError(_("You must specify a start date"))
 
         end_date = self.cleaned_data.get('end_date')
-        if end_date and start_date > end_date:
-            raise ValidationError(_("End date must be after start date."))
-
-        if end_date and end_date <= datetime.date.today():
-            raise ValidationError(_("End date must be in the future."))
+        if end_date:
+            if start_date > end_date:
+                raise ValidationError(_("End date must be after start date."))
+            if (
+                self.subscription and self.subscription.date_end != end_date
+                and end_date <= datetime.date.today()
+            ):
+                raise ValidationError(_("End date must be in the future."))
 
         return self.cleaned_data
-
-    @transaction.atomic
-    def create_subscription(self):
-        account = BillingAccount.objects.get(id=self.cleaned_data['account'])
-        domain = self.cleaned_data['domain']
-        plan_version = SoftwarePlanVersion.objects.get(id=self.cleaned_data['plan_version'])
-        date_start = self.cleaned_data['start_date']
-        date_end = self.cleaned_data['end_date']
-        date_delay_invoicing = self.cleaned_data['delay_invoice_until']
-        salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
-        do_not_invoice = self.cleaned_data['do_not_invoice']
-        no_invoice_reason = self.cleaned_data['no_invoice_reason']
-        do_not_email = self.cleaned_data['do_not_email']
-        auto_generate_credits = self.cleaned_data['auto_generate_credits']
-        service_type = self.cleaned_data['service_type']
-        pro_bono_status = self.cleaned_data['pro_bono_status']
-        funding_source = self.cleaned_data['funding_source']
-        sub = Subscription.new_domain_subscription(
-            account, domain, plan_version,
-            date_start=date_start,
-            date_end=date_end,
-            date_delay_invoicing=date_delay_invoicing,
-            salesforce_contract_id=salesforce_contract_id,
-            do_not_invoice=do_not_invoice,
-            no_invoice_reason=no_invoice_reason,
-            do_not_email=do_not_email,
-            auto_generate_credits=auto_generate_credits,
-            web_user=self.web_user,
-            service_type=service_type,
-            pro_bono_status=pro_bono_status,
-            funding_source=funding_source,
-            internal_change=True,
-        )
-        return sub
-
-    def clean_active_accounts(self):
-        transfer_account = self.cleaned_data.get('active_accounts')
-        if transfer_account and transfer_account == self.subscription.account.id:
-            raise ValidationError(_("Please select an account other than the "
-                                    "current account to transfer to."))
-        return transfer_account
-
-    @transaction.atomic
-    def update_subscription(self):
-        self.subscription.update_subscription(
-            date_start=self.cleaned_data['start_date'],
-            date_end=self.cleaned_data['end_date'],
-            date_delay_invoicing=self.cleaned_data['delay_invoice_until'],
-            do_not_invoice=self.cleaned_data['do_not_invoice'],
-            no_invoice_reason=self.cleaned_data['no_invoice_reason'],
-            do_not_email=self.cleaned_data['do_not_email'],
-            auto_generate_credits=self.cleaned_data['auto_generate_credits'],
-            salesforce_contract_id=self.cleaned_data['salesforce_contract_id'],
-            web_user=self.web_user,
-            service_type=self.cleaned_data['service_type'],
-            pro_bono_status=self.cleaned_data['pro_bono_status'],
-            funding_source=self.cleaned_data['funding_source']
-        )
-        transfer_account = self.cleaned_data.get('active_accounts')
-        if transfer_account:
-            acct = BillingAccount.objects.get(id=transfer_account)
-            self.subscription.account = acct
-            self.subscription.save()
 
 
 class ChangeSubscriptionForm(forms.Form):
