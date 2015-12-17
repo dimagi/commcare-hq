@@ -32,7 +32,7 @@ class FormDetails(jsonobject.JsonObject):
 
 
 def update_reports_analytics_indexes():
-    XFormInstance.get_db().view('reports_forms/all_forms', limit=1).all()
+    XFormInstance.get_db().view('all_forms/view', limit=1).all()
 
 
 @quickcache(['domain', 'xmlns'], timeout=5 * 60)

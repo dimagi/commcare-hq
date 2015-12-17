@@ -62,7 +62,7 @@ def get_forms_of_all_types(domain):
 def get_commtrack_forms(domain):
     key = ['submission xmlns', domain, COMMTRACK_REPORT_XMLNS]
     return XFormInstance.view(
-        'reports_forms/all_forms',
+        'all_forms/view',
         startkey=key,
         endkey=key + [{}],
         reduce=False,

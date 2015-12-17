@@ -55,7 +55,7 @@ class FormProcessorTestUtils(object):
         view = 'couchforms/all_submissions_by_domain'
         view_kwargs = {}
         if domain and user_id:
-            view = 'reports_forms/all_forms'
+            view = 'all_forms/view'
             view_kwargs = {
                 'startkey': ['submission user', domain, user_id],
                 'endkey': ['submission user', domain, user_id, {}],

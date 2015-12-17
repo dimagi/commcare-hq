@@ -1591,7 +1591,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             view_name = 'deleted_data/deleted_forms_by_user'
             startkey = [self.user_id]
         else:
-            view_name = 'reports_forms/all_forms'
+            view_name = 'all_forms/view'
             startkey = ['submission user', self.domain, self.user_id]
 
         db = XFormInstance.get_db()
@@ -1611,7 +1611,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     @property
     def form_count(self):
         key = ["submission user", self.domain, self.user_id]
-        result = XFormInstance.view('reports_forms/all_forms',
+        result = XFormInstance.view('all_forms/view',
             startkey=key,
             endkey=key + [{}],
             reduce=True
