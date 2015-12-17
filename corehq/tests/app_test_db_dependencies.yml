@@ -49,6 +49,7 @@ casexml.apps.phone:
   - custom.logistics  # For domain.delete() in OtaFixtureTest teardown
   - corehq.apps.commtrack  # For domain.delete() in OtaFixtureTest teardown
   - corehq.apps.accounting  # For domain.delete() in OtaFixtureTest teardown
+  - corehq.apps.tour
   - corehq.apps.fixtures
 casexml.apps.case:
   - casexml.apps.phone
