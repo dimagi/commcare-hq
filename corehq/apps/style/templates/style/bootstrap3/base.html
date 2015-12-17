@@ -261,7 +261,7 @@
                             is copyright &copy;
                         {% endblocktrans %}{% now "Y" %}
                         <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
-                        {% if user.is_authenticated %}
+                        {% if request.user.is_authenticated %}
                             &nbsp;|&nbsp;
                             <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>.
                         {% endif %}
