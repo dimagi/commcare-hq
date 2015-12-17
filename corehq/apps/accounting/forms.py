@@ -855,7 +855,7 @@ class SuppressSubscriptionForm(forms.Form):
         fields = [
             crispy.Div(
                 crispy.HTML('Warning: this can only be undone by a developer.'),
-                    css_class='alert alert-error',
+                css_class='alert alert-error',
             ),
         ]
         if self.subscription.is_active:
