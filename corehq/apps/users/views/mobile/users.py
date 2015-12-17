@@ -441,9 +441,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'custom_field_names': [f.label for f in self.custom_data.fields],
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
-            'pagination_limit_cookie_name': ('hq.pagination.limit'
-                                             '.mobile_workers_list.%s'
-                                             % self.domain)
+            'pagination_limit_cookie_name': (
+                'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
+            'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain)
         }
 
     @property

@@ -208,11 +208,9 @@ $(function () {
                                     </p>
                                     {% endif %}
                                     <p>
-                                    {% if can_edit_billing_info %}
-                                       <a href="{% url 'extra_users_confirm_billing' domain %}" class="btn btn-primary">{% trans 'Confirm Billing Information' %}</a>
-                                    {% else %}
+                                    {% if not can_edit_billing_info %}
                                        {% blocktrans %}
-                                           Note: You must be a Billing Admin to confirm your Billing Information.
+                                           Note: You must be an admin web user to confirm your Billing Information.
                                        {% endblocktrans %}
                                     {% endif %}
                                     </p>
@@ -220,7 +218,7 @@ $(function () {
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
-                                <a href="{% url 'domain_subscription_view' domain %}" class="btn btn-primary">{% trans "Update Subscription" %}</a>
+                                <a href="{% url 'extra_users_confirm_billing' domain %}" class="btn btn-primary {% if not can_edit_billing_info %}disabled{% endif %}">{% trans 'Confirm Billing Information' %}</a>
                             </div>
                         </div>
                     </div>
