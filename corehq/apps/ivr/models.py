@@ -1,4 +1,5 @@
 from corehq.apps.sms.mixin import MobileBackend, UnrecognizedBackendException
+from corehq.apps.sms.models import SQLMobileBackend
 from corehq.apps.sms.util import get_available_backends
 
 
@@ -46,3 +47,9 @@ class IVRBackend(MobileBackend):
         else:
             raise UnrecognizedIVRBackendException("Backend %s has an "
                 "unrecognized doc type." % self._id)
+
+
+class SQLIVRBackend(SQLMobileBackend):
+    class Meta:
+        app_label = 'sms'
+        proxy = True

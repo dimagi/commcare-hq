@@ -1,5 +1,6 @@
 from corehq.apps.sms.mixin import MobileBackend, SMSLoadBalancingMixin, BackendMapping
 from corehq.apps.sms.models import SQLMobileBackend, MobileBackendInvitation, SQLMobileBackendMapping
+from corehq.messaging.ivrbackends.kookoo.models import KooKooBackend, SQLKooKooBackend
 from corehq.messaging.smsbackends.apposit.models import AppositBackend, SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import GrapevineBackend, SQLGrapevineBackend
 from corehq.messaging.smsbackends.http.models import HttpBackend, SQLHttpBackend
@@ -13,6 +14,7 @@ from corehq.messaging.smsbackends.tropo.models import TropoBackend, SQLTropoBack
 from corehq.messaging.smsbackends.twilio.models import TwilioBackend, SQLTwilioBackend
 from corehq.messaging.smsbackends.unicel.models import UnicelBackend, SQLUnicelBackend
 from corehq.messaging.smsbackends.yo.models import SQLYoBackend
+from couchdbkit.resource import ResourceNotFound
 from django.test import TestCase
 
 
@@ -24,8 +26,29 @@ class BackendMigrationTestCase(TestCase):
         self._delete_all_backends()
 
     def _get_all_couch_backends(self):
-        return (MobileBackend.view('sms/global_backends', include_docs=True, reduce=False).all() +
-                MobileBackend.view('sms/backend_by_owner_domain', include_docs=True, reduce=False).all())
+        result = MobileBackend.view(
+            'sms/global_backends',
+            include_docs=True,
+            reduce=False
+        ).all()
+        result.extend(
+            MobileBackend.view(
+                'sms/backend_by_owner_domain',
+                include_docs=True,
+                reduce=False
+            ).all()
+        )
+        kookoo_backends = MobileBackend.view(
+            'all_docs/by_doc_type',
+            startkey=['KooKooBackend'],
+            endkey=['KooKooBackend', {}],
+            include_docs=True,
+            reduce=False
+        ).all()
+        for backend in kookoo_backends:
+            if not backend.base_doc.endswith('-Deleted'):
+                result.append(backend)
+        return result
 
     def _get_all_couch_backend_mappings(self):
         return BackendMapping.view('sms/backend_map', include_docs=True).all()
@@ -1291,6 +1314,72 @@ class BackendMigrationTestCase(TestCase):
                 'method': 'POST',
                 'additional_params': {'a': 'b2', 'c': 'd2'},
             }
+        )
+
+        self._test_couch_backend_retire(couch_obj)
+
+    def test_kookoo_sql_to_couch(self):
+        sql_obj = self._test_sql_backend_create(
+            SQLKooKooBackend,
+            'IVR',
+            'KOOKOO',
+            True,
+            None,
+            'MOBILE_BACKEND_KOOKOO',
+            "KooKoo",
+            "KooKoo Description",
+            ['91'],
+            {'api_key': 'abc'},
+            None,
+            couch_class=KooKooBackend
+        )
+
+        self._test_sql_backend_update(
+            SQLTropoBackend,
+            'IVR',
+            'KOOKOO',
+            True,
+            None,
+            'MOBILE_BACKEND_KOOKOO2',
+            "KooKoo2",
+            "KooKoo Description2",
+            ['91'],
+            {'api_key': 'abc2'},
+            None,
+            sql_obj=sql_obj,
+            couch_class=KooKooBackend
+        )
+
+        self._test_sql_backend_retire(sql_obj)
+
+    def test_kookoo_couch_to_sql(self):
+        couch_obj = self._test_couch_backend_create(
+            KooKooBackend,
+            None,
+            'MOBILE_BACKEND_KOOKOO',
+            "KooKoo",
+            None,
+            [],
+            True,
+            "KooKoo Description",
+            ['91'],
+            None,
+            extra_fields={'api_key': 'abc'},
+        )
+
+        self._test_couch_backend_update(
+            KooKooBackend,
+            None,
+            'MOBILE_BACKEND_KOOKOO2',
+            "KooKoo2",
+            None,
+            [],
+            True,
+            "KooKoo Description2",
+            ['91'],
+            None,
+            couch_obj=couch_obj,
+            extra_fields={'api_key': 'abc2'},
         )
 
         self._test_couch_backend_retire(couch_obj)

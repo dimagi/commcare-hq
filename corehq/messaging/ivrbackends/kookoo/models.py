@@ -1,5 +1,5 @@
 from corehq.apps.ivr.api import log_error, GatewayConnectionError
-from corehq.apps.ivr.models import IVRBackend
+from corehq.apps.ivr.models import IVRBackend, SQLIVRBackend
 from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.sms.util import strip_plus
 from dimagi.ext.couchdbkit import StringProperty
@@ -125,3 +125,23 @@ class KooKooBackend(IVRBackend):
         except Exception:
             notify_exception(None, message='[IVR] Error connecting to KooKoo')
             raise GatewayConnectionError('Error connecting to KooKoo')
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLKooKooBackend
+
+
+class SQLKooKooBackend(SQLIVRBackend):
+    class Meta:
+        app_label = 'sms'
+        proxy = True
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return KooKooBackend
+
+    @classmethod
+    def get_available_extra_fields(cls):
+        return [
+            'api_key',
+        ]
