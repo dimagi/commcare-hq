@@ -235,6 +235,14 @@
             ga_track_event('App Builder', 'Download Multimedia');
         });
     </script>
+    <script>
+        // Set up typeahead for domain names
+        $(function(){
+            $("#id_domain").koApplyBindings({
+                domain_names: {{ domain_names|JSON }},
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block title %}
