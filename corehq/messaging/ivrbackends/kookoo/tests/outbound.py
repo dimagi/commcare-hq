@@ -157,6 +157,7 @@ class KooKooTestCase(TouchformsTestCase):
             self.user1._id,
             '91000',
             owner_id=self.groups[0]._id,
+            contact_ivr_backend_id='MOBILE_BACKEND_KOOKOO'
         ))
         CaseReminderHandler.now = datetime(2014, 6, 23, 12, 0)
         CaseReminderHandler.fire_reminders()
