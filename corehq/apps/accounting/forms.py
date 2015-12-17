@@ -651,7 +651,7 @@ class SubscriptionForm(forms.Form):
                 raise ValidationError(_("End date must be after start date."))
             if (
                 self.subscription and self.subscription.date_end != end_date
-                and self.end_date <= datetime.date.today()
+                and end_date <= datetime.date.today()
             ):
                 raise ValidationError(_("End date must be in the future."))
 
