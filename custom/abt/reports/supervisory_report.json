@@ -9,7 +9,7 @@
         "airszimbabwe"
     ],
     "report_id": "supervisory_report",
-    "data_source_table": "supervisory-002",
+    "data_source_table": "supervisory-003",
     "config": {
         "doc_type": "ReportConfiguration",
         "domain": "airs",
