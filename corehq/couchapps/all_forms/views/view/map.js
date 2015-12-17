@@ -1,5 +1,18 @@
 function(doc) {
-    // !code util/reports_forms.js
+
+    function get_user_id(xform_doc) {
+        return (xform_doc.form.meta ? xform_doc.form.meta.userID : null);
+    }
+
+    function get_username(xform_doc) {
+        return (xform_doc.form.meta ? xform_doc.form.meta.username : null);
+    }
+
+    var MISSING_APP_ID = "_MISSING_APP_ID";
+
+    function get_app_id(xform_doc) {
+        return xform_doc.app_id || MISSING_APP_ID;
+    }
 
     if(doc.doc_type === "XFormInstance" && get_user_id(doc) != null) {
         // Note: if the user_id is null, that likely means doc is a device log, so not a form we care about here.
