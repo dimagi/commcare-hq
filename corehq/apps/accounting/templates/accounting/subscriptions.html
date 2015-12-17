@@ -60,6 +60,7 @@
         {% endif %}
         <li><a href="#credits" data-toggle="tab">{% trans "Credits" %}</a></li>
         <li><a href="#cancel" data-toggle="tab">{% trans "Cancel" %}</a></li>
+        <li><a href="#suppress" data-toggle="tab">{% trans "Suppress" %}</a></li>
     </ul>
 
     <div class="tab-content">
@@ -113,6 +114,11 @@
             {% elif disable_cancel %}
                 Subscription has already ended.
             {% endif %}
+        </div>
+        <div class="tab-pane" id="suppress">
+            <form class="form form-horizontal" method="post" id="suppress_form">
+                {% crispy suppress_form %}
+            </form>
         </div>
     </div>
 {% endblock %}

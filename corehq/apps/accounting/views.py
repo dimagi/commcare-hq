@@ -32,6 +32,7 @@ from corehq.apps.accounting.forms import (
     TestReminderEmailFrom,
     CreateAdminForm,
     SuppressInvoiceForm,
+    SuppressSubscriptionForm,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError, InvoiceError, CreditLineError,
@@ -345,6 +346,13 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         return CancelForm()
 
     @property
+    @memoized
+    def suppress_form(self):
+        if self.request.method == 'POST' and 'suppress_subscription' in self.request.POST:
+            return SuppressSubscriptionForm(self.subscription, self.request.POST)
+        return SuppressSubscriptionForm(self.subscription)
+
+    @property
     def invoice_context(self):
         subscriber_domain = self.subscription.subscriber.domain
 
@@ -376,6 +384,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             'subscription': self.subscription,
             'subscription_canceled':
                 self.subscription_canceled if hasattr(self, 'subscription_canceled') else False,
+            'suppress_form': self.suppress_form,
         }
 
         context.update(self.invoice_context)
