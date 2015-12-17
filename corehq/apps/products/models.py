@@ -135,10 +135,12 @@ class Product(Document):
     def get_by_code(cls, domain, code):
         if not code:
             return None
-        result = cls.view("commtrack/product_by_code",
-                          key=[domain, code.lower()],
-                          include_docs=True).first()
-        return result
+        try:
+            sql_product = SQLProduct.objects.get(domain=domain, code=code)
+        except SQLProduct.DoesNotExist:
+            return None
+        else:
+            return cls.get(sql_product.product_id)
 
     @classmethod
     def by_program_id(cls, domain, prog_id, wrap=True, **kwargs):
