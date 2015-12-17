@@ -1750,3 +1750,5 @@ class MaintenanceAlert(models.Model):
     @property
     def html(self):
         return mark_up_urls(self.text)
+
+from .signals import *
