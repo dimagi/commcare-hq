@@ -4262,16 +4262,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             return self.lazy_fetch_attachment("qrcode.png")
         except ResourceNotFound:
-            try:
-                from pygooglechart import QRChart
-            except ImportError:
-                raise Exception(
-                    "Aw shucks, someone forgot to install "
-                    "the google chart library on this machine "
-                    "and this feature needs it. "
-                    "To get it, run easy_install pygooglechart. "
-                    "Until you do that this won't work."
-                )
+            from pygooglechart import QRChart
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
             code.add_data(self.odk_profile_url if not with_media else self.odk_media_profile_url)
