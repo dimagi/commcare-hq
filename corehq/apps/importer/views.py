@@ -310,6 +310,8 @@ def importer_job_poll(request, domain, download_id, template="importer/partials/
     try:
         download_context = get_download_context(download_id, check_state=True)
     except TaskFailedError as e:
+        # todo: this is async, so it's totally inappropriate to be using messages.error
+        # todo: and HttpResponseRedirect
         error = e.errors
         if error == 'EXPIRED':
             return _spreadsheet_expired(request, domain)
