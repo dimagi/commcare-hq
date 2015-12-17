@@ -116,15 +116,14 @@ $(function () {
                         {% endblocktrans %}
                     </p>
                     <div class="btn-toolbar" style="margin-bottom: 20px;">
-                        {% if can_add_extra_users %}
-                            <button type="button"
-                                    class="btn btn-success"
-                                    data-toggle="modal"
-                                    data-target="#newMobileWorkerModal"
-                                    ng-click="initializeMobileWorker()">
-                                <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
-                            </button>
-                        {% endif %}
+
+                        <button type="button"
+                                class="btn btn-success"
+                                data-toggle="modal"
+                                data-target="#newMobileWorkerModal"
+                                ng-click="initializeMobileWorker()">
+                            <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
+                        </button>
                         {% if can_bulk_edit_users %}
                             <a id="bulk_download" class="btn btn-info" href="{% url "download_commcare_users" domain %}">
                                 <i class="icon-download-alt"></i> {% trans "Download Mobile Workers" %}
@@ -142,11 +141,41 @@ $(function () {
                 </div>
             </div>
             <div class="modal fade" id="newMobileWorkerModal">
-                <div class="modal-dialog">
-                    <form id="newMobileWorkerForm"
-                          name="mobileWorkerForm"
-                          novalidate
-                          ng-submit="submitNewMobileWorker()">
+                {% if can_add_extra_users %}
+                    <div class="modal-dialog">
+                        <form id="newMobileWorkerForm"
+                              name="mobileWorkerForm"
+                              novalidate
+                              ng-submit="submitNewMobileWorker()">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal">
+                                        <span aria-hidden="true">&times;</span>
+                                        <span class="sr-only">{% trans 'Close' %}</span>
+                                    </button>
+                                    <h3 class="modal-title">{% trans "Create New Mobile Worker" %}</h3>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-horizontal">
+                                        {% crispy new_mobile_worker_form %}
+                                        {% if custom_fields_form.fields %}
+                                            {% crispy custom_fields_form %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
+                                    <button type="submit"
+                                            ng-disabled="mobileWorkerForm.$invalid || usernameAvailabilityStatus !== 'available'"
+                                            class="btn btn-primary">
+                                        {% trans "Create" %}
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                {% else %}
+                    <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
                                 <button type="button" class="close" data-dismiss="modal">
@@ -156,24 +185,36 @@ $(function () {
                                 <h3 class="modal-title">{% trans "Create New Mobile Worker" %}</h3>
                             </div>
                             <div class="modal-body">
-                                <div class="form-horizontal">
-                                    {% crispy new_mobile_worker_form %}
-                                    {% if custom_fields_form.fields %}
-                                        {% crispy custom_fields_form %}
+                                <div class="alert">
+                                    {% url 'domain_select_plan' domain as change_plan_url %}
+                                    <p>
+                                    {% blocktrans with request.plan.user_limit as u %}
+                                       <strong>Mobile Worker Limit Reached:</strong> You have reached the limit of {{ u }}
+                                       Mobile Workers included with your plan. You may no longer add new Mobile Workers until you
+                                       confirm your project's billing information.
+                                    {% endblocktrans %}
+                                    </p>
+                                    <p>
+                                       {% blocktrans with request.plan.user_fee as u %}
+                                       There will be an additional charge of {{ u }} per month per additional Mobile Worker over this limit.
+                                       {% endblocktrans %}
+                                    </p>
+                                    <p>
+                                    {% if not can_edit_billing_info %}
+                                       {% blocktrans %}
+                                           Note: You must be an admin web user to confirm your Billing Information.
+                                       {% endblocktrans %}
                                     {% endif %}
+                                    </p>
                                 </div>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
-                                <button type="submit"
-                                        ng-disabled="mobileWorkerForm.$invalid || usernameAvailabilityStatus !== 'available'"
-                                        class="btn btn-primary">
-                                    {% trans "Create" %}
-                                </button>
+                                <a href="{% url 'extra_users_confirm_billing' domain %}" class="btn btn-primary {% if not can_edit_billing_info %}disabled{% endif %}">{% trans 'Confirm Billing Information' %}</a>
                             </div>
                         </div>
-                    </form>
-                </div>
+                    </div>
+                {% endif %}
             </div>
             {% angularjs %}
 
