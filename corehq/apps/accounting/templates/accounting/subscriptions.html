@@ -18,6 +18,13 @@
             });
         </script>
     {% endif %}
+    {% if disable_suppress %}
+        <script type="text/javascript">
+            $(function () {
+                $("#suppress_form :input").attr("disabled", true);
+            });
+        </script>
+    {% endif %}
     <script type="text/javascript">
         var new_plan_version = new AsyncSelect2Handler('new_plan_version');
         new_plan_version.init();
