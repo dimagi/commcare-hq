@@ -278,7 +278,7 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
             )
         if self.file_ext.lower() not in possible_extensions(self.form_path):
             raise BadMediaFileException(
-                _("File {name}s has an incorrect file type {ext}.").format(
+                _("File {name} has an incorrect file type {ext}.").format(
                     name=self.uploaded_file.name,
                     ext=self.file_ext,
                 )
