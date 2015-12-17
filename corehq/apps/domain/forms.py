@@ -8,6 +8,7 @@ import re
 import io
 from PIL import Image
 import uuid
+from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import get_current_site
 from django.utils.http import urlsafe_base64_encode
@@ -63,7 +64,7 @@ from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, Domain, TransferDomainRequest)
 from corehq.apps.reminders.models import CaseReminderHandler
 
-from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import TextField
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
@@ -73,6 +74,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
 import django
+from pyzxcvbn import zxcvbn
 
 if django.VERSION < (1, 6):
     from django.contrib.auth.hashers import UNUSABLE_PASSWORD as UNUSABLE_PASSWORD_PREFIX
@@ -954,12 +956,9 @@ max_pwd = 20
 pwd_pattern = re.compile( r"([-\w]){"  + str(min_pwd) + ',' + str(max_pwd) + '}' )
 
 def clean_password(txt):
-    if len(txt) < min_pwd:
-        raise forms.ValidationError('Password is too short; must be at least %s characters' % min_pwd )
-    if len(txt) > max_pwd:
-        raise forms.ValidationError('Password is too long; must be less than %s characters' % max_pwd )
-    if not pwd_pattern.match(txt):
-        raise forms.ValidationError('Password may only contain letters, numbers, hyphens, and underscores')
+    strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
+    if strength['score'] < 3:
+        raise forms.ValidationError(_('Password is not strong enough. Try making your password more complex.'))
     return txt
 
 
@@ -1051,6 +1050,26 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
             # The base class throws various emails that give away information about the user;
             # we can pretend all is well since the save() method is safe for missing users.
             return self.cleaned_data['email']
+
+
+class HQSetPasswordForm(SetPasswordForm):
+    new_password1 = forms.CharField(label=ugettext_lazy("New password"),
+                                    widget=forms.PasswordInput(
+                                        attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
+                                    help_text=mark_safe("""
+                                    <span data-bind="text: passwordHelp, css: color">
+                                    """))
+
+    def clean_new_password1(self):
+        return clean_password(self.cleaned_data.get('new_password1'))
+
+    def save(self, commit=True):
+        user = super(HQSetPasswordForm, self).save(commit)
+        couch_user = CouchUser.from_django_user(user)
+        couch_user.last_password_set = datetime.datetime.utcnow()
+        if commit:
+            couch_user.save()
+        return user
 
 
 class EditBillingAccountInfoForm(forms.ModelForm):
