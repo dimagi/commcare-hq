@@ -1,3 +1,11 @@
+from datetime import datetime
+from decimal import Decimal
+import itertools
+import json_field
+
+from django.db import models
+from django.utils.translation import ugettext as _
+
 from couchdbkit.exceptions import ResourceNotFound
 from dimagi.ext.couchdbkit import (
     Document,
@@ -7,11 +15,7 @@ from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
 )
-from datetime import datetime
-from decimal import Decimal
-from django.db import models
-from django.utils.translation import ugettext as _
-import json_field
+from dimagi.utils.couch.database import iter_docs
 
 # move these too
 from corehq.apps.commtrack.exceptions import InvalidProductException, DuplicateProductCodeException
@@ -319,6 +323,30 @@ class Product(Document):
         return p
 
 
+class ProductQueriesMixin(object):
+    def product_ids(self):
+        return self.values_list('product_id', flat=True)
+
+    def couch_products(self, wrapped=True):
+        """
+        Returns the couch products corresponding to this queryset.
+        """
+        ids = self.product_ids()
+        products = iter_docs(Product.get_db(), ids)
+        if wrapped:
+            return itertools.imap(Product.wrap, products)
+        return products
+
+
+class ProductQuerySet(ProductQueriesMixin, models.query.QuerySet):
+    pass
+
+
+class ProductManager(ProductQueriesMixin, models.Manager):
+    def get_queryset(self):
+        return ProductQuerySet(self.model, using=self._db)
+
+
 class SQLProduct(models.Model):
     """
     A SQL based clone of couch Products.
@@ -341,6 +369,8 @@ class SQLProduct(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
+
+    objects = ProductManager()
 
     def __unicode__(self):
         return u"{} ({})".format(self.name, self.domain)
