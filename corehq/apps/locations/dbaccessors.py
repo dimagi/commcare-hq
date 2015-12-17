@@ -1,6 +1,5 @@
 from itertools import imap
 
-from corehq.apps.locations.models import Location
 from dimagi.utils.couch.database import iter_docs
 from corehq.apps.es import UserES
 
@@ -76,11 +75,3 @@ def get_users_location_ids(domain, user_ids):
               .fields(['location_id'])
               .run())
     return [r['location_id'] for r in result.hits if 'location_id' in r]
-
-
-def get_location_from_site_code(domain, site_code):
-    return Location.view(
-        'commtrack/locations_by_code',
-        key=[domain, site_code.lower()],
-        include_docs=True
-    ).first()

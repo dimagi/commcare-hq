@@ -12,7 +12,7 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import get_current_site
 from django.utils.http import urlsafe_base64_encode
-from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, HIPAA_COMPLIANCE_CHECKBOX
+from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, HIPAA_COMPLIANCE_CHECKBOX, SECURE_SESSIONS_CHECKBOX
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -725,6 +725,11 @@ class PrivacySecurityForm(forms.Form):
             "<a href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'>"
             "Read more about secure submissions here</a>"))
     )
+    secure_sessions = BooleanField(
+        label=ugettext_lazy("Shorten Inactivity Timeout"),
+        required=False,
+        help_text=ugettext_lazy("All web users on this project will be logged out after 30 minutes of inactivity")
+    )
     allow_domain_requests = BooleanField(
         label=ugettext_lazy("Web user requests"),
         required=False,
@@ -737,6 +742,7 @@ class PrivacySecurityForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         user_name = kwargs.pop('user_name')
+        domain = kwargs.pop('domain')
         super(PrivacySecurityForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.form_class = 'form-horizontal'
@@ -744,10 +750,13 @@ class PrivacySecurityForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper[0] = twbscrispy.PrependedText('restrict_superusers', '')
         self.helper[1] = twbscrispy.PrependedText('secure_submissions', '')
-        self.helper[2] = twbscrispy.PrependedText('allow_domain_requests', '')
-        self.helper[3] = twbscrispy.PrependedText('hipaa_compliant', '')
+        self.helper[2] = twbscrispy.PrependedText('secure_sessions', '')
+        self.helper[3] = twbscrispy.PrependedText('allow_domain_requests', '')
+        self.helper[4] = twbscrispy.PrependedText('hipaa_compliant', '')
         if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
-            self.helper.layout.pop(3)
+            self.helper.layout.pop(4)
+        if not SECURE_SESSIONS_CHECKBOX.enabled(domain):
+            self.helper.layout.pop(2)
         self.helper.all().wrap_together(crispy.Fieldset, 'Edit Privacy Settings')
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -762,6 +771,7 @@ class PrivacySecurityForm(forms.Form):
     def save(self, domain):
         domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
         domain.allow_domain_requests = self.cleaned_data.get('allow_domain_requests', False)
+        domain.secure_sessions = self.cleaned_data.get('secure_sessions', False)
         secure_submissions = self.cleaned_data.get(
             'secure_submissions', False)
         apps_to_save = []

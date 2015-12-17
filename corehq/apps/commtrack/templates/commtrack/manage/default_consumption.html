@@ -16,6 +16,7 @@
         </div>
     </div>
     <form class="form-horizontal" method="post">
+        {% csrf_token %}
         <fieldset>
             <legend>{% trans 'Edit Default Monthly Consumption' %}</legend>
             {% crispy form %}

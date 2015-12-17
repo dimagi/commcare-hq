@@ -72,15 +72,6 @@ class DefaultConsumptionGenerationCache(GenerationCache):
     ]
 
 
-class LocationGenerationCache(GenerationCache):
-    generation_key = '#gen#location#'
-    doc_types = ['Location']
-    views = [
-        'commtrack/locations_by_code',
-        '_all_docs',
-    ]
-
-
 class InvitationGenerationCache(GenerationCache):
     generation_key = '#gen#invitation#'
     doc_types = ['Invitation']

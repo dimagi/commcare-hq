@@ -14,6 +14,7 @@
                     </div>
                     <form name="drop_repeater" action="{% url 'drop_repeater' domain repeater.get_id %}"
                           method="post">
+                        {% csrf_token %}
                         <div class="modal-body">
                             <p>Are you sure you want to stop forwarding to: {{ repeater.url }}?</p>
                         </div>

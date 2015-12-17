@@ -57,6 +57,7 @@
             </div>
             <div>
                 <form id="actionform" class="form-inline" action="{% url "pillow_errors" %}" method="post">
+                    {% csrf_token %}
                     <input type="hidden" name="source" value="single" />
                     <input type="hidden" name="PillowError_{{ error.id }}" value="1" />
                     <input type="hidden" name="action" value="" />

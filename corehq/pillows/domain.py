@@ -53,7 +53,7 @@ class DomainPillow(HQPillow):
         doc_ret = copy.deepcopy(doc_dict)
         sub = Subscription.objects.filter(subscriber__domain=doc_dict['name'], is_active=True)
         doc_ret['deployment'] = doc_dict.get('deployment', None) or {}
-        countries = doc_dict['deployment'].get('countries', [])
+        countries = doc_ret['deployment'].get('countries', [])
         doc_ret['deployment']['countries'] = []
         if sub:
             doc_ret['subscription'] = sub[0].plan_version.plan.edition

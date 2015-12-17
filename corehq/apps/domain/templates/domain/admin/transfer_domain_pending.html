@@ -25,6 +25,7 @@
         </div>
         <div class="span2">
             <form action="{{ transfer.deactivate_url }}" method="POST">
+                {% csrf_token %}
                 <input class="btn btn-danger" type="submit" value="{% trans "Cancel Transfer" %}" />
             </form>
         </div>

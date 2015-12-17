@@ -311,8 +311,21 @@ def track_periodic_data():
         )
     _soft_assert(processing_time.seconds < 10, msg)
 
-    _batch_track_on_hubspot(submit_json)
-    _track_periodic_data_on_kiss(submit_json)
+    submit_data_to_hub_and_kiss(submit_json)
+
+
+def submit_data_to_hub_and_kiss(submit_json):
+    hubspot_dispatch = (_batch_track_on_hubspot, "Error submitting periodic analytics data to Hubspot")
+    kissmetrics_dispatch = (
+        _track_periodic_data_on_kiss, "Error submitting periodic analytics data to Kissmetrics"
+    )
+
+    for (dispatcher, error_message) in [hubspot_dispatch, kissmetrics_dispatch]:
+        try:
+            dispatcher(submit_json)
+        except Exception, e:
+            logger.error(error_message)
+            logger.exception(e)
 
 
 def _track_periodic_data_on_kiss(submit_json):

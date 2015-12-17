@@ -70,6 +70,7 @@
         </div>
     </div>
     <form id="settings" class="form form-horizontal" method="post">
+        {% csrf_token %}
         <fieldset>
             <div class="control-group">
                 <button type="button" class="btn btn-success" data-bind="click: new_loctype">

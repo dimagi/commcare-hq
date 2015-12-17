@@ -327,6 +327,9 @@ class Domain(Document, SnapshotMixin):
     default_mobile_worker_redirect = StringProperty(default=None)
     last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
+    # when turned on, users who enter the domain are logged out after 30 minutes of inactivity
+    secure_sessions = BooleanProperty(default=False)
+
     @property
     def domain_type(self):
         """

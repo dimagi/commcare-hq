@@ -1,6 +1,7 @@
 {% load i18n %}
 {% if published %}
 <form class="form-horizontal" action="{% url "domain_clear_published" domain %}" method="POST">
+{% csrf_token %}
 <div class="row-fluid">
     <div class="span4"><h3>This project has been published</h3></div>
     <div class="span8">
@@ -15,6 +16,7 @@
         <dt><h4>Most Recent Version</h4></dt>
         <dd>
             <form method="get" action="{% url "domain_create_snapshot" domain %}">
+                {% csrf_token %}
                 <a class="btn btn-primary"
                    data-action="{% url "domain_set_published" domain version.name %}"
                    data-toggle="modal" data-target="#contentDistributionAgreement"
