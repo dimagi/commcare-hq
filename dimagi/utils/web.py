@@ -12,7 +12,6 @@ from django.http import HttpResponse
 from django.template import RequestContext
 from django.shortcuts import render_to_response as django_r_to_r
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
-from django.contrib.sites.models import Site
 import json
 from django.utils.encoding import force_unicode
 from django.utils.functional import Promise
