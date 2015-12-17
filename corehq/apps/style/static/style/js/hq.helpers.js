@@ -42,18 +42,22 @@ $(function() {
     });
 });
 
-var oldHide = $.fn.popover.Constructor.prototype.hide;
+$(function() {
+    if ($.fn.popover) {
+        var oldHide = $.fn.popover.Constructor.prototype.hide;
 
-$.fn.popover.Constructor.prototype.hide = function() {
-    if (this.options.trigger === "hover" && this.tip().is(":hover")) {
-        var that = this;
-        setTimeout(function() {
-            return that.hide.apply(that, arguments);
-        }, that.options.delay.hide);
-        return;
+        $.fn.popover.Constructor.prototype.hide = function() {
+            if (this.options.trigger === "hover" && this.tip().is(":hover")) {
+                var that = this;
+                setTimeout(function() {
+                    return that.hide.apply(that, arguments);
+                }, that.options.delay.hide);
+                return;
+            }
+            oldHide.apply(this, arguments);
+        };
     }
-    oldHide.apply(this, arguments);
-};
+});
 
 $.fn.hqHelp = function () {
     var self = this;

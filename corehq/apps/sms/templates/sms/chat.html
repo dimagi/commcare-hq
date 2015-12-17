@@ -25,6 +25,7 @@
         <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
         <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'knockout-2.3.0-legacy/knockout.js' %}"></script>
+        <script src="{% static 'style/js/hq.helpers.js' %}"></script>
         <style>
             html, body {
                 height: 100%;
@@ -438,7 +439,7 @@
                     }, 60000);
                 }
                 chat_window_view_model = new ChatWindowViewModel();
-                ko.applyBindings(chat_window_view_model);
+                $('body').koApplyBindings(chat_window_view_model);
                 $(window).resize(resize_messages);
                 $(window).focus(chat_window_view_model.enter_focus);
                 $(window).blur(chat_window_view_model.leave_focus);
