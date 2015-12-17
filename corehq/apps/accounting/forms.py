@@ -842,6 +842,44 @@ class CancelForm(forms.Form):
         )
 
 
+class SuppressSubscriptionForm(forms.Form):
+    submit_kwarg = 'suppress_subscription'
+
+    def __init__(self, subscription, *args, **kwargs):
+        self.subscription = subscription
+        super(SuppressSubscriptionForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+
+        fields = [
+            crispy.Div(
+                crispy.HTML('Warning: this can only be undone by a developer.'),
+                    css_class='alert alert-error',
+            ),
+        ]
+        if self.subscription.is_active:
+            fields.append(crispy.Div(
+                crispy.HTML('An active subscription cannot be suppressed.'),
+                css_class='alert alert-warning',
+            ))
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Suppress subscription from subscription report, invoice generation, and from being activated',
+                *fields
+            ),
+            FormActions(
+                StrictButton(
+                    'Suppress Subscription',
+                    css_class='btn-danger',
+                    name=self.submit_kwarg,
+                    type='submit',
+                ),
+            ),
+        )
+
+
 class PlanInformationForm(forms.Form):
     name = forms.CharField(max_length=80)
     description = forms.CharField(required=False)
