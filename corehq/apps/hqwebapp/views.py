@@ -485,9 +485,9 @@ def debug_notify(request):
 @require_POST
 def jserror(request):
     agent = request.META.get('HTTP_USER_AGENT', None)
+    os = browser_name = browser_version = bot = DATADOG_UNKNOWN
     if agent:
         parsed_agent = httpagentparser.detect(agent)
-        os = browser_name = browser_version = DATADOG_UNKNOWN
         bot = parsed_agent.get('bot', False)
         if 'os' in parsed_agent:
             os = parsed_agent['os'].get('name', DATADOG_UNKNOWN)
