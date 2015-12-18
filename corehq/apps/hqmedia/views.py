@@ -294,16 +294,16 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
                 )
             )
         if self.file_ext.lower() != self.orig_ext.lower():
-            raise BadMediaFileException(
-                _("The file type of {name} of '{ext}' does not match the "
-                  "file type of the original media file '{orig_ext}'. To change "
-                  "file types, please upload directly from the "
-                  "Form Builder.").format(
-                      name=self.uploaded_file.name,
-                      ext=self.file_ext.lower(),
-                      orig_ext=self.orig_ext.lower(),
-                  )
-            )
+            raise BadMediaFileException(_(
+                "The file type of {name} of '{ext}' does not match the "
+                "file type of the original media file '{orig_ext}'. To change "
+                "file types, please upload directly from the "
+                "Form Builder."
+            ).format(
+                name=self.uploaded_file.name,
+                ext=self.file_ext.lower(),
+                orig_ext=self.orig_ext.lower(),
+            ))
 
     def process_upload(self):
         self.uploaded_file.file.seek(0)
