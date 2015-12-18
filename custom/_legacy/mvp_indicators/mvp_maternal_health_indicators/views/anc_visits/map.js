@@ -43,18 +43,16 @@ function (doc) {
             }
         }
 
-        if ((indicators.muac_m && indicators.muac_m.value) || 
-            (indicators.update_muac && indicators.update_muac.value &&
+        if (indicators.update_muac && indicators.update_muac.value &&
             ((indicators.muac && indicators.muac.value) ||
-            (indicators.smuac && indicators.smuac.value)))) {
-                var muac = parseFloat(indicators.muac.value),
-                    smuac = parseFloat(indicators.smuac.value),
-                    muac_m = parseFloat(indicators.muac_m.value),
+            (indicators.smuac && indicators.smuac.value))) {
+                var muac = (indicators.muac && indicators.muac.value) ? parseFloat(indicators.muac.value) : "",
+		                smuac = (indicators.smuac && indicators.smuac.value) ? parseFloat(indicators.smuac.value) : "",
                     update_muac = indicators.update_muac.value;
-                if (muac !=="" || (update_muac == "yes" && (muac !=="" || smuac !==""))) {
+                if (update_muac == "yes" && (muac !=="" || smuac !=="")) {
                     indicator_emits["muac"] = case_id;
 
-                    if ((muac || muac_m) < 210 || smuac < 21){
+                    if ((muac < 210 && muac !=="") || (smuac < 21 && smuac !=="")){
                         indicator_emits["moderate_muac"] = case_id;
                     }
                 }
