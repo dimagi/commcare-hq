@@ -9,7 +9,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.commtrack.views import BaseCommTrackManageView
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.programs.forms import ProgramForm
 
@@ -152,25 +152,22 @@ class EditProgramView(NewProgramView):
 class FetchProductForProgramListView(EditProgramView):
     urlname = 'commtrack_product_for_program_fetch'
 
-    def skip(self):
-        return (int(self.page) - 1) * int(self.limit)
-
-    @property
-    def product_data(self):
-        def _scrub(product_doc):
-            product_doc['code'] = product_doc.pop('code_')
-            return product_doc
-
-        data = []
-        products = Product.by_program_id(domain=self.domain, prog_id=self.program_id, skip=self.skip(),
-                limit=self.limit)
-        for p in products:
-            data.append(_scrub(p._doc))
-        return data
+    def get_product_data(self):
+        start = (int(self.page) - 1) * int(self.limit)
+        end = start + int(self.limit)
+        queryset = SQLProduct.objects.filter(domain=self.domain,
+                                             program_id=self.program_id)
+        for product in queryset[start:end]:
+            yield {
+                'name': product.name,
+                'code': product.code,
+                'description': product.description,
+                'unit': product.units,
+            }
 
     def get(self, request, *args, **kwargs):
         return HttpResponse(json.dumps({
             'success': True,
             'current_page': self.page,
-            'data_list': self.product_data,
+            'data_list': list(self.get_product_data()),
         }), 'text/json')
