@@ -367,18 +367,6 @@
         {% endblock %}
         </div>
         <!--Begin javascript -->
-        <script>
-            window.onerror = function(message, file, line, col, error) {
-                $.post('/jserror/', {
-                    message: message,
-                    page: window.location.href,
-                    file: file,
-                    line: line,
-                    stack: error ? error.stack : null
-                });
-                return false; // let default handler run
-            }
-        </script>
         {% include 'style/bootstrap2/partials/bootstrap2_js.html' %}
         <script src="{% static 'hqstyle/js/jquery/plugins/jquery.form.js' %}"></script>
 
