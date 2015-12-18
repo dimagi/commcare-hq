@@ -1342,7 +1342,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                     int(report_data.avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals
                 ),
                 # Last Form submission
-                last_form_by_user.get(user["user_id"]) or self.NO_FORMS_TEXT,
+                last_form_by_user.get(user["user_id"]) or _(self.NO_FORMS_TEXT),
                 # Cases opened
                 util.numcell(
                     self._html_anchor_tag(self._case_list_url_cases_opened_by(user['user_id']), cases_opened),
@@ -1412,7 +1412,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
             total_row[3] = '%s / %s' % reduce(add, [row[3]["html"] for row in rows], (0, 0))
         else:
-            num = len(filter(lambda row: row[3] != self.NO_FORMS_TEXT, rows))
+            num = len(filter(lambda row: row[3] != _(self.NO_FORMS_TEXT), rows))
             total_row[3] = '%s / %s' % (num, len(rows))
 
         return total_row
