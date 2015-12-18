@@ -104,4 +104,7 @@ class Program(Document):
                           limit=1).first()
         return result
 
-
+    def get_products_count(self):
+        return (SQLProduct.objects
+                .filter(domain=self.domain, program_id=self.get_id)
+                .count())

@@ -9,7 +9,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.commtrack.views import BaseCommTrackManageView
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.programs.forms import ProgramForm
 
@@ -109,17 +109,13 @@ class EditProgramView(NewProgramView):
         return self.request.GET.get('limit', self.DEFAULT_LIMIT)
 
     @property
-    def total(self):
-        return len(Product.by_program_id(self.domain, self.program_id))
-
-    @property
     def page_context(self):
         return {
             'program': self.program,
             'data_list': {
                 'page': self.page,
                 'limit': self.limit,
-                'total': self.total
+                'total': self.program.get_products_count(),
             },
             'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
             'form': self.new_program_form,
