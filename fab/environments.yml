@@ -79,6 +79,36 @@ india:
         concurrency: 2
       flower: {}
 
+softlayer:
+  environment: softlayer
+  should_migrate: True
+
+  celery_processes:
+    '*':
+      main:
+        concurrency: 8
+      background_queue:
+        concurrency: 4
+      periodic:
+        concurrency: 4
+      pillow_retry_queue:
+        concurrency: 1
+      reminder_case_update_queue:
+        concurrency: 4
+      reminder_queue:
+        concurrency: 8
+      reminder_rule_queue:
+        concurrency: 4
+      saved_exports_queue:
+        concurrency: 3
+      sms_queue:
+        concurrency: 8
+      ucr_queue:
+        concurrency: 4
+      email_queue:
+        concurrency: 2
+      flower: {}
+
 preview:
   environment: preview
   code_branch: master

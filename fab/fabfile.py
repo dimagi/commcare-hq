@@ -105,7 +105,7 @@ env.roledefs = {
 
 def _require_target():
     require('root', 'code_root', 'hosts', 'environment',
-            provided_by=('staging', 'preview', 'production', 'india', 'zambia'))
+            provided_by=('staging', 'preview', 'production', 'india', 'softlayer', 'zambia'))
 
 
 def format_env(current_env, extra=None):
@@ -214,6 +214,13 @@ def india():
 def swiss():
     env.inventory = os.path.join('fab', 'inventory', 'swiss')
     load_env('swiss')
+    execute(env_common)
+
+
+@task
+def softlayer():
+    env.inventory = os.path.join('fab', 'inventory', 'softlayer')
+    load_env('softlayer')
     execute(env_common)
 
 
@@ -932,7 +939,7 @@ def clear_services_dir():
 @task
 def supervisorctl(command):
     require('supervisor_roles',
-            provided_by=('staging', 'preview', 'production', 'india', 'zambia'))
+            provided_by=('staging', 'preview', 'production', 'india', 'softlayer', 'zambia'))
 
     @roles(env.supervisor_roles)
     def _inner():
