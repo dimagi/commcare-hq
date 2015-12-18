@@ -875,6 +875,7 @@ class SuppressSubscriptionForm(forms.Form):
                     css_class='btn-danger',
                     name=self.submit_kwarg,
                     type='submit',
+                    **({'disabled': True} if self.subscription.is_active else {})
                 ),
             ),
         )

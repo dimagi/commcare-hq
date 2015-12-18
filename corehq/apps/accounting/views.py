@@ -380,7 +380,6 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             'change_subscription_form': self.change_subscription_form,
             'credit_list': CreditLine.objects.filter(subscription=self.subscription),
             'disable_cancel': has_subscription_already_ended(self.subscription),
-            'disable_suppress': self.subscription.is_active,
             'form': self.subscription_form,
             "subscription_has_ended": not self.subscription.is_active and self.subscription.date_start <= date.today(),
             'subscription': self.subscription,
