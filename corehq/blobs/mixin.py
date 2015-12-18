@@ -37,7 +37,7 @@ class BlobMixin(Document):
     # methods on this mixin will not touch couchdb.
     migrating_blobs_from_couch = False
 
-    _auto_save_on_mutate_attachment = True
+    _atomic_blobs = None
 
     def _blobdb_bucket(self):
         if self._id is None:
@@ -74,6 +74,7 @@ class BlobMixin(Document):
             name = getattr(content, "name", None)
         if name is None:
             raise InvalidAttachment("cannot save attachment without name")
+        old_meta = self.blobs.get(name)
 
         if isinstance(content, unicode):
             content = StringIO(content.encode("utf-8"))
@@ -91,8 +92,13 @@ class BlobMixin(Document):
         )
         if self.migrating_blobs_from_couch and self._attachments:
             self._attachments.pop(name, None)
-        if self._auto_save_on_mutate_attachment:
+        if old_meta and old_meta.id and (self._atomic_blobs is None
+                                         or name in self._atomic_blobs):
+            db.delete(old_meta.id, bucket)
+        if self._atomic_blobs is None:
             self.save()
+        else:
+            self._atomic_blobs.add(name)
         return True
 
     def fetch_attachment(self, name, stream=False):
@@ -133,7 +139,7 @@ class BlobMixin(Document):
         should_save = meta is not None or deleted
         if meta is not None:
             deleted = get_blob_db().delete(meta.id, self._blobdb_bucket()) or deleted
-        if should_save and self._auto_save_on_mutate_attachment:
+        if should_save and self._atomic_blobs is None:
             self.save()
         return deleted
 
@@ -160,11 +166,13 @@ class BlobMixin(Document):
                     old_attachments = dict(self._attachments)
                 else:
                     old_attachments = None
-            auto = self._auto_save_on_mutate_attachment
-            self._auto_save_on_mutate_attachment = False
+            atomicity = self._atomic_blobs
+            self._atomic_blobs = set()
+            success = False
             try:
                 yield
                 self.save()
+                success = True
             except:
                 typ, exc, tb = sys.exc_info()
                 # list blobs items to avoid dict-changed-during-iteration error
@@ -176,7 +184,14 @@ class BlobMixin(Document):
                     self._attachments = old_attachments
                 raise typ, exc, tb
             finally:
-                self._auto_save_on_mutate_attachment = auto
+                self._atomic_blobs = atomicity
+            if success:
+                # delete replaced blobs
+                db = get_blob_db()
+                bucket = self._blobdb_bucket()
+                for name, meta in list(old_external_blobs.iteritems()):
+                    if meta is not self.blobs.get(name):
+                        db.delete(meta.id, bucket)
         return atomic_blobs_context()
 
 
