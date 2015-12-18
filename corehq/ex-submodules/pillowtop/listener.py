@@ -136,8 +136,8 @@ class BasicPillow(PillowBase):
     def _get_default_change_feed(self):
         return CouchChangeFeed(
             couch_db=self.get_couch_db(),
-            couch_filter=self.couch_filter,
             include_docs=self.include_docs,
+            couch_filter=self.couch_filter,
             extra_couch_view_params=self.extra_args
         )
 

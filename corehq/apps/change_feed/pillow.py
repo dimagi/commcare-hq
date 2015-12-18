@@ -94,7 +94,7 @@ def get_user_groups_db_kafka_pillow():
         name=pillow_name,
         document_store=None,  # because we're using include_docs we can be explicit about not using this
         checkpoint=checkpoint,
-        change_feed=CouchChangeFeed(user_groups_couch_db, include_docs=True, couch_filter=None),
+        change_feed=CouchChangeFeed(user_groups_couch_db, include_docs=True),
         processor=processor,
         change_processed_event_handler=PillowCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100,
