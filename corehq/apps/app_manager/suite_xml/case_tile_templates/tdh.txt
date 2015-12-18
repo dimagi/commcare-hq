@@ -18,10 +18,6 @@
       	</push>
       </stack>
     </action>
-
-    <variables>
-        <ageindays function="today() - date({date[prop_name]})"/>
-    </variables>
     <field>
       <style
           horz-align="center"
@@ -62,12 +58,12 @@
       </header>
       <template>
         <text>
-          &lt;b&gt;{header[prefix]} &lt;/b&gt; <xpath function="{header[prop_name]}"/>
+          &lt;b&gt;{header[prefix]} &lt;/b&gt; <xpath function="{header[xpath_function]}"/>
         </text>
       </template>
       <sort type="string" order="-2" direction="ascending">
         <text>
-          <xpath function="{header[prop_name]}"/>
+          <xpath function="{header[xpath_function]}"/>
         </text>
       </sort>
     </field>
@@ -88,11 +84,11 @@
         </text>
       </header>
       <template>
-        <text>&lt;b&gt;{top_left[prefix]} &lt;/b&gt; <xpath function="{top_left[prop_name]}"/></text>
+        <text>&lt;b&gt;{top_left[prefix]} &lt;/b&gt; <xpath function="{top_left[xpath_function]}"/></text>
       </template>
       <sort type="string" order="-2" direction="ascending">
         <text>
-          <xpath function="{top_left[prop_name]}"/>
+          <xpath function="{top_left[xpath_function]}"/>
         </text>
       </sort>
     </field>
@@ -113,7 +109,7 @@
         </text>
       </header>
       <template>
-        <text>&lt;b&gt;{sex[prefix]} &lt;/b&gt;<xpath function="if({sex[prop_name]} = 'male', $kmale, if({sex[prop_name]} = 'female', $kfemale, ''))">
+        <text>&lt;b&gt;{sex[prefix]} &lt;/b&gt;<xpath function="{sex[xpath_function]}">
             <variable name="kfemale">
               <locale id="{sex[enum_keys][female]}"/>
             </variable>
@@ -140,11 +136,11 @@
         </text>
       </header>
       <template>
-        <text>&lt;b&gt;{bottom_left[prefix]} &lt;/b&gt; <xpath function="{bottom_left[prop_name]}"/></text>
+        <text>&lt;b&gt;{bottom_left[prefix]} &lt;/b&gt; <xpath function="{bottom_left[xpath_function]}"/></text>
       </template>
       <sort type="string" order="-2" direction="ascending">
         <text>
-          <xpath function="{bottom_left[prop_name]}"/>
+          <xpath function="{bottom_left[xpath_function]}"/>
         </text>
       </sort>
     </field>
@@ -165,7 +161,7 @@
         </text>
       </header>
       <template>
-        <text>&lt;b&gt;{date[prefix]} &lt;/b&gt; <xpath function="if($ageindays &gt; 30, concat(int($ageindays div 30.25), ' Mois'), concat(int($ageindays), ' Jours'))"/></text>
+        <text>&lt;b&gt;{date[prefix]} &lt;/b&gt; <xpath function="{date[xpath_function]}"/></text>
       </template>
     </field>
   </detail>
