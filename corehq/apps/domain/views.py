@@ -542,9 +542,12 @@ def test_repeater(request, domain):
         url = form.cleaned_data["url"]
         format = format or RegisterGenerator.default_format_by_repeater(repeater_class)
         generator_class = RegisterGenerator.generator_class_by_repeater_format(repeater_class, format)
-        fake_post = generator_class(repeater_class()).get_test_payload()
+        generator = generator_class(repeater_class())
+        fake_post = generator.get_test_payload()
+        headers = generator.get_headers()
+
         try:
-            resp = simple_post(fake_post, url)
+            resp = simple_post(fake_post, url, headers=headers)
             if 200 <= resp.status < 300:
                 return HttpResponse(json.dumps({"success": True,
                                                 "response": resp.read(),

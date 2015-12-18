@@ -33,7 +33,7 @@ class BasePayloadGenerator(object):
     def get_payload(self, repeat_record, payload_doc):
         raise NotImplementedError()
 
-    def get_headers(self, repeat_record, payload_doc):
+    def get_headers(self):
         return {}
 
     def get_test_payload(self):
@@ -59,6 +59,9 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, payload_doc):
         return payload_doc.to_xml(self.repeater.version or V2, include_case_on_closed=True)
 
+    def get_headers(self):
+        return {'Content-type': 'application/json'}
+
     def get_test_payload(self):
         from casexml.apps.case.mock import CaseBlock
         return CaseBlock(
@@ -75,6 +78,9 @@ class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
         del payload_doc['actions']
         data = payload_doc.get_json(lite=True)
         return json.dumps(data, cls=DjangoJSONEncoder)
+
+    def get_headers(self):
+        return {'Content-type': 'application/json'}
 
     def get_test_payload(self):
         from casexml.apps.case.models import CommCareCase
@@ -102,6 +108,9 @@ class ShortFormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
                            'received_on': json_format_datetime(form.received_on),
                            'case_ids': [case._id for case in cases]})
 
+    def get_headers(self):
+        return {'Content-type': 'application/json'}
+
     def get_test_payload(self):
         return json.dumps({
             'form_id': 'test-form-' + uuid4().hex,
@@ -117,6 +126,9 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
         res = XFormInstanceResource()
         bundle = res.build_bundle(obj=form)
         return res.serialize(None, res.full_dehydrate(bundle), 'application/json')
+
+    def get_headers(self):
+        return {'Content-type': 'application/json'}
 
     def get_test_payload(self):
         return self.get_payload(None, _get_test_form())
