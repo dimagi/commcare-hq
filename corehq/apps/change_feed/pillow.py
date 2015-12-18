@@ -6,12 +6,17 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed.connection import get_kafka_client
 from corehq.apps.change_feed.topics import get_topic
+from corehq.apps.users.models import CommCareUser
+from corehq.util.couchdb_management import couch_config
 from couchforms.models import all_known_formlike_doc_types
 import logging
-from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoint_store
+from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoint_store, \
+    PillowCheckpointEventHandler
 from pillowtop.couchdb import CachedCouchDB
+from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.feed.interface import ChangeMeta
 from pillowtop.listener import PythonPillow
+from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processor import PillowProcessor
 
 
@@ -72,6 +77,28 @@ def get_default_couch_db_change_feed_pillow():
         couch_db=default_couch_db,
         kafka=kafka_client,
         checkpoint=PillowCheckpoint(get_django_checkpoint_store(), 'default-couch-change-feed')
+    )
+
+
+def get_user_groups_db_kafka_pillow():
+    # note: this is temporarily using ConstructedPillow as a test. If it is successful we should
+    # flip the main one over as well
+    user_groups_couch_db = couch_config.get_db_for_class(CommCareUser)
+    pillow_name = 'UserGroupsDbKafkaPillow'
+    kafka_client = _get_kafka_client_or_none()
+    processor = KafkaProcessor(
+        kafka_client, data_source_type=data_sources.COUCH, data_source_name=user_groups_couch_db.dbname
+    )
+    checkpoint = PillowCheckpoint(get_django_checkpoint_store(), pillow_name)
+    return ConstructedPillow(
+        name=pillow_name,
+        document_store=None,  # because we're using include_docs we can be explicit about not using this
+        checkpoint=checkpoint,
+        change_feed=CouchChangeFeed(user_groups_couch_db, include_docs=True, couch_filter=None),
+        processor=processor,
+        change_processed_event_handler=PillowCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100,
+        ),
     )
 
 

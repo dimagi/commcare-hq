@@ -1404,6 +1404,11 @@ PILLOWTOPS = {
             'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
         },
         {
+            'name': 'UserGroupsDbKafkaPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
+        },
+        {
             'name': 'KafkaCaseConsumerPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_case_consumer_pillow',
