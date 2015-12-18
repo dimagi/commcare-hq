@@ -140,7 +140,7 @@ class Product(Document):
         if not code:
             return None
         try:
-            sql_product = SQLProduct.objects.get(domain=domain, code=code)
+            sql_product = SQLProduct.objects.get(domain=domain, code__iexact=code)
         except SQLProduct.DoesNotExist:
             return None
         else:
