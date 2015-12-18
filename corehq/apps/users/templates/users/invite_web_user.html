@@ -3,12 +3,27 @@
 {% load hqstyle_tags %}
 {% load i18n %}
 
+{% block hubspot %}{{ block.super }}
+    <script type="text/javascript">
+        var _hsq = window._hsq = window._hsq || [];
+        _hsq.push(['trackClick', '#js-send-invite', 'user_submitted_domain_invite']);
+        {% if request.couch_user %}
+            _hsq.push(['identify', {
+                email: '{{ request.couch_user.username }}',
+                firstname: '{{ request.couch_user.first_name }}',
+                lastname: '{{ request.couch_user.last_name }}',
+                invite_to: '{{ request.domain }}'
+            }]);
+        {% endif %}
+    </script>
+{% endblock %}
+
 {% block main_column %}
     <form class="form form-horizontal" method="post" action="">{% csrf_token %}
         {% bootstrap_form_errors registration_form %}
         {% bootstrap_fieldset registration_form "Information for new web user" %}
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" id="js-send-invite" class="btn btn-primary">
                 {% if request_id %}
                     {% trans "Add User" %}
                 {% else %}
