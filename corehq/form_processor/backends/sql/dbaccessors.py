@@ -426,8 +426,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
-        # TODO: Welp, I guess no nests exercise this code path
-        raise NotImplementedError
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute('SELECT case_id FROM get_case_ids_modified_with_owner_since(%s, %s, %s)', [domain, owner_id, reference_date])
+            results = fetchall_as_namedtuple(cursor)
+            return [result.case_id for result in results]
 
     @staticmethod
     def get_extension_case_ids(domain, case_ids): # I need like this but without the relationship id check

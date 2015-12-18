@@ -27,4 +27,5 @@ class Migration(migrations.Migration):
         migrator.get_migration('get_extension_case_ids.sql'),
         migrator.get_migration('case_has_transactions_since_sync.sql'),
         migrator.get_migration('get_all_reverse_indices.sql'),
+        migrator.get_migration('get_case_ids_modified_with_owner_since.sql'),
     ]
