@@ -147,18 +147,6 @@ class Product(Document):
             return cls.get(sql_product.product_id)
 
     @classmethod
-    def by_program_id(cls, domain, prog_id, wrap=True, **kwargs):
-        kwargs.update(dict(
-            view_name='commtrack/product_by_program_id',
-            key=[domain, prog_id],
-            include_docs=True
-        ))
-        if wrap:
-            return Product.view(**kwargs)
-        else:
-            return [row["doc"] for row in Product.view(wrap_doc=False, **kwargs)]
-
-    @classmethod
     def by_domain(cls, domain, wrap=True, include_archived=False, **kwargs):
         """
         Gets all products in a domain.
