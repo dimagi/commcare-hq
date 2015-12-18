@@ -1,3 +1,4 @@
+import os
 import subprocess
 
 from compressor.exceptions import FilterError
@@ -69,6 +70,11 @@ class JsUglifySourcemapCompressor(JsCompressor):
             c.encode(self.charset) for c in content)
 
         if settings.COMPRESS_ENABLED or forced:
+            js_compress_dir = os.path.join(
+                settings.STATIC_ROOT, self.output_dir, self.output_prefix
+            )
+            if not os.path.exists(js_compress_dir):
+                os.makedirs(js_compress_dir, 0775)
             filepath = self.get_filepath(concatenated_content, basename=None)
 
             # UglifySourcemapFilter writes the file directly, as it needs to
