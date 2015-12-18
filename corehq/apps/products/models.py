@@ -154,14 +154,6 @@ class Product(Document):
         return list(queryset.couch_products(wrapped=wrap))
 
     @classmethod
-    def archived_by_domain(cls, domain, wrap=True, **kwargs):
-        products = cls.by_domain(domain, wrap, kwargs)
-        if wrap:
-            return filter(lambda p: p.is_archived, products)
-        else:
-            return [p for p in products if p.get('is_archived', False)]
-
-    @classmethod
     def ids_by_domain(cls, domain):
         """
         Gets all product ids in a domain.
