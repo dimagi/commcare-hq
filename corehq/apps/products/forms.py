@@ -22,7 +22,7 @@ class CurrencyField(forms.DecimalField):
 
 class ProductForm(forms.Form):
     name = forms.CharField(max_length=100)
-    code = forms.CharField(label=ugettext_noop("Product ID"), max_length=10, required=False)
+    code = forms.CharField(label=ugettext_noop("Product ID"), max_length=100, required=False)
     description = forms.CharField(max_length=500, required=False, widget=forms.Textarea)
     unit = forms.CharField(label=ugettext_noop("Units"), max_length=100, required=False)
     program_id = forms.ChoiceField(label=ugettext_noop("Program"), choices=(), required=True)
