@@ -26,4 +26,5 @@ class KooKooLogCallTestCase(LogCallTestCase):
         return Client().get('/kookoo/ivr/?cid=%s&sid=xyz&event=NewCall' % phone_number)
 
     def check_response(self, response):
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, '<response sid="xyz"><hangup/></response>')
