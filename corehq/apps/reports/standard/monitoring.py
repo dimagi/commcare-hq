@@ -963,7 +963,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
                     app_id=info['app_id'],
                     by_submission_time=self.by_submission_time,
                 )
-                data = XFormInstance.get_db().view("reports_forms/all_forms",
+                data = XFormInstance.get_db().view("all_forms/view",
                     reduce=False,
                     startkey=key+[self.datespan.startdate_param_utc],
                     endkey=key+[self.datespan.enddate_param_utc],
