@@ -22,5 +22,6 @@ urlpatterns = patterns('custom.ewsghana.views',
     url(r'^user_settings/(?P<user_id>[ \w-]+)/$', EWSUserExtensionView.as_view(), name='ews_user_settings'),
     url(r'^dashboard_page/$', DashboardPageView.as_view(), name='dashboard_page'),
     url(r'^balance/$', BalanceMigrationView.as_view(), name='balance_migration'),
-    url(r'^email_balance/$', BalanceEmailMigrationView.as_view(), name='email_balance_migration')
+    url(r'^email_balance/$', BalanceEmailMigrationView.as_view(), name='email_balance_migration'),
+    url(r'^fix_email_reports', 'fix_email_reports', name='fix_email_reports')
 )

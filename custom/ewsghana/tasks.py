@@ -1,7 +1,8 @@
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.reports.models import ReportNotification
+from corehq.apps.users.models import CommCareUser, WebUser
 from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
 from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts, OnGoingStockoutsRMS
 from custom.ewsghana.alerts.urgent_alerts import UrgentNonReporting, UrgentStockoutAlert
@@ -208,3 +209,14 @@ def delete_connections_field_task(domain):
 def balance_migration_task(domain):
     endpoint = GhanaEndpoint.from_config(EWSGhanaConfig.for_domain(domain))
     BalanceMigration(domain, endpoint).balance_email_reports()
+
+
+@task(queue='logistics_background_queue', ignore_result=True, acks_late=True)
+def set_send_to_owner_field_task(domain):
+    for web_user in WebUser.by_domain(domain):
+        notifications = ReportNotification.by_domain_and_owner(domain, web_user.get_id)
+        for notification in notifications:
+            if not notification.send_to_owner and not notification.recipient_emails:
+                notification.send_to_owner = True
+                notification.save()
+    balance_migration_task.delay(domain)
