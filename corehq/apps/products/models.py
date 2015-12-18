@@ -155,15 +155,7 @@ class Product(Document):
 
     @classmethod
     def ids_by_domain(cls, domain):
-        """
-        Gets all product ids in a domain.
-        """
-        view_results = Product.get_db().view('commtrack/products',
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=False,
-        )
-        return [row['id'] for row in view_results]
+        return list(SQLProduct.objects.filter(domain=domain).product_ids())
 
     @classmethod
     def count_by_domain(cls, domain):
