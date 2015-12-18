@@ -68,7 +68,7 @@ class PtopReindexer(NoArgsCommand):
                     action='store_true',
                     dest='noinput',
                     default=False,
-                    help='Skip important confirmation warnings?!?!'),
+                    help='Skip important confirmation warnings.'),
         make_option('--runfile',
                     action='store',
                     dest='runfile',
