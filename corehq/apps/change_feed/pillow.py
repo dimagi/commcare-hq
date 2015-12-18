@@ -51,17 +51,20 @@ class ChangeFeedPillow(PythonPillow):
 
 def get_default_couch_db_change_feed_pillow():
     default_couch_db = CachedCouchDB(CommCareCase.get_db().uri, readonly=False)
-    try:
-        kafka_client = get_kafka_client()
-    except KafkaUnavailableError:
-        logging.warning('Ignoring missing kafka client during unit testing')
-        kafka_client = None
-
+    kafka_client = _get_kafka_client_or_none()
     return ChangeFeedPillow(
         couch_db=default_couch_db,
         kafka=kafka_client,
         checkpoint=PillowCheckpoint(get_django_checkpoint_store(), 'default-couch-change-feed')
     )
+
+
+def _get_kafka_client_or_none():
+    try:
+        return get_kafka_client()
+    except KafkaUnavailableError:
+        logging.warning('Ignoring missing kafka client during unit testing')
+        return None
 
 
 def _get_document_type(document_or_none):
