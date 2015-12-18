@@ -147,41 +147,11 @@ class Product(Document):
             return cls.get(sql_product.product_id)
 
     @classmethod
-    def by_domain(cls, domain, wrap=True, include_archived=False, **kwargs):
-        """
-        Gets all products in a domain.
-
-        By default this filters out any archived products.
-        WARNING: this doesn't paginate correctly; it filters after the query
-        If you need pagination, use SQLProduct instead
-        """
-        kwargs.update(dict(
-            view_name='commtrack/products',
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=True
-        ))
-        if wrap:
-            products = Product.view(**kwargs)
-            if not include_archived:
-                return filter(lambda p: not p.is_archived, products)
-            else:
-                return products
-        else:
-            if not include_archived:
-                return [
-                    row["doc"] for row in Product.view(
-                        wrap_doc=False,
-                        **kwargs
-                    ) if not row["doc"].get('is_archived', False)
-                ]
-            else:
-                return [
-                    row["doc"] for row in Product.view(
-                        wrap_doc=False,
-                        **kwargs
-                    )
-                ]
+    def by_domain(cls, domain, wrap=True, include_archived=False):
+        queryset = SQLProduct.objects.filter(domain=domain)
+        if not include_archived:
+            queryset = queryset.filter(is_archived=False)
+        return list(queryset.couch_products(wrapped=wrap))
 
     @classmethod
     def archived_by_domain(cls, domain, wrap=True, **kwargs):
