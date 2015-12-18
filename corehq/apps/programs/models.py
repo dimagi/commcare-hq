@@ -41,7 +41,7 @@ class Program(Document):
         Gets all programs in a domain.
         """
         kwargs = dict(
-            view_name='commtrack/programs',
+            view_name='commtrack/program_by_code',
             startkey=[domain],
             endkey=[domain, {}],
             include_docs=True
