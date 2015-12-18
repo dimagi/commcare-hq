@@ -11,7 +11,7 @@
     </text>
     <command id="m1-f0"/>
   </menu>
-  <menu root="m2" id="m1">
+  <menu root="m2" id="m1.m2">
     <text>
       <locale id="modules.m1"/>
     </text>
