@@ -65,14 +65,10 @@ class Program(Document):
 
         default = Program.default_for_domain(self.domain)
 
-        products = Product.by_program_id(
-            self.domain,
-            self._id,
-            wrap=True
-        )
+        sql_products = SQLProduct.objects.filter(domain=self.domain,
+                                                 program_id=self.get_id)
         to_save = []
-
-        for product in products:
+        for product in sql_products.couch_products():
             product['program_id'] = default._id
             to_save.append(product)
 
@@ -84,7 +80,7 @@ class Program(Document):
         Product.bulk_save(to_save)
 
         # bulk update sqlproducts
-        SQLProduct.objects.filter(program_id=self._id).update(program_id=default._id)
+        sql_products.update(program_id=default._id)
 
         return super(Program, self).delete()
 
