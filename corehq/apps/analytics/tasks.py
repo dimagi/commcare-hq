@@ -279,7 +279,7 @@ def track_periodic_data():
             if domain in domains_to_mobile_users and domains_to_mobile_users[domain] > max_workers:
                 max_workers = domains_to_mobile_users[domain]
 
-        project_spaces_created = get_domains_created_by_user(email)
+        project_spaces_created = ", ".join(get_domains_created_by_user(email))
 
         user_json = {
             'email': email,
