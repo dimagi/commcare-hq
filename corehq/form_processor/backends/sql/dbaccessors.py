@@ -258,10 +258,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_all_reverse_indices_info(domain, case_ids):
-        query = CommCareCaseIndexSQL.objects.filter(
-            # domain=domain,  # TODO: Why isn't domain being saved on CommCareCaseIndexSQL objects?
-            referenced_id__in=case_ids
-        )
+        # TODO: If the domain field is used on CommCareCaseIndexSQL in the future, this function should filter by it.
+        indexes = CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_all_reverse_indices(%s)', [case_ids])
         return [
             CaseIndexInfo(
                 case_id=index.case_id,
@@ -269,7 +267,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 referenced_id=index.referenced_id,
                 referenced_type=index.referenced_type,
                 relationship=index.relationship_id
-            ) for index in query
+            ) for index in indexes
         ]
 
     @staticmethod
@@ -277,11 +275,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         """
         Given a base list of case ids, gets all ids of cases they reference (parent and host cases)
         """
-        query = CommCareCaseIndexSQL.objects.filter(
-            # domain=domain,  # TODO: Why isn't domain being saved on CommCareCaseIndexSQL objects?
-            case_id__in=case_ids
-        )
-        return list(set(query.values_list('referenced_id', flat=True)))
+        with get_cursor(CommCareCaseIndexSQL) as cursor:
+            cursor.execute('SELECT referenced_id FROM get_indexed_case_ids(%s, %s)', [domain, list(case_ids)])
+            results = fetchall_as_namedtuple(cursor)
+            return [result.referenced_id for result in results]
 
     @staticmethod
     def get_reverse_indexed_cases(domain, case_ids):
@@ -334,13 +331,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def case_has_transactions_since_sync(case_id, sync_log_id, sync_log_date):
-        query = CaseTransaction.objects.filter(
-            case_id=case_id,
-            server_date__gt=sync_log_date,
-        ).exclude(
-            sync_log_id=sync_log_id
-        )
-        return query.exists()
+        with get_cursor(CaseTransaction) as cursor:
+            cursor.execute('SELECT case_has_transactions_since_sync(%s, %s, %s)', [case_id, sync_log_id, sync_log_date])
+            result = cursor.fetchone()[0]
+            return result
 
     @staticmethod
     def get_case_by_location(domain, location_id):
@@ -361,11 +355,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_ids_in_domain_by_owners(domain, owner_ids):
-        query = CommCareCaseSQL.objects.filter(
-            domain=domain,
-            owner_id__in=owner_ids,
-        )
-        return list(query.values_list('case_id', flat=True))
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute('SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s)', [domain, owner_ids])
+            results = fetchall_as_namedtuple(cursor)
+            return [result.case_id for result in results]
 
     @staticmethod
     @unit_testing_only
@@ -419,18 +412,21 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_open_case_ids(domain, owner_id):
-        owner_id_is_falsey = Q(owner_id=None) | Q(owner_id="")
-        owner_query = Q(owner_id=owner_id) | (owner_id_is_falsey & Q(modified_by=owner_id))
-        query = CommCareCaseSQL.objects.filter(domain=domain, closed=False).filter(owner_query)
-        return list(query.values_list('case_id', flat=True))
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute('SELECT case_id FROM get_open_case_ids(%s, %s)', [domain, owner_id])
+            results = fetchall_as_namedtuple(cursor)
+            return [result.case_id for result in results]
 
     @staticmethod
     def get_closed_case_ids(domain, owner_id):
-        query = CommCareCaseSQL.objects.filter(domain=domain, owner_id=owner_id, closed=True)
-        return list(query.values_list('case_id', flat=True))
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute('SELECT case_id FROM get_closed_case_ids(%s, %s)', [domain, owner_id])
+            results = fetchall_as_namedtuple(cursor)
+            return [result.case_id for result in results]
 
     @staticmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
+        # TODO: Welp, I guess no nests exercise this code path
         raise NotImplementedError
 
     @staticmethod
@@ -438,13 +434,11 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         """
         Given a base list of case ids, for those that are open, get all ids of all extension cases that reference them
         """
-        query = CommCareCaseIndexSQL.objects.filter(
-            # domain=domain,  # TODO: Why isn't domain being used?
-            referenced_id__in=case_ids,
-            relationship_id=CommCareCaseIndexSQL.EXTENSION
-        )
         # TODO: Filter by open cases?
-        return list(query.values_list('case_id', flat=True))
+        with get_cursor(CommCareCaseIndexSQL) as cursor:
+            cursor.execute('SELECT case_id FROM get_extension_case_ids(%s, %s)', [domain, list(case_ids)])
+            results = fetchall_as_namedtuple(cursor)
+            return [result.case_id for result in results]
 
     @staticmethod
     def get_last_modified_dates(domain, case_ids):
@@ -452,11 +446,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         Given a list of case IDs, return a dict where the ids are keys and the
         values are the last server modified date of that case.
         """
-        query = CommCareCaseSQL.objects.filter(
-            domain=domain,
-            case_id__in=case_ids
-        )
-        return dict(query.values_list("case_id", "server_modified_on"))
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute('SELECT case_id, server_modified_on FROM get_last_modified_dates(%s, %s)', [domain, case_ids])
+            results = fetchall_as_namedtuple(cursor)
+            return dict((result.case_id, result.server_modified_on) for result in results)
 
 
 def _order_list(id_list, object_list, id_property):
