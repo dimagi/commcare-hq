@@ -343,8 +343,8 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     def cancel_form(self):
         if (self.request.method == 'POST'
             and 'cancel_subscription' in self.request.POST):
-            return CancelForm(self.request.POST)
-        return CancelForm()
+            return CancelForm(self.subscription, self.request.POST)
+        return CancelForm(self.subscription)
 
     @property
     @memoized

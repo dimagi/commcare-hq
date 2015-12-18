@@ -823,13 +823,16 @@ class CancelForm(forms.Form):
         widget=forms.TextInput,
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, subscription, *args, **kwargs):
         super(CancelForm, self).__init__(*args, **kwargs)
+
+        can_cancel = has_subscription_already_ended(subscription)
+
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Cancel Subscription',
-                'note',
+                crispy.Field('note', **({'readonly': True} if can_cancel else {})),
             ),
             FormActions(
                 StrictButton(
@@ -837,6 +840,7 @@ class CancelForm(forms.Form):
                     css_class='btn-danger',
                     name='cancel_subscription',
                     type='submit',
+                    **({'disabled': True} if can_cancel else {})
                 )
             ),
         )
