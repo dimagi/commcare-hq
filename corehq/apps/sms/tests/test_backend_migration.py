@@ -14,7 +14,6 @@ from corehq.messaging.smsbackends.tropo.models import TropoBackend, SQLTropoBack
 from corehq.messaging.smsbackends.twilio.models import TwilioBackend, SQLTwilioBackend
 from corehq.messaging.smsbackends.unicel.models import UnicelBackend, SQLUnicelBackend
 from corehq.messaging.smsbackends.yo.models import SQLYoBackend
-from couchdbkit.resource import ResourceNotFound
 from django.test import TestCase
 
 

@@ -71,7 +71,7 @@ class KooKooBackend(IVRBackend):
         for response in ivr_responses:
             text_to_say = response["text_to_say"]
             audio_file_url = response["audio_file_url"]
-            
+
             if audio_file_url is not None:
                 xml_string += "<playaudio>%s</playaudio>" % escape(audio_file_url)
             elif text_to_say is not None:
@@ -88,7 +88,7 @@ class KooKooBackend(IVRBackend):
 
         if collect_input:
             xml_string = '<collectdtmf %s o="%s">%s</collectdtmf>' % (input_length_str, timeout, xml_string)
-        
+
         if hang_up:
             xml_string += "<hangup/>"
 
