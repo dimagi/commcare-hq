@@ -1,6 +1,4 @@
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.commtrack.models import SupplyPointCase
-from corehq.apps.products.models import Product
 
 
 def get_relevant_supply_point_ids(domain, active_location=None):
@@ -28,8 +26,3 @@ def get_relevant_supply_point_ids(domain, active_location=None):
         return supply_point_ids
     else:
         return filter_relevant(SQLLocation.objects.filter(domain=domain))
-
-
-def product_ids_filtered_by_program(domain, program):
-    products = Product.by_program_id(domain, program, False)
-    return [p['_id'] for p in products]
