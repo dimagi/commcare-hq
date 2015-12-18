@@ -97,7 +97,7 @@ from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
 from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
-    RepeatRecord, repeater_types
+    RepeatRecord, repeater_types, RegisterGenerator
 from dimagi.utils.post import simple_post
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -532,27 +532,17 @@ def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']
     format = request.POST.get('format', None)
+    repeater_class = repeater_types[repeater_type]
     form = GenericRepeaterForm(
         {"url": url, "format": format},
         domain=domain,
-        repeater_class=repeater_types[repeater_type]
+        repeater_class=repeater_class
     )
     if form.is_valid():
         url = form.cleaned_data["url"]
-        # now we fake a post
-        def _stub(repeater_type):
-            if 'case' in repeater_type.lower():
-                return CaseBlock(
-                    case_id='test-case-%s' % uuid.uuid4().hex,
-                    create=True,
-                    case_type='test',
-                    case_name='test case',
-                ).as_string()
-            else:
-                return "<?xml version='1.0' ?><data id='test'><TestString>Test post from CommCareHQ on %s</TestString></data>" % \
-                       (datetime.datetime.utcnow())
-
-        fake_post = _stub(repeater_type)
+        format = format or RegisterGenerator.default_format_by_repeater(repeater_class)
+        generator_class = RegisterGenerator.generator_class_by_repeater_format(repeater_class, format)
+        fake_post = generator_class(repeater_class()).get_test_payload()
         try:
             resp = simple_post(fake_post, url)
             if 200 <= resp.status < 300:
