@@ -694,6 +694,8 @@ def copy_tf_localsettings():
 def copy_components():
     if files.exists('{}/bower_components'.format(env.code_current)):
         sudo('cp -r {}/bower_components {}/bower_components'.format(env.code_current, env.code_root))
+    else:
+        sudo('mkdir {}/bower_components'.format(env.code_root))
 
 
 def copy_release_files():
