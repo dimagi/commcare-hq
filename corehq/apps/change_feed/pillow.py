@@ -19,9 +19,11 @@ class KafkaProcessor(PillowProcessor):
     """
     Processor that pushes changes to Kafka
     """
-    def __init__(self, kafka):
+    def __init__(self, kafka, data_source_type, data_source_name):
         self._kafka = kafka
         self._producer = KeyedProducer(self._kafka)
+        self._data_source_type = data_source_type
+        self._data_source_name = data_source_name
 
     def process_change(self, pillow_instance, change, do_set_checkpoint=False):
         document_type = _get_document_type(change.document)
@@ -29,8 +31,8 @@ class KafkaProcessor(PillowProcessor):
             assert change.document is not None
             change_meta = ChangeMeta(
                 document_id=change.id,
-                data_source_type=data_sources.COUCH,
-                data_source_name=pillow_instance.get_db_name(),
+                data_source_type=self._data_source_type,
+                data_source_name=self._data_source_name,
                 document_type=document_type,
                 document_subtype=_get_document_subtype(change.document),
                 domain=change.document.get('domain', None),
@@ -52,7 +54,9 @@ class ChangeFeedPillow(PythonPillow):
 
     def __init__(self, couch_db, kafka, checkpoint):
         super(ChangeFeedPillow, self).__init__(couch_db=couch_db, checkpoint=checkpoint, chunk_size=10)
-        self._processor = KafkaProcessor(kafka)
+        self._processor = KafkaProcessor(
+            kafka, data_source_type=data_sources.COUCH, data_source_name=self.get_db_name()
+        )
 
     def get_db_name(self):
         return self.get_couch_db().dbname
