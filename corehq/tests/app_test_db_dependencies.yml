@@ -10,9 +10,14 @@ pillow_retry: []
 pillowtop: []
 testapps.test_elasticsearch: []
 testapps.test_pillowtop:
+  - auditcare
+  - django_digest
   - corehq.apps.domain
+  - corehq.apps.hqadmin
   - corehq.apps.users
+  - corehq.couchapps
   - couchforms
+  - pillowtop
 casexml.apps.phone:
   - auditcare
   - django_digest
