@@ -85,11 +85,11 @@ class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     def get_test_payload(self):
         from casexml.apps.case.models import CommCareCase
         return self.get_payload(
-                None,
-                CommCareCase(
-                        domain='demo-domain', type='case_type', name='Demo',
-                        user_id='user1', prop_a=True, prop_b='value'
-                )
+            None,
+            CommCareCase(
+                domain='demo-domain', type='case_type', name='Demo',
+                user_id='user1', prop_a=True, prop_b='value'
+            )
         )
 
 
