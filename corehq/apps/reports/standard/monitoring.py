@@ -1132,10 +1132,11 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             for u in self.users_to_iterate
         }
 
-    def _dates_for_linked_reports(self, case_list=False):
-        start_date = self.datespan.startdate_param
-        end_date = self.datespan.enddate if not case_list else self.datespan.enddate + datetime.timedelta(days=1)
-        end_date = end_date.strftime(self.datespan.format)
+    @staticmethod
+    def _dates_for_linked_reports(datespan, case_list=False):
+        start_date = datespan.startdate_param
+        end_date = datespan.enddate if not case_list else datespan.enddate + datetime.timedelta(days=1)
+        end_date = end_date.strftime(datespan.format)
         return start_date, end_date
 
     def _submit_history_link(self, owner_id, value):
@@ -1148,7 +1149,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         else:
             params = EMWF.for_user(owner_id)
 
-        start_date, end_date = self._dates_for_linked_reports()
+        start_date, end_date = self._dates_for_linked_reports(self.datespan)
         params.update({
             "startdate": start_date,
             "enddate": end_date,
@@ -1159,21 +1160,25 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             value,
         )
 
-    def _html_anchor_tag(self, href, value):
+    @staticmethod
+    def _html_anchor_tag(href, value):
         return '<a href="{}" target="_blank">{}</a>'.format(href, value)
 
-    def _make_url(self, base_url, params):
+    @staticmethod
+    def _make_url(base_url, params):
         return '{base_url}?{params}'.format(
             base_url=base_url,
             params=urlencode(params, True),
         )
 
-    def _case_query(self, case_type):
+    @staticmethod
+    def _case_query(case_type):
         if not case_type:
             return ''
         return ' AND type.exact: {}'.format(case_type)
 
-    def _case_list_url_params(self, query, owner_id):
+    @staticmethod
+    def _case_list_url_params(query, owner_id):
         params = {}
         params.update(EMWF.for_user(owner_id))  # Get user slug for Users or Groups Filter
         params.update({'search_query': query})
@@ -1184,7 +1189,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return absolute_reverse('project_report_dispatcher', args=(self.domain, 'case_list'))
 
     def _case_list_url(self, query, owner_id):
-        params = self._case_list_url_params(query, owner_id)
+        params = WorkerActivityReport._case_list_url_params(query, owner_id)
         return self._make_url(self._case_list_base_url, params)
 
     def _case_list_url_cases_opened_by(self, owner_id):
@@ -1194,7 +1199,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return self._case_list_url_cases_by(owner_id, is_closed=True)
 
     def _case_list_url_cases_by(self, owner_id, is_closed=False):
-        start_date, end_date = self._dates_for_linked_reports(case_list=True)
+        start_date, end_date = self._dates_for_linked_reports(self.datespan, case_list=True)
         prefix = 'closed' if is_closed else 'opened'
 
         query = "{prefix}_by: {owner_id} AND {prefix}_on: [{start_date} TO {end_date}] {case_query}".format(
@@ -1208,7 +1213,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return self._case_list_url(query, owner_id)
 
     def _case_list_url_total_cases(self, owner_id):
-        start_date, end_date = self._dates_for_linked_reports(case_list=True)
+        start_date, end_date = self._dates_for_linked_reports(self.datespan, case_list=True)
         # Subtract a day for inclusiveness
         start_date = (self.datespan.startdate - datetime.timedelta(days=1)).strftime(self.datespan.format)
 
@@ -1219,7 +1224,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return self._case_list_url(query, owner_id)
 
     def _case_list_url_active_cases(self, owner_id):
-        start_date, end_date = self._dates_for_linked_reports(case_list=True)
+        start_date, end_date = self._dates_for_linked_reports(self.datespan, case_list=True)
         query = "modified_on: [{start_date} TO {end_date}]".format(
             start_date=start_date,
             end_date=end_date
@@ -1231,7 +1236,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         takes group info, and creates a cell that links to the user status report focused on the group
         """
         base_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'worker_activity'))
-        start_date, end_date = self._dates_for_linked_reports()
+        start_date, end_date = self._dates_for_linked_reports(self.datespan)
         params = {
             "group": group_id,
             "startdate": start_date,
