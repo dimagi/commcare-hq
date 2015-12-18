@@ -25,6 +25,7 @@ from custom.ewsghana.filters import EWSDateFilter
 from custom.ewsghana.forms import InputStockForm, EWSUserSettings
 from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge, EWSExtension, EWSMigrationStats, \
     EWSMigrationProblem
+from custom.ewsghana.tasks import set_send_to_owner_field_task
 from custom.ewsghana.reports.specific_reports.dashboard_report import DashboardReport
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct, StockStatus
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData, StockLevelsReport
@@ -203,6 +204,13 @@ def balance_email_reports_migration(request, domain):
 @require_POST
 def migrate_email_settings_view(request, domain):
     migrate_email_settings.delay(domain)
+    return HttpResponse('OK')
+
+
+@domain_admin_required
+@require_POST
+def fix_email_reports(request, domain):
+    set_send_to_owner_field_task.delay(domain)
     return HttpResponse('OK')
 
 
