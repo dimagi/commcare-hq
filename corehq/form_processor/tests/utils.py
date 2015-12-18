@@ -219,3 +219,18 @@ def get_simple_form_xml(form_id, case_id=None, metadata=None):
         case_block = CaseBlock(create=True, case_id=case_id).as_string()
     form_xml = SIMPLE_FORM.format(uuid=form_id, case_block=case_block, **metadata.to_json())
     return form_xml
+
+
+def get_simple_wrapped_form(form_id, case_id=None, metadata=None, save=True):
+    from corehq.form_processor.utils import convert_xform_to_json
+    xml = get_simple_form_xml(form_id=form_id, metadata=metadata)
+    form_json = convert_xform_to_json(xml)
+    from corehq.form_processor.interfaces.processor import FormProcessorInterface
+    interface = FormProcessorInterface(domain=metadata.domain)
+    wrapped_form = interface.new_xform(form_json)
+    wrapped_form.domain = metadata.domain
+    interface.store_attachments(wrapped_form, [Attachment('form.xml', xml, 'text/xml')])
+    if save:
+        interface.save_processed_models([wrapped_form])
+
+    return wrapped_form
