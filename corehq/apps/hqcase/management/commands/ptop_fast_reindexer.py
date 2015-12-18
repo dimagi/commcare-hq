@@ -335,10 +335,12 @@ class PtopReindexer(NoArgsCommand):
 def _ask_user_to_proceed(pillow_name):
     confirm = raw_input("""
         ### %s Fast Reindex !!! ###
+
         You have requested to do an elastic index reset via fast track.
-        This will IRREVERSIBLY REMOVE
-        ALL index data in the case index and will take a while to reload.
-        Are you sure you want to do this. Also you MUST have run_ptop disabled for this to run.
+        This will IRREVERSIBLY REMOVE ALL index data in the associated index.
+        Also, you MUST have run_ptop disabled for this to run.
+
+        Are you sure you want to do this?
 
         Type 'yes' to continue, or 'no' to cancel: """ % pillow_name)
 
