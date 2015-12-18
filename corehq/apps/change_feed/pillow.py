@@ -12,26 +12,25 @@ from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoin
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.feed.interface import ChangeMeta
 from pillowtop.listener import PythonPillow
+from pillowtop.processor import PillowProcessor
 
 
-class ChangeFeedPillow(PythonPillow):
-
-    def __init__(self, couch_db, kafka, checkpoint):
-        super(ChangeFeedPillow, self).__init__(couch_db=couch_db, checkpoint=checkpoint, chunk_size=10)
+class KafkaProcessor(PillowProcessor):
+    """
+    Processor that pushes changes to Kafka
+    """
+    def __init__(self, kafka):
         self._kafka = kafka
         self._producer = KeyedProducer(self._kafka)
 
-    def get_db_name(self):
-        return self.get_couch_db().dbname
-
-    def process_change(self, change, is_retry_attempt=False):
+    def process_change(self, pillow_instance, change, do_set_checkpoint=False):
         document_type = _get_document_type(change.document)
         if document_type:
             assert change.document is not None
             change_meta = ChangeMeta(
                 document_id=change.id,
                 data_source_type=data_sources.COUCH,
-                data_source_name=self.get_db_name(),
+                data_source_name=pillow_instance.get_db_name(),
                 document_type=document_type,
                 document_subtype=_get_document_subtype(change.document),
                 domain=change.document.get('domain', None),
@@ -47,6 +46,19 @@ class ChangeFeedPillow(PythonPillow):
                 # kafka seems to be down. sleep a bit to avoid crazy amounts of error spam
                 time.sleep(15)
                 raise
+
+
+class ChangeFeedPillow(PythonPillow):
+
+    def __init__(self, couch_db, kafka, checkpoint):
+        super(ChangeFeedPillow, self).__init__(couch_db=couch_db, checkpoint=checkpoint, chunk_size=10)
+        self._processor = KafkaProcessor(kafka)
+
+    def get_db_name(self):
+        return self.get_couch_db().dbname
+
+    def process_change(self, change, is_retry_attempt=False):
+        self._processor.process_change(self, change)
 
 
 def get_default_couch_db_change_feed_pillow():
