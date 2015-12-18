@@ -111,6 +111,8 @@ del _formdesigner_path
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
+DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
+
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -808,6 +810,9 @@ LOGGING = {
         'pillowtop': {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
+        'datadog': {
+            'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'
+        }
     },
     'filters': {
         'require_debug_false': {
@@ -842,6 +847,12 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'formatter': 'simple',
             'filename': ANALYTICS_LOG_FILE
+        },
+        'datadog': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'datadog',
+            'filename': DATADOG_LOG_FILE
         },
         'couchlog': {
             'level': 'WARNING',
@@ -910,6 +921,11 @@ LOGGING = {
             'handlers': ['analytics'],
             'level': 'DEBUG',
             'propagate': True,
+        },
+        'datadog-metrics': {
+            'handler': ['datadog'],
+            'level': 'INFO',
+            'propogate': False,
         },
     }
 }
