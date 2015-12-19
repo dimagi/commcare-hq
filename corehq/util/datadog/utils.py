@@ -78,3 +78,12 @@ def sanitize_url(url):
     # Remove URL params
     url = re.sub(r'\?[^ ]*', '', url)
     return url
+
+
+def get_url_group(url):
+    default = 'other'
+    if url.startswith('/a/' + WILDCARD):
+        parts = url.split('/')
+        return parts[3] if len(parts) >= 4 else default
+
+    return default
