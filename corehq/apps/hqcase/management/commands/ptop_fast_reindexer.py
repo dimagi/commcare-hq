@@ -204,7 +204,7 @@ class PtopReindexer(NoArgsCommand):
 
     def handle(self, *args, **options):
         if not options['noinput'] and not _ask_user_to_proceed(self.indexing_pillow_class.__name__):
-            self.log ("\tReset cancelled by user.")
+            self.log("\tReset cancelled by user.")
             return
 
         self._bootstrap(options)
