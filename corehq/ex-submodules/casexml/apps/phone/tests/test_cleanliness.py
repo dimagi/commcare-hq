@@ -617,6 +617,44 @@ class GetCaseFootprintInfoTest(TestCase):
         footprint_info = get_case_footprint_info(self.domain, self.owner_id)
         self.assertEqual(footprint_info.all_ids, set([extension.case_id, parent.case_id, child.case_id]))
 
+    def test_cousins(self):
+        """http://manage.dimagi.com/default.asp?189528
+        """
+        grandparent = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.other_owner_id}
+        )
+        parent_1 = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.other_owner_id},
+            indices=[CaseIndex(grandparent)]
+        )
+        parent_2 = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.other_owner_id},
+            indices=[CaseIndex(grandparent)]
+        )
+        child_1 = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.owner_id},
+            indices=[CaseIndex(parent_1)]
+        )
+        child_2 = CaseStructure(
+            case_id=uuid.uuid4().hex,
+            attrs={'owner_id': self.owner_id},
+            indices=[CaseIndex(parent_2)]
+        )
+        self.factory.create_or_update_cases([grandparent, parent_1, parent_2, child_1, child_2])
+        footprint_info = get_case_footprint_info(self.domain, self.owner_id)
+        self.assertEqual(
+            footprint_info.all_ids,
+            set([grandparent.case_id,
+                 parent_1.case_id,
+                 parent_2.case_id,
+                 child_1.case_id,
+                 child_2.case_id])
+        )
+
 
 class GetDependentCasesTest(TestCase):
     @classmethod
