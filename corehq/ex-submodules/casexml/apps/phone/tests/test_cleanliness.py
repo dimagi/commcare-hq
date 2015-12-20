@@ -621,26 +621,26 @@ class GetCaseFootprintInfoTest(TestCase):
         """http://manage.dimagi.com/default.asp?189528
         """
         grandparent = CaseStructure(
-            case_id=uuid.uuid4().hex,
+            case_id="Steffon",
             attrs={'owner_id': self.other_owner_id}
         )
         parent_1 = CaseStructure(
-            case_id=uuid.uuid4().hex,
+            case_id="Stannis",
             attrs={'owner_id': self.other_owner_id},
             indices=[CaseIndex(grandparent)]
         )
         parent_2 = CaseStructure(
-            case_id=uuid.uuid4().hex,
+            case_id="Robert",
             attrs={'owner_id': self.other_owner_id},
             indices=[CaseIndex(grandparent)]
         )
         child_1 = CaseStructure(
-            case_id=uuid.uuid4().hex,
+            case_id="Shireen",
             attrs={'owner_id': self.owner_id},
             indices=[CaseIndex(parent_1)]
         )
         child_2 = CaseStructure(
-            case_id=uuid.uuid4().hex,
+            case_id="Joffrey",
             attrs={'owner_id': self.owner_id},
             indices=[CaseIndex(parent_2)]
         )

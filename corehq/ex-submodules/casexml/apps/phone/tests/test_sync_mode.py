@@ -691,25 +691,25 @@ class SyncTokenUpdateTest(SyncBaseTest):
         """
         other_owner_id = uuid.uuid4().hex
         grandparent = CaseStructure(
-            case_id="grandparent",
+            case_id="Steffon",
             attrs={'owner_id': other_owner_id}
         )
         parent_1 = CaseStructure(
-            case_id="parent_1",
+            case_id="Stannis",
             attrs={'owner_id': other_owner_id},
             indices=[CaseIndex(grandparent)]
         )
         parent_2 = CaseStructure(
-            case_id="parent_2",
+            case_id="Robert",
             attrs={'owner_id': other_owner_id},
             indices=[CaseIndex(grandparent)]
         )
         child_1 = CaseStructure(
-            case_id="child_1",
+            case_id="Shireen",
             indices=[CaseIndex(parent_1)]
         )
         child_2 = CaseStructure(
-            case_id="child_2",
+            case_id="Joffrey",
             indices=[CaseIndex(parent_2)]
         )
         self.factory.create_or_update_cases([grandparent, parent_1, parent_2, child_1, child_2])
