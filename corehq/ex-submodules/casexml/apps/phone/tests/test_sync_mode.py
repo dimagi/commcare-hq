@@ -686,6 +686,41 @@ class SyncTokenUpdateTest(SyncBaseTest):
         next_sync_log = synclog_from_restore_payload(payload)
         self.assertFalse(next_sync_log.phone_is_holding_case(case.case_id))
 
+    def test_cousins(self):
+        """http://manage.dimagi.com/default.asp?189528
+        """
+        other_owner_id = uuid.uuid4().hex
+        grandparent = CaseStructure(
+            case_id="grandparent",
+            attrs={'owner_id': other_owner_id}
+        )
+        parent_1 = CaseStructure(
+            case_id="parent_1",
+            attrs={'owner_id': other_owner_id},
+            indices=[CaseIndex(grandparent)]
+        )
+        parent_2 = CaseStructure(
+            case_id="parent_2",
+            attrs={'owner_id': other_owner_id},
+            indices=[CaseIndex(grandparent)]
+        )
+        child_1 = CaseStructure(
+            case_id="child_1",
+            indices=[CaseIndex(parent_1)]
+        )
+        child_2 = CaseStructure(
+            case_id="child_2",
+            indices=[CaseIndex(parent_2)]
+        )
+        self.factory.create_or_update_cases([grandparent, parent_1, parent_2, child_1, child_2])
+        assert_user_has_cases(self, self.user, [
+            grandparent.case_id,
+            parent_1.case_id,
+            parent_2.case_id,
+            child_1.case_id,
+            child_2.case_id
+        ])
+
 
 class SyncDeletedCasesTest(SyncBaseTest):
 
