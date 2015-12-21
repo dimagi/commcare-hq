@@ -1508,7 +1508,6 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
 
     class Meta:
         db_table = 'messaging_mobilebackend'
-        unique_together = ('domain', 'name')
 
     @classmethod
     def get_available_extra_fields(cls):
