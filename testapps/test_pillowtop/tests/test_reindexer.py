@@ -42,6 +42,7 @@ class PillowtopReindexerTest(TestCase):
         self.assertEqual('CommCareCase', case_doc['doc_type'])
 
     def test_xform_reindexers(self):
+        FormProcessorTestUtils.delete_all_xforms()
         metadata = TestFormMetadata(domain=self.domain)
         form = make_es_ready_form(metadata).wrapped_form
         form.save()
@@ -55,6 +56,7 @@ class PillowtopReindexerTest(TestCase):
         form.delete()
 
     def test_unknown_user_reindexer(self):
+        FormProcessorTestUtils.delete_all_xforms()
         user_id = 'test-unknown-user'
         metadata = TestFormMetadata(domain=self.domain, user_id='test-unknown-user')
         form = make_es_ready_form(metadata).wrapped_form

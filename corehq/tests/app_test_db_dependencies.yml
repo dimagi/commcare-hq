@@ -16,6 +16,9 @@ testapps.test_pillowtop:
   - corehq.apps.hqadmin
   - corehq.apps.users
   - corehq.couchapps
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
   - couchforms
   - pillowtop
 casexml.apps.phone:
