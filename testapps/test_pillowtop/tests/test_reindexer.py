@@ -5,7 +5,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.es import UserES, CaseES, FormES, ESQuery
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests.utils import TestFormMetadata
+from corehq.form_processor.tests.utils import TestFormMetadata, FormProcessorTestUtils
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.elastic import delete_es_index
@@ -26,8 +26,10 @@ class PillowtopReindexerTest(TestCase):
         self.assertEqual(self.domain, user_doc['domain'])
         self.assertEqual(username, user_doc['username'])
         self.assertEqual('CommCareUser', user_doc['doc_type'])
+        delete_es_index(USER_INDEX)
 
     def test_case_reindexer(self):
+        FormProcessorTestUtils.delete_all_cases()
         case_name = 'reindexer-test-case-{}'.format(uuid.uuid4().hex)
         with drop_connected_signals(case_post_save):
             CommCareCase(domain=self.domain, name=case_name).save()
@@ -72,3 +74,4 @@ class PillowtopReindexerTest(TestCase):
         self.assertEqual(user_id, user_doc['_id'])
         self.assertEqual('UnknownUser', user_doc['doc_type'])
         form.delete()
+        delete_es_index(USER_INDEX)
