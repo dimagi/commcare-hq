@@ -935,7 +935,6 @@ class SavedBasicExport(BlobMixin, Document):
     A cache of an export that lives in couch.
     Doesn't do anything smart, just works off an index
     """
-    migrating_blobs_from_couch = True
     configuration = SchemaProperty(ExportConfiguration)
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
