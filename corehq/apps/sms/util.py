@@ -63,27 +63,34 @@ def format_message_list(message_list):
     return " ".join(message_list)
 
 
-# Creates a case by submitting system-generated casexml
-def register_sms_contact(domain, case_type, case_name, user_id, contact_phone_number, contact_phone_number_is_verified="1", contact_backend_id=None, language_code=None, time_zone=None, owner_id=None):
+def register_sms_contact(domain, case_type, case_name, user_id,
+        contact_phone_number, contact_phone_number_is_verified="1",
+        contact_backend_id=None, language_code=None, time_zone=None,
+        owner_id=None, contact_ivr_backend_id=None):
+    """
+    Creates a messaging case contact by submitting system-generated casexml
+    """
     utcnow = str(datetime.datetime.utcnow())
     case_id = str(uuid.uuid3(uuid.NAMESPACE_URL, utcnow))
     if owner_id is None:
         owner_id = user_id
     context = {
-        "case_id" : case_id,
-        "date_modified" : json_format_datetime(datetime.datetime.utcnow()),
-        "case_type" : case_type,
-        "case_name" : case_name,
-        "owner_id" : owner_id,
-        "user_id" : user_id,
-        "contact_phone_number" : contact_phone_number,
-        "contact_phone_number_is_verified" : contact_phone_number_is_verified,
-        "contact_backend_id" : contact_backend_id,
-        "language_code" : language_code,
-        "time_zone" : time_zone
+        "case_id": case_id,
+        "date_modified": json_format_datetime(datetime.datetime.utcnow()),
+        "case_type": case_type,
+        "case_name": case_name,
+        "owner_id": owner_id,
+        "user_id": user_id,
+        "contact_phone_number": contact_phone_number,
+        "contact_phone_number_is_verified": contact_phone_number_is_verified,
+        "contact_backend_id": contact_backend_id,
+        "language_code": language_code,
+        "time_zone": time_zone,
+        "contact_ivr_backend_id": contact_ivr_backend_id,
     }
     submit_case_block_from_template(domain, "sms/xml/register_contact.xml", context)
     return case_id
+
 
 def update_contact(domain, case_id, user_id, contact_phone_number=None, contact_phone_number_is_verified=None, contact_backend_id=None, language_code=None, time_zone=None):
     context = {
@@ -137,9 +144,16 @@ def close_task(domain, subcase_guid, submitting_user_id):
     submit_case_block_from_template(domain, "sms/xml/close_task.xml", context)
 
 
-def get_available_backends(index_by_api_id=False):
+def get_available_backends(index_by_api_id=False, backend_type='SMS'):
     result = {}
-    for backend_class in settings.SMS_LOADED_BACKENDS:
+    if backend_type == 'SMS':
+        backend_classes = settings.SMS_LOADED_BACKENDS
+    elif backend_type == 'IVR':
+        backend_classes = settings.IVR_LOADED_BACKENDS
+    else:
+        raise Exception("Unknown backend_type %s requested" % backend_type)
+
+    for backend_class in backend_classes:
         klass = to_function(backend_class)
         if index_by_api_id:
             api_id = klass.get_api_id()
