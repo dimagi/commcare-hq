@@ -348,6 +348,13 @@ class MobileBackend(SyncCouchToSQLMixin, SafeSaveDocument):
                     ) for domain in self.authorized_domains
                 ]
 
+    def wrap_correctly(self):
+        from corehq.apps.ivr.models import IVRBackend
+        return {
+            'SMS': SMSBackend,
+            'IVR': IVRBackend,
+        }.get(self.backend_type).wrap(self.to_json()).wrap_correctly()
+
 
 class SMSLoadBalancingInfo(object):
     def __init__(self, phone_number, stats_key=None, stats=None,
