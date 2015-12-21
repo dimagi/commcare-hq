@@ -1643,3 +1643,18 @@ class MobileBackendInvitation(models.Model):
     # The backend that is being shared
     backend = models.ForeignKey('SQLMobileBackend')
     accepted = models.BooleanField(default=False)
+
+
+class MigrationStatus(models.Model):
+    """
+    A model to keep track of whether certain messaging migrations have
+    been run yet or not.
+    """
+    class Meta:
+        db_table = 'messaging_migrationstatus'
+
+    # The name of the migration (i.e., 'backend', 'backend_map', 'sms', etc.)
+    name = models.CharField(max_length=126)
+
+    # The timestamp that the migration was run
+    timestamp = models.DateTimeField()
