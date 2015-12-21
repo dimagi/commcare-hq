@@ -1,5 +1,5 @@
 from corehq.apps.sms.mixin import MobileBackend
-from corehq.apps.sms.models import SQLMobileBackend, SMS
+from corehq.apps.sms.models import SQLMobileBackend, SMS, MigrationStatus
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import BaseCommand
 from optparse import make_option
@@ -112,6 +112,7 @@ def migrate(balance_only=False):
                 backend.wrap_correctly()._migration_do_sync()
     perform_sanity_checks()
     balance(couch_count, couch_count_deleted, couch_count_global)
+    MigrationStatus.set_migration_completed('backend')
 
 
 class Command(BaseCommand):

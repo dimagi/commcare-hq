@@ -1657,4 +1657,18 @@ class MigrationStatus(models.Model):
     name = models.CharField(max_length=126)
 
     # The timestamp that the migration was run
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(null=True)
+
+    @classmethod
+    def set_migration_completed(cls, name):
+        obj, created = cls.objects.get_or_create(name=name)
+        obj.timestamp = datetime.utcnow()
+        obj.save()
+
+    @classmethod
+    def has_migration_completed(cls, name):
+        try:
+            cls.objects.get(name=name)
+            return True
+        except cls.DoesNotExist:
+            return False
