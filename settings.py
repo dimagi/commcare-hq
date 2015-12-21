@@ -1601,7 +1601,7 @@ TRAVIS_TEST_GROUPS = (
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
         'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
         'couchapps', 'couchlog', 'crud', 'cvsu', 'django_digest',
-        'domain', 'domainsync', 'export',
+        'domain', 'domainsync', 'export', 'sms',
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
