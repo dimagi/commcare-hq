@@ -6,7 +6,7 @@ from django.template import RequestContext
 from django.conf import settings
 from django.views.generic import RedirectView
 
-from corehq.apps.domain.forms import ConfidentialPasswordResetForm
+from corehq.apps.domain.forms import ConfidentialPasswordResetForm, HQSetPasswordForm
 from corehq.apps.domain.views import (
     EditBasicProjectInfoView, EditPrivacySecurityView,
     DefaultProjectSettingsView, EditMyProjectSettingsView,
@@ -89,8 +89,8 @@ urlpatterns =\
             name='password_reset_done'),
 
         url(r'^accounts/password_reset_confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
-            'password_reset_confirm',
-            auth_pages_path('password_reset_confirm.html'), name="password_reset_confirm"),
+            'password_reset_confirm', extend(auth_pages_path('password_reset_confirm.html'),
+                                             {'set_password_form': HQSetPasswordForm}), name="password_reset_confirm"),
         url(r'^accounts/password_reset_confirm/done/$', 'password_reset_complete', auth_pages_path('password_reset_complete.html'),
             name='password_reset_complete')
     )
