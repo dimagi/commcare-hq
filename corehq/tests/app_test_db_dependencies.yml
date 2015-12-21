@@ -131,6 +131,7 @@ corehq.apps.commtrack:
   - corehq.apps.accounting
   - corehq.apps.dropbox
   - touchforms.formplayer
+  - corehq.apps.tour
 corehq.apps.userreports:
   - casexml.apps.case
   - casexml.apps.stock
