@@ -957,7 +957,7 @@ pwd_pattern = re.compile( r"([-\w]){"  + str(min_pwd) + ',' + str(max_pwd) + '}'
 
 def clean_password(txt):
     strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
-    if strength['score'] < 3:
+    if strength['score'] < 2:
         raise forms.ValidationError(_('Password is not strong enough. Try making your password more complex.'))
     return txt
 
