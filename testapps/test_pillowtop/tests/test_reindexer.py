@@ -8,7 +8,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import TestFormMetadata, FormProcessorTestUtils
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.context_managers import drop_connected_signals
-from corehq.util.elastic import delete_es_index
+from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import make_es_ready_form
 
 
@@ -59,7 +59,7 @@ class PillowtopReindexerTest(TestCase):
         metadata = TestFormMetadata(domain=self.domain, user_id='test-unknown-user')
         form = make_es_ready_form(metadata).wrapped_form
         form.save()
-        delete_es_index(USER_INDEX)
+        ensure_index_deleted(USER_INDEX)
         call_command('ptop_fast_reindex_unknownusers', noinput=True, bulk=True)
         # the default query doesn't include unknown users so should have no results
         self.assertEqual(0, UserES().run().total)
