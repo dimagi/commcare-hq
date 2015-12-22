@@ -99,8 +99,6 @@ def _get_subscription_properties_by_user(couch_user):
         'is_on_community_plan': _is_one_of_editions(SoftwarePlanEdition.COMMUNITY),
         'is_on_standard_plan': _is_one_of_editions(SoftwarePlanEdition.STANDARD),
         'is_on_pro_plan': _is_one_of_editions(SoftwarePlanEdition.PRO),
-        'is_on_advanced_plan': _is_one_of_editions(SoftwarePlanEdition.ADVANCED),
-        'is_on_enterprise_plan': _is_one_of_editions(SoftwarePlanEdition.ENTERPRISE),
         'is_on_pro_bono_plan': _is_a_pro_bono_status(ProBonoStatus.YES),
         'is_on_discounted_plan': _is_a_pro_bono_status(ProBonoStatus.DISCOUNTED),
         'is_on_extended_trial_plan': _is_on_extended_trial(),

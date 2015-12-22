@@ -28,6 +28,7 @@ from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.style.decorators import use_bootstrap3
 from dimagi.utils.web import json_response
 from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
 )
@@ -38,6 +39,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
+from corehq.apps.users.models import CommCareUser
 
 
 @cache_control(no_cache=True, no_store=True)
@@ -76,6 +78,7 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     context.update({
         'release_manager': True,
         'can_send_sms': can_send_sms,
+        'has_mobile_workers': get_doc_count_in_domain_by_class(domain, CommCareUser) > 0,
         'sms_contacts': (
             get_sms_autocomplete_context(request, domain)['sms_contacts']
             if can_send_sms else []

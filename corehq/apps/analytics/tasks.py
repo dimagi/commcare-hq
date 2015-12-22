@@ -4,6 +4,7 @@ from celery.schedules import crontab
 from celery.task import task, periodic_task
 import sys
 import tinys3
+from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
 from corehq.util.dates import unix_time
@@ -278,6 +279,8 @@ def track_periodic_data():
             if domain in domains_to_mobile_users and domains_to_mobile_users[domain] > max_workers:
                 max_workers = domains_to_mobile_users[domain]
 
+        project_spaces_created = ", ".join(get_domains_created_by_user(email))
+
         user_json = {
             'email': email,
             'properties': [
@@ -288,6 +291,10 @@ def track_periodic_data():
                 {
                     'property': 'max_mobile_workers_in_a_domain',
                     'value': max_workers
+                },
+                {
+                    'property': 'project_spaces_created_by_user',
+                    'value': project_spaces_created,
                 }
             ]
         }
@@ -311,8 +318,21 @@ def track_periodic_data():
         )
     _soft_assert(processing_time.seconds < 10, msg)
 
-    _batch_track_on_hubspot(submit_json)
-    _track_periodic_data_on_kiss(submit_json)
+    submit_data_to_hub_and_kiss(submit_json)
+
+
+def submit_data_to_hub_and_kiss(submit_json):
+    hubspot_dispatch = (_batch_track_on_hubspot, "Error submitting periodic analytics data to Hubspot")
+    kissmetrics_dispatch = (
+        _track_periodic_data_on_kiss, "Error submitting periodic analytics data to Kissmetrics"
+    )
+
+    for (dispatcher, error_message) in [hubspot_dispatch, kissmetrics_dispatch]:
+        try:
+            dispatcher(submit_json)
+        except Exception, e:
+            logger.error(error_message)
+            logger.exception(e)
 
 
 def _track_periodic_data_on_kiss(submit_json):

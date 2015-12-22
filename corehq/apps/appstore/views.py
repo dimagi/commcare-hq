@@ -1,5 +1,6 @@
 import json
 from urllib import urlencode
+from corehq.apps.appstore.exceptions import CopiedFromDeletedException
 from corehq.apps.registration.utils import create_30_day_trial
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
@@ -10,6 +11,7 @@ from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
 from django.shortcuts import render
 from django.contrib import messages
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.name_to_url import name_to_url
 from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.app_manager.views.apps import clear_app_cache
@@ -68,8 +70,8 @@ def can_view_app(req, dom):
     return True
 
 
-def project_info(request, domain, template="appstore/project_info.html"):
-    dom = Domain.get(domain)
+def project_info(request, snapshot, template="appstore/project_info.html"):
+    dom = Domain.get(snapshot)
     if not can_view_app(request, dom):
         raise Http404()
     copies = dom.copies_of_parent()
@@ -109,7 +111,23 @@ def appstore(request, template="appstore/appstore_base.html"):
     results = es_snapshot_query(params, SNAPSHOT_FACETS)
     hits = results.get('hits', {}).get('hits', [])
     hits = deduplicate(hits)
-    d_results = [Domain.wrap(res['_source']) for res in hits]
+    d_results = []
+    for res in hits:
+        try:
+            domain = Domain.wrap(res['_source'])
+            if domain.copied_from is not None:
+                # this avoids putting in snapshots in the list where the
+                # copied_from domain has been deleted.
+                d_results.append(domain)
+        except CopiedFromDeletedException as e:
+            notify_exception(
+                request,
+                message=(
+                    "Fetched Exchange Snapshot Error: {}. "
+                    "The problem snapshot id: {}".format(
+                    e.message, res['_source']['_id'])
+                )
+            )
 
     starter_apps = request.GET.get('is_starter_app', None)
     sort_by = request.GET.get('sort_by', None)
@@ -180,8 +198,8 @@ def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time"):
 
 
 @require_superuser
-def approve_app(request, domain):
-    domain = Domain.get(domain)
+def approve_app(request, snapshot):
+    domain = Domain.get(snapshot)
     if request.GET.get('approve') == 'true':
         domain.is_approved = True
         domain.save()
@@ -193,23 +211,23 @@ def approve_app(request, domain):
 
 @login_required
 @retry_resource(3)
-def import_app(request, domain):
+def import_app(request, snapshot):
     user = request.couch_user
     if not user.is_eula_signed():
         messages.error(request, 'You must agree to our eula to download an app')
-        return project_info(request, domain)
+        return project_info(request, snapshot)
 
-    from_project = Domain.get(domain)
+    from_project = Domain.get(snapshot)
 
     if request.method == 'POST' and from_project.is_snapshot:
         if not from_project.published:
             messages.error(request, "This project is not published and can't be downloaded")
-            return project_info(request, domain)
+            return project_info(request, snapshot)
 
         to_project_name = request.POST['project']
         if not user.is_member_of(to_project_name):
             messages.error(request, _("You don't belong to that project"))
-            return project_info(request, domain)
+            return project_info(request, snapshot)
 
         full_apps = from_project.full_applications(include_builds=False)
         assert full_apps, 'Bad attempt to copy apps from a project without any!'
@@ -224,17 +242,17 @@ def import_app(request, domain):
                          extra_tags="html")
         return HttpResponseRedirect(reverse('view_app', args=[to_project_name, new_doc.id]))
     else:
-        return HttpResponseRedirect(reverse('project_info', args=[domain]))
+        return HttpResponseRedirect(reverse('project_info', args=[snapshot]))
 
 
 @login_required
-def copy_snapshot(request, domain):
+def copy_snapshot(request, snapshot):
     user = request.couch_user
     if not user.is_eula_signed():
         messages.error(request, 'You must agree to our eula to download an app')
-        return project_info(request, domain)
+        return project_info(request, snapshot)
 
-    dom = Domain.get(domain)
+    dom = Domain.get(snapshot)
     if request.method == "POST" and dom.is_snapshot:
         assert dom.full_applications(include_builds=False), 'Bad attempt to copy project without any apps!'
 
@@ -250,11 +268,11 @@ def copy_snapshot(request, domain):
         if request.POST.get('new_project_name', ""):
             if not dom.published:
                 messages.error(request, _("This project is not published and can't be downloaded"))
-                return project_info(request, domain)
+                return project_info(request, snapshot)
 
             if not form.is_valid():
                 messages.error(request, form.errors)
-                return project_info(request, domain)
+                return project_info(request, snapshot)
 
             new_domain_name = name_to_url(form.cleaned_data['hr_name'], "project")
             with CriticalSection(['copy_domain_snapshot_{}_to_{}'.format(dom.name, new_domain_name)]):
@@ -267,7 +285,7 @@ def copy_snapshot(request, domain):
 
                 except NameUnavailableException:
                     messages.error(request, _("A project by that name already exists"))
-                    return project_info(request, domain)
+                    return project_info(request, snapshot)
 
                 # sign new project up for trial
                 create_30_day_trial(new_domain)
@@ -283,13 +301,13 @@ def copy_snapshot(request, domain):
                                                 args=[new_domain.name, new_domain.full_applications()[0].get_id]))
         else:
             messages.error(request, _("You must specify a name for the new project"))
-            return project_info(request, domain)
+            return project_info(request, snapshot)
     else:
-        return HttpResponseRedirect(reverse('project_info', args=[domain]))
+        return HttpResponseRedirect(reverse('project_info', args=[snapshot]))
 
 
-def project_image(request, domain):
-    project = Domain.get(domain)
+def project_image(request, snapshot):
+    project = Domain.get(snapshot)
     if project.image_path:
         image = project.fetch_attachment(project.image_path)
         return HttpResponse(image, content_type=project.image_type)
@@ -297,8 +315,8 @@ def project_image(request, domain):
         raise Http404()
 
 
-def project_documentation_file(request, domain):
-    project = Domain.get(domain)
+def project_documentation_file(request, snapshot):
+    project = Domain.get(snapshot)
     if project.documentation_file_path:
         documentation_file = project.fetch_attachment(project.documentation_file_path)
         return HttpResponse(documentation_file, content_type=project.documentation_file_type)
@@ -307,8 +325,8 @@ def project_documentation_file(request, domain):
 
 
 @login_required
-def deployment_info(request, domain, template="appstore/deployment_info.html"):
-    dom = Domain.get_by_name(domain)
+def deployment_info(request, snapshot, template="appstore/deployment_info.html"):
+    dom = Domain.get_by_name(snapshot)
     if not dom or not dom.deployment.public:
         raise Http404()
 
@@ -377,8 +395,8 @@ def es_deployments_query(params, facets=None, terms=None, sort_by="snapshot_time
     return es_query(params, facets, terms, q)
 
 
-def media_files(request, domain, template="appstore/media_files.html"):
-    dom = Domain.get(domain)
+def media_files(request, snapshot, template="appstore/media_files.html"):
+    dom = Domain.get(snapshot)
     if not can_view_app(request, dom):
         raise Http404()
 

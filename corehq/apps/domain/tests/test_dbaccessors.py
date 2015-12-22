@@ -1,8 +1,12 @@
 import uuid
 from django.test import TestCase
 from corehq.apps.commtrack.models import CommtrackConfig
-from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class, get_domain_ids_by_names, \
-    get_docs_in_domain_by_class
+from corehq.apps.domain.dbaccessors import (
+    get_doc_count_in_domain_by_class,
+    get_doc_ids_in_domain_by_class,
+    get_docs_in_domain_by_class,
+    get_domain_ids_by_names,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import UserRole
@@ -17,6 +21,16 @@ class DBAccessorsTest(TestCase):
     def setUpClass(cls):
         cls.domain = 'domain-domain'
         cls.db = get_db()
+
+    def test_get_doc_count_in_domain_by_class(self):
+        group = Group(domain=self.domain)
+        group.save()
+        self.addCleanup(group.delete)
+        group2 = Group(domain=self.domain)
+        group2.save()
+        self.addCleanup(group2.delete)
+        count = get_doc_count_in_domain_by_class(self.domain, Group)
+        self.assertEqual(count, 2)
 
     def test_get_doc_ids_in_domain_by_class(self):
         user_role = UserRole(domain=self.domain)

@@ -37,6 +37,7 @@
                 {% endblocktrans %}
                 {% if request.user.is_superuser and request|toggle_enabled:'SUPPORT' %}
                 <form method="post" action="" class="pull-right">
+                    {% csrf_token %}
                     <input type="hidden" name="case_id" value="{{ key.case_id }}">
                     <input type="hidden" name="section_id" value="{{ key.section_id }}">
                     <input type="hidden" name="product_id" value="{{ key.product_id }}">

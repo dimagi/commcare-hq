@@ -9,6 +9,7 @@
           action="{% url "corehq.apps.importer.views.excel_config" domain %}"
           method="post"
           enctype="multipart/form-data">
+        {% csrf_token %}
         <fieldset>
             <legend>
                 {% trans "Upload an Excel File From Your Computer to Import From" %}

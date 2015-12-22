@@ -34,14 +34,8 @@ class ProgramsTest(CommTrackTest):
             2,
             len(Program.by_domain(self.domain.name))
         )
-        self.assertEqual(
-            2,
-            Product.by_program_id(self.domain.name, self.default_program._id).count()
-        )
-        self.assertEqual(
-            1,
-            Product.by_program_id(self.domain.name, self.new_program._id).count()
-        )
+        self.assertEqual(2, self.default_program.get_products_count())
+        self.assertEqual(1, self.new_program.get_products_count())
         self.assertEqual(
             self.new_program._id,
             self.products[0].program_id
@@ -58,14 +52,8 @@ class ProgramsTest(CommTrackTest):
         with self.assertRaises(ResourceNotFound):
             Program.get(new_program_id)
 
-        self.assertEqual(
-            1,
-            len(Program.by_domain(self.domain.name))
-        )
-        self.assertEqual(
-            3,
-            Product.by_program_id(self.domain.name, self.default_program._id).count()
-        )
+        self.assertEqual(1, len(Program.by_domain(self.domain.name)))
+        self.assertEqual(3, self.default_program.get_products_count())
         self.assertEqual(
             self.default_program._id,
             Product.get(self.products[0]._id).program_id

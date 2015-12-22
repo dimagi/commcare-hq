@@ -438,7 +438,7 @@
                     }, 60000);
                 }
                 chat_window_view_model = new ChatWindowViewModel();
-                $('body').koApplyBindings(chat_window_view_model);
+                ko.applyBindings(chat_window_view_model);
                 $(window).resize(resize_messages);
                 $(window).focus(chat_window_view_model.enter_focus);
                 $(window).blur(chat_window_view_model.leave_focus);

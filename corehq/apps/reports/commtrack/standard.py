@@ -10,7 +10,7 @@ from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.locations.models import Location, SQLLocation
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
+from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.filters.commtrack import AdvancedColumns
 
@@ -142,12 +142,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         stock_states = stock_states.order_by('product_id')
 
         if self.program_id:
-            stock_states = stock_states.filter(
-                product_id__in=product_ids_filtered_by_program(
-                    self.domain,
-                    self.program_id
-                )
-            )
+            stock_states = stock_states.filter(sql_product__program_id=self.program_id)
 
         product_grouping = {}
         for state in stock_states:
@@ -168,16 +163,17 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                 }
                 product_grouping[state.product_id][status] = 1
 
-        for product in product_grouping.values():
-            yield [
-                product['obj'].name,
-                product['facility_count'],
-                100.0 * product['stockout'] / product['facility_count'],
-                100.0 * product['understock'] / product['facility_count'],
-                100.0 * product['adequate'] / product['facility_count'],
-                100.0 * product['overstock'] / product['facility_count'],
-                100.0 * product['nodata'] / product['facility_count'],
-            ]
+        rows = [[
+            product['obj'].name,
+            product['facility_count'],
+            100.0 * product['stockout'] / product['facility_count'],
+            100.0 * product['understock'] / product['facility_count'],
+            100.0 * product['adequate'] / product['facility_count'],
+            100.0 * product['overstock'] / product['facility_count'],
+            100.0 * product['nodata'] / product['facility_count'],
+        ] for product in product_grouping.values()]
+
+        return sorted(rows, key=lambda r: r[0].lower())
 
     @property
     def rows(self):
@@ -223,19 +219,13 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
         'corehq.apps.reports.filters.dates.SingleDateFilter',
     ]
 
-    def __init__(self, *args, **kwargs):
-        super(SimplifiedInventoryReport, self).__init__(*args, **kwargs)
+    @property
+    @memoized
+    def products(self):
         products = SQLProduct.objects.filter(domain=self.domain)
-
         if self.program_id:
             products = products.filter(program_id=self.program_id)
-
-        # product names used for columns are sorted by product name
-        self.product_names = dict([(p.product_id, p.name) for p in products])
-
-        self.product_dict = {
-            p: None for p in products.values_list('product_id', flat=True)
-        }
+        return list(products.order_by('name'))
 
     @property
     def headers(self):
@@ -243,7 +233,7 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
             DataTablesColumn(_('Location')),
         ]
 
-        columns += [DataTablesColumn(p) for p in sorted(self.product_names.values())]
+        columns += [DataTablesColumn(p.name) for p in self.products]
 
         return DataTablesHeader(*columns)
 
@@ -260,10 +250,10 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
         data = SimplifiedInventoryDataSource(config).get_data()
 
         for loc_name, loc_data in data:
-            row_dict = dict(self.product_dict, **dict(loc_data))
             yield [loc_name] + [
-                v if v is not None else _('No data')
-                for k, v in sorted(row_dict.items(), key=lambda(k, v): self.product_names[k])]
+                loc_data.get(p.product_id, _('No data'))
+                for p in self.products
+            ]
 
 
 class InventoryReport(GenericTabularReport, CommtrackReportMixin):

@@ -11,6 +11,11 @@ function (doc) {
             report_date;
 
         report_date = closed_date;
+        if (indicators.date_of_termination && indicators.date_of_termination.value) {
+          report_date = date_of_termination.value;
+        } else {
+          report_date = closed_date;
+        }
 
         if (isVerbalAutopsyNeonateForm(doc)) {
             indicator_keys.push("va_neonate");

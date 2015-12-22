@@ -103,6 +103,7 @@
                             <h3>{% trans "Delete SMS Connection?" %}</h3>
                         </div>
                         <form class="form form-horizontal" name="delete_backend" action="{% if show_global %}{% url "delete_backend" backend.get_id %}{% else %}{% url "delete_domain_backend" domain backend.get_id %}{% endif %}" method="post">
+                            {% csrf_token %}
                             <div class="modal-body">
                                 <p>{% trans "Are you sure you want to delete SMS Connection" %} '{{ backend.name }}'?</p>
                             </div>

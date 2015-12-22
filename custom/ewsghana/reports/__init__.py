@@ -6,9 +6,9 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
+from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.graph_models import LineChart, MultiBarChart, PieChart
-
 from custom.ewsghana.filters import EWSRestrictionLocationFilter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.common import ALL_OPTION
@@ -72,8 +72,9 @@ class EWSData(object):
 
     @property
     def location_id(self):
+        from custom.ewsghana import ROOT_SITE_CODE
         return self.config.get('location_id') or get_object_or_404(
-            SQLLocation, domain=self.domain, location_type__name='country'
+            SQLLocation, domain=self.domain, site_code=ROOT_SITE_CODE
         ).location_id
 
     @property
@@ -165,12 +166,13 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
     @property
     @memoized
     def location(self):
+        from custom.ewsghana import ROOT_SITE_CODE
         loc_id = self.request_params.get('location_id')
         if loc_id:
             return get_object_or_404(SQLLocation, location_id=loc_id, is_archived=False)
         else:
             return get_object_or_404(
-                SQLLocation, location_type__name='country', domain=self.domain, is_archived=False
+                SQLLocation, site_code=ROOT_SITE_CODE, domain=self.domain, is_archived=False
             )
 
     @property
@@ -286,7 +288,7 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
 
     def get_report_context(self, data_provider):
         total_row = []
-        headers = []
+        headers = DataTablesHeader()
         rows = []
 
         if not self.needs_filters and data_provider.show_table:

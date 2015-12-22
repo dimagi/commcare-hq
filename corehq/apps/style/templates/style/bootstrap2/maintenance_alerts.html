@@ -17,6 +17,7 @@ $(function () {
             shown at a time, and the most recently modified alert will be displayed.
         </p>
         <form method="post" action="{% url 'create_alert' %}" id="alertForm">
+            {% csrf_token %}
             <textarea name="alert_text" placeholder="Alert text..." form="alertForm"></textarea>
             <button type="submit" class="btn btn-primary">Preview Alert</button>
         </form>
@@ -38,12 +39,14 @@ $(function () {
                 <td data-bind="text: active"></td>
                 <td>
                     <form method="post" action="{% url 'activate_alert' %}">
+                        {% csrf_token %}
                         <input name="alert_id" type="hidden" data-bind="value: id">
                         <button type="submit" class="btn btn-primary">Activate Alert</button>
                     </form>
                 </td>
                 <td>
                     <form method="post" action="{% url 'deactivate_alert' %}">
+                        {% csrf_token %}
                         <input name="alert_id" type="hidden" data-bind="value: id">
                         <button type="submit" class="btn btn-error">De-activate Alert</button>
                     </form>
