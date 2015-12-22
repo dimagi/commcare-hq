@@ -136,6 +136,15 @@ def get_project_spaces(facets=None):
     """
     Returns a list of names of project spaces that satisfy the facets
     """
+    def normalize_domain_names(domain_names):
+        ret = []
+        for d in domain_names:
+            if type(d) == list:
+                assert len(d) == 1
+                d = d[0]
+            ret.append(d)
+        return ret
+
     real_domain_query = (
         DomainES()
         .fields(["name"])
@@ -145,6 +154,7 @@ def get_project_spaces(facets=None):
         real_domain_query = add_params_to_query(real_domain_query, facets)
     real_domain_query_results = real_domain_query.run().raw_hits
     domain_names = [_['fields']['name'] for _ in real_domain_query_results]
+    domain_names = normalize_domain_names(domain_names)
     if 'search' in facets:
         return list(set(domain_names) & set(facets['search']))
     return domain_names
