@@ -2458,10 +2458,9 @@ class CreditLine(models.Model):
                                                  feature_type=None,
                                                  product_type=None):
         return cls.objects.filter(
-            models.Q(subscription=subscription) |
-            models.Q(account=subscription.account, subscription__exact=None)
-        ).filter(
-            product_type__exact=product_type, feature_type__exact=feature_type
+            subscription=subscription,
+            feature_type__exact=feature_type,
+            product_type__exact=product_type,
         ).all()
 
     @classmethod
