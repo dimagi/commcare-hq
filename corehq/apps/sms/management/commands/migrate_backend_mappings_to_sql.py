@@ -13,7 +13,7 @@ def balance(couch_count):
 
 
 def migrate(balance_only=False):
-    if not MigrationStatus.has_migration_completed('backend'):
+    if not MigrationStatus.has_migration_completed(MigrationStatus.MIGRATION_BACKEND):
         print ("ERROR: The backend migration (./manage.py migrate_backends_to_sql) "
                "must be completed before doing the backend mapping migration")
         return
@@ -30,7 +30,7 @@ def migrate(balance_only=False):
             mapping._migration_do_sync()
     balance(couch_count)
     if not balance_only:
-        MigrationStatus.set_migration_completed('backend_map')
+        MigrationStatus.set_migration_completed(MigrationStatus.MIGRATION_BACKEND_MAP)
 
 
 class Command(BaseCommand):

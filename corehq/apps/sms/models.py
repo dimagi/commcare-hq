@@ -1650,10 +1650,14 @@ class MigrationStatus(models.Model):
     A model to keep track of whether certain messaging migrations have
     been run yet or not.
     """
+
+    MIGRATION_BACKEND = 'backend'
+    MIGRATION_BACKEND_MAP = 'backend_map'
+
     class Meta:
         db_table = 'messaging_migrationstatus'
 
-    # The name of the migration (i.e., 'backend', 'backend_map', 'sms', etc.)
+    # The name of the migration (one of the MIGRATION_* constants above)
     name = models.CharField(max_length=126)
 
     # The timestamp that the migration was run
