@@ -20,8 +20,11 @@ def migrate(balance_only=False):
 
     # There aren't a lot of backend mappings, no need to use iter_docs
     mappings = BackendMapping.view(
-        'sms/backend_map',
-        include_docs=True
+        'all_docs/by_doc_type',
+        startkey=['BackendMapping'],
+        endkey=['BackendMapping', {}],
+        include_docs=True,
+        reduce=False
     ).all()
     couch_count = 0
     for mapping in mappings:
