@@ -717,6 +717,7 @@ var AdvancedCase = (function () {
 
             self.removeProperty = function (property) {
                 self.case_properties.remove(property);
+                self.config.saveButton.fire('change');
             };
 
             self.addPreload = function () {
@@ -729,6 +730,7 @@ var AdvancedCase = (function () {
 
             self.removePreload = function (property) {
                 self.preload.remove(property);
+                self.config.saveButton.fire('change');
             };
 
             self.hasPreload = function() {
@@ -950,6 +952,7 @@ var AdvancedCase = (function () {
 
             self.removeProperty = function (property) {
                 self.case_properties.remove(property);
+                self.config.saveButton.fire('change');
             };
 
             self.relationshipTypes = ActionBase.relationshipTypes;

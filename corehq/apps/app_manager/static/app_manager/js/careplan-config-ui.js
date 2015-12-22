@@ -259,6 +259,7 @@ var CareplanConfig = (function () {
 
             self.removeProperty = function (property) {
                 self.case_properties.remove(property);
+                self.careplanConfig.saveButton.fire('change');
             };
 
             self.addPreload = function () {
@@ -272,6 +273,7 @@ var CareplanConfig = (function () {
 
             self.removePreload = function (property) {
                 self.case_preload.remove(property);
+                self.careplanConfig.saveButton.fire('change');
             };
 
             self.repeat_context = function () {
