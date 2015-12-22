@@ -4,6 +4,7 @@ from django.test import TestCase
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.es import UserES, CaseES, FormES, ESQuery
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import TestFormMetadata, FormProcessorTestUtils
 from corehq.pillows.mappings.user_mapping import USER_INDEX
@@ -17,6 +18,7 @@ class PillowtopReindexerTest(TestCase):
     domain = 'reindex-test-domain'
 
     def test_user_reindexer(self):
+        delete_all_users()
         username = 'reindex-test-username'
         CommCareUser.create(self.domain, username, 'secret')
         call_command('ptop_fast_reindex_users', noinput=True, bulk=True)
