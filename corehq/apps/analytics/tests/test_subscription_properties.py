@@ -51,9 +51,8 @@ class TestSubscriptionProperties(TestCase):
             account,
             domain_name,
             plan,
-            date_start=datetime.date.today() + datetime.timedelta(days=1),
+            date_start=datetime.date.today() - datetime.timedelta(days=1),
             date_end=datetime.date.today() + datetime.timedelta(days=5))
-        subscription.is_active = True
         subscription.save()
         cls._to_delete.append(account)
         cls._to_delete.append(subscription)
