@@ -25,12 +25,20 @@ class EmailAuthenticationForm(AuthenticationForm):
         return username
 
     def clean(self):
-        username = self.cleaned_data['username']
-        user = CouchUser.get_by_username(username)
         lockout_message = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password.'))
-        if user and user.locked_out:
+        username = self.cleaned_data['username']
+        try:
+            cleaned_data = super(EmailAuthenticationForm, self).clean()
+        except ValidationError:
+            user = CouchUser.get_by_username(username)
+            if user and user.login_attempts > 4:
+                raise ValidationError(lockout_message)
+            else:
+                raise
+        user = CouchUser.get_by_username(username)
+        if user and user.login_attempts > 4:
             raise ValidationError(lockout_message)
-        return super(EmailAuthenticationForm, self).clean()
+        return cleaned_data
 
 
 

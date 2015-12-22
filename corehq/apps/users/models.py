@@ -2037,7 +2037,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     program_id = StringProperty()
 
-    locked_out = BooleanProperty(default=False)
     login_attempts = IntegerProperty(default=0)
     attempt_date = DateProperty()
 
