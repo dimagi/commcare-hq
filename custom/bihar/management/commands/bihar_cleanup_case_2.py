@@ -5,7 +5,6 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.core.management import BaseCommand
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xml import V2
 from corehq.apps.hqcase.utils import submit_case_blocks
 from dimagi.utils.chunked import chunked
 
