@@ -1208,6 +1208,7 @@ class Subscription(models.Model):
         if self.is_active != is_active_dates:
             if is_active_dates:
                 self.is_active = True
+                self.subscriber.activate_subscription(get_privileges(self.plan_version), self)
             else:
                 raise SubscriptionAdjustmentError(
                     'Cannot deactivate a subscription here. Cancel subscription instead.'
