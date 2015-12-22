@@ -17,6 +17,7 @@ import KISSmetrics
 import logging
 
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.accounting.models import SoftwarePlanEdition
 
@@ -156,16 +157,13 @@ def update_hubspot_properties(webuser, properties):
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
-def track_created_hq_account_on_hubspot(webuser, cookies, meta):
-    _track_on_hubspot(webuser, {
-        'created_account_in_hq': True,
-        'is_a_commcare_user': True,
-    })
-    _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, cookies, meta)
-
-
-@task(queue='background_queue', acks_late=True, ignore_result=True)
-def track_user_sign_in_on_hubspot(webuser, cookies, meta):
+def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
+    if path.startswith(reverse("register_user")):
+        _track_on_hubspot(webuser, {
+            'created_account_in_hq': True,
+            'is_a_commcare_user': True,
+        })
+        _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, cookies, meta)
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, cookies, meta)
 
 
