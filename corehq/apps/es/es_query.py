@@ -301,6 +301,8 @@ class ESQuery(object):
         query = deepcopy(self)
         if default in query._default_filters:
             query._default_filters.pop(default)
+        if len(query._default_filters) == 0:
+            query._default_filters = {"match_all": filters.match_all()}
         return query
 
     def values(self, *fields):
