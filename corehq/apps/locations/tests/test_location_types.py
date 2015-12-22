@@ -115,13 +115,20 @@ class TestLocationTypeOwnership(TestCase):
         )
 
     def test_archived_locations_are_not_included(self):
-        parent_type = make_loc_type('parent', domain=self.domain, shares_cases=True, view_descendants=True)
-        child_type = make_loc_type('child', domain=self.domain, shares_cases=False)
-        grandchild_type = make_loc_type('grandchild', domain=self.domain, shares_cases=True)
-        parent_loc = make_loc('parent', type=parent_type.name, domain=self.domain)
-        child_loc = make_loc('child', type=child_type.name, domain=self.domain, parent=parent_loc)
-        grandchild_loc = make_loc('grandchild', type=grandchild_type.name, domain=self.domain, parent=child_loc)
-        archived_grandchild_loc = make_loc('archived_grandchild', type=grandchild_type.name, domain=self.domain, parent=child_loc, is_archived=True)
+        parent_type = make_loc_type('parent', domain=self.domain,
+                shares_cases=True, view_descendants=True)
+        child_type = make_loc_type('child', domain=self.domain,
+                shares_cases=False)
+        grandchild_type = make_loc_type('grandchild', domain=self.domain,
+                shares_cases=True)
+        parent_loc = make_loc('parent', type=parent_type.name,
+                domain=self.domain)
+        child_loc = make_loc('child', type=child_type.name, domain=self.domain,
+                parent=parent_loc)
+        grandchild_loc = make_loc('grandchild', type=grandchild_type.name,
+                domain=self.domain, parent=child_loc)
+        make_loc('archived_grandchild', type=grandchild_type.name,
+                 domain=self.domain, parent=child_loc, is_archived=True)
         self.user.set_location(parent_loc)
         self.assertEqual(
             set([parent_loc._id, grandchild_loc._id]),
