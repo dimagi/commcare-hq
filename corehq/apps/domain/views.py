@@ -9,19 +9,22 @@ import cStringIO
 from couchdbkit import ResourceNotFound
 import dateutil
 from django.core.paginator import Paginator
-from django.views.generic import View
+from django.views.generic import View, TemplateView
 from django.db.models import Sum
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
+from django.utils.http import urlsafe_base64_decode
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import redirect, render
 from django.contrib import messages
+from django.contrib.auth.views import password_reset_confirm
 from django.views.decorators.http import require_POST
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.contrib.auth.models import User
 
 from corehq.const import USER_DATE_FORMAT
 from custom.dhis2.forms import Dhis2SettingsForm
@@ -101,6 +104,7 @@ from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRe
 from dimagi.utils.post import simple_post
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.signals import clear_failed_logins_and_unlock_account
 
 
 accounting_logger = logging.getLogger('accounting')
@@ -2809,3 +2813,18 @@ class CardsView(BaseCardView):
             return self._generic_error()
 
         return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
+
+
+class PasswordResetView(View):
+    urlname = "password_reset_confirm"
+
+    def get(self, request, *args, **kwargs):
+        return password_reset_confirm(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        response = password_reset_confirm(request, *args, **kwargs)
+        uidb64 = kwargs.get('uidb64')
+        uid = urlsafe_base64_decode(uidb64)
+        user = User.objects.get(pk=uid)
+        clear_failed_logins_and_unlock_account(None, request, user)
+        return response
