@@ -781,7 +781,7 @@ class SoftwarePlanVersion(models.Model):
             return product_rate.product.product_type
         except (IndexError, SoftwareProductRate.DoesNotExist):
             pass
-        return "CommCare"
+        return SoftwareProductType.COMMCARE
 
     @property
     def version(self):
@@ -2210,6 +2210,49 @@ class BillingRecord(BillingRecordBase):
                 'last_4': last_4,
             })
 
+        product_type = self.invoice.subscription.plan_version.core_product
+        plan_credit_adjustment = CreditAdjustment.objects.filter(
+            invoice=self.invoice,
+            line_item__product_rate__product__product_type=product_type,
+        )
+        plan_credits = CreditLine.get_total_credits(
+            subscription=self.invoice.subscription,
+            product_type=product_type,
+        ) or Decimal('0.00')
+        if plan_credit_adjustment or plan_credits:
+            context.update({
+                'show_plan_credits': True,
+                'plan_credits': plan_credits,
+            })
+
+        user_credit_adjustment = CreditAdjustment.objects.filter(
+            invoice=self.invoice,
+            line_item__feature_rate__feature__feature_type=FeatureType.USER,
+        )
+        user_credits = CreditLine.get_total_credits(
+            subscription=self.invoice.subscription,
+            feature_type=FeatureType.USER,
+        ) or Decimal('0.00')
+        if user_credit_adjustment or user_credits:
+            context.update({
+                'show_user_credits': True,
+                'user_credits': user_credits,
+            })
+
+        sms_credit_adjustment = CreditAdjustment.objects.filter(
+            invoice=self.invoice,
+            line_item__feature_rate__feature__feature_type=FeatureType.SMS,
+        )
+        sms_credits = CreditLine.get_total_credits(
+            subscription=self.invoice.subscription,
+            feature_type=FeatureType.SMS,
+        ) or Decimal('0.00')
+        if sms_credit_adjustment or sms_credits:
+            context.update({
+                'show_sms_credits': True,
+                'sms_credits': sms_credits,
+            })
+
         return context
 
     def email_subject(self):
@@ -2463,6 +2506,31 @@ class CreditLine(models.Model):
         ).filter(
             product_type__exact=product_type, feature_type__exact=feature_type
         ).all()
+
+    @classmethod
+    def get_total_credits(cls, subscription=None, account=None, product_type=None, feature_type=None):
+        assert subscription or account
+        assert not product_type or not feature_type
+
+        kwargs = {}
+        if product_type:
+            kwargs['product_type'] = product_type
+        elif feature_type:
+            kwargs['feature_type'] = feature_type
+
+        credit_lines = []
+        if subscription is not None:
+            credit_lines = CreditLine.get_credits_by_subscription_and_features(
+                subscription, **kwargs
+            )
+        elif account is not None:
+            credit_lines = CreditLine.get_credits_for_account(
+                account, **kwargs
+            )
+
+        if credit_lines:
+            return sum(map(lambda credit_line: credit_line.balance, credit_lines))
+        return None
 
     @classmethod
     def add_credit(cls, amount, account=None, subscription=None,
