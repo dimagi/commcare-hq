@@ -54,7 +54,6 @@ branches:
   - requests #Simon 11/3
   - add-tableau-dashboard # TS 11/5
   - fix-toggle #wsp 12/14
-  - saved-export-blobs # Daniel 12/3
   - es-fix # Noah 12/7
   - location-delete # Cal 12/16
   - password-strength # Cal 12/17
