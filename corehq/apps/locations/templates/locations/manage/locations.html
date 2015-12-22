@@ -98,7 +98,7 @@ delete_loc = function(button, name, loc_id) {
     function delete_fn() {
         $(button).disableButton();
         $.ajax({
-            type: 'POST',
+            type: 'DELETE',
             url: loc_delete_url(loc_id),
             dataType: 'json',
             error: function (response, status, error) {

@@ -603,7 +603,7 @@ class Location(CachedCouchDocumentMixin, Document):
         Delete a location and its dependants.
         This also unassigns users assigned to the location.
         """
-        to_delete = [loc for loc in [self] + self.descendants]
+        to_delete = [self] + self.descendants
 
         # if there are errors deleting couch locations, roll back sql delete
         with transaction.atomic():
