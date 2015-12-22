@@ -58,4 +58,3 @@ class TestDeleteDomain(TestCase):
 
     def tearDown(self):
         self.domain2.delete()
-

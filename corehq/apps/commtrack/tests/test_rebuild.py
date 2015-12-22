@@ -43,7 +43,7 @@ class RebuildStockStateTest(TestCase):
         )
 
     def _get_stats(self):
-        stock_state = StockState.include_archived.get(**self._stock_state_key)
+        stock_state = StockState.objects.get(**self._stock_state_key)
         latest_txn = StockTransaction.latest(**self._stock_state_key)
         all_txns = StockTransaction.get_ordered_transactions_for_stock(
             **self._stock_state_key)

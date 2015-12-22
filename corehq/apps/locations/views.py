@@ -360,6 +360,7 @@ def archive_location(request, domain, loc_id):
         )
     })
 
+
 @require_http_methods(['DELETE'])
 @can_edit_location
 def delete_location(request, domain, loc_id):

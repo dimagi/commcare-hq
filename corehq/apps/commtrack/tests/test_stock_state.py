@@ -113,15 +113,6 @@ class StockStateBehaviorTest(StockStateTest):
                 product_id=self.products[0]._id,
             )
 
-        # should still show up in include_archived filter
-        self.assertEqual(
-            StockState.include_archived.get(
-                section_id='stock',
-                case_id=self.sp.case_id,
-                product_id=self.products[0]._id,
-            ).product_id,
-            self.products[0]._id
-        )
 
     def test_domain_mapping(self):
         # make sure there's a fake case setup for this
