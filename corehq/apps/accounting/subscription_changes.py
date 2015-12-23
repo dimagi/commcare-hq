@@ -6,6 +6,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ungettext
 from corehq import privileges
 from corehq.apps.accounting.utils import get_active_reminders_by_domain_name
+from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.app_manager.models import Application
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.models import Domain
@@ -76,6 +77,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         privileges.ROLE_BASED_ACCESS,
         privileges.DATA_CLEANUP,
         LATER_SUBSCRIPTION_NOTIFICATION,
+        privileges.COMMCARE_LOGO_UPLOADER,
     ]
     action_type = "downgrade"
 
@@ -200,6 +202,23 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             )
             return False
 
+    @property
+    def response_commcare_logo_uploader(self):
+        """Make sure no existing applications are using a logo.
+        """
+        try:
+            for app in get_all_apps(self.domain.name):
+                has_archived = app.archive_logos()
+                if has_archived:
+                    app.save()
+            return True
+        except Exception:
+            logger.exception(
+                "[BILLING] Failed to remove all commcare logos "
+                "for domain %s." % self.domain.name
+            )
+            return False
+
 
 class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
     """
@@ -209,6 +228,7 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
     """
     supported_privileges = [
         privileges.ROLE_BASED_ACCESS,
+        privileges.COMMCARE_LOGO_UPLOADER,
     ]
     action_type = "upgrade"
 
@@ -225,6 +245,23 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
                 print "Re-Activating %d archived roles." % num_archived_roles
         UserRole.unarchive_roles_for_domain(self.domain.name)
         return True
+
+    @property
+    def response_commcare_logo_uploader(self):
+        """Make sure no existing applications are using a logo.
+        """
+        try:
+            for app in get_all_apps(self.domain.name):
+                has_restored = app.restore_logos()
+                if has_restored:
+                    app.save()
+            return True
+        except Exception:
+            logger.exception(
+                "[BILLING] Failed to restore all commcare logos "
+                "for domain %s." % self.domain.name
+            )
+            return False
 
 
 class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
