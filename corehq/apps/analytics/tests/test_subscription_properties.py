@@ -96,7 +96,7 @@ class TestSubscriptionProperties(TestCase):
         plan, subscription = Subscription.get_subscribed_plan_by_domain(domain_name)
         subscription.update_subscription(
             pro_bono_status=pro_bono_status,
-            date_start=datetime.date.today() + datetime.timedelta(days=1),
+            date_start=datetime.date.today() - datetime.timedelta(days=1),
             date_end=datetime.date.today() + datetime.timedelta(days=5)
         )
 
@@ -104,6 +104,6 @@ class TestSubscriptionProperties(TestCase):
         plan, subscription = Subscription.get_subscribed_plan_by_domain(domain_name)
         subscription.update_subscription(
             service_type=SubscriptionType.EXTENDED_TRIAL,
-            date_start=datetime.date.today() + datetime.timedelta(days=1),
+            date_start=datetime.date.today() - datetime.timedelta(days=1),
             date_end=datetime.date.today() + datetime.timedelta(days=5)
         )
