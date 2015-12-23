@@ -5,9 +5,8 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
 from django.http import QueryDict
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
-
+from django.utils.translation import ugettext_lazy as _, ugettext_noop
 from corehq.apps.users.models import CouchUser
 
 from crispy_forms import layout as crispy
@@ -15,10 +14,36 @@ from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 
 from dimagi.utils.decorators.memoized import memoized
+from corehq.apps.style import crispy as hqcrispy
 
 
 class EmailAuthenticationForm(AuthenticationForm):
     username = forms.EmailField(label=_("E-mail"), max_length=75)
+
+    def __init__(self, request=None, *args, **kwargs):
+        super(EmailAuthenticationForm, self).__init__(request, *args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-4'
+        self.helper.field_class = 'col-sm-4'
+        self.helper.layout = crispy.Layout(
+            'username',
+            'password',
+            crispy.HTML(
+                '<p class="col-sm-offset-4">'
+                '<a href="{% url "password_reset_email" %}">'
+                '<i class="fa fa-question-circle"></i> ' + ugettext_noop("Forgot your password?") + '</a></p>'
+            ),
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    StrictButton(
+                        _('Sign In'),
+                        type="submit",
+                        css_class='btn-primary btn-lg'
+                    )
+                )
+            )
+        )
 
     def clean_username(self):
         username = self.cleaned_data['username'].lower()

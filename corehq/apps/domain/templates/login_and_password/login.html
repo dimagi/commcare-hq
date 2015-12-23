@@ -1,8 +1,10 @@
-{% extends "style/bootstrap2/centered.html" %}
+{% extends "style/bootstrap3/base.html" %}
 {% block title %}Login to {{ SITE_NAME }}{% endblock title %}
 
-{% block centered-content %}
-    {% block login-content %}
-    {% include "login_and_password/partials/login_full.html" %}
-    {% endblock %}
-{% endblock centered-content %}
+{% block content %}
+    <div class="container">
+        {% block login-content %}
+            {% include "login_and_password/partials/login_full.html" %}
+        {% endblock %}
+    </div>
+{% endblock content %}

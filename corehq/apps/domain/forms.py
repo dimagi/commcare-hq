@@ -1,4 +1,5 @@
 import copy
+from django.contrib.auth.forms import SetPasswordForm
 import logging
 from urlparse import urlparse, parse_qs
 import datetime
@@ -971,10 +972,10 @@ class HQPasswordResetForm(forms.Form):
     """
     email = forms.EmailField(label=ugettext_lazy("Username"), max_length=254)
     error_messages = {
-        'unknown': ugettext_lazy("That email address doesn't have an associated "
-                     "user account. Are you sure you've registered?"),
+        'unknown': ugettext_lazy("That email address doesn't have an associated user account. "
+                                 "Are you sure you've registered?"),
         'unusable': ugettext_lazy("The user account associated with this email "
-                       "address cannot reset the password."),
+                                  "address cannot reset the password."),
     }
 
     def clean_email(self):
@@ -1040,6 +1041,54 @@ class HQPasswordResetForm(forms.Form):
             subject = ''.join(subject.splitlines())
             email = render_to_string(email_template_name, c)
             send_mail_async.delay(subject, email, from_email, [user.email])
+
+    def __init__(self, *args, **kwargs):
+        super(HQPasswordResetForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
+        self.helper.layout = crispy.Layout(
+            'email',
+            crispy.Div(
+                crispy.HTML(
+                    '<p class="help-block">' +
+                    ugettext_noop("We will email instructions to you for resetting your password.") + '</p>'
+                ), css_class='col-sm-offset-3 col-md-offset-4 col-lg-offset-2'
+            ),
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    StrictButton(
+                        _('Reset Password'),
+                        type="submit",
+                        css_class='btn-primary'
+                    )
+                )
+            )
+        )
+
+
+class HQSetPasswordForm(SetPasswordForm):
+
+    def __init__(self, *args, **kwargs):
+        super(HQSetPasswordForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.form_class = 'form form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            'new_password1',
+            'new_password2',
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    StrictButton(
+                        _('Reset Password'),
+                        type="submit",
+                        css_class='btn-primary btn-lg'
+                    )
+                )
+            )
+        )
 
 
 class ConfidentialPasswordResetForm(HQPasswordResetForm):

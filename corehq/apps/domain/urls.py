@@ -24,8 +24,8 @@ from corehq.apps.domain.views import (
     ActivateTransferDomainView, DeactivateTransferDomainView,
     BulkStripePaymentView, InternalSubscriptionManagementView,
     WireInvoiceView, SubscriptionRenewalView, CreditsWireInvoiceView,
-    CardsView, CardView, PasswordResetView
-)
+    CardsView, CardView)
+from corehq.apps.style.decorators import use_bootstrap3_func
 
 #
 # After much reading, I discovered that Django matches URLs derived from the environment
@@ -47,21 +47,23 @@ from corehq.apps.domain.views import (
 # problem with the mailserver. Catch that more elegantly with a simple wrapper.
 
 
+@use_bootstrap3_func
 def exception_safe_password_reset(request, *args, **kwargs):
     try:
         return password_reset(request, *args, **kwargs)
     except None:
-        vals = {'error_msg':'There was a problem with your request',
-                'error_details':sys.exc_info(),
-                'show_homepage_link': 1 }
+        vals = {'error_msg': 'There was a problem with your request',
+                'error_details': sys.exc_info(),
+                'show_homepage_link': 1}
         return render_to_response('error.html', vals, context_instance=RequestContext(request))
-
 
 # auth templates are normally in 'registration,'but that's too confusing a name, given that this app has
 # both user and domain registration. Move them somewhere more descriptive.
 
+
 def auth_pages_path(page):
-    return {'template_name':'login_and_password/' + page}
+    return {'template_name': 'login_and_password/' + page}
+
 
 def extend(d1, d2):
     return dict(d1.items() + d2.items())
@@ -81,16 +83,16 @@ urlpatterns =\
         url(r'^accounts/password_change_done/$', 'password_change_done', auth_pages_path('password_change_done.html'),
             name='password_change_done'),
 
-        url(r'^accounts/password_reset_email/$', exception_safe_password_reset, extend(auth_pages_path('password_reset_form.html'),
-                                                                                       { 'password_reset_form': ConfidentialPasswordResetForm,
-                                                                                         'from_email':settings.DEFAULT_FROM_EMAIL}),
+        url(r'^accounts/password_reset_email/$', exception_safe_password_reset, extend(
+            auth_pages_path('password_reset_form.html'),
+            {'password_reset_form': ConfidentialPasswordResetForm, 'from_email': settings.DEFAULT_FROM_EMAIL}),
             name='password_reset_email'),
         url(r'^accounts/password_reset_email/done/$', 'password_reset_done', auth_pages_path('password_reset_done.html'),
             name='password_reset_done'),
 
         url(r'^accounts/password_reset_confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
-            PasswordResetView.as_view(),  extend(auth_pages_path('password_reset_confirm.html'),
-                                                    {'set_password_form': HQSetPasswordForm}), name=PasswordResetView.urlname),
+            'password_reset_confirm', extend(auth_pages_path('password_reset_confirm.html'),
+            {'set_password_form': HQSetPasswordForm}), name="password_reset_confirm"),
         url(r'^accounts/password_reset_confirm/done/$', 'password_reset_complete', auth_pages_path('password_reset_complete.html'),
             name='password_reset_complete')
     )

@@ -445,6 +445,8 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 BASE_TEMPLATE = "style/bootstrap2/base.html"  # should eventually be bootstrap3
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
+# Todo: Remove when all dependent templates migrated to bootstrap3
+LOGIN_TEMPLATE_BOOTSTRAP2 = "login_and_password/bootstrap2/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
 CSRF_FAILURE_VIEW = 'corehq.apps.hqwebapp.views.csrf_failure'
@@ -1620,6 +1622,7 @@ if LESS_DEBUG:
 COMPRESS_OFFLINE_CONTEXT = {
     'base_template': BASE_TEMPLATE,
     'login_template': LOGIN_TEMPLATE,
+    'login_template_bootstrap2': LOGIN_TEMPLATE_BOOTSTRAP2,
     'original_template': BASE_ASYNC_TEMPLATE,
     'less_debug': LESS_DEBUG,
     'less_watch': LESS_WATCH,

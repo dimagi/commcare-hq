@@ -24,6 +24,17 @@ def use_bootstrap3(view_func):
     return _wrapped
 
 
+def use_bootstrap3_func(view_func):
+    @wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        # set bootstrap version in thread local
+        set_bootstrap_version3()
+        # set crispy forms template in thread local
+        set_template_pack('bootstrap3')
+        return view_func(request, *args, **kwargs)
+    return _wrapped
+
+
 def use_select2(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
     to enable the inclusion of the select2 js library at the base template.

@@ -1,0 +1,9 @@
+{% load i18n %}
+
+<div class="row">
+    <div class="page-header">
+        <h1>{% trans 'Password Reset Successful' %}</h1>
+    </div>
+    <p>{% trans 'Your password was successfully changed.' %}</p>
+    <a href="{% url "login" DOMAIN_TYPE %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
+</div>

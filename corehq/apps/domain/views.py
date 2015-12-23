@@ -23,8 +23,10 @@ from django.contrib import messages
 from django.contrib.auth.views import password_reset_confirm
 from django.views.decorators.http import require_POST
 from PIL import Image
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.models import User
+from django.utils.translation import ugettext as _, ugettext_lazy
 
 from corehq.const import USER_DATE_FORMAT
 from custom.dhis2.forms import Dhis2SettingsForm
@@ -92,7 +94,7 @@ from corehq.apps.domain.forms import (
     ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
     ConfirmSubscriptionRenewalForm, SnapshotFixtureForm, TransferDomainForm,
     SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS, AdvancedExtendedTrialForm,
-    ContractedPartnerForm, DimagiOnlyEnterpriseForm)
+    ContractedPartnerForm, DimagiOnlyEnterpriseForm, ConfidentialPasswordResetForm)
 from corehq.apps.domain.models import Domain, LICENSES, TransferDomainRequest
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
@@ -114,7 +116,7 @@ PAYMENT_ERROR_MESSAGES = {
     403: ugettext_lazy('Forbidden.'),
     404: ugettext_lazy('Page not found.'),
     500: ugettext_lazy("There was an error processing your request."
-           " We're working quickly to fix the issue. Please try again shortly."),
+                       " We're working quickly to fix the issue. Please try again shortly."),
 }
 
 
@@ -572,6 +574,7 @@ def autocomplete_fields(request, field):
     prefix = request.GET.get('prefix', '')
     results = Domain.field_by_prefix(field, prefix)
     return HttpResponse(json.dumps(results))
+
 
 def logo(request, domain):
     logo = Domain.get_by_name(domain).get_custom_logo()
