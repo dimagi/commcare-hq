@@ -42,6 +42,15 @@ def init_hq_python_path():
     _set_source_root(os.path.join('corehq', 'ex-submodules'))
     _set_source_root(os.path.join('custom', '_legacy'))
 
+
+def set_default_settings_path(argv):
+    if len(argv) > 1 and argv[1] == 'test':
+        module = 'testsettings'
+    else:
+        module = 'settings'
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", module)
+
+
 if __name__ == "__main__":
     init_hq_python_path()
 
@@ -68,6 +77,6 @@ if __name__ == "__main__":
     # workaround for https://github.com/smore-inc/tinys3/issues/33
     mimetypes.init()
 
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+    set_default_settings_path(sys.argv)
     from django.core.management import execute_from_command_line
     execute_from_command_line(sys.argv)

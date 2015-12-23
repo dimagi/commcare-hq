@@ -2,7 +2,7 @@ from settings import *
 
 INSTALLED_APPS += (
     'django_nose',
-)
+) + TEST_APPS
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = [
@@ -35,6 +35,8 @@ for key, value in {
     ]),
 
     'NOSE_EXCLUDE_DIRS': ';'.join([
+        'corehq/apps/cloudcare/tests/selenium',
+        'corehq/apps/reports/tests/selenium',
         'scripts',
         'testapps',
 
@@ -45,9 +47,6 @@ for key, value in {
 }.items():
     os.environ.setdefault(key, value)
 del key, value
-
-# HqTestSuiteRunner settings
-INSTALLED_APPS = INSTALLED_APPS + list(TEST_APPS)
 
 if "SKIP_TESTS_REQUIRING_EXTRA_SETUP" not in globals():
     SKIP_TESTS_REQUIRING_EXTRA_SETUP = False
@@ -68,12 +67,9 @@ ENABLE_PRELOGIN_SITE = True
 
 
 def _clean_up_logging_output():
-    import logging
-    logging.getLogger('raven').setLevel('WARNING')
-
     # make all loggers propagate to prevent
     # "No handlers could be found for logger ..."
-    # (a side effect of --logging-clear-handlers)
+    # (a side effect of nose option --logging-clear-handlers)
     for item in LOGGING["loggers"].values():
         if not item.get("propagate", True):
             item["propagate"] = True
