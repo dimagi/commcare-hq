@@ -5,8 +5,9 @@ import os
 
 
 EXCEPTION_MESSAGE = Template("""
-Halting migrate command because one or more messaging migrations have not
-yet completed.
+
+*** Halting migrate command because one or more messaging postgres migrations
+have not yet completed.
 
 In order to continue, switch into your code root (and virtual environment if
 you have one), and do the following:
@@ -51,9 +52,9 @@ class MigrationException(Exception):
     pass
 
 
-def assert_messaging_migration_complete(info, model_class=MigrationStatus):
+def assert_messaging_migration_complete(info):
     migrations_have_not_run = any(
-        [not model_class.has_migration_completed(name) for name in info.migration_names]
+        [not MigrationStatus.has_migration_completed(name) for name in info.migration_names]
     )
     is_fresh_install = os.environ.get('CCHQ_IS_FRESH_INSTALL') == '1'
     if migrations_have_not_run and not (settings.UNIT_TESTING or is_fresh_install):
@@ -66,6 +67,5 @@ def assert_backend_migration_complete(apps, schema_editor):
             [MigrationStatus.MIGRATION_BACKEND, MigrationStatus.MIGRATION_BACKEND_MAP],
             'backend-messaging-migration',
             ['migrate_backends_to_sql', 'migrate_backend_mappings_to_sql']
-        ),
-        model_class=apps.get_model('sms', 'MigrationStatus')
+        )
     )
