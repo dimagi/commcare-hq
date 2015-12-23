@@ -15,7 +15,7 @@ you have one), and do the following:
 git fetch origin
 git checkout -b {{ tag_name }}-tmp {{ tag_name }}
 git submodule update --init --recursive
-find . -name "*.pyc" -delete
+find . -name "*.pyc" -delete # (linux command to delete .pyc files - adjust appropriately for your platform)
 {% for command in commands %}python manage.py {{ command }}
 {% endfor %}
 
@@ -24,7 +24,9 @@ update submodules, clean *.pyc files, and run python manage.py migrate normally.
 
 NOTE: If you are seeing this on a fresh install of CommCareHQ, then you can
 ignore the above. Instead, the first time you run migrate, run it with the
-following command:
+following command (this command assumes a linux environment - for other platforms
+you just need to run python manage.py migrate with a temporary environment
+variable CCHQ_IS_FRESH_INSTALL set to 1):
     env CCHQ_IS_FRESH_INSTALL=1 python manage.py migrate
 """)
 
