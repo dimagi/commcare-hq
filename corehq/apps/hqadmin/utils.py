@@ -8,9 +8,11 @@ EPSILON = 10000000
 
 def pillow_seq_store():
     for pillow in get_all_pillow_instances():
-        checkpoint = pillow.get_checkpoint()
-        store, created = PillowCheckpointSeqStore.objects.get_or_create(checkpoint_id=checkpoint['_id'])
-        if not created and force_seq_int(checkpoint['seq']) < force_seq_int(store.seq) - EPSILON:
+        checkpoint = pillow.checkpoint
+        store, created = PillowCheckpointSeqStore.objects.get_or_create(checkpoint_id=checkpoint.checkpoint_id)
+        db_seq = checkpoint.get_current_sequence_id()
+        store_seq = force_seq_int(store.seq) or 0
+        if not created and force_seq_int(db_seq) < store_seq - EPSILON:
             notify_exception(
                 None,
                 message='Found seq number lower than previous for {}. '
@@ -20,5 +22,5 @@ def pillow_seq_store():
                     'stored seq': store.seq
                 })
         else:
-            store.seq = checkpoint['seq']
+            store.seq = db_seq
             store.save()
