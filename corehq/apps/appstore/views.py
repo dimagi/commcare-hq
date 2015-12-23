@@ -1,7 +1,7 @@
 import json
 from urllib import urlencode
 from corehq.apps.appstore.exceptions import CopiedFromDeletedException
-from corehq.apps.registration.utils import create_30_day_trial
+from corehq.apps.registration.utils import create_free_community_plan
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 
@@ -287,8 +287,8 @@ def copy_snapshot(request, snapshot):
                     messages.error(request, _("A project by that name already exists"))
                     return project_info(request, snapshot)
 
-                # sign new project up for trial
-                create_30_day_trial(new_domain)
+                # sign new project up for free community plan
+                create_free_community_plan(new_domain)
 
             def inc_downloads(d):
                 d.downloads += 1
