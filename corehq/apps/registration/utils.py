@@ -86,9 +86,13 @@ def request_new_domain(request, form, domain_type=None, new_user=True):
 
     if not new_domain.name:
         new_domain.name = new_domain._id
-        new_domain.save() # we need to get the name from the _id
+        new_domain.save()  # we need to get the name from the _id
 
-    create_30_day_trial(new_domain)
+    if new_user:
+        create_30_day_trial(new_domain)
+    else:
+        create_free_community_plan(new_domain)
+
     UserRole.init_domain_with_presets(new_domain.name)
 
     dom_req.domain = new_domain.name
@@ -282,3 +286,20 @@ def create_30_day_trial(domain_obj):
     )
     trial_subscription.is_active = True
     trial_subscription.save()
+
+
+def create_free_community_plan(domain_obj):
+    community_plan_version = DefaultProductPlan.get_default_plan_by_domain(
+        domain_obj, edition=SoftwarePlanEdition.COMMUNITY
+    )
+    community_account = BillingAccount.objects.get_or_create(
+        name="Free Community Account for %s" % domain_obj.name,
+        currency=Currency.get_default(),
+        created_by_domain=domain_obj.name
+    )[0]
+    free_community_subscription = Subscription.new_domain_subscription(
+        community_account, domain_obj.name, community_plan_version,
+        adjustment_method=SubscriptionAdjustmentMethod.USER,
+    )
+    free_community_subscription.is_active = True
+    free_community_subscription.save()
