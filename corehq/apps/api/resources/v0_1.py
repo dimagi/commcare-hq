@@ -2,7 +2,6 @@
 from functools import wraps
 from itertools import imap
 import json
-from base64 import b64decode
 
 # Django imports
 import datetime
@@ -17,7 +16,7 @@ from django.conf import settings
 from tastypie import fields
 from tastypie.authentication import Authentication
 from tastypie.authorization import ReadOnlyAuthorization
-from tastypie.exceptions import BadRequest, ImmediateHttpResponse
+from tastypie.exceptions import BadRequest
 from tastypie.throttle import CacheThrottle
 
 # External imports
@@ -28,7 +27,6 @@ from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.users.decorators import require_permission, require_permission_raw
 from corehq.toggles import IS_DEVELOPER, API_THROTTLE_WHITELIST
 from couchforms.models import XFormInstance
-from python_digest import parse_digest_credentials
 
 # CCHQ imports
 from corehq.apps.domain.decorators import (
@@ -36,8 +34,7 @@ from corehq.apps.domain.decorators import (
     login_or_basic,
     login_or_api_key)
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser
-from corehq.apps.hqwebapp.signals import add_failed_attempt, clear_failed_logins_and_unlock_account
+from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
 # API imports
 from corehq.apps.api.serializers import CustomXMLSerializer, XFormInstanceSerializer
