@@ -94,38 +94,10 @@ class LoginAndDomainAuthentication(Authentication):
         except PermissionDenied:
             response = HttpResponseForbidden()
 
-        auth_type = determine_authtype_from_header(request)
-        username = self._get_username_from_request(request, auth_type)
-        self._check_lockout(request, username)
-
         if response == PASSED_AUTH:
-            # reset lockout
-            clear_failed_logins_and_unlock_account(None, request, request.user)
             return True
         else:
-            # basic auth triggers failed login signal already
-            if auth_type == 'digest':
-                add_failed_attempt(None, {'username': username})
             return response
-
-    def _get_username_from_request(self, request, auth_type):
-        username = None
-        if auth_type == 'digest':
-            digest = parse_digest_credentials(request.META['HTTP_AUTHORIZATION'])
-            username = digest.username
-        elif auth_type == 'basic':
-            username = b64decode(request.META['HTTP_AUTHORIZATION'].split()[1]).split(':')[0]
-        return username
-
-    def _check_lockout(self, request, username):
-        if hasattr(request, 'couch_user'):
-            user = request.couch_user
-        else:
-            user = CouchUser.get_by_username(username)
-        if user and user.login_attempts > 4:
-                raise ImmediateHttpResponse(HttpResponse(json.dumps({"error": "maximum password attempts exceeded"}),
-                                            content_type="application/json",
-                                            status=401))
 
     def get_identifier(self, request):
         return request.couch_user.username

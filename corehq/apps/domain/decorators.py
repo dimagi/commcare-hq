@@ -1,21 +1,27 @@
 # Standard Library imports
 from functools import wraps
 import logging
+import json
+from base64 import b64decode
 
 # Django imports
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden
+from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden, HttpResponse
 from django.utils.decorators import method_decorator
 from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 
 # External imports
 from django_digest.decorators import httpdigest
-from corehq.apps.domain.auth import determine_authtype_from_request, basicauth, BASIC, DIGEST, API_KEY
+from corehq.apps.domain.auth import (
+    determine_authtype_from_request, basicauth,
+    BASIC, DIGEST, API_KEY, determine_authtype_from_header
+)
 from django_prbac.utils import has_privilege
+from python_digest import parse_digest_credentials
 
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
@@ -25,6 +31,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser
 from corehq import privileges
+from corehq.apps.hqwebapp.signals import clear_failed_logins_and_unlock_account
 
 ########################################################################################################
 from corehq.toggles import IS_DEVELOPER
@@ -125,6 +132,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False):
         @wraps(fn)
         def safe_fn(request, domain, *args, **kwargs):
             if not request.user.is_authenticated():
+                @check_lockout
                 @challenge_fn
                 def _inner(request, domain, *args, **kwargs):
                     request.couch_user = couch_user = CouchUser.from_django_user(request.user)
@@ -133,6 +141,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False):
                         and (allow_cc_users or couch_user.is_web_user())
                         and couch_user.is_member_of(domain)
                     ):
+                        clear_failed_logins_and_unlock_account(None, request, request.user)
                         return fn(request, domain, *args, **kwargs)
                     else:
                         return HttpResponseForbidden()
@@ -224,6 +233,28 @@ def login_required(view_func):
         return view_func(request, *args, **kwargs)
     return _inner
 
+def check_lockout(fn):
+    @wraps(fn)
+    def _inner(request, *args, **kwargs):
+        username = _get_username_from_request(request)
+        user = CouchUser.get_by_username(username)
+        if user and user.login_attempts > 4:
+            return HttpResponse(json.dumps({"error": "maximum password attempts exceeded"}),
+                                        content_type="application/json",
+                                        status=401)
+        else:
+            return fn(request, *args, **kwargs)
+    return _inner
+
+def _get_username_from_request(request):
+    auth_type = determine_authtype_from_header(request)
+    username = None
+    if auth_type == 'digest':
+        digest = parse_digest_credentials(request.META['HTTP_AUTHORIZATION'])
+        username = digest.username
+    elif auth_type == 'basic':
+        username = b64decode(request.META['HTTP_AUTHORIZATION'].split()[1]).split(':')[0]
+    return username
 
 ########################################################################################################
 #
