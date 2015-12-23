@@ -8,9 +8,16 @@ class Command(PtopReindexer):
     help = "Fast reindex of SQL form data index"
 
     doc_class = XFormInstance
-    view_name = 'hqadmin/forms_over_time'
     pillow_class = FormDataPillow
     own_index_exists = False
+
+    view_name = 'all_docs/by_doc_type'
+
+    def get_extra_view_kwargs(self):
+        return {
+            'startkey': ['XFormInstance'],
+            'endkey': ['XFormInstance', {}],
+        }
 
     def handle(self, *args, **options):
         if options.get('bulk', False):
