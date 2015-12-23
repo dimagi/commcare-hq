@@ -4,7 +4,13 @@ from django.conf import settings
 from jsonobject.api import JsonObject
 from jsonobject.properties import IntegerProperty, StringProperty
 
-from .exceptions import PartitionValidationError, NotPowerOf2Error, NonContinuousShardsError, NotZeroStartError
+from .exceptions import (
+    PartitionedDatabaseRequiredError,
+    PartitionValidationError,
+    NotPowerOf2Error,
+    NonContinuousShardsError,
+    NotZeroStartError,
+)
 
 FORM_PROCESSING_GROUP = 'form_processing'
 PROXY_GROUP = 'proxy'
@@ -61,7 +67,8 @@ class DbShard(object):
 class PartitionConfig(object):
 
     def __init__(self):
-        assert settings.USE_PARTITIONED_DATABASE
+        if not settings.USE_PARTITIONED_DATABASE:
+            raise PartitionedDatabaseRequiredError
         self._validate()
 
     def _validate(self):

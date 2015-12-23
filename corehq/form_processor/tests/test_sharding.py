@@ -6,7 +6,8 @@ from unittest import skipUnless
 
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.tests import create_form_for_test, FormProcessorTestUtils
-from corehq.sql_db.config import PartitionConfig
+from corehq.sql_db.config import PartitionConfig, PartitionedDatabaseRequiredError
+from corehq.util.test_utils import trap_extra_setup
 from crispy_forms.tests.utils import override_settings
 
 DOMAIN = 'sharding-test'
@@ -19,7 +20,8 @@ class ShardingTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.partion_config = PartitionConfig()
+        with trap_extra_setup(PartitionedDatabaseRequiredError):
+            cls.partion_config = PartitionConfig()
         assert len(cls.partion_config.get_form_processing_dbs()) > 1
 
     def tearDown(self):

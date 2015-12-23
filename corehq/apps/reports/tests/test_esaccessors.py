@@ -52,9 +52,9 @@ class BaseESAccessorsTest(SimpleTestCase):
     es_index = None
 
     def setUp(self):
-        ensure_index_deleted(self.es_index)
-        self.domain = 'esdomain'
         with trap_extra_setup(ConnectionError):
+            ensure_index_deleted(self.es_index)
+            self.domain = 'esdomain'
             self.pillow = self.get_pillow()
 
     def get_pillow(self):

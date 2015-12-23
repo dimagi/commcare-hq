@@ -6,6 +6,8 @@ from corehq.apps.es import CaseES
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case import CasePillow, get_sql_case_to_elasticsearch_pillow
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
+from corehq.util.test_utils import trap_extra_setup
+from elasticsearch.exceptions import ConnectionError
 from testapps.test_pillowtop.utils import get_test_kafka_consumer, make_a_case
 
 
@@ -15,7 +17,8 @@ class CasePillowTest(TestCase):
 
     def setUp(self):
         FormProcessorTestUtils.delete_all_cases()
-        self.pillow = CasePillow()
+        with trap_extra_setup(ConnectionError):
+            self.pillow = CasePillow()
         self.elasticsearch = self.pillow.get_es_new()
         delete_es_index(self.pillow.es_index)
 
