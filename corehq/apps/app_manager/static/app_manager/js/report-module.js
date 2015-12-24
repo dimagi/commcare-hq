@@ -3,6 +3,19 @@
 var select2Separator = "\u001F";
 
 var ReportModule = (function () {
+
+    function KeyValuePair(key, value, config) {
+        var self = this;
+
+        self.key = ko.observable(key);
+        self.value = ko.observable(value);
+        self.config = config;
+
+        self.remove = function() {
+            config.keyValuePairs.remove(self);
+        };
+    }
+
     function Config(dict) {
         var self = this;
 
