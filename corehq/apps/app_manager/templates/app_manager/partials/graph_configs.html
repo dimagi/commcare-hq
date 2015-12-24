@@ -16,9 +16,9 @@
         {% trans 'Configuration' %}:
         <div data-bind="foreach: { data: report.graphConfig.getCurrentGraphConfig(chart.chart_id).config.keyValuePairs, as: 'keyValuePair' }">
             <p>
-                <input type="text" data-bind="value: keyValuePair[0]">
+                <input type="text" data-bind="value: keyValuePair.key">
                 <i class="icon-arrow-right"></i>
-                <input type="text" data-bind="value: keyValuePair[1]">
+                <input type="text" data-bind="value: keyValuePair.value">
             </p>
         </div>
         <button class="btn" data-bind="click: report.graphConfig.getCurrentGraphConfig(chart.chart_id).config.addConfig">
@@ -32,9 +32,9 @@
             <span data-bind="text: series"></span>
             <div data-bind="foreach: { data: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_configs[series].keyValuePairs, as: 'keyValuePair' }">
                 <p>
-                    <input type="text" data-bind="value: keyValuePair[0]">
+                    <input type="text" data-bind="value: keyValuePair.key">
                     <i class="icon-arrow-right"></i>
-                    <input type="text" data-bind="value: keyValuePair[1]">
+                    <input type="text" data-bind="value: keyValuePair.value">
                 </p>
             </div>
             <button class="btn" data-bind="click: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_configs[series].addConfig">
