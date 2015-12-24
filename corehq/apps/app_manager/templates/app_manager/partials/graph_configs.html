@@ -19,6 +19,7 @@
                 <input type="text" data-bind="value: keyValuePair.key">
                 <i class="icon-arrow-right"></i>
                 <input type="text" data-bind="value: keyValuePair.value">
+                <i class="fa fa-remove icon-remove icon-blue" style="cursor: pointer;" data-bind="click: keyValuePair.remove"></i>
             </p>
         </div>
         <button class="btn" data-bind="click: report.graphConfig.getCurrentGraphConfig(chart.chart_id).config.addConfig">
@@ -35,6 +36,7 @@
                     <input type="text" data-bind="value: keyValuePair.key">
                     <i class="icon-arrow-right"></i>
                     <input type="text" data-bind="value: keyValuePair.value">
+                    <i class="fa fa-remove icon-remove icon-blue" style="cursor: pointer;" data-bind="click: keyValuePair.remove"></i>
                 </p>
             </div>
             <button class="btn" data-bind="click: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_configs[series].addConfig">
