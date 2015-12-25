@@ -705,24 +705,21 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 % self.account
             )
         product_rate = product_rates[0]
-        product_info = {
+        return {
             'name': product_rate.product.product_type,
             'monthly_fee': _("USD %s /month") % product_rate.monthly_fee,
-            'credit': None,
             'type': product_rate.product.product_type,
+            'subscription_credit': self._fmt_credit(self._credit_grand_total(
+                CreditLine.get_credits_by_subscription_and_features(
+                    subscription, product_type=product_rate.product.product_type
+                ) if subscription else None
+            )),
+            'account_credit': self._fmt_credit(self._credit_grand_total(
+                CreditLine.get_credits_for_account(
+                    account, product_type=product_rate.product.product_type
+                ) if account else None
+            )),
         }
-        credit_lines = None
-        if subscription is not None:
-            credit_lines = CreditLine.get_credits_by_subscription_and_features(
-                subscription, product_type=product_rate.product.product_type
-            )
-        elif account is not None:
-            credit_lines = CreditLine.get_credits_for_account(
-                account, product_type=product_rate.product.product_type
-            )
-        if credit_lines:
-            product_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
-        return product_info
 
     def get_feature_summary(self, plan_version, account, subscription):
         feature_summary = []

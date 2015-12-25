@@ -118,9 +118,20 @@
                         <div class="control-group">
                             <label class="control-label">{% trans 'Plan Credit' %}</label>
                             <div class="controls">
-                                <span class="help-inline"
-                                      style="margin-right: 10px;"
-                                      data-bind="text: amount"></span>
+                                <p class="control-group-text" data-bind="text: amount"></p>
+                            </div>
+                        </div>
+                        <div class="control-group" data-bind="visible: isAccountVisible">
+                            <label class="control-label">{% trans 'Account Plan Credit' %}</label>
+                            <div class="controls">
+                                <p class="control-group-text" data-bind="text: accountAmount"></p>
+                                <p class="help-block">
+                                    <i class="icon-info-sign"></i>
+                                    {% blocktrans %}
+                                        This is credit that can be applied to your software plan.
+                                        It's likely that someone from Dimagi added these credits for you.
+                                    {% endblocktrans %}
+                                </p>
                             </div>
                         </div>
                     </div>
