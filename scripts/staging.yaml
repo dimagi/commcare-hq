@@ -57,7 +57,7 @@ branches:
   - es-fix # Noah 12/7
   - location-delete # Cal 12/16
   - password-strength # Cal 12/17
-  - false-heartbeat-fix  # Biyeun 12/22
+#  - false-heartbeat-fix  # Biyeun 12/22
   - location-delete+es # Cal 12/23
 submodules:
   submodules/touchforms-src:
