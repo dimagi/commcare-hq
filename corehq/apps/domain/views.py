@@ -707,18 +707,19 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 % self.account
             )
         product_rate = product_rates[0]
+        product_type = product_rate.product.product_type
         return {
-            'name': product_rate.product.product_type,
+            'name': product_type,
             'monthly_fee': _("USD %s /month") % product_rate.monthly_fee,
-            'type': product_rate.product.product_type,
+            'type': product_type,
             'subscription_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_by_subscription_and_features(
-                    subscription, product_type=product_rate.product.product_type
+                    subscription, product_type=product_type
                 ) if subscription else None
             )),
             'account_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_for_account(
-                    account, product_type=product_rate.product.product_type
+                    account, product_type=product_type
                 ) if account else None
             )),
         }
@@ -726,24 +727,25 @@ class DomainSubscriptionView(DomainAccountingSettings):
     def get_feature_summary(self, plan_version, account, subscription):
         def _get_feature_info(feature_rate):
             usage = FeatureUsageCalculator(feature_rate, self.domain).get_usage()
+            feature_type = feature_rate.feature.feature_type
             return {
-                'name': get_feature_name(feature_rate.feature.feature_type, self.product),
+                'name': get_feature_name(feature_type, self.product),
                 'usage': usage,
                 'remaining': (
                     feature_rate.monthly_limit - usage
                     if feature_rate.monthly_limit != UNLIMITED_FEATURE_USAGE
                     else _('Unlimited')
                 ),
-                'type': feature_rate.feature.feature_type,
-                'recurring_interval': get_feature_recurring_interval(feature_rate.feature.feature_type),
+                'type': feature_type,
+                'recurring_interval': get_feature_recurring_interval(feature_type),
                 'subscription_credit': self._fmt_credit(self._credit_grand_total(
                     CreditLine.get_credits_by_subscription_and_features(
-                        subscription, feature_type=feature_rate.feature.feature_type
+                        subscription, feature_type=feature_type
                     ) if subscription else None
                 )),
                 'account_credit': self._fmt_credit(self._credit_grand_total(
                     CreditLine.get_credits_for_account(
-                        account, feature_type=feature_rate.feature.feature_type
+                        account, feature_type=feature_type
                     ) if account else None
                 )),
             }
