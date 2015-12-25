@@ -1,5 +1,7 @@
 from django import template
+from django.conf import settings
 from django.template.loader import render_to_string
+from django.templatetags.i18n import language_name
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
@@ -148,3 +150,18 @@ def maintenance_alert():
             '<div class="alert alert-warning" style="text-align: center; margin-bottom: 0;">{}</div>',
             mark_safe(alert.html),
         )
+
+
+@register.filter
+def aliased_language_name(lang_code):
+    """
+    This is same as django's inbuilt template filter `language_name` but works with aliases
+    Note that we use non-standard language codes as alias, for e.g. fra instead of fr for French
+    """
+    try:
+        return language_name(lang_code)
+    except KeyError:
+        for code, name in settings.LANGUAGES:
+            if code == lang_code:
+                return name
+        raise KeyError('Unknown language code %s' % lang_code)
