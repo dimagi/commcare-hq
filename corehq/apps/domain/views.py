@@ -608,6 +608,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
         return self.request.couch_user.is_domain_admin(self.domain)
 
     @property
+    @memoized
     def plan(self):
         plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)
         date_end = None
@@ -733,21 +734,19 @@ class DomainSubscriptionView(DomainAccountingSettings):
                     if feature_rate.monthly_limit != -1
                     else _('Unlimited')
                 ),
-                'credit': self._fmt_credit(),
                 'type': feature_rate.feature.feature_type,
                 'recurring_interval': get_feature_recurring_interval(feature_rate.feature.feature_type),
+                'subscription_credit': self._fmt_credit(self._credit_grand_total(
+                    CreditLine.get_credits_by_subscription_and_features(
+                        subscription, feature_type=feature_rate.feature.feature_type
+                    ) if subscription else None
+                )),
+                'account_credit': self._fmt_credit(self._credit_grand_total(
+                    CreditLine.get_credits_for_account(
+                        account, feature_type=feature_rate.feature.feature_type
+                    ) if account else None
+                )),
             }
-
-            credit_lines = None
-            if subscription is not None:
-                credit_lines = CreditLine.get_credits_by_subscription_and_features(
-                    subscription, feature_type=feature_rate.feature.feature_type
-                )
-            elif account is not None:
-                credit_lines = CreditLine.get_credits_for_account(
-                    account, feature_type=feature_rate.feature.feature_type)
-            if credit_lines:
-                feature_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
 
             feature_summary.append(feature_info)
         return feature_summary
@@ -765,6 +764,10 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'sms_rate_calc_url': reverse(SMSRatesView.urlname,
                                          args=[self.domain]),
             'user_email': self.request.couch_user.username,
+            'show_account_credits': any(
+                feature['account_credit'].get('is_visible')
+                for feature in self.plan.get('features')
+            )
         }
 
 
