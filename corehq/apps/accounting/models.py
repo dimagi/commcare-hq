@@ -76,6 +76,8 @@ class FeatureType(object):
     USER = "User"
     SMS = "SMS"
     API = "API"
+    ANY = ""
+
     CHOICES = (
         (USER, USER),
         (SMS, SMS),
@@ -86,6 +88,8 @@ class SoftwareProductType(object):
     COMMCARE = "CommCare"
     COMMTRACK = "CommTrack"
     COMMCONNECT = "CommConnect"
+    ANY = ""
+
     CHOICES = (
         (COMMCARE, COMMCARE),
         (COMMTRACK, COMMTRACK),
