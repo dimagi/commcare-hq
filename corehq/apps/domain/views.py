@@ -618,7 +618,6 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'price': None,
         }
         cards = None
-        general_credits = None
         if subscription:
             cards = get_customer_cards(self.account, self.request.user.username, self.domain)
             date_end = (subscription.date_end.strftime(USER_DATE_FORMAT)
@@ -644,16 +643,20 @@ class DomainSubscriptionView(DomainAccountingSettings):
                         'can_renew': days_left <= 30,
                         'renew_url': reverse(SubscriptionRenewalView.urlname, args=[self.domain]),
                     })
-            general_credits = CreditLine.get_credits_by_subscription_and_features(subscription)
-        elif self.account is not None:
-            general_credits = CreditLine.get_credits_for_account(self.account)
-        if general_credits:
-            general_credits = self._fmt_credit(self._credit_grand_total(general_credits))
 
         info = {
             'products': [self.get_product_summary(plan_version, self.account, subscription)],
             'features': self.get_feature_summary(plan_version, self.account, subscription),
-            'general_credit': general_credits,
+            'general_credit': self._fmt_credit(self._credit_grand_total(
+                CreditLine.get_credits_by_subscription_and_features(
+                    subscription
+                ) if subscription else None
+            )),
+            'account_general_credit': self._fmt_credit(self._credit_grand_total(
+                CreditLine.get_credits_for_account(
+                    self.account
+                ) if self.account else None
+            )),
             'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
             'do_not_invoice': subscription.do_not_invoice if subscription is not None else False,
             'is_trial': subscription.is_trial if subscription is not None else False,
