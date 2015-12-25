@@ -59,6 +59,7 @@ branches:
   - password-strength # Cal 12/17
 #  - false-heartbeat-fix  # Biyeun 12/22
   - location-delete+es # Cal 12/23
+  - credit-line-balances # Nick P
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
