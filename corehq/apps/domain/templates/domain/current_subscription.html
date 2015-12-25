@@ -156,6 +156,36 @@
                             </div>
                         </div>
                     {% endif %}
+                    {% if plan.feature_credit and plan.feature_credit.is_visible %}
+                        <div class="control-group">
+                            <label class="control-label">{% trans 'Feature Credit' %}</label>
+                            <div class="controls">
+                                <p class="control-group-text">{{ plan.feature_credit.amount }}</p>
+                                <p class="help-block">
+                                    <i class="icon-info-sign"></i>
+                                    {% blocktrans %}
+                                        This is credit that can be applied to the features below.
+                                        It's likely that someone from Dimagi added these credits for you.
+                                    {% endblocktrans %}
+                                </p>
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% if plan.account_feature_credit and plan.account_feature_credit.is_visible %}
+                        <div class="control-group">
+                            <label class="control-label">{% trans 'Account Feature Credit' %}</label>
+                            <div class="controls">
+                                <p class="control-group-text">{{ plan.account_feature_credit.amount }}</p>
+                                <p class="help-block">
+                                    <i class="icon-info-sign"></i>
+                                    {% blocktrans %}
+                                        This is credit that can be applied to the features below.
+                                        It's likely that someone from Dimagi added these credits for you.
+                                    {% endblocktrans %}
+                                </p>
+                            </div>
+                        </div>
+                    {% endif %}
                     {% if plan.next_subscription.exists %}
                         <div class="control-group">
                             <label class="control-label">
