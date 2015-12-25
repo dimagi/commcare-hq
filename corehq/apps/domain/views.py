@@ -724,10 +724,9 @@ class DomainSubscriptionView(DomainAccountingSettings):
         }
 
     def get_feature_summary(self, plan_version, account, subscription):
-        feature_summary = []
-        for feature_rate in plan_version.feature_rates.all():
+        def _get_feature_info(feature_rate):
             usage = FeatureUsageCalculator(feature_rate, self.domain).get_usage()
-            feature_info = {
+            return {
                 'name': get_feature_name(feature_rate.feature.feature_type, self.product),
                 'usage': usage,
                 'remaining': (
@@ -749,8 +748,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 )),
             }
 
-            feature_summary.append(feature_info)
-        return feature_summary
+        return map(_get_feature_info, plan_version.feature_rates.all())
 
     @property
     def page_context(self):
