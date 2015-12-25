@@ -780,6 +780,19 @@ class SoftwarePlanVersion(models.Model):
             'version_num': self.version,
         }
 
+    def get_product_rate(self):
+        product_rates = self.product_rates.all()
+        if len(product_rates) > 1:
+            # Models and UI are both written to support multiple products,
+            # but for now, each subscription can only have one product.
+            logger.error(
+                "[BILLING] "
+                "There are multiple product rates for plan version number %d. "
+                "Odd, right? Consider this an issue."
+                % self.id
+            )
+        return product_rates[0]
+
     @property
     def core_product(self):
         try:

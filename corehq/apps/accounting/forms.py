@@ -426,7 +426,7 @@ class SubscriptionForm(forms.Form):
                 'plan_name': subscription.plan_version,
             })
             try:
-                plan_product = subscription.plan_version.product_rates.all()[0].product.product_type
+                plan_product = subscription.plan_version.get_product_rate().product.product_type
                 self.fields['plan_product'].initial = plan_product
             except (IndexError, SoftwarePlanVersion.DoesNotExist):
                 plan_product = (

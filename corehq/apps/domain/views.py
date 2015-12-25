@@ -696,17 +696,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
         return sum([c.balance for c in credit_lines]) if credit_lines else Decimal('0.00')
 
     def get_product_summary(self, plan_version, account, subscription):
-        product_rates = plan_version.product_rates.all()
-        if len(product_rates) > 1:
-            # Models and UI are both written to support multiple products,
-            # but for now, each subscription can only have one product.
-            accounting_logger.error(
-                "[BILLING] "
-                "There seem to be multiple ACTIVE NEXT subscriptions for the subscriber %s. "
-                "Odd, right? The latest one by date_created was used, but consider this an issue."
-                % self.account
-            )
-        product_rate = product_rates[0]
+        product_rate = plan_version.get_product_rate()
         product_type = product_rate.product.product_type
         return {
             'name': product_type,
