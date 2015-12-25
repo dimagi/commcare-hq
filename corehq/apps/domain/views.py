@@ -67,7 +67,8 @@ from corehq.apps.accounting.models import (
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
     PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility, FeatureType,
-    StripePaymentMethod, LastPayment
+    StripePaymentMethod, LastPayment,
+    UNLIMITED_FEATURE_USAGE,
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import (
@@ -731,7 +732,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 'usage': usage,
                 'remaining': (
                     feature_rate.monthly_limit - usage
-                    if feature_rate.monthly_limit != -1
+                    if feature_rate.monthly_limit != UNLIMITED_FEATURE_USAGE
                     else _('Unlimited')
                 ),
                 'type': feature_rate.feature.feature_type,

@@ -56,6 +56,8 @@ integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-21
 MAX_INVOICE_COMMUNICATIONS = 5
 SMALL_INVOICE_THRESHOLD = 100
 
+UNLIMITED_FEATURE_USAGE = -1
+
 
 class BillingAccountType(object):
     CONTRACT = "CONTRACT"
@@ -814,7 +816,7 @@ class SoftwarePlanVersion(models.Model):
         desc.update({
             'monthly_fee': 'USD %s' % product.monthly_fee,
             'rates': [{'name': FEATURE_TYPE_TO_NAME[r.feature.feature_type],
-                       'included': 'Infinite' if r.monthly_limit == -1 else r.monthly_limit}
+                       'included': 'Infinite' if r.monthly_limit == UNLIMITED_FEATURE_USAGE else r.monthly_limit}
                       for r in self.feature_rates.all()],
             'edition': self.plan.edition,
         })
@@ -826,7 +828,7 @@ class SoftwarePlanVersion(models.Model):
         user_features = self.feature_rates.filter(feature__feature_type=FeatureType.USER)
         try:
             user_feature = user_features.order_by('monthly_limit')[0]
-            if not user_feature.monthly_limit == -1:
+            if not user_feature.monthly_limit == UNLIMITED_FEATURE_USAGE:
                 user_feature = user_features.order_by('-monthly_limit')[0]
             return user_feature
         except IndexError:
@@ -836,7 +838,7 @@ class SoftwarePlanVersion(models.Model):
     def user_limit(self):
         if self.user_feature is not None:
             return self.user_feature.monthly_limit
-        return -1
+        return UNLIMITED_FEATURE_USAGE
 
     @property
     def user_fee(self):
@@ -850,8 +852,7 @@ class SoftwarePlanVersion(models.Model):
             return False
         from corehq.apps.accounting.usage import FeatureUsageCalculator
         for feature_rate in self.feature_rates.all():
-            # -1 is the special infinity charge
-            if feature_rate.monthly_limit != -1:
+            if feature_rate.monthly_limit != UNLIMITED_FEATURE_USAGE:
                 calc = FeatureUsageCalculator(
                     feature_rate, domain.name, start_date=start_date,
                     end_date=end_date
