@@ -114,7 +114,13 @@ class ReportFixturesProvider(object):
                 get_expanded_columns(data_source.column_configs, data_source.config)
             )
             rows_elem.append(_row_to_row_elem(
-                total_row, data_source.get_total_records(),
+                dict(
+                    zip(
+                        map(lambda column_config: column_config.column_id, data_source.column_configs),
+                        map(str, total_row)
+                    )
+                ),
+                data_source.get_total_records(),
                 is_total_row=True,
             ))
 
