@@ -1,6 +1,5 @@
 import json
 from django.core.management import BaseCommand, CommandError
-from corehq.apps.hqadmin.management.commands.fix_checkpoint_after_rewind import set_checkpoint
 from pillowtop import get_pillow_by_name
 
 
@@ -26,4 +25,4 @@ class Command(BaseCommand):
             if input not in ['y', 'yes']:
                 print 'skipped'
                 continue
-            set_checkpoint(pillow, checkpoint_to_set)
+            pillow.checkpoint.update_to(checkpoint_to_set)
