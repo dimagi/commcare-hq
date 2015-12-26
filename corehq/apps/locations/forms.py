@@ -303,12 +303,21 @@ class UsersAtLocationForm(MultipleSelectionForm):
                       .domain(self.domain_object.name)
                       .mobile_users()
                       .fields(['_id', 'username', 'first_name', 'last_name']))
-        return [
-            (u['_id'], user_display_string(u['username'],
-                                           u.get('first_name', ''),
-                                           u.get('last_name', '')))
-            for u in user_query.run().hits
-        ]
+        results = user_query.run().hits
+        if results and isinstance(results[0]['username'], list):
+            return [
+                (u['_id'], user_display_string(u['username'][0],
+                                               u.get('first_name', [''][0]),
+                                               u.get('last_name', [''][0])))
+                for u in results
+            ]
+        else:
+            return [
+                (u['_id'], user_display_string(u['username'],
+                                               u.get('first_name', ''),
+                                               u.get('last_name', '')))
+                for u in results
+            ]
 
     @property
     @memoized
