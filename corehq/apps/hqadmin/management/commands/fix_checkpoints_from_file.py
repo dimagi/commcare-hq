@@ -30,7 +30,7 @@ class Command(BaseCommand):
                 pillow_name, old_seq, checkpoint_to_set,
             )
             if not options['noinput'] and \
-                            raw_input("{} Type ['y', 'yes'] to continue.\n".format(msg)) not in ['y', 'yes']:
+                    raw_input("{} Type ['y', 'yes'] to continue.\n".format(msg)) not in ['y', 'yes']:
                 print 'skipped'
                 continue
             pillow.checkpoint.update_to(checkpoint_to_set)
