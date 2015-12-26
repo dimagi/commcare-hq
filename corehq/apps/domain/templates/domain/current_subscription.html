@@ -118,9 +118,20 @@
                         <div class="control-group">
                             <label class="control-label">{% trans 'Plan Credit' %}</label>
                             <div class="controls">
-                                <span class="help-inline"
-                                      style="margin-right: 10px;"
-                                      data-bind="text: amount"></span>
+                                <p class="control-group-text" data-bind="text: amount"></p>
+                            </div>
+                        </div>
+                        <div class="control-group" data-bind="visible: isAccountVisible">
+                            <label class="control-label">{% trans 'Account Plan Credit' %}</label>
+                            <div class="controls">
+                                <p class="control-group-text" data-bind="text: accountAmount"></p>
+                                <p class="help-block">
+                                    <i class="icon-info-sign"></i>
+                                    {% blocktrans %}
+                                        This is credit that can be applied to your software plan.
+                                        It's likely that someone from Dimagi added these credits for you.
+                                    {% endblocktrans %}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -135,6 +146,52 @@
                                         This is credit that can be applied to either your software plan
                                         or the features below. It's likely that someone from Dimagi added these
                                         credits for you.
+                                    {% endblocktrans %}
+                                </p>
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% if plan.account_general_credit and plan.account_general_credit.is_visible %}
+                        <div class="control-group">
+                            <label class="control-label">{% trans 'Account General Credit' %}</label>
+                            <div class="controls">
+                                <p class="control-group-text">{{ plan.account_general_credit.amount }}</p>
+                                <p class="help-block">
+                                    <i class="icon-info-sign"></i>
+                                    {% blocktrans %}
+                                        This is credit that can be applied to either your software plan
+                                        or the features below. It's likely that someone from Dimagi added these
+                                        credits for you.
+                                    {% endblocktrans %}
+                                </p>
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% if plan.feature_credit and plan.feature_credit.is_visible %}
+                        <div class="control-group">
+                            <label class="control-label">{% trans 'Feature Credit' %}</label>
+                            <div class="controls">
+                                <p class="control-group-text">{{ plan.feature_credit.amount }}</p>
+                                <p class="help-block">
+                                    <i class="icon-info-sign"></i>
+                                    {% blocktrans %}
+                                        This is credit that can be applied to the features below.
+                                        It's likely that someone from Dimagi added these credits for you.
+                                    {% endblocktrans %}
+                                </p>
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% if plan.account_feature_credit and plan.account_feature_credit.is_visible %}
+                        <div class="control-group">
+                            <label class="control-label">{% trans 'Account Feature Credit' %}</label>
+                            <div class="controls">
+                                <p class="control-group-text">{{ plan.account_feature_credit.amount }}</p>
+                                <p class="help-block">
+                                    <i class="icon-info-sign"></i>
+                                    {% blocktrans %}
+                                        This is credit that can be applied to the features below.
+                                        It's likely that someone from Dimagi added these credits for you.
                                     {% endblocktrans %}
                                 </p>
                             </div>
@@ -212,6 +269,9 @@
                         <th>{% trans "Remaining" %}</th>
                         {% if not plan.is_trial %}
                         <th>{% trans "Credits Available" %}</th>
+                        {% if show_account_credits %}
+                        <th>{% trans "Account Credits Available" %}</th>
+                        {% endif %}
                         {% endif %}
                     </tr>
                 </thead>
@@ -222,6 +282,9 @@
                         <td data-bind="text: remaining"></td>
                         {% if not plan.is_trial %}
                         <td data-bind="text: amount"></td>
+                        {% if show_account_credits %}
+                        <td data-bind="text: accountAmount"></td>
+                        {% endif %}
                         {% endif %}
                     </tr>
                 </tbody>

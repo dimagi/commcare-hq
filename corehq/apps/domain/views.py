@@ -67,7 +67,8 @@ from corehq.apps.accounting.models import (
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
     PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility, FeatureType,
-    StripePaymentMethod, LastPayment
+    StripePaymentMethod, LastPayment,
+    UNLIMITED_FEATURE_USAGE,
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import (
@@ -608,6 +609,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
         return self.request.couch_user.is_domain_admin(self.domain)
 
     @property
+    @memoized
     def plan(self):
         plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)
         date_end = None
@@ -618,7 +620,6 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'price': None,
         }
         cards = None
-        general_credits = None
         if subscription:
             cards = get_customer_cards(self.account, self.request.user.username, self.domain)
             date_end = (subscription.date_end.strftime(USER_DATE_FORMAT)
@@ -644,16 +645,30 @@ class DomainSubscriptionView(DomainAccountingSettings):
                         'can_renew': days_left <= 30,
                         'renew_url': reverse(SubscriptionRenewalView.urlname, args=[self.domain]),
                     })
-            general_credits = CreditLine.get_credits_by_subscription_and_features(subscription)
-        elif self.account is not None:
-            general_credits = CreditLine.get_credits_for_account(self.account)
-        if general_credits:
-            general_credits = self._fmt_credit(self._credit_grand_total(general_credits))
 
         info = {
             'products': [self.get_product_summary(plan_version, self.account, subscription)],
             'features': self.get_feature_summary(plan_version, self.account, subscription),
-            'general_credit': general_credits,
+            'general_credit': self._fmt_credit(self._credit_grand_total(
+                CreditLine.get_credits_by_subscription_and_features(
+                    subscription
+                ) if subscription else None
+            )),
+            'feature_credit': self._fmt_credit(self._credit_grand_total(
+                CreditLine.get_credits_by_subscription_and_features(
+                    subscription, feature_type=FeatureType.ANY
+                ) if subscription else None
+            )),
+            'account_general_credit': self._fmt_credit(self._credit_grand_total(
+                CreditLine.get_credits_for_account(
+                    self.account
+                ) if self.account else None
+            )),
+            'account_feature_credit': self._fmt_credit(self._credit_grand_total(
+                CreditLine.get_credits_for_account(
+                    self.account, feature_type=FeatureType.ANY
+                ) if self.account else None
+            )),
             'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
             'do_not_invoice': subscription.do_not_invoice if subscription is not None else False,
             'is_trial': subscription.is_trial if subscription is not None else False,
@@ -681,66 +696,51 @@ class DomainSubscriptionView(DomainAccountingSettings):
         return sum([c.balance for c in credit_lines]) if credit_lines else Decimal('0.00')
 
     def get_product_summary(self, plan_version, account, subscription):
-        product_rates = plan_version.product_rates.all()
-        if len(product_rates) > 1:
-            # Models and UI are both written to support multiple products,
-            # but for now, each subscription can only have one product.
-            accounting_logger.error(
-                "[BILLING] "
-                "There seem to be multiple ACTIVE NEXT subscriptions for the subscriber %s. "
-                "Odd, right? The latest one by date_created was used, but consider this an issue."
-                % self.account
-            )
-        product_rate = product_rates[0]
-        product_info = {
-            'name': product_rate.product.product_type,
+        product_rate = plan_version.get_product_rate()
+        product_type = product_rate.product.product_type
+        return {
+            'name': product_type,
             'monthly_fee': _("USD %s /month") % product_rate.monthly_fee,
-            'credit': None,
-            'type': product_rate.product.product_type,
+            'type': product_type,
+            'subscription_credit': self._fmt_credit(self._credit_grand_total(
+                CreditLine.get_credits_by_subscription_and_features(
+                    subscription, product_type=product_type
+                ) if subscription else None
+            )),
+            'account_credit': self._fmt_credit(self._credit_grand_total(
+                CreditLine.get_credits_for_account(
+                    account, product_type=product_type
+                ) if account else None
+            )),
         }
-        credit_lines = None
-        if subscription is not None:
-            credit_lines = CreditLine.get_credits_by_subscription_and_features(
-                subscription, product_type=product_rate.product.product_type
-            )
-        elif account is not None:
-            credit_lines = CreditLine.get_credits_for_account(
-                account, product_type=product_rate.product.product_type
-            )
-        if credit_lines:
-            product_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
-        return product_info
 
     def get_feature_summary(self, plan_version, account, subscription):
-        feature_summary = []
-        for feature_rate in plan_version.feature_rates.all():
+        def _get_feature_info(feature_rate):
             usage = FeatureUsageCalculator(feature_rate, self.domain).get_usage()
-            feature_info = {
-                'name': get_feature_name(feature_rate.feature.feature_type, self.product),
+            feature_type = feature_rate.feature.feature_type
+            return {
+                'name': get_feature_name(feature_type, self.product),
                 'usage': usage,
                 'remaining': (
                     feature_rate.monthly_limit - usage
-                    if feature_rate.monthly_limit != -1
+                    if feature_rate.monthly_limit != UNLIMITED_FEATURE_USAGE
                     else _('Unlimited')
                 ),
-                'credit': self._fmt_credit(),
-                'type': feature_rate.feature.feature_type,
-                'recurring_interval': get_feature_recurring_interval(feature_rate.feature.feature_type),
+                'type': feature_type,
+                'recurring_interval': get_feature_recurring_interval(feature_type),
+                'subscription_credit': self._fmt_credit(self._credit_grand_total(
+                    CreditLine.get_credits_by_subscription_and_features(
+                        subscription, feature_type=feature_type
+                    ) if subscription else None
+                )),
+                'account_credit': self._fmt_credit(self._credit_grand_total(
+                    CreditLine.get_credits_for_account(
+                        account, feature_type=feature_type
+                    ) if account else None
+                )),
             }
 
-            credit_lines = None
-            if subscription is not None:
-                credit_lines = CreditLine.get_credits_by_subscription_and_features(
-                    subscription, feature_type=feature_rate.feature.feature_type
-                )
-            elif account is not None:
-                credit_lines = CreditLine.get_credits_for_account(
-                    account, feature_type=feature_rate.feature.feature_type)
-            if credit_lines:
-                feature_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
-
-            feature_summary.append(feature_info)
-        return feature_summary
+        return map(_get_feature_info, plan_version.feature_rates.all())
 
     @property
     def page_context(self):
@@ -755,6 +755,10 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'sms_rate_calc_url': reverse(SMSRatesView.urlname,
                                          args=[self.domain]),
             'user_email': self.request.couch_user.username,
+            'show_account_credits': any(
+                feature['account_credit'].get('is_visible')
+                for feature in self.plan.get('features')
+            )
         }
 
 
