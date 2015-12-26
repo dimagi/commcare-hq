@@ -541,21 +541,21 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         except KeyError:
             return HttpResponseBadRequest('You must specify a username')
         if username == 'admin' or username == 'demo_user':
-            return {'error': _(u'Username {} is reserved.'.format(username))}
+            return {'error': _(u'Username {} is reserved.').format(username)}
         if '@' in username:
             return {
-                'error': _(u'Username {} cannot contain "@".'.format(username))
+                'error': _(u'Username {} cannot contain "@".').format(username)
             }
         if ' ' in username:
             return {
                 'error': _(u'Username {} cannot contain '
-                           'spaces.'.format(username))
+                           'spaces.').format(username)
             }
         full_username = format_username(username, self.domain)
         if CommCareUser.get_by_username(full_username, strict=True):
-            result = {'error': _(u'Username {} is already taken'.format(username))}
+            result = {'error': _(u'Username {} is already taken').format(username)}
         else:
-            result = {'success': _(u'Username {} is available'.format(username))}
+            result = {'success': _(u'Username {} is available').format(username)}
         return result
 
     @allow_remote_invocation
