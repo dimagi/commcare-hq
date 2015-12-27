@@ -835,7 +835,8 @@ class FormExportSchema(HQExportSchema):
             for column in [column for table in self.tables for column in table.columns]:
                 if isinstance(column, SplitColumn):
                     question = self.question_schema.question_schema.get(column.index)
-                    column.options = question.options
+                    if question:
+                        column.options = question.options
                     column.ignore_extras = True
 
     def update_question_schema(self):
