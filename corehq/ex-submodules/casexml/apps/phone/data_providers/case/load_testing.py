@@ -44,3 +44,6 @@ def append_update_to_response(response, update, restore_state):
         current_count += 1
         if current_count < restore_state.loadtest_factor:
             update = transform_loadtest_update(original_update, current_count)
+        #only add user case on the first iteration
+        if original_update.case.type == 'commcare-user':
+            return
