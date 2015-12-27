@@ -3,6 +3,8 @@ import datetime
 import logging
 from tempfile import NamedTemporaryFile
 from decimal import Decimal
+import itertools
+
 from couchdbkit import ResourceNotFound
 from django.db.models.manager import Manager
 
@@ -2433,17 +2435,33 @@ class CreditLine(models.Model):
 
     @classmethod
     def get_credits_for_line_item(cls, line_item):
-        return cls.get_credits_by_subscription_and_features(
-            line_item.invoice.subscription,
-            product_type=(line_item.product_rate.product.product_type
-                          if line_item.product_rate is not None else None),
-            feature_type=(line_item.feature_rate.feature.feature_type
-                          if line_item.feature_rate is not None else None),
+        product_type = (
+            line_item.product_rate.product.product_type
+            if line_item.product_rate is not None else None
+        )
+        feature_type = (
+            line_item.feature_rate.feature.feature_type
+            if line_item.feature_rate is not None else None
+        )
+        return itertools.chain(
+            cls.get_credits_by_subscription_and_features(
+                line_item.invoice.subscription,
+                product_type=product_type,
+                feature_type=feature_type,
+            ),
+            cls.get_credits_for_account(
+                line_item.invoice.subscription.account,
+                product_type=product_type,
+                feature_type=feature_type,
+            )
         )
 
     @classmethod
     def get_credits_for_invoice(cls, invoice):
-        return cls.get_credits_by_subscription_and_features(invoice.subscription)
+        return itertools.chain(
+            cls.get_credits_by_subscription_and_features(invoice.subscription),
+            cls.get_credits_for_account(invoice.subscription.account)
+        )
 
     @classmethod
     def get_credits_for_account(cls, account, feature_type=None, product_type=None):
