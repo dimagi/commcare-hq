@@ -31,7 +31,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser
 from corehq import privileges
-from corehq.apps.hqwebapp.signals import clear_failed_logins_and_unlock_account
+from corehq.apps.hqwebapp.signals import clear_login_attempts
 
 ########################################################################################################
 from corehq.toggles import IS_DEVELOPER
@@ -141,7 +141,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False):
                         and (allow_cc_users or couch_user.is_web_user())
                         and couch_user.is_member_of(domain)
                     ):
-                        clear_failed_logins_and_unlock_account(None, request, request.user)
+                        clear_login_attempts(request.user)
                         return fn(request, domain, *args, **kwargs)
                     else:
                         return HttpResponseForbidden()
@@ -238,7 +238,7 @@ def check_lockout(fn):
     def _inner(request, *args, **kwargs):
         username = _get_username_from_request(request)
         user = CouchUser.get_by_username(username)
-        if user and user.login_attempts > 4:
+        if user and user.is_web_user() and user.is_locked_out():
             return HttpResponse(json.dumps({"error": "maximum password attempts exceeded"}),
                                         content_type="application/json",
                                         status=401)

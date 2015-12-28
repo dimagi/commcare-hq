@@ -2212,6 +2212,9 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
                 pass
         return None
 
+    def is_locked_out(self):
+        return self.login_attempts > 4
+
 
 class FakeUser(WebUser):
     """

@@ -31,12 +31,12 @@ class EmailAuthenticationForm(AuthenticationForm):
             cleaned_data = super(EmailAuthenticationForm, self).clean()
         except ValidationError:
             user = CouchUser.get_by_username(username)
-            if user and user.login_attempts > 4:
+            if user and user.is_web_user() and user.is_locked_out():
                 raise ValidationError(lockout_message)
             else:
                 raise
         user = CouchUser.get_by_username(username)
-        if user and user.login_attempts > 4:
+        if user and user.is_web_user() and user.is_locked_out():
             raise ValidationError(lockout_message)
         return cleaned_data
 

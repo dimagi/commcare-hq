@@ -104,7 +104,7 @@ from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRe
 from dimagi.utils.post import simple_post
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.hqwebapp.signals import clear_failed_logins_and_unlock_account
+from corehq.apps.hqwebapp.signals import clear_login_attempts
 
 
 accounting_logger = logging.getLogger('accounting')
@@ -2826,5 +2826,5 @@ class PasswordResetView(View):
         uidb64 = kwargs.get('uidb64')
         uid = urlsafe_base64_decode(uidb64)
         user = User.objects.get(pk=uid)
-        clear_failed_logins_and_unlock_account(None, request, user)
+        clear_login_attempts(user)
         return response
