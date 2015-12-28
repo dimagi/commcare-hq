@@ -6,6 +6,7 @@ from django.test import TestCase
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound, CaseSaveError
+from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
     CaseTransaction, CommCareCaseIndexSQL, CaseAttachmentSQL, SupplyPointCaseMixin
@@ -362,8 +363,199 @@ class CaseAccessorTestsSQL(TestCase):
         with self.assertRaises(CaseSaveError):
             CaseAccessorSQL.save_case(case)
 
+    def test_get_case_ids_by_owners(self):
+        case1 = _create_case(user_id="user1")
+        case2 = _create_case(user_id="user1")
+        case3 = _create_case(user_id="user2")
+        case4 = _create_case(user_id="user3")
 
-def _create_case(domain=None, form_id=None, case_type=None):
+        case_ids = CaseAccessorSQL.get_case_ids_in_domain_by_owners(DOMAIN, ["user1", "user3"])
+        self.assertEqual(set(case_ids), set([case1.case_id, case2.case_id, case4.case_id]))
+
+    def test_get_open_case_ids(self):
+        case1 = _create_case(user_id="user1")
+        case2 = _create_case(user_id="user1")
+        case3 = _create_case(user_id="user2")
+        case2.closed = True
+        CaseAccessorSQL.save_case(case2)
+
+        self.assertEqual(CaseAccessorSQL.get_open_case_ids(DOMAIN, "user1"), [case1.case_id])
+
+    def test_get_closed_case_ids(self):
+        case1 = _create_case(user_id="user1")
+        case2 = _create_case(user_id="user1")
+        case3 = _create_case(user_id="user2")
+        case2.closed = True
+        CaseAccessorSQL.save_case(case2)
+
+        self.assertEqual(CaseAccessorSQL.get_closed_case_ids(DOMAIN, "user1"), [case2.case_id])
+
+    def test_get_case_ids_modified_with_owner_since(self):
+        case1 = _create_case(user_id="user1")
+        date1 = datetime(1992, 1, 30)
+        case1.server_modified_on = date1
+        CaseAccessorSQL.save_case(case1)
+
+        case2 = _create_case(user_id="user2")
+        date2 = datetime(2015, 12, 28, 5, 48)
+        case2.server_modified_on = date2
+        CaseAccessorSQL.save_case(case2)
+
+        case3 = _create_case(user_id="user1")
+        date3 = datetime(1992, 1, 1)
+        case3.server_modified_on = date3
+        CaseAccessorSQL.save_case(case3)
+
+        self.assertEqual(
+            CaseAccessorSQL.get_case_ids_modified_with_owner_since(DOMAIN, "user1", datetime(1992, 1, 15)),
+            [case1.case_id]
+        )
+
+    def test_get_extension_case_ids(self):
+        # Create case and index
+        referenced_id = uuid.uuid4().hex
+        case = _create_case()
+        extension_index = CommCareCaseIndexSQL(
+            case=case,
+            identifier="task",
+            referenced_type="task",
+            referenced_id=referenced_id,
+            relationship_id=CommCareCaseIndexSQL.EXTENSION
+        )
+        case.track_create(extension_index)
+        CaseAccessorSQL.save_case(case)
+
+
+        # Create irrelevant case
+        other_case = _create_case()
+        child_index = CommCareCaseIndexSQL(
+            case=other_case,
+            identifier='parent',
+            referenced_type='mother',
+            referenced_id=referenced_id,
+            relationship_id=CommCareCaseIndexSQL.CHILD
+        )
+        case.track_create(child_index)
+        CaseAccessorSQL.save_case(other_case)
+
+        self.assertEqual(
+            CaseAccessorSQL.get_extension_case_ids(DOMAIN, [referenced_id]),
+            [case.case_id]
+        )
+
+    def test_get_indexed_case_ids(self):
+        # Create case and indexes
+        case = _create_case()
+        extension_index = CommCareCaseIndexSQL(
+            case=case,
+            identifier="task",
+            referenced_type="task",
+            referenced_id=uuid.uuid4().hex,
+            relationship_id=CommCareCaseIndexSQL.EXTENSION
+        )
+        case.track_create(extension_index)
+        child_index = CommCareCaseIndexSQL(
+            case=case,
+            identifier='parent',
+            referenced_type='mother',
+            referenced_id=uuid.uuid4().hex,
+            relationship_id=CommCareCaseIndexSQL.CHILD
+        )
+        case.track_create(child_index)
+        CaseAccessorSQL.save_case(case)
+
+        # Create irrelevant case
+        other_case = _create_case()
+        other_child_index = CommCareCaseIndexSQL(
+            case=other_case,
+            identifier='parent',
+            referenced_type='mother',
+            referenced_id=case.case_id,
+            relationship_id=CommCareCaseIndexSQL.CHILD
+        )
+        other_case.track_create(other_child_index)
+        CaseAccessorSQL.save_case(other_case)
+
+        self.assertEqual(
+            set(CaseAccessorSQL.get_indexed_case_ids(DOMAIN, [case.case_id])),
+            set([extension_index.referenced_id, child_index.referenced_id])
+        )
+
+    def test_get_last_modified_dates(self):
+        case1 = _create_case()
+        date1 = datetime(1992, 1, 30, 12, 0)
+        case1.server_modified_on = date1
+        CaseAccessorSQL.save_case(case1)
+
+        case2 = _create_case()
+        date2 = datetime(2015, 12, 28, 5, 48)
+        case2.server_modified_on = date2
+        CaseAccessorSQL.save_case(case2)
+
+        case3 = _create_case()
+
+        self.assertEqual(
+            CaseAccessorSQL.get_last_modified_dates(DOMAIN, [case1.case_id, case2.case_id]),
+            {case1.case_id: date1, case2.case_id: date2}
+        )
+
+    def test_get_all_reverse_indices_info(self):
+        # Create case and indexes
+        case = _create_case()
+        referenced_id1 = uuid.uuid4().hex
+        referenced_id2 = uuid.uuid4().hex
+        extension_index = CommCareCaseIndexSQL(
+            case=case,
+            identifier="task",
+            referenced_type="task",
+            referenced_id=referenced_id1,
+            relationship_id=CommCareCaseIndexSQL.EXTENSION
+        )
+        case.track_create(extension_index)
+        child_index = CommCareCaseIndexSQL(
+            case=case,
+            identifier='parent',
+            referenced_type='mother',
+            referenced_id=referenced_id2,
+            relationship_id=CommCareCaseIndexSQL.CHILD
+        )
+        case.track_create(child_index)
+        CaseAccessorSQL.save_case(case)
+
+        # Create irrelevant case and index
+        other_case = _create_case()
+        other_child_index = CommCareCaseIndexSQL(
+            case=other_case,
+            identifier='parent',
+            referenced_type='mother',
+            referenced_id=case.case_id,
+            relationship_id=CommCareCaseIndexSQL.CHILD
+        )
+        other_case.track_create(other_child_index)
+        CaseAccessorSQL.save_case(other_case)
+
+        self.assertEqual(
+            set(CaseAccessorSQL.get_all_reverse_indices_info(DOMAIN, [referenced_id1, referenced_id2])),
+            {
+                CaseIndexInfo(
+                    case_id=case.case_id,
+                    identifier=u'task',
+                    referenced_id=referenced_id1,
+                    referenced_type=u'task',
+                    relationship=CommCareCaseIndexSQL.EXTENSION,
+                ),
+                CaseIndexInfo(
+                    case_id=case.case_id,
+                    identifier=u'parent',
+                    referenced_id=referenced_id2,
+                    referenced_type=u'mother',
+                    relationship=CommCareCaseIndexSQL.CHILD
+                ),
+            }
+        )
+
+
+def _create_case(domain=None, form_id=None, case_type=None, user_id=None):
     """
     Create the models directly so that these tests aren't dependent on any
     other apps. Not testing form processing here anyway.
@@ -372,7 +564,7 @@ def _create_case(domain=None, form_id=None, case_type=None):
     domain = domain or DOMAIN
     form_id = form_id or uuid.uuid4().hex
     case_id = uuid.uuid4().hex
-    user_id = 'user1'
+    user_id = user_id or 'user1'
     utcnow = datetime.utcnow()
 
     form = XFormInstanceSQL(

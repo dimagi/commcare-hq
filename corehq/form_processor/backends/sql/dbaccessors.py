@@ -433,7 +433,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_extension_case_ids(domain, case_ids):
         """
-        Given a base list of case ids, for those that are open, get all ids of all extension cases that reference them
+        Given a base list of case ids, get all ids of all extension cases that reference them
         """
         with get_cursor(CommCareCaseIndexSQL) as cursor:
             cursor.execute('SELECT case_id FROM get_extension_case_ids(%s, %s)', [domain, list(case_ids)])
