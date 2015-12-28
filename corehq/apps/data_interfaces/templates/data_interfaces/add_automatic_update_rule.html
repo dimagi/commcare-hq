@@ -100,7 +100,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr ng-repeat="condition in conditions_objs" {% if form.conditions.errors %}class="has-error"{% endif %}>
+                <tr ng-repeat="condition in conditions_objs track by $index" {% if form.conditions.errors %}class="has-error"{% endif %}>
                     {% angularjs %}
                     <td>
                         <input class="case-property-typeahead textinput textInput form-control"
