@@ -209,7 +209,7 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
         <partial>
           <template form="graph">
             <graph type="bar">
-              <series nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/rows/row[column[@id='computed_owner_name_40cc88a0']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]">
+              <series nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/rows/row[@is_total_row='False'][column[@id='computed_owner_name_40cc88a0']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]">
                 <configuration/>
                 <x function="column[@id='color_94ec39e6']"/>
                 <y function="column[@id='count']"/>
@@ -224,17 +224,17 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual("""
         <partial>
           <rows>
-            <row index="0">
+            <row index="0" is_total_row="False">
               <column id="color_94ec39e6">red</column>
               <column id="computed_owner_name_40cc88a0">cory</column>
               <column id="count">2</column>
             </row>
-            <row index="1">
+            <row index="1" is_total_row="False">
               <column id="color_94ec39e6">black</column>
               <column id="computed_owner_name_40cc88a0">ctsims</column>
               <column id="count">1</column>
             </row>
-            <row index="2">
+            <row index="2" is_total_row="False">
               <column id="color_94ec39e6">red</column>
               <column id="computed_owner_name_40cc88a0">daniel</column>
               <column id="count">3</column>
