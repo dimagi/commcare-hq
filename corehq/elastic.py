@@ -134,9 +134,9 @@ def run_query(url, q):
     return get_es().get(url, data=q)
 
 
-def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None,
-        interval="day", q=None, filters=[]):
-    q = q or {"query": {"match_all":{}}}
+def es_histogram(histo_type, domains=None, startdate=None, enddate=None,
+        interval="day", filters=[]):
+    q = {"query": {"match_all":{}}}
 
     if domains is not None:
         q["query"] = {"bool": {"must": [q["query"], {"in": {"domain.exact": domains}}]}}
@@ -159,9 +159,6 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
                             }}}]}}},
         "size": 0
     })
-
-    if tz_diff:
-        q["facets"]["histo"]["date_histogram"]["time_zone"] = tz_diff
 
     q["facets"]["histo"]["facet_filter"]["and"].extend(filters)
     q["facets"]["histo"]["facet_filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, []))
@@ -258,18 +255,6 @@ def stream_es_query(chunksize=100, **kwargs):
             yield hit
 
 
-def stream_esquery(esquery, chunksize=SIZE_LIMIT):
-    size = esquery._size if esquery._size is not None else SIZE_LIMIT
-    start = esquery._start if esquery._start is not None else 0
-    for chunk_start in range(start, start + size, chunksize):
-        es_query_set = esquery.size(chunksize).start(chunk_start).run()
-        if not es_query_set.raw_hits:
-            break
-        else:
-            for hit in es_query_set.raw_hits:
-                yield hit
-
-
 def parse_args_for_es(request, prefix=None):
     """
     Parses a request's query string for url parameters. It specifically parses the facet url parameter so that each term
@@ -326,15 +311,3 @@ def fill_mapping_with_facets(facet_mapping, results, params=None):
                 for choice in facet_dict["choices"]:
                     choice["display"] = facet_dict.get('mapping').get(choice["name"], choice["name"])
     return facet_mapping
-
-DAY_VALUE = 86400000
-def format_histo_data(data, name, min_t=None, max_t=None):
-    data = dict([(d["time"], d["count"]) for d in data])
-    times = data.keys()
-    min_t, max_t = min_t or min(times), max_t or max(times)
-    time = min_t
-    values = []
-    while time <= max_t:
-        values.append([time, data.get(time, 0)])
-        time += DAY_VALUE
-    return {"key": name, "values": values}
