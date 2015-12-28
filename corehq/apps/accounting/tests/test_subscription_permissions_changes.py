@@ -1,12 +1,10 @@
-import datetime
 import os
-from pandas import json
+import json
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, \
     SoftwarePlanEdition, Subscription
 from corehq.apps.accounting.tests import BaseAccountingTest
-from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 
 
