@@ -51,7 +51,11 @@ class NewWebUserRegistrationForm(DomainRegistrationForm):
                              help_text=_('You will use this email to log in.'))
     password = forms.CharField(label=_('Create Password'),
                                max_length=max_pwd,
-                               widget=forms.PasswordInput(render_value=False))
+                               widget=forms.PasswordInput(render_value=False,
+                                                          attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
+                               help_text=mark_safe("""
+                               <span data-bind="text: passwordHelp, css: color">
+                               """))
     create_domain = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,
