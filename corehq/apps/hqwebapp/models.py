@@ -1501,6 +1501,10 @@ class MySettingsTab(UITab):
                     'title': _(ChangeMyPasswordView.page_title),
                     'url': reverse(ChangeMyPasswordView.urlname),
                 },
+                {
+                    'title': _("Two Factor Authentication Settings"),
+                    'url': reverse('two_factor:profile'),
+                }
             ))
         ]
         return items

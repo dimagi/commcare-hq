@@ -32,8 +32,14 @@ from django.template import loader
 from django.template.context import RequestContext
 from django.template.response import TemplateResponse
 from restkit import Resource
-from two_factor.views import LoginView
-from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
+from two_factor.views import LoginView, SetupView
+from two_factor.forms import (
+    AuthenticationTokenForm, BackupTokenForm, MethodForm,
+    TOTPDeviceForm, PhoneNumberForm, PhoneNumberForm,
+    DeviceValidationForm
+)
+from django_otp.plugins.otp_totp.models import TOTPDevice
+
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.app_manager.models import Application
@@ -1124,3 +1130,18 @@ class DataTablesAJAXPaginationMixin(object):
             'iTotalRecords': total_records,
             'iTotalDisplayRecords': filtered_records or total_records,
         }))
+
+class NewPhoneView(SetupView):
+    urlname = 'new_phone'
+
+    form_list = (
+        ('method', MethodForm),
+        ('generator', TOTPDeviceForm),
+        ('sms', PhoneNumberForm),
+        ('call', PhoneNumberForm),
+        ('validation', DeviceValidationForm),
+    )
+
+    def get(self, request, *args, **kwargs):
+        TOTPDevice.objects.filter(user_id=request.user).delete()
+        return super(SetupView, self).get(request, *args, **kwargs)

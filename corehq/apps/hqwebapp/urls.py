@@ -1,5 +1,6 @@
 from django.conf.urls import *
 from corehq.apps.domain.views import PublicSMSRatesView
+from corehq.apps.hqwebapp.views import NewPhoneView
 
 urlpatterns = patterns(
     'corehq.apps.hqwebapp.views',
@@ -28,6 +29,7 @@ urlpatterns = patterns(
     url(r'^dropbox_upload/(?P<download_id>[0-9a-fA-Z]{25,32})/$', 'dropbox_upload',
         name='dropbox_upload'),
     url(r'', include('two_factor.urls', 'two_factor')),
+    url(r'^account/two_factor/new_phone/$', NewPhoneView.as_view(), name=NewPhoneView.urlname)
 )
 
 domain_specific = patterns('corehq.apps.hqwebapp.views',
