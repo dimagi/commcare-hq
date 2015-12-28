@@ -12009,13 +12009,13 @@ msgstr ""
 msgid "Print"
 msgstr ""
 
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html:33
+#: corehq/apps/hqadmin/templates/hqadmin/bootstrap2/hqadmin_base_report.html:33
 #: corehq/apps/hqadmin/templates/hqadmin/malt_downloader.html:9
 #: corehq/apps/hqwebapp/models.py:1510 corehq/apps/hqwebapp/models.py:1678
 msgid "Admin Reports"
 msgstr ""
 
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html:37
+#: corehq/apps/hqadmin/templates/hqadmin/bootstrap2/hqadmin_base_report.html:37
 msgid "Administrative Report"
 msgstr ""
 
