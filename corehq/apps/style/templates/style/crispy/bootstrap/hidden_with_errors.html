@@ -3,12 +3,12 @@
 {% if field.is_hidden %}
 	{{ field }}
     {% if field.errors %}
-        <div class="controls has-error error">
+        <div class="controls error">
             {% include 'bootstrap/layout/help_text_and_errors.html' %}
         </div>
     {% endif %}
 {% else %}
-	<{% if tag %}{{ tag }}{% else %}div{% endif %} id="div_{{ field.auto_id }}" class="control-group{% if wrapper_class %} {{ wrapper_class }}{% endif %}{% if form_show_errors%}{% if field.errors %} has-error error{% endif %}{% endif %}{% if field.css_classes %} {{ field.css_classes }}{% endif %}">
+	<{% if tag %}{{ tag }}{% else %}div{% endif %} id="div_{{ field.auto_id }}" class="control-group{% if wrapper_class %} {{ wrapper_class }}{% endif %}{% if form_show_errors%}{% if field.errors %} error{% endif %}{% endif %}{% if field.css_classes %} {{ field.css_classes }}{% endif %}">
 		{% if field.label and not field|is_checkbox and form_show_labels %}
 			<label for="{{ field.id_for_label }}" class="control-label {% if field.field.required %}requiredField{% endif %}">
 				{{ field.label|safe }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}

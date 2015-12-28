@@ -1185,7 +1185,7 @@ class Subscription(models.Model):
                 method=method, note=note, web_user=web_user,
             )
 
-    def update_subscription(self, date_start=None, date_end=None,
+    def update_subscription(self, date_start, date_end,
                             date_delay_invoicing=None, do_not_invoice=False,
                             no_invoice_reason=None, do_not_email=False,
                             salesforce_contract_id=None,
@@ -1194,29 +1194,27 @@ class Subscription(models.Model):
                             service_type=None, pro_bono_status=None, funding_source=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
-        today = datetime.date.today()
-        if self.date_end is None or self.date_end > today:
-            self.date_end = date_end
-        if self.is_active and self.date_end is not None and self.date_end <= today:
-            self.is_active = False
-
-        if (self.date_start > today and date_start is not None
-            and date_start > today and (self.date_end is None or not date_start > self.date_end)
-        ):
-            self.date_start = date_start
-        elif self.date_end is not None and date_start > self.date_end:
+        if not date_start:
+            raise SubscriptionAdjustmentError('Start date must be provided')
+        if date_end is not None and date_start > date_end:
             raise SubscriptionAdjustmentError(
                 "Can't have a subscription start after the end date."
             )
-        elif date_start is not None and date_start != self.date_start:
-            raise SubscriptionAdjustmentError(
-                "Can't change the start date of a subscription to a date that "
-                "is today or in the past."
-            )
+        self.raise_conflicting_dates(date_start, date_end)
+        self.date_start = date_start
+        self.date_end = date_end
 
-        self.raise_conflicting_dates(self.date_start, self.date_end)
+        is_active_dates = is_active_subscription(self.date_start, self.date_end)
+        if self.is_active != is_active_dates:
+            if is_active_dates:
+                self.is_active = True
+                self.subscriber.activate_subscription(get_privileges(self.plan_version), self)
+            else:
+                raise SubscriptionAdjustmentError(
+                    'Cannot deactivate a subscription here. Cancel subscription instead.'
+                )
 
-        if self.date_delay_invoicing is None or self.date_delay_invoicing > today:
+        if self.date_delay_invoicing is None or self.date_delay_invoicing > datetime.date.today():
             self.date_delay_invoicing = date_delay_invoicing
 
         self.do_not_invoice = do_not_invoice

@@ -20,7 +20,6 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
-from corehq.elastic import es_wrapper
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
@@ -841,26 +840,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         if should_save:
             couch_user.save()
         return couch_user
-
-    @classmethod
-    def es_fakes(cls, domain, fields=None, start_at=None, size=None, wrap=True):
-        """
-        Get users from ES.  Use instead of by_domain()
-        This is faster than big db calls, but only returns partial data.
-        Set wrap to False to get a raw dict object (much faster).
-        This raw dict can be passed to _report_user_dict.
-        The save method has been disabled.
-        """
-        fields = fields or ['_id', 'username', 'first_name', 'last_name',
-                'doc_type', 'is_active', 'email']
-        raw = es_wrapper('users', domain=domain, doc_type=cls.__name__,
-                fields=fields, start_at=start_at, size=size)
-        if not wrap:
-            return raw
-        def save(*args, **kwargs):
-            raise NotImplementedError("This is a fake user, don't save it!")
-        ESUser = type(cls.__name__, (cls,), {'save': save})
-        return [ESUser(u) for u in raw]
 
     class AccountTypeError(Exception):
         pass

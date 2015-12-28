@@ -72,18 +72,23 @@ def deactivate_subscriptions(based_on_date=None):
             subscription.is_active = False
             subscription.save()
             next_subscription = subscription.next_subscription
-            if next_subscription and next_subscription.date_start == ending_date:
+            activate_next_subscription = next_subscription and next_subscription.date_start == ending_date
+            if activate_next_subscription:
                 new_plan_version = next_subscription.plan_version
                 next_subscription.is_active = True
                 next_subscription.save()
             else:
                 new_plan_version = None
             _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
+            if next_subscription and subscription.account == next_subscription.account:
+                subscription.transfer_credits(subscription=next_subscription)
+            else:
+                subscription.transfer_credits()
             subscription.subscriber.deactivate_subscription(
                 downgraded_privileges=downgraded_privs,
                 upgraded_privileges=upgraded_privs,
                 old_subscription=subscription,
-                new_subscription=next_subscription,
+                new_subscription=next_subscription if activate_next_subscription else None,
             )
 
 

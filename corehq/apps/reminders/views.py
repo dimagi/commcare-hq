@@ -7,8 +7,8 @@ import pytz
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
-from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js, use_jquery_ui, use_timepicker, \
-    use_datatables
+from corehq.apps.style.decorators import use_bootstrap3, use_datatables, use_knockout_js, use_jquery_ui, \
+    use_timepicker, use_select2
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
@@ -370,6 +370,15 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     template_name = 'reminders/manage_scheduled_reminder.html'
     ui_type = UI_SIMPLE_FIXED
 
+    @method_decorator(reminders_framework_permission)
+    @use_bootstrap3
+    @use_knockout_js
+    @use_jquery_ui
+    @use_timepicker
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(CreateScheduledReminderView, self).dispatch(request, *args, **kwargs)
+
     @property
     def reminder_form_class(self):
         return {
@@ -573,10 +582,6 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
 
     def _format_response(self, resp_list):
         return [{'text': r, 'id': r} for r in resp_list]
-
-    @method_decorator(reminders_framework_permission)
-    def dispatch(self, request, *args, **kwargs):
-        return super(CreateScheduledReminderView, self).dispatch(request, *args, **kwargs)
 
     def post(self, *args, **kwargs):
         if self.action in [
@@ -1146,6 +1151,13 @@ class RemindersListView(BaseMessagingSectionView):
     template_name = 'reminders/reminders_list.html'
     urlname = "list_reminders_new"
     page_title = ugettext_noop("Reminder Definitions")
+
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    @use_datatables
+    @use_knockout_js
+    def dispatch(self, *args, **kwargs):
+        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
     @property
     def page_url(self):

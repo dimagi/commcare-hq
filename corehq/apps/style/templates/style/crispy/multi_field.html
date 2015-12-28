@@ -1,6 +1,19 @@
 <div class="form-group {{ multifield.css_class }}" {{ multifield.flat_attrs|safe }}>
     <label class="control-label {{ label_class }}">
         {{ label_html }}
+        {% if help_bubble_text and multifield.css_id %}
+            <span class="hq-help-template"
+                data-title="{{ multifield.label_html }}"
+                data-content="{{ help_bubble_text }}" data-bootstrap3="true"
+            ></span>
+            <script>
+                $(function () {
+                    $('.hq-help-template').each(function () {
+                      COMMCAREHQ.transformHelpTemplate($(this), true);
+                    });
+                });
+            </script>
+        {% endif %}
     </label>
     <div class="controls {{ field_class }} controls-multiple">
         <div class="row">

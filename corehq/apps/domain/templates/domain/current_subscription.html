@@ -301,10 +301,7 @@
                     {% trans 'Total Credits' %}
                 </label>
                 <div class="controls">
-                    <div>
-                        <span class="add-on">$</span>
-                        <span data-bind="text: amount()"></span>
-                    </div>
+                    <p class="control-group-text" data-bind="text: ('$ ' + amount())"></p>
                 </div>
             </div>
             <input type="hidden" name="amount" data-bind="value: amount" />
