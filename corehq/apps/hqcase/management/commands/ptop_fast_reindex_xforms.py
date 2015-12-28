@@ -9,8 +9,15 @@ class Command(ElasticReindexer):
     help = "Fast reindex of case elastic index by using the case view and reindexing cases"
 
     doc_class = XFormInstance
-    view_name = 'hqadmin/forms_over_time'
     pillow_class = XFormPillow
+
+    view_name = 'all_docs/by_doc_type'
+
+    def get_extra_view_kwargs(self):
+        return {
+            'startkey': ['XFormInstance'],
+            'endkey': ['XFormInstance', {}],
+        }
 
     def handle(self, *args, **options):
         if not options.get('bulk', False):
