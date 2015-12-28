@@ -18,7 +18,6 @@ from casexml.apps.stock.models import StockTransaction
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
-from corehq.elastic import es_wrapper
 
 from . import v0_1, v0_4
 from . import HqBaseResource, DomainSpecificResourceMixin
@@ -26,6 +25,16 @@ from phonelog.models import DeviceReportEntry
 
 
 MOCK_BULK_USER_ES = None
+
+
+def user_es_call(domain, q, fields, size, start_at):
+    query = (UserES()
+             .domain(domain)
+             .set_query({"query_string": {"query": q}})
+             .fields(fields)
+             .size(size)
+             .start(start_at))
+    return query.run().hits
 
 
 class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
@@ -77,9 +86,8 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
         fields = self.fields.keys()
         fields.remove('id')
         fields.append('_id')
-        fn = MOCK_BULK_USER_ES or es_wrapper
+        fn = MOCK_BULK_USER_ES or user_es_call
         users = fn(
-                'users',
                 domain=kwargs['domain'],
                 q=param('q'),
                 fields=fields,
