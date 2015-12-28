@@ -1875,7 +1875,7 @@ msgid "Go to All Invoices page for this Project Space"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/invoice_table.html:8
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_filters.html:9
+#: corehq/apps/hqadmin/templates/hqadmin/bootstrap2/hqadmin_base_filters.html:9
 #: corehq/apps/reports_core/templates/reports_core/base_template_new.html:156
 msgid "Export to Excel"
 msgstr ""
@@ -12160,13 +12160,13 @@ msgstr ""
 msgid "Apply to All Charts"
 msgstr ""
 
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_filters.html:15
+#: corehq/apps/hqadmin/templates/hqadmin/bootstrap2/hqadmin_base_filters.html:15
 #: corehq/apps/reports/templates/reports/standard/base_template.html:138
 #: corehq/apps/reports_core/templates/reports_core/base_template_new.html:161
 msgid "Email report"
 msgstr ""
 
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_filters.html:21
+#: corehq/apps/hqadmin/templates/hqadmin/bootstrap2/hqadmin_base_filters.html:21
 #: corehq/apps/reports/templates/reports/standard/base_template.html:144
 #: corehq/apps/reports_core/templates/reports_core/base_template_new.html:166
 msgid "Print"
