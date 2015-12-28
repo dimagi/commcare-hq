@@ -184,7 +184,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
         })
         return HttpResponse(json.dumps(response))
 
-    def validate_file(self):
+    def validate_file(self, replace_diff_ext=False):
         raise NotImplementedError("You must validate your uploaded file!")
 
     def process_upload(self):
@@ -203,7 +203,7 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
         except Exception as e:
             raise BadMediaFileException("There was an issue processing the zip file you provided. Error: %s" % e)
 
-    def validate_file(self):
+    def validate_file(self, replace_diff_ext=False):
         if not self.mime_type in self.valid_mime_types():
             raise BadMediaFileException("Your zip file doesn't have a valid mimetype.")
         if not self.uploaded_zip:
@@ -271,7 +271,7 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
             return self.file_ext
         return '.{}'.format(self.original_path.split('.')[-1])
 
-    def validate_file(self):
+    def validate_file(self, replace_diff_ext=False):
         def possible_extensions(filename):
             possible_type = guess_type(filename)[0]
             if not possible_type:
@@ -293,7 +293,7 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
                     ext=self.file_ext,
                 )
             )
-        if self.file_ext.lower() != self.orig_ext.lower():
+        if not replace_diff_ext and self.file_ext.lower() != self.orig_ext.lower():
             raise BadMediaFileException(_(
                 "The file type of {name} of '{ext}' does not match the "
                 "file type of the original media file '{orig_ext}'. To change "
@@ -348,6 +348,9 @@ class ProcessLogoFileUploadView(ProcessImageFileUploadView):
     def form_path(self):
         return ("jr://file/commcare/logo/data/%s%s"
                 % (self.filename, self.file_ext))
+
+    def validate_file(self, replace_diff_ext=True):
+        return super(ProcessLogoFileUploadView, self).validate_file(replace_diff_ext)
 
     @property
     def filename(self):
