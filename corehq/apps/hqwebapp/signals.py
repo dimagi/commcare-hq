@@ -5,15 +5,18 @@ from django.dispatch import receiver
 
 from corehq.apps.users.models import CouchUser
 
+
 def clear_login_attempts(user):
     user = CouchUser.from_django_user(user)
     if user.is_web_user() and user.login_attempts > 0:
         user.login_attempts = 0
         user.save()
 
+
 @receiver(user_logged_in)
 def clear_failed_logins_and_unlock_account(sender, request, user, **kwargs):
     clear_login_attempts(user)
+
 
 @receiver(user_login_failed)
 def add_failed_attempt(sender, credentials, **kwargs):

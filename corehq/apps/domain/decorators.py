@@ -233,6 +233,7 @@ def login_required(view_func):
         return view_func(request, *args, **kwargs)
     return _inner
 
+
 def check_lockout(fn):
     @wraps(fn)
     def _inner(request, *args, **kwargs):
@@ -240,11 +241,12 @@ def check_lockout(fn):
         user = CouchUser.get_by_username(username)
         if user and user.is_web_user() and user.is_locked_out():
             return HttpResponse(json.dumps({"error": "maximum password attempts exceeded"}),
-                                        content_type="application/json",
-                                        status=401)
+                                content_type="application/json",
+                                status=401)
         else:
             return fn(request, *args, **kwargs)
     return _inner
+
 
 def _get_username_from_request(request):
     auth_type = determine_authtype_from_header(request)

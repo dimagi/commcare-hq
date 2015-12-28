@@ -9,7 +9,7 @@ import cStringIO
 from couchdbkit import ResourceNotFound
 import dateutil
 from django.core.paginator import Paginator
-from django.views.generic import View, TemplateView
+from django.views.generic import View
 from django.db.models import Sum
 from django.conf import settings
 from django.template.loader import render_to_string
