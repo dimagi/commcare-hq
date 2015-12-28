@@ -535,20 +535,16 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
             # check all of the transactions since last sync for one that had a different sync token
             from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
             return CaseAccessorSQL.case_has_transactions_since_sync(self.case_id, sync_log._id, sync_log.date)
-            # TODO: Should this logic really be on CaseAccessorSQL? I'm following the pattern of the
-            #       transactions method.
         return False
 
     def get_actions_for_form(self, xform):
         from casexml.apps.case.xform import get_case_updates
-        # Will this import cause atrocious performance?
         updates = [u for u in get_case_updates(xform) if u.id == self.case_id]
         actions = [a for update in updates for a in update.actions]
         normalized_actions = [
             CaseAction(
                 action_type=a.action_type_slug,
                 updated_known_properties=a.get_known_properties(),
-                #indices=[CommCareCaseIndex.from_case_index_update(i) for i in action.indices]
                 indices=a.indices
             ) for a in actions
         ]

@@ -5,7 +5,7 @@ BEGIN
     RETURN QUERY
     SELECT case_index_table.referenced_id FROM form_processor_commcarecaseindexsql AS case_index_table
     WHERE
-      -- case_index_table.domain = domain_name AND -- TODO: Why isn't any value ever being saved in this column?
+      -- case_index_table.domain = domain_name AND -- TODO: Uncomment if domain is ever saved in CaseIndex column
       case_index_table.case_id = ANY(case_ids)
     ;
 END;

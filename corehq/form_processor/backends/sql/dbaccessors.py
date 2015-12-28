@@ -2,7 +2,6 @@ import logging
 from itertools import groupby
 
 from django.db import connections, InternalError, transaction
-from django.db.models import Q
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor, \
     CaseIndexInfo
@@ -432,7 +431,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.case_id for result in results]
 
     @staticmethod
-    def get_extension_case_ids(domain, case_ids): # I need like this but without the relationship id check
+    def get_extension_case_ids(domain, case_ids):
         """
         Given a base list of case ids, for those that are open, get all ids of all extension cases that reference them
         """
