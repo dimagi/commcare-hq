@@ -18,7 +18,7 @@ def get_indexed_case_ids(domain, case_ids):
 
 def get_extension_case_ids(domain, case_ids):
     """
-    Given a base list of case ids, for those that are open, get all ids of all extension cases that reference them
+    Given a base list of case ids,  get all ids of all extension cases that reference them
     """
     return [r.case_id for r in get_all_reverse_indices_info(domain, case_ids, CASE_INDEX_EXTENSION)]
 
