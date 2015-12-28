@@ -129,9 +129,9 @@ class B3MultiField(LayoutObject):
                 fname = field.fields[0]
                 if fname not in form:
                     continue
-                error = form[fname].errors
-                if error:
-                    errors.append(error)
+                error_list = form[fname].errors
+                if error_list:
+                    errors.extend([error for error in error_list])
             else:
                 try:
                     errors.extend(self._get_errors(form, field.fields))
