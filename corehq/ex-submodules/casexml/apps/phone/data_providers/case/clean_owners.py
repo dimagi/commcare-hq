@@ -27,6 +27,7 @@ class CleanOwnerCaseSyncOperation(object):
 
     def __init__(self, restore_state):
         self.restore_state = restore_state
+        self.case_accessor = CaseAccessors(self.restore_state.domain)
 
     @property
     @memoized
@@ -56,7 +57,7 @@ class CleanOwnerCaseSyncOperation(object):
             # don't bother checking ones we've already decided to check
             other_ids_to_check = self.restore_state.last_sync_log.case_ids_on_phone - case_ids_to_sync
             case_ids_to_sync = case_ids_to_sync | set(filter_cases_modified_since(
-                self.restore_state.domain, list(other_ids_to_check), self.restore_state.last_sync_log.date
+                self.case_accessor, list(other_ids_to_check), self.restore_state.last_sync_log.date
             ))
 
         all_maybe_syncing = copy(case_ids_to_sync)
@@ -71,7 +72,7 @@ class CleanOwnerCaseSyncOperation(object):
             # todo: see if we can avoid wrapping - serialization depends on it heavily for now
             case_batch = filter(
                 partial(case_needs_to_sync, last_sync_log=self.restore_state.last_sync_log),
-                [case for case in CaseAccessors(self.restore_state.domain).get_cases(ids)
+                [case for case in self.case_accessor.get_cases(ids)
                  if not case.is_deleted]
             )
             updates = get_case_sync_updates(
@@ -134,7 +135,7 @@ class CleanOwnerCaseSyncOperation(object):
         self.restore_state.current_sync_log.extension_index_tree = extension_index_tree
         self.restore_state.current_sync_log.closed_cases = closed_cases
 
-        _move_no_longer_owned_cases_to_dependent_list_if_necessary(self.restore_state)
+        _move_no_longer_owned_cases_to_dependent_list_if_necessary(self.restore_state, self.case_accessor)
         self.restore_state.current_sync_log.purge_dependent_cases()
 
         purged_cases = case_ids_on_phone - self.restore_state.current_sync_log.case_ids_on_phone
@@ -159,13 +160,12 @@ class CleanOwnerCaseSyncOperation(object):
 
     def _get_case_ids_for_owners_without_extensions(self, owner_id):
         if self.is_clean(owner_id):
-            domain = self.restore_state.domain
             if self.restore_state.is_initial:
                 # for a clean owner's initial sync the base set is just the open ids
-                return set(CaseAccessors(domain).get_open_case_ids(owner_id))
+                return set(self.case_accessor.get_open_case_ids(owner_id))
             else:
                 # for a clean owner's steady state sync, the base set is anything modified since last sync
-                return set(CaseAccessors(domain).get_case_ids_modified_with_owner_since(
+                return set(self.case_accessor.get_case_ids_modified_with_owner_since(
                     owner_id, self.restore_state.last_sync_log.date
                 ))
         else:
@@ -182,26 +182,24 @@ class CleanOwnerCaseSyncOperation(object):
             # extension parameters get set correctly
             return get_case_footprint_info(self.restore_state.domain, owner_id).all_ids
         else:
-            domain = self.restore_state.domain
-            case_accessor = CaseAccessors(domain)
             if self.restore_state.is_initial:
                 # for a clean owner's initial sync the base set is just the open ids and their extensions
-                all_case_ids = set(case_accessor.get_open_case_ids(owner_id))
+                all_case_ids = set(self.case_accessor.get_open_case_ids(owner_id))
                 new_case_ids = set(all_case_ids)
                 while new_case_ids:
                     all_case_ids = all_case_ids | new_case_ids
-                    extension_case_ids = set(case_accessor.get_extension_case_ids(new_case_ids))
+                    extension_case_ids = set(self.case_accessor.get_extension_case_ids(new_case_ids))
                     new_case_ids = extension_case_ids - all_case_ids
                 return all_case_ids
             else:
                 # for a clean owner's steady state sync, the base set is anything modified since last sync
-                modified_non_extension_cases = set(case_accessor.get_case_ids_modified_with_owner_since(
+                modified_non_extension_cases = set(self.case_accessor.get_case_ids_modified_with_owner_since(
                     owner_id, self.restore_state.last_sync_log.date
                 ))
                 # we also need to fetch unowned extension cases that have been modified
                 extension_case_ids = self.restore_state.last_sync_log.extension_index_tree.indices.keys()
                 modified_extension_cases = set(filter_cases_modified_since(
-                    domain, extension_case_ids, self.restore_state.last_sync_log.date
+                    self.case_accessor, extension_case_ids, self.restore_state.last_sync_log.date
                 ))
                 return modified_non_extension_cases | modified_extension_cases
 
@@ -214,12 +212,12 @@ def _is_live(case, restore_state):
     return not case.closed and get_owner_id(case) in restore_state.owner_ids
 
 
-def filter_cases_modified_since(domain, case_ids, reference_date):
+def filter_cases_modified_since(case_accessor, case_ids, reference_date):
     """
-    Given a domain, case_ids, and a reference date, filter the case ids to only those
+    Given a CaseAccessors, case_ids, and a reference date, filter the case ids to only those
     that have been modified since that reference date.
     """
-    last_modified_date_dict = CaseAccessors(domain).get_last_modified_dates(case_ids)
+    last_modified_date_dict = case_accessor.get_last_modified_dates(case_ids)
     for case_id in case_ids:
         if last_modified_date_dict.get(case_id, datetime(1900, 1, 1)) > reference_date:
             yield case_id
@@ -252,7 +250,7 @@ def pop_ids(set_, how_many):
     return result
 
 
-def _move_no_longer_owned_cases_to_dependent_list_if_necessary(restore_state):
+def _move_no_longer_owned_cases_to_dependent_list_if_necessary(restore_state, case_accessor):
     if not restore_state.is_initial:
         removed_owners = (
             set(restore_state.last_sync_log.owner_ids_on_phone) - set(restore_state.owner_ids)
@@ -261,7 +259,7 @@ def _move_no_longer_owned_cases_to_dependent_list_if_necessary(restore_state):
             # if we removed any owner ids, then any cases that belonged to those owners need
             # to be moved to the dependent list
             domain = restore_state.domain
-            case_ids_to_try_purging = CaseAccessors(domain).get_case_ids_by_owners(list(removed_owners))
+            case_ids_to_try_purging = case_accessor.get_case_ids_by_owners(list(removed_owners))
             for to_purge in case_ids_to_try_purging:
                 if to_purge in restore_state.current_sync_log.case_ids_on_phone:
                     restore_state.current_sync_log.dependent_case_ids_on_phone.add(to_purge)
