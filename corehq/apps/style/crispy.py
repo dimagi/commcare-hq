@@ -2,7 +2,7 @@ import re
 from contextlib import contextmanager
 
 from django.utils.safestring import mark_safe
-from crispy_forms.bootstrap import FormActions as OriginalFormActions, InlineField
+from crispy_forms.bootstrap import FormActions as OriginalFormActions, InlineField, AccordionGroup
 from crispy_forms.layout import Field as OldField, LayoutObject
 from crispy_forms.utils import render_field, get_template_pack, flatatt
 from django.template import Context
@@ -96,6 +96,7 @@ class B3MultiField(LayoutObject):
         self.css_id = kwargs.pop('css_id', '')
         self.field_class = kwargs.pop('field_class', None)
         self.label_class = kwargs.pop('label_class', None)
+        self.help_bubble_text = kwargs.pop('help_bubble_text', '')
         self.flat_attrs = flatatt(kwargs)
 
     def render(self, form, form_style, context, template_pack=None):
@@ -112,7 +113,8 @@ class B3MultiField(LayoutObject):
             'label_html': mark_safe(self.label_html),
             'field_html': mark_safe(html),
             'multifield': self,
-            'error_list': errors
+            'error_list': errors,
+            'help_bubble_text': self.help_bubble_text,
         })
 
         if not (self.field_class or self.label_class):
@@ -127,7 +129,7 @@ class B3MultiField(LayoutObject):
         for field in fields:
             if isinstance(field, OldField) or issubclass(field.__class__, OldField):
                 fname = field.fields[0]
-                if fname not in form:
+                if fname not in form.fields:
                     continue
                 error = form[fname].errors
                 if error:
@@ -204,3 +206,21 @@ class LinkButton(LayoutObject):
             'button_attrs': flatatt(self.attrs if isinstance(self.attrs, dict) else {}),
         })
         return render_to_string(template, context)
+
+
+class FieldsetAccordionGroup(AccordionGroup):
+    template = "style/crispy/{template_pack}/accordion_group.html"
+
+    def render(self, form, form_style, context, template_pack=None):
+        template_pack = template_pack or get_template_pack()
+        self.template = self.template.format(template_pack=template_pack)
+        return super(FieldsetAccordionGroup, self).render(form, form_style, context, template_pack)
+
+
+class HiddenFieldWithErrors(Field):
+    template = "style/crispy/{template_pack}/hidden_with_errors.html"
+
+    def render(self, form, form_style, context, template_pack=None):
+        template_pack = template_pack or get_template_pack()
+        self.template = self.template.format(template_pack=template_pack)
+        return super(HiddenFieldWithErrors, self).render(form, form_style, context, template_pack)
