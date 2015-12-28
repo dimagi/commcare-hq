@@ -27,7 +27,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
     @memoized
     def template_report(self):
         if self.is_rendered_as_email:
-            self.report_template_path ="reports/async/tabular.html"
+            self.report_template_path ="reports/async/bootstrap2/tabular.html"
         return super(CHWManagerReport, self).template_report
 
     @property

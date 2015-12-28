@@ -11174,7 +11174,7 @@ msgstr ""
 
 #: corehq/apps/fixtures/templates/fixtures/view_table.html:72
 #: corehq/apps/reports/templates/reports/async/maps.html:35
-#: corehq/apps/reports/templates/reports/async/tabular.html:62
+#: corehq/apps/reports/templates/reports/async/bootstrap2/tabular.html:62
 #: custom/apps/cvsu/templates/cvsu/partials/report_table.html:23
 #: custom/apps/cvsu/templates/cvsu/partials/report_table.html:24
 #: custom/care_pathways/templates/care_pathways/partials/report_table.html:39
