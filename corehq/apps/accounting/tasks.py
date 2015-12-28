@@ -80,6 +80,10 @@ def deactivate_subscriptions(based_on_date=None):
             else:
                 new_plan_version = None
             _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
+            if next_subscription and subscription.account == next_subscription.account:
+                subscription.transfer_credits(subscription=next_subscription)
+            else:
+                subscription.transfer_credits()
             subscription.subscriber.deactivate_subscription(
                 downgraded_privileges=downgraded_privs,
                 upgraded_privileges=upgraded_privs,
