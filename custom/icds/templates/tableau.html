@@ -1,0 +1,36 @@
+{% load compress %}{% load hq_shared_tags %}<!DOCTYPE html>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
+<script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
+<script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
+<script type="text/javascript" src="https://icds.commcarehq.org/javascripts/api/tableau-2.0.0.min.js "></script>
+
+<script type="text/javascript" src="{% new_static 'underscore/underscore.js' %}"></script>
+
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="nav navbar-nav">
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Reports<span class="caret"></span></a>
+                <ul class="dropdown-menu"></ul>
+            </li>
+        </div>
+    </div>
+
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-7">
+            {#    TODO: update this div to use B3 spacing that is the right size.#}
+            <div id="tableauPlaceholder" style="width:1100px; height:900px;"></div>
+        </div>
+        <div class="col-md-2">
+            <button id="inspectButton" class="btn btn-block btn-primary" disabled="disabled">Inspect</button>
+            <div id="drilldown" class="well">
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% include "partials/tableau_js.html" %}
