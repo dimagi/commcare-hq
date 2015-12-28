@@ -534,7 +534,7 @@ FACET_MAPPING = [
 
 class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
-    base_template = "hqadmin/faceted_report.html"
+    base_template = "hqadmin/bootstrap2/faceted_report.html"
 
 
 class AdminFacetedReport(AdminReport, ElasticTabularReport):
