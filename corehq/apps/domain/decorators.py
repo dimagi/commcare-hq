@@ -1,7 +1,6 @@
 # Standard Library imports
 from functools import wraps
 import logging
-import json
 from base64 import b64decode
 
 # Django imports
@@ -25,6 +24,7 @@ from python_digest import parse_digest_credentials
 
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
+from dimagi.utils.web import json_response
 
 # CCHQ imports
 from corehq.apps.domain.models import Domain
@@ -240,9 +240,7 @@ def check_lockout(fn):
         username = _get_username_from_request(request)
         user = CouchUser.get_by_username(username)
         if user and user.is_web_user() and user.is_locked_out():
-            return HttpResponse(json.dumps({"error": "maximum password attempts exceeded"}),
-                                content_type="application/json",
-                                status=401)
+            return json_response({"error": "maximum password attempts exceeded"}, status_code=401)
         else:
             return fn(request, *args, **kwargs)
     return _inner
@@ -251,10 +249,10 @@ def check_lockout(fn):
 def _get_username_from_request(request):
     auth_type = determine_authtype_from_header(request)
     username = None
-    if auth_type == 'digest':
+    if auth_type == DIGEST:
         digest = parse_digest_credentials(request.META['HTTP_AUTHORIZATION'])
         username = digest.username
-    elif auth_type == 'basic':
+    elif auth_type == BASIC:
         username = b64decode(request.META['HTTP_AUTHORIZATION'].split()[1]).split(':')[0]
     return username
 

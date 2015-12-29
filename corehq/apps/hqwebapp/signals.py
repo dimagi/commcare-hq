@@ -8,7 +8,7 @@ from corehq.apps.users.models import CouchUser
 
 def clear_login_attempts(user):
     user = CouchUser.from_django_user(user)
-    if user.is_web_user() and user.login_attempts > 0:
+    if user and user.is_web_user() and user.login_attempts > 0:
         user.login_attempts = 0
         user.save()
 
