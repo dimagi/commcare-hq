@@ -11,4 +11,9 @@ $(function(){
         window.location.hash = this.hash;
         $('html,body').scrollTop(scrollmem);
     });
+
+    $('.nav-tabs a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        console.log('shown');
+        $(window).trigger('resize');
+    });
 });
