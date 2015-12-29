@@ -18,10 +18,10 @@
                 <thead>
                     <tr>
                         <th class="span10">
-                            Name
+                            {% trans "Name" %}
                         </th>
                         <th class="span2">
-                            Delete?
+                            {% trans "Delete?" %}
                         </th>
                     </tr>
                 </thead>
@@ -64,7 +64,7 @@
                             <input type="text" class="input-small" data-bind="value: tag" readonly/>
                         </td>
                         <td>
-                            <span>(Not editable)</span>
+                            <span>{% trans "(Not editable)" %}</span>
                         </td>
                         <!-- /ko -->
                     </tr>
