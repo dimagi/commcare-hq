@@ -10,6 +10,7 @@ import itertools
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View, TemplateView
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -167,6 +168,12 @@ class BaseProcessUploadedView(BaseMultimediaView):
             return CommCareMultimedia.get_mime_type(data, filename=self.uploaded_file.name)
         except Exception as e:
             raise BadMediaFileException("There was an error fetching the MIME type of your file. Error: %s" % e)
+
+    @method_decorator(require_permission(Permissions.edit_apps, login_decorator=login_with_permission_from_post()))
+    # YUI js uploader library doesn't support csrf
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseMultimediaView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         return HttpResponseBadRequest("You may only post to this URL.")
