@@ -1,6 +1,14 @@
 <script>
     var viz = {},
-        workbook = {};
+        workbook = {},
+        LOCATIONS_MAP = {
+           'state': 1,
+            'district': 2,
+            'block': 3,
+            'supervisor': 4,
+            'awc': 5,
+        };
+
     function initializeViz() {
         var placeholderDiv = document.getElementById("tableauPlaceholder");
         var url = "https://icds.commcarehq.org/#/views/{{ report_workbook }}/{{ report_worksheet }}";
@@ -24,12 +32,8 @@
 
     function setUpInitialTableauParams() {
         var params = {
-            'view_by': '{{ view_by }}',
-            'user_state': '{{ user_state|default:'' }}',
-            'user_district': '{{ user_district|default:'' }}',
-            'user_block': '{{ user_block|default:'' }}',
-            'user_supervisor': '{{ user_supervisor|default:''}}',
-            'user_awc': '{{ user_awc|default:'' }}'
+            'view_by': LOCATIONS_MAP.{{ view_by }},
+            'user_{{ view_by }}': '{{ view_by_value|default:'' }}',
         };
         applyParams(workbook, params);
 
@@ -54,7 +58,7 @@
         viz.addEventListener(tableau.TableauEventName.MARKS_SELECTION, onMarksSelection);
     }
 
-    function addNavigationLink(sheetName, isActive) {
+    function addNavigationLink(sheetName) {
         var html = "<li><a href='#' class='nav-link'>" + sheetName + "</a></li>";
         $(".dropdown-menu").append(html);
     }

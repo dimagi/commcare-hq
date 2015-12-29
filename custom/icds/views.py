@@ -4,27 +4,19 @@ import requests
 from corehq import toggles
 from corehq.apps.locations.models import SQLLocation
 
-LOCATIONS_MAP = {
-    'state': 1,
-    'district': 2,
-    'block': 3,
-    'supervisor': 4,
-    'awc': 5,
-}
 
 @toggles.ICDS_REPORTS.required_decorator()
 def tableau(request, domain, workbook, worksheet):
     # TODO: In production we should limit this to only the actual workbook, but this makes iteration much easier
     # trusted_ticket = _get_tableau_trusted_ticket(request.)
-    location_type_name, location_name = _get_user_permissions(request.couch_user, domain)
-
-    user_location_level_key = 'user_{}'.format(location_type_name)
+    couch_user = request.get('couch_user', None)
+    location_type_name, location_name = _get_user_permissions(couch_user, domain)
 
     context = {
         'report_workbook': workbook,
         'report_worksheet': worksheet,
-        'view_by': LOCATIONS_MAP[location_type_name],
-        user_location_level_key: location_name,
+        'view_by': location_type_name,
+        'view_by_value': location_name,
         'debug': request.GET.get('debug', False),
     }
 
