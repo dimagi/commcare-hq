@@ -554,6 +554,16 @@ class CaseAccessorTestsSQL(TestCase):
             }
         )
 
+    def test_case_has_transactions_since_sync(self):
+        case1 = _create_case()
+        _create_case_transactions(case1)
+        self.assertTrue(
+            CaseAccessorSQL.case_has_transactions_since_sync(case1.case_id, "foo", datetime(1992, 01, 30))
+        )
+        self.assertFalse(
+            CaseAccessorSQL.case_has_transactions_since_sync(case1.case_id, "foo", datetime.utcnow())
+        )
+
 
 def _create_case(domain=None, form_id=None, case_type=None, user_id=None):
     """
