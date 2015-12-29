@@ -2,14 +2,14 @@
 <div data-bind="modal: editing" class="modal fade">
     <div class="modal-header">
         <a class="close" data-bind="click: cancelEdit">×</a>
-        <h3>{% trans "Edit Data Type" %} "<span data-bind="text: tag"></span>"</h3>
+        <h3>{% trans "Edit Table" %} "<span data-bind="text: tag"></span>"</h3>
     </div>
     <div class="modal-body">
         <div class="control-group">
             <label class="control-label">{% trans "Table ID" %}</label>
             <input type="text" class="control" data-bind="value: tag"/>
-            <label class="control-label">{% trans "Visible to all users? " %}
-                <input type="checkbox" data-bind="checked: is_global" style="vertical-align: top;"/>
+            <label class="control-label checkbox">{% trans "Visible to all users? " %}
+                <input type="checkbox" data-bind="checked: is_global"/>
             </label>
         </div>
         <h4>{% trans "Fields" %}</h4>
@@ -18,10 +18,10 @@
                 <thead>
                     <tr>
                         <th class="span10">
-                            field_name
+                            Name
                         </th>
                         <th class="span2">
-                            Delete Field?
+                            Delete?
                         </th>
                     </tr>
                 </thead>
@@ -71,7 +71,7 @@
                     <!-- /ko -->
                 </tbody>
             </table>
-            <button class="btn btn-primary btn-mini" data-bind="click: addField">
+            <button class="btn btn-mini" data-bind="click: addField">
                 <i class="icon-white icon-plus"></i>
                 {% trans "Add Field" %}
             </button>
