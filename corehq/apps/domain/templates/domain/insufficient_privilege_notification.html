@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap2/base_page.html' %}
+{% extends 'style/bootstrap3/base_page.html' %}
 {% load i18n %}
 
 {% block page_content %}
@@ -20,7 +20,7 @@
     {% endif %}
     <div class="pull-left">
         <a href="https://wiki.commcarehq.org/display/commcarepublic/CommCare+Plan+Details"
-           class="btn" target="_blank">{% trans 'Read more about our pricing plans' %}</a>
+           class="btn btn-default" target="_blank">{% trans 'Read more about our pricing plans' %}</a>
     </div>
     <div class="pull-right">
         {% if is_domain_admin %}
