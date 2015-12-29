@@ -3,26 +3,6 @@
 
 <div class="hq-accordion-control">
     <div class="accordion-heading">
-        <div class="accordion-actions">
-            {% if report.is_exportable %}
-                <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="export-report-excel">
-                    <i class="icon icon-share"></i> {% trans "Export to Excel" %}
-                </a>
-            {% endif %}
-
-            {% if report.is_emailable %}
-                <a href="#email-report-modal" class="btn{% if report.needs_filters %} hide{% endif %}" data-toggle="modal" id="email-report">
-                    <i class="icon icon-envelope"></i> {% trans "Email report" %}
-                </a>
-            {% endif %}
-
-            {% if report.is_printable %}
-                <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="print-report">
-                    <i class="icon icon-print"></i> {% trans "Print" %}
-                </a>
-            {% endif %}
-
-        </div>
         {% if show_dates %}<a href="#reportFilters" data-toggle="collapse">Advanced Filters</a>{% else %}
             <div class="no-filters">&nbsp;</div>
         {% endif %}
