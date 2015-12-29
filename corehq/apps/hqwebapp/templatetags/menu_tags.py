@@ -155,8 +155,7 @@ def maintenance_alert():
 @register.filter
 def aliased_language_name(lang_code):
     """
-    This is same as django's inbuilt template filter `language_name` but works with aliases
-    Note that we use non-standard language codes as alias, for e.g. fra instead of fr for French
+    This is needed since we use non-standard language codes as alias, for e.g. 'fra' instead of 'fr' for French
     """
     try:
         return language_name(lang_code)
