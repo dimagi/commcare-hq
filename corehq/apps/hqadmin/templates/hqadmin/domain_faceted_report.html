@@ -93,12 +93,36 @@
         </span>
     </form>
 
-    <h2>{% trans "Project Spaces" %}</h2>
-    {% include "hqadmin/partials/visualizations.html" with chart_name="domains" date_field_opts=domain_datefields %}
-    <h2>{% trans "Forms" %}</h2>
-    {% include "hqadmin/partials/visualizations.html" with chart_name="forms" %}
-    <h2>{% trans "Cases" %}</h2>
-    {% include "hqadmin/partials/visualizations.html" with chart_name="cases" %}
-    <h2>{% trans "Users" %}</h2>
-    {% include "hqadmin/partials/visualizations.html" with chart_name="users" %}
+    <div class="panel panel-default">
+        <div class="panel-heading panel-chart-heading">
+            <h2 class="panel-title">{% trans "Project Spaces" %}</h2>
+        </div>
+        <div class="panel-body">
+        {% include "hqadmin/bootstrap3/partials/visualizations.html" with chart_name="domains" date_field_opts=domain_datefields %}
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading panel-chart-heading">
+            <h2 class="panel-title">{% trans "Forms" %}</h2>
+        </div>
+        <div class="panel-body">
+        {% include "hqadmin/bootstrap3/partials/visualizations.html" with chart_name="forms" %}
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading panel-chart-heading">
+            <h2 class="panel-title">{% trans "Cases" %}</h2>
+        </div>
+        <div class="panel-body">
+        {% include "hqadmin/bootstrap3/partials/visualizations.html" with chart_name="cases" %}
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading panel-chart-heading">
+            <h2 class="panel-title">{% trans "Users" %}</h2>
+        </div>
+        <div class="panel-body">
+        {% include "hqadmin/bootstrap3/partials/visualizations.html" with chart_name="users" %}
+        </div>
+    </div>
 {% endblock %}
