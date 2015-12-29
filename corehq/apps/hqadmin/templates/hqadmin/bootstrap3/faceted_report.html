@@ -16,12 +16,10 @@
     {% include "reports/standard/partials/report_loader.html" %}
 {% endblock %}
 
-{% block sidebar %}
+{% block page_navigation %}
     {{ block.super }}
     <hr />
     {% url "admin_report_dispatcher" facet_report.slug as search_url %}
     <h4 style="margin-left: 1em">{{ facet_report.facet_title }}</h4>
     {% include 'appstore/partials/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
 {% endblock %}
-
-{% block report-title %}{{ facet_report.name }}{% endblock %}
