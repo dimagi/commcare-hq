@@ -20,4 +20,8 @@ class HQCsrfViewMiddleWare(CsrfViewMiddleware):
             logger.error(warning)
             return self._accept(request)
         else:
+            warning = "The request at {url} doesn't contain a csrf token. This has been rejected".format(
+                          url=request.path
+                      )
+            logger.error(warning)
             return super(HQCsrfViewMiddleWare, self)._reject(request, reason)
