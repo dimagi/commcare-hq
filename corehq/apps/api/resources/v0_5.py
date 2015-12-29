@@ -7,6 +7,7 @@ from tastypie.utils import dict_strip_unicode_keys
 
 from collections import namedtuple
 
+from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 
 from tastypie import fields
@@ -159,6 +160,12 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         except Exception:
             if bundle.obj._id:
                 bundle.obj.retire()
+            try:
+                django_user = bundle.obj.get_django_user()
+            except User.DoesNotExist:
+                pass
+            else:
+                django_user.delete()
         return bundle
 
     def obj_update(self, bundle, **kwargs):
