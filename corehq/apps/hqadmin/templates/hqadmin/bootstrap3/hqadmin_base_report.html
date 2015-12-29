@@ -2,15 +2,10 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block head %}
-    {{ block.super }}
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
-{% endblock %}
+{% block title %}{{ report.title }}: Admin Reports{% endblock %}
 
 {% block js %}{{ block.super }}
-    {% include "imports/datatables.html" %}
     <script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
-    <script type="text/javascript" src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
 {% endblock %}
 
@@ -19,7 +14,9 @@
         {% if aoColumns %}
         $(function() {
                 var reportTables = new HQReportDataTables({
-                    {% if aoColumns %}aoColumns: {{ aoColumns|JSON }}{% endif %}
+                    {% if aoColumns %}aoColumns: {{ aoColumns|JSON }}{% endif %},
+                    useBootstrap3: true,
+                    paginationType: 'bs_normal'
                 });
                 reportTables.render();
         });
@@ -27,17 +24,13 @@
     </script>
 {% endblock %}
 
-{% block page-title %}
-    <ul class="breadcrumb">
+{% block page_breadcrumbs %}
+    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
         <li>
-            <a href="{% url "default_admin_report" %}"><strong>{% trans "Admin Reports" %}</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url "default_admin_report" %}"><strong>{% trans "Admin Reports" %}</strong></a>
         </li>
-        {% if not report_breadcrumbs %}
-            <li class="active">
-                <div id="report-title"><a href="#">{% block report-title %}{% trans "Administrative Report" %}{% endblock %}</a></div>
-            </li>
-        {% else %}
-            {{ report_breadcrumbs|safe }}
+        <li class="active">{{ report.title }}</li>
+    </ol>
 {% endblock %}
 
 {% block pre_page_content %}
@@ -64,13 +57,11 @@
     {% endif %}
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     {% if not hide_filters %}
-        {% include "hqadmin/bootstrap2/hqadmin_base_filters.html" %}
+        {% include "hqadmin/bootstrap3/hqadmin_base_filters.html" %}
     {% endif %}
     <div id="report-content">
         {% block reportcontent %}{% endblock %}
      </div>
 {% endblock %}
-
-{% block title %}Admin Reports{% endblock %}
