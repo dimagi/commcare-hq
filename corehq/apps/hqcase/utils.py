@@ -256,7 +256,7 @@ def submit_case_block_from_template(domain, template, context, xmlns=None):
     kwargs = {}
     if xmlns:
         kwargs['xmlns'] = xmlns
-    submit_case_blocks(case_block, domain, **kwargs)
+    submit_case_blocks(case_block, domain, user_id=SYSTEM_USER_ID, **kwargs)
 
 
 def update_case(domain, case_id, case_properties=None, close=False, xmlns=None):
