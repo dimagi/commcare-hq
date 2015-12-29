@@ -5,9 +5,9 @@
 {% block reportcontent %}
     {% if report.show %}
         {% if report.slug %}
-            <div class="hq-loading" style="display: none;">
+            <div class="hq-loading">
                 <h4>{% trans "Loading Report" %}</h4>
-                <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                <i class="fa fa-spinner fa-spin js-loading-spinner"></i>
                 <h6>{% trans report.title %}</h6>
             </div>
         {% else %}
