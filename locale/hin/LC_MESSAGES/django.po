@@ -19576,7 +19576,7 @@ msgstr ""
 msgid "Displays the detail for a given messaging survey."
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/async/default.html:9
+#: corehq/apps/reports/templates/reports/async/bootstrap2/default.html:9
 msgid "Loading Report"
 msgstr ""
 
