@@ -4,8 +4,56 @@
 }
 .dataTables_info {
   padding-top: 24px;
+  padding-right: 5px;
 }
 
 .dataTables_wrapper thead th {
+  background-color: desaturate(@cc-brand-low, 50%);
+  color: #ffffff;
+  &:nth-child(odd) {
+    background-color: lighten(desaturate(@cc-brand-low, 50%), 10%);
+  }
+}
+
+.dataTables_wrapper tfoot td,
+.dataTables_wrapper tfoot th {
+  background-color: lighten(desaturate(@cc-brand-low, 60%), 10%);
+  color: #ffffff;
+  padding: 8px;
+}
+
+.dataTable .header {
+  &.headerSortUp {
+    .dt-sort-icon:before {
+      content: "\f077";
+    }
+  }
+  &.headerSortDown {
+    .dt-sort-icon:before {
+      content: "\f078";
+    }
+  }
+  &.headerSortUp,
+  &.headerSortDown {
+    background-color: @cc-brand-mid;
+  }
+}
+
+.datatable .sorting_1 {
   background-color: @cc-bg;
+}
+
+.panel-body-datatable {
+  padding: 0;
+  .dataTables_control {
+    padding: 10px 15px;
+    .dataTables_info {
+      padding-top: 0;
+    }
+    .dataTables_paginate {
+      .pagination {
+        margin: 0;
+      }
+    }
+  }
 }
