@@ -57,6 +57,7 @@ def rebuild_export(config, schema, output_dir, last_access_cutoff=None, filter=N
             try:
                 saved.save()
             except ResourceConflict:
+                # task was executed concurrently, so let first to finish win and abort the rest
                 return
             saved.set_payload(payload)
         else:
