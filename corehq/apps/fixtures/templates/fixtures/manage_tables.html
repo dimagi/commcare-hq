@@ -68,9 +68,9 @@
                         <th>
                             {% trans "View Table" %}
                             <i class="icon-white icon-share"></i>
-                        </th>                        
+                        </th>
                         <th>
-                            {% trans "Delete Table" %}
+                            {% trans "Edit or Delete Table" %}
                         </th>
                         <th>
                             {% trans "Include in Download" %}
@@ -91,7 +91,7 @@
                             <td>
                                 <button class="btn" data-bind="click: startEditing, visible: saveState() === 'saved'">
                                     <i class="icon-edit"></i>
-                                    Edit Type
+                                    Edit
                                 </button>
                                 <button class="btn disabled" data-bind="visible: saveState() === 'saving'">Saving...</button>
                                 {% include "fixtures/partials/edit_table_modal.html" %} 
