@@ -674,6 +674,15 @@ class GenericReportView(object):
         """
         return []
 
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        """
+        Use this function to apply the bootstrap 3 decorators found in
+        style/decorators.py to a report. We're using this in the interim until
+        we overhaul the reports framework, but still want to migrate some
+        reports to bootstrap 3.
+        """
+        self.is_bootstrap3 = False
+
 
 class GenericTabularReport(GenericReportView):
     """
