@@ -1,6 +1,6 @@
 from couchexport.exceptions import SchemaMismatchException, ExportRebuildError
 from couchexport.models import GroupExportConfiguration, SavedBasicExport
-from couchdbkit.exceptions import ResourceNotFound
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from datetime import datetime
 import os
 import json
@@ -54,8 +54,13 @@ def rebuild_export(config, schema, output_dir, last_access_cutoff=None, filter=N
             if saved.last_accessed is None:
                 saved.last_accessed = datetime.utcnow()
             saved.last_updated = datetime.utcnow()
-            saved.save()
-            saved.set_payload(payload)
+            try:
+                saved.save()
+            except ResourceConflict:
+                # task was executed concurrently, so let first to finish win and abort the rest
+                pass
+            else:
+                saved.set_payload(payload)
         else:
             with open(os.path.join(output_dir, config.filename), "wb") as f:
                 f.write(payload)
