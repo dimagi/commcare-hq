@@ -1,13 +1,14 @@
 # Standard Library imports
 from functools import wraps
 import logging
+import json
 
 # Django imports
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden
+from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden, HttpResponse
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
 from django.utils.http import urlquote
@@ -20,6 +21,8 @@ from django_prbac.utils import has_privilege
 
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
+
+from django_otp import match_token
 
 # CCHQ imports
 from corehq.apps.domain.models import Domain
@@ -127,7 +130,7 @@ def api_key():
     return real_decorator
 
 
-def _login_or_challenge(challenge_fn, allow_cc_users=False):
+def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False):
     # ensure someone is logged in, or challenge
     # challenge_fn should itself be a decorator that can handle authentication
     def _outer(fn):
@@ -135,6 +138,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False):
         def safe_fn(request, domain, *args, **kwargs):
             if not request.user.is_authenticated():
                 @challenge_fn
+                @two_factor_check(api_key)
                 def _inner(request, domain, *args, **kwargs):
                     request.couch_user = couch_user = CouchUser.from_django_user(request.user)
                     if (
@@ -182,10 +186,28 @@ def login_or_digest_or_basic_or_apikey(default=BASIC):
 
 
 def login_or_api_key_ex(allow_cc_users=False):
-    return _login_or_challenge(api_key(), allow_cc_users=allow_cc_users)
+    return _login_or_challenge(api_key(), allow_cc_users=allow_cc_users, api_key=True)
 
 
 login_or_api_key = login_or_api_key_ex()
+
+
+def two_factor_check(api_key):
+    def _outer(fn):
+        @wraps(fn)
+        def _inner(request, *args, **kwargs):
+            if not api_key and TWO_FACTOR_AUTH.enabled(request.domain):
+                token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
+                print token
+                if token and match_token(request.user, token):
+                    return fn(request, *args, **kwargs)
+                else:
+                    return HttpResponse(json.dumps({"error": "must send X-CommcareHQ-OTP header"}),
+                                        content_type='application/json',
+                                        status=401)
+            return fn(request, *args, **kwargs)
+        return _inner
+    return _outer
 
 # For views that are inside a class
 # todo where is this being used? can be replaced with decorator below
