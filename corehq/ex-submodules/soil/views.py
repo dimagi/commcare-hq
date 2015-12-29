@@ -6,6 +6,8 @@ from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpRespons
 import logging
 from django.shortcuts import render_to_response, render
 from django.template.context import RequestContext
+from django.utils.translation import ugettext_lazy as _
+
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.tasks import demo_sleep
@@ -41,7 +43,7 @@ def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html")
     try:
         context = get_download_context(download_id, check_state=True, message=message)
     except TaskFailedError as e:
-        context = {'error': list(e.errors)}
+        context = {'error': list(e.errors) if e.errors else [_("An error occurred during the download.")]}
         return HttpResponseServerError(render(request, template, context))
     return render(request, template, context)
 
