@@ -447,7 +447,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         values are the last server modified date of that case.
         """
         with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT case_id, server_modified_on FROM get_last_modified_dates(%s, %s)', [domain, case_ids])
+            cursor.execute('SELECT case_id, server_modified_on FROM get_case_last_modified_dates(%s, %s)', [domain, case_ids])
             results = fetchall_as_namedtuple(cursor)
             return dict((result.case_id, result.server_modified_on) for result in results)
 

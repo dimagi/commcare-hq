@@ -1,6 +1,6 @@
-DROP FUNCTION IF EXISTS get_last_modified_dates(text, text[]);
+DROP FUNCTION IF EXISTS get_case_last_modified_dates(text, text[]);
 
-CREATE FUNCTION get_last_modified_dates(domain_name text, case_ids text[])
+CREATE FUNCTION get_case_last_modified_dates(domain_name text, case_ids text[])
   RETURNS TABLE (case_id VARCHAR(255), server_modified_on timestamp with time zone) AS $$
 BEGIN
     RETURN QUERY
