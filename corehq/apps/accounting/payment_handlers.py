@@ -415,10 +415,10 @@ class AutoPayInvoicePaymentHandler(object):
             try:
                 payment_record = payment_method.create_charge(autopay_card, amount_in_dollars=amount)
             except stripe.error.CardError:
-                self._handle_card_declined(invoice, payment_method)
+                self._handle_card_declined(invoice)
                 continue
             except payment_method.STRIPE_GENERIC_ERROR as e:
-                self._handle_card_errors(invoice, payment_method, e)
+                self._handle_card_errors(invoice, e)
                 continue
             else:
                 with transaction.atomic():
@@ -447,7 +447,7 @@ class AutoPayInvoicePaymentHandler(object):
                 payment_record, product, domain, receipt_email_template, receipt_email_template_plaintext, context,
             )
         except:
-            self._handle_email_failure(invoice, payment_record)
+            self._handle_email_failure(payment_record)
 
     def _handle_card_declined(self, invoice):
         logger.error("[Billing][Autopay] An automatic payment failed for invoice: {} "
