@@ -21,7 +21,7 @@ class MigrationCheckpoint(Checkpoint):
 
 
 class StockDataCheckpoint(Checkpoint):
-    location = models.ForeignKey(SQLLocation, null=True, blank=True)
+    location = models.ForeignKey(SQLLocation, on_delete=models.PROTECT, null=True, blank=True)
 
 
 @receiver(commcare_domain_pre_delete)
