@@ -7,13 +7,7 @@ BEGIN
     WHERE
       case_table.closed = FALSE
       AND case_table.domain = domain_name
-      AND (
-        -- owner_id matches
-        case_table.owner_id = p_owner_id
-        OR (
-          -- owner_id is falsey and modified_by matches
-          (case_table.owner_id is NULL OR case_table.owner_id = '') AND case_table.modified_by = p_owner_id
-        )
-      );
+      AND case_table.owner_id = p_owner_id
+      ;
 END;
 $$ LANGUAGE plpgsql;

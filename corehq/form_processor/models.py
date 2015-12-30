@@ -418,7 +418,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     type = models.CharField(max_length=255)
     name = models.CharField(max_length=255, null=True)
 
-    owner_id = models.CharField(max_length=255)
+    owner_id = models.CharField(max_length=255, null=False)
 
     opened_on = models.DateTimeField(null=True)
     opened_by = models.CharField(max_length=255, null=True)

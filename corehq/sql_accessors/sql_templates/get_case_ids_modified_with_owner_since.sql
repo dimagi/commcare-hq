@@ -7,13 +7,7 @@ BEGIN
     SELECT case_table.case_id FROM form_processor_commcarecasesql as case_table
     WHERE case_table.domain = domain_name
       AND case_table.server_modified_on >= reference_date
-      -- AND owner_id matches OR (owner_id is falsey AND modified_by matches)
-      AND (
-         case_table.owner_id = p_owner_id
-         OR (
-           (case_table.owner_id IS NULL OR case_table.owner_id = '') AND case_table.modified_by = p_owner_id
-         )
-      )
+      AND case_table.owner_id = p_owner_id
     ;
 END;
 $$ LANGUAGE plpgsql;
