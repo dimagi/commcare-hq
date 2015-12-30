@@ -457,7 +457,7 @@ def delete_report(request, domain, report_id):
     if data_source.get_report_count() <= 1:
         # No other reports reference this data source.
         try:
-            delete_data_source_shared(domain, data_source._id, request)
+            data_source.deactivate()
         except Http404:
             # It's possible the data source has already been deleted, but
             # that's fine with us.
