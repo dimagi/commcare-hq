@@ -1,3 +1,6 @@
+// Note: This file should probably be deleted, this function is not being used anywhere,
+// using this function would result in a csrf error
+
 // hat tip: http://stackoverflow.com/questions/133925/javascript-post-request-like-a-form-submit
 var postToUrl = function (path, params, method) {
     method = method || "post"; // Set method to post by default, if not specified.

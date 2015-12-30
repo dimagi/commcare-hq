@@ -3,6 +3,8 @@ import logging
 from django.middleware.csrf import CsrfViewMiddleware, REASON_NO_CSRF_COOKIE, REASON_BAD_TOKEN
 from django.conf import settings
 
+from corehq.util.soft_assert import soft_assert
+
 
 logger = logging.getLogger('')
 
@@ -20,4 +22,10 @@ class HQCsrfViewMiddleWare(CsrfViewMiddleware):
             logger.error(warning)
             return self._accept(request)
         else:
+            warning = "The request at {url} doesn't contain a csrf token. This has been rejected".format(
+                url=request.path
+            )
+            _assert = soft_assert(notify_admins=True, exponential_backoff=False)
+            _assert(False, warning)
+            logger.error(warning)  # send it couchlog for log-analysis
             return super(HQCsrfViewMiddleWare, self)._reject(request, reason)
