@@ -43,18 +43,21 @@
         </div>
         <div data-bind="visible: allowed()">
             <input type="text" data-bind="
-                    value: inputValue,
+                    xpathValidator: inputValue,
                     hasfocus: hasFocus,
                     css: inputCss,
-                    attr: inputAttr,
-                    valueUpdate: 'textchange'
+                    attr: inputAttr
             "/>
-            <a href="#" class="btn btn-mini btn-danger" data-bind="exitInput: $data">
-                {% trans "Delete" %}
-            </a>
-            <div class="help-block" data-bind="visible: messages.helpText">
-                <i class="icon icon-info-sign"></i>
-                <span data-bind="html: messages.helpText"></span>
+            <div class="span4">
+                <a href="#" class="btn btn-mini btn-danger" data-bind="exitInput: $data">
+                    {% trans "Delete" %}
+                </a>
+            </div>
+            <div>
+                <div class="help-block span7" data-bind="visible: messages.helpText">
+                    <i class="icon icon-info-sign"></i>
+                    <span data-bind="html: messages.helpText"></span>
+                </div>
             </div>
         </div>
     </div>
