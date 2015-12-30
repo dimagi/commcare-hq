@@ -73,7 +73,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from casexml.apps.case.models import CommCareCase
 from dateutil.parser import parse
-from corehq.apps.sms.util import close_task
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count, iter_docs
 from custom.ewsghana.forms import EWSBroadcastForm

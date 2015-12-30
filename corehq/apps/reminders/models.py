@@ -16,7 +16,6 @@ from dateutil.parser import parse
 from corehq.apps.reminders.util import enqueue_reminder_directly, get_verified_number_for_recipient
 from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.resource import ResourceNotFound
-from corehq.apps.sms.util import create_task, close_task, update_task
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from dimagi.utils.couch import LockableMixIn, CriticalSection

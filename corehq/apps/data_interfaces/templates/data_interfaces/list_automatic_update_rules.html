@@ -158,8 +158,8 @@
                         </td>
                         <td>{{ rule.case_type }}</td>
                         <td>
-                            <span ng-show="rule.active">{% trans "Active" %}</span>
-                            <span ng-hide="rule.active">{% trans "Inactive" %}</span>
+                            <span class="label label-success" ng-show="rule.active">{% trans "Active" %}</span>
+                            <span class="label label-danger" ng-hide="rule.active">{% trans "Inactive" %}</span>
                         </td>
                         <td>{{ rule.last_run }}</td>
                         <td>
@@ -176,7 +176,7 @@
                                 {% trans "Deactivate" %}
                             </button>
                             <button type="button"
-                                    class="btn btn-default"
+                                    class="btn btn-danger"
                                     data-toggle="modal"
                                     data-target="#delete_{{ rule.id }}">
                                     {% trans "Delete" %}
