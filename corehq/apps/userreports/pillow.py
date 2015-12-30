@@ -30,7 +30,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
         self.last_bootstrapped = datetime.utcnow()
 
     def get_all_configs(self):
-        return DataSourceConfiguration.all()
+        return filter(lambda config: not config.is_deactivated, DataSourceConfiguration.all())
 
     def run(self):
         self.bootstrap()
