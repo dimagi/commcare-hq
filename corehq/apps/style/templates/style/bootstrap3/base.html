@@ -312,7 +312,7 @@
         {# HQ Specific Libraries #}
         <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
         {% compress js %}
-        <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
+        <script src="{% new_static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/hq-bug-report.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/layout.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/form_tools.js' %}"></script>
