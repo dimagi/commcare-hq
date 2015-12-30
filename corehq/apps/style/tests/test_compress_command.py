@@ -23,6 +23,11 @@ DISALLOWED_TAGS = [
     ('^</script>$', 'You cannot use inline JS in a compress block'),
 ]
 
+IGNORED_FILES = [
+    'http://opensource.org/licenses/mit-license.html',
+    'More Info : http://www.quirksmode.org/css/box.html',
+]
+
 
 class TestDjangoCompressOffline(SimpleTestCase):
 
@@ -38,6 +43,9 @@ class TestDjangoCompressOffline(SimpleTestCase):
         )
 
     def _is_b3(self, filename):
+        if filename in IGNORED_FILES:
+            return  False
+
         if filename.endswith(B3_BASE):
             return True
 
