@@ -20,6 +20,6 @@
     {{ block.super }}
     <hr />
     {% url "admin_report_dispatcher" facet_report.slug as search_url %}
-    <h4 style="margin-left: 1em">{{ facet_report.facet_title }}</h4>
-    {% include 'appstore/partials/bootstrap2/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
+    <h4 class="text-hq-nav-header">{{ facet_report.facet_title }}</h4>
+    {% include 'appstore/partials/bootstrap3/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
 {% endblock %}
