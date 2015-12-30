@@ -585,6 +585,10 @@ def delete_data_source_shared(domain, config_id, request=None):
 @require_POST
 def rebuild_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
+    if config.is_deactivated:
+        config.is_deactivated = False
+        config.save()
+
     messages.success(
         request,
         _('Table "{}" is now being rebuilt. Data should start showing up soon').format(
