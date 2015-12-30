@@ -16,7 +16,7 @@
     {% else %}
         <h6 style="text-align: center; margin-top: 100px;">
             <i class="icon-info-sign" id="no-viewable-reports"></i>
-            You are not registered to see reports
+            {% trans 'You are not registered to see reports' %}
         </h6>
         <script>
             $(function () {
@@ -25,11 +25,8 @@
                 $('.hq-content').removeClass('span10').addClass('span12').css({margin: 0});
                 $('#no-viewable-reports').popover({
                     placement: 'top',
-                    title: "We're serious about security",
-                    content: "Your project may contain sensitive personal and medical information, " +
-                            "so we don't show this data to " +
-                            "just anyone. If you think you should have access to your project's reports " +
-                            "please contact your project lead."
+                    title: "{% trans "We're serious about security" %}",
+                    content: "{% trans "Your project may contain sensitive personal and medical information, so we don't show this data to just anyone. If you think you should have access to your project's reports please contact your project lead." %}"
                 });
             });
         </script>

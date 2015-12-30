@@ -44,13 +44,13 @@
 
         {% if report.is_emailable %}
             <a href="#email-report-modal" class="btn{% if report.needs_filters %} hide{% endif %}" data-toggle="modal" id="email-report">
-                <i class="icon icon-envelope"></i> {% trans "Email report" %}
+                <i class="fa fa-envelope"></i> {% trans "Email report" %}
             </a>
         {% endif %}
 
         {% if report.is_printable %}
             <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="print-report">
-                <i class="icon icon-print"></i> {% trans "Print" %}
+                <i class="fa fa-print"></i> {% trans "Print" %}
             </a>
         {% endif %}
     </div>

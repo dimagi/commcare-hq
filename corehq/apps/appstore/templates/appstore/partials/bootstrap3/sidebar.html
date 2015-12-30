@@ -1,6 +1,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
-<ul class="nav nav-list nav-hq-sidebar">
+<ul class="nav nav-hq-sidebar">
     {% if display_ua %}
         {% if request.user.is_superuser %}
             <li{% if not include_unapproved %} class="active"{% endif %}><a href="{% url "appstore" %}">{% trans "Approved" %}</a></li>
@@ -16,11 +16,11 @@
     </li>
     <li class="nav-input">
         <form action="{{ search_url }}" method="get" class="form-search" id="facet-search">
-            <input type="search" name="{{ search_name }}" placeholder="Search for {{ search_for }}" value="{{ search_query }}" class="search-query form-control" />
+            <input type="search" name="{{ search_name }}" placeholder="{% trans 'Search for' %} {{ search_for }}" value="{{ search_query }}" class="search-query form-control" />
         </form>
     </li>
 </ul>
-<ul class="nav nav-list nav-hq-sidebar">
+<ul class="nav nav-hq-sidebar">
 {% for facet_group, expanded, facets in facet_map %}
 
     {% if grouped_facets and facet_group %}
@@ -46,7 +46,7 @@
             {% endifequal %}
         </a>
 
-        <ul class="nav nav-list facet-nav">
+        <ul class="nav facet-nav">
         {% for choice in f.choices %}
             <li class="sortable sortable-{{ f.facet }}
                 {% if not f.expanded or forloop.counter > 5 and choices|length > 6 %}
@@ -61,12 +61,10 @@
                     </div>
                     <div class="col-sm-2"><input id="s-{{ f.facet }}-{{ choice.name }}" name="{{ choice.name|urlencode }}" class="facet-checkbox" type="checkbox" {% if choice.active %}checked=checked{% endif %}/></div>
                 </div>
-
-
             </li>
         {% endfor %}
         {% if f.choices|length > 6 and f.expanded %}
-            <li style="list-style-type: none;"><a class="more-sortable-button" data-sortable="{{ f.facet }}" href="#">{% trans "More..." %}</a></li>
+            <li><a class="more-sortable-button" data-sortable="{{ f.facet }}" href="#">{% trans "More..." %}</a></li>
         {% endif %}
         </ul>
     {% endfor %}
