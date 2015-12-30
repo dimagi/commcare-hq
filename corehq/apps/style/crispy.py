@@ -133,7 +133,7 @@ class B3MultiField(LayoutObject):
                     continue
                 error_list = form[fname].errors
                 if error_list:
-                    errors.extend([error for error in error_list])
+                    errors.extend(error_list)
             else:
                 try:
                     errors.extend(self._get_errors(form, field.fields))
