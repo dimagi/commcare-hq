@@ -407,7 +407,7 @@
 
         {% if request.guided_tour %}
         {% compress js %}
-        <script src="{% static 'tour/js/tour.utils.js' %}"></script>
+        <script src="{% new_static 'tour/js/tour.utils.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'bootstrap-tour/build/js/bootstrap-tour.min.js' %}"></script>
         {% endcompress %}
         {% endif %}

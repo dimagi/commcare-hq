@@ -8,9 +8,15 @@ from django.core.management import call_command
 from django.test import SimpleTestCase
 from unittest.util import safe_repr
 
+B3_BASE = 'style/bootstrap3/base.html'
+
 BLOCK_JS = ' block js '
 BLOCK_CSS = ' block stylesheets '
 ENDBLOCK = ' endblock '
+
+COMPRESS_JS = ' compress js '
+COMPRESS_CSS = ' compress stylesheets '
+ENDCOMPRESS = ' endcompress '
 
 DISALLOWED_TAGS = [
     ('{% if', 'You cannot use "if" tags in a compress block'),
@@ -32,13 +38,16 @@ class TestDjangoCompressOffline(SimpleTestCase):
         )
 
     def _is_b3(self, filename):
+        if filename.endswith(B3_BASE):
+            return True
+
         parser = DjangoParser(charset=settings.FILE_CHARSET)
         template = parser.parse(filename)
 
         return self._is_b3_base_template(template)
 
     def _is_b3_base_template(self, template):
-        if template.name == 'style/bootstrap3/base.html':
+        if template.name == B3_BASE:
             return True
 
         nodes = list(template.nodelist)
@@ -65,11 +74,15 @@ class TestDjangoCompressOffline(SimpleTestCase):
             if self._is_b3(filename):
                 with open(filename, 'r+') as f:
                     for line in f.readlines():
-                        if (BLOCK_JS in line or BLOCK_CSS in line) and ENDBLOCK not in line:
+                        has_start_tag = BLOCK_JS in line or BLOCK_CSS in line 
+                        has_start_tag = has_start_tag or COMPRESS_JS in line or COMPRESS_CSS in line
+                        has_end_tag = ENDBLOCK in line or ENDCOMPRESS in line
+
+                        if has_start_tag and not has_end_tag:
                             in_compress_block = True
                             continue
 
-                        if ENDBLOCK in line:
+                        if has_end_tag:
                             in_compress_block = False
 
                         if in_compress_block:
