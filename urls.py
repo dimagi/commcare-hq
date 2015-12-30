@@ -67,6 +67,7 @@ domain_specific = patterns('',
     (r'^dashboard/', include('corehq.apps.dashboard.urls')),
     (r'^configurable_reports/', include('corehq.apps.userreports.urls')),
     (r'^performance_messaging/', include('corehq.apps.performance_sms.urls')),
+    (r'^', include('custom.icds.urls')),
 )
 
 urlpatterns = patterns('',
