@@ -25,6 +25,7 @@ Subscription = apps.get_model('accounting', 'Subscription')
 
 from corehq.apps.accounting.models import (
     SoftwareProductType, SoftwarePlanEdition, SoftwarePlanVisibility, FeatureType,
+    UNLIMITED_FEATURE_USAGE,
 )
 
 
@@ -295,8 +296,8 @@ class Command(BaseCommand):
                 FeatureType.SMS: FeatureRate(monthly_limit=7 if self.for_tests else 1000),
             },
             SoftwarePlanEdition.ENTERPRISE: {
-                FeatureType.USER: FeatureRate(monthly_limit=-1, per_excess_fee=Decimal('0.00')),
-                FeatureType.SMS: FeatureRate(monthly_limit=-1),
+                FeatureType.USER: FeatureRate(monthly_limit=UNLIMITED_FEATURE_USAGE, per_excess_fee=Decimal('0.00')),
+                FeatureType.SMS: FeatureRate(monthly_limit=UNLIMITED_FEATURE_USAGE),
             },
         }
         for feature in features:
