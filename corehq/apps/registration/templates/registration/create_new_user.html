@@ -1,11 +1,13 @@
 {% extends "registration/base.html" %}
-{% load i18n %}
+{% load i18n %}{% load hq_shared_tags %}
 
 {% block title %}{% trans "Create an Account" %}{% endblock title %}
 {% block step-title %}{% trans "Create an Account" %}{% endblock %}
 {% block js-inline  %}{{ block.super }}
     {% url "eula_basic" as eula_url %}
     {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
+    <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
+    <script src="{% static 'registration/js/password.js' %}"></script>
 {% endblock %}
 
 {% block registration-content %}
