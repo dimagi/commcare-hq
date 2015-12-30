@@ -38,7 +38,7 @@
         "phone_numbers": {{ form.phone_numbers.value|default:'[]'|safe }},
         "phone_number_required_text": "{% trans 'You must have at least one phone number.' %}",
     });
-    ko.applyBindings(svm, $("#settings_form").get(0));
+    $("#settings_form").koApplyBindings(svm);
 </script>
 {% endblock %}
 
@@ -85,6 +85,7 @@
 {% block main_column %}
     <div class="page-header"><h3>{{ backend_generic_name }} {% trans "Connection" %}</h3></div>
     <form id="settings_form" action="" method="post">
+        {% csrf_token %}
         <h4>{% trans "General Settings" %}</h4>
         <div class="form-block">
             <table>

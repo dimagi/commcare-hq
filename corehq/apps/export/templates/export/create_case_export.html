@@ -25,10 +25,10 @@
             return caseTypes;
         });
 
-        ko.applyBindings({
+        $("#create-export-form").koApplyBindings({
             appId: appId,
             caseTypeOptions: caseTypeOptions
-        }, $("#create-export-form").get(0));
+        });
     </script>
 {% endblock %}
 

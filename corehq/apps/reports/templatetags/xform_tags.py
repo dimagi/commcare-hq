@@ -1,5 +1,6 @@
 from functools import partial
 
+from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
 from django import template
@@ -222,4 +223,4 @@ def render_form(form, domain, options):
         "show_edit_options": show_edit_options,
         "show_edit_submission": show_edit_submission,
         "show_resave": show_resave,
-    })
+    }, RequestContext(request))

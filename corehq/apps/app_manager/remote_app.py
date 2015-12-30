@@ -63,7 +63,7 @@ def make_remote_profile(app):
 
         if app.manage_urls:
             profile_xml.auto_set_versions(app.version)
-            profile_xml.set_attribute('update', app.hq_profile_url)
+            profile_xml.set_attribute('update', app.profile_url)
             profile_xml.set_property("ota-restore-url", app.ota_restore_url)
             profile_xml.set_property("PostURL", app.post_url)
             profile_xml.set_property("cc_user_domain", cc_user_domain(app.domain))

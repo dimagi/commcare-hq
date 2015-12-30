@@ -2,8 +2,7 @@ import re
 
 from django.contrib.auth.models import User
 
-from corehq.apps.locations.dbaccessors import get_location_from_site_code
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, Location
 
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from corehq.apps.users.models import CommCareUser
@@ -24,7 +23,7 @@ class RegisterHandler(KeywordHandler):
         self.respond(REGISTER_HELP)
 
     def _get_facility_location(self, domain, msd_code):
-        return get_location_from_site_code(domain, msd_code)
+        return Location.by_site_code(domain, msd_code)
 
     def _get_district_location(self, domain, sp):
         return SQLLocation.objects.filter(

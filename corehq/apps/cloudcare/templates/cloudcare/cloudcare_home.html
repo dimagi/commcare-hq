@@ -204,6 +204,14 @@
         <section id="case-crumbs" style="width: 800px"></section>
         <section id="cases"></section>
         <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
+        {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
+        <section id="cloudcare-debugger" data-bind="
+            template: {
+                name: 'instance-viewer-ko-template',
+                afterRender: adjustWidth
+            }
+        "></section>
+        {% endif %}
     </div>
 
     {% include 'cloudcare/includes/case_details.html' %}

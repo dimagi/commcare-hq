@@ -256,13 +256,14 @@ def generate_cases(argsets, cls=None):
     return add_cases
 
 
-def make_es_ready_form(metadata=None):
+def make_es_ready_form(metadata):
     # this is rather complicated due to form processor abstractions and ES restrictions
     # on what data needs to be in the index and is allowed in the index
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
     from corehq.form_processor.tests.utils import get_simple_form_xml
     from corehq.form_processor.utils import convert_xform_to_json
 
+    assert metadata is not None
     metadata.domain = metadata.domain or uuid.uuid4().hex
     form_id = uuid.uuid4().hex
     form_xml = get_simple_form_xml(form_id=form_id, metadata=metadata)

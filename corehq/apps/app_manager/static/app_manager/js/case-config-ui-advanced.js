@@ -169,7 +169,7 @@ var AdvancedCase = (function () {
         self.init = function () {
             var $home = $('#case-config-ko');
             _.delay(function () {
-                ko.applyBindings(self, $home.get(0));
+                $home.koApplyBindings(self);
                 $home.on('textchange', 'input', self.change)
                      // all select2's are represented by an input[type="hidden"]
                      .on('change', 'select, input[type="hidden"]', self.change)
@@ -717,6 +717,7 @@ var AdvancedCase = (function () {
 
             self.removeProperty = function (property) {
                 self.case_properties.remove(property);
+                self.config.saveButton.fire('change');
             };
 
             self.addPreload = function () {
@@ -729,6 +730,7 @@ var AdvancedCase = (function () {
 
             self.removePreload = function (property) {
                 self.preload.remove(property);
+                self.config.saveButton.fire('change');
             };
 
             self.hasPreload = function() {
@@ -950,6 +952,7 @@ var AdvancedCase = (function () {
 
             self.removeProperty = function (property) {
                 self.case_properties.remove(property);
+                self.config.saveButton.fire('change');
             };
 
             self.relationshipTypes = ActionBase.relationshipTypes;

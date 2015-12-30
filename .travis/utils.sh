@@ -7,7 +7,7 @@ setup_elasticsearch() {
 
     tar xvzf elasticsearch.tar.gz
     nohup bash -c "cd elasticsearch-${es_version} && bin/elasticsearch &"
-    sleep 5
+    sleep 10
 }
 
 setup_kafka() {
@@ -16,6 +16,6 @@ setup_kafka() {
     mkdir -p kafka && tar xzf kafka.tgz -C kafka --strip-components 1
     nohup bash -c "cd kafka && bin/zookeeper-server-start.sh config/zookeeper.properties &"
     nohup bash -c "cd kafka && bin/kafka-server-start.sh config/server.properties &"
-    sleep 5
+    sleep 10
     kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic case --zookeeper localhost:2181
 }

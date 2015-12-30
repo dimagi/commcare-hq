@@ -2,6 +2,7 @@ from functools import wraps
 import logging
 from corehq.util.global_request import get_request
 from dimagi.utils.logging import notify_exception
+from django.conf import settings
 
 
 class ContextDecorator(object):
@@ -52,3 +53,12 @@ class change_log_level(ContextDecorator):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.logger.setLevel(self.original_level)
+
+
+class require_debug_true(ContextDecorator):
+    def __enter__(self):
+        if not settings.DEBUG:
+            raise Exception("This can only be called in DEBUG mode.")
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass

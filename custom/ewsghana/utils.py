@@ -335,7 +335,8 @@ def can_receive_email(user, verified_number):
 
 @quickcache(['domain'])
 def get_country_id(domain):
-    return SQLLocation.objects.filter(domain=domain, location_type__name='country')[0].location_id
+    from custom.ewsghana import ROOT_SITE_CODE
+    return SQLLocation.objects.get(domain=domain, site_code=ROOT_SITE_CODE).location_id
 
 
 def has_input_stock_permissions(couch_user, location, domain):

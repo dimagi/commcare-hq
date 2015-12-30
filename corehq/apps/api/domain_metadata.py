@@ -11,6 +11,7 @@ from corehq.apps.es.domains import DomainES
 
 from tastypie import fields
 from tastypie.exceptions import NotFound
+from tastypie.resources import Resource
 import operator
 from dimagi.utils.dates import force_to_datetime
 
@@ -49,6 +50,10 @@ class DomainMetadataResource(HqBaseResource):
     billing_properties = fields.DictField()
     calculated_properties = fields.DictField()
     domain_properties = fields.DictField()
+
+    # using the default resource dispatch function to bypass our authorization for internal use
+    def dispatch(self, request_type, request, **kwargs):
+        return Resource.dispatch(self, request_type, request, **kwargs)
 
     def dehydrate_billing_properties(self, bundle):
         domain = _get_domain(bundle)

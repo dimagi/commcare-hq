@@ -301,6 +301,8 @@ class ESQuery(object):
         query = deepcopy(self)
         if default in query._default_filters:
             query._default_filters.pop(default)
+        if len(query._default_filters) == 0:
+            query._default_filters = {"match_all": filters.match_all()}
         return query
 
     def values(self, *fields):
@@ -312,6 +314,10 @@ class ESQuery(object):
 
     def values_list(self, *fields, **kwargs):
         return values_list(self.fields(fields).run().hits, *fields, **kwargs)
+
+    def count(self):
+        """Performs a minimal query to get the count of matching documents"""
+        return self.size(0).run().total
 
 
 class ESQuerySet(object):

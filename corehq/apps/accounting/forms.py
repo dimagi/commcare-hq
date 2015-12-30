@@ -22,7 +22,8 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from django_countries.data import COUNTRIES
 from corehq import privileges, toggles
-from corehq.apps.accounting.exceptions import CreateAccountingAdminError
+from corehq.apps.accounting.exceptions import CreateAccountingAdminError, \
+    InvoiceError
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.tasks import send_subscription_reminder_emails
 from corehq.apps.users.models import WebUser
@@ -558,6 +559,54 @@ class SubscriptionForm(forms.Form):
             )
         )
 
+    @transaction.atomic
+    def create_subscription(self):
+        account = BillingAccount.objects.get(id=self.cleaned_data['account'])
+        domain = self.cleaned_data['domain']
+        plan_version = SoftwarePlanVersion.objects.get(id=self.cleaned_data['plan_version'])
+        sub = Subscription.new_domain_subscription(
+            account, domain, plan_version,
+            web_user=self.web_user,
+            internal_change=True,
+            **self.shared_keywords
+        )
+        return sub
+
+    @transaction.atomic
+    def update_subscription(self):
+        self.subscription.update_subscription(
+            web_user=self.web_user,
+            **self.shared_keywords
+        )
+        transfer_account = self.cleaned_data.get('active_accounts')
+        if transfer_account:
+            acct = BillingAccount.objects.get(id=transfer_account)
+            self.subscription.account = acct
+            self.subscription.save()
+
+    @property
+    def shared_keywords(self):
+        return dict(
+            date_start=self.cleaned_data['start_date'],
+            date_end=self.cleaned_data['end_date'],
+            date_delay_invoicing=self.cleaned_data['delay_invoice_until'],
+            do_not_invoice=self.cleaned_data['do_not_invoice'],
+            no_invoice_reason=self.cleaned_data['no_invoice_reason'],
+            do_not_email=self.cleaned_data['do_not_email'],
+            auto_generate_credits=self.cleaned_data['auto_generate_credits'],
+            salesforce_contract_id=self.cleaned_data['salesforce_contract_id'],
+            service_type=self.cleaned_data['service_type'],
+            pro_bono_status=self.cleaned_data['pro_bono_status'],
+            funding_source=self.cleaned_data['funding_source'],
+        )
+
+    def clean_active_accounts(self):
+        transfer_account = self.cleaned_data.get('active_accounts')
+        if transfer_account and transfer_account == self.subscription.account.id:
+            raise ValidationError(_("Please select an account other than the "
+                                    "current account to transfer to."))
+        return transfer_account
+
     def clean_domain(self):
         domain_name = self.cleaned_data['domain']
         if self.fields['domain'].required:
@@ -598,76 +647,11 @@ class SubscriptionForm(forms.Form):
                 raise ValidationError(_("You must specify a start date"))
 
         end_date = self.cleaned_data.get('end_date')
-        if end_date and start_date > end_date:
-            raise ValidationError(_("End date must be after start date."))
-
-        if end_date and end_date <= datetime.date.today():
-            raise ValidationError(_("End date must be in the future."))
+        if end_date:
+            if start_date > end_date:
+                raise ValidationError(_("End date must be after start date."))
 
         return self.cleaned_data
-
-    @transaction.atomic
-    def create_subscription(self):
-        account = BillingAccount.objects.get(id=self.cleaned_data['account'])
-        domain = self.cleaned_data['domain']
-        plan_version = SoftwarePlanVersion.objects.get(id=self.cleaned_data['plan_version'])
-        date_start = self.cleaned_data['start_date']
-        date_end = self.cleaned_data['end_date']
-        date_delay_invoicing = self.cleaned_data['delay_invoice_until']
-        salesforce_contract_id = self.cleaned_data['salesforce_contract_id']
-        do_not_invoice = self.cleaned_data['do_not_invoice']
-        no_invoice_reason = self.cleaned_data['no_invoice_reason']
-        do_not_email = self.cleaned_data['do_not_email']
-        auto_generate_credits = self.cleaned_data['auto_generate_credits']
-        service_type = self.cleaned_data['service_type']
-        pro_bono_status = self.cleaned_data['pro_bono_status']
-        funding_source = self.cleaned_data['funding_source']
-        sub = Subscription.new_domain_subscription(
-            account, domain, plan_version,
-            date_start=date_start,
-            date_end=date_end,
-            date_delay_invoicing=date_delay_invoicing,
-            salesforce_contract_id=salesforce_contract_id,
-            do_not_invoice=do_not_invoice,
-            no_invoice_reason=no_invoice_reason,
-            do_not_email=do_not_email,
-            auto_generate_credits=auto_generate_credits,
-            web_user=self.web_user,
-            service_type=service_type,
-            pro_bono_status=pro_bono_status,
-            funding_source=funding_source,
-            internal_change=True,
-        )
-        return sub
-
-    def clean_active_accounts(self):
-        transfer_account = self.cleaned_data.get('active_accounts')
-        if transfer_account and transfer_account == self.subscription.account.id:
-            raise ValidationError(_("Please select an account other than the "
-                                    "current account to transfer to."))
-        return transfer_account
-
-    @transaction.atomic
-    def update_subscription(self):
-        self.subscription.update_subscription(
-            date_start=self.cleaned_data['start_date'],
-            date_end=self.cleaned_data['end_date'],
-            date_delay_invoicing=self.cleaned_data['delay_invoice_until'],
-            do_not_invoice=self.cleaned_data['do_not_invoice'],
-            no_invoice_reason=self.cleaned_data['no_invoice_reason'],
-            do_not_email=self.cleaned_data['do_not_email'],
-            auto_generate_credits=self.cleaned_data['auto_generate_credits'],
-            salesforce_contract_id=self.cleaned_data['salesforce_contract_id'],
-            web_user=self.web_user,
-            service_type=self.cleaned_data['service_type'],
-            pro_bono_status=self.cleaned_data['pro_bono_status'],
-            funding_source=self.cleaned_data['funding_source']
-        )
-        transfer_account = self.cleaned_data.get('active_accounts')
-        if transfer_account:
-            acct = BillingAccount.objects.get(id=transfer_account)
-            self.subscription.account = acct
-            self.subscription.save()
 
 
 class ChangeSubscriptionForm(forms.Form):
@@ -834,13 +818,16 @@ class CancelForm(forms.Form):
         widget=forms.TextInput,
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, subscription, *args, **kwargs):
         super(CancelForm, self).__init__(*args, **kwargs)
+
+        can_cancel = has_subscription_already_ended(subscription)
+
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Cancel Subscription',
-                'note',
+                crispy.Field('note', **({'readonly': True} if can_cancel else {})),
             ),
             FormActions(
                 StrictButton(
@@ -848,7 +835,47 @@ class CancelForm(forms.Form):
                     css_class='btn-danger',
                     name='cancel_subscription',
                     type='submit',
+                    **({'disabled': True} if can_cancel else {})
                 )
+            ),
+        )
+
+
+class SuppressSubscriptionForm(forms.Form):
+    submit_kwarg = 'suppress_subscription'
+
+    def __init__(self, subscription, *args, **kwargs):
+        self.subscription = subscription
+        super(SuppressSubscriptionForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+
+        fields = [
+            crispy.Div(
+                crispy.HTML('Warning: this can only be undone by a developer.'),
+                css_class='alert alert-error',
+            ),
+        ]
+        if self.subscription.is_active:
+            fields.append(crispy.Div(
+                crispy.HTML('An active subscription cannot be suppressed.'),
+                css_class='alert alert-warning',
+            ))
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Suppress subscription from subscription report, invoice generation, and from being activated',
+                *fields
+            ),
+            FormActions(
+                StrictButton(
+                    'Suppress Subscription',
+                    css_class='btn-danger',
+                    name=self.submit_kwarg,
+                    type='submit',
+                    **({'disabled': True} if self.subscription.is_active else {})
+                ),
             ),
         )
 
@@ -1598,42 +1625,28 @@ class TriggerInvoiceForm(forms.Form):
         invoice_factory.create_invoices()
 
     def clean_previous_invoices(self, invoice_start, invoice_end, domain_name):
-        last_generated_invoices = Invoice.objects.filter(
+        prev_invoices = Invoice.objects.filter(
             date_start__lte=invoice_end, date_end__gte=invoice_start,
             subscription__subscriber__domain=domain_name
-        ).all()
-        for invoice in last_generated_invoices:
-            for record in invoice.billingrecord_set.all():
-                record.pdf.delete()
-                record.delete()
-            invoice.subscriptionadjustment_set.all().delete()
-            invoice.creditadjustment_set.all().delete()
-            try:
-                invoice.lineitem_set.all().delete()
-            except ProtectedError:
-                # this will happen if there were any credits generated.
-                # Leave in for now, as it's just for testing purposes.
-                pass
-            try:
-                # we want to get rid of as many old community subscriptions from that month
-                # as testing will allow.
-                if invoice.subscription.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
-                    community_sub = invoice.subscription
-                    community_sub.subscriptionadjustment_set.all().delete()
-                    community_sub.subscriptionadjustment_related.all().delete()
-                    community_sub.creditline_set.all().delete()
-                    invoice.delete()
-                    try:
-                        community_sub.delete()
-                    except ProtectedError:
-                        pass
-                else:
-                    invoice.delete()
-            except ProtectedError:
-                # this will happen for credit lines applied to invoices' line items. We don't
-                # want to throw away the credit lines, as that will affect testing totals
-                invoice.is_hidden = True
-                invoice.save()
+        )
+        if prev_invoices.count() > 0:
+            from corehq.apps.accounting.views import InvoiceSummaryView
+            raise InvoiceError(
+                "Invoices exist that were already generated with this same "
+                "criteria. You must manually suppress these invoices: "
+                "{invoice_list}".format(
+                    num_invoices=prev_invoices.count(),
+                    invoice_list=', '.join(
+                        map(
+                            lambda x: '<a href="{edit_url}">{name}</a>'.format(
+                                edit_url=reverse(InvoiceSummaryView.urlname,
+                                                 args=(x.id,)),
+                                name=x.invoice_number
+                            ), prev_invoices.all()
+                        )
+                    ),
+                )
+            )
 
 
 class TriggerBookkeeperEmailForm(forms.Form):

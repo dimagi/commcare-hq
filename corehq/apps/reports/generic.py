@@ -76,7 +76,8 @@ class GenericReportView(object):
     dispatcher = None  # ReportDispatcher subclass
     toggles = ()  # Optionally provide toggles to turn on/off the report
 
-    is_cacheable = False  # whether to use caching on @request_cache methods
+    # whether to use caching on @request_cache methods. will ignore this if CACHE_REPORTS is set to False
+    is_cacheable = False
 
     # Code can expect `fields` to be an iterable even when empty (never None)
     fields = ()

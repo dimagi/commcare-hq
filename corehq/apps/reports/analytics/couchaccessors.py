@@ -32,7 +32,8 @@ class FormDetails(jsonobject.JsonObject):
 
 
 def update_reports_analytics_indexes():
-    XFormInstance.get_db().view('reports_forms/all_forms', limit=1).all()
+    XFormInstance.get_db().view('all_forms/view', limit=1).all()
+    XFormInstance.get_db().view('forms_by_app_info/view', limit=1).all()
 
 
 @quickcache(['domain', 'xmlns'], timeout=5 * 60)
@@ -48,7 +49,7 @@ def get_all_form_definitions_grouped_by_app_and_xmlns(domain):
     startkey = ["xmlns app", domain]
     return [
         _row_to_form_info(r) for r in Application.get_db().view(
-            'reports_forms/by_app_info',
+            'forms_by_app_info/view',
             startkey=startkey,
             endkey=startkey + [{}],
             group=True,
@@ -69,7 +70,7 @@ def get_all_form_details(domain, deleted=None):
         startkey = ["status app module form", domain, status]
     return [
         _row_to_form_details(r) for r in Application.get_db().view(
-            'reports_forms/by_app_info',
+            'forms_by_app_info/view',
             startkey=startkey,
             endkey=startkey + [{}],
             reduce=False,
@@ -81,7 +82,7 @@ def get_all_form_details(domain, deleted=None):
 def get_form_details_for_xmlns(domain, xmlns):
     startkey = ["xmlns", domain, xmlns]
     return [
-        _row_to_form_details(row) for row in Application.get_db().view('reports_forms/by_app_info',
+        _row_to_form_details(row) for row in Application.get_db().view('forms_by_app_info/view',
             startkey=startkey,
             endkey=startkey + [{}],
             reduce=False,
@@ -94,7 +95,7 @@ def get_form_details_for_app(domain, app_id, deleted=False):
     status = 'deleted' if deleted else 'active'
     startkey = ["status app module form", domain, status, app_id]
     return [
-        _row_to_form_details(row) for row in Application.get_db().view('reports_forms/by_app_info',
+        _row_to_form_details(row) for row in Application.get_db().view('forms_by_app_info/view',
             startkey=startkey,
             endkey=startkey + [{}],
             reduce=False,
@@ -107,7 +108,7 @@ def get_form_details_for_app_and_module(domain, app_id, module_id, deleted=False
     status = 'deleted' if deleted else 'active'
     startkey = ["status app module form", domain, status, app_id, module_id]
     return [
-        _row_to_form_details(row) for row in Application.get_db().view('reports_forms/by_app_info',
+        _row_to_form_details(row) for row in Application.get_db().view('forms_by_app_info/view',
             startkey=startkey,
             endkey=startkey + [{}],
             reduce=False,
@@ -120,7 +121,7 @@ def get_form_details_for_app_and_xmlns(domain, app_id, xmlns, deleted=False):
     status = 'deleted' if deleted else 'active'
     startkey = ["status xmlns app", domain, status, xmlns, app_id]
     return [
-        _row_to_form_details(row) for row in Application.get_db().view('reports_forms/by_app_info',
+        _row_to_form_details(row) for row in Application.get_db().view('forms_by_app_info/view',
             startkey=startkey,
             endkey=startkey + [{}],
             reduce=False,

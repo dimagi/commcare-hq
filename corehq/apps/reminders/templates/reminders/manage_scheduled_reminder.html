@@ -1,20 +1,12 @@
-{% extends 'reminders/base_template.html' %}
+{% extends "style/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'reminders/ko/reminders.manage.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
-    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
-{% endblock %}
-
-{% block head %}{{ block.super }}
-    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
-    <link href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}" rel="stylesheet">
+    <script src="{% new_static 'reminders/ko/reminders.manage.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/main.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -26,12 +18,21 @@
             {{ available_languages|JSON }},
             {{ form.initial_event|JSON }}
         );
-        ko.applyBindings(manageRemindersModel, $('#manage-reminders-form').get(0));
+        $('#manage-reminders-form').koApplyBindings(manageRemindersModel);
         manageRemindersModel.init();
     </script>
 {% endblock %}
 
-{% block main_column %}
+{% block stylesheets %}
+    <style>
+        .form-horizontal .form-group {
+            margin-left: 0;
+            margin-right: 0;
+        }
+    </style>
+{% endblock %}
+
+{% block page_content %}
     <div id="manage-reminders-form">
         <form class="form form-horizontal"
               method="post">
@@ -56,8 +57,7 @@
     </script>
 
     <script type="text/html" id="event-message-length-template">
-        <span class="alert"
-              data-bind="css: { 'alert-error': isMessageLong, 'alert-info': isSingleMessage }">
+        <span class="alert" data-bind="css: { 'alert-warning': messageLength() === 0, 'alert-danger': isMessageLong, 'alert-info': isSingleMessage }">
              <span data-bind="text: messageLength"></span>
             <span data-bind="visible: showPluralChar">characters</span>
             <span data-bind="visible: showSingularChar">character</span> (160 /message)

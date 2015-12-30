@@ -46,29 +46,27 @@ trunk: master
 name: autostaging
 branches:
   - kill-x_over_time  # Danny 12/11
-  - kill-facilities  # Danny 12/11
-  - synclogs-db  # Danny 12/10
   - validate-xpath  # Danny 12/05
   - vellum-staging # J$ 11/13
-  - two-factor+websockets
   #- fix-toggle+two-factor-otp-only #wsp 11/17
   - two-factor-otp-only+add-tableau-dashboard  # Ethan 11/24
   - two-factor-otp-only # j$ 10/2
   - requests #Simon 11/3
   - add-tableau-dashboard # TS 11/5
-  #- fix-toggle #wsp 11/17
-  - extended-trial-metadata # Cal 11/25
-  - cache-control # Cal 11/30
-  - saved-export-blobs # Daniel 12/3
+  - fix-toggle #wsp 12/14
   - es-fix # Noah 12/7
-  - use-strict-apply-bindings # Jenny 12/7
-  - form-guided-tour  # Biyeun 12/10
+  - location-delete # Cal 12/16
+  - password-strength # Cal 12/17
+#  - false-heartbeat-fix  # Biyeun 12/22
+  - location-delete+es # Cal 12/23
+  - credit-line-balances # Nick P
+  - deactivate-data-source # Nick P 12/29
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
-        # - sqlite-backend #wsp 1117
+    branches:
+      - sqlite-backend #wsp 12/14
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
@@ -78,11 +76,7 @@ submodules:
     branches: []
   submodules/django-digest-src:
     branches: []
-  submodules/pillowtop-src:
-    branches: []
   submodules/dimagi-utils-src:
     branches: []
   submodules/django-prbac-src:
-    branches: []
-  submodules/fluff-src:
     branches: []

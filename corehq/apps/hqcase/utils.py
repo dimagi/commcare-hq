@@ -247,16 +247,17 @@ def _process_case_block(case_block, attachments, old_case_id):
     return ET.tostring(root), ret_attachments
 
 
-def submit_case_block_from_template(domain, template, context, xmlns=None):
+def submit_case_block_from_template(domain, template, context, xmlns=None, user_id=None):
     case_block = render_to_string(template, context)
     # Ensure the XML is formatted properly
     # An exception is raised if not
     case_block = ElementTree.tostring(ElementTree.XML(case_block))
 
+    user_id = user_id or SYSTEM_USER_ID
     kwargs = {}
     if xmlns:
         kwargs['xmlns'] = xmlns
-    submit_case_blocks(case_block, domain, **kwargs)
+    submit_case_blocks(case_block, domain, user_id=user_id, **kwargs)
 
 
 def update_case(domain, case_id, case_properties=None, close=False, xmlns=None):

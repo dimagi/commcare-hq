@@ -97,7 +97,7 @@ from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
 from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
-    RepeatRecord, repeater_types
+    RepeatRecord, repeater_types, RegisterGenerator
 from dimagi.utils.post import simple_post
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -532,29 +532,22 @@ def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']
     format = request.POST.get('format', None)
+    repeater_class = repeater_types[repeater_type]
     form = GenericRepeaterForm(
         {"url": url, "format": format},
         domain=domain,
-        repeater_class=repeater_types[repeater_type]
+        repeater_class=repeater_class
     )
     if form.is_valid():
         url = form.cleaned_data["url"]
-        # now we fake a post
-        def _stub(repeater_type):
-            if 'case' in repeater_type.lower():
-                return CaseBlock(
-                    case_id='test-case-%s' % uuid.uuid4().hex,
-                    create=True,
-                    case_type='test',
-                    case_name='test case',
-                ).as_string()
-            else:
-                return "<?xml version='1.0' ?><data id='test'><TestString>Test post from CommCareHQ on %s</TestString></data>" % \
-                       (datetime.datetime.utcnow())
+        format = format or RegisterGenerator.default_format_by_repeater(repeater_class)
+        generator_class = RegisterGenerator.generator_class_by_repeater_format(repeater_class, format)
+        generator = generator_class(repeater_class())
+        fake_post = generator.get_test_payload()
+        headers = generator.get_headers()
 
-        fake_post = _stub(repeater_type)
         try:
-            resp = simple_post(fake_post, url)
+            resp = simple_post(fake_post, url, headers=headers)
             if 200 <= resp.status < 300:
                 return HttpResponse(json.dumps({"success": True,
                                                 "response": resp.read(),
@@ -1365,11 +1358,14 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "restrict_superusers": self.domain_object.restrict_superusers,
             "allow_domain_requests": self.domain_object.allow_domain_requests,
             "hipaa_compliant": self.domain_object.hipaa_compliant,
+            "secure_sessions": self.domain_object.secure_sessions,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial,
-                                       user_name=self.request.couch_user.username)
-        return PrivacySecurityForm(initial=initial, user_name=self.request.couch_user.username)
+                                       user_name=self.request.couch_user.username,
+                                       domain=self.request.domain)
+        return PrivacySecurityForm(initial=initial, user_name=self.request.couch_user.username,
+                                   domain=self.request.domain)
 
     @property
     def page_context(self):

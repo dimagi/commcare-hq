@@ -51,7 +51,7 @@
             edit: edit,
             validate: validate
         });
-        ko.applyBindings(sl, $("#supported-languages").get(0));
+        $("#supported-languages").koApplyBindings(sl);
     });
 </script>
 {% endblock %}
