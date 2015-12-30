@@ -15,6 +15,11 @@ function HQReportDataTables(options) {
     self.ajaxParams = options.ajaxParams || new Object();
     self.ajaxSource = options.ajaxSource;
     self.loadingText = options.loadingText || "Loading <img src='/static/hqwebapp/img/ajax-loader.gif' alt='loading indicator' />";
+    self.loadingTemplateSelector = options.loadingTemplateSelector;
+    if (self.loadingTemplateSelector !== undefined) {
+        var loadingTemplate = _.template($(self.loadingTemplateSelector).html() || self.loadingText);
+        self.loadingText = loadingTemplate({});
+    }
     self.emptyText = options.emptyText || "No data available to display. Please try changing your filters.";
     self.errorText = options.errorText || "<span class='label label-important'>Sorry!</span> There was an error with your query, it has been logged, please try another query.";
     self.badRequestErrorText = options.badRequestErrorText || options.errorText || "<span class='label label-important'>Sorry!</span> Your search query is invalid, please adjust the formatting and try again.";
