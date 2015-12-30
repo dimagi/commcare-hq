@@ -48,20 +48,36 @@
 {% block modals %}
     <div class="loading-backdrop hide"></div>
 
-    <div class="modal hide fade" id="loadingReportIssueModal">
-        <div class="modal-header">
-            <a class="close" data-dismiss="modal">&times;</a>
-            <h3>Problem Loading Report "{{ report.title }}"</h3>
-        </div>
-        <div class="modal-body">
-            <p>There seems to be a problem loading data for the <strong>{{ report.title }}</strong> report.</p>
-            <p>The report returned the following error:</p>
-            <div class="alert alert-error report-error-status"></div>
-            <p>If this problem persists, we encourage you to <a href="#modalReportIssue" data-target="#modalReportIssue" data-toggle="modal">Report an Issue</a>.</p>
-        </div>
-        <div class="modal-footer">
-            <a href="#" class="btn btn-primary" onclick="$(this).parent().parent().trigger('reloadHQReport')" data-loading-text="Trying Again..." data-fail-text="Loading Failed. Try Again?">Try Again</a>
-            <a href="#" class="btn" data-dismiss="modal">Cancel</a>
+    <div class="modal fade" tabindex="-1" role="dialog" id="loadingReportIssueModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">{% trans 'Problem Loading Report' %} "{{ report.title }}"</h4>
+                </div>
+                <div class="modal-body">
+                    <p>{% trans 'There seems to be a problem loading data for the report' %}: <strong>{{ report.title }}</strong></p>
+                    <p>{% trans 'The report returned the following error' %}:</p>
+                    <div class="alert alert-error report-error-status"></div>
+                    <p>
+                        {% blocktrans %}
+                        If this problem persists, we encourage you to
+                        <a href="#modalReportIssue"
+                           data-target="#modalReportIssue"
+                           data-toggle="modal">Report an Issue</a>.
+                        {% endblocktrans %}
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <a href="#"
+                       class="btn btn-primary"
+                       onclick="$(this).parent().parent().trigger('reloadHQReport')"
+                       data-loading-text="{% trans 'Trying Again...' %}"
+                       data-fail-text="{% trans 'Loading Failed. Try Again?' %}">{% trans 'Try Again' %}
+                    </a>
+                    <a href="#" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</a>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}
