@@ -5,7 +5,7 @@
             orphan: true,  // needed due to the async nature of the app manager
             steps: [
                 {
-                    element: 'h1.page-header .breadcrumb',
+                    element: '#mainmenu-ApplicationsTab',
                     title: gettext("Welcome to the App Builder"),
                     content: gettext("Click 'Next' for a quick introduction to this page."),
                     placement: 'bottom'
@@ -30,7 +30,8 @@
                     },
                     onHide: function () {
                         $('#cloudcare-preview-url').removeClass('btn-success');
-                    }
+                    },
+                    orphan: false
                 },
                 {
                     element: '#tour-deploy-link',
@@ -44,7 +45,7 @@
                     }
                 },
                 {
-                    element: 'h1.page-header',
+                    element: '',
                     title: gettext("Happy App Building!"),
                     content: gettext('For more advice, tutorials, and answers to questions, please checkout our <a href="http://help.commcarehq.org/">Help Site</a>.'),
                     html: true,
