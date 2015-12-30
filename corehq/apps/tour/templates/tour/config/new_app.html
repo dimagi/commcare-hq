@@ -1,35 +1,19 @@
-{% load i18n %}
 <script type="text/javascript">
     $(function () {
-        {% trans "Welcome to the App Builder" as step1_title %}
-        {% trans "Click 'Next' for a quick introduction to this page." as step1_content %}
-
-        {% trans "Edit a form" as step2_title %}
-        {% trans "Build and edit form questions and logic in our easy Form Builder." as step2_content %}
-
-        {% trans "Preview a form" as step3_title %}
-        {% trans "Check out what your form looks like in a web preview" as step3_content %}
-
-        {% trans "Deploy your App" as step4_title %}
-        {% trans "Click here to install your app on a mobile device." as step4_content %}
-
-        {% trans "Happy App Building!" as step5_title %}
-        {% trans 'For more advice, tutorials, and answers to questions, please checkout our <a href="http://help.commcarehq.org/">Help Site</a>.' as step5_content %}
-
         var form_tour = new Tour({
             name: '{{ request.guided_tour.slug }}',
             orphan: true,  // needed due to the async nature of the app manager
             steps: [
                 {
                     element: 'h1.page-header .breadcrumb',
-                    title: "{{ step1_title|escapejs }}",
-                    content: "{{ step1_content|escapejs }}",
+                    title: gettext("Welcome to the App Builder"),
+                    content: gettext("Click 'Next' for a quick introduction to this page."),
                     placement: 'bottom'
                 },
                 {
                     element: '#edit_label',
-                    title: "{{ step2_title|escapejs }}",
-                    content: "{{ step2_content|escapejs }}",
+                    title: gettext("Edit a form"),
+                    content: gettext("Build and edit form questions and logic in our easy Form Builder."),
                     onShown: function () {
                         $('#edit_label').addClass('btn-success').removeClass('btn-primary');
                     },
@@ -39,8 +23,8 @@
                 },
                 {
                     element: '#cloudcare-preview-url',
-                    title: "{{ step3_title|escapejs }}",
-                    content: "{{ step3_content|escapejs }}",
+                    title: gettext("Preview a form"),
+                    content: gettext("Check out what your form looks like in a web preview"),
                     onShown: function () {
                         $('#cloudcare-preview-url').addClass('btn-success');
                     },
@@ -50,8 +34,8 @@
                 },
                 {
                     element: '#tour-deploy-link',
-                    title: "{{ step4_title|escapejs }}",
-                    content: "{{ step4_content|escapejs }}",
+                    title: gettext("Deploy your App"),
+                    content: gettext("Click here to install your app on a mobile device."),
                     onShown: function () {
                         $('#tour-deploy-link').parent().addClass('active');
                     },
@@ -61,8 +45,8 @@
                 },
                 {
                     element: 'h1.page-header',
-                    title: "{{ step5_title|escapejs }}",
-                    content: '{{ step5_content|escapejs }}',
+                    title: gettext("Happy App Building!"),
+                    content: gettext('For more advice, tutorials, and answers to questions, please checkout our <a href="http://help.commcarehq.org/">Help Site</a>.'),
                     html: true,
                     placement: 'bottom'
                 }
