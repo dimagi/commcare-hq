@@ -1,5 +1,6 @@
 import json
 import os
+from django.db.models import ProtectedError
 from django.test import TestCase
 from corehq.apps.commtrack.dbaccessors import \
     get_supply_point_case_by_location_id
@@ -204,3 +205,15 @@ class LocationSyncTest(TestCase):
         self.assertEqual(in_charges.count(), 1)
         user = CommCareUser.get_by_user_id(in_charges[0].user_id)
         self.assertIsNotNone(user)
+
+    def test_location_delete_fail(self):
+        # test that deletion of a location fails and is rolled back when
+        # it is a foreign key of a custom model
+        with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
+            location = Location(json.loads(f.read())[1])
+
+        ewsghana_location = self.api_object.location_sync(location)
+        with self.assertRaises(ProtectedError):
+            ewsghana_location.full_delete()
+        ewsghana_sql_location = SQLLocation.objects.filter(location_id=ewsghana_location._id)
+        self.assertEqual(len(ewsghana_sql_location), 1)
