@@ -1780,6 +1780,21 @@ class WireInvoice(InvoiceBase):
     def get_total(self):
         return self.balance
 
+    @property
+    def email_recipients(self):
+        try:
+            original_record = WireBillingRecord.objects.filter(invoice=self).order_by('-date_created')[0]
+            return original_record.emailed_to.split(',') if original_record.emailed_to else []
+        except IndexError:
+            logger.error(
+                "[BILLING] "
+                "Strange that WireInvoice %d has no associated WireBillingRecord. "
+                "Should investigate."
+                % self.id
+            )
+            return []
+
+
 
 class WirePrepaymentInvoice(WireInvoice):
     class Meta:
