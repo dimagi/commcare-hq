@@ -5,11 +5,16 @@
     <label class="control-label">
         {% trans "Module Filter" %}
     </label>
-    <div class="controls commcare-feature" data-since-version="2.20">
+    <div class="controls commcare-feature" data-since-version="2.20" id="module-filter">
         <input type="text"
             placeholder="{% trans "XPath expression" %}"
             name="module_filter"
-            value="{% if module.module_filter %}{{ module.module_filter }}{% endif %}"/>
+            data-bind="xpathValidator: xpath"/>
     </div>
 </div>
+<script>
+$(function () {
+    $('#module-filter').koApplyBindings({xpath: {{ module.module_filter|JSON }} || ''});
+});
+</script>
 {% endif %}
