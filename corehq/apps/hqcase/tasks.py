@@ -30,6 +30,9 @@ def explode_cases(user_id, domain, factor, task=None):
 
     # copy parents
     for case in cases:
+        # skip over user as a case
+        if case.type == 'commcare-user':
+            continue
         # save children for later
         if case.indices:
             child_cases.append(case)
