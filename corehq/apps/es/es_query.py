@@ -354,9 +354,27 @@ class ESQuerySet(object):
         if self.query._fields == []:
             return self.ids
         elif self.query._fields is not None:
-            return [r['fields'] for r in self.raw_hits]
+            return [self._flatten_field_dict(r['fields']) for r in self.raw_hits]
         else:
             return [r['_source'] for r in self.raw_hits]
+
+    @staticmethod
+    def _flatten_field_dict(field_dict):
+        """
+        In ElasticSearch 1.3, the return format was changed such that field
+        values are always returned as lists, where as previously they would
+        be returned as scalars if the field had a single value, and returned
+        as lists if the field had multiple values.
+        This method restores the behavior of 0.90 .
+        
+        https://www.elastic.co/guide/en/elasticsearch/reference/1.3/_return_values.html
+        """
+        for key, val in field_dict.iteritems():
+            new_val = val
+            if type(val) == list and len(val) == 1:
+                new_val = val[0]
+            field_dict[key] = new_val
+        return field_dict
 
     @property
     def total(self):
