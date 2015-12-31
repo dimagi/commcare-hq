@@ -1732,23 +1732,6 @@ class InvoiceBase(models.Model):
     def email_recipients(self):
         raise NotImplementedError
 
-    @property
-    def contact_emails(self):
-        billing_contact_info = BillingContactInfo.objects.filter(account=self.account)
-        contact_email_str = billing_contact_info[0].emails if billing_contact_info else None
-        contact_emails = contact_email_str.split(',') if contact_email_str else []
-        if not contact_emails:
-            admins = WebUser.get_admins_by_domain(self.get_domain())
-            contact_emails = [a.email if a.email else a.username for a in admins]
-            logger.error(
-                "[BILLING] "
-                "Could not find an email to send the invoice "
-                "email to for the domain %s. Sending to domain admins instead: "
-                "%s." %
-                (self.get_domain(), ', '.join(contact_emails))
-            )
-        return contact_emails
-
 
 class WireInvoice(InvoiceBase):
     # WireInvoice is tied to a domain, rather than a subscription
@@ -1825,6 +1808,23 @@ class Invoice(InvoiceBase):
             return [settings.FINANCE_EMAIL]
         else:
             return self.contact_emails
+
+    @property
+    def contact_emails(self):
+        billing_contact_info = BillingContactInfo.objects.filter(account=self.account)
+        contact_email_str = billing_contact_info[0].emails if billing_contact_info else None
+        contact_emails = contact_email_str.split(',') if contact_email_str else []
+        if not contact_emails:
+            admins = WebUser.get_admins_by_domain(self.get_domain())
+            contact_emails = [a.email if a.email else a.username for a in admins]
+            logger.error(
+                "[BILLING] "
+                "Could not find an email to send the invoice "
+                "email to for the domain %s. Sending to domain admins instead: "
+                "%s." %
+                (self.get_domain(), ', '.join(contact_emails))
+            )
+        return contact_emails
 
     @property
     def subtotal(self):
