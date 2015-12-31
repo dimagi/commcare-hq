@@ -1811,12 +1811,15 @@ class Invoice(InvoiceBase):
 
     @property
     def contact_emails(self):
-        billing_contact_info = BillingContactInfo.objects.filter(account=self.account)
-        contact_email_str = billing_contact_info[0].emails if billing_contact_info else None
-        contact_emails = contact_email_str.split(',') if contact_email_str else []
+        try:
+            billing_contact_info = BillingContactInfo.objects.get(account=self.account)
+            contact_emails = billing_contact_info.emails.split(',') if billing_contact_info.emails else []
+        except BillingContactInfo.DoesNotExist:
+            contact_emails = []
+
         if not contact_emails:
             admins = WebUser.get_admins_by_domain(self.get_domain())
-            contact_emails = [a.email if a.email else a.username for a in admins]
+            contact_emails = [admin.email if admin.email else admin.username for admin in admins]
             logger.error(
                 "[BILLING] "
                 "Could not find an email to send the invoice "
