@@ -1730,24 +1730,7 @@ class InvoiceBase(models.Model):
 
     @property
     def email_recipients(self):
-        return self.contact_emails
-
-    @property
-    def contact_emails(self):
-        billing_contact_info = BillingContactInfo.objects.filter(account=self.account)
-        contact_email_str = billing_contact_info[0].emails if billing_contact_info else None
-        contact_emails = contact_email_str.split(',') if contact_email_str else []
-        if not contact_emails:
-            admins = WebUser.get_admins_by_domain(self.get_domain())
-            contact_emails = [a.email if a.email else a.username for a in admins]
-            logger.error(
-                "[BILLING] "
-                "Could not find an email to send the invoice "
-                "email to for the domain %s. Sending to domain admins instead: "
-                "%s." %
-                (self.get_domain(), ', '.join(contact_emails))
-            )
-        return contact_emails
+        raise NotImplementedError
 
 
 class WireInvoice(InvoiceBase):
@@ -1780,6 +1763,21 @@ class WireInvoice(InvoiceBase):
     def get_total(self):
         return self.balance
 
+    @property
+    def email_recipients(self):
+        try:
+            original_record = WireBillingRecord.objects.filter(invoice=self).order_by('-date_created')[0]
+            return original_record.emailed_to.split(',') if original_record.emailed_to else []
+        except IndexError:
+            logger.error(
+                "[BILLING] "
+                "Strange that WireInvoice %d has no associated WireBillingRecord. "
+                "Should investigate."
+                % self.id
+            )
+            return []
+
+
 
 class WirePrepaymentInvoice(WireInvoice):
     class Meta:
@@ -1810,6 +1808,26 @@ class Invoice(InvoiceBase):
             return [settings.FINANCE_EMAIL]
         else:
             return self.contact_emails
+
+    @property
+    def contact_emails(self):
+        try:
+            billing_contact_info = BillingContactInfo.objects.get(account=self.account)
+            contact_emails = billing_contact_info.emails.split(',') if billing_contact_info.emails else []
+        except BillingContactInfo.DoesNotExist:
+            contact_emails = []
+
+        if not contact_emails:
+            admins = WebUser.get_admins_by_domain(self.get_domain())
+            contact_emails = [admin.email if admin.email else admin.username for admin in admins]
+            logger.error(
+                "[BILLING] "
+                "Could not find an email to send the invoice "
+                "email to for the domain %s. Sending to domain admins instead: "
+                "%s." %
+                (self.get_domain(), ', '.join(contact_emails))
+            )
+        return contact_emails
 
     @property
     def subtotal(self):

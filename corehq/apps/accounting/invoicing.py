@@ -241,6 +241,7 @@ class DomainWireInvoiceFactory(object):
         if self.domain is None:
             raise InvoiceError("Domain '{}' is not a valid domain on HQ!".format(self.domain))
 
+    @transaction.atomic()
     def create_wire_invoice(self, balance):
 
         # Gather relevant invoices
