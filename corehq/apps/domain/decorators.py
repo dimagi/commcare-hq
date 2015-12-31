@@ -240,20 +240,23 @@ def check_lockout(fn):
         username = _get_username_from_request(request)
         user = CouchUser.get_by_username(username)
         if user and user.is_web_user() and user.is_locked_out():
-            return json_response({"error": "maximum password attempts exceeded"}, status_code=401)
+            return json_response({_("error"): _("maximum password attempts exceeded")}, status_code=401)
         else:
             return fn(request, *args, **kwargs)
     return _inner
 
 
 def _get_username_from_request(request):
-    auth_type = determine_authtype_from_header(request)
+    auth_header = (request.META.get('HTTP_AUTHORIZATION') or '').lower()
     username = None
-    if auth_type == DIGEST:
+    if auth_header.startswith('digest '):
         digest = parse_digest_credentials(request.META['HTTP_AUTHORIZATION'])
         username = digest.username
-    elif auth_type == BASIC:
-        username = b64decode(request.META['HTTP_AUTHORIZATION'].split()[1]).split(':')[0]
+    elif auth_header.startswith('basic '):
+        try:
+            username = b64decode(request.META['HTTP_AUTHORIZATION'].split()[1]).split(':')[0]
+        except IndexError:
+            pass
     return username
 
 ########################################################################################################
