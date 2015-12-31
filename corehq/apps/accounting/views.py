@@ -1,6 +1,5 @@
 from datetime import date
 import json
-import logging
 
 from django.conf import settings
 from django.contrib import messages
@@ -63,17 +62,14 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import (
     fmt_feature_rate_dict, fmt_product_rate_dict,
-    has_subscription_already_ended
-)
+    has_subscription_already_ended,
+    log_accounting_error)
 from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMixin
 from corehq import privileges, toggles
 from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.models import Role, Grant
 
 from urllib import urlencode
-
-
-logger = logging.getLogger('accounting')
 
 
 @requires_privilege_raise404(privileges.ACCOUNTING_ADMIN)
@@ -211,8 +207,8 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
                     messages.success(request, "Successfully adjusted credit.")
                     return HttpResponseRedirect(self.page_url)
             except CreditLineError as e:
-                logger.error(
-                    "[BILLING] failed to add credit in admin UI due to: %s"
+                log_accounting_error(
+                    "failed to add credit in admin UI due to: %s"
                     % e
                 )
                 messages.error(request, "Issue adding credit: %s" % e)

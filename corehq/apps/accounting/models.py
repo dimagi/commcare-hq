@@ -1,6 +1,5 @@
 from StringIO import StringIO
 import datetime
-import logging
 from tempfile import NamedTemporaryFile
 from decimal import Decimal
 import itertools
@@ -45,6 +44,8 @@ from corehq.apps.accounting.utils import (
     fmt_dollar_amount, EXCHANGE_RATE_DECIMAL_PLACES,
     ensure_domain_instance, get_change_status,
     is_active_subscription,
+    log_accounting_error,
+    log_accounting_info,
 )
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
@@ -52,7 +53,6 @@ from corehq.apps.accounting.subscription_changes import (
 from corehq.apps.accounting.emails import send_subscription_change_alert
 from corehq.apps.domain.models import Domain
 
-logger = logging.getLogger('accounting')
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
 MAX_INVOICE_COMMUNICATIONS = 5
@@ -409,8 +409,7 @@ class BillingAccount(models.Model):
         except cls.DoesNotExist:
             pass
         except cls.MultipleObjectsReturned:
-            logger.error(
-                "[BILLING] "
+            log_accounting_error(
                 "Multiple billing accounts showed up for the domain '%s'. The "
                 "latest one was served, but you should reconcile very soon."
                 % domain
@@ -787,8 +786,7 @@ class SoftwarePlanVersion(models.Model):
         if len(product_rates) > 1:
             # Models and UI are both written to support multiple products,
             # but for now, each subscription can only have one product.
-            logger.error(
-                "[BILLING] "
+            log_accounting_error(
                 "There are multiple product rates for plan version number %d. "
                 "Odd, right? Consider this an issue."
                 % self.id
@@ -1515,13 +1513,14 @@ class Subscription(models.Model):
                 email_from=get_dimagi_from_email_by_product(product),
                 bcc=bcc,
             )
-            logger.info(
-                "[BILLING] Sent %(days_left)s-day subscription reminder "
+            log_accounting_info(
+                "Sent %(days_left)s-day subscription reminder "
                 "email for %(domain)s to %(email)s." % {
                     'days_left': num_days_left,
                     'domain': domain_name,
                     'email': email,
-                })
+                }
+            )
 
     def send_dimagi_ending_reminder_email(self):
         if self.date_end is None:
@@ -1573,8 +1572,7 @@ class Subscription(models.Model):
             return None, None
 
         if len(active_subscriptions) > 1:
-            logger.error(
-                "[BILLING] "
+            log_accounting_error(
                 "There seem to be multiple ACTIVE subscriptions for the "
                 "subscriber %s. Odd, right? The latest one by "
                 "date_created was used, but consider this an issue."
@@ -1789,7 +1787,7 @@ class WireInvoice(InvoiceBase):
             original_record = WireBillingRecord.objects.filter(invoice=self).order_by('-date_created')[0]
             return original_record.emailed_to.split(',') if original_record.emailed_to else []
         except IndexError:
-            logger.error(
+            log_accounting_error(
                 "[BILLING] "
                 "Strange that WireInvoice %d has no associated WireBillingRecord. "
                 "Should investigate."
@@ -1840,12 +1838,10 @@ class Invoice(InvoiceBase):
         if not contact_emails:
             admins = WebUser.get_admins_by_domain(self.get_domain())
             contact_emails = [admin.email if admin.email else admin.username for admin in admins]
-            logger.error(
-                "[BILLING] "
+            log_accounting_error(
                 "Could not find an email to send the invoice "
-                "email to for the domain %s. Sending to domain admins instead: "
-                "%s." %
-                (self.get_domain(), ', '.join(contact_emails))
+                "email to for the domain %s. Sending to domain admins instead: %s."
+                % (self.get_domain(), ', '.join(contact_emails))
             )
         return contact_emails
 
@@ -2026,8 +2022,8 @@ class BillingRecordBase(models.Model):
         self.skipped_email = True
         month_name = self.invoice.date_start.strftime("%B")
         self.save()
-        logger.info(
-            "[BILLING] Throttled billing statements for domain %(domain)s "
+        log_accounting_info(
+            "Throttled billing statements for domain %(domain)s "
             "to %(emails)s." % {
                 'domain': self.invoice.get_domain(),
                 'emails': ', '.join(contact_emails),
@@ -2110,9 +2106,8 @@ class BillingRecordBase(models.Model):
             )
         self.emailed_to = ",".join(contact_emails)
         self.save()
-        logger.info(
-            "[BILLING] Sent billing statements for domain %(domain)s "
-            "to %(emails)s." % {
+        log_accounting_info(
+            "Sent billing statements for domain %(domain)s to %(emails)s." % {
                 'domain': domain,
                 'emails': ', '.join(contact_emails),
             }
