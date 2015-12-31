@@ -26,6 +26,7 @@ from corehq.apps.accounting.models import (
     EntryPoint, WireInvoice, WireBillingRecord,
     SMALL_INVOICE_THRESHOLD, WirePrepaymentBillingRecord,
     WirePrepaymentInvoice,
+    UNLIMITED_FEATURE_USAGE,
 )
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
@@ -463,7 +464,7 @@ class UserLineItemFactory(FeatureLineItemFactory):
 
     @property
     def num_excess_users(self):
-        if self.rate.monthly_limit == -1:
+        if self.rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
             return 0
         else:
             return max(self.num_users - self.rate.monthly_limit, 0)
@@ -514,7 +515,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
     @property
     @memoized
     def unit_description(self):
-        if self.rate.monthly_limit == -1:
+        if self.rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
             return _("%(num_sms)d SMS Message%(plural)s") % {
                 'num_sms': self.num_sms,
                 'plural': '' if self.num_sms == 1 else 's',
@@ -527,7 +528,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
                 'monthly_limit': self.rate.monthly_limit,
             }
         else:
-            assert self.rate.monthly_limit != -1
+            assert self.rate.monthly_limit != UNLIMITED_FEATURE_USAGE
             assert self.rate.monthly_limit < self.num_sms
             num_extra = self.num_sms - self.rate.monthly_limit
             assert num_extra > 0
@@ -563,7 +564,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
     @property
     @memoized
     def is_within_monthly_limit(self):
-        if self.rate.monthly_limit == -1:
+        if self.rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
             return True
         else:
             return self.num_sms <= self.rate.monthly_limit
