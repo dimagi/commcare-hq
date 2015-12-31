@@ -146,7 +146,7 @@
         {% endif %}
 
         {% if formdesigner %}
-        <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
+        <script src="{% new_static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
         {% endif %}
 
         {% block head %}
@@ -380,8 +380,8 @@
 
         {% if request.use_nvd3 %}
         {% compress js %}
-        <script src="{% static 'nvd3/lib/d3.v2.js' %}"></script>
-        <script src="{% static 'nvd3/lib/fisheye.js' %}"></script>
+        <script src="{% new_static 'nvd3/lib/d3.v2.js' %}"></script>
+        <script src="{% new_static 'nvd3/lib/fisheye.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'd3/d3.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'nvd3/nv.d3.min.js' %}"></script>
         {% endcompress %}
@@ -409,7 +409,7 @@
 
         {% if request.guided_tour %}
         {% compress js %}
-        <script src="{% static 'tour/js/tour.utils.js' %}"></script>
+        <script src="{% new_static 'tour/js/tour.utils.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'bootstrap-tour/build/js/bootstrap-tour.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
