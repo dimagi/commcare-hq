@@ -1,0 +1,148 @@
+<script>
+    var viz = {};
+    var workbook = {}
+    function initializeViz() {
+        var placeholderDiv = document.getElementById("tableauPlaceholder");
+        var url = "https://icds.commcarehq.org/#/views/{{ report_view }}";
+        var options = {
+            width: placeholderDiv.offsetWidth,
+            height: placeholderDiv.offsetHeight,
+            hideTabs: true,
+            hideToolbar: true,
+            onFirstInteractive: function () {
+                setUpNav(viz)
+            }
+        };
+        viz = new tableau.Viz(placeholderDiv, url, options);
+    }
+
+    function setUpNav(viz) {
+        workbook = viz.getWorkbook();
+        var sheets = workbook.getPublishedSheetsInfo();
+        _.each(sheets, function(sheet) {
+            // TODO: This is a bit hacky, $0 was the only item in the sheet object though (maybe has to do with dashboards vs sheets?)
+            addNavigationLink(sheet.$0.name, sheet.$0.isActive)
+        });
+        $(".nav-link").click(function (){
+            var link = $(this);
+            workbook.activateSheetAsync(link[0].textContent);
+            // TODO: Breadcrumbs to indicate current report?
+            // $(".btn.btn-success").removeClass('btn-success').addClass('btn-default');
+            // btn.removeClass('btn-default').addClass('btn-success');
+
+            // TODO: This should handle resetting filters and setting view by to state as well
+        });
+
+        viz.addEventListener(tableau.TableauEventName.MARKS_SELECTION, onMarksSelection);
+    }
+
+    function addNavigationLink(sheetName, isActive) {
+        var btnColor = isActive  ? 'success' : 'default';
+        // var html = "<div class='row'><button class='btn btn-block btn-" + btnColor + "'>" + sheetName + "</btn></div>";
+        var html = "<li><a href='#' class='nav-link'>" + sheetName + "</a></li>";
+        $(".dropdown-menu").append(html);
+    }
+
+    function onMarksSelection(marksEvent) {
+        console.log('onMarksSelection', marksEvent);
+        return marksEvent.getMarksAsync().then(activateDrilldown);
+    }
+
+    function activateDrilldown(marks) {
+        console.log('onMarksSelection', marks);
+        clearDrilldown();
+        // marks is an array of what the user has clicked
+        var html = [],
+            sheetName = '',
+            filters = {},
+            params = {},
+            filter_key,
+            filter_value;
+        for (var markIndex = 0; markIndex < marks.length; markIndex++) {
+            // TODO: Handle more than 1 better
+            var pairs = marks[markIndex].getPairs();
+            for (var pairIndex = 0; pairIndex < pairs.length; pairIndex++) {
+                var pair = pairs[pairIndex];
+                html.push("<li><b>" + pair.fieldName + "</b>: "+ pair.formattedValue + "</li>");
+
+                // Find the sheet we are navigating to
+                // TODO: Handle the case where js_sheet isn't defined
+                if(pair.fieldName === 'js_sheet') {
+                    console.log('sheetName = ', pair.formattedValue);
+                    sheetName = pair.formattedValue;
+                }
+
+                // Split out params and filters to be applied
+                var FILTER_KEY_SUBSTRING = 'ATTR(js_key_Location Key',
+                    FILTER_VALUE_SUBSTRING = 'ATTR(js_key_Location Name',
+                    PARAM_SUBSTRING = 'ATTR(js_param_';
+                if(pair.fieldName.includes(FILTER_KEY_SUBSTRING)) {
+                    filter_key = pair.formattedValue;
+                }
+                if(pair.fieldName.includes(FILTER_VALUE_SUBSTRING)) {
+                    filter_value = pair.formattedValue;
+                    filters[filter_key] = filter_value;
+                }
+                if(pair.fieldName.includes(PARAM_SUBSTRING)) {
+                    var param_key = pair.fieldName.slice(PARAM_SUBSTRING.length, -1);
+                    params[param_key] = pair.formattedValue;
+                }
+
+            }
+            html.push("</ul>");
+        }
+
+
+        html = html.join("");
+        console.log('html', html);
+
+        $("#drilldown").append(html);
+
+        // Add inspect button listener
+        $("#inspectButton").unbind('click').click(function() {
+            // TODO: Handle the case where we are in the same sheet, might just need to apply filters then?
+            console.log('Activating: ', sheetName);
+            var dashboard,
+                worksheets;
+            workbook.activateSheetAsync(sheetName)
+                    .then(function(dash) {
+                        dashboard = dash;
+                        worksheets = dashboard.getWorksheets();
+                    })
+                    .then(function(){
+                        // I need the last worksheet to return a promise like object when all the iteration is complete
+                        var last_worksheet;
+                        _.each(worksheets, function (worksheet) {
+                            _.each(filters, function(value, key) {
+                                console.log('Applying filter to:', worksheet, 'filter key:', key, ', value:', value);
+                                last_worksheet = worksheet.applyFilterAsync(key, value, tableau.FilterUpdateType.REPLACE);
+                                worksheet.getFiltersAsync().then(function(filters) {console.log(filters)})
+                            })
+                        });
+                        key = 'View By';
+                        value = params[key];
+
+                        console.log('Applying parameter to: ', key, ' value: ', value);
+                        return workbook.changeParameterValueAsync(key, value);
+                        //});
+
+                        return last_worksheet;
+                    }).otherwise(function(err){
+                        console.log(err);
+                    })
+            ;
+        }).prop('disabled', false);
+
+        console.log(filters)
+        console.log(params)
+    }
+
+    function clearDrilldown() {
+        $("#drilldown").empty();
+        // TODO: Disabling the button doesn't work
+        $("#inspectButton").prop('disabled', true);
+    }
+
+    initializeViz()
+
+</script>
