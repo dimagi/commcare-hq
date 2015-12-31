@@ -45,6 +45,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     new_user.is_superuser = False
     new_user.last_login = now
     new_user.date_joined = now
+    new_user.last_password_set = now
     new_user.save()
 
     return new_user
