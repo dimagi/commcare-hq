@@ -156,7 +156,9 @@
                 {% endif %}
             </div>
             {% if not plan.is_trial %}
+                {% if plan.has_account_level_credit %}
                 <h2>{% trans 'Subscription Credit' %}</h2>
+                {% endif %}
                 <div class="form form-horizontal">
                     <div data-bind="foreach: products">
                         <div class="control-group">
