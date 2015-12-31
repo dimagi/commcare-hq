@@ -678,6 +678,14 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'cards': cards,
             'next_subscription': next_subscription,
         }
+        info['has_account_level_credit'] = (
+            any(
+                product_info['account_credit'] and product_info['account_credit']['is_visible']
+                for product_info in info['products']
+            )
+            or info['account_feature_credit'] and info['account_feature_credit']['is_visible']
+            or info['account_general_credit'] and info['account_general_credit']['is_visible']
+        )
         info.update(plan_version.user_facing_description)
 
         return info

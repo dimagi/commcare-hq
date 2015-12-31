@@ -208,6 +208,7 @@
                     </div>
                     {% endif %}
                 </div>
+                {% if plan.has_account_level_credit %}
                 <h2>{% trans 'Account Credit' %}</h2>
                 <div class="form form-horizontal">
                     <div data-bind="foreach: products">
@@ -272,6 +273,7 @@
                     </div>
                     {% endif %}
                 </div>
+                {% endif %}
                 <div class="form form-horizontal">
                     <div data-bind="with: prepayments">
                         <div class="control-group">
