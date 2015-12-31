@@ -213,7 +213,7 @@
                     <div data-bind="foreach: products">
                         <div class="control-group" data-bind="visible: isAccountVisible">
                             <label class="control-label">
-                                {% trans 'Account Plan Credit' %}
+                                {% trans 'Plan Credit' %}
                                 <div class="hq-help">
                                     <a href="#"
                                        data-content="This is credit that can be applied to your software plan.
@@ -233,7 +233,7 @@
                     {% if plan.account_feature_credit and plan.account_feature_credit.is_visible %}
                     <div class="control-group">
                         <label class="control-label">
-                            {% trans 'Account Feature Credit' %}
+                            {% trans 'Feature Credit' %}
                             <div class="hq-help">
                                 <a href="#"
                                    data-content="This is credit that can be applied to the features below.
@@ -253,7 +253,7 @@
                     {% if plan.account_general_credit and plan.account_general_credit.is_visible %}
                     <div class="control-group">
                         <label class="control-label">
-                            {% trans 'Account General Credit' %}
+                            {% trans 'General Credit' %}
                             <div class="hq-help">
                                 <a href="#"
                                    data-content="This is credit that can be applied to either your software
