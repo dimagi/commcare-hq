@@ -23,6 +23,7 @@ api_urls = patterns('corehq.apps.cloudcare.views',
     url(r'^sessions/(?P<session_id>[\w-]*)/$', 'get_session_context', name='cloudcare_get_session_context'),
     url(r'^ledgers/$', 'get_ledgers', name='cloudcare_get_ledgers'),
     url(r'^render_form/$', 'render_form', name='cloudcare_render_form'),
+    url(r'^sync_db/$', 'sync_db_api', name='cloudcare_sync_db'),
 )
 
 # used in settings urls
