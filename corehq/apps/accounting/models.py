@@ -354,11 +354,6 @@ class BillingAccount(models.Model):
         app_label = 'accounting'
 
     @property
-    def balance(self):
-        # todo compute
-        return 0.0
-
-    @property
     def auto_pay_enabled(self):
         return self.auto_pay_user is not None
 
