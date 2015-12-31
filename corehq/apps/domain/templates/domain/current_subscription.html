@@ -52,7 +52,7 @@
 <div class="row">
     <div class="span12">
         <article id="subscriptionSummary">
-            <h2>{% trans 'Current Subscription' %}</h2>
+            <legend>{% trans 'Current Subscription' %}</legend>
             <div class="form form-horizontal">
                 <div class="control-group">
                     <label class="control-label">{% trans 'Plan' %}</label>
@@ -157,7 +157,7 @@
             </div>
             {% if not plan.is_trial %}
                 {% if plan.has_account_level_credit %}
-                <h2>{% trans 'Subscription Credit' %}</h2>
+                <legend>{% trans 'Subscription Credit' %}</legend>
                 {% endif %}
                 <div class="form form-horizontal">
                     <div data-bind="foreach: products">
@@ -211,7 +211,7 @@
                     {% endif %}
                 </div>
                 {% if plan.has_account_level_credit %}
-                <h2>{% trans 'Account Credit' %}</h2>
+                <legend>{% trans 'Account Credit' %}</legend>
                 <div class="form form-horizontal">
                     <div data-bind="foreach: products">
                         <div class="control-group" data-bind="visible: isAccountVisible">
@@ -308,7 +308,7 @@
                     </div>
                 </div>
             {% endif %}
-            <h2>{% trans 'Usage Summary' %}</h2>
+            <legend>{% trans 'Usage Summary' %}</legend>
             <table class="table table-bordered table-striped">
                 <thead>
                     <tr>
