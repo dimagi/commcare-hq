@@ -1730,7 +1730,7 @@ class InvoiceBase(models.Model):
 
     @property
     def email_recipients(self):
-        return self.contact_emails
+        raise NotImplementedError
 
     @property
     def contact_emails(self):
