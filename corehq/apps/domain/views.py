@@ -50,6 +50,7 @@ from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import (
     get_change_status, get_privileges, fmt_dollar_amount,
     quantize_accounting_decimal, get_customer_cards,
+    log_accounting_error,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
@@ -103,8 +104,6 @@ from dimagi.utils.post import simple_post
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 
-
-accounting_logger = logging.getLogger('accounting')
 
 PAYMENT_ERROR_MESSAGES = {
     400: ugettext_lazy('Your request was not formatted properly.'),
@@ -967,12 +966,13 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                     'template': 'statement-row-template',
                 }
             except BillingRecord.DoesNotExist:
-                logging.error(
+                log_accounting_error(
                     "An invoice was generated for %(invoice_id)d "
                     "(domain: %(domain)s), but no billing record!" % {
                         'invoice_id': invoice.id,
                         'domain': self.domain,
-                    })
+                    }
+                )
 
     def refresh_item(self, item_id):
         pass
@@ -1019,8 +1019,8 @@ class BaseStripePaymentView(DomainAccountingSettings):
             payment_handler = self.get_payment_handler()
             response = payment_handler.process_request(request)
         except PaymentRequestError as e:
-            accounting_logger.error(
-                "[BILLING] Failed to process Stripe Payment due to bad "
+            log_accounting_error(
+                "Failed to process Stripe Payment due to bad "
                 "request for domain %(domain)s user %(web_user)s: "
                 "%(error)s" % {
                     'domain': self.domain,
@@ -1208,7 +1208,7 @@ class BillingStatementPdfView(View):
             response = HttpResponse(data, content_type='application/pdf')
             response['Content-Disposition'] = 'inline;filename="%s' % filename
         except Exception as e:
-            logging.error('[Billing] Fetching invoice PDF failed: %s' % e)
+            log_accounting_error('Fetching invoice PDF failed: %s' % e)
             return HttpResponse(_("Could not obtain billing statement. "
                                   "An issue has been submitted."))
         return response
@@ -1655,11 +1655,13 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
         new_edition = self.request.POST.get('plan_edition').title()
         plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain, new_edition)
         if plan_version is None:
-            logging.error("[BILLING] Could not find a matching renewable plan "
-                          "for %(domain)s, subscription number %(sub_pk)s." % {
-                'domain': self.domain,
-                'sub_pk': self.subscription.pk
-            })
+            log_accounting_error(
+                "Could not find a matching renewable plan "
+                "for %(domain)s, subscription number %(sub_pk)s." % {
+                    'domain': self.domain,
+                    'sub_pk': self.subscription.pk
+                }
+            )
             raise Http404
         return plan_version
 

@@ -1,13 +1,16 @@
 import calendar
 from decimal import Decimal
 import datetime
-import logging
 from django.db import transaction
 from django.db.models import F, Q, Min, Max
 from django.template.loader import render_to_string
 
 from django.utils.translation import ugettext as _
-from corehq.apps.accounting.utils import ensure_domain_instance
+from corehq.apps.accounting.utils import (
+    ensure_domain_instance,
+    log_accounting_error,
+    log_accounting_info,
+)
 from corehq.apps.domain.models import Domain
 from dimagi.utils.decorators.memoized import memoized
 
@@ -30,8 +33,6 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
-
-logger = logging.getLogger('accounting')
 
 
 DEFAULT_DAYS_UNTIL_DUE = 30
@@ -114,7 +115,7 @@ class DomainInvoiceFactory(object):
             entry_point=EntryPoint.SELF_STARTED,
         )[0]
         if account.date_confirmed_extra_charges is None:
-            logger.info(
+            log_accounting_info(
                 "Did not generate invoice because date_confirmed_extra_charges "
                 "was null for domain %s" % self.domain.name
             )
@@ -153,8 +154,10 @@ class DomainInvoiceFactory(object):
     def create_invoice_for_subscription(self, subscription):
         if subscription.is_trial:
             # Don't create invoices for trial subscriptions
-            logger.info("[BILLING] Skipping invoicing for Subscription "
-                        "%s because it's a trial." % subscription.pk)
+            log_accounting_info(
+                "Skipping invoicing for Subscription %s because it's a trial."
+                % subscription.pk
+            )
             return
 
         if subscription.date_start > self.date_start:
@@ -213,7 +216,7 @@ class DomainInvoiceFactory(object):
             record.send_email()
         except InvoiceEmailThrottledError as e:
             if not self.logged_throttle_error:
-                logger.error("[BILLING] %s" % e)
+                log_accounting_error(e.message)
                 self.logged_throttle_error = True
 
         return invoice
@@ -293,7 +296,7 @@ class DomainWireInvoiceFactory(object):
         except InvoiceEmailThrottledError as e:
             # Currently wire invoices are never throttled
             if not self.logged_throttle_error:
-                logger.error("[BILLING] %s" % e)
+                log_accounting_error(e.message)
                 self.logged_throttle_error = True
 
         return wire_invoice
