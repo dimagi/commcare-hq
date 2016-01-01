@@ -79,7 +79,6 @@ class BillingAccountType(object):
 class FeatureType(object):
     USER = "User"
     SMS = "SMS"
-    API = "API"
     ANY = ""
 
     CHOICES = (
@@ -353,11 +352,6 @@ class BillingAccount(models.Model):
 
     class Meta:
         app_label = 'accounting'
-
-    @property
-    def balance(self):
-        # todo compute
-        return 0.0
 
     @property
     def auto_pay_enabled(self):
@@ -800,7 +794,7 @@ class SoftwarePlanVersion(models.Model):
             return product_rate.product.product_type
         except (IndexError, SoftwareProductRate.DoesNotExist):
             pass
-        return "CommCare"
+        return SoftwareProductType.COMMCARE
 
     @property
     def version(self):
