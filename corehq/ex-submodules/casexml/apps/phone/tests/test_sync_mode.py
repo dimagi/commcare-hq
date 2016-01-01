@@ -508,6 +508,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         last_sync = synclog_from_restore_payload(restore_config.get_payload().as_string())
         self.assertFalse(last_sync.phone_is_holding_case(case_id))
 
+    @run_with_all_backends
     def test_sync_by_user_id(self):
         # create a case with an empty owner but valid user id
         case_id = self.factory.create_case(owner_id='', user_id=USER_ID).case_id
