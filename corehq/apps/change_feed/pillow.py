@@ -46,7 +46,7 @@ class KafkaProcessor(PillowProcessor):
             try:
                 self._producer.send_messages(
                     bytes(get_topic(document_type)),
-                    bytes(change_meta.domain),
+                    bytes(change_meta.domain.encode('utf-8')),
                     bytes(json.dumps(change_meta.to_json())),
                 )
             except LeaderNotAvailableError:

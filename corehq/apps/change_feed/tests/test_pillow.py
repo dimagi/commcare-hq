@@ -1,3 +1,4 @@
+# coding=utf-8
 from django.conf import settings
 from django.test import SimpleTestCase
 from fakecouch import FakeCouchDb
@@ -45,3 +46,14 @@ class ChangeFeedPillowTest(SimpleTestCase):
 
         with self.assertRaises(ConsumerTimeout):
             self.consumer.next()
+
+    def test_process_change_with_unicode_domain(self):
+        document = {
+            'doc_type': 'CommCareCase',
+            'type': 'mother',
+            'domain': u'हिंदी',
+        }
+        self.pillow.process_change(Change(id='test-id', sequence_id='3', document=document))
+        message = self.consumer.next()
+        change_meta = change_meta_from_kafka_message(message.value)
+        self.assertEqual(document['domain'], change_meta.domain)
