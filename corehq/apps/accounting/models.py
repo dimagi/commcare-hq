@@ -4,6 +4,7 @@ from tempfile import NamedTemporaryFile
 from decimal import Decimal
 import itertools
 
+import json_field
 from couchdbkit import ResourceNotFound
 from django.db.models.manager import Manager
 
@@ -497,8 +498,8 @@ class BillingContactInfo(models.Model):
     last_name = models.CharField(
         max_length=50, null=True, blank=True, verbose_name=_("Last Name")
     )
-    emails = models.CharField(
-        max_length=200, null=True,
+    email_list = json_field.JSONField(
+        default=[],
         verbose_name=_("Contact Emails"),
         help_text=_("We will email communications regarding your account "
                     "to the emails specified here.")
@@ -535,6 +536,11 @@ class BillingContactInfo(models.Model):
 
     class Meta:
         app_label = 'accounting'
+
+    def __init__(self, *args, **kwargs):
+        super(BillingContactInfo, self).__init__(*args, **kwargs)
+        if self.email_list == '[]':
+            self.email_list = []
 
     @property
     def full_name(self):
