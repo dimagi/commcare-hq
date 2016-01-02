@@ -1478,12 +1478,11 @@ class Subscription(models.Model):
                             'ending_on': ending_on,
                         }
 
-            billing_contact_emails = BillingContactInfo.objects.get(account=self.account).emails
-            if billing_contact_emails is None:
+            billing_contact_emails = BillingContactInfo.objects.get(account=self.account).email_list
+            if not billing_contact_emails:
                 raise SubscriptionReminderError(
                     "Billing account %d doesn't have any contact emails" % self.account.id
                 )
-            billing_contact_emails = billing_contact_emails.split(',')
             emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
 
             template = 'accounting/subscription_ending_reminder_email.html'
@@ -1542,7 +1541,7 @@ class Subscription(models.Model):
         context = {
             'domain': domain,
             'end_date': end_date,
-            'contacts': self.account.billingcontactinfo.emails,
+            'contacts': self.account.billingcontactinfo.email_list,
             'dimagi_contact': email,
         }
         email_html = render_to_string(template, context)
@@ -1830,7 +1829,7 @@ class Invoice(InvoiceBase):
     def contact_emails(self):
         try:
             billing_contact_info = BillingContactInfo.objects.get(account=self.account)
-            contact_emails = billing_contact_info.emails.split(',') if billing_contact_info.emails else []
+            contact_emails = billing_contact_info.email_list
         except BillingContactInfo.DoesNotExist:
             contact_emails = []
 
