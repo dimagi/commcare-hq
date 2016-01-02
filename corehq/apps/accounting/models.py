@@ -1478,7 +1478,7 @@ class Subscription(models.Model):
                             'ending_on': ending_on,
                         }
 
-            billing_contact_emails = BillingContactInfo.objects.get(account=self.account).email_list
+            billing_contact_emails = self.account.billingcontactinfo.email_list
             if not billing_contact_emails:
                 raise SubscriptionReminderError(
                     "Billing account %d doesn't have any contact emails" % self.account.id
