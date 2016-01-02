@@ -168,26 +168,6 @@
                             </div>
                         </div>
                     </div>
-                    {% if plan.feature_credit and plan.feature_credit.is_visible %}
-                    <div class="control-group">
-                        <label class="control-label">
-                            {% trans 'Feature Credit' %}
-                            <div class="hq-help">
-                                <a href="#"
-                                   data-content="This is credit that can be applied to the features below.
-                                    It's likely that someone from Dimagi added these credits for you."
-                                   data-title="Feature Credit"
-                                   data-original-title=""
-                                   title="">
-                                    <i class="icon-question-sign"></i>
-                                </a>
-                            </div>
-                        </label>
-                        <div class="controls">
-                            <p class="control-group-text">{{ plan.feature_credit.amount }}</p>
-                        </div>
-                    </div>
-                    {% endif %}
                     {% if plan.general_credit and plan.general_credit.is_visible %}
                     <div class="control-group">
                         <label class="control-label">
@@ -233,26 +213,6 @@
                             </div>
                         </div>
                     </div>
-                    {% if plan.account_feature_credit and plan.account_feature_credit.is_visible %}
-                    <div class="control-group">
-                        <label class="control-label">
-                            {% trans 'Feature Credit' %}
-                            <div class="hq-help">
-                                <a href="#"
-                                   data-content="This is credit that can be applied to the features below.
-                                    It's likely that someone from Dimagi added these credits for you."
-                                   data-title="Account Feature Credit"
-                                   data-original-title=""
-                                   title="">
-                                    <i class="icon-question-sign"></i>
-                                </a>
-                            </div>
-                        </label>
-                        <div class="controls">
-                            <p class="control-group-text">{{ plan.account_feature_credit.amount }}</p>
-                        </div>
-                    </div>
-                    {% endif %}
                     {% if plan.account_general_credit and plan.account_general_credit.is_visible %}
                     <div class="control-group">
                         <label class="control-label">
