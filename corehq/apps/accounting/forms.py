@@ -758,10 +758,7 @@ class CreditForm(forms.Form):
         product_choices = [('', 'Any')]
         product_choices.extend(SoftwareProductType.CHOICES)
         self.fields['product_type'].choices = product_choices
-
-        feature_choices = [('', 'Any')]
-        feature_choices.extend(FeatureType.CHOICES)
-        self.fields['feature_type'].choices = feature_choices
+        self.fields['feature_type'].choices = FeatureType.CHOICES
 
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
