@@ -1477,14 +1477,14 @@ class InternalSubscriptionManagementForm(forms.Form):
     @memoized
     def current_contact_emails(self):
         if (
-            self.current_subscription is None
-            or self.account.account_type not in self.autocomplete_account_types
+            self.current_subscription
+            and self.account.account_type in self.autocomplete_account_types
         ):
-            return None
-        try:
-            return ','.join(self.account.billingcontactinfo.email_list)
-        except BillingContactInfo.DoesNotExist:
-            return None
+            try:
+                return ','.join(self.account.billingcontactinfo.email_list)
+            except BillingContactInfo.DoesNotExist:
+                pass
+        return None
 
     @property
     def subscription_default_fields(self):
