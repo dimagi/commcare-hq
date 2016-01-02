@@ -79,7 +79,6 @@ class BillingAccountType(object):
 class FeatureType(object):
     USER = "User"
     SMS = "SMS"
-    ANY = ""
 
     CHOICES = (
         (USER, USER),
