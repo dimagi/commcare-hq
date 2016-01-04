@@ -6,7 +6,9 @@ if "django.conf" not in sys.modules:
     settings.configure(
         UNIT_TESTING=True,
         SECRET_KEY="secret",
+        SHARED_DRIVE_CONF=None,
     )
 else:
     from .test_fsdb import *
+    from .test_init import *
     from .test_mixin import *

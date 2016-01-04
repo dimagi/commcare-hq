@@ -60,6 +60,7 @@ sqlagg==0.3.3
 django-redis==4.2
 redis==2.10.3
 unittest2
+testil
 fakecouch==0.0.8
 # WeasyPrint==0.20.2
 twilio==3.6.4

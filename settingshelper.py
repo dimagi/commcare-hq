@@ -30,6 +30,16 @@ class SharedDriveConfiguration(object):
 
         return path
 
+    def get_unset_reason(self, name):
+        if not self.shared_drive_path:
+            return "invalid shared drive path: %r" % (self.shared_drive_path,)
+        if not os.path.isdir(self.shared_drive_path):
+            return "shared drive path is not a directory: %r" % (self.shared_drive_path,)
+        directory = getattr(self, name + "_name")
+        if not directory:
+            return name + " is empty or not configured in settings"
+        return None
+
     @property
     def restore_dir(self):
         return self._restore_dir or tempfile.gettempdir()
