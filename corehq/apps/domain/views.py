@@ -653,19 +653,9 @@ class DomainSubscriptionView(DomainAccountingSettings):
                     subscription
                 ) if subscription else None
             )),
-            'feature_credit': self._fmt_credit(self._credit_grand_total(
-                CreditLine.get_credits_by_subscription_and_features(
-                    subscription, feature_type=FeatureType.ANY
-                ) if subscription else None
-            )),
             'account_general_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_for_account(
                     self.account
-                ) if self.account else None
-            )),
-            'account_feature_credit': self._fmt_credit(self._credit_grand_total(
-                CreditLine.get_credits_for_account(
-                    self.account, feature_type=FeatureType.ANY
                 ) if self.account else None
             )),
             'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
@@ -682,7 +672,6 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 product_info['account_credit'] and product_info['account_credit']['is_visible']
                 for product_info in info['products']
             )
-            or info['account_feature_credit'] and info['account_feature_credit']['is_visible']
             or info['account_general_credit'] and info['account_general_credit']['is_visible']
         )
         info.update(plan_version.user_facing_description)

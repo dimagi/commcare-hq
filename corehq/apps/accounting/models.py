@@ -79,7 +79,6 @@ class BillingAccountType(object):
 class FeatureType(object):
     USER = "User"
     SMS = "SMS"
-    ANY = ""
 
     CHOICES = (
         (USER, USER),
@@ -2398,7 +2397,7 @@ class CreditLine(models.Model):
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True, blank=True)
     product_type = models.CharField(max_length=25, null=True, blank=True,
                                     choices=SoftwareProductType.CHOICES)
-    feature_type = models.CharField(max_length=10, null=True, blank=True,
+    feature_type = models.CharField(max_length=10, null=True,
                                     choices=FeatureType.CHOICES)
     date_created = models.DateTimeField(auto_now_add=True)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
