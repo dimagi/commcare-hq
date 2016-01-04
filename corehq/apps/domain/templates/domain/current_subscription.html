@@ -209,6 +209,35 @@
                         </div>
                     </div>
                     {% endif %}
+                    <div data-bind="with: prepayments">
+                        <div class="control-group">
+                            <div class="controls">
+                                {% if can_purchase_credits and not plan.is_trial %}
+                                <button type="button"
+                                class="btn btn-success"
+                                data-toggle="modal"
+                                data-target="#paymentModal"
+                                data-bind="click: function(){triggerPayment(paymentHandler.CREDIT_CARD)}"
+                                >
+                                {% trans 'Prepay by Credit Card' %}
+                                </button>
+                                <button type="button"
+                                class="btn btn-success"
+                                data-toggle="modal"
+                                data-target="#paymentModal"
+                                data-bind="click: function(){triggerPayment(paymentHandler.WIRE)}"
+                                >
+                                {% trans 'Prepay by Wire' %}
+                                </button>
+                                {% else %}
+                                <span class="label">
+                                    <i class="icon-info-sign"></i>
+                                    {% trans "Not Billing Admin, Can't Add Credit" %}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 {% if plan.has_account_level_credit %}
                 <legend>{% trans 'Account Credit' %}</legend>
@@ -276,37 +305,6 @@
                     {% endif %}
                 </div>
                 {% endif %}
-                <div class="form form-horizontal">
-                    <div data-bind="with: prepayments">
-                        <div class="control-group">
-                            <div class="controls">
-                                {% if can_purchase_credits and not plan.is_trial %}
-                                <button type="button"
-                                class="btn btn-success"
-                                data-toggle="modal"
-                                data-target="#paymentModal"
-                                data-bind="click: function(){triggerPayment(paymentHandler.CREDIT_CARD)}"
-                                >
-                                {% trans 'Prepay by Credit Card' %}
-                                </button>
-                                <button type="button"
-                                class="btn btn-success"
-                                data-toggle="modal"
-                                data-target="#paymentModal"
-                                data-bind="click: function(){triggerPayment(paymentHandler.WIRE)}"
-                                >
-                                {% trans 'Prepay by Wire' %}
-                                </button>
-                                {% else %}
-                                <span class="label">
-                                    <i class="icon-info-sign"></i>
-                                    {% trans "Not Billing Admin, Can't Add Credit" %}
-                                </span>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
             {% endif %}
             <legend>{% trans 'Usage Summary' %}</legend>
             <table class="table table-bordered table-striped">
