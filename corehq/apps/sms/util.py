@@ -124,6 +124,26 @@ def get_available_backends(index_by_api_id=False, backend_type='SMS'):
             result[klass.__name__] = klass
     return result
 
+
+def get_backend_classes(backend_type='SMS'):
+    """
+    backend_type - should either be 'SMS' or 'IVR'.
+    Returns a dictionary of {api id: class}
+    """
+    result = {}
+    if backend_type == 'SMS':
+        backend_classes = settings.SMS_LOADED_SQL_BACKENDS
+    elif backend_type == 'IVR':
+        backend_classes = settings.IVR_LOADED_SQL_BACKENDS
+    else:
+        raise Exception("Unknown backend_type %s requested" % backend_type)
+
+    for backend_class in backend_classes:
+        cls = to_function(backend_class)
+        result[cls.get_api_id()] = cls
+    return result
+
+
 CLEAN_TEXT_REPLACEMENTS = (
     # Common emoticon replacements
     (":o", ": o"),
