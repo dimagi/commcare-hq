@@ -7,6 +7,7 @@
 
 {% block registration-content %}
 <form method="post" action="{% url "registration_resend_domain_confirmation" %}" class="form-horizontal">
+    {% csrf_token %}
     <fieldset>
         <div class="control-group">
             <label class="control-label">Username / Email:</label>

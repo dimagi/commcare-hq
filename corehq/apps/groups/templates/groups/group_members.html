@@ -146,6 +146,7 @@
 {% if group.is_deleted %}
     <div class="alert alert-info">{% trans "Whoa, how did you get here? This group has been deleted already. If you would like to undelete it you can do so below."%}</div>
     <form name="restore_group" action="{% url "restore_group" domain group.get_id %}" method="post">
+        {% csrf_token %}
         <button class="btn btn-primary disable-on-submit" type="submit">
             {% blocktrans with group.name as group_name %}
                 Restore Group "{{group_name}}"
@@ -166,6 +167,7 @@
             </a>
             {% if bulk_sms_verification_enabled %}
             <form id="initiate-verification-workflow" class="form form-horizontal" method="post" action="{% url "bulk_sms_verification" domain group.get_id %}">
+                {% csrf_token %}
                 <button id="submit-verification" type="submit" class="btn">
                     <i class="icon icon-signal"></i> {% trans 'Initiate Phone Verification for All Members' %}
                 </button>
@@ -193,6 +195,7 @@
                 </h3>
             </div>
             <form id="edit-group-settings" class="form form-horizontal" method="post" action="{% url "edit_group" domain group.get_id %}">
+                {% csrf_token %}
                 <div class="modal-body">
                     <div class="control-group">
                         <label class="control-label" for="group-name-input">{% trans "Group Name" %}</label>
@@ -248,6 +251,7 @@
     </div>
     <h3>{% trans "Group Data" %}</h3>
     <form id="group-data-form" class="form form-horizontal disable-on-submit" name="group-data-form" method="post" action="{% url "update_group_data" domain group.get_id %}">
+        {% csrf_token %}
         <input name="group-data" id="group-data" type="hidden" value='{{ group.metadata|JSON }}'></input>
         <div class="form-actions"><button type="submit" class="btn btn-primary">{% trans "Update Group Data" %}</button></div>
     </form>
@@ -264,6 +268,7 @@
             </h3>
         </div>
         <form name="delete_group" action="{% url "delete_group" domain group.get_id %}" method="post">
+            {% csrf_token %}
             <div class="modal-body">
                 <p>
                 {% blocktrans with group.name as group_name %}

@@ -7,7 +7,7 @@
 ├── XMLWriter#ab8760d6e0
 ├── chai#3.4.2
 ├── equivalent-xml-js#7de21be295
-├── fuse.js#1.2.2
+├── fuse.js#1.2.2 (latest is 1.3.1)
 ├── jquery#1.11.3 (latest is 3.0.0-alpha1+compat)
 ├── jsdiff#1.4.0 (latest is 2.2.1)
 ├─┬ jstree#3.1.1 (latest is 3.2.1)
@@ -16,11 +16,11 @@
 ├── markdown-it#4.2.2 (latest is 5.0.2)
 ├── require-css#0.1.8
 ├── require-less#0.1.5
-├── requirejs#2.1.20 (2.1.22 available)
+├── requirejs#2.1.22
 ├── requirejs-plugins#1.0.3
 ├── requirejs-text#2.0.14
 ├── requirejs-tpl#a3ca1e0e7f
 ├── underscore#1.4.4 (latest is 1.8.3)
 ├── when#2.8.0 (latest is 3.7.5)
-├── xpath#7cbc5f765c
+├── xpath#7e6c1f8de6
 └── xrayquire#2a0861abd7

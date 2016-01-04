@@ -7,13 +7,13 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import namedtupledict
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import es_query, ES_URLS
 from corehq.util import remove_dups
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.models import SQLLocation
 
 from .. import util
 from ..models import HQUserType, HQUserToggle
+from ..analytics.esaccessors import get_user_stubs, get_group_stubs
 from .base import (
     BaseDrilldownOptionFilter,
     BaseMultipleOptionFilter,
@@ -24,8 +24,7 @@ from .base import (
 
 
 class UserTypeFilter(BaseReportFilter):
-    # note, this is a butchered refactor of the original FilterUsersField.
-    # don't use this as a guideline for anything.
+    # note, don't use this as a guideline for anything.
     slug = "ufilter"
     label = ugettext_lazy("User Type")
     template = "reports/filters/filter_users.html"
@@ -159,10 +158,11 @@ _UserData = namedtupledict('_UserData', (
 class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     """
     To get raw filter results:
+        mobile_user_and_group_slugs = request.GET.getlist(ExpandedMobileWorkerFilter.slug)
 
-        user_ids = emwf.selected_user_ids(request)
-        user_types = emwf.selected_user_types(request)
-        group_ids = emwf.selected_group_ids(request)
+        user_ids = emwf.selected_user_ids(mobile_user_and_group_slugs)
+        user_types = emwf.selected_user_types(mobile_user_and_group_slugs)
+        group_ids = emwf.selected_group_ids(mobile_user_and_group_slugs)
     """
     slug = "emw"
     label = ugettext_lazy("Groups or Users")
@@ -177,38 +177,33 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     def utils(self):
         return EmwfUtils(self.domain)
 
-    @classmethod
-    def selected_user_ids(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return [u[3:] for u in emws if u.startswith("u__")]
+    @staticmethod
+    def selected_user_ids(mobile_user_and_group_slugs):
+        return [u[3:] for u in mobile_user_and_group_slugs if u.startswith("u__")]
 
-    @classmethod
-    def selected_user_types(cls, request):
+    @staticmethod
+    def selected_user_types(mobile_user_and_group_slugs):
         """
         usage: ``HQUserType.DEMO_USER in selected_user_types``
         """
-        emws = request.GET.getlist(cls.slug)
-        return [int(t[3:]) for t in emws
+        return [int(t[3:]) for t in mobile_user_and_group_slugs
                 if t.startswith("t__") and t[3:].isdigit()]
 
     @classmethod
-    def selected_group_ids(cls, request):
-        return cls.selected_reporting_group_ids(request)
+    def selected_group_ids(cls, mobile_user_and_group_slugs):
+        return cls.selected_reporting_group_ids(mobile_user_and_group_slugs)
 
-    @classmethod
-    def selected_reporting_group_ids(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return [g[3:] for g in emws if g.startswith("g__")]
+    @staticmethod
+    def selected_reporting_group_ids(mobile_user_and_group_slugs):
+        return [g[3:] for g in mobile_user_and_group_slugs if g.startswith("g__")]
 
-    @classmethod
-    def selected_location_ids(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return [l[3:] for l in emws if l.startswith("l__")]
+    @staticmethod
+    def selected_location_ids(mobile_user_and_group_slugs):
+        return [l[3:] for l in mobile_user_and_group_slugs if l.startswith("l__")]
 
-    @classmethod
-    def show_all_mobile_workers(cls, request):
-        emws = request.GET.getlist(cls.slug)
-        return 't__0' in emws
+    @staticmethod
+    def show_all_mobile_workers(mobile_user_and_group_slugs):
+        return 't__0' in mobile_user_and_group_slugs
 
     def get_default_selections(self):
         defaults = [('t__0', _("[All mobile workers]"))]
@@ -224,10 +219,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             return [{'id': url_id, 'text': text}
                     for url_id, text in self.get_default_selections()]
 
-        selected = (self.selected_static_options(self.request) +
-                    self.selected_user_entries(self.request) +
-                    self.selected_group_entries(self.request) +
-                    self.selected_location_entries(self.request))
+        selected = (self.selected_static_options(selected_ids) +
+                    self._selected_user_entries(selected_ids) +
+                    self._selected_group_entries(selected_ids) +
+                    self._selected_location_entries(selected_ids))
         known_ids = dict(selected)
         return [
             {'id': id, 'text': known_ids[id]}
@@ -235,45 +230,31 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             if id in known_ids
         ]
 
-    def selected_static_options(self, request):
-        selected_ids = self.request.GET.getlist(self.slug)
+    def selected_static_options(self, mobile_user_and_group_slugs):
         return [option for option in self.utils.static_options
-                if option[0] in selected_ids]
+                if option[0] in mobile_user_and_group_slugs]
 
-    def selected_user_entries(self, request):
-        user_ids = self.selected_user_ids(request)
+    def _selected_user_entries(self, mobile_user_and_group_slugs):
+        user_ids = self.selected_user_ids(mobile_user_and_group_slugs)
         if not user_ids:
             return []
-        q = {"query": {"filtered": {"filter": {
-            "ids": {"values": user_ids}
-        }}}}
-        res = es_query(
-            es_url=ES_URLS["users"],
-            q=q,
-            fields=['_id', 'username', 'first_name', 'last_name', 'doc_type'],
-        )
-        return [self.utils.user_tuple(hit['fields']) for hit in res['hits']['hits']]
+        results = get_user_stubs(user_ids)
+        return [self.utils.user_tuple(hit) for hit in results]
 
-    def selected_groups_query(self, request):
-        group_ids = self.selected_group_ids(request)
+    def _selected_groups_query(self, mobile_user_and_group_slugs):
+        group_ids = self.selected_group_ids(mobile_user_and_group_slugs)
         if not group_ids:
             return []
-        q = {"query": {"filtered": {"filter": {
-            "ids": {"values": group_ids}
-        }}}}
-        return es_query(
-            es_url=ES_URLS["groups"],
-            q=q,
-            fields=['_id', 'name', "case_sharing", "reporting"],
-        )['hits']['hits']
+        return get_group_stubs(group_ids)
 
-    def selected_group_entries(self, request):
-        return [self.utils.reporting_group_tuple(group['fields'])
-                for group in self.selected_groups_query(request)
-                if group['fields'].get("reporting", False)]
+    def _selected_group_entries(self, mobile_user_and_group_slugs):
+        groups = self._selected_groups_query(mobile_user_and_group_slugs)
+        return [self.utils.reporting_group_tuple(group)
+                for group in groups
+                if group.get("reporting", False)]
 
-    def selected_location_entries(self, request):
-        location_ids = self.selected_location_ids(request)
+    def _selected_location_entries(self, mobile_user_and_group_slugs):
+        location_ids = self.selected_location_ids(mobile_user_and_group_slugs)
         if not location_ids:
             return []
         return map(self.utils.location_tuple,
@@ -287,17 +268,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return context
 
     @classmethod
-    def pull_groups(cls, domain, request):
-        group_ids = cls.selected_group_ids(request)
-        if not group_ids:
-            return Group.get_reporting_groups(domain)
-        return [Group.get(g) for g in group_ids]
-
-    @classmethod
-    def user_es_query(cls, domain, request):
-        user_ids = cls.selected_user_ids(request)
-        user_types = cls.selected_user_types(request)
-        group_ids = cls.selected_group_ids(request)
+    def user_es_query(cls, domain, mobile_user_and_group_slugs):
+        user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
+        user_types = cls.selected_user_types(mobile_user_and_group_slugs)
+        group_ids = cls.selected_group_ids(mobile_user_and_group_slugs)
 
         user_type_filters = []
         if HQUserType.ADMIN in user_types:
@@ -327,40 +301,40 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             else:
                 return q.filter(id_filter)
 
-
     @classmethod
-    @memoized
-    def pull_users_and_groups(cls, domain, request, simplified_users=False,
-            combined=False, CommCareUser=CommCareUser, include_inactive=False):
-        user_ids = cls.selected_user_ids(request)
-        user_types = cls.selected_user_types(request)
-        group_ids = cls.selected_group_ids(request)
+    def pull_users_and_groups(cls, domain, mobile_user_and_group_slugs, include_inactive=False):
+        user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
+        user_types = cls.selected_user_types(mobile_user_and_group_slugs)
+        group_ids = cls.selected_group_ids(mobile_user_and_group_slugs)
         users = []
         if user_ids or HQUserType.REGISTERED in user_types:
             users = util.get_all_users_by_domain(
                 domain=domain,
                 user_ids=user_ids,
-                simplified=simplified_users,
+                simplified=True,
                 CommCareUser=CommCareUser,
             )
         user_filter = tuple([HQUserToggle(id, id in user_types) for id in range(4)])
-        other_users = util.get_all_users_by_domain(domain=domain, user_filter=user_filter, simplified=simplified_users,
-                                                   CommCareUser=CommCareUser, include_inactive=include_inactive)
+        other_users = util.get_all_users_by_domain(
+            domain=domain,
+            user_filter=user_filter,
+            simplified=True,
+            CommCareUser=CommCareUser,
+            include_inactive=include_inactive
+        )
         groups = [Group.get(g) for g in group_ids]
         all_users = users + other_users
-        if combined:
-            user_dict = {}
-            for group in groups:
-                user_dict["%s|%s" % (group.name, group._id)] = util.get_all_users_by_domain(
-                    group=group,
-                    simplified=simplified_users
-                )
-            users_in_groups = [user for sublist in user_dict.values() for user in sublist]
-            users_by_group = user_dict
-            combined_users = remove_dups(all_users + users_in_groups, "user_id")
-        else:
-            users_by_group = None
-            combined_users = None
+
+        user_dict = {}
+        for group in groups:
+            user_dict["%s|%s" % (group.name, group._id)] = util.get_all_users_by_domain(
+                group=group,
+                simplified=True
+            )
+        users_in_groups = [user for sublist in user_dict.values() for user in sublist]
+        users_by_group = user_dict
+        combined_users = remove_dups(all_users + users_in_groups, "user_id")
+
         return _UserData(
             users=all_users,
             admin_and_demo_users=other_users,

@@ -7,12 +7,14 @@ from decimal import Decimal
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import MultipleResultsFound
 from dimagi.utils.couch import release_lock
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.modules import try_import
 from dimagi.utils.parsing import json_format_datetime
+from django.db import transaction
 from corehq.apps.domain.models import Domain
 from couchdbkit import ResourceNotFound
 
@@ -190,7 +192,8 @@ def get_global_prefix_backend_mapping():
             result[entry.prefix] = entry.backend_id
     return result
 
-class MobileBackend(Document):
+
+class MobileBackend(SyncCouchToSQLMixin, SafeSaveDocument):
     """
     Defines an instance of a backend api to be used for either sending sms, or sending outbound calls.
     """
@@ -210,9 +213,6 @@ class MobileBackend(Document):
     # If this this backend represents an international gateway,
     # set this to: ['*']
     supported_countries = ListProperty(StringProperty)
-    # TODO: Once the ivr backends get refactored, can remove these two properties:
-    outbound_module = StringProperty()      # The fully-qualified name of the outbound module to be used (sms backends: must implement send(); ivr backends: must implement initiate_outbound_call() )
-    outbound_params = DictProperty()        # The parameters which will be the keyword arguments sent to the outbound module's send() method
     reply_to_phone_number = StringProperty() # The phone number which you can text to / call to reply to this backend
 
     def domain_is_authorized(self, domain):
@@ -311,22 +311,50 @@ class MobileBackend(Document):
         """
         raise NotImplementedError("Please define get_form_class()")
 
-    @property
-    def backend_module(self):
-        if self.outbound_module == 'corehq.apps.kookoo.api':
-            self.outbound_module = 'corehq.messaging.ivrbackends.kookoo.api'
-        module = try_import(self.outbound_module)
-        if not module:
-            raise RuntimeError('could not find outbound module %s' % self.outbound_module)
-        return module
-
     def retire(self):
         self.base_doc += "-Deleted"
         self.save()
 
-    def get_cleaned_outbound_params(self):
-        # for passing to functions, ensure the keys are all strings
-        return dict((str(k), v) for k, v in self.outbound_params.items())
+    def _migration_sync_to_sql(self, sql_object):
+        from corehq.apps.sms.models import MobileBackendInvitation
+        sql_object.backend_type = self.backend_type
+        sql_object.hq_api_id = getattr(self, 'incoming_api_id', None) or self.get_api_id()
+        sql_object.is_global = self.is_global
+        sql_object.domain = self.domain
+        sql_object.name = self.name
+        sql_object.display_name = self.display_name
+        sql_object.description = self.description
+        sql_object.supported_countries = self.supported_countries
+        sql_object.reply_to_phone_number = self.reply_to_phone_number
+
+        extra_fields = {}
+        for field in sql_object.get_available_extra_fields():
+            extra_fields[field] = getattr(self, field)
+
+        sql_object.set_extra_fields(**extra_fields)
+        sql_object.deleted = self.base_doc.endswith('-Deleted')
+
+        if isinstance(self, SMSLoadBalancingMixin):
+            sql_object.load_balancing_numbers = self.phone_numbers
+
+        with transaction.atomic():
+            sql_object.save(sync_to_couch=False)
+            sql_object.mobilebackendinvitation_set.all().delete()
+            if not self.base_doc.endswith('-Deleted'):
+                sql_object.mobilebackendinvitation_set = [
+                    MobileBackendInvitation(
+                        domain=domain,
+                        accepted=True,
+                    ) for domain in self.authorized_domains
+                ]
+
+    def wrap_correctly(self):
+        from corehq.apps.ivr.models import IVRBackend
+        return {
+            'SMS': SMSBackend,
+            'IVR': IVRBackend,
+        }.get(self.backend_type).wrap(self.to_json()).wrap_correctly()
+
 
 class SMSLoadBalancingInfo(object):
     def __init__(self, phone_number, stats_key=None, stats=None,
@@ -526,11 +554,28 @@ class SMSBackend(MobileBackend):
                 "unrecognized doc type." % self._id)
 
 
-class BackendMapping(Document):
+class BackendMapping(SyncCouchToSQLMixin, Document):
     domain = StringProperty()
     is_global = BooleanProperty()
     prefix = StringProperty()
+    backend_type = StringProperty(choices=['SMS', 'IVR'], default='SMS')
     backend_id = StringProperty() # Couch Document id of a MobileBackend
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        from corehq.apps.sms.models import SQLMobileBackendMapping
+        return SQLMobileBackendMapping
+
+    def _migration_sync_to_sql(self, sql_object):
+        from corehq.apps.sms.models import SQLMobileBackend
+        sql_object.couch_id = self._id
+        sql_object.is_global = self.is_global
+        sql_object.domain = self.domain
+        sql_object.backend_type = self.backend_type
+        sql_object.prefix = self.prefix
+        sql_object.backend = SQLMobileBackend.objects.get(couch_id=self.backend_id)
+        sql_object.save(sync_to_couch=False)
+
 
 def apply_leniency(contact_phone_number):
     """

@@ -40,6 +40,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                  .size(self.pagination.count)
                  .start(self.pagination.start))
         query.es_query['sort'] = self.get_sorting_block()
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
 
         if self.case_filter:
             query = query.filter(self.case_filter)
@@ -52,11 +53,11 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         if self.case_status:
             query = query.is_closed(self.case_status == 'closed')
 
-        if EMWF.show_all_data(self.request):
+        if EMWF.show_all_data(mobile_user_and_group_slugs):
             pass
-        elif EMWF.show_project_data(self.request):
+        elif EMWF.show_project_data(mobile_user_and_group_slugs):
             # Show everything but stuff we know for sure to exclude
-            user_types = EMWF.selected_user_types(self.request)
+            user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
             ids_to_exclude = self.get_special_owner_ids(
                 admin=HQUserType.ADMIN not in user_types,
                 unknown=HQUserType.UNKNOWN not in user_types,
@@ -108,7 +109,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     def case_owners(self):
         # Get user ids for each user that match the demo_user, admin,
         # Unknown Users, or All Mobile Workers filters
-        user_types = EMWF.selected_user_types(self.request)
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
         special_owner_ids = self.get_special_owner_ids(
             admin=HQUserType.ADMIN in user_types,
             unknown=HQUserType.UNKNOWN in user_types,
@@ -117,14 +119,14 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         )
 
         # Get user ids for each user that was specifically selected
-        selected_user_ids = EMWF.selected_user_ids(self.request)
+        selected_user_ids = EMWF.selected_user_ids(mobile_user_and_group_slugs)
 
         # Get group ids for each group that was specified
-        selected_reporting_group_ids = EMWF.selected_reporting_group_ids(self.request)
-        selected_sharing_group_ids = EMWF.selected_sharing_group_ids(self.request)
+        selected_reporting_group_ids = EMWF.selected_reporting_group_ids(mobile_user_and_group_slugs)
+        selected_sharing_group_ids = EMWF.selected_sharing_group_ids(mobile_user_and_group_slugs)
 
         # Show cases owned by any selected locations, user locations, or their children
-        loc_ids = set(EMWF.selected_location_ids(self.request) +
+        loc_ids = set(EMWF.selected_location_ids(mobile_user_and_group_slugs) +
                       get_users_location_ids(self.domain, selected_user_ids))
         location_owner_ids = get_locations_and_children(loc_ids).location_ids()
 
@@ -212,7 +214,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
             'external_id',
         ]
 
-    def get_data(self, slugs=None):
+    def get_data(self):
         for row in self.es_results['hits'].get('hits', []):
             case = self.get_case(row)
             ci = CaseInfo(self, case)

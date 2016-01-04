@@ -1,3 +1,4 @@
+from corehq.apps.es import UserES
 from corehq.apps.users.models import CommCareUser
 from corehq.util.couch import stale_ok
 
@@ -54,3 +55,16 @@ def _get_commcare_users_in_domain(active_flag, domain, start_at, limit):
         stale=stale_ok(),
         **extra_args
     ).all()
+
+
+def get_search_users_in_domain_es_query(domain, search_string, limit, offset):
+    """
+    returns a UserES object
+    """
+    default_search_fields = ["username", "last_name", "first_name"]
+    return (UserES()
+            .domain(domain)
+            .search_string_query(search_string, default_search_fields)
+            .start(offset)
+            .size(limit)
+            .sort('username'))

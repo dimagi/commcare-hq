@@ -19,13 +19,19 @@ from sqlalchemy.util import immutabledict
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form, RemoteApp
 from corehq.apps.app_manager.util import get_case_properties
-from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+from corehq.apps.cachehq.mixins import (
+    CachedCouchDocumentMixin,
+    QuickCachedDocumentMixin,
+)
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.models import FormQuestionSchema
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_all_daterange_slugs
-from corehq.apps.reports.dbaccessors import stale_get_exports_json
+from corehq.apps.reports.dbaccessors import (
+    hq_group_export_configs_by_domain,
+    stale_get_exports_json,
+)
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.exceptions import (
@@ -42,6 +48,7 @@ from corehq.apps.reports.exportfilters import (
 from corehq.apps.userreports.util import default_language as ucr_default_language, localize as ucr_localize
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
+from corehq.util.quickcache import quickcache
 from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
 
@@ -753,6 +760,10 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             self.delete()
             return
 
+        if self.owner.is_deleted():
+            self.delete()
+            return
+
         if self.recipients_by_language:
             for language, emails in self.recipients_by_language.items():
                 self._get_and_send_report(language, emails)
@@ -996,7 +1007,7 @@ def _apply_removal(export_tables, removal_list):
     return [tabledata for tabledata in export_tables if not tabledata[0] in removal_list]
 
 
-class HQGroupExportConfiguration(CachedCouchDocumentMixin, GroupExportConfiguration):
+class HQGroupExportConfiguration(QuickCachedDocumentMixin, GroupExportConfiguration):
     """
     HQ's version of a group export, tagged with a domain
     """
@@ -1035,13 +1046,9 @@ class HQGroupExportConfiguration(CachedCouchDocumentMixin, GroupExportConfigurat
         return self.exports_of_type('case')
 
     @classmethod
+    @quickcache(['cls.__name__', 'domain'])
     def by_domain(cls, domain):
-        return cache_core.cached_view(cls.get_db(), "groupexport/by_domain",
-            key=domain,
-            reduce=False,
-            include_docs=True,
-            wrapper=cls.wrap,
-        )
+        return hq_group_export_configs_by_domain(domain)
 
     @classmethod
     def get_for_domain(cls, domain):
@@ -1074,3 +1081,7 @@ class HQGroupExportConfiguration(CachedCouchDocumentMixin, GroupExportConfigurat
         if updated:
             group.save()
         return group
+
+    def clear_caches(self):
+        super(HQGroupExportConfiguration, self).clear_caches()
+        self.by_domain.clear(self.__class__, self.domain)

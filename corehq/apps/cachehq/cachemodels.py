@@ -9,10 +9,8 @@ class DomainGenerationCache(GenerationCache):
         "domain/published_snapshots",
         "domain/not_snapshots",
         "domain/copied_from_snapshot",
-        "domain/with_deployment",
         "domain/domains",
         "domain/fields_by_prefix",
-        "domain/by_organization",
     ]
 
 class UserGenerationCache(GenerationCache):
@@ -31,7 +29,6 @@ class UserGenerationCache(GenerationCache):
         "users/mailing_list_emails",
         "domain/old_users",
         "users_extra/phones_to_domains",
-        "eula_reports/non_eulized_users"
     ]
 
 
@@ -44,7 +41,6 @@ class GroupGenerationCache(GenerationCache):
         "groups/by_user_type",
         "groups/by_name",
         "groups/all_groups",
-        "groups/by_domain",
         "users/by_group",
     ]
 
@@ -59,13 +55,12 @@ class UserRoleGenerationCache(GenerationCache):
 
 class ReportGenerationCache(GenerationCache):
     generation_key = '#gen#reports#'
-    doc_types = ['ReportConfig', 'HQGroupExportConfiguration', 'ReportNotification']
+    doc_types = ['ReportConfig', 'ReportNotification']
     views = [
         'reportconfig/configs_by_domain',
         'reportconfig/notifications_by_config',
         "reportconfig/user_notifications",
         "reportconfig/daily_notifications",
-        'groupexport/by_domain',
     ]
 
 
@@ -74,15 +69,6 @@ class DefaultConsumptionGenerationCache(GenerationCache):
     doc_types = ['DefaultConsumption']
     views = [
         'consumption/consumption_index',
-    ]
-
-
-class LocationGenerationCache(GenerationCache):
-    generation_key = '#gen#location#'
-    doc_types = ['Location']
-    views = [
-        'commtrack/locations_by_code',
-        '_all_docs',
     ]
 
 
@@ -99,12 +85,4 @@ class UserReportsDataSourceCache(GenerationCache):
     doc_types = ['DataSourceConfiguration']
     views = [
         'userreports/data_sources_by_build_info',
-    ]
-
-
-class UserReportsReportConfigCache(GenerationCache):
-    generation_key = '#gen#userreports#reportconfig#'
-    doc_types = ['ReportConfiguration']
-    views = [
-        'userreports/report_configs_by_domain',
     ]

@@ -72,12 +72,12 @@ class DateFilterValue(FilterValue):
         startdate = self.value.startdate
         enddate = self.value.enddate
 
+        if self.value.inclusive and enddate:
+            enddate = enddate + timedelta(days=1) - timedelta.resolution
+
         if self.filter.compare_as_string:
             startdate = str(startdate) if startdate is not None else None
             enddate = str(enddate) if enddate is not None else None
-
-        if self.value.inclusive and enddate:
-                enddate = self.value.enddate + timedelta(days=1) - timedelta.resolution
 
         sql_values = {}
         if startdate is not None:

@@ -197,6 +197,63 @@ class CallCenterUtilsUserCaseTests(TestCase):
         case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertEquals(case.completed_training, 'yes')
 
+    def test_reactivate_user(self):
+        """Confirm that reactivating a user re-opens its user case."""
+        self.user.save()
+        user_case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        self.assertIsNotNone(user_case)
+
+        self.user.is_active = False
+        self.user.save()
+        user_case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        self.assertTrue(user_case.closed)
+
+        self.user.is_active = True
+        self.user.save()
+        user_case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        self.assertFalse(user_case.closed)
+
+    def test_update_deactivated_user(self):
+        """
+        Confirm that updating a deactivated user also updates the user case.
+        """
+        self.user.save()
+        user_case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        self.assertIsNotNone(user_case)
+
+        self.user.is_active = False
+        self.user.save()
+        user_case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        self.assertTrue(user_case.closed)
+
+        self.user.user_data = {'foo': 'bar'}
+        self.user.save()
+        user_case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        self.assertTrue(user_case.closed)
+        self.assertEquals(user_case.foo, 'bar')
+
+    def test_update_and_reactivate_in_one_save(self):
+        """
+        Confirm that a usercase can be updated and reactived in a single save of the user model
+        """
+        """
+        Confirm that updating a deactivated user also updates the user case.
+        """
+        self.user.save()
+        user_case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        self.assertIsNotNone(user_case)
+
+        self.user.is_active = False
+        self.user.save()
+        user_case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        self.assertTrue(user_case.closed)
+
+        self.user.user_data = {'foo': 'bar'}
+        self.user.is_active = True
+        self.user.save()
+        user_case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
+        self.assertFalse(user_case.closed)
+        self.assertEquals(user_case.foo, 'bar')
 
 class DomainTimezoneTests(SimpleTestCase):
     def _test_midnights(self, utcnow, test_cases):

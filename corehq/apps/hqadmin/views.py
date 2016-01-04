@@ -31,16 +31,15 @@ from django.http import (
 )
 from restkit import Resource
 from restkit.errors import Unauthorized
-from couchdbkit import ResourceNotFound, Database
+from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
-from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.toggles import any_toggle_enabled, SUPPORT
+from corehq.util.couchdb_management import couch_config
 from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorException, all_pillows_supervisor_status, \
     pillow_supervisor_status
-from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
 from couchforms.models import XFormInstance
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
@@ -48,16 +47,12 @@ from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.admin import MALTRowAdmin
-from corehq.apps.es.cases import CaseES
-from corehq.apps.es.domains import DomainES
-from corehq.apps.es.forms import FormES
 from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
-from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.escheck import (
     check_es_cluster_health,
     check_xform_es_index,
@@ -71,17 +66,16 @@ from corehq.apps.hqadmin.reporting.reports import (
     get_stats_data,
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
-from corehq.db import Session
+from corehq.sql_db.connections import Session
 from corehq.elastic import parse_args_for_es, ES_URLS, run_query
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.decorators.datespan import datespan_in_request
-from dimagi.utils.parsing import json_format_datetime, json_format_date
+from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response, get_url_base
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from .multimech import GlobalConfig
@@ -348,52 +342,6 @@ def system_info(request):
     return render(request, "hqadmin/system_info.html", context)
 
 
-@cache_page(60 * 5)
-@require_superuser_or_developer
-def db_comparisons(request):
-
-    def _simple_view_couch_query(db, view_name):
-        return db.view(view_name, reduce=True).one()['value']
-
-    comparison_config = [
-        {
-            'description': 'Users (base_doc is "CouchUser")',
-            'couch_docs': _simple_view_couch_query(CommCareUser.get_db(), 'users/by_username'),
-            'es_query': UserES().remove_default_filter('active').size(0),
-            'sql_rows': User.objects.count(),
-        },
-        {
-            'description': 'Domains (doc_type is "Domain")',
-            'couch_docs': _simple_view_couch_query(Domain.get_db(), 'domain/by_status'),
-            'es_query': DomainES().size(0),
-            'sql_rows': None,
-        },
-        {
-            'description': 'Forms (doc_type is "XFormInstance")',
-            'couch_docs': get_number_of_forms_all_domains_in_couch(),
-            'es_query': FormES().remove_default_filter('has_xmlns')
-                .remove_default_filter('has_user')
-                .size(0),
-            'sql_rows': FormData.objects.exclude(domain__isnull=True).count(),
-        },
-        {
-            'description': 'Cases (doc_type is "CommCareCase")',
-            'couch_docs': get_total_case_count(),
-            'es_query': CaseES().size(0),
-            'sql_rows': CaseData.objects.exclude(domain__isnull=True).count(),
-        }
-    ]
-
-    comparisons = []
-    for comp in comparison_config:
-        comparisons.append({
-            'description': comp['description'],
-            'couch_docs': comp['couch_docs'],
-            'es_docs': comp['es_query'].run().total,
-            'sql_rows': comp['sql_rows'] if comp['sql_rows'] else 'n/a',
-        })
-    return json_response(comparisons)
-
 @require_POST
 @require_superuser_or_developer
 def pillow_operation_api(request):
@@ -460,35 +408,6 @@ def pillow_operation_api(request):
                 return get_response(str(e))
     else:
         return get_response("No pillow found with name '{}'".format(pillow_name))
-
-@require_superuser
-def noneulized_users(request, template="hqadmin/noneulized_users.html"):
-    context = get_hqadmin_base_context(request)
-
-    days = request.GET.get("days", None)
-    days = int(days) if days else 60
-    days_ago = datetime.utcnow() - timedelta(days=days)
-
-    users = WebUser.view(
-        "eula_report/noneulized_users",
-        reduce=False,
-        include_docs=True,
-        startkey=["WebUser", json_format_datetime(days_ago)],
-        endkey=["WebUser", {}]
-    ).all()
-
-    context.update({"users": filter(lambda user: not user.is_dimagi, users), "days": days})
-
-    headers = DataTablesHeader(
-        DataTablesColumn("Username"),
-        DataTablesColumn("Date of Last Login"),
-        DataTablesColumn("couch_id"),
-    )
-    context['layout_flush_content'] = True
-    context["headers"] = headers
-    context["aoColumns"] = headers.render_aoColumns
-
-    return render(request, template, context)
 
 
 @require_superuser
@@ -688,10 +607,13 @@ def loadtest(request):
     return render(request, template, context)
 
 
-def _lookup_id_in_couch(doc_id):
-    db_urls = [settings.COUCH_DATABASE] + settings.EXTRA_COUCHDB_DATABASES.values()
-    for url in db_urls:
-        db = Database(url)
+def _lookup_id_in_couch(doc_id, db_name=None):
+    if db_name:
+        dbs = [couch_config.get_db(db_name)]
+    else:
+        dbs = couch_config.all_dbs_by_slug.values()
+
+    for db in dbs:
         try:
             doc = db.get(doc_id)
         except ResourceNotFound:
@@ -743,7 +665,9 @@ def doc_in_es(request):
 @require_superuser
 def raw_couch(request):
     doc_id = request.GET.get("id")
-    context = _lookup_id_in_couch(doc_id) if doc_id else {}
+    db_name = request.GET.get("db_name", None)
+    context = _lookup_id_in_couch(doc_id, db_name) if doc_id else {}
+    context['all_databases'] = couch_config.all_dbs_by_slug.keys()
     return render(request, "hqadmin/raw_couch.html", context)
 
 

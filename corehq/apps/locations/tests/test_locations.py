@@ -71,6 +71,35 @@ class LocationProducts(TestCase):
 
 
 class LocationTestBase(TestCase):
+    dependent_apps = [
+        'auditcare',
+        'casexml.apps.case',
+        'casexml.apps.phone',
+        'casexml.apps.stock',
+        'corehq.apps.accounting',
+        'corehq.apps.commtrack',
+        'corehq.apps.domain',
+        'corehq.apps.dropbox',
+        'corehq.apps.fixtures',
+        'corehq.apps.hqcase',
+        'corehq.apps.products',
+        'corehq.apps.reminders',
+        'corehq.apps.sms',
+        'corehq.apps.smsforms',
+        'corehq.apps.tzmigration',
+        'corehq.apps.users',
+        'corehq.couchapps',
+        'couchforms',
+        'custom.logistics',
+        'custom.ilsgateway',
+        'custom.ewsghana',
+        'django.contrib.admin',
+        'django_digest',
+        'django_prbac',
+        'tastypie',
+        'touchforms.formplayer',
+    ]
+
     def setUp(self):
         self.domain = create_domain('locations-test')
         self.domain.convert_to_commtrack()

@@ -52,14 +52,11 @@ class FormExportReportBase(ExportReport, DatespanMixin):
               'corehq.apps.reports.filters.select.GroupFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter']
 
-    @property
-    def can_view_deid(self):
-        return has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
-
     @memoized
     def get_saved_exports(self):
+        from corehq.apps.export.views import user_can_view_deid_exports
         exports = FormExportSchema.get_stale_exports(self.domain)
-        if not self.can_view_deid:
+        if not user_can_view_deid_exports(self.domain, self.request.couch_user):
             exports = filter(lambda x: not x.is_safe, exports)
         return sorted(exports, key=lambda x: x.name)
 

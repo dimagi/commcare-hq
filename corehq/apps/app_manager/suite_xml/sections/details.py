@@ -367,7 +367,8 @@ def get_instances_for_module(app, module, additional_xpaths=None):
         for detail_id in detail_ids:
             xpaths.update(details_by_id[detail_id].get_all_xpaths())
 
-        return EntryInstances.get_required_instances(xpaths)
+        instances, _ = EntryInstances.get_required_instances(xpaths)
+        return instances
 
 
 class CaseTileHelper(object):
@@ -424,11 +425,11 @@ class CaseTileHelper(object):
         }
 
     def _get_column_context(self, column):
-        from corehq.apps.app_manager.detail_screen import get_column_xpath_generator
+        from corehq.apps.app_manager.detail_screen import get_column_generator
         context = {
-            "prop_name": get_column_xpath_generator(
-                self.app, self.module, self.detail, column
-            ).xpath,
+            "xpath_function": escape(get_column_generator(
+                self.app, self.module, self.detail, column).xpath_function,
+                {'"': '&quot;'}),
             "locale_id": id_strings.detail_column_header_locale(
                 self.module, self.detail_type, column,
             ),

@@ -1,10 +1,6 @@
-{% extends 'reminders/base_template.html' %}
+{% extends "style/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
-
-{% block js %} {{ block.super }}
-    {% include "imports/datatables.html" %}
-{% endblock %}
 
 {% block js-inline %} {{ block.super }}
     <script>
@@ -28,37 +24,36 @@
 
         $(function() {
             upcoming_table = $("#upcoming-broadcasts-table").dataTable({
-                "sPaginationType": "bootstrap",
-                "bLengthChange": false,
-                "bFilter": false,
-                "bSort": false,
-                "iDisplayLength": 5,
-                "bProcessing": true,
-                "bServerSide": true,
-                "sAjaxSource": "{% url 'list_broadcasts' domain %}",
+                "lengthChange": false,
+                "filter": false,
+                "sort": false,
+                "displayLength": 5,
+                "processing": true,
+                "serverSide": true,
+                "ajaxSource": "{% url 'list_broadcasts' domain %}",
                 "fnServerParams": function(aoData) {
                     aoData.push({"name": "action", "value": "list_upcoming"});
                 },
                 "sDom": "rtp",
-                "oLanguage": {
-                    "sEmptyTable": "{% trans 'There are no broadcasts to display.' %}",
-                    "sInfoEmpty": "{% trans 'There are no broadcasts to display.' %}",
-                    "sLengthMenu": "{% trans 'Show _MENU_ broadcasts per page' %}",
-                    "sProcessing": '<img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" /> {% trans 'Loading Broadcasts...' %}',
-                    "sInfo": "{% trans 'Showing _START_ to _END_ of _TOTAL_ broadcasts' %}",
-                    "sInfoFiltered": "{% trans '(filtered from _MAX_ total broadcasts)' %}"
+                "language": {
+                    "emptyTable": "{% trans 'There are no broadcasts to display.' %}",
+                    "infoEmpty": "{% trans 'There are no broadcasts to display.' %}",
+                    "lengthMenu": "{% trans 'Show _MENU_ broadcasts per page' %}",
+                    "processing": '<img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" /> {% trans 'Loading Broadcasts...' %}',
+                    "info": "{% trans 'Showing _START_ to _END_ of _TOTAL_ broadcasts' %}",
+                    "infoFiltered": "{% trans '(filtered from _MAX_ total broadcasts)' %}"
                 },
-                "aoColumnDefs": [
+                "columnDefs": [
                     {
-                        "aTargets": [0],
-                        "fnRender": function(obj) {
-                            return '<a href="' + obj.aData[4] + '">' + obj.aData[0] + '</a>';
+                        "targets": [0],
+                        "render": function(data, type, full) {
+                            return '<a href="' + full[4] + '">' + full[0] + '</a>';
                         }
                     },
                     {
-                        "aTargets": [3],
-                        "fnRender": function(obj) {
-                            return '<button class="btn btn-danger" onClick="delete_broadcast(\'' + obj.aData[3] + '\');"> \
+                        "targets": [3],
+                        "render": function(data) {
+                            return '<button class="btn btn-danger" onClick="delete_broadcast(\'' + data + '\');"> \
                                         {% trans 'Delete' %} \
                                     </button>';
                         }
@@ -66,31 +61,30 @@
                 ]
             });
             past_table = $("#past-broadcasts-table").dataTable({
-                "sPaginationType": "bootstrap",
-                "bLengthChange": false,
-                "bFilter": false,
-                "bSort": false,
-                "iDisplayLength": 5,
-                "bProcessing": true,
-                "bServerSide": true,
-                "sAjaxSource": "{% url 'list_broadcasts' domain %}",
+                "lengthChange": false,
+                "filter": false,
+                "sort": false,
+                "displayLength": 5,
+                "processing": true,
+                "serverSide": true,
+                "ajaxSource": "{% url 'list_broadcasts' domain %}",
                 "fnServerParams": function(aoData) {
                     aoData.push({"name": "action", "value": "list_past"});
                 },
-                "sDom": "rtp",
-                "oLanguage": {
-                    "sEmptyTable": "{% trans 'There are no broadcasts to display.' %}",
-                    "sInfoEmpty": "{% trans 'There are no broadcasts to display.' %}",
-                    "sLengthMenu": "{% trans 'Show _MENU_ broadcasts per page' %}",
-                    "sProcessing": '<img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" /> {% trans 'Loading Broadcasts...' %}',
-                    "sInfo": "{% trans 'Showing _START_ to _END_ of _TOTAL_ broadcasts' %}",
-                    "sInfoFiltered": "{% trans '(filtered from _MAX_ total broadcasts)' %}"
+                "dom": "rtp",
+                "language": {
+                    "emptyTable": "{% trans 'There are no broadcasts to display.' %}",
+                    "infoEmpty": "{% trans 'There are no broadcasts to display.' %}",
+                    "lengthMenu": "{% trans 'Show _MENU_ broadcasts per page' %}",
+                    "processing": '<img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" /> {% trans 'Loading Broadcasts...' %}',
+                    "info": "{% trans 'Showing _START_ to _END_ of _TOTAL_ broadcasts' %}",
+                    "infoFiltered": "{% trans '(filtered from _MAX_ total broadcasts)' %}"
                 },
-                "aoColumnDefs": [
+                "columnDefs": [
                     {
-                        "aTargets": [3],
-                        "fnRender": function(obj) {
-                            return '<a class="btn btn-primary" href="' + obj.aData[5] + '">{% trans "Copy" %}</a>';
+                        "targets": [3],
+                        "render": function(data, type, full) {
+                            return '<a class="btn btn-primary" href="' + full[5] + '">{% trans "Copy" %}</a>';
                         }
                     }
                 ]
@@ -99,10 +93,10 @@
     </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     <div class="btn-group">
         <a href="{% url 'add_broadcast' domain %}" class="btn btn-success">
-            <i class="icon-plus"></i>
+            <i class="fa fa-plus"></i>
             {% trans 'New Broadcast' %}
         </a>
     </div>
@@ -111,23 +105,23 @@
         <table id="upcoming-broadcasts-table" class="table table-striped table-bordered">
             <thead>
                 <tr>
-                    <th class="span4">{% trans 'When' %}</th>
-                    <th class="span4">{% trans 'Recipient(s)' %}</th>
-                    <th class="span4">{% trans 'Content' %}</th>
-                    <th class="span4">{% trans 'Action' %}</th>
+                    <th class="col-md-4">{% trans 'When' %}</th>
+                    <th class="col-md-4">{% trans 'Recipient(s)' %}</th>
+                    <th class="col-md-4">{% trans 'Content' %}</th>
+                    <th class="col-md-4">{% trans 'Action' %}</th>
                 </tr>
             </thead>
         </table>
     </div>
-    <h4>{% trans 'Previously Sent' %}</h4>
+    <h4 style="clear: both">{% trans 'Previously Sent' %}</h4>
     <div>
         <table id="past-broadcasts-table" class="table table-striped table-bordered">
             <thead>
                 <tr>
-                    <th class="span4">{% trans 'When' %}</th>
-                    <th class="span4">{% trans 'Recipient(s)' %}</th>
-                    <th class="span4">{% trans 'Content' %}</th>
-                    <th class="span4">{% trans 'Action' %}</th>
+                    <th class="col-md-4">{% trans 'When' %}</th>
+                    <th class="col-md-4">{% trans 'Recipient(s)' %}</th>
+                    <th class="col-md-4">{% trans 'Content' %}</th>
+                    <th class="col-md-4">{% trans 'Action' %}</th>
                 </tr>
             </thead>
         </table>

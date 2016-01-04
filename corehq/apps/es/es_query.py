@@ -88,6 +88,7 @@ Language
 from collections import namedtuple
 from copy import deepcopy
 import json
+from corehq.apps.es.utils import values_list
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -208,8 +209,8 @@ class ESQuery(object):
     def terms_facet(self, term, name, size=None):
         return self.facet(facets.TermsFacet(term, name, size))
 
-    def date_histogram(self, name, datefield, interval):
-        return self.facet(facets.DateHistogram(name, datefield, interval))
+    def date_histogram(self, name, datefield, interval, timezone=None):
+        return self.facet(facets.DateHistogram(name, datefield, interval, timezone=None))
 
     @property
     def _query(self):
@@ -300,7 +301,23 @@ class ESQuery(object):
         query = deepcopy(self)
         if default in query._default_filters:
             query._default_filters.pop(default)
+        if len(query._default_filters) == 0:
+            query._default_filters = {"match_all": filters.match_all()}
         return query
+
+    def values(self, *fields):
+        """modeled after django's QuerySet.values"""
+        if fields:
+            return self.fields(fields).run().hits
+        else:
+            return self.run().hits
+
+    def values_list(self, *fields, **kwargs):
+        return values_list(self.fields(fields).run().hits, *fields, **kwargs)
+
+    def count(self):
+        """Performs a minimal query to get the count of matching documents"""
+        return self.size(0).run().total
 
 
 class ESQuerySet(object):
@@ -337,9 +354,27 @@ class ESQuerySet(object):
         if self.query._fields == []:
             return self.ids
         elif self.query._fields is not None:
-            return [r['fields'] for r in self.raw_hits]
+            return [self._flatten_field_dict(r['fields']) for r in self.raw_hits]
         else:
             return [r['_source'] for r in self.raw_hits]
+
+    @staticmethod
+    def _flatten_field_dict(field_dict):
+        """
+        In ElasticSearch 1.3, the return format was changed such that field
+        values are always returned as lists, where as previously they would
+        be returned as scalars if the field had a single value, and returned
+        as lists if the field had multiple values.
+        This method restores the behavior of 0.90 .
+        
+        https://www.elastic.co/guide/en/elasticsearch/reference/1.3/_return_values.html
+        """
+        for key, val in field_dict.iteritems():
+            new_val = val
+            if type(val) == list and len(val) == 1:
+                new_val = val[0]
+            field_dict[key] = new_val
+        return field_dict
 
     @property
     def total(self):
@@ -368,6 +403,9 @@ class ESQuerySet(object):
         raw = self.raw.get('facets', {})
         results = namedtuple('facet_results', [f.name for f in facets])
         return results(**{f.name: f.parse_result(raw) for f in facets})
+
+    def __repr__(self):
+        return '{}({!r}, {!r})'.format(self.__class__.__name__, self.raw, self.query)
 
 
 class HQESQuery(ESQuery):

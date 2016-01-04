@@ -1,12 +1,16 @@
+from collections import namedtuple
 import logging
 
 from couchdbkit.exceptions import BulkSaveError
 from redis.exceptions import RedisError
 
 from dimagi.utils.decorators.memoized import memoized
-from corehq.util.test_utils import unit_testing_only
 
 from ..utils import should_use_sql_backend
+
+
+CaseUpdateMetadata = namedtuple('CaseUpdateMetadata', ['case', 'is_creation', 'previous_owner_id'])
+ProcessedForms = namedtuple('ProcessedForms', ['submitted', 'deprecated'])
 
 
 class FormProcessorInterface(object):
@@ -61,9 +65,15 @@ class FormProcessorInterface(object):
         else:
             return CaseDbCacheCouch
 
-    @unit_testing_only
-    def post_xform(self, instance_xml, attachments=None, process=None, domain='test-domain'):
-        return self.processor.post_xform(instance_xml, attachments=attachments, process=process, domain=domain)
+    @property
+    @memoized
+    def ledger_processor(self):
+        from corehq.form_processor.backends.couch.ledger import LedgerProcessorCouch
+        from corehq.form_processor.backends.sql.ledger import LedgerProcessorSQL
+        if should_use_sql_backend(self.domain):
+            return LedgerProcessorSQL(domain=self.domain)
+        else:
+            return LedgerProcessorCouch(domain=self.domain)
 
     def save_xform(self, xform):
         return self.processor.save_xform(xform)
@@ -98,29 +108,37 @@ class FormProcessorInterface(object):
     def xformerror_from_xform_instance(self, instance, error_message, with_new_id=False):
         return self.processor.xformerror_from_xform_instance(instance, error_message, with_new_id=with_new_id)
 
-    def save_processed_models(self, instance, xforms, cases=None):
+    def save_processed_models(self, forms, cases=None, stock_updates=None):
+        forms = _list_to_processed_forms_tuple(forms)
         try:
-            return self.processor.save_processed_models(xforms, cases=cases)
+            return self.processor.save_processed_models(
+                forms,
+                cases=cases,
+                stock_updates=stock_updates,
+            )
         except BulkSaveError as e:
             logging.error('BulkSaveError saving forms', exc_info=1,
                           extra={'details': {'errors': e.errors}})
             raise
         except Exception as e:
-            from couchforms.util import _handle_unexpected_error
-            xforms_being_saved = [xform.form_id for xform in xforms]
+            xforms_being_saved = [form.form_id for form in forms if form]
             error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
                 type(e).__name__,
                 unicode(e),
                 ', '.join(xforms_being_saved)
             )
-            _handle_unexpected_error(self, instance, error_message)
+            from corehq.form_processor.submission_post import handle_unexpected_error
+            handle_unexpected_error(self, forms.submitted, error_message)
             raise
 
     def hard_delete_case_and_forms(self, case, xforms):
-        self.processor.hard_delete_case_and_forms(case, xforms)
+        domain = case.domain
+        all_domains = {domain} | {xform.domain for xform in xforms}
+        assert len(all_domains) == 1, all_domains
+        self.processor.hard_delete_case_and_forms(domain, case, xforms)
 
-    def deprecate_xform(self, existing_xform, new_xform):
-        return self.processor.deprecate_xform(existing_xform, new_xform)
+    def apply_deprecation(self, existing_xform, new_xform):
+        return self.processor.apply_deprecation(existing_xform, new_xform)
 
     def deduplicate_xform(self, xform):
         return self.processor.deduplicate_xform(xform)
@@ -132,7 +150,23 @@ class FormProcessorInterface(object):
         return self.processor.hard_rebuild_case(self.domain, case_id, detail)
 
     def get_cases_from_forms(self, xforms, case_db):
+        """
+        Returns a dict of case_ids to CaseUpdateMetadata objects containing the touched cases
+        (with the forms' updates already applied to the cases)
+        """
         return self.processor.get_cases_from_forms(xforms, case_db)
 
-    def log_submission_error(self, instance, message, callback):
-        return self.processor.log_submission_error(instance, message, callback)
+    def submission_error_form_instance(self, instance, message):
+        return self.processor.submission_error_form_instance(self.domain, instance, message)
+
+
+def _list_to_processed_forms_tuple(forms):
+    """
+    :param forms: List of forms (either 1 or 2)
+    :return: tuple with main form first and deprecated form second
+    """
+    if len(forms) == 1:
+        return ProcessedForms(forms[0], None)
+    else:
+        assert len(forms) == 2
+        return ProcessedForms(*sorted(forms, key=lambda form: form.is_deprecated))

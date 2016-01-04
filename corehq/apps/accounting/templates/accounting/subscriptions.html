@@ -11,13 +11,6 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    {% if disable_cancel %}
-        <script type="text/javascript">
-            $(function () {
-                $("#cancel_form :input").attr("disabled", true);
-            });
-        </script>
-    {% endif %}
     <script type="text/javascript">
         var new_plan_version = new AsyncSelect2Handler('new_plan_version');
         new_plan_version.init();
@@ -43,8 +36,7 @@
         billingInfoHandler.init();
 
     {% for adjust_balance_form in adjust_balance_forms %}
-            var adjustBalanceFormModel = new AdjustBalanceFormModel();
-            ko.applyBindings(adjustBalanceFormModel, $('#adjust-balance-form-{{ adjust_balance_form.invoice.id }}').get(0));
+        $('#adjust-balance-form-{{ adjust_balance_form.invoice.id }}').koApplyBindings(new AdjustBalanceFormModel());
     {% endfor %}
 
     </script>
@@ -60,7 +52,8 @@
         </li>
         {% endif %}
         <li><a href="#credits" data-toggle="tab">{% trans "Credits" %}</a></li>
-        <li><a href="#actions" data-toggle="tab">{% trans "Permanent Actions" %}</a></li>
+        <li><a href="#cancel" data-toggle="tab">{% trans "Cancel" %}</a></li>
+        <li><a href="#suppress" data-toggle="tab">{% trans "Suppress" %}</a></li>
     </ul>
 
     <div class="tab-content">
@@ -89,10 +82,15 @@
         {% endif %}
 
         <div class="tab-pane" id="credits">
+            {% if subscription_has_ended %}
+            <div class="alert alert-warning">
+                This subscription has ended.
+            </div>
+            {% endif %}
             {% include 'accounting/credits_tab.html' %}
         </div>
 
-        <div class="tab-pane" id="actions">
+        <div class="tab-pane" id="cancel">
             <div class="alert alert-error">
                 Do this ONLY if absolutely necessary.
                 Do not cancel subscriptions just to change start dates.
@@ -109,6 +107,11 @@
             {% elif disable_cancel %}
                 Subscription has already ended.
             {% endif %}
+        </div>
+        <div class="tab-pane" id="suppress">
+            <form class="form form-horizontal" method="post" id="suppress_form">
+                {% crispy suppress_form %}
+            </form>
         </div>
     </div>
 {% endblock %}

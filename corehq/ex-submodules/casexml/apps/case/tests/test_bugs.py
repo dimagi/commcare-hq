@@ -10,7 +10,7 @@ from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2, V1
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.form_processor.test_utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -56,16 +56,15 @@ class CaseBugTest(TestCase, TestFileMixin):
             case_id = uuid.uuid4().hex
             format_args = {
                 'case_id': case_id,
-                'form_id': uuid.uuid4().hex,
                 'user_id': uuid.uuid4().hex,
                 'case_name': 'data corner cases',
                 'case_type': 'datatype-check',
             }
             format_args.update(custom_format_args)
             for filename in ['bugs_in_case_create_datatypes', 'bugs_in_case_update_datatypes']:
+                format_args['form_id'] = uuid.uuid4().hex,
                 xml_data = self.get_xml(filename).format(**format_args)
                 response, form, [case] = submit_form_locally(xml_data, 'test-domain')
-
                 self.assertEqual(format_args['user_id'], case.user_id)
                 self.assertEqual(format_args['case_name'], case.name)
                 self.assertEqual(format_args['case_type'], case.type)

@@ -26,9 +26,6 @@
         {% blocktrans with plan.name as p %}
         You have selected the <strong>{{ p }} Software Plan</strong>.
         {% endblocktrans %}
-        {% ifequal plan.edition 'Enterprise' %}
-        This is the Dimagi Internal Special!
-        {% endifequal %}
     </p>
     <dl class="dl-horizontal">
         <dt>{% trans 'Monthly Fee' %}</dt>
@@ -90,6 +87,7 @@
     </div>
     {% else %}
     <form action="{% url 'confirm_billing_account_info' domain %}" method="post" class="form">
+        {% csrf_token %}
         <hr />
         <input type="hidden" value="{{ plan.edition }}" name="plan_edition" />
         <p>

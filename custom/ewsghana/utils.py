@@ -12,7 +12,7 @@ from dateutil.rrule import MO
 from django.utils import html
 from corehq.apps.sms.mixin import VerifiedNumber, BackendMapping
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.messaging.smsbackends.test.api import TestSMSBackend
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import add_msg_tags, send_sms_to_verified_number, send_sms as core_send_sms
@@ -335,7 +335,8 @@ def can_receive_email(user, verified_number):
 
 @quickcache(['domain'])
 def get_country_id(domain):
-    return SQLLocation.objects.filter(domain=domain, location_type__name='country')[0].location_id
+    from custom.ewsghana import ROOT_SITE_CODE
+    return SQLLocation.objects.get(domain=domain, site_code=ROOT_SITE_CODE).location_id
 
 
 def has_input_stock_permissions(couch_user, location, domain):

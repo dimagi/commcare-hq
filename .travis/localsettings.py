@@ -12,7 +12,10 @@ DATABASES = {
         'USER': 'postgres',
         'PASSWORD': '',
         'HOST': 'localhost',
-        'PORT': '5432'
+        'PORT': '5432',
+        'TEST': {
+            'SERIALIZE': False,  # https://docs.djangoproject.com/en/1.8/ref/settings/#serialize
+        },
     }
 }
 
@@ -106,6 +109,12 @@ ENABLE_PRELOGIN_SITE = True
 
 TESTS_SHOULD_TRACK_CLEANLINESS = True
 
-IS_TRAVIS = True
+UNIT_TESTING = True
+
+LOCAL_APPS = (
+    'testapps.test_elasticsearch',
+    'testapps.test_pillowtop',
+)
 
 PILLOWTOP_MACHINE_ID = 'testhq'
+ALLOW_ELASTICSEARCH_TESTS = True

@@ -1,3 +1,4 @@
+from collections import namedtuple
 from dimagi.ext import jsonobject
 from dimagi.utils import parsing as dateparse
 from django.utils.translation import ugettext as _
@@ -7,6 +8,9 @@ from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.commtrack.models import CommtrackActionConfig
 from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.products.models import Product
+
+
+UniqueLedgerReference = namedtuple('UniqueLedgerReference', ['case_id', 'section_id', 'entry_id'])
 
 
 class StockReportHelper(jsonobject.JsonObject):
@@ -21,6 +25,11 @@ class StockReportHelper(jsonobject.JsonObject):
     transactions = jsonobject.ListProperty(lambda: StockTransactionHelper)
     server_date = jsonobject.DateTimeProperty()
     deprecated = jsonobject.BooleanProperty()
+
+    @property
+    def report_type(self):
+        # this is for callers to be able to use a less confusing name
+        return self.tag
 
     @classmethod
     def make_from_form(cls, form, timestamp, tag, transactions):
@@ -57,6 +66,12 @@ class StockTransactionHelper(jsonobject.JsonObject):
     timestamp = jsonobject.DateTimeProperty()
     case_id = jsonobject.StringProperty()
     section_id = jsonobject.StringProperty()
+
+    @property
+    def ledger_reference(self):
+        return UniqueLedgerReference(
+            case_id=self.case_id, section_id=self.section_id, entry_id=self.product_id
+        )
 
     @property
     def relative_quantity(self):

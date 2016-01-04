@@ -1,0 +1,726 @@
+[
+    {
+        "name": "Ownership_Purge",
+        "cases": [
+            "a",
+            "b",
+            "c"
+        ],
+        "outcome": []
+    },
+    {
+        "name": "Partial_Ownership",
+        "owned": [
+            "a",
+            "b",
+            "c"
+        ],
+        "cases": [
+            "d"
+        ],
+        "outcome": [
+            "a",
+            "b",
+            "c"
+        ]
+    },
+    {
+        "name": "Subcase_Ownership",
+        "owned": [
+            "d"
+        ],
+        "subcases": [
+            [
+                "d",
+                "b"
+            ]
+        ],
+        "outcome": [
+            "d",
+            "b"
+        ]
+    },
+    {
+        "name": "Close_Purge",
+        "closed": [
+            "a"
+        ],
+        "outcome": []
+    },
+    {
+        "name": "Live_Dependence",
+        "owned": [
+            "a",
+            "b"
+        ],
+        "closed": [
+            "a"
+        ],
+        "subcases": [
+            [
+                "b",
+                "a"
+            ]
+        ],
+        "outcome": [
+            "a",
+            "b"
+        ]
+    },
+    {
+        "name": "Test_Reverse_Index",
+        "owned": [
+            "a",
+            "b"
+        ],
+        "closed": [
+            "b"
+        ],
+        "subcases": [
+            [
+                "b",
+                "a"
+            ]
+        ],
+        "outcome": [
+            "a"
+        ]
+    },
+    {
+        "name": "Multiple_Dead",
+        "owned": [
+            "a",
+            "b"
+        ],
+        "closed": [
+            "a",
+            "b"
+        ],
+        "subcases": [
+            [
+                "b",
+                "a"
+            ]
+        ],
+        "outcome": []
+    },
+    {
+        "name": "Alternating_Chain",
+        "owned": [
+            "b",
+            "d"
+        ],
+        "closed": [
+            "b",
+            "e"
+        ],
+        "subcases": [
+            [
+                "d",
+                "b"
+            ],
+            [
+                "e",
+                "d"
+            ]
+        ],
+        "outcome": [
+            "d",
+            "b"
+        ]
+    },
+    {
+        "name": "Lopsided_Chain",
+        "owned": [
+            "b",
+            "d",
+            "e"
+        ],
+        "closed": [
+            "d",
+            "e"
+        ],
+        "subcases": [
+            [
+                "d",
+                "b"
+            ],
+            [
+                "e",
+                "d"
+            ]
+        ],
+        "outcome": [
+            "b"
+        ]
+    },
+    {
+        "name": "Extension_retention",
+        "owned": [
+            "a"
+        ],
+        "extensions": [
+            [
+                "e",
+                "a"
+            ]
+        ],
+        "outcome": [
+            "a",
+            "e"
+        ]
+    },
+    {
+        "name": "Extension_Purge",
+        "owned": [
+            "a"
+        ],
+        "closed": [
+            "a"
+        ],
+        "extensions": [
+            [
+                "e",
+                "a"
+            ]
+        ],
+        "outcome": []
+    },
+    {
+        "name": "Extension_Subcase_Chain",
+        "owned": [
+            "a",
+            "b"
+        ],
+        "closed": [
+            "a"
+        ],
+        "subcases": [
+            [
+                "b",
+                "e"
+            ]
+        ],
+        "extensions": [
+            [
+                "e",
+                "a"
+            ]
+        ],
+        "outcome": [
+            "a",
+            "b",
+            "e"
+        ]
+    },
+    {
+        "name": "Extension_Subcase_Chain_Closed",
+        "owned": [
+            "a",
+            "b"
+        ],
+        "closed": [
+            "a",
+            "b"
+        ],
+        "subcases": [
+            [
+                "b",
+                "e"
+            ]
+        ],
+        "extensions": [
+            [
+                "e",
+                "a"
+            ]
+        ],
+        "outcome": []
+    },
+    {
+        "name": "Heterogeneous_Children",
+        "owned": [
+            "a",
+            "b",
+            "e"
+        ],
+        "closed": [
+            "a"
+        ],
+        "subcases": [
+            [
+                "b",
+                "a"
+            ]
+        ],
+        "extensions": [
+            [
+                "e",
+                "a"
+            ]
+        ],
+        "outcome": [
+            "a",
+            "b",
+            "e"
+        ]
+    },
+    {
+        "name": "Heterogeneous_Parentage",
+        "owned": [
+            "a",
+            "b"
+        ],
+        "closed": [
+            "a"
+        ],
+        "subcases": [
+            [
+                "e",
+                "b"
+            ]
+        ],
+        "extensions": [
+            [
+                "e",
+                "a"
+            ]
+        ],
+        "outcome": [
+            "b"
+        ]
+    },
+    {
+        "name": "Delegate_Pull",
+        "owned": [
+            "d"
+        ],
+        "extensions": [
+            [
+                "d",
+                "a"
+            ]
+        ],
+        "outcome": [
+            "d",
+            "a"
+        ]
+    },
+    {
+        "name": "Delegate_Keep",
+        "owned": [
+            "a"
+        ],
+        "extensions": [
+            [
+                "d",
+                "a"
+            ]
+        ],
+        "outcome": [
+            "d",
+            "a"
+        ]
+    },
+    {
+        "name": "Delegate_Extension_Info",
+        "owned": [
+            "d"
+        ],
+        "extensions": [
+            [
+                "d",
+                "a"
+            ],
+            [
+                "b",
+                "a"
+            ]
+        ],
+        "outcome": [
+            "d",
+            "a",
+            "b"
+        ]
+    },
+    {
+        "name": "Long_chain",
+        "owned": [
+            "a"
+        ],
+        "extensions": [
+            [
+                "b",
+                "a"
+            ],
+            [
+                "c",
+                "b"
+            ],
+            [
+                "d",
+                "c"
+            ]
+        ],
+        "outcome": [
+            "a",
+            "b",
+            "c",
+            "d"
+        ]
+    },
+    {
+        "name": "Long_Chain_with_Children",
+        "owned": [
+            "e"
+        ],
+        "extensions": [
+            [
+                "d",
+                "c"
+            ],
+            [
+                "c",
+                "b"
+            ],
+            [
+                "b",
+                "a"
+            ]
+        ],
+        "subcases": [
+            [
+                "e",
+                "c"
+            ]
+        ],
+        "outcome": [
+            "a",
+            "b",
+            "c",
+            "d",
+            "e"
+        ]
+    },
+    {
+        "name": "Closed_Extension",
+        "owned": [
+            "a"
+        ],
+        "closed": [
+            "b"
+        ],
+        "extensions": [
+            [
+                "b",
+                "a"
+            ]
+        ],
+        "outcome": [
+            "a"
+        ]
+    },
+    {
+        "name": "Closed_Extension_With_Children",
+        "owned": [
+            "a"
+        ],
+        "closed": [
+            "b"
+        ],
+        "extensions": [
+            [
+                "c",
+                "b"
+            ]
+        ],
+        "subcases": [
+            [
+                "a",
+                "b"
+            ]
+        ],
+        "outcome": [
+            "a",
+            "b",
+            "c"
+        ]
+    },
+    {
+        "name": "Double_Chain",
+        "owned": [
+            "a",
+            "b",
+            "c"
+        ],
+        "closed": [
+            "a",
+            "b"
+        ],
+        "subcases": [
+            [
+                "c",
+                "b"
+            ],
+            [
+                "b",
+                "a"
+            ]
+        ],
+        "outcome": [
+            "a",
+            "b",
+            "c"
+        ]
+    },
+    {
+        "name": "Double_Index",
+        "owned": [
+            "a",
+            "b"
+        ],
+        "closed": [
+            "a"
+        ],
+        "subcases": [
+            [
+                "b",
+                "a"
+            ]
+        ],
+        "extensions": [
+            [
+                "b",
+                "a"
+            ]
+        ],
+        "outcome": [
+            "a",
+            "b"
+        ]
+    },
+    {
+        "name": "Extension_Two_Hosts",
+        "owned": [
+            "e"
+        ],
+        "closed": [
+            "a"
+        ],
+        "extensions": [
+            [
+                "e",
+                "a"
+            ],
+            [
+                "e",
+                "b"
+            ]
+        ],
+        "outcome": [
+            "a",
+            "b",
+            "e"
+        ]
+    },
+    {
+        "name": "Double_Extension",
+        "owned": [
+            "a",
+            "b"
+        ],
+        "closed": [
+            "a"
+        ],
+        "extensions": [
+            [
+                "e",
+                "a"
+            ],
+            [
+                "b",
+                "e"
+            ]
+        ],
+        "outcome": []
+    },
+    {
+        "name": "Delegate_Closure",
+        "owned": [
+            "d"
+        ],
+        "closed": [
+            "a"
+        ],
+        "extensions": [
+            [
+                "d",
+                "a"
+            ]
+        ],
+        "outcome": []
+    },
+    {
+        "name": "chain_with_owned_closed",
+        "owned": [
+            "b"
+        ],
+        "extensions": [
+            [
+                "d",
+                "c"
+            ],
+            [
+                "c",
+                "b"
+            ],
+            [
+                "b",
+                "a"
+            ]
+        ],
+        "closed": [
+            "b"
+        ],
+        "outcome": []
+    },
+    {
+        "name": "owned_closed",
+        "owned": [
+            "b"
+        ],
+        "extensions": [
+            [
+                "d",
+                "c"
+            ],
+            [
+                "c",
+                "b"
+            ],
+            [
+                "b",
+                "a"
+            ]
+        ],
+        "closed": [
+            "a",
+            "b",
+            "c",
+            "d"
+        ],
+        "outcome": []
+    },
+    {
+        "name": "owned_closed_host",
+        "owned": [
+            "b"
+        ],
+        "extensions": [
+            [
+                "d",
+                "c"
+            ],
+            [
+                "c",
+                "b"
+            ],
+            [
+                "b",
+                "a"
+            ]
+        ],
+        "closed": [
+            "a"
+        ],
+        "outcome": []
+    },
+    {
+        "name": "owned_closed_open_extension",
+        "owned": [
+            "a"
+        ],
+        "extensions": [
+            [
+                "a",
+                "b"
+            ]
+        ],
+        "closed": [
+            "b"
+        ],
+        "outcome": []
+    },
+    {
+        "name": "closed_extension",
+        "owned": [
+            "a"
+        ],
+        "extensions": [
+            [
+                "e",
+                "a"
+            ]
+        ],
+        "closed": [
+            "e"
+        ],
+        "outcome": [
+            "a"
+        ]
+    },
+    {
+        "name": "Broken_Extension_Chain",
+        "owned": [
+            "a"
+        ],
+        "closed": [
+            "b"
+        ],
+        "extensions": [
+            [
+                "b",
+                "a"
+            ],
+            [
+                "c",
+                "b"
+            ]
+        ],
+        "outcome": [
+            "a"
+        ]
+    },
+    {
+        "name": "Cousins",
+        "owned": [
+            "a",
+            "b"
+        ],
+        "subcases": [
+            [
+                "a",
+                "c"
+            ],
+            [
+                "b",
+                "d"
+            ],
+            [
+                "c",
+                "e"
+            ],
+            [
+                "d",
+                "e"
+            ]
+        ],
+        "outcome": [
+            "a",
+            "b",
+            "c",
+            "d",
+            "e"
+        ]
+    }
+]

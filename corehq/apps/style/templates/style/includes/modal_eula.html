@@ -5,6 +5,7 @@
             <form id="eula-agree"
                   action="{% url "agree_to_eula" %}"
                   method="POST">
+                {% csrf_token %}
                 <input name="next" type="hidden" value="{{ request.path }}" />
                 <div class="modal-content">
                     <div class="modal-header">

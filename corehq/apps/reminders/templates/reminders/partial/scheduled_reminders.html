@@ -1,5 +1,6 @@
-{% extends "reminders/reminders_base.html" %}
+{% extends "style/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
+{% load i18n %}
 
 {% block js-inline %}{{ block.super }}
     <script>
@@ -59,8 +60,74 @@
         });
     </script>
 {% endblock %}
-{% block head %}{{ block.super }}
+{% block stylesheets %}{{ block.super }}
     <style>
+        #scheduled-reminders-container {
+            margin: 10px;
+        }
+        table {
+            margin: auto;
+        }
+        table.calendar td {
+            border: 1px solid #BBB;
+        }
+        .scheduled-reminders {
+            width: 100%;
+        }
+        .scheduled-reminders li {
+            background-color: #CCF;
+            border: 1px solid #AAF;
+            margin: 2px;
+            padding: 5px;
+        }
+        .calendar-today {
+            background-color: #EEE;
+        }
+        .calendar-past {
+            background-color: #FDD;
+        }
+        .calendar-cell {
+            min-height: 100px;
+        }
+        .date-header {
+            color: #888;
+            text-align: center;
+        }
+        .time-header {
+            color: #888;
+        }
+        #main_container {
+            padding: 10px;
+        }
+        .light {
+            color: #999;
+        }
+        .horizontal li {
+            display: inline;
+            border-left: 1px solid #CCC;
+            padding-left: .5em;
+        }
+        .horizontal li:first-child {
+            border-left: none;
+        }
+        tr.separator {
+            background-color: #EEE;
+            border: 1px solid #CCC;
+        }
+        .center {
+            text-align: center;
+        }
+        .form-block {
+            border: 1px solid #EAEAFF;
+            background-color: #FAFAFF;
+            padding: 20px;
+        }
+        .errorlist li {
+            background-color: #F88;
+            border: 1px solid #A44;
+            padding: 2px;
+            list-style-type: none;
+        }
         .calendar-first:not(:first-child) {
             border-left-width: 3px;
         }
@@ -83,13 +150,7 @@
     </style>
 {% endblock %}
 
-{% block subsection-title %}
-<li class="active">
-    <a href="#">Reminder Calendar</a>
-</li>
-{% endblock %}
-
-{% block main_column %}
+{% block page_content %}
     {% include "style/bootstrap2/partials/time_notice.html" %}
     <div id='scheduled-reminders-container'>
         <table class="calendar">

@@ -4,9 +4,11 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
+    <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
     <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
+    {% if is_form_editable %}
     <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
+    {% endif %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -20,7 +22,7 @@
             date.setDate(date.getDate() + parseInt(viewModel.trialLength()));
             return date.toJSON().slice(0, 10);
         });
-        ko.applyBindings(viewModel, document.getElementById('subscription_management'));
+        $('#subscription_management').koApplyBindings(viewModel);
 
         var billingInfoHandler = new BillingContactInfoHandler(
             "{% trans "Please enter a valid email." %}"

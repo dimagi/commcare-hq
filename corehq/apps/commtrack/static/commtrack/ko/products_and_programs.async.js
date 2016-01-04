@@ -71,11 +71,9 @@ var CommtrackProductsProgramsViewModel = function (o) {
 };
 
 $.fn.asyncProgramProductList = function (options) {
-    this.each(function(i, v) {
-        var viewModel = new CommtrackProductsProgramsViewModel(options);
-        ko.applyBindings(viewModel, $(this).get(i));
-        viewModel.init();
-    });
+    var viewModel = new CommtrackProductsProgramsViewModel(options);
+    $(this).koApplyBindings(viewModel);
+    viewModel.init();
 };
 
 ko.bindingHandlers.isPrevNextDisabled = {

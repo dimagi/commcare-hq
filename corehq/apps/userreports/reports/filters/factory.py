@@ -4,8 +4,9 @@ from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, C
     NumericFilter
 from corehq.apps.userreports.exceptions import BadSpecError
 from django.utils.translation import ugettext as _
-from corehq.apps.userreports.reports.filters.choice_providers import get_choices_from_data_source_column, \
-    DATA_SOURCE_COLUMN, LOCATION, get_location_choices
+from corehq.apps.userreports.reports.filters.choice_providers import DATA_SOURCE_COLUMN, \
+    LOCATION, DataSourceColumnChoiceProvider, LocationChoiceProvider, UserChoiceProvider, \
+    USER, OWNER, OwnerChoiceProvider
 from corehq.apps.userreports.reports.filters.values import(
     dynamic_choice_list_url,
     NONE_CHOICE,
@@ -16,7 +17,7 @@ from corehq.apps.userreports.reports.filters.specs import (
 )
 
 
-def _build_date_filter(spec):
+def _build_date_filter(spec, report):
     wrapped = DateFilterSpec.wrap(spec)
     return DatespanFilter(
         name=wrapped.slug,
@@ -24,7 +25,7 @@ def _build_date_filter(spec):
     )
 
 
-def _build_numeric_filter(spec):
+def _build_numeric_filter(spec, report):
     wrapped = NumericFilterSpec.wrap(spec)
     return NumericFilter(
         name=wrapped.slug,
@@ -32,7 +33,7 @@ def _build_numeric_filter(spec):
     )
 
 
-def _build_choice_list_filter(spec):
+def _build_choice_list_filter(spec, report):
     wrapped = ChoiceListFilterSpec.wrap(spec)
     choices = [Choice(
         fc.value if fc.value is not None else NONE_CHOICE,
@@ -48,7 +49,7 @@ def _build_choice_list_filter(spec):
     )
 
 
-def _build_dynamic_choice_list_filter(spec):
+def _build_dynamic_choice_list_filter(spec, report):
     wrapped = DynamicChoiceListFilterSpec.wrap(spec)
     return DynamicChoiceListFilter(
         name=wrapped.slug,
@@ -57,7 +58,7 @@ def _build_dynamic_choice_list_filter(spec):
         label=wrapped.display,
         show_all=wrapped.show_all,
         url_generator=dynamic_choice_list_url,
-        choice_provider=FilterChoiceProviderFactory.from_spec(wrapped.get_choice_provider_spec()),
+        choice_provider=FilterChoiceProviderFactory.from_spec(wrapped.get_choice_provider_spec())(report, wrapped.slug),
     )
 
 
@@ -70,10 +71,10 @@ class ReportFilterFactory(object):
     }
 
     @classmethod
-    def from_spec(cls, spec):
+    def from_spec(cls, spec, report=None):
         cls.validate_spec(spec)
         try:
-            return cls.constructor_map[spec['type']](spec)
+            return cls.constructor_map[spec['type']](spec, report)
         except (AssertionError, BadValueError) as e:
             raise BadSpecError(_('Problem creating report filter from spec: {}, message is: {}').format(
                 json.dumps(spec, indent=2),
@@ -93,10 +94,12 @@ class ReportFilterFactory(object):
 
 class FilterChoiceProviderFactory(object):
     constructor_map = {
-        DATA_SOURCE_COLUMN: get_choices_from_data_source_column,
-        LOCATION: get_location_choices,
+        DATA_SOURCE_COLUMN: DataSourceColumnChoiceProvider,
+        LOCATION: LocationChoiceProvider,
+        USER: UserChoiceProvider,
+        OWNER: OwnerChoiceProvider
     }
 
     @classmethod
     def from_spec(cls, choice_provider_spec):
-        return cls.constructor_map.get(choice_provider_spec['type'], get_choices_from_data_source_column)
+        return cls.constructor_map.get(choice_provider_spec['type'], DataSourceColumnChoiceProvider)

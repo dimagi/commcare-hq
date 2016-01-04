@@ -13,4 +13,13 @@
         </label>
     </div>
     {% endif %}
+    <div class="controls">
+        <label for="include_ids" class="checkbox">
+            <input class="checkboxinput"
+                   id="include_ids"
+                   type="checkbox"
+                   data-bind="checked: include_ids">
+            {% trans "Include location ID in download." %}
+        </label>
+    </div>
 {% endblock %}

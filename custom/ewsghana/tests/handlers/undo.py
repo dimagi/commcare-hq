@@ -1,7 +1,6 @@
 from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.commtrack.models import StockState
-from corehq.form_processor.test_utils import FormProcessorTestUtils
-from couchforms.models import XFormInstance
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from custom.ewsghana.tests.handlers.utils import EWSScriptTest, TEST_DOMAIN
 
 

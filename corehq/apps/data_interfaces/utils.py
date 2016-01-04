@@ -76,10 +76,10 @@ def archive_or_restore_forms(domain, user, form_ids, archive_or_restore, task=No
 
         try:
             if archive_or_restore.is_archive_mode():
-                xform.archive(user=user.username)
+                xform.archive(user_id=user.username)
                 message = _(u"Successfully archived {form}").format(form=xform_string)
             else:
-                xform.unarchive(user=user.username)
+                xform.unarchive(user_id=user.username)
                 message = _(u"Successfully unarchived {form}").format(form=xform_string)
             response['success'].append(message)
             success_count = success_count + 1

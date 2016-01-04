@@ -6,39 +6,63 @@
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
-        $(function() {
-            var $testLinkButton = $('<a style="margin-left: 5px;" class="btn btn-info hide" href="#" />'),
-                     $testLabel = $('<span style="margin-left: 5px;" class="label" />');
-            $testLinkButton.text("{% trans 'Test Link' %}");
+        $(document).ready(function() {
+            var $testLinkButton = $('#test-forward-link'),
+                $testResult = $('#test-forward-result');
+
+            var handleSuccess = function(resp) {
+                /*
+                 * Handles a successful attempt to test the link. Note, just gets run when HQ returns
+                 * successful not if the link being tested returns successful
+                 */
+                var jsonResp = JSON.parse(resp),
+                    message;
+                $testResult.removeClass("hide text-danger text-success");
+                $testLinkButton.enableButton();
+
+                if (jsonResp.status) {
+                    message = jsonResp.status + ": " + jsonResp.response;
+                } else {
+                    message = jsonResp.response;
+                }
+
+                if (jsonResp.success) {
+                    $testResult.addClass("text-success");
+                    $testResult.text("{% trans 'Success! Response is' %}: " + message);
+                } else {
+                    $testResult.addClass("text-danger");
+                    $testResult.text("{% trans 'Failed! Response is' %}: " + message);
+                }
+            };
+
+            var handleFailure = function(resp) {
+                /*
+                 * Handles an HQ failure to test the URL
+                 */
+                $testLinkButton.enableButton();
+                $testResult
+                    .removeClass("hide text-success")
+                    .addClass("text-danger");
+                $testResult.text("{% trans 'HQ was unable to make the request' %}: " + resp.statusText);
+            };
+
             $testLinkButton.click(function () {
-                var url = $("#id_url").val(),
-                    format = $("#id_format").val(),
-                    type = {{ repeater_type|to_javascript_string }},
-                    data = {url: url, repeater_type: type, format: format};
-                jQuery.post("{% url "test_repeater" domain %}", data, function(data) {
-                    json_res = JSON.parse(data);
-                    $testLabel.removeClass("hide label-danger label-success");
-                    if (json_res.status) {
-                        msg = json_res.status + ": " + json_res.response;
-                    } else {
-                        msg = json_res.response;
-                    }
-                    if (json_res.success) {
-                        $testLabel.addClass("label-success");
-                        $testLabel.text("{% trans 'Success! Response is' %}: " + msg);
-                    } else {
-                        $testLabel.addClass("label-danger");
-                        $testLabel.text("{% trans 'Failed! Response is' %}: " + msg);
-                    }
-                });
+                var data = {
+                    url: $('#id_url').val(),
+                    format: $('#id_format').val(),
+                    repeater_type: {{ repeater_type|to_javascript_string }}
+                };
+                $testLinkButton.disableButton();
+
+                $.post("{% url "test_repeater" domain %}", data)
+                    .success(handleSuccess)
+                    .fail(handleFailure);
             });
-            $('#id_url').after($testLinkButton);
-            $testLinkButton.after($testLabel.addClass('hide'));
             $('#id_url').change(function () {
                 if ($(this).val()) {
-                    $testLinkButton.removeClass('hide');
+                    $testLinkButton.removeClass('disabled');
                 } else {
-                    $testLinkButton.addClass('hide');
+                    $testLinkButton.addClass('disabled');
                 }
             });
         });

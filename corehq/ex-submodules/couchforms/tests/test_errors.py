@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.form_processor.test_utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 class CaseProcessingErrorsTest(TestCase):

@@ -2,7 +2,7 @@ import logging
 from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
-from corehq.messaging.smsbackends.tropo.api import TropoBackend
+from corehq.messaging.smsbackends.tropo.models import TropoBackend
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
 

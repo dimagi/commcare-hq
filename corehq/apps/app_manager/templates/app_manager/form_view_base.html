@@ -87,7 +87,7 @@
     <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'style/ko/knockout_subscribables.ko.js' %}"></script>
-    <script src="{% static 'style/lib/jquery/plugins/jquery.caret-1.5.2.min.js' %}"></script>
+    <script src="{% static 'jquery.caret/dist/jquery.caret-1.5.2.min.js' %}"></script>
 
     {% if app.application_version == '2.0' %}
         <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
@@ -99,7 +99,6 @@
         <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
         <script src="{% static 'app_manager/js/case-config-ui-1.js' %}"></script>
     {% endif %}
-    <script src="{% static 'cloudcare/js/util.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -113,21 +112,8 @@
     {% endif %}
     <script>
         $(function(){
-            (function styleSourcePopup() {
-                var $dialog = $(".xml-source");
-                if ($dialog.hasClass('ui-dialog-content')) {
-                    $dialog.dialog({
-                        open: function () {
-                            $dialog.dialog('option', 'height', $(window).height() -100);
-                            $dialog.dialog('option', 'width', $(window).width() - 100);
-                            $dialog.dialog('option', 'position', [50, 50]);
-                        }
-                    });
-                } else {
-                    window.setTimeout(styleSourcePopup, 1000);
-                }
-            }());
-            (function doFileUploadCheck(){
+            // Do file upload check
+            (function(){
                 $("#xform_file_input").change(function(){
                     if ($(this).val()) {
                         $("#xform_file_submit").show();
@@ -136,19 +122,23 @@
                     }
                 }).trigger('change');
             }());
-            (function configXFormSourceAjax(){
+
+            // Configure form source ajax
+            (function(){
                 $("#xform-source-opener").click(function(evt){
                     if (evt.shiftKey) {
-                        $("#source-readonly").hide();
-                        $("#source-edit").show();
-                        $.get($(this).attr('href'), function (data) {
-                            $("#xform-source-edit").text(data);
+                        // Shift+click: edit form source
+                        $(".source-readonly").hide();
+                        $(".source-edit").show();
+                        $.get($(this).data('href'), function (data) {
+                            $("#xform-source-edit").text(data).caret(0);
                         }, 'json');
                     } else {
-                        $("#source-edit").hide();
-                        $("#source-readonly").show();
+                        // Plain click: view form source
+                        $(".source-edit").hide();
+                        $(".source-readonly").show();
                         $("#xform-source").text("Loading...");
-                        $.get($(this).attr('href'), function (data) {
+                        $.get($(this).data('href'), function (data) {
                             var brush = new SyntaxHighlighter.brushes.Xml();
                             brush.init({ toolbar: false });
                             // brush.getDiv seems to escape inconsistently, so I'm helping it out
@@ -156,6 +146,7 @@
                             $("#xform-source").html(brush.getDiv(data));
                         }, 'json');
                     }
+                    $(".xml-source").modal();
                 });
             }());
 
@@ -177,12 +168,10 @@
                              form_requires() === 'case') ||
                             isUserCaseInUse) && !putInRoot;
                 });
-                ko.applyBindings({
+                $('#form-filter').koApplyBindings({
                         formFilter: ko.observable(formFilter),
-                        formFilterAllowed: formFilterAllowed
-                    },
-                    $('#form-filter').get(0)
-                );
+                        formFilterAllowed: formFilterAllowed,
+                });
                 {% endif %}
 
                 {% if allow_form_workflow %}
@@ -207,16 +196,16 @@
                     options.formDatumsUrl = '{% url 'get_form_datums' domain app.id %}'
                     {% endif %}
 
-                    ko.applyBindings(new FormWorkflow(options), $('#form-workflow').get(0))
+                    $('#form-workflow').koApplyBindings(new FormWorkflow(options))
                 {% endif %}
 
-                ko.applyBindings({
+                $('#auto-gps-capture').koApplyBindings({
                     auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }})
-                }, $('#auto-gps-capture').get(0));
+                });
                 {% if request|toggle_enabled:'NO_VELLUM' %}
-                ko.applyBindings({
+                $('#no-vellum').koApplyBindings({
                     no_vellum: ko.observable({{ form.no_vellum|JSON }})
-                }, $('#no-vellum').get(0));
+                });
                 {% endif %}
 
                 gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
@@ -226,6 +215,22 @@
             {% if allow_cloudcare %}
                 // tag the 'preview in cloudcare' button with the right url
                 // unfortunately, has to be done in javascript
+                var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
+                    var url = urlRoot;
+                    if (appId !== undefined) {
+                        url = url + "view/" + appId;
+                        if (moduleId !== undefined) {
+                            url = url + "/" + moduleId;
+                            if (formId !== undefined) {
+                                url = url + "/" + formId;
+                                if (caseId !== undefined) {
+                                    url = url + "/" + caseId;
+                                }
+                            }
+                        }
+                    }
+                    return url;
+                };
                 var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
                 $("#cloudcare-preview-url").attr("href", cloudCareUrl);
                 $('#cloudcare-preview-url').click(function(e) {
@@ -250,6 +255,7 @@
     {% if not is_user_registration %}
         <div class="delete-me">
             <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
+                {% csrf_token %}
                 <button type="submit" class="disable-on-submit btn btn-danger">
                     <i class="icon-trash"></i>
                     {% trans "Delete Form" %}
@@ -297,7 +303,7 @@
     <div class="tabbable">
         <ul class="nav nav-tabs">
             <li class="active">
-                <a href="#form-settings" data-toggle="tab">{% trans "Settings" %}</a>
+                <a href="#form-settings" id="tour-form-settings-tab" data-toggle="tab">{% trans "Settings" %}</a>
             </li>
             <li>
                 <a id="case-configuration-tab" href="#case-configuration" data-toggle="tab">

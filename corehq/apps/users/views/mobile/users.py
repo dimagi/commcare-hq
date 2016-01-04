@@ -36,15 +36,14 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.es import UserES
-from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.analytics import users_have_locations
+from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.const import USER_DATE_FORMAT
-from corehq.elastic import es_query, ES_URLS, ADD_TO_ES_FILTER
 from corehq.util.couch import get_document_or_404
 from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader
@@ -59,7 +58,6 @@ from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
-from corehq.apps.locations.permissions import user_can_edit_any_location
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.style.decorators import use_bootstrap3, use_select2
@@ -228,7 +226,7 @@ class EditCommCareUserView(BaseFullEditUserView):
         if request.POST['form_type'] == "commtrack":
             if self.update_commtrack_form.is_valid():
                 self.update_commtrack_form.save(self.editable_user)
-                messages.success(request, _("CommCare Supply information updated!"))
+                messages.success(request, _("Information updated!"))
         return super(EditCommCareUserView, self).post(request, *args, **kwargs)
 
     def custom_user_is_valid(self):
@@ -443,9 +441,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'custom_field_names': [f.label for f in self.custom_data.fields],
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
-            'pagination_limit_cookie_name': ('hq.pagination.limit'
-                                             '.mobile_workers_list.%s'
-                                             % self.domain)
+            'pagination_limit_cookie_name': (
+                'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
+            'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain)
         }
 
     @property
@@ -475,13 +473,10 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         }
 
     def _user_query(self, search_string, page, limit):
-        default_search_fields = ["username", "last_name", "first_name"]
-        return (UserES()
-                .domain(self.domain)
-                .mobile_users()
-                .search_string_query(search_string, default_search_fields)
-                .start(limit * (page - 1))
-                .size(limit))
+        user_es = get_search_users_in_domain_es_query(
+            domain=self.domain, search_string=search_string,
+            offset=page * limit, limit=limit)
+        return user_es.mobile_users()
 
     @allow_remote_invocation
     def get_pagination_data(self, in_data):
@@ -495,10 +490,12 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         except ValueError:
             limit = 10
 
+        # front end pages start at one
         page = in_data.get('page', 1)
         query = in_data.get('query')
 
-        users_query = self._user_query(query, page, limit)
+        # backend pages start at 0
+        users_query = self._user_query(query, page - 1, limit)
         if in_data.get('showDeactivatedUsers', False):
             users_query = users_query.show_only_inactive()
         users_data = users_query.run()
@@ -544,21 +541,21 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         except KeyError:
             return HttpResponseBadRequest('You must specify a username')
         if username == 'admin' or username == 'demo_user':
-            return {'error': _('Username {} is reserved.'.format(username))}
+            return {'error': _(u'Username {} is reserved.').format(username)}
         if '@' in username:
             return {
-                'error': _('Username {} cannot contain "@".'.format(username))
+                'error': _(u'Username {} cannot contain "@".').format(username)
             }
         if ' ' in username:
             return {
-                'error': _('Username {} cannot contain '
-                           'spaces.'.format(username))
+                'error': _(u'Username {} cannot contain '
+                           'spaces.').format(username)
             }
         full_username = format_username(username, self.domain)
         if CommCareUser.get_by_username(full_username, strict=True):
-            result = {'error': _('Username {} is already taken'.format(username))}
+            result = {'error': _(u'Username {} is already taken').format(username)}
         else:
-            result = {'success': _('Username {} is available'.format(username))}
+            result = {'success': _(u'Username {} is available').format(username)}
         return result
 
     @allow_remote_invocation

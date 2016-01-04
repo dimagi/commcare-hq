@@ -25,6 +25,7 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.hqwebapp.models import ApplicationsTab
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.tour import tours
 from corehq.apps.translations.models import Translation
 from corehq.apps.app_manager.const import (
     APP_V1,
@@ -65,7 +66,6 @@ from corehq.apps.app_manager.models import (
     str_to_cls,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
-from dimagi.utils.web import get_url_base
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from django_prbac.utils import has_privilege
@@ -126,6 +126,8 @@ def default_new_app(request, domain):
         app.secure_submissions = True
     clear_app_cache(request, domain)
     app.save()
+    if toggles.GUIDED_TOUR.enabled(domain) and tours.NEW_APP.is_enabled(request.user):
+        return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, 0, 0]))
     return HttpResponseRedirect(reverse('form_source', args=[domain, app._id, 0, 0]))
 
 
@@ -242,7 +244,6 @@ def get_apps_base_context(request, domain, app):
         'langs': langs,
         'domain': domain,
         'app': app,
-        'URL_BASE': get_url_base(),
         'timezone': timezone,
     }
 
@@ -309,6 +310,8 @@ def app_from_template(request, domain, slug):
         app.get_module(module_id).get_form(form_id)
     except (ModuleNotFoundException, FormNotFoundException):
         return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
+    if toggles.GUIDED_TOUR.enabled(domain) and tours.NEW_APP.is_enabled(request.user):
+        return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, module_id, form_id]))
     return HttpResponseRedirect(reverse('form_source', args=[domain, app._id, module_id, form_id]))
 
 
@@ -586,6 +589,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('minimum_use_threshold', None),
         ('use_grid_menus', None),
         ('comment', None),
+        ('custom_base_url', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):

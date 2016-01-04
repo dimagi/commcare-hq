@@ -14,12 +14,14 @@ class ReportFactory(object):
     @classmethod
     def from_spec(cls, spec):
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        order_by = [(o['field'], o['order']) for o in spec.sort_expression]
         return ConfigurableReportDataSource(
             domain=spec.domain,
             config_or_config_id=spec.config_id,
             filters=[ReportFilter.wrap(f) for f in spec.filters],
             aggregation_columns=spec.aggregation_columns,
             columns=spec.report_columns,
+            order_by=order_by,
         )
 
 

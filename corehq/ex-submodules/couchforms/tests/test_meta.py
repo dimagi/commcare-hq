@@ -8,8 +8,7 @@ from corehq.util.test_utils import TestFileMixin
 from couchforms.datatypes import GeoPoint
 from couchforms.models import XFormInstance
 
-from corehq.form_processor.test_utils import run_with_all_backends
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.tests.utils import run_with_all_backends, post_xform
 
 
 class TestMeta(TestCase, TestFileMixin):
@@ -29,7 +28,7 @@ class TestMeta(TestCase, TestFileMixin):
     @run_with_all_backends
     def testClosed(self):
         xml_data = self.get_xml('meta')
-        xform = FormProcessorInterface().post_xform(xml_data)
+        xform = post_xform(xml_data)
 
         self.assertNotEqual(None, xform.metadata)
         self.assertEqual(date(2010, 07, 22), xform.metadata.timeStart.date())
@@ -60,7 +59,7 @@ class TestMeta(TestCase, TestFileMixin):
         (b) does not crash anything
         '''
         xml_data = self.get_xml('decimalmeta')
-        xform = FormProcessorInterface().post_xform(xml_data)
+        xform = post_xform(xml_data)
 
         self.assertEqual(xform.metadata.appVersion, '2.0')
         result = {
@@ -81,7 +80,7 @@ class TestMeta(TestCase, TestFileMixin):
     @run_with_all_backends
     def testMetaBadUsername(self):
         xml_data = self.get_xml('meta_bad_username')
-        xform = FormProcessorInterface().post_xform(xml_data)
+        xform = post_xform(xml_data)
 
         self.assertEqual(xform.metadata.appVersion, '2.0')
         result = {
@@ -101,7 +100,7 @@ class TestMeta(TestCase, TestFileMixin):
     @run_with_all_backends
     def testMetaAppVersionDict(self):
         xml_data = self.get_xml('meta_dict_appversion')
-        xform = FormProcessorInterface().post_xform(xml_data)
+        xform = post_xform(xml_data)
 
         self.assertEqual(xform.metadata.appVersion, '2.0')
         result = {
@@ -122,7 +121,7 @@ class TestMeta(TestCase, TestFileMixin):
     def test_gps_location(self):
         xml_data = self.get_xml('gps_location', override_path=('data',))
 
-        xform = FormProcessorInterface().post_xform(xml_data)
+        xform = post_xform(xml_data)
 
         self.assertEqual(
             xform.metadata.location,
@@ -152,7 +151,7 @@ class TestMeta(TestCase, TestFileMixin):
     @run_with_all_backends
     def test_empty_gps_location(self):
         xml_data = self.get_xml('gps_empty_location', override_path=('data',))
-        xform = FormProcessorInterface().post_xform(xml_data)
+        xform = post_xform(xml_data)
 
         self.assertEqual(
             xform.metadata.location,
@@ -164,7 +163,7 @@ class TestMeta(TestCase, TestFileMixin):
     @run_with_all_backends
     def testMetaDateInDatetimeFields(self):
         xml_data = self.get_xml('date_in_meta', override_path=('data',))
-        xform = FormProcessorInterface().post_xform(xml_data)
+        xform = post_xform(xml_data)
 
         self.assertEqual(datetime(2014, 7, 10), xform.metadata.timeStart)
         self.assertEqual(datetime(2014, 7, 11), xform.metadata.timeEnd)
@@ -172,6 +171,6 @@ class TestMeta(TestCase, TestFileMixin):
     @run_with_all_backends
     def test_missing_meta_key(self):
         xml_data = self.get_xml('missing_date_in_meta', override_path=('data',))
-        xform = FormProcessorInterface().post_xform(xml_data)
+        xform = post_xform(xml_data)
         self.assertEqual(datetime(2014, 7, 10), xform.metadata.timeStart)
         self.assertIsNone(xform.metadata.timeEnd)

@@ -615,7 +615,8 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             report_id=report._id,
             header={'en': 'CommBugz'},
             uuid='ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i',
-            description='report description',
+            xpath_description='"report description"',
+            use_xpath_description=True
         )
         report_app_config._report = report
         report_module.report_configs = [report_app_config]
@@ -648,7 +649,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.select']",
         )
         self.assertXmlPartialEqual(
-            self.get_xml('reports_module_summary_detail'),
+            self.get_xml('reports_module_summary_detail_use_xpath_description'),
             app.create_suite(),
             "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.summary']",
         )
@@ -665,4 +666,11 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertIn(
             'reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i=CommBugz',
             app.create_app_strings('default'),
+        )
+
+        report_app_config.use_xpath_description = False
+        self.assertXmlPartialEqual(
+            self.get_xml('reports_module_summary_detail_use_localized_description'),
+            app.create_suite(),
+            "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.summary']",
         )

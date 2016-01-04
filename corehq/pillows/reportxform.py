@@ -1,12 +1,11 @@
-import copy
 from django.conf import settings
-from casexml.apps.case.xform import extract_case_blocks
 
 from corehq.pillows.base import convert_property_dict
 from .mappings.reportxform_mapping import REPORT_XFORM_INDEX, REPORT_XFORM_MAPPING
 from .xform import XFormPillow
 
 COMPUTED_CASEBLOCKS_KEY = '_case_blocks'
+
 
 class ReportXFormPillow(XFormPillow):
     """
@@ -20,7 +19,8 @@ class ReportXFormPillow(XFormPillow):
     #type level mapping
     default_mapping = REPORT_XFORM_MAPPING
 
-    def get_unique_id(self):
+    @classmethod
+    def get_unique_id(cls):
         return REPORT_XFORM_INDEX
 
     def change_transform(self, doc_dict):

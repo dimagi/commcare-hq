@@ -1,13 +1,13 @@
 # coding=utf-8
 from datetime import date, datetime, timedelta
+from casexml.apps.phone.analytics import get_sync_logs_for_user
 from corehq import toggles
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log, SyncLogAssertionError
-from corehq.apps.receiverwrapper.util import get_meta_appversion_text, get_build_version, \
-    BuildVersionSource
+from corehq.apps.receiverwrapper.util import get_meta_appversion_text, BuildVersionSource, get_app_version_info
 from couchdbkit import ResourceNotFound
 from couchexport.export import SCALAR_NEVER_WAS
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -15,12 +15,11 @@ from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.util import make_form_couch_key, format_datatables_data
+from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CommCareUser
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
 from couchforms.analytics import get_last_form_submission_for_user_for_app
-from couchforms.models import XFormInstance
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
@@ -40,9 +39,8 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
         return super(DeploymentsReport, cls).show_in_navigation(domain, project, user)
 
 
-def _build_html(version, version_source):
-    version = version or _("Unknown")
-
+def _build_html(version_info):
+    version = version_info.build_version or _("Unknown")
     def fmt(title, extra_class=u'', extra_text=u''):
         return format_html(
             u'<span class="label{extra_class}" title="{title}">'
@@ -52,15 +50,15 @@ def _build_html(version, version_source):
             extra_class=extra_class,
             extra_text=extra_text,
         )
-    if version_source == BuildVersionSource.BUILD_ID:
+    if version_info.source == BuildVersionSource.BUILD_ID:
         return fmt(title=_("This was taken from build id"),
                    extra_class=u' label-success')
-    elif version_source == BuildVersionSource.APPVERSION_TEXT:
+    elif version_info.source == BuildVersionSource.APPVERSION_TEXT:
         return fmt(title=_("This was taken from appversion text"))
-    elif version_source == BuildVersionSource.XFORM_VERSION:
+    elif version_info.source == BuildVersionSource.XFORM_VERSION:
         return fmt(title=_("This was taken from xform version"),
                    extra_text=u'≥ ')
-    elif version_source == BuildVersionSource.NONE:
+    elif version_info.source == BuildVersionSource.NONE:
         return fmt(title=_("Unable to determine the build version"))
     else:
         raise AssertionError('version_source must be '
@@ -104,7 +102,6 @@ class ApplicationStatusReport(DeploymentsReport):
 
             if xform:
                 last_seen = xform.received_on
-                build_version, build_version_source = get_build_version(xform)
 
                 if xform.app_id:
                     try:
@@ -116,10 +113,19 @@ class ApplicationStatusReport(DeploymentsReport):
                 else:
                     app_name = get_meta_appversion_text(xform)
 
-                build_html = _build_html(build_version, build_version_source)
+                app_version_info = get_app_version_info(xform)
+                build_html = _build_html(app_version_info)
+                commcare_version = (
+                    'CommCare {}'.format(app_version_info.commcare_version)
+                    if app_version_info.commcare_version
+                    else _("Unknown CommCare Version")
+                )
+                commcare_version_html = mark_safe('<span class="label label-info">{}</span>'.format(
+                    commcare_version)
+                )
                 app_name = app_name or _("Unknown App")
                 app_name = format_html(
-                    u'{} {}', app_name, mark_safe(build_html),
+                    u'{} {} {}', app_name, mark_safe(build_html), commcare_version_html
                 )
 
             if app_name is None and selected_app:
@@ -197,15 +203,6 @@ class SyncHistoryReport(DeploymentsReport):
         # security check
         get_document_or_404(CommCareUser, self.domain, user_id)
 
-        sync_log_ids = [row['id'] for row in SyncLog.view(
-            "phone/sync_logs_by_user",
-            startkey=[user_id, {}],
-            endkey=[user_id],
-            descending=True,
-            reduce=False,
-            limit=self.limit,
-        )]
-
         def _sync_log_to_row(sync_log):
             def _fmt_duration(duration):
                 if isinstance(duration, int):
@@ -266,10 +263,8 @@ class SyncHistoryReport(DeploymentsReport):
 
             return columns
 
-        return [
-            _sync_log_to_row(properly_wrap_sync_log(sync_log_json))
-            for sync_log_json in iter_docs(SyncLog.get_db(), sync_log_ids)
-        ]
+        return [_sync_log_to_row(sync_log)
+                for sync_log in get_sync_logs_for_user(user_id, self.limit)]
 
     @property
     def show_extra_columns(self):

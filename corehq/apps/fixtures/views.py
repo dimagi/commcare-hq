@@ -9,6 +9,7 @@ from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 
@@ -27,7 +28,7 @@ from corehq.apps.fixtures.exceptions import (
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, FieldList, FixtureTypeField
 from corehq.apps.fixtures.upload import run_upload, validate_file_format, get_workbook
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
-from corehq.apps.fixtures.utils import is_field_name_invalid
+from corehq.apps.fixtures.utils import is_identifier_invalid
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import Permissions
@@ -113,22 +114,22 @@ def update_tables(request, domain, data_type_id, test_patch=None):
 
     if request.method == 'POST' or request.method == "PUT":
         fields_update = test_patch or _to_kwargs(request)
+        fields_patches = fields_update["fields"]
+        data_tag = fields_update["tag"]
+        is_global = fields_update["is_global"]
 
-        # validate fields
+        # validate tag and fields
         validation_errors = []
+        if is_identifier_invalid(data_tag):
+            validation_errors.append(data_tag)
         for field_name, options in fields_update['fields'].items():
             method = options.keys()
             if 'update' in method:
                 field_name = options['update']
-            if field_name.startswith('xml') and 'remove' not in method:
-                validation_errors.append(
-                    _("Field name \"%s\" cannot begin with 'xml'.") % field_name
-                )
-            if is_field_name_invalid(field_name) and 'remove' not in method:
-                validation_errors.append(
-                    _("Field name \"%s\" cannot include /, "
-                      "\\, <, >, or spaces.") % field_name
-                )
+            if is_identifier_invalid(field_name) and 'remove' not in method:
+                validation_errors.append(field_name)
+        validation_errors = map(lambda e: _("\"%s\" cannot include special characters "
+                                            "or begin with \"xml\".") % e, validation_errors)
         if validation_errors:
             return json_response({
                 'validation_errors': validation_errors,
@@ -137,9 +138,6 @@ def update_tables(request, domain, data_type_id, test_patch=None):
                     "correctly formatted"),
             })
 
-        fields_patches = fields_update["fields"]
-        data_tag = fields_update["tag"]
-        is_global = fields_update["is_global"]
         with CouchTransaction() as transaction:
             if data_type_id:
                 data_type = update_types(fields_patches, domain, data_type_id, data_tag, is_global, transaction)
@@ -381,6 +379,7 @@ def fixture_upload_job_poll(request, domain, download_id, template="fixtures/par
     return render(request, template, context)
 
 
+@csrf_exempt
 @require_POST
 @login_or_digest
 @require_can_edit_fixtures

@@ -4,12 +4,17 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
+from couchforms.analytics import get_last_form_submission_received
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import require_superuser_or_developer
 from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.users.models import CouchUser
+from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js
 from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN
 from toggle.models import Toggle
 from toggle.shortcuts import clear_toggle_cache
+
+NOT_FOUND = "Not Found"
 
 
 class ToggleBaseView(BasePageView):
@@ -20,6 +25,7 @@ class ToggleBaseView(BasePageView):
 
     def toggle_map(self):
         return dict([(t.slug, t) for t in all_toggles()])
+
 
 class ToggleListView(ToggleBaseView):
     urlname = 'toggle_list'
@@ -38,7 +44,10 @@ class ToggleListView(ToggleBaseView):
     def page_context(self):
         toggles = list(all_toggles())
         domain_counts = {}
+        active_domain_count = {}
         user_counts = {}
+        last_used = {}
+        last_modified = {}
         if self.show_usage:
             for t in toggles:
                 counter = Counter()
@@ -47,26 +56,39 @@ class ToggleListView(ToggleBaseView):
                 except ResourceNotFound:
                     domain_counts[t.slug] = 0
                     user_counts[t.slug] = 0
+                    active_domain_count[t.slug] = 0
                 else:
                     for u in usage.enabled_users:
                         namespace = u.split(":", 1)[0] if u.find(":") != -1 else NAMESPACE_USER
                         counter[namespace] += 1
+                    usage_info = _get_usage_info(usage)
                     domain_counts[t.slug] = counter.get(NAMESPACE_DOMAIN, 0)
+                    active_domain_count[t.slug] = usage_info["_active_domains"]
                     user_counts[t.slug] = counter.get(NAMESPACE_USER, 0)
-
+                    last_used[t.slug] = usage_info["_latest"]
+                    last_modified[t.slug] = usage.last_modified
         return {
             'domain_counts': domain_counts,
+            'active_domain_count': active_domain_count,
             'page_url': self.page_url,
             'show_usage': self.show_usage,
             'toggles': toggles,
             'tags': ALL_TAGS,
             'user_counts': user_counts,
+            'last_used': last_used,
+            'last_modified': last_modified,
         }
 
 
 class ToggleEditView(ToggleBaseView):
     urlname = 'edit_toggle'
     template_name = 'toggle/edit_flag.html'
+
+    @use_bootstrap3
+    @use_knockout_js
+    @method_decorator(require_superuser_or_developer)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ToggleEditView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_title(self):
@@ -79,6 +101,10 @@ class ToggleEditView(ToggleBaseView):
     @property
     def expanded(self):
         return self.request.GET.get('expand') == 'true'
+
+    @property
+    def usage_info(self):
+        return self.request.GET.get('usage_info') == 'true'
 
     @property
     def toggle_slug(self):
@@ -110,17 +136,21 @@ class ToggleEditView(ToggleBaseView):
     @property
     def page_context(self):
         toggle_meta = self.toggle_meta()
+        toggle = self.get_toggle()
         context = {
             'toggle_meta': toggle_meta,
-            'toggle': self.get_toggle(),
+            'toggle': toggle,
             'expanded': self.expanded,
             'namespaces': [NAMESPACE_USER if n is None else n for n in toggle_meta.namespaces],
+            'usage_info': self.usage_info,
         }
         if self.expanded:
             context['domain_toggle_list'] = sorted(
                 [(row['key'], toggle_meta.enabled(row['key'])) for row in Domain.get_all(include_docs=False)],
                 key=lambda domain_tup: (not domain_tup[1], domain_tup[0])
             )
+        if self.usage_info:
+            context['last_used'] = _get_usage_info(toggle)
         return context
 
     def call_save_fn(self, changed_entries, currently_enabled):
@@ -149,6 +179,66 @@ class ToggleEditView(ToggleBaseView):
             clear_toggle_cache(toggle.slug, item)
 
         data = {
-            'item_list': item_list
+            'items': item_list
         }
+        if self.usage_info:
+            data['last_used'] = _get_usage_info(toggle)
         return HttpResponse(json.dumps(data), content_type="application/json")
+
+
+def _get_usage_info(toggle):
+    """Returns usage information for each toggle
+    """
+    last_used = {}
+    active_domains = 0
+    for enabled in toggle.enabled_users:
+        name = _enabled_item_name(enabled)
+        if _namespace_domain(enabled):
+            last_form_submission = get_last_form_submission_received(name)
+            last_used[name] = _format_date(last_form_submission)
+            if last_form_submission:
+                active_domains += 1
+        else:
+            try:
+                user = CouchUser.get_by_username(name)
+                last_used[name] = _format_date(user.last_login) if user else NOT_FOUND
+            except ResourceNotFound:
+                last_used[name] = NOT_FOUND
+    last_used["_latest"] = _get_most_recently_used(last_used)
+    last_used["_active_domains"] = active_domains
+    return last_used
+
+
+def _namespace_domain(enabled_item):
+    """Returns whether the enabled item has the domain namespace
+    Toggles that are of domain namespace are of the form DOMAIN:{item}
+    """
+    return enabled_item.split(":")[0] == NAMESPACE_DOMAIN
+
+
+def _enabled_item_name(enabled_item):
+    """Returns the toggle item name
+    Toggles are of the form: {namespace}:{toggle_item} or {toggle_item}
+    The latter case is used occasionally if the namespace is "USER"
+    """
+    try:
+        return enabled_item.split(":")[1]
+    except IndexError:
+        return enabled_item.split(":")[0]
+
+
+def _format_date(date):
+    DATE_FORMAT = "%Y-%m-%d"
+    if date is None:
+        return NOT_FOUND
+    return date.strftime(DATE_FORMAT)
+
+
+def _get_most_recently_used(last_used):
+    """Returns the name and date of the most recently used toggle"""
+    last_used = {k: v for k, v in last_used.iteritems() if v != NOT_FOUND}
+    most_recently_used = sorted(last_used, key=last_used.get, reverse=True)
+    return {
+        'name': most_recently_used[0],
+        'date': last_used[most_recently_used[0]]
+    } if most_recently_used else None

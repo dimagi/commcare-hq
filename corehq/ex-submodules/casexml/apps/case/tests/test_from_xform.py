@@ -8,7 +8,7 @@ from casexml.apps.case.tests.util import bootstrap_case_from_xml
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
-from corehq.form_processor.test_utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -126,5 +126,5 @@ class CaseFromXFormTest(TestCase):
         for index, xform in enumerate(xforms):
             transaction = case.transactions[index]
             self.assertEqual(CaseTransaction.TYPE_FORM, transaction.type)
-            self.assertEqual(xform.form_id, transaction.form_uuid)
+            self.assertEqual(xform.form_id, transaction.form_id)
             self.assertFalse(transaction.revoked)

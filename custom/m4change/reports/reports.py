@@ -47,7 +47,7 @@ class M4ChangeReportDataSource(ReportDataSource):
     def get_report_slugs(self):
         return [report.slug for report in self.get_reports()]
 
-    def get_data(self, slugs=None):
+    def get_data(self):
         startdate = self.config['startdate']
         enddate = self.config['enddate']
         datespan = DateSpan(startdate, enddate)

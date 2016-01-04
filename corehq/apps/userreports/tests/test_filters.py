@@ -5,18 +5,6 @@ from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import FactoryContext
 
 
-class BasicFilterTest(SimpleTestCase):
-
-    def test_invalid_slug(self):
-        with self.assertRaises(BadSpecError):
-            FilterFactory.from_spec({
-                'type': 'property_match',
-                'property_name': 'foo',
-                'property_value': 'bar',
-                'slug': 'this-is-bad',
-            })
-
-
 class PropertyMatchFilterTest(SimpleTestCase):
 
     def get_filter(self):
@@ -202,6 +190,52 @@ class BooleanExpressionFilterTest(SimpleTestCase):
             self.assertTrue(filter({'foo': match}))
         for non_match in (-10, 0, 2):
             self.assertFalse(filter({'foo': non_match}))
+
+    def test_date_conversion(self):
+        filter_with_date = FilterFactory.from_spec({
+            "type": "boolean_expression",
+            "expression": {
+                "datatype": "date",
+                "property_name": "visit_date",
+                "type": "property_name"
+            },
+            "operator": "gt",
+            "property_value": "2015-05-05"
+        })
+        self.assertFalse(filter_with_date({'visit_date': '2015-05-04'}))
+        self.assertTrue(filter_with_date({'visit_date': '2015-05-06'}))
+
+    def test_literal_in_expression(self):
+        filter_with_literal = FilterFactory.from_spec({
+            'type': 'boolean_expression',
+            'expression': 1,
+            'operator': 'gt',
+            'property_value': 2
+        })
+        self.assertFalse(filter_with_literal({}))
+        filter_with_literal = FilterFactory.from_spec({
+            'type': 'boolean_expression',
+            'expression': 2,
+            'operator': 'gt',
+            'property_value': 1
+        })
+        self.assertTrue(filter_with_literal({}))
+
+    def test_expression_in_value(self):
+        filter_with_exp = FilterFactory.from_spec({
+            'type': 'boolean_expression',
+            'expression': {
+                'type': 'property_name',
+                'property_name': 'foo',
+            },
+            'operator': 'gt',
+            'property_value': {
+                'type': 'property_name',
+                'property_name': 'bar',
+            },
+        })
+        self.assertTrue(filter_with_exp({'foo': 4, 'bar': 2}))
+        self.assertFalse(filter_with_exp({'foo': 2, 'bar': 4}))
 
 
 class ConfigurableANDFilterTest(SimpleTestCase):

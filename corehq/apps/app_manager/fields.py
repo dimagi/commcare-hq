@@ -9,7 +9,7 @@ from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app, \
     get_exports_by_application
 from corehq.apps.app_manager.models import Application
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
-from couchforms.dbaccessors import get_exports_by_form
+from couchforms.analytics import get_exports_by_form
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
 
@@ -44,11 +44,11 @@ class ApplicationDataSourceUIHelper(object):
     - Add the following knockout bindings to your template:
 
         $(function () {
-            ko.applyBindings({
+            $("#FORM").koApplyBindings({
                 application: ko.observable(""),
                 sourceType: ko.observable(""),
                 sourcesMap: {{ sources_map|JSON }}
-            }, $("#FORM").get(0));
+            });
         });
 
     Where FORM is a selector for your form and sources_map is the .all_sources property from this object

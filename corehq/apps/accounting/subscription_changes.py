@@ -1,11 +1,14 @@
 import json
-import logging
 import datetime
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ungettext
 from corehq import privileges
-from corehq.apps.accounting.utils import get_active_reminders_by_domain_name
+from corehq.apps.accounting.utils import (
+    get_active_reminders_by_domain_name,
+    log_accounting_error,
+)
+from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.app_manager.models import Application
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.models import Domain
@@ -17,7 +20,6 @@ from couchexport.models import SavedExportSchema
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 
-logger = logging.getLogger('accounting')
 
 LATER_SUBSCRIPTION_NOTIFICATION = 'later_subscription'
 
@@ -76,6 +78,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         privileges.ROLE_BASED_ACCESS,
         privileges.DATA_CLEANUP,
         LATER_SUBSCRIPTION_NOTIFICATION,
+        privileges.COMMCARE_LOGO_UPLOADER,
     ]
     action_type = "downgrade"
 
@@ -97,8 +100,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
                     print ("Deactivated Reminder %s [%s]"
                            % (reminder.nickname, reminder._id))
         except Exception:
-            logger.exception(
-                "[BILLING] Failed to downgrade outbound sms for domain %s."
+            log_accounting_error(
+                "Failed to downgrade outbound sms for domain %s."
                 % self.domain.name
             )
             return False
@@ -118,8 +121,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
                     print ("Deactivated Survey %s [%s]"
                            % (survey.nickname, survey._id))
         except Exception:
-            logger.exception(
-                "[Billing] Failed to downgrade outbound sms for domain %s."
+            log_accounting_error(
+                "Failed to downgrade outbound sms for domain %s."
                 % self.domain.name
             )
             return False
@@ -194,9 +197,26 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             ).update(active=False)
             return True
         except Exception:
-            logger.exception(
-                "[BILLING] Failed to deactivate automatic update rules "
+            log_accounting_error(
+                "Failed to deactivate automatic update rules "
                 "for domain %s." % self.domain.name
+            )
+            return False
+
+    @property
+    def response_commcare_logo_uploader(self):
+        """Make sure no existing applications are using a logo.
+        """
+        try:
+            for app in get_all_apps(self.domain.name):
+                has_archived = app.archive_logos()
+                if has_archived:
+                    app.save()
+            return True
+        except Exception:
+            log_accounting_error(
+                "Failed to remove all commcare logos for domain %s."
+                % self.domain.name
             )
             return False
 
@@ -209,6 +229,7 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
     """
     supported_privileges = [
         privileges.ROLE_BASED_ACCESS,
+        privileges.COMMCARE_LOGO_UPLOADER,
     ]
     action_type = "upgrade"
 
@@ -225,6 +246,23 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
                 print "Re-Activating %d archived roles." % num_archived_roles
         UserRole.unarchive_roles_for_domain(self.domain.name)
         return True
+
+    @property
+    def response_commcare_logo_uploader(self):
+        """Make sure no existing applications are using a logo.
+        """
+        try:
+            for app in get_all_apps(self.domain.name):
+                has_restored = app.restore_logos()
+                if has_restored:
+                    app.save()
+            return True
+        except Exception:
+            log_accounting_error(
+                "Failed to restore all commcare logos for domain %s."
+                % self.domain.name
+            )
+            return False
 
 
 class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
@@ -405,12 +443,12 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         Get the allowed number of mobile workers based on plan version.
         """
-        from corehq.apps.accounting.models import FeatureType, FeatureRate
+        from corehq.apps.accounting.models import FeatureType, FeatureRate, UNLIMITED_FEATURE_USAGE
         num_users = CommCareUser.total_by_domain(self.domain.name, is_active=True)
         try:
             user_rate = self.new_plan_version.feature_rates.filter(
                 feature__feature_type=FeatureType.USER).latest('date_created')
-            if user_rate.monthly_limit == -1:
+            if user_rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
                 return
             num_allowed = user_rate.monthly_limit
             num_extra = num_users - num_allowed
@@ -437,11 +475,10 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                     }
                 )
         except FeatureRate.DoesNotExist:
-            logger.error(
-                "[BILLING] "
+            log_accounting_error(
                 "It seems that the plan %s did not have rate for Mobile "
-                "Workers. This is problematic." %
-                    self.new_plan_version.plan.name
+                "Workers. This is problematic."
+                % self.new_plan_version.plan.name
             )
 
     @property

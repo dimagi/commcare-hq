@@ -64,6 +64,26 @@ and `tests/main.js` for example options usage.
 
 Vellum targets modern browsers.  IE8 and earlier are not supported.
 
+Tests
+-----
+
+Test in a browser:
+```
+$ `npm bin`/http-server -c-1
+$ chromium-browser http://localhost:8080
+```
+
+By default, the test page will load the non-built version unless a `built`
+parameter is present in the query string.
+
+Commands to run tests headlessly:
+```
+grunt test
+grunt test --grep "test grep"
+```
+
+You can also use `grunt watch` to test as file changes happen.
+
 Contributing
 ------------
 
@@ -77,20 +97,4 @@ $ npm install
 Build optimized version (test locally by changing `useBuilt` in `tests/main.js`):
 ```
 $ make
-```
-
-Test in a browser:
-```
-$ `npm bin`/http-server -c-1
-$ chromium-browser http://localhost:8080
-```
-
-By default, the test page will load the non-built version unless a `built`
-parameter is present in the query string.
-
-Commands to run tests headlessly:
-```
-$ npm test
-$ ./test
-$ ./test --help # for advanced usage
 ```

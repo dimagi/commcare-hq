@@ -28,6 +28,8 @@ def term(field, value):
     """
     if isinstance(value, list):
         return {"terms": {field: value}}
+    elif isinstance(value, set):
+        return {"terms": {field: list(value)}}
     else:
         return {"term": {field: value}}
 

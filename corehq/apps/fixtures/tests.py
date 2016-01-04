@@ -8,7 +8,7 @@ from corehq.apps.fixtures.dbaccessors import \
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FixtureOwnership, FixtureTypeField, \
     FixtureItemField, FieldList
 from corehq.apps.fixtures.exceptions import FixtureVersionError
-from corehq.apps.fixtures.utils import is_field_name_invalid
+from corehq.apps.fixtures.utils import is_identifier_invalid
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase, SimpleTestCase
 
@@ -284,24 +284,28 @@ class FieldNameValidationTest(SimpleTestCase):
 
     def test_slash(self):
         bad_name = "will/crash"
-        self.assertTrue(is_field_name_invalid(bad_name))
+        self.assertTrue(is_identifier_invalid(bad_name))
 
     def test_space(self):
         bad_name = "space cadet"
-        self.assertTrue(is_field_name_invalid(bad_name))
+        self.assertTrue(is_identifier_invalid(bad_name))
+
+    def test_xml(self):
+        bad_name = "xml_and_more"
+        self.assertTrue(is_identifier_invalid(bad_name))
 
     def test_backslash(self):
         bad_name = "space\\cadet"
-        self.assertTrue(is_field_name_invalid(bad_name))
+        self.assertTrue(is_identifier_invalid(bad_name))
 
     def test_brackets(self):
         bad_name = "<space>"
-        self.assertTrue(is_field_name_invalid(bad_name))
+        self.assertTrue(is_identifier_invalid(bad_name))
 
     def test_combo(self):
         bad_name = "<space>\<dadgg sd"
-        self.assertTrue(is_field_name_invalid(bad_name))
+        self.assertTrue(is_identifier_invalid(bad_name))
 
     def test_good(self):
-        good_name = "foobar"
-        self.assertFalse(is_field_name_invalid(good_name))
+        good_name = "fooxmlbar"
+        self.assertFalse(is_identifier_invalid(good_name))

@@ -10,10 +10,6 @@ function MultimediaReferenceController (references, obj_map, totals) {
         return (self.showMissingReferences()) ? "Show All References" : "Show Only Missing References";
     }, self);
 
-    self.toggleRefsClass = ko.computed(function () {
-        return (self.showMissingReferences()) ? "btn btn-success" : "btn btn-warning";
-    }, self);
-
     self.render = function () {
         _.each(references, function (ref) {
             if (!self.modules[ref.module.id]) {
@@ -251,6 +247,7 @@ function BaseMediaReference (ref) {
         if (self.upload_controller) {
             self.upload_controller.uploadParams = {
                 path: self.path,
+                originalPath: self.path,
                 media_type : self.media_class,
                 old_ref: self.m_id || "",
                 replace_attachment: true

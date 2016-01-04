@@ -1,20 +1,21 @@
-{% extends 'sms/default.html' %}
+{% extends 'style/bootstrap3/base_section.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load timezone_tags %}
+{% load crispy_forms_tags %}
 
-{% block title %}{% trans "Compose SMS Message" %}{% endblock %}
-
-{% block sms-js-inline %}
+{% block js-inline %}
     <script type="text/javascript">
 
         $(function(){
-            $("#sms-message").bind('keyup', function () {
+            $("#hint_id_recipients").addClass("alert alert-info");
+            $("#hint_id_message").addClass("alert alert-info");
+            $("#id_message").bind('keyup', function () {
                 var max_char = 160,
                         current_count = $(this).val().length,
                         cc_message = "";
                 var chars_remaining = max_char - current_count;
-                var $char_count = $("#character-count");
+                var $char_count = $("#hint_id_message");
                 if(chars_remaining < 0)
                     $char_count.addClass("alert-danger").removeClass('alert-info');
                 else
@@ -28,42 +29,14 @@
 
 
             $('.sms-typeahead').multiTypeahead({
-                source: {{ sms_contacts|JSON }},
+                source: {{ sms_contacts|JSON }}
             }).focus();
 
         });
     </script>
 {% endblock %}
 
-{% block page-subtitle %}
-    <a href="{% url "sms_compose_message" domain %}">{% trans "Compose SMS Message" %}</a>
-{% endblock %}
 
-{% block main_column %}
-    <form class="form form-horizontal" action="{% url "corehq.apps.sms.views.send_to_recipients" domain %}" method="post">{% csrf_token %}
-        <fieldset>
-            <legend>{% trans "Send SMS Message" %}</legend>
-            <div class="control-group">
-                <label class="control-label" for="sms-recipients">{% trans "Recipients:" %}</label>
-                <div class="controls">
-                    <div class="row-fluid">
-                        <textarea id="sms-recipients" name="recipients" class="sms-typeahead span12"></textarea>
-                    </div>
-                    <p class="alert alert-info help-block">{% trans "Type a username, group name or 'send to all'" %}</p>
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label" for="sms-message">{% trans "Message:" %}</label>
-                <div class="controls">
-                    <div class="row-fluid">
-                        <textarea id="sms-message" name="message" class="span12"></textarea>
-                    </div>
-                    <p class="alert alert-info help-block" id="character-count">{% trans "0 characters (160 max)" %}</p>
-                </div>
-            </div>
-        </fieldset>
-        <div class="form-actions">
-            <button type="submit" name="send_sms_button" class="btn btn-primary">{% trans "Send Message" %}</button>
-        </div>
-    </form>
+{% block page_content %}
+    {% crispy form %}
 {% endblock %}

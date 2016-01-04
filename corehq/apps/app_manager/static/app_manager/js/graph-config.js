@@ -44,7 +44,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         // Load the modal with the copy
         var $modalDiv = $('<div data-bind="template: \'graph_configuration_modal\'"></div>');
 
-        ko.applyBindings(graphViewModelCopy, $modalDiv.get(0));
+        $modalDiv.koApplyBindings(graphViewModelCopy);
 
         var $modal = $modalDiv.find('.modal');
         $modal.appendTo('body');
@@ -57,7 +57,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         self.graphViewModel.graphDisplayName(name);
     };
 
-    ko.applyBindings(self, self.ui.get(0));
+    self.ui.koApplyBindings(self);
     eventize(self);
 
     /**
@@ -303,14 +303,13 @@ var GraphViewModel = function(moduleOptions){
         'secondary-y-max',
         // Axis labels:
         'x-labels',
+        'x-labels-time-format',
         'y-labels',
         'secondary-y-labels',
         // other:
         'show-axes',
         'show-grid',
         'show-legend',
-        'zoom',
-        'zoom-location',
         'bar-orientation',
         'stack',
     ];
@@ -329,14 +328,13 @@ var GraphViewModel = function(moduleOptions){
         'secondary-y-max': 'ex: 100',
         // Axis labels:
         'x-labels': 'ex: 3 or \'[1,3,5]\' or \'{"0":"freezing"}\'',
+        'x-labels-time-format': 'ex: \'%Y-%m\'',
         'y-labels': 'ex: 3 or \'[1,3,5]\' or \'{"0":"freezing"}\'',
         'secondary-y-labels': 'ex: 3 or [1,3,5] or {"0":"freezing"}',
         // other:
         'show-axes': 'true() or false()',
         'show-grid': 'true() or false()',
         'show-legend': 'true() or false()',
-        'zoom': 'true() or false()',
-        'zoom-location': 'ex: \'top-right\'',
         'bar-orientation': '\'horizontal\' or \'vertical\'',
         'stack': 'true() or false()',
     };
@@ -491,16 +489,16 @@ var GraphSeries = function (original, childCaseTypes, fixtures){
     self.xLabel = "X";
     self.yLabel = "Y";
     self.configPropertyOptions = [
-        'fill-above',
         'fill-below',
         'line-color',
         'name',
+        'x-name',
     ];
     self.configPropertyHints = {
-        'fill-above': "ex: '#aarrggbb'",
         'fill-below': "ex: '#aarrggbb'",
         'line-color': "ex: '#aarrggbb'",
-        'name': "ex: 'My Series 1'",
+        'name': "ex: 'My Y-Values 1'",
+        'x-name': "ex: 'My X-Values'",
     };
 
     self.toggleShowDataPath = function() {
@@ -519,8 +517,10 @@ GraphSeries.prototype.constructor = GraphSeries;
 var XYGraphSeries = function(original, childCaseTypes, fixtures){
     GraphSeries.apply(this, [original, childCaseTypes, fixtures]);
     var self = this;
-    self.configPropertyOptions = self.configPropertyOptions.concat(['point-style', 'secondary-y']);
-    self.configPropertyHints['point-style'] = "'none', 'circle', 'x', 'diamond', ..."; //triangle and square are also options
+    self.configPropertyOptions = self.configPropertyOptions.concat(['is-data', 'point-style', 'secondary-y']);
+    self.configPropertyHints['is-data'] = 'true() or false()';
+    // triangle-up and triangle-down are also options
+    self.configPropertyHints['point-style'] = "'none', 'circle', 'cross', 'diamond', ...";
     self.configPropertyHints['secondary-y'] = 'true() or false()';
 
 };
@@ -533,8 +533,8 @@ var BarGraphSeries = function(original, childCaseTypes, fixtures){
 
     self.xLabel = "Label";
     self.yLabel = "Value";
-    self.configPropertyOptions = self.configPropertyOptions.concat(['bar-sort']);
-    self.configPropertyHints['bar-sort'] = "'ascending' or 'descending'";
+    self.configPropertyOptions = self.configPropertyOptions.concat(['bar-color']);
+    self.configPropertyHints['bar-color'] = "if(x > 100, '#55ff00ff', 'ffff00ff')";
 };
 BarGraphSeries.prototype = new GraphSeries();
 BarGraphSeries.constructor = BarGraphSeries;

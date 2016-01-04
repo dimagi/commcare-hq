@@ -3,10 +3,8 @@ from optparse import make_option
 from couchdbkit import Database
 
 from django.core.management.base import BaseCommand
-from django.db.models import get_apps
 from corehq.preindex import get_preindex_plugins
 from dimagi.utils.couch.database import get_design_docs
-from dimagi.utils.couch.sync_docs import get_app_sync_info
 
 
 class Command(BaseCommand):
@@ -20,13 +18,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # build a data structure indexing databases to relevant design docs
         db_label_map = defaultdict(lambda: set())
-
-        # pull design docs from normal couchbkit apps
-        app_infos = [get_app_sync_info(app) for app in get_apps()]
-        for info in app_infos:
-            for design in info.designs:
-                if design.design_path:
-                    db_label_map[design.db.uri].add(design.app_label)
 
         # pull design docs from preindex plugins
         plugins = get_preindex_plugins()
@@ -55,8 +46,28 @@ class Command(BaseCommand):
                     '',
             ])).lower() == 'delete designs':
                 for db, design_docs in designs_to_delete.items():
+                    for design_doc in design_docs:
+                        # If we don't delete conflicts, then they take the place of the
+                        # document when it's deleted. (That's how couch works.)
+                        # This results in a huge reindex for an old conflicted version
+                        # of a design doc we don't even want anymore.
+                        delete_conflicts(db, design_doc['_id'])
                     db.delete_docs(design_docs)
             else:
                 print 'aborted!'
         else:
             print 'database already completely pruned!'
+
+
+class MyConflictsDontDie(Exception):
+    pass
+
+
+def delete_conflicts(db, doc_id):
+    doc_with_conflicts = db.get(doc_id, conflicts=True)
+    if '_conflicts' in doc_with_conflicts:
+        conflict_revs = doc_with_conflicts['_conflicts']
+        db.bulk_delete([{'_id': doc_id, '_rev': rev} for rev in conflict_revs])
+        doc_with_conflicts = db.get(doc_id, conflicts=True)
+        if '_conflicts' in doc_with_conflicts:
+            raise MyConflictsDontDie(doc_with_conflicts)

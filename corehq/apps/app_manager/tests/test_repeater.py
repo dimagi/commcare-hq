@@ -3,7 +3,7 @@ from datetime import datetime
 from django.test import TestCase
 from django.test.client import Client
 
-from corehq.apps.receiverwrapper.models import RepeatRecord, AppStructureRepeater
+from corehq.apps.repeaters.models import RepeatRecord, AppStructureRepeater
 from corehq.apps.app_manager.models import Application
 
 

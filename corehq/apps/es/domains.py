@@ -37,6 +37,7 @@ class DomainES(HQESQuery):
             in_domains,
             is_active,
             is_snapshot,
+            created_by_user,
         ] + super(DomainES, self).builtin_filters
 
 
@@ -79,7 +80,7 @@ def last_modified(gt=None, gte=None, lt=None, lte=None):
 
 
 def in_domains(domains):
-    return filters.term('name', list(domains))
+    return filters.term('name', domains)
 
 
 def is_active(is_active=True):
@@ -88,3 +89,7 @@ def is_active(is_active=True):
 
 def is_snapshot(is_snapshot=True):
     return filters.term('is_snapshot', is_snapshot)
+
+
+def created_by_user(creating_user):
+    return filters.term('creating_user', creating_user)

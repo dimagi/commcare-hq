@@ -73,6 +73,17 @@ from .utils import (
 )
 
 
+def invoice_column_cell(invoice):
+    from corehq.apps.accounting.views import InvoiceSummaryView
+    return format_datatables_data(
+        mark_safe(make_anchor_tag(
+            reverse(InvoiceSummaryView.urlname, args=(invoice.id,)),
+            invoice.invoice_number
+        )),
+        invoice.id,
+    )
+
+
 class AddItemInterface(GenericTabularReport):
     base_template = 'accounting/add_new_item_button.html'
     exportable = True
@@ -236,7 +247,7 @@ class SubscriptionInterface(AddItemInterface):
             DataTablesColumn("Do Not Invoice"),
             DataTablesColumn("Created By"),
             DataTablesColumn("Type"),
-            DataTablesColumn("Pro-Bono"),
+            DataTablesColumn("Discounted"),
         )
         if not self.is_rendered_as_email:
             header.add_column(DataTablesColumn("Action"))
@@ -684,7 +695,6 @@ class InvoiceInterface(InvoiceInterfaceBase):
 
         if not self.is_rendered_as_email:
             header.add_column(DataTablesColumn("Action"))
-            header.add_column(DataTablesColumn("View Invoice"))
         return header
 
     @property
@@ -713,10 +723,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
             invoice_href = reverse(InvoiceSummaryView.urlname, args=(invoice.id,))
 
             columns = [
-                format_datatables_data(
-                    mark_safe(make_anchor_tag(invoice_href, invoice.invoice_number)),
-                    invoice.id,
-                ),
+                invoice_column_cell(invoice),
                 format_datatables_data(
                     mark_safe(make_anchor_tag(account_href, account_name)),
                     invoice.subscription.account.name
@@ -779,14 +786,9 @@ class InvoiceInterface(InvoiceInterfaceBase):
                     "data-target": adjust_href,
                     "class": "btn",
                 }
-                columns.extend([
+                columns.append(
                     mark_safe(make_anchor_tag(adjust_href, adjust_name, adjust_attrs)),
-                    mark_safe(make_anchor_tag(
-                        invoice_href,
-                        "Go to Invoice",
-                        {"class": "btn"},
-                    ))
-                ])
+                )
             rows.append(columns)
         return rows
 
@@ -1138,6 +1140,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
             ),
             DataTablesColumn("Project Space"),
             DataTablesColumn("Reason"),
+            DataTablesColumn("Invoice"),
             DataTablesColumn("Note"),
             DataTablesColumn("Amount"),
             DataTablesColumn("By User"),
@@ -1145,7 +1148,10 @@ class CreditAdjustmentInterface(GenericTabularReport):
 
     @property
     def rows(self):
-        from corehq.apps.accounting.views import EditSubscriptionView, ManageBillingAccountView
+        from corehq.apps.accounting.views import (
+            EditSubscriptionView,
+            ManageBillingAccountView,
+        )
         return [
             map(lambda x: x or '', [
                 credit_adj.date_created,
@@ -1180,6 +1186,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
                     )
                 ),
                 dict(CreditAdjustmentReason.CHOICES)[credit_adj.reason],
+                invoice_column_cell(credit_adj.invoice) if credit_adj.invoice else None,
                 credit_adj.note,
                 quantize_accounting_decimal(credit_adj.amount),
                 credit_adj.web_user,

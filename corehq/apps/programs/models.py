@@ -41,7 +41,7 @@ class Program(Document):
         Gets all programs in a domain.
         """
         kwargs = dict(
-            view_name='commtrack/programs',
+            view_name='commtrack/program_by_code',
             startkey=[domain],
             endkey=[domain, {}],
             include_docs=True
@@ -65,14 +65,10 @@ class Program(Document):
 
         default = Program.default_for_domain(self.domain)
 
-        products = Product.by_program_id(
-            self.domain,
-            self._id,
-            wrap=True
-        )
+        sql_products = SQLProduct.objects.filter(domain=self.domain,
+                                                 program_id=self.get_id)
         to_save = []
-
-        for product in products:
+        for product in sql_products.couch_products():
             product['program_id'] = default._id
             to_save.append(product)
 
@@ -84,7 +80,7 @@ class Program(Document):
         Product.bulk_save(to_save)
 
         # bulk update sqlproducts
-        SQLProduct.objects.filter(program_id=self._id).update(program_id=default._id)
+        sql_products.update(program_id=default._id)
 
         return super(Program, self).delete()
 
@@ -104,4 +100,7 @@ class Program(Document):
                           limit=1).first()
         return result
 
-
+    def get_products_count(self):
+        return (SQLProduct.objects
+                .filter(domain=self.domain, program_id=self.get_id)
+                .count())

@@ -21,6 +21,7 @@ from .test_utils import *
 from .test_view import *
 from .test_dbaccessors import *
 from .test_report_aggregation import *
+from .test_choice_provider import *
 
 from corehq.apps.userreports.expressions.getters import recursive_lookup
 

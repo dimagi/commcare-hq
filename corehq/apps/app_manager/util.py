@@ -400,6 +400,30 @@ def all_apps_by_domain(domain):
         yield get_correct_app_class(doc).wrap(doc)
 
 
+def all_case_properties_by_domain(domain, include_parent_properties=True):
+    result = {}
+    for app in all_apps_by_domain(domain):
+        if app.is_remote_app():
+            continue
+
+        property_map = get_case_properties(app, app.get_case_types(),
+            defaults=('name',), include_parent_properties=include_parent_properties)
+
+        for case_type, properties in property_map.iteritems():
+            if case_type in result:
+                result[case_type].extend(properties)
+            else:
+                result[case_type] = properties
+
+    cleaned_result = {}
+    for case_type, properties in result.iteritems():
+        properties = list(set(properties))
+        properties.sort()
+        cleaned_result[case_type] = properties
+
+    return cleaned_result
+
+
 def new_careplan_module(app, name, lang, target_module):
     from corehq.apps.app_manager.models import CareplanModule, CareplanGoalForm, CareplanTaskForm
     module = app.add_module(CareplanModule.new_module(
@@ -508,7 +532,7 @@ def prefix_usercase_properties(properties):
 
 
 def get_cloudcare_session_data(domain_name, form, couch_user):
-    from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+    from corehq.apps.hqcase.utils import get_case_id_by_domain_hq_user_id
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 
     datums = EntriesHelper.get_new_case_id_datums_meta(form)
@@ -521,9 +545,9 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
             _assert(False, 'Domain "%s": %s' % (domain_name, err))
         else:
             if EntriesHelper.any_usercase_datums(extra_datums):
-                usercase = get_case_by_domain_hq_user_id(domain_name, couch_user.get_id, USERCASE_TYPE)
-                if usercase:
-                    session_data[USERCASE_ID] = usercase.get_id
+                usercase_id = get_case_id_by_domain_hq_user_id(domain_name, couch_user.get_id, USERCASE_TYPE)
+                if usercase_id:
+                    session_data[USERCASE_ID] = usercase_id
     return session_data
 
 

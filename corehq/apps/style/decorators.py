@@ -183,3 +183,39 @@ def use_datatables(view_func):
         request.use_datatables = True
         return view_func(class_based_view, request, *args, **kwargs)
     return _wrapped
+
+
+def use_typeahead(view_func):
+    """Use this decorator on the dispatch method of a TemplateView subclass
+    to enable the inclusion of the typeahead library at the base template
+    level.
+
+    Example:
+
+    @use_typeahead
+    def dispatch(self, request, *args, **kwargs):
+        return super(MyView, self).dispatch(request, *args, **kwargs)
+    """
+    @wraps(view_func)
+    def _wrapped(class_based_view, request, *args, **kwargs):
+        request.use_typeahead = True
+        return view_func(class_based_view, request, *args, **kwargs)
+    return _wrapped
+
+
+def use_timepicker(view_func):
+    """Use this decorator on the dispatch method of a TemplateView subclass
+    to enable the inclusion of the timepicker library at the base template
+    level.
+
+    Example:
+
+    @use_timepicker
+    def dispatch(self, request, *args, **kwargs):
+        return super(MyView, self).dispatch(request, *args, **kwargs)
+    """
+    @wraps(view_func)
+    def _wrapped(class_based_view, request, *args, **kwargs):
+        request.use_timepicker = True
+        return view_func(class_based_view, request, *args, **kwargs)
+    return _wrapped

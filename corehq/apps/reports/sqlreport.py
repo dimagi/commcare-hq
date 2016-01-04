@@ -8,7 +8,7 @@ from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.basic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, \
     DataTablesColumn, DTSortType
-from corehq.db import DEFAULT_ENGINE_ID, connection_manager
+from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.util import format_datatables_data
 
@@ -54,8 +54,6 @@ class DatabaseColumn(Column):
         Args:
             :param header:
                 The column header.
-            :param name:
-                The name of the column. This must match up to a column name in the report database.
             :param args:
                 Additional positional arguments will be passed on when creating the DataTablesColumn
             :param agg_column:
@@ -235,10 +233,9 @@ class SqlData(ReportDataSource):
     def query_context(self):
         return sqlagg.QueryContext(self.table_name, self.wrapped_filters, self.group_by)
 
-    def get_data(self, slugs=None):
-        data = self._get_data(slugs=slugs)
-        columns = [c for c in self.columns if not slugs or c.slug in slugs]
-        formatter = DataFormatter(DictDataFormat(columns, no_value=None))
+    def get_data(self):
+        data = self._get_data()
+        formatter = DataFormatter(DictDataFormat(self.columns, no_value=None))
         formatted_data = formatter.format(data, keys=self.keys, group_by=self.group_by)
 
         if self.group_by:
@@ -249,14 +246,13 @@ class SqlData(ReportDataSource):
     def slugs(self):
         return [c.slug for c in self.columns]
 
-    def _get_data(self, slugs=None):
+    def _get_data(self):
         if self.keys is not None and not self.group_by:
             raise SqlReportException('Keys supplied without group_by.')
 
         qc = self.query_context
         for c in self.columns:
-            if not slugs or c.slug in slugs:
-                qc.append_column(c.view)
+            qc.append_column(c.view)
 
         session = connection_manager.get_scoped_session(self.engine_id)
         try:

@@ -2,6 +2,7 @@ from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
 import json
+import itertools
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from corehq.toggles import LEGACY_SYNC_SUPPORT
@@ -12,6 +13,7 @@ from django.db import models
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
+from dimagi.utils.couch.database import get_db
 from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
@@ -134,6 +136,11 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     error_hash = StringProperty()
 
     strict = True  # for asserts
+
+    @classmethod
+    def get(cls, doc_id):
+        doc = get_sync_log_doc(doc_id)
+        return cls.wrap(doc)
 
     def _assert(self, conditional, msg="", case_id=None):
         if not conditional:
@@ -458,9 +465,6 @@ class SyncLog(AbstractSyncLog):
         return self.dependent_cases_on_phone
 
 
-PruneResult = namedtuple('PruneResult', ['seen', 'pruned'])
-
-
 class IndexTree(DocumentSchema):
     """
     Document type representing a case dependency tree (which is flattened to a single dict)
@@ -471,6 +475,81 @@ class IndexTree(DocumentSchema):
 
     def __repr__(self):
         return json.dumps(self.indices, indent=2)
+
+    @staticmethod
+    def get_all_dependencies(case_id, child_index_tree, extension_index_tree, closed_cases=None,
+                             cached_child_map=None, cached_extension_map=None):
+        """Takes a child and extension index tree and returns returns a set of all dependencies of <case_id>
+
+        Traverse each incoming index, return each touched case. Stop traversing
+        incoming extensions if they lead to closed cases.
+        Traverse each outgoing index in the extension tree, return each touched case
+        """
+        if closed_cases is None:
+            closed_cases = set()
+
+        def _recursive_call(case_id, all_cases, cached_child_map, cached_extension_map):
+            all_cases.add(case_id)
+            incoming_extension_indices = extension_index_tree.get_cases_that_directly_depend_on_case(
+                case_id,
+                cached_map=cached_extension_map
+            )
+            open_incoming_extension_indices = {
+                case for case in incoming_extension_indices if case not in closed_cases
+            }
+            all_incoming_indices = itertools.chain(
+                child_index_tree.get_cases_that_directly_depend_on_case(case_id, cached_map=cached_child_map),
+                open_incoming_extension_indices,
+            )
+
+            for dependent_case in all_incoming_indices:
+                # incoming indices
+                if dependent_case not in all_cases:
+                    all_cases.add(dependent_case)
+                    _recursive_call(dependent_case, all_cases, cached_child_map, cached_extension_map)
+            for indexed_case in extension_index_tree.indices.get(case_id, {}).values():
+                # outgoing extension indices
+                if indexed_case not in all_cases:
+                    all_cases.add(indexed_case)
+                    _recursive_call(indexed_case, all_cases, cached_child_map, cached_extension_map)
+
+        all_cases = set()
+        cached_child_map = cached_child_map or _reverse_index_map(child_index_tree.indices)
+        cached_extension_map = cached_extension_map or _reverse_index_map(extension_index_tree.indices)
+        _recursive_call(case_id, all_cases, cached_child_map, cached_extension_map)
+        return all_cases
+
+    @staticmethod
+    def get_all_outgoing_cases(case_id, child_index_tree, extension_index_tree):
+        """traverse all outgoing child and extension indices"""
+        all_cases = set([case_id])
+        new_cases = set([case_id])
+        while new_cases:
+            case_to_check = new_cases.pop()
+            parent_cases = set(child_index_tree.indices.get(case_to_check, {}).values())
+            host_cases = set(extension_index_tree.indices.get(case_to_check, {}).values())
+            new_cases = (new_cases | parent_cases | host_cases) - all_cases
+            all_cases = all_cases | parent_cases | host_cases
+        return all_cases
+
+    @staticmethod
+    def traverse_incoming_extensions(case_id, extension_index_tree, closed_cases, cached_map=None):
+        """traverse open incoming extensions"""
+        all_cases = set([case_id])
+        new_cases = set([case_id])
+        cached_map = cached_map or _reverse_index_map(extension_index_tree.indices)
+        while new_cases:
+            case_to_check = new_cases.pop()
+            open_incoming_extension_indices = {
+                case for case in
+                extension_index_tree.get_cases_that_directly_depend_on_case(case_to_check,
+                                                                            cached_map=cached_map)
+                if case not in closed_cases
+            }
+            for incoming_case in open_incoming_extension_indices:
+                new_cases.add(incoming_case)
+                all_cases.add(incoming_case)
+        return all_cases
 
     def get_cases_that_directly_depend_on_case(self, case_id, cached_map=None):
         cached_map = cached_map or _reverse_index_map(self.indices)
@@ -541,10 +620,13 @@ class SimplifiedSyncLog(AbstractSyncLog):
     log_format = StringProperty(default=LOG_FORMAT_SIMPLIFIED)
     case_ids_on_phone = SetProperty(unicode)
     # this is a subset of case_ids_on_phone used to flag that a case is only around because it has dependencies
-    # this allows us to prune it if possible from other actions
+    # this allows us to purge it if possible from other actions
     dependent_case_ids_on_phone = SetProperty(unicode)
     owner_ids_on_phone = SetProperty(unicode)
-    index_tree = SchemaProperty(IndexTree)
+    index_tree = SchemaProperty(IndexTree)  # index tree of subcases / children
+    extension_index_tree = SchemaProperty(IndexTree)  # index tree of extensions
+    closed_cases = SetProperty(unicode)
+    extensions_checked = BooleanProperty(default=False)
 
     def save(self, *args, **kwargs):
         # force doc type to SyncLog to avoid changing the couch view.
@@ -567,86 +649,208 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def primary_case_ids(self):
         return self.case_ids_on_phone - self.dependent_case_ids_on_phone
 
-    def prune_case(self, case_id):
+    def purge(self, case_id):
         """
-        Prunes a case from the tree while also pruning any dependencies as a result of this pruning.
+        This happens in 3 phases, and recursively tries to purge outgoing indices of purged cases.
+        Definitions:
+        -----------
+        A case is *relevant* if:
+        - it is open and owned or,
+        - it has a relevant child or,
+        - it has a relevant extension or,
+        - it is the extension of a relevant case.
+
+        A case is *available* if:
+        - it is open and not an extension case or,
+        - it is open and is the extension of an available case.
+
+        A case is *live* if:
+        - it is owned and available or,
+        - it has a live child or,
+        - it has a live extension or,
+        - it is the exension of a live case.
+
+        Algorithm:
+        ----------
+        1. Mark *relevant* cases
+            Mark all open cases owned by the user relevant. Traversing all outgoing child
+            and extension indexes, as well as all incoming extension indexes, mark all
+            touched cases relevant.
+
+        2. Mark *available* cases
+            Mark all relevant cases that are open and have no outgoing extension indexes
+            as available. Traverse incoming extension indexes which don't lead to closed
+            cases, mark all touched cases as available.
+
+        3. Mark *live* cases
+            Mark all relevant, owned, available cases as live. Traverse incoming
+            extension indexes which don't lead to closed cases, mark all touched
+            cases as live.
         """
-        logger.debug('pruning: {}'.format(case_id))
+        logger.debug("purging: {}".format(case_id))
         self.dependent_case_ids_on_phone.add(case_id)
-        reverse_index_map = _reverse_index_map(self.index_tree.indices)
-        dependencies = self.index_tree.get_all_cases_that_depend_on_case(case_id, cached_map=reverse_index_map)
-        # we can only potentially remove a case if it's already in dependent case ids
-        # and therefore not directly owned
-        candidates_to_remove = dependencies & self.dependent_case_ids_on_phone
-        dependencies_not_to_remove = dependencies - self.dependent_case_ids_on_phone
+        relevant = self._get_relevant_cases(case_id)
+        available = self._get_available_cases(relevant)
+        live = self._get_live_cases(available)
+        to_remove = relevant - live
+        self._remove_cases_purge_indices(to_remove, case_id)
 
-        def _remove_case(to_remove):
-            # uses closures for assertions
-            logger.debug('removing: {}'.format(to_remove))
-            assert to_remove in self.dependent_case_ids_on_phone
-            indices = self.index_tree.indices.pop(to_remove, {})
-            if to_remove != case_id:
-                # if the case had indexes they better also be in our removal list (except for ourselves)
-                for index in indices.values():
-                    if not _domain_has_legacy_toggle_set():
-                        # unblocking http://manage.dimagi.com/default.asp?185850#1039475
-                        _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False,
-                                              fail_if_debug=True)
-                        _assert(index in candidates_to_remove,
-                            "expected {} in {} but wasn't".format(index, candidates_to_remove))
-            try:
-                self.case_ids_on_phone.remove(to_remove)
-            except KeyError:
-                _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False)
+    def _get_relevant_cases(self, case_id):
+        """
+        Mark all open cases owned by the user relevant. Traversing all outgoing child
+        and extension indexes, as well as all incoming extension indexes,
+        mark all touched cases relevant.
+        """
+        relevant = IndexTree.get_all_dependencies(
+            case_id,
+            closed_cases=self.closed_cases,
+            child_index_tree=self.index_tree,
+            extension_index_tree=self.extension_index_tree,
+            cached_child_map=_reverse_index_map(self.index_tree.indices),
+            cached_extension_map=_reverse_index_map(self.extension_index_tree.indices),
+        )
+        logger.debug("Relevant cases: {}".format(relevant))
 
-                def _should_fail_softly():
-                    def _sync_log_was_old():
-                        # todo: this here to avoid having to manually clean up after
-                        # http://manage.dimagi.com/default.asp?179664
-                        # it should be removed when there are no longer any instances of the assertion
-                        if self.date < datetime(2015, 8, 25):
-                            _assert(False, 'patching sync log {} to remove missing case ID {}!'.format(
-                                self._id, to_remove)
-                            )
-                            return True
-                        return False
+        return relevant
 
-                    return _domain_has_legacy_toggle_set() or _sync_log_was_old()
+    def _get_available_cases(self, relevant):
+        """
+        Mark all relevant cases that are open and have no outgoing extension indexes
+        as available. Traverse incoming extension indexes which don't lead to closed
+        cases, mark all touched cases as available
+        """
+        incoming_extensions = _reverse_index_map(self.extension_index_tree.indices)
+        available = {case for case in relevant
+                     if case not in self.closed_cases
+                     and not self.extension_index_tree.indices.get(case) or self.index_tree.indices.get(case)}
+        new_available = set() | available
+        while new_available:
+            case_to_check = new_available.pop()
+            for incoming_extension in incoming_extensions.get(case_to_check, []):
+                if incoming_extension not in self.closed_cases:
+                    new_available.add(incoming_extension)
+            available = available | new_available
+        logger.debug("Available cases: {}".format(available))
 
-                if _should_fail_softly():
-                    pass
-                else:
-                    # this is only a soft assert for now because of http://manage.dimagi.com/default.asp?181443
-                    # we should convert back to a real Exception when we stop getting any of these
-                    _assert(False, 'case {} already removed from sync log {}'.format(to_remove, self._id))
+        return available
 
+    def _get_live_cases(self, available):
+        """
+        Mark all relevant, owned, available cases as live. Traverse incoming
+        extension indexes which don't lead to closed cases, mark all touched
+        cases as available.
+        """
+        incoming_extensions = _reverse_index_map(self.extension_index_tree.indices)
+        live = {case for case in available if case in self.primary_case_ids}
+        new_live = set() | live
+        checked = set()
+        while new_live:
+            case_to_check = new_live.pop()
+            checked.add(case_to_check)
+            new_live = new_live | IndexTree.get_all_outgoing_cases(
+                case_to_check,
+                self.index_tree,
+                self.extension_index_tree
+            )
+            new_live = new_live | IndexTree.traverse_incoming_extensions(
+                case_to_check,
+                self.extension_index_tree,
+                self.closed_cases, cached_map=incoming_extensions
+            )
+            new_live = new_live - checked
+            live = live | new_live
+
+        logger.debug("live cases: {}".format(live))
+
+        return live
+
+    def _remove_cases_purge_indices(self, all_to_remove, checked_case_id):
+        """Remove all cases marked for removal. Traverse child cases and try to purge those too."""
+        logger.debug("cases to to_remove: {}".format(all_to_remove))
+        for to_remove in all_to_remove:
+            indices = self.index_tree.indices.get(to_remove, {})
+            self._remove_case(to_remove, all_to_remove, checked_case_id)
+            for referenced_case in indices.values():
+                is_dependent_case = referenced_case in self.dependent_case_ids_on_phone
+                already_primed_for_removal = referenced_case in all_to_remove
+                if is_dependent_case and not already_primed_for_removal and referenced_case != checked_case_id:
+                    self.purge(referenced_case)
+
+    def _remove_case(self, to_remove, all_to_remove, checked_case_id):
+        """Removes case from index trees, case_ids_on_phone and dependent_case_ids_on_phone if pertinent"""
+        logger.debug('removing: {}'.format(to_remove))
+
+        deleted_indices = self.index_tree.indices.pop(to_remove, {})
+        deleted_indices.update(self.extension_index_tree.indices.pop(to_remove, {}))
+
+        self._validate_case_removal(to_remove, all_to_remove, deleted_indices, checked_case_id)
+
+        try:
+            self.case_ids_on_phone.remove(to_remove)
+        except KeyError:
+            _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False)
+            should_fail_softly = _domain_has_legacy_toggle_set()
+            if should_fail_softly:
+                pass
+            else:
+                # this is only a soft assert for now because of http://manage.dimagi.com/default.asp?181443
+                # we should convert back to a real Exception when we stop getting any of these
+                _assert(False, 'case {} already removed from sync log {}'.format(to_remove, self._id))
+
+        if to_remove in self.dependent_case_ids_on_phone:
             self.dependent_case_ids_on_phone.remove(to_remove)
 
-        if not dependencies_not_to_remove:
-            # this case's entire relevancy chain is in dependent cases
-            # this means they can all now be removed.
-            this_case_indices = self.index_tree.indices.get(case_id, {})
-            for to_remove in candidates_to_remove:
-                _remove_case(to_remove)
+    def _validate_case_removal(self, case_to_remove, all_to_remove, deleted_indices, checked_case_id):
+        """Traverse immediate outgoing indices. Validate that these are also candidates for removal."""
+        if case_to_remove == checked_case_id:
+            return
 
-            for this_case_index in this_case_indices.values():
-                if (this_case_index in self.dependent_case_ids_on_phone and
-                        this_case_index not in candidates_to_remove):
-                    self.prune_case(this_case_index)
-        else:
-            # we have some possible candidates for removal. we should check each of them except ourself
-            candidates_to_also_check = candidates_to_remove - set(case_id)
-            for candidate in candidates_to_also_check:
-                candidate_dependencies = self.index_tree.get_all_cases_that_depend_on_case(
-                    candidate, cached_map=reverse_index_map
-                )
-                if not candidate_dependencies - self.dependent_case_ids_on_phone:
-                    _remove_case(candidate)
+        for index in deleted_indices.values():
+            if not _domain_has_legacy_toggle_set():
+                # unblocking http://manage.dimagi.com/default.asp?185850#1039475
+                _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=True,
+                                      fail_if_debug=True)
+                _assert(index in (all_to_remove | set([checked_case_id])),
+                        "expected {} in {} but wasn't".format(index, all_to_remove))
 
     def _add_primary_case(self, case_id):
         self.case_ids_on_phone.add(case_id)
         if case_id in self.dependent_case_ids_on_phone:
             self.dependent_case_ids_on_phone.remove(case_id)
+
+    def _add_index(self, index, case_update):
+        logger.debug('adding index {} --<{}>--> {} ({}).'.format(
+            index.case_id, index.relationship, index.referenced_id, index.identifier))
+        if index.relationship == const.CASE_INDEX_EXTENSION:
+            self._add_extension_index(index, case_update)
+        else:
+            self._add_child_index(index)
+
+    def _add_extension_index(self, index, case_update):
+        assert index.relationship == const.CASE_INDEX_EXTENSION
+        self.extension_index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
+
+        if index.referenced_id not in self.case_ids_on_phone:
+            self.case_ids_on_phone.add(index.referenced_id)
+            self.dependent_case_ids_on_phone.add(index.referenced_id)
+
+        case_child_indices = [idx for idx in case_update.indices_to_add
+                              if idx.relationship == const.CASE_INDEX_CHILD
+                              and idx.referenced_id == index.referenced_id]
+        if not case_child_indices and not case_update.is_live:
+            # this case doesn't also have child indices, and it is not owned, so it is dependent
+            self.dependent_case_ids_on_phone.add(index.case_id)
+
+    def _add_child_index(self, index):
+        assert index.relationship == const.CASE_INDEX_CHILD
+        self.index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
+        if index.referenced_id not in self.case_ids_on_phone:
+            self.case_ids_on_phone.add(index.referenced_id)
+            self.dependent_case_ids_on_phone.add(index.referenced_id)
+
+    def _delete_index(self, index):
+        self.index_tree.delete_index(index.case_id, index.identifier)
+        self.extension_index_tree.delete_index(index.case_id, index.identifier)
 
     def update_phone_lists(self, xform, case_list):
         made_changes = False
@@ -656,15 +860,35 @@ class SimplifiedSyncLog(AbstractSyncLog):
         logger.debug('index tree before update: {}'.format(self.index_tree))
 
         class CaseUpdate(object):
-            def __init__(self, case_id):
+            def __init__(self, case_id, owner_ids_on_phone):
                 self.case_id = case_id
+                self.owner_ids_on_phone = owner_ids_on_phone
                 self.was_live_previously = True
                 self.final_owner_id = None
                 self.is_closed = None
                 self.indices_to_add = []
                 self.indices_to_delete = []
 
-        ShortIndex = namedtuple('ShortIndex', ['case_id', 'identifier', 'referenced_id'])
+            @property
+            def extension_indices_to_add(self):
+                return [index for index in self.indices_to_add
+                        if index.relationship == const.CASE_INDEX_EXTENSION]
+
+            def has_extension_indices_to_add(self):
+                return len(self.extension_indices_to_add) > 0
+
+            @property
+            def is_live(self):
+                """returns whether an update is live for a specifc set of owner_ids"""
+                if self.is_closed:
+                    return False
+                elif self.final_owner_id is None:
+                    # we likely didn't touch owner_id so just default to whatever it was previously
+                    return self.was_live_previously
+                else:
+                    return self.final_owner_id in self.owner_ids_on_phone
+
+        ShortIndex = namedtuple('ShortIndex', ['case_id', 'identifier', 'referenced_id', 'relationship'])
 
         # this is a variable used via closures in the function below
         owner_id_map = {}
@@ -679,9 +903,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         all_updates = {}
         for case in case_list:
-            if case.case_id not in all_updates:
+            if case._id not in all_updates:
                 logger.debug('initializing update for case {}'.format(case.case_id))
-                all_updates[case.case_id] = CaseUpdate(case_id=case.case_id)
+                all_updates[case._id] = CaseUpdate(case_id=case.case_id,
+                                                   owner_ids_on_phone=self.owner_ids_on_phone)
 
             case_update = all_updates[case.case_id]
             case_update.was_live_previously = case.case_id in self.primary_case_ids
@@ -695,36 +920,19 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     for index in action.indices:
                         if index.referenced_id:
                             case_update.indices_to_add.append(
-                                ShortIndex(case.case_id, index.identifier, index.referenced_id)
+                                ShortIndex(case.case_id, index.identifier, index.referenced_id, index.relationship)
                             )
                         else:
                             case_update.indices_to_delete.append(
-                                ShortIndex(case.case_id, index.identifier, None)
+                                ShortIndex(case.case_id, index.identifier, None, None)
                             )
                 elif action.action_type == const.CASE_ACTION_CLOSE:
                     case_update.is_closed = True
 
-        def _add_index(index):
-            logger.debug('adding index {} -> {} ({}).'.format(
-                index.case_id, index.referenced_id, index.identifier))
-            self.index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
-            if index.referenced_id not in self.case_ids_on_phone:
-                self.case_ids_on_phone.add(index.referenced_id)
-                self.dependent_case_ids_on_phone.add(index.referenced_id)
-
-        def _is_live(case_update, owner_ids):
-            if case_update.is_closed:
-                return False
-            elif case_update.final_owner_id is None:
-                # we likely didn't touch owner_id so just default to whatever it was previously
-                return case_update.was_live_previously
-            else:
-                return case_update.final_owner_id in owner_ids
-
         non_live_updates = []
         for case in case_list:
             case_update = all_updates[case.case_id]
-            if _is_live(case_update, self.owner_ids_on_phone):
+            if case_update.is_live:
                 logger.debug('case {} is live.'.format(case_update.case_id))
                 if case.case_id not in self.case_ids_on_phone:
                     self._add_primary_case(case.case_id)
@@ -734,31 +942,43 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     made_changes = True
 
                 for index in case_update.indices_to_add:
-                    _add_index(index)
+                    self._add_index(index, case_update)
                     made_changes = True
                 for index in case_update.indices_to_delete:
-                    self.index_tree.delete_index(index.case_id, index.identifier)
+                    self._delete_index(index)
                     made_changes = True
             else:
                 # process the non-live updates after all live are already processed
                 non_live_updates.append(case_update)
+                # populate the closed cases list before processing non-live updates
+                if case_update.is_closed:
+                    self.closed_cases.add(case_update.case_id)
 
         for update in non_live_updates:
             logger.debug('case {} is NOT live.'.format(update.case_id))
+            if update.has_extension_indices_to_add():
+                # non-live cases with extension indices should be added and processed
+                self.case_ids_on_phone.add(update.case_id)
+                for index in update.indices_to_add:
+                    self._add_index(index, update)
+                    made_changes = True
+
+        for update in non_live_updates:
             if update.case_id in self.case_ids_on_phone:
-                # try pruning the case
-                self.prune_case(update.case_id)
+                # try purging the case
+                self.purge(update.case_id)
                 if update.case_id in self.case_ids_on_phone:
                     # if unsuccessful, process the rest of the update
                     for index in update.indices_to_add:
-                        _add_index(index)
+                        self._add_index(index, update)
                     for index in update.indices_to_delete:
-                        self.index_tree.delete_index(index.case_id, index.identifier)
+                        self._delete_index(index)
                 made_changes = True
 
         logger.debug('case ids after update: {}'.format(', '.join(self.case_ids_on_phone)))
         logger.debug('dependent case ids after update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
         logger.debug('index tree after update: {}'.format(self.index_tree))
+        logger.debug('extension index tree after update: {}'.format(self.extension_index_tree))
         if made_changes or case_list:
             try:
                 if made_changes:
@@ -779,18 +999,18 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 ))
                 raise
 
-    def prune_dependent_cases(self):
+    def purge_dependent_cases(self):
         """
-        Attempt to prune any dependent cases from the sync log.
+        Attempt to purge any dependent cases from the sync log.
         """
         # this is done when migrating from old formats or during initial sync
-        # to prune non-relevant dependencies
+        # to purge non-relevant dependencies
         for dependent_case_id in list(self.dependent_case_ids_on_phone):
-            # need this additional check since the case might have already been pruned/remove
-            # as a result of pruning the child case
+            # need this additional check since the case might have already been purged/remove
+            # as a result of purging the child case
             if dependent_case_id in self.dependent_case_ids_on_phone:
-                # this will be a no-op if the case cannot be pruned due to dependencies
-                self.prune_case(dependent_case_id)
+                # this will be a no-op if the case cannot be purged due to dependencies
+                self.purge(dependent_case_id)
 
     @classmethod
     def from_other_format(cls, other_sync_log):
@@ -819,10 +1039,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     _add_state_contributions(ret, case_state, is_dependent=True)
                     dependent_case_ids.add(case_state.case_id)
 
-            # try to prune any dependent cases - the old format does this on
+            # try to purge any dependent cases - the old format does this on
             # access, but the new format does it ahead of time and always assumes
             # its current state is accurate.
-            ret.prune_dependent_cases()
+            ret.purge_dependent_cases()
 
             # set and cleanup other properties
             ret.log_format = LOG_FORMAT_SIMPLIFIED
@@ -851,8 +1071,17 @@ def _domain_has_legacy_toggle_set():
     # old versions of commcare (< 2.10ish) didn't purge on form completion
     # so can still modify cases that should no longer be on the phone.
     request = get_request()
-    domain = request.domain if request else None
+    domain = getattr(request, 'domain', None)
     return LEGACY_SYNC_SUPPORT.enabled(domain) if domain else False
+
+
+def get_sync_log_doc(doc_id):
+    try:
+        return SyncLog.get_db().get(doc_id)
+    except ResourceNotFound:
+        legacy_doc = get_db(None).get(doc_id, attachments=True)
+        del legacy_doc['_rev']  # remove the rev so we can save this to the new DB
+        return legacy_doc
 
 
 def get_properly_wrapped_sync_log(doc_id):
@@ -860,7 +1089,7 @@ def get_properly_wrapped_sync_log(doc_id):
     Looks up and wraps a sync log, using the class based on the 'log_format' attribute.
     Defaults to the existing legacy SyncLog class.
     """
-    return properly_wrap_sync_log(SyncLog.get_db().get(doc_id))
+    return properly_wrap_sync_log(get_sync_log_doc(doc_id))
 
 
 def properly_wrap_sync_log(doc):

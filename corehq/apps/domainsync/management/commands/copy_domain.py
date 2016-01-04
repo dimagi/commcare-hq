@@ -170,13 +170,13 @@ class Command(BaseCommand):
                                postgres_db=options['postgres_db'], exclude_attachments=exclude_attachments)
 
     def list_types(self, sourcedb, domain, since):
-        doc_types = sourcedb.view("domain/docs", startkey=[domain],
+        doc_types = sourcedb.view("by_domain_doc_type_date/view", startkey=[domain],
                                   endkey=[domain, {}], reduce=True, group=True, group_level=2)
 
         doc_count = dict([(row['key'][1], row['value']) for row in doc_types])
         if since:
             for doc_type in sorted(doc_count.iterkeys()):
-                num_since = sourcedb.view("domain/docs", startkey=[domain, doc_type, since],
+                num_since = sourcedb.view("by_domain_doc_type_date/view", startkey=[domain, doc_type, since],
                                           endkey=[domain, doc_type, {}], reduce=True).all()
                 num = num_since[0]['value'] if num_since else 0
                 print "{0:<30}- {1:<6} total {2}".format(doc_type, num, doc_count[doc_type])
@@ -188,7 +188,7 @@ class Command(BaseCommand):
                   doc_type=None, since=None, exclude_types=None, postgres_db=None, exclude_attachments=False):
 
         if not doc_ids:
-            doc_ids = [result["id"] for result in sourcedb.view("domain/docs", startkey=startkey,
+            doc_ids = [result["id"] for result in sourcedb.view("by_domain_doc_type_date/view", startkey=startkey,
                                                                 endkey=endkey, reduce=False)]
         total = len(doc_ids)
         count = 0

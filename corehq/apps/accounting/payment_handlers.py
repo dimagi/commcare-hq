@@ -1,5 +1,5 @@
 from decimal import Decimal
-import logging
+from django.db import transaction
 import stripe
 from django.conf import settings
 from django.utils.translation import ugettext as _
@@ -11,16 +11,21 @@ from corehq.apps.accounting.models import (
     SoftwareProductType,
     FeatureType,
     PaymentMethod,
+    PreOrPostPay,
     StripePaymentMethod,
+    LastPayment
 )
 from corehq.apps.accounting.user_text import get_feature_name
-from corehq.apps.accounting.utils import fmt_dollar_amount
+from corehq.apps.accounting.utils import (
+    fmt_dollar_amount,
+    log_accounting_error,
+    log_accounting_info,
+)
 from corehq.apps.domain.models import Domain
 from corehq.const import USER_DATE_FORMAT
 from dimagi.utils.decorators.memoized import memoized
 
 stripe.api_key = settings.STRIPE_PRIVATE_KEY
-logger = logging.getLogger('accounting')
 
 
 class BaseStripePaymentHandler(object):
@@ -66,6 +71,12 @@ class BaseStripePaymentHandler(object):
         amt_cents = amount * Decimal('100')
         return int(amt_cents.quantize(Decimal(10)))
 
+    def update_payment_information(self, account):
+        account.last_payment_method = LastPayment.CC_ONE_TIME
+        account.pre_or_post_pay = PreOrPostPay.POSTPAY
+        account.save()
+
+
     def process_request(self, request):
         customer = None
         amount = self.get_charge_amount(request)
@@ -85,15 +96,17 @@ class BaseStripePaymentHandler(object):
             },
         }
         try:
-            if remove_card:
-                self.payment_method.remove_card(card)
-                return {'success': True, 'removedCard': card, }
-            if save_card:
-                card = self.payment_method.create_card(card, billing_account, self.domain, autopay=autopay)
+            with transaction.atomic():
+                if remove_card:
+                    self.payment_method.remove_card(card)
+                    return {'success': True, 'removedCard': card, }
+                if save_card:
+                    card = self.payment_method.create_card(card, billing_account, self.domain, autopay=autopay)
             if save_card or is_saved_card:
                 customer = self.payment_method.customer
 
             charge = self.create_charge(amount, card=card, customer=customer)
+            self.update_payment_information(billing_account)
         except stripe.error.CardError as e:
             # card was declined
             return e.json_body
@@ -103,37 +116,38 @@ class BaseStripePaymentHandler(object):
             stripe.error.APIConnectionError,
             stripe.error.StripeError,
         ) as e:
-            logger.error(
-                "[BILLING] A payment for %(cost_item)s failed due "
+            log_accounting_error(
+                "A payment for %(cost_item)s failed due "
                 "to a Stripe %(error_class)s: %(error_msg)s" % {
                     'error_class': e.__class__.__name__,
                     'cost_item': self.cost_item_name,
                     'error_msg': e.json_body['error']
-                }, exc_info=True)
+                }
+            )
             return generic_error
         except Exception as e:
-            logger.error(
-                "[BILLING] A payment for %(cost_item)s failed due "
-                "to: %(error_msg)s" % {
+            log_accounting_error(
+                "A payment for %(cost_item)s failed due to: %(error_msg)s" % {
                     'cost_item': self.cost_item_name,
                     'error_msg': e,
-                }, exc_info=True)
+                }
+            )
             return generic_error
 
-        payment_record = PaymentRecord.create_record(
-            self.payment_method, charge.id, amount
-        )
-
-        self.update_credits(payment_record)
+        with transaction.atomic():
+            payment_record = PaymentRecord.create_record(
+                self.payment_method, charge.id, amount
+            )
+            self.update_credits(payment_record)
 
         try:
             self.send_email(payment_record)
         except Exception:
-            logger.error(
-                "[BILLING] Failed to send out an email receipt for "
+            log_accounting_error(
+                "Failed to send out an email receipt for "
                 "payment related to PaymentRecord No. %s. "
                 "Everything else succeeded."
-                % payment_record.id, exc_info=True
+                % payment_record.id
             )
 
         return {
@@ -333,6 +347,12 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
             description="Payment for %s" % self.cost_item_name,
         )
 
+    def update_payment_information(self, account):
+        account.last_payment_method = LastPayment.CC_ONE_TIME
+        account.pre_or_post_pay = PreOrPostPay.PREPAY
+        account.save()
+
+
     def update_credits(self, payment_record):
         for feature in self.features:
             feature_amount = feature['amount']
@@ -345,9 +365,14 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                     payment_record=payment_record,
                 ))
             else:
-                logger.error("[BILLING] {account} tried to make a payment for {feature} for less than $0.5."
-                             "You should follow up with them.".format(account=self.account,
-                                                                      feature=feature['type']))
+                log_accounting_error(
+                    "{account} tried to make a payment for {feature} for less than $0.5."
+                    "You should follow up with them."
+                    .format(
+                        account=self.account,
+                        feature=feature['type']
+                    )
+                )
         for product in self.products:
             plan_amount = product['amount']
             if plan_amount >= 0.5:
@@ -359,9 +384,14 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                     payment_record=payment_record,
                 ))
             else:
-                logger.error("[BILLING] {account} tried to make a payment for {product} for less than $0.5."
-                             "You should follow up with them.".format(account=self.account,
-                                                                      product=product['type']))
+                log_accounting_error(
+                    "{account} tried to make a payment for {product} for less than $0.5."
+                    "You should follow up with them."
+                    .format(
+                        account=self.account,
+                        product=product['type']
+                    )
+                )
 
     def process_request(self, request):
         response = super(CreditStripePaymentHandler, self).process_request(request)
@@ -386,7 +416,7 @@ class AutoPayInvoicePaymentHandler(object):
         """ Pays the full balance of all autopayable invoices on date_due """
         autopayable_invoices = Invoice.autopayable_invoices(date_due)
         for invoice in autopayable_invoices:
-            logging.info("[Billing][Autopay] Autopaying invoice {}".format(invoice.id))
+            log_accounting_info("[Autopay] Autopaying invoice {}".format(invoice.id))
             amount = invoice.balance.quantize(Decimal(10) ** -2)
 
             auto_payer = invoice.subscription.account.auto_pay_user
@@ -398,13 +428,17 @@ class AutoPayInvoicePaymentHandler(object):
             try:
                 payment_record = payment_method.create_charge(autopay_card, amount_in_dollars=amount)
             except stripe.error.CardError:
-                self._handle_card_declined(invoice, payment_method)
+                self._handle_card_declined(invoice)
                 continue
             except payment_method.STRIPE_GENERIC_ERROR as e:
-                self._handle_card_errors(invoice, payment_method, e)
+                self._handle_card_errors(invoice, e)
                 continue
             else:
-                invoice.pay_invoice(payment_record)
+                with transaction.atomic():
+                    invoice.pay_invoice(payment_record)
+                    invoice.subscription.account.last_payment_method = LastPayment.CC_AUTO
+                    invoice.account.save()
+
                 self._send_payment_receipt(invoice, payment_record)
 
     def _send_payment_receipt(self, invoice, payment_record):
@@ -426,18 +460,25 @@ class AutoPayInvoicePaymentHandler(object):
                 payment_record, product, domain, receipt_email_template, receipt_email_template_plaintext, context,
             )
         except:
-            self._handle_email_failure(invoice, payment_record)
+            self._handle_email_failure(payment_record)
 
     def _handle_card_declined(self, invoice):
-        logger.error("[Billing][Autopay] An automatic payment failed for invoice: {} "
-                     "because the card was declined. This invoice will not be automatically paid."
-                     .format(invoice.id))
+        log_accounting_error(
+            "[Autopay] An automatic payment failed for invoice: {} "
+            "because the card was declined. This invoice will not be automatically paid."
+            .format(invoice.id)
+        )
 
     def _handle_card_errors(self, invoice, e):
-        logger.error("[Billing][Autopay] An automatic payment failed for invoice: {invoice} "
-                     "because the of {error}. This invoice will not be automatically paid."
-                     .format(invoice=invoice.id, error=e))
+        log_accounting_error(
+            "[Autopay] An automatic payment failed for invoice: {invoice} "
+            "because the of {error}. This invoice will not be automatically paid."
+            .format(invoice=invoice.id, error=e)
+        )
 
     def _handle_email_failure(self, payment_record):
-        logger.error("[Billing][Autopay] During an automatic payment, sending a payment receipt failed"
-                     " for Payment Record: {}. Everything else succeeded".format(payment_record.id))
+        log_accounting_error(
+            "[Autopay] During an automatic payment, sending a payment receipt failed"
+            " for Payment Record: {}. Everything else succeeded"
+            .format(payment_record.id)
+        )

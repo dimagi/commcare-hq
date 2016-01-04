@@ -6,6 +6,7 @@ from celery.utils.log import get_task_logger
 import datetime
 from couchdbkit import ResourceNotFound
 from django.conf import settings
+from django.db import transaction
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
@@ -50,13 +51,14 @@ def activate_subscriptions(based_on_date=None):
     starting_subscriptions = Subscription.objects.filter(date_start=starting_date)
     for subscription in starting_subscriptions:
         if not has_subscription_already_ended(subscription) and not subscription.is_active:
-            subscription.is_active = True
-            subscription.save()
-            upgraded_privs = get_change_status(None, subscription.plan_version).upgraded_privs
-            subscription.subscriber.activate_subscription(
-                upgraded_privileges=upgraded_privs,
-                subscription=subscription,
-            )
+            with transaction.atomic():
+                subscription.is_active = True
+                subscription.save()
+                upgraded_privs = get_change_status(None, subscription.plan_version).upgraded_privs
+                subscription.subscriber.activate_subscription(
+                    upgraded_privileges=upgraded_privs,
+                    subscription=subscription,
+                )
 
 
 def deactivate_subscriptions(based_on_date=None):
@@ -66,22 +68,28 @@ def deactivate_subscriptions(based_on_date=None):
     ending_date = based_on_date or datetime.date.today()
     ending_subscriptions = Subscription.objects.filter(date_end=ending_date)
     for subscription in ending_subscriptions:
-        subscription.is_active = False
-        subscription.save()
-        next_subscription = subscription.next_subscription
-        if next_subscription and next_subscription.date_start == ending_date:
-            new_plan_version = next_subscription.plan_version
-            next_subscription.is_active = True
-            next_subscription.save()
-        else:
-            new_plan_version = None
-        _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
-        subscription.subscriber.deactivate_subscription(
-            downgraded_privileges=downgraded_privs,
-            upgraded_privileges=upgraded_privs,
-            old_subscription=subscription,
-            new_subscription=next_subscription,
-        )
+        with transaction.atomic():
+            subscription.is_active = False
+            subscription.save()
+            next_subscription = subscription.next_subscription
+            activate_next_subscription = next_subscription and next_subscription.date_start == ending_date
+            if activate_next_subscription:
+                new_plan_version = next_subscription.plan_version
+                next_subscription.is_active = True
+                next_subscription.save()
+            else:
+                new_plan_version = None
+            _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
+            if next_subscription and subscription.account == next_subscription.account:
+                subscription.transfer_credits(subscription=next_subscription)
+            else:
+                subscription.transfer_credits()
+            subscription.subscriber.deactivate_subscription(
+                downgraded_privileges=downgraded_privs,
+                upgraded_privileges=upgraded_privs,
+                old_subscription=subscription,
+                new_subscription=next_subscription if activate_next_subscription else None,
+            )
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0))
@@ -229,9 +237,12 @@ def send_subscription_reminder_emails(num_days, exclude_trials=True):
     if exclude_trials:
         ending_subscriptions = ending_subscriptions.filter(is_trial=False)
     for subscription in ending_subscriptions:
-        # only send reminder emails if the subscription isn't renewed
-        if not subscription.is_renewed:
-            subscription.send_ending_reminder_email()
+        try:
+            # only send reminder emails if the subscription isn't renewed
+            if not subscription.is_renewed:
+                subscription.send_ending_reminder_email()
+        except Exception as e:
+            logger.error("[BILLING] %s" % e)
 
 
 def send_subscription_reminder_emails_dimagi_contact(num_days):

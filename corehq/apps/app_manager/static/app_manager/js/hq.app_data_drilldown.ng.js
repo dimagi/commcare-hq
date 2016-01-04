@@ -42,7 +42,7 @@
         $scope, djangoRMI, formFieldSlugs, formDefaults, djangoRMICallbackName,
         processApplicationDataFormSuccessCallback, formModalSelector
     ) {
-        var self = {};
+        var self = this;
         $scope._ = _;  // use underscore.js in templates
 
         $scope.showNoAppsError = false;
@@ -64,6 +64,8 @@
         self._forms_by_app_by_module = {};
         self._case_types_by_app = {};
 
+        self._select2Test = {};
+
         var _formElemGetter = function(fieldSlug) {
             return $('#id_' + fieldSlug);
         };
@@ -73,7 +75,7 @@
                 if (fieldSlug) {
                     $scope.formData[fieldSlug] = '';
                     var $formElem = _formElemGetter(fieldSlug);
-                    if ($formElem) {
+                    if ($formElem.length > 0) {
                         $formElem.select2({
                             data: field_data || [],
                             triggerChange: true
@@ -82,6 +84,11 @@
                             .find('.select2-choice').addClass('select2-default')
                             .find('.select2-chosen').text(self._placeholders[fieldSlug]);
                     }
+                    self._select2Test[fieldSlug] = {
+                        data: field_data,
+                        placeholder: self._placeholders[fieldSlug],
+                        defaults: formDefaults[fieldSlug]
+                    };
                 }
             };
         };
@@ -91,12 +98,17 @@
                 $scope.formData.app_type = formDefaults.app_type;
 
                 var $formElem = _formElemGetter('app_type');
-                if ($formElem) {
+                if ($formElem.length > 0) {
                     $formElem.select2({
                         data: self._app_types || [],
                         triggerChange: true
                     }).select2('val', formDefaults.app_type).trigger('change');
                 }
+                self._select2Test.app_type = {
+                    data: self._app_types || [],
+                    placeholder: null,
+                    defaults: formDefaults.app_type
+                };
             },
             setApps: _formSelect2Setter(formFieldSlugs.application),
             setModules: _formSelect2Setter(formFieldSlugs.module),
@@ -125,6 +137,7 @@
             if (self._numRetries > 3) {
                 $scope.formLoadError = 'default';
                 $scope.isLoaded = true;
+                return;
             }
             self._numRetries ++;
             self._initializeForm();

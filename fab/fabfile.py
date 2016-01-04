@@ -105,7 +105,7 @@ env.roledefs = {
 
 def _require_target():
     require('root', 'code_root', 'hosts', 'environment',
-            provided_by=('staging', 'preview', 'production', 'india', 'zambia'))
+            provided_by=('staging', 'preview', 'production', 'old_india', 'softlayer', 'zambia'))
 
 
 def format_env(current_env, extra=None):
@@ -204,9 +204,27 @@ def load_env(env_name):
 
 
 @task
-def india():
+def old_india():
     env.inventory = os.path.join('fab', 'inventory', 'india')
     load_env('india')
+    execute(env_common)
+
+
+@task
+def swiss():
+    env.inventory = os.path.join('fab', 'inventory', 'swiss')
+    load_env('swiss')
+    execute(env_common)
+
+
+@task
+def india():
+    softlayer()
+
+@task
+def softlayer():
+    env.inventory = os.path.join('fab', 'inventory', 'softlayer')
+    load_env('softlayer')
     execute(env_common)
 
 
@@ -680,6 +698,8 @@ def copy_tf_localsettings():
 def copy_components():
     if files.exists('{}/bower_components'.format(env.code_current)):
         sudo('cp -r {}/bower_components {}/bower_components'.format(env.code_current, env.code_root))
+    else:
+        sudo('mkdir {}/bower_components'.format(env.code_root))
 
 
 def copy_release_files():
@@ -822,6 +842,24 @@ def _tag_commit():
     return diff_url
 
 
+@task
+@roles(['deploy'])
+def manage():
+    """
+    run a management command
+
+    usage:
+        fab <env> manage --set cmd='<command>'
+    e.g.
+        fab production manage --set cmd='prune_couch_views'
+    """
+    _require_target()
+    require('cmd')
+    with cd(env.code_current):
+        sudo('{env.virtualenv_current}/bin/python manage.py {env.cmd}'
+             .format(env=env))
+
+
 @task(alias='deploy')
 def awesome_deploy(confirm="yes"):
     """preindex and deploy if it completes quickly enough, otherwise abort"""
@@ -877,29 +915,38 @@ def update_virtualenv():
         # but only the ones that are actually installed (checks pip freeze)
         sudo("%s bash scripts/uninstall-requirements.sh" % cmd_prefix,
              user=env.sudo_user)
-        sudo('%s pip install --timeout 60 --requirement %s --requirement %s' % (
+        sudo('%s pip install --timeout 60 --quiet --requirement %s --requirement %s' % (
             cmd_prefix,
             posixpath.join(requirements, 'prod-requirements.txt'),
             posixpath.join(requirements, 'requirements.txt'),
         ))
 
 
+@task
+def wipe_supervisor_conf():
+    _require_target()
+    execute(clear_services_dir, current=True)
+    execute(services_restart)
+
+
 @roles(ROLES_ALL_SERVICES)
 @parallel
-def clear_services_dir():
+def clear_services_dir(current=False):
     """
     remove old confs from directory first
     the clear_supervisor_confs management command will scan the directory and find prefixed conf files of the supervisord files
     and delete them matching the prefix of the current server environment
 
     """
+    code_root = env.code_current if current else env.code_root
+    venv_root = env.virtualenv_current if current else env.virtualenv_root
     services_dir = posixpath.join(env.services, u'supervisor')
-    with cd(env.code_root):
+    with cd(code_root):
         sudo((
             '%(virtualenv_root)s/bin/python manage.py '
             'clear_supervisor_confs --conf_location "%(conf_location)s"'
         ) % {
-            'virtualenv_root': env.virtualenv_root,
+            'virtualenv_root': venv_root,
             'conf_location': services_dir,
         })
 
@@ -907,7 +954,7 @@ def clear_services_dir():
 @task
 def supervisorctl(command):
     require('supervisor_roles',
-            provided_by=('staging', 'preview', 'production', 'india', 'zambia'))
+            provided_by=('staging', 'preview', 'production', 'old_india', 'softlayer', 'zambia'))
 
     @roles(env.supervisor_roles)
     def _inner():
@@ -988,7 +1035,7 @@ def _do_compress(use_current_release=False):
     """Run Django Compressor after a code update"""
     venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('{}/bin/python manage.py compress --force'.format(venv))
+        sudo('{}/bin/python manage.py compress --force -v 0'.format(venv))
     update_manifest(save=True, use_current_release=use_current_release)
 
 
@@ -998,16 +1045,17 @@ def _do_collectstatic(use_current_release=False):
     """Collect static after a code update"""
     venv = env.virtualenv_root if not use_current_release else env.virtualenv_current
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('{}/bin/python manage.py collectstatic --noinput'.format(venv))
+        sudo('{}/bin/python manage.py collectstatic --noinput -v 0'.format(venv))
         sudo('{}/bin/python manage.py fix_less_imports_collectstatic'.format(venv))
+        sudo('{}/bin/python manage.py compilejsi18n'.format(venv))
 
 
 @parallel
 @roles(ROLES_STATIC)
 def _bower_install(use_current_release=False):
     with cd(env.code_root if not use_current_release else env.code_current):
-        sudo('bower prune --production')
-        sudo('bower update --production')
+        sudo('bower prune --production --config.interactive=false')
+        sudo('bower update --production --config.interactive=false')
 
 
 @roles(ROLES_DJANGO)

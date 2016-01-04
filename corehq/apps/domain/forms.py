@@ -11,7 +11,7 @@ import uuid
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import get_current_site
 from django.utils.http import urlsafe_base64_encode
-from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, HIPAA_COMPLIANCE_CHECKBOX
+from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, HIPAA_COMPLIANCE_CHECKBOX, SECURE_SESSIONS_CHECKBOX
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -47,12 +47,14 @@ from corehq.apps.accounting.models import (
     Currency,
     DefaultProductPlan,
     FeatureType,
+    PreOrPostPay,
     ProBonoStatus,
     SoftwarePlanEdition,
     Subscription,
     SubscriptionAdjustmentMethod,
     SubscriptionType,
     EntryPoint,
+    FundingSource
 )
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
@@ -721,6 +723,11 @@ class PrivacySecurityForm(forms.Form):
             "<a href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'>"
             "Read more about secure submissions here</a>"))
     )
+    secure_sessions = BooleanField(
+        label=ugettext_lazy("Shorten Inactivity Timeout"),
+        required=False,
+        help_text=ugettext_lazy("All web users on this project will be logged out after 30 minutes of inactivity")
+    )
     allow_domain_requests = BooleanField(
         label=ugettext_lazy("Web user requests"),
         required=False,
@@ -733,6 +740,7 @@ class PrivacySecurityForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         user_name = kwargs.pop('user_name')
+        domain = kwargs.pop('domain')
         super(PrivacySecurityForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.form_class = 'form-horizontal'
@@ -740,10 +748,13 @@ class PrivacySecurityForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper[0] = twbscrispy.PrependedText('restrict_superusers', '')
         self.helper[1] = twbscrispy.PrependedText('secure_submissions', '')
-        self.helper[2] = twbscrispy.PrependedText('allow_domain_requests', '')
-        self.helper[3] = twbscrispy.PrependedText('hipaa_compliant', '')
+        self.helper[2] = twbscrispy.PrependedText('secure_sessions', '')
+        self.helper[3] = twbscrispy.PrependedText('allow_domain_requests', '')
+        self.helper[4] = twbscrispy.PrependedText('hipaa_compliant', '')
         if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
-            self.helper.layout.pop(3)
+            self.helper.layout.pop(4)
+        if not SECURE_SESSIONS_CHECKBOX.enabled(domain):
+            self.helper.layout.pop(2)
         self.helper.all().wrap_together(crispy.Fieldset, 'Edit Privacy Settings')
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -758,6 +769,7 @@ class PrivacySecurityForm(forms.Form):
     def save(self, domain):
         domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
         domain.allow_domain_requests = self.cleaned_data.get('allow_domain_requests', False)
+        domain.secure_sessions = self.cleaned_data.get('secure_sessions', False)
         secure_submissions = self.cleaned_data.get(
             'secure_submissions', False)
         apps_to_save = []
@@ -1109,6 +1121,9 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                                               "Did you forget the country code?"))
             return "+%s%s" % (parsed_number.country_code, parsed_number.national_number)
 
+    # Does not use the commit kwarg.
+    # TODO - Should support it or otherwise change the function name
+    @transaction.atomic
     def save(self, commit=True):
         billing_contact_info = super(EditBillingAccountInfoForm, self).save(commit=False)
         billing_contact_info.account = self.account
@@ -1165,39 +1180,43 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         )
 
     def save(self, commit=True):
-        account_save_success = super(ConfirmNewSubscriptionForm, self).save(commit=False)
-        if not account_save_success:
-            return False
-
         try:
-            if self.current_subscription is not None:
-                if self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
-                    self.current_subscription.cancel_subscription(adjustment_method=SubscriptionAdjustmentMethod.USER,
-                                                                  web_user=self.creating_user)
+            with transaction.atomic():
+                account_save_success = super(ConfirmNewSubscriptionForm, self).save()
+                if not account_save_success:
+                    return False
+
+                if self.current_subscription is not None:
+                    if self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
+                        self.current_subscription.cancel_subscription(adjustment_method=SubscriptionAdjustmentMethod.USER,
+                                                                      web_user=self.creating_user)
+                    else:
+                        subscription = self.current_subscription.change_plan(
+                            self.plan_version,
+                            web_user=self.creating_user,
+                            adjustment_method=SubscriptionAdjustmentMethod.USER,
+                            service_type=SubscriptionType.SELF_SERVICE,
+                            pro_bono_status=ProBonoStatus.NO,
+                        )
+                        subscription.is_active = True
+                        if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
+                            subscription.do_not_invoice = True
+                        subscription.save()
                 else:
-                    subscription = self.current_subscription.change_plan(
-                        self.plan_version,
+                    subscription = Subscription.new_domain_subscription(
+                        self.account, self.domain, self.plan_version,
                         web_user=self.creating_user,
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.SELF_SERVICE,
                         pro_bono_status=ProBonoStatus.NO,
+                        funding_source=FundingSource.CLIENT
                     )
                     subscription.is_active = True
                     if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
+                        # this point can only be reached if the initiating user was a superuser
                         subscription.do_not_invoice = True
                     subscription.save()
-            else:
-                subscription = Subscription.new_domain_subscription(
-                    self.account, self.domain, self.plan_version,
-                    web_user=self.creating_user,
-                    adjustment_method=SubscriptionAdjustmentMethod.USER,
-                    service_type=SubscriptionType.SELF_SERVICE)
-                subscription.is_active = True
-                if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
-                    # this point can only be reached if the initiating user was a superuser
-                    subscription.do_not_invoice = True
-                subscription.save()
-            return True
+                return True
         except Exception:
             logger.exception("There was an error subscribing the domain '%s' to plan '%s'. "
                              "Go quickly!" % (self.domain, self.plan_version.plan.name))
@@ -1266,18 +1285,19 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         )
 
     def save(self, commit=True):
-        account_save_success = super(ConfirmSubscriptionRenewalForm, self).save(commit=False)
-        if not account_save_success:
-            return False
-
         try:
-            self.current_subscription.renew_subscription(
-                web_user=self.creating_user,
-                adjustment_method=SubscriptionAdjustmentMethod.USER,
-                service_type=SubscriptionType.SELF_SERVICE,
-                pro_bono_status=ProBonoStatus.NO,
-                new_version=self.renewed_version,
-            )
+            with transaction.atomic():
+                account_save_success = super(ConfirmSubscriptionRenewalForm, self).save()
+                if not account_save_success:
+                    return False
+                self.current_subscription.renew_subscription(
+                    web_user=self.creating_user,
+                    adjustment_method=SubscriptionAdjustmentMethod.USER,
+                    service_type=SubscriptionType.SELF_SERVICE,
+                    pro_bono_status=ProBonoStatus.NO,
+                    funding_source=FundingSource.CLIENT,
+                    new_version=self.renewed_version,
+                )
         except SubscriptionRenewalError as e:
             logger.error("[BILLING] Subscription for %(domain)s failed to "
                          "renew due to: %(error)s." % {
@@ -1396,6 +1416,7 @@ class InternalSubscriptionManagementForm(forms.Form):
                 dimagi_contact=self.web_user,
                 account_type=BillingAccountType.GLOBAL_SERVICES,
                 entry_point=EntryPoint.CONTRACTED,
+                pre_or_post_pay=PreOrPostPay.POSTPAY
             )
             account.save()
         contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
@@ -1482,6 +1503,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
             *self.form_actions
         )
 
+    @transaction.atomic
     def process_subscription_management(self):
         enterprise_plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, SoftwarePlanEdition.ENTERPRISE
@@ -1506,6 +1528,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
         fields = super(DimagiOnlyEnterpriseForm, self).subscription_default_fields
         fields.update({
             'do_not_invoice': True,
+            'service_type': SubscriptionType.INTERNAL,
         })
         return fields
 
@@ -1561,6 +1584,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
             *self.form_actions
         )
 
+    @transaction.atomic
     def process_subscription_management(self):
         advanced_trial_plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, edition=SoftwarePlanEdition.ADVANCED, is_trial=True,
@@ -1588,6 +1612,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
             'date_end': datetime.date.today() + relativedelta(days=int(self.cleaned_data['trial_length'])),
             'do_not_invoice': False,
             'is_trial': True,
+            'service_type': SubscriptionType.EXTENDED_TRIAL
         })
         return fields
 
@@ -1658,7 +1683,23 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
         self.fields['emails'].initial = self.current_contact_emails
 
         plan_edition = self.current_subscription.plan_version.plan.edition if self.current_subscription else None
-        if plan_edition not in [
+
+        if self.is_uneditable:
+            self.helper.layout = crispy.Layout(
+                TextField('software_plan_edition', plan_edition),
+                TextField('fogbugz_client_name', self.current_subscription.account.name),
+                TextField('emails', self.current_contact_emails),
+                TextField('start_date', self.current_subscription.date_start),
+                TextField('end_date', self.current_subscription.date_end),
+                crispy.HTML(_(
+                    '<p><i class="icon-info-sign"></i> This project is on a contracted Enterprise '
+                    'subscription. You cannot change contracted Enterprise subscriptions here. '
+                    'Please contact the Ops team at %(accounts_email)s to request changes.</p>' % {
+                        'accounts_email': settings.ACCOUNTS_EMAIL,
+                    }
+                ))
+            )
+        elif plan_edition not in [
             first for first, second in self.fields['software_plan_edition'].choices
         ]:
             self.fields['start_date'].initial = datetime.date.today()
@@ -1705,23 +1746,21 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                 *self.form_actions
             )
 
+    @transaction.atomic
     def process_subscription_management(self):
         new_plan_version = DefaultProductPlan.get_default_plan_by_domain(
             self.domain, edition=self.cleaned_data['software_plan_edition'],
         )
 
         if not self.current_subscription or self.cleaned_data['start_date'] > datetime.date.today():
-            with transaction.atomic():
-                # atomically create new subscription
-                new_subscription = Subscription.new_domain_subscription(
-                    self.next_account,
-                    self.domain,
-                    new_plan_version,
-                    date_start=self.cleaned_data['start_date'],
-                    **self.subscription_default_fields
-                )
+            new_subscription = Subscription.new_domain_subscription(
+                self.next_account,
+                self.domain,
+                new_plan_version,
+                date_start=self.cleaned_data['start_date'],
+                **self.subscription_default_fields
+            )
         else:
-            # change plan method is already atomic
             new_subscription = self.current_subscription.change_plan(
                 new_plan_version,
                 transfer_credits=self.current_subscription.account == self.next_account,
@@ -1742,6 +1781,14 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             subscription=new_subscription,
             web_user=self.web_user,
             reason=CreditAdjustmentReason.MANUAL,
+        )
+
+    @property
+    def is_uneditable(self):
+        return (
+            self.current_subscription
+            and self.current_subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
+            and self.current_subscription.service_type == SubscriptionType.CONTRACTED
         )
 
     @property
@@ -1817,14 +1864,26 @@ class SelectSubscriptionTypeForm(forms.Form):
         required=False,
     )
 
-    def __init__(self, *args, **kwargs):
-        super(SelectSubscriptionTypeForm, self).__init__(*args, **kwargs)
+    def __init__(self, defaults=None, disable_input=False, **kwargs):
+        defaults = defaults or {}
+        super(SelectSubscriptionTypeForm, self).__init__(defaults, **kwargs)
 
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
-        self.helper.layout = crispy.Layout(
-            crispy.Field(
-                'subscription_type',
-                data_bind='value: subscriptionType',
+        if defaults and disable_input:
+            self.helper.layout = crispy.Layout(
+                TextField(
+                    'subscription_type', {
+                        form.slug: form.subscription_type
+                        for form in INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
+                    }[defaults.get('subscription_type')]
+                ),
             )
-        )
+        else:
+            self.helper.layout = crispy.Layout(
+                crispy.Field(
+                    'subscription_type',
+                    data_bind='value: subscriptionType',
+                    css_class="disabled"
+                )
+            )

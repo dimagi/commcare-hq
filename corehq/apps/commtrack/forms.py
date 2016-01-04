@@ -99,7 +99,7 @@ class CommTrackSettingsForm(forms.Form):
         forms.Form.__init__(self, *args, **kwargs)
 
         self.fields['individual_consumption_defaults'].help_text = _(
-            "This is configured on the <a href='{url}'>bulk location import page</a>."
+            "This is configured by <a href='{url}'>bulk importing your organization structure</a>."
         ).format(url=url)
 
 

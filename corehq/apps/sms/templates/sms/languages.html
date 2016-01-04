@@ -18,7 +18,7 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+    <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
     <script src="{% static 'hqwebapp/js/main.js' %}"></script>
@@ -51,7 +51,7 @@
             edit: edit,
             validate: validate
         });
-        ko.applyBindings(sl, $("#supported-languages").get(0));
+        $("#supported-languages").koApplyBindings(sl);
     });
 </script>
 {% endblock %}

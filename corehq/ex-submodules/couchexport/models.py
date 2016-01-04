@@ -10,6 +10,7 @@ from dimagi.ext.couchdbkit import Document, DictProperty,\
     StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty, IntegerProperty
 import json
 import couchexport
+from corehq.blobs.mixin import BlobMixin
 from couchexport.exceptions import CustomExportValidationError
 from couchexport.files import ExportFiles
 from couchexport.transforms import identity
@@ -136,22 +137,6 @@ class ExportSchema(Document, UnicodeMixIn):
             include_docs=True,
             reduce=False,
         ).one()
-
-    @classmethod
-    def get_all_indices(cls):
-        ret = cls.get_db().view("couchexport/schema_checkpoints",
-            reduce=True,
-            group=True,
-            group_level=1,
-        )
-        for row in ret:
-            index = row['key'][0]
-            try:
-                yield json.loads(index)
-            except ValueError:
-                # ignore this for now - should just be garbage data
-                # print "poorly formatted index key %s" % index
-                pass
 
     @classmethod
     def get_all_checkpoints(cls, index):
@@ -594,7 +579,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     name = StringProperty()
     default_format = StringProperty()
 
-    is_safe = BooleanProperty(default=False)
+    is_safe = BooleanProperty(default=False)  # Is the export de-identified?
     # self.index should always match self.schema.index
     # needs to be here so we can use in couch views
     index = JsonProperty()
@@ -928,11 +913,13 @@ class GroupExportConfiguration(Document):
         """
         return zip(self.all_configs, self.all_export_schemas)
 
-class SavedBasicExport(Document):
+
+class SavedBasicExport(BlobMixin, Document):
     """
     A cache of an export that lives in couch.
     Doesn't do anything smart, just works off an index
     """
+    migrating_blobs_from_couch = True
     configuration = SchemaProperty(ExportConfiguration)
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
@@ -940,12 +927,12 @@ class SavedBasicExport(Document):
     @property
     def size(self):
         try:
-            return self._attachments[self.get_attachment_name()]["length"]
+            return self.blobs[self.get_attachment_name()].content_length
         except KeyError:
             return 0
 
     def has_file(self):
-        return self.get_attachment_name() in self._attachments
+        return self.get_attachment_name() in self.blobs
 
     def get_attachment_name(self):
         # obfuscate this because couch doesn't like attachments that start with underscores

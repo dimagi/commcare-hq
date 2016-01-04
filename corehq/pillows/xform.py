@@ -35,6 +35,7 @@ def flatten(d, parent_key='', delimiter='/'):
             items.append((new_key, v))
     return dict(items)
 
+
 class XFormPillow(HQPillow):
     document_class = XFormInstance
     couch_filter = "couchforms/xforms"
@@ -47,6 +48,7 @@ class XFormPillow(HQPillow):
     handler_domain_map = {}
     default_mapping = XFORM_MAPPING
 
+    @classmethod
     def get_unique_id(self):
         return XFORM_INDEX
 

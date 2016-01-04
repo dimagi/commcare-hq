@@ -2,6 +2,7 @@ import logging
 try:
     from .test_caching_utils import *
     from .test_cleanliness import *
+    from .test_dbaccessors import *
     from .test_new_sync import *
     from .test_index_tree import *
     from .test_ota_restore import *
@@ -10,6 +11,7 @@ try:
     from .test_sync_log_assertions import *
     from .test_sync_logs import *
     from .test_sync_mode import *
+    from .test_extension_indexes import *
     from .test_ota_fixtures import OtaFixtureTest
     # uncomment to run performance tests
     # from .performance_tests import SyncPerformanceTest

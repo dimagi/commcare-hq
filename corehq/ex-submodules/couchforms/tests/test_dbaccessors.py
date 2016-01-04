@@ -1,14 +1,15 @@
 import datetime
 from django.test import TestCase
 
-from corehq.form_processor.test_utils import FormProcessorTestUtils
+from corehq.apps.hqadmin.dbaccessors import get_number_of_forms_in_all_domains
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from couchforms.dbaccessors import get_forms_by_type, \
-    get_number_of_forms_by_type, get_number_of_forms_of_all_types, \
-    get_form_ids_by_type, get_number_of_forms_all_domains_in_couch
+    get_form_ids_by_type
 from couchforms.models import XFormInstance, XFormError
 
 
 class TestDBAccessors(TestCase):
+    dependent_apps = ['corehq.couchapps', 'corehq.apps.domain', 'corehq.form_processor']
 
     @classmethod
     def setUpClass(cls):
@@ -47,30 +48,12 @@ class TestDBAccessors(TestCase):
         for form in forms:
             self.assertIsInstance(form, XFormError)
 
-    def test_get_number_of_forms_by_type_xforminstance(self):
-        self.assertEqual(
-            get_number_of_forms_by_type(self.domain, 'XFormInstance'),
-            len(self.xforms)
-        )
-
-    def test_get_number_of_forms_by_type_xformerror(self):
-        self.assertEqual(
-            get_number_of_forms_by_type(self.domain, 'XFormError'),
-            len(self.xform_errors)
-        )
-
-    def test_get_number_of_forms_of_all_types(self):
-        self.assertEqual(
-            get_number_of_forms_of_all_types(self.domain),
-            len(self.xforms) + len(self.xform_errors)
-        )
-
     def test_get_form_ids_by_type(self):
         form_ids = get_form_ids_by_type(self.domain, 'XFormError')
         self.assertEqual(form_ids, [form._id for form in self.xform_errors])
 
-    def test_get_number_of_forms_all_domains_in_couch(self):
+    def test_get_number_of_forms_in_all_domains(self):
         self.assertEqual(
-            get_number_of_forms_all_domains_in_couch(),
+            get_number_of_forms_in_all_domains(),
             len(self.xforms)
         )

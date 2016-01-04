@@ -10,6 +10,7 @@ from corehq import privileges
 from django.core.cache import cache
 from django_prbac.utils import has_privilege
 
+from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
 
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
 SYSTEM_USER_ID = 'system'
@@ -19,6 +20,7 @@ WEIRD_USER_IDS = [
     'commtrack-system',    # internal HQ/commtrack system forms
     DEMO_USER_ID,           # demo mode
     'demo_user_group_id',  # demo mode with case sharing enabled
+    UNOWNED_EXTENSION_OWNER_ID,
     SYSTEM_USER_ID,
 ]
 

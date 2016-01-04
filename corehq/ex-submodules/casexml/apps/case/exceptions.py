@@ -42,3 +42,7 @@ class MissingServerDate(ReconciliationError):
 
 class VersionNotSupported(CommCareCaseError):
     pass
+
+
+class PhoneDateValueError(CommCareCaseError):
+    pass

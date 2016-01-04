@@ -20,6 +20,7 @@ try:
     from .test_tags import *
     from .test_v2_parsing import *
     from .test_domains import *
+    from .test_close_extension_chain import *
     from .test_strict_datetimes import *
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity

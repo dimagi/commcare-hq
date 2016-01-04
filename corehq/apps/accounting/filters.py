@@ -142,7 +142,7 @@ class SubscriptionTypeFilter(BaseSingleOptionFilter):
 
 class ProBonoStatusFilter(BaseSingleOptionFilter):
     slug = 'pro_bono_status'
-    label = _("Pro-Bono")
+    label = _("Discounted")
     default_text = _("Any")
     options = ProBonoStatus.CHOICES
 

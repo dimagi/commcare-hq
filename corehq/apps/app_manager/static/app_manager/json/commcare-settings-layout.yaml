@@ -10,6 +10,7 @@
     - hq.commtrack_requisition_mode
     - hq.use_custom_suite
     - hq.custom_suite
+    - hq.custom_base_url
     # RemoteApp
     - hq.profile_url
     - hq.manage_urls
@@ -22,9 +23,6 @@
     - hq.build_spec  # CommCare Version
     - properties.cc-autoup-freq  # Auto Update Frequency
     - properties.unsent-number-limit  # Unsent Form Limit
-    - properties.server-tether  # Sync Mode
-    - properties.cc-autosync-freq  # Auto-Sync Frequency
-    - properties.unsent-time-limit  # Unsynced Time Limit
     - properties.cc-content-valid  # Multimedia Validation
     
 
@@ -36,6 +34,9 @@
     - hq.admin_password  # Admin Password
     - hq.show_user_registration  # Allow User Registration from Phone
     - properties.cc-send-procedure  # Send Data
+    - properties.server-tether  # Sync Mode
+    - properties.cc-autosync-freq  # Auto-Sync Frequency
+    - properties.unsent-time-limit  # Unsynced Time Limit
     - properties.password_format  # Password Format
 
 - title: 'Java Phone User Interface Settings'

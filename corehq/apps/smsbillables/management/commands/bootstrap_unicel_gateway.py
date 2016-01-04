@@ -4,7 +4,7 @@ from django.core.management.base import LabelCommand
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
-from corehq.messaging.smsbackends.unicel.api import UnicelBackend
+from corehq.messaging.smsbackends.unicel.models import UnicelBackend
 
 logger = logging.getLogger('accounting')
 

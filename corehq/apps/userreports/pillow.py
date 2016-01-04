@@ -6,8 +6,8 @@ from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildEr
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
 from corehq.apps.userreports.sql import IndicatorSqlAdapter, metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.db import connection_manager
-from dimagi.utils.logging import notify_error
+from corehq.sql_db.connections import connection_manager
+from corehq.util.soft_assert import soft_assert
 from fluff.signals import get_migration_context, get_tables_to_rebuild
 from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoint_store
 from pillowtop.couchdb import CachedCouchDB
@@ -30,7 +30,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
         self.last_bootstrapped = datetime.utcnow()
 
     def get_all_configs(self):
-        return DataSourceConfiguration.all()
+        return filter(lambda config: not config.is_deactivated, DataSourceConfiguration.all())
 
     def run(self):
         self.bootstrap()
@@ -61,6 +61,9 @@ class ConfigurableIndicatorPillow(PythonPillow):
         for adapter in self.table_adapters:
             tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
 
+        _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']))
+        _notify_cory = lambda msg: _assert(False, msg)
+
         for engine_id, table_map in tables_by_engine.items():
             engine = connection_manager.get_engine(engine_id)
             with engine.begin() as connection:
@@ -73,7 +76,13 @@ class ConfigurableIndicatorPillow(PythonPillow):
                 try:
                     self.rebuild_table(sql_adapter)
                 except TableRebuildError, e:
-                    notify_error(unicode(e))
+                    _notify_cory(unicode(e))
+                else:
+                    _notify_cory(u'rebuilt table {} ({}) because {}'.format(
+                        table_name,
+                        u'{} [{}]'.format(sql_adapter.config.display_name, sql_adapter.config._id),
+                        diffs,
+                    ))
 
     def rebuild_table(self, sql_adapter):
         config = sql_adapter.config

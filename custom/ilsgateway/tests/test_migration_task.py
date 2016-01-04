@@ -3,7 +3,7 @@ from django.test import TestCase
 from corehq.apps.commtrack.models import Product
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from corehq.apps.locations.models import Location
-from corehq.messaging.smsbackends.test.api import TestSMSBackend
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from corehq.apps.users.models import WebUser, CommCareUser
 from custom.ilsgateway.models import ILSGatewayConfig
 from custom.ilsgateway.tests.mock_endpoint import MockEndpoint

@@ -1,5 +1,5 @@
 import json
-from .api import TropoBackend
+from .models import TropoBackend
 from tropo import Tropo
 from corehq.apps.ivr.api import incoming as incoming_call
 from corehq.apps.sms.api import incoming as incoming_sms
@@ -9,6 +9,7 @@ from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import CallLog, INCOMING, OUTGOING
 from datetime import datetime
 from corehq.apps.sms.util import strip_plus
+
 
 @csrf_exempt
 def sms_in(request):
@@ -45,6 +46,7 @@ def sms_in(request):
     else:
         return HttpResponseBadRequest("Bad Request")
 
+
 @csrf_exempt
 def ivr_in(request):
     """
@@ -79,5 +81,3 @@ def ivr_in(request):
         return HttpResponse(t.RenderJson())
     else:
         return HttpResponseBadRequest("Bad Request")
-
-

@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime
 import logging
 from xml.etree import ElementTree
@@ -13,7 +14,10 @@ from corehq.util.xml_utils import serialize
 from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
-from corehq.apps.userreports.util import localize
+from corehq.apps.userreports.reports.util import (
+    get_expanded_columns,
+    get_total_row,
+)
 
 
 class ReportFixturesProvider(object):
@@ -49,10 +53,11 @@ class ReportFixturesProvider(object):
             try:
                 reports_elem.append(self._report_config_to_fixture(report_config, user))
             except UserReportsError:
-                pass
+                if settings.UNIT_TESTING or settings.DEBUG:
+                    raise
             except Exception as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
-                if settings.UNIT_TESTING:
+                if settings.UNIT_TESTING or settings.DEBUG:
                     raise
         root.append(reports_elem)
         return [root]
@@ -60,27 +65,86 @@ class ReportFixturesProvider(object):
     def _report_config_to_fixture(self, report_config, user):
         report_elem = ElementTree.Element('report', attrib={'id': report_config.uuid})
         report = ReportConfiguration.get(report_config.report_id)
-        report_elem.append(self._element('name', localize(report_config.header, user.language)))
         data_source = ReportFactory.from_spec(report)
 
-        data_source.set_filter_values({
+        all_filter_values = {
             filter_slug: filter.get_filter_value(user)
             for filter_slug, filter in report_config.filters.items()
-        })
+        }
+        filter_values = {
+            filter_slug: filter_value for filter_slug, filter_value in all_filter_values.items()
+            if filter_value is not None
+        }
+        defer_filters = {
+            filter_slug: report.get_ui_filter(filter_slug)
+            for filter_slug, filter_value in all_filter_values.items()
+            if filter_value is None
+        }
+        data_source.set_filter_values(filter_values)
+        data_source.defer_filters(defer_filters)
 
         rows_elem = ElementTree.Element('rows')
 
-        for i, row in enumerate(data_source.get_data()):
-            row_elem = ElementTree.Element('row', attrib={'index': str(i)})
-            for k in sorted(row.keys()):
-                row_elem.append(self._element('column', serialize(row[k]), attrib={'id': k}))
-            rows_elem.append(row_elem)
+        deferred_fields = {ui_filter.field for ui_filter in defer_filters.values()}
+        filter_options_by_field = defaultdict(set)
 
+        def _row_to_row_elem(row, index, is_total_row=False):
+            row_elem = ElementTree.Element(
+                'row',
+                attrib={
+                    'index': str(index),
+                    'is_total_row': str(is_total_row),
+                }
+            )
+            for k in sorted(row.keys()):
+                value = serialize(row[k])
+                row_elem.append(self._element('column', value, attrib={'id': k}))
+                if not is_total_row and k in deferred_fields:
+                    filter_options_by_field[k].add(value)
+            return row_elem
+
+        for i, row in enumerate(data_source.get_data()):
+            rows_elem.append(_row_to_row_elem(row, i))
+
+        if data_source.has_total_row:
+            total_row = get_total_row(
+                data_source.get_data(),
+                data_source.aggregation_columns,
+                data_source.column_configs,
+                get_expanded_columns(data_source.column_configs, data_source.config)
+            )
+            rows_elem.append(_row_to_row_elem(
+                dict(
+                    zip(
+                        map(lambda column_config: column_config.column_id, data_source.column_configs),
+                        map(str, total_row)
+                    )
+                ),
+                data_source.get_total_records(),
+                is_total_row=True,
+            ))
+
+        filters_elem = self._element('filters')
+        for filter_slug, ui_filter in defer_filters.items():
+            # @field is maybe a bad name for this attribute,
+            # since it's actually the filter slug
+            filter_elem = self._element('filter', attrib={'field': filter_slug})
+            option_values = filter_options_by_field[ui_filter.field]
+            choices = ui_filter.choice_provider.get_choices_for_values(option_values)
+            choices = sorted(choices, key=lambda choice: choice.display)
+            for choice in choices:
+                # add the correct text from ui_filter.choice_provider
+                option_elem = self._element(
+                    'option', text=choice.display, attrib={'value': choice.value})
+                filter_elem.append(option_elem)
+            filters_elem.append(filter_elem)
+
+        report_elem.append(filters_elem)
         report_elem.append(rows_elem)
         return report_elem
 
     @staticmethod
-    def _element(name, text, attrib=None):
+    def _element(name, text=None, attrib=None):
         attrib = attrib or {}
         element = ElementTree.Element(name, attrib=attrib)
         element.text = text

@@ -1,4 +1,5 @@
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty, DictProperty
+from jsonobject import DefaultProperty
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.expressions.getters import TransformedGetter, getter_from_property_reference, \
     transform_from_datatype
@@ -75,7 +76,7 @@ class ExpressionIndicatorSpec(IndicatorSpecBase):
     datatype = DataTypeProperty(required=True)
     is_nullable = BooleanProperty(default=True)
     is_primary_key = BooleanProperty(default=False)
-    expression = DictProperty(required=True)
+    expression = DefaultProperty(required=True)
     transform = DictProperty(required=False)
 
     def parsed_expression(self, context):

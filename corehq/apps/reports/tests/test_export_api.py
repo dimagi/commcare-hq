@@ -36,11 +36,11 @@ def get_form():
     return FORM_TEMPLATE % {"uid": uuid.uuid4().hex}
 
 
-def submit_form(f=None, domain=DOMAIN):
+def _submit_form(f=None, domain=DOMAIN):
     if f is None:
         f = get_form()
     url = get_submit_url(domain)
-    return spoof_submission(url, f, hqsubmission=False)
+    return spoof_submission(url, f)
 
 
 def get_export_response(client, previous="", include_errors=False, domain=DOMAIN):
@@ -90,7 +90,7 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
         c = Client()
         c.login(**{'username': 'test', 'password': 'foobar'})
 
-        submit_form()
+        _submit_form()
         time.sleep(1)
         resp = get_export_response(c)
         self.assertEqual(200, resp.status_code)
@@ -111,7 +111,7 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
         self.assertEqual(302, resp.status_code)
         
         # data = data
-        submit_form()
+        _submit_form()
 
         # now that this is time based we have to sleep first. this is annoying
         time.sleep(1)
@@ -125,7 +125,7 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
         resp = get_export_response(c, prev_token)
         self.assertEqual(302, resp.status_code)
 
-        submit_form()
+        _submit_form()
         time.sleep(1)
         resp = get_export_response(c, prev_token)
         self.assertEqual(200, resp.status_code)
@@ -141,13 +141,13 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
         
         # submit, assert something
         f = get_form()
-        submit_form(f)
+        _submit_form(f)
         resp = get_export_response(c)
         self.assertEqual(200, resp.status_code)
         initial_content = _content(resp)
         
         # resubmit, assert same since it's a dupe
-        submit_form(f)
+        _submit_form(f)
         resp = get_export_response(c)
         self.assertEqual(200, resp.status_code)
         # hack: check for the number of rows to ensure the new one 
@@ -173,7 +173,7 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
         c = Client()
         c.login(**{'username': 'test2', 'password': 'testpass'})
         f = get_form()
-        submit_form(f, community_domain.name)
+        _submit_form(f, community_domain.name)
         resp = get_export_response(c, domain=community_domain.name)
         self.assertEqual(401, resp.status_code)
 

@@ -20,8 +20,8 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
-from corehq.elastic import es_wrapper
 from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from couchdbkit.resource import ResourceNotFound
 from corehq.util.view_utils import absolute_reverse
@@ -39,7 +39,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from casexml.apps.phone.models import User as CaseXMLUser
-from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin, QuickCachedDocumentMixin
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
 from corehq.apps.domain.models import Domain, LicenseAgreement
@@ -538,7 +538,11 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 return
 
         domain_obj = Domain.get_by_name(domain, strict=True)
-        if not domain_obj:
+        # if you haven't seen any of these by Feb 2016 you should delete this code.
+        _soft_assert = soft_assert(notify_admins=True)
+        if not _soft_assert(domain_obj,
+                            "Domain membership added before domain created",
+                            {'domain': domain}):
             domain_obj = Domain(is_active=True, name=domain, date_created=datetime.utcnow())
             domain_obj.save()
 
@@ -836,26 +840,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         if should_save:
             couch_user.save()
         return couch_user
-
-    @classmethod
-    def es_fakes(cls, domain, fields=None, start_at=None, size=None, wrap=True):
-        """
-        Get users from ES.  Use instead of by_domain()
-        This is faster than big db calls, but only returns partial data.
-        Set wrap to False to get a raw dict object (much faster).
-        This raw dict can be passed to _report_user_dict.
-        The save method has been disabled.
-        """
-        fields = fields or ['_id', 'username', 'first_name', 'last_name',
-                'doc_type', 'is_active', 'email']
-        raw = es_wrapper('users', domain=domain, doc_type=cls.__name__,
-                fields=fields, start_at=start_at, size=size)
-        if not wrap:
-            return raw
-        def save(*args, **kwargs):
-            raise NotImplementedError("This is a fake user, don't save it!")
-        ESUser = type(cls.__name__, (cls,), {'save': save})
-        return [ESUser(u) for u in raw]
 
     class AccountTypeError(Exception):
         pass
@@ -1586,7 +1570,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             view_name = 'deleted_data/deleted_forms_by_user'
             startkey = [self.user_id]
         else:
-            view_name = 'reports_forms/all_forms'
+            view_name = 'all_forms/view'
             startkey = ['submission user', self.domain, self.user_id]
 
         db = XFormInstance.get_db()
@@ -1606,7 +1590,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     @property
     def form_count(self):
         key = ["submission user", self.domain, self.user_id]
-        result = XFormInstance.view('reports_forms/all_forms',
+        result = XFormInstance.view('all_forms/view',
             startkey=key,
             endkey=key + [{}],
             reduce=True
@@ -2023,9 +2007,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
     def get_usercase_id(self):
-        from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-        usercase = get_case_by_domain_hq_user_id(self.domain, self._id, USERCASE_TYPE)
-        return usercase.case_id if usercase else None
+        from corehq.apps.hqcase.utils import get_case_id_by_domain_hq_user_id
+        return get_case_id_by_domain_hq_user_id(self.domain, self._id, USERCASE_TYPE)
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
@@ -2297,12 +2280,15 @@ class DomainRequest(models.Model):
             WebUser.get_admins_by_domain(self.domain)}
         text_content = render_to_string("users/email/request_domain_access.txt", params)
         html_content = render_to_string("users/email/request_domain_access.html", params)
-        subject = _('Request from %s to join %s') % (self.full_name, domain_name)
+        subject = _('Request from %(name)s to join %(domain)s') % {
+            'name': self.full_name,
+            'domain': domain_name,
+        }
         send_html_email_async.delay(subject, recipients, html_content, text_content=text_content,
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
 
-class Invitation(CachedCouchDocumentMixin, Document):
+class Invitation(QuickCachedDocumentMixin, Document):
     email = StringProperty()
     invited_by = StringProperty()
     invited_on = DateTimeProperty()

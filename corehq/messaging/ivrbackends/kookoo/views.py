@@ -2,16 +2,17 @@ import sys
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.ivr.api import incoming, IVR_EVENT_NEW_CALL, IVR_EVENT_INPUT, IVR_EVENT_DISCONNECT
-from corehq.messaging.ivrbackends.kookoo import api as backend_module
+from corehq.messaging.ivrbackends.kookoo.models import KooKooBackend
 from corehq.apps.sms.models import CallLog
 from dimagi.utils.couch import CriticalSection
 
-"""
-Kookoo invokes this view for its main communication with HQ.
-Point Kookoo's 'url' parameter here.
-"""
+
 @csrf_exempt
 def ivr(request):
+    """
+    Kookoo invokes this view for its main communication with HQ.
+    Point Kookoo's 'url' parameter here.
+    """
     # Retrieve all parameters
     called_number = request.GET.get("called_number", None)
     outbound_sid = request.GET.get("outbound_sid", None)
@@ -39,17 +40,22 @@ def ivr(request):
     else:
         ivr_event = IVR_EVENT_DISCONNECT
 
+    # Once this moves to postgres we'll have a better way to look this up.
+    # For now, I don't want to add or change any couch views.
+    backend = KooKooBackend.get('MOBILE_BACKEND_KOOKOO')
     with CriticalSection([gateway_session_id], timeout=300):
-        result = incoming(phone_number, backend_module, gateway_session_id,
-            ivr_event, input_data=data, duration=total_call_duration)
+        result = incoming(phone_number, gateway_session_id, ivr_event,
+            backend=backend, input_data=data, duration=total_call_duration)
     return result
 
-"""
-Kookoo invokes this view after a call is finished (whether answered or not) with status and some statistics.
-Point Kookoo's 'callback_url' parameter here.
-"""
+
 @csrf_exempt
 def ivr_finished(request):
+    """
+    Kookoo invokes this view after a call is finished (whether answered or not)
+    with status and some statistics.
+    Point Kookoo's 'callback_url' parameter here.
+    """
     # Retrieve all parameters
     status = request.POST.get("status", None)
     start_time = request.POST.get("start_time", None)
@@ -79,6 +85,3 @@ def ivr_finished(request):
             call_log_entry.save()
     
     return HttpResponse("")
-
-
-

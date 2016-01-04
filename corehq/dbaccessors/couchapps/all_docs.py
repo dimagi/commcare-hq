@@ -40,7 +40,7 @@ def get_all_docs_with_doc_types(db, doc_types):
         results = paginate_view(
             db, 'all_docs/by_doc_type',
             chunk_size=100, startkey=[doc_type], endkey=[doc_type, {}],
-            attachments=True, include_docs=True, reduce=False)
+            include_docs=True, reduce=False)
         for result in results:
             yield result['doc']
 

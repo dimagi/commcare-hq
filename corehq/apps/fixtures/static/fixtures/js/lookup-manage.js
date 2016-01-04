@@ -105,7 +105,7 @@ $(function () {
                 error: function(data) {
                     var error_message;
                     if (data.responseText == "DuplicateFixture"){
-                        error_message = "Can not create table with table_id '"+self.tag()+"'. table_id should be unique.";
+                        error_message = "Can not create table with ID '"+self.tag()+"'. Table IDs should be unique.";
                     }
                     else{
                         error_message = somethingWentWrong;
@@ -324,7 +324,7 @@ $(function () {
             self.data_types.push(dataType);
         };
         self.removeDataType = function (dataType) {
-            if (confirm("Are you sure you want to delete the table '" + dataType.tag() + "'")){
+            if (confirm("Are you sure you want to delete the table '" + dataType.tag() + "'?")){
                     self.data_types.destroy(dataType);
                     dataType.save();                 
             }
@@ -350,10 +350,10 @@ $(function () {
 
     var el = $('#fixtures-ui');
     var app = new App();
-    ko.applyBindings(app, el.get(0));
+    el.koApplyBindings(app);
     el.show();
     app.loadData();
-    ko.applyBindings(app, $('#fixture-upload')[0]);
+    $('#fixture-upload').koApplyBindings(app);
     $("#fixture-download").on("hidden", function(){
                     $("#downloading").show();
                     $("#download-progress").hide();

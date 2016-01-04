@@ -21,11 +21,11 @@
             third-party data analysis tools.
         {% endblocktrans %}
     </p>
-    {% if not is_deid %}
+    {% if has_edit_permissions %}
     <p ng-show="!_.isEmpty(exports) || !hasLoaded">
         <a href="#createExportOptionsModal"
            data-toggle="modal"
-           class="btn btn-success">
+           class="btn btn-success new-export-link">
             <i class="fa fa-plus"></i>
             {% trans "Create New Export" %}
         </a>
@@ -37,7 +37,7 @@
         {% endblocktrans %}</strong></p>
         <p><a href="#createExportOptionsModal"
               data-toggle="modal"
-              class="btn btn-success">
+              class="btn btn-success new-export-link">
             <i class="fa fa-plus"></i>
             {% trans "Create New Export" %}
         </a></p>
@@ -73,7 +73,7 @@
                 </strong>
                 {% blocktrans %}
                     If this problem persists, please
-                    <a href="#reportIssueModal"
+                    <a href="#modalReportIssue"
                        data-toggle="modal">Report an Issue</a>.
                 {% endblocktrans %}
             </div>
@@ -83,7 +83,7 @@
                 <thead>
                     <tr>
                         <th class="col-sm-6">{% trans 'Name' %}</th>
-                        {% if not is_deid %}
+                        {% if has_edit_permissions %}
                         <th class="col-sm-1">{% trans 'Edit' %}</th>
                         {% endif %}
                         <th class="col-sm-2">{% trans 'Export' %}</th>
@@ -117,7 +117,7 @@
                                 <i class="fa fa-file-o"></i> <strong>{% trans 'Form:' %}</strong> {{ export.formname }}
                             </p>
                             {% endangularjs %}
-                            {% if not is_deid %}
+                            {% if has_edit_permissions %}
                             {% angularjs %}
                             <div class="alert alert-neutral alert-small"
                                  ng-show="!_.isEmpty(export.emailedExports)">
@@ -214,7 +214,7 @@
                             {% endangularjs %}
                             {% endif %}
                         </td>
-                        {% if not is_deid %}
+                        {% if has_edit_permissions %}
                         {% angularjs %}
                         <td>
                             <a href="{{ export.editUrl }}"
@@ -226,7 +226,8 @@
                         {% angularjs %}
                         <td>
                             <a href="{{ export.downloadUrl }}"
-                               class="btn btn-primary">
+                               class="btn btn-primary"
+                               ng-click="sendExportAnalytics()">
                                 {% trans 'Export' %}</a>
                         </td>
                         {% endangularjs %}

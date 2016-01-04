@@ -7,7 +7,7 @@ jsonobject-couchdbkit==0.7.1.0
 celery==3.1.18
 # required by django-digest
 decorator==4.0.4
-django==1.7.10
+django==1.7.11
 django-braces==1.8.1
 django-celery==3.1.16
 django-json-field==0.5.7
@@ -56,7 +56,7 @@ socketpool==0.5.3
 markdown==2.2.1
 amqp==1.4.7
 amqplib==1.0.2
-sqlagg==0.3.2
+sqlagg==0.3.3
 django-redis==4.2
 redis==2.10.3
 unittest2
@@ -82,3 +82,5 @@ django-uuidfield==0.5.0
 # required by ctable
 SQLAlchemy==1.0.9
 alembic==0.6.4
+django-statici18n==1.1.5
+httpagentparser==1.7.8

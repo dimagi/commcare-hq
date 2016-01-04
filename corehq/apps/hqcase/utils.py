@@ -72,35 +72,29 @@ def get_case_wrapper(data):
     return wrapper
 
 
-def get_case_by_domain_hq_user_id(domain, user_id, case_type):
-    """
-    Get the 'user case' for user_id. User cases are part of the call center feature.
-    """
-    cases = CommCareCase.view(
-        'hqcase/by_domain_hq_user_id',
-        key=[domain, user_id],
+def _get_cases_by_domain_hq_user_id(domain, user_id, case_type, include_docs):
+    return CommCareCase.view(
+        'case_by_domain_hq_user_id_type/view',
+        key=[domain, user_id, case_type],
         reduce=False,
-        include_docs=True
+        include_docs=include_docs
     ).all()
 
-    for case in cases:
-        if case.type == case_type:
-            return case
 
-
-def get_callcenter_case_mapping(domain, user_ids):
+def get_case_by_domain_hq_user_id(domain, user_id, case_type):
     """
-    Get the mapping from user_id to 'user case id' for each user in user_ids.
+    Return the first case of case_type owned by user_id
     """
-    keys = [[domain, user_id] for user_id in user_ids]
-    rows = CommCareCase.view(
-        'hqcase/by_domain_hq_user_id',
-        keys=keys,
-        reduce=False,
-        include_docs=False
-    )
+    cases = _get_cases_by_domain_hq_user_id(domain, user_id, case_type, include_docs=True)
+    return cases[0] if cases else None
 
-    return {r['key'][1]: r['id'] for r in rows}
+
+def get_case_id_by_domain_hq_user_id(domain, user_id, case_type):
+    """
+    Return the ID of the first case of case_type owned by user_id
+    """
+    rows = _get_cases_by_domain_hq_user_id(domain, user_id, case_type, include_docs=False)
+    return rows[0]['id'] if rows else None
 
 
 def get_case_by_identifier(domain, identifier):
@@ -253,15 +247,20 @@ def _process_case_block(case_block, attachments, old_case_id):
     return ET.tostring(root), ret_attachments
 
 
-def submit_case_block_from_template(domain, template, context):
+def submit_case_block_from_template(domain, template, context, xmlns=None, user_id=None):
     case_block = render_to_string(template, context)
     # Ensure the XML is formatted properly
     # An exception is raised if not
     case_block = ElementTree.tostring(ElementTree.XML(case_block))
-    submit_case_blocks(case_block, domain)
+
+    user_id = user_id or SYSTEM_USER_ID
+    kwargs = {}
+    if xmlns:
+        kwargs['xmlns'] = xmlns
+    submit_case_blocks(case_block, domain, user_id=user_id, **kwargs)
 
 
-def update_case(domain, case_id, case_properties=None, close=False):
+def update_case(domain, case_id, case_properties=None, close=False, xmlns=None):
     """
     Updates or closes a case (or both) by submitting a form.
     domain - the case's domain
@@ -269,6 +268,7 @@ def update_case(domain, case_id, case_properties=None, close=False):
     case_properties - to update the case, pass in a dictionary of {name1: value1, ...}
                       to ignore case updates, leave this argument out
     close - True to close the case, False otherwise
+    xmlns - pass in an xmlns to use it instead of the default
     """
     context = {
         'case_id': case_id,
@@ -277,4 +277,4 @@ def update_case(domain, case_id, case_properties=None, close=False):
         'case_properties': case_properties,
         'close': close,
     }
-    submit_case_block_from_template(domain, 'hqcase/xml/update_case.xml', context)
+    submit_case_block_from_template(domain, 'hqcase/xml/update_case.xml', context, xmlns=xmlns)

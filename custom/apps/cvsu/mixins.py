@@ -4,8 +4,25 @@ from sqlagg.columns import MonthColumn, YearColumn, YearQuarterColumn
 from sqlagg.filters import IN
 
 from corehq.apps.reports.sqlreport import SqlReportException, AggregateColumn, DatabaseColumn
-from corehq.db import connection_manager
-from custom.apps.cvsu.sqldata import combine_month_year, format_date, combine_quarter_year, format_year
+from corehq.apps.reports.util import format_datatables_data
+from corehq.sql_db.connections import connection_manager
+
+
+def combine_month_year(year, month):
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    return "%s %s" % (months[int(month) - 1], int(year)), int(year * 100 + month)
+
+
+def combine_quarter_year(year, quarter):
+    return "%s Q%s" % (int(year), int(quarter)), int(year * 10 + quarter)
+
+
+def format_year(year):
+    return format_datatables_data(int(year), int(year))
+
+
+def format_date(value):
+    return format_datatables_data(value[0], value[1])
 
 
 class CVSUSqlDataMixin(object):
@@ -24,14 +41,13 @@ class CVSUSqlDataMixin(object):
             if column.slug == column_name:
                 return column
 
-    def _get_data(self, slugs=None):
+    def _get_data(self):
         if self.keys is not None and not self.group_by:
             raise SqlReportException('Keys supplied without group_by.')
 
         qc = self.query_context
         for c in self.columns:
-            if not slugs or c.slug in slugs:
-                qc.append_column(c.view)
+            qc.append_column(c.view)
 
         session = connection_manager.get_scoped_session(self.engine_id)
 

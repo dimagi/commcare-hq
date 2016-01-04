@@ -1,11 +1,11 @@
-{% extends "hqadmin/hqadmin_base_report.html" %}
+{% extends "hqadmin/bootstrap2/hqadmin_base_report.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load humanize %}
 {% block report-title %}System Info{% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+    <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
     <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
     <script src="{% static 'hqwebapp/js/main.js' %}"></script>
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
@@ -243,7 +243,7 @@
             self.show_pillow_dialog = function (operation) {
                 var element = $('#pillow_operation_modal').get(0);
                 ko.cleanNode(element);
-                ko.applyBindings(new PillowOperationViewModel(self, operation), element);
+                $(element).koApplyBindings(new PillowOperationViewModel(self, operation));
                 $('#pillow_operation_modal').modal({
                     backdrop: 'static',
                     keyboard: false,
@@ -307,7 +307,6 @@
         var couchViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=_active_tasks", ActiveTaskModel, {{ couch_update }});
         {% endif %}
         var pillowtopViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=pillowtop", PillowModel, {{ couch_update }}, 'name');
-        var dbComparisonsViewModel = new RefreshableViewModel("{% url "db_comparisons" %}", DbComparisons, {{ db_update }}, 'description');
 
         var AutoRefreshModel = function () {
             var self = this;
@@ -336,17 +335,15 @@
 
         var autoRefresh = new AutoRefreshModel();
         $(function () {
-            ko.applyBindings(celeryViewModel, $("#celeryblock").get(0));
-            ko.applyBindings(couchViewModel, $("#couchblock").get(0));
-            ko.applyBindings(pillowtopViewModel, $('#pillowtop-status').get(0));
-            ko.applyBindings(dbComparisonsViewModel, $('#elastic-vs-couch').get(0));
+            $("#celeryblock").koApplyBindings(celeryViewModel);
+            $("#couchblock").koApplyBindings(couchViewModel);
+            $('#pillowtop-status').koApplyBindings(pillowtopViewModel);
             autoRefresh.addModel(celeryViewModel);
             autoRefresh.addModel(couchViewModel);
             autoRefresh.addModel(pillowtopViewModel);
-            autoRefresh.addModel(dbComparisonsViewModel);
 
             autoRefresh.refreshAll();
-            ko.applyBindings(autoRefresh, $('#autorefresh').get(0));
+            $('#autorefresh').koApplyBindings(autoRefresh);
         });
 
     </script>
@@ -511,37 +508,6 @@
                         </button>
                     </td>
                 </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div class="row-fluid" id="elastic-vs-couch">
-        <h3>
-            Elasticsearch/Couch/Postgres comparison
-            <small data-bind="if: loading()">
-                <i class="icon-refresh icon-spin"></i>
-            </small>
-            <small data-bind="if: !loading() && !autoRefresh()">
-                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
-            </small>
-        </h3>
-        <p class="text-error" data-bind="visible: error, text: error"></p>
-        <table class="table table-striped" data-bind="visible: !error()">
-            <thread>
-            <tr>
-                <th>Description</th>
-                <th>CouchDB</th>
-                <th>Elasticsearch</th>
-                <th>PostgreSQL</th>
-            </tr>
-            </thread>
-            <tbody data-bind="foreach: models">
-            <tr>
-                <td data-bind="text: description"></td>
-                <td data-bind="text: couch_docs"></td>
-                <td data-bind="text: es_docs"></td>
-                <td data-bind="text: sql_rows"></td>
-            </tr>
             </tbody>
         </table>
     </div>

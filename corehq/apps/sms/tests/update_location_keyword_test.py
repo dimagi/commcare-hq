@@ -8,7 +8,7 @@ from corehq.apps.sms.messages import get_message
 from corehq.apps.sms.mixin import BackendMapping
 from corehq.apps.sms.models import SMS
 from corehq.apps.users.models import CommCareUser
-from corehq.messaging.smsbackends.test.api import TestSMSBackend
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
 import corehq.apps.sms.messages as messages
 
 
@@ -34,7 +34,7 @@ class UpdateLocationKeywordTest(TestCase, DomainSubscriptionMixin):
 
         cls.setup_subscription(cls.domain_obj.name, SoftwarePlanEdition.ADVANCED)
 
-        cls.backend = TestSMSBackend(is_global=True)
+        cls.backend = TestSMSBackend(name='MOBILE_BACKEND_TEST', is_global=True)
         cls.backend.save()
 
         cls.backend_mapping = BackendMapping(

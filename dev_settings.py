@@ -9,9 +9,16 @@ import os
 
 LOCAL_APPS = (
     'django_extensions',
+    # for tests
+    'testapps.test_elasticsearch',
+    'testapps.test_pillowtop',
 )
 
 TEST_RUNNER = 'testrunner.DevTestRunner'
+
+# https://docs.djangoproject.com/en/1.8/ref/settings/#std:setting-TEST_NON_SERIALIZED_APPS
+# https://docs.djangoproject.com/en/1.8/ref/settings/#serialize
+TEST_NON_SERIALIZED_APPS = ['corehq.form_processor']
 
 ####### Django Extensions #######
 # These things will be imported when you run ./manage.py shell_plus
@@ -53,3 +60,8 @@ PILLOWTOP_MACHINE_ID = 'testhq'  # for tests
 CELERY_ALWAYS_EAGER = True
 # Fail hard in tasks so you get a traceback
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
+
+# default inactivity timeout to 1 year
+INACTIVITY_TIMEOUT = 60 * 24 * 365
+
+CACHE_REPORTS = False

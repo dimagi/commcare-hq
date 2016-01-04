@@ -1,4 +1,6 @@
 from functools import partial
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from dimagi.utils.dates import force_to_datetime
 import fluff
 from corehq.fluff.calculators.case import CasePropertyFilter
@@ -190,3 +192,17 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
 WorldVisionMotherFluffPillow = WorldVisionMotherFluff.pillow()
 WorldVisionChildFluffPillow = WorldVisionChildFluff.pillow()
 WorldVisionHierarchyFluffPillow = WorldVisionHierarchyFluff.pillow()
+
+
+def get_mother_pillow():
+    return WorldVisionMotherFluffPillow(
+        change_feed=KafkaChangeFeed(topic=topics.CASE, group_id='wv-mother-fluff'),
+        preload_docs=False,
+    )
+
+
+def get_child_pillow():
+    return WorldVisionChildFluffPillow(
+        change_feed=KafkaChangeFeed(topic=topics.CASE, group_id='wv-child-fluff'),
+        preload_docs=False,
+    )

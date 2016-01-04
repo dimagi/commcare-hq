@@ -32,8 +32,6 @@ application_urls = patterns('corehq.apps.hqmedia.views',
         name=ProcessTextFileUploadView.name),
     url(r'^remove_logo/$', RemoveLogoView.as_view(), name=RemoveLogoView.name),
     url(r'^map/$', MultimediaReferencesView.as_view(), name=MultimediaReferencesView.name),
-    url(r'^search/$', 'search_for_media', name='hqmedia_search'),
-    url(r'^choose/$', 'choose_media', name='hqmedia_choose_media'),
 )
 
 download_urls = patterns('corehq.apps.hqmedia.views',

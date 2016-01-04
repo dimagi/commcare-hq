@@ -34,6 +34,8 @@ from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.userreports.util import has_report_builder_access
+from corehq.apps.users.decorators import get_permission_name
+from corehq.apps.users.models import Permissions
 from django_prbac.utils import has_privilege
 from corehq.util.markup import mark_up_urls
 
@@ -594,6 +596,18 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
+    def can_only_see_deid_exports(self):
+        from corehq.apps.export.views import user_can_view_deid_exports
+        return (not self.couch_user.can_view_reports()
+                and not self.couch_user.has_permission(
+                    self.domain,
+                    get_permission_name(Permissions.view_report),
+                    data='corehq.apps.reports.standard.export.ExcelExportReport'
+                )
+                and user_can_view_deid_exports(self.domain, self.couch_user))
+
+    @property
+    @memoized
     def can_use_lookup_tables(self):
         return domain_has_privilege(self.domain, privileges.LOOKUP_TABLES)
 
@@ -610,9 +624,21 @@ class ProjectDataTab(UITab):
             'domain': self.domain,
         }
 
-        new_exports_views = []
-        if self.can_edit_commcare_data and toggle_enabled(self._request,
-                                                          toggles.REVAMPED_EXPORTS):
+        export_data_views = []
+        if self.can_only_see_deid_exports:
+            from corehq.apps.export.views import DeIdFormExportListView, DownloadFormExportView
+            export_data_views.append({
+                'title': DeIdFormExportListView.page_title,
+                'url': reverse(DeIdFormExportListView.urlname,
+                               args=(self.domain,)),
+                'subpages': [
+                    {
+                        'title': DownloadFormExportView.page_title,
+                        'urlname': DownloadFormExportView.urlname,
+                    },
+                ]
+            })
+        elif self.can_export_data:
             from corehq.apps.export.views import (
                 FormExportListView,
                 CaseExportListView,
@@ -624,16 +650,18 @@ class ProjectDataTab(UITab):
                 EditCustomFormExportView,
                 EditCustomCaseExportView,
             )
-            new_exports_views.extend([
+            export_data_views.extend([
                 {
                     'title': FormExportListView.page_title,
                     'url': reverse(FormExportListView.urlname,
                                    args=(self.domain,)),
-                    'subpages': [
+                    'show_in_dropdown': True,
+                    'icon': 'icon icon-list-alt fa fa-list-alt',
+                    'subpages': filter(None, [
                         {
                             'title': CreateCustomFormExportView.page_title,
                             'urlname': CreateCustomFormExportView.urlname,
-                        },
+                        } if self.can_edit_commcare_data else None,
                         {
                             'title': BulkDownloadFormExportView.page_title,
                             'urlname': BulkDownloadFormExportView.urlname,
@@ -645,18 +673,20 @@ class ProjectDataTab(UITab):
                         {
                             'title': EditCustomFormExportView.page_title,
                             'urlname': EditCustomFormExportView.urlname,
-                        },
-                    ]
+                        } if self.can_edit_commcare_data else None,
+                    ])
                 },
                 {
                     'title': CaseExportListView.page_title,
                     'url': reverse(CaseExportListView.urlname,
                                    args=(self.domain,)),
-                    'subpages': [
+                    'show_in_dropdown': True,
+                    'icon': 'icon icon-share fa fa-share-square-o',
+                    'subpages': filter(None, [
                         {
                             'title': CreateCustomCaseExportView.page_title,
                             'urlname': CreateCustomCaseExportView.urlname,
-                        },
+                        } if self.can_edit_commcare_data else None,
                         {
                             'title': DownloadCaseExportView.page_title,
                             'urlname': DownloadCaseExportView.urlname,
@@ -664,34 +694,13 @@ class ProjectDataTab(UITab):
                         {
                             'title': EditCustomCaseExportView.page_title,
                             'urlname': EditCustomCaseExportView.urlname,
-                        },
-                    ]
+                        } if self.can_edit_commcare_data else None,
+                    ])
                 },
             ])
-        from corehq.apps.export.views import DeIdFormExportListView
-        if (
-            DeIdFormExportListView.has_deid_permissions(self._request, self.domain)
-            and toggle_enabled(self._request, toggles.REVAMPED_EXPORTS)
-        ):
-            from corehq.apps.export.views import DownloadFormExportView
-            new_exports_views.append({
-                'title': DeIdFormExportListView.page_title,
-                'url': reverse(DeIdFormExportListView.urlname,
-                               args=(self.domain,)),
-                'subpages': [
-                    {
-                        'title': DownloadFormExportView.page_title,
-                        'urlname': DownloadFormExportView.urlname,
-                    },
-                ]
-            })
-        if new_exports_views:
-            items.append([_("Export Data [New - IN UAT/QA]"), new_exports_views])
 
-        if self.can_export_data:
-            from corehq.apps.data_interfaces.dispatcher \
-                import DataInterfaceDispatcher
-            items.extend(DataInterfaceDispatcher.navigation_sections(context))
+        if export_data_views:
+            items.append([_("Export Data"), export_data_views])
 
         if self.can_edit_commcare_data:
             from corehq.apps.data_interfaces.dispatcher \
@@ -719,6 +728,27 @@ class ProjectDataTab(UITab):
             items.extend(FixtureInterfaceDispatcher.navigation_sections(context))
 
         return items
+
+    @property
+    def dropdown_items(self):
+        if self.can_only_see_deid_exports or not self.can_export_data:
+            return []
+        from corehq.apps.export.views import (
+            FormExportListView,
+            CaseExportListView,
+        )
+        return [
+            dropdown_dict(
+                FormExportListView.page_title,
+                url=reverse(FormExportListView.urlname, args=(self.domain,))
+            ),
+            dropdown_dict(
+                CaseExportListView.page_title,
+                url=reverse(CaseExportListView.urlname, args=(self.domain,))
+            ),
+            dropdown_dict(None, is_divider=True),
+            dropdown_dict(_("View All"), url=self.url),
+        ]
 
 
 class ApplicationsTab(UITab):
@@ -803,7 +833,7 @@ class CloudcareTab(UITab):
 
 class MessagingTab(UITab):
     title = ugettext_noop("Messaging")
-    view = "corehq.apps.sms.views.compose_message"
+    view = "corehq.apps.sms.views.default"
 
     @property
     def is_viewable(self):
@@ -1509,6 +1539,8 @@ class AdminReportsTab(UITab):
             (_('Administrative Reports'), [
                 {'title': _('Project Space List'),
                  'url': reverse('admin_report_dispatcher', args=('domains',))},
+                {'title': _('Submission Map'),
+                 'url': reverse('dimagisphere')},
                 {'title': _('User List'),
                  'url': reverse('admin_report_dispatcher', args=('user_list',))},
                 {'title': _('Application List'),
@@ -1645,6 +1677,7 @@ class AdminTab(UITab):
             dropdown_dict(_("Reports"), is_header=True),
             dropdown_dict(_("Admin Reports"), url=reverse("default_admin_report")),
             dropdown_dict(_("System Info"), url=reverse("system_info")),
+            dropdown_dict(_("Submission Map"), url=reverse("dimagisphere")),
             dropdown_dict(_("Management"), is_header=True),
             dropdown_dict(mark_for_escaping(_("Commands")),
                           url=reverse("management_commands")),
@@ -1667,6 +1700,7 @@ class AdminTab(UITab):
         submenu_context.extend([
             dropdown_dict(_("SMS Connectivity & Billing"), url=reverse("default_sms_admin_interface")),
             dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
+            dropdown_dict(_("CommCare Builds"), url="/builds/edit_menu"),
             dropdown_dict(None, is_divider=True),
             dropdown_dict(_("Django Admin"), url="/admin")
         ])

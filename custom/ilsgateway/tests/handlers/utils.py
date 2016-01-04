@@ -6,9 +6,9 @@ from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.mixin import MobileBackend
 from corehq.apps.users.models import CommCareUser
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from custom.logistics.tests.test_script import TestScript
 from corehq.apps.commtrack.tests.util import make_loc, TEST_BACKEND
-from corehq.apps.sms.backend import test
 from custom.ilsgateway.models import ILSGatewayConfig
 from custom.logistics.tests.utils import bootstrap_user
 from casexml.apps.stock.models import DocDomainMapping
@@ -47,7 +47,8 @@ class ILSTestScript(TestScript):
         facility3 = make_loc(
             code="d31049", name="Test Facility 3", type="FACILITY", domain=domain.name, parent=district
         )
-        test.bootstrap(TEST_BACKEND, to_console=True)
+        cls.sms_backend = TestSMSBackend(name=TEST_BACKEND.upper(), is_global=True)
+        cls.sms_backend.save()
         cls.user1 = bootstrap_user(
             facility, username='stella', domain=domain.name, home_loc='loc1', phone_number='5551234',
             first_name='stella', last_name='Test'
@@ -85,7 +86,7 @@ class ILSTestScript(TestScript):
 
     @classmethod
     def tearDownClass(cls):
-        MobileBackend.load_by_name(TEST_DOMAIN, TEST_BACKEND).delete()
+        cls.sms_backend.delete()
         CommCareUser.get_by_username('stella').delete()
         CommCareUser.get_by_username('bella').delete()
         CommCareUser.get_by_username('trella').delete()

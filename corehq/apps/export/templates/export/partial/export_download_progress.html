@@ -17,7 +17,7 @@
                         <p>
                             {% blocktrans %}
                                 If the problem persists, please
-                                <a href="#reportIssueModal"
+                                <a href="#modalReportIssue"
                                    data-toggle="modal">
                                     Report an Issue</a>.
                             {% endblocktrans %}
@@ -32,11 +32,12 @@
                     <form class="form-inline download-form"
                           method="POST"
                           action="{{ dropboxUrl }}">
+                        {% csrf_token %}
                         <a href="{{ downloadUrl }}"
                            class="btn btn-success btn-full-width"
                            ng-show="!!isDownloadReady"
                            ng-disabled="!isDownloadReady"
-                           ng-click="isDownloaded = true;">
+                           ng-click="isDownloaded = true; sendAnalytics();">
                                 <i class="fa fa-download"></i>
                                 <span ng-show="!isMultimediaDownload">{% trans "Download" %}</span>
                                 <span ng-show="isMultimediaDownload">{% trans "Download Multimedia" %}</span>

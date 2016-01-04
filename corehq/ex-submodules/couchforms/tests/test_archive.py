@@ -6,7 +6,7 @@ from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms.signals import xform_archived, xform_unarchived
 
-from corehq.form_processor.test_utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -35,7 +35,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual(0, len(xform.history))
 
         lower_bound = datetime.utcnow() - timedelta(seconds=1)
-        xform.archive(user='mr. librarian')
+        xform.archive(user_id='mr. librarian')
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
 
         xform = self.formdb.get_form(xform.form_id)
@@ -50,7 +50,7 @@ class TestFormArchiving(TestCase, TestFileMixin):
         self.assertEqual('mr. librarian', archival.user)
 
         lower_bound = datetime.utcnow() - timedelta(seconds=1)
-        xform.unarchive(user='mr. researcher')
+        xform.unarchive(user_id='mr. researcher')
         upper_bound = datetime.utcnow() + timedelta(seconds=1)
 
         xform = self.formdb.get_form(xform.form_id)

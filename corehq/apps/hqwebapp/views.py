@@ -7,6 +7,7 @@ import re
 import sys
 import traceback
 import uuid
+import httpagentparser
 
 from django.conf import settings
 from django.contrib import messages
@@ -42,14 +43,15 @@ from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN
 from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
-from corehq.apps.receiverwrapper.models import Repeater
 from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.util.cache_utils import ExponentialBackoff
 from corehq.util.context_processors import get_domain_type
-from corehq.util.datadog.utils import create_datadog_event
+from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
+from corehq.util.datadog.metrics import JSERROR_COUNT
+from corehq.util.datadog.const import DATADOG_UNKNOWN
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception, notify_js_exception
@@ -482,27 +484,26 @@ def debug_notify(request):
 
 @require_POST
 def jserror(request):
-    stack = request.POST.get('stack', None)
-    message = request.POST.get('message', None)
-    if stack:
-        cache_key = ' '.join(map(lambda l: l.strip(), stack.split('\n'))[:3])
-    else:
-        cache_key = message
+    agent = request.META.get('HTTP_USER_AGENT', None)
+    os = browser_name = browser_version = bot = DATADOG_UNKNOWN
+    if agent:
+        parsed_agent = httpagentparser.detect(agent)
+        bot = parsed_agent.get('bot', False)
+        if 'os' in parsed_agent:
+            os = parsed_agent['os'].get('name', DATADOG_UNKNOWN)
 
-    count = ExponentialBackoff.increment(cache_key)
-    if not ExponentialBackoff.should_backoff(cache_key):
-        notify_js_exception(
-            request,
-            message=message,
-            details={
-                'filename': request.POST.get('filename', None),
-                'line': request.POST.get('line', None),
-                'page': request.POST.get('page', None),
-                'agent': request.META.get('HTTP_USER_AGENT', None),
-                'js_stack': stack,
-                'count': count,
-            }
-        )
+        if 'browser' in parsed_agent:
+            browser_version = parsed_agent['browser'].get('version', DATADOG_UNKNOWN)
+            browser_name = parsed_agent['browser'].get('name', DATADOG_UNKNOWN)
+
+    log_counter(JSERROR_COUNT, {
+        'os': os,
+        'browser_version': browser_version,
+        'browser_name': browser_name,
+        'url': sanitize_url(request.POST.get('page', None)),
+        'file': request.POST.get('filename'),
+        'bot': bot,
+    })
 
     return HttpResponse('')
 

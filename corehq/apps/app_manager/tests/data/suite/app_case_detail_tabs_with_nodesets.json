@@ -631,13 +631,10 @@
                         {  
                             "doc_type":"DetailTab",
                             "has_nodeset":true,
-                            "nodeset":"instance('external')/some/data",
+                            "nodeset":"instance('commtrack:products')/some/data",
                             "isTab":true,
                             "header":{  
                                 "en":"External Data"
-                            },
-                            "connectors":{  
-                                "external": "jr://blahblah"
                             },
                             "starting_index":4
                         }

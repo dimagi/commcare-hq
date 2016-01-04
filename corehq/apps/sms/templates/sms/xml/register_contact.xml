@@ -12,6 +12,9 @@
         {% else %}
         <contact_backend_id/>
         {% endif %}
+        {% if contact_ivr_backend_id %}
+        <contact_ivr_backend_id>{{ contact_ivr_backend_id }}</contact_ivr_backend_id>
+        {% endif %}
         {% if language_code %}
         <language_code>{{ language_code }}</language_code>
         {% else %}

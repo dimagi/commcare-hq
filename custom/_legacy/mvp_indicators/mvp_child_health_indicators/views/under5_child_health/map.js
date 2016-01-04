@@ -47,33 +47,35 @@ function(doc) {
                     // pass
                 }
 
-                if (age > 60) {
+                if (age >= 60) {
                     if ( danger_signs.indexOf('cough') >= 0) {
                         if (indicators.chest_indrawing && indicators.chest_indrawing.value === "no") {
                             indicator_keys.push("cough_fastbreathing");
                         }
-                        if ( age < 365 && indicators.chest_indrawing && indicators.chest_indrawing.value > 40) {
+                        if ( age < 365 && indicators.fast_breathing && indicators.fast_breathing.value >= 50) {
                             indicator_keys.push("fastbreathing");
                             if (fever_medication && (fever_medication.indexOf('amoxicillin') >= 0 ||
                                                                     fever_medication.indexOf('amoxycillin') >= 0)) {
                                 indicator_keys.push("fastbreathing_treated");
                             }
                         }
-                        if ( age >= 365 && indicators.chest_indrawing && indicators.chest_indrawing.value > 50) {
+                        if ( age >= 365 && indicators.fast_breathing && indicators.fast_breathing.value >= 40) {
                             indicator_keys.push("fastbreathing");
                             if (fever_medication && (fever_medication.indexOf('amoxicillin') >= 0 ||
                                                                     fever_medication.indexOf('amoxycillin') >= 0)) {
                                 indicator_keys.push("fastbreathing_treated");
                             }
                         }
-                        if ( age < 365 && indicators.chest_indrawing && indicators.chest_indrawing.value < 40) {
+                        if ( age < 365 && indicators.fast_breathing && indicators.fast_breathing.value < 50 &&
+                            indicators.fast_breathing.value !== "") {
                             indicator_keys.push("no_fastbreathing");
                             if (fever_medication && (fever_medication.indexOf('amoxicillin') >= 0 ||
                                                                     fever_medication.indexOf('amoxycillin') >= 0)) {
                                 indicator_keys.push("no_fastbreathing_treated");
                             }
                         }
-                        if ( age >= 365 && indicators.chest_indrawing && indicators.chest_indrawing.value < 50) {
+                        if ( age >= 365 && indicators.fast_breathing && indicators.fast_breathing.value < 40 &&
+                            indicators.fast_breathing.value !== "" ) {
                             indicator_keys.push("no_fastbreathing");
                             if (fever_medication && (fever_medication.indexOf('amoxicillin') >= 0 ||
                                                                     fever_medication.indexOf('amoxycillin') >= 0)) {

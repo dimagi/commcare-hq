@@ -17,7 +17,7 @@ class DateRangeField(ReportField):
         self.context["datespan_name"] = self.name
 
         range = self.request.GET.get('range', None)
-        if range is not None:
+        if range:
             dates = str(range).split(_(' to '))
             self.request.datespan.startdate = datetime.datetime.combine(
                 iso_string_to_date(dates[0]), datetime.time())

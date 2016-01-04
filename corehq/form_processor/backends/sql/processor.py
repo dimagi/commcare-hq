@@ -1,41 +1,22 @@
 import datetime
 import logging
 import uuid
-import hashlib
 
 from django.db import transaction
-
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
+from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from couchforms.const import ATTACHMENT_NAME
-from couchforms.util import process_xform
 
 from corehq.form_processor.models import (
-    XFormInstanceSQL, XFormAttachmentSQL,
-    XFormOperationSQL, CommCareCaseIndexSQL, CaseTransaction,
-    CommCareCaseSQL, FormEditRebuild, Attachment, CaseAttachmentSQL)
+    XFormInstanceSQL, XFormAttachmentSQL, CaseTransaction,
+    CommCareCaseSQL, FormEditRebuild, Attachment)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 
 
 class FormProcessorSQL(object):
-
-    @classmethod
-    def post_xform(cls, instance_xml, attachments=None, process=None, domain='test-domain'):
-        """
-        create a new xform and releases the lock
-
-        this is a testing entry point only and is not to be used in real code
-
-        """
-        if not process:
-            def process(xform):
-                xform.domain = domain
-        xform_lock = process_xform(domain, instance_xml, attachments=attachments, process=process)
-        with xform_lock as xforms:
-            cls.save_processed_models(xforms)
-            return xforms[0]
 
     @classmethod
     def store_attachments(cls, xform, attachments):
@@ -43,7 +24,7 @@ class FormProcessorSQL(object):
         for attachment in attachments:
             xform_attachment = XFormAttachmentSQL(
                 name=attachment.name,
-                attachment_uuid=unicode(uuid.uuid4()),
+                attachment_id=uuid.uuid4(),
                 content_type=attachment.content_type,
                 md5=attachment.md5,
             )
@@ -58,7 +39,7 @@ class FormProcessorSQL(object):
 
         return XFormInstanceSQL(
             # other properties can be set post-wrap
-            form_uuid=form_id,
+            form_id=form_id,
             xmlns=form_data.get('@xmlns'),
             received_on=datetime.datetime.utcnow(),
             user_id=extract_meta_user_id(form_data),
@@ -69,103 +50,30 @@ class FormProcessorSQL(object):
         return FormAccessorSQL.form_with_id_exists(xform_id, domain=domain)
 
     @classmethod
-    def hard_delete_case_and_forms(cls, case, xforms):
+    def hard_delete_case_and_forms(cls, domain, case, xforms):
         form_ids = [xform.form_id for xform in xforms]
-        FormAccessorSQL.hard_delete_forms(form_ids)
-        CaseAccessorSQL.hard_delete_case(case.case_id)
+        FormAccessorSQL.hard_delete_forms(domain, form_ids)
+        CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
 
     @classmethod
-    def save_processed_models(cls, xforms, cases=None):
+    def save_processed_models(cls, processed_forms, cases=None, stock_updates=None):
         with transaction.atomic():
             logging.debug('Beginning atomic commit\n')
-            # Ensure already saved forms get saved first to avoid ID conflicts
-            is_deprecation = len(xforms) > 1
-            for xform in sorted(xforms, key=lambda xform: not xform.is_saved()):
-                cls.save_xform(xform, is_deprecation)
+            # Save deprecated form first to avoid ID conflicts
+            if processed_forms.deprecated:
+                FormAccessorSQL.save_deprecated_form(processed_forms.deprecated)
+
+            FormAccessorSQL.save_new_form(processed_forms.submitted)
 
             if cases:
                 for case in cases:
-                    cls.save_case(case)
+                    CaseAccessorSQL.save_case(case)
+            for stock_update in stock_updates or []:
+                stock_update.commit()
 
     @classmethod
-    def save_xform(cls, xform, is_deprecation=False):
-        """
-        :param xform: The xform to save
-        :param is_deprecation: Set to True if this save is part of a deprecation save.
-        """
-        with transaction.atomic():
-            logging.debug('Saving form: %s', xform)
-            xform.save()
-            if is_deprecation and xform.is_deprecated:
-                logging.debug(
-                    'Reassigning attachments and operations to deprecated form: %s -> %s',
-                    xform.orig_id, xform.form_id
-                )
-                attachments = XFormAttachmentSQL.objects.filter(xform_id=xform.orig_id)
-                attachments.update(xform_id=xform.form_id)
-
-                operations = XFormOperationSQL.objects.filter(xform_id=xform.orig_id)
-                operations.update(xform_id=xform.form_id)
-
-            unsaved_attachments = getattr(xform, 'unsaved_attachments', None)
-            if unsaved_attachments:
-                logging.debug('Saving %s attachments for form: %s', len(unsaved_attachments), xform.form_id)
-                for unsaved_attachment in unsaved_attachments:
-                    unsaved_attachment.xform = xform
-                xform.attachments.bulk_create(unsaved_attachments)
-                del xform.unsaved_attachments
-
-    @classmethod
-    def save_case(cls, case):
-        with transaction.atomic():
-            logging.debug('Saving case: %s', case)
-            if logging.root.isEnabledFor(logging.DEBUG):
-                logging.debug(case.dumps(pretty=True))
-            case.save()
-            FormProcessorSQL.save_tracked_models(case, CommCareCaseIndexSQL)
-            FormProcessorSQL.save_tracked_models(case, CaseTransaction)
-            case.clear_tracked_models()
-
-    @staticmethod
-    def save_tracked_models(case, model_class):
-        to_delete = case.get_tracked_models_to_delete(model_class)
-        if to_delete:
-            logging.debug('Deleting %s: %s', model_class, to_delete)
-            ids = [index.pk for index in to_delete]
-            model_class.objects.filter(pk__in=ids).delete()
-
-        to_update = case.get_tracked_models_to_update(model_class)
-        for model in to_update:
-            logging.debug('Updating %s: %s', model_class, model)
-            model.save()
-
-        to_create = case.get_tracked_models_to_create(model_class)
-        for i, model in enumerate(to_create):
-            logging.debug('Creating %s %s: %s', i, model_class, model)
-            model.save()
-
-    @classmethod
-    def deprecate_xform(cls, existing_xform, new_xform):
-        # if the form contents are not the same:
-        #  - "Deprecate" the old form by making a new document with the same contents
-        #    but a different ID and a doc_type of XFormDeprecated
-        #  - Save the new instance to the previous document to preserve the ID
-
-        old_id = existing_xform.form_id
-        new_xform = cls.assign_new_id(new_xform)
-
-        # swap the two documents so the original ID now refers to the new one
-        # and mark original as deprecated
-        new_xform.form_id, existing_xform.form_id = old_id, new_xform.form_id
-
-        # flag the old doc with metadata pointing to the new one
+    def apply_deprecation(cls, existing_xform, new_xform):
         existing_xform.state = XFormInstanceSQL.DEPRECATED
-        existing_xform.orig_id = old_id
-
-        # and give the new doc server data of the old one and some metadata
-        new_xform.received_on = existing_xform.received_on
-        new_xform.deprecated_form_id = existing_xform.form_id
-        new_xform.edited_on = datetime.datetime.utcnow()
         return existing_xform, new_xform
 
     @classmethod
@@ -196,9 +104,10 @@ class FormProcessorSQL(object):
         return instance
 
     @classmethod
-    def log_submission_error(cls, instance, message, callback):
+    def submission_error_form_instance(cls, domain, instance, message):
         xform = XFormInstanceSQL(
-            form_uuid=uuid.uuid4().hex,
+            domain=domain,
+            form_id=uuid.uuid4().hex,
             received_on=datetime.datetime.utcnow(),
             problem=message,
             state=XFormInstanceSQL.SUBMISSION_ERROR_LOG
@@ -209,10 +118,6 @@ class FormProcessorSQL(object):
             content_type='text/xml',
         )])
 
-        if callback:
-            callback(xform)
-
-        cls.save_xform(xform)
         return xform
 
     @staticmethod
@@ -232,18 +137,23 @@ class FormProcessorSQL(object):
             rebuild_detail = FormEditRebuild(deprecated_form_id=deprecated_form.form_id)
             for case_id in affected_cases:
                 case = case_db.get(case_id)
+                is_creation = False
                 if not case:
                     case = CommCareCaseSQL(domain=domain, case_id=case_id)
+                    is_creation = True
                     case_db.set(case_id, case)
+                previous_owner = case.owner_id
                 case = FormProcessorSQL._rebuild_case_from_transactions(case, rebuild_detail, updated_xforms=xforms)
                 if case:
-                    touched_cases[case.case_id] = case
+                    touched_cases[case.case_id] = CaseUpdateMetadata(
+                        case=case, is_creation=is_creation, previous_owner_id=previous_owner,
+                    )
         else:
             xform = xforms[0]
             for case_update in get_case_updates(xform):
-                case = case_db.get_case_from_case_update(case_update, xform)
-                if case:
-                    touched_cases[case.case_id] = case
+                case_update_meta = case_db.get_case_from_case_update(case_update, xform)
+                if case_update_meta.case:
+                    touched_cases[case_update_meta.case.case_id] = case_update_meta
                 else:
                     logging.error(
                         "XForm %s had a case block that wasn't able to create a case! "
@@ -259,13 +169,13 @@ class FormProcessorSQL(object):
             assert case.domain == domain
             found = True
         except CaseNotFound:
-            case = CommCareCaseSQL(case_uuid=case_id, domain=domain)
+            case = CommCareCaseSQL(case_id=case_id, domain=domain)
             found = False
 
         case = FormProcessorSQL._rebuild_case_from_transactions(case, detail)
         if case.is_deleted and not found:
             return None
-        FormProcessorSQL.save_case(case)
+        CaseAccessorSQL.save_case(case)
 
     @staticmethod
     def _rebuild_case_from_transactions(case, detail, updated_xforms=None):
@@ -284,12 +194,12 @@ class FormProcessorSQL(object):
 
 def get_case_transactions(case_id, updated_xforms=None):
     transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case_id)
-    form_ids = {tx.form_uuid for tx in transactions}
+    form_ids = {tx.form_id for tx in transactions}
     updated_xforms_map = {
         xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
     } if updated_xforms else {}
 
-    form_ids_to_fetch = form_ids - set(updated_xforms_map.keys())
+    form_ids_to_fetch = list(form_ids - set(updated_xforms_map.keys()))
     xform_map = {form.form_id: form for form in FormAccessorSQL.get_forms_with_attachments_meta(form_ids_to_fetch)}
 
     def get_form(form_id):
@@ -302,10 +212,10 @@ def get_case_transactions(case_id, updated_xforms=None):
             raise XFormNotFound
 
     for transaction in transactions:
-        if transaction.form_uuid:
+        if transaction.form_id:
             try:
-                transaction.cached_form = get_form(transaction.form_uuid)
+                transaction.cached_form = get_form(transaction.form_id)
             except XFormNotFound:
-                logging.error('Form not found during rebuild: %s', transaction.form_uuid)
+                logging.error('Form not found during rebuild: %s', transaction.form_id)
 
     return transactions

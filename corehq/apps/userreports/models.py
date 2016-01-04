@@ -1,6 +1,9 @@
 from copy import copy, deepcopy
 import json
-from corehq.db import UCR_ENGINE_ID
+
+from corehq.apps.userreports.sql import IndicatorSqlAdapter
+from corehq.sql_db.connections import UCR_ENGINE_ID
+from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -11,9 +14,12 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.ext.couchdbkit import StringProperty, DictProperty, ListProperty, IntegerProperty
 from dimagi.ext.jsonobject import JsonObject
-from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
+from corehq.apps.cachehq.mixins import (
+    CachedCouchDocumentMixin,
+    QuickCachedDocumentMixin,
+)
 from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
-    get_report_configs_for_domain, get_all_report_configs
+    get_report_configs_for_domain
 from corehq.apps.userreports.exceptions import (
     BadSpecError,
     DataSourceConfigurationNotFoundError,
@@ -74,6 +80,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     named_expressions = DictProperty()
     named_filters = DictProperty()
     meta = SchemaProperty(DataSourceMeta)
+    is_deactivated = BooleanProperty(default=False)
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
@@ -220,7 +227,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         """
         Return the number of ReportConfigurations that reference this data source.
         """
-        return get_number_of_report_configs_by_data_source(self.domain, self._id)
+        return ReportConfiguration.count_by_data_source(self.domain, self._id)
 
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
@@ -262,6 +269,11 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         for result in iter_docs(cls.get_db(), cls.all_ids()):
             yield cls.wrap(result)
 
+    def deactivate(self):
+        self.is_deactivated = True
+        self.save()
+        IndicatorSqlAdapter(self).drop_table()
+
 
 class ReportMeta(DocumentSchema):
     # `True` if this report was initially constructed by the report builder.
@@ -269,7 +281,7 @@ class ReportMeta(DocumentSchema):
     builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker'])
 
 
-class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
+class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     """
     A report configuration. These map 1:1 with reports that show up in the UI.
     """
@@ -301,7 +313,7 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def ui_filters(self):
-        return [ReportFilterFactory.from_spec(f) for f in self.filters]
+        return [ReportFilterFactory.from_spec(f, self) for f in self.filters]
 
     @property
     @memoized
@@ -365,12 +377,19 @@ class ReportConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         self.sort_order
 
     @classmethod
+    @quickcache(['cls.__name__', 'domain'])
     def by_domain(cls, domain):
         return get_report_configs_for_domain(domain)
 
     @classmethod
-    def all(cls):
-        return get_all_report_configs()
+    @quickcache(['cls.__name__', 'domain', 'data_source_id'])
+    def count_by_data_source(cls, domain, data_source_id):
+        return get_number_of_report_configs_by_data_source(domain, data_source_id)
+
+    def clear_caches(self):
+        super(ReportConfiguration, self).clear_caches()
+        self.by_domain.clear(self.__class__, self.domain)
+        self.count_by_data_source.clear(self.__class__, self.domain, self.config_id)
 
 
 STATIC_PREFIX = 'static-'

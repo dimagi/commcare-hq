@@ -34,13 +34,13 @@ class SMSPillow(AliasedElasticPillow):
     es_index = SMS_INDEX
     default_mapping = SMS_MAPPING
 
+    @classmethod
     @memoized
-    def calc_meta(self):
+    def calc_meta(cls):
         #todo: actually do this correctly
 
         """
         override of the meta calculator since we're separating out all the types,
         so we just do a hash of the "prototype" instead to determined md5
         """
-        return self.calc_mapping_hash({"es_meta": self.es_meta,
-                                       "mapping": self.default_mapping})
+        return cls.calc_mapping_hash({"es_meta": cls.es_meta, "mapping": cls.default_mapping})

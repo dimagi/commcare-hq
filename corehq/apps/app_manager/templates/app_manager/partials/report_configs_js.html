@@ -14,12 +14,21 @@
             saveURL: saveURL,
             lang: {{ lang|JSON }},
             menuImage: menuImage,
-            menuAudio: menuAudio
+            menuAudio: menuAudio,
+            containerId: "#settings"
         });
-        ko.applyBindings(reportModule, document.getElementById("save-button"));
-        ko.applyBindings(reportModule, document.getElementById("module-name"));
-        ko.applyBindings(reportModule, document.getElementById("report-list"));
-        ko.applyBindings(reportModule, document.getElementById("add-report-btn"));
+        _([
+            $('#save-button'),
+            $('#module-name'),
+            $('#module-filter'),
+            $('#report-list'),
+            $('#add-report-btn')
+        ]).each(function($element) {
+            // never call applyBindings with null as the second arg!
+            if ($element.get(0)) {
+                $element.koApplyBindings(reportModule);
+            }
+        });
         menuImage.ref.subscribe(function() {
             reportModule.changeSaveButton();
         });

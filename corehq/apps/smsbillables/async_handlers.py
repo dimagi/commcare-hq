@@ -1,8 +1,7 @@
 import json
-import logging
 from couchdbkit import ResourceNotFound
 from django.utils.translation import ugettext_lazy as _
-from corehq.apps.accounting.utils import fmt_dollar_amount
+from corehq.apps.accounting.utils import fmt_dollar_amount, log_accounting_error
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.sms.mixin import SMSBackend
@@ -15,7 +14,6 @@ from corehq.util.quickcache import quickcache
 
 
 NONMATCHING_COUNTRY = 'nonmatching'
-logger = logging.getLogger('accounting')
 
 
 class SMSRatesAsyncHandler(BaseAsyncHandler):
@@ -31,8 +29,10 @@ class SMSRatesAsyncHandler(BaseAsyncHandler):
             backend = SMSBackend.get(gateway)
             backend_api_id = get_backend_by_class_name(backend.doc_type).get_api_id()
         except Exception as e:
-            logger.error("Failed to get backend for calculating an sms rate "
-                         "due to: %s" % e)
+            log_accounting_error(
+                "Failed to get backend for calculating an sms rate due to: %s"
+                % e
+            )
             raise SMSRateCalculatorError("Could not obtain connection information.")
 
         country_code = self.data.get('country_code')
@@ -135,7 +135,7 @@ class PublicSMSRatesAsyncHandler(BaseAsyncHandler):
 
         rate_table = []
 
-        from corehq.messaging.smsbackends.test.api import TestSMSBackend
+        from corehq.messaging.smsbackends.test.models import TestSMSBackend
 
         for backend_instance in backends:
             backend_instance = backend_instance.wrap_correctly()

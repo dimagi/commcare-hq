@@ -293,6 +293,7 @@
     <div>
     {% if applications %}
         <form id="new-project-form" method="post" class="form-inline" action="{% url "domain_copy_snapshot" project %}">
+            {% csrf_token %}
             <fieldset>
                 <legend>{% trans "Download" %}</legend>
                 {% if request.couch_user %}
@@ -336,6 +337,7 @@
             </fieldset>
         </form>
         <form id="import-form" method="post" class="form-inline" action="{% url "import_app_from_snapshot" project %}">
+            {% csrf_token %}
             <div class="hide" id="import-app">
                 <select name="project" id="project_select">
                     {% for p in request.couch_user.projects %}

@@ -367,6 +367,16 @@ class ExpressionIndicatorTest(SingleIndicatorTestBase):
         })
         self._check_result(indicator, {'month': "3"}, "March")
 
+    def test_literal(self):
+        indicator = IndicatorFactory.from_spec({
+            "type": "expression",
+            "expression": 10,
+            "column_id": "foo",
+            "datatype": "integer"
+        })
+        self._check_result(indicator, {}, 10)
+        self._check_result(indicator, {'foo': 'bar'}, 10)
+
 
 class ChoiceListIndicatorTest(SimpleTestCase):
     def setUp(self):

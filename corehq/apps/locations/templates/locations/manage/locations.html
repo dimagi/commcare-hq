@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+    <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
     <script src="{% static 'locations/ko/location_tree.async.js' %}"></script>
     <link rel="stylesheet" href="{% static 'locations/style/manage.css' %}">
 {% endblock %}
@@ -63,7 +63,7 @@ archive_loc = function(button, name, loc_id) {
         "archive_fn": archive_fn,
     };
     ko.cleanNode(archive_location_modal);
-    ko.applyBindings(modal_context, archive_location_modal);
+    $(archive_location_modal).koApplyBindings(modal_context);
     $(archive_location_modal).modal('show');
 
 }
@@ -87,7 +87,7 @@ remove_elements_after_action = function(button) {
 
 $(function() {
     var model = new LocationTreeViewModel(hierarchy);
-    ko.applyBindings(model, $('#location_tree')[0]);
+    $('#location_tree').koApplyBindings(model);
     model.load(locs, selected_loc);
 });
 
@@ -131,15 +131,14 @@ $(function() {
 <div class="row-fluid">
     <div class="span12">
         <div class="btn-toolbar">
-            {% if has_location_types and can_edit_any_location %}
-                <a class="btn btn-info" href="{% url "location_import" domain %}">
-                    <i class="icon-upload"></i> {% trans 'Bulk Import Locations' %}
-                </a>
-            {% else %}
-                <div class="btn btn-info disabled">
-                    <i class="icon-upload"></i> {% trans 'Bulk Import Locations' %}
-                </div>
-            {% endif %}
+            <a class="btn btn-primary"
+               href="{% url "location_import" domain %}"
+               {% if not has_location_types or not can_edit_any_location %}
+                   disabled
+               {% endif %}
+            >
+                <i class="icon-upload"></i> {% trans 'Bulk Import' %}
+            </a>
             <a class="btn" href="{% url "location_types" domain %}">
                 {% trans "Edit Organization Levels" %}
             </a>

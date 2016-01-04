@@ -632,7 +632,7 @@ class ConfigureNewReportBase(forms.Form):
                 # If no one else is using the current data source, delete it.
                 data_source = DataSourceConfiguration.get(self.existing_report.config_id)
                 if data_source.get_report_count() <= 1:
-                    delete_data_source_shared(self.domain, data_source._id)
+                    data_source.deactivate()
 
                 self.existing_report.config_id = matching_data_source['id']
 
@@ -643,7 +643,7 @@ class ConfigureNewReportBase(forms.Form):
             # Delete the old one if no other reports use it
             old_data_source = DataSourceConfiguration.get(self.existing_report.config_id)
             if old_data_source.get_report_count() <= 1:
-                delete_data_source_shared(self.domain, old_data_source._id)
+                old_data_source.deactivate()
 
             # Make sure the user can create more data sources
             elif len(existing_sources) >= 5:

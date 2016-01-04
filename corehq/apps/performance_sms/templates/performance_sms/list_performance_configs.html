@@ -49,6 +49,7 @@ g{% load i18n %}
                         <li><a class="send-message" href="#" data-config="{{ performance_config.get_id }}">{% trans "Send Real Messages Now" %}</a></li>
                     </ul>
                     <form id="{{ performance_config.get_id }}" action="{% url "performance_sms.send_performance_messages" domain performance_config.get_id %}" method="POST" class="hidden" >
+                    {% csrf_token %}
                     </form>
                 </td>
             </tr>

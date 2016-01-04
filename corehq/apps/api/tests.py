@@ -28,11 +28,10 @@ from corehq.pillows.xform import XFormPillow
 from corehq.pillows.case import CasePillow
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.domain.models import Domain
-from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
-from corehq.apps.api.resources import v0_1, v0_4, v0_5
+from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater
+from corehq.apps.api.resources import v0_4, v0_5
 from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
-from corehq.apps.api import es
-from corehq.apps.api.es import ESQuerySet, ESUserError
+from corehq.apps.api.es import ElasticAPIQuerySet
 from corehq.apps.users.analytics import update_analytics_indexes
 from django.conf import settings
 from custom.hope.models import CC_BIHAR_PREGNANCY
@@ -762,9 +761,9 @@ class TestReportPillow(TestCase):
             self.assertTrue(cleaned['form']['meta']['appVersion'], "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")
 
 
-class TestESQuerySet(TestCase):
+class TestElasticAPIQuerySet(TestCase):
     '''
-    Tests the ESQuerySet for appropriate slicing, etc
+    Tests the ElasticAPIQuerySet for appropriate slicing, etc
     '''
 
     def test_slice(self):
@@ -772,21 +771,21 @@ class TestESQuerySet(TestCase):
         for i in xrange(0, 1300):
             es.add_doc(i, {'i': i})
         
-        queryset = ESQuerySet(es_client=es, payload={})
+        queryset = ElasticAPIQuerySet(es_client=es, payload={})
         qs_slice = list(queryset[3:7])
 
         self.assertEqual(es.queries[0]['from'], 3)
         self.assertEqual(es.queries[0]['size'], 4)
         self.assertEqual(len(qs_slice), 4)
 
-        queryset = ESQuerySet(es_client=es, payload={})
+        queryset = ElasticAPIQuerySet(es_client=es, payload={})
         qs_slice = list(queryset[10:20])
 
         self.assertEqual(es.queries[1]['from'], 10)
         self.assertEqual(es.queries[1]['size'], 10)
         self.assertEqual(len(qs_slice), 10)
 
-        queryset = ESQuerySet(es_client=es, payload={})
+        queryset = ElasticAPIQuerySet(es_client=es, payload={})
         qs_slice = list(queryset[500:1000])
         
         self.assertEqual(es.queries[2]['from'], 500)
@@ -798,7 +797,7 @@ class TestESQuerySet(TestCase):
         for i in xrange(0, 1300):
             es.add_doc(i, {'i': i})
         
-        queryset = ESQuerySet(es_client=es, payload={})
+        queryset = ElasticAPIQuerySet(es_client=es, payload={})
         qs_asc = list(queryset.order_by('foo'))
         self.assertEqual(es.queries[0]['sort'], [{'foo': 'asc'}])
 
@@ -1179,7 +1178,7 @@ class TestGroupResource(APIResourceTest):
         group = Group({"name": "test", "domain": self.domain.name})
         group.save()
 
-        group_json =  {
+        group_json = {
             "case_sharing": True,
             "metadata": {
                 "localization": "Ghana"

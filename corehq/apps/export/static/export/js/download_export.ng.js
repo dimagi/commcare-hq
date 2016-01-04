@@ -11,17 +11,16 @@
         'ngMessages'
     ]);
 
-    var $element = {
-        progress: function () {
-            return $('#download-progress-bar');
-        },
-        group: function () {
-            return $('#id_group');
-        },
-        user_type: function () {
-            return $('#id_user_types');
-        }
-    };
+    download_export.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+    }]);
+    download_export.constant('formElement', {
+        progress: function () { return null; },
+        group: function () { return null; },
+        user_type: function () { return null; }
+    });
 
     download_export.constant('exportList', []);
     download_export.constant('maxColumnSize', 2000);
@@ -31,7 +30,7 @@
     var exportsControllers = {};
     exportsControllers.DownloadExportFormController = function (
         $scope, djangoRMI, exportList, maxColumnSize, exportDownloadService,
-        defaultDateRange, checkForMultimedia
+        defaultDateRange, checkForMultimedia, formElement
     ) {
         var self = {};
         $scope._ = _;   // make underscore.js available
@@ -54,7 +53,7 @@
 
         $scope.formData.type_or_group = 'type';
         $scope.formData.user_types = ['mobile'];
-        $element.user_type().select2('val', ['mobile']);
+        if (formElement.user_type()) formElement.user_type().select2('val', ['mobile']);
 
         if (!_.isNull(defaultDateRange)) {
             $scope.formData.date_range = defaultDateRange;
@@ -87,7 +86,7 @@
             if (data.success) {
                 $scope.groupsLoading = false;
                 $scope.hasGroups = data.groups.length > 0;
-                $element.group().select2({
+                if (formElement.group()) formElement.group().select2({
                     data: data.groups
                 });
             } else {
@@ -103,6 +102,17 @@
 
         self._getGroups();
 
+        var exportType = $scope.exportList[0].export_type;
+        self.exportType = _(exportType).capitalize();
+
+        self.sendAnalytics = function () {
+            _.each($scope.formData.user_types, function (user_type) {
+                analytics.usage("Download Export", 'Select "user type"', user_type);
+            });
+            var action = ($scope.exportList.length > 1) ? "Bulk" : "Regular";
+            analytics.usage("Download Export", self.exportType, action);
+        };
+
         $scope.isFormInvalid = function () {
             if ($scope.formData.type_or_group === 'group') {
                 return _.isEmpty($scope.formData.group);
@@ -113,6 +123,7 @@
         $scope.prepareExport = function () {
             $scope.prepareExportError = null;
             $scope.preparingExport = true;
+            analytics.workflow("Clicked Prepare Export");
             djangoRMI.prepare_custom_export({
                 exports: $scope.exportList,
                 max_column_size: self._maxColumnSize,
@@ -120,9 +131,10 @@
             })
                 .success(function (data) {
                     if (data.success) {
+                        self.sendAnalytics();
                         $scope.preparingExport = false;
                         $scope.downloadInProgress = true;
-                        exportDownloadService.startDownload(data.download_id);
+                        exportDownloadService.startDownload(data.download_id, self.exportType);
                     } else {
                         self._handlePrepareError(data);
                     }
@@ -138,6 +150,7 @@
                 $scope.prepareExportError = "default";
             }
             $scope.preparingExport = false;
+            $scope.preparingMultimediaExport = false;
         };
 
         $scope.preparingMultimediaExport = false;
@@ -150,9 +163,10 @@
             })
                 .success(function (data) {
                     if (data.success) {
+                        self.sendAnalytics();
                         $scope.preparingMultimediaExport = false;
                         $scope.downloadInProgress = true;
-                        exportDownloadService.startMultimediaDownload(data.download_id);
+                        exportDownloadService.startMultimediaDownload(data.download_id, self.exportType);
                     } else {
                         self._handlePrepareError(data);
                     }
@@ -169,7 +183,7 @@
     };
 
     exportsControllers.DownloadProgressController = function (
-        $scope, exportDownloadService
+        $scope, exportDownloadService, formElement
     ) {
         var self = {};
 
@@ -183,8 +197,10 @@
             $scope.progress = {};
             $scope.showCeleryError = false;
             $scope.isMultimediaDownload = false;
-            $element.progress().css('width', '0%');
-            $element.progress().removeClass('progress-bar-success');
+            if (formElement.progress()) {
+                formElement.progress().css('width', '0%');
+                formElement.progress().removeClass('progress-bar-success');
+            }
         };
 
         self._reset();
@@ -206,12 +222,12 @@
                 $scope.isDownloadReady = true;
                 $scope.dropboxUrl = data.dropbox_url;
                 $scope.downloadUrl = data.download_url;
-                $element.progress().addClass('progress-bar-success');
+                if (formElement.progress()) formElement.progress().addClass('progress-bar-success');
             } else if (_.isNumber(data.progress.percent)) {
                 progressPercent = data.progress.percent;
             }
             $scope.progress.percent = progressPercent;
-            $element.progress().css('width', progressPercent + '%');
+            if (formElement.progress()) formElement.progress().css('width', progressPercent + '%');
         };
 
         $scope.resetDownload = function () {
@@ -236,6 +252,11 @@
         }, function (status) {
             $scope.isMultimediaDownload = status;
         });
+
+        $scope.sendAnalytics = function () {
+            analytics.usage("Download Export", _(exportDownloadService.exportType).capitalize(), "Saved");
+            analytics.workflow("Clicked Download button");
+        };
     };
     download_export.controller(exportsControllers);
 
@@ -247,11 +268,13 @@
             self.downloadId = null;
             self._numErrors = 0;
             self._numCeleryRetries = 0;
+            self._lastProgress = 0;
             self.downloadStatusData = null;
             self.showDownloadStatus = false;
             self.downloadError = null;
             self.showCeleryError = false;
             self.isMultimediaDownload = false;
+            self.exportType = null;
         };
 
         self.resetDownload();
@@ -265,9 +288,20 @@
                         self.downloadStatusData = data;
                         if (data.has_file && data.is_ready) {
                             $interval.cancel(self._promise);
+                            return;
                         }
                         if (data.progress && data.progress.error) {
                             $interval.cancel(self._promise);
+                            self.downloadError = data.progress.error;
+                            return;
+                        }
+                        if (data.progress.current > self._lastProgress) {
+                            self._lastProgress = data.progress.current;
+                            // processing is still going, keep moving.
+                            // this avoids failing hard prematurely at celery errors if
+                            // the polling is still reporting forward progress.
+                            self._numCeleryRetries = 0;
+                            return;
                         }
                     }
                     if (data.error) {
@@ -302,15 +336,16 @@
             self._numErrors ++;
         };
 
-        self.startDownload = function (downloadId) {
+        self.startDownload = function (downloadId, exportType) {
             self.showDownloadStatus = true;
             self.downloadId = downloadId;
+            self.exportType = exportType;
             self._promise = $interval(self._checkDownloadProgress, 2000);
         };
 
-        self.startMultimediaDownload = function(downloadId) {
+        self.startMultimediaDownload = function(downloadId, exportType) {
             self.isMultimediaDownload = true;
-            self.startDownload(downloadId);
+            self.startDownload(downloadId, exportType);
         };
 
         return self;

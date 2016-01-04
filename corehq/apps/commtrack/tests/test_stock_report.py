@@ -9,8 +9,8 @@ from corehq.apps.commtrack.models import SQLProduct
 
 from casexml.apps.stock.const import REPORT_TYPE_BALANCE
 from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.apps.commtrack.processing import create_models_for_stock_report
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.ledgers.helpers import StockReportHelper, StockTransactionHelper
 from couchforms.models import XFormInstance
 
@@ -36,12 +36,18 @@ class StockReportDomainTest(TestCase):
         )
         return report, form
 
+    def _create_models_for_stock_report_helper(self, stock_report_helper):
+        models_to_update = self.ledger_processor.get_models_to_update(stock_report_helper)
+        if models_to_update:
+            models_to_update.commit()
+
     def setUp(self):
         self.case_ids = {'c1': 10, 'c2': 30, 'c3': 50}
         self.section_ids = {'s1': 2, 's2': 9}
         self.product_ids = {'p1': 1, 'p2': 3, 'p3': 5}
 
         self.domain = self._get_name_for_domain()
+        self.ledger_processor = FormProcessorInterface(domain=self.domain).ledger_processor
         create_domain(self.domain)
 
         SQLProduct.objects.bulk_create([
@@ -66,7 +72,7 @@ class StockReportDomainTest(TestCase):
                     self.transactions.setdefault(case, {}).setdefault(section, {})[product] = bal
 
         self.new_stock_report, self.form = self.create_report(transactions_flat)
-        create_models_for_stock_report(self.domain, self.new_stock_report)
+        self._create_models_for_stock_report_helper(self.new_stock_report)
 
     def tearDown(self):
         delete_all_xforms()
@@ -105,7 +111,7 @@ class StockReportDomainTest(TestCase):
                 action='soh',
                 quantity=864)
         ], date=date)
-        create_models_for_stock_report(self.domain, report)
+        self._create_models_for_stock_report_helper(report)
 
         # create second report with the same date
         # results should have this transaction and not the previous one
@@ -117,7 +123,7 @@ class StockReportDomainTest(TestCase):
                 action='soh',
                 quantity=1)
         ], date=date)
-        create_models_for_stock_report(self.domain, report)
+        self._create_models_for_stock_report_helper(report)
 
         new_trans = self.transactions.copy()
         new_trans['c1']['s1']['p1'] = 1

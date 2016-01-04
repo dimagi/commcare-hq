@@ -18,7 +18,7 @@ from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.app_manager import util as app_manager_util
 from corehq.apps.app_manager.models import Application, RemoteApp
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.receiverwrapper.models import Repeater, repeater_types
+from corehq.apps.repeaters.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.users.util import format_username
@@ -26,7 +26,7 @@ from corehq.apps.users.models import CouchUser, Permissions
 
 from corehq.apps.api.resources import v0_1, v0_3, HqBaseResource, DomainSpecificResourceMixin, \
     SimpleSortableResourceMixin
-from corehq.apps.api.es import XFormES, CaseES, ESQuerySet, es_search
+from corehq.apps.api.es import XFormES, CaseES, ElasticAPIQuerySet, es_search
 from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
 from corehq.apps.api.serializers import CommCareCaseSerializer
 
@@ -56,6 +56,24 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
 
     cases = UseIfRequested(ToManyDocumentsField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
                                                 attribute=lambda xform: casexml_xform.cases_referenced_by_xform(xform)))
+
+    attachments = fields.DictField(readonly=True, null=True)
+
+    def dehydrate_attachments(self, bundle):
+        attachments_dict = getattr(bundle.obj, '_attachments', None)
+        if not attachments_dict:
+            return {}
+
+        def _normalize_meta(meta):
+            noramlized = {}
+            for atrib in ('length', 'content_type'):
+                if atrib in meta:
+                    noramlized[atrib] = meta[atrib]
+            return noramlized
+
+        return {
+            name: _normalize_meta(meta) for name, meta in attachments_dict.items()
+        }
 
     is_phone_submission = fields.BooleanField(readonly=True)
 
@@ -96,9 +114,11 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
                 return doc
 
         # Note that XFormES is used only as an ES client, for `run_query` against the proper index
-        return ESQuerySet(payload=es_query,
-                          model=wrapper,
-                          es_client=self.xform_es(domain)).order_by('-received_on')
+        return ElasticAPIQuerySet(
+            payload=es_query,
+            model=wrapper,
+            es_client=self.xform_es(domain)
+        ).order_by('-received_on')
 
     class Meta(v0_3.XFormInstanceResource.Meta):
         ordering = ['received_on']
@@ -218,9 +238,11 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
             del query['size']
 
         # Note that CaseES is used only as an ES client, for `run_query` against the proper index
-        return ESQuerySet(payload=query,
-                          model=CommCareCase,
-                          es_client=self.case_es(domain)).order_by('server_modified_on')
+        return ElasticAPIQuerySet(
+            payload=query,
+            model=CommCareCase,
+            es_client=self.case_es(domain)
+        ).order_by('server_modified_on')
 
     class Meta(v0_3.CommCareCaseResource.Meta):
         max_limit = 100 # Today, takes ~25 seconds for some domains
@@ -426,9 +448,11 @@ class HOPECaseResource(CommCareCaseResource):
             del query['size']
 
         # Note that CaseES is used only as an ES client, for `run_query` against the proper index
-        return ESQuerySet(payload=query,
-                          model=HOPECase,
-                          es_client=self.case_es(domain)).order_by('server_modified_on')
+        return ElasticAPIQuerySet(
+            payload=query,
+            model=HOPECase,
+            es_client=self.case_es(domain),
+        ).order_by('server_modified_on')
 
     def alter_list_data_to_serialize(self, request, data):
 

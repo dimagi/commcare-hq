@@ -14,7 +14,7 @@ from corehq.apps.reminders.views import (
     CreateBroadcastView,
     EditBroadcastView,
     CopyBroadcastView,
-)
+    ScheduledRemindersCalendarView)
 
 urlpatterns = patterns('corehq.apps.reminders.views',
     url(r'^list/$', RemindersListView.as_view(), name=RemindersListView.urlname),
@@ -25,7 +25,7 @@ urlpatterns = patterns('corehq.apps.reminders.views',
         name=EditBroadcastView.urlname),
     url(r'^broadcasts/copy/(?P<broadcast_id>[\w-]+)/$', CopyBroadcastView.as_view(),
         name=CopyBroadcastView.urlname),
-    url(r'^scheduled/', 'scheduled_reminders', name='scheduled_reminders'),
+    url(r'^scheduled/', ScheduledRemindersCalendarView.as_view(), name=ScheduledRemindersCalendarView.urlname),
     url(r'^schedule/complex/$',
         CreateComplexScheduledReminderView.as_view(), name=CreateComplexScheduledReminderView.urlname),
     url(r'^schedule/(?P<handler_id>[\w-]+)/$',

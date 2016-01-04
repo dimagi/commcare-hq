@@ -110,6 +110,7 @@
             </td>
             <td>
                 <form action="{% url "domain_clear_published" domain %}" method="POST">
+                    {% csrf_token %}
                     <button class="btn btn-danger" type="submit">Unpublish</button>
                 </form>
             </td>

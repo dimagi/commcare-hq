@@ -1,9 +1,12 @@
 from StringIO import StringIO
 import datetime
-import logging
 from tempfile import NamedTemporaryFile
 from decimal import Decimal
+import itertools
+
 from couchdbkit import ResourceNotFound
+from django.db.models.manager import Manager
+
 from corehq.util.quickcache import quickcache
 from corehq.util.global_request import get_request
 from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
@@ -41,6 +44,8 @@ from corehq.apps.accounting.utils import (
     fmt_dollar_amount, EXCHANGE_RATE_DECIMAL_PLACES,
     ensure_domain_instance, get_change_status,
     is_active_subscription,
+    log_accounting_error,
+    log_accounting_info,
 )
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
@@ -48,11 +53,12 @@ from corehq.apps.accounting.subscription_changes import (
 from corehq.apps.accounting.emails import send_subscription_change_alert
 from corehq.apps.domain.models import Domain
 
-logger = logging.getLogger('accounting')
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
 MAX_INVOICE_COMMUNICATIONS = 5
 SMALL_INVOICE_THRESHOLD = 100
+
+UNLIMITED_FEATURE_USAGE = -1
 
 
 class BillingAccountType(object):
@@ -73,7 +79,8 @@ class BillingAccountType(object):
 class FeatureType(object):
     USER = "User"
     SMS = "SMS"
-    API = "API"
+    ANY = ""
+
     CHOICES = (
         (USER, USER),
         (SMS, SMS),
@@ -84,6 +91,8 @@ class SoftwareProductType(object):
     COMMCARE = "CommCare"
     COMMTRACK = "CommTrack"
     COMMCONNECT = "CommConnect"
+    ANY = ""
+
     CHOICES = (
         (COMMCARE, COMMCARE),
         (COMMTRACK, COMMTRACK),
@@ -195,26 +204,42 @@ class PaymentMethodType(object):
 
 
 class SubscriptionType(object):
-    CONTRACTED = "CONTRACTED"
-    SELF_SERVICE = "SELF_SERVICE"
+    CONTRACTED = "IMPLEMENTATION"
+    SELF_SERVICE = "PRODUCT"
+    TRIAL = "TRIAL"
+    EXTENDED_TRIAL = "EXTENDED_TRIAL"
+    SANDBOX = "SANDBOX"
+    INTERNAL = "INTERNAL"
     NOT_SET = "NOT_SET"
     CHOICES = (
-        (CONTRACTED, "Contracted"),
-        (SELF_SERVICE, "Self-service"),
-        (NOT_SET, "Not Set"),
+        (CONTRACTED, "Implementation"),
+        (SELF_SERVICE, "Product"),
+        (TRIAL, "Trial"),
+        (EXTENDED_TRIAL, "Extended Trial"),
+        (SANDBOX, "Sandbox"),
+        (INTERNAL, "Internal"),
     )
 
 
 class ProBonoStatus(object):
-    YES = "YES"
-    NO = "NO"
+    YES = "PRO_BONO"
+    NO = "FULL_PRICE"
     DISCOUNTED = "DISCOUNTED"
-    NOT_SET = "NOT_SET"
     CHOICES = (
-        (YES, "Yes"),
-        (NO, "No"),
+        (NO, "Full Price"),
         (DISCOUNTED, "Discounted"),
-        (NOT_SET, "Not Set"),
+        (YES, "Pro Bono"),
+    )
+
+
+class FundingSource(object):
+    DIMAGI = "DIMAGI"
+    CLIENT = "CLIENT"
+    EXTERNAL = "EXTERNAL"
+    CHOICES = (
+        (DIMAGI, "Dimagi"),
+        (CLIENT, "Client Funding"),
+        (EXTERNAL, "External Funding"),
     )
 
 
@@ -225,6 +250,36 @@ class EntryPoint(object):
     CHOICES = (
         (CONTRACTED, "Contracted"),
         (SELF_STARTED, "Self-started"),
+        (NOT_SET, "Not Set"),
+    )
+
+
+class LastPayment(object):
+    CC_ONE_TIME = "CC_ONE_TIME"
+    CC_AUTO = "CC_AUTO"
+    WIRE = "WIRE"
+    ACH = "ACH"
+    OTHER = "OTHER"
+    BU_PAYMENT = "BU_PAYMENT"
+    NONE = "NONE"
+    CHOICES = (
+        (CC_ONE_TIME, "Credit Card - One Time"),
+        (CC_AUTO, "Credit Card - Autopay"),
+        (WIRE, "Wire"),
+        (ACH, "ACH"),
+        (OTHER, "Other"),
+        (BU_PAYMENT, "Payment to local BU"),
+        (NONE, "None"),
+    )
+
+
+class PreOrPostPay(object):
+    PREPAY = "PREPAY"
+    POSTPAY = "POSTPAY"
+    NOT_SET = "NOT_SET"
+    CHOICES = (
+        (PREPAY, "Prepay"),
+        (POSTPAY, "Postpay"),
         (NOT_SET, "Not Set"),
     )
 
@@ -284,14 +339,19 @@ class BillingAccount(models.Model):
     )
     auto_pay_user = models.CharField(max_length=80, null=True)
     last_modified = models.DateTimeField(auto_now=True)
+    last_payment_method = models.CharField(
+        max_length=25,
+        default=LastPayment.NONE,
+        choices=LastPayment.CHOICES,
+    )
+    pre_or_post_pay = models.CharField(
+        max_length=25,
+        default=PreOrPostPay.NOT_SET,
+        choices=PreOrPostPay.CHOICES,
+    )
 
     class Meta:
         app_label = 'accounting'
-
-    @property
-    def balance(self):
-        # todo compute
-        return 0.0
 
     @property
     def auto_pay_enabled(self):
@@ -301,7 +361,8 @@ class BillingAccount(models.Model):
     def get_or_create_account_by_domain(cls, domain,
                                         created_by=None, account_type=None,
                                         created_by_invoicing=False,
-                                        entry_point=None):
+                                        entry_point=None, last_payment_method=None,
+                                        pre_or_post_pay=None):
         """
         First try to grab the account used for the last subscription.
         If an account is not found, create it.
@@ -312,6 +373,8 @@ class BillingAccount(models.Model):
             is_new = True
             account_type = account_type or BillingAccountType.INVOICE_GENERATED
             entry_point = entry_point or EntryPoint.NOT_SET
+            last_payment_method = last_payment_method or LastPayment.NONE
+            pre_or_post_pay = pre_or_post_pay or PreOrPostPay.POSTPAY
             account = BillingAccount(
                 name="Account for Project %s" % domain,
                 created_by=created_by,
@@ -319,6 +382,8 @@ class BillingAccount(models.Model):
                 currency=Currency.get_default(),
                 account_type=account_type,
                 entry_point=entry_point,
+                last_payment_method=last_payment_method,
+                pre_or_post_pay=pre_or_post_pay
             )
             account.save()
         return account, is_new
@@ -338,8 +403,7 @@ class BillingAccount(models.Model):
         except cls.DoesNotExist:
             pass
         except cls.MultipleObjectsReturned:
-            logger.error(
-                "[BILLING] "
+            log_accounting_error(
                 "Multiple billing accounts showed up for the domain '%s'. The "
                 "latest one was served, but you should reconcile very soon."
                 % domain
@@ -711,6 +775,18 @@ class SoftwarePlanVersion(models.Model):
             'version_num': self.version,
         }
 
+    def get_product_rate(self):
+        product_rates = self.product_rates.all()
+        if len(product_rates) > 1:
+            # Models and UI are both written to support multiple products,
+            # but for now, each subscription can only have one product.
+            log_accounting_error(
+                "There are multiple product rates for plan version number %d. "
+                "Odd, right? Consider this an issue."
+                % self.id
+            )
+        return product_rates[0]
+
     @property
     def core_product(self):
         try:
@@ -718,7 +794,7 @@ class SoftwarePlanVersion(models.Model):
             return product_rate.product.product_type
         except (IndexError, SoftwareProductRate.DoesNotExist):
             pass
-        return "CommCare"
+        return SoftwareProductType.COMMCARE
 
     @property
     def version(self):
@@ -747,7 +823,7 @@ class SoftwarePlanVersion(models.Model):
         desc.update({
             'monthly_fee': 'USD %s' % product.monthly_fee,
             'rates': [{'name': FEATURE_TYPE_TO_NAME[r.feature.feature_type],
-                       'included': 'Infinite' if r.monthly_limit == -1 else r.monthly_limit}
+                       'included': 'Infinite' if r.monthly_limit == UNLIMITED_FEATURE_USAGE else r.monthly_limit}
                       for r in self.feature_rates.all()],
             'edition': self.plan.edition,
         })
@@ -759,7 +835,7 @@ class SoftwarePlanVersion(models.Model):
         user_features = self.feature_rates.filter(feature__feature_type=FeatureType.USER)
         try:
             user_feature = user_features.order_by('monthly_limit')[0]
-            if not user_feature.monthly_limit == -1:
+            if not user_feature.monthly_limit == UNLIMITED_FEATURE_USAGE:
                 user_feature = user_features.order_by('-monthly_limit')[0]
             return user_feature
         except IndexError:
@@ -769,7 +845,7 @@ class SoftwarePlanVersion(models.Model):
     def user_limit(self):
         if self.user_feature is not None:
             return self.user_feature.monthly_limit
-        return -1
+        return UNLIMITED_FEATURE_USAGE
 
     @property
     def user_fee(self):
@@ -783,8 +859,7 @@ class SoftwarePlanVersion(models.Model):
             return False
         from corehq.apps.accounting.usage import FeatureUsageCalculator
         for feature_rate in self.feature_rates.all():
-            # -1 is the special infinity charge
-            if feature_rate.monthly_limit != -1:
+            if feature_rate.monthly_limit != UNLIMITED_FEATURE_USAGE:
                 calc = FeatureUsageCalculator(
                     feature_rate, domain.name, start_date=start_date,
                     end_date=end_date
@@ -922,6 +997,11 @@ class Subscriber(models.Model):
             raise SubscriptionChangeError("The upgrade was not successful.")
 
 
+class SubscriptionManager(models.Manager):
+    def get_queryset(self):
+        return super(SubscriptionManager, self).get_queryset().filter(is_hidden_to_ops=False)
+
+
 class Subscription(models.Model):
     """
     Links a Subscriber to a SoftwarePlan and BillingAccount, necessary for invoicing.
@@ -937,19 +1017,28 @@ class Subscription(models.Model):
     is_active = models.BooleanField(default=False)
     do_not_invoice = models.BooleanField(default=False)
     no_invoice_reason = models.CharField(blank=True, null=True, max_length=256)
+    do_not_email = models.BooleanField(default=False)
     auto_generate_credits = models.BooleanField(default=False)
     is_trial = models.BooleanField(default=False)
     service_type = models.CharField(
         max_length=25,
         choices=SubscriptionType.CHOICES,
-        default=SubscriptionType.NOT_SET,
+        default=SubscriptionType.NOT_SET
     )
     pro_bono_status = models.CharField(
         max_length=25,
         choices=ProBonoStatus.CHOICES,
-        default=ProBonoStatus.NOT_SET,
+        default=ProBonoStatus.NO,
+    )
+    funding_source = models.CharField(
+        max_length=25,
+        choices=FundingSource.CHOICES,
+        default=FundingSource.CLIENT
     )
     last_modified = models.DateTimeField(auto_now=True)
+    is_hidden_to_ops = models.BooleanField(default=False)
+
+    objects = SubscriptionManager()
 
     class Meta:
         app_label = 'accounting'
@@ -1108,48 +1197,49 @@ class Subscription(models.Model):
                 method=method, note=note, web_user=web_user,
             )
 
-    def update_subscription(self, date_start=None, date_end=None,
+    def update_subscription(self, date_start, date_end,
                             date_delay_invoicing=None, do_not_invoice=False,
-                            no_invoice_reason=None,
+                            no_invoice_reason=None, do_not_email=False,
                             salesforce_contract_id=None,
                             auto_generate_credits=False,
                             web_user=None, note=None, adjustment_method=None,
-                            service_type=None, pro_bono_status=None):
+                            service_type=None, pro_bono_status=None, funding_source=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
-        today = datetime.date.today()
-        if self.date_end is None or self.date_end > today:
-            self.date_end = date_end
-        if self.is_active and self.date_end is not None and self.date_end <= today:
-            self.is_active = False
-
-        if (self.date_start > today and date_start is not None
-            and date_start > today and (self.date_end is None or not date_start > self.date_end)
-        ):
-            self.date_start = date_start
-        elif self.date_end is not None and date_start > self.date_end:
+        if not date_start:
+            raise SubscriptionAdjustmentError('Start date must be provided')
+        if date_end is not None and date_start > date_end:
             raise SubscriptionAdjustmentError(
                 "Can't have a subscription start after the end date."
             )
-        elif date_start is not None and date_start != self.date_start:
-            raise SubscriptionAdjustmentError(
-                "Can't change the start date of a subscription to a date that "
-                "is today or in the past."
-            )
+        self.raise_conflicting_dates(date_start, date_end)
+        self.date_start = date_start
+        self.date_end = date_end
 
-        self.raise_conflicting_dates(self.date_start, self.date_end)
+        is_active_dates = is_active_subscription(self.date_start, self.date_end)
+        if self.is_active != is_active_dates:
+            if is_active_dates:
+                self.is_active = True
+                self.subscriber.activate_subscription(get_privileges(self.plan_version), self)
+            else:
+                raise SubscriptionAdjustmentError(
+                    'Cannot deactivate a subscription here. Cancel subscription instead.'
+                )
 
-        if self.date_delay_invoicing is None or self.date_delay_invoicing > today:
+        if self.date_delay_invoicing is None or self.date_delay_invoicing > datetime.date.today():
             self.date_delay_invoicing = date_delay_invoicing
 
         self.do_not_invoice = do_not_invoice
         self.no_invoice_reason = no_invoice_reason
+        self.do_not_email = do_not_email
         self.auto_generate_credits = auto_generate_credits
         self.salesforce_contract_id = salesforce_contract_id
         if service_type is not None:
             self.service_type = service_type
         if pro_bono_status is not None:
             self.pro_bono_status = pro_bono_status
+        if funding_source is not None:
+            self.funding_source = funding_source
         self.save()
 
         SubscriptionAdjustment.record_adjustment(
@@ -1160,7 +1250,7 @@ class Subscription(models.Model):
     @transaction.atomic
     def change_plan(self, new_plan_version, date_end=None,
                     note=None, web_user=None, adjustment_method=None,
-                    service_type=None, pro_bono_status=None,
+                    service_type=None, pro_bono_status=None, funding_source=None,
                     transfer_credits=True, internal_change=False, account=None,
                     do_not_invoice=None, no_invoice_reason=None, **kwargs):
         """
@@ -1197,7 +1287,8 @@ class Subscription(models.Model):
             do_not_invoice=do_not_invoice if do_not_invoice else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason else self.no_invoice_reason,
             service_type=(service_type or SubscriptionType.NOT_SET),
-            pro_bono_status=(pro_bono_status or ProBonoStatus.NOT_SET),
+            pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
+            funding_source=(funding_source or FundingSource.CLIENT),
             **kwargs
         )
         new_subscription.save()
@@ -1253,7 +1344,7 @@ class Subscription(models.Model):
     def renew_subscription(self, date_end=None, note=None, web_user=None,
                            adjustment_method=None,
                            service_type=None, pro_bono_status=None,
-                           new_version=None):
+                           funding_source=None, new_version=None):
         """
         This creates a new subscription with a date_start that is
         equivalent to the current subscription's date_end.
@@ -1293,6 +1384,8 @@ class Subscription(models.Model):
             renewed_subscription.service_type = service_type
         if pro_bono_status is not None:
             renewed_subscription.pro_bono_status = pro_bono_status
+        if funding_source is not None:
+            renewed_subscription.funding_source = funding_source
         if datetime.date.today() == self.date_end:
             renewed_subscription.is_active = True
         renewed_subscription.save()
@@ -1382,7 +1475,9 @@ class Subscription(models.Model):
 
             billing_contact_emails = BillingContactInfo.objects.get(account=self.account).emails
             if billing_contact_emails is None:
-                raise SubscriptionReminderError("This billing account doesn't have any contact emails")
+                raise SubscriptionReminderError(
+                    "Billing account %d doesn't have any contact emails" % self.account.id
+                )
             billing_contact_emails = billing_contact_emails.split(',')
             emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
 
@@ -1412,13 +1507,14 @@ class Subscription(models.Model):
                 email_from=get_dimagi_from_email_by_product(product),
                 bcc=bcc,
             )
-            logger.info(
-                "[BILLING] Sent %(days_left)s-day subscription reminder "
+            log_accounting_info(
+                "Sent %(days_left)s-day subscription reminder "
                 "email for %(domain)s to %(email)s." % {
                     'days_left': num_days_left,
                     'domain': domain_name,
                     'email': email,
-                })
+                }
+            )
 
     def send_dimagi_ending_reminder_email(self):
         if self.date_end is None:
@@ -1470,8 +1566,7 @@ class Subscription(models.Model):
             return None, None
 
         if len(active_subscriptions) > 1:
-            logger.error(
-                "[BILLING] "
+            log_accounting_error(
                 "There seem to be multiple ACTIVE subscriptions for the "
                 "subscriber %s. Odd, right? The latest one by "
                 "date_created was used, but consider this an issue."
@@ -1620,6 +1715,7 @@ class InvoiceBase(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
 
     objects = InvoiceBaseManager()
+    api_objects = Manager()
 
     class Meta:
         abstract = True
@@ -1637,28 +1733,16 @@ class InvoiceBase(models.Model):
         raise NotImplementedError()
 
     @property
+    def account(self):
+        raise NotImplementedError()
+
+    @property
     def is_paid(self):
         return bool(self.date_paid)
 
     @property
     def email_recipients(self):
-        return self.contact_emails
-
-    @property
-    def contact_emails(self):
-        contact_emails = self.account.billingcontactinfo.emails if self.account.billingcontactinfo else None
-        contact_emails = contact_emails.split(',') if contact_emails else []
-        if not contact_emails:
-            admins = WebUser.get_admins_by_domain(self.get_domain())
-            contact_emails = [a.email if a.email else a.username for a in admins]
-            logger.error(
-                "[BILLING] "
-                "Could not find an email to send the invoice "
-                "email to for the domain %s. Sending to domain admins instead: "
-                "%s." %
-                (self.get_domain(), ', '.join(contact_emails))
-            )
-        return contact_emails
+        raise NotImplementedError
 
 
 class WireInvoice(InvoiceBase):
@@ -1691,6 +1775,21 @@ class WireInvoice(InvoiceBase):
     def get_total(self):
         return self.balance
 
+    @property
+    def email_recipients(self):
+        try:
+            original_record = WireBillingRecord.objects.filter(invoice=self).order_by('-date_created')[0]
+            return original_record.emailed_to.split(',') if original_record.emailed_to else []
+        except IndexError:
+            log_accounting_error(
+                "[BILLING] "
+                "Strange that WireInvoice %d has no associated WireBillingRecord. "
+                "Should investigate."
+                % self.id
+            )
+            return []
+
+
 
 class WirePrepaymentInvoice(WireInvoice):
     class Meta:
@@ -1721,6 +1820,24 @@ class Invoice(InvoiceBase):
             return [settings.FINANCE_EMAIL]
         else:
             return self.contact_emails
+
+    @property
+    def contact_emails(self):
+        try:
+            billing_contact_info = BillingContactInfo.objects.get(account=self.account)
+            contact_emails = billing_contact_info.emails.split(',') if billing_contact_info.emails else []
+        except BillingContactInfo.DoesNotExist:
+            contact_emails = []
+
+        if not contact_emails:
+            admins = WebUser.get_admins_by_domain(self.get_domain())
+            contact_emails = [admin.email if admin.email else admin.username for admin in admins]
+            log_accounting_error(
+                "Could not find an email to send the invoice "
+                "email to for the domain %s. Sending to domain admins instead: %s."
+                % (self.get_domain(), ', '.join(contact_emails))
+            )
+        return contact_emails
 
     @property
     def subtotal(self):
@@ -1899,8 +2016,8 @@ class BillingRecordBase(models.Model):
         self.skipped_email = True
         month_name = self.invoice.date_start.strftime("%B")
         self.save()
-        logger.info(
-            "[BILLING] Throttled billing statements for domain %(domain)s "
+        log_accounting_info(
+            "Throttled billing statements for domain %(domain)s "
             "to %(emails)s." % {
                 'domain': self.invoice.get_domain(),
                 'emails': ', '.join(contact_emails),
@@ -1983,9 +2100,8 @@ class BillingRecordBase(models.Model):
             )
         self.emailed_to = ",".join(contact_emails)
         self.save()
-        logger.info(
-            "[BILLING] Sent billing statements for domain %(domain)s "
-            "to %(emails)s." % {
+        log_accounting_info(
+            "Sent billing statements for domain %(domain)s to %(emails)s." % {
                 'domain': domain,
                 'emails': ', '.join(contact_emails),
             }
@@ -2067,7 +2183,8 @@ class BillingRecord(BillingRecordBase):
         small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD and
                             subscription.service_type == SubscriptionType.CONTRACTED)
         hidden = self.invoice.is_hidden
-        return not (autogenerate or small_contracted or hidden)
+        do_not_email = self.invoice.subscription.do_not_email
+        return not (autogenerate or small_contracted or hidden or do_not_email)
 
     def is_email_throttled(self):
         month = self.invoice.date_start.month
@@ -2237,7 +2354,7 @@ class LineItem(models.Model):
     base_cost = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     unit_description = models.TextField(blank=True, null=True)
     unit_cost = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
-    quantity = models.IntegerField(default=1)
+    quantity = models.IntegerField(default=1, validators=integer_field_validators)
     last_modified = models.DateTimeField(auto_now=True)
 
     objects = LineItemManager()
@@ -2341,17 +2458,33 @@ class CreditLine(models.Model):
 
     @classmethod
     def get_credits_for_line_item(cls, line_item):
-        return cls.get_credits_by_subscription_and_features(
-            line_item.invoice.subscription,
-            product_type=(line_item.product_rate.product.product_type
-                          if line_item.product_rate is not None else None),
-            feature_type=(line_item.feature_rate.feature.feature_type
-                          if line_item.feature_rate is not None else None),
+        product_type = (
+            line_item.product_rate.product.product_type
+            if line_item.product_rate is not None else None
+        )
+        feature_type = (
+            line_item.feature_rate.feature.feature_type
+            if line_item.feature_rate is not None else None
+        )
+        return itertools.chain(
+            cls.get_credits_by_subscription_and_features(
+                line_item.invoice.subscription,
+                product_type=product_type,
+                feature_type=feature_type,
+            ),
+            cls.get_credits_for_account(
+                line_item.invoice.subscription.account,
+                product_type=product_type,
+                feature_type=feature_type,
+            )
         )
 
     @classmethod
     def get_credits_for_invoice(cls, invoice):
-        return cls.get_credits_by_subscription_and_features(invoice.subscription)
+        return itertools.chain(
+            cls.get_credits_by_subscription_and_features(invoice.subscription),
+            cls.get_credits_for_account(invoice.subscription.account)
+        )
 
     @classmethod
     def get_credits_for_account(cls, account, feature_type=None, product_type=None):
@@ -2366,10 +2499,9 @@ class CreditLine(models.Model):
                                                  feature_type=None,
                                                  product_type=None):
         return cls.objects.filter(
-            models.Q(subscription=subscription) |
-            models.Q(account=subscription.account, subscription__exact=None)
-        ).filter(
-            product_type__exact=product_type, feature_type__exact=feature_type
+            subscription=subscription,
+            feature_type__exact=feature_type,
+            product_type__exact=product_type,
         ).all()
 
     @classmethod

@@ -8,8 +8,19 @@
 <script type="text/javascript">
 (function (angular, initial) {
     'use strict';
-    var autoUpdateRuleApp = angular.module('addUpdateRuleApp', []);
-    autoUpdateRuleApp.controller('UpdateRuleController', function($scope) {
+    var autoUpdateRuleApp = angular.module('addUpdateRuleApp', ['ng.django.rmi']);
+
+    autoUpdateRuleApp.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+    }]);
+
+    autoUpdateRuleApp.config(function(djangoRMIProvider) {
+        djangoRMIProvider.configure({% djng_current_rmi %});
+    });
+
+    autoUpdateRuleApp.controller('UpdateRuleController', function($scope, djangoRMI) {
         $scope.name = initial.name;
         $scope.case_type = initial.case_type;
         $scope.action = initial.action;
@@ -18,9 +29,30 @@
         $scope.server_modified_boundary = initial.server_modified_boundary;
         $scope.conditions_objs = initial.conditions;
         $scope.conditions = JSON.stringify(initial.conditions);
+        $scope.case_property_map = {}
+
+        $scope.get_typeahead_source = function(query, process) {
+            process($scope.case_property_map[$scope.case_type] || []);
+        };
+
+        $scope.set_typeahead = function(element) {
+            element.typeahead({
+                source: $scope.get_typeahead_source,
+                minLength: 0
+            });
+        };
+
+        $scope.init_typeahead = function() {
+            $('.case-property-typeahead').each(function() {
+                $scope.set_typeahead($(this));
+            });
+        };
 
         $scope.$watch('conditions_objs', function(newValue, oldValue) {
             $scope.conditions = JSON.stringify(newValue);
+            if(newValue.length > oldValue.length) {
+                setTimeout($scope.init_typeahead, 100);
+            }
         }, true);
 
         $scope.addCondition = function() {
@@ -32,9 +64,21 @@
         $scope.matchesDaysSince = function(condition) {
             return condition.property_match_type == 'DAYS';
         };
+        $scope.matchesHasValue = function(condition) {
+            return condition.property_match_type == 'HAS_VALUE';
+        };
         $scope.showUpdateProperty = function() {
             return $scope.action == 'UPDATE_AND_CLOSE';
         };
+
+        angular.element(document).ready(function() {
+            djangoRMI.get_case_property_map().success(function(response) {
+                if(response.success) {
+                    $scope.case_property_map = response.data;
+                }
+            });
+            $scope.init_typeahead();
+        });
     });
 }(window.angular, {{ form.current_values|JSON }}));
 </script>
@@ -46,10 +90,10 @@
         {% crispy form %}
     </div>
     <script type="text/ng-template" id="conditions.tpl">
-        <table class="table table-responsive">
+        <table class="table table-responsive" ng-show="conditions_objs.length > 0">
             <thead>
                 <tr>
-                    <th class="col-xs-2">{% trans "Property Name" %}</th>
+                    <th class="col-xs-2">{% trans "Case Property Name" %}</th>
                     <th class="col-xs-2">{% trans "Match Type" %}</th>
                     <th class="col-xs-1">{% trans "Value" %}</th>
                     <th class="col-xs-1"></th>
@@ -57,26 +101,10 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>server_modified_on</div>
-                    <td>{% trans "after date by" %}</td>
-                    <td>
-                        <input class="textinput textInput form-control"
-                               type="text"
-                               name="server_modified_boundary"
-                               ng-model="server_modified_boundary" />
-                        {% if form.server_modified_boundary.errors %}
-                        <span class="help-block">
-                            <strong>{{ form.server_modified_boundary.errors.0 }}</strong>
-                        </span>
-                        {% endif %}
-                    </td>
-                    <td>{% trans "days" %}</td>
-                </tr>
-                <tr ng-repeat="condition in conditions_objs">
+                <tr ng-repeat="condition in conditions_objs track by $index" {% if form.conditions.errors %}class="has-error"{% endif %}>
                     {% angularjs %}
                     <td>
-                        <input class="textinput textInput form-control"
+                        <input class="case-property-typeahead textinput textInput form-control"
                                type="text"
                                ng-model="condition.property_name" />
                     </td>
@@ -86,12 +114,14 @@
                             <option value="DAYS">{% trans "after date by" %}</option>
                             <option value="EQUAL">{% trans "equals" %}</option>
                             <option value="NOT_EQUAL">{% trans "does not equal" %}</option>
+                            <option value="HAS_VALUE">{% trans "has a value" %}</option>
                         </select>
                     </td>
                     <td>
                         <input class="textinput textInput form-control"
                                type="text"
-                               ng-model="condition.property_value" />
+                               ng-model="condition.property_value"
+                               ng-hide="matchesHasValue(condition)" />
                     </td>
                     <td>
                         <span ng-show="matchesDaysSince(condition)">{% trans "days" %}</span>
@@ -108,17 +138,19 @@
             </tbody>
         </table>
         {% if form.conditions.errors %}
-        <div>
-            <span class="help-block">
-                <strong>{{ form.conditions.errors.0 }}</strong>
-            </span>
+        <div class="has-error row">
+            <div class="col-sm-offset-3 col-md-offset-2">
+                <span class="help-block">
+                    <strong>{{ form.conditions.errors.0 }}</strong>
+                </span>
+            </div>
         </div>
         {% endif %}
         <div class="btn-toolbar" style="margin-bottom: 20px;">
             <button type="button"
                     class="btn btn-success"
                     ng-click="addCondition();">
-                <i class="fa fa-plus"></i> {% trans "Add Condition" %}
+                <i class="fa fa-plus"></i> {% trans "Add Filter" %}
             </button>
         </div>
     </script>

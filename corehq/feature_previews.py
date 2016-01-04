@@ -36,6 +36,17 @@ class FeaturePreview(StaticToggle):
         return prbac_has_privilege(request, self.privilege)
 
 
+def all_previews():
+    for toggle_name, toggle in globals().items():
+        if not toggle_name.startswith('__'):
+            if isinstance(toggle, StaticToggle):
+                yield toggle
+
+
+def previews_dict(domain):
+    return {t.slug: True for t in all_previews() if t.enabled(domain)}
+
+
 SUBMIT_HISTORY_FILTERS = FeaturePreview(
     slug='submit_history_filters',
     label=_("Advanced Submit History Filters"),
@@ -104,5 +115,16 @@ MODULE_FILTER = FeaturePreview(
         'Similar to form display conditions, hide your module unless the condition is met. Most commonly used'
         ' in conjunction with '
         '<a href="https://help.commcarehq.org/display/commcarepublic/Custom+User+Data">custom user data</a>.'
+    ),
+)
+
+
+# Only used in Vellum
+VELLUM_ADVANCED_ITEMSETS = FeaturePreview(
+    slug='advanced_itemsets',
+    label=_("Custom Single and Multiple Answer Questions"),
+    description=_(
+        "Allows display of custom lists, such as case sharing groups or locations as choices in Single Answer or "
+        "Multiple Answer lookup Table questions. Configuring these questions requires specifying advanced logic."
     ),
 )

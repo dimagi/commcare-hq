@@ -6,15 +6,34 @@ from xml.etree import ElementTree
 import datetime
 
 from django.conf import settings
+from iso8601 import iso8601
 
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_UPDATE, CASE_ACTION_CREATE
 from casexml.apps.case.dbaccessors import get_indexed_case_ids
+from casexml.apps.case.exceptions import PhoneDateValueError
 from casexml.apps.phone.models import SyncLogAssertionError, get_properly_wrapped_sync_log
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.stock.models import StockReport
+from corehq.util.soft_assert import soft_assert
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
+
+
+def validate_phone_datetime(datetime_string, none_ok=False):
+    if none_ok:
+        if datetime_string is None:
+            return None
+        if not datetime_string != '':
+            soft_assert('@'.join(['droberts', 'dimagi.com']))(
+                False,
+                'phone datetime should never be empty'
+            )
+            return None
+    try:
+        return iso8601.parse_date(datetime_string)
+    except iso8601.ParseError:
+        raise PhoneDateValueError('{!r}'.format(datetime_string))
 
 
 def make_form_from_case_blocks(case_blocks):
@@ -77,7 +96,7 @@ def create_real_cases_from_dummy_cases(cases):
 
 
 def get_case_xform_ids(case_id):
-    results = XFormInstance.get_db().view('case/form_case_index',
+    results = XFormInstance.get_db().view('form_case_index/form_case_index',
                                           reduce=False,
                                           startkey=[case_id],
                                           endkey=[case_id, {}])

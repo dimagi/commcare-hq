@@ -3,7 +3,7 @@ from django.core.urlresolvers import reverse
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.test_utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 import django_digest.test
 from django.test import TestCase
 import os

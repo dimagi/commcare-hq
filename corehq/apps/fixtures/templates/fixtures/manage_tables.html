@@ -52,14 +52,17 @@
 
 <div class="row-fluid" id="fixtures-ui">
         <div class="span10">
-            <h4 class="pull-left">
+            <legend class="pull-left">
+                <div class="pull-right">
+                    <a href="#export-download-status" class="btn btn-primary"
+                       data-bind="click: downloadExcels, attr: {'disabled': selectedTables().length < 1}">
+                        <i class="icon-cloud-download icon-white"></i> {% trans "Download Lookup Tables" %}
+                    </a>
+                </div>
                 {% trans "Bulk Download Lookup Tables" %}
-            </h4>
-            <h4 class="pull-right">
-                <a href="#export-download-status" class="btn btn-success" data-bind="click: downloadExcels, attr: {'disabled': selectedTables().length < 1}"><i class="icon-cloud-download icon-white"></i> {% trans "Download Lookup Tables" %} </a>
-            </h4>
+            </legend>
 
-            <table class="table table-striped table-bordered" style="margin-bottom:0">
+            <table class="table table-striped table-bordered">
                 <thead>
                     <tr>
                         <th>
@@ -68,9 +71,9 @@
                         <th>
                             {% trans "View Table" %}
                             <i class="icon-white icon-share"></i>
-                        </th>                        
+                        </th>
                         <th>
-                            {% trans "Delete Table" %}
+                            {% trans "Edit or Delete Table" %}
                         </th>
                         <th>
                             {% trans "Include in Download" %}
@@ -86,18 +89,20 @@
                                 <span data-bind="text: tag"></span>
                             </td>
                             <td>
-                                <a data-bind="attr: {href: view_link}" target='_blank'><span>View Table</span></a>
+                                <a data-bind="attr: {href: view_link}" target='_blank'>{% trans "View Table" %}</a>
                             </td>
                             <td>
                                 <button class="btn" data-bind="click: startEditing, visible: saveState() === 'saved'">
                                     <i class="icon-edit"></i>
-                                    Edit Type
+                                    {% trans "Edit" %}
                                 </button>
-                                <button class="btn disabled" data-bind="visible: saveState() === 'saving'">Saving...</button>
+                                <button class="btn disabled" data-bind="visible: saveState() === 'saving'">
+                                    {% trans "Saving..." %}
+                                </button>
                                 {% include "fixtures/partials/edit_table_modal.html" %} 
                                 <button class="btn btn-danger" data-bind="click: $root.removeDataType">
                                     <i class="icon-white icon-trash"></i>
-                                    Delete
+                                    {% trans "Delete" %}
                                 </button>
                             </td>
                             <td>
@@ -109,34 +114,37 @@
                     <!-- /ko -->
                     <tr>
                         <td colspan="4">
-                        <button class="btn btn-primary" data-bind="click: $root.addDataType">
+                        <button class="btn" data-bind="click: $root.addDataType">
                             <i class="icon-white icon-plus"></i>
                             {% trans "Add Table" %}
                         </button>
                         </td>
                     </tr>
                 </tbody>
-            </table></br>
+            </table>
         </div>
 </div>
 <div class="row-fluid">
-        <div class="span10">
-            <h4>
-                {% blocktrans %}
-                    Bulk Upload Lookup Tables
-                {% endblocktrans %}
-            </h4>
-            <p>
-                {% blocktrans %}
-                    Create new tables or update existing ones by uploading a new or existing Excel file. Follow these instructions <a href='https://confluence.dimagi.com/pages/viewpage.action?pageId=12222793' target='_blank'>Lookup Tables</a> for setting up your excel file.
-                {% endblocktrans %}
-            </p>
-        </div>
+    <div class="span10">
+        <legend>
+            {% blocktrans %}
+                Bulk Upload Lookup Tables
+            {% endblocktrans %}
+        </legend>
+        <p>
+            {% blocktrans %}
+                Create new tables or update existing ones by uploading a new or existing Excel file.
+                See the
+                <a href='https://confluence.dimagi.com/pages/viewpage.action?pageId=12222793' target='_blank'>
+                    Lookup Tables help page
+                </a> for instructions on setting up your excel file.
+            {% endblocktrans %}
+        </p>
+    </div>
 </div>
 <div class="row-fluid" id="fixture-upload">
-        <form class="form form-horizontal span10" id="uploadForm" action="{% url "upload_fixtures" domain %}" method="post" enctype="multipart/form-data">
-            <div class="form-actions" style="padding-left: 1em;">
-                <fieldset class="modal-body">
+        <form class="form form-horizontal span10" id="uploadForm" action="{% url "upload_fixtures" domain %}" method="post" enctype="multipart/form-data">{% csrf_token %}
+                <fieldset>
                     <label for="bulk_upload_file" class="control-label">{% trans "Lookup Tables File" %}</label>
                     <div class="controls">
                         <input id="bulk_upload_file" type="file" name="file" data-bind="value: file"/>
@@ -146,12 +154,11 @@
                         <input id="replace" type="checkbox" name="replace"/>
                     </div>
                 </fieldset>
-                <div class="controls modal-footer">
+                <div class="form-actions">
                     <button type="submit" class="btn btn-primary disable-on-submit" data-bind="attr: {'disabled': !file()}">
                         <i class="icon icon-cloud-upload"></i> {% trans 'Upload Tables' %}
                     </button>
                 </div>
-            </div>
         </form>
 </div>
 <div class="modal hide fade" id="fixture-download">

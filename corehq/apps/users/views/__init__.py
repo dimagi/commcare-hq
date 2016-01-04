@@ -227,7 +227,7 @@ class BaseEditUserView(BaseUserSettingsView):
             self.editable_user.save()
         elif self.request.POST['form_type'] == "update-user":
             if all([self.update_user(), self.custom_user_is_valid()]):
-                messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.username)
+                messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
 
         return self.get(request, *args, **kwargs)
 
@@ -585,18 +585,14 @@ def delete_user_role(request, domain):
 class UserInvitationView(object):
     # todo cleanup this view so it properly inherits from BaseSectionPageView
     template = "users/accept_invite.html"
-    # a list of strings containing which parameters of the call function
-    # should be set as attributes to self
-    need = ["domain"]
 
     def __call__(self, request, invitation_id, **kwargs):
         logging.warning("Don't use this view in more apps until it gets cleaned up.")
         # add the correct parameters to this instance
         self.request = request
         self.inv_id = invitation_id
-        for k, v in kwargs.iteritems():
-            if k in self.need:
-                setattr(self, k, v)
+        if 'domain' in kwargs:
+            self.domain = kwargs['domain']
 
         if request.GET.get('switch') == 'true':
             logout(request)

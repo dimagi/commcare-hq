@@ -1,6 +1,6 @@
 import requests
 from corehq.apps.sms.mixin import SMSBackend
-from corehq.apps.sms.models import SMS
+from corehq.apps.sms.models import SMS, SQLSMSBackend
 from corehq.apps.sms.util import strip_plus
 from corehq.messaging.smsbackends.apposit.forms import AppositBackendForm
 from dimagi.ext.couchdbkit import StringProperty
@@ -72,3 +72,26 @@ class AppositBackend(SMSBackend):
 
         if self.response_is_error(response):
             self.handle_error(response, msg)
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLAppositBackend
+
+
+class SQLAppositBackend(SQLSMSBackend):
+    class Meta:
+        app_label = 'sms'
+        proxy = True
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return AppositBackend
+
+    @classmethod
+    def get_available_extra_fields(cls):
+        return [
+            'from_number',
+            'username',
+            'password',
+            'service_id',
+        ]

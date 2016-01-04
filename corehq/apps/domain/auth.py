@@ -8,6 +8,10 @@ from tastypie.authentication import ApiKeyAuthentication
 J2ME = 'j2me'
 ANDROID = 'android'
 
+BASIC = 'basic'
+DIGEST = 'digest'
+API_KEY = 'api_key'
+
 
 def determine_authtype_from_header(request, default=None):
     """
@@ -15,11 +19,11 @@ def determine_authtype_from_header(request, default=None):
     """
     auth_header = (request.META.get('HTTP_AUTHORIZATION') or '').lower()
     if auth_header.startswith('basic '):
-        return 'basic'
+        return BASIC
     elif auth_header.startswith('digest '):
-        return 'digest'
+        return DIGEST
     elif all(ApiKeyAuthentication().extract_credentials(request)):
-        return 'api_key'
+        return API_KEY
 
     return default
 
@@ -31,8 +35,8 @@ def determine_authtype_from_request(request, default='basic'):
     """
     user_agent = request.META.get('HTTP_USER_AGENT')
     type_to_auth_map = {
-        J2ME: 'digest',
-        ANDROID: 'basic',
+        J2ME: DIGEST,
+        ANDROID: BASIC,
     }
     user_type = guess_phone_type_from_user_agent(user_agent)
     if user_type is not None:
@@ -61,7 +65,7 @@ def basicauth(realm=''):
             if 'HTTP_AUTHORIZATION' in request.META:
                 auth = request.META['HTTP_AUTHORIZATION'].split()
                 if len(auth) == 2:
-                    if auth[0].lower() == "basic":
+                    if auth[0].lower() == BASIC:
                         uname, passwd = base64.b64decode(auth[1]).split(':', 1)
                         user = authenticate(username=uname, password=passwd)
                         if user is not None and user.is_active:

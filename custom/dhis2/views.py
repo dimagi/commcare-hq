@@ -1,9 +1,9 @@
 from datetime import datetime
 from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.receiverwrapper.models import RepeatRecord
-from corehq.apps.receiverwrapper.tasks import process_repeater_list
 from django.http import HttpResponse
 
+from corehq.apps.repeaters.models import RepeatRecord
+from corehq.apps.repeaters.tasks import process_repeater_list
 
 PAGE = """
 <html>

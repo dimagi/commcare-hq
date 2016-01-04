@@ -1,4 +1,4 @@
-{% extends report_base|default:"reports/async/default.html" %}
+{% extends report_base|default:"reports/async/bootstrap2/default.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -19,7 +19,7 @@
             export_type: "case"
         } );
         $('#full-case-export').one().each(function () {
-            ko.applyBindings(exportManager, this);
+            $(this).koApplyBindings(exportManager);
         });
 
         // Daily Saved Exports event tracking

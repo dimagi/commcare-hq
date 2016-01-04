@@ -22,3 +22,7 @@ class UnsupportedScheduledReportError(Exception):
 
 class InvalidDaterangeException(Exception):
     pass
+
+
+class TooMuchDataError(Exception):
+    pass

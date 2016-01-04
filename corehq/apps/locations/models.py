@@ -310,7 +310,7 @@ class SQLLocation(MPTTModel):
         if self.location_type.shares_cases:
             yield self.case_sharing_group_object(for_user_id)
         if self.location_type.view_descendants:
-            for sql_loc in self.get_descendants().filter(location_type__shares_cases=True):
+            for sql_loc in self.get_descendants().filter(location_type__shares_cases=True, is_archived=False):
                 yield sql_loc.case_sharing_group_object(for_user_id)
 
     def case_sharing_group_object(self, user_id=None):
@@ -417,13 +417,15 @@ class Location(CachedCouchDocumentMixin, Document):
         return super(Location, cls).wrap(data)
 
     def __init__(self, *args, **kwargs):
+        from corehq.apps.locations.util import get_lineage_from_location, get_lineage_from_location_id
         if 'parent' in kwargs:
             parent = kwargs['parent']
             if parent:
-                if not isinstance(parent, Document):
+                if isinstance(parent, Document):
+                    lineage = get_lineage_from_location(parent)
+                else:
                     # 'parent' is a doc id
-                    parent = Location.get(parent)
-                lineage = list(reversed(parent.path))
+                    lineage = get_lineage_from_location_id(parent)
             else:
                 lineage = []
             kwargs['lineage'] = lineage
@@ -496,7 +498,8 @@ class Location(CachedCouchDocumentMixin, Document):
         parent_id = self.parent_id
         if parent_id:
             sql_location.parent = SQLLocation.objects.get(location_id=parent_id)
-
+        else:
+            sql_location.parent = None
         return sql_location
 
     @property
@@ -574,7 +577,7 @@ class Location(CachedCouchDocumentMixin, Document):
         if sp and sp.closed:
             for action in sp.actions:
                 if action.action_type == 'close':
-                    action.xform.archive(user=COMMTRACK_USERNAME)
+                    action.xform.archive(user_id=COMMTRACK_USERNAME)
                     break
 
     def unarchive(self):

@@ -3,6 +3,7 @@ import logging
 from iso8601 import iso8601
 
 from casexml.apps.case import const
+from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
@@ -22,6 +23,14 @@ def _convert_type(property_name, value):
 
 class SqlCaseUpdateStrategy(UpdateStrategy):
     case_implementation_class = CommCareCaseSQL
+
+    def apply_action_intent(self, case_action_intent):
+        if not case_action_intent.is_deprecation:
+            # for now we only allow commtrack actions to be processed this way so just assert that's the case
+            assert case_action_intent.action_type == CASE_ACTION_COMMTRACK
+            transaction = CaseTransaction.ledger_transaction(self.case, case_action_intent.form)
+            if transaction not in self.case.get_tracked_models_to_create(CaseTransaction):
+                self.case.track_create(transaction)
 
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
         self._apply_case_update(case_update, xformdoc)
@@ -91,7 +100,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         for key, value in update_action.dynamic_properties.items():
             if key == 'location_id':
                 # special treatment of location_id
-                self.case.location_uuid = value
+                self.case.location_id = value
             elif key not in const.CASE_TAGS:
                 self.case.case_json[key] = value
 

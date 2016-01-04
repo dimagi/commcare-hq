@@ -9,6 +9,7 @@ Use the following plugins:
 * floatingspace
 * undo (for change events)
 * widget
+* [config helper](http://ckeditor.com/addon/confighelper) (for placeholder support)
 
 If by chance this hasn't been updated you can also check build-config.js in
 lib/ckeditor/

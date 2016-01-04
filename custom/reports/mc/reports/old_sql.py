@@ -220,7 +220,7 @@ class FormPropertySection(Section):
         user_ids = self.report.get_user_ids()
         rows = []
         for user in user_ids:
-            last_submission = XFormInstance.get_db().view('reports_forms/all_forms',
+            last_submission = XFormInstance.get_db().view('all_forms/view',
                 startkey=[key_base, domain, self.xmlns, user, enddate],
                 endkey=[key_base, domain, self.xmlns, user, startdate],
                 limit=1,
@@ -262,9 +262,9 @@ class McSqlData(SqlData):
         return self.format.get_headers()
 
     @memoized
-    def get_data(self, slugs=None):
+    def get_data(self):
         # only overridden to memoize
-        return super(McSqlData, self).get_data(slugs)
+        return super(McSqlData, self).get_data()
 
     @memoized
     def get_users(self):

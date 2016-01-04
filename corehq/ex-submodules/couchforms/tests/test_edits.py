@@ -15,7 +15,7 @@ from couchforms.models import (
 )
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.test_utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends, post_xform
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -40,19 +40,15 @@ class EditFormTest(TestCase, TestFileMixin):
     def test_basic_edit(self):
         original_xml = self.get_xml('original')
         edit_xml = self.get_xml('edit')
-        yesterday = datetime.utcnow() - timedelta(days=1)
 
-        def process(form):
-            form.domain = self.domain
-            form.received_on = yesterday
+        xform = post_xform(original_xml, domain=self.domain)
 
-        xform = self.interface.post_xform(original_xml, process=process)
         self.assertEqual(self.ID, xform.form_id)
         self.assertTrue(xform.is_normal)
         self.assertEqual("", xform.form_data['vitals']['height'])
         self.assertEqual("other", xform.form_data['assessment']['categories'])
 
-        xform = self.interface.post_xform(edit_xml, domain=self.domain)
+        xform = post_xform(edit_xml, domain=self.domain)
         self.assertEqual(self.ID, xform.form_id)
         self.assertTrue(xform.is_normal)
         self.assertEqual("100", xform.form_data['vitals']['height'])

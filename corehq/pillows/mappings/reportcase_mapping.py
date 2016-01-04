@@ -1,4 +1,6 @@
-REPORT_CASE_INDEX="report_cases_czei39du507m9mmpqk3y01x72a3ux4p0"
+from corehq.util.elastic import es_index
+
+REPORT_CASE_INDEX = es_index("report_cases_czei39du507m9mmpqk3y01x72a3ux4p0")
 
 REPORT_CASE_MAPPING={'_meta': {'comment': '2013-11-05 dmyung',
            'created': None},

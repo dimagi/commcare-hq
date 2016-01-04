@@ -1,4 +1,4 @@
-from corehq.apps.locations.dbaccessors import get_location_from_site_code
+from corehq.apps.locations.models import Location
 from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber
 from custom.ewsghana.reminders import REGISTER_HELP, REGISTRATION_CONFIRM
 from django.contrib.auth.models import User
@@ -14,7 +14,7 @@ class RegistrationHandler(KeywordHandler):
         self.respond(REGISTER_HELP)
 
     def _get_facility_location(self, domain, msd_code):
-        return get_location_from_site_code(domain, msd_code)
+        return Location.by_site_code(domain, msd_code)
 
     def handle(self):
         words = self.args

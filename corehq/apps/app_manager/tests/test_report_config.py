@@ -10,7 +10,9 @@ from corehq.apps.app_manager.models import ReportAppConfig, Application, ReportM
 from corehq.apps.app_manager.tests import TestXmlMixin
 from corehq.apps.app_manager.tests.mocks.mobile_ucr import mock_report_configurations, \
     mock_report_configuration_get, mock_report_data
+from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import ReportConfiguration, ReportMeta
+from corehq.apps.userreports.reports.filters.choice_providers import ChoiceProvider
 from corehq.apps.userreports.reports.filters.specs import DynamicChoiceListFilterSpec
 from corehq.apps.userreports.reports.specs import FieldColumn, MultibarChartSpec, \
     GraphDisplayColumn
@@ -72,6 +74,21 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'mobile_ucr'
     root = os.path.dirname(__file__)
 
+    @staticmethod
+    def make_report_config(domain, report_id):
+        class MockChoiceProvider(ChoiceProvider):
+            def query(self, query_context):
+                pass
+
+            def get_choices_for_known_values(self, values):
+                _map = {'cory': 'Cory Zue', 'ctsims': 'Clayton Sims', 'daniel': 'Daniel Roberts'}
+                return [Choice(value, _map.get(value, value)) for value in values]
+
+        report_configuration = MAKE_REPORT_CONFIG(domain, report_id)
+        ui_filter = report_configuration.get_ui_filter('computed_owner_name_40cc88a0_1')
+        ui_filter.choice_provider = MockChoiceProvider(None, None)
+        return report_configuration
+
     @classmethod
     def setUpClass(cls):
         cls.report_id = '7b97e8b53d00d43ca126b10093215a9d'
@@ -84,7 +101,7 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
         )
         update_toggle_cache(MOBILE_UCR.slug, cls.domain, True, NAMESPACE_DOMAIN)
 
-        report_configuration = MAKE_REPORT_CONFIG(cls.domain, cls.report_id)
+        report_configuration = cls.make_report_config(cls.domain, cls.report_id)
         cls.report_configs_by_id = {
             cls.report_id: report_configuration
         }
@@ -135,7 +152,7 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
             <instance id="reports" src="jr://fixture/commcare:reports"/>
             <session>
               <datum id="report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/filters/filter[@field='computed_owner_name_40cc88a0_1']/option" value="./@value" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.computed_owner_name_40cc88a0_1"/>
-              <datum id="report_id_a98c812873986df34fd1b4ceb45e6164ae9cc664" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']" value="./@id" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.select" detail-confirm="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.summary"/>
+              <datum id="report_id_a98c812873986df34fd1b4ceb45e6164ae9cc664" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']" value="./@id" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.select" detail-confirm="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.summary" autoselect="true"/>
             </session>
           </entry>
         </partial>
@@ -192,7 +209,7 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
         <partial>
           <template form="graph">
             <graph type="bar">
-              <series nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/rows/row[column[@id='computed_owner_name_40cc88a0']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]">
+              <series nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/rows/row[@is_total_row='False'][column[@id='computed_owner_name_40cc88a0']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]">
                 <configuration/>
                 <x function="column[@id='color_94ec39e6']"/>
                 <y function="column[@id='count']"/>
@@ -203,21 +220,21 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
         </partial>
         """, self.suite, "detail[@id='reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.summary']/detail/field/template[@form='graph']")
 
-    def test_fixture(self):
+    def test_fixture_rows(self):
         self.assertXmlPartialEqual("""
         <partial>
           <rows>
-            <row index="0">
+            <row index="0" is_total_row="False">
               <column id="color_94ec39e6">red</column>
               <column id="computed_owner_name_40cc88a0">cory</column>
               <column id="count">2</column>
             </row>
-            <row index="1">
+            <row index="1" is_total_row="False">
               <column id="color_94ec39e6">black</column>
               <column id="computed_owner_name_40cc88a0">ctsims</column>
               <column id="count">1</column>
             </row>
-            <row index="2">
+            <row index="2" is_total_row="False">
               <column id="color_94ec39e6">red</column>
               <column id="computed_owner_name_40cc88a0">daniel</column>
               <column id="count">3</column>
@@ -225,3 +242,16 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
           </rows>
         </partial>
         """, self.fixture, "reports/report/rows")
+
+    def test_fixture_filters(self):
+        self.assertXmlPartialEqual("""
+        <partial>
+          <filters>
+            <filter field="computed_owner_name_40cc88a0_1">
+              <option value="ctsims">Clayton Sims</option>
+              <option value="cory">Cory Zue</option>
+              <option value="daniel">Daniel Roberts</option>
+            </filter>
+          </filters>
+        </partial>
+        """, self.fixture, "reports/report/filters")
