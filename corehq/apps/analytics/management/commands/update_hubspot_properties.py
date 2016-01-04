@@ -5,13 +5,14 @@ from django.core.management import BaseCommand
 from django.core.management.base import CommandError
 from corehq.apps.analytics.signals import _get_domain_membership_properties, _get_subscription_properties_by_user
 from corehq.apps.analytics.tasks import _batch_track_on_hubspot
-from corehq.apps.es import UserES
+from corehq.apps.es.users import UserES
 from corehq.apps.users.models import WebUser
 
 
 class Command(BaseCommand):
     args = '<property_name_1> <property_name_2> ...'
-    help = ("Updates given Hubspot properties for all users active within last 6 months")
+    help = ("Updates given Hubspot properties for all users active within last 6 months. "
+            "Only subscription and domain-membership properties are supported")
 
     def handle(self, *args, **options):
         if not args:
