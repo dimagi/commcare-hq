@@ -649,7 +649,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
 
     @use_nvd3
     def set_bootstrap3_status(self, request, *args, **kwargs):
-        super(AdminDomainStatsReport, self).set_bootstrap3_status(request, *args,**kwargs)
+        super(AdminDomainStatsReport, self).set_bootstrap3_status(request, *args, **kwargs)
 
     @property
     def template_context(self):
