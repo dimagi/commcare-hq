@@ -74,7 +74,7 @@ class DomainMetadataResource(HqBaseResource):
             es_data = (DomainES()
                        .in_domains([domain.name])
                        .run()
-                       .raw_hits[0]['_source'])
+                       .hits[0])
             return {
                 raw_hit: es_data[raw_hit]
                 for raw_hit in es_data if raw_hit[:3] == 'cp_'
