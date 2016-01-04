@@ -557,7 +557,7 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
     es_facet_mapping = []
     section_name = ugettext_noop("ADMINREPORT")
     es_url = ''
-    
+
     @property
     def template_context(self):
         ctxt = super(AdminFacetedReport, self).template_context
