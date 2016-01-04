@@ -42,6 +42,7 @@ class Product(JsonObject):
 
 
 class ILSUser(JsonObject):
+    id = IntegerProperty()
     username = StringProperty()
     first_name = StringProperty()
     last_name = StringProperty()
@@ -366,19 +367,19 @@ class ILSGatewayAPI(APISynchronization):
 
         if user is None:
             try:
-                ils_sql_web_user = ILSGatewayWebUser.objects.get(username=ilsgateway_webuser.username)
+                ils_sql_web_user = ILSGatewayWebUser.objects.get(external_id=ilsgateway_webuser.id)
             except ILSGatewayWebUser.DoesNotExist:
                 ils_sql_web_user = None
 
             if ils_sql_web_user:
                 # if user exists in db it means he was already migrated but he changed email in v1
-                email = ils_sql_web_user.email
-                user = WebUser.get_by_username(email)
+                old_email = ils_sql_web_user.email
+                user = WebUser.get_by_username(old_email)
                 ils_domains = ILSGatewayConfig.get_all_enabled_domains()
                 # make sure it's user migrated from ILS and username is available
                 if all([domain in ils_domains for domain in user.domains])\
-                        and not WebUser.get_by_username(ilsgateway_webuser.email):
-                    user.username = ilsgateway_webuser.email
+                        and not WebUser.get_by_username(email):
+                    user.username = email
                     user.email = ilsgateway_webuser.email
                     user.save()
                     ils_sql_web_user.email = email
@@ -392,8 +393,8 @@ class ILSGatewayAPI(APISynchronization):
             self._edit_web_user(user, location_id)
 
         ILSGatewayWebUser.objects.get_or_create(
-            username=ilsgateway_webuser.username,
-            email=ilsgateway_webuser.email
+            external_id=ilsgateway_webuser.id,
+            email=email
         )
         return user
 

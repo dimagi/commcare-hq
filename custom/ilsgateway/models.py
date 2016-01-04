@@ -518,7 +518,7 @@ class ILSNotes(models.Model):
 
 class ILSGatewayWebUser(models.Model):
     # To remove after switchover
-    username = models.CharField(max_length=128, db_index=True)
+    external_id = models.IntegerField(db_index=True)
     email = models.CharField(max_length=128)
 
 

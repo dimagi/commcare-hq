@@ -59,7 +59,7 @@ class WebUsersSyncTest(TestCase):
         self.assertEqual(UserRole.get_read_only_role_by_domain(TEST_DOMAIN)._id,
                          ilsgateway_webuser.get_domain_membership(TEST_DOMAIN).role_id)
 
-        sql_ils = ILSGatewayWebUser.objects.get(username=webuser.username)
+        sql_ils = ILSGatewayWebUser.objects.get(id=webuser.id)
         self.assertEqual(sql_ils.email, ilsgateway_webuser.email)
 
     def test_edit_webuser_email(self):
