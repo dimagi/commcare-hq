@@ -498,6 +498,7 @@ class BillingContactInfo(models.Model):
     last_name = models.CharField(
         max_length=50, null=True, blank=True, verbose_name=_("Last Name")
     )
+    # TODO - replace with models.ArrayField once django >= 1.9
     email_list = json_field.JSONField(
         default=[],
         verbose_name=_("Contact Emails"),
