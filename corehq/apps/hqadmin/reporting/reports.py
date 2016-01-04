@@ -588,8 +588,7 @@ def get_domain_stats_data(domains, datespan, interval,
 
 def commtrack_form_submissions(domains, datespan, interval,
         datefield='received_on'):
-    mobile_workers = [a['_id'] for a in
-            UserES().fields([]).mobile_users().show_inactive().run().raw_hits]
+    mobile_workers = UserES().fields([]).mobile_users().show_inactive().run().doc_ids
 
     forms_after_date = (FormES()
             .domain(domains)
