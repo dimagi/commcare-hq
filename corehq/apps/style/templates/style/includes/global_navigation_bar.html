@@ -15,7 +15,7 @@
                 <div class="login-container">
                     <div class="login-username">
                         {% if user.first_name %}
-                            {{ user.first_name }}
+                            {{ user.first_name }} {{ user.last_name }}
                             <small>{{ user.username }}</small>
                         {% else %}
                             {{ user.username }}
