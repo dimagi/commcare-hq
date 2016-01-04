@@ -120,6 +120,14 @@ class TestESQuery(ElasticTestMixin, TestCase):
                 .xmlns('banana')
         self.checkQuery(query, json_output)
 
+    def test_remove_all_defaults(self):
+        # Elasticsearch fails if you pass it an empty list of filters
+        query = (users.UserES()
+                 .remove_default_filter('not_deleted')
+                 .remove_default_filter('active'))
+        filters = query.raw_query['query']['filtered']['filter']['and']
+        self.assertTrue(len(filters) > 0)
+
 
 class TestESQuerySet(TestCase):
     example_response = {

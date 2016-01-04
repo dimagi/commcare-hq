@@ -1508,7 +1508,6 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
 
     class Meta:
         db_table = 'messaging_mobilebackend'
-        unique_together = ('domain', 'name')
 
     @classmethod
     def get_available_extra_fields(cls):
@@ -1644,3 +1643,32 @@ class MobileBackendInvitation(models.Model):
     # The backend that is being shared
     backend = models.ForeignKey('SQLMobileBackend')
     accepted = models.BooleanField(default=False)
+
+
+class MigrationStatus(models.Model):
+    """
+    A model to keep track of whether certain messaging migrations have
+    been run yet or not.
+    """
+    class Meta:
+        db_table = 'messaging_migrationstatus'
+
+    # The name of the migration (i.e., 'backend', 'backend_map', 'sms', etc.)
+    name = models.CharField(max_length=126)
+
+    # The timestamp that the migration was run
+    timestamp = models.DateTimeField(null=True)
+
+    @classmethod
+    def set_migration_completed(cls, name):
+        obj, created = cls.objects.get_or_create(name=name)
+        obj.timestamp = datetime.utcnow()
+        obj.save()
+
+    @classmethod
+    def has_migration_completed(cls, name):
+        try:
+            cls.objects.get(name=name)
+            return True
+        except cls.DoesNotExist:
+            return False

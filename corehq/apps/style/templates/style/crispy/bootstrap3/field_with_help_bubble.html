@@ -5,7 +5,7 @@
 {% else %}
     <{% if tag %}{{ tag }}{% else %}div{% endif %}
         id="div_{{ field.auto_id }}" 
-        class="form-group{% if wrapper_class %} {{ wrapper_class }}{% endif %}{% if form_show_errors%}{% if field.errors %}error has-error{% endif %}{% endif %}{% if field.css_classes %} {{ field.css_classes }}{% endif %}"
+        class="form-group{% if wrapper_class %} {{ wrapper_class }}{% endif %}{% if form_show_errors%}{% if field.errors %} error has-error{% endif %}{% endif %}{% if field.css_classes %} {{ field.css_classes }}{% endif %}"
     >
         {% if field.label and not field|is_checkbox and form_show_labels %}
             <div class="control-label {{ label_class }} {% if field.field.required %}requiredField{% endif %}">

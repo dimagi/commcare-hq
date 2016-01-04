@@ -83,11 +83,19 @@
                 </div>
             </div>
         </div>
+        <div class="row-fluid">
+            <div class="span12">
+                <div class="btn-toolbar">
+                    <button class="btn" id="fix_email_reports">
+                        {% trans "Fix email reports" %}
+                    </button>
+                </div>
+            </div>
+        </div>
     {% endif %}
 {% endblock %}
 
 {% block js-inline %}
-
     <script>
         var settings = {{ settings|JSON }};
 
@@ -117,6 +125,12 @@
 
         $("#balance_email_reports_migration").click(function() {
             var url = '{% url 'balance_email_reports_migration' domain %}';
+            var successMessage = "{% trans "Resync started" %}";
+            _post(this, url, {success: successMessage});
+        });
+
+        $("#fix_email_reports").click(function() {
+            var url = '{% url 'fix_email_reports' domain %}';
             var successMessage = "{% trans "Resync started" %}";
             _post(this, url, {success: successMessage});
         });

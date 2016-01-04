@@ -10,6 +10,7 @@ import itertools
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View, TemplateView
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -168,6 +169,12 @@ class BaseProcessUploadedView(BaseMultimediaView):
         except Exception as e:
             raise BadMediaFileException("There was an error fetching the MIME type of your file. Error: %s" % e)
 
+    @method_decorator(require_permission(Permissions.edit_apps, login_decorator=login_with_permission_from_post()))
+    # YUI js uploader library doesn't support csrf
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseMultimediaView, self).dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
         return HttpResponseBadRequest("You may only post to this URL.")
 
@@ -184,7 +191,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
         })
         return HttpResponse(json.dumps(response))
 
-    def validate_file(self):
+    def validate_file(self, replace_diff_ext=False):
         raise NotImplementedError("You must validate your uploaded file!")
 
     def process_upload(self):
@@ -203,7 +210,7 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
         except Exception as e:
             raise BadMediaFileException("There was an issue processing the zip file you provided. Error: %s" % e)
 
-    def validate_file(self):
+    def validate_file(self, replace_diff_ext=False):
         if not self.mime_type in self.valid_mime_types():
             raise BadMediaFileException("Your zip file doesn't have a valid mimetype.")
         if not self.uploaded_zip:
@@ -255,13 +262,23 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
         return self.request.POST.get('path', '')
 
     @property
+    def original_path(self):
+        return self.request.POST.get('originalPath')
+
+    @property
     def file_ext(self):
         def file_ext(filename):
             _, extension = os.path.splitext(filename)
             return extension
         return file_ext(self.uploaded_file.name)
 
-    def validate_file(self):
+    @property
+    def orig_ext(self):
+        if self.original_path is None:
+            return self.file_ext
+        return '.{}'.format(self.original_path.split('.')[-1])
+
+    def validate_file(self, replace_diff_ext=False):
         def possible_extensions(filename):
             possible_type = guess_type(filename)[0]
             if not possible_type:
@@ -278,11 +295,22 @@ class BaseProcessFileUploadView(BaseProcessUploadedView):
             )
         if self.file_ext.lower() not in possible_extensions(self.form_path):
             raise BadMediaFileException(
-                _("File {name}s has an incorrect file type {ext}.").format(
+                _("File {name} has an incorrect file type {ext}.").format(
                     name=self.uploaded_file.name,
                     ext=self.file_ext,
                 )
             )
+        if not replace_diff_ext and self.file_ext.lower() != self.orig_ext.lower():
+            raise BadMediaFileException(_(
+                "The file type of {name} of '{ext}' does not match the "
+                "file type of the original media file '{orig_ext}'. To change "
+                "file types, please upload directly from the "
+                "Form Builder."
+            ).format(
+                name=self.uploaded_file.name,
+                ext=self.file_ext.lower(),
+                orig_ext=self.orig_ext.lower(),
+            ))
 
     def process_upload(self):
         self.uploaded_file.file.seek(0)
@@ -327,6 +355,9 @@ class ProcessLogoFileUploadView(ProcessImageFileUploadView):
     def form_path(self):
         return ("jr://file/commcare/logo/data/%s%s"
                 % (self.filename, self.file_ext))
+
+    def validate_file(self, replace_diff_ext=True):
+        return super(ProcessLogoFileUploadView, self).validate_file(replace_diff_ext)
 
     @property
     def filename(self):

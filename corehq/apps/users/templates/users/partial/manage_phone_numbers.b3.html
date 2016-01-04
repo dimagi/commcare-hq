@@ -37,6 +37,7 @@
                         <form method="post"
                               action="{% url "verify_phone_number" domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}"
                               style="display: inline;">
+                              {% csrf_token %}
                             <button type="submit"
                                     data-title="{% trans 'Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified.' %}"
                                     class="btn btn-primary verify-button"><i class="fa fa-signal"></i> {% trans 'Verify' %}
@@ -73,6 +74,7 @@
                               action="{% url "make_phone_number_default" domain couch_user.couch_id %}"
                               {% endif %}
                               method="POST">
+                            {% csrf_token %}
                             <input type="hidden" name="form_type" value="make-phone-number-default"/>
                             <input type="hidden" name="phone_number" value="{{ phone.number }}"/>
                             <button type="submit" class="btn btn-default">

@@ -156,7 +156,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         return values
 
     def set_case_type_choices(self, initial):
-        case_types = get_case_types_for_domain(self.domain)
+        case_types = [''] + get_case_types_for_domain(self.domain)
         if initial and initial not in case_types:
             # Include the deleted case type in the list of choices so that
             # we always allow proper display and edit of rules
@@ -252,7 +252,8 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
     def clean_server_modified_boundary(self):
         value = self.cleaned_data.get('server_modified_boundary')
         if not isinstance(value, int) or value < 30:
-            raise ValidationError(_("Please enter a whole number greater than 30"))
+            raise ValidationError(_("Please enter a whole number greater than "
+                                    "or equal to 30."))
         return value
 
     def clean_conditions(self):

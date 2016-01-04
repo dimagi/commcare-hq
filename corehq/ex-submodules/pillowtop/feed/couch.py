@@ -5,7 +5,7 @@ from pillowtop.feed.interface import ChangeFeed, Change
 
 class CouchChangeFeed(ChangeFeed):
 
-    def __init__(self, couch_db, couch_filter, include_docs, extra_couch_view_params=None):
+    def __init__(self, couch_db, include_docs, couch_filter=None, extra_couch_view_params=None):
         self._couch_db = couch_db
         self._couch_filter = couch_filter
         self._include_docs = include_docs

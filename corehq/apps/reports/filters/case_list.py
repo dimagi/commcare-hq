@@ -90,18 +90,12 @@ class CaseListFilterOptions(EmwfOptionsView):
             ]
 
     def get_sharing_groups_size(self, query):
-        return self.group_es_call(query, group_type="case_sharing", size=0,
-                                  return_count=True)[0]
+        return self.group_es_query(query, group_type="case_sharing").count()
 
     def get_sharing_groups(self, query, start, size):
-        fields = ['_id', 'name']
-        sharing_groups = self.group_es_call(
-            query,
-            group_type="case_sharing",
-            fields=fields,
-            sort_by="name.exact",
-            order="asc",
-            start_at=start,
-            size=size,
-        )
-        return map(self.utils.sharing_group_tuple, sharing_groups)
+        groups = (self.group_es_query(query, group_type="case_sharing")
+                  .fields(['_id', 'name'])
+                  .start(start)
+                  .size(size)
+                  .sort("name.exact"))
+        return map(self.utils.sharing_group_tuple, groups.run().hits)

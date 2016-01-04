@@ -10,7 +10,7 @@ from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.locations.models import Location, SQLLocation
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
+from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.filters.commtrack import AdvancedColumns
 
@@ -142,12 +142,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         stock_states = stock_states.order_by('product_id')
 
         if self.program_id:
-            stock_states = stock_states.filter(
-                product_id__in=product_ids_filtered_by_program(
-                    self.domain,
-                    self.program_id
-                )
-            )
+            stock_states = stock_states.filter(sql_product__program_id=self.program_id)
 
         product_grouping = {}
         for state in stock_states:

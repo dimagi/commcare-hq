@@ -20,10 +20,6 @@ class StaticGuidedTour(object):
         return not GuidedTour.has_seen_tour(user, self.slug)
 
 
-NEW_BLANK_APP = StaticGuidedTour(
-    'new_blank_app', 'tour/config/new_blank_app.html'
-)
-
-NEW_TEMPLATE_APP = StaticGuidedTour(
-    'new_template_app', 'tour/config/new_template_app.html'
+NEW_APP = StaticGuidedTour(
+    'new_app', 'tour/config/new_app.html'
 )

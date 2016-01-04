@@ -93,9 +93,10 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
         if request.user.is_superuser or domain_has_privilege(request.domain, privileges.API_ACCESS):
             return super(HqBaseResource, self).dispatch(request_type, request, **kwargs)
         else:
-            raise ImmediateHttpResponse(HttpResponse(json.dumps({"error": "not authorized"}),
-                                            content_type="application/json",
-                                            status=401))
+            raise ImmediateHttpResponse(HttpResponse(
+                json.dumps({"error": "Your current plan does not have access to this feature"}),
+                content_type="application/json",
+                status=401))
 
 
 class SimpleSortableResourceMixin(object):

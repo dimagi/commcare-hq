@@ -426,7 +426,7 @@ class SubscriptionForm(forms.Form):
                 'plan_name': subscription.plan_version,
             })
             try:
-                plan_product = subscription.plan_version.product_rates.all()[0].product.product_type
+                plan_product = subscription.plan_version.get_product_rate().product.product_type
                 self.fields['plan_product'].initial = plan_product
             except (IndexError, SoftwarePlanVersion.DoesNotExist):
                 plan_product = (
@@ -650,11 +650,6 @@ class SubscriptionForm(forms.Form):
         if end_date:
             if start_date > end_date:
                 raise ValidationError(_("End date must be after start date."))
-            if (
-                self.subscription and self.subscription.date_end != end_date
-                and end_date <= datetime.date.today()
-            ):
-                raise ValidationError(_("End date must be in the future."))
 
         return self.cleaned_data
 
@@ -823,13 +818,16 @@ class CancelForm(forms.Form):
         widget=forms.TextInput,
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, subscription, *args, **kwargs):
         super(CancelForm, self).__init__(*args, **kwargs)
+
+        can_cancel = has_subscription_already_ended(subscription)
+
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Cancel Subscription',
-                'note',
+                crispy.Field('note', **({'readonly': True} if can_cancel else {})),
             ),
             FormActions(
                 StrictButton(
@@ -837,7 +835,47 @@ class CancelForm(forms.Form):
                     css_class='btn-danger',
                     name='cancel_subscription',
                     type='submit',
+                    **({'disabled': True} if can_cancel else {})
                 )
+            ),
+        )
+
+
+class SuppressSubscriptionForm(forms.Form):
+    submit_kwarg = 'suppress_subscription'
+
+    def __init__(self, subscription, *args, **kwargs):
+        self.subscription = subscription
+        super(SuppressSubscriptionForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+
+        fields = [
+            crispy.Div(
+                crispy.HTML('Warning: this can only be undone by a developer.'),
+                css_class='alert alert-error',
+            ),
+        ]
+        if self.subscription.is_active:
+            fields.append(crispy.Div(
+                crispy.HTML('An active subscription cannot be suppressed.'),
+                css_class='alert alert-warning',
+            ))
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Suppress subscription from subscription report, invoice generation, and from being activated',
+                *fields
+            ),
+            FormActions(
+                StrictButton(
+                    'Suppress Subscription',
+                    css_class='btn-danger',
+                    name=self.submit_kwarg,
+                    type='submit',
+                    **({'disabled': True} if self.subscription.is_active else {})
+                ),
             ),
         )
 

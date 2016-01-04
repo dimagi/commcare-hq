@@ -297,7 +297,7 @@
             {
               "case_tile_field": "header",
               "filter_xpath": "",
-              "format": "plain",
+              "format": "calculate",
               "isTab": false,
               "enum": [
                 
@@ -308,7 +308,7 @@
                 "en": ""
               },
               "doc_type": "DetailColumn",
-              "calc_xpath": ".",
+              "calc_xpath": "if(today() - date(dob) > 30, concat(name, ' (', int((today() - date(dob)) div 30.25), ' Mois)'), concat(name, ' (',int(today() - date(dob)), ' Jours)'))",
               "field": "name",
               "model": "case",
               "hasAutocomplete": true,
@@ -395,7 +395,7 @@
               "case_tile_field": "date",
               "doc_type": "DetailColumn",
               "filter_xpath": "",
-              "format": "date",
+              "format": "calculate",
               "late_flag": 30,
               "enum": [
                 
@@ -406,7 +406,7 @@
               "time_ago_interval": 365.25,
               "field": "dob",
               "isTab": false,
-              "calc_xpath": ".",
+              "calc_xpath": "format-date(date(dob), \"%e/%n/%Y\")",
               "model": "case",
               "hasAutocomplete": true,
               "graph_configuration": null,
