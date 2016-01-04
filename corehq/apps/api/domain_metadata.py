@@ -73,6 +73,7 @@ class DomainMetadataResource(HqBaseResource):
         try:
             es_data = (DomainES()
                        .in_domains([domain.name])
+                       .size(1)
                        .run()
                        .hits[0])
             return {
