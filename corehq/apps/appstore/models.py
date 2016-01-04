@@ -1,3 +1,5 @@
+from couchdbkit import ResourceNotFound
+from corehq.apps.appstore.exceptions import CopiedFromDeletedException
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.decorators.memoized import memoized
 
@@ -14,8 +16,14 @@ class SnapshotMixin(DocumentSchema):
     def copied_from(self):
         doc_id = self.copy_history[-1] if self.is_copy else None
         if doc_id:
-            doc = self.get(doc_id)
-            return doc
+            try:
+                doc = self.get(doc_id)
+                return doc
+            except ResourceNotFound:
+                raise CopiedFromDeletedException(
+                    'This snapshot points to a source domain that cannot be found. '
+                    'The missing doc ID is: {}'.format(doc_id)
+                )
         return None
 
     def get_updated_history(self):

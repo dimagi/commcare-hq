@@ -14,12 +14,12 @@
     <script>
         $(function () {
             var translations = {
-                forms: "{% trans 'Forms' %}",
-                repeat: "{% trans 'Repeat: ' %}",
-                cases: "{% trans 'Cases' %}",
-                case_history: "{% trans 'Case History' %}",
-                history_to_parents: "{% trans 'Case History > Parent Cases' %}",
-                parent_cases: "{% trans 'Parent Cases' %}",
+                forms: "{% trans 'Forms'|escapejs %}",
+                repeat: "{% trans 'Repeat: '|escapejs %}",
+                cases: "{% trans 'Cases'|escapejs %}",
+                case_history: "{% trans 'Case History'|escapejs %}",
+                history_to_parents: "{% trans 'Case History > Parent Cases'|escapejs %}",
+                parent_cases: "{% trans 'Parent Cases'|escapejs %}",
             };
             var customExportView = CustomExportView.wrap({
                 export_type: {{ custom_export.type|JSON }},
@@ -127,7 +127,6 @@
             <div>
                 <legend data-bind="visible: $root.utils.actuallyShowTable($data)">
                     <span data-bind="visible: $root.repeatsEnabled()">
-                        <!-- here -->
                         <input type="checkbox" data-bind="checked: selected" />
                     </span>
                     <span>

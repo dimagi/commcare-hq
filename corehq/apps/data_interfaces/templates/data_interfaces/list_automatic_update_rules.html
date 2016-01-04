@@ -12,6 +12,12 @@
 (function (angular, undefined) {
     'use strict';
     var autoUpdateRuleApp = angular.module('autoUpdateRuleApp', ['hq.pagination']);
+    autoUpdateRuleApp.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+    }]);
+
     autoUpdateRuleApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure({% djng_current_rmi %});
     }]);
@@ -51,6 +57,15 @@
                 rule.action_error = '{% trans "Issue communicating with server. Try again."|escapejs %}';
             });
         },
+        manuallyRunRules: function (djangoRMI) {
+            djangoRMI.run_rules({})
+            .success(function (data) {
+                $('#run-all-rules-button').html("{% trans "Task started. Last Run timestamp will be updated when complete (refresh page to check)." %}");
+            })
+            .error(function () {
+                $('#run-all-rules-button').html("{% trans "An error occurred. Please try again." %}");
+            });
+        },
         deleteRule: function (rule, djangoRMI, paginationController) {
             $('#delete_' + rule.id).modal('hide');
             djangoRMI.update_rule({
@@ -75,13 +90,19 @@
 {% endblock %}
 
 {% block page_content %}
-<div ng-app="autoUpdateRuleApp">
+<div ng-app="autoUpdateRuleApp" ng-controller="PaginatedListController as paginationController">
     <div class="btn-toolbar" style="margin-bottom: 20px;">
         <a href="{% url "add_automatic_update_rule" domain %}">
             <button type="button" class="btn btn-success">
                 <i class="fa fa-plus"></i> {% trans "Add Automatic Case Close Rule" %}
             </button>
         </a>
+        <button id="run-all-rules-button"
+                type="button"
+                class="btn btn-default"
+                ng-click="manuallyRunRules(djangoRMI);">
+                {% trans "Run All Rules" %}
+        </button>
     </div>
     <div class="row">
         <div class="col-sm-8">
@@ -100,7 +121,6 @@
         </div>
     </div>
     <div class="panel panel-default"
-         ng-controller="PaginatedListController as paginationController"
          ng-cloak>
         <div class="panel-heading">
             <h3 class="panel-title">{% trans 'Automatic Case Close Rules' %}</h3>
@@ -144,8 +164,8 @@
                         </td>
                         <td>{{ rule.case_type }}</td>
                         <td>
-                            <span ng-show="rule.active">{% trans "Active" %}</span>
-                            <span ng-hide="rule.active">{% trans "Inactive" %}</span>
+                            <span class="label label-success" ng-show="rule.active">{% trans "Active" %}</span>
+                            <span class="label label-danger" ng-hide="rule.active">{% trans "Inactive" %}</span>
                         </td>
                         <td>{{ rule.last_run }}</td>
                         <td>
@@ -162,7 +182,7 @@
                                 {% trans "Deactivate" %}
                             </button>
                             <button type="button"
-                                    class="btn btn-default"
+                                    class="btn btn-danger"
                                     data-toggle="modal"
                                     data-target="#delete_{{ rule.id }}">
                                     {% trans "Delete" %}
@@ -172,6 +192,7 @@
                                     <form class="modal-content"
                                           method="post"
                                           ng-submit="deleteRule(rule, djangoRMI, paginationController);">
+                                        {% csrf_token %}
                                         <div class="modal-header">
                                             <button type="button"
                                                     class="close"

@@ -11,7 +11,7 @@ class UndoHandler(KeywordHandler):
 
     def get_user_latest_xform(self, user):
         return XFormInstance.view(
-            'reports_forms/all_forms',
+            'all_forms/view',
             startkey=['submission xmlns user', self.domain, COMMTRACK_REPORT_XMLNS, user.get_id, {}],
             endkey=['submission xmlns user', self.domain, COMMTRACK_REPORT_XMLNS, user.get_id],
             reduce=False,

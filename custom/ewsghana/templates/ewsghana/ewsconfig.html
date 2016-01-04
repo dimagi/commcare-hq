@@ -1,5 +1,7 @@
 {% extends 'logistics/config.html' %}
 {% load i18n %}
+{% load hq_shared_tags %}
+
 {% block main_column %}
     {% if is_commtrack_enabled %}
         {{ block.super }}
@@ -62,54 +64,8 @@
         </table>
     {% endif %}
 
-    {{ block.super }}
     {% if settings.source_config.enabled %}
         <div class="row-fluid">
-            <div class="span12">
-                <div class="btn-toolbar">
-                    <button class="btn" id="sync_stock_data">
-                        {% trans "Sync stock data" %}
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="row-fluid">
-            <div class="span12">
-                <div class="btn-toolbar">
-                    <button class="btn" id="clear_stock_data">
-                        {% trans "Clear stock data" %}
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="row-fluid">
-            <div class="span12">
-                <div class="btn-toolbar">
-                    <button class="btn" id="ews_resync_web_users">
-                        {% trans "Run web users resync" %}
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="row-fluid">
-            <div class="span12">
-                <div class="btn-toolbar">
-                    <button class="btn" id="fix_locations">
-                        {% trans "Fix locations" %}
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="row-fluid">
-            <div class="span12">
-                <div class="btn-toolbar">
-                    <button class="btn" id="ews_add_products_to_locs">
-                        {% trans "Add Products to Locations" %}
-                    </button>
-                </div>
-            </div>
-        </div><div class="row-fluid">
             <div class="span12">
                 <div class="btn-toolbar">
                     <button class="btn" id="migrate_email_settings">
@@ -121,8 +77,8 @@
         <div class="row-fluid">
             <div class="span12">
                 <div class="btn-toolbar">
-                    <button class="btn" id="delete_last_stock_data">
-                        {% trans "Delete last migrated stock data" %}
+                    <button class="btn" id="balance_email_reports_migration">
+                        {% trans "Balance email reports migration" %}
                     </button>
                 </div>
             </div>
@@ -130,29 +86,19 @@
         <div class="row-fluid">
             <div class="span12">
                 <div class="btn-toolbar">
-                    <button class="btn" id="convert_custom_user_data">
-                        {% trans "Convert custom user data" %}
+                    <button class="btn" id="fix_email_reports">
+                        {% trans "Fix email reports" %}
                     </button>
                 </div>
             </div>
         </div>
-        <div class="row-fluid">
-            <div class="span12">
-                <div class="btn-toolbar">
-                    <button class="btn" id="delete_connections_field">
-                        {% trans "Delete connections field" %}
-                    </button>
-                </div>
-            </div>
-        </div>
-
     {% endif %}
 {% endblock %}
 
 {% block js-inline %}
-
-    {{ block.super }}
     <script>
+        var settings = {{ settings|JSON }};
+
         var _post = function (elem, url, options) {
             var options = options || {};
             var success = options.success || "{% trans "Sync Successful" %}";
@@ -171,58 +117,22 @@
             });
         };
 
-        $("#sync_stock_data").click(function() {
-            var url = '{% url sync_stock_url domain %}';
-            var successMessage = "{% trans "Sync started" %}";
-            _post(this, url, {success: successMessage});
-        });
-
-        $("#clear_stock_data").click(function() {
-            var url = '{% url clear_stock_url domain %}';
-            var successMessage = "{% trans "Started" %}";
-            _post(this, url, {success: successMessage});
-        });
-
-        $("#ews_resync_web_users").click(function() {
-            var url = '{% url 'ews_resync_web_users' domain %}';
-            var successMessage = "{% trans "Resync started" %}";
-            _post(this, url, {success: successMessage});
-        });
-
-        $("#fix_locations").click(function() {
-            var url = '{% url 'ews_fix_locations' domain %}';
-            var successMessage = "{% trans "Resync started" %}";
-            _post(this, url, {success: successMessage});
-        });
-
-        $("#ews_add_products_to_locs").click(function() {
-            var url = '{% url 'ews_add_products_to_locs' domain %}';
-            var successMessage = "{% trans "Resync started" %}";
-            _post(this, url, {success: successMessage});
-        });
         $("#migrate_email_settings").click(function() {
             var url = '{% url 'migrate_email_settings' domain %}';
             var successMessage = "{% trans "Resync started" %}";
             _post(this, url, {success: successMessage});
         });
 
-        $("#delete_last_stock_data").click(function() {
-            var url = '{% url 'delete_last_stock_data' domain %}';
+        $("#balance_email_reports_migration").click(function() {
+            var url = '{% url 'balance_email_reports_migration' domain %}';
             var successMessage = "{% trans "Resync started" %}";
             _post(this, url, {success: successMessage});
         });
 
-        $("#convert_custom_user_data").click(function() {
-            var url = '{% url 'convert_user_data_fields' domain %}';
+        $("#fix_email_reports").click(function() {
+            var url = '{% url 'fix_email_reports' domain %}';
             var successMessage = "{% trans "Resync started" %}";
             _post(this, url, {success: successMessage});
         });
-
-        $("#delete_connections_field").click(function() {
-            var url = '{% url 'delete_connections_field' domain %}';
-            var successMessage = "{% trans "Resync started" %}";
-            _post(this, url, {success: successMessage});
-        });
-
     </script>
 {% endblock %}

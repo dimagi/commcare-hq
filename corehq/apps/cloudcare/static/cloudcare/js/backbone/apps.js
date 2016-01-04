@@ -193,8 +193,14 @@ cloudCare.SessionView = Selectable.extend({
             e.stopPropagation();
             var dialog = confirm(translatedStrings.deleteSaved);
             if (dialog == true) {
-                self.model.destroy();
-                showSuccess(translatedStrings.deleteSuccess, $("#cloudcare-notifications"), 10000);
+                self.model.destroy({
+                    success: function(model, response) {
+                        showSuccess(translatedStrings.deleteSuccess, $("#cloudcare-notifications"), 10000);
+                    },
+                    error: function(model, response) {
+                        showError(translatedStrings.deleteError, $("#cloudcare-notifications"), 10000);
+                    }
+                });
             }
         });
         $("<a />").text(this.model.get('display')).appendTo($(this.el));

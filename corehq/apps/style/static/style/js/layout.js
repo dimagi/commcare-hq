@@ -47,59 +47,29 @@ hqLayout.actions = {
             $content = $(hqLayout.selector.content);
         if ($content.length) {
             var availableHeight = hqLayout.utils.getAvailableContentHeight(),
-                contentHeight = $content.innerHeight(),
-                footerHeight = $(hqLayout.selector.footer).outerHeight();
+                contentHeight = $content.innerHeight();
             if (contentHeight > availableHeight) {
-                $content.css('padding-bottom', footerHeight + 15 + 'px');
+                $content.css('padding-bottom', 15 + 'px');
                 contentHeight = $content.outerHeight();
             }
 
             if ($sidebar.length) {
                 var newSidebarHeight = Math.max(availableHeight, contentHeight);
                 $sidebar.css('min-height', newSidebarHeight + 'px');
-                $sidebar.css('padding-bottom', footerHeight + 15 + 'px');
             }
         }
     },
-    recheckFooterStatus: function () {
-        if (hqLayout.utils.isScrolledToFooter()) {
-            hqLayout.actions.showFooter();
-        } else if (hqLayout.utils.isScrollable() && !(hqLayout.utils.isScrolledToFooter())) {
-            hqLayout.actions.hideFooter();
-        } else {
-            hqLayout.actions.showFooter();
-        }
-    },
-    showFooter: function () {
-        if (!hqLayout.values.isFooterVisible) {
-            $(hqLayout.selector.footer).animate({
-                bottom: "0"
-            });
-            hqLayout.values.isFooterVisible = true;
-        }
-    },
-    hideFooter: function () {
-        if (hqLayout.values.isFooterVisible) {
-            $(hqLayout.selector.footer).animate({
-                bottom: -hqLayout.values.footerHeight
-            });
-            hqLayout.values.isFooterVisible = false;
-        }
-    }
 };
 
 $(window).load(function () {
     hqLayout.actions.initialize();
     hqLayout.actions.balanceSidebar();
-    hqLayout.actions.recheckFooterStatus();
 });
 
 $(window).resize(function () {
     hqLayout.actions.balanceSidebar();
-    hqLayout.actions.recheckFooterStatus();
 });
 
 $(window).scroll(function () {
     hqLayout.actions.balanceSidebar();
-    hqLayout.actions.recheckFooterStatus();
 });

@@ -167,6 +167,7 @@
             <form class="form form-horizontal reset-password-form"
                   action="{% url "change_password" domain couch_user.user_id %}"
                   method="post">
+                {% csrf_token %}
                 <fieldset>
                     <legend>{% trans 'Reset Password' %}</legend>
                     <div class="reset-password-body">
@@ -213,6 +214,7 @@
               action="{% url "delete_commcare_user" domain couch_user.user_id %}"
               method="post"
               data-bind="submit: submit">
+            {% csrf_token %}
             <div class="modal-body">
                 <p class="alert">
                     <i class="icon-white icon-warning-sign"></i>

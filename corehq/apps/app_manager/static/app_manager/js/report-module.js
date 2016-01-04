@@ -3,6 +3,19 @@
 var select2Separator = "\u001F";
 
 var ReportModule = (function () {
+
+    function KeyValuePair(key, value, config) {
+        var self = this;
+
+        self.key = ko.observable(key);
+        self.value = ko.observable(value);
+        self.config = config;
+
+        self.remove = function() {
+            config.keyValuePairs.remove(self);
+        };
+    }
+
     function Config(dict) {
         var self = this;
 
@@ -10,11 +23,11 @@ var ReportModule = (function () {
 
         self.keyValuePairs = ko.observableArray();
         _.each(dict, function(value, key) {
-            self.keyValuePairs.push([ko.observable(key), ko.observable(value)]);
+            self.keyValuePairs.push(new KeyValuePair(key, value, self));
         });
 
         self.addConfig = function() {
-            self.keyValuePairs.push([ko.observable(), ko.observable()]);
+            self.keyValuePairs.push(new KeyValuePair('', '', self));
         };
     }
 
@@ -68,7 +81,7 @@ var ReportModule = (function () {
                 var dict = {};
                 var keyValuePairs = config.keyValuePairs();
                 for (var i = 0; i < keyValuePairs.length; i++) {
-                    dict[keyValuePairs[i][0]()] = keyValuePairs[i][1]();
+                    dict[keyValuePairs[i].key()] = keyValuePairs[i].value();
                 }
                 return dict;
             }
@@ -95,8 +108,8 @@ var ReportModule = (function () {
             var addConfigToSaveButton = function(config) {
                 addSubscriberToSaveButton(config.keyValuePairs);
                 _.each(config.keyValuePairs(), function(keyValuePair) {
-                    addSubscriberToSaveButton(keyValuePair[0]);
-                    addSubscriberToSaveButton(keyValuePair[1]);
+                    addSubscriberToSaveButton(keyValuePair.key);
+                    addSubscriberToSaveButton(keyValuePair.value);
                 });
             };
             _.each(self.graphConfigs, function(reportGraphConfigs) {

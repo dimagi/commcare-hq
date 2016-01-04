@@ -48,7 +48,7 @@ individual project sites when necessary.
 + pip  (If you use virtualenv (see below) this will be installed automatically)
 + CouchDB >= 1.0 (1.2 recommended) (install from OS package manager (`sudo apt-get install couchdb`) or [here][couchdb])
   - Mac users: note that when installing erlang, you do NOT need to check out an older version of erlang.rb
-+ PostgreSQL >= 9.1 - (install from OS package manager (`sudo apt-get install postgresql`) or [here][postgres])
++ PostgreSQL >= 9.4 - (install from OS package manager (`sudo apt-get install postgresql`) or [here][postgres])
 + [Elasticsearch][elasticsearch] 0.90.13. In Ubuntu and other Debian derivatives,
   [download the deb package][elasticsearch], install, and then **hold** the version to prevent automatic upgrades:
 
@@ -211,6 +211,7 @@ Populate your database:
     $ ./manage.py sync_couch_views
     $ ./manage.py migrate --noinput
     $ ./manage.py collectstatic --noinput
+    $ ./manage.py compilejsi18n
 
 Create a project. The following command will do some basic setup, create a superuser, and create a project. The 
 project-name, email, and password given here are specific to your local development environment. Ignore warnings 
@@ -370,6 +371,7 @@ Notice that `COMPRESS_MINT_DELAY`, `COMPRESS_MTIME_DELAY`, and
 For all STATICFILES changes, run:
 
     $ manage.py collectstatic
+    $ manage.py compilejsi18n
     $ manage.py fix_less_imports_collectstatic
     $ manage.py compress
 
@@ -451,18 +453,10 @@ Then run the following separately:
     # run the Django server
     $ ./manage.py runserver 0.0.0.0:8000
 
-If you want to use CloudCare you will also need to run the Touchforms server and be running a multi-threaded
+If you want to use CloudCare you will also need to run the Touchforms server.
 
     # run Touchforms server
     > jython submodules/touchforms-src/touchforms/backend/xformserver.py
-
-    # On Mac / Linux use Gunicorn as the multi-threaded server
-    $ gunicorn deployment.gunicorn.commcarehq_wsgi:application \
-        -c deployment/gunicorn/gunicorn_conf.py \
-        -k gevent --bind 0.0.0.0:8000
-
-    # on Windows use CherryPy
-    > manage.py runcpserver port=8000
 
 Running Formdesigner in Development mode
 ----------------------------------------

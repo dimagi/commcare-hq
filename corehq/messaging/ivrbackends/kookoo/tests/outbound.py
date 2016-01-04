@@ -8,12 +8,23 @@ from corehq.apps.reminders.models import (CaseReminderHandler,
     METHOD_IVR_SURVEY, RECIPIENT_CASE, REMINDER_TYPE_DEFAULT,
     CASE_CRITERIA, CaseReminderEvent, FIRE_TIME_DEFAULT,
     EVENT_AS_SCHEDULE, MATCH_EXACT, RECIPIENT_OWNER)
+from corehq.messaging.ivrbackends.kookoo.models import KooKooBackend
+from mock import patch
 from time import sleep
 from datetime import datetime, time
+import hashlib
 import os
 import urllib
 import urllib2
 
+
+def mock_kookoo_outbound_api(*args, **kwargs):
+    session_id = hashlib.sha224(datetime.utcnow().isoformat()).hexdigest()
+    return "<request><status>queued</status><message>%s</message></request>" % session_id
+
+
+@patch('corehq.messaging.ivrbackends.kookoo.models.KooKooBackend.invoke_kookoo_outbound_api',
+    new=mock_kookoo_outbound_api)
 class KooKooTestCase(TouchformsTestCase):
     """
     Must be run manually (see corehq.apps.sms.tests.util.TouchformsTestCase)
@@ -21,10 +32,11 @@ class KooKooTestCase(TouchformsTestCase):
 
     def setUp(self):
         super(KooKooTestCase, self).setUp()
-        self.ivr_backend = MobileBackend(
+        self.ivr_backend = KooKooBackend(
             _id="MOBILE_BACKEND_KOOKOO",
-            outbound_module="corehq.messaging.ivrbackends.kookoo.api",
-            outbound_params={"is_test": True, "api_key": "xyz"},
+            name="MOBILE_BACKEND_KOOKOO",
+            is_global=True,
+            api_key="xyz",
         )
         self.ivr_backend.save()
 
@@ -146,6 +158,7 @@ class KooKooTestCase(TouchformsTestCase):
             self.user1._id,
             '91000',
             owner_id=self.groups[0]._id,
+            contact_ivr_backend_id='MOBILE_BACKEND_KOOKOO'
         ))
         CaseReminderHandler.now = datetime(2014, 6, 23, 12, 0)
         CaseReminderHandler.fire_reminders()

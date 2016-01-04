@@ -1,4 +1,4 @@
-{% extends "hqadmin/faceted_report.html" %}
+{% extends "hqadmin/bootstrap2/faceted_report.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -111,7 +111,7 @@
         {% if indicator in indicator_data.keys %}
             {% with data=indicator_data|dict_lookup:indicator %}
                 <h2>{{ data.chart_title }}</h2>
-                {% include "hqadmin/partials/visualizations.html" with chart_name=data.chart_name date_field_opts=data.date_field_opts hide_cumulative_charts=data.hide_cumulative_charts interval=data.interval %}
+                {% include "hqadmin/bootstrap2/partials/visualizations.html" with chart_name=data.chart_name date_field_opts=data.date_field_opts hide_cumulative_charts=data.hide_cumulative_charts interval=data.interval %}
             {% endwith %}
         {% endif %}
     {% endfor %}

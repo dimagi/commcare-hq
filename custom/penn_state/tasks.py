@@ -67,7 +67,7 @@ class Site(object):
         # process this week's forms
         key = make_form_couch_key(user.domain, user_id=user.user_id, xmlns=DAILY_DATA_XMLNS)
         forms = XFormInstance.view(
-            "reports_forms/all_forms",
+            "all_forms/view",
             startkey=key + [str(self.week[0])],
             endkey=key + [str(self.week[-1] + datetime.timedelta(days=1))],
             reduce=False,
@@ -122,7 +122,7 @@ def get_days_on(date):
     start = week[0] - datetime.timedelta(days=1)
     end = week[-1] + datetime.timedelta(days=1)
     forms = XFormInstance.view(
-        'reports_forms/all_forms',
+        'all_forms/view',
         startkey=['submission xmlns', DOMAIN, WEEKLY_SCHEDULE_XMLNS, start.isoformat()],
         endkey=['submission xmlns', DOMAIN, WEEKLY_SCHEDULE_XMLNS, end.isoformat()],
         reduce=False,

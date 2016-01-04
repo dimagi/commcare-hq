@@ -1,4 +1,4 @@
-{% extends 'reports/async/tabular.html' %}
+{% extends 'reports/async/bootstrap2/tabular.html' %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -96,6 +96,7 @@
         <form method="post"
               action="{% url 'xform_management' domain %}"
               enctype="multipart/form-data">
+                {% csrf_token %}
             {% if total_xForms > 0 %}
                 <div id ="form_options" class="well form-inline" style="marging: 1em">
                     <div>

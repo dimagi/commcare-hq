@@ -43,7 +43,7 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
     def enabled_for_domain(domain):
         return Dhis2Settings.is_enabled_for_domain(domain)
 
-    def get_headers(self, repeat_record, payload_doc):
+    def get_headers(self):
         return {'Content-type': 'application/json'}
 
     def _update_instance(self, dhis2_api, case):

@@ -38,6 +38,7 @@
 
 {% block main_column %}
     <form action="{% url "corehq.apps.app_manager.views.import_app" domain %}" id="app-import-form" method="post" data-bind="submit: save">
+        {% csrf_token %}
 {% if app %}
         <p>Import application <strong>{{ app.name }}</strong> from domain <strong>{{ app.domain }}</strong>?</p>
         <table {% if not is_superuser %}class="hide"{% endif %}>

@@ -321,7 +321,51 @@
                             "late_flag": 30,
                             "model": "case",
                             "time_ago_interval": 365.25
-                        }
+                        },
+                        {
+                            "advanced": "",
+                            "calc_xpath": "concat(., .)",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "plain",
+                            "filter_xpath": "",
+                            "format": "calculate",
+                            "graph_configuration": null,
+                            "hasAutocomplete": true,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Calculation"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "time_ago_interval": 365.25
+                        },
+                        {
+                            "advanced": "",
+                            "calc_xpath": "if($lang = 'en', ., 'nope')",
+                            "case_tile_field": "",
+                            "doc_type": "DetailColumn",
+                            "enum": [],
+                            "field": "plain",
+                            "filter_xpath": "",
+                            "format": "calculate",
+                            "graph_configuration": null,
+                            "hasAutocomplete": true,
+                            "hasNodeset": false,
+                            "header": {
+                                "en": "Calculation with Language"
+                            },
+                            "isTab": false,
+                            "late_flag": 30,
+                            "model": "case",
+                            "nodeset": "",
+                            "late_flag": 30,
+                            "model": "case",
+                            "time_ago_interval": 365.25
+                         }
                     ],
                     "doc_type": "Detail",
                     "type": "case_long"

@@ -39,7 +39,7 @@ class ConvenientBaseMixIn(object):
     # for convenience
 
     base_template_mobile = "bihar/base_template_mobile.html"
-    report_template_path = "reports/async/tabular.html"
+    report_template_path = "reports/async/bootstrap2/tabular.html"
 
     hide_filters = True
     flush_layout = True

@@ -104,7 +104,7 @@
                 </td>
                 <td>
                     <form action="{% url 'end_report_run' domain %}" method="POST">
-
+                        {% csrf_token %}
                         <button type="submit" class="btn">Mark as finished</button>
                     </form>
                 </td>

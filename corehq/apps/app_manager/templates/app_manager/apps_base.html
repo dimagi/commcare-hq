@@ -37,7 +37,7 @@
 {% block js-inline %}{{ block.super }}
     <script>
     $(function () {
-        $('#deleted-app-dialog').modal({
+        $('#deleted-app-modal').modal({
             backdrop: 'static',
             keyboard: false,
             show: true
@@ -129,7 +129,7 @@
 {% block modals %}
     {{ block.super }}
     {% if app.is_deleted %}
-    <div id="deleted-app-dialog" class="modal hide fade">
+    <div id="deleted-app-modal" class="modal hide fade">
         <div class="modal-header"><h3>{% trans 'Oops! This application was deleted.' %}</h3></div>
         <div class="modal-body">
             <p>{% trans 'If you want your application back, click Restore.' %}</p>

@@ -7,6 +7,7 @@ from tastypie.utils import dict_strip_unicode_keys
 
 from collections import namedtuple
 
+from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 
 from tastypie import fields
@@ -18,7 +19,6 @@ from casexml.apps.stock.models import StockTransaction
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
-from corehq.elastic import es_wrapper
 
 from . import v0_1, v0_4
 from . import HqBaseResource, DomainSpecificResourceMixin
@@ -26,6 +26,16 @@ from phonelog.models import DeviceReportEntry
 
 
 MOCK_BULK_USER_ES = None
+
+
+def user_es_call(domain, q, fields, size, start_at):
+    query = (UserES()
+             .domain(domain)
+             .set_query({"query_string": {"query": q}})
+             .fields(fields)
+             .size(size)
+             .start(start_at))
+    return query.run().hits
 
 
 class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
@@ -77,9 +87,8 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
         fields = self.fields.keys()
         fields.remove('id')
         fields.append('_id')
-        fn = MOCK_BULK_USER_ES or es_wrapper
+        fn = MOCK_BULK_USER_ES or user_es_call
         users = fn(
-                'users',
                 domain=kwargs['domain'],
                 q=param('q'),
                 fields=fields,
@@ -149,7 +158,14 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             self._update(bundle)
             bundle.obj.save()
         except Exception:
-            bundle.obj.retire()
+            if bundle.obj._id:
+                bundle.obj.retire()
+            try:
+                django_user = bundle.obj.get_django_user()
+            except User.DoesNotExist:
+                pass
+            else:
+                django_user.delete()
         return bundle
 
     def obj_update(self, bundle, **kwargs):

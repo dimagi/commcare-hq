@@ -101,8 +101,10 @@ class ProductListView(BaseCommTrackManageView):
 
     @property
     def product_queryset(self):
-        return SQLProduct.objects.filter(domain=self.domain,
-                                         is_archived=self.show_only_inactive)
+        return (SQLProduct.objects
+                .filter(domain=self.domain,
+                        is_archived=self.show_only_inactive)
+                .order_by('name'))
 
     @property
     @memoized

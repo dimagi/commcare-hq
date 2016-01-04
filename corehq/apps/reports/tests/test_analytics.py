@@ -5,9 +5,7 @@ from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_su
     update_reports_analytics_indexes, get_all_form_definitions_grouped_by_app_and_xmlns, SimpleFormInfo, \
     get_all_form_details, get_form_details_for_xmlns, get_form_details_for_app_and_module, \
     get_form_details_for_app_and_xmlns, get_form_details_for_app
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import TestFormMetadata, get_simple_form_xml
-from corehq.form_processor.utils import convert_xform_to_json
+from corehq.form_processor.tests.utils import TestFormMetadata, get_simple_wrapped_form
 
 
 class ReportsAnalyticsTest(TestCase):
@@ -22,11 +20,7 @@ class ReportsAnalyticsTest(TestCase):
         form_id = uuid.uuid4().hex
         form_name = 'my cool form'
         metadata = TestFormMetadata(domain=domain, xmlns=xmlns, form_name=form_name)
-        form_json = convert_xform_to_json(get_simple_form_xml(form_id=form_id, metadata=metadata))
-        interface = FormProcessorInterface(domain=metadata.domain)
-        wrapped_form = interface.new_xform(form_json)
-        wrapped_form.domain = domain
-        interface.save_processed_models([wrapped_form])
+        get_simple_wrapped_form(form_id, metadata=metadata)
         update_reports_analytics_indexes()
         self.assertEqual(form_name, guess_form_name_from_submissions_using_xmlns(domain, xmlns))
 

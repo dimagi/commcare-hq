@@ -1,4 +1,4 @@
-{% extends "hqadmin/hqadmin_base_report.html" %}
+{% extends "hqadmin/bootstrap2/hqadmin_base_report.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load humanize %}
@@ -307,7 +307,6 @@
         var couchViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=_active_tasks", ActiveTaskModel, {{ couch_update }});
         {% endif %}
         var pillowtopViewModel = new RefreshableViewModel("{% url "system_ajax" %}?api=pillowtop", PillowModel, {{ couch_update }}, 'name');
-        var dbComparisonsViewModel = new RefreshableViewModel("{% url "db_comparisons" %}", DbComparisons, {{ db_update }}, 'description');
 
         var AutoRefreshModel = function () {
             var self = this;
@@ -339,11 +338,9 @@
             $("#celeryblock").koApplyBindings(celeryViewModel);
             $("#couchblock").koApplyBindings(couchViewModel);
             $('#pillowtop-status').koApplyBindings(pillowtopViewModel);
-            $('#elastic-vs-couch').koApplyBindings(dbComparisonsViewModel);
             autoRefresh.addModel(celeryViewModel);
             autoRefresh.addModel(couchViewModel);
             autoRefresh.addModel(pillowtopViewModel);
-            autoRefresh.addModel(dbComparisonsViewModel);
 
             autoRefresh.refreshAll();
             $('#autorefresh').koApplyBindings(autoRefresh);
@@ -511,37 +508,6 @@
                         </button>
                     </td>
                 </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div class="row-fluid" id="elastic-vs-couch">
-        <h3>
-            Elasticsearch/Couch/Postgres comparison
-            <small data-bind="if: loading()">
-                <i class="icon-refresh icon-spin"></i>
-            </small>
-            <small data-bind="if: !loading() && !autoRefresh()">
-                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
-            </small>
-        </h3>
-        <p class="text-error" data-bind="visible: error, text: error"></p>
-        <table class="table table-striped" data-bind="visible: !error()">
-            <thread>
-            <tr>
-                <th>Description</th>
-                <th>CouchDB</th>
-                <th>Elasticsearch</th>
-                <th>PostgreSQL</th>
-            </tr>
-            </thread>
-            <tbody data-bind="foreach: models">
-            <tr>
-                <td data-bind="text: description"></td>
-                <td data-bind="text: couch_docs"></td>
-                <td data-bind="text: es_docs"></td>
-                <td data-bind="text: sql_rows"></td>
-            </tr>
             </tbody>
         </table>
     </div>

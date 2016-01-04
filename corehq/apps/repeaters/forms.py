@@ -50,23 +50,23 @@ class GenericRepeaterForm(forms.Form):
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.offset_class = 'col-sm-offset-3 col-md-offset-2'
 
         self.form_fields.extend([
             'url',
             crispy.Div(
-                crispy.Div('', css_class=self.helper.label_class),
                 crispy.Div(
-                    crispy.Div(
-                        css_id='test-forward-result',
-                        css_class='text-success hide',
-                    ),
                     twbscrispy.StrictButton(
                         _('Test Link'),
                         type='button',
                         css_id='test-forward-link',
                         css_class='btn btn-info disabled',
                     ),
-                    css_class=self.helper.field_class,
+                    crispy.Div(
+                        css_id='test-forward-result',
+                        css_class='text-success hide',
+                    ),
+                    css_class='{} {}'.format(self.helper.field_class, self.helper.offset_class),
                 ),
                 css_class='form-group'
             ),
