@@ -26,7 +26,6 @@ gunicorn==18.0
 lxml==3.4.4
 kafka-python==0.9.4
 mock==0.8.0
-mocker==1.1.1
 openpyxl==2.2.5
 Pillow==2.7.0
 phonenumberslite==7.1.0
@@ -59,9 +58,6 @@ amqplib==1.0.2
 sqlagg==0.3.3
 django-redis==4.2
 redis==2.10.3
-unittest2
-testil
-fakecouch==0.0.8
 # WeasyPrint==0.20.2
 twilio==3.6.4
 django-countries==3.3
