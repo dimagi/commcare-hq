@@ -536,7 +536,14 @@ FACET_MAPPING = [
 
 class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
-    base_template = "hqadmin/bootstrap2/faceted_report.html"
+    base_template = "hqadmin/bootstrap3/faceted_report.html"
+    report_template_path = "reports/async/bootstrap3/tabular.html"
+
+    @use_jquery_ui
+    @use_bootstrap3
+    @use_datatables
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        self.is_bootstrap3 = True
 
 
 class AdminFacetedReport(AdminReport, ElasticTabularReport):
@@ -550,17 +557,7 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
     es_facet_mapping = []
     section_name = ugettext_noop("ADMINREPORT")
     es_url = ''
-
-    # todo move to base class once all admin reports are migrated
-    base_template = "hqadmin/bootstrap3/faceted_report.html"
-    report_template_path = "reports/async/bootstrap3/tabular.html"
-
-    @use_jquery_ui
-    @use_bootstrap3
-    @use_datatables
-    def set_bootstrap3_status(self, request, *args, **kwargs):
-        self.is_bootstrap3 = True
-
+    
     @property
     def template_context(self):
         ctxt = super(AdminFacetedReport, self).template_context
