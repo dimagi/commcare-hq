@@ -410,7 +410,7 @@ DEFAULT_CONSUMPTION = 10.  # per month
 
 class ActiveManager(models.Manager):
     """
-    Filter any object that is associated to an archived product.
+    Filter any object that is associated to an archived product
     """
 
     def get_queryset(self):

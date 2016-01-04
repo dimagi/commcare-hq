@@ -13,7 +13,7 @@ from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.mixin import MobileBackend
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.smsbackends.test.models import TestSMSBackend
-from custom.ewsghana.models import EWSGhanaConfig
+from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge
 from custom.ewsghana.utils import prepare_domain, bootstrap_user, create_backend
 from custom.logistics.tests.test_script import TestScript
 from casexml.apps.stock.models import StockReport, StockTransaction
@@ -175,6 +175,7 @@ class EWSScriptTest(TestScript):
         cls.sms_backend.delete()
         CommCareUser.get_by_username('stella').delete()
         CommCareUser.get_by_username('super').delete()
+        FacilityInCharge.objects.all().delete()
         delete_all_locations()
         LocationType.objects.all().delete()
         for product in Product.by_domain(TEST_DOMAIN):
