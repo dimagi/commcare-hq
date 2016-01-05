@@ -174,7 +174,8 @@ class BillingAccountBasicForm(forms.Form):
                     crispy.Submit(
                         'account_basic',
                         'Update Basic Information'
-                        if account is not None else 'Add New Account'
+                        if account is not None else 'Add New Account',
+                        css_class='disable-on-submit',
                     )
                 )
             )
@@ -553,8 +554,11 @@ class SubscriptionForm(forms.Form):
             ),
             FormActions(
                 crispy.ButtonHolder(
-                    crispy.Submit('set_subscription',
-                           '%s Subscription' % ('Update' if self.is_existing else 'Create'))
+                    crispy.Submit(
+                        'set_subscription',
+                        '%s Subscription' % ('Update' if self.is_existing else 'Create'),
+                        css_class='disable-on-submit',
+                    )
                 )
             )
         )
@@ -717,7 +721,7 @@ class ChangeSubscriptionForm(forms.Form):
                 StrictButton(
                     "Change Subscription",
                     type="submit",
-                    css_class="btn-primary",
+                    css_class="btn-primary disable-on-submit",
                 ),
             ),
         )
@@ -772,7 +776,11 @@ class CreditForm(forms.Form):
             ),
             FormActions(
                 crispy.ButtonHolder(
-                    crispy.Submit('adjust_credit', 'Update Credit')
+                    crispy.Submit(
+                        'adjust_credit',
+                        'Update Credit',
+                        css_class='disable-on-submit',
+                    ),
                 )
             )
         )
@@ -829,7 +837,7 @@ class CancelForm(forms.Form):
             FormActions(
                 StrictButton(
                     'CANCEL SUBSCRIPTION',
-                    css_class='btn-danger',
+                    css_class='btn-danger disable-on-submit',
                     name='cancel_subscription',
                     type='submit',
                     **({'disabled': True} if can_cancel else {})
@@ -868,7 +876,7 @@ class SuppressSubscriptionForm(forms.Form):
             FormActions(
                 StrictButton(
                     'Suppress Subscription',
-                    css_class='btn-danger',
+                    css_class='btn-danger disable-on-submit',
                     name=self.submit_kwarg,
                     type='submit',
                     **({'disabled': True} if self.subscription.is_active else {})
@@ -909,8 +917,11 @@ class PlanInformationForm(forms.Form):
             ),
             FormActions(
                 crispy.ButtonHolder(
-                    crispy.Submit('plan_information',
-                           '%s Software Plan' % ('Update' if plan is not None else 'Create'))
+                    crispy.Submit(
+                        'plan_information',
+                        '%s Software Plan' % ('Update' if plan is not None else 'Create'),
+                        css_class='disable-on-submit',
+                    )
                 )
             )
         )
@@ -1168,7 +1179,7 @@ class SoftwarePlanVersionForm(forms.Form):
             FormActions(
                 StrictButton(
                     'Update Plan Version',
-                    css_class='btn-primary',
+                    css_class='btn-primary disable-on-submit',
                     type="submit",
                 ),
             )
@@ -1605,7 +1616,7 @@ class TriggerInvoiceForm(forms.Form):
             FormActions(
                 StrictButton(
                     "Trigger Invoice",
-                    css_class="btn-primary",
+                    css_class="btn-primary disable-on-submit",
                     type="submit",
                 ),
             )
@@ -1674,7 +1685,7 @@ class TriggerBookkeeperEmailForm(forms.Form):
             FormActions(
                 StrictButton(
                     "Trigger Bookkeeper Email",
-                    css_class="btn-primary",
+                    css_class="btn-primary disable-on-submit",
                     type="submit",
                 ),
             )
@@ -1721,7 +1732,7 @@ class TestReminderEmailFrom(forms.Form):
                 StrictButton(
                     "Send Reminder Emails",
                     type="submit",
-                    css_class='btn-primary'
+                    css_class='btn-primary disable-on-submit'
                 )
             )
         )
@@ -1798,11 +1809,13 @@ class AdjustBalanceForm(forms.Form):
                     crispy.Submit(
                         'adjust_balance',
                         'Apply',
+                        css_class='disable-on-submit',
                         data_loading_text='Submitting...',
                     ),
                     crispy.Button(
                         'close',
                         'Close',
+                        css_class='disable-on-submit',
                         data_dismiss='modal',
                     ),
                 ),
@@ -1928,7 +1941,7 @@ class InvoiceInfoForm(forms.Form):
                         'Adjust Balance',
                         data_toggle='modal',
                         data_target='#adjustBalanceModal-%d' % invoice.id,
-                        css_class='disabled' if invoice.is_wire else '',
+                        css_class=('disabled' if invoice.is_wire else '') + ' disable-on-submit',
                     ),
                 ),
             ),
@@ -1961,11 +1974,13 @@ class ResendEmailForm(forms.Form):
                     crispy.Submit(
                         'resend_email',
                         'Send Email',
+                        css_class='disable-on-submit',
                         data_loading_text='Submitting...',
                     ),
                     crispy.Button(
                         'close',
                         'Close',
+                        css_class='disable-on-submit',
                         data_dismiss='modal',
                     ),
                 ),
@@ -2008,7 +2023,7 @@ class SuppressInvoiceForm(forms.Form):
             FormActions(
                 StrictButton(
                     'Suppress Invoice',
-                    css_class='btn-danger',
+                    css_class='btn-danger disable-on-submit',
                     name=self.submit_kwarg,
                     type='submit',
                 ),
@@ -2038,7 +2053,7 @@ class CreateAdminForm(forms.Form):
             ),
             StrictButton(
                 mark_safe('<i class="icon-plus"></i> %s' % "Add Admin"),
-                css_class="btn-success",
+                css_class="btn-success disable-on-submit",
                 type="submit",
             )
         )
