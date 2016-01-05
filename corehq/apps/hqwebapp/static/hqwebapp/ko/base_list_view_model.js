@@ -83,6 +83,7 @@ BaseListViewModel = function (o) {
             }
         };
     };
+
     view_model.unsuccessful_archive_action = function (button, index) {
         return function (data) {
             $(button).button('unsuccessful');
