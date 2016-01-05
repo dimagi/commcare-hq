@@ -39,6 +39,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(check_single_product_rates),
+        HqRunPython(check_single_product_rates, reverse_code=(lambda apps, schema_editor: None)),
         HqRunPython(copy_product_rates_to_product_rate, reverse_code=copy_product_rate_to_product_rates),
     ]
