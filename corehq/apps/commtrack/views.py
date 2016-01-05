@@ -315,6 +315,11 @@ class StockLevelsView(BaseCommTrackManageView):
         # TODO display error messages to the user...
         return self.get(request, *args, **kwargs)
 
+    @use_bootstrap3
+    @use_knockout_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(StockLevelsView, self).dispatch(request, *args, **kwargs)
+
 
 class RebuildStockStateView(BaseCommTrackManageView):
     urlname = 'rebuild_stock_state'

@@ -1,9 +1,9 @@
-{% extends "settings/bootstrap2/base_template.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 
-{% block main_column %}
+{% block page_content %}
     <legend>{% trans "Configure Stock Levels Per Location Type" %}</legend>
     {{ stock_levels_form.as_table }}
 {% endblock %}
