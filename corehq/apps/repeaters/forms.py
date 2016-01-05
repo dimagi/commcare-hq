@@ -136,3 +136,15 @@ class FormRepeaterForm(GenericRepeaterForm):
             twbscrispy.PrependedText('include_app_id_param', '')
         ])
         return fields
+
+
+class CaseRepeaterForm(GenericRepeaterForm):
+    exclude_case_types = forms.CharField(
+        required=False,
+        label=_('Exclude case types'),
+        help_text=_('Cases of these type will not be forwarded when created or closed')
+    )
+
+    def get_ordered_crispy_form_fields(self):
+        fields = super(CaseRepeaterForm, self).get_ordered_crispy_form_fields()
+        return ['exclude_case_types'] + fields
