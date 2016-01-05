@@ -1,6 +1,6 @@
 from corehq.apps.domain.models import Domain
-from corehq.apps.sms.models import SQLMobileBackend, SQLMobileBackendMapping, MigrationStatus
-from dimagi.utils.couch.database import iter_docs
+from corehq.apps.sms.models import SQLMobileBackendMapping, MigrationStatus
+from corehq.apps.sms.signals import _sync_default_backend_mapping
 from django.core.management.base import BaseCommand
 from optparse import make_option
 
@@ -20,43 +20,12 @@ def migrate(balance_only=False):
         return
 
     couch_count = 0
-    result = Domain.view('domain/domains', include_docs=False, reduce=False).all()
-    ids = [row['id'] for row in result]
-
-    for doc in iter_docs(Domain.get_db(), ids):
-        backend_id = doc.get('default_sms_backend_id')
-        domain = doc.get('name')
-
-        if backend_id:
+    for domain in Domain.get_all():
+        if domain.default_sms_backend_id:
             couch_count += 1
 
-            if not balance_only:
-                try:
-                    backend = SQLMobileBackend.objects.get(couch_id=backend_id)
-                except SQLMobileBackend.DoesNotExist:
-                    print "ERROR: Backend %s for domain %s not found" % (backend_id, domain)
-                    continue
-
-                mapping, created = SQLMobileBackendMapping.objects.get_or_create(
-                    is_global=False,
-                    domain=domain,
-                    backend_type='SMS',
-                    prefix='*'
-                )
-                mapping.backend = backend
-                mapping.save()
-        elif not balance_only:
-            try:
-                mapping = SQLMobileBackendMapping.objects.get(
-                    is_global=False,
-                    domain=domain,
-                    backend_type='SMS',
-                    prefix='*'
-                )
-                mapping.delete()
-                print "Deleted mapping for domain %s" % domain
-            except SQLMobileBackendMapping.DoesNotExist:
-                pass
+        if not balance_only:
+            _sync_default_backend_mapping(domain)
 
     balance(couch_count)
     if not balance_only:
