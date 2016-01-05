@@ -56,7 +56,7 @@ branches:
   - fix-toggle #wsp 12/14
   - location-delete # Cal 12/16
   - new-footer-nav # Biyeun 1/4
-  - test-requirements # daniel 1/4
+  - kill-old-exports-urls # Nick P 1/5
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
