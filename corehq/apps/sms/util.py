@@ -10,6 +10,7 @@ from corehq.apps.hqcase.utils import submit_case_block_from_template
 from corehq.apps.sms.mixin import MobileBackend
 from corehq.util.quickcache import quickcache
 from django.core.exceptions import ValidationError
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.modules import to_function
 from django.utils.translation import ugettext as _
@@ -125,22 +126,25 @@ def get_available_backends(index_by_api_id=False, backend_type='SMS'):
     return result
 
 
-def get_backend_classes(backend_type='SMS'):
+@memoized
+def get_backend_classes():
     """
-    backend_type - should either be 'SMS' or 'IVR'.
-    Returns a dictionary of {api id: class}
+    Returns a dictionary of {api id: class} for all installed SMS and IVR
+    backends.
     """
     result = {}
-    if backend_type == 'SMS':
-        backend_classes = settings.SMS_LOADED_SQL_BACKENDS
-    elif backend_type == 'IVR':
-        backend_classes = settings.IVR_LOADED_SQL_BACKENDS
-    else:
-        raise Exception("Unknown backend_type %s requested" % backend_type)
+    backend_classes = (
+        settings.SMS_LOADED_SQL_BACKENDS +
+        settings.IVR_LOADED_SQL_BACKENDS
+    )
 
     for backend_class in backend_classes:
         cls = to_function(backend_class)
-        result[cls.get_api_id()] = cls
+        api_id = cls.get_api_id()
+        if api_id in result:
+            raise Exception("Cannot have more than one backend with the same "
+                            "api id. Duplicate found for: %s" % api_id)
+        result[api_id] = cls
     return result
 
 

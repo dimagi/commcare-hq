@@ -1529,41 +1529,40 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
                 self.domain_is_shared(self, domain))
 
     @classmethod
-    def load_domain_default_backend(cls, domain):
+    def load_default_backend(cls, backend_type, phone_number, domain=None):
         """
-        Loads the default backend for the given domain or returns
-        None if there is none.
-        """
-        domain_obj = Domain.get_by_name(domain)
-        if domain_obj.default_sms_backend_id:
-            return cls.load(domain_obj.default_sms_backend_id)
-        return None
-
-    @classmethod
-    def load_system_default_backend(cls, phone_number):
-        """
-        Chooses the appropriate system backend based on the phone number's
+        Chooses the appropriate backend based on the phone number's
         prefix, or returns None if no catch-all backend is configured.
+
+        backend_type - SQLMobileBackend.SMS or SQLMobileBackend.IVR
+        phone_number - the phone number
+        domain - pass in a domain to choose the default backend from the domain's
+                 configured backends, otherwise leave None to choose from the
+                 system's configured backends
         """
-        backend_map = SQLMobileBackendMapping.get_prefix_to_backend_map()
+        backend_map = SQLMobileBackendMapping.get_prefix_to_backend_map(
+            backend_type, domain=domain)
         backend_id = backend_map.get_backend_id_by_prefix(phone_number)
         if backend_id:
             return cls.load(backend_id)
         return None
 
     @classmethod
-    def load_by_phone_and_domain(cls, phone_number, domain=None):
+    def load_default_by_phone_and_domain(cls, backend_type, phone_number, domain=None):
         """
-        Get the appropriate outbound SMS backend to send to a
-        particular phone_number
+        Get the appropriate outbound backend to communicate with phone_number.
+
+        backend_type - SQLMobileBackend.SMS or SQLMobileBackend.IVR
+        phone_number - the phone number
+        domain - the domain
         """
         backend = None
 
         if domain:
-            backend = cls.load_domain_default_backend(domain)
+            backend = cls.load_default_backend(backend_type, phone_number, domain=domain)
 
         if not backend:
-            backend = cls.load_system_default_backend(phone_number)
+            backend = cls.load_default_backend(backend_type, phone_number)
 
         if not backend:
             raise BadSMSConfigException("No suitable backend found for phone "
@@ -1573,6 +1572,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         return backend
 
     @classmethod
+    @quickcache(['backend_id'], timeout=60 * 60)
     def get_backend_api_id(cls, backend_id):
         result = (cls.objects
                   .filter(pk=backend_id)
@@ -1599,7 +1599,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
             raise BadSMSConfigException("Unexpected backend api id found '%s' for "
                                         "backend '%s'" % (api_id, backend_id))
 
-        return backend_classes[api_id].objects.get(backend_id)
+        return backend_classes[api_id].objects.get(pk=backend_id)
 
     @classmethod
     def get_backend_from_id_and_api_id_result(cls, result):
@@ -1609,20 +1609,22 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         return None
 
     @classmethod
-    def get_owned_backend_by_name(cls, domain, name):
+    def get_owned_backend_by_name(cls, backend_type, domain, name):
         name = name.strip().upper()
         result = cls.objects.filter(
             is_global=False,
+            backend_type=backend_type,
             domain=domain,
             name=name
         ).values_list('id', 'hq_api_id')
         return cls.get_backend_from_id_and_api_id_result(result)
 
     @classmethod
-    def get_shared_backend_by_name(cls, domain, name):
+    def get_shared_backend_by_name(cls, backend_type, domain, name):
         name = name.strip().upper()
         result = cls.objects.filter(
             is_global=False,
+            backend_type=backend_type,
             mobilebackendinvation__domain=domain,
             mobilebackendinvation__accepted=True,
             name=name
@@ -1630,32 +1632,37 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         return cls.get_backend_from_id_and_api_id_result(result)
 
     @classmethod
-    def get_global_backend_by_name(cls, domain, name):
+    def get_global_backend_by_name(cls, backend_type, name):
         name = name.strip().upper()
         result = cls.objects.filter(
             is_global=True,
+            backend_type=backend_type,
             name=name
         ).values_list('id', 'hq_api_id')
         return cls.get_backend_from_id_and_api_id_result(result)
 
     @classmethod
-    @quickcache(['backend_id'], timeout=5 * 60)
-    def load_by_name(cls, domain, name):
+    @quickcache(['backend_type', 'domain', 'name'], timeout=5 * 60)
+    def load_by_name(cls, backend_type, domain, name):
         """
         Attempts to load the backend with the given name.
         If no matching backend is found, a BadSMSConfigException is raised.
+
+        backend_type - SQLMobileBackend.SMS or SQLMobileBackend.IVR
+        domain - the domain
+        name - the name of the backend (corresponding to SQLMobileBackend.name)
         """
-        backend = cls.get_owned_backend_by_name(domain, name)
+        backend = cls.get_owned_backend_by_name(backend_type, domain, name)
 
         if not backend:
-            backend = cls.get_shared_backend_by_name(domain, name)
+            backend = cls.get_shared_backend_by_name(backend_type, domain, name)
 
         if not backend:
-            backend = cls.get_global_backend_by_name(domain, name)
+            backend = cls.get_global_backend_by_name(backend_type, name)
 
         if not backend:
-            raise BadSMSConfigException("Could not find backend '%s' from "
-                                        "domain '%s'" % (name, domain))
+            raise BadSMSConfigException("Could not find %s backend '%s' from "
+                                        "domain '%s'" % (backend_type, name, domain))
 
         return backend
 
@@ -1857,19 +1864,18 @@ class SQLMobileBackendMapping(SyncSQLToCouchMixin, models.Model):
     backend = models.ForeignKey('SQLMobileBackend')
 
     @classmethod
-    @quickcache(['domain'], timeout=5 * 60)
-    def get_prefix_to_backend_map(cls, domain=None):
+    @quickcache(['backend_type', 'domain'], timeout=5 * 60)
+    def get_prefix_to_backend_map(cls, backend_type, domain=None):
         """
+        backend_type - SQLMobileBackend.SMS or SQLMobileBackend.IVR
         domain - the domain for which to retrieve the backend map, otherwise if left None
                  the global backend map will be returned.
         Returns a BackendMap
         """
-        from corehq.apps.sms.models import SQLMobileBackendMapping
-
         if domain:
-            filter_args = {'is_global': False, 'domain': domain}
+            filter_args = {'backend_type': backend_type, 'is_global': False, 'domain': domain}
         else:
-            filter_args = {'is_global': True}
+            filter_args = {'backend_type': backend_type, 'is_global': True}
 
         catchall_backend_id = None
         backend_map = {}
