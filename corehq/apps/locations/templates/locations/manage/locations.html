@@ -35,9 +35,20 @@ function loc_unarchive_url(loc_id) {
     return template.replace('-locid-', loc_id);
 }
 
+function loc_delete_url(loc_id) {
+    var template = '{% url "delete_location" domain "-locid-" %}';
+    return template.replace('-locid-', loc_id);
+}
+
 var archive_success_message = _.template(
     '{% trans "You have successfully archived the location <%=name%>" %}'
 );
+
+var delete_success_message = _.template(
+    '{% trans "You have successfully deleted the location <%=name%> and all of its child locations" %}'
+);
+
+var delete_error_message = '{% trans "An error occurred while deleting your location. If the problem persists, please report an issue" %}'
 
 archive_loc = function(button, name, loc_id) {
     var archive_location_modal = $('#archive-location-modal')[0];
@@ -79,6 +90,37 @@ unarchive_loc = function(button, loc_id) {
             remove_elements_after_action(button);
         }
     });
+}
+
+delete_loc = function(button, name, loc_id) {
+    var delete_location_modal = $('#delete-location-modal')[0];
+
+    function delete_fn() {
+        $(button).disableButton();
+        $.ajax({
+            type: 'DELETE',
+            url: loc_delete_url(loc_id),
+            dataType: 'json',
+            error: function (response, status, error) {
+                alert_user(delete_error_message);
+                $(button).enableButton();
+            },
+            success: function (response) {
+                alert_user(delete_success_message({"name": name}), "success");
+                remove_elements_after_action(button);
+            }
+        });
+        $(delete_location_modal).modal('hide');
+    }
+
+    var modal_context = {
+        "name": name,
+        "loc_id": loc_id,
+        "delete_fn": delete_fn,
+    };
+    ko.cleanNode(delete_location_modal);
+    ko.applyBindings(modal_context, delete_location_modal);
+    $(delete_location_modal).modal('show');
 }
 
 remove_elements_after_action = function(button) {
@@ -175,6 +217,10 @@ $(function() {
                             data-bind="click: function(data, event) { archive_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
                             {% trans "Archive" %}
                         </button>
+                        <button class="btn btn-danger"
+                            data-bind="click: function(data, event) { delete_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
+                            {% trans "Delete" %}
+                        </button>
                     {% endif %}
                 </div>
 
@@ -262,6 +308,24 @@ $(function() {
     <div class="modal-footer">
         <button data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
         <button data-bind="click: archive_fn" class="btn btn-warning">{% trans "Archive" %}</button>
+    </div>
+</div>
+<div class="modal hide fade" id="delete-location-modal">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">&times;</a>
+        <h4>{% trans "Delete Location:" %} <span data-bind="text: name" \></h4>
+    </div>
+    <div class="modal-body">
+        <p>
+            {% blocktrans %}
+            <strong>Warning!</strong> Deleting a location is permanent. There is no way to undo this action.
+            This will also delete all child locations. Are you sure you want to delete this location?
+            {% endblocktrans %}
+        </p>
+    </div>
+    <div class="modal-footer">
+        <button data-dismiss="modal" class="btn">{% trans "Cancel" %}</button>
+        <button data-bind="click: delete_fn" class="btn btn-danger">{% trans "Delete" %}</button>
     </div>
 </div>
 {% endblock modals %}
