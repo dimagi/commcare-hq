@@ -1,3 +1,4 @@
+from crispy_forms.bootstrap import PrependedText
 from django import forms
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from crispy_forms.helper import FormHelper
@@ -62,6 +63,9 @@ class CommTrackSettingsForm(forms.Form):
         domain = kwargs.pop('domain')
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
+
         self.helper.layout = Layout(
             Fieldset(
                 _('Stock Levels'),
@@ -77,18 +81,20 @@ class CommTrackSettingsForm(forms.Form):
             ),
             Fieldset(
                 _('Consumption Settings'),
-                'use_auto_consumption',
+                PrependedText('use_auto_consumption', ''),
                 'consumption_min_transactions',
                 'consumption_min_window',
                 'consumption_optimal_window',
-                'individual_consumption_defaults',
+                PrependedText('individual_consumption_defaults', ''),
             ),
             Fieldset(
                 _('Phone Settings'),
-                'sync_consumption_fixtures',
+                PrependedText('sync_consumption_fixtures', ''),
             ),
-            ButtonHolder(
-                Submit('submit', ugettext_lazy('Submit'))
+            hqcrispy.FormActions(
+                ButtonHolder(
+                    Submit('submit', ugettext_lazy('Submit'))
+                )
             )
         )
 
