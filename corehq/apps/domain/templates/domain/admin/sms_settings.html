@@ -1,12 +1,11 @@
-{% extends "settings/bootstrap2/base_template.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'commtrack/ko/sms.js' %}"></script>
+    <script src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% new_static 'commtrack/ko/sms.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -16,15 +15,15 @@
     </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     <form id="settings" class="form form-horizontal" method="post">
         {% csrf_token %}
         <fieldset>
             <legend>{% trans 'SMS Keywords' %}</legend>
-            <div class="control-group" data-bind="css: { 'error': keyword_error }">
-                <label class="control-label" for="keyword_stock_report">{% trans 'Stock Report' %}</label>
-                <div class="controls">
-                    <input id="keyword_stock_report" type="text" data-bind="value: keyword"/>
+            <div class="form-group" data-bind="css: { 'error': keyword_error }">
+                <label class="col-sm-2 control-label" for="keyword_stock_report">{% trans 'Stock Report' %}</label>
+                <div class="col-sm-3">
+                    <input id="keyword_stock_report" class="form-control" type="text" data-bind="value: keyword"/>
                     <div class="help-inline" data-bind="text: keyword_error"></div>
                 </div>
             </div>
@@ -32,12 +31,12 @@
 
         <fieldset>
             <legend>{% trans 'Stock Actions' %}</legend>
-            <div class="control-group">
-                <label class="control-label">{% trans 'Edit Actions' %}</label>
-                <div class="controls">
+            <div class="form-group">
+                <label class="col-sm-2 control-label">{% trans 'Edit Actions' %}</label>
+                <div class="col-sm-10">
                     {% include "domain/admin/commtrack_action_table.html" %}
-                    <button type="button" class="btn" data-bind="click: new_action">
-                        <i class="icon-plus"></i> {% trans "New Action" %}
+                    <button type="button" class="btn btn-default" data-bind="click: new_action">
+                        <i class="fa fa-plus"></i> {% trans "New Action" %}
                     </button>
                 </div>
             </div>
@@ -45,31 +44,32 @@
 
         <fieldset style="display:none;">
             <legend>{% trans "Requisitions" %}</legend>
-            <div class="control-group" >
-            <label class="control-label"></label>
-            <div class="controls">
-              <label class="checkbox">
-                  <input id="requisitions_enabled" type="checkbox" data-bind="checked: false" /> {% trans "Enable Requisitions" %}
-              </label>
+            <div class="form-group">
+                <div class="checkbox">
+                  <label><input id="requisitions_enabled" type="checkbox" data-bind="checked: false" /> {% trans "Enable Requisitions" %}</label>
+                </div>
             </div>
-          </div>
         </fieldset>
 
         <fieldset data-bind="with: requisition_config(), visible: requisition_config().enabled">
             <legend>{% trans "Requisitions Actions" %}</legend>
-            <div class="control-group">
-                <label class="control-label">{% trans 'Edit Actions' %}</label>
-                <div class="controls">
+            <div class="form-group">
+                <label class="col-sm-2 control-label">{% trans 'Edit Actions' %}</label>
+                <div class="col-sm-10">
                     {% include "domain/admin/commtrack_action_table.html" %}
-                <button type="button" class="btn" data-bind="click: new_action"><i class="icon-white"></i> {% trans "New Action" %}</button>
+                <button type="button" class="btn btn-default" data-bind="click: new_action">
+                    <i class="fa fa-plus"></i> {% trans "New Action" %}
+                </button>
                 </div>
             </div>
         </fieldset>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
-                {% trans "Save Settings" %}
-            </button>
+            <div class="col-sm-10 col-sm-offset-2">
+                <button type="submit" class="btn btn-primary">
+                    {% trans "Save Settings" %}
+                </button>
+            </div>
         </div>
 
         <input name="json" type="hidden" data-bind="value: json_payload" />

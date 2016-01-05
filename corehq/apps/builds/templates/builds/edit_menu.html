@@ -89,7 +89,7 @@
             <li>Click Submit</li>
             <li>Wait until the page loads. If successful click back and refresh to see your new build.</li>
         </ol>
-        <form action="{% url 'corehq.apps.builds.views.import_build' %}" method="post">% csrf_token %}
+        <form action="{% url 'corehq.apps.builds.views.import_build' %}" method="post">{% csrf_token %}
             <label for="import_build_name">Source for artifacts.zip</label>
             <input id="import_build_name" type="text" name="source"/>
             <br/>

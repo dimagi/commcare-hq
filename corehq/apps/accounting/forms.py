@@ -79,10 +79,8 @@ class BillingAccountBasicForm(forms.Form):
                                             required=False)
     currency = forms.ChoiceField(label="Currency")
 
-    emails = forms.CharField(
+    email_list = forms.CharField(
         label=ugettext_lazy('Client Contact Emails'),
-        widget=forms.Textarea,
-        max_length=BillingContactInfo._meta.get_field('emails').max_length,
     )
     is_active = forms.BooleanField(
         label=ugettext_lazy("Account is Active"),
@@ -121,7 +119,7 @@ class BillingAccountBasicForm(forms.Form):
                 'name': account.name,
                 'salesforce_account_id': account.salesforce_account_id,
                 'currency': account.currency.code,
-                'emails': contact_info.emails,
+                'email_list': ','.join(contact_info.email_list),
                 'is_active': account.is_active,
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
@@ -160,7 +158,7 @@ class BillingAccountBasicForm(forms.Form):
             crispy.Fieldset(
                 'Basic Information',
                 'name',
-                crispy.Field('emails', css_class='input-xxlarge'),
+                crispy.Field('email_list', css_class='input-xxlarge'),
                 'dimagi_contact',
                 'salesforce_account_id',
                 'currency',
@@ -174,7 +172,8 @@ class BillingAccountBasicForm(forms.Form):
                     crispy.Submit(
                         'account_basic',
                         'Update Basic Information'
-                        if account is not None else 'Add New Account'
+                        if account is not None else 'Add New Account',
+                        css_class='disable-on-submit',
                     )
                 )
             )
@@ -190,18 +189,8 @@ class BillingAccountBasicForm(forms.Form):
             raise ValidationError(_("Name '%s' is already taken.") % name)
         return name
 
-    def clean_emails(self):
-        account_contact_emails = self.cleaned_data['emails']
-        if account_contact_emails != '':
-            invalid_emails = []
-            for email in account_contact_emails.split(','):
-                email_no_whitespace = email.strip()
-                # TODO - validate emails
-            if len(invalid_emails) != 0:
-                raise ValidationError(
-                    _("Invalid emails: %s") % ', '.join(invalid_emails)
-                )
-        return account_contact_emails
+    def clean_email_list(self):
+        return self.cleaned_data['email_list'].split(',')
 
     def clean_active_accounts(self):
         transfer_subs = self.cleaned_data['active_accounts']
@@ -240,7 +229,7 @@ class BillingAccountBasicForm(forms.Form):
         contact_info, _ = BillingContactInfo.objects.get_or_create(
             account=account,
         )
-        contact_info.emails = self.cleaned_data['emails']
+        contact_info.email_list = self.cleaned_data['email_list']
         contact_info.save()
 
         return account
@@ -269,7 +258,7 @@ class BillingAccountBasicForm(forms.Form):
         contact_info, _ = BillingContactInfo.objects.get_or_create(
             account=account,
         )
-        contact_info.emails = self.cleaned_data['emails']
+        contact_info.email_list = self.cleaned_data['email_list']
         contact_info.save()
 
 
@@ -426,7 +415,7 @@ class SubscriptionForm(forms.Form):
                 'plan_name': subscription.plan_version,
             })
             try:
-                plan_product = subscription.plan_version.product_rates.all()[0].product.product_type
+                plan_product = subscription.plan_version.get_product_rate().product.product_type
                 self.fields['plan_product'].initial = plan_product
             except (IndexError, SoftwarePlanVersion.DoesNotExist):
                 plan_product = (
@@ -553,8 +542,11 @@ class SubscriptionForm(forms.Form):
             ),
             FormActions(
                 crispy.ButtonHolder(
-                    crispy.Submit('set_subscription',
-                           '%s Subscription' % ('Update' if self.is_existing else 'Create'))
+                    crispy.Submit(
+                        'set_subscription',
+                        '%s Subscription' % ('Update' if self.is_existing else 'Create'),
+                        css_class='disable-on-submit',
+                    )
                 )
             )
         )
@@ -626,7 +618,7 @@ class SubscriptionForm(forms.Form):
                 not self.cleaned_data['do_not_invoice']
                 and (
                     not BillingContactInfo.objects.filter(account=account).exists()
-                    or not account.billingcontactinfo.emails
+                    or not account.billingcontactinfo.email_list
                 )
             ):
                 from corehq.apps.accounting.views import ManageBillingAccountView
@@ -717,7 +709,7 @@ class ChangeSubscriptionForm(forms.Form):
                 StrictButton(
                     "Change Subscription",
                     type="submit",
-                    css_class="btn-primary",
+                    css_class="btn-primary disable-on-submit",
                 ),
             ),
         )
@@ -758,10 +750,7 @@ class CreditForm(forms.Form):
         product_choices = [('', 'Any')]
         product_choices.extend(SoftwareProductType.CHOICES)
         self.fields['product_type'].choices = product_choices
-
-        feature_choices = [('', 'Any')]
-        feature_choices.extend(FeatureType.CHOICES)
-        self.fields['feature_type'].choices = feature_choices
+        self.fields['feature_type'].choices = FeatureType.CHOICES
 
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
@@ -775,7 +764,11 @@ class CreditForm(forms.Form):
             ),
             FormActions(
                 crispy.ButtonHolder(
-                    crispy.Submit('adjust_credit', 'Update Credit')
+                    crispy.Submit(
+                        'adjust_credit',
+                        'Update Credit',
+                        css_class='disable-on-submit',
+                    ),
                 )
             )
         )
@@ -832,7 +825,7 @@ class CancelForm(forms.Form):
             FormActions(
                 StrictButton(
                     'CANCEL SUBSCRIPTION',
-                    css_class='btn-danger',
+                    css_class='btn-danger disable-on-submit',
                     name='cancel_subscription',
                     type='submit',
                     **({'disabled': True} if can_cancel else {})
@@ -871,7 +864,7 @@ class SuppressSubscriptionForm(forms.Form):
             FormActions(
                 StrictButton(
                     'Suppress Subscription',
-                    css_class='btn-danger',
+                    css_class='btn-danger disable-on-submit',
                     name=self.submit_kwarg,
                     type='submit',
                     **({'disabled': True} if self.subscription.is_active else {})
@@ -912,8 +905,11 @@ class PlanInformationForm(forms.Form):
             ),
             FormActions(
                 crispy.ButtonHolder(
-                    crispy.Submit('plan_information',
-                           '%s Software Plan' % ('Update' if plan is not None else 'Create'))
+                    crispy.Submit(
+                        'plan_information',
+                        '%s Software Plan' % ('Update' if plan is not None else 'Create'),
+                        css_class='disable-on-submit',
+                    )
                 )
             )
         )
@@ -1171,7 +1167,7 @@ class SoftwarePlanVersionForm(forms.Form):
             FormActions(
                 StrictButton(
                     'Update Plan Version',
-                    css_class='btn-primary',
+                    css_class='btn-primary disable-on-submit',
                     type="submit",
                 ),
             )
@@ -1608,7 +1604,7 @@ class TriggerInvoiceForm(forms.Form):
             FormActions(
                 StrictButton(
                     "Trigger Invoice",
-                    css_class="btn-primary",
+                    css_class="btn-primary disable-on-submit",
                     type="submit",
                 ),
             )
@@ -1677,7 +1673,7 @@ class TriggerBookkeeperEmailForm(forms.Form):
             FormActions(
                 StrictButton(
                     "Trigger Bookkeeper Email",
-                    css_class="btn-primary",
+                    css_class="btn-primary disable-on-submit",
                     type="submit",
                 ),
             )
@@ -1724,7 +1720,7 @@ class TestReminderEmailFrom(forms.Form):
                 StrictButton(
                     "Send Reminder Emails",
                     type="submit",
-                    css_class='btn-primary'
+                    css_class='btn-primary disable-on-submit'
                 )
             )
         )
@@ -1801,11 +1797,13 @@ class AdjustBalanceForm(forms.Form):
                     crispy.Submit(
                         'adjust_balance',
                         'Apply',
+                        css_class='disable-on-submit',
                         data_loading_text='Submitting...',
                     ),
                     crispy.Button(
                         'close',
                         'Close',
+                        css_class='disable-on-submit',
                         data_dismiss='modal',
                     ),
                 ),
@@ -1931,7 +1929,7 @@ class InvoiceInfoForm(forms.Form):
                         'Adjust Balance',
                         data_toggle='modal',
                         data_target='#adjustBalanceModal-%d' % invoice.id,
-                        css_class='disabled' if invoice.is_wire else '',
+                        css_class=('disabled' if invoice.is_wire else '') + ' disable-on-submit',
                     ),
                 ),
             ),
@@ -1964,11 +1962,13 @@ class ResendEmailForm(forms.Form):
                     crispy.Submit(
                         'resend_email',
                         'Send Email',
+                        css_class='disable-on-submit',
                         data_loading_text='Submitting...',
                     ),
                     crispy.Button(
                         'close',
                         'Close',
+                        css_class='disable-on-submit',
                         data_dismiss='modal',
                     ),
                 ),
@@ -2011,7 +2011,7 @@ class SuppressInvoiceForm(forms.Form):
             FormActions(
                 StrictButton(
                     'Suppress Invoice',
-                    css_class='btn-danger',
+                    css_class='btn-danger disable-on-submit',
                     name=self.submit_kwarg,
                     type='submit',
                 ),
@@ -2041,7 +2041,7 @@ class CreateAdminForm(forms.Form):
             ),
             StrictButton(
                 mark_safe('<i class="icon-plus"></i> %s' % "Add Admin"),
-                css_class="btn-success",
+                css_class="btn-success disable-on-submit",
                 type="submit",
             )
         )

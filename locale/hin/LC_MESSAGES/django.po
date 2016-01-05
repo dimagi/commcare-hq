@@ -1862,7 +1862,7 @@ msgid "Go to All Invoices page for this Project Space"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/invoice_table.html:8
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_filters.html:9
+#: corehq/apps/hqadmin/templates/hqadmin/bootstrap2/hqadmin_base_filters.html:9
 #: corehq/apps/reports_core/templates/reports_core/base_template_new.html:156
 msgid "Export to Excel"
 msgstr ""
@@ -11213,7 +11213,7 @@ msgstr ""
 
 #: corehq/apps/fixtures/templates/fixtures/view_table.html:72
 #: corehq/apps/reports/templates/reports/async/maps.html:35
-#: corehq/apps/reports/templates/reports/async/tabular.html:62
+#: corehq/apps/reports/templates/reports/async/bootstrap2/tabular.html:62
 #: custom/apps/cvsu/templates/cvsu/partials/report_table.html:23
 #: custom/apps/cvsu/templates/cvsu/partials/report_table.html:24
 #: custom/care_pathways/templates/care_pathways/partials/report_table.html:39
@@ -12036,25 +12036,25 @@ msgstr ""
 msgid "Apply to All Charts"
 msgstr ""
 
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_filters.html:15
+#: corehq/apps/hqadmin/templates/hqadmin/bootstrap2/hqadmin_base_filters.html:15
 #: corehq/apps/reports/templates/reports/standard/base_template.html:138
 #: corehq/apps/reports_core/templates/reports_core/base_template_new.html:161
 msgid "Email report"
 msgstr ""
 
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_filters.html:21
+#: corehq/apps/hqadmin/templates/hqadmin/bootstrap2/hqadmin_base_filters.html:21
 #: corehq/apps/reports/templates/reports/standard/base_template.html:144
 #: corehq/apps/reports_core/templates/reports_core/base_template_new.html:166
 msgid "Print"
 msgstr ""
 
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html:33
+#: corehq/apps/hqadmin/templates/hqadmin/bootstrap2/hqadmin_base_report.html:33
 #: corehq/apps/hqadmin/templates/hqadmin/malt_downloader.html:9
 #: corehq/apps/hqwebapp/models.py:1510 corehq/apps/hqwebapp/models.py:1678
 msgid "Admin Reports"
 msgstr ""
 
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html:37
+#: corehq/apps/hqadmin/templates/hqadmin/bootstrap2/hqadmin_base_report.html:37
 msgid "Administrative Report"
 msgstr ""
 
@@ -19589,7 +19589,7 @@ msgstr ""
 msgid "Displays the detail for a given messaging survey."
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/async/default.html:9
+#: corehq/apps/reports/templates/reports/async/bootstrap2/default.html:9
 msgid "Loading Report"
 msgstr ""
 

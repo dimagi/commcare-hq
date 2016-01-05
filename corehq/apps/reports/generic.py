@@ -257,7 +257,7 @@ class GenericReportView(object):
     @property
     @memoized
     def template_async_base(self):
-        return ((self.base_template_async or "reports/async/default.html")
+        return ((self.base_template_async or "reports/async/bootstrap2/default.html")
                                         if self.asynchronous else self.template_base)
     @property
     @memoized
@@ -674,6 +674,15 @@ class GenericReportView(object):
         """
         return []
 
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        """
+        Use this function to apply the bootstrap 3 decorators found in
+        style/decorators.py to a report. We're using this in the interim until
+        we overhaul the reports framework, but still want to migrate some
+        reports to bootstrap 3.
+        """
+        self.is_bootstrap3 = False
+
 
 class GenericTabularReport(GenericReportView):
     """
@@ -727,7 +736,7 @@ class GenericTabularReport(GenericReportView):
     bad_request_error_text = None
 
     # override old class properties
-    report_template_path = "reports/async/tabular.html"
+    report_template_path = "reports/async/bootstrap2/tabular.html"
     flush_layout = True
 
     # set to a list of functions that take in a report object 
