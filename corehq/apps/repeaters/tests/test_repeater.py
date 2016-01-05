@@ -214,7 +214,6 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
     def setUpClass(cls):
         cls.domain_name = "test-domain"
         cls.domain = create_domain(cls.domain_name)
-
         cls.repeater = CaseRepeater(
             domain=cls.domain_name,
             url="case-repeater-url",
@@ -225,7 +224,14 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
     def tearDownClass(cls):
         cls.domain.delete()
         cls.repeater.delete()
-        for repeat_record in cls.repeat_records(cls.domain_name):
+
+    def tearDown(self):
+        try:
+            # delete case, so that post of xform_xml creates new case as expected multiple-times
+            CommCareCase.get(case_id).delete()
+        except:
+            pass
+        for repeat_record in self.repeat_records(self.domain_name):
             repeat_record.delete()
 
     def test_case_close_format(self):
@@ -241,6 +247,14 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.assertXmlHasXpath(close_payload, '//*[local-name()="case"]')
         self.assertXmlHasXpath(close_payload, '//*[local-name()="close"]')
         self.assertXmlHasXpath(close_payload, '//*[local-name()="update"]')
+
+    def test_excluded_case_types_are_not_forwarded(self):
+        self.repeater.exclude_case_types = ['repeater_case']
+        self.repeater.save()
+        # create a case
+        self.post_xml(xform_xml, self.domain_name)
+        # check no case forwarding happens
+        self.assertEqual(0, len(self.repeat_records(self.domain_name).all()))
 
 
 class RepeaterFailureTest(BaseRepeaterTest):

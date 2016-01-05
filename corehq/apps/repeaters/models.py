@@ -198,6 +198,9 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         return generator.get_payload(repeat_record, self.payload_doc(repeat_record))
 
     def register(self, payload, next_check=None):
+        if not self.allowed_to_forward(payload):
+            return
+
         repeat_record = RepeatRecord(
             repeater_id=self.get_id,
             repeater_type=self.doc_type,
@@ -207,6 +210,12 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         )
         repeat_record.save()
         return repeat_record
+
+    def allowed_to_forward(self, payload):
+        """
+        Return True/False depending on whether the payload meets forawrding criteria or not
+        """
+        return True
 
     def clear_caches(self):
         if self.__class__ == Repeater:
@@ -331,6 +340,10 @@ class CaseRepeater(Repeater):
     """
 
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
+    exclude_case_types = StringListProperty(default=[])
+
+    def allowed_to_forward(self, payload):
+        return payload.type not in self.exclude_case_types
 
     @memoized
     def payload_doc(self, repeat_record):
