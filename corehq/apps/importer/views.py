@@ -89,11 +89,10 @@ def excel_config(request, domain):
                             'Please try again with a different spreadsheet.')
 
     case_types_from_apps = get_case_types_from_apps(domain)
-    # for this we just want cases that have data but aren't being used anymore
-    case_types_from_cases = [t for t in get_case_types_for_domain(domain)
-                             if t not in case_types_from_apps]
+    unrecognized_case_types = [t for t in get_case_types_for_domain(domain)
+                               if t not in case_types_from_apps]
 
-    if len(case_types_from_apps) == 0 and len(case_types_from_cases) == 0:
+    if len(case_types_from_apps) == 0 and len(unrecognized_case_types) == 0:
         return render_error(
             request,
             domain,
@@ -107,7 +106,7 @@ def excel_config(request, domain):
         "importer/excel_config.html", {
             'named_columns': named_columns,
             'columns': columns,
-            'case_types_from_cases': case_types_from_cases,
+            'unrecognized_case_types': unrecognized_case_types,
             'case_types_from_apps': case_types_from_apps,
             'domain': domain,
             'report': {
