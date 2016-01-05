@@ -52,7 +52,7 @@ def simple_post_with_cached_timeout(data, url, expiry=60 * 60, *args, **kwargs):
         cache.set(key, 'timeout', expiry)
         raise
 
-    if not 200 <= resp.status < 300:
+    if not 200 <= resp.status_code < 300:
         cache.set(key, 'error', expiry)
     return resp
 

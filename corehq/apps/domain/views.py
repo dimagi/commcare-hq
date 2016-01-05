@@ -548,14 +548,14 @@ def test_repeater(request, domain):
 
         try:
             resp = simple_post(fake_post, url, headers=headers)
-            if 200 <= resp.status < 300:
+            if 200 <= resp.status_code < 300:
                 return HttpResponse(json.dumps({"success": True,
-                                                "response": resp.read(),
-                                                "status": resp.status}))
+                                                "response": resp.content,
+                                                "status": resp.status_code}))
             else:
                 return HttpResponse(json.dumps({"success": False,
-                                                "response": resp.read(),
-                                                "status": resp.status}))
+                                                "response": resp.content,
+                                                "status": resp.status_code}))
 
         except Exception, e:
             errors = str(e)
