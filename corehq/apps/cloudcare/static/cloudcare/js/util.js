@@ -133,10 +133,11 @@ var tfLoadingComplete = function (isError) {
 
 var tfSyncComplete = function (isError) {
     hideLoading();
+    console.log("isErorr: " + isError)
     if (isError) {
-        showError(translatedStrings.errSyncing, $('#save-indicator'));
+        showError(translatedStrings.errSyncing, $('#cloudcare-notifications'));
     } else {
-        showSuccess(translatedStrings.synced, $('#save-indicator'));
+        showSuccess(translatedStrings.synced, $('#cloudcare-notifications'), 2500);
     }
 };
 
