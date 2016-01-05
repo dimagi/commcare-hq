@@ -49,7 +49,7 @@ class BulkUploadForm(forms.Form):
                 ),
             ),
             StrictButton(
-                ('<i class="icon-cloud-upload"></i> Upload %s'
+                ('<i class="fa fa-cloud-upload"></i> Upload %s'
                  % plural_noun.title()),
                 css_class='btn-primary',
                 data_bind='disable: !file()',
