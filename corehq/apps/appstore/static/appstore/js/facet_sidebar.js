@@ -36,7 +36,7 @@ $(function () {
     $(".more-sortable-button").click(function() {
         var $this = $(this);
         var sortable = $this.data('sortable').replace(new RegExp("\\.", "g"), "\\.");
-        $('.sortable-' + sortable).show();
+        $('.sortable-' + sortable).removeClass('hide');
         $this.hide();
         return false;
     });
