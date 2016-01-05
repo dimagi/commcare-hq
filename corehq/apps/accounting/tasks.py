@@ -2,7 +2,6 @@ from urllib import urlencode
 from StringIO import StringIO
 from celery.schedules import crontab
 from celery.task import periodic_task, task
-from celery.utils.log import get_task_logger
 import datetime
 from couchdbkit import ResourceNotFound
 from django.conf import settings
@@ -30,6 +29,8 @@ from corehq.apps.accounting.utils import (
     has_subscription_already_ended, get_dimagi_from_email_by_product,
     fmt_dollar_amount,
     get_change_status,
+    log_accounting_error,
+    log_accounting_info,
 )
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.users.models import FakeUser, WebUser
@@ -39,8 +40,6 @@ from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.email import send_HTML_email
 import corehq.apps.accounting.filters as filters
-
-logger = get_task_logger('accounting')
 
 
 def activate_subscriptions(based_on_date=None):
@@ -104,7 +103,7 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
     """
     today = based_on_date or datetime.date.today()
     invoice_start, invoice_end = utils.get_previous_month_date_range(today)
-    logger.info("[Billing] Starting up invoices for %(start)s - %(end)s" % {
+    log_accounting_info("Starting up invoices for %(start)s - %(end)s" % {
         'start': invoice_start.strftime(USER_DATE_FORMAT),
         'end': invoice_end.strftime(USER_DATE_FORMAT),
     })
@@ -117,35 +116,33 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
                 date_created__gte=today).count() != 0):
             pass
         elif is_test:
-            logger.info("[Billing] Ready to create invoice for domain %s"
-                        % domain.name)
+            log_accounting_info("Ready to create invoice for domain %s" % domain.name)
         else:
             try:
                 invoice_factory = DomainInvoiceFactory(
                     invoice_start, invoice_end, domain)
                 invoice_factory.create_invoices()
-                logger.info("[BILLING] Sent invoices for domain %s"
-                            % domain.name)
+                log_accounting_info("Sent invoices for domain %s" % domain.name)
             except CreditLineError as e:
-                logger.error(
-                    "[BILLING] There was an error utilizing credits for "
+                log_accounting_error(
+                    "There was an error utilizing credits for "
                     "domain %s: %s" % (domain.name, e)
                 )
             except BillingContactInfoError as e:
-                logger.info("BillingContactInfoError: %s" % e)
+                log_accounting_error("BillingContactInfoError: %s" % e)
             except InvoiceError as e:
-                logger.error(
-                    "[BILLING] Could not create invoice for domain %s: %s" % (
+                log_accounting_error(
+                    "Could not create invoice for domain %s: %s" % (
                     domain.name, e
                 ))
             except InvoiceAlreadyCreatedError as e:
-                logger.error(
-                    "[BILLING] Invoice already existed for domain %s: %s" % (
+                log_accounting_error(
+                    "Invoice already existed for domain %s: %s" % (
                     domain.name, e
                 ))
             except Exception as e:
-                logger.error(
-                    "[BILLING] Error occurred while creating invoice for "
+                log_accounting_error(
+                    "Error occurred while creating invoice for "
                     "domain %s: %s" % (domain.name, e)
                 )
 
@@ -204,8 +201,8 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
             file_attachments=[excel_attachment],
         )
 
-    logger.info(
-        "[BILLING] Sent Bookkeeper Invoice Summary for %(month)s "
+    log_accounting_info(
+        "Sent Bookkeeper Invoice Summary for %(month)s "
         "to %(emails)s." % {
             'month': first_of_month.strftime(USER_MONTH_FORMAT),
             'emails': ", ".join(emails)
@@ -242,7 +239,7 @@ def send_subscription_reminder_emails(num_days, exclude_trials=True):
             if not subscription.is_renewed:
                 subscription.send_ending_reminder_email()
         except Exception as e:
-            logger.error("[BILLING] %s" % e)
+            log_accounting_error(e.message)
 
 
 def send_subscription_reminder_emails_dimagi_contact(num_days):
@@ -285,7 +282,7 @@ def create_wire_credits_invoice(domain_name,
     try:
         record.send_email(contact_emails=contact_emails)
     except Exception as e:
-        logger.error("[BILLING] %s" % e)
+        log_accounting_error(e.message)
 
 
 @task(ignore_result=True)
@@ -298,8 +295,8 @@ def send_purchase_receipt(payment_record, core_product, domain,
         web_user = WebUser.get_by_username(email)
         name = web_user.first_name
     except ResourceNotFound:
-        logger.error(
-            "[BILLING] Strange. A payment attempt was made by a user that "
+        log_accounting_error(
+            "Strange. A payment attempt was made by a user that "
             "we can't seem to find! %s" % email
         )
         name = email
@@ -341,8 +338,8 @@ def weekly_digest():
         ))
 
     if not ending_in_forty_days:
-        logger.info(
-            "[Billing] Did not send summary of ending subscriptions because "
+        log_accounting_info(
+            "Did not send summary of ending subscriptions because "
             "there are none."
         )
         return
@@ -415,8 +412,8 @@ def weekly_digest():
         file_attachments=[file_attachment],
     )
 
-    logger.info(
-        "[BILLING] Sent summary of ending subscriptions from %(today)s" % {
+    log_accounting_info(
+        "Sent summary of ending subscriptions from %(today)s" % {
             'today': today.isoformat(),
         })
 
