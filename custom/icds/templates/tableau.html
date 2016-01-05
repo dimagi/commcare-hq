@@ -1,8 +1,8 @@
 {% load compress %}{% load hq_shared_tags %}<!DOCTYPE html>
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
+<link type="text/css" rel="stylesheet" media="all" href="{% new_static 'style/lib/bootstrap-3.2.0/dist/css/bootstrap.min.css' %}"/>
 <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
 <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
-<script type="text/javascript" src="https://icds.commcarehq.org/javascripts/api/tableau-2.0.0.min.js "></script>
+<script type="text/javascript" src="{% new_static 'tableau.min.js' %}"></script>
 
 <script type="text/javascript" src="{% new_static 'underscore/underscore.js' %}"></script>
 
@@ -20,14 +20,23 @@
 
 <div class="container-fluid">
     <div class="row">
-        <div class="col-md-7">
-            {#    TODO: update this div to use B3 spacing that is the right size.#}
-            <div id="tableauPlaceholder" style="width:1100px; height:900px;"></div>
-        </div>
         <div class="col-md-2">
-            <button id="inspectButton" class="btn btn-block btn-primary" disabled="disabled">Inspect</button>
-            <div id="drilldown" class="well">
-            </div>
+            <button id="resetFilters" class="btn btn-block btn-primary" disabled="disabled">Reset Filtering</button>
+            {% if debug %}
+                <button id="inspectButton" class="btn btn-block btn-primary" disabled="disabled">Inspect</button>
+                <div id="drilldown" class="well">
+                </div>
+                <div class="well">
+                    USER FILTERING DEBUG INFO (inital values):
+                    <ul>
+                        <li>view_by = {{ view_by }}</li>
+                        <li>user_{{ view_by }} = {{ view_by_value|default:'not set' }}</li>
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-md-10">
+            <div id="tableauPlaceholder" style="width:1100px; height:900px; overflow:visible;"></div>
         </div>
     </div>
 
