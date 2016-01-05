@@ -1773,6 +1773,38 @@ class SQLSMSBackend(SQLMobileBackend):
     class Meta:
         proxy = True
 
+    def get_sms_interval(self):
+        """
+        Override to use rate limiting. Return None to not use rate limiting,
+        otherwise return the number of seconds by which outbound sms requests
+        should be separated when using this backend.
+        Note that this should not be over 30 due to choice of redis lock
+        timeout. See corehq.apps.sms.tasks.handle_outgoing.
+
+        Also, this can be a fractional amount of seconds. For example, to
+        separate requests by a minimum of a quarter second, return 0.25.
+        """
+        return None
+
+    def send(self, msg, *args, **kwargs):
+        raise NotImplementedError("Please implement this method.")
+
+    @classmethod
+    def get_opt_in_keywords(cls):
+        """
+        Override to specify a set of opt-in keywords to use for this
+        backend type.
+        """
+        return []
+
+    @classmethod
+    def get_opt_out_keywords(cls):
+        """
+        Override to specify a set of opt-out keywords to use for this
+        backend type.
+        """
+        return []
+
 
 class BackendMap(object):
     def __init__(self, catchall_backend_id, backend_map):
