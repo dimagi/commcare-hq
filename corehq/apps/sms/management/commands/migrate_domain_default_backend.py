@@ -37,13 +37,26 @@ def migrate(balance_only=False):
                     print "ERROR: Backend %s for domain %s not found" % (backend_id, domain)
                     continue
 
-                SQLMobileBackendMapping(
+                mapping, created = SQLMobileBackendMapping.objects.get_or_create(
                     is_global=False,
                     domain=domain,
                     backend_type='SMS',
-                    prefix='*',
-                    backend=backend
-                ).save()
+                    prefix='*'
+                )
+                mapping.backend = backend
+                mapping.save()
+        elif not balance_only:
+            try:
+                mapping = SQLMobileBackendMapping.objects.get(
+                    is_global=False,
+                    domain=domain,
+                    backend_type='SMS',
+                    prefix='*'
+                )
+                mapping.delete()
+                print "Deleted mapping for domain %s" % domain
+            except SQLMobileBackendMapping.DoesNotExist:
+                pass
 
     balance(couch_count)
     if not balance_only:
