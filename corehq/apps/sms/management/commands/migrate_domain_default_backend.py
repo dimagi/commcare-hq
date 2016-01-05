@@ -14,7 +14,7 @@ def balance(couch_count):
 
 
 def migrate(balance_only=False):
-    if not MigrationStatus.has_migration_completed('backend'):
+    if not MigrationStatus.has_migration_completed(MigrationStatus.MIGRATION_BACKEND):
         print ("ERROR: The backend migration (./manage.py migrate_backends_to_sql) "
                "must be completed before doing the domain default backend migration")
         return
@@ -47,7 +47,7 @@ def migrate(balance_only=False):
 
     balance(couch_count)
     if not balance_only:
-        MigrationStatus.set_migration_completed('domain_default_backend')
+        MigrationStatus.set_migration_completed(MigrationStatus.MIGRATION_DOMAIN_DEFAULT_BACKEND)
 
 
 class Command(BaseCommand):
