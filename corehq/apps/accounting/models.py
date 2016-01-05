@@ -765,7 +765,8 @@ class SoftwarePlanVersion(models.Model):
     must be created.
     """
     plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
-    product_rates = models.ManyToManyField(SoftwareProductRate, blank=True)
+    product_rates = models.ManyToManyField(SoftwareProductRate, blank=True, related_name='+')
+    product_rate = models.ForeignKey(SoftwareProductRate, null=True)
     feature_rates = models.ManyToManyField(FeatureRate, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
