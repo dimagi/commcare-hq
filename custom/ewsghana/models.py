@@ -79,7 +79,7 @@ class EWSGhanaConfig(Document):
 
 class FacilityInCharge(models.Model):
     user_id = models.CharField(max_length=128, db_index=True)
-    location = models.ForeignKey(SQLLocation)
+    location = models.ForeignKey(SQLLocation, on_delete=models.PROTECT)
 
     class Meta:
         app_label = 'ewsghana'
