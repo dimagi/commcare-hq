@@ -37,24 +37,60 @@ class GenericRepeaterForm(forms.Form):
         self.formats = RegisterGenerator.all_formats_by_repeater(self.repeater_class, for_domain=self.domain)
         super(GenericRepeaterForm, self).__init__(*args, **kwargs)
 
-        self.form_fields = []
         if self.formats and len(self.formats) > 1:
-            self.form_fields = ['format']
             self.fields['format'] = forms.ChoiceField(
                 required=True,
                 label='Payload Format',
                 choices=self.formats,
             )
 
+        self._initialize_crispy_layout()
+
+    def _initialize_crispy_layout(self):
         self.helper = FormHelper(self)
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.offset_class = 'col-sm-offset-3 col-md-offset-2'
 
-        self.form_fields.extend([
-            'url',
-            crispy.Div(
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Forwarding Settings',
+                *self.get_ordered_crispy_form_fields()
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Start Forwarding"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
+
+    def get_ordered_crispy_form_fields(self):
+        """
+        Can be overriden to add extra fields or change the order of the form fields
+        """
+        form_fields = []
+        if self.formats and len(self.formats) > 1:
+            form_fields = ['format']
+
+        form_fields.extend([
+            "url",
+            self.special_crispy_fields["test_link"],
+            self.special_crispy_fields["use_basic_auth"],
+            "username",
+            "password"
+        ])
+        return form_fields
+
+    @property
+    def special_crispy_fields(self):
+        """
+        Simple mapping that can be used in generating self.get_ordered_crispy_form_fields
+        """
+        return {
+            "test_link": crispy.Div(
                 crispy.Div(
                     twbscrispy.StrictButton(
                         _('Test Link'),
@@ -70,23 +106,8 @@ class GenericRepeaterForm(forms.Form):
                 ),
                 css_class='form-group'
             ),
-            twbscrispy.PrependedText('use_basic_auth', ''),
-            'username',
-            'password'
-        ])
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                'Forwarding Settings',
-                *self.form_fields
-            ),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _("Start Forwarding"),
-                    type="submit",
-                    css_class='btn-primary',
-                )
-            )
-        )
+            "use_basic_auth": twbscrispy.PrependedText('use_basic_auth', ''),
+        }
 
     def clean(self):
         cleaned_data = super(GenericRepeaterForm, self).clean()
@@ -108,26 +129,10 @@ class FormRepeaterForm(GenericRepeaterForm):
         initial=True
     )
 
-    def __init__(self, *args, **kwargs):
-        super(FormRepeaterForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.form_fields.extend([
+    def get_ordered_crispy_form_fields(self):
+        fields = super(FormRepeaterForm, self).get_ordered_crispy_form_fields()
+        fields.extend([
             twbscrispy.PrependedText('exclude_device_reports', ''),
             twbscrispy.PrependedText('include_app_id_param', '')
         ])
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                'Forwarding Settings',
-                *self.form_fields
-            ),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _("Start Forwarding"),
-                    type="submit",
-                    css_class='btn-primary',
-                )
-            )
-        )
+        return fields
