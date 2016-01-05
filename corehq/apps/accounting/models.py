@@ -1765,7 +1765,6 @@ class WireInvoice(InvoiceBase):
             return original_record.emailed_to.split(',') if original_record.emailed_to else []
         except IndexError:
             log_accounting_error(
-                "[BILLING] "
                 "Strange that WireInvoice %d has no associated WireBillingRecord. "
                 "Should investigate."
                 % self.id
