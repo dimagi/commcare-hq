@@ -696,7 +696,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
         return sum([c.balance for c in credit_lines]) if credit_lines else Decimal('0.00')
 
     def get_product_summary(self, plan_version, account, subscription):
-        product_rate = plan_version.get_product_rate()
+        product_rate = plan_version.product_rate
         product_type = product_rate.product.product_type
         return {
             'name': product_type,

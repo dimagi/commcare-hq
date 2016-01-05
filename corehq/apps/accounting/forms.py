@@ -420,7 +420,7 @@ class SubscriptionForm(forms.Form):
                 'plan_name': subscription.plan_version,
             })
             try:
-                plan_product = subscription.plan_version.get_product_rate().product.product_type
+                plan_product = subscription.plan_version.product_rate.product.product_type
                 self.fields['plan_product'].initial = plan_product
             except (IndexError, SoftwarePlanVersion.DoesNotExist):
                 plan_product = (
@@ -1249,7 +1249,10 @@ class SoftwarePlanVersionForm(forms.Form):
     @memoized
     def current_products_to_rates(self):
         if self.plan_version is not None:
-            return dict([(r.product.id, r) for r in self.plan_version.product_rates.all()])
+            product_rate = self.plan_version.product_rate
+            return {
+                product_rate.product.id: product_rate
+            }
         else:
             return {}
 
@@ -1365,7 +1368,7 @@ class SoftwarePlanVersionForm(forms.Form):
         rate_ids = lambda x: set([r.id for r in x])
         if (not self.is_update
             and (self.plan_version is None
-                 or rate_ids(rate_instances).symmetric_difference(rate_ids(self.plan_version.product_rates.all())))):
+                 or rate_ids(rate_instances).symmetric_difference(rate_ids([self.plan_version.product_rate])))):
             self.is_update = True
         return original_data
 
@@ -1426,9 +1429,9 @@ class SoftwarePlanVersionForm(forms.Form):
             feature_rate.save()
             new_version.feature_rates.add(feature_rate)
 
-        for product_rate in self.new_product_rates:
-            product_rate.save()
-            new_version.product_rates.add(product_rate)
+        product_rate = self.new_product_rates[0]  # always contains one item
+        product_rate.save()
+        new_version.product_rate = product_rate
 
         new_version.save()
         messages.success(request, 'The version for %s Software Plan was successfully updated.' % new_version.plan.name)

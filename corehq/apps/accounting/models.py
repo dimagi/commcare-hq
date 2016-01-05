@@ -781,26 +781,9 @@ class SoftwarePlanVersion(models.Model):
             'version_num': self.version,
         }
 
-    def get_product_rate(self):
-        product_rates = self.product_rates.all()
-        if len(product_rates) > 1:
-            # Models and UI are both written to support multiple products,
-            # but for now, each subscription can only have one product.
-            log_accounting_error(
-                "There are multiple product rates for plan version number %d. "
-                "Odd, right? Consider this an issue."
-                % self.id
-            )
-        return product_rates[0]
-
     @property
     def core_product(self):
-        try:
-            product_rate = self.product_rates.all()[0]
-            return product_rate.product.product_type
-        except (IndexError, SoftwareProductRate.DoesNotExist):
-            pass
-        return SoftwareProductType.COMMCARE
+        return self.product_rate.product.product_type
 
     @property
     def version(self):
@@ -811,7 +794,6 @@ class SoftwarePlanVersion(models.Model):
     @property
     def user_facing_description(self):
         from corehq.apps.accounting.user_text import DESC_BY_EDITION, FEATURE_TYPE_TO_NAME
-        product = self.product_rates.get()
         desc = {
             'name': self.plan.name,
             'description': self.plan.description,
@@ -827,7 +809,7 @@ class SoftwarePlanVersion(models.Model):
         except KeyError:
             pass
         desc.update({
-            'monthly_fee': 'USD %s' % product.monthly_fee,
+            'monthly_fee': 'USD %s' % self.product_rate.monthly_fee,
             'rates': [{'name': FEATURE_TYPE_TO_NAME[r.feature.feature_type],
                        'included': 'Infinite' if r.monthly_limit == UNLIMITED_FEATURE_USAGE else r.monthly_limit}
                       for r in self.feature_rates.all()],
