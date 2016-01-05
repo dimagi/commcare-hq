@@ -739,6 +739,13 @@ GRID_MENUS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+TF_USES_SQLITE_BACKEND = StaticToggle(
+    'tf_sql_backend',
+    'Use a SQLite backend for Touchforms',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 SECURE_SESSIONS_CHECKBOX = StaticToggle(
     'secure_sessions_checkbox',
     'Show secure sessions checkbox',
