@@ -134,9 +134,9 @@ var tfLoadingComplete = function (isError) {
 var tfSyncComplete = function (isError) {
     hideLoading();
     if (isError) {
-        $('#save-indicator').text(translatedStrings.errSyncing).removeClass('alert-warning alert-success').addClass('alert-danger').show();
+        showError(translatedStrings.errSyncing, $('#save-indicator'));
     } else {
-        $('#save-indicator').text(translatedStrings.synced).removeClass('alert-warning alert-danger').addClass('alert-success').show();
+        showSuccess(translatedStrings.synced, $('#save-indicator'));
     }
 };
 
