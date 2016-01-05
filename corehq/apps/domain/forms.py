@@ -19,7 +19,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
-from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.accounting.utils import domain_has_privilege, log_accounting_error
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.feature_previews import CALLCENTER
 
@@ -1331,11 +1331,12 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                     new_version=self.renewed_version,
                 )
         except SubscriptionRenewalError as e:
-            logger.error("[BILLING] Subscription for %(domain)s failed to "
-                         "renew due to: %(error)s." % {
-                             'domain': self.domain,
-                             'error': e,
-                         })
+            log_accounting_error(
+                "Subscription for %(domain)s failed to renew due to: %(error)s." % {
+                    'domain': self.domain,
+                    'error': e,
+                }
+            )
         return True
 
 
