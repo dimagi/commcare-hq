@@ -761,7 +761,7 @@ class DefaultProductPlan(models.Model):
 class SoftwarePlanVersion(models.Model):
     """
     Links a plan to its rates and provides versioning information.
-    Once a new SoftwarePlanVersion is created, it cannot be modified. Instead, a new SofwarePlanVersion
+    Once a new SoftwarePlanVersion is created, it cannot be modified. Instead, a new SoftwarePlanVersion
     must be created.
     """
     plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
