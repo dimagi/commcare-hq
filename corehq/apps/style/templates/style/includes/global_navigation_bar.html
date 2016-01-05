@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load tzmigration %}
 
-{% if request.couch_user and request.couch_user.is_web_user %}
+{% if request.couch_user %}
 <ul class="nav navbar-nav" role="menu">
     <li id="settingsmenu-projectSettings" class="dropdown">
         <a href="#" class="dropdown-toggle" data-toggle="dropdown">
@@ -42,7 +42,7 @@
                     {% trans 'Sign Out' %}
                 </a>
             </li>
-            {% if domain and domain != 'public' and not request.project.is_snapshot %}
+            {% if request.couch_user.is_web_user and domain and domain != 'public' and not request.project.is_snapshot %}
             <li class="nav-divider divider"></li>
             <li class="dropdown-header nav-header">{% trans 'Manage Project' %}</li>
             <li>
@@ -106,6 +106,13 @@
         {% else %}
             {% domains_for_user request %}
         {% endif %}
+    </li>
+    {% endif %}
+    {% if request.couch_user and request.couch_user.is_commcare_user %}
+    <li id="settingsmenu-project-commcareonly">
+        <a href="{% url "homepage" %}">
+            {{ request.couch_user.project.display_name }}
+        </a>
     </li>
     {% endif %}
 </ul>
