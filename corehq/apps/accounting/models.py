@@ -1181,28 +1181,6 @@ class Subscription(models.Model):
                    }
                 )
 
-    def terminate_all_active_subscriptions(self, excluded_id=None,
-                                           web_user=None, note=None,
-                                           method=None):
-        active_subs = Subscription.objects.filter(
-            subscriber=self.subscriber, is_active=True
-        )
-        if excluded_id is not None:
-            active_subs = active_subs.exclude(id=excluded_id)
-        today = datetime.date.today()
-
-        for sub in active_subs:
-            if sub.id == self.id:
-                sub = self
-            sub.is_active = False
-            if sub.date_end is None or sub.date_end > today:
-                sub.date_end = today
-            sub.save()
-            SubscriptionAdjustment.record_adjustment(
-                sub, reason=SubscriptionAdjustmentReason.MODIFY,
-                method=method, note=note, web_user=web_user,
-            )
-
     def update_subscription(self, date_start, date_end,
                             date_delay_invoicing=None, do_not_invoice=False,
                             no_invoice_reason=None, do_not_email=False,
