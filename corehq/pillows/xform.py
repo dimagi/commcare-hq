@@ -47,6 +47,11 @@ class XFormPillow(HQPillow):
     # for simplicity, the handlers are managed on the domain level
     handler_domain_map = {}
     default_mapping = XFORM_MAPPING
+    es_meta = {
+        'settings': {
+            'index.mapping.ignore_malformed': True
+        }
+    }
 
     @classmethod
     def get_unique_id(self):

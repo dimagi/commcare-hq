@@ -14,6 +14,11 @@ class ReportCasePillow(CasePillow):
     es_type = "report_case"
     es_index = REPORT_CASE_INDEX
     default_mapping = REPORT_CASE_MAPPING
+    es_meta = {
+        'settings': {
+            'index.mapping.ignore_malformed': True
+        }
+    }
 
     def change_transform(self, doc_dict):
         if self.get_domain(doc_dict) not in getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', []):

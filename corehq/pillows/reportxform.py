@@ -18,6 +18,11 @@ class ReportXFormPillow(XFormPillow):
 
     #type level mapping
     default_mapping = REPORT_XFORM_MAPPING
+    es_meta = {
+        'settings': {
+            'index.mapping.ignore_malformed': True
+        }
+    }
 
     @classmethod
     def get_unique_id(cls):
