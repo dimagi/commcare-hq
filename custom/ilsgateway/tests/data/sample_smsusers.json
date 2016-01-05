@@ -1,69 +1,102 @@
 [
-    {
-        "id": 1,
-        "name": "Test user",
-        "role": "ic",
-        "is_active": "True",
-        "supply_point": 79,
-        "email": "test@gmail.com",
-        "phone_numbers": [
-            "4224242442"
-        ],
-        "backend": "push_backend"
-    },
-    {
+  {
+    "id": 1,
+    "name": "Test user",
+    "role": "ic",
+    "is_active": "True",
+    "supply_point": 79,
+    "email": "test@gmail.com",
+    "phone_numbers": [
+      {
+        "backend": "push_backend",
+        "default": true,
+        "phone_number": "4224242442"
+      }
+    ],
+    "backend": "push_backend"
+  },
+  {
+    "backend": "message_tester",
+    "date_updated": "2014-07-15T00:00:00",
+    "email": "",
+    "id": 1,
+    "is_active": "True",
+    "name": "Facility in-charge MICHENJELE DISP",
+    "phone_numbers": [
+      {
         "backend": "message_tester",
-        "date_updated": "2014-07-15T00:00:00",
-        "email": "",
-        "id": 1,
-        "is_active": "True",
-        "name": "Facility in-charge MICHENJELE DISP",
-        "phone_numbers": ["222"],
-        "role": "Facility in-charge",
-        "supply_point": 48
-    },
-    {
-        "backend": "",
-        "date_updated": "2014-07-15T00:00:00",
-        "email": "test3@example.com",
-        "id": 2,
-        "is_active": "True",
-        "name": "test3",
-        "phone_numbers": [],
-        "role": "Facility in-charge",
-        "supply_point": 50
-    },
-    {
-        "backend": "",
-        "date_updated": "2014-07-15T00:00:00",
-        "email": "test4@example.com",
-        "id": 3,
-        "is_active": "True",
-        "name": "Test4",
-        "phone_numbers": [],
-        "role": "District Pharmacist",
-        "supply_point": 79
-    },
-    {
+        "default": true,
+        "phone_number": "222"
+      }
+    ],
+    "role": "Facility in-charge",
+    "supply_point": 48
+  },
+  {
+    "backend": "",
+    "date_updated": "2014-07-15T00:00:00",
+    "email": "test3@example.com",
+    "id": 2,
+    "is_active": "True",
+    "name": "test3",
+    "phone_numbers": [
+      {
+        "backend": "push_backend",
+        "default": true,
+        "phone_number": "2222"
+      },
+      {
         "backend": "message_tester",
-        "date_updated": "2014-07-15T00:00:00",
-        "email": "",
-        "id": 4,
-        "is_active": "True",
-        "name": "Test5",
-        "phone_numbers": ["7323223222"],
-        "role": "Facility in-charge",
-        "supply_point": 60
-    },
-    {
-        "backend": "message_tester",
-        "date_updated": "2014-07-15T00:00:00",
-        "email": "test6@example.com",
-        "id": 5,
-        "is_active": "True",
-        "name": "Test6",
-        "phone_numbers": ["123456789"],
-        "role": "RMO",
-        "supply_point": 50
-    }
+        "default": false,
+        "phone_number": "3333"
+      }
+    ],
+    "role": "Facility in-charge",
+    "supply_point": 50
+  },
+  {
+    "backend": "",
+    "date_updated": "2014-07-15T00:00:00",
+    "email": "test4@example.com",
+    "id": 3,
+    "is_active": "True",
+    "name": "Test4",
+    "phone_numbers": [],
+    "role": "District Pharmacist",
+    "supply_point": 79
+  },
+  {
+    "backend": "message_tester",
+    "date_updated": "2014-07-15T00:00:00",
+    "email": "",
+    "id": 4,
+    "is_active": "True",
+    "name": "Test5",
+    "phone_numbers": [
+      {
+        "backend": "push_backend",
+        "default": true,
+        "phone_number": "7323223222"
+      }
+    ],
+    "role": "Facility in-charge",
+    "supply_point": 60
+  },
+  {
+    "backend": "message_tester",
+    "date_updated": "2014-07-15T00:00:00",
+    "email": "test6@example.com",
+    "id": 5,
+    "is_active": "True",
+    "name": "Test6",
+    "phone_numbers": [
+      {
+        "backend": "push_backend",
+        "default": true,
+        "phone_number": "123456789"
+      }
+    ],
+    "role": "RMO",
+    "supply_point": 50
+  }
 ]
