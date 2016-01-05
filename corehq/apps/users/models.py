@@ -70,6 +70,8 @@ from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
+MAX_LOGIN_ATTEMPTS = 5
+
 def _add_to_list(list, obj, default):
     if obj in list:
         list.remove(obj)
@@ -2213,7 +2215,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         return None
 
     def is_locked_out(self):
-        return self.login_attempts > 4
+        return self.login_attempts >= MAX_LOGIN_ATTEMPTS
 
 
 class FakeUser(WebUser):

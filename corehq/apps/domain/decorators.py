@@ -17,7 +17,7 @@ from django.utils.translation import ugettext as _
 from django_digest.decorators import httpdigest
 from corehq.apps.domain.auth import (
     determine_authtype_from_request, basicauth,
-    BASIC, DIGEST, API_KEY, determine_authtype_from_header
+    BASIC, DIGEST, API_KEY
 )
 from django_prbac.utils import has_privilege
 from python_digest import parse_digest_credentials
@@ -141,7 +141,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False):
                         and (allow_cc_users or couch_user.is_web_user())
                         and couch_user.is_member_of(domain)
                     ):
-                        clear_login_attempts(request.user)
+                        clear_login_attempts(couch_user)
                         return fn(request, domain, *args, **kwargs)
                     else:
                         return HttpResponseForbidden()

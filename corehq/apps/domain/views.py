@@ -57,7 +57,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
-from corehq.apps.users.models import Invitation
+from corehq.apps.users.models import Invitation, CouchUser
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
 from corehq.util.context_processors import get_domain_type
@@ -2826,5 +2826,6 @@ class PasswordResetView(View):
         uidb64 = kwargs.get('uidb64')
         uid = urlsafe_base64_decode(uidb64)
         user = User.objects.get(pk=uid)
-        clear_login_attempts(user)
+        couch_user = CouchUser.from_django_user(user)
+        clear_login_attempts(couch_user)
         return response

@@ -7,7 +7,6 @@ from corehq.apps.users.models import CouchUser
 
 
 def clear_login_attempts(user):
-    user = CouchUser.from_django_user(user)
     if user and user.is_web_user() and user.login_attempts > 0:
         user.login_attempts = 0
         user.save()
@@ -15,7 +14,8 @@ def clear_login_attempts(user):
 
 @receiver(user_logged_in)
 def clear_failed_logins_and_unlock_account(sender, request, user, **kwargs):
-    clear_login_attempts(user)
+    couch_user = CouchUser.from_django_user(user)
+    clear_login_attempts(couch_user)
 
 
 @receiver(user_login_failed)
