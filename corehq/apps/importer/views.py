@@ -1,6 +1,7 @@
 import os.path
-from django.http import HttpResponseRedirect, HttpResponseServerError
+from django.http import HttpResponseRedirect
 from django.utils.datastructures import MultiValueDictKeyError
+from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.hqcase.dbaccessors import get_case_properties, \
     get_case_types_for_domain
 from corehq.apps.importer import base
@@ -11,12 +12,10 @@ from corehq.apps.importer.tasks import bulk_import_async
 from django.views.decorators.http import require_POST
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.apps.app_manager.models import ApplicationBase
 from corehq.util.files import file_extention_from_filename
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 from soil import DownloadBase
-from soil.heartbeat import heartbeat_enabled, is_alive
 from django.template.context import RequestContext
 
 from django.contrib import messages
@@ -89,21 +88,10 @@ def excel_config(request, domain):
                             'Your spreadsheet is empty. '
                             'Please try again with a different spreadsheet.')
 
-    case_types_from_apps = []
-    # load types from all modules
-    for row in ApplicationBase.view(
-        'app_manager/types_by_module',
-        reduce=True,
-        group=True,
-        startkey=[domain],
-        endkey=[domain, {}]
-    ).all():
-        if not row['key'][1] in case_types_from_apps:
-            case_types_from_apps.append(row['key'][1])
-
-    case_types_from_cases = get_case_types_for_domain(domain)
+    case_types_from_apps = get_case_types_from_apps(domain)
     # for this we just want cases that have data but aren't being used anymore
-    case_types_from_cases = filter(lambda x: x not in case_types_from_apps, case_types_from_cases)
+    case_types_from_cases = [t for t in get_case_types_for_domain(domain)
+                             if t not in case_types_from_apps]
 
     if len(case_types_from_apps) == 0 and len(case_types_from_cases) == 0:
         return render_error(
