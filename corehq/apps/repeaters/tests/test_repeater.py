@@ -273,7 +273,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
             def get_payload(self, repeat_record, payload_doc):
                 return payload
 
-        repeat_record = self.repeater.register(case_id)
+        repeat_record = self.repeater.register(CommCareCase.get(case_id))
         with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout', side_effect=Exception('Boom!')):
             repeat_record.fire()
 
@@ -370,7 +370,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
             def get_payload(self, repeat_record, payload_doc):
                 return payload
 
-        repeat_record = self.repeater.register(case_id)
+        repeat_record = self.repeater.register(CommCareCase.get(case_id))
         post_fn = MagicMock()
         repeat_record.fire(post_fn=post_fn)
         headers = self.repeater.get_headers(repeat_record)

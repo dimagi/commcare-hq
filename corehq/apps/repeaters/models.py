@@ -198,16 +198,12 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         return generator.get_payload(repeat_record, self.payload_doc(repeat_record))
 
     def register(self, payload, next_check=None):
-        try:
-            payload_id = payload.get_id
-        except Exception:
-            payload_id = payload
         repeat_record = RepeatRecord(
             repeater_id=self.get_id,
             repeater_type=self.doc_type,
             domain=self.domain,
             next_check=next_check or datetime.utcnow(),
-            payload_id=payload_id
+            payload_id=payload.get_id
         )
         repeat_record.save()
         return repeat_record
