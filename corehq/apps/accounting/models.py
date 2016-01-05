@@ -4,6 +4,7 @@ from tempfile import NamedTemporaryFile
 from decimal import Decimal
 import itertools
 
+import json_field
 from couchdbkit import ResourceNotFound
 from django.db.models.manager import Manager
 
@@ -497,8 +498,9 @@ class BillingContactInfo(models.Model):
     last_name = models.CharField(
         max_length=50, null=True, blank=True, verbose_name=_("Last Name")
     )
-    emails = models.CharField(
-        max_length=200, null=True,
+    # TODO - replace with models.ArrayField once django >= 1.9
+    email_list = json_field.JSONField(
+        default=[],
         verbose_name=_("Contact Emails"),
         help_text=_("We will email communications regarding your account "
                     "to the emails specified here.")
@@ -535,6 +537,11 @@ class BillingContactInfo(models.Model):
 
     class Meta:
         app_label = 'accounting'
+
+    def __init__(self, *args, **kwargs):
+        super(BillingContactInfo, self).__init__(*args, **kwargs)
+        if self.email_list == '[]':
+            self.email_list = []
 
     @property
     def full_name(self):
@@ -1472,12 +1479,11 @@ class Subscription(models.Model):
                             'ending_on': ending_on,
                         }
 
-            billing_contact_emails = BillingContactInfo.objects.get(account=self.account).emails
-            if billing_contact_emails is None:
+            billing_contact_emails = self.account.billingcontactinfo.email_list
+            if not billing_contact_emails:
                 raise SubscriptionReminderError(
                     "Billing account %d doesn't have any contact emails" % self.account.id
                 )
-            billing_contact_emails = billing_contact_emails.split(',')
             emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
 
             template = 'accounting/subscription_ending_reminder_email.html'
@@ -1536,7 +1542,7 @@ class Subscription(models.Model):
         context = {
             'domain': domain,
             'end_date': end_date,
-            'contacts': self.account.billingcontactinfo.emails,
+            'contacts': self.account.billingcontactinfo.email_list,
             'dimagi_contact': email,
         }
         email_html = render_to_string(template, context)
@@ -1824,7 +1830,7 @@ class Invoice(InvoiceBase):
     def contact_emails(self):
         try:
             billing_contact_info = BillingContactInfo.objects.get(account=self.account)
-            contact_emails = billing_contact_info.emails.split(',') if billing_contact_info.emails else []
+            contact_emails = billing_contact_info.email_list
         except BillingContactInfo.DoesNotExist:
             contact_emails = []
 
