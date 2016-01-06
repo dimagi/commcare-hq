@@ -34,7 +34,7 @@ class DeviceLogTagFilter(BaseReportFilter):
 class BaseDeviceLogFilter(BaseReportFilter):
     # todo: make this better
     slug = "logfilter"
-    template = "reports/filters/devicelog_filter.html"
+    template = "reports/filters/bootstrap2/devicelog_filter.html"
     field = None
     label = ugettext_noop("Filter Logs By")
     url_param_map = {'Unknown': None}
