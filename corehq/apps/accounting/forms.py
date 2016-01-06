@@ -375,6 +375,7 @@ class SubscriptionForm(forms.Form):
         choices=FundingSource.CHOICES,
         initial=FundingSource.CLIENT,
     )
+    set_subscription = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, subscription, account_id, web_user, *args, **kwargs):
         # account_id is not referenced if subscription is not None
@@ -538,7 +539,8 @@ class SubscriptionForm(forms.Form):
                 'auto_generate_credits',
                 'service_type',
                 'pro_bono_status',
-                'funding_source'
+                'funding_source',
+                'set_subscription'
             ),
             FormActions(
                 crispy.ButtonHolder(
@@ -741,6 +743,7 @@ class CreditForm(forms.Form):
     )
     product_type = forms.ChoiceField(required=False, label=ugettext_lazy("Product Type"))
     feature_type = forms.ChoiceField(required=False, label=ugettext_lazy("Feature Type"))
+    adjust = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, account, subscription, *args, **kwargs):
         self.account = account
@@ -761,6 +764,7 @@ class CreditForm(forms.Form):
                 crispy.Field('rate_type', data_bind="value: rateType"),
                 crispy.Div('product_type', data_bind="visible: showProduct"),
                 crispy.Div('feature_type', data_bind="visible: showFeature"),
+                'adjust'
             ),
             FormActions(
                 crispy.ButtonHolder(
@@ -810,6 +814,7 @@ class CancelForm(forms.Form):
     note = forms.CharField(
         widget=forms.TextInput,
     )
+    cancel_subscription = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, subscription, *args, **kwargs):
         super(CancelForm, self).__init__(*args, **kwargs)
@@ -821,6 +826,7 @@ class CancelForm(forms.Form):
             crispy.Fieldset(
                 'Cancel Subscription',
                 crispy.Field('note', **({'readonly': True} if can_cancel else {})),
+                'cancel_subscription'
             ),
             FormActions(
                 StrictButton(
@@ -836,6 +842,7 @@ class CancelForm(forms.Form):
 
 class SuppressSubscriptionForm(forms.Form):
     submit_kwarg = 'suppress_subscription'
+    suppress_subscription = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, subscription, *args, **kwargs):
         self.subscription = subscription
@@ -849,6 +856,7 @@ class SuppressSubscriptionForm(forms.Form):
                 crispy.HTML('Warning: this can only be undone by a developer.'),
                 css_class='alert alert-error',
             ),
+            'suppress_subscription'
         ]
         if self.subscription.is_active:
             fields.append(crispy.Div(
@@ -1754,6 +1762,8 @@ class AdjustBalanceForm(forms.Form):
         widget=forms.HiddenInput(),
     )
 
+    adjust = forms.CharField(widget=forms.HiddenInput, required=False)
+
     def __init__(self, invoice, *args, **kwargs):
         self.invoice = invoice
         super(AdjustBalanceForm, self).__init__(*args, **kwargs)
@@ -1789,6 +1799,7 @@ class AdjustBalanceForm(forms.Form):
                 crispy.Field('method'),
                 crispy.Field('note'),
                 crispy.Field('invoice_id'),
+                'adjust',
                 css_class='modal-body',
                 css_id="adjust-balance-form-%d" % invoice.id
             ),
@@ -1942,6 +1953,7 @@ class ResendEmailForm(forms.Form):
         label="Additional Recipients:",
         required=False,
     )
+    resend = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, invoice, *args, **kwargs):
         self.invoice = invoice
@@ -1955,6 +1967,7 @@ class ResendEmailForm(forms.Form):
                     ', '.join(invoice.email_recipients)
                 ),
                 crispy.Field('additional_recipients'),
+                'resend',
                 css_class='modal-body',
             ),
             FormActions(
@@ -1992,7 +2005,8 @@ class ResendEmailForm(forms.Form):
 
 
 class SuppressInvoiceForm(forms.Form):
-    submit_kwarg = 'suppress_invoice'
+    submit_kwarg = 'suppress'
+    suppress = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, invoice, *args, **kwargs):
         self.invoice = invoice
@@ -2006,7 +2020,8 @@ class SuppressInvoiceForm(forms.Form):
                 crispy.Div(
                     crispy.HTML('Warning: this can only be undone by a developer.'),
                     css_class='alert alert-error',
-                )
+                ),
+                'suppress',
             ),
             FormActions(
                 StrictButton(

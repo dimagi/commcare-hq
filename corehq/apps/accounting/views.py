@@ -200,7 +200,7 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
             self.contact_form.save()
             messages.success(request, "Account Contact Info successfully updated.")
             return HttpResponseRedirect(self.page_url)
-        elif ('adjust_credit' in self.request.POST
+        elif ('adjust' in self.request.POST
               and self.credit_form.is_valid()):
             try:
                 if self.credit_form.adjust_credit(web_user=request.user.username):
@@ -329,7 +329,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     @property
     @memoized
     def credit_form(self):
-        if self.request.method == 'POST' and 'adjust_credit' in self.request.POST:
+        if self.request.method == 'POST' and 'adjust' in self.request.POST:
             return CreditForm(self.subscription.account, self.subscription,
                               self.request.POST)
         return CreditForm(self.subscription.account, self.subscription)
@@ -766,13 +766,13 @@ class InvoiceSummaryViewBase(AccountingSectionView):
         return SuppressInvoiceForm(self.invoice)
 
     def post(self, request, *args, **kwargs):
-        if 'adjust_balance' in self.request.POST:
+        if 'adjust' in self.request.POST:
             if self.adjust_balance_form.is_valid():
                 self.adjust_balance_form.adjust_balance(
                     web_user=self.request.user.username,
                 )
                 return HttpResponseRedirect(request.META.get('HTTP_REFERER') or self.page_url)
-        elif 'resend_email' in self.request.POST:
+        elif 'resend' in self.request.POST:
             if self.resend_email_form.is_valid():
                 try:
                     self.resend_email_form.resend_email()
