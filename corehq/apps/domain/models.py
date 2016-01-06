@@ -880,6 +880,12 @@ class Domain(Document, SnapshotMixin):
         super(Domain, self).delete()
         Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
+    def _delete_messaging_data(self):
+        from corehq.apps.sms.models import SQLMobileBackendMapping
+        # TODO: Can make this a bulk delete once the sync to couch is no longer necessary
+        for mapping in SQLMobileBackendMapping.objects.filter(is_global=False, domain=self.name):
+            mapping.delete()
+
     def _pre_delete(self):
         from corehq.apps.domain.signals import commcare_domain_pre_delete
         from corehq.apps.domain.deletion import apply_deletion_operations
@@ -898,6 +904,7 @@ class Domain(Document, SnapshotMixin):
         for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):
             iter_bulk_delete(db, related_doc_ids, chunksize=500)
 
+        self._delete_messaging_data()
         self._delete_web_users_from_domain()
         apply_deletion_operations(self.name, dynamic_deletion_operations)
 
