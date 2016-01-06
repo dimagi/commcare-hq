@@ -133,7 +133,26 @@
         {# Core Libraries #}
         {% compress js %}
         {% include "style/includes/bootstrap3/core_libraries.html" %}
+        {% endcompress %} 
+
+        {% if formdesigner %}
+        <script src="{% new_static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
+        {% endif %}
+
+        {% if request.use_jquery_ui %}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
         {% endcompress %}
+        {% endif %}
+
+        {% if request.use_jquery_ui_multiselect %}
+            {% compress js %}
+                <script src="{% new_static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
+                <script src="{% new_static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
+            {% endcompress %}
+        {% endif %}
+
+        <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
 
         {# Up here because if daterangepicker is called from within a form widget, #}
         {# the javascript requiring the config file is run before js-inline #}
@@ -143,10 +162,6 @@
         <script type="text/javascript" src="{% new_static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/daterangepicker.config.js' %}"></script>
         {% endcompress %}
-        {% endif %}
-
-        {% if formdesigner %}
-        <script src="{% new_static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
         {% endif %}
 
         {% block head %}
@@ -363,19 +378,6 @@
         {% compress js %}
         <script type="text/javascript" src="{% new_static 'style/lib/select2-4.0/dist/js/select2.full.min.js' %}"></script>
         {% endcompress %}
-        {% endif %}
-
-        {% if request.use_jquery_ui %}
-        {% compress js %}
-        <script type="text/javascript" src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
-
-        {% if request.use_jquery_ui_multiselect %}
-            {% compress js %}
-                <script src="{% new_static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
-                <script src="{% new_static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
-            {% endcompress %}
         {% endif %}
 
         {% if request.use_nvd3 %}
