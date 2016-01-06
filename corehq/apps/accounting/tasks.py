@@ -97,10 +97,22 @@ def deactivate_subscriptions(based_on_date=None):
             )
 
 
+def warn_subscriptions_still_active(based_on_date=None):
+    ending_date = based_on_date or datetime.date.today()
+    subscriptions_still_active = Subscription.objects.filter(
+        date_end__lte=ending_date,
+        is_active=True,
+    )
+    for subscription in subscriptions_still_active:
+        log_accounting_error("%s is still active." % subscription)
+
+
 @periodic_task(run_every=crontab(minute=0, hour=5))
 def update_subscriptions():
     deactivate_subscriptions()
     activate_subscriptions()
+    warn_subscriptions_still_active()
+
 
 @periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'))
 def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
