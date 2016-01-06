@@ -25,7 +25,11 @@ def migrate(balance_only=False):
             couch_count += 1
 
         if not balance_only:
-            _sync_default_backend_mapping(domain)
+            try:
+                _sync_default_backend_mapping(domain)
+            except Exception as e:
+                print ("Error while syncing domain %s, backend %s: %s" %
+                       (domain.name, domain.default_sms_backend_id, e))
 
     balance(couch_count)
     if not balance_only:
