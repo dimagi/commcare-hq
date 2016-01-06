@@ -3957,33 +3957,26 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 descending=True,
             ).first()
 
+    @memoized
     def get_latest_saved(self):
         """
         This looks really similar to get_latest_app, not sure why tim added
         """
-        if not hasattr(self, '_latest_saved'):
-            released = self.__class__.view('app_manager/applications',
-                startkey=['^ReleasedApplications', self.domain, self._id, {}],
-                endkey=['^ReleasedApplications', self.domain, self._id],
-                limit=1,
-                descending=True,
-                include_docs=True
-            )
-            if len(released) > 0:
-                self._latest_saved = released.all()[0]
-            else:
-                saved = self.__class__.view('app_manager/saved_app',
-                    startkey=[self.domain, self._id, {}],
-                    endkey=[self.domain, self._id],
-                    descending=True,
-                    limit=1,
-                    include_docs=True
-                )
-                if len(saved) > 0:
-                    self._latest_saved = saved.all()[0]
-                else:
-                    self._latest_saved = None  # do not return this app!
-        return self._latest_saved
+        released = self.__class__.view('app_manager/applications',
+            startkey=['^ReleasedApplications', self.domain, self._id, {}],
+            endkey=['^ReleasedApplications', self.domain, self._id],
+            descending=True,
+            include_docs=True
+        ).first()
+        if released:
+            return released
+
+        return self.__class__.view('app_manager/saved_app',
+            startkey=[self.domain, self._id, {}],
+            endkey=[self.domain, self._id],
+            descending=True,
+            include_docs=True
+        ).first()
 
     def set_admin_password(self, raw_password):
         salt = os.urandom(5).encode('hex')
