@@ -47,9 +47,12 @@ def activate_subscriptions(based_on_date=None):
     Activates all subscriptions starting today (or, for testing, based on the date specified)
     """
     starting_date = based_on_date or datetime.date.today()
-    starting_subscriptions = Subscription.objects.filter(date_start=starting_date)
+    starting_subscriptions = Subscription.objects.filter(
+        date_start=starting_date,
+        is_active=False,
+    )
     for subscription in starting_subscriptions:
-        if not has_subscription_already_ended(subscription) and not subscription.is_active:
+        if not has_subscription_already_ended(subscription):
             with transaction.atomic():
                 subscription.is_active = True
                 subscription.save()
