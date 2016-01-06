@@ -1677,3 +1677,7 @@ class MigrationStatus(models.Model):
             return True
         except cls.DoesNotExist:
             return False
+
+
+# Import signal receiver so that it gets registered
+from corehq.apps.sms.signals import sync_default_backend_mapping
