@@ -6,6 +6,7 @@ import datetime
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
@@ -105,6 +106,17 @@ def warn_subscriptions_still_active(based_on_date=None):
     )
     for subscription in subscriptions_still_active:
         log_accounting_error("%s is still active." % subscription)
+
+
+def warn_subscriptions_not_active(based_on_date=None):
+    based_on_date = based_on_date or datetime.date.today()
+    subscriptions_not_active = Subscription.objects.filter(
+        Q(date_end=None) | Q(date_end__gt=based_on_date),
+        date_start__lte=based_on_date,
+        is_active=False,
+    )
+    for subscription in subscriptions_not_active:
+        log_accounting_error("%s is not active" % subscription)
 
 
 @periodic_task(run_every=crontab(minute=0, hour=5))
