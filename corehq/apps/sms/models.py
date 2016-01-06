@@ -1600,6 +1600,7 @@ class SQLMobileBackendMapping(SyncSQLToCouchMixin, models.Model):
     """
     class Meta:
         db_table = 'messaging_mobilebackendmapping'
+        unique_together = ('domain', 'backend_type', 'prefix')
 
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
