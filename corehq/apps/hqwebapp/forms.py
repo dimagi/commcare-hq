@@ -6,6 +6,9 @@ from django.core.exceptions import ValidationError
 from django.http import QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
+from django.utils.safestring import mark_safe
+
+from corehq.apps.users.models import CouchUser
 
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -20,6 +23,23 @@ class EmailAuthenticationForm(AuthenticationForm):
     def clean_username(self):
         username = self.cleaned_data['username'].lower()
         return username
+
+    def clean(self):
+        lockout_message = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password.'))
+        username = self.cleaned_data['username']
+        try:
+            cleaned_data = super(EmailAuthenticationForm, self).clean()
+        except ValidationError:
+            user = CouchUser.get_by_username(username)
+            if user and user.is_web_user() and user.is_locked_out():
+                raise ValidationError(lockout_message)
+            else:
+                raise
+        user = CouchUser.get_by_username(username)
+        if user and user.is_web_user() and user.is_locked_out():
+            raise ValidationError(lockout_message)
+        return cleaned_data
+
 
 
 class CloudCareAuthenticationForm(EmailAuthenticationForm):
