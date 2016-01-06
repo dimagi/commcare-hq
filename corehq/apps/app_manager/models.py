@@ -3823,6 +3823,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     Abstract base class for Application and RemoteApp.
     Contains methods for generating the various files and zipping them into CommCare.jar
 
+    There are several flavors of Applications:
+        Application - The current state of the application has copy_of==None
+        SavedAppBuild - Whenever the app is built, a copy is created, and
+            copy_of will be set to the original application's id.
+        Released builds are SavedAppBuilds with is_released==True.  These have
+            been starred on the releases page.
     """
 
     recipients = StringProperty(default="")
