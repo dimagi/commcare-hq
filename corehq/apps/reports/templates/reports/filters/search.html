@@ -1,4 +1,4 @@
-{% extends 'reports/filters/base.html' %}
+{% extends 'reports/filters/bootstrap2/base.html' %}
 {% load hq_shared_tags %}
 {% block filter_content %}
 <input id="{{ css_id }}" name="{{ slug }}" type="text" class="{% block input_css_class %}span6{% endblock %}" value="{{ search_query }}">
