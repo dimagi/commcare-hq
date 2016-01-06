@@ -72,7 +72,11 @@
             <tr>
                 <td>{{ product_name }}</td>
                 <td>{{ transaction.stock_on_hand }}</td>
+                {% if transaction %}
                 <td><a href="{% url 'render_form_data' case.domain transaction.report.form_id %}">{{ transaction.report.date }}</a></td>
+                {% else %}
+                <td>{% trans "No transaction found" %}</td>
+                {% endif %}
             </tr>
             {% endfor %}
             </table>
