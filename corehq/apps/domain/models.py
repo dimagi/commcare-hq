@@ -881,10 +881,20 @@ class Domain(Document, SnapshotMixin):
         Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
     def _delete_messaging_data(self):
-        from corehq.apps.sms.models import SQLMobileBackendMapping
-        # TODO: Can make this a bulk delete once the sync to couch is no longer necessary
-        for mapping in SQLMobileBackendMapping.objects.filter(is_global=False, domain=self.name):
-            mapping.delete()
+        from corehq.apps.sms.models import (SQLMobileBackendMapping,
+            MobileBackendInvitation, SQLMobileBackend, SMS, MessagingEvent,
+            MessagingSubEvent, SelfRegistrationInvitation)
+        # Ok to keep these as bulk deletes since all domain-related couch docs
+        # are deleted via bulk delete in self._pre_delete() (so we don't need the
+        # couch-sql sync to run on each object we're deleting)
+        SMS.objects.filter(domain=self.name).delete()
+        MessagingSubEvent.objects.filter(parent__domain=self.name).delete()
+        MessagingEvent.objects.filter(domain=self.name).delete()
+        SelfRegistrationInvitation.objects.filter(domain=self.name).delete()
+        SQLMobileBackendMapping.objects.filter(is_global=False, domain=self.name).delete()
+        MobileBackendInvitation.objects.filter(domain=self.name).delete()
+        SQLMobileBackend.objects.filter(is_global=False, domain=self.name).delete()
+
 
     def _pre_delete(self):
         from corehq.apps.domain.signals import commcare_domain_pre_delete
