@@ -189,7 +189,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
             and select a final option before the result is usable. For example, you can't just pick an application
             and show all of its forms, you must select exactly one form.
     """
-    template = "reports/filters/drilldown_options.html"
+    template = "reports/filters/bootstrap2/drilldown_options.html"
     use_only_last = False
     drilldown_empty_text = ugettext_noop("No Data Available")
     is_cacheable = True
