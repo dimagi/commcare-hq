@@ -88,10 +88,11 @@ Language
 from collections import namedtuple
 from copy import deepcopy
 import json
-from corehq.apps.es.utils import values_list
+from pprint import pformat
 
 from dimagi.utils.decorators.memoized import memoized
 
+from corehq.apps.es.utils import values_list
 from corehq.elastic import ES_URLS, ESError, run_query, SIZE_LIMIT
 
 from . import facets
@@ -319,6 +320,9 @@ class ESQuery(object):
         """Performs a minimal query to get the count of matching documents"""
         return self.size(0).run().total
 
+    def __repr__(self):
+        return '{}({!r})'.format(self.__class__.__name__, self.raw_query)
+
 
 class ESQuerySet(object):
     """
@@ -366,7 +370,7 @@ class ESQuerySet(object):
         be returned as scalars if the field had a single value, and returned
         as lists if the field had multiple values.
         This method restores the behavior of 0.90 .
-        
+
         https://www.elastic.co/guide/en/elasticsearch/reference/1.3/_return_values.html
         """
         for key, val in field_dict.iteritems():
@@ -405,7 +409,11 @@ class ESQuerySet(object):
         return results(**{f.name: f.parse_result(raw) for f in facets})
 
     def __repr__(self):
-        return '{}({!r}, {!r})'.format(self.__class__.__name__, self.raw, self.query)
+        raw = pformat(self.raw, depth=2)
+        raw = deepcopy(self.raw)
+        # Turn raw['facets'] into {'key1': {...}, 'key2': {...}} if it exists
+        # Turn hits into [...] if it exists
+        return '{}({!r}, {!r})'.format(self.__class__.__name__, raw, self.query)
 
 
 class HQESQuery(ESQuery):
