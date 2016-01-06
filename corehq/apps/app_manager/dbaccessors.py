@@ -16,19 +16,22 @@ def domain_has_apps(domain):
     return len(results) > 0
 
 
-def get_latest_released_app_doc(domain, app_id):
+def get_latest_released_app_doc(domain, app_id, min_version=None):
+    """Get the latest starred build for the application"""
     from .models import Application
+    key = ['^ReleasedApplications', domain, app_id]
     app = Application.get_db().view(
         'app_manager/applications',
-        startkey=['^ReleasedApplications', domain, app_id, {}],
-        endkey=['^ReleasedApplications', domain, app_id],
+        startkey=key + [{}],
+        endkey=(key + [min_version]) if min_version is not None else key,
         descending=True,
         include_docs=True
     ).first()
     return app['doc'] if app else None
 
 
-def get_latest_saved_app_doc(domain, app_id):
+def get_latest_build_doc(domain, app_id):
+    """Get the latest build of the application, regardless of star."""
     from .models import Application
     app = Application.get_db().view(
         'app_manager/saved_app',
@@ -67,29 +70,12 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
             min_version = -1
 
         if target == 'build':
-            # get latest-build regardless of star
-            couch_view = 'app_manager/saved_app'
-            startkey = [domain, parent_app_id, {}]
-            endkey = [domain, parent_app_id]
+            app = get_latest_build_doc(domain, parent_app_id)
         else:
-            # get latest starred-build
-            couch_view = 'app_manager/applications'
-            startkey = ['^ReleasedApplications', domain, parent_app_id, {}]
-            endkey = ['^ReleasedApplications', domain, parent_app_id, min_version]
+            app = get_latest_released_app_doc(domain, app_id, min_version=min_version)
 
-        latest_app = Application.get_db().view(
-            couch_view,
-            startkey=startkey,
-            endkey=endkey,
-            limit=1,
-            descending=True,
-            include_docs=True
-        ).one()
-
-        try:
-            app = latest_app['doc']
-        except TypeError:
-            # If no builds/starred-builds, return act as if latest=False
+        if not app:
+            # If no builds/starred-builds, act as if latest=False
             app = original_app
     else:
         try:

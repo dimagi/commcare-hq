@@ -71,7 +71,7 @@ from corehq.apps.app_manager import current_builds, app_strings, remote_app, \
 from corehq.apps.app_manager.suite_xml import xml_models as suite_models
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
-    get_latest_saved_app_doc,
+    get_latest_build_doc,
     get_latest_released_app_doc,
 )
 from corehq.apps.app_manager.util import (
@@ -3970,7 +3970,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         This looks really similar to get_latest_app, not sure why tim added
         """
         doc = (get_latest_released_app_doc(self.domain, self._id) or
-               get_latest_saved_app_doc(self.domain, self._id))
+               get_latest_build_doc(self.domain, self._id))
         return self.__class__.wrap(doc) if doc else None
 
     def set_admin_password(self, raw_password):
