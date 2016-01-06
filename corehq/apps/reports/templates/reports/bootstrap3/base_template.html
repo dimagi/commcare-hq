@@ -1,4 +1,4 @@
-{% extends "reports/bootstrap2/standard/base_template.html" %}
+{% extends "reports/bootstrap3/standard/base_template.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
@@ -96,6 +96,6 @@
             </div>
         {% endif %}
     </div>
-    {% include "reports/partials/save_reports_modal.html" %}
+    {% include "reports/bootstrap3/partials/save_reports_modal.html" %}
 </div>
 {% endblock %}

@@ -1,15 +1,11 @@
-{% extends "style/bootstrap2/two_column.html" %}
+{% extends "style/bootstrap3/two_column.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
     {% block reports-js %}
-    {% include "imports/datatables.html" %}
     <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
-    <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
     <script src="{% static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.history.js' %}"></script>
-    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'reports/javascripts/datepicker.js' %}"></script>
     <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
     <script src="{% static 'reports/javascripts/reports.async.js' %}"></script>
@@ -64,34 +60,32 @@
 {% endblock %}
 {% endblock %}
 
-{% block head %}
+{% block stylesheets %}
     {{ block.super }}
-    {% block reports-css %}
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
-    {% endblock %}
+    {% block reports-css %}{% endblock %}
 {% endblock %}
 
 {% block title %}{{ report.title|default:"Project Reports"|safe }}{% endblock %}
 
-{% block page-title %}
-    <ul class="breadcrumb">
+{% block page_breadcrumbs %}
+    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
         <li>
-            <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a> <span class="divider">&gt;</span>
+            <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
         </li>
         {% if report.breadcrumbs %}
             {% for crumb in report.breadcrumbs %}
                 <li>
-                    <a href="{{ crumb.link }}">{{ crumb.title }}</a> <span class="divider">&gt;</span>
+                    <a href="{{ crumb.link }}">{{ crumb.title }}</a>
                 </li>
             {% endfor %}
         {% endif %}
         <li class="active">
-            <div id="report-title"><a href="{{ report.url }}">{% trans report.title|default:"Untitled Report"|safe %}</a></div>
+            <a href="{{ report.url }}" id="report-title">{% trans report.title|default:"Untitled Report"|safe %}</a>
         </li>
-    </ul>
+    </ol>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     <div class="hq-accordion-control{% if report.is_async%} hide{% endif %}" id="reportFiltersAccordion">
         {% if report.show_filters %}
             <div id="reportFilters" class="accordion-body collapse">
@@ -99,7 +93,7 @@
                     <form method="get" id="paramSelectorForm" class="form-horizontal">
                         <div id="hq-report-filters">
                             {% if not report.is_async %}
-                                {% include "reports/async/bootstrap2/filters.html" %}
+                                {% include "reports/async/bootstrap3/filters.html" %}
                             {% endif %}
                         </div>
                         <div class="form-actions">
@@ -224,7 +218,7 @@
             {% block reportcontent %}
             {% endblock %}
         {% else %}
-            {% include "reports/async/bootstrap2/default.html" %}
+            {% include "reports/async/bootstrap3/default.html" %}
         {% endif %}
     </div>
 {% endblock %}
