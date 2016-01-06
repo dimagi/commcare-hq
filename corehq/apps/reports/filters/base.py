@@ -94,7 +94,7 @@ class BaseSingleOptionFilter(BaseReportFilter):
     """
         Displays a select field.
     """
-    template = "reports/filters/single_option.html"
+    template = "reports/filters/bootstrap2/single_option.html"
     default_text = ugettext_noop("Filter by...")
     placeholder = ''
     is_paginated = False
