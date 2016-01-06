@@ -1,4 +1,4 @@
-{% extends 'reports/filters/bootstrap2/drilldown_options.html' %}
+{% extends 'reports/filters/bootstrap3/drilldown_options.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block filter_content %}
@@ -68,7 +68,7 @@
 
 {% block filter_js %} {{ block.super }}
 {% if unknown_available or display_app_type %}
-<script type="text/javascript" src="{% static 'reports/ko/report_filter.advanced_forms_options.js' %}"></script>
+<script type="text/javascript" src="{% new_static 'reports/ko/report_filter.advanced_forms_options.js' %}"></script>
 <script type="text/javascript">
     $(function () {
        $('#{{ css_id }}-advanced-options').advanceFormsOptions({

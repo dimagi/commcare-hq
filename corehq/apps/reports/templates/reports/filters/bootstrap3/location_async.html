@@ -23,11 +23,11 @@
                            disable: !can_edit_children()"></select>
       {% endblock %}
   </div>
-  <img id="loc_ajax" src="{% static 'formplayer/img/loading_small.gif' %}" style="display: none;">
+  <img id="loc_ajax" src="{% new_static 'formplayer/img/loading_small.gif' %}" style="display: none;">
 </div>
 <input name="location_id" type="hidden" data-bind="value: selected_locid" />
 
-<script type="text/javascript" src="{% static 'locations/ko/location_drilldown.async.js' %}"></script>
+<script type="text/javascript" src="{% new_static 'locations/ko/location_drilldown.async.js' %}"></script>
 <script type="text/javascript">
 
 var LOAD_LOCS_URL = '{{ api_root }}';

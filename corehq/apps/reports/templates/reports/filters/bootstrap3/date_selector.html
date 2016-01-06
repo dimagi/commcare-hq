@@ -1,4 +1,4 @@
-{% extends 'reports/filters/bootstrap2/base.html' %}
+{% extends 'reports/filters/bootstrap3/base.html' %}
 {% load staticfiles %}
 {% load i18n %}
 {% block filter_content %}
@@ -6,9 +6,9 @@
 {% endblock %}
 {% block filter_js %}
 {% ifequal slug 'date'  %}
-    <link rel="stylesheet" type="text/css" href="{% static "reports/css/daterangepicker-bs2.css" %}">
-    <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
+    <link rel="stylesheet" type="text/css" href="{% new_static "reports/css/daterangepicker-bs2.css" %}">
+    <script type="text/javascript" src="{% new_static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'reports/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
     <script type="text/javascript">
         $(function () {
             $('#filter_date_selector').daterangepicker(

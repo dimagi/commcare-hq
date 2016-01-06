@@ -1,4 +1,4 @@
-{% extends 'reports/filters/bootstrap2/base.html' %}
+{% extends 'reports/filters/bootstrap3/base.html' %}
 {% load hq_shared_tags %}
 {% block filter_content %}
     {% if not endpoint %}
@@ -18,8 +18,8 @@
     {% endif %}
 {% endblock %}
 {% block filter_js %}
-<link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
-<script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
+<link href="{% new_static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
+<script src="{% new_static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
 <script type="text/javascript">
     $(function () {
         $('#{{ css_id }}').parent().koApplyBindings({

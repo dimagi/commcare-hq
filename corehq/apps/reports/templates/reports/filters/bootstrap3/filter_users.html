@@ -1,5 +1,5 @@
 {# todo: this filter sucks, please fix it or get rid of it #}
-{% extends 'reports/filters/bootstrap2/base.html' %}
+{% extends 'reports/filters/bootstrap3/base.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -24,7 +24,7 @@
     </div>
 {% endif %}
 
-<script type="text/javascript" src="{% static 'reports/javascripts/field.filter_buttons.js' %}"></script>
+<script type="text/javascript" src="{% new_static 'reports/javascripts/field.filter_buttons.js' %}"></script>
 <script type="text/javascript">
     $(function() {
         linkButtonGroup("{{ css_id }}");

@@ -1,4 +1,4 @@
-{% extends 'reports/filters/bootstrap2/base.html' %}
+{% extends 'reports/filters/bootstrap3/base.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block filter_content %}
@@ -34,7 +34,7 @@
  {% endif %}
 {% endblock %}
 {% block filter_js %}
-<script type="text/javascript" src="{% static 'reports/ko/report_filter.drilldown_options.js' %}"></script>
+<script type="text/javascript" src="{% new_static 'reports/ko/report_filter.drilldown_options.js' %}"></script>
 <script type="text/javascript">
     $(function () {
        $('#{{ css_id }}').drilldownOptionFilter({

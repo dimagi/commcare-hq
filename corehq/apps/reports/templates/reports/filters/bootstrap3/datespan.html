@@ -1,5 +1,5 @@
-{% extends 'reports/filters/bootstrap2/base.html' %}
-{% load staticfiles %}
+{% extends 'reports/filters/bootstrap3/base.html' %}
+{% load hq_shared_tags %}
 {% load i18n %}
 {% block filter_content %}
     <input type="text" id="filter_range" class="date-range-picker" value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}" />
@@ -24,10 +24,10 @@
 {% endblock %}
 {% block filter_js %}
 {% ifequal slug 'datespan'  %}
-    <link rel="stylesheet" type="text/css" href="{% static "reports/css/daterangepicker-bs2.css" %}">
-    <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reports/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reports/javascripts/daterangepicker.js' %}"></script>
+    <link rel="stylesheet" type="text/css" href="{% new_static "reports/css/daterangepicker-bs2.css" %}">
+    <script type="text/javascript" src="{% new_static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'reports/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'reports/javascripts/daterangepicker.js' %}"></script>
     <script type="text/javascript">
         $(function () {
             var separator = '{{ separator }}';
