@@ -56,7 +56,6 @@ branches:
   - fix-toggle #wsp 12/14
   - location-delete # Cal 12/16
   - new-footer-nav # Biyeun 1/4
-  - uglify-compressor # Ben 1/6
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
