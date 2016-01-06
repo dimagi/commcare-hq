@@ -174,7 +174,7 @@ class BaseSingleOptionTypeaheadFilter(BaseSingleOptionFilter):
     """
         Displays a combobox (select field with typeahead).
     """
-    template = "reports/filters/single_option_typeahead.html"
+    template = "reports/filters/bootstrap2/single_option_typeahead.html"
 
 
 class BaseDrilldownOptionFilter(BaseReportFilter):
