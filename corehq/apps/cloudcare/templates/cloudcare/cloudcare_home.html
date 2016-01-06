@@ -74,6 +74,7 @@
         newWindow: "{% trans "Open in New Window" %}",
         deleteSaved: "{% trans "Permanently delete this form? You will not be able to return to it later." %}",
         deleteSuccess: "{% trans "Form was deleted." %}",
+        deleteError:  "{% trans "Error deleting form. Please try again and report an issue if this problem persists." %}",
         caseListError: "{% trans "Unable to load the case list. If you are using a filter expression please double check the syntax and try again. Please report an issue if this problem persists." %}",
         navigateDirty: "{% trans "You have not submitted this form. Click ‘Stay on this Page’ to continue working on this form. If you click 'Leave this Page' you can resume work on this form later." %}",
         sidebarDirty: "{% trans "You have not submitted this form. Click ‘Cancel’ to continue working on this form. If you click 'OK' you can resume work on this form later." %}"
@@ -190,6 +191,14 @@
         <section id="case-crumbs" style="width: 800px"></section>
         <section id="cases"></section>
         <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
+        {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
+        <section id="cloudcare-debugger" data-bind="
+            template: {
+                name: 'instance-viewer-ko-template',
+                afterRender: adjustWidth
+            }
+        "></section>
+        {% endif %}
     </div>
 
     {% include 'cloudcare/includes/case_details.html' %}

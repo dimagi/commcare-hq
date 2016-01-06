@@ -77,10 +77,12 @@ class MenuContributor(SuiteContributorByModule):
 
             for id_module in id_modules:
                 for root_module in root_modules:
-                    menu_kwargs = {
-                        'id': id_strings.menu_id(id_module),
-                        'root': id_strings.menu_id(root_module) if root_module else None,
-                    }
+                    menu_kwargs = {}
+                    suffix = ""
+                    if root_module:
+                        menu_kwargs.update({'root': id_strings.menu_id(root_module)})
+                        suffix = id_strings.menu_id(root_module) if root_module.doc_type == 'ShadowModule' else ""
+                    menu_kwargs.update({'id': id_strings.menu_id(id_module, suffix)})
 
                     if supports_module_filter:
                         menu_kwargs['relevant'] = interpolate_xpath(module.module_filter)

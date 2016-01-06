@@ -26,7 +26,7 @@ class ProductsTest(CommTrackTest):
         )
 
         self.assertEqual(
-            len(Product.archived_by_domain(self.domain.name, wrap=False, include_archived=True)),
+            SQLProduct.objects.filter(domain=self.domain.name, is_archived=True).count(),
             1
         )
 

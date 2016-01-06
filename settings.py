@@ -111,6 +111,8 @@ del _formdesigner_path
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
+DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
+
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -356,7 +358,6 @@ HQ_APPS = (
 
     'custom.uth',
 
-    'custom.colalife',
     'custom.intrahealth',
     'custom.world_vision',
     'custom.up_nrhm',
@@ -382,8 +383,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.messaging.smsbackends.http',
     'corehq.apps.ota',
     'corehq.apps.settings',
-    'corehq.messaging.smsbackends.telerivet',
-    'corehq.messaging.smsbackends.tropo',
     'corehq.messaging.smsbackends.megamobile',
     'corehq.messaging.smsbackends.yo',
     'corehq.messaging.smsbackends.smsgh',
@@ -414,6 +413,9 @@ LOGIN_REDIRECT_URL = '/'
 
 
 REPORT_CACHE = 'default'  # or e.g. 'redis'
+
+# When set to False, HQ will not cache any reports using is_cacheable
+CACHE_REPORTS = True
 
 ####### Domain settings  #######
 
@@ -706,7 +708,6 @@ AUDIT_MODULES = [
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
-    'ANALYTICS_API_ID_PUBLIC_COMMCARE': '',
     'KISSMETRICS_KEY': '',
     'HUBSPOT_API_KEY': '',
     'HUBSPOT_API_ID': '',
@@ -806,6 +807,9 @@ LOGGING = {
         'pillowtop': {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
+        'datadog': {
+            'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'
+        }
     },
     'filters': {
         'require_debug_false': {
@@ -840,6 +844,12 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'formatter': 'simple',
             'filename': ANALYTICS_LOG_FILE
+        },
+        'datadog': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'datadog',
+            'filename': DATADOG_LOG_FILE
         },
         'couchlog': {
             'level': 'WARNING',
@@ -908,6 +918,11 @@ LOGGING = {
             'handlers': ['analytics'],
             'level': 'DEBUG',
             'propagate': True,
+        },
+        'datadog-metrics': {
+            'handler': ['datadog'],
+            'level': 'INFO',
+            'propogate': False,
         },
     }
 }
@@ -1285,6 +1300,10 @@ SMS_LOADED_BACKENDS = [
     'corehq.messaging.smsbackends.apposit.models.AppositBackend',
 ]
 
+IVR_LOADED_BACKENDS = [
+    'corehq.messaging.ivrbackends.kookoo.models.KooKooBackend',
+]
+
 IVR_BACKEND_MAP = {
     "91": "MOBILE_BACKEND_KOOKOO",
 }
@@ -1401,6 +1420,11 @@ PILLOWTOPS = {
             'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
         },
         {
+            'name': 'UserGroupsDbKafkaPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
+        },
+        {
             'name': 'KafkaCaseConsumerPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_case_consumer_pillow',
@@ -1459,7 +1483,6 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
     'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
-    'corehq.apps.cachehq.cachemodels.LocationGenerationCache',
     'corehq.apps.cachehq.cachemodels.InvitationGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
@@ -1582,7 +1605,7 @@ TRAVIS_TEST_GROUPS = (
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
-        'care_pathways', 'colalife', 'common', 'compressor', 'smsbillables',
+        'care_pathways', 'common', 'compressor', 'smsbillables',
     ),
 )
 

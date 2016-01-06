@@ -8,6 +8,7 @@ import re
 import io
 from PIL import Image
 import uuid
+from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import get_current_site
 from django.utils.http import urlsafe_base64_encode
@@ -18,7 +19,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
-from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.accounting.utils import domain_has_privilege, log_accounting_error
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.feature_previews import CALLCENTER
 
@@ -63,7 +64,7 @@ from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, Domain, TransferDomainRequest)
 from corehq.apps.reminders.models import CaseReminderHandler
 
-from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import TextField
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
@@ -73,6 +74,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, BootstrapDisabledInput
 import django
+from pyzxcvbn import zxcvbn
 
 if django.VERSION < (1, 6):
     from django.contrib.auth.hashers import UNUSABLE_PASSWORD as UNUSABLE_PASSWORD_PREFIX
@@ -954,12 +956,9 @@ max_pwd = 20
 pwd_pattern = re.compile( r"([-\w]){"  + str(min_pwd) + ',' + str(max_pwd) + '}' )
 
 def clean_password(txt):
-    if len(txt) < min_pwd:
-        raise forms.ValidationError('Password is too short; must be at least %s characters' % min_pwd )
-    if len(txt) > max_pwd:
-        raise forms.ValidationError('Password is too long; must be less than %s characters' % max_pwd )
-    if not pwd_pattern.match(txt):
-        raise forms.ValidationError('Password may only contain letters, numbers, hyphens, and underscores')
+    strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
+    if strength['score'] < 2:
+        raise forms.ValidationError(_('Password is not strong enough. Try making your password more complex.'))
     return txt
 
 
@@ -1053,11 +1052,36 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
             return self.cleaned_data['email']
 
 
+class HQSetPasswordForm(SetPasswordForm):
+    new_password1 = forms.CharField(label=ugettext_lazy("New password"),
+                                    widget=forms.PasswordInput(
+                                        attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
+                                    help_text=mark_safe("""
+                                    <span data-bind="text: passwordHelp, css: color">
+                                    """))
+
+    def clean_new_password1(self):
+        return clean_password(self.cleaned_data.get('new_password1'))
+
+    def save(self, commit=True):
+        user = super(HQSetPasswordForm, self).save(commit)
+        couch_user = CouchUser.from_django_user(user)
+        couch_user.last_password_set = datetime.datetime.utcnow()
+        if commit:
+            couch_user.save()
+        return user
+
+
 class EditBillingAccountInfoForm(forms.ModelForm):
+
+    email_list = forms.CharField(
+        label=BillingContactInfo._meta.get_field('email_list').verbose_name,
+        help_text=BillingContactInfo._meta.get_field('email_list').help_text,
+    )
 
     class Meta:
         model = BillingContactInfo
-        fields = ['first_name', 'last_name', 'phone_number', 'emails', 'company_name', 'first_line',
+        fields = ['first_name', 'last_name', 'phone_number', 'company_name', 'first_line',
                   'second_line', 'city', 'state_province_region', 'postal_code', 'country']
 
     def __init__(self, account, domain, creating_user, data=None, *args, **kwargs):
@@ -1073,6 +1097,10 @@ class EditBillingAccountInfoForm(forms.ModelForm):
 
         try:
             kwargs['instance'] = self.account.billingcontactinfo
+            kwargs['initial'] = {
+                'email_list': ','.join(self.account.billingcontactinfo.email_list),
+            }
+
         except BillingContactInfo.DoesNotExist:
             pass
 
@@ -1086,7 +1114,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('emails', css_class='input-xxlarge'),
+                crispy.Field('email_list', css_class='input-xxlarge'),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1121,11 +1149,15 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                                               "Did you forget the country code?"))
             return "+%s%s" % (parsed_number.country_code, parsed_number.national_number)
 
+    def clean_email_list(self):
+        return self.cleaned_data['email_list'].split(',')
+
     # Does not use the commit kwarg.
     # TODO - Should support it or otherwise change the function name
     @transaction.atomic
     def save(self, commit=True):
         billing_contact_info = super(EditBillingAccountInfoForm, self).save(commit=False)
+        billing_contact_info.email_list = self.cleaned_data['email_list']
         billing_contact_info.account = self.account
         billing_contact_info.save()
 
@@ -1299,11 +1331,12 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                     new_version=self.renewed_version,
                 )
         except SubscriptionRenewalError as e:
-            logger.error("[BILLING] Subscription for %(domain)s failed to "
-                         "renew due to: %(error)s." % {
-                             'domain': self.domain,
-                             'error': e,
-                         })
+            log_accounting_error(
+                "Subscription for %(domain)s failed to renew due to: %(error)s." % {
+                    'domain': self.domain,
+                    'error': e,
+                }
+            )
         return True
 
 
@@ -1420,11 +1453,9 @@ class InternalSubscriptionManagementForm(forms.Form):
             )
             account.save()
         contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
-        emails = contact_info.emails.split(',') if contact_info.emails else []
         for email in self.account_emails:
-            if email not in emails:
-                emails.append(email)
-        contact_info.emails = ','.join(emails)
+            if email not in contact_info.email_list:
+                contact_info.email_list.append(email)
         contact_info.save()
         return account
 
@@ -1446,15 +1477,15 @@ class InternalSubscriptionManagementForm(forms.Form):
     @property
     @memoized
     def current_contact_emails(self):
-        if self.current_subscription is None:
-            return None
-        try:
-            return BillingContactInfo.objects.get(
-                account=self.current_subscription.account,
-                account__account_type__in=self.autocomplete_account_types,
-            ).emails
-        except BillingContactInfo.DoesNotExist:
-            return None
+        if (
+            self.current_subscription
+            and self.account.account_type in self.autocomplete_account_types
+        ):
+            try:
+                return ','.join(self.account.billingcontactinfo.email_list)
+            except BillingContactInfo.DoesNotExist:
+                pass
+        return None
 
     @property
     def subscription_default_fields(self):
@@ -1548,7 +1579,6 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
 
     emails = forms.CharField(
         label=ugettext_noop('Partner Contact Emails'),
-        max_length=BillingContactInfo._meta.get_field('emails').max_length
     )
 
     trial_length = forms.ChoiceField(
@@ -1649,7 +1679,6 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             'or SMS limits in their plan.'
         ),
         label=ugettext_noop('Partner Contact Emails'),
-        max_length=BillingContactInfo._meta.get_field('emails').max_length,
     )
 
     start_date = forms.DateField(

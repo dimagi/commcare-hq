@@ -761,6 +761,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             return
 
         if self.owner.is_deleted():
+            self.delete()
             return
 
         if self.recipients_by_language:

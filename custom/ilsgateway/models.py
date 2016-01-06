@@ -171,7 +171,7 @@ class SupplyPointStatus(models.Model):
 class DeliveryGroupReport(models.Model):
     location_id = models.CharField(max_length=100, db_index=True)
     quantity = models.IntegerField()
-    report_date = models.DateTimeField(default=datetime.utcnow())
+    report_date = models.DateTimeField(default=datetime.utcnow)
     message = models.CharField(max_length=100, db_index=True)
     delivery_group = models.CharField(max_length=1)
     external_id = models.PositiveIntegerField(null=True, db_index=True)

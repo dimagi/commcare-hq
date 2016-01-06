@@ -1,6 +1,7 @@
 from datetime import datetime
 from corehq.apps.sms.models import (CallLog, INCOMING, OUTGOING,
     MessagingSubEvent, MessagingEvent)
+from corehq.apps.ivr.models import IVRBackend
 from corehq.apps.sms.mixin import VerifiedNumber, MobileBackend
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.smsforms.app import start_session, _get_responses
@@ -75,9 +76,9 @@ def get_input_length(question):
         return None
 
 
-def hang_up_response(gateway_session_id, backend_module=None):
-    if backend_module:
-        return HttpResponse(backend_module.get_http_response_string(
+def hang_up_response(gateway_session_id, backend=None):
+    if backend:
+        return HttpResponse(backend.get_response(
             gateway_session_id,
             [],
             collect_input=False,
@@ -213,7 +214,7 @@ def answer_question(call_log_entry, recipient, input_data, logged_subevent=None)
     return (responses, answer_is_valid)
 
 
-def handle_known_call_session(call_log_entry, backend_module, ivr_event,
+def handle_known_call_session(call_log_entry, backend, ivr_event,
         input_data=None, logged_subevent=None):
     if (ivr_event == IVR_EVENT_NEW_CALL and
             call_log_entry.use_precached_first_response):
@@ -225,7 +226,7 @@ def handle_known_call_session(call_log_entry, backend_module, ivr_event,
     app, module, form, error = get_app_module_form(call_log_entry, logged_subevent)
     if error:
         return hang_up_response(call_log_entry.gateway_session_id,
-            backend_module=backend_module)
+            backend=backend)
 
     recipient = call_log_entry.recipient
 
@@ -235,7 +236,7 @@ def handle_known_call_session(call_log_entry, backend_module, ivr_event,
             call_log_entry, logged_subevent, app, module, form)
         if error:
             return hang_up_response(call_log_entry.gateway_session_id,
-                backend_module=backend_module)
+                backend=backend)
         call_log_entry.xforms_session_id = session.session_id
     elif ivr_event == IVR_EVENT_INPUT:
         responses, answer_is_valid = answer_question(call_log_entry, recipient,
@@ -277,12 +278,12 @@ def handle_known_call_session(call_log_entry, backend_module, ivr_event,
     call_log_entry.save()
 
     return HttpResponse(
-        backend_module.get_http_response_string(call_log_entry.gateway_session_id,
+        backend.get_response(call_log_entry.gateway_session_id,
             ivr_responses, collect_input=(not hang_up), hang_up=hang_up,
             input_length=input_length))
 
 
-def log_call(phone_number, gateway_session_id, backend_api=None):
+def log_call(phone_number, gateway_session_id, backend=None):
     cleaned_number = strip_plus(phone_number)
     v = VerifiedNumber.by_extensive_search(cleaned_number)
 
@@ -290,7 +291,8 @@ def log_call(phone_number, gateway_session_id, backend_api=None):
         phone_number=cleaned_number,
         direction=INCOMING,
         date=datetime.utcnow(),
-        backend_api=backend_api,
+        backend_api=backend.get_api_id() if backend else None,
+        backend_id=backend.get_id if backend else None,
         gateway_session_id=gateway_session_id,
     )
     if v:
@@ -300,38 +302,37 @@ def log_call(phone_number, gateway_session_id, backend_api=None):
     call.save()
 
 
-def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_data=None,
+def incoming(phone_number, gateway_session_id, ivr_event, backend=None, input_data=None,
         duration=None):
     """
     The main entry point for all incoming IVR requests.
     """
-    call_log_entry = CallLog.get_call_by_gateway_session_id(gateway_session_id)
+    call = CallLog.get_call_by_gateway_session_id(gateway_session_id)
     logged_subevent = None
-    if call_log_entry and call_log_entry.messaging_subevent_id:
+    if call and call.messaging_subevent_id:
         logged_subevent = MessagingSubEvent.objects.get(
-            pk=call_log_entry.messaging_subevent_id)
+            pk=call.messaging_subevent_id)
 
-    if call_log_entry:
-        add_metadata(call_log_entry, duration)
+    if call:
+        add_metadata(call, duration)
 
-    if call_log_entry and call_log_entry.form_unique_id is None:
+    if call and call.form_unique_id is None:
         # If this request is for a call with no form,
         # then just short circuit everything and hang up
-        return hang_up_response(gateway_session_id, backend_module=backend_module)
+        return hang_up_response(gateway_session_id, backend=backend)
 
-    if call_log_entry and backend_module:
-        return handle_known_call_session(call_log_entry, backend_module, ivr_event,
+    if call and backend:
+        return handle_known_call_session(call, backend, ivr_event,
             input_data=input_data, logged_subevent=logged_subevent)
     else:
-        if not call_log_entry:
-            log_call(phone_number, gateway_session_id,
-                backend_api=(backend_module.API_ID if backend_module else None))
-        return hang_up_response(gateway_session_id, backend_module=backend_module)
+        if not call:
+            log_call(phone_number, gateway_session_id, backend=backend)
+        return hang_up_response(gateway_session_id, backend=backend)
 
 
 def get_ivr_backend(recipient, verified_number=None, unverified_number=None):
     if verified_number and verified_number.ivr_backend_id:
-        return MobileBackend.get(verified_number.ivr_backend_id)
+        return IVRBackend.get(verified_number.ivr_backend_id).wrap_correctly()
     else:
         phone_number = (verified_number.phone_number if verified_number
             else unverified_number)
@@ -340,7 +341,7 @@ def get_ivr_backend(recipient, verified_number=None, unverified_number=None):
         prefixes = sorted(prefixes, key=lambda x: len(x), reverse=True)
         for prefix in prefixes:
             if phone_number.startswith(prefix):
-                return MobileBackend.get(settings.IVR_BACKEND_MAP[prefix])
+                return IVRBackend.get(settings.IVR_BACKEND_MAP[prefix]).wrap_correctly()
     return None
 
 
@@ -401,14 +402,6 @@ def get_first_ivr_response_data(recipient, call_log_entry, logged_subevent):
     return (None, False)
 
 
-def set_first_ivr_response(call_log_entry, gateway_session_id, ivr_data, get_response_function):
-    call_log_entry.xforms_session_id = ivr_data.session.session_id
-    call_log_entry.use_precached_first_response = True
-    call_log_entry.first_response = get_response_function(
-        gateway_session_id, ivr_data.ivr_responses, collect_input=True,
-        hang_up=False, input_length=ivr_data.input_length)
-
-
 def initiate_outbound_call(recipient, form_unique_id, submit_partial_form,
         include_case_side_effects, max_question_retries, messaging_event_id,
         verified_number=None, unverified_number=None, case_id=None,
@@ -418,7 +411,7 @@ def initiate_outbound_call(recipient, form_unique_id, submit_partial_form,
     Returns True if the call should not be retried (either because it was
     queued successfully or because an unrecoverable error occurred).
     """
-    call_log_entry = None
+    call = None
     logged_event = MessagingEvent.objects.get(pk=messaging_event_id)
     logged_subevent = logged_event.create_ivr_subevent(recipient,
         form_unique_id, case_id=case_id)
@@ -437,7 +430,7 @@ def initiate_outbound_call(recipient, form_unique_id, submit_partial_form,
     phone_number = (verified_number.phone_number if verified_number
         else unverified_number)
 
-    call_log_entry = CallLog(
+    call = CallLog(
         couch_recipient_doc_type=recipient.doc_type,
         couch_recipient=recipient.get_id,
         phone_number='+%s' % str(phone_number),
@@ -454,30 +447,29 @@ def initiate_outbound_call(recipient, form_unique_id, submit_partial_form,
         messaging_subevent_id=logged_subevent.pk,
     )
 
-    ivr_data, error = get_first_ivr_response_data(recipient,
-        call_log_entry, logged_subevent)
-    if error:
-        return True
+    ivr_data = None
+    if backend.cache_first_ivr_response():
+        ivr_data, error = get_first_ivr_response_data(recipient,
+            call, logged_subevent)
+        if error:
+            return True
+
     if ivr_data:
         logged_subevent.xforms_session = ivr_data.session
         logged_subevent.save()
 
     try:
-        kwargs = backend.get_cleaned_outbound_params()
-        module = backend.backend_module
-
-        call_log_entry.backend_api = module.API_ID
-        call_log_entry.save()
-
-        result = module.initiate_outbound_call(call_log_entry,
-            logged_subevent, ivr_data=ivr_data, **kwargs)
+        call.backend_api = backend.get_api_id()
+        call.backend_id = backend.get_id
+        result = backend.initiate_outbound_call(call, logged_subevent)
+        if ivr_data and not call.error:
+            backend.set_first_ivr_response(call, call.gateway_session_id, ivr_data)
+        call.save()
         logged_subevent.completed()
         return result
     except GatewayConnectionError:
-        log_error(MessagingEvent.ERROR_GATEWAY_ERROR,
-            call_log_entry, logged_subevent)
+        log_error(MessagingEvent.ERROR_GATEWAY_ERROR, call, logged_subevent)
         raise
     except Exception:
-        log_error(MessagingEvent.ERROR_INTERNAL_SERVER_ERROR,
-            call_log_entry, logged_subevent)
+        log_error(MessagingEvent.ERROR_INTERNAL_SERVER_ERROR, call, logged_subevent)
         raise

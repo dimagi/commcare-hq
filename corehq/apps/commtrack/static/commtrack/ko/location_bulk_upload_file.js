@@ -23,6 +23,6 @@ $(function () {
     }
 
     $("#download_block").koApplyBindings(
-        new ConsumptionOptionsViewModel($("#download_link").get(0).href),
+        new ConsumptionOptionsViewModel($("#download_link").get(0).href)
     );
 });

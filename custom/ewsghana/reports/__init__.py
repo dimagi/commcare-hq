@@ -6,6 +6,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
+from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.graph_models import LineChart, MultiBarChart, PieChart
 from custom.ewsghana.filters import EWSRestrictionLocationFilter
@@ -287,7 +288,7 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
 
     def get_report_context(self, data_provider):
         total_row = []
-        headers = []
+        headers = DataTablesHeader()
         rows = []
 
         if not self.needs_filters and data_provider.show_table:

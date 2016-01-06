@@ -1,6 +1,7 @@
 from itertools import imap
 from django.conf import settings
 from corehq.apps.users.models import CommCareUser
+from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.couch.database import iter_docs, iter_bulk_delete
 
 
@@ -41,8 +42,6 @@ def get_all_user_ids():
     ).all()]
 
 
+@unit_testing_only
 def delete_all_users():
-    if not settings.UNIT_TESTING:
-        raise Exception("You're not allowed to delete all users except in tests!")
-
     iter_bulk_delete(CommCareUser.get_db(), get_all_user_ids())

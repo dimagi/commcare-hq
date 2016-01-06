@@ -93,6 +93,17 @@ class TestBlobMixin(BaseTestCase):
         with open(path) as fh:
             self.assertEqual(fh.read(), b"test_blob_directory content")
 
+    def test_put_attachment_deletes_replaced_blob(self):
+        name = "test.\u4500"
+        bucket = self.obj._blobdb_bucket()
+        self.obj.put_attachment("content 1", name)
+        path1 = self.db.get_path(self.obj.blobs[name].id, bucket)
+        self.obj.put_attachment("content 2", name)
+        path2 = self.db.get_path(self.obj.blobs[name].id, bucket)
+        self.assertNotEqual(path1, path2)
+        self.assertFalse(os.path.exists(path1), "found unexpected file: " + path1)
+        self.assertEqual(self.obj.fetch_attachment(name), "content 2")
+
     def test_put_attachment_deletes_couch_attachment(self):
         name = "test"
         content = StringIO(b"content")
@@ -158,6 +169,59 @@ class TestBlobMixin(BaseTestCase):
         self.assertTrue(obj._id is not None)
         self.assertEqual(obj.fetch_attachment(name), "content")
         self.assertIn(name, obj.blobs)
+
+    def test_atomic_blobs_deletes_replaced_blob(self):
+        name = "test.\u4500"
+        bucket = self.obj._blobdb_bucket()
+        with self.obj.atomic_blobs():
+            self.obj.put_attachment("content 1", name)
+        path1 = self.db.get_path(self.obj.blobs[name].id, bucket)
+        with self.obj.atomic_blobs():
+            self.obj.put_attachment("content 2", name)
+        path2 = self.db.get_path(self.obj.blobs[name].id, bucket)
+        self.assertNotEqual(path1, path2)
+        self.assertFalse(os.path.exists(path1), "found unexpected file: " + path1)
+        self.assertEqual(self.obj.fetch_attachment(name), "content 2")
+
+    def test_atomic_blobs_deletes_replaced_blob_in_same_context(self):
+        name = "test.\u4500"
+        bucket = self.obj._blobdb_bucket()
+        with self.obj.atomic_blobs():
+            self.obj.put_attachment("content 1", name)
+            path1 = self.db.get_path(self.obj.blobs[name].id, bucket)
+            self.obj.put_attachment("content 2", name)
+        path2 = self.db.get_path(self.obj.blobs[name].id, bucket)
+        self.assertNotEqual(path1, path2)
+        self.assertFalse(os.path.exists(path1), "found unexpected file: " + path1)
+        self.assertEqual(self.obj.fetch_attachment(name), "content 2")
+
+    def test_atomic_blobs_deletes_replaced_blob_in_nested_context(self):
+        name = "test.\u4500"
+        bucket = self.obj._blobdb_bucket()
+        with self.obj.atomic_blobs():
+            self.obj.put_attachment("content 1", name)
+            path1 = self.db.get_path(self.obj.blobs[name].id, bucket)
+            with self.obj.atomic_blobs():
+                self.obj.put_attachment("content 2", name)
+        path2 = self.db.get_path(self.obj.blobs[name].id, bucket)
+        self.assertNotEqual(path1, path2)
+        self.assertFalse(os.path.exists(path1), "found unexpected file: " + path1)
+        self.assertEqual(self.obj.fetch_attachment(name), "content 2")
+
+    def test_atomic_blobs_preserves_blob_replaced_in_failed_nested_context(self):
+        name = "test.\u4500"
+        bucket = self.obj._blobdb_bucket()
+        with self.obj.atomic_blobs():
+            self.obj.put_attachment("content 1", name)
+            path1 = self.db.get_path(self.obj.blobs[name].id, bucket)
+            with self.assertRaises(BlowUp):
+                with self.obj.atomic_blobs():
+                    self.obj.put_attachment("content 2", name)
+                    path2 = self.db.get_path(self.obj.blobs[name].id, bucket)
+                    raise BlowUp("fail")
+        self.assertNotEqual(path1, path2)
+        self.assertFalse(os.path.exists(path2), "found unexpected file: " + path1)
+        self.assertEqual(self.obj.fetch_attachment(name), "content 1")
 
     def test_atomic_blobs_fail(self):
         name = "test.1"

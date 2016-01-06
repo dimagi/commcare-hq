@@ -8,14 +8,23 @@ function replaceAll(find, replace, str) {
 }
 
 function chevron_toggle(show, $toggling, $chevron, $holds_toggle_state, after_fn) {
-    var chev = "icon-double-angle-";
+    var chev = "icon-double-angle-",
+        chevB3 = "fa-angle-double-";
     if (show) {
         $toggling.hide();
-        $chevron.removeClass(chev + "down").addClass(chev + "right");
+        $chevron
+            .removeClass(chev + "down")
+            .addClass(chev + "right")
+            .removeClass(chevB3 + "down")
+            .addClass(chevB3 + "right");
         $holds_toggle_state.data("show", false);
     } else {
         $toggling.show();
-        $chevron.removeClass(chev + "right").addClass(chev + "down");
+        $chevron
+            .removeClass(chev + "right")
+            .addClass(chev + "down")
+            .removeClass(chevB3 + "right")
+            .addClass(chevB3 + "down");
         $holds_toggle_state.data("show", true);
     }
     if (after_fn) {
@@ -27,7 +36,7 @@ $(function () {
     $(".more-sortable-button").click(function() {
         var $this = $(this);
         var sortable = $this.data('sortable').replace(new RegExp("\\.", "g"), "\\.");
-        $('.sortable-' + sortable).show();
+        $('.sortable-' + sortable).removeClass('hide');
         $this.hide();
         return false;
     });

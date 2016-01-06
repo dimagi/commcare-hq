@@ -105,7 +105,7 @@ env.roledefs = {
 
 def _require_target():
     require('root', 'code_root', 'hosts', 'environment',
-            provided_by=('staging', 'preview', 'production', 'india', 'zambia'))
+            provided_by=('staging', 'preview', 'production', 'old_india', 'softlayer', 'zambia'))
 
 
 def format_env(current_env, extra=None):
@@ -204,9 +204,27 @@ def load_env(env_name):
 
 
 @task
-def india():
+def old_india():
     env.inventory = os.path.join('fab', 'inventory', 'india')
     load_env('india')
+    execute(env_common)
+
+
+@task
+def swiss():
+    env.inventory = os.path.join('fab', 'inventory', 'swiss')
+    load_env('swiss')
+    execute(env_common)
+
+
+@task
+def india():
+    softlayer()
+
+@task
+def softlayer():
+    env.inventory = os.path.join('fab', 'inventory', 'softlayer')
+    load_env('softlayer')
     execute(env_common)
 
 
@@ -680,6 +698,8 @@ def copy_tf_localsettings():
 def copy_components():
     if files.exists('{}/bower_components'.format(env.code_current)):
         sudo('cp -r {}/bower_components {}/bower_components'.format(env.code_current, env.code_root))
+    else:
+        sudo('mkdir {}/bower_components'.format(env.code_root))
 
 
 def copy_release_files():
@@ -902,22 +922,31 @@ def update_virtualenv():
         ))
 
 
+@task
+def wipe_supervisor_conf():
+    _require_target()
+    execute(clear_services_dir, current=True)
+    execute(services_restart)
+
+
 @roles(ROLES_ALL_SERVICES)
 @parallel
-def clear_services_dir():
+def clear_services_dir(current=False):
     """
     remove old confs from directory first
     the clear_supervisor_confs management command will scan the directory and find prefixed conf files of the supervisord files
     and delete them matching the prefix of the current server environment
 
     """
+    code_root = env.code_current if current else env.code_root
+    venv_root = env.virtualenv_current if current else env.virtualenv_root
     services_dir = posixpath.join(env.services, u'supervisor')
-    with cd(env.code_root):
+    with cd(code_root):
         sudo((
             '%(virtualenv_root)s/bin/python manage.py '
             'clear_supervisor_confs --conf_location "%(conf_location)s"'
         ) % {
-            'virtualenv_root': env.virtualenv_root,
+            'virtualenv_root': venv_root,
             'conf_location': services_dir,
         })
 
@@ -925,7 +954,7 @@ def clear_services_dir():
 @task
 def supervisorctl(command):
     require('supervisor_roles',
-            provided_by=('staging', 'preview', 'production', 'india', 'zambia'))
+            provided_by=('staging', 'preview', 'production', 'old_india', 'softlayer', 'zambia'))
 
     @roles(env.supervisor_roles)
     def _inner():

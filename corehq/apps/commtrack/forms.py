@@ -1,8 +1,10 @@
+from crispy_forms.bootstrap import PrependedText
 from django import forms
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, HTML
 
+from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.hqwebapp.forms import FormListForm
 from corehq.apps.products.models import Product
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_product, get_default_monthly_consumption
@@ -61,6 +63,9 @@ class CommTrackSettingsForm(forms.Form):
         domain = kwargs.pop('domain')
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
+
         self.helper.layout = Layout(
             Fieldset(
                 _('Stock Levels'),
@@ -76,18 +81,20 @@ class CommTrackSettingsForm(forms.Form):
             ),
             Fieldset(
                 _('Consumption Settings'),
-                'use_auto_consumption',
+                PrependedText('use_auto_consumption', ''),
                 'consumption_min_transactions',
                 'consumption_min_window',
                 'consumption_optimal_window',
-                'individual_consumption_defaults',
+                PrependedText('individual_consumption_defaults', ''),
             ),
             Fieldset(
                 _('Phone Settings'),
-                'sync_consumption_fixtures',
+                PrependedText('sync_consumption_fixtures', ''),
             ),
-            ButtonHolder(
-                Submit('submit', ugettext_lazy('Submit'))
+            hqcrispy.FormActions(
+                ButtonHolder(
+                    Submit('submit', ugettext_lazy('Submit'))
+                )
             )
         )
 
@@ -107,10 +114,17 @@ class ConsumptionForm(forms.Form):
     def __init__(self, domain, *args, **kwargs):
         self.domain = domain
         super(ConsumptionForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
+
+        layout = []
         products = Product.by_domain(domain)
         for p in products:
             field_name = 'default_%s' % p._id
             display = _('Default %(product_name)s') % {'product_name': p.name}
+            layout.append(field_name)
             self.fields[field_name] = forms.DecimalField(
                 label=display,
                 required=False,
@@ -121,6 +135,13 @@ class ConsumptionForm(forms.Form):
                     None
                 )
             )
+
+        layout.append(hqcrispy.FormActions(
+            ButtonHolder(
+                Submit('submit', ugettext_lazy('Update Default Consumption Info'))
+            )
+        ))
+        self.helper.layout = Layout(*layout)
 
     def save(self):
         for field in self.fields:
@@ -170,6 +191,8 @@ class StockLevelsForm(FormListForm):
     """
     Form for specifying stock levels per location type
     """
+    template = "style/bootstrap3/partials/form_list_form.html"
+
     child_form_class = LocationTypeStockLevels
     columns = [
         {'label': _("Location Type"), 'key': 'loc_type'},

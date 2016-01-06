@@ -99,7 +99,8 @@ var HQVisualizations = function (options) {
             $(self.chart_tabs_id).on('click', 'a[data-toggle="hash-tab"]', function(){
                 $('.nvd3-chart').hide();
                 var $chart = $($(this).attr('href')).children('.nvd3-chart');
-                $chart.show();
+                $chart.show().removeClass('hidden');
+                $(window).trigger('resize');
                 var chart = self.charts[$chart.parents('.tab-pane').attr('id')];
                     _update_chart_if_exists(chart); // for some reason nvd3 doesn't fully animate the charts, force this update
             });
@@ -114,7 +115,9 @@ var HQVisualizations = function (options) {
 
         $(self.charts_id + " .no-data").hide();
         $error.hide();
-        $loading.show();
+        $loading.show().removeClass('hidden');
+        $(window).trigger('resize');  // redraw graph
+
         var svg_width = $(self.charts_id + " .tab-pane.active").width();
         $charts.each(function(){
             // hack: need to explicitly set the width to a pixel value because nvd3 has issues when it's set to 100%
@@ -153,12 +156,14 @@ var HQVisualizations = function (options) {
                 self.charts = loadCharts(self.chart_name, self.xaxis_label, d.histo_data, d.initial_values,
                         startdate.getTime(), enddate.getTime(), self.interval);
                 $loading.hide();
-                $charts.show();
+                $charts.show().removeClass('hidden');
+                $(window).trigger('resize');  // redraw graph
 
                 _.each(self.charts, function(chart, name) {
                     if (chart === null) {
                         $("#" + self.chart_name + "-" + name + " svg").hide();
-                        $("#" + self.chart_name + "-" + name + " .no-data").show();
+                        $("#" + self.chart_name + "-" + name + " .no-data").show().removeClass('hidden');
+                        $(window).trigger('resize');  // redraw graph
                     }
                 });
 
@@ -184,7 +189,7 @@ var HQVisualizations = function (options) {
             }
         ).fail(function() {
             $loading.hide();
-            $error.show();
+            $error.show().removeClass('hidden');
         });
     };
 };

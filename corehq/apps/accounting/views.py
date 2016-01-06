@@ -1,6 +1,5 @@
 from datetime import date
 import json
-import logging
 
 from django.conf import settings
 from django.contrib import messages
@@ -32,10 +31,12 @@ from corehq.apps.accounting.forms import (
     TestReminderEmailFrom,
     CreateAdminForm,
     SuppressInvoiceForm,
+    SuppressSubscriptionForm,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError, InvoiceError, CreditLineError,
     CreateAccountingAdminError,
+    SubscriptionAdjustmentError,
 )
 from corehq.apps.accounting.interface import (
     AccountingInterface, SubscriptionInterface, SoftwarePlanInterface,
@@ -61,17 +62,14 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import (
     fmt_feature_rate_dict, fmt_product_rate_dict,
-    has_subscription_already_ended
-)
+    has_subscription_already_ended,
+    log_accounting_error)
 from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMixin
 from corehq import privileges, toggles
 from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.models import Role, Grant
 
 from urllib import urlencode
-
-
-logger = logging.getLogger('accounting')
 
 
 @requires_privilege_raise404(privileges.ACCOUNTING_ADMIN)
@@ -209,8 +207,8 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
                     messages.success(request, "Successfully adjusted credit.")
                     return HttpResponseRedirect(self.page_url)
             except CreditLineError as e:
-                logger.error(
-                    "[BILLING] failed to add credit in admin UI due to: %s"
+                log_accounting_error(
+                    "failed to add credit in admin UI due to: %s"
                     % e
                 )
                 messages.error(request, "Issue adding credit: %s" % e)
@@ -341,8 +339,15 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     def cancel_form(self):
         if (self.request.method == 'POST'
             and 'cancel_subscription' in self.request.POST):
-            return CancelForm(self.request.POST)
-        return CancelForm()
+            return CancelForm(self.subscription, self.request.POST)
+        return CancelForm(self.subscription)
+
+    @property
+    @memoized
+    def suppress_form(self):
+        if self.request.method == 'POST' and 'suppress_subscription' in self.request.POST:
+            return SuppressSubscriptionForm(self.subscription, self.request.POST)
+        return SuppressSubscriptionForm(self.subscription)
 
     @property
     def invoice_context(self):
@@ -376,6 +381,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             'subscription': self.subscription,
             'subscription_canceled':
                 self.subscription_canceled if hasattr(self, 'subscription_canceled') else False,
+            'suppress_form': self.suppress_form,
         }
 
         context.update(self.invoice_context)
@@ -410,6 +416,9 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
               and self.cancel_form.is_valid()):
             self.cancel_subscription()
             messages.success(request, "The subscription has been cancelled.")
+        elif SuppressSubscriptionForm.submit_kwarg in self.request.POST and self.suppress_form.is_valid():
+            self.suppress_subscription()
+            return HttpResponseRedirect(SubscriptionInterface.get_url())
         elif ('subscription_change_note' in self.request.POST
               and self.change_subscription_form.is_valid()
         ):
@@ -427,6 +436,16 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             web_user=self.request.user.username,
         )
         self.subscription_canceled = True
+
+    def suppress_subscription(self):
+        if self.subscription.is_active:
+            raise SubscriptionAdjustmentError(
+                "Cannot suppress active subscription, id %d"
+                % self.subscription.id
+            )
+        else:
+            self.subscription.is_hidden_to_ops = True
+            self.subscription.save()
 
 
 class NewSoftwarePlanView(AccountingSectionView):
@@ -600,7 +619,7 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
                              % self.trigger_form.cleaned_data['domain'])
                 return HttpResponseRedirect(reverse(self.urlname))
             except (CreditLineError, InvoiceError) as e:
-                messages.error(request, "Error generating invoices: %s" % e)
+                messages.error(request, "Error generating invoices: %s" % e, extra_tags='html')
         return self.get(request, *args, **kwargs)
 
 

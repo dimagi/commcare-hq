@@ -133,3 +133,21 @@ def get_exports_by_application(domain):
         reduce=False,
         stale=settings.COUCH_STALE_QUERY,
     )
+
+
+def get_all_apps(domain):
+    """
+    Returns a list of all the apps ever built and current Applications.
+    Used for subscription management when apps use subscription only features
+    that shouldn't be present in built apps as well as app definitions.
+    """
+    from .models import Application
+    saved_apps = Application.get_db().view(
+        'app_manager/saved_app',
+        startkey=[domain],
+        endkey=[domain, {}],
+        include_docs=True,
+    )
+    all_apps = [get_correct_app_class(row['doc']).wrap(row['doc']) for row in saved_apps]
+    all_apps.extend(get_apps_in_domain(domain))
+    return all_apps

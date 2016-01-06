@@ -85,7 +85,7 @@ def process_reminder_rule(handler, schedule_changed, prev_definition,
     handler.save(unlock=True)
 
 
-@task(queue=CELERY_REMINDERS_QUEUE, ignore_result=True)
+@task(queue=CELERY_REMINDERS_QUEUE, ignore_result=True, acks_late=True)
 def fire_reminder(reminder_id, domain):
     try:
         if reminder_rate_limiter.can_perform_action(domain):

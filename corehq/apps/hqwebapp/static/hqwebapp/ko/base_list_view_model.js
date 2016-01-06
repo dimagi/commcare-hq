@@ -67,9 +67,9 @@ BaseListViewModel = function (o) {
     view_model.successful_archive_action = function (button, index) {
         return function (data) {
             if (data.success) {
-                var $modal = $(button).parent().parent();
+                var $modal = $(button).parent().parent().parent().parent();
                 $modal.modal('hide');
-                $modal.on('hidden', function () {
+                $modal.on('hidden.bs.modal', function () {
                     var data_list = view_model.data_list(),
                         actioned = view_model.archive_action_items();
                     actioned.push(data_list[index]);
@@ -83,6 +83,7 @@ BaseListViewModel = function (o) {
             }
         };
     };
+
     view_model.unsuccessful_archive_action = function (button, index) {
         return function (data) {
             $(button).button('unsuccessful');

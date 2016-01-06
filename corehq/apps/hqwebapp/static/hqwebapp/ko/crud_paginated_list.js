@@ -2,12 +2,15 @@ var CRUDPaginatedListModel = function (
     total,
     pageLimit,
     currentPage,
-    options
+    options,
+    paginatedItem
 ) {
     'use strict';
     options = options || {};
 
     var self = this;
+
+    self.PaginatedItem = paginatedItem || PaginatedItem;
 
     self.sortBy = options.sortBy || 'abc';
 
@@ -96,7 +99,7 @@ var CRUDPaginatedListModel = function (
                 self.paginatedList(_.map(
                     data.paginatedList,
                     function (listItem) {
-                        return new PaginatedItem(listItem, self.initRow);
+                        return new self.PaginatedItem(listItem, self.initRow);
                     }
                 ));
                 self.deletedList([]);
@@ -147,7 +150,7 @@ var CRUDPaginatedListModel = function (
                         if (data.newItem.error) {
                             self.alertHtml(data.newItem.error);
                         } else {
-                            self.newList.push(new PaginatedItem(data.newItem, self.initRow));
+                            self.newList.push(new self.PaginatedItem(data.newItem, self.initRow));
                         }
                     }
                 }
