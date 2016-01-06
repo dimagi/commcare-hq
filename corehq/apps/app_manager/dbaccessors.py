@@ -16,6 +16,30 @@ def domain_has_apps(domain):
     return len(results) > 0
 
 
+def get_latest_released_app_doc(domain, app_id):
+    from .models import Application
+    app = Application.get_db().view(
+        'app_manager/applications',
+        startkey=['^ReleasedApplications', domain, app_id, {}],
+        endkey=['^ReleasedApplications', domain, app_id],
+        descending=True,
+        include_docs=True
+    ).first()
+    return app['doc'] if app else None
+
+
+def get_latest_saved_app_doc(domain, app_id):
+    from .models import Application
+    app = Application.get_db().view(
+        'app_manager/saved_app',
+        startkey=[domain, app_id, {}],
+        endkey=[domain, app_id],
+        descending=True,
+        include_docs=True
+    ).first()
+    return app['doc'] if app else None
+
+
 def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     """
     Utility for getting an app, making sure it's in the domain specified, and wrapping it in the right class

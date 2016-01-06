@@ -2,7 +2,6 @@
 from distutils.version import LooseVersion
 from itertools import chain
 import tempfile
-from mock import Mock
 import os
 import logging
 import hashlib
@@ -17,7 +16,7 @@ from copy import deepcopy
 from urllib2 import urlopen
 from urlparse import urljoin
 
-from couchdbkit import ResourceConflict, MultipleResultsFound
+from couchdbkit import MultipleResultsFound
 import itertools
 from lxml import etree
 from django.core.cache import cache
@@ -27,7 +26,6 @@ from django.utils.translation import override, ugettext as _, ugettext
 from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
-from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -71,7 +69,11 @@ from corehq.apps.domain.models import cached_property, Domain
 from corehq.apps.app_manager import current_builds, app_strings, remote_app, \
     id_strings, commcare_settings
 from corehq.apps.app_manager.suite_xml import xml_models as suite_models
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_latest_saved_app_doc,
+    get_latest_released_app_doc,
+)
 from corehq.apps.app_manager.util import (
     split_path,
     save_xform,
@@ -93,7 +95,6 @@ from .exceptions import (
     LocationXpathValidationError,
     ModuleNotFoundException,
     ModuleIdMissingException,
-    NoMatchingFilterException,
     RearrangeError,
     SuiteValidationError,
     VersioningError,
@@ -3962,21 +3963,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         """
         This looks really similar to get_latest_app, not sure why tim added
         """
-        released = self.__class__.view('app_manager/applications',
-            startkey=['^ReleasedApplications', self.domain, self._id, {}],
-            endkey=['^ReleasedApplications', self.domain, self._id],
-            descending=True,
-            include_docs=True
-        ).first()
-        if released:
-            return released
-
-        return self.__class__.view('app_manager/saved_app',
-            startkey=[self.domain, self._id, {}],
-            endkey=[self.domain, self._id],
-            descending=True,
-            include_docs=True
-        ).first()
+        doc = (get_latest_released_app_doc(self.domain, self._id) or
+               get_latest_saved_app_doc(self.domain, self._id))
+        return self.__class__.wrap(doc) if doc else None
 
     def set_admin_password(self, raw_password):
         salt = os.urandom(5).encode('hex')
