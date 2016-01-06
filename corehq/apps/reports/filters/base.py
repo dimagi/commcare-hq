@@ -316,7 +316,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
 
 
 class BaseTagsFilter(BaseReportFilter):
-    template = "reports/filters/base_tags_filter.html"
+    template = "reports/filters/bootstrap2/base_tags_filter.html"
     tags = []
 
     @property
