@@ -30,17 +30,27 @@ def get_latest_released_app_doc(domain, app_id, min_version=None):
     return app['doc'] if app else None
 
 
-def get_latest_build_doc(domain, app_id):
-    """Get the latest build of the application, regardless of star."""
+def _get_latest_build_view(domain, app_id, include_docs):
     from .models import Application
-    app = Application.get_db().view(
+    return Application.get_db().view(
         'app_manager/saved_app',
         startkey=[domain, app_id, {}],
         endkey=[domain, app_id],
         descending=True,
-        include_docs=True
+        include_docs=include_docs,
     ).first()
-    return app['doc'] if app else None
+
+
+def get_latest_build_doc(domain, app_id):
+    """Get the latest saved build of the application, regardless of star."""
+    res = _get_latest_build_view(domain, app_id, include_docs=True)
+    return res['doc'] if res else None
+
+
+def get_latest_build_id(domain, app_id):
+    """Get id of the latest build of the application, regardless of star."""
+    res = _get_latest_build_view(domain, app_id, include_docs=False)
+    return res['id'] if res else None
 
 
 def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
