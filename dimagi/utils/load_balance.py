@@ -35,5 +35,5 @@ def load_balance(key, objects):
         # try to delete, it will try it again at 2,000,000, and so on.
         client.delete(key)
 
-    index = value % len(objects)
+    index = (value - 1) % len(objects)
     return objects[index]
