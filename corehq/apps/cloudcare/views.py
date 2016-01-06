@@ -485,6 +485,7 @@ def get_ledgers(request, domain):
         default=custom_json_handler,
     )
 
+
 @cloudcare_api
 def sync_db_api(request, domain):
     auth_cookie = request.COOKIES.get('sessionid')

@@ -144,9 +144,7 @@
 {% endblock %}
 
 {% block page_navigation %}
-{% if sessions_enabled %}
     <div id="save-indicator" class="alert" style="display: none;"></div>
-{% endif %}
 {% if request|toggle_enabled:"TF_USES_SQLITE_BACKEND" %}
     <div id="sync-container">
         <button class="btn btn-primary" type="button" id="sync-button">Sync Data</button>
