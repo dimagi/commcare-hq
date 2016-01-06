@@ -1479,10 +1479,10 @@ class InternalSubscriptionManagementForm(forms.Form):
     def current_contact_emails(self):
         if (
             self.current_subscription
-            and self.account.account_type in self.autocomplete_account_types
+            and self.current_subscription.account.account_type in self.autocomplete_account_types
         ):
             try:
-                return ','.join(self.account.billingcontactinfo.email_list)
+                return ','.join(self.current_subscription.account.billingcontactinfo.email_list)
             except BillingContactInfo.DoesNotExist:
                 pass
         return None
