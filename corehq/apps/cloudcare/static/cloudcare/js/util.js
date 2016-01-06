@@ -129,7 +129,16 @@ var tfLoadingComplete = function (isError) {
     if (isError) {
         showError(translatedStrings.errSaving, $('#cloudcare-notifications'));
     }
-}
+};
+
+var tfSyncComplete = function (isError) {
+    hideLoading();
+    if (isError) {
+        showError(translatedStrings.errSyncing, $('#cloudcare-notifications'));
+    } else {
+        showSuccess(translatedStrings.synced, $('#cloudcare-notifications'), 2500);
+    }
+};
 
 var hideLoading = function (selector) {
     NProgress.done();

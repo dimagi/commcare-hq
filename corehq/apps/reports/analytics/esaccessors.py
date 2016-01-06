@@ -12,12 +12,12 @@ def get_last_submission_time_for_user(domain, user_id, datespan):
         .completed(gte=datespan.startdate.date(), lte=datespan.enddate.date()) \
         .sort("form.meta.timeEnd", desc=True) \
         .size(1)
-    results = form_query.run().raw_hits
+    results = form_query.run().hits
 
     def convert_to_date(date):
         return string_to_datetime(date).date() if date else None
 
-    return convert_to_date(results[0]['_source']['form']['meta']['timeEnd'] if results else None)
+    return convert_to_date(results[0]['form']['meta']['timeEnd'] if results else None)
 
 
 def get_active_case_counts_by_owner(domain, datespan, case_types=None):

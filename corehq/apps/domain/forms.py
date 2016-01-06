@@ -1466,23 +1466,25 @@ class InternalSubscriptionManagementForm(forms.Form):
 
     @property
     @memoized
-    def autocomplete_account_name(self):
-        if (
+    def should_autocomplete_account(self):
+        return (
             self.current_subscription
             and self.current_subscription.account.account_type in self.autocomplete_account_types
-        ):
+        )
+
+    @property
+    @memoized
+    def autocomplete_account_name(self):
+        if self.should_autocomplete_account:
             return self.current_subscription.account.name
         return None
 
     @property
     @memoized
     def current_contact_emails(self):
-        if (
-            self.current_subscription
-            and self.account.account_type in self.autocomplete_account_types
-        ):
+        if self.should_autocomplete_account:
             try:
-                return ','.join(self.account.billingcontactinfo.email_list)
+                return ','.join(self.current_subscription.account.billingcontactinfo.email_list)
             except BillingContactInfo.DoesNotExist:
                 pass
         return None

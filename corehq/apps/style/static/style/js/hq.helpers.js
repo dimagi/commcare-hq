@@ -41,17 +41,18 @@ $(function() {
         $(this).parents('.alert').hide(150);
     });
 
-    window.onerror = function(message, file, line, col, error) {
-        $.post('/jserror/', {
-            message: message,
-            page: window.location.href,
-            file: file,
-            line: line,
-            stack: error ? error.stack : null
-        });
-        return false; // let default handler run
-    };
 });
+
+window.onerror = function(message, file, line, col, error) {
+    $.post('/jserror/', {
+        message: message,
+        page: window.location.href,
+        file: file,
+        line: line,
+        stack: error ? error.stack : null
+    });
+    return false; // let default handler run
+};
 
 var oldHide = $.fn.popover.Constructor.prototype.hide;
 
