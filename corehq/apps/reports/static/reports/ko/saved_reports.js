@@ -60,6 +60,8 @@ var ReportConfig = function (data) {
         } else if (date_range === 'range') {
             start_date = self.start_date();
             end_date = self.end_date();
+        } else if (date_range === '') {
+            return '';
         } else {
             end_date = today;
 
@@ -70,9 +72,6 @@ var ReportConfig = function (data) {
             } else if (date_range === 'lastn') {
                 days = self.days();
             } else {
-                if (self.report_slug() === 'case_list') {
-                    return '';
-                }
                 throw "Invalid date range.";
             }
 
