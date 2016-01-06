@@ -65,7 +65,10 @@ def deactivate_subscriptions(based_on_date=None):
     Deactivates all subscriptions ending today (or, for testing, based on the date specified)
     """
     ending_date = based_on_date or datetime.date.today()
-    ending_subscriptions = Subscription.objects.filter(date_end=ending_date)
+    ending_subscriptions = Subscription.objects.filter(
+        date_end=ending_date,
+        is_active=True,
+    )
     for subscription in ending_subscriptions:
         with transaction.atomic():
             subscription.is_active = False
