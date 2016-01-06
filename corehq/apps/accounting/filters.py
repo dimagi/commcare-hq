@@ -261,7 +261,7 @@ class OptionalFilterMixin(object):
 
 
 class OptionalDateRangeFilter(DateRangeFilter, OptionalFilterMixin):
-    template = 'reports/filters/optional_daterange.html'
+    template = 'reports/filters/bootstrap2/optional_daterange.html'
 
     @property
     def filter_context(self):
