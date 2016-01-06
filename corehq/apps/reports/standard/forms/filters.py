@@ -60,7 +60,7 @@ class SubmissionTypeFilter(BaseReportFilter):
     # todo: cleanup
     slug = "submitfilter"
     label = ugettext_noop("Submission Type")
-    template = "reports/filters/submit_error_types.html"
+    template = "reports/filters/bootstrap2/submit_error_types.html"
 
     @property
     def filter_context(self):
