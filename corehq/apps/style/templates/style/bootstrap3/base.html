@@ -392,6 +392,7 @@
         {% if request.use_datatables %}
         {% compress js %}
         <script src="{% new_static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
+        <script src="{% new_static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
         <script src="{% new_static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
         {% endcompress %}
         {% endif %}
