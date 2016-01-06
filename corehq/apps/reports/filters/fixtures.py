@@ -15,7 +15,7 @@ class AsyncDrillableFilter(BaseReportFilter):
                          {"type": "block", "parent_ref": "district_id", "references": "id", "display": "name"},
                          {"type": "village", "parent_ref": "block_id", "references": "id", "display": "name"}]
     """
-    template = "reports/filters/drillable_async.html"
+    template = "reports/filters/bootstrap2/drillable_async.html"
     hierarchy = [] # a list of fixture data type names that representing different levels of the hierarchy. Starting with the root
 
     def fdi_to_json(self, fdi):
