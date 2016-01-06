@@ -6,6 +6,7 @@ from django.core.urlresolvers import reverse
 from django.template.base import Variable, VariableDoesNotExist
 from django.template.loader import render_to_string
 from django.utils.datastructures import SortedDict
+from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.http import QueryDict
@@ -25,13 +26,25 @@ def JSON(obj):
     if isinstance(obj, QueryDict):
         obj = dict(obj)
     try:
-        return mark_safe(json.dumps(obj, default=json_handler))
+        return mark_safe(json.dumps(escape_json_leaves(obj), default=json_handler))
     except TypeError as e:
         msg = ("Unserializable data was sent to the `|JSON` template tag.  "
                "If DEBUG is off, Django will silently swallow this error.  "
                "{}".format(e.message))
         soft_assert(notify_admins=True)(False, msg)
         raise e
+
+
+def escape_json_leaves(obj):
+    '''
+    This function should html escape and "leaf" node in a python object prior to encoding as json
+    '''
+    if isinstance(obj, list):
+        return [escape_json_leaves(x) for x in obj]
+    if isinstance(obj, dict):
+        return {k: escape_json_leaves(v) for k, v in obj.items()}
+    else:
+        return escape(obj)
 
 
 @register.filter
