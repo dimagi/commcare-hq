@@ -143,4 +143,4 @@ class OptionalAsyncLocationFilter(AsyncLocationFilter):
 
 
 class MultiLocationFilter(AsyncDrillableFilter):
-    template = "reports/filters/multi_location.html"
+    template = "reports/filters/bootstrap2/multi_location.html"
