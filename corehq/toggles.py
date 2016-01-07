@@ -659,15 +659,6 @@ EWS_BROADCAST_BY_ROLE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-
-AUTOMATIC_CASE_CLOSURE = StaticToggle(
-    'automatic_case_closure',
-    'Automatically Close Cases',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-)
-
-
 SMS_PERFORMANCE_FEEDBACK = StaticToggle(
     'sms_performance_feedback',
     'Enable SMS-based performance feedback',
