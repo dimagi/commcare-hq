@@ -33,7 +33,7 @@ class CasePillow(HQPillow):
         )
         if doc_dict and doc_dict['doc_type'] == 'CommCareCase-Deleted':
             if self.doc_exists(doc_dict):
-                self.get_es().delete(path=self.get_doc_path_typed(doc_dict))
+                self.get_es_new().delete(self.es_index, self.es_type, doc_dict['_id'])
             return None
         else:
             return LockManager(doc_dict, lock)

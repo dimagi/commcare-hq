@@ -468,7 +468,7 @@ class AliasedElasticPillow(BasicPillow):
         if changes_dict.get('deleted', False):
             try:
                 if self.doc_exists(id):
-                    self.get_es().delete(path=self.get_doc_path(id))
+                    self.get_es_new().delete(self.es_index, self.es_type, id)
             except Exception, ex:
                 pillow_logging.error(
                     "ElasticPillow: error deleting route %s - ignoring: %s" % (
@@ -538,8 +538,7 @@ class AliasedElasticPillow(BasicPillow):
             "%s,send_bulk,%s" % (self.get_name(), str(ms_from_timedelta(datetime.utcnow() - send_start) / 1000.0)))
 
     def send_bulk(self, payload):
-        es = self.get_es()
-        es.post('_bulk', data=payload)
+        self.get_es_new().bulk(payload)
 
     @staticmethod
     def calc_mapping_hash(mapping):
