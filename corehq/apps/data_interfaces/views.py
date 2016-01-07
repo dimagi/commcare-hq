@@ -577,7 +577,7 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
             'pagination_limit_cookie_name': ('hq.pagination.limit'
                                              '.automatic_update_rule_list.%s'
                                              % self.domain),
-            'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatic+Case+Closure',
+            'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases',
         }
 
     def _format_rule(self, rule):
