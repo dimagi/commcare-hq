@@ -5,6 +5,7 @@ import httplib
 import subprocess
 import tempfile
 from subprocess import PIPE
+import requests
 from restkit import Resource, BasicAuth
 
 
@@ -55,16 +56,8 @@ def simple_post(data, url, content_type="text/xml", timeout=60, headers=None):
     }
     if headers:
         default_headers.update(headers)
-            
-    up = urlparse(url)
-    if url.startswith("https"):
-        Connection = httplib.HTTPSConnection
-    else:
-        Connection = httplib.HTTPConnection
-    conn = Connection(up.netloc, timeout=timeout)
-    conn.request('POST', url, data, default_headers)
-    return conn.getresponse()
 
+    return requests.post(url, data, headers=default_headers)
 
 
 def post_data(data, url, curl_command="curl", use_curl=False, 
