@@ -1,27 +1,30 @@
 {% extends "registration/base.html" %}
+{% load i18n %}
 
 {% block title %}Resend Confirmation Email{% endblock title %}
 
 {% block breadcrumbs %}{% endblock %}
-{% block step-title %}Resend Confirmation Email{% endblock %}
+{% block step-title %}{% trans 'Resend Confirmation Email' %}{% endblock %}
 
 {% block registration-content %}
-<form method="post" action="{% url "registration_resend_domain_confirmation" %}" class="form-horizontal">
+<form method="post" action="{% url "registration_resend_domain_confirmation" %}" class="form form-horizontal">
     {% csrf_token %}
     <fieldset>
-        <div class="control-group">
-            <label class="control-label">Username / Email:</label>
+        <div class="form-group">
+            <label class="control-label">{% trans 'Username / Email' %}:</label>
             <div class="controls">
                 <span class="input-xlarge uneditable-input">{{ request.user.username }}</span>
             </div>
         </div>
-        <div class="control-group">
-            <label class="control-label">Pending Project Name:</label>
+        <div class="form-group">
+            <label class="control-label">{% trans 'Pending Project Name' %}:</label>
             <div class="controls">
                 <span class="input-xlarge uneditable-input">{{ requested_domain }}</span>
             </div>
         </div>
     </fieldset>
-    <div class="form-actions"><button type="submit" class="btn btn-primary">Resend Confirmation</button></div>
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">{% trans 'Resend Confirmation' %}</button>
+    </div>
 </form>
 {% endblock %}

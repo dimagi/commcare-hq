@@ -11,10 +11,10 @@
 {% endblock js-inline %}
 {% endif %}
 
-{% block title %}Confirmation Email Sent{% endblock title %}
+{% block title %}{% trans 'Confirmation Email Sent' %}{% endblock title %}
 
 {% block step-title %}
-    Confirm Account {% if alert_message %}<small>{{ alert_message }}</small>{% endif %}
+    {% trans 'Confirm Account' %} {% if alert_message %}<small>{{ alert_message }}</small>{% endif %}
 {% endblock %}
 
 {% block registration-content %}

@@ -1,6 +1,10 @@
+from crispy_forms.bootstrap import StrictButton, PrependedText
+from crispy_forms.helper import FormHelper
+from crispy_forms import layout as crispy
 from django import forms
 from django.contrib.auth.models import User
 from django.core.validators import validate_email
+from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
@@ -9,6 +13,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.forms import RoleForm, SupplyPointSelectWidget
 from corehq.apps.domain.forms import clean_password, max_pwd
 from corehq.apps.domain.models import Domain
+from corehq.apps.style import crispy as hqcrispy
 
 
 # https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
@@ -36,19 +41,23 @@ class DomainRegistrationForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(DomainRegistrationForm, self).__init__(*args, **kwargs)
+
         self.helper = FormHelper()
-        self.helper.form_class = "form-horizontal"
+        self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-6 col-md-5 col-lg-3'
+        self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
+
         self.helper.layout = crispy.Layout(
-            'hr_name',
             'org',
+            'hr_name',
             'domain_type',
             hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _("Create Project"),
-                    type="submit",
-                    css_class="btn btn-primary btn-lg disable-on-submit",
+                crispy.ButtonHolder(
+                    StrictButton(
+                        _('Create Project'),
+                        type="submit",
+                        css_class='btn-primary btn-lg disable-on-submit'
+                    )
                 )
             )
         )
@@ -83,22 +92,49 @@ class NewWebUserRegistrationForm(DomainRegistrationForm):
                                """))
     create_domain = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
     # Must be set to False to have the clean_*() routine called
-    eula_confirmed = forms.BooleanField(required=False,
-                                        label="",
-                                        help_text=mark_safe_lazy(_(
-                                            """I have read and agree to the
-                                               <a data-toggle='modal'
-                                                  data-target='#eulaModal'
-                                                  href='#eulaModal'>
-                                                  CommCare HQ End User License Agreement
-                                               </a>.""")))
+    eula_confirmed = forms.BooleanField(
+        required=False, label=" ", help_text=mark_safe_lazy(_(
+            """I have read and agree to the <a data-toggle='modal' data-target='#eulaModal' href='#eulaModal'>
+            CommCare HQ End User License Agreement</a>.""")))
 
     def __init__(self, *args, **kwargs):
         super(DomainRegistrationForm, self).__init__(*args, **kwargs)
-        initial_create_domain = kwargs.get('initial', {}).get('create_domain', True)
+
+        initial = kwargs.get('initial', {})
+        initial_create_domain = initial.get('create_domain', True)
         data_create_domain = self.data.get('create_domain', "True")
+
         if not initial_create_domain or data_create_domain == "False":
             self.fields['hr_name'].widget = forms.HiddenInput()
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
+
+        if 'domain_type' in initial:
+            self.helper.form_action = reverse('register_user', kwargs={'domain_type': initial['domain_type']})
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("New user information"),
+                'full_name',
+                'email',
+                'password',
+                PrependedText('eula_confirmed', '')
+            ),
+            'hr_name' if isinstance(self.fields['hr_name'], forms.HiddenInput) else crispy.Fieldset(
+                "Create your first project", 'hr_name'),
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    StrictButton(
+                        _('Create Account'),
+                        type="submit",
+                        css_class='btn-primary btn-lg disable-on-submit'
+                    )
+                )
+            )
+        )
 
     def clean_full_name(self):
         data = self.cleaned_data['full_name'].split()

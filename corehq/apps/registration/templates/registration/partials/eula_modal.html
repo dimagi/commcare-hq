@@ -1,13 +1,17 @@
 {% load i18n %}
-<div class="modal hide fade" id="eulaModal">
-    <div class="modal-header">
-        <a class="close" data-dismiss="modal">&times;</a>
-        <h4>{% trans "CommCare HQ End User License Agreement" %}</h4>
-    </div>
-    <div class="modal-body">
-        {% trans "Loading Terms of Service..." %}
-    </div>
-    <div class="modal-footer">
-        <a href="#" data-dismiss="modal" class="btn">{% trans "Close" %}</a>
+<div class="modal fade" id="eulaModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">{% trans "CommCare HQ End User License Agreement" %}</h4>
+            </div>
+            <div class="modal-body">
+                {% trans "Loading Terms of Service..." %}
+            </div>
+            <div class="modal-footer">
+                <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Close" %}</a>
+            </div>
+        </div>
     </div>
 </div>

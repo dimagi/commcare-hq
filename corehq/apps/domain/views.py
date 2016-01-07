@@ -26,7 +26,6 @@ from PIL import Image
 
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.models import User
-from django.utils.translation import ugettext as _, ugettext_lazy
 
 from corehq.const import USER_DATE_FORMAT
 from custom.dhis2.forms import Dhis2SettingsForm
