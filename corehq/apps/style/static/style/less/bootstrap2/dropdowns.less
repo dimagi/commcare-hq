@@ -1,8 +1,18 @@
 // Modified Dropdown menu features
 
-.dropdown-menu.right-align {
+.dropdown-menu.right-align,
+.dropdown-menu-right {
   left: auto;
   right: 0;
+}
+
+.navbar .nav > li > .dropdown-menu.dropdown-menu-right {
+  &:before {
+    display: none;
+  }
+  &:after {
+    display: none;
+  }
 }
 
 .dropdown-menu .nav-header {
@@ -36,4 +46,31 @@
     li.active > a {
         color: @white;
     }
+}
+
+.dropdown-menu .login-container {
+  padding: 2px 20px 5px;
+  .login-note {
+    color: @cc-brand-mid;
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: bold;
+    padding-bottom: 4px;
+  }
+  .login-username {
+    font-size: 1.25em;
+    line-height: 1.3em;
+    small {
+      display: block;
+      font-size: 12px;
+    }
+  }
+  .login-role {
+    font-weight: bold;
+    color: @cc-neutral-mid;
+  }
+}
+
+.dropdown-menu .dropdown-icon {
+  margin-right: 4px;
 }
