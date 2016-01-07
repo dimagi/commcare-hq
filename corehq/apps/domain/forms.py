@@ -956,10 +956,15 @@ max_pwd = 20
 pwd_pattern = re.compile( r"([-\w]){"  + str(min_pwd) + ',' + str(max_pwd) + '}' )
 
 def clean_password(txt):
-    strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
-    if strength['score'] < 2:
-        raise forms.ValidationError(_('Password is not strong enough. Try making your password more complex.'))
-    return txt
+    # TODO: waiting on upstream PR to fix TypeError https://github.com/taxpon/pyzxcvbn/pull/1
+    try:
+        strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
+    except TypeError:
+        raise forms.ValidationError(_('Please do not use years in your password.'))
+    else:
+        if strength['score'] < 2:
+            raise forms.ValidationError(_('Password is not strong enough. Try making your password more complex.'))
+        return txt
 
 
 class HQPasswordResetForm(forms.Form):
