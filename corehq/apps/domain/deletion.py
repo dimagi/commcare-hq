@@ -44,6 +44,12 @@ class ModelDeletion(BaseDeletion):
         return apps.get_model(self.app_label, self.model_name)
 
     def execute(self, domain_name):
+        if not domain_name:
+            # The Django orm will properly turn a None domain_name to a
+            # IS NULL filter. We don't want to allow deleting records for
+            # NULL domain names since they might have special meaning (like
+            # in some of the SMS models).
+            raise RuntimeError("Expected a valid domain name")
         if self.is_app_installed():
             model = self.get_model_class()
             model.objects.filter(**{self.domain_filter_kwarg: domain_name}).delete()
@@ -76,6 +82,13 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('accounting', 'Invoice', 'subscription__subscriber__domain'),
     ModelDeletion('accounting', 'Subscription', 'subscriber__domain'),
     ModelDeletion('accounting', 'Subscriber', 'domain'),
+    ModelDeletion('sms', 'SMS', 'domain'),
+    ModelDeletion('sms', 'MessagingSubEvent', 'parent__domain'),
+    ModelDeletion('sms', 'MessagingEvent', 'domain'),
+    ModelDeletion('sms', 'SelfRegistrationInvitation', 'domain'),
+    ModelDeletion('sms', 'SQLMobileBackendMapping', 'domain'),
+    ModelDeletion('sms', 'MobileBackendInvitation', 'domain'),
+    ModelDeletion('sms', 'SQLMobileBackend', 'domain'),
 ]
 
 
