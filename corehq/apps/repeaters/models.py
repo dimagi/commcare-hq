@@ -504,4 +504,5 @@ class RepeatRecord(Document, LockableMixIn):
                     })
 
 # import signals
+# Do not remove this import, its required for the signals code to run even though not explicitly used in this file
 from corehq.apps.repeaters import signals
