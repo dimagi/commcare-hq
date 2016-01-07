@@ -5,6 +5,8 @@ import logging
 import urllib
 import urlparse
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT
+from corehq.util.datadog.utils import log_counter
 from corehq.util.quickcache import quickcache
 
 from dimagi.ext.couchdbkit import *
@@ -495,6 +497,8 @@ class RepeatRecord(Document, LockableMixIn):
                 if not self.succeeded:
                     # mark it failed for later and give up
                     self.update_failure(failure_reason)
-
-# import signals
-from corehq.apps.repeaters import signals
+                    log_counter(REPEATER_ERROR_COUNT, {
+                        '_id': self._id,
+                        'reason': failure_reason,
+                        'target_url': self.url,
+                    })
