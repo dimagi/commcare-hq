@@ -289,8 +289,10 @@ class AutomaticCaseUpdateTest(TestCase):
         rules = AutomaticUpdateRule.by_domain(self.domain)
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
 
-        boundary_date = AutomaticUpdateRule.get_boundary_date(rules_by_case_type['test-case-type'], datetime(2016, 1, 1))
+        boundary_date = AutomaticUpdateRule.get_boundary_date(
+            rules_by_case_type['test-case-type'], datetime(2016, 1, 1))
         self.assertEqual(boundary_date, datetime(2015, 12, 2))
 
-        boundary_date = AutomaticUpdateRule.get_boundary_date(rules_by_case_type['test-case-type-2'], datetime(2016, 1, 1))
+        boundary_date = AutomaticUpdateRule.get_boundary_date(
+            rules_by_case_type['test-case-type-2'], datetime(2016, 1, 1))
         self.assertEqual(boundary_date, datetime(2015, 12, 2))
