@@ -1,14 +1,17 @@
 {% extends "style/bootstrap3/two_column.html" %}
+{% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
     {% block reports-js %}
-    <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
-    <script src="{% static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/jquery.history.js' %}"></script>
-    <script src="{% static 'reports/javascripts/datepicker.js' %}"></script>
-    <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
-    <script src="{% static 'reports/javascripts/reports.async.js' %}"></script>
+    {% compress js %}
+    <script src="{% new_static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/lib/jquery.history.js' %}"></script>
+    <script src="{% new_static 'reports/javascripts/datepicker.js' %}"></script>
+    <script src="{% new_static 'reports/javascripts/reports.config.js' %}"></script>
+    <script src="{% new_static 'reports/javascripts/reports.async.js' %}"></script>
+    {% endcompress %}
     {% endblock %}
 {% endblock %}
 

@@ -1,10 +1,13 @@
 {% extends "reports/bootstrap3/standard/base_template.html" %}
+{% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
-    <script src="{% static 'reports/ko/saved_reports.js' %}"></script>
+    {% compress js %}
+    <script src="{% new_static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/main.js' %}"></script>
+    <script src="{% new_static 'reports/ko/saved_reports.js' %}"></script>
+    {% endcompress %}
 {% endblock %}
 
 {% block reports-js-inline %}{{ block.super }}
