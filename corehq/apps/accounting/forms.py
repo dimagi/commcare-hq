@@ -110,7 +110,7 @@ class BillingAccountBasicForm(forms.Form):
         label=ugettext_lazy("Prepay or Postpay"),
         choices=PreOrPostPay.CHOICES
     )
-    account_basic = forms.CharField(widget=forms.HiddenInput)
+    account_basic = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, account, *args, **kwargs):
         self.account = account
@@ -266,7 +266,7 @@ class BillingAccountBasicForm(forms.Form):
 
 class BillingAccountContactForm(forms.ModelForm):
 
-    account_contact = forms.CharField(widget=forms.HiddenInput)
+    account_contact = forms.CharField(widget=forms.HiddenInput, required=False)
 
     class Meta:
         model = BillingContactInfo
