@@ -386,9 +386,9 @@ class ILSGatewayAPI(APISynchronization):
                 # make sure it's user migrated from ILS and username is available
                 if all([domain in ils_domains for domain in user.domains])\
                         and not WebUser.get_by_username(email):
-                    user.username = email
-                    user.email = ilsgateway_webuser.email
+                    user.delete_domain_membership(self.domain)
                     user.save()
+                    user = self._create_web_user(email, ilsgateway_webuser, location_id, user_dict)
                     ils_sql_web_user.email = email
                     if self.domain not in user.get_domains():
                         user.add_domain_membership(self.domain, location_id=location_id)

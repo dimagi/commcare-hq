@@ -66,12 +66,17 @@ class WebUsersSyncTest(TestCase):
         with open(os.path.join(self.datapath, 'sample_webusers.json')) as f:
             webuser = ILSUser(json.loads(f.read())[0])
         self.assertEqual(len(WebUser.by_domain(TEST_DOMAIN)), 0)
-        self.api_object.web_user_sync(webuser)
-        self.assertEqual(len(WebUser.by_domain(TEST_DOMAIN)), 1)
-        webuser.email = 'edited@example.com'
+
         ils_webuser = self.api_object.web_user_sync(webuser)
         self.assertEqual(len(WebUser.by_domain(TEST_DOMAIN)), 1)
-        self.assertEqual(ils_webuser.username, 'edited@example.com')
+
+        webuser.email = 'edited@example.com'
+        ils_webuser2 = self.api_object.web_user_sync(webuser)
+        ils_webuser = WebUser.get(docid=ils_webuser.get_id)
+
+        self.assertEqual(len(WebUser.by_domain(TEST_DOMAIN)), 1)
+        self.assertIsNone(ils_webuser.get_domain_membership(TEST_DOMAIN))
+        self.assertEqual(ils_webuser2.username, 'edited@example.com')
 
     def test_webusers_migration(self):
         checkpoint = MigrationCheckpoint(
