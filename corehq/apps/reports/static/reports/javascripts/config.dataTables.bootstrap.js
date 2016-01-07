@@ -177,11 +177,17 @@ function HQReportDataTables(options) {
             if (!self.datatable)
                 self.datatable = datatable;
 
-            if(self.fixColumns)
-                new FixedColumns( datatable, {
+            if (self.fixColumns && self.useBootstrap3) {
+                new $.fn.dataTable.FixedColumns(datatable, {
                     iLeftColumns: self.fixColsNumLeft,
                     iLeftWidth: self.fixColsWidth
-                } );
+                });
+            } else if (self.fixColumns) {
+                new FixedColumns(datatable, {
+                    iLeftColumns: self.fixColsNumLeft,
+                    iLeftWidth: self.fixColsWidth
+                });
+            }
             $(window).on('resize', function () {
                 datatable.fnAdjustColumnSizing();
             } );
