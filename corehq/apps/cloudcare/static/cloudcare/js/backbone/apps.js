@@ -876,14 +876,17 @@ cloudCare.AppView = Backbone.View.extend({
         this.caseSelectionView.model.set("childCase", null);
     },
     syncDb: function (username) {
-        self = this;
+        var self = this;
         var resp = $.ajax({
             url: self.options.syncDbUrl,
             dataType: "json",
             data: {"username": username},
         });
+        $('#sync-button').disableButton();
+        showLoading();
         resp.done(function (data) {
             tfSyncComplete(data.status === "error");
+            $('#sync-button').enableButton();
         });
 
     },
