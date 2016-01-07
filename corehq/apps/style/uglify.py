@@ -25,14 +25,15 @@ class UglifySourcemapFilter(CompilerFilter):
         infiles = []
         for infile in kwargs['content_meta']:
             # type, full_filename, relative_filename
-            infiles.append(infile[1])
+            infiles.append(infile[2])
 
         options['infiles'] = ' '.join(f for f in infiles)
 
         options['mapfile'] = kwargs['outfile'].replace('.js', '.map.js')
 
         options['mapurl'] = '{}{}'.format(
-            settings.STATIC_URL, options['mapfile'])
+            settings.STATIC_URL, options['mapfile']
+        )
 
         options['maproot'] = settings.STATIC_URL
 
