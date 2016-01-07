@@ -25,7 +25,7 @@ def load_balance(key, objects):
     # doesn't exist.
     client = get_redis_client().client.get_client()
 
-    # Increment the key. If they key doesn't exist (or already expired),
+    # Increment the key. If the key doesn't exist (or already expired),
     # redis sets the value to 0 before incrementing.
     value = client.incr(key)
 
