@@ -74,8 +74,6 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
             setattr(settings, setting, value)
             print "set %s settting to %s" % (setting, value)
 
-        settings.COUCH_SETTINGS_HELPER = settings.COUCH_SETTINGS_HELPER._replace(
-            is_test=True)
         settings.EXTRA_COUCHDB_DATABASES = settings.COUCH_SETTINGS_HELPER.get_extra_couchdbs()
 
         return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
