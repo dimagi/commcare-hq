@@ -56,6 +56,7 @@ class LocationResource(SQLResourceURIMixin, ModelResource, HqBaseResource):
 
     class Meta:
         resource_name = 'location'
+        detail_uri_name = 'location_id'
         queryset = SQLLocation.objects.filter(is_archived=False).all()
         authentication = DomainAdminAuthentication()
         allowed_methods = ['get']

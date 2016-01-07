@@ -10,7 +10,7 @@ from corehq.apps.users.util import format_username
 from dimagi.utils.modules import to_function
 from dimagi.utils.logging import notify_exception
 from corehq import privileges
-from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.accounting.utils import domain_has_privilege, log_accounting_error
 from corehq.apps.sms.util import (clean_phone_number, clean_text,
     get_available_backends)
 from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING,
@@ -557,4 +557,4 @@ def create_billable_for_sms(msg, delay=True):
         else:
             store_billable(msg)
     except Exception as e:
-        logging.error("[BILLING] Errors Creating SMS Billable: %s" % e)
+        log_accounting_error("Errors Creating SMS Billable: %s" % e)

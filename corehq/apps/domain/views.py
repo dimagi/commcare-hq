@@ -14,14 +14,17 @@ from django.db.models import Sum
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
+from django.utils.http import urlsafe_base64_decode
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import redirect, render
 from django.contrib import messages
+from django.contrib.auth.views import password_reset_confirm
 from django.views.decorators.http import require_POST
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.contrib.auth.models import User
 
 from corehq.const import USER_DATE_FORMAT
 from custom.dhis2.forms import Dhis2SettingsForm
@@ -55,7 +58,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
-from corehq.apps.users.models import Invitation
+from corehq.apps.users.models import Invitation, CouchUser
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
 from corehq.util.context_processors import get_domain_type
@@ -103,6 +106,7 @@ from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRe
 from dimagi.utils.post import simple_post
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.signals import clear_login_attempts
 
 
 PAYMENT_ERROR_MESSAGES = {
@@ -653,19 +657,9 @@ class DomainSubscriptionView(DomainAccountingSettings):
                     subscription
                 ) if subscription else None
             )),
-            'feature_credit': self._fmt_credit(self._credit_grand_total(
-                CreditLine.get_credits_by_subscription_and_features(
-                    subscription, feature_type=FeatureType.ANY
-                ) if subscription else None
-            )),
             'account_general_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_for_account(
                     self.account
-                ) if self.account else None
-            )),
-            'account_feature_credit': self._fmt_credit(self._credit_grand_total(
-                CreditLine.get_credits_for_account(
-                    self.account, feature_type=FeatureType.ANY
                 ) if self.account else None
             )),
             'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
@@ -682,7 +676,6 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 product_info['account_credit'] and product_info['account_credit']['is_visible']
                 for product_info in info['products']
             )
-            or info['account_feature_credit'] and info['account_feature_credit']['is_visible']
             or info['account_general_credit'] and info['account_general_credit']['is_visible']
         )
         info.update(plan_version.user_facing_description)
@@ -2816,3 +2809,19 @@ class CardsView(BaseCardView):
             return self._generic_error()
 
         return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
+
+
+class PasswordResetView(View):
+    urlname = "password_reset_confirm"
+
+    def get(self, request, *args, **kwargs):
+        return password_reset_confirm(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        response = password_reset_confirm(request, *args, **kwargs)
+        uidb64 = kwargs.get('uidb64')
+        uid = urlsafe_base64_decode(uidb64)
+        user = User.objects.get(pk=uid)
+        couch_user = CouchUser.from_django_user(user)
+        clear_login_attempts(couch_user)
+        return response

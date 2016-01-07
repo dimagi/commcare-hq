@@ -536,7 +536,14 @@ FACET_MAPPING = [
 
 class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
-    base_template = "hqadmin/bootstrap2/faceted_report.html"
+    base_template = "hqadmin/bootstrap3/faceted_report.html"
+    report_template_path = "reports/async/bootstrap3/tabular.html"
+
+    @use_jquery_ui
+    @use_bootstrap3
+    @use_datatables
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        self.is_bootstrap3 = True
 
 
 class AdminFacetedReport(AdminReport, ElasticTabularReport):
@@ -640,14 +647,9 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     search_for = ugettext_noop("projects...")
     base_template = "hqadmin/domain_faceted_report.html"
 
-    report_template_path = "reports/async/bootstrap3/tabular.html"
-
-    @use_bootstrap3
-    @use_datatables
-    @use_jquery_ui
     @use_nvd3
     def set_bootstrap3_status(self, request, *args, **kwargs):
-        self.is_bootstrap3 = True
+        super(AdminDomainStatsReport, self).set_bootstrap3_status(request, *args, **kwargs)
 
     @property
     def template_context(self):

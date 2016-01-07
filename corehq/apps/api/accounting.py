@@ -130,12 +130,16 @@ class SubscriberResource(ModelResource):
 
 class BillingContactInfoResource(ModelResource):
     account = fields.IntegerField('account_id')
+    emails = fields.CharField(readonly=True)
 
     class Meta(AccountingResourceMeta):
         queryset = BillingContactInfo.objects.all().order_by('pk')
-        fields = ['id', 'first_name', 'last_name', 'emails', 'phone_number', 'company_name', 'first_line',
+        fields = ['id', 'first_name', 'last_name', 'phone_number', 'company_name', 'first_line',
                   'second_line', 'city', 'state_province_region', 'postal_code', 'country', 'last_modified']
         resource_name = 'billing_contact_info'
+
+    def dehydrate_emails(self, bundle):
+        return ','.join(bundle.obj.email_list)
 
 
 class BillingAccountResource(ModelResource):

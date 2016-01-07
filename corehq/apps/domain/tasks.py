@@ -30,10 +30,10 @@ def _real_incomplete_domains():
             .non_test_domains()
             .incomplete_domains()
             .run()
-            .raw_hits
+            .hits
     )
 
-    return {x['fields']['name'] for x in incomplete_domains}
+    return {x['name'] for x in incomplete_domains}
 
 
 def incomplete_domains_to_email():

@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block title %}{{ report.title }}: Admin Reports{% endblock %}
+{% block title %}{% if current_page and section %}{% if current_page.title %}{{ current_page.title }} : {% endif %}{{ section.page_name }} {% else %}{{ report.title }}{% endif %}: Admin Reports{% endblock %}
 
 {% block js %}{{ block.super }}
     <script type="text/javascript" src="{% new_static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
@@ -29,7 +29,7 @@
         <li>
             <a href="{% url "default_admin_report" %}"><strong>{% trans "Admin Reports" %}</strong></a>
         </li>
-        <li class="active">{{ report.title }}</li>
+        <li class="active">{% if current_page and current_page.title %}{{ current_page.title }}{% else %}{{ report.title }}{% endif %}</li>
     </ol>
 {% endblock %}
 

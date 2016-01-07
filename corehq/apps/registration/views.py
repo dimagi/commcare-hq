@@ -6,9 +6,11 @@ from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import redirect, render
-from django.template.loader import render_to_string
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 import sys
+
+from django.views.generic.base import TemplateView
 
 from corehq.apps.analytics.tasks import (
     track_workflow,
@@ -21,6 +23,7 @@ from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm
 from corehq.apps.registration.utils import activate_new_user, send_new_request_update_email, request_new_domain, \
     send_domain_registration_email
+from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import get_ip
@@ -104,30 +107,33 @@ def register_user(request, domain_type=None):
         return render(request, 'registration/create_new_user.html', context)
 
 
-@transaction.atomic
-@login_required
-def register_domain(request, domain_type=None):
-    domain_type = domain_type or 'commcare'
-    if domain_type not in DOMAIN_TYPES or (not request.couch_user) or request.couch_user.is_commcare_user():
-        raise Http404()
+class RegisterDomainView(TemplateView):
 
-    context = get_domain_context(domain_type)
+    template_name = 'registration/domain_request.html'
 
-    is_new = False
-    referer_url = request.GET.get('referer', '')
+    @method_decorator(login_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(RegisterDomainView, self).dispatch(request, *args, **kwargs)
 
-    active_domains_for_user = Domain.active_for_user(request.user)
-    if len(active_domains_for_user) <= 0 and not request.user.is_superuser:
-        is_new = True
-        domains_for_user = Domain.active_for_user(request.user, is_active=False)
-        if len(domains_for_user) > 0:
-            context['requested_domain'] = domains_for_user[0]
-            return render(request, 'registration/confirmation_waiting.html',
-                    context)
+    def get(self, request, *args, **kwargs):
+        active_domains_for_user = Domain.active_for_user(request.user)
+        if len(active_domains_for_user) <= 0 and not request.user.is_superuser:
+            domains_for_user = Domain.active_for_user(request.user, is_active=False)
+            if len(domains_for_user) > 0:
+                context = get_domain_context(kwargs.get('domain_type') or 'commcare')
+                context['requested_domain'] = domains_for_user[0]
+                return render(request, 'registration/confirmation_waiting.html', context)
+        return super(RegisterDomainView, self).get(request, *args, **kwargs)
 
-    if request.method == 'POST':
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        domain_type = kwargs.get('domain_type') or 'commcare'
+        is_new = False
+        referer_url = request.GET.get('referer', '')
         nextpage = request.POST.get('next')
         form = DomainRegistrationForm(request.POST)
+        context = self.get_context_data(form=form)
         if form.is_valid():
             reqs_today = RegistrationRequest.get_requests_today()
             max_req = settings.DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY
@@ -156,22 +162,35 @@ def register_domain(request, domain_type=None):
                     'requested_domain': domain_name,
                     'track_domain_registration': True,
                 })
-                return render(request, 'registration/confirmation_sent.html',
-                        context)
+                return render(request, 'registration/confirmation_sent.html', context)
             else:
                 if nextpage:
                     return HttpResponseRedirect(nextpage)
                 if referer_url:
                     return redirect(referer_url)
                 return HttpResponseRedirect(reverse("domain_homepage", args=[domain_name]))
-    else:
-        form = DomainRegistrationForm(initial={'domain_type': domain_type})
 
-    context.update({
-        'form': form,
-        'is_new': is_new,
-    })
-    return render(request, 'registration/domain_request.html', context)
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        request = self.request
+        domain_type = kwargs.get('domain_type') or 'commcare'
+        if domain_type not in DOMAIN_TYPES or (not request.couch_user) or request.couch_user.is_commcare_user():
+            raise Http404()
+
+        context = super(RegisterDomainView, self).get_context_data(**kwargs)
+        context .update(get_domain_context(domain_type))
+        is_new = False
+
+        active_domains_for_user = Domain.active_for_user(request.user)
+        if len(active_domains_for_user) <= 0 and not request.user.is_superuser:
+            is_new = True
+
+        context.update({
+            'form': kwargs.get('form') or DomainRegistrationForm(initial={'domain_type': domain_type}),
+            'is_new': is_new,
+        })
+        return context
 
 
 @transaction.atomic

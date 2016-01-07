@@ -168,26 +168,6 @@
                             </div>
                         </div>
                     </div>
-                    {% if plan.feature_credit and plan.feature_credit.is_visible %}
-                    <div class="control-group">
-                        <label class="control-label">
-                            {% trans 'Feature Credit' %}
-                            <div class="hq-help">
-                                <a href="#"
-                                   data-content="This is credit that can be applied to the features below.
-                                    It's likely that someone from Dimagi added these credits for you."
-                                   data-title="Feature Credit"
-                                   data-original-title=""
-                                   title="">
-                                    <i class="icon-question-sign"></i>
-                                </a>
-                            </div>
-                        </label>
-                        <div class="controls">
-                            <p class="control-group-text">{{ plan.feature_credit.amount }}</p>
-                        </div>
-                    </div>
-                    {% endif %}
                     {% if plan.general_credit and plan.general_credit.is_visible %}
                     <div class="control-group">
                         <label class="control-label">
@@ -209,74 +189,6 @@
                         </div>
                     </div>
                     {% endif %}
-                </div>
-                {% if plan.has_account_level_credit %}
-                <legend>{% trans 'Account Credit' %}</legend>
-                <div class="form form-horizontal">
-                    <div data-bind="foreach: products">
-                        <div class="control-group" data-bind="visible: isAccountVisible">
-                            <label class="control-label">
-                                {% trans 'Plan Credit' %}
-                                <div class="hq-help">
-                                    <a href="#"
-                                       data-content="This is credit that can be applied to your software plan.
-                                        It's likely that someone from Dimagi added these credits for you."
-                                       data-title="Account Plan Credit"
-                                       data-original-title=""
-                                       title="">
-                                        <i class="icon-question-sign"></i>
-                                    </a>
-                                </div>
-                            </label>
-                            <div class="controls">
-                                <p class="control-group-text" data-bind="text: accountAmount"></p>
-                            </div>
-                        </div>
-                    </div>
-                    {% if plan.account_feature_credit and plan.account_feature_credit.is_visible %}
-                    <div class="control-group">
-                        <label class="control-label">
-                            {% trans 'Feature Credit' %}
-                            <div class="hq-help">
-                                <a href="#"
-                                   data-content="This is credit that can be applied to the features below.
-                                    It's likely that someone from Dimagi added these credits for you."
-                                   data-title="Account Feature Credit"
-                                   data-original-title=""
-                                   title="">
-                                    <i class="icon-question-sign"></i>
-                                </a>
-                            </div>
-                        </label>
-                        <div class="controls">
-                            <p class="control-group-text">{{ plan.account_feature_credit.amount }}</p>
-                        </div>
-                    </div>
-                    {% endif %}
-                    {% if plan.account_general_credit and plan.account_general_credit.is_visible %}
-                    <div class="control-group">
-                        <label class="control-label">
-                            {% trans 'General Credit' %}
-                            <div class="hq-help">
-                                <a href="#"
-                                   data-content="This is credit that can be applied to either your software
-                                    plan or the features below. It's likely that someone from Dimagi added
-                                    these credits for you."
-                                   data-title="Account General Credit"
-                                   data-original-title=""
-                                   title="">
-                                    <i class="icon-question-sign"></i>
-                                </a>
-                            </div>
-                        </label>
-                        <div class="controls">
-                            <p class="control-group-text">{{ plan.account_general_credit.amount }}</p>
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-                {% endif %}
-                <div class="form form-horizontal">
                     <div data-bind="with: prepayments">
                         <div class="control-group">
                             <div class="controls">
@@ -307,6 +219,52 @@
                         </div>
                     </div>
                 </div>
+                {% if plan.has_account_level_credit %}
+                <legend>{% trans 'Account Credit' %}</legend>
+                <div class="form form-horizontal">
+                    <div data-bind="foreach: products">
+                        <div class="control-group" data-bind="visible: isAccountVisible">
+                            <label class="control-label">
+                                {% trans 'Plan Credit' %}
+                                <div class="hq-help">
+                                    <a href="#"
+                                       data-content="This is credit that can be applied to your software plan.
+                                        It's likely that someone from Dimagi added these credits for you."
+                                       data-title="Account Plan Credit"
+                                       data-original-title=""
+                                       title="">
+                                        <i class="icon-question-sign"></i>
+                                    </a>
+                                </div>
+                            </label>
+                            <div class="controls">
+                                <p class="control-group-text" data-bind="text: accountAmount"></p>
+                            </div>
+                        </div>
+                    </div>
+                    {% if plan.account_general_credit and plan.account_general_credit.is_visible %}
+                    <div class="control-group">
+                        <label class="control-label">
+                            {% trans 'General Credit' %}
+                            <div class="hq-help">
+                                <a href="#"
+                                   data-content="This is credit that can be applied to either your software
+                                    plan or the features below. It's likely that someone from Dimagi added
+                                    these credits for you."
+                                   data-title="Account General Credit"
+                                   data-original-title=""
+                                   title="">
+                                    <i class="icon-question-sign"></i>
+                                </a>
+                            </div>
+                        </label>
+                        <div class="controls">
+                            <p class="control-group-text">{{ plan.account_general_credit.amount }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
             {% endif %}
             <legend>{% trans 'Usage Summary' %}</legend>
             <table class="table table-bordered table-striped">

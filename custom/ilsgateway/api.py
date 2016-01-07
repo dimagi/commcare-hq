@@ -3,6 +3,7 @@ from django.core.validators import validate_email
 from django.db import transaction
 from corehq.apps.hqcase.dbaccessors import \
     get_supply_point_case_in_domain_by_id
+from corehq.apps.sms.mixin import PhoneNumberInUseException, InvalidFormatException, apply_leniency, VerifiedNumber
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty,\
     FloatProperty, DictProperty
@@ -57,6 +58,12 @@ class ILSUser(JsonObject):
     supply_point = IntegerProperty()
 
 
+class Connection(JsonObject):
+    phone_number = StringProperty()
+    backend = StringProperty()
+    default = BooleanProperty()
+
+
 class SMSUser(JsonObject):
     id = IntegerProperty()
     name = StringProperty()
@@ -64,7 +71,7 @@ class SMSUser(JsonObject):
     is_active = StringProperty()
     supply_point = DecimalProperty()
     email = StringProperty()
-    phone_numbers = ListProperty()
+    phone_numbers = ListProperty(item_type=Connection)
     backend = StringProperty()
     date_updated = StringProperty()
     language = StringProperty()
@@ -397,6 +404,70 @@ class ILSGatewayAPI(APISynchronization):
             email=email
         )
         return user
+
+    def _reassign_number(self, user, connection):
+        v = VerifiedNumber.by_phone(apply_leniency(connection.phone_number), include_pending=True)
+        if v.domain in self._get_logistics_domains():
+            v.domain = self.domain
+            v.owner_doc_type = user.doc_type
+            v.owner_id = user.get_id
+            backend_id = None
+            if connection.backend != 'push_backend':
+                backend_id = 'MOBILE_BACKEND_TEST'
+            v.backend_id = backend_id
+            v.verified = True
+            v.save()
+
+    def _save_verified_number(self, user, connection):
+        try:
+            self.save_verified_number(user, connection)
+        except PhoneNumberInUseException:
+            self._reassign_number(user, connection)
+        except InvalidFormatException:
+            pass
+
+    def save_verified_number(self, user, connection):
+        backend_id = None
+        if connection.backend != 'push_backend':
+            backend_id = 'MOBILE_BACKEND_TEST'
+        user.save_verified_number(self.domain, connection.phone_number, True, backend_id=backend_id)
+
+    def add_phone_numbers(self, ilsgateway_smsuser, user):
+        phone_numbers = ilsgateway_smsuser.phone_numbers
+        if not phone_numbers:
+            return
+
+        saved_numbers = []
+        for connection in phone_numbers:
+            phone_number = apply_leniency(connection.phone_number)
+            if connection.default:
+                saved_numbers = [phone_number] + saved_numbers
+            else:
+                saved_numbers.append(phone_number)
+        user.phone_numbers = saved_numbers
+        user.save()
+
+        for connection in phone_numbers:
+            self._save_verified_number(user, connection)
+
+    def edit_phone_numbers(self, ilsgateway_smsuser, user):
+        phone_numbers = set(user.phone_numbers)
+        saved_numbers = []
+
+        for connection in ilsgateway_smsuser.phone_numbers:
+            phone_number = apply_leniency(connection.phone_number)
+            if phone_number not in phone_numbers:
+                self._save_verified_number(user, connection)
+            if connection.default:
+                saved_numbers = [phone_number] + saved_numbers
+            else:
+                saved_numbers.append(phone_number)
+
+        for phone_number in phone_numbers - set(saved_numbers):
+            user.delete_verified_number(phone_number)
+
+        user.phone_numbers = saved_numbers
+        user.save()
 
     def sms_user_sync(self, ilsgateway_smsuser, **kwargs):
         sms_user = super(ILSGatewayAPI, self).sms_user_sync(ilsgateway_smsuser, **kwargs)

@@ -112,7 +112,7 @@ def migrate(balance_only=False):
     perform_sanity_checks()
     balance(couch_count, couch_count_deleted, couch_count_global)
     if not balance_only:
-        MigrationStatus.set_migration_completed('backend')
+        MigrationStatus.set_migration_completed(MigrationStatus.MIGRATION_BACKEND)
 
 
 class Command(BaseCommand):
