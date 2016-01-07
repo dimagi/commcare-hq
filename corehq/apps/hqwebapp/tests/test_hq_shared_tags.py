@@ -1,5 +1,8 @@
+import json
 from unittest import TestCase
 from django.template import Context, Template, TemplateSyntaxError
+from django.test import SimpleTestCase
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import escape_json_leaves
 
 
 class TestCaseTag(TestCase):
@@ -95,6 +98,19 @@ class TestCaseTag(TestCase):
         self.assertEqual(str(context.exception),
             "'endcase' tag does not accept arguments")
 
+
+class TestJsonTag(SimpleTestCase):
+    def test_escaping_html(self):
+        json_data_dict = {
+            'one': [
+                'foo',
+                'bar',
+            ],
+            'two': 'baz</script><script>alert(1)</script>'
+        }
+        escaped = json.dumps(escape_json_leaves(json_data_dict))
+        expected = '{"two": "baz&lt;/script&gt;&lt;script&gt;alert(1)&lt;/script&gt;", "one": ["foo", "bar"]}'
+        self.assertEqual(escaped, expected)
 
 def render(template, **context):
     if not isinstance(template, Template):
