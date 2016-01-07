@@ -18,6 +18,7 @@ def base_template(request):
     return {
         'base_template': settings.BASE_TEMPLATE,
         'login_template': settings.LOGIN_TEMPLATE,
+        'login_template_bootstrap2': settings.LOGIN_TEMPLATE_BOOTSTRAP2,
         'less_debug': settings.LESS_DEBUG,
         'less_watch': settings.LESS_WATCH,
     }

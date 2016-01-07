@@ -43,7 +43,8 @@ class RegistrationRequest(Document):
 
     @classmethod
     def get_request_for_username(cls, username):
-        result = cls.view("registration/requests_by_username",
+        result = cls.view(
+            "registration/requests_by_username",
             key=username,
             reduce=False,
             include_docs=True).first()

@@ -23,7 +23,7 @@ from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm
 from corehq.apps.registration.utils import activate_new_user, send_new_request_update_email, request_new_domain, \
     send_domain_registration_email
-from corehq.apps.style.decorators import use_bootstrap3
+from corehq.apps.style.decorators import use_bootstrap3_func, use_bootstrap3
 from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import get_ip
@@ -34,6 +34,7 @@ DOMAIN_TYPES = (
     'commtrack'
 )
 
+
 def get_domain_context(domain_type='commcare'):
     """
     Set context variables that are normally set based on the domain type
@@ -43,11 +44,13 @@ def get_domain_context(domain_type='commcare'):
     dummy_domain = get_dummy_domain(domain_type)
     return get_per_domain_context(dummy_domain)
 
+
 def registration_default(request):
     return redirect(register_user)
 
 
 @transaction.atomic
+@use_bootstrap3_func
 def register_user(request, domain_type=None):
     domain_type = domain_type or 'commcare'
     if domain_type not in DOMAIN_TYPES:
@@ -108,7 +111,6 @@ def register_user(request, domain_type=None):
 
 
 class RegisterDomainView(TemplateView):
-
     template_name = 'registration/domain_request.html'
 
     @method_decorator(login_required)
@@ -268,7 +270,7 @@ def confirm_domain(request, guid=None):
     if requested_domain.is_active:
         assert(req.confirm_time is not None and req.confirm_ip is not None)
         messages.success(request, 'Your account %s has already been activated. '
-            'No further validation is required.' % req.new_user_username)
+                                  'No further validation is required.' % req.new_user_username)
         return HttpResponseRedirect(reverse("dashboard_default", args=[requested_domain]))
 
     # Set confirm time and IP; activate domain and new user who is in the
@@ -281,10 +283,9 @@ def confirm_domain(request, guid=None):
 
     send_new_request_update_email(requesting_user, get_ip(request), requested_domain.name, is_confirming=True)
 
-    messages.success(request,
-            'Your account has been successfully activated.  Thank you for taking '
-            'the time to confirm your email address: %s.'
-        % (requesting_user.username))
+    messages.success(
+        request, 'Your account has been successfully activated.  Thank you for taking '
+                 'the time to confirm your email address: %s.' % requesting_user.username)
     track_workflow(requesting_user.email, "Confirmed new project")
     track_confirmed_account_on_hubspot.delay(requesting_user)
     return HttpResponseRedirect(reverse("dashboard_default", args=[requested_domain]))

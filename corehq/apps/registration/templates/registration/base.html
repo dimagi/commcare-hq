@@ -1,9 +1,10 @@
 {% extends login_template %}
+{% load i18n %}
 
 {% block login-content %}
     <div class="row">
         <div class="page-header">
-            <h1>{% block step-title %}Create an Account{% endblock %}</h1>
+            <h1>{% block step-title %}{% trans 'Create an Account' %}{% endblock %}</h1>
         </div>
         {% block registration-content %}
         {% endblock %}

@@ -44,6 +44,7 @@ from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.reports.util import is_mobile_worker_with_report_access
+from corehq.apps.style.decorators import use_bootstrap3_func
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.hqwebapp.doc_info import get_doc_info
@@ -320,6 +321,7 @@ def server_up(req):
     else:
         return HttpResponse("success")
 
+
 def no_permissions(request, redirect_to=None, template_name="403.html"):
     """
     403 error handler.
@@ -341,6 +343,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
              })))
 
 
+@use_bootstrap3_func
 def _login(req, domain_name, template_name):
 
     if req.user.is_authenticated() and req.method != "POST":
@@ -405,6 +408,7 @@ def is_mobile_url(url):
     # Minor hack
     return ('reports/custom/mobile' in url)
 
+
 def logout(req):
     referer = req.META.get('HTTP_REFERER')
     domain = get_domain_from_url(urlparse(referer).path) if referer else None
@@ -421,6 +425,7 @@ def logout(req):
         return HttpResponseRedirect('%s' % domain_login_url)
     else:
         return HttpResponseRedirect(reverse('login'))
+
 
 @login_and_domain_required
 def retrieve_download(req, domain, download_id, template="style/includes/file_download.html"):
@@ -622,11 +627,14 @@ def render_static(request, template):
 def eula(request):
     return render_static(request, "eula.html")
 
+
 def cda(request):
     return render_static(request, "cda.html")
 
+
 def apache_license(request):
     return render_static(request, "apache_license.html")
+
 
 def bsd_license(request):
     return render_static(request, "bsd_license.html")

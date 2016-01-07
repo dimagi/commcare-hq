@@ -4,10 +4,14 @@
 {% block title %}Waiting for Email Confirmation{% endblock title %}
 
 {% block step-title %}
-    Confirm Account <small>Waiting for your confirmation. Please check your email.</small>
+    {% trans 'Confirm Account' %} <small>{% trans 'Waiting for your confirmation. Please check your email.' %}</small>
 {% endblock %}
 
 {% block registration-content %}
-    <p>Thank you for requesting a new CommCare HQ project: <strong>{{ requested_domain }}</strong>. Before you can use this project, you must first confirm your account.</p>
+    <p>
+        {% trans 'Thank you for requesting a new CommCare HQ project' %}:
+        <strong>{{ requested_domain }}</strong>.
+        {% trans 'Before you can use this project, you must first confirm your account.' %}
+    </p>
     {% include "registration/partials/confirmation_waiting_actions.html" %}
 {% endblock %}
