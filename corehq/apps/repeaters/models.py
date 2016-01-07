@@ -502,3 +502,6 @@ class RepeatRecord(Document, LockableMixIn):
                         'reason': failure_reason,
                         'target_url': self.url,
                     })
+
+# import signals
+from corehq.apps.repeaters import signals
