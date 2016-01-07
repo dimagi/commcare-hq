@@ -62,6 +62,7 @@ def active_mobile_users(domain, *args):
 
     sms_users = {q['term'] for q in (
         SMSES()
+        .incoming_messages()
         .user_facet(size=USER_COUNT_UPPER_BOUND)
         .to_commcare_user()
         .domain(domain)
