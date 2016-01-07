@@ -54,12 +54,8 @@ branches:
   - requests #Simon 11/3
   - add-tableau-dashboard # TS 11/5
   - fix-toggle #wsp 12/14
-  - es-api-fix # Noah 12/31
   - location-delete # Cal 12/16
-  - password-strength # Cal 12/17
-#  - false-heartbeat-fix  # Biyeun 12/22
-  - credit-line-balances # Nick P
-  - deactivate-data-source # Nick P 12/29
+  - new-footer-nav # Biyeun 1/4
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

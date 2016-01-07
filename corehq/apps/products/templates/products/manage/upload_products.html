@@ -1,10 +1,10 @@
-{% extends "settings/bootstrap2/base_template.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load hq_shared_tags %}
 
 {% block js %} {{ block.super }}
-    <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
 {% endblock %}
 
-{% block main_column %}
-    {% include "style/bootstrap2/partials/bulk_upload.html" %}
+{% block page_content%}
+    {% include "style/bootstrap3/partials/bulk_upload.html" %}
 {% endblock %}

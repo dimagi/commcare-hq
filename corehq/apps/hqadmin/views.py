@@ -20,7 +20,7 @@ from django.shortcuts import render
 from django.views.decorators.cache import cache_page
 from django.views.generic import FormView
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.template.loader import render_to_string
 from django.http import (
     HttpResponseRedirect,
@@ -36,6 +36,9 @@ from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+from corehq.apps.style.decorators import use_datatables, use_knockout_js, \
+    use_jquery_ui
+from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.couchdb_management import couch_config
 from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorException, all_pillows_supervisor_status, \
@@ -125,6 +128,18 @@ def contact_email(request):
     response["Access-Control-Max-Age"] = "1000"
     response["Access-Control-Allow-Headers"] = "*"
     return response
+
+
+class BaseAdminSectionView(BaseB3SectionPageView):
+    section_name = ugettext_lazy("Admin Reports")
+
+    @property
+    def section_url(self):
+        return reverse('default_admin_report')
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
 
 
 class AuthenticateAs(BasePageView):
@@ -316,30 +331,42 @@ def system_ajax(request):
     return HttpResponse('{}', content_type='application/json')
 
 
-@require_superuser_or_developer
-def system_info(request):
-    environment = settings.SERVER_ENVIRONMENT
+class SystemInfoView(BaseAdminSectionView):
+    page_title = ugettext_lazy("System Info")
+    urlname = 'system_info'
+    template_name = "hqadmin/system_info.html"
 
-    context = get_hqadmin_base_context(request)
-    context['couch_update'] = request.GET.get('couch_update', 5000)
-    context['celery_update'] = request.GET.get('celery_update', 10000)
-    context['db_update'] = request.GET.get('db_update', 30000)
-    context['celery_flower_url'] = getattr(settings, 'CELERY_FLOWER_URL', None)
+    @use_datatables
+    @use_knockout_js
+    @use_jquery_ui
+    @method_decorator(require_superuser_or_developer)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseAdminSectionView, self).dispatch(request, *args, **kwargs)
 
-    context['is_bigcouch'] = is_bigcouch()
-    context['rabbitmq_url'] = get_rabbitmq_management_url()
-    context['hide_filters'] = True
-    context['current_system'] = socket.gethostname()
-    context['deploy_history'] = HqDeploy.get_latest(environment, limit=5)
+    @property
+    def page_context(self):
+        environment = settings.SERVER_ENVIRONMENT
 
-    context['user_is_support'] = hasattr(request, 'user') and SUPPORT.enabled(request.user.username)
+        context = get_hqadmin_base_context(self.request)
+        context['couch_update'] = self.request.GET.get('couch_update', 5000)
+        context['celery_update'] = self.request.GET.get('celery_update', 10000)
+        context['db_update'] = self.request.GET.get('db_update', 30000)
+        context['self.request'] = getattr(settings, 'CELERY_FLOWER_URL', None)
 
-    context.update(check_redis())
-    context.update(check_rabbitmq())
-    context.update(check_celery_health())
-    context.update(check_es_cluster_health())
+        context['is_bigcouch'] = is_bigcouch()
+        context['rabbitmq_url'] = get_rabbitmq_management_url()
+        context['hide_filters'] = True
+        context['current_system'] = socket.gethostname()
+        context['deploy_history'] = HqDeploy.get_latest(environment, limit=5)
 
-    return render(request, "hqadmin/system_info.html", context)
+        context['user_is_support'] = hasattr(self.request, 'user') and SUPPORT.enabled(self.request.user.username)
+
+        context.update(check_redis())
+        context.update(check_rabbitmq())
+        context.update(check_celery_health())
+        context.update(check_es_cluster_health())
+
+        return context
 
 
 @require_POST

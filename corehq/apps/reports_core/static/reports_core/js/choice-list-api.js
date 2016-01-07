@@ -11,7 +11,7 @@ var choiceListUtils = (function() {
         };
     };
     module.formatValueForSelect2 = function (val) {
-        return {'id': val.value, 'text': val.display};
+        return {'id': val.value, 'text': val.display || ''};
     };
     module.formatPageForSelect2 = function (data, page) {
         // parse the results into the format expected by Select2.

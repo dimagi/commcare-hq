@@ -1,0 +1,5 @@
+coverage
+fakecouch==0.0.8
+mocker==1.1.1
+testil
+unittest2

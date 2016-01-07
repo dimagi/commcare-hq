@@ -718,6 +718,13 @@ GRID_MENUS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+TF_USES_SQLITE_BACKEND = StaticToggle(
+    'tf_sql_backend',
+    'Use a SQLite backend for Touchforms',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 SECURE_SESSIONS_CHECKBOX = StaticToggle(
     'secure_sessions_checkbox',
     'Show secure sessions checkbox',
@@ -736,5 +743,12 @@ CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
     'Allow specifying a custom base URL for an application. Main use case is to allow migrating ICDS to a new cluster.',
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+TF_USES_SQLITE_BACKEND = StaticToggle(
+    'tf_sql_backend',
+    'Use a SQLite backend for Touchforms',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )

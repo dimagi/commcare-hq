@@ -19,7 +19,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from corehq import privileges
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
-from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.accounting.utils import domain_has_privilege, log_accounting_error
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.feature_previews import CALLCENTER
 
@@ -1074,9 +1074,14 @@ class HQSetPasswordForm(SetPasswordForm):
 
 class EditBillingAccountInfoForm(forms.ModelForm):
 
+    email_list = forms.CharField(
+        label=BillingContactInfo._meta.get_field('email_list').verbose_name,
+        help_text=BillingContactInfo._meta.get_field('email_list').help_text,
+    )
+
     class Meta:
         model = BillingContactInfo
-        fields = ['first_name', 'last_name', 'phone_number', 'emails', 'company_name', 'first_line',
+        fields = ['first_name', 'last_name', 'phone_number', 'company_name', 'first_line',
                   'second_line', 'city', 'state_province_region', 'postal_code', 'country']
 
     def __init__(self, account, domain, creating_user, data=None, *args, **kwargs):
@@ -1092,6 +1097,10 @@ class EditBillingAccountInfoForm(forms.ModelForm):
 
         try:
             kwargs['instance'] = self.account.billingcontactinfo
+            kwargs['initial'] = {
+                'email_list': ','.join(self.account.billingcontactinfo.email_list),
+            }
+
         except BillingContactInfo.DoesNotExist:
             pass
 
@@ -1105,7 +1114,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('emails', css_class='input-xxlarge'),
+                crispy.Field('email_list', css_class='input-xxlarge'),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1140,11 +1149,15 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                                               "Did you forget the country code?"))
             return "+%s%s" % (parsed_number.country_code, parsed_number.national_number)
 
+    def clean_email_list(self):
+        return self.cleaned_data['email_list'].split(',')
+
     # Does not use the commit kwarg.
     # TODO - Should support it or otherwise change the function name
     @transaction.atomic
     def save(self, commit=True):
         billing_contact_info = super(EditBillingAccountInfoForm, self).save(commit=False)
+        billing_contact_info.email_list = self.cleaned_data['email_list']
         billing_contact_info.account = self.account
         billing_contact_info.save()
 
@@ -1318,11 +1331,12 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                     new_version=self.renewed_version,
                 )
         except SubscriptionRenewalError as e:
-            logger.error("[BILLING] Subscription for %(domain)s failed to "
-                         "renew due to: %(error)s." % {
-                             'domain': self.domain,
-                             'error': e,
-                         })
+            log_accounting_error(
+                "Subscription for %(domain)s failed to renew due to: %(error)s." % {
+                    'domain': self.domain,
+                    'error': e,
+                }
+            )
         return True
 
 
@@ -1439,11 +1453,9 @@ class InternalSubscriptionManagementForm(forms.Form):
             )
             account.save()
         contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
-        emails = contact_info.emails.split(',') if contact_info.emails else []
         for email in self.account_emails:
-            if email not in emails:
-                emails.append(email)
-        contact_info.emails = ','.join(emails)
+            if email not in contact_info.email_list:
+                contact_info.email_list.append(email)
         contact_info.save()
         return account
 
@@ -1454,26 +1466,28 @@ class InternalSubscriptionManagementForm(forms.Form):
 
     @property
     @memoized
-    def autocomplete_account_name(self):
-        if (
+    def should_autocomplete_account(self):
+        return (
             self.current_subscription
             and self.current_subscription.account.account_type in self.autocomplete_account_types
-        ):
+        )
+
+    @property
+    @memoized
+    def autocomplete_account_name(self):
+        if self.should_autocomplete_account:
             return self.current_subscription.account.name
         return None
 
     @property
     @memoized
     def current_contact_emails(self):
-        if self.current_subscription is None:
-            return None
-        try:
-            return BillingContactInfo.objects.get(
-                account=self.current_subscription.account,
-                account__account_type__in=self.autocomplete_account_types,
-            ).emails
-        except BillingContactInfo.DoesNotExist:
-            return None
+        if self.should_autocomplete_account:
+            try:
+                return ','.join(self.current_subscription.account.billingcontactinfo.email_list)
+            except BillingContactInfo.DoesNotExist:
+                pass
+        return None
 
     @property
     def subscription_default_fields(self):
@@ -1567,7 +1581,6 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
 
     emails = forms.CharField(
         label=ugettext_noop('Partner Contact Emails'),
-        max_length=BillingContactInfo._meta.get_field('emails').max_length
     )
 
     trial_length = forms.ChoiceField(
@@ -1668,7 +1681,6 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             'or SMS limits in their plan.'
         ),
         label=ugettext_noop('Partner Contact Emails'),
-        max_length=BillingContactInfo._meta.get_field('emails').max_length,
     )
 
     start_date = forms.DateField(

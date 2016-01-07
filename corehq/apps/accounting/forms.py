@@ -79,10 +79,8 @@ class BillingAccountBasicForm(forms.Form):
                                             required=False)
     currency = forms.ChoiceField(label="Currency")
 
-    emails = forms.CharField(
+    email_list = forms.CharField(
         label=ugettext_lazy('Client Contact Emails'),
-        widget=forms.Textarea,
-        max_length=BillingContactInfo._meta.get_field('emails').max_length,
     )
     is_active = forms.BooleanField(
         label=ugettext_lazy("Account is Active"),
@@ -121,7 +119,7 @@ class BillingAccountBasicForm(forms.Form):
                 'name': account.name,
                 'salesforce_account_id': account.salesforce_account_id,
                 'currency': account.currency.code,
-                'emails': contact_info.emails,
+                'email_list': ','.join(contact_info.email_list),
                 'is_active': account.is_active,
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
@@ -160,7 +158,7 @@ class BillingAccountBasicForm(forms.Form):
             crispy.Fieldset(
                 'Basic Information',
                 'name',
-                crispy.Field('emails', css_class='input-xxlarge'),
+                crispy.Field('email_list', css_class='input-xxlarge'),
                 'dimagi_contact',
                 'salesforce_account_id',
                 'currency',
@@ -190,18 +188,8 @@ class BillingAccountBasicForm(forms.Form):
             raise ValidationError(_("Name '%s' is already taken.") % name)
         return name
 
-    def clean_emails(self):
-        account_contact_emails = self.cleaned_data['emails']
-        if account_contact_emails != '':
-            invalid_emails = []
-            for email in account_contact_emails.split(','):
-                email_no_whitespace = email.strip()
-                # TODO - validate emails
-            if len(invalid_emails) != 0:
-                raise ValidationError(
-                    _("Invalid emails: %s") % ', '.join(invalid_emails)
-                )
-        return account_contact_emails
+    def clean_email_list(self):
+        return self.cleaned_data['email_list'].split(',')
 
     def clean_active_accounts(self):
         transfer_subs = self.cleaned_data['active_accounts']
@@ -240,7 +228,7 @@ class BillingAccountBasicForm(forms.Form):
         contact_info, _ = BillingContactInfo.objects.get_or_create(
             account=account,
         )
-        contact_info.emails = self.cleaned_data['emails']
+        contact_info.email_list = self.cleaned_data['email_list']
         contact_info.save()
 
         return account
@@ -269,7 +257,7 @@ class BillingAccountBasicForm(forms.Form):
         contact_info, _ = BillingContactInfo.objects.get_or_create(
             account=account,
         )
-        contact_info.emails = self.cleaned_data['emails']
+        contact_info.email_list = self.cleaned_data['email_list']
         contact_info.save()
 
 
@@ -626,7 +614,7 @@ class SubscriptionForm(forms.Form):
                 not self.cleaned_data['do_not_invoice']
                 and (
                     not BillingContactInfo.objects.filter(account=account).exists()
-                    or not account.billingcontactinfo.emails
+                    or not account.billingcontactinfo.email_list
                 )
             ):
                 from corehq.apps.accounting.views import ManageBillingAccountView

@@ -91,7 +91,6 @@ class LoginAndDomainAuthentication(Authentication):
         except PermissionDenied:
             response = HttpResponseForbidden()
 
-
         if response == PASSED_AUTH:
             return True
         else:
