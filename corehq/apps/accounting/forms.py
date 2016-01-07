@@ -110,6 +110,7 @@ class BillingAccountBasicForm(forms.Form):
         label=ugettext_lazy("Prepay or Postpay"),
         choices=PreOrPostPay.CHOICES
     )
+    account_basic = forms.CharField(widget=forms.HiddenInput)
 
     def __init__(self, account, *args, **kwargs):
         self.account = account
@@ -165,6 +166,7 @@ class BillingAccountBasicForm(forms.Form):
                 'entry_point',
                 'last_payment_method',
                 'pre_or_post_pay',
+                'account_basic',
                 crispy.Div(*additional_fields),
             ),
             FormActions(
@@ -263,6 +265,8 @@ class BillingAccountBasicForm(forms.Form):
 
 
 class BillingAccountContactForm(forms.ModelForm):
+
+    account_contact = forms.CharField(widget=forms.HiddenInput)
 
     class Meta:
         model = BillingContactInfo

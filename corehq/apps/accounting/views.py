@@ -164,7 +164,7 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
     @memoized
     def credit_form(self):
         if (self.request.method == 'POST'
-                and 'adjust_credit' in self.request.POST):
+                and 'adjust' in self.request.POST):
             return CreditForm(self.account, None, self.request.POST)
         return CreditForm(self.account, None)
 
@@ -409,7 +409,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
                 messages.error(request,
                                "Could not update subscription due to: %s" % e)
             return HttpResponseRedirect(self.page_url)
-        elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
+        elif 'adjust' in self.request.POST and self.credit_form.is_valid():
             if self.credit_form.adjust_credit(web_user=request.user.username):
                 return HttpResponseRedirect(self.page_url)
         elif ('cancel_subscription' in self.request.POST
