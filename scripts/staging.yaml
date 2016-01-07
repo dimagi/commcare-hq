@@ -60,13 +60,12 @@ submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - sqlite-backend #wsp 12/14
+    branches: []
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
-      #- 2.24-validator  # Will 11/12
+    branches:
+      - 2.25-jar  # Will 1/12
   submodules/ctable-src:
     branches: []
   submodules/django-digest-src:
