@@ -68,6 +68,9 @@ class AppAwareSyncTests(TestCase):
         module.report_configs = [ReportAppConfig.wrap(report_app_config)]
         cls.app2.save()
 
+        cls.app3 = Application.new_app(cls.domain, 'Test App 3', application_version=APP_V2)
+        cls.app3.save()
+
     @classmethod
     def tearDownClass(cls):
         toggles.MOBILE_UCR.set(cls.domain, False, toggles.NAMESPACE_DOMAIN)
@@ -103,3 +106,10 @@ class AppAwareSyncTests(TestCase):
         reports = fixtures[0].findall('.//report')
         self.assertEqual(len(reports), 1)
         self.assertEqual(reports[0].attrib.get('id'), '123456')
+
+    def test_report_fixtures_provider_with_app_that_doesnt_have_reports(self):
+        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
+            get_data_mock.return_value = self.rows
+            fixtures = report_fixture_generator(self.user, '2.0', None, app=self.app3)
+        self.assertEqual(len(fixtures), 0)
