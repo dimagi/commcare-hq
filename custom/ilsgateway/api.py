@@ -390,8 +390,6 @@ class ILSGatewayAPI(APISynchronization):
                     user.save()
                     user = self._create_web_user(email, ilsgateway_webuser, location_id, user_dict)
                     ils_sql_web_user.email = email
-                    if self.domain not in user.get_domains():
-                        user.add_domain_membership(self.domain, location_id=location_id)
                     ils_sql_web_user.save()
                     return user
             else:
@@ -399,10 +397,11 @@ class ILSGatewayAPI(APISynchronization):
         else:
             self._edit_web_user(user, location_id)
 
-        ILSGatewayWebUser.objects.get_or_create(
+        ilsgateway_webuser, _ = ILSGatewayWebUser.objects.get_or_create(
             external_id=ilsgateway_webuser.id,
-            email=email
         )
+        ilsgateway_webuser.email = email
+        ilsgateway_webuser.save()
         return user
 
     def _reassign_number(self, user, connection):
