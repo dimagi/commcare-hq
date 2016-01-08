@@ -249,14 +249,24 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.assertXmlHasXpath(close_payload, '//*[local-name()="update"]')
 
     def test_excluded_case_types_are_not_forwarded(self):
-        white_listed_case_types = ['repeater_case', 'random_case_type']
-        white_listed_case_types.pop(0)  # don't include 'repeater_case' in the whitelist
-        self.repeater.white_listed_case_types = white_listed_case_types
+        self.repeater.white_listed_case_types = ['planet']
         self.repeater.save()
-        # create a case
-        self.post_xml(xform_xml, self.domain_name)
-        # check no case forwarding happens
-        self.assertEqual(0, len(self.repeat_records(self.domain_name).all()))
+
+        white_listed_case = CaseBlock(
+            case_id="a_case_id",
+            create=True,
+            case_type="planet",
+        ).as_xml()
+        CaseFactory(self.domain_name).post_case_blocks([white_listed_case])
+        self.assertEqual(1, len(self.repeat_records(self.domain_name).all()))
+
+        non_white_listed_case = CaseBlock(
+            case_id="b_case_id",
+            create=True,
+            case_type="cat",
+        ).as_xml()
+        CaseFactory(self.domain_name).post_case_blocks([non_white_listed_case])
+        self.assertEqual(1, len(self.repeat_records(self.domain_name).all()))
 
     def test_black_listed_user_cases_do_not_forward(self):
         self.repeater.black_listed_users = ['black_listed_user']
