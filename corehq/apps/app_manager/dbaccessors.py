@@ -1,5 +1,6 @@
 from django.conf import settings
 from corehq.apps.app_manager.util import get_correct_app_class
+from corehq.apps.es import AppES
 from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
 from django.http import Http404
@@ -171,3 +172,12 @@ def get_all_apps(domain):
     all_apps = [get_correct_app_class(row['doc']).wrap(row['doc']) for row in saved_apps]
     all_apps.extend(get_apps_in_domain(domain))
     return all_apps
+
+
+def get_case_types_from_apps(domain):
+    """Get the case types of modules in applications in the domain."""
+    q = (AppES()
+         .domain(domain)
+         .size(0)
+         .terms_facet('modules.case_type.exact', 'case_types'))
+    return q.run().facets.case_types.terms
