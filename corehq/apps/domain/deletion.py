@@ -55,6 +55,16 @@ class ModelDeletion(BaseDeletion):
             model.objects.filter(**{self.domain_filter_kwarg: domain_name}).delete()
 
 
+def _delete_domain_backend_mappings(domain_name):
+    model = apps.get_model('sms', 'SQLMobileBackendMapping')
+    model.objects.filter(is_global=False, domain=domain_name).delete()
+
+
+def _delete_domain_backends(domain_name):
+    model = apps.get_model('sms', 'SQLMobileBackend')
+    model.objects.filter(is_global=False, domain=domain_name).delete()
+
+
 # We use raw queries instead of ORM because Django queryset delete needs to
 # fetch objects into memory to send signals and handle cascades. It makes deletion very slow
 # if we have a millions of rows in stock data tables.
@@ -86,9 +96,9 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('sms', 'MessagingSubEvent', 'parent__domain'),
     ModelDeletion('sms', 'MessagingEvent', 'domain'),
     ModelDeletion('sms', 'SelfRegistrationInvitation', 'domain'),
-    ModelDeletion('sms', 'SQLMobileBackendMapping', 'domain'),
+    CustomDeletion('sms', _delete_domain_backend_mappings),
     ModelDeletion('sms', 'MobileBackendInvitation', 'domain'),
-    ModelDeletion('sms', 'SQLMobileBackend', 'domain'),
+    CustomDeletion('sms', _delete_domain_backends),
 ]
 
 
