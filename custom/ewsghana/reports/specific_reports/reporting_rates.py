@@ -449,18 +449,17 @@ class ReportingRatesReport(MultiReport):
 
     @property
     def report_config(self):
+        report_config = super(ReportingRatesReport, self).report_config
         program = self.request.GET.get('filter_by_program')
-        return dict(
-            domain=self.domain,
+        report_config.update(dict(
             startdate=self.datespan.startdate,
             enddate=self.datespan.enddate,
-            location_id=self.request.GET.get('location_id') or get_country_id(self.domain),
             products=None,
             program=program if program != ALL_OPTION else None,
-            user=self.request.couch_user,
             datespan_type=self.request.GET.get('datespan_type'),
             is_rendered_as_email=self.is_rendered_as_email
-        )
+        ))
+        return report_config
 
     @property
     def print_providers(self):
