@@ -1705,6 +1705,18 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         """
         raise NotImplementedError("Please implement this method")
 
+    @property
+    def config(self):
+        """
+        Returns self.get_extra_fields() converted into an object so that
+        you can reference self.config.gateway_user_id, for example,
+        instead of self.get_extra_fields()['gateway_user_id']
+        """
+        config = object()
+        for name, value in self.get_extra_fields().iteritems():
+            setattr(config, name, value)
+        return config
+
     def get_extra_fields(self):
         result = {field: None for field in self.get_available_extra_fields()}
         result.update(self.extra_fields)
