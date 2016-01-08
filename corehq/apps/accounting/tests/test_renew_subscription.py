@@ -47,24 +47,19 @@ class TestRenewSubscriptions(BaseAccountingTest):
 
     def test_simple_renewal(self):
         today = datetime.date.today()
-        new_end_date = today + datetime.timedelta(days=9)
 
-        renewed_subscription = self.subscription.renew_subscription(
-            date_end=new_end_date
-        )
+        renewed_subscription = self.subscription.renew_subscription()
 
-        self.assertEqual(renewed_subscription.date_end, new_end_date)
+        self.assertEqual(renewed_subscription.date_end, None)
         self.assertEqual(renewed_subscription.date_start, self.subscription.date_end)
         self.assertEqual(renewed_subscription.plan_version, self.subscription.plan_version)
 
     def test_change_plan_on_renewal(self):
         today = datetime.date.today()
-        new_end_date = today + datetime.timedelta(days=9)
         new_edition = SoftwarePlanEdition.ADVANCED
         new_plan = DefaultProductPlan.get_default_plan_by_domain(self.domain.name, new_edition)
 
         renewed_subscription = self.subscription.renew_subscription(
-            date_end=new_end_date,
             new_version=new_plan
         )
 
