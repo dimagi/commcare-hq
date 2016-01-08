@@ -249,7 +249,9 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.assertXmlHasXpath(close_payload, '//*[local-name()="update"]')
 
     def test_excluded_case_types_are_not_forwarded(self):
-        self.repeater.exclude_case_types = ['repeater_case']
+        white_listed_case_types = ['repeater_case', 'random_case_type']
+        white_listed_case_types.pop(0)  # don't include 'repeater_case' in the whitelist
+        self.repeater.white_listed_case_types = white_listed_case_types
         self.repeater.save()
         # create a case
         self.post_xml(xform_xml, self.domain_name)

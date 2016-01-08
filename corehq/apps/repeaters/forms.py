@@ -139,12 +139,12 @@ class FormRepeaterForm(GenericRepeaterForm):
 
 
 class CaseRepeaterForm(GenericRepeaterForm):
-    exclude_case_types = forms.CharField(
+    white_listed_case_types = forms.CharField(
         required=False,
-        label=_('Exclude case types'),
-        help_text=_('Cases of these type will not be forwarded when created or closed')
+        label=_('Select case types to forward'),
+        help_text=_('Only cases of this type will be forwarded. Leave empty to forward all cases')
     )
 
     def get_ordered_crispy_form_fields(self):
         fields = super(CaseRepeaterForm, self).get_ordered_crispy_form_fields()
-        return ['exclude_case_types'] + fields
+        return ['white_listed_case_types'] + fields

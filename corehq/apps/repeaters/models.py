@@ -340,10 +340,10 @@ class CaseRepeater(Repeater):
     """
 
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
-    exclude_case_types = StringListProperty(default=[])
+    white_listed_case_types = StringListProperty(default=[])
 
     def allowed_to_forward(self, payload):
-        return payload.type not in self.exclude_case_types
+        return not self.white_listed_case_types or payload.type in self.white_listed_case_types
 
     @memoized
     def payload_doc(self, repeat_record):
