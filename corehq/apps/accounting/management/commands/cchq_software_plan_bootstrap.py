@@ -31,6 +31,23 @@ from corehq.apps.accounting.models import (
 
 logger = logging.getLogger(__name__)
 
+BOOTSTRAP_EDITION_TO_ROLE = {
+    SoftwarePlanEdition.COMMUNITY: 'community_plan_v0',
+    SoftwarePlanEdition.STANDARD: 'standard_plan_v0',
+    SoftwarePlanEdition.PRO: 'pro_plan_v0',
+    SoftwarePlanEdition.ADVANCED: 'advanced_plan_v0',
+    SoftwarePlanEdition.ENTERPRISE: 'enterprise_plan_v0',
+}
+EDITIONS = [
+    SoftwarePlanEdition.COMMUNITY,
+    SoftwarePlanEdition.STANDARD,
+    SoftwarePlanEdition.PRO,
+    SoftwarePlanEdition.ADVANCED,
+    SoftwarePlanEdition.ENTERPRISE,
+]
+FEATURE_TYPES = [f[0] for f in FeatureType.CHOICES]
+PRODUCT_TYPES = [p[0] for p in SoftwareProductType.CHOICES]
+
 
 class Command(BaseCommand):
     help = 'Populate a fresh db with standard set of Software Plans.'
@@ -77,15 +94,6 @@ class Command(BaseCommand):
                 self.flush_plans()
 
         if not flush:
-            self.product_types = [p[0] for p in SoftwareProductType.CHOICES]
-            self.editions = [
-                SoftwarePlanEdition.COMMUNITY,
-                SoftwarePlanEdition.STANDARD,
-                SoftwarePlanEdition.PRO,
-                SoftwarePlanEdition.ADVANCED,
-                SoftwarePlanEdition.ENTERPRISE,
-            ]
-            self.feature_types = [f[0] for f in FeatureType.CHOICES]
             self.ensure_plans(dry_run=dry_run)
 
     def flush_plans(self):
@@ -120,9 +128,9 @@ class Command(BaseCommand):
 
     def ensure_plans(self, dry_run=False):
         edition_to_features = self.ensure_features(dry_run=dry_run)
-        for product_type in self.product_types:
-            for edition in self.editions:
-                role_slug = self.BOOTSTRAP_EDITION_TO_ROLE[edition]
+        for product_type in PRODUCT_TYPES:
+            for edition in EDITIONS:
+                role_slug = BOOTSTRAP_EDITION_TO_ROLE[edition]
                 try:
                     role = Role.objects.get(slug=role_slug)
                 except ObjectDoesNotExist:
@@ -245,8 +253,8 @@ class Command(BaseCommand):
             logger.info('Ensuring Features')
 
         edition_to_features = defaultdict(list)
-        for edition in self.editions:
-            for feature_type in self.feature_types:
+        for edition in EDITIONS:
+            for feature_type in FEATURE_TYPES:
                 feature = Feature(name='%s %s' % (feature_type, edition), feature_type=feature_type)
                 if edition == SoftwarePlanEdition.ENTERPRISE:
                     feature.name = "Dimagi Only %s" % feature.name
@@ -309,13 +317,3 @@ class Command(BaseCommand):
                 logger.info("Creating rate for feature '%s': %s" % (feature.name, feature_rate))
             feature_rates.append(feature_rate)
         return feature_rates
-
-    BOOTSTRAP_EDITION_TO_ROLE = {
-        SoftwarePlanEdition.COMMUNITY: 'community_plan_v0',
-        SoftwarePlanEdition.STANDARD: 'standard_plan_v0',
-        SoftwarePlanEdition.PRO: 'pro_plan_v0',
-        SoftwarePlanEdition.ADVANCED: 'advanced_plan_v0',
-        SoftwarePlanEdition.ENTERPRISE: 'enterprise_plan_v0',
-    }
-
-
