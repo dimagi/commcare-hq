@@ -205,7 +205,7 @@ var ReportConfigsViewModel = function (options) {
     self.setConfigBeingEdited = function (config) {
 
         var filters = {},
-            excludeFilters = ['startdate', 'enddate', 'format'];
+            excludeFilters = ['startdate', 'enddate', 'format', 'date'];
         if (self.filterForm) {
             self.filterForm.find(":input").each(function () {
                 var el = $(this),
