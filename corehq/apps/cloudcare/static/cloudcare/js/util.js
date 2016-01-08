@@ -136,7 +136,7 @@ var tfSyncComplete = function (isError) {
     if (isError) {
         showError(translatedStrings.errSyncing, $('#cloudcare-notifications'));
     } else {
-        showSuccess(translatedStrings.synced, $('#cloudcare-notifications'), 2500);
+        showSuccess(translatedStrings.synced, $('#cloudcare-notifications'), 5000);
     }
 };
 
