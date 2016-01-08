@@ -119,7 +119,7 @@ class InputStockView(BaseDomainView):
                 }
                 process(self.domain, unpacked_data)
             url = make_url(
-                StockLevelsReport,
+                StockStatus,
                 self.domain,
                 '?location_id=%s&filter_by_program=%s&startdate='
                 '&enddate=&report_type=&filter_by_product=%s',

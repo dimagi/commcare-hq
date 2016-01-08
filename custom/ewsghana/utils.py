@@ -17,7 +17,7 @@ from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import add_msg_tags, send_sms_to_verified_number, send_sms as core_send_sms
 from corehq.apps.sms.models import SMSLog, OUTGOING
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, UserRole
 from custom.ewsghana.models import EWSGhanaConfig, EWSExtension
 from custom.ewsghana.reminders.const import DAYS_UNTIL_LATE
 
@@ -340,9 +340,18 @@ def get_country_id(domain):
 
 
 def has_input_stock_permissions(couch_user, location, domain):
-    domain_membership = couch_user.get_domain_membership(domain)
     if not couch_user.is_web_user():
         return False
+
+    domain_membership = couch_user.get_domain_membership(domain)
+
+    if not domain_membership:
+        return False
+
+    administrator_role_id = UserRole.by_domain_and_name(domain, 'Administrator')[0].get_id
+
+    if domain_membership.role_id == administrator_role_id:
+        return True
 
     try:
         location_id = EWSExtension.objects.get(user_id=couch_user.get_id, domain=domain).location_id
@@ -351,7 +360,7 @@ def has_input_stock_permissions(couch_user, location, domain):
     except EWSExtension.DoesNotExist:
         pass
 
-    if not domain_membership or not domain_membership.location_id:
+    if not domain_membership.location_id:
         return False
 
     try:
