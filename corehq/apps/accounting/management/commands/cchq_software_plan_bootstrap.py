@@ -11,7 +11,6 @@ from optparse import make_option
 from django.apps import apps as default_apps
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
-from django_prbac.models import Role
 
 from corehq.apps.accounting.models import (
     SoftwareProductType, SoftwarePlanEdition, SoftwarePlanVisibility, FeatureType,
@@ -132,6 +131,7 @@ def ensure_plans(dry_run, verbose, for_tests, apps):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
+    Role = apps.get_model('django_prbac', 'Role')
 
     edition_to_features = _ensure_features(dry_run=dry_run, verbose=verbose, apps=apps)
     for product_type in PRODUCT_TYPES:
