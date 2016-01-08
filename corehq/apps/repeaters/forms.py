@@ -1,12 +1,15 @@
-from corehq.apps.repeaters.models import RegisterGenerator
-
 from django import forms
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
+from corehq.apps.repeaters.models import RegisterGenerator
+
+from dimagi.utils.decorators.memoized import memoized
 
 
 class GenericRepeaterForm(forms.Form):
@@ -37,14 +40,19 @@ class GenericRepeaterForm(forms.Form):
         self.formats = RegisterGenerator.all_formats_by_repeater(self.repeater_class, for_domain=self.domain)
         super(GenericRepeaterForm, self).__init__(*args, **kwargs)
 
+        self.set_extra_django_form_fields()
+        self._initialize_crispy_layout()
+
+    def set_extra_django_form_fields(self):
+        """
+        Override this to set extra django form-fields that can be calculated only within request context
+        """
         if self.formats and len(self.formats) > 1:
             self.fields['format'] = forms.ChoiceField(
                 required=True,
                 label='Payload Format',
                 choices=self.formats,
             )
-
-        self._initialize_crispy_layout()
 
     def _initialize_crispy_layout(self):
         self.helper = FormHelper(self)
@@ -69,7 +77,7 @@ class GenericRepeaterForm(forms.Form):
 
     def get_ordered_crispy_form_fields(self):
         """
-        Can be overriden to add extra fields or change the order of the form fields
+        Override this to change the order of the crispy form fields and add extra crispy fields
         """
         form_fields = []
         if self.formats and len(self.formats) > 1:
@@ -87,7 +95,7 @@ class GenericRepeaterForm(forms.Form):
     @property
     def special_crispy_fields(self):
         """
-        Simple mapping that can be used in generating self.get_ordered_crispy_form_fields
+        DRY mapping that can be used in generating self.get_ordered_crispy_form_fields
         """
         return {
             "test_link": crispy.Div(
@@ -139,12 +147,29 @@ class FormRepeaterForm(GenericRepeaterForm):
 
 
 class CaseRepeaterForm(GenericRepeaterForm):
-    white_listed_case_types = forms.CharField(
+    white_listed_case_types = forms.MultipleChoiceField(
         required=False,
         label=_('Select case types to forward'),
         help_text=_('Only cases of this type will be forwarded. Leave empty to forward all cases')
     )
 
+    @property
+    @memoized
+    def case_types(self):
+        return get_case_types_for_domain(self.domain)
+
+    def set_extra_django_form_fields(self):
+        super(CaseRepeaterForm, self).set_extra_django_form_fields()
+        self.fields['white_listed_case_types'].choices = [(t, t) for t in self.case_types]
+
     def get_ordered_crispy_form_fields(self):
         fields = super(CaseRepeaterForm, self).get_ordered_crispy_form_fields()
         return ['white_listed_case_types'] + fields
+
+    def clean(self):
+        cleaned_data = super(GenericRepeaterForm, self).clean()
+        white_listed_case_types = cleaned_data['white_listed_case_types']
+        # todo; better UX for case-types
+        if not set(self.case_types).issubset(white_listed_case_types):
+            raise ValidationError('Unknow case-type')
+        return cleaned_data
