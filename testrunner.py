@@ -2,8 +2,9 @@ import datetime
 from collections import defaultdict
 from functools import wraps
 from unittest.util import strclass
-from couchdbkit import Database, ResourceNotFound
+from urlparse import urlparse
 
+from couchdbkit import Database, ResourceNotFound
 from couchdbkit.ext.django import loading
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
 from django.apps import AppConfig
@@ -90,10 +91,16 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
 
         Database.__init__ = asserting_init
 
+    @classmethod
+    def get_test_db_name(cls, db_uri):
+        cls._assert_is_a_test_db(db_uri)
+        return db_uri
+
     @staticmethod
     def _assert_is_a_test_db(db_uri):
-        assert db_uri.startswith('test_'), db_uri
-        assert '_test_test' not in db_uri, db_uri
+        dbname = urlparse(db_uri).path
+        assert dbname.lstrip('/').startswith('test_'), db_uri
+        assert not dbname.endswith('_test'), db_uri
 
     @staticmethod
     def _delete_db_if_exists(db):
