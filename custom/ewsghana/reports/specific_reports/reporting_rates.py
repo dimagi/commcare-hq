@@ -300,7 +300,7 @@ class AlertsData(ReportingRatesData):
                     (sp.location_id, json_format_date(self.config['startdate']),
                      json_format_date(self.config['enddate']))
                 )
-                if sp.supply_point_id not in self.config['reporting_supply_points']:
+                if sp.location_id not in self.config['reporting_supply_points']:
                     rows.append(['<div style="background-color: rgba(255, 0, 0, 0.2)">%s has not reported last '
                                  'month. <a href="%s" target="_blank">[details]</a></div>' % (sp.name, url)])
                 if sp.location_id not in with_reporters:
