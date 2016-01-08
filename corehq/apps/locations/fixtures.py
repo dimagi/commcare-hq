@@ -59,7 +59,7 @@ def should_sync_locations(last_sync, location_db, user):
 class LocationFixtureProvider(object):
     id = 'commtrack:locations'
 
-    def __call__(self, user, version, last_sync=None):
+    def __call__(self, user, version, last_sync=None, app=None):
         """
         By default this will generate a fixture for the users
         location and it's "footprint", meaning the path

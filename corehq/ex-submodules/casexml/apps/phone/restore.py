@@ -265,12 +265,13 @@ class RestoreParams(object):
     """
 
     def __init__(self, sync_log_id='', version=V1, state_hash='', include_item_count=False,
-                 force_restore_mode=None):
+                 force_restore_mode=None, app=None):
         self.sync_log_id = sync_log_id
         self.version = version
         self.state_hash = state_hash
         self.include_item_count = include_item_count
         self.force_restore_mode = force_restore_mode
+        self.app = app
 
 
 class RestoreCacheSettings(object):
