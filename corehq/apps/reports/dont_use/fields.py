@@ -143,7 +143,7 @@ class SelectProgramField(ReportSelectField):
 
 
 class ReportMultiSelectField(ReportSelectField):
-    template = "reports/dont_use_fields/multiselect_generic.html"
+    template = "reports/dont_use_fields/bootstrap2/multiselect_generic.html"
     selected = []
     # auto_select
     default_option = []
