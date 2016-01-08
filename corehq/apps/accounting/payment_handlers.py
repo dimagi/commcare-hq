@@ -465,7 +465,8 @@ class AutoPayInvoicePaymentHandler(object):
     def _handle_card_declined(self, invoice):
         log_accounting_error(
             "[Autopay] An automatic payment failed for invoice: {} "
-            "because the card was declined. This invoice will not be automatically paid."
+            "because the card was declined. This invoice will not be automatically paid. "
+            "Not necessarily actionable, but be aware that this happened."
             .format(invoice.id)
         )
 
