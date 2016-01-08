@@ -71,7 +71,7 @@ class Command(BaseCommand):
                                             "current subscriptions and remove the older versions? Type 'yes' to "
                                             "continue.")
             if confirm_force_reset == 'yes':
-                _force_reset_subscription_versions(verbose=verbose)
+                _force_reset_subscription_versions(verbose=verbose, apps=default_apps)
             return
 
         if fresh_start or flush:
@@ -79,13 +79,13 @@ class Command(BaseCommand):
                                             "You can't do this if there are any active Subscriptions."
                                             " Type 'yes' to continue.\n")
             if confirm_fresh_start == 'yes':
-                _flush_plans(verbose=verbose)
+                _flush_plans(verbose=verbose, apps=default_apps)
 
         if not flush:
-            ensure_plans(dry_run=dry_run, verbose=verbose)
+            ensure_plans(dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps)
 
 
-def _flush_plans(verbose=False, apps=default_apps):
+def _flush_plans(verbose, apps):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     Feature = apps.get_model('accounting', 'Feature')
     FeatureRate = apps.get_model('accounting', 'FeatureRate')
@@ -105,7 +105,7 @@ def _flush_plans(verbose=False, apps=default_apps):
     Feature.objects.all().delete()
 
 
-def _force_reset_subscription_versions(verbose=False, apps=default_apps):
+def _force_reset_subscription_versions(verbose, apps):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     Subscription = apps.get_model('accounting', 'Subscription')
 
@@ -128,7 +128,7 @@ def _force_reset_subscription_versions(verbose=False, apps=default_apps):
         versions_to_remove.delete()
 
 
-def ensure_plans(dry_run=False, verbose=False, for_tests=False, apps=default_apps):
+def ensure_plans(dry_run, verbose, for_tests, apps):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
@@ -200,7 +200,7 @@ def ensure_plans(dry_run=False, verbose=False, for_tests=False, apps=default_app
                                          default_product_plan.edition))
 
 
-def _ensure_product_and_rate(product_type, edition, dry_run=False, verbose=False, apps=default_apps):
+def _ensure_product_and_rate(product_type, edition, dry_run, verbose, apps):
     """
     Ensures that all the necessary SoftwareProducts and SoftwareProductRates are created for the plan.
     """
@@ -256,7 +256,7 @@ def _ensure_product_and_rate(product_type, edition, dry_run=False, verbose=False
     return product, product_rates
 
 
-def _ensure_features(dry_run=False, verbose=False, apps=default_apps):
+def _ensure_features(dry_run, verbose, apps):
     """
     Ensures that all the Features necessary for the plans are created.
     """
@@ -288,7 +288,7 @@ def _ensure_features(dry_run=False, verbose=False, apps=default_apps):
     return edition_to_features
 
 
-def _ensure_feature_rates(features, edition, dry_run=False, verbose=False, for_tests=False, apps=default_apps):
+def _ensure_feature_rates(features, edition, dry_run, verbose, for_tests, apps):
     """
     Ensures that all the FeatureRates necessary for the plans are created.
     """
