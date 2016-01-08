@@ -50,4 +50,4 @@ fi
 echo "Committing and pushing changes"
 git add locale/
 git commit --edit --message="Update translations." --message="[ci skip]"
-# git push origin master
+git push origin master
