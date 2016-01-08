@@ -72,8 +72,8 @@ class Command(BaseCommand):
                testing=False, *args, **options):
         logger.info('Bootstrapping standard plans. Enterprise plans will have to be created via the admin UIs.')
 
-        self.for_tests = testing
-        if self.for_tests:
+        for_tests = testing
+        if for_tests:
             logger.info("Initializing Plans and Roles for Testing")
 
         if force_reset:
@@ -124,7 +124,7 @@ class Command(BaseCommand):
                 logger.info("Removing %d old versions." % len(versions_to_remove))
             versions_to_remove.delete()
 
-    def ensure_plans(self, dry_run=False, verbose=False):
+    def ensure_plans(self, dry_run=False, verbose=False, for_tests=False):
         edition_to_features = self.ensure_features(dry_run=dry_run, verbose=verbose)
         for product_type in PRODUCT_TYPES:
             for edition in EDITIONS:
@@ -138,7 +138,7 @@ class Command(BaseCommand):
                 software_plan_version = SoftwarePlanVersion(role=role)
 
                 product, product_rates = self.ensure_product_and_rate(product_type, edition, dry_run=dry_run, verbose=verbose)
-                feature_rates = self.ensure_feature_rates(edition_to_features[edition], edition, dry_run=dry_run, verbose=verbose)
+                feature_rates = self.ensure_feature_rates(edition_to_features[edition], edition, dry_run=dry_run, verbose=verbose, for_tests=for_tests)
                 software_plan = SoftwarePlan(
                     name='%s Edition' % product.name, edition=edition, visibility=SoftwarePlanVisibility.PUBLIC
                 )
@@ -272,7 +272,7 @@ class Command(BaseCommand):
                 edition_to_features[edition].append(feature)
         return edition_to_features
 
-    def ensure_feature_rates(self, features, edition, dry_run=False, verbose=False):
+    def ensure_feature_rates(self, features, edition, dry_run=False, verbose=False, for_tests=False):
         """
         Ensures that all the FeatureRates necessary for the plans are created.
         """
@@ -282,24 +282,24 @@ class Command(BaseCommand):
         feature_rates = []
         BOOTSTRAP_FEATURE_RATES = {
             SoftwarePlanEdition.COMMUNITY: {
-                FeatureType.USER: FeatureRate(monthly_limit=2 if self.for_tests else 50,
+                FeatureType.USER: FeatureRate(monthly_limit=2 if for_tests else 50,
                                               per_excess_fee=Decimal('1.00')),
                 FeatureType.SMS: FeatureRate(monthly_limit=0),  # use defaults here
             },
             SoftwarePlanEdition.STANDARD: {
-                FeatureType.USER: FeatureRate(monthly_limit=4 if self.for_tests else 100,
+                FeatureType.USER: FeatureRate(monthly_limit=4 if for_tests else 100,
                                               per_excess_fee=Decimal('1.00')),
-                FeatureType.SMS: FeatureRate(monthly_limit=3 if self.for_tests else 100),
+                FeatureType.SMS: FeatureRate(monthly_limit=3 if for_tests else 100),
             },
             SoftwarePlanEdition.PRO: {
-                FeatureType.USER: FeatureRate(monthly_limit=6 if self.for_tests else 500,
+                FeatureType.USER: FeatureRate(monthly_limit=6 if for_tests else 500,
                                               per_excess_fee=Decimal('1.00')),
-                FeatureType.SMS: FeatureRate(monthly_limit=5 if self.for_tests else 500),
+                FeatureType.SMS: FeatureRate(monthly_limit=5 if for_tests else 500),
             },
             SoftwarePlanEdition.ADVANCED: {
-                FeatureType.USER: FeatureRate(monthly_limit=8 if self.for_tests else 1000,
+                FeatureType.USER: FeatureRate(monthly_limit=8 if for_tests else 1000,
                                               per_excess_fee=Decimal('1.00')),
-                FeatureType.SMS: FeatureRate(monthly_limit=7 if self.for_tests else 1000),
+                FeatureType.SMS: FeatureRate(monthly_limit=7 if for_tests else 1000),
             },
             SoftwarePlanEdition.ENTERPRISE: {
                 FeatureType.USER: FeatureRate(monthly_limit=UNLIMITED_FEATURE_USAGE, per_excess_fee=Decimal('0.00')),
