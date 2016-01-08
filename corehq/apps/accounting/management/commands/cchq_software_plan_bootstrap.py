@@ -8,20 +8,10 @@ import logging
 from optparse import make_option
 
 # Django imports
-from django.apps import apps
+from django.apps import apps as default_apps
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
 from django_prbac.models import Role
-
-# Use current models
-DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
-Feature = apps.get_model('accounting', 'Feature')
-SoftwareProduct = apps.get_model('accounting', 'SoftwareProduct')
-FeatureRate = apps.get_model('accounting', 'FeatureRate')
-SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
-SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
-SoftwareProductRate = apps.get_model('accounting', 'SoftwareProductRate')
-Subscription = apps.get_model('accounting', 'Subscription')
 
 from corehq.apps.accounting.models import (
     SoftwareProductType, SoftwarePlanEdition, SoftwarePlanVisibility, FeatureType,
@@ -95,7 +85,15 @@ class Command(BaseCommand):
             ensure_plans(dry_run=dry_run, verbose=verbose)
 
 
-def _flush_plans(verbose=False):
+def _flush_plans(verbose=False, apps=default_apps):
+    DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
+    Feature = apps.get_model('accounting', 'Feature')
+    FeatureRate = apps.get_model('accounting', 'FeatureRate')
+    SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
+    SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
+    SoftwareProduct = apps.get_model('accounting', 'SoftwareProduct')
+    SoftwareProductRate = apps.get_model('accounting', 'SoftwareProductRate')
+
     if verbose:
         logger.info("Flushing ALL SoftwarePlans...")
     DefaultProductPlan.objects.all().delete()
@@ -107,7 +105,10 @@ def _flush_plans(verbose=False):
     Feature.objects.all().delete()
 
 
-def _force_reset_subscription_versions(verbose=False):
+def _force_reset_subscription_versions(verbose=False, apps=default_apps):
+    DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
+    Subscription = apps.get_model('accounting', 'Subscription')
+
     for default_plan in DefaultProductPlan.objects.all():
         software_plan = default_plan.plan
         latest_version = software_plan.get_version()
@@ -127,8 +128,12 @@ def _force_reset_subscription_versions(verbose=False):
         versions_to_remove.delete()
 
 
-def ensure_plans(dry_run=False, verbose=False, for_tests=False):
-    edition_to_features = _ensure_features(dry_run=dry_run, verbose=verbose)
+def ensure_plans(dry_run=False, verbose=False, for_tests=False, apps=default_apps):
+    DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
+    SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
+    SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
+
+    edition_to_features = _ensure_features(dry_run=dry_run, verbose=verbose, apps=apps)
     for product_type in PRODUCT_TYPES:
         for edition in EDITIONS:
             role_slug = BOOTSTRAP_EDITION_TO_ROLE[edition]
@@ -140,8 +145,8 @@ def ensure_plans(dry_run=False, verbose=False, for_tests=False):
                 return
             software_plan_version = SoftwarePlanVersion(role=role)
 
-            product, product_rates = _ensure_product_and_rate(product_type, edition, dry_run=dry_run, verbose=verbose)
-            feature_rates = _ensure_feature_rates(edition_to_features[edition], edition, dry_run=dry_run, verbose=verbose, for_tests=for_tests)
+            product, product_rates = _ensure_product_and_rate(product_type, edition, dry_run=dry_run, verbose=verbose, apps=apps)
+            feature_rates = _ensure_feature_rates(edition_to_features[edition], edition, dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=apps)
             software_plan = SoftwarePlan(
                 name='%s Edition' % product.name, edition=edition, visibility=SoftwarePlanVisibility.PUBLIC
             )
@@ -195,10 +200,13 @@ def ensure_plans(dry_run=False, verbose=False, for_tests=False):
                                          default_product_plan.edition))
 
 
-def _ensure_product_and_rate(product_type, edition, dry_run=False, verbose=False):
+def _ensure_product_and_rate(product_type, edition, dry_run=False, verbose=False, apps=default_apps):
     """
     Ensures that all the necessary SoftwareProducts and SoftwareProductRates are created for the plan.
     """
+    SoftwareProduct = apps.get_model('accounting', 'SoftwareProduct')
+    SoftwareProductRate = apps.get_model('accounting', 'SoftwareProductRate')
+
     if verbose:
         logger.info('Ensuring Products and Product Rates')
 
@@ -248,10 +256,12 @@ def _ensure_product_and_rate(product_type, edition, dry_run=False, verbose=False
     return product, product_rates
 
 
-def _ensure_features(dry_run=False, verbose=False):
+def _ensure_features(dry_run=False, verbose=False, apps=default_apps):
     """
     Ensures that all the Features necessary for the plans are created.
     """
+    Feature = apps.get_model('accounting', 'Feature')
+
     if verbose:
         logger.info('Ensuring Features')
 
@@ -278,10 +288,12 @@ def _ensure_features(dry_run=False, verbose=False):
     return edition_to_features
 
 
-def _ensure_feature_rates(features, edition, dry_run=False, verbose=False, for_tests=False):
+def _ensure_feature_rates(features, edition, dry_run=False, verbose=False, for_tests=False, apps=default_apps):
     """
     Ensures that all the FeatureRates necessary for the plans are created.
     """
+    FeatureRate = apps.get_model('accounting', 'FeatureRate')
+
     if verbose:
         logger.info('Ensuring Feature Rates')
 
