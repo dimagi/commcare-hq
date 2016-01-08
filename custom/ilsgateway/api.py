@@ -1,3 +1,5 @@
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.db import transaction
 from corehq.apps.hqcase.dbaccessors import \
     get_supply_point_case_in_domain_by_id
@@ -8,9 +10,10 @@ from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, D
 from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.programs.models import Program
-from corehq.apps.users.models import UserRole
+from corehq.apps.users.models import UserRole, WebUser
 from custom.api.utils import apply_updates
-from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroupReport, HistoricalLocationGroup
+from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroupReport, HistoricalLocationGroup, \
+    ILSGatewayWebUser, ILSGatewayConfig
 from custom.logistics.api import LogisticsEndpoint, APISynchronization, ApiSyncObject
 from corehq.apps.locations.models import Location as Loc
 
@@ -40,6 +43,7 @@ class Product(JsonObject):
 
 
 class ILSUser(JsonObject):
+    id = IntegerProperty()
     username = StringProperty()
     first_name = StringProperty()
     last_name = StringProperty()
@@ -268,7 +272,7 @@ class ILSGatewayAPI(APISynchronization):
                 self.location_groups_sync,
                 migrate_once=True
             ),
-            ApiSyncObject('webuser', self.endpoint.get_webusers, self.web_user_sync, 'user__date_joined'),
+            ApiSyncObject('webuser', self.endpoint.get_webusers, self.web_user_sync, 'date_updated'),
             ApiSyncObject('smsuser', self.endpoint.get_smsusers, self.sms_user_sync, 'date_updated')
         ]
 
@@ -323,14 +327,82 @@ class ILSGatewayAPI(APISynchronization):
                     product.save()
         return product
 
-    def web_user_sync(self, ilsgateway_webuser):
-        web_user = super(ILSGatewayAPI, self).web_user_sync(ilsgateway_webuser)
-        if not web_user:
-            return None
-        dm = web_user.get_domain_membership(self.domain)
+    def _create_web_user(self, email, ilsgateway_webuser, location_id, user_dict):
+        user = WebUser.create(domain=None, username=email,
+                              password=ilsgateway_webuser.password, email=ilsgateway_webuser.email.lower(),
+                              **user_dict)
+        user.add_domain_membership(self.domain, location_id=location_id)
+        dm = user.get_domain_membership(self.domain)
         dm.role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
-        web_user.save()
-        return web_user
+        user.save()
+        return user
+
+    def _edit_web_user(self, user, location_id):
+        read_only_role = UserRole.get_read_only_role_by_domain(self.domain).get_id
+        if self.domain not in user.get_domains():
+            user.add_domain_membership(self.domain, location_id=location_id, role_id=read_only_role)
+            user.save()
+        else:
+            dm = user.get_domain_membership(self.domain)
+            if dm.role_id != read_only_role or dm.location_id != location_id:
+                dm.role_id = read_only_role
+                dm.location_id = location_id
+                user.save()
+
+    def web_user_sync(self, ilsgateway_webuser):
+        email = ilsgateway_webuser.email.lower()
+        if not email:
+            try:
+                validate_email(ilsgateway_webuser.username)
+                email = ilsgateway_webuser.username
+            except ValidationError:
+                return None
+        user = WebUser.get_by_username(email)
+        user_dict = {
+            'first_name': ilsgateway_webuser.first_name,
+            'last_name': ilsgateway_webuser.last_name,
+            'is_active': ilsgateway_webuser.is_active,
+            'password_hashed': True,
+        }
+        location_id = None
+        if ilsgateway_webuser.location:
+            try:
+                sql_location = SQLLocation.objects.get(domain=self.domain, external_id=ilsgateway_webuser.location)
+                location_id = sql_location.location_id
+            except SQLLocation.DoesNotExist:
+                location_id = None
+
+        if user is None:
+            try:
+                ils_sql_web_user = ILSGatewayWebUser.objects.get(external_id=ilsgateway_webuser.id)
+            except ILSGatewayWebUser.DoesNotExist:
+                ils_sql_web_user = None
+
+            if ils_sql_web_user:
+                # if user exists in db it means he was already migrated but he changed email in v1
+                old_email = ils_sql_web_user.email
+                user = WebUser.get_by_username(old_email)
+                ils_domains = ILSGatewayConfig.get_all_enabled_domains()
+                # make sure it's user migrated from ILS and username is available
+                if all([domain in ils_domains for domain in user.domains])\
+                        and not WebUser.get_by_username(email):
+                    user.delete_domain_membership(self.domain)
+                    user.save()
+                    user = self._create_web_user(email, ilsgateway_webuser, location_id, user_dict)
+                    ils_sql_web_user.email = email
+                    ils_sql_web_user.save()
+                    return user
+            else:
+                user = self._create_web_user(email, ilsgateway_webuser, location_id, user_dict)
+        else:
+            self._edit_web_user(user, location_id)
+
+        ilsgateway_webuser, _ = ILSGatewayWebUser.objects.get_or_create(
+            external_id=ilsgateway_webuser.id,
+        )
+        ilsgateway_webuser.email = email
+        ilsgateway_webuser.save()
+        return user
 
     def _reassign_number(self, user, connection):
         v = VerifiedNumber.by_phone(apply_leniency(connection.phone_number), include_pending=True)
