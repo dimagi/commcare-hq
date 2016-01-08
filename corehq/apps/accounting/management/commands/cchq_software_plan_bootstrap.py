@@ -76,14 +76,12 @@ class Command(BaseCommand):
         if self.for_tests:
             logger.info("Initializing Plans and Roles for Testing")
 
-        self.verbose = verbose
-
         if force_reset:
             confirm_force_reset = raw_input("Are you sure you want to assign the latest default plan version to all"
                                             "current subscriptions and remove the older versions? Type 'yes' to "
                                             "continue.")
             if confirm_force_reset == 'yes':
-                self.force_reset_subscription_versions()
+                self.force_reset_subscription_versions(verbose=verbose)
             return
 
         if fresh_start or flush:
@@ -91,13 +89,13 @@ class Command(BaseCommand):
                                             "You can't do this if there are any active Subscriptions."
                                             " Type 'yes' to continue.\n")
             if confirm_fresh_start == 'yes':
-                self.flush_plans()
+                self.flush_plans(verbose=verbose)
 
         if not flush:
-            self.ensure_plans(dry_run=dry_run)
+            self.ensure_plans(dry_run=dry_run, verbose=verbose)
 
-    def flush_plans(self):
-        if self.verbose:
+    def flush_plans(self, verbose=False):
+        if verbose:
             logger.info("Flushing ALL SoftwarePlans...")
         DefaultProductPlan.objects.all().delete()
         SoftwarePlanVersion.objects.all().delete()
@@ -107,14 +105,14 @@ class Command(BaseCommand):
         FeatureRate.objects.all().delete()
         Feature.objects.all().delete()
 
-    def force_reset_subscription_versions(self):
+    def force_reset_subscription_versions(self, verbose=False):
         for default_plan in DefaultProductPlan.objects.all():
             software_plan = default_plan.plan
             latest_version = software_plan.get_version()
             subscriptions_to_update = Subscription.objects.filter(plan_version__plan__pk=software_plan.pk).exclude(
                 plan_version=latest_version).all()
             # assign latest version of software plan to all subscriptions referencing that software plan
-            if self.verbose:
+            if verbose:
                 logger.info('Updating %d subscriptions to latest version of %s.' %
                             (len(subscriptions_to_update), software_plan.name))
             for subscription in subscriptions_to_update:
@@ -122,12 +120,12 @@ class Command(BaseCommand):
                 subscription.save()
             # delete all old versions of that software plan
             versions_to_remove = software_plan.softwareplanversion_set.exclude(pk=latest_version.pk).all()
-            if self.verbose:
+            if verbose:
                 logger.info("Removing %d old versions." % len(versions_to_remove))
             versions_to_remove.delete()
 
-    def ensure_plans(self, dry_run=False):
-        edition_to_features = self.ensure_features(dry_run=dry_run)
+    def ensure_plans(self, dry_run=False, verbose=False):
+        edition_to_features = self.ensure_features(dry_run=dry_run, verbose=verbose)
         for product_type in PRODUCT_TYPES:
             for edition in EDITIONS:
                 role_slug = BOOTSTRAP_EDITION_TO_ROLE[edition]
@@ -139,8 +137,8 @@ class Command(BaseCommand):
                     return
                 software_plan_version = SoftwarePlanVersion(role=role)
 
-                product, product_rates = self.ensure_product_and_rate(product_type, edition, dry_run=dry_run)
-                feature_rates = self.ensure_feature_rates(edition_to_features[edition], edition, dry_run=dry_run)
+                product, product_rates = self.ensure_product_and_rate(product_type, edition, dry_run=dry_run, verbose=verbose)
+                feature_rates = self.ensure_feature_rates(edition_to_features[edition], edition, dry_run=dry_run, verbose=verbose)
                 software_plan = SoftwarePlan(
                     name='%s Edition' % product.name, edition=edition, visibility=SoftwarePlanVisibility.PUBLIC
                 )
@@ -149,12 +147,12 @@ class Command(BaseCommand):
                 else:
                     try:
                         software_plan = SoftwarePlan.objects.get(name=software_plan.name)
-                        if self.verbose:
+                        if verbose:
                             logger.info("Plan '%s' already exists. Using existing plan to add version."
                                         % software_plan.name)
                     except SoftwarePlan.DoesNotExist:
                         software_plan.save()
-                        if self.verbose:
+                        if verbose:
                             logger.info("Creating Software Plan: %s" % software_plan.name)
 
                         software_plan_version.plan = software_plan
@@ -180,7 +178,7 @@ class Command(BaseCommand):
                         try:
                             default_product_plan = DefaultProductPlan.objects.get(product_type=product.product_type,
                                                                                   edition=edition, is_trial=is_trial)
-                            if self.verbose:
+                            if verbose:
                                 logger.info("Default for product '%s' and edition "
                                             "'%s' already exists." % (
                                                 product.product_type, default_product_plan.edition
@@ -188,16 +186,16 @@ class Command(BaseCommand):
                         except ObjectDoesNotExist:
                             default_product_plan.plan = software_plan
                             default_product_plan.save()
-                            if self.verbose:
+                            if verbose:
                                 logger.info("Setting plan as default for product '%s' and edition '%s'." %
                                             (product.product_type,
                                              default_product_plan.edition))
 
-    def ensure_product_and_rate(self, product_type, edition, dry_run=False):
+    def ensure_product_and_rate(self, product_type, edition, dry_run=False, verbose=False):
         """
         Ensures that all the necessary SoftwareProducts and SoftwareProductRates are created for the plan.
         """
-        if self.verbose:
+        if verbose:
             logger.info('Ensuring Products and Product Rates')
 
         product = SoftwareProduct(name='%s %s' % (product_type, edition), product_type=product_type)
@@ -230,26 +228,26 @@ class Command(BaseCommand):
             else:
                 try:
                     product = SoftwareProduct.objects.get(name=product.name)
-                    if self.verbose:
+                    if verbose:
                         logger.info("Product '%s' already exists. Using "
                                     "existing product to add rate."
                                     % product.name)
                 except SoftwareProduct.DoesNotExist:
                     product.save()
-                    if self.verbose:
+                    if verbose:
                         logger.info("Creating Product: %s" % product)
-                if self.verbose:
+                if verbose:
                     logger.info("Corresponding product rate of $%d created."
                                 % product_rate.monthly_fee)
             product_rate.product = product
             product_rates.append(product_rate)
         return product, product_rates
 
-    def ensure_features(self, dry_run=False):
+    def ensure_features(self, dry_run=False, verbose=False):
         """
         Ensures that all the Features necessary for the plans are created.
         """
-        if self.verbose:
+        if verbose:
             logger.info('Ensuring Features')
 
         edition_to_features = defaultdict(list)
@@ -263,22 +261,22 @@ class Command(BaseCommand):
                 else:
                     try:
                         feature = Feature.objects.get(name=feature.name)
-                        if self.verbose:
+                        if verbose:
                             logger.info("Feature '%s' already exists. Using "
                                         "existing feature to add rate."
                                         % feature.name)
                     except ObjectDoesNotExist:
                         feature.save()
-                        if self.verbose:
+                        if verbose:
                             logger.info("Creating Feature: %s" % feature)
                 edition_to_features[edition].append(feature)
         return edition_to_features
 
-    def ensure_feature_rates(self, features, edition, dry_run=False):
+    def ensure_feature_rates(self, features, edition, dry_run=False, verbose=False):
         """
         Ensures that all the FeatureRates necessary for the plans are created.
         """
-        if self.verbose:
+        if verbose:
             logger.info('Ensuring Feature Rates')
 
         feature_rates = []
@@ -313,7 +311,7 @@ class Command(BaseCommand):
             feature_rate.feature = feature
             if dry_run:
                 logger.info("[DRY RUN] Creating rate for feature '%s': %s" % (feature.name, feature_rate))
-            elif self.verbose:
+            elif verbose:
                 logger.info("Creating rate for feature '%s': %s" % (feature.name, feature_rate))
             feature_rates.append(feature_rate)
         return feature_rates
