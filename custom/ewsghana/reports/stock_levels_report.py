@@ -1,3 +1,4 @@
+import collections
 from collections import OrderedDict
 from datetime import timedelta
 from itertools import chain
@@ -325,17 +326,19 @@ class UsersData(EWSData):
                                         location_id=self.location_id).values_list('user_id', flat=True)
         ))
 
-        web_users = [
-            {
-                'id': web_user['_id'],
-                'first_name': web_user['first_name'],
-                'last_name': web_user['last_name'],
-                'email': web_user['username']
-            }
+        WebUserInfo = collections.namedtuple('WebUserInfo', 'id first_name last_name email')
+
+        web_users = {
+            WebUserInfo(
+                id=web_user['_id'],
+                first_name=web_user['first_name'],
+                last_name=web_user['last_name'],
+                email=web_user['email']
+            )
             for web_user in (UserES().web_users().domain(self.config['domain']).term(
                 "domain_memberships.location_id", self.location_id
             ).run().hits + web_users_from_extension)
-        ]
+        }
 
         return render_to_string('ewsghana/partials/users_tables.html', {
             'users': [user_to_dict(user) for user in users],

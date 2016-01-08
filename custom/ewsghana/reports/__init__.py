@@ -184,19 +184,20 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
 
         try:
             ews_extension = EWSExtension.objects.get(user_id=user.get_id, domain=self.domain)
-            if ews_extension.location_id:
-                return get_object_or_404(
-                    SQLLocation, domain=self.domain, location_id=ews_extension.location_id, is_archived=False
-                )
         except EWSExtension.DoesNotExist:
             return
+
+        if ews_extension.location_id:
+            return get_object_or_404(
+                SQLLocation, domain=self.domain, location_id=ews_extension.location_id, is_archived=False
+            )
 
     @property
     @memoized
     def location(self):
         loc_id = self.request_params.get('location_id')
         if loc_id:
-            return get_object_or_404(SQLLocation, location_id=loc_id, is_archived=False)
+            return get_object_or_404(SQLLocation, location_id=loc_id, domain=self.domain, is_archived=False)
         else:
             user_location = self.user_location
             if user_location:
