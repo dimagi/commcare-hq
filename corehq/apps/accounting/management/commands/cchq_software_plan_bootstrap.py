@@ -81,7 +81,7 @@ class Command(BaseCommand):
                                             "current subscriptions and remove the older versions? Type 'yes' to "
                                             "continue.")
             if confirm_force_reset == 'yes':
-                force_reset_subscription_versions(verbose=verbose)
+                _force_reset_subscription_versions(verbose=verbose)
             return
 
         if fresh_start or flush:
@@ -89,13 +89,13 @@ class Command(BaseCommand):
                                             "You can't do this if there are any active Subscriptions."
                                             " Type 'yes' to continue.\n")
             if confirm_fresh_start == 'yes':
-                flush_plans(verbose=verbose)
+                _flush_plans(verbose=verbose)
 
         if not flush:
             ensure_plans(dry_run=dry_run, verbose=verbose)
 
 
-def flush_plans(verbose=False):
+def _flush_plans(verbose=False):
     if verbose:
         logger.info("Flushing ALL SoftwarePlans...")
     DefaultProductPlan.objects.all().delete()
@@ -107,7 +107,7 @@ def flush_plans(verbose=False):
     Feature.objects.all().delete()
 
 
-def force_reset_subscription_versions(verbose=False):
+def _force_reset_subscription_versions(verbose=False):
     for default_plan in DefaultProductPlan.objects.all():
         software_plan = default_plan.plan
         latest_version = software_plan.get_version()
@@ -128,7 +128,7 @@ def force_reset_subscription_versions(verbose=False):
 
 
 def ensure_plans(dry_run=False, verbose=False, for_tests=False):
-    edition_to_features = ensure_features(dry_run=dry_run, verbose=verbose)
+    edition_to_features = _ensure_features(dry_run=dry_run, verbose=verbose)
     for product_type in PRODUCT_TYPES:
         for edition in EDITIONS:
             role_slug = BOOTSTRAP_EDITION_TO_ROLE[edition]
@@ -140,8 +140,8 @@ def ensure_plans(dry_run=False, verbose=False, for_tests=False):
                 return
             software_plan_version = SoftwarePlanVersion(role=role)
 
-            product, product_rates = ensure_product_and_rate(product_type, edition, dry_run=dry_run, verbose=verbose)
-            feature_rates = ensure_feature_rates(edition_to_features[edition], edition, dry_run=dry_run, verbose=verbose, for_tests=for_tests)
+            product, product_rates = _ensure_product_and_rate(product_type, edition, dry_run=dry_run, verbose=verbose)
+            feature_rates = _ensure_feature_rates(edition_to_features[edition], edition, dry_run=dry_run, verbose=verbose, for_tests=for_tests)
             software_plan = SoftwarePlan(
                 name='%s Edition' % product.name, edition=edition, visibility=SoftwarePlanVisibility.PUBLIC
             )
@@ -195,7 +195,7 @@ def ensure_plans(dry_run=False, verbose=False, for_tests=False):
                                          default_product_plan.edition))
 
 
-def ensure_product_and_rate(product_type, edition, dry_run=False, verbose=False):
+def _ensure_product_and_rate(product_type, edition, dry_run=False, verbose=False):
     """
     Ensures that all the necessary SoftwareProducts and SoftwareProductRates are created for the plan.
     """
@@ -248,7 +248,7 @@ def ensure_product_and_rate(product_type, edition, dry_run=False, verbose=False)
     return product, product_rates
 
 
-def ensure_features(dry_run=False, verbose=False):
+def _ensure_features(dry_run=False, verbose=False):
     """
     Ensures that all the Features necessary for the plans are created.
     """
@@ -278,7 +278,7 @@ def ensure_features(dry_run=False, verbose=False):
     return edition_to_features
 
 
-def ensure_feature_rates(features, edition, dry_run=False, verbose=False, for_tests=False):
+def _ensure_feature_rates(features, edition, dry_run=False, verbose=False, for_tests=False):
     """
     Ensures that all the FeatureRates necessary for the plans are created.
     """
