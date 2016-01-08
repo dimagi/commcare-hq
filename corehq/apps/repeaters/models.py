@@ -340,10 +340,18 @@ class CaseRepeater(Repeater):
     """
 
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
-    white_listed_case_types = StringListProperty(default=[])
+    white_listed_case_types = StringListProperty(default=[])  # empty value means all case-types are accepted
+    black_listed_users = StringListProperty(default=[])  # users who caseblock submissions should be ignored
 
     def allowed_to_forward(self, payload):
-        return not self.white_listed_case_types or payload.type in self.white_listed_case_types
+        allowed_case_type = not self.white_listed_case_types or payload.type in self.white_listed_case_types
+        allowed_user = self.payload_owner(payload) not in self.black_listed_users
+        return allowed_case_type and allowed_user
+
+    @classmethod
+    def payload_owner(cls, payload):
+        # get the user_id who submitted the payload, note, it's not the owner_id
+        return payload.actions[-1].user_id
 
     @memoized
     def payload_doc(self, repeat_record):
