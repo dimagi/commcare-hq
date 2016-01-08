@@ -1395,7 +1395,7 @@ class Subscription(models.Model):
         renewed_subscription.save()
 
         # transfer existing credit lines to the renewed subscription
-        self.transfer_credits(renewed_subscription)
+        self.transfer_credits(renewed_subscription) # is this premature?? I think so. The deactivation code should handle this
 
         # record renewal from old subscription
         SubscriptionAdjustment.record_adjustment(

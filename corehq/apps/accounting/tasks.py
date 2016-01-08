@@ -110,6 +110,9 @@ def _deactivate_subscription(subscription, ending_date):
         next_subscription = assign_explicit_community_subscription(subscription.subscriber.domain, ending_date)
         new_plan_version = next_subscription.plan_version
     _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
+    # even this seems premature - what if a subscription still needs to be invoiced and the new
+    # subscription holds the credit lines?
+    # alternatively - always move to account level credit, if we're ok with the user having to see that
     if next_subscription and subscription.account == next_subscription.account:
         subscription.transfer_credits(subscription=next_subscription)
     else:
