@@ -152,24 +152,36 @@ class CaseRepeaterForm(GenericRepeaterForm):
         label=_('Select case types to forward'),
         help_text=_('Only cases of this type will be forwarded. Leave empty to forward all cases')
     )
+    black_listed_users = forms.MultipleChoiceField(
+        required=False,
+        label=_('Select users to exclude case-submissions'),
+        help_text=_('Case creations and updates submitted by these users will not be forwarded')
+    )
 
     @property
     @memoized
     def case_types(self):
         return get_case_types_for_domain(self.domain)
 
+    @property
+    @memoized
+    def users(self):
+        # todo
+        return []
+
     def set_extra_django_form_fields(self):
         super(CaseRepeaterForm, self).set_extra_django_form_fields()
         self.fields['white_listed_case_types'].choices = [(t, t) for t in self.case_types]
+        self.fields['black_listed_users'].choices = [(user.id, user.name) for user in self.users]
 
     def get_ordered_crispy_form_fields(self):
         fields = super(CaseRepeaterForm, self).get_ordered_crispy_form_fields()
-        return ['white_listed_case_types'] + fields
+        return ['white_listed_case_types'] + ['black_listed_users'] + fields
 
     def clean(self):
         cleaned_data = super(GenericRepeaterForm, self).clean()
         white_listed_case_types = cleaned_data['white_listed_case_types']
         # todo; better UX for case-types
-        if not set(self.case_types).issubset(white_listed_case_types):
+        if not set(white_listed_case_types).issubset(self.case_types):
             raise ValidationError('Unknow case-type')
         return cleaned_data

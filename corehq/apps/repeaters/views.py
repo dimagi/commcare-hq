@@ -15,4 +15,5 @@ class AddCaseRepeaterView(AddRepeaterView):
     def make_repeater(self):
         repeater = super(AddCaseRepeaterView, self).make_repeater()
         repeater.white_listed_case_types = self.add_repeater_form.cleaned_data['white_listed_case_types']
+        repeater.black_listed_users = self.add_repeater_form.cleaned_data['black_listed_users']
         return repeater
