@@ -1,4 +1,3 @@
-from copy import copy
 from functools import wraps
 import logging
 from couchdbkit.exceptions import ResourceNotFound
@@ -24,8 +23,7 @@ from pillowtop.couchdb import CachedCouchDB
 
 from django import db
 from pillowtop.dao.couch import CouchDocumentStore
-from pillowtop.es_utils import create_index_for_pillow, pillow_index_exists, pillow_mapping_exists, \
-    initialize_mapping_if_necessary, completely_initialize_pillow_index
+from pillowtop.es_utils import completely_initialize_pillow_index
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
