@@ -381,7 +381,6 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, r
             current_tries += 1
             pillow_logging.error("[%s] put_robust error %s attempt %d/%d" % (
                 name, ex, current_tries, retries))
-            time.sleep(math.pow(RETRY_INTERVAL, current_tries))
 
             if current_tries == retries:
                 message = "[%s] Max retry error on %s/%s/%s" % (name, index, doc_type, doc_id)
@@ -389,6 +388,8 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, r
                     raise PillowtopIndexingError(message)
                 else:
                     pillow_logging.error(message)
+
+            time.sleep(math.pow(RETRY_INTERVAL, current_tries))
         except RequestError as ex:
             error_message = "Pillowtop put_robust error [%s]:\n%s\n\tpath: %s/%s/%s\n\t%s" % (
                 name,
