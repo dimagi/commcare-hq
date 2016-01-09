@@ -3,7 +3,7 @@ from functools import wraps
 import logging
 from couchdbkit.exceptions import ResourceNotFound
 from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import RequestError, ConnectionError
+from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError
 from psycopg2._psycopg import InterfaceError
 from datetime import datetime, timedelta
 import hashlib
@@ -400,6 +400,8 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, r
                 raise PillowtopIndexingError(error_message)
             else:
                 pillow_logging.error(error_message)
+            break
+        except NotFoundError:
             break
 
 
