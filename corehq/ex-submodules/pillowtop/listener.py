@@ -2,7 +2,8 @@ from copy import copy
 from functools import wraps
 import logging
 from couchdbkit.exceptions import ResourceNotFound
-from elasticsearch import Elasticsearch, TransportError
+from elasticsearch import Elasticsearch
+from elasticsearch.exceptions import RequestError, ConnectionError
 from psycopg2._psycopg import InterfaceError
 from datetime import datetime, timedelta
 import hashlib
@@ -10,7 +11,6 @@ import traceback
 import math
 import time
 
-from requests import ConnectionError
 import simplejson
 import rawes
 import sys
@@ -360,7 +360,7 @@ class PythonPillow(BasicPillow):
         super(PythonPillow, self).run()
 
 
-def send_to_elasticsearch(path, es_getter, name, data=None, retries=MAX_RETRIES,
+def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, retries=MAX_RETRIES,
         except_on_failure=False, update=False, delete=False):
     """
     More fault tolerant es.put method
@@ -370,12 +370,12 @@ def send_to_elasticsearch(path, es_getter, name, data=None, retries=MAX_RETRIES,
     while current_tries < retries:
         try:
             if delete:
-                res = es_getter().delete(path=path)
+                es_getter().delete(index, doc_type, doc_id)
             elif update:
                 params = {'retry_on_conflict': 2}
-                res = es_getter().post("%s/_update" % path, data={"doc": data}, params=params)
+                es_getter().update(index, doc_type, doc_id, body={"doc": data}, params=params)
             else:
-                res = es_getter().put(path, data=data)
+                es_getter().create(index, doc_type, body=data, id=doc_id)
             break
         except ConnectionError, ex:
             current_tries += 1
@@ -384,25 +384,23 @@ def send_to_elasticsearch(path, es_getter, name, data=None, retries=MAX_RETRIES,
             time.sleep(math.pow(RETRY_INTERVAL, current_tries))
 
             if current_tries == retries:
-                message = "[%s] Max retry error on %s" % (name, path)
+                message = "[%s] Max retry error on %s/%s/%s" % (name, index, doc_type, doc_id)
                 if except_on_failure:
                     raise PillowtopIndexingError(message)
                 else:
                     pillow_logging.error(message)
-                res = {}
+        except RequestError as ex:
+            error_message = "Pillowtop put_robust error [%s]:\n%s\n\tpath: %s/%s/%s\n\t%s" % (
+                name,
+                ex.message or "No error message",
+                index, doc_type, doc_id,
+                data.keys())
 
-    if res.get('status', 0) == 400:
-        error_message = "Pillowtop put_robust error [%s]:\n%s\n\tpath: %s\n\t%s" % (
-            name,
-            res.get('error', "No error message"),
-            path,
-            data.keys())
-
-        if except_on_failure:
-            raise PillowtopIndexingError(error_message)
-        else:
-            pillow_logging.error(error_message)
-    return res
+            if except_on_failure:
+                raise PillowtopIndexingError(error_message)
+            else:
+                pillow_logging.error(error_message)
+            break
 
 
 class AliasedElasticPillow(BasicPillow):
@@ -479,13 +477,14 @@ class AliasedElasticPillow(BasicPillow):
             return None
         return super(AliasedElasticPillow, self).change_trigger(changes_dict)
 
-    def send_robust(self, path, data=None, retries=MAX_RETRIES,
-            except_on_failure=False, update=False):
-        return send_to_elasticsearch(
-            path=path,
-            es_getter=self.get_es,
+    def send_robust(self, doc_dict, retries=MAX_RETRIES, except_on_failure=False, update=False):
+        send_to_elasticsearch(
+            index=self.es_index,
+            doc_type=self.es_type,
+            doc_id=doc_dict['_id'],
+            es_getter=self.get_es_new,
             name=self.get_name(),
-            data=data,
+            data=doc_dict,
             retries=retries,
             except_on_failure=except_on_failure,
             update=update,
@@ -498,8 +497,6 @@ class AliasedElasticPillow(BasicPillow):
         """
         try:
             if not self.bulk:
-                doc_path = self.get_doc_path_typed(doc_dict)
-
                 doc_exists = self.doc_exists(doc_dict)
 
                 if self.allow_updates:
@@ -508,8 +505,7 @@ class AliasedElasticPillow(BasicPillow):
                     can_put = not doc_exists
 
                 if can_put and not self.bulk:
-                    res = self.send_robust(doc_path, data=doc_dict, update=doc_exists)
-                    return res
+                    self.send_robust(doc_dict, update=doc_exists)
         except Exception, ex:
             tb = traceback.format_exc()
             pillow_logging.error(
@@ -584,15 +580,6 @@ class AliasedElasticPillow(BasicPillow):
                 pillow_logging.error(
                     "Error on change: %s, %s" % (change['id'], ex)
                 )
-
-    def get_doc_path_typed(self, doc_dict):
-        # todo: the type is silly here but changing it would require a big reindex
-        return "%(index)s/%(type_string)s/%(id)s" % (
-            {
-                'index': self.es_index,
-                'type_string': self.es_type,
-                'id': doc_dict['_id']
-            })
 
     def doc_exists(self, doc_id_or_dict):
         """
