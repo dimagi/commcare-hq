@@ -129,8 +129,9 @@ class ESError(Exception):
     pass
 
 
-def run_query(url, q):
-    return get_es().get(url, data=q)
+def run_query(index_name, q):
+    es_meta = ES_META[index_name]
+    return get_es_new().search(es_meta.index, es_meta.type, body=q)
 
 
 def es_histogram(histo_type, domains=None, startdate=None, enddate=None,
