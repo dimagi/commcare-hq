@@ -50,10 +50,10 @@ def simple_post(data, url, content_type="text/xml", timeout=60, headers=None):
     """
     if isinstance(data, unicode):
         data = data.encode('utf-8')  # can't pass unicode to http request posts
-    default_headers = {
+    default_headers = requests.structures.CaseInsensitiveDict({
         "content-type": content_type,
         "content-length": len(data),
-    }
+    })
     if headers:
         default_headers.update(headers)
 
