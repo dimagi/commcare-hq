@@ -1,7 +1,7 @@
 from casexml.apps.case.xform import is_device_report
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
-from corehq.elastic import ES_URLS, stream_es_query, get_es, doc_exists_in_es
+from corehq.elastic import ES_URLS, stream_es_query, get_es, doc_exists_in_es, send_to_elasticsearch
 from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.decorators.memoized import memoized
@@ -140,10 +140,11 @@ class UnknownUsersPillow(PythonPillow):
             }
             if domain:
                 doc["domain_membership"] = {"domain": domain}
-            self.es.put(self.es_path + user_id, data=doc)
+            send_to_elasticsearch(USER_INDEX, doc)
 
 
 def add_demo_user_to_user_index():
-    es = get_es()
-    es_path = USER_INDEX + "/user/demo_user"
-    es.put(es_path, data={"_id": "demo_user", "username": "demo_user", "doc_type": "DemoUser"})
+    send_to_elasticsearch(
+        USER_INDEX,
+        {"_id": "demo_user", "username": "demo_user", "doc_type": "DemoUser"}
+    )
