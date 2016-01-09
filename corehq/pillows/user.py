@@ -1,7 +1,10 @@
 from casexml.apps.case.xform import is_device_report
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
-from corehq.elastic import ES_URLS, stream_es_query, get_es, doc_exists_in_es, send_to_elasticsearch
+from corehq.elastic import (
+    ES_URLS, stream_es_query, doc_exists_in_es,
+    send_to_elasticsearch, get_es_new, ES_META
+)
 from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.decorators.memoized import memoized
@@ -69,12 +72,13 @@ class GroupToUserPillow(PythonPillow):
     def __init__(self):
         checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
         super(GroupToUserPillow, self).__init__(checkpoint=checkpoint)
+        self.es = get_es_new()
+        self.es_type = ES_META['users'].type
 
     def python_filter(self, change):
         return change.document.get('doc_type', None) in ('Group', 'Group-Deleted')
 
     def change_transport(self, doc_dict):
-        es = get_es()
         user_ids = doc_dict.get("users", [])
         q = {"filter": {"and": [{"terms": {"_id": user_ids}}]}}
         for user_source in stream_es_query(es_url=ES_URLS["users"], q=q, fields=["__group_ids", "__group_names"]):
@@ -84,7 +88,7 @@ class GroupToUserPillow(PythonPillow):
                 group_ids.add(doc_dict["_id"])
                 group_names.add(doc_dict["name"])
                 doc = {"__group_ids": list(group_ids), "__group_names": list(group_names)}
-                es.post("%s/user/%s/_update" % (USER_INDEX, user_source["_id"]), data={"doc": doc})
+                self.es.update(USER_INDEX, self.es_type, user_source["_id"], body={"doc": doc})
 
 
 class UnknownUsersPillow(PythonPillow):
@@ -99,7 +103,8 @@ class UnknownUsersPillow(PythonPillow):
         checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
         super(UnknownUsersPillow, self).__init__(checkpoint=checkpoint)
         self.user_db = CouchUser.get_db()
-        self.es = get_es()
+        self.es = get_es_new()
+        self.es_type = ES_META['users'].type
 
     def python_filter(self, change):
         # designed to exactly mimic the behavior of couchforms/filters/xforms.js
@@ -140,7 +145,7 @@ class UnknownUsersPillow(PythonPillow):
             }
             if domain:
                 doc["domain_membership"] = {"domain": domain}
-            send_to_elasticsearch(USER_INDEX, doc)
+            self.es.create(USER_INDEX, self.es_type, body=doc, id=user_id)
 
 
 def add_demo_user_to_user_index():
