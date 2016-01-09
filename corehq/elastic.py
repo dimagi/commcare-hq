@@ -163,8 +163,8 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None,
     q["facets"]["histo"]["facet_filter"]["and"].extend(filters)
     q["facets"]["histo"]["facet_filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, []))
 
-    es = get_es()
-    ret_data = es.get(ES_URLS[histo_type], data=q)
+    es_meta = ES_META[histo_type]
+    ret_data = get_es_new().search(es_meta.index, es_meta.type, body=q)
     return ret_data["facets"]["histo"]["entries"]
 
 
