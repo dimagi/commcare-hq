@@ -47,11 +47,10 @@ from corehq.apps.hqadmin.escheck import (
 )
 from corehq.apps.indicators.utils import get_mvp_domains
 from corehq.elastic import (
-    get_es,
     ES_URLS,
     stream_es_query,
     send_to_elasticsearch,
-)
+    get_es_new, ES_META)
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.util.files import file_extention_from_filename
 from corehq.util.view_utils import absolute_reverse
@@ -248,19 +247,19 @@ def update_calculated_properties():
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
 
 
-
 def is_app_active(app_id, domain):
     return app_has_been_submitted_to_in_last_30_days(domain, app_id)
 
 
 @periodic_task(run_every=crontab(hour="12, 22", minute="0", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
 def apps_update_calculated_properties():
-    es = get_es()
+    es = get_es_new()
     q = {"filter": {"and": [{"missing": {"field": "copy_of"}}]}}
     results = stream_es_query(q=q, es_url=ES_URLS["apps"], size=999999, chunksize=500)
     for r in results:
         calced_props = {"cp_is_active": is_app_active(r["_id"], r["_source"]["domain"])}
-        es.post("%s/app/%s/_update" % (APP_INDEX, r["_id"]), data={"doc": calced_props})
+        es.update(APP_INDEX, ES_META['apps'].type, r["_id"], body={"doc": calced_props})
+
 
 @task(ignore_result=True)
 def export_all_rows_task(ReportClass, report_state):
