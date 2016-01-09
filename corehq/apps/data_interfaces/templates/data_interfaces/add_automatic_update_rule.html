@@ -4,6 +4,12 @@
 {% load djangular_tags %}
 {% load crispy_forms_tags %}
 
+
+{% block js %}{{ block.super }}
+    <script src="{% new_static 'hqwebapp/js/main.js' %}"></script>
+{% endblock %}
+
+
 {% block js-inline %}{{ block.super }}
 <script type="text/javascript">
 (function (angular, initial) {

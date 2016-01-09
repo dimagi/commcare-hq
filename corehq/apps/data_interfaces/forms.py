@@ -211,6 +211,11 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                              _('days after the case was last modified.')),
                         css_class='col-sm-6',
                     ),
+                    help_bubble_text=_("This will close the case if it has been "
+                                       "more than the chosen number of days since "
+                                       "the case was last modified. Cases are "
+                                       "checked against this rule weekly."),
+                    css_id='server_modified_boundary_multifield',
                     label_class=self.helper.label_class,
                     field_class='col-sm-8 col-md-6',
                 ),
