@@ -12,7 +12,6 @@ import math
 import time
 
 import simplejson
-import rawes
 import sys
 
 from dimagi.utils.decorators.memoized import memoized
@@ -449,10 +448,6 @@ class AliasedElasticPillow(BasicPillow):
 
     def get_doc_path(self, doc_id):
         return "%s/%s/%s" % (self.es_index, self.es_type, doc_id)
-
-    @memoized
-    def get_es(self):
-        return rawes.Elastic('%s:%s' % (self.es_host, self.es_port), timeout=self.es_timeout)
 
     @memoized
     def get_es_new(self):
