@@ -546,12 +546,12 @@ class AliasedElasticPillow(BasicPillow):
         return hashlib.md5(simplejson.dumps(mapping, sort_keys=True)).hexdigest()
 
     @classmethod
-    def get_unique_id(self):
+    def get_unique_id(cls):
         """
         a unique identifier for the pillow - typically the hash associated with the index
         """
         # for legacy reasons this is the default until we remove it.
-        return self.calc_meta()
+        return cls.calc_meta()
 
     @classmethod
     def calc_meta(cls):
