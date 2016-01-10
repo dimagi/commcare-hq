@@ -167,7 +167,7 @@ def _check_es_rev(index, doc_id, couch_revs):
     """
     Specific docid and rev checker.
 
-    index: rawes index
+    index: Elasticsearch index
     doc_id: id to query in ES
     couch_rev: target couch_rev that you want to match
     """
