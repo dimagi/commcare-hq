@@ -4,6 +4,8 @@ from urllib import unquote
 from elasticsearch import Elasticsearch
 import rawes
 from django.conf import settings
+from elasticsearch.exceptions import ElasticsearchException
+
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from pillowtop.listener import send_to_elasticsearch as send_to_es
 from corehq.pillows.mappings.app_mapping import APP_INDEX
@@ -169,7 +171,7 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None,
 
 
 SIZE_LIMIT = 1000000
-def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at=None, size=None, dict_only=False,
+def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_at=None, size=None, dict_only=False,
              fields=None, facet_size=None):
     if terms is None:
         terms = []
@@ -222,7 +224,6 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
         }
         q["query"]["filtered"]["query"] = query if query else {"match_all": {}}
 
-
     if fields is not None:
         q["fields"] = q.get("fields", [])
         q["fields"].extend(fields)
@@ -230,14 +231,14 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
     if dict_only:
         return q
 
-    es_url = es_url or DOMAIN_INDEX + '/hqdomain/_search'
+    es_index = es_index or 'domains'
+    es = get_es_new()
+    meta = ES_META[es_index]
 
-    es = get_es()
-    result = es.get(es_url, data=q)
-
-    if 'error' in result:
-        msg = result['error']
-        raise ESError(msg)
+    try:
+        result = es.search(meta.index, meta.type, body=q)
+    except ElasticsearchException as e:
+        raise ESError(e)
 
     return result
 

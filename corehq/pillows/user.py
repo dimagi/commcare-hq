@@ -2,7 +2,7 @@ from casexml.apps.case.xform import is_device_report
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.elastic import (
-    ES_URLS, stream_es_query, doc_exists_in_es,
+    stream_es_query, doc_exists_in_es,
     send_to_elasticsearch, get_es_new, ES_META
 )
 from corehq.pillows.mappings.user_mapping import USER_MAPPING, USER_INDEX
@@ -81,7 +81,7 @@ class GroupToUserPillow(PythonPillow):
     def change_transport(self, doc_dict):
         user_ids = doc_dict.get("users", [])
         q = {"filter": {"and": [{"terms": {"_id": user_ids}}]}}
-        for user_source in stream_es_query(es_url=ES_URLS["users"], q=q, fields=["__group_ids", "__group_names"]):
+        for user_source in stream_es_query(ex_index='users', q=q, fields=["__group_ids", "__group_names"]):
             group_ids = set(user_source.get('fields', {}).get("__group_ids", []))
             group_names = set(user_source.get('fields', {}).get("__group_names", []))
             if doc_dict["name"] not in group_names or doc_dict["_id"] not in group_ids:
