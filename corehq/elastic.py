@@ -2,7 +2,6 @@ import copy
 from collections import namedtuple
 from urllib import unquote
 from elasticsearch import Elasticsearch
-import rawes
 from django.conf import settings
 from elasticsearch.exceptions import ElasticsearchException
 
@@ -27,18 +26,6 @@ def get_es_new():
         'host': settings.ELASTICSEARCH_HOST,
         'port': settings.ELASTICSEARCH_PORT,
     }])
-
-
-def get_es(timeout=30):
-    """
-    Get a handle to the configured elastic search DB
-    Returns a rawes.Elastic instance.
-
-    We are hoping to deprecate and retire this method soonish.
-    """
-    return rawes.Elastic('%s:%s' % (settings.ELASTICSEARCH_HOST,
-                                    settings.ELASTICSEARCH_PORT),
-                         timeout=timeout)
 
 
 def doc_exists_in_es(index, doc_id):

@@ -12,3 +12,4 @@ django-rosetta
 GitPython
 gitdb
 django-kombu
+rawes
