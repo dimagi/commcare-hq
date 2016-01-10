@@ -70,8 +70,6 @@ ES_META = {
     "report_xforms": EsMeta(REPORT_XFORM_INDEX, 'report_xform'),
 }
 
-ES_URLS = {key: '{m.index}/{m.type}/_search'.format(m=meta) for key, meta in ES_META.items()}
-
 ADD_TO_ES_FILTER = {
     "forms": [
         {"term": {"doc_type": "xforminstance"}},
