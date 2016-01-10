@@ -20,6 +20,7 @@ else
 fi
 
 if [ "${BOWER:-no}" = "yes" ]; then
+    npm install -g uglify-js
     npm install -g bower
     bower install
 fi
