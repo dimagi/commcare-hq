@@ -79,7 +79,7 @@ class TestUserSyncToEs(SimpleTestCase):
 
         user.delete()
         self.pillow.get_es_new().indices.refresh(self.pillow.es_index)
-        doc_exists_in_es('users', user._id)
+        self.assertFalse(doc_exists_in_es('users', user._id))
 
     def check_user(self, user):
         self.pillow.get_es_new().indices.refresh(self.pillow.es_index)
