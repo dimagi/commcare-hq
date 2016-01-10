@@ -7,6 +7,7 @@ from corehq.apps.reports.analytics.esaccessors import get_user_stubs
 from corehq.elastic import doc_exists_in_es
 from corehq.pillows.user import UserPillow
 from corehq.util.test_utils import mock_out_couch
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from ..models import CommCareUser, WebUser
 
@@ -77,7 +78,9 @@ class TestUserSyncToEs(SimpleTestCase):
         user.save()
         self.check_user(user)
 
-        user.delete()
+        # simulate retire without needing couch
+        user.base_doc += DELETED_SUFFIX
+        user.save()
         self.pillow.get_es_new().indices.refresh(self.pillow.es_index)
         self.assertFalse(doc_exists_in_es('users', user._id))
 
