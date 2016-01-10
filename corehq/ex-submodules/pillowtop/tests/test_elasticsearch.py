@@ -1,6 +1,8 @@
 import copy
 import uuid
 from django.test import SimpleTestCase
+
+from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings, \
     set_index_reindex_settings, set_index_normal_settings, create_index_for_pillow, assume_alias_for_pillow, \
     pillow_index_exists, pillow_mapping_exists, completely_initialize_pillow_index
@@ -57,9 +59,7 @@ class ElasticPillowTest(SimpleTestCase):
         pillow = TestElasticPillow(online=False)
         self.index = pillow.es_index
         self.es = pillow.get_es_new()
-        if self.es.indices.exists(self.index):
-            self.es.indices.delete(self.index)
-        self.assertFalse(self.es.indices.exists(self.index))
+        ensure_index_deleted(self.index)
 
     def test_create_index_on_pillow_creation(self):
         pillow = TestElasticPillow()
@@ -230,10 +230,7 @@ class TestSendToElasticsearch(SimpleTestCase):
         self.es = self.pillow.get_es_new()
         self.index = self.pillow.es_index
 
-        # delete the index if it exists
-        if self.es.indices.exists(self.index):
-            self.es.indices.delete(self.index)
-        self.assertFalse(self.es.indices.exists(self.index))
+        ensure_index_deleted(self.index)
 
         completely_initialize_pillow_index(self.pillow)
 
