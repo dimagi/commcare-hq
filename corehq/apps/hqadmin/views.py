@@ -636,7 +636,7 @@ def loadtest(request):
 
 def _lookup_id_in_couch(doc_id, db_name=None):
     if db_name:
-        dbs = [couch_config.get_db(db_name)]
+        dbs = [couch_config.get_db(None if db_name == 'commcarehq' else db_name)]
     else:
         dbs = couch_config.all_dbs_by_slug.values()
 
@@ -694,7 +694,8 @@ def raw_couch(request):
     doc_id = request.GET.get("id")
     db_name = request.GET.get("db_name", None)
     context = _lookup_id_in_couch(doc_id, db_name) if doc_id else {}
-    context['all_databases'] = couch_config.all_dbs_by_slug.keys()
+    other_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
+    context['all_databases'] = ['commcarehq'] + other_dbs
     return render(request, "hqadmin/raw_couch.html", context)
 
 
