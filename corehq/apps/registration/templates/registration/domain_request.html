@@ -1,75 +1,48 @@
-{% extends "registration/base.html" %}
+{% extends "style/bootstrap3/base.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load crispy_forms_tags %}
 
 {% block title %}New Project Space{% endblock title %}
 
-{% block head %}{{ block.super }}
-    {{ form.media }}
-{% endblock %}
-
-{% block step-title %}
-    {% if is_new %}
-        {% blocktrans %}Welcome to {{ SITE_NAME }}! <small>It's time to create your first project.</small>{% endblocktrans %}
-    {% else %}
-        {% blocktrans %}Create a New Project Space{% endblocktrans %}
-    {% endif %}
-{% endblock %}
-
-{% block registration-content %}
-<div>
-    {% if is_new %}
-    <p>
-    {% blocktrans with request.couch_user.first_name as first_name %}
-    Congratulations, {{ first_name }}&mdash;you've successfully joined {{ SITE_NAME }}.
-    {% endblocktrans %}
-    </p>
-    <p>
-    {% blocktrans %}
-    Your {{ SITE_NAME }} project will contain all form submissions from your CommCare mobile applications, as well as tools that help you easily create, deploy, and monitor your applications and workers.
-    {% endblocktrans %}
-    </p>
-    <p>
-    {% blocktrans %}
-    Before you can view any of your own data from CommCare, you will need to create a project space.
-    {% endblocktrans %}
-    </p>
-    {% endif %}
-    <form class="form-horizontal" method="post" action="{{ request.get_full_path }}">
-        {% csrf_token %}
-        <fieldset>
-            {% for global_error in form.non_field_errors %}
-                <div class="alert alert-error">
-                    {{ global_error }}
-                </div>
-            {% endfor %}
-            {% for field in form.visible_fields %}
-                <div class="control-group{% if field.errors %} error{% endif %}">
-                    <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
-                    <div class="controls">
-                    {{ field }}
-                        <span class="help-inline"></span>
-                        {% for error in field.errors %}
-                            <span class="help-inline">{{ error }}</span>
-                        {% endfor %}
-                        {% if field.help_text %}
-                            <p class="help-block">
-                                {{ field.help_text }}
-                            </p>
-                        {% endif %}
-                    </div>
-                </div>
-            {% endfor %}
-
-            {% for hidden in form.hidden_fields %}
-                {{ hidden }}
-            {% endfor %}
-        </fieldset>
-        <div class="form-actions"{% if not is_new %} style="margin-top:24px; padding-top:18px;"{% endif %}>
-            <button type="submit" class="btn btn-primary btn-large disable-on-submit">
-                {% trans "Create Project" %}
-            </button>
+{% block content %}
+    <div class="container">
+        <div class="page-header">
+            <h1>
+                {% if is_new %}
+                    {% blocktrans %}Welcome to {{ SITE_NAME }}!
+                        <small>It's time to create your first project.</small>{% endblocktrans %}
+                {% else %}
+                    {% blocktrans %}Create a New Project Space{% endblocktrans %}
+                {% endif %}
+            </h1>
         </div>
-    </form>
-</div>
+
+        {% block registration-content %}
+            <div>
+                {% if is_new %}
+                    <p>
+                        {% blocktrans with request.couch_user.first_name as first_name %}
+                            Congratulations, {{ first_name }}&mdash;you've successfully joined {{ SITE_NAME }}.
+                        {% endblocktrans %}
+                    </p>
+                    <p>
+                        {% blocktrans %}
+                            Your {{ SITE_NAME }} project will contain all form submissions from your CommCare
+                            mobile applications, as well as tools that help you easily create, deploy, and monitor
+                            your applications and workers.
+                        {% endblocktrans %}
+                    </p>
+                    <p>
+                        {% blocktrans %}
+                            Before you can view any of your own data from CommCare, you will need to create a
+                            project space.
+                        {% endblocktrans %}
+                    </p>
+                {% endif %}
+                {% crispy form %}
+            </div>
+    {% endblock %}
+    </div>
+
 {% endblock %}

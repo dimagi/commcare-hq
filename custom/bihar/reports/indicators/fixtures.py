@@ -15,7 +15,7 @@ hard_coded_fixture_id = 'indicators:bihar-supervisor'
 class IndicatorFixtureProvider(object):
     id = hard_coded_fixture_id
 
-    def __call__(self, user, version, last_sync=None):
+    def __call__(self, user, version, last_sync=None, app=None):
         if user.domain in hard_coded_domains:
             groups = filter(hard_coded_group_filter, Group.by_user(user))
             if len(groups) == 1:

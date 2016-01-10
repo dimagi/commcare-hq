@@ -710,7 +710,7 @@ class ProjectDataTab(UITab):
             from corehq.apps.data_interfaces.views \
                 import ArchiveFormView, AutomaticUpdateRuleListView
 
-            if self.can_use_data_cleanup and toggles.AUTOMATIC_CASE_CLOSURE.enabled(self.domain):
+            if self.can_use_data_cleanup:
                 edit_section[0][1].append({
                     'title': AutomaticUpdateRuleListView.page_title,
                     'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
@@ -1750,3 +1750,5 @@ class MaintenanceAlert(models.Model):
     @property
     def html(self):
         return mark_up_urls(self.text)
+
+from .signals import *

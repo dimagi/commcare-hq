@@ -743,8 +743,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
         incoming_extensions = _reverse_index_map(self.extension_index_tree.indices)
         live = {case for case in available if case in self.primary_case_ids}
         new_live = set() | live
+        checked = set()
         while new_live:
             case_to_check = new_live.pop()
+            checked.add(case_to_check)
             new_live = new_live | IndexTree.get_all_outgoing_cases(
                 case_to_check,
                 self.index_tree,
@@ -755,7 +757,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 self.extension_index_tree,
                 self.closed_cases, cached_map=incoming_extensions
             )
-            new_live = new_live - live
+            new_live = new_live - checked
             live = live | new_live
 
         logger.debug("live cases: {}".format(live))

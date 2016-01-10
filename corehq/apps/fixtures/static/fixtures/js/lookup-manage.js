@@ -105,7 +105,7 @@ $(function () {
                 error: function(data) {
                     var error_message;
                     if (data.responseText == "DuplicateFixture"){
-                        error_message = "Can not create table with table_id '"+self.tag()+"'. table_id should be unique.";
+                        error_message = "Can not create table with ID '"+self.tag()+"'. Table IDs should be unique.";
                     }
                     else{
                         error_message = somethingWentWrong;
@@ -324,7 +324,7 @@ $(function () {
             self.data_types.push(dataType);
         };
         self.removeDataType = function (dataType) {
-            if (confirm("Are you sure you want to delete the table '" + dataType.tag() + "'")){
+            if (confirm("Are you sure you want to delete the table '" + dataType.tag() + "'?")){
                     self.data_types.destroy(dataType);
                     dataType.save();                 
             }

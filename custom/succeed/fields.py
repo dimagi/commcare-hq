@@ -3,7 +3,6 @@ from corehq.apps.reports.dont_use.fields import ReportSelectField
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.elastic import es_query
 from corehq.apps.es import CaseES
-from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from custom.succeed.utils import (
     CONFIG
 )
@@ -107,7 +106,7 @@ class PatientNameFilterMixin(object):
             subterms.append({'or': filters})
             es_filters["and"].append({'and': subterms} if subterms else {})
 
-        es_results = es_query(q=q, es_url=REPORT_CASE_INDEX + '/_search', dict_only=False)
+        es_results = es_query(q=q, es_index='report_cases', dict_only=False)
         return [(case['_source']['_id'], case['_source']['full_name']['#value']) for case in es_results['hits'].get('hits', [])]
 
 class PatientName(PatientNameFilterMixin, BaseSingleOptionFilter):

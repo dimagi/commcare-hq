@@ -1,5 +1,7 @@
 from django import template
+from django.conf import settings
 from django.template.loader import render_to_string
+from django.templatetags.i18n import language_name
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
@@ -52,12 +54,7 @@ class MainMenuNode(template.Node):
         # other blocks
         context.dicts[0]['active_tab'] = get_active_tab(visible_tabs,
                                                         request.get_full_path())
-
-        template = {
-            style_utils.BOOTSTRAP_2: 'style/bootstrap2/partials/menu_main.html',
-            style_utils.BOOTSTRAP_3: 'style/bootstrap3/partials/menu_main.html',
-        }[style_utils.get_bootstrap_version()]
-        return mark_safe(render_to_string(template, {
+        return mark_safe(render_to_string('style/includes/menu_main.html', {
             'tabs': visible_tabs,
         }))
 
@@ -148,3 +145,17 @@ def maintenance_alert():
             '<div class="alert alert-warning" style="text-align: center; margin-bottom: 0;">{}</div>',
             mark_safe(alert.html),
         )
+
+
+@register.filter
+def aliased_language_name(lang_code):
+    """
+    This is needed since we use non-standard language codes as alias, for e.g. 'fra' instead of 'fr' for French
+    """
+    try:
+        return language_name(lang_code)
+    except KeyError:
+        for code, name in settings.LANGUAGES:
+            if code == lang_code:
+                return name
+        raise KeyError('Unknown language code %s' % lang_code)

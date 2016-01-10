@@ -14,5 +14,11 @@ def clean_fixture_field_name(field_name):
     return subbed_string
 
 
-def is_field_name_invalid(field_name):
-    return bool(re.search(BAD_SLUG_PATTERN, field_name))
+def is_identifier_invalid(name):
+    """
+    Determine if given name is an invalid XML identifier:
+    - Blank
+    - Contains special characters
+    - Start with "xml"
+    """
+    return not bool(name) or bool(re.search(BAD_SLUG_PATTERN, name)) or name.startswith('xml')

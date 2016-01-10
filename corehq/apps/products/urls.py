@@ -4,7 +4,8 @@ from corehq.apps.products.views import (
     UploadProductView, ProductImportStatusView, ProductFieldsView
 )
 
-settings_urls = patterns('corehq.apps.products.views',
+settings_urls = patterns(
+    'corehq.apps.products.views',
     url(r'^$', ProductListView.as_view(), name=ProductListView.urlname),
     url(r'^fields/$', ProductFieldsView.as_view(), name=ProductFieldsView.urlname),
     url(r'^list/$', FetchProductListView.as_view(), name=FetchProductListView.urlname),

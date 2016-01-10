@@ -14,14 +14,17 @@ from django.db.models import Sum
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
+from django.utils.http import urlsafe_base64_decode
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import redirect, render
 from django.contrib import messages
+from django.contrib.auth.views import password_reset_confirm
 from django.views.decorators.http import require_POST
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.contrib.auth.models import User
 
 from corehq.const import USER_DATE_FORMAT
 from custom.dhis2.forms import Dhis2SettingsForm
@@ -50,11 +53,12 @@ from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import (
     get_change_status, get_privileges, fmt_dollar_amount,
     quantize_accounting_decimal, get_customer_cards,
+    log_accounting_error,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
-from corehq.apps.users.models import Invitation
+from corehq.apps.users.models import Invitation, CouchUser
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
 from corehq.util.context_processors import get_domain_type
@@ -67,7 +71,8 @@ from corehq.apps.accounting.models import (
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
     PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility, FeatureType,
-    StripePaymentMethod, LastPayment
+    StripePaymentMethod, LastPayment,
+    UNLIMITED_FEATURE_USAGE,
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import (
@@ -101,9 +106,8 @@ from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRe
 from dimagi.utils.post import simple_post
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.signals import clear_login_attempts
 
-
-accounting_logger = logging.getLogger('accounting')
 
 PAYMENT_ERROR_MESSAGES = {
     400: ugettext_lazy('Your request was not formatted properly.'),
@@ -548,14 +552,14 @@ def test_repeater(request, domain):
 
         try:
             resp = simple_post(fake_post, url, headers=headers)
-            if 200 <= resp.status < 300:
+            if 200 <= resp.status_code < 300:
                 return HttpResponse(json.dumps({"success": True,
-                                                "response": resp.read(),
-                                                "status": resp.status}))
+                                                "response": resp.content,
+                                                "status": resp.status_code}))
             else:
                 return HttpResponse(json.dumps({"success": False,
-                                                "response": resp.read(),
-                                                "status": resp.status}))
+                                                "response": resp.content,
+                                                "status": resp.status_code}))
 
         except Exception, e:
             errors = str(e)
@@ -608,6 +612,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
         return self.request.couch_user.is_domain_admin(self.domain)
 
     @property
+    @memoized
     def plan(self):
         plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)
         date_end = None
@@ -618,7 +623,6 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'price': None,
         }
         cards = None
-        general_credits = None
         if subscription:
             cards = get_customer_cards(self.account, self.request.user.username, self.domain)
             date_end = (subscription.date_end.strftime(USER_DATE_FORMAT)
@@ -644,16 +648,20 @@ class DomainSubscriptionView(DomainAccountingSettings):
                         'can_renew': days_left <= 30,
                         'renew_url': reverse(SubscriptionRenewalView.urlname, args=[self.domain]),
                     })
-            general_credits = CreditLine.get_credits_by_subscription_and_features(subscription)
-        elif self.account is not None:
-            general_credits = CreditLine.get_credits_for_account(self.account)
-        if general_credits:
-            general_credits = self._fmt_credit(self._credit_grand_total(general_credits))
 
         info = {
             'products': [self.get_product_summary(plan_version, self.account, subscription)],
             'features': self.get_feature_summary(plan_version, self.account, subscription),
-            'general_credit': general_credits,
+            'general_credit': self._fmt_credit(self._credit_grand_total(
+                CreditLine.get_credits_by_subscription_and_features(
+                    subscription
+                ) if subscription else None
+            )),
+            'account_general_credit': self._fmt_credit(self._credit_grand_total(
+                CreditLine.get_credits_for_account(
+                    self.account
+                ) if self.account else None
+            )),
             'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
             'do_not_invoice': subscription.do_not_invoice if subscription is not None else False,
             'is_trial': subscription.is_trial if subscription is not None else False,
@@ -663,6 +671,13 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'cards': cards,
             'next_subscription': next_subscription,
         }
+        info['has_account_level_credit'] = (
+            any(
+                product_info['account_credit'] and product_info['account_credit']['is_visible']
+                for product_info in info['products']
+            )
+            or info['account_general_credit'] and info['account_general_credit']['is_visible']
+        )
         info.update(plan_version.user_facing_description)
 
         return info
@@ -681,66 +696,51 @@ class DomainSubscriptionView(DomainAccountingSettings):
         return sum([c.balance for c in credit_lines]) if credit_lines else Decimal('0.00')
 
     def get_product_summary(self, plan_version, account, subscription):
-        product_rates = plan_version.product_rates.all()
-        if len(product_rates) > 1:
-            # Models and UI are both written to support multiple products,
-            # but for now, each subscription can only have one product.
-            accounting_logger.error(
-                "[BILLING] "
-                "There seem to be multiple ACTIVE NEXT subscriptions for the subscriber %s. "
-                "Odd, right? The latest one by date_created was used, but consider this an issue."
-                % self.account
-            )
-        product_rate = product_rates[0]
-        product_info = {
-            'name': product_rate.product.product_type,
+        product_rate = plan_version.get_product_rate()
+        product_type = product_rate.product.product_type
+        return {
+            'name': product_type,
             'monthly_fee': _("USD %s /month") % product_rate.monthly_fee,
-            'credit': None,
-            'type': product_rate.product.product_type,
+            'type': product_type,
+            'subscription_credit': self._fmt_credit(self._credit_grand_total(
+                CreditLine.get_credits_by_subscription_and_features(
+                    subscription, product_type=product_type
+                ) if subscription else None
+            )),
+            'account_credit': self._fmt_credit(self._credit_grand_total(
+                CreditLine.get_credits_for_account(
+                    account, product_type=product_type
+                ) if account else None
+            )),
         }
-        credit_lines = None
-        if subscription is not None:
-            credit_lines = CreditLine.get_credits_by_subscription_and_features(
-                subscription, product_type=product_rate.product.product_type
-            )
-        elif account is not None:
-            credit_lines = CreditLine.get_credits_for_account(
-                account, product_type=product_rate.product.product_type
-            )
-        if credit_lines:
-            product_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
-        return product_info
 
     def get_feature_summary(self, plan_version, account, subscription):
-        feature_summary = []
-        for feature_rate in plan_version.feature_rates.all():
+        def _get_feature_info(feature_rate):
             usage = FeatureUsageCalculator(feature_rate, self.domain).get_usage()
-            feature_info = {
-                'name': get_feature_name(feature_rate.feature.feature_type, self.product),
+            feature_type = feature_rate.feature.feature_type
+            return {
+                'name': get_feature_name(feature_type, self.product),
                 'usage': usage,
                 'remaining': (
                     feature_rate.monthly_limit - usage
-                    if feature_rate.monthly_limit != -1
+                    if feature_rate.monthly_limit != UNLIMITED_FEATURE_USAGE
                     else _('Unlimited')
                 ),
-                'credit': self._fmt_credit(),
-                'type': feature_rate.feature.feature_type,
-                'recurring_interval': get_feature_recurring_interval(feature_rate.feature.feature_type),
+                'type': feature_type,
+                'recurring_interval': get_feature_recurring_interval(feature_type),
+                'subscription_credit': self._fmt_credit(self._credit_grand_total(
+                    CreditLine.get_credits_by_subscription_and_features(
+                        subscription, feature_type=feature_type
+                    ) if subscription else None
+                )),
+                'account_credit': self._fmt_credit(self._credit_grand_total(
+                    CreditLine.get_credits_for_account(
+                        account, feature_type=feature_type
+                    ) if account else None
+                )),
             }
 
-            credit_lines = None
-            if subscription is not None:
-                credit_lines = CreditLine.get_credits_by_subscription_and_features(
-                    subscription, feature_type=feature_rate.feature.feature_type
-                )
-            elif account is not None:
-                credit_lines = CreditLine.get_credits_for_account(
-                    account, feature_type=feature_rate.feature.feature_type)
-            if credit_lines:
-                feature_info['credit'] = self._fmt_credit(self._credit_grand_total(credit_lines))
-
-            feature_summary.append(feature_info)
-        return feature_summary
+        return map(_get_feature_info, plan_version.feature_rates.all())
 
     @property
     def page_context(self):
@@ -755,6 +755,10 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'sms_rate_calc_url': reverse(SMSRatesView.urlname,
                                          args=[self.domain]),
             'user_email': self.request.couch_user.username,
+            'show_account_credits': any(
+                feature['account_credit'].get('is_visible')
+                for feature in self.plan.get('features')
+            )
         }
 
 
@@ -955,12 +959,13 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                     'template': 'statement-row-template',
                 }
             except BillingRecord.DoesNotExist:
-                logging.error(
+                log_accounting_error(
                     "An invoice was generated for %(invoice_id)d "
                     "(domain: %(domain)s), but no billing record!" % {
                         'invoice_id': invoice.id,
                         'domain': self.domain,
-                    })
+                    }
+                )
 
     def refresh_item(self, item_id):
         pass
@@ -1007,8 +1012,8 @@ class BaseStripePaymentView(DomainAccountingSettings):
             payment_handler = self.get_payment_handler()
             response = payment_handler.process_request(request)
         except PaymentRequestError as e:
-            accounting_logger.error(
-                "[BILLING] Failed to process Stripe Payment due to bad "
+            log_accounting_error(
+                "Failed to process Stripe Payment due to bad "
                 "request for domain %(domain)s user %(web_user)s: "
                 "%(error)s" % {
                     'domain': self.domain,
@@ -1196,7 +1201,7 @@ class BillingStatementPdfView(View):
             response = HttpResponse(data, content_type='application/pdf')
             response['Content-Disposition'] = 'inline;filename="%s' % filename
         except Exception as e:
-            logging.error('[Billing] Fetching invoice PDF failed: %s' % e)
+            log_accounting_error('Fetching invoice PDF failed: %s' % e)
             return HttpResponse(_("Could not obtain billing statement. "
                                   "An issue has been submitted."))
         return response
@@ -1643,11 +1648,13 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
         new_edition = self.request.POST.get('plan_edition').title()
         plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain, new_edition)
         if plan_version is None:
-            logging.error("[BILLING] Could not find a matching renewable plan "
-                          "for %(domain)s, subscription number %(sub_pk)s." % {
-                'domain': self.domain,
-                'sub_pk': self.subscription.pk
-            })
+            log_accounting_error(
+                "Could not find a matching renewable plan "
+                "for %(domain)s, subscription number %(sub_pk)s." % {
+                    'domain': self.domain,
+                    'sub_pk': self.subscription.pk
+                }
+            )
             raise Http404
         return plan_version
 
@@ -2802,3 +2809,19 @@ class CardsView(BaseCardView):
             return self._generic_error()
 
         return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
+
+
+class PasswordResetView(View):
+    urlname = "password_reset_confirm"
+
+    def get(self, request, *args, **kwargs):
+        return password_reset_confirm(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        response = password_reset_confirm(request, *args, **kwargs)
+        uidb64 = kwargs.get('uidb64')
+        uid = urlsafe_base64_decode(uidb64)
+        user = User.objects.get(pk=uid)
+        couch_user = CouchUser.from_django_user(user)
+        clear_login_attempts(couch_user)
+        return response

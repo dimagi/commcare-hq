@@ -34,12 +34,13 @@ def sms_in(request):
     else:
         return HttpResponseBadRequest("POST Expected")
 
+
 @csrf_exempt
 def ivr_in(request):
     if request.method == 'POST':
         from_number = request.POST.get('From')
         call_sid = request.POST.get('CallSid')
-        log_call(from_number, '%s-%s' % (API_ID, call_sid), backend_api=API_ID)
+        log_call(from_number, '%s-%s' % (API_ID, call_sid))
         return HttpResponse(IVR_RESPONSE)
     else:
         return HttpResponseBadRequest("POST Expected")

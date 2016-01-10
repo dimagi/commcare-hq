@@ -14,7 +14,7 @@ from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.safe_index import safe_index
 from casexml.apps.phone.caselogic import get_footprint, get_related_cases
 from datetime import datetime
-from corehq.elastic import get_es
+from corehq.elastic import get_es_new, ES_META
 import urllib
 from django.utils.translation import ugettext as _
 from dimagi.utils.parsing import json_format_date
@@ -310,18 +310,19 @@ class ElasticCaseQuery(object):
             'size': self.offset + self.limit,
         }
 
+
 def es_filter_cases(domain, filters=None):
     """
     Filter cases using elastic search
     (Domain, Filters?) -> [CommCareCase]
     """
-    
-    
     q = ElasticCaseQuery(domain, filters)
-    res = get_es().get('hqcases/_search', data=q.get_query())
+    meta = ES_META['cases']
+    res = get_es_new().search(meta.index, body=q.get_query())
     # this is ugly, but for consistency / ease of deployment just
     # use this to return everything in the expected format for now
     return [CommCareCase.wrap(r["_source"]) for r in res['hits']['hits'] if r["_source"]]
+
 
 def get_filters_from_request(request, limit_top_level=None):
     """

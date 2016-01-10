@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase
 
 from corehq.util.test_utils import generate_cases
-from corehq.util.datadog.utils import sanitize_url
+from corehq.util.datadog.utils import sanitize_url, get_url_group
 
 
 class DatadogUtilsTest(SimpleTestCase):
@@ -17,3 +17,14 @@ class DatadogUtilsTest(SimpleTestCase):
 ], DatadogUtilsTest)
 def test_sanitize_url(self, url, sanitized):
     self.assertEqual(sanitize_url(url), sanitized)
+
+
+@generate_cases([
+    ('/', 'other'),
+    ('/a/*/api', 'api'),
+    ('/a/domain', 'other'),
+    ('/1/2/3/4', 'other'),
+    ('/a/*/cloudcare', 'cloudcare'),
+], DatadogUtilsTest)
+def test_url_group(self, url, group):
+    self.assertEqual(get_url_group(url), group)

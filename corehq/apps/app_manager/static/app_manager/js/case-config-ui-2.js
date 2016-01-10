@@ -312,6 +312,7 @@ var CaseConfig = (function () {
 
             self.removeProperty = function (property) {
                 self.case_properties.remove(property);
+                self.caseConfig.saveButton.fire('change');
             };
 
             self.propertyCounts = ko.computed(function () {
@@ -339,6 +340,7 @@ var CaseConfig = (function () {
 
                 self.removePreload = function (property) {
                     self.case_preload.remove(property);
+                    self.caseConfig.saveButton.fire('change');
                 };
 
                 self.preloadCounts = ko.computed(function () {
@@ -494,6 +496,7 @@ var CaseConfig = (function () {
 
             self.removeProperty = function (property) {
                 self.case_properties.remove(property);
+                self.caseConfig.saveUsercaseButton.fire('change');
             };
 
             self.propertyCounts = ko.computed(function () {
@@ -521,6 +524,7 @@ var CaseConfig = (function () {
 
                 self.removePreload = function (property) {
                     self.case_preload.remove(property);
+                    self.caseConfig.saveUsercaseButton.fire('change');
                 };
 
                 self.preloadCounts = ko.computed(function () {

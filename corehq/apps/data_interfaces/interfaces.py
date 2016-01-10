@@ -25,7 +25,7 @@ from .dispatcher import EditDataInterfaceDispatcher
 class DataInterface(GenericReportView):
     # overriding properties from GenericReportView
     section_name = ugettext_noop("Data")
-    base_template = "reports/standard/base_template.html"
+    base_template = "reports/bootstrap2/standard/base_template.html"
     asynchronous = True
     dispatcher = EditDataInterfaceDispatcher
     exportable = False
@@ -243,7 +243,7 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
         results = es_query(
             params={'domain.exact': self.domain},
             q=self.filters_as_es_query(),
-            es_url=XFORM_INDEX + '/xform/_search',
+            es_index='forms',
             fields=['_id'],
         )
         form_ids = [res['_id'] for res in results.get('hits', {}).get('hits', [])]

@@ -12,7 +12,7 @@ class DatespanFilter(BaseReportFilter):
         This is the standard datespan filter that gets pulled into request with the decorator
         @datespan_in_request
     """
-    template = "reports/filters/datespan.html"
+    template = "reports/filters/bootstrap2/datespan.html"
     label = ugettext_lazy("Date Range")
     slug = "datespan"
     inclusive = True
@@ -48,7 +48,7 @@ class SingleDateFilter(BaseReportFilter):
     """
     A filter that returns a single date
     """
-    template = "reports/filters/date_selector.html"
+    template = "reports/filters/bootstrap2/date_selector.html"
     label = ugettext_lazy("Date")
     slug = "date"
 

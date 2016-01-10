@@ -9,9 +9,13 @@ TEST_DOMAIN = 'locations-test'
 TEST_LOCATION_TYPE = 'location'
 
 
-def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, parent=None):
+def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE,
+        parent=None, is_archived=False):
     name = name or code
-    loc = Location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
+    loc = Location(
+        site_code=code, name=name, domain=domain, location_type=type,
+        parent=parent, is_archived=is_archived
+    )
     loc.save()
     return loc
 
@@ -20,7 +24,7 @@ def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, paren
 def delete_all_locations():
     ids = [
         doc['id'] for doc in
-        SupplyPointCase.get_db().view('commtrack/supply_point_by_loc', reduce=False).all()
+        SupplyPointCase.get_db().view('supply_point_by_loc/view', reduce=False).all()
     ]
     iter_bulk_delete(SupplyPointCase.get_db(), ids)
 

@@ -15,7 +15,7 @@ class FluffPreindexPlugin(PreindexPlugin):
         self.app_label = app_label
         self.dir = os.path.abspath(os.path.dirname(file))
 
-    def get_designs(self):
+    def _get_designs(self):
         designs = []
         for pillow in get_all_pillow_classes():
             if hasattr(pillow, 'indicator_class'):

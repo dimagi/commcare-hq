@@ -1,4 +1,4 @@
-{% extends "settings/bootstrap2/base_template.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 
@@ -13,6 +13,6 @@
 </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     {% crispy form %}
 {% endblock %}

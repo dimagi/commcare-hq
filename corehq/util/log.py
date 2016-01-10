@@ -14,6 +14,9 @@ from django.utils.log import AdminEmailHandler
 from django.views.debug import SafeExceptionReporterFilter, get_exception_reporter_filter
 from django.template.loader import render_to_string
 from corehq.util.view_utils import get_request
+from corehq.util.datadog.utils import log_counter, get_url_group, sanitize_url
+from corehq.util.datadog.metrics import ERROR_COUNT
+from corehq.util.datadog.const import DATADOG_UNKNOWN
 
 
 def clean_exception(exception):
@@ -87,6 +90,13 @@ class HqAdminEmailHandler(AdminEmailHandler):
             'code': code,
         })
         if request:
+            sanitized_url = sanitize_url(request.build_absolute_uri())
+            log_counter(ERROR_COUNT, {
+                'url': sanitized_url,
+                'group': get_url_group(sanitized_url),
+                'domain': getattr(request, 'domain', DATADOG_UNKNOWN),
+            })
+
             context.update({
                 'get': request.GET,
                 'post': SafeExceptionReporterFilter().get_post_parameters(request),

@@ -59,7 +59,6 @@ LANGUAGE_CODE = 'en-us'
 
 LANGUAGES = (
     ('en', 'English'),
-    ('fr', 'French'),
     ('fra', 'French'),  # we need this alias
     ('hin', 'Hindi'),
     ('sw', 'Swahili'),
@@ -383,8 +382,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.messaging.smsbackends.http',
     'corehq.apps.ota',
     'corehq.apps.settings',
-    'corehq.messaging.smsbackends.telerivet',
-    'corehq.messaging.smsbackends.tropo',
     'corehq.messaging.smsbackends.megamobile',
     'corehq.messaging.smsbackends.yo',
     'corehq.messaging.smsbackends.smsgh',
@@ -710,7 +707,6 @@ AUDIT_MODULES = [
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
-    'ANALYTICS_API_ID_PUBLIC_COMMCARE': '',
     'KISSMETRICS_KEY': '',
     'HUBSPOT_API_KEY': '',
     'HUBSPOT_API_ID': '',
@@ -1303,6 +1299,10 @@ SMS_LOADED_BACKENDS = [
     'corehq.messaging.smsbackends.apposit.models.AppositBackend',
 ]
 
+IVR_LOADED_BACKENDS = [
+    'corehq.messaging.ivrbackends.kookoo.models.KooKooBackend',
+]
+
 IVR_BACKEND_MAP = {
     "91": "MOBILE_BACKEND_KOOKOO",
 }
@@ -1417,6 +1417,11 @@ PILLOWTOPS = {
             'name': 'DefaultChangeFeedPillow',
             'class': 'corehq.apps.change_feed.pillow.ChangeFeedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
+        },
+        {
+            'name': 'UserGroupsDbKafkaPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
         },
         {
             'name': 'KafkaCaseConsumerPillow',

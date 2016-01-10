@@ -8,7 +8,7 @@ import itertools
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.history import get_recent_changes
-from corehq.elastic import get_es
+from corehq.elastic import get_es_new
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
@@ -27,8 +27,7 @@ def check_es_cluster_health():
     There are better realtime tools for monitoring ES clusters which should probably be looked at. specifically paramedic or bigdesk
     """
     ret = {}
-    es = get_es()
-    cluster_health = es.get('_cluster/health')
+    cluster_health = get_es_new().cluster.health()
     ret[CLUSTER_HEALTH] = cluster_health['status']
     return ret
 
@@ -137,10 +136,10 @@ def _get_latest_doc_from_index(es_index, sort_field):
         "sort": {sort_field: "desc"},
         "size": 1
     }
-    es = get_es()
+    es = get_es_new()
 
     try:
-        res = es[es_index].get('_search', data=recent_query)
+        res = es.search(es_index, body=recent_query)
         if 'hits' in res:
             if 'hits' in res['hits']:
                 result = res['hits']['hits'][0]
@@ -155,11 +154,11 @@ def _check_es_rev(index, doc_id, couch_revs):
     """
     Specific docid and rev checker.
 
-    index: rawes index
+    index: Elasticsearch index
     doc_id: id to query in ES
     couch_rev: target couch_rev that you want to match
     """
-    es = get_es()
+    es = get_es_new()
     doc_id_query = {
         "filter": {
             "ids": {"values": [doc_id]}
@@ -168,7 +167,7 @@ def _check_es_rev(index, doc_id, couch_revs):
     }
 
     try:
-        res = es[index].get('_search', data=doc_id_query)
+        res = es.search(index, body=doc_id_query)
         status = False
         message = "Not in sync"
 
@@ -194,5 +193,3 @@ def _check_es_rev(index, doc_id, couch_revs):
         message = "ES Error: %s" % ex
         status = False
     return {index: {"index": index, "status": status, "message": message}}
-
-
