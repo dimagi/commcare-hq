@@ -5,16 +5,18 @@ from datetime import date
 import xlrd
 from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
-from xlrd import xldate_as_tuple, XL_CELL_NUMBER
 from corehq.apps.hqcase.dbaccessors import get_cases_in_domain_by_external_id
 
 from corehq.apps.importer.const import LookupErrors, ImportErrors
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.groups.models import Group
+from corehq.apps.importer.exceptions import ImporterExcelFileEncrypted, \
+    ImporterExcelError, ImporterFileNotFound, ImporterRefError
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.locations.models import SQLLocation, Location
+from corehq.util.soft_assert import soft_assert
 
 
 class ImporterConfig(object):
@@ -95,6 +97,25 @@ class ImporterConfig(object):
 
         )
 
+
+def open_workbook(filename=None, **kwargs):
+    _soft_assert = soft_assert(notify_admins=True)
+    try:
+        return xlrd.open_workbook(filename=filename, **kwargs)
+    except xlrd.XLRDError as e:
+        message = unicode(e)
+        if message == u'Workbook is encrypted':
+            raise ImporterExcelFileEncrypted(message)
+        else:
+            _soft_assert(False, 'displaying XLRDError directly to user', e)
+            raise ImporterExcelError(message)
+    except IOError as e:
+        raise ImporterFileNotFound(unicode(e))
+    except Exception as e:
+        _soft_assert(False, 'xlrd.open_workbook raised unaccounted for error', e)
+        raise ImporterFileNotFound(unicode(e))
+
+
 class ExcelFile(object):
     """
     Class to deal with Excel files.
@@ -110,16 +131,17 @@ class ExcelFile(object):
     file_path = ''
     workbook = None
     column_headers = False
-    has_errors = False
 
     def __init__(self, file_path, column_headers):
+        """
+        raises ImporterError or one of its subtypes
+        if there's a problem with the excel file
+
+        """
         self.file_path = file_path
         self.column_headers = column_headers
 
-        try:
-            self.workbook = xlrd.open_workbook(self.file_path)
-        except Exception:
-            self.has_errors = True
+        self.workbook = open_workbook(self.file_path)
 
     def _col_values(self, sheet, index):
         return [self._fmt_value(cell) for cell in sheet.col(index)]
@@ -129,7 +151,7 @@ class ExcelFile(object):
 
     def _fmt_value(self, cell):
         # Explicitly format integers, since xlrd treats all numbers as decimals (adds ".0")
-        if cell.ctype == XL_CELL_NUMBER and int(cell.value) == cell.value:
+        if cell.ctype == xlrd.XL_CELL_NUMBER and int(cell.value) == cell.value:
             return int(cell.value)
         return cell.value
 
@@ -266,7 +288,7 @@ def parse_excel_date(date_val, datemode):
     """ Convert field value from excel to a date value """
     if date_val:
         try:
-            parsed_date = str(date(*xldate_as_tuple(date_val, datemode)[:3]))
+            parsed_date = str(date(*xlrd.xldate_as_tuple(date_val, datemode)[:3]))
         except Exception:
             raise InvalidDateException
     else:
@@ -398,7 +420,7 @@ def populate_updated_fields(config, columns, row, datemode):
 
 def get_spreadsheet(download_ref, column_headers=True):
     if not download_ref:
-        return None
+        raise ImporterRefError('null download ref')
     return ExcelFile(download_ref.get_filename(), column_headers)
 
 

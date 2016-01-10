@@ -13,6 +13,7 @@ from django.db import models
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
+from dimagi.utils.couch.database import get_db
 from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
@@ -135,6 +136,11 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     error_hash = StringProperty()
 
     strict = True  # for asserts
+
+    @classmethod
+    def get(cls, doc_id):
+        doc = get_sync_log_doc(doc_id)
+        return cls.wrap(doc)
 
     def _assert(self, conditional, msg="", case_id=None):
         if not conditional:
@@ -737,8 +743,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
         incoming_extensions = _reverse_index_map(self.extension_index_tree.indices)
         live = {case for case in available if case in self.primary_case_ids}
         new_live = set() | live
+        checked = set()
         while new_live:
             case_to_check = new_live.pop()
+            checked.add(case_to_check)
             new_live = new_live | IndexTree.get_all_outgoing_cases(
                 case_to_check,
                 self.index_tree,
@@ -749,7 +757,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 self.extension_index_tree,
                 self.closed_cases, cached_map=incoming_extensions
             )
-            new_live = new_live - live
+            new_live = new_live - checked
             live = live | new_live
 
         logger.debug("live cases: {}".format(live))
@@ -1067,12 +1075,21 @@ def _domain_has_legacy_toggle_set():
     return LEGACY_SYNC_SUPPORT.enabled(domain) if domain else False
 
 
+def get_sync_log_doc(doc_id):
+    try:
+        return SyncLog.get_db().get(doc_id)
+    except ResourceNotFound:
+        legacy_doc = get_db(None).get(doc_id, attachments=True)
+        del legacy_doc['_rev']  # remove the rev so we can save this to the new DB
+        return legacy_doc
+
+
 def get_properly_wrapped_sync_log(doc_id):
     """
     Looks up and wraps a sync log, using the class based on the 'log_format' attribute.
     Defaults to the existing legacy SyncLog class.
     """
-    return properly_wrap_sync_log(SyncLog.get_db().get(doc_id))
+    return properly_wrap_sync_log(get_sync_log_doc(doc_id))
 
 
 def properly_wrap_sync_log(doc):

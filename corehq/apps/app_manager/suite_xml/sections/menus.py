@@ -47,9 +47,14 @@ class MenuContributor(SuiteContributorByModule):
             if hasattr(module, 'case_list') and module.case_list.show:
                 yield Command(id=id_strings.case_list_command(module))
 
+        supports_module_filter = (
+            self.app.domain and MODULE_FILTER.enabled(self.app.domain) and
+            self.app.enable_module_filtering and getattr(module, 'module_filter', None)
+        )
+
         menus = []
         if hasattr(module, 'get_menus'):
-            for menu in module.get_menus():
+            for menu in module.get_menus(supports_module_filter=supports_module_filter):
                 menus.append(menu)
         elif module.module_type != 'careplan':
             id_modules = [module]
@@ -72,14 +77,14 @@ class MenuContributor(SuiteContributorByModule):
 
             for id_module in id_modules:
                 for root_module in root_modules:
-                    menu_kwargs = {
-                        'id': id_strings.menu_id(id_module),
-                        'root': id_strings.menu_id(root_module) if root_module else None,
-                    }
+                    menu_kwargs = {}
+                    suffix = ""
+                    if root_module:
+                        menu_kwargs.update({'root': id_strings.menu_id(root_module)})
+                        suffix = id_strings.menu_id(root_module) if root_module.doc_type == 'ShadowModule' else ""
+                    menu_kwargs.update({'id': id_strings.menu_id(id_module, suffix)})
 
-                    if (self.app.domain and MODULE_FILTER.enabled(self.app.domain) and
-                            self.app.enable_module_filtering and
-                            getattr(module, 'module_filter', None)):
+                    if supports_module_filter:
                         menu_kwargs['relevant'] = interpolate_xpath(module.module_filter)
 
                     if self.app.enable_localized_menu_media:

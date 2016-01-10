@@ -9,12 +9,12 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function () {
-            ko.applyBindings({
+            $("#performance-form").koApplyBindings({
                 application: ko.observable('{{ form.app_id }}'),
                 source: ko.observable('{{ form.source_id }}'),
                 sourceType: ko.observable("form"),
-                sourcesMap: {{ sources_map|JSON }}
-            }, $("#performance-form").get(0));
+                sourcesMap: {{ sources_map|JSON }},
+            });
         });
     </script>
 {% endblock %}

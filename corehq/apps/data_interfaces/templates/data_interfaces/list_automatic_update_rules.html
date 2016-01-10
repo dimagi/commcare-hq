@@ -12,6 +12,12 @@
 (function (angular, undefined) {
     'use strict';
     var autoUpdateRuleApp = angular.module('autoUpdateRuleApp', ['hq.pagination']);
+    autoUpdateRuleApp.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+    }]);
+
     autoUpdateRuleApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure({% djng_current_rmi %});
     }]);
@@ -75,19 +81,34 @@
 {% endblock %}
 
 {% block page_content %}
-<div ng-app="autoUpdateRuleApp">
+<div ng-app="autoUpdateRuleApp" ng-controller="PaginatedListController as paginationController">
     <div class="btn-toolbar" style="margin-bottom: 20px;">
         <a href="{% url "add_automatic_update_rule" domain %}">
             <button type="button" class="btn btn-success">
-                <i class="fa fa-plus"></i> {% trans "Add Automatic Update Rule" %}
+                <i class="fa fa-plus"></i> {% trans "Add Automatic Case Close Rule" %}
             </button>
         </a>
     </div>
+    <div class="row">
+        <div class="col-sm-8">
+            <p class="lead">
+                {% blocktrans %}
+                Automatically update and close cases from CommCareHQ
+                {% endblocktrans %}
+            </p>
+            <p>
+                {% blocktrans %}
+                Create rules for closing cases from CommCareHQ.
+                All rules run once a week on Friday at midnight GMT.
+                For more information, see the <a href="{{ help_site_url }}">Help Site</a>.
+                {% endblocktrans %}
+            </p>
+        </div>
+    </div>
     <div class="panel panel-default"
-         ng-controller="PaginatedListController as paginationController"
          ng-cloak>
         <div class="panel-heading">
-            <h3 class="panel-title">{% trans 'Automatic Update Rules' %}</h3>
+            <h3 class="panel-title">{% trans 'Automatic Case Close Rules' %}</h3>
         </div>
         <div class="panel-body">
             <div class="alert alert-info" ng-hide="paginatedItems.length > 0 || notLoaded || hasError">
@@ -128,8 +149,8 @@
                         </td>
                         <td>{{ rule.case_type }}</td>
                         <td>
-                            <span ng-show="rule.active">{% trans "Active" %}</span>
-                            <span ng-hide="rule.active">{% trans "Inactive" %}</span>
+                            <span class="label label-success" ng-show="rule.active">{% trans "Active" %}</span>
+                            <span class="label label-danger" ng-hide="rule.active">{% trans "Inactive" %}</span>
                         </td>
                         <td>{{ rule.last_run }}</td>
                         <td>
@@ -146,7 +167,7 @@
                                 {% trans "Deactivate" %}
                             </button>
                             <button type="button"
-                                    class="btn btn-default"
+                                    class="btn btn-danger"
                                     data-toggle="modal"
                                     data-target="#delete_{{ rule.id }}">
                                     {% trans "Delete" %}
@@ -156,6 +177,7 @@
                                     <form class="modal-content"
                                           method="post"
                                           ng-submit="deleteRule(rule, djangoRMI, paginationController);">
+                                        {% csrf_token %}
                                         <div class="modal-header">
                                             <button type="button"
                                                     class="close"

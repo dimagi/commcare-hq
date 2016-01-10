@@ -6,13 +6,14 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
+from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.graph_models import LineChart, MultiBarChart, PieChart
-
 from custom.ewsghana.filters import EWSRestrictionLocationFilter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
+from custom.ewsghana.models import EWSExtension
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation, LocationType
 from custom.ewsghana.utils import get_descendants, filter_slugs_by_role, ews_date_format, get_products_for_locations, \
@@ -72,9 +73,7 @@ class EWSData(object):
 
     @property
     def location_id(self):
-        return self.config.get('location_id') or get_object_or_404(
-            SQLLocation, domain=self.domain, location_type__name='country'
-        ).location_id
+        return self.config.get('location_id')
 
     @property
     @memoized
@@ -164,14 +163,51 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
 
     @property
     @memoized
+    def root_location(self):
+        from custom.ewsghana import ROOT_SITE_CODE
+        return get_object_or_404(
+            SQLLocation, site_code=ROOT_SITE_CODE, domain=self.domain, is_archived=False
+        )
+
+    @property
+    @memoized
+    def user_location(self):
+        user = self.request.couch_user
+        dm = user.get_domain_membership(self.domain)
+        if not dm:
+            return
+
+        if dm.location_id:
+            return get_object_or_404(
+                SQLLocation, domain=self.domain, location_id=dm.location_id, is_archived=False
+            )
+
+        try:
+            ews_extension = EWSExtension.objects.get(user_id=user.get_id, domain=self.domain)
+        except EWSExtension.DoesNotExist:
+            return
+
+        if ews_extension.location_id:
+            return get_object_or_404(
+                SQLLocation, domain=self.domain, location_id=ews_extension.location_id, is_archived=False
+            )
+
+    @property
+    @memoized
     def location(self):
         loc_id = self.request_params.get('location_id')
         if loc_id:
-            return get_object_or_404(SQLLocation, location_id=loc_id, is_archived=False)
+            return get_object_or_404(SQLLocation, location_id=loc_id, domain=self.domain, is_archived=False)
         else:
-            return get_object_or_404(
-                SQLLocation, location_type__name='country', domain=self.domain, is_archived=False
-            )
+            user_location = self.user_location
+            if user_location:
+                return user_location
+            return self.root_location
+
+    @property
+    @memoized
+    def location_id(self):
+        return self.location.location_id
 
     @property
     def report_subtitles(self):
@@ -255,9 +291,8 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
     def report_config(self):
         return dict(
             domain=self.domain,
-            startdate=self.datespan.startdate,
-            enddate=self.datespan.enddate,
-            location_id=self.request.GET.get('location_id'),
+            location_id=self.location_id,
+            user=self.request.couch_user
         )
 
     def report_filters(self):
@@ -286,7 +321,7 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
 
     def get_report_context(self, data_provider):
         total_row = []
-        headers = []
+        headers = DataTablesHeader()
         rows = []
 
         if not self.needs_filters and data_provider.show_table:

@@ -1,7 +1,6 @@
 import json
 
 from django.template.loader import render_to_string
-from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.cache import cache_control
 from django.http import HttpResponse, Http404
@@ -16,7 +15,7 @@ from corehq.apps.app_manager.views.download import source_files
 
 from corehq.apps.app_manager.views.utils import back_to_main, encode_if_unicode, \
     get_langs
-from corehq import toggles, privileges
+from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_built_app_on_hubspot
 from corehq.apps.app_manager.exceptions import (
@@ -28,16 +27,18 @@ from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.style.decorators import use_bootstrap3
 from dimagi.utils.web import json_response
 from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
 )
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc
 from corehq.apps.app_manager.models import (
     Application,
     SavedAppBuild,
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
+from corehq.apps.users.models import CommCareUser
 
 
 @cache_control(no_cache=True, no_store=True)
@@ -76,6 +77,7 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     context.update({
         'release_manager': True,
         'can_send_sms': can_send_sms,
+        'has_mobile_workers': get_doc_count_in_domain_by_class(domain, CommCareUser) > 0,
         'sms_contacts': (
             get_sms_autocomplete_context(request, domain)['sms_contacts']
             if can_send_sms else []
@@ -98,16 +100,10 @@ def current_app_version(request, domain, app_id):
     Return current app version and the latest release
     """
     app = get_app(domain, app_id)
-    latest = Application.get_db().view('app_manager/saved_app',
-        startkey=[domain, app_id, {}],
-        endkey=[domain, app_id],
-        descending=True,
-        limit=1,
-    ).first()
-    latest_release = latest['value']['version'] if latest else None
+    latest = get_latest_build_doc(domain, app_id)
     return json_response({
         'currentVersion': app.version,
-        'latestRelease': latest_release,
+        'latestRelease': latest['version'] if latest else None,
     })
 
 

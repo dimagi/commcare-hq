@@ -25,7 +25,7 @@ def case_block(case):
 
 def get_cases(domain):
     supply_point_ids = (case['id'] for case in CommCareCase.get_db().view(
-        'commtrack/supply_point_by_loc',
+        'supply_point_by_loc/view',
         startkey=[domain],
         endkey=[domain, {}],
         reduce=False,

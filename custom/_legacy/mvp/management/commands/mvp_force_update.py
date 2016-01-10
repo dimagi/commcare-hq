@@ -76,7 +76,7 @@ class Command(LabelCommand):
             print "\n\nGetting Forms of Type %s and XMLNS %s for domain %s" % (label_name, xmlns, domain)
 
             relevant_forms = XFormInstance.get_db().view(
-                "reports_forms/all_forms",
+                "all_forms/view",
                 reduce=True,
                 startkey=['submission xmlns', domain, xmlns],
                 endkey=['submission xmlns', domain, xmlns, {}],
@@ -84,7 +84,7 @@ class Command(LabelCommand):
             num_forms = relevant_forms['value'] if relevant_forms else 0
 
             form_ids = [r['id'] for r in XFormInstance.view(
-                "reports_forms/all_forms",
+                "all_forms/view",
                 reduce=False,
                 include_docs=False,
                 startkey=['submission xmlns', domain, xmlns],

@@ -1,15 +1,19 @@
 import datetime
 import logging
+
 from celery.task import task
+from couchdbkit import ResourceConflict
 from sqlalchemy.exc import DataError
+
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
-from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
+
+from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
+from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
+from corehq.apps.userreports.sql import IndicatorSqlAdapter
 
 
 @task(queue='ucr_queue', ignore_result=True, acks_late=True)
@@ -63,7 +67,14 @@ def rebuild_indicators(indicator_config_id):
     if not is_static:
         client.delete(redis_key)
         config.meta.build.finished = True
-        config.save()
+        try:
+            config.save()
+        except ResourceConflict:
+            current_config = DataSourceConfiguration.get(config._id)
+            # check that a new build has not yet started
+            if config.meta.build.initiated == current_config.meta.build.initiated:
+                current_config.meta.build.finished = True
+                current_config.save()
 
 
 def _get_db(doc_type):

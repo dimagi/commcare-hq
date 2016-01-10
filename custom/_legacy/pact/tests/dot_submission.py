@@ -87,13 +87,13 @@ class dotsSubmissionTests(TestCase):
         Test to ensure that with a DOT submission the signal works
         """
         start_dot = len(XFormInstance.view(
-            'reports_forms/all_forms',
+            'all_forms/view',
             startkey=['submission xmlns', self.domain.name, XMLNS_DOTS_FORM],
             endkey=['submission xmlns', self.domain.name, XMLNS_DOTS_FORM, {}],
             reduce=False
         ).all())
         start_update = len(XFormInstance.view(
-            'reports_forms/all_forms',
+            'all_forms/view',
             startkey=['submission xmlns', self.domain.name, XMLNS_PATIENT_UPDATE_DOT],
             endkey=['submission xmlns', self.domain.name, XMLNS_PATIENT_UPDATE_DOT, {}],
             reduce=False
@@ -104,12 +104,12 @@ class dotsSubmissionTests(TestCase):
         self.assertTrue(hasattr(submitted, PACT_DOTS_DATA_PROPERTY))
 
         dot_count = XFormInstance.view(
-            'reports_forms/all_forms',
+            'all_forms/view',
             startkey=['submission xmlns', self.domain.name, XMLNS_DOTS_FORM],
             endkey=['submission xmlns', self.domain.name, XMLNS_DOTS_FORM, {}],
         ).all()[0]['value']
         update_count = XFormInstance.view(
-            'reports_forms/all_forms',
+            'all_forms/view',
             startkey=['submission xmlns', self.domain.name, XMLNS_PATIENT_UPDATE_DOT],
             endkey=['submission xmlns', self.domain.name, XMLNS_PATIENT_UPDATE_DOT, {}],
         ).all()[0]['value']

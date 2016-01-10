@@ -72,6 +72,7 @@ from corehq.apps.app_manager.models import (
     FormDatum)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
+from corehq.apps.tour import tours
 
 
 @no_conflict_require_POST
@@ -477,6 +478,13 @@ def get_form_view_context_and_template(request, domain, form, langs, is_user_reg
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
     }
+
+    if toggles.GUIDED_TOUR.enabled(domain):
+        is_template_app = context['allow_cloudcare'] and form.source and not context['is_user_registration']
+        if is_template_app and tours.NEW_APP.is_enabled(request.user):
+            request.guided_tour = tours.NEW_APP.get_tour_data()
+        elif tours.NEW_APP.is_enabled(request.user):
+            request.guided_tour = tours.NEW_APP.get_tour_data()
 
     if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
         module = form.get_module()

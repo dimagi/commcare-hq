@@ -10,7 +10,6 @@ from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import FormDisplay
-from corehq.apps.reports.dont_use.fields import StrongFilterUsersField
 from corehq.apps.reports.filters.forms import MISSING_APP_ID, FormsByApplicationFilter
 from corehq.apps.reports.generic import (GenericTabularReport,
                                          ProjectInspectionReportParamsMixin,
@@ -47,7 +46,6 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
         'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
     ajax_pagination = True
-    filter_users_field_class = StrongFilterUsersField
     include_inactive = True
 
     # Feature preview flag for Submit History Filters
@@ -82,8 +80,12 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                 yield {'or': [form_filter(f) for f in form_values]}
 
         truthy_only = functools.partial(filter, None)
+        mobile_user_and_group_slugs = self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
         users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
-            self.domain, self.request, True, True, include_inactive=True)
+            self.domain,
+            mobile_user_and_group_slugs,
+            include_inactive=True
+        )
         all_mobile_workers_selected = 't__0' in self.request.GET.getlist('emw')
         if not all_mobile_workers_selected or users_data.admin_and_demo_users:
             yield {

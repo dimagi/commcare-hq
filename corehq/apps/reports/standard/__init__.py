@@ -21,7 +21,7 @@ from dimagi.utils.decorators.memoized import memoized
 class ProjectReport(GenericReportView):
     # overriding properties from GenericReportView
     section_name = ugettext_noop("Project Reports")
-    base_template = 'reports/base_template.html'
+    base_template = 'reports/bootstrap2/base_template.html'
     dispatcher = ProjectReportDispatcher
     asynchronous = True
 
@@ -49,11 +49,11 @@ class CommCareUserMemoizer(object):
     def get_by_user_id(self, user_id):
         return CommCareUser.get_by_user_id(user_id)
 
+
 class ProjectReportParametersMixin(object):
     """
     All the parameters necessary for the project reports.
     Intended to be mixed in with a GenericReportView object.
-
     """
 
     default_case_type = None

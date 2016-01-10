@@ -111,6 +111,10 @@ class EWSScriptTest(TestScript):
         cls.user2 = bootstrap_user(username='super', domain=domain.name, home_loc=loc2,
                                    first_name='test2', last_name='test2',
                                    phone_number='222222', user_data={'role': ['In Charge']})
+        FacilityInCharge.objects.create(
+            user_id=cls.user2.get_id,
+            location=loc2.sql_location
+        )
         cls.user3 = bootstrap_user(username='pharmacist', domain=domain.name, home_loc=loc2,
                                    first_name='test3', last_name='test3',
                                    phone_number='333333')

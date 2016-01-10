@@ -141,9 +141,17 @@ var HQAsyncReport = function (o) {
                 self.hqLoading.fadeOut();
 
                 if (!initial_load || !self.standardReport.needsFilters) {
-                    self.standardReport.filterSubmitButton.removeClass('btn-primary').button('standard');
+                    self.standardReport.filterSubmitButton
+                        .removeClass('btn-primary')
+                        .button('standard')
+                        .addClass('disabled')
+                        .prop('disabled', true);
                 } else {
-                    self.standardReport.filterSubmitButton.button('reset').addClass('btn-primary');
+                    self.standardReport.filterSubmitButton
+                        .button('reset')
+                        .addClass('btn-primary')
+                        .removeClass('disabled')
+                        .removeProp('disabled');
                 }
             },
             error: function (data) {
@@ -159,7 +167,7 @@ var HQAsyncReport = function (o) {
                 } else {
                     self.hqLoading = $('.hq-loading');
                     self.hqLoading.find('h4').text("Loading Stopped");
-                    self.hqLoading.find('img').attr('style', 'visibility: hidden;');
+                    self.hqLoading.find('.js-loading-spinner').attr('style', 'visibility: hidden;');
                 }
             },
             beforeSend: function () {
@@ -182,7 +190,7 @@ var HQAsyncReport = function (o) {
     self.loadingIssueModal.on('hide', function () {
         if (self.issueAttempts > 0) {
             self.hqLoading = $('.hq-loading');
-            self.hqLoading.find('img').addClass('hide');
+            self.hqLoading.find('.js-loading-spinner').addClass('hide');
             self.hqLoading.find('h4').text('We were unsuccessful loading the report:').attr('style', 'margin-bottom: 10px;');
         }
     });

@@ -19,7 +19,7 @@
 
 {% block head %}{{ block.super }}
 
-<script language="javascript" type="text/javascript" src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+<script language="javascript" type="text/javascript" src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
 <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}">
 
 <style type="text/css">
@@ -84,6 +84,7 @@
 {% include "style/bootstrap2/partials/time_notice.html" %}
 <h4>{% trans 'Broadcast Message' %}</h4>
 <form id="one_time_reminder_form" action="{% if handler_id %}{% url "edit_one_time_reminder" domain handler_id %}{% else %}{% url "add_one_time_reminder" domain %}{% endif %}" method="post">
+    {% csrf_token %}
     <div class="form-block">
         <table id="main_table">
             <tbody>

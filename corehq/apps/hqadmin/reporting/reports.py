@@ -143,8 +143,7 @@ def get_project_spaces(facets=None):
     )
     if facets:
         real_domain_query = add_params_to_query(real_domain_query, facets)
-    real_domain_query_results = real_domain_query.run().raw_hits
-    domain_names = [_['fields']['name'] for _ in real_domain_query_results]
+    domain_names = [hit['name'] for hit in real_domain_query.run().hits]
     if 'search' in facets:
         return list(set(domain_names) & set(facets['search']))
     return domain_names
@@ -589,8 +588,7 @@ def get_domain_stats_data(domains, datespan, interval,
 
 def commtrack_form_submissions(domains, datespan, interval,
         datefield='received_on'):
-    mobile_workers = [a['_id'] for a in
-            UserES().fields([]).mobile_users().show_inactive().run().raw_hits]
+    mobile_workers = UserES().fields([]).mobile_users().show_inactive().run().doc_ids
 
     forms_after_date = (FormES()
             .domain(domains)

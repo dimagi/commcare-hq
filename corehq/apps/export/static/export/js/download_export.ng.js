@@ -123,6 +123,7 @@
         $scope.prepareExport = function () {
             $scope.prepareExportError = null;
             $scope.preparingExport = true;
+            analytics.workflow("Clicked Prepare Export");
             djangoRMI.prepare_custom_export({
                 exports: $scope.exportList,
                 max_column_size: self._maxColumnSize,
@@ -254,6 +255,7 @@
 
         $scope.sendAnalytics = function () {
             analytics.usage("Download Export", _(exportDownloadService.exportType).capitalize(), "Saved");
+            analytics.workflow("Clicked Download button");
         };
     };
     download_export.controller(exportsControllers);
@@ -266,6 +268,7 @@
             self.downloadId = null;
             self._numErrors = 0;
             self._numCeleryRetries = 0;
+            self._lastProgress = 0;
             self.downloadStatusData = null;
             self.showDownloadStatus = false;
             self.downloadError = null;
@@ -290,6 +293,14 @@
                         if (data.progress && data.progress.error) {
                             $interval.cancel(self._promise);
                             self.downloadError = data.progress.error;
+                            return;
+                        }
+                        if (data.progress.current > self._lastProgress) {
+                            self._lastProgress = data.progress.current;
+                            // processing is still going, keep moving.
+                            // this avoids failing hard prematurely at celery errors if
+                            // the polling is still reporting forward progress.
+                            self._numCeleryRetries = 0;
                             return;
                         }
                     }

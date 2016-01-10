@@ -2,10 +2,10 @@
 {% block js-inline %} {{ block.super }}
     <script>
         $(function () {
-            ko.applyBindings({
+            $('#explode').koApplyBindings({
                 factor: ko.observable(''),
-                user_id: ko.observable('')
-            }, $('#explode').get(0));
+                user_id: ko.observable(''),
+            });
         }());
     </script>
 {% endblock %}
@@ -20,6 +20,7 @@
                 <p><strong>Warning!</strong> The Exploder will multiply all cases you have by the explode factor your write in, so, for example, if you're exploding a test user with 20 cases, and write the factor to be 200, it will actually give you 4,000 cases, NOT 200. Be careful! For this reason, it's best to create a new test user with only one case to explode.</p>
             </div>
             <form class="form" action="" method="POST">
+                {% csrf_token %}
                 <label for="explode-user_id">User</label>
                 <select id="explode-user_id" name="user_id" data-bind="value: user_id">
                     <option>Select a CHW...</option>

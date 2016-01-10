@@ -64,6 +64,10 @@ class TermsResult(FacetResult):
     def counts_by_term(self):
         return {d['term']: d['count'] for d in self.result}
 
+    @property
+    def terms(self):
+        return [d['term'] for d in self.result]
+
 
 class TermsFacet(Facet):
     """
@@ -102,9 +106,10 @@ class DateHistogram(Facet):
     """
     type = "date_histogram"
 
-    def __init__(self, name, datefield, interval):
+    def __init__(self, name, datefield, interval, timezone=None):
         self.name = name
         self.params = {
             "field": datefield,
-            "interval": interval
+            "interval": interval,
+            "time_zone": timezone,
         }

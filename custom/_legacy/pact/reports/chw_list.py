@@ -41,7 +41,7 @@ class PactCHWDashboard(GenericTabularReport, ProjectReportParametersMixin, Custo
         rows = []
         def form_count(user_id):
             key = make_form_couch_key(self.domain, user_id=user_id)
-            result = XFormInstance.view('reports_forms/all_forms',
+            result = XFormInstance.view('all_forms/view',
                                         startkey=key,
                                         endkey=key + [{}],
                                         group_level=0
@@ -55,7 +55,7 @@ class PactCHWDashboard(GenericTabularReport, ProjectReportParametersMixin, Custo
         def last_submit_time(user_id):
             #need to call it directly due to reversed not liking the keys set the regular way
             key = make_form_couch_key(self.domain, user_id=user_id)
-            v = XFormInstance.get_db().view('reports_forms/all_forms',
+            v = XFormInstance.get_db().view('all_forms/view',
                 endkey=key,
                 startkey=key + [{}],
                 reduce=False,

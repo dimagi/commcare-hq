@@ -20,7 +20,7 @@ from django.shortcuts import render
 from django.views.decorators.cache import cache_page
 from django.views.generic import FormView
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.template.loader import render_to_string
 from django.http import (
     HttpResponseRedirect,
@@ -31,17 +31,18 @@ from django.http import (
 )
 from restkit import Resource
 from restkit.errors import Unauthorized
-from couchdbkit import ResourceNotFound, Database
+from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
-from corehq.apps.hqcase.dbaccessors import get_total_case_count
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+from corehq.apps.style.decorators import use_datatables, use_knockout_js, \
+    use_jquery_ui
+from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.couchdb_management import couch_config
 from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorException, all_pillows_supervisor_status, \
     pillow_supervisor_status
-from couchforms.dbaccessors import get_number_of_forms_all_domains_in_couch
 from couchforms.models import XFormInstance
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
@@ -49,16 +50,12 @@ from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.admin import MALTRowAdmin
-from corehq.apps.es.cases import CaseES
-from corehq.apps.es.domains import DomainES
-from corehq.apps.es.forms import FormES
 from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
-from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.escheck import (
     check_es_cluster_health,
     check_xform_es_index,
@@ -72,17 +69,16 @@ from corehq.apps.hqadmin.reporting.reports import (
     get_stats_data,
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
-from corehq.db import Session
+from corehq.sql_db.connections import Session
 from corehq.elastic import parse_args_for_es, ES_URLS, run_query
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.decorators.datespan import datespan_in_request
-from dimagi.utils.parsing import json_format_datetime, json_format_date
+from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response, get_url_base
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from .multimech import GlobalConfig
@@ -132,6 +128,18 @@ def contact_email(request):
     response["Access-Control-Max-Age"] = "1000"
     response["Access-Control-Allow-Headers"] = "*"
     return response
+
+
+class BaseAdminSectionView(BaseB3SectionPageView):
+    section_name = ugettext_lazy("Admin Reports")
+
+    @property
+    def section_url(self):
+        return reverse('default_admin_report')
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
 
 
 class AuthenticateAs(BasePageView):
@@ -323,77 +331,43 @@ def system_ajax(request):
     return HttpResponse('{}', content_type='application/json')
 
 
-@require_superuser_or_developer
-def system_info(request):
-    environment = settings.SERVER_ENVIRONMENT
+class SystemInfoView(BaseAdminSectionView):
+    page_title = ugettext_lazy("System Info")
+    urlname = 'system_info'
+    template_name = "hqadmin/system_info.html"
 
-    context = get_hqadmin_base_context(request)
-    context['couch_update'] = request.GET.get('couch_update', 5000)
-    context['celery_update'] = request.GET.get('celery_update', 10000)
-    context['db_update'] = request.GET.get('db_update', 30000)
-    context['celery_flower_url'] = getattr(settings, 'CELERY_FLOWER_URL', None)
+    @use_datatables
+    @use_knockout_js
+    @use_jquery_ui
+    @method_decorator(require_superuser_or_developer)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseAdminSectionView, self).dispatch(request, *args, **kwargs)
 
-    context['is_bigcouch'] = is_bigcouch()
-    context['rabbitmq_url'] = get_rabbitmq_management_url()
-    context['hide_filters'] = True
-    context['current_system'] = socket.gethostname()
-    context['deploy_history'] = HqDeploy.get_latest(environment, limit=5)
+    @property
+    def page_context(self):
+        environment = settings.SERVER_ENVIRONMENT
 
-    context['user_is_support'] = hasattr(request, 'user') and SUPPORT.enabled(request.user.username)
+        context = get_hqadmin_base_context(self.request)
+        context['couch_update'] = self.request.GET.get('couch_update', 5000)
+        context['celery_update'] = self.request.GET.get('celery_update', 10000)
+        context['db_update'] = self.request.GET.get('db_update', 30000)
+        context['self.request'] = getattr(settings, 'CELERY_FLOWER_URL', None)
 
-    context.update(check_redis())
-    context.update(check_rabbitmq())
-    context.update(check_celery_health())
-    context.update(check_es_cluster_health())
+        context['is_bigcouch'] = is_bigcouch()
+        context['rabbitmq_url'] = get_rabbitmq_management_url()
+        context['hide_filters'] = True
+        context['current_system'] = socket.gethostname()
+        context['deploy_history'] = HqDeploy.get_latest(environment, limit=5)
 
-    return render(request, "hqadmin/system_info.html", context)
+        context['user_is_support'] = hasattr(self.request, 'user') and SUPPORT.enabled(self.request.user.username)
 
+        context.update(check_redis())
+        context.update(check_rabbitmq())
+        context.update(check_celery_health())
+        context.update(check_es_cluster_health())
 
-@cache_page(60 * 5)
-@require_superuser_or_developer
-def db_comparisons(request):
+        return context
 
-    def _simple_view_couch_query(db, view_name):
-        return db.view(view_name, reduce=True).one()['value']
-
-    comparison_config = [
-        {
-            'description': 'Users (base_doc is "CouchUser")',
-            'couch_docs': _simple_view_couch_query(CommCareUser.get_db(), 'users/by_username'),
-            'es_query': UserES().remove_default_filter('active').size(0),
-            'sql_rows': User.objects.count(),
-        },
-        {
-            'description': 'Domains (doc_type is "Domain")',
-            'couch_docs': _simple_view_couch_query(Domain.get_db(), 'domain/by_status'),
-            'es_query': DomainES().size(0),
-            'sql_rows': None,
-        },
-        {
-            'description': 'Forms (doc_type is "XFormInstance")',
-            'couch_docs': get_number_of_forms_all_domains_in_couch(),
-            'es_query': FormES().remove_default_filter('has_xmlns')
-                .remove_default_filter('has_user')
-                .size(0),
-            'sql_rows': FormData.objects.exclude(domain__isnull=True).count(),
-        },
-        {
-            'description': 'Cases (doc_type is "CommCareCase")',
-            'couch_docs': get_total_case_count(),
-            'es_query': CaseES().size(0),
-            'sql_rows': CaseData.objects.exclude(domain__isnull=True).count(),
-        }
-    ]
-
-    comparisons = []
-    for comp in comparison_config:
-        comparisons.append({
-            'description': comp['description'],
-            'couch_docs': comp['couch_docs'],
-            'es_docs': comp['es_query'].run().total,
-            'sql_rows': comp['sql_rows'] if comp['sql_rows'] else 'n/a',
-        })
-    return json_response(comparisons)
 
 @require_POST
 @require_superuser_or_developer
@@ -461,35 +435,6 @@ def pillow_operation_api(request):
                 return get_response(str(e))
     else:
         return get_response("No pillow found with name '{}'".format(pillow_name))
-
-@require_superuser
-def noneulized_users(request, template="hqadmin/noneulized_users.html"):
-    context = get_hqadmin_base_context(request)
-
-    days = request.GET.get("days", None)
-    days = int(days) if days else 60
-    days_ago = datetime.utcnow() - timedelta(days=days)
-
-    users = WebUser.view(
-        "eula_report/noneulized_users",
-        reduce=False,
-        include_docs=True,
-        startkey=["WebUser", json_format_datetime(days_ago)],
-        endkey=["WebUser", {}]
-    ).all()
-
-    context.update({"users": filter(lambda user: not user.is_dimagi, users), "days": days})
-
-    headers = DataTablesHeader(
-        DataTablesColumn("Username"),
-        DataTablesColumn("Date of Last Login"),
-        DataTablesColumn("couch_id"),
-    )
-    context['layout_flush_content'] = True
-    context["headers"] = headers
-    context["aoColumns"] = headers.render_aoColumns
-
-    return render(request, template, context)
 
 
 @require_superuser

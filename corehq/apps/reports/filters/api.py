@@ -10,11 +10,12 @@ from braces.views import JSONResponseMixin
 from corehq import toggles
 from corehq.apps.commtrack.models import SQLLocation
 from corehq.apps.domain.decorators import LoginAndDomainMixin
-from corehq.elastic import es_wrapper, ESError
+from corehq.elastic import ESError
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.reports.filters.users import EmwfUtils
+from corehq.apps.es import UserES, GroupES, groups
 
 logger = logging.getLogger(__name__)
 
@@ -103,50 +104,46 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
             tokens = query.split()
             return ['%s*' % tokens.pop()] + tokens
 
-    def user_es_call(self, query, **kwargs):
-        query = {"bool": {"must": [
-            {"query_string": {
-                "query": q,
-                "fields": ["first_name", "last_name", "username"],
-            }} for q in self.get_es_query_strings(query)
-        ]}} if query and query.strip() else None
-        return es_wrapper('users', domain=self.domain, q=query, **kwargs)
+    def user_es_query(self, query):
+        search_fields = ["first_name", "last_name", "username"]
+        return (UserES()
+                .domain(self.domain)
+                .search_string_query(query, default_fields=search_fields))
 
     def get_users_size(self, query):
-        return self.user_es_call(query, size=0, return_count=True)[0]
+        return self.user_es_query(query).count()
 
     def get_users(self, query, start, size):
-        fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type']
-        users = self.user_es_call(query, fields=fields, start_at=start, size=size,
-                                  sort_by='username.exact', order='asc')
-        return [self.utils.user_tuple(u) for u in users]
+        users = (self.user_es_query(query)
+                 .fields(['_id', 'username', 'first_name', 'last_name', 'doc_type'])
+                 .start(start)
+                 .size(size)
+                 .sort("username.exact"))
+        return [self.utils.user_tuple(u) for u in users.run().hits]
 
     def get_groups_size(self, query):
-        return self.group_es_call(query, size=0, return_count=True)[0]
+        return self.group_es_query(query).count()
 
-    def group_es_call(self, query, group_type="reporting", **kwargs):
-        query = {"bool": {"must": [
-            {"query_string": {
-                "query": q,
-                "default_field": "name",
-            }} for q in self.get_es_query_strings(query)
-        ]}} if query and query.strip() else None
-        type_filter = {"term": {group_type: "true"}}
-        return es_wrapper('groups', domain=self.domain, q=query,
-                          filters=[type_filter], doc_type='Group',
-                          **kwargs)
+    def group_es_query(self, query, group_type="reporting"):
+        if group_type == "reporting":
+            type_filter = groups.is_reporting()
+        elif group_type == "case_sharing":
+            type_filter = groups.is_case_sharing()
+        else:
+            raise TypeError("group_type '{}' not recognized".format(group_type))
+
+        return (GroupES()
+                .domain(self.domain)
+                .filter(type_filter)
+                .search_string_query(query, default_fields=["name"]))
 
     def get_groups(self, query, start, size):
-        fields = ['_id', 'name']
-        groups = self.group_es_call(
-            query,
-            fields=fields,
-            sort_by="name.exact",
-            order="asc",
-            start_at=start,
-            size=size,
-        )
-        return [self.utils.reporting_group_tuple(g) for g in groups]
+        groups = (self.group_es_query(query)
+                  .fields(['_id', 'name'])
+                  .start(start)
+                  .size(size)
+                  .sort("name.exact"))
+        return [self.utils.reporting_group_tuple(g) for g in groups.run().hits]
 
 
 def paginate_options(data_sources, query, start, size):

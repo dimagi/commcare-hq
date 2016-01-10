@@ -12,10 +12,10 @@
             var path = '{{ request.path }}';
             COMMCAREHQ.initBlock($('.hq-content'));
             $('.hq-help-template').each(function () {
+                $(this).data().bootstrap3 = true;
                 COMMCAREHQ.transformHelpTemplate($(this), false);
             });
             $('.hq-help').hqHelp();
         });
     </script>
 {% endblock %}
-

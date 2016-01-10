@@ -499,7 +499,7 @@ class ReportXFormES(XFormES):
         return query
 
 
-class ESQuerySet(object):
+class ElasticAPIQuerySet(object):
     """
     An abstract representation of an elastic search query,
     modeled somewhat after Django's QuerySet but with
@@ -538,7 +538,7 @@ class ESQuerySet(object):
 
     def with_fields(self, es_client=None, payload=None, model=None):
         "Clones this queryset, optionally changing some fields"
-        return ESQuerySet(es_client=es_client or self.es_client,
+        return ElasticAPIQuerySet(es_client=es_client or self.es_client,
                           payload=payload or self.payload,
                           model=model or self.model)
         

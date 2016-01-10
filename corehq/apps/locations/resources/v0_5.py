@@ -49,13 +49,14 @@ class LocationTypeResource(SQLResourceURIMixin, ModelResource, HqBaseResource):
         }
 
 
-class LocationResource(SQLResourceURIMixin, ModelResource, HqBaseResource):
+class LocationResource(ModelResource, HqBaseResource):
     location_data = fields.DictField('metadata')
     location_type = fields.ForeignKey(LocationTypeResource, 'location_type')
     parent = fields.ForeignKey('self', 'parent', null=True)
 
     class Meta:
         resource_name = 'location'
+        detail_uri_name = 'location_id'
         queryset = SQLLocation.objects.filter(is_archived=False).all()
         authentication = DomainAdminAuthentication()
         allowed_methods = ['get']
@@ -80,3 +81,18 @@ class LocationResource(SQLResourceURIMixin, ModelResource, HqBaseResource):
             'latitude': ALL,
             'longitude': ALL,
         }
+
+    def get_resource_uri(self, bundle_or_obj=None):
+        if isinstance(bundle_or_obj, Bundle):
+            obj = bundle_or_obj.obj
+        elif bundle_or_obj is None:
+            return None
+        else:
+            obj = bundle_or_obj
+
+        return absolute_reverse('api_dispatch_detail', kwargs={
+            'resource_name': self._meta.resource_name,
+            'domain': obj.domain,
+            'api_name': self._meta.api_name,
+            'location_id': obj.location_id
+        })

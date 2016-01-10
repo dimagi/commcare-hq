@@ -16,6 +16,7 @@ from corehq.apps.hqmedia.controller import (
     MultimediaImageUploadController,
     MultimediaAudioUploadController,
 )
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import (
     ApplicationMediaReference,
     CommCareImage,
@@ -194,9 +195,12 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         'app': app,
     })
 
-    # Pass form for Copy Application to template:
+    # Pass form for Copy Application to template
+    domain_names = [d.name for d in Domain.active_for_user(request.user)]
+    domain_names.sort()
     context.update({
-        'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id)
+        'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id),
+        'domain_names': domain_names,
     })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]

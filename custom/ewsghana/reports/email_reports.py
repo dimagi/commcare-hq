@@ -1,4 +1,5 @@
 from collections import defaultdict
+
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
@@ -61,7 +62,7 @@ class StockSummaryReportData(EmailReportData):
                                       'stockout': 0, 'low': 0, 'overstock': 0, 'adequate': 0}
 
         for location in locations:
-            location_products = list(location.products)
+            location_products = list(location.products.exclude(is_archived=True))
             stock_states = StockState.objects.filter(
                 case_id=location.supply_point_id,
                 section_id=STOCK_SECTION_TYPE,
@@ -226,24 +227,31 @@ class StockSummaryReport(MultiReport):
     split = False
 
     @property
+    @memoized
+    def location(self):
+        location = super(StockSummaryReport, self).location
+        if location.location_type.administrative:
+            return location
+        return self.root_location
+
+    @property
     def title(self):
         return 'Weekly Stock Summary Report - {0} - {1} {2}'.format(
-            SQLLocation.objects.get(location_id=self.report_config['location_id']).name,
+            self.location.name,
             ews_date_format(self.datespan.startdate_utc),
             ews_date_format(self.datespan.enddate_utc)
         )
 
     @property
     def report_config(self):
-        location_id = self.request.GET.get('location_id')
-        return dict(
-            domain=self.domain,
+        report_config = super(StockSummaryReport, self).report_config
+        report_config.update(dict(
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
-            location_id=location_id if location_id else get_country_id(self.domain),
             program='',
             products=''
-        )
+        ))
+        return report_config
 
     @property
     @memoized

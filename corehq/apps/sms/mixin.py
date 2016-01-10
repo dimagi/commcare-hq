@@ -213,9 +213,6 @@ class MobileBackend(SyncCouchToSQLMixin, SafeSaveDocument):
     # If this this backend represents an international gateway,
     # set this to: ['*']
     supported_countries = ListProperty(StringProperty)
-    # TODO: Once the ivr backends get refactored, can remove these two properties:
-    outbound_module = StringProperty()      # The fully-qualified name of the outbound module to be used (sms backends: must implement send(); ivr backends: must implement initiate_outbound_call() )
-    outbound_params = DictProperty()        # The parameters which will be the keyword arguments sent to the outbound module's send() method
     reply_to_phone_number = StringProperty() # The phone number which you can text to / call to reply to this backend
 
     def domain_is_authorized(self, domain):
@@ -314,22 +311,9 @@ class MobileBackend(SyncCouchToSQLMixin, SafeSaveDocument):
         """
         raise NotImplementedError("Please define get_form_class()")
 
-    @property
-    def backend_module(self):
-        if self.outbound_module == 'corehq.apps.kookoo.api':
-            self.outbound_module = 'corehq.messaging.ivrbackends.kookoo.api'
-        module = try_import(self.outbound_module)
-        if not module:
-            raise RuntimeError('could not find outbound module %s' % self.outbound_module)
-        return module
-
     def retire(self):
         self.base_doc += "-Deleted"
         self.save()
-
-    def get_cleaned_outbound_params(self):
-        # for passing to functions, ensure the keys are all strings
-        return dict((str(k), v) for k, v in self.outbound_params.items())
 
     def _migration_sync_to_sql(self, sql_object):
         from corehq.apps.sms.models import MobileBackendInvitation
@@ -363,6 +347,13 @@ class MobileBackend(SyncCouchToSQLMixin, SafeSaveDocument):
                         accepted=True,
                     ) for domain in self.authorized_domains
                 ]
+
+    def wrap_correctly(self):
+        from corehq.apps.ivr.models import IVRBackend
+        return {
+            'SMS': SMSBackend,
+            'IVR': IVRBackend,
+        }.get(self.backend_type).wrap(self.to_json()).wrap_correctly()
 
 
 class SMSLoadBalancingInfo(object):

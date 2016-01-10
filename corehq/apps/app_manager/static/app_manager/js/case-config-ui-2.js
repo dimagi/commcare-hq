@@ -158,7 +158,7 @@ var CaseConfig = (function () {
             var $home = $('#case-config-ko');
             var $usercaseMgmt = $('#usercase-config-ko');
             _.delay(function () {
-                ko.applyBindings(self, $home.get(0));
+                $home.koApplyBindings(self);
                 $home.on('textchange', 'input', self.change)
                      // all select2's are represented by an input[type="hidden"]
                      .on('change', 'select, input[type="hidden"]', self.change)
@@ -166,7 +166,7 @@ var CaseConfig = (function () {
                 self.ensureBlankProperties();
                 self.forceRefreshTextchangeBinding($home);
 
-                ko.applyBindings(self, $usercaseMgmt.get(0));
+                $usercaseMgmt.koApplyBindings(self);
                 if (self.allowUsercase) {
                     $usercaseMgmt.on('textchange', 'input', self.usercaseChange)
                                  .on('change', 'select, input[type="hidden"]', self.usercaseChange)
@@ -312,6 +312,7 @@ var CaseConfig = (function () {
 
             self.removeProperty = function (property) {
                 self.case_properties.remove(property);
+                self.caseConfig.saveButton.fire('change');
             };
 
             self.propertyCounts = ko.computed(function () {
@@ -339,6 +340,7 @@ var CaseConfig = (function () {
 
                 self.removePreload = function (property) {
                     self.case_preload.remove(property);
+                    self.caseConfig.saveButton.fire('change');
                 };
 
                 self.preloadCounts = ko.computed(function () {
@@ -494,6 +496,7 @@ var CaseConfig = (function () {
 
             self.removeProperty = function (property) {
                 self.case_properties.remove(property);
+                self.caseConfig.saveUsercaseButton.fire('change');
             };
 
             self.propertyCounts = ko.computed(function () {
@@ -521,6 +524,7 @@ var CaseConfig = (function () {
 
                 self.removePreload = function (property) {
                     self.case_preload.remove(property);
+                    self.caseConfig.saveUsercaseButton.fire('change');
                 };
 
                 self.preloadCounts = ko.computed(function () {

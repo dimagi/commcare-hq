@@ -325,7 +325,7 @@ class SupplyPointCase(CommCareCase):
     location_id = StringProperty()
 
     class Meta:
-        # This is necessary otherwise syncdb will confuse this app with casexml
+        # This is necessary otherwise couchdbkit will confuse this app with casexml
         app_label = "commtrack"
 
     @property

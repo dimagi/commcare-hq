@@ -259,6 +259,7 @@ var CareplanConfig = (function () {
 
             self.removeProperty = function (property) {
                 self.case_properties.remove(property);
+                self.careplanConfig.saveButton.fire('change');
             };
 
             self.addPreload = function () {
@@ -272,6 +273,7 @@ var CareplanConfig = (function () {
 
             self.removePreload = function (property) {
                 self.case_preload.remove(property);
+                self.careplanConfig.saveButton.fire('change');
             };
 
             self.repeat_context = function () {
@@ -401,7 +403,7 @@ var CareplanConfig = (function () {
 
         self.init = function () {
             _.delay(function () {
-                ko.applyBindings(self, self.home.get(0));
+                self.home.koApplyBindings(self);
                 self.home.on('textchange', 'input', self.change)
                      // all select2's are represented by an input[type="hidden"]
                      .on('change', 'select, input[type="hidden"]', self.change)

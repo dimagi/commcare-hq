@@ -18,6 +18,7 @@ from dimagi.utils.couch.database import get_db, get_safe_read_kwargs, iter_docs
 from django.utils.translation import ugettext as _
 
 MULTIMEDIA_PREFIX = "jr://file/"
+LOGO_ARCHIVE_KEY = 'logos'
 
 
 class AuxMedia(DocumentSchema):
@@ -227,19 +228,6 @@ class CommCareMultimedia(SafeSaveDocument):
     def get_by_data(cls, data):
         file_hash = cls.generate_hash(data)
         return cls.get_by_hash(file_hash)
-
-    @classmethod
-    def all_tags(cls):
-        return [d['key'] for d in cls.view('hqmedia/tags', group=True).all()]
-
-    @classmethod
-    def search(cls, query, limit=10):
-        results = get_db().search(cls.Config.search_view,
-            q=query,
-            limit=limit,
-            #stale='ok',
-        )
-        return map(cls.get, [r['id'] for r in results])
 
     @classmethod
     def get_doc_class(cls, doc_type):
@@ -499,6 +487,8 @@ class HQMediaMixin(Document):
 
     # paths to custom logos
     logo_refs = DictProperty()
+
+    archived_media = DictProperty()  # where we store references to the old logos (or other multimedia) on a downgrade, so that information is not lost
 
     @property
     @memoized
@@ -769,3 +759,30 @@ class HQMediaMixin(Document):
             "has_form_errors": self.media_form_errors,
             "has_missing_refs": has_missing_refs,
         }
+
+    def archive_logos(self):
+        """
+        Archives any uploaded logos in the application.
+        """
+        has_archived = False
+        if LOGO_ARCHIVE_KEY not in self.archived_media:
+            self.archived_media[LOGO_ARCHIVE_KEY] = {}
+        for slug, logo_data in self.logo_refs.items():
+            self.archived_media[LOGO_ARCHIVE_KEY][slug] = logo_data
+            has_archived = True
+            del self.logo_refs[slug]
+        return has_archived
+
+    def restore_logos(self):
+        """
+        Restores any uploaded logos in the application.
+        """
+        has_restored = False
+        if hasattr(self, 'archived_media') and LOGO_ARCHIVE_KEY in self.archived_media:
+            for slug, logo_data in self.archived_media[LOGO_ARCHIVE_KEY].items():
+                self.logo_refs[slug] = logo_data
+                has_restored = True
+                del self.archived_media[LOGO_ARCHIVE_KEY][slug]
+        return has_restored
+
+

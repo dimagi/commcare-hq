@@ -3,8 +3,10 @@ import json
 import os
 from django.test import TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
+from corehq.apps.locations.models import Location
 from corehq.apps.users.models import WebUser, UserRole
-from custom.ilsgateway.api import ILSUser, ILSGatewayAPI
+from custom.ilsgateway.api import ILSUser, ILSGatewayAPI, Location as Loc
+from custom.ilsgateway.models import ILSGatewayWebUser, ILSGatewayConfig
 from custom.ilsgateway.tests.mock_endpoint import MockEndpoint
 from custom.logistics.api import ApiSyncObject
 from custom.logistics.commtrack import synchronization
@@ -20,9 +22,23 @@ class WebUsersSyncTest(TestCase):
         self.api_object = ILSGatewayAPI(TEST_DOMAIN, self.endpoint)
         self.datapath = os.path.join(os.path.dirname(__file__), 'data')
         initial_bootstrap(TEST_DOMAIN)
+        config = ILSGatewayConfig(
+            domain=TEST_DOMAIN, enabled=True, all_stock_data=True, password='dummy', username='dummy',
+            url='http//test-api.com/'
+        )
+        config.save()
+
+        with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
+            location = Loc(**json.loads(f.read())[1])
+        self.api_object.prepare_commtrack_config()
+        self.api_object.location_sync(location)
 
         for user in WebUser.by_domain(TEST_DOMAIN):
             user.delete()
+
+    def tearDown(self):
+        for location in Location.by_domain(TEST_DOMAIN):
+            location.delete()
 
     def test_create_webuser(self):
         with open(os.path.join(self.datapath, 'sample_webusers.json')) as f:
@@ -37,12 +53,30 @@ class WebUsersSyncTest(TestCase):
         self.assertEqual(webuser.is_active, ilsgateway_webuser.is_active)
         self.assertEqual(False, ilsgateway_webuser.is_superuser)
         self.assertEqual(False, ilsgateway_webuser.is_staff)
-        # self.assertEqual(webuser.location, ilsgateway_webuser.location)
-        # self.assertEqual(webuser.supply_point, ilsgateway_webuser.supply_point)
+        self.assertIsNotNone(webuser.location)
         domain_name = ilsgateway_webuser.get_domains()[0]
         self.assertEqual(TEST_DOMAIN, domain_name)
         self.assertEqual(UserRole.get_read_only_role_by_domain(TEST_DOMAIN)._id,
                          ilsgateway_webuser.get_domain_membership(TEST_DOMAIN).role_id)
+
+        sql_ils = ILSGatewayWebUser.objects.get(external_id=webuser.id)
+        self.assertEqual(sql_ils.email, ilsgateway_webuser.email)
+
+    def test_edit_webuser_email(self):
+        with open(os.path.join(self.datapath, 'sample_webusers.json')) as f:
+            webuser = ILSUser(json.loads(f.read())[0])
+        self.assertEqual(len(WebUser.by_domain(TEST_DOMAIN)), 0)
+
+        ils_webuser = self.api_object.web_user_sync(webuser)
+        self.assertEqual(len(WebUser.by_domain(TEST_DOMAIN)), 1)
+
+        webuser.email = 'edited@example.com'
+        ils_webuser2 = self.api_object.web_user_sync(webuser)
+        ils_webuser = WebUser.get(docid=ils_webuser.get_id)
+
+        self.assertEqual(len(WebUser.by_domain(TEST_DOMAIN)), 1)
+        self.assertIsNone(ils_webuser.get_domain_membership(TEST_DOMAIN))
+        self.assertEqual(ils_webuser2.username, 'edited@example.com')
 
     def test_webusers_migration(self):
         checkpoint = MigrationCheckpoint(

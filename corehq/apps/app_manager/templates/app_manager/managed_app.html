@@ -158,7 +158,7 @@
 <nav class="app-manager-content hide">
     <ul class="nav nav-list">
         <li {% if release_manager %}class="active"{% endif %}>
-            <a href="{% url "release_manager" domain app.id %}">
+            <a href="{% url "release_manager" domain app.id %}" id="tour-deploy-link">
                 <i class="icon-download-alt"></i>
                 {% trans "Deploy" %}
             </a>
@@ -215,6 +215,7 @@
             <li class="sort-action">
                 <form method="post"
                       action="{% url "corehq.apps.app_manager.views.rearrange" domain app.id 'modules' %}">
+                      {% csrf_token %}
                 </form>
             </li>
             <li class="sort-disabled edit-form-li {% if is_user_registration %} active{% endif %}" id="user-registration-nav-link">
@@ -244,6 +245,7 @@
                             <li class="sort-action">
                                 <form method="post"
                                       action="{% url "corehq.apps.app_manager.views.rearrange" domain app.id 'forms' %}">
+                                      {% csrf_token %}
                                 </form>
                             </li>
                             {% with nav_form as selected_form %}
@@ -295,7 +297,7 @@
                         <ul class="dropdown-menu" role="menu">
                             <li><a href="#" class="new-module" data-type="case">{% trans "New Case Module" %}</a></li>
                             {% if show_care_plan %}
-                            <li><a data-toggle="modal" href="#careplan-module-dialog">{% trans "New Care Plan Module" %}</a></li>
+                            <li><a data-toggle="modal" href="#careplan-module-modal">{% trans "New Care Plan Module" %}</a></li>
                             {% endif %}
                             {% if show_advanced %}
                             <li>
@@ -320,7 +322,7 @@
                             {% endif %}
                         </ul>
                     </li>
-                    {% include "app_manager/partials/new_module_dialogs.html" %}
+                    {% include "app_manager/partials/new_careplan_module.html" %}
                 {% else %}
                 <li class="sort-disabled">
                     <a href="#" class="new-module" data-type="case">

@@ -1,10 +1,11 @@
 {% load i18n %}
 <table class="table table-bordered">
     <thead data-bind="with: eventObjects()[0]">
-        <th class="span2">
+        <th class="col-md-2">
             <span data-bind="visible: !$parent.isOffsetTimingUsed()">{% trans 'Day' %}</span>
             <span data-bind="visible: $parent.isOffsetTimingUsed()">{% trans 'Days to Delay' %}</span>
             <span class="hq-help-template"
+                       data-bootstrap3="true"
                        data-title="{% trans 'Day' %}"
                        data-content="{% blocktrans %}
                           The day on which each event in the reminder comes due.
@@ -14,10 +15,11 @@
                            {% endblocktrans %}"
             ></span>
         </th>
-        <th class="span2">
+        <th class="col-md-2">
             <span data-bind="visible: !$parent.isOffsetTimingUsed()">{% trans 'Time' %}</span>
             <span data-bind="visible: $parent.isOffsetTimingUsed()">{% trans 'Time to Delay' %}</span>
             <span class="hq-help-template"
+                        data-bootstrap3="true"
                         data-title="{% trans 'Time' %}"
                         data-content="{% blocktrans %}
                             Specify the time at which the reminder will be sent out.
@@ -26,25 +28,26 @@
                             {% endblocktrans %}"
             ></span>
         </th>
-        <th class="span2" data-bind="visible: isWindowLengthVisible">
+        <th class="col-md-2" data-bind="visible: isWindowLengthVisible">
             {% trans 'Window' %}
             <span class="hq-help-template"
+                        data-bootstrap3="true"
                         data-title="{% trans 'Window' %}"
                         data-content="{% blocktrans %}
                             The number of minutes after the start within which to randomly send the message.
                             {% endblocktrans %}"
             ></span>
         </th>
-        <th class="span5" data-bind="visible: isSurveyVisible">{% trans 'Survey' %}</th>
-        <th class="span5" data-bind="visible: isSubjectVisible">{% trans 'Subject' %}</th>
-        <th class="span5" data-bind="visible: isMessageVisible">{% trans 'Message' %}</th>
-        <th class="span5" data-bind="visible: $parent.areTimeoutsVisible()">{% trans 'Timeout Intervals' %}</th>
-        <th class="span1" data-bind="visible: $parent.isEventDeleteButtonVisible"></th>
+        <th class="col-md-5" data-bind="visible: isSurveyVisible">{% trans 'Survey' %}</th>
+        <th class="col-md-5" data-bind="visible: isSubjectVisible">{% trans 'Subject' %}</th>
+        <th class="col-md-5" data-bind="visible: isMessageVisible">{% trans 'Message' %}</th>
+        <th class="col-md-5" data-bind="visible: $parent.areTimeoutsVisible()">{% trans 'Timeout Intervals' %}</th>
+        <th class="col-md-1" data-bind="visible: $parent.isEventDeleteButtonVisible"></th>
     </thead>
     <tbody data-bind="foreach: { data: eventObjects, afterAdd: refreshEventsListUI }">
         <td>
             <input type="hidden" data-bind="value: fire_time_type" />
-            <input type="text" class="input-mini" data-bind="value: day_num" />
+            <input type="text" class="form-control" data-bind="value: day_num" />
         </td>
         <td>
             <div data-bind="template: { name: 'event-fire-template', data: $data }"></div>
@@ -52,20 +55,20 @@
         <td data-bind="visible: isWindowLengthVisible">
             <input type="text"
                    name="time_window_legnth"
-                   class="input-mini"
+                   class="form-control"
                    data-bind="value: time_window_length" /> {% trans 'minute(s)' %}
         </td>
         <td data-bind="visible: isSurveyVisible">
-            <input type="text"
+            <input type="hidden"
                    name="form_unique_id"
                    data-bind="value: form_unique_id, visible: isSurveyVisible"
-                   class="input-xxlarge" />
+                   class="form-control" />
         </td>
         <td data-bind="visible: isSubjectVisible">
             <div data-bind="foreach: messageTranslations">
                 <label><strong data-bind="text: languageLabel"></strong></label>
                 <textarea rows="2"
-                          class="input-xxlarge"
+                          class="form-control"
                           data-bind="value: subject, valueUpdate: 'keyup'"></textarea>
                 <hr data-bind="visible: $parent.messageTranslations().length > 1
                                && $index() + 1 !== $parent.messageTranslations().length" />
@@ -75,10 +78,10 @@
             <div data-bind="foreach: messageTranslations">
                 <label><strong data-bind="text: languageLabel"></strong></label>
                 <textarea rows="2"
-                          class="input-xxlarge"
+                          class="form-control"
                           data-bind="value: message, valueUpdate: 'keyup'"></textarea>
                 <div data-bind="template: { name: 'event-message-length-template' },
-                                visible: !$parent.isEmailSelected()" style="margin-top: 5px;"></div>
+                                visible: !$parent.isEmailSelected()" style="margin: 20px 0 10px 0;"></div>
                 <hr data-bind="visible: $parent.messageTranslations().length > 1
                                && $index() + 1 !== $parent.messageTranslations().length" />
             </div>
@@ -86,7 +89,7 @@
         <td data-bind="visible: $parent.areTimeoutsVisible()">
             <input type="text"
                    name="callback_timeout_intervals"
-                   class="input-small"
+                   class="form-control"
                    placeholder="{% trans 'e.g. 30,60,180' %}"
                    data-bind="value: callback_timeout_intervals" />
         </td>
@@ -94,7 +97,7 @@
             <button type="button"
                     class="btn btn-danger"
                     data-bind="event: { click: $parent.removeEvent }">
-                <i class="icon-remove"></i>
+                <i class="fa fa-remove"></i>
             </button>
         </td>
     </tbody>
@@ -104,5 +107,5 @@
     <button type="button"
             class="btn btn-success"
             data-bind="event: { click: addEvent }">
-        <i class="icon-plus"></i> {% trans 'Event' %}</button>
+        <i class="fa fa-plus"></i> {% trans 'Event' %}</button>
 </p>

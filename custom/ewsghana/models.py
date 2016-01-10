@@ -155,7 +155,10 @@ class SQLNotification(models.Model):
 
 @receiver(commcare_domain_pre_delete)
 def domain_pre_delete_receiver(domain, **kwargs):
-    FacilityInCharge.objects.filter(location__in=SQLLocation.objects.filter(domain=domain)).delete()
-    EWSExtension.objects.filter(domain=domain).delete()
-    EWSMigrationStats.objects.filter(domain=domain).delete()
-    EWSMigrationProblem.objects.filter(domain=domain).delete()
+    from corehq.apps.domain.deletion import ModelDeletion
+    return [
+        ModelDeletion('ewsghana', 'FacilityInCharge', 'location__domain'),
+        ModelDeletion('ewsghana', 'EWSExtension', 'domain'),
+        ModelDeletion('ewsghana', 'EWSMigrationStats', 'domain'),
+        ModelDeletion('ewsghana', 'EWSMigrationProblem', 'domain'),
+    ]

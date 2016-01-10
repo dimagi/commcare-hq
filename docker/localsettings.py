@@ -105,8 +105,8 @@ BASE_ADDRESS = '{}:8000'.format(os.environ.get('BASE_HOST', 'localhost'))
 # Set your analytics IDs here for GA and other external analytics services
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '*******',
-    'ANALYTICS_API_ID_PUBLIC_COMMCARE': '*****',
     'KISSMETRICS_KEY': '*****',
+    'HUBSPOT_API_KEY': '*****',
 }
 
 ANALYTICS_CONFIG = {

@@ -13,7 +13,7 @@
     <script>
         var baForm = new BillingAccountForm({{ basic_form.is_active.value|BOOL }});
         $(function () {
-            ko.applyBindings(baForm, $('#account-form').get(0));
+            $('#account-form').koApplyBindings(baForm);
         });
     </script>
 {% endblock %}

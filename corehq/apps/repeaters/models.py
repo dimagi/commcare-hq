@@ -5,6 +5,8 @@ import logging
 import urllib
 import urlparse
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT
+from corehq.util.datadog.utils import log_counter
 from corehq.util.quickcache import quickcache
 
 from dimagi.ext.couchdbkit import *
@@ -52,7 +54,7 @@ def simple_post_with_cached_timeout(data, url, expiry=60 * 60, *args, **kwargs):
         cache.set(key, 'timeout', expiry)
         raise
 
-    if not 200 <= resp.status < 300:
+    if not 200 <= resp.status_code < 300:
         cache.set(key, 'error', expiry)
     return resp
 
@@ -282,7 +284,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     def get_headers(self, repeat_record):
         # to be overridden
         generator = self.get_payload_generator(self.format_or_default_format())
-        headers = generator.get_headers(repeat_record, self.payload_doc(repeat_record))
+        headers = generator.get_headers()
         if self.use_basic_auth:
             user_pass = base64.encodestring(':'.join((self.username, self.password))).replace('\n', '')
             headers.update({'Authorization': 'Basic ' + user_pass})
@@ -495,6 +497,12 @@ class RepeatRecord(Document, LockableMixIn):
                 if not self.succeeded:
                     # mark it failed for later and give up
                     self.update_failure(failure_reason)
+                    log_counter(REPEATER_ERROR_COUNT, {
+                        '_id': self._id,
+                        'reason': failure_reason,
+                        'target_url': self.url,
+                    })
 
 # import signals
+# Do not remove this import, its required for the signals code to run even though not explicitly used in this file
 from corehq.apps.repeaters import signals

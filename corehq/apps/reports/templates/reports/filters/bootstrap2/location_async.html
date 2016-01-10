@@ -1,0 +1,49 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{# todo: fix template to properly inherit from filters/base.html #}
+{% if make_optional %}
+<label class="control-label">{% trans "Location Filter" %}</label>
+<div class="controls">
+    <div>
+        <select data-bind="value: show_location_filter">
+            <option value="y">{% trans "On" %}</option>
+            <option value="n">{% trans "Off" %}</option>
+        </select>
+    </div>
+</div>
+{% endif %}
+<label class="control-label" data-bind="visible: show_location_filter_bool()">{{ control_name }}</label> {# this is wrong, see filters/single_option.html for a proper implementation #}
+<div class="controls" data-bind="visible: show_location_filter_bool()">
+  <div data-bind="foreach: selected_path" style="display: inline-block;">
+      {% block location_select %}
+        <select data-bind="options: children,
+                           optionsText: 'display_name',
+                           value: selected_child,
+                           disable: !can_edit_children()"></select>
+      {% endblock %}
+  </div>
+  <img id="loc_ajax" src="{% static 'formplayer/img/loading_small.gif' %}" style="display: none;">
+</div>
+<input name="location_id" type="hidden" data-bind="value: selected_locid" />
+
+<script type="text/javascript" src="{% static 'locations/ko/location_drilldown.async.js' %}"></script>
+<script type="text/javascript">
+
+var LOAD_LOCS_URL = '{{ api_root }}';
+
+$(function() {
+
+  var locs = {{ locations|JSON }};
+  var selected = '{{ loc_id }}';
+  var hierarchy = {{ hierarchy|JSON }};
+
+  var show_location_filter = {% if make_optional and not loc_id %}'n'{% else %}'y'{% endif%};
+  var model = new LocationSelectViewModel(hierarchy, undefined, undefined, undefined, undefined, show_location_filter);
+  $('#group_{{ control_slug }}').koApplyBindings(model);
+  model.load(locs, selected);
+
+});
+
+</script>
+

@@ -27,7 +27,7 @@
             paymentHandler.loadCards({{ plan.cards|JSON }});
         {% endif %}
         $(function () {
-            ko.applyBindings(paymentHandler, $('#paymentModal').get(0));
+            $('#paymentModal').koApplyBindings(paymentHandler);
         });
 
         var creditsHandler = new CreditsManager(
@@ -35,11 +35,16 @@
             paymentHandler, {{ can_purchase_credits|BOOL }}, {{ plan.is_trial|BOOL }}
         );
         $(function () {
-            ko.applyBindings(creditsHandler, $('#subscriptionSummary').get(0));
+            $('#subscriptionSummary').koApplyBindings(creditsHandler);
             creditsHandler.init();
         });
 
-
+        $(function () {
+            $('.hq-help-template').each(function () {
+                COMMCAREHQ.transformHelpTemplate($(this), true);
+            });
+            $('.hq-help').hqHelp();
+        });
     </script>
 {% endblock %}
 
@@ -47,7 +52,7 @@
 <div class="row">
     <div class="span12">
         <article id="subscriptionSummary">
-            <h2>{% trans 'Current Subscription' %}</h2>
+            <legend>{% trans 'Current Subscription' %}</legend>
             <div class="form form-horizontal">
                 <div class="control-group">
                     <label class="control-label">{% trans 'Plan' %}</label>
@@ -115,31 +120,7 @@
                                    data-bind="text: monthlyFee"></p>
                             </div>
                         </div>
-                        <div class="control-group">
-                            <label class="control-label">{% trans 'Plan Credit' %}</label>
-                            <div class="controls">
-                                <span class="help-inline"
-                                      style="margin-right: 10px;"
-                                      data-bind="text: amount"></span>
-                            </div>
-                        </div>
                     </div>
-                    {% if plan.general_credit and plan.general_credit.is_visible %}
-                        <div class="control-group">
-                            <label class="control-label">{% trans 'General Credit' %}</label>
-                            <div class="controls">
-                                <p class="control-group-text">{{ plan.general_credit.amount }}</p>
-                                <p class="help-block">
-                                    <i class="icon-info-sign"></i>
-                                    {% blocktrans %}
-                                        This is credit that can be applied to either your software plan
-                                        or the features below. It's likely that someone from Dimagi added these
-                                        credits for you.
-                                    {% endblocktrans %}
-                                </p>
-                            </div>
-                        </div>
-                    {% endif %}
                     {% if plan.next_subscription.exists %}
                         <div class="control-group">
                             <label class="control-label">
@@ -172,6 +153,42 @@
                             </div>
                         </div>
                     {% endif %}
+                {% endif %}
+            </div>
+            {% if not plan.is_trial %}
+                {% if plan.has_account_level_credit %}
+                <legend>{% trans 'Subscription Credit' %}</legend>
+                {% endif %}
+                <div class="form form-horizontal">
+                    <div data-bind="foreach: products">
+                        <div class="control-group">
+                            <label class="control-label">{% trans 'Plan Credit' %}</label>
+                            <div class="controls">
+                                <p class="control-group-text" data-bind="text: amount"></p>
+                            </div>
+                        </div>
+                    </div>
+                    {% if plan.general_credit and plan.general_credit.is_visible %}
+                    <div class="control-group">
+                        <label class="control-label">
+                            {% trans 'General Credit' %}
+                            <div class="hq-help">
+                                <a href="#"
+                                   data-content="This is credit that can be applied to either your software
+                                    plan or the features below. It's likely that someone from Dimagi added
+                                    these credits for you."
+                                   data-title="General Credit"
+                                   data-original-title=""
+                                   title="">
+                                    <i class="icon-question-sign"></i>
+                                </a>
+                            </div>
+                        </label>
+                        <div class="controls">
+                            <p class="control-group-text">{{ plan.general_credit.amount }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
                     <div data-bind="with: prepayments">
                         <div class="control-group">
                             <div class="controls">
@@ -201,9 +218,55 @@
                             </div>
                         </div>
                     </div>
+                </div>
+                {% if plan.has_account_level_credit %}
+                <legend>{% trans 'Account Credit' %}</legend>
+                <div class="form form-horizontal">
+                    <div data-bind="foreach: products">
+                        <div class="control-group" data-bind="visible: isAccountVisible">
+                            <label class="control-label">
+                                {% trans 'Plan Credit' %}
+                                <div class="hq-help">
+                                    <a href="#"
+                                       data-content="This is credit that can be applied to your software plan.
+                                        It's likely that someone from Dimagi added these credits for you."
+                                       data-title="Account Plan Credit"
+                                       data-original-title=""
+                                       title="">
+                                        <i class="icon-question-sign"></i>
+                                    </a>
+                                </div>
+                            </label>
+                            <div class="controls">
+                                <p class="control-group-text" data-bind="text: accountAmount"></p>
+                            </div>
+                        </div>
+                    </div>
+                    {% if plan.account_general_credit and plan.account_general_credit.is_visible %}
+                    <div class="control-group">
+                        <label class="control-label">
+                            {% trans 'General Credit' %}
+                            <div class="hq-help">
+                                <a href="#"
+                                   data-content="This is credit that can be applied to either your software
+                                    plan or the features below. It's likely that someone from Dimagi added
+                                    these credits for you."
+                                   data-title="Account General Credit"
+                                   data-original-title=""
+                                   title="">
+                                    <i class="icon-question-sign"></i>
+                                </a>
+                            </div>
+                        </label>
+                        <div class="controls">
+                            <p class="control-group-text">{{ plan.account_general_credit.amount }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
                 {% endif %}
-            </div>
-            <h2>{% trans 'Usage Summary' %}</h2>
+            {% endif %}
+            <legend>{% trans 'Usage Summary' %}</legend>
             <table class="table table-bordered table-striped">
                 <thead>
                     <tr>
@@ -212,6 +275,9 @@
                         <th>{% trans "Remaining" %}</th>
                         {% if not plan.is_trial %}
                         <th>{% trans "Credits Available" %}</th>
+                        {% if show_account_credits %}
+                        <th>{% trans "Account Credits Available" %}</th>
+                        {% endif %}
                         {% endif %}
                     </tr>
                 </thead>
@@ -222,6 +288,9 @@
                         <td data-bind="text: remaining"></td>
                         {% if not plan.is_trial %}
                         <td data-bind="text: amount"></td>
+                        {% if show_account_credits %}
+                        <td data-bind="text: accountAmount"></td>
+                        {% endif %}
                         {% endif %}
                     </tr>
                 </tbody>
@@ -301,10 +370,7 @@
                     {% trans 'Total Credits' %}
                 </label>
                 <div class="controls">
-                    <div>
-                        <span class="add-on">$</span>
-                        <span data-bind="text: amount()"></span>
-                    </div>
+                    <p class="control-group-text" data-bind="text: ('$ ' + amount())"></p>
                 </div>
             </div>
             <input type="hidden" name="amount" data-bind="value: amount" />

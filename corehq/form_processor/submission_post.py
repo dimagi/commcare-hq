@@ -93,7 +93,7 @@ class SubmissionPost(object):
         xforms[0] = instance
         # this is usually just one document, but if an edit errored we want
         # to save the deprecated form as well
-        self.interface.save_processed_models(instance, xforms)
+        self.interface.save_processed_models(xforms)
 
     def _handle_basic_failure_modes(self):
         if timezone_migration_in_progress(self.domain):
@@ -151,18 +151,18 @@ class SubmissionPost(object):
                     raise
                 else:
                     instance.initial_processing_complete = True
-                    self.save_processed_models(instance, xforms, case_stock_result)
+                    self.save_processed_models(xforms, case_stock_result)
                     cases = case_stock_result.case_models
 
             errors = self.process_signals(instance)
             response = self._get_open_rosa_response(instance, errors)
             return response, instance, cases
 
-    def save_processed_models(self, instance, xforms, case_stock_result):
+    def save_processed_models(self, xforms, case_stock_result):
         from casexml.apps.case.signals import case_post_save
+        instance = xforms[0]
         with unfinished_submission(instance) as unfinished_submission_stub:
             self.interface.save_processed_models(
-                instance,
                 xforms,
                 case_stock_result.case_models,
                 case_stock_result.stock_models
@@ -298,13 +298,17 @@ def handle_unexpected_error(interface, instance, e):
     # and then resubmit, the new submission never has a
     # chance to get reprocessed; it'll just get saved as
     # a duplicate.
+    from corehq.util.global_request.api import get_request
+    request = get_request()
+
     error_message = u'{}: {}'.format(type(e).__name__, unicode(e))
     instance = interface.xformerror_from_xform_instance(instance, error_message, with_new_id=True)
-    notify_exception(None, (
-        u"Error in case or stock processing "
-        u"for form {}: {}. "
-        u"Error saved as {}"
-    ).format(instance.orig_id, error_message, instance.form_id))
+    domain = getattr(instance, 'domain', '---')
+    notify_exception(request, u"Error in case or stock processing for domain: {}".format(domain), details={
+        'original form ID': instance.orig_id,
+        'error form ID': instance.form_id,
+        'error message': error_message
+    })
     FormAccessors(interface.domain).save_new_form(instance)
 
 

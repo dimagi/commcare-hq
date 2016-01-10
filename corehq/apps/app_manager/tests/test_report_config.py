@@ -130,8 +130,8 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
         ]
         with mock_report_data(cls.data):
             with mock_report_configuration_get(cls.report_configs_by_id):
-                with mock.patch('corehq.apps.app_manager.dbaccessors.get_apps_in_domain',
-                                lambda domain: [cls.app]):
+                with mock.patch('corehq.apps.app_manager.fixtures.mobile_ucr.get_apps_in_domain',
+                                lambda domain, include_remote: [cls.app]):
                     fixture, = report_fixture_generator(cls.user, '2.0')
         cls.fixture = ElementTree.tostring(fixture)
 
@@ -152,7 +152,7 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
             <instance id="reports" src="jr://fixture/commcare:reports"/>
             <session>
               <datum id="report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/filters/filter[@field='computed_owner_name_40cc88a0_1']/option" value="./@value" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.computed_owner_name_40cc88a0_1"/>
-              <datum id="report_id_a98c812873986df34fd1b4ceb45e6164ae9cc664" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']" value="./@id" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.select" detail-confirm="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.summary"/>
+              <datum id="report_id_a98c812873986df34fd1b4ceb45e6164ae9cc664" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']" value="./@id" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.select" detail-confirm="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.summary" autoselect="true"/>
             </session>
           </entry>
         </partial>
@@ -209,7 +209,7 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
         <partial>
           <template form="graph">
             <graph type="bar">
-              <series nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/rows/row[column[@id='computed_owner_name_40cc88a0']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]">
+              <series nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/rows/row[@is_total_row='False'][column[@id='computed_owner_name_40cc88a0']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]">
                 <configuration/>
                 <x function="column[@id='color_94ec39e6']"/>
                 <y function="column[@id='count']"/>
@@ -224,17 +224,17 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
         self.assertXmlPartialEqual("""
         <partial>
           <rows>
-            <row index="0">
+            <row index="0" is_total_row="False">
               <column id="color_94ec39e6">red</column>
               <column id="computed_owner_name_40cc88a0">cory</column>
               <column id="count">2</column>
             </row>
-            <row index="1">
+            <row index="1" is_total_row="False">
               <column id="color_94ec39e6">black</column>
               <column id="computed_owner_name_40cc88a0">ctsims</column>
               <column id="count">1</column>
             </row>
-            <row index="2">
+            <row index="2" is_total_row="False">
               <column id="color_94ec39e6">red</column>
               <column id="computed_owner_name_40cc88a0">daniel</column>
               <column id="count">3</column>

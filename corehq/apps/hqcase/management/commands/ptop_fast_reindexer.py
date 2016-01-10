@@ -7,6 +7,8 @@ from django.core.management.base import NoArgsCommand
 import json
 from corehq.util.couch_helpers import paginate_view
 from pillowtop.couchdb import CachedCouchDB
+from pillowtop.es_utils import set_index_reindex_settings, set_index_normal_settings, create_index_for_pillow, \
+    initialize_mapping_if_necessary
 from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import Change
 from pillowtop.listener import AliasedElasticPillow, PythonPillow
@@ -66,7 +68,7 @@ class PtopReindexer(NoArgsCommand):
                     action='store_true',
                     dest='noinput',
                     default=False,
-                    help='Skip important confirmation warnings?!?!'),
+                    help='Skip important confirmation warnings.'),
         make_option('--runfile',
                     action='store',
                     dest='runfile',
@@ -76,8 +78,7 @@ class PtopReindexer(NoArgsCommand):
                     action='store',
                     type='int',
                     dest='chunk_size',
-                    default=CHUNK_SIZE,
-                    help='Previous run input file prefix',),
+                    help='Number of docs to save at a time',),
     )
 
     doc_class = None
@@ -88,6 +89,7 @@ class PtopReindexer(NoArgsCommand):
     # By default this == self.pillow_class
     indexing_pillow_class = None
     file_prefix = "ptop_fast_reindex_"
+    default_chunk_size = CHUNK_SIZE
 
     def __init__(self):
         super(PtopReindexer, self).__init__()
@@ -196,32 +198,14 @@ class PtopReindexer(NoArgsCommand):
         self.indexing_pillow = self.indexing_pillow_class()
         self.db = self.doc_class.get_db()
         self.runfile = options['runfile']
-        self.chunk_size = options.get('chunk_size', CHUNK_SIZE)
+        self.chunk_size = options.get('chunk_size', None) or self.default_chunk_size
         self.start_num = options.get('seq', 0)
         self.in_place = options['in_place']
 
     def handle(self, *args, **options):
-        if not options['noinput']:
-            confirm = raw_input("""
-        ### %s Fast Reindex !!! ###
-        You have requested to do an elastic index reset via fast track.
-        This will IRREVERSIBLY REMOVE
-        ALL index data in the case index and will take a while to reload.
-        Are you sure you want to do this. Also you MUST have run_ptop disabled for this to run.
-
-        Type 'yes' to continue, or 'no' to cancel: """ % self.indexing_pillow_class.__name__)
-
-            if confirm != 'yes':
-                self.log("\tReset cancelled.")
-                return
-
-            confirm_ptop = raw_input("""\tAre you sure you disabled run_ptop? """)
-            if confirm_ptop != "yes":
-                return
-
-            confirm_alias = raw_input("""\tAre you sure you are not blowing away a production index? """)
-            if confirm_alias != "yes":
-                return
+        if not options['noinput'] and not _ask_user_to_proceed(self.indexing_pillow_class.__name__):
+            self.log("\tReset cancelled by user.")
+            return
 
         self._bootstrap(options)
         start = datetime.utcnow()
@@ -348,6 +332,31 @@ class PtopReindexer(NoArgsCommand):
         pass
 
 
+def _ask_user_to_proceed(pillow_name):
+    confirm = raw_input("""
+        ### %s Fast Reindex !!! ###
+
+        You have requested to do an elastic index reset via fast track.
+        This will IRREVERSIBLY REMOVE ALL index data in the associated index.
+        Also, you MUST have run_ptop disabled for this to run.
+
+        Are you sure you want to do this?
+
+        Type 'yes' to continue, or 'no' to cancel: """ % pillow_name)
+
+    if confirm != 'yes':
+        return False
+
+    confirm_ptop = raw_input("""\tAre you sure you disabled run_ptop? """)
+    if confirm_ptop != "yes":
+        return False
+
+    confirm_alias = raw_input("""\tAre you sure you are not blowing away a production index? """)
+    if confirm_alias != "yes":
+        return False
+    return True
+
+
 class ElasticReindexer(PtopReindexer):
 
     own_index_exists = True
@@ -356,18 +365,19 @@ class ElasticReindexer(PtopReindexer):
         if not self.in_place and self.own_index_exists:
             # delete the existing index.
             self.log("Deleting index")
-            self.indexing_pillow.delete_index()
+            self.indexing_pillow.get_es_new().indices.delete(self.indexing_pillow.es_index)
             self.log("Recreating index")
-            self.indexing_pillow.create_index()
-            self.indexing_pillow.initialize_mapping_if_necessary()
+            create_index_for_pillow(self.indexing_pillow)
+            initialize_mapping_if_necessary(self.indexing_pillow)
 
     def post_load_hook(self):
         if not self.in_place:
             # configure index to indexing mode
-            self.indexing_pillow.set_index_reindex_settings()
+            set_index_reindex_settings(self.indexing_pillow.get_es_new(), self.indexing_pillow.es_index)
 
     def pre_complete_hook(self):
         if not self.in_place:
             self.log("setting index settings to normal search configuration and refreshing index")
-            self.indexing_pillow.set_index_normal_settings()
-        self.indexing_pillow.refresh_index()
+            set_index_normal_settings(self.indexing_pillow.get_es_new(), self.indexing_pillow.es_index)
+        # refresh the index
+        self.indexing_pillow.get_es_new().indices.refresh(self.indexing_pillow.es_index)

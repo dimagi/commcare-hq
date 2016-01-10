@@ -4,10 +4,9 @@ from __future__ import unicode_literals
 from django.db import models, migrations
 from django.conf import settings
 from django.core.management import call_command
+from corehq.preindex import get_preindex_plugin
 
-from dimagi.utils.couch import sync_docs
-
-import corehq.apps.sms.models as sms_models
+from corehq.sql_db.operations import HqRunPython
 from corehq.apps.smsbillables.management.commands.bootstrap_grapevine_gateway import \
     bootstrap_grapevine_gateway
 from corehq.apps.smsbillables.management.commands.bootstrap_mach_gateway import \
@@ -49,7 +48,7 @@ def bootstrap_currency(apps, schema_editor):
 
 
 def bootstrap_sms(apps, schema_editor):
-    sync_docs.sync(sms_models, verbosity=2)
+    get_preindex_plugin('sms').sync_design_docs()
     bootstrap_grapevine_gateway(apps)
     bootstrap_mach_gateway(apps)
     bootstrap_tropo_gateway(apps)
@@ -76,7 +75,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(sync_sms_docs),
-        migrations.RunPython(bootstrap_currency),
-        migrations.RunPython(bootstrap_sms),
+        HqRunPython(sync_sms_docs),
+        HqRunPython(bootstrap_currency),
+        HqRunPython(bootstrap_sms),
     ]

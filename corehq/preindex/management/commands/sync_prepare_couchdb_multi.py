@@ -1,36 +1,17 @@
 from optparse import make_option
-from dimagi.utils.couch import sync_docs
-from gevent import monkey
+from traceback import print_stack
 from corehq.preindex import get_preindex_plugins
-
-monkey.patch_all()
-from restkit.session import set_session
-set_session("gevent")
-
-from django.db.models import get_apps
 from django.core.management.base import BaseCommand
 from django.core.mail import send_mail
 from datetime import datetime
 from gevent.pool import Pool
 from django.conf import settings
+from corehq.preindex.accessors import sync_design_doc, get_preindex_designs
+
 setattr(settings, 'COUCHDB_TIMEOUT', 999999)
 
 
 POOL_SIZE = getattr(settings, 'PREINDEX_POOL_SIZE', 8)
-POOL_WAIT = getattr(settings, 'PREINDEX_POOL_WAIT', 10)
-MAX_TRIES = getattr(settings, 'PREINDEX_MAX_TRIES', 3)
-
-
-def do_sync(app_index):
-    """
-    Get the app for the given index.
-    For multiprocessing can't pass a complex object hence the call here...again
-    """
-    #sanity check:
-    app = get_apps()[app_index]
-    sync_docs.sync(app, verbosity=2, temp='tmp')
-    print "preindex %s complete" % app_index
-    return app_index
 
 
 class Command(BaseCommand):
@@ -49,9 +30,9 @@ class Command(BaseCommand):
 
         start = datetime.utcnow()
         if len(args) == 0:
-            num_pool = POOL_SIZE
+            self.num_pool = POOL_SIZE
         else:
-            num_pool = int(args[0])
+            self.num_pool = int(args[0])
 
         if len(args) > 1:
             username = args[1]
@@ -60,32 +41,7 @@ class Command(BaseCommand):
 
         no_email = options['no_mail']
 
-        pool = Pool(num_pool)
-
-        apps = get_apps()
-
-        completed = set()
-        app_ids = set(range(len(apps)))
-        for app_id in sorted(app_ids.difference(completed)):
-            # keep trying all the preindexes
-            # until they all complete satisfactorily.
-            print "Trying to preindex view (%d/%d) %s" % (
-                app_id, len(apps), apps[app_id])
-            pool.spawn(do_sync, app_id)
-
-        for plugin in get_preindex_plugins():
-            print "Custom preindex for plugin %s" % (
-                plugin.app_label
-            )
-            pool.spawn(plugin.sync_design_docs, temp='tmp')
-
-        print "All apps loaded into jobs, waiting..."
-        pool.join()
-        # reraise any error
-        for greenlet in pool.greenlets:
-            greenlet.get()
-        print "All apps reported complete."
-
+        self.handle_sync()
         message = "Preindex results:\n"
         message += "\tInitiated by: %s\n" % username
 
@@ -101,3 +57,21 @@ class Command(BaseCommand):
                 [x[1] for x in settings.ADMINS],
                 fail_silently=True,
             )
+
+    def handle_sync(self):
+        # pooling is only important when there's a serious reindex
+        # (but when there is, boy is it important!)
+        pool = Pool(self.num_pool)
+        for design in get_preindex_designs():
+            pool.spawn(sync_design_doc, design, temp='tmp')
+
+        print "All apps loaded into jobs, waiting..."
+        pool.join()
+        # reraise any error
+        for greenlet in pool.greenlets:
+            try:
+                greenlet.get()
+            except Exception:
+                print "Error in greenlet", greenlet
+                print_stack()
+        print "All apps reported complete."

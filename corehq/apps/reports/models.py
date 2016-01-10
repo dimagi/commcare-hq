@@ -760,6 +760,10 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             self.delete()
             return
 
+        if self.owner.is_deleted():
+            self.delete()
+            return
+
         if self.recipients_by_language:
             for language, emails in self.recipients_by_language.items():
                 self._get_and_send_report(language, emails)

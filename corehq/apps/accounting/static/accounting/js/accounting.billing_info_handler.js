@@ -10,7 +10,7 @@ var BillingContactInfoHandler = function (valid_email_text) {
         };
         callback(data);
     };
-    self.emails = new EmailSelect2Handler('emails', valid_email_text);
+    self.emails = new EmailSelect2Handler('email_list', valid_email_text);
     self.active_accounts = new AsyncSelect2Handler('active_accounts');
 
     self.init = function () {

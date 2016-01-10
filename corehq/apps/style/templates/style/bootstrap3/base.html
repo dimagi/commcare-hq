@@ -1,4 +1,4 @@
-{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}<!DOCTYPE html>
+{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
 <html lang="{{ LANGUAGE_CODE }}">
     <head>
@@ -123,10 +123,36 @@
         {% endcompress %}
         {% endif %}
 
+        {% if request.guided_tour %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% new_static 'bootstrap-tour/build/css/bootstrap-tour.min.css' %}" />
+        {% endif %}
+
         {# Core Libraries #}
         {% compress js %}
         {% include "style/includes/bootstrap3/core_libraries.html" %}
+        {% endcompress %} 
+
+        {% if formdesigner %}
+        <script src="{% new_static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
+        {% endif %}
+
+        {% if request.use_jquery_ui %}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
         {% endcompress %}
+        {% endif %}
+
+        {% if request.use_jquery_ui_multiselect %}
+            {% compress js %}
+                <script src="{% new_static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
+                <script src="{% new_static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
+            {% endcompress %}
+        {% endif %}
+
+        <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
 
         {# Up here because if daterangepicker is called from within a form widget, #}
         {# the javascript requiring the config file is run before js-inline #}
@@ -138,12 +164,11 @@
         {% endcompress %}
         {% endif %}
 
-        {% if formdesigner %}
-        <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
-        {% endif %}
-
         {% block head %}
         {% endblock %}
+
+        {# hubspot tracking events must be defined BEFORE the hubspot js is loaded #}
+        {% block hubspot %}{% endblock %}
 
         {% include 'style/includes/analytics_all.html' %}
 
@@ -168,74 +193,76 @@
     </head>
     <body>
         {% maintenance_alert %}
-        <div id="hq-navigation"
-             class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
-            <div class="container-fluid">
-                <div class="navbar-header">
-                    <a href="{% url "homepage" %}" class="navbar-brand">
-                        <img src="{{ LOGO_URL }}" alt="{{ SITE_NAME }} Logo" />
-                    </a>
-                </div>
-                <nav class="collapse navbar-collapse" role="navigation">
-                    {% block tabs %}
-                        {% format_main_menu %}
-                    {% endblock %}
-                    <div class="btn-toolbar pull-right">
-                    {% if request.user.is_authenticated %}
-                        {% include 'style/includes/global_navigation_bar.html' %}
-                    {% else %}
-                        <a href="{% url "login" DOMAIN_TYPE %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
-                    {% endif %}
+        <div class="hq-container">
+            <div id="hq-navigation"
+                 class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <a href="{% url "homepage" %}" class="navbar-brand">
+                            <img src="{{ LOGO_URL }}" alt="{{ SITE_NAME }} Logo" />
+                        </a>
                     </div>
-                </nav>
-                {% format_subtab_menu %}
-            </div>
-        </div>
-        {% if request.project.is_snapshot %}
-            <div class="alert alert-info">
-                {% trans "This is a snapshot of " %}{{ request.project.copied_from.display_name }}
-            </div>
-        {% endif %}
-
-        {% if not no_header %}
-            <div id="unsupported-browser" class="alert alert-error alert-block alert-full" style="display: none;">
-                <p><i class="fa fa-warning-sign"></i><strong>{% trans 'CommCare HQ does not work well with Internet Explorer.'%}</strong></p>
-                <p>
-                    {% blocktrans %}
-                    We recommend
-                    <a href="https://www.google.com/chrome">Chrome</a>
-                    or <a href="http://www.mozilla.org/">Firefox</a>.
-                    {% endblocktrans %}
-                </p>
-            </div>
-            <div class="container-fluid">
-                <div class="row">
-                    <div class="col-sm-12">
-                       {% if messages %}
-                            {% for message in messages %}
-                                <div class="alert alert-margin-top fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
-                                    <a class="close" data-dismiss="alert" href="#">&times;</a>
-                                    {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
-                                </div>
-                            {% endfor %}
+                    <nav class="collapse navbar-collapse" role="navigation">
+                        {% block tabs %}
+                            {% format_main_menu %}
+                        {% endblock %}
+                        <div class="btn-toolbar pull-right">
+                        {% if request.user.is_authenticated %}
+                            {% include 'style/includes/global_navigation_bar.html' %}
+                        {% else %}
+                            <a href="{% url "login" DOMAIN_TYPE %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
                         {% endif %}
-                    </div>
+                        </div>
+                    </nav>
+                    {% format_subtab_menu %}
                 </div>
-
             </div>
-            {# todo: handle with angular #}
-{#            <div id="message-alerts" data-bind="foreach: alerts">#}
-{#                <div data-bind="attr: {'class': alert_class}">#}
-{#                    <a class="close" data-dismiss="alert" href="#">&times;</a>#}
-{#                    <span data-bind="text: message"></span>#}
-{#                </div>#}
-{#            </div>#}
-        {% endif %}
-        {% block content %}{% endblock content %}
+            {% if request.project.is_snapshot %}
+                <div class="alert alert-info">
+                    {% trans "This is a snapshot of " %}{{ request.project.copied_from.display_name }}
+                </div>
+            {% endif %}
+
+            {% if not no_header %}
+                <div id="unsupported-browser" class="alert alert-error alert-block alert-full" style="display: none;">
+                    <p><i class="fa fa-warning-sign"></i><strong>{% trans 'CommCare HQ does not work well with Internet Explorer.'%}</strong></p>
+                    <p>
+                        {% blocktrans %}
+                        We recommend
+                        <a href="https://www.google.com/chrome">Chrome</a>
+                        or <a href="http://www.mozilla.org/">Firefox</a>.
+                        {% endblocktrans %}
+                    </p>
+                </div>
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-sm-12">
+                           {% if messages %}
+                                {% for message in messages %}
+                                    <div class="alert alert-margin-top fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
+                                        <a class="close" data-dismiss="alert" href="#">&times;</a>
+                                        {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
+                {# todo: handle with angular #}
+    {#            <div id="message-alerts" data-bind="foreach: alerts">#}
+    {#                <div data-bind="attr: {'class': alert_class}">#}
+    {#                    <a class="close" data-dismiss="alert" href="#">&times;</a>#}
+    {#                    <span data-bind="text: message"></span>#}
+    {#                </div>#}
+    {#            </div>#}
+            {% endif %}
+            {% block content %}{% endblock content %}
+        </div>
         <footer>
             <nav id="hq-footer"
                  role="navigation"
-                 class="navbar navbar-inverse navbar-fixed-bottom navbar-hq-footer">
+                 class="navbar navbar-inverse navbar-hq-footer">
                 <div class="container-fluid">
                     <div class="navbar-header">
                         <a href="http://www.commcarehq.org/">
@@ -298,7 +325,9 @@
         </script>
 
         {# HQ Specific Libraries #}
+        <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
         {% compress js %}
+        <script src="{% new_static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/hq-bug-report.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/layout.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/form_tools.js' %}"></script>
@@ -322,7 +351,6 @@
                 ERROR_SAVING: '{% trans "There was an error deleting"|escapejs %}'
             }, 'btn btn-danger');
         </script>
-
         {# JavaScript Display Logic Libaries #}
 
         {# Use knockout explicitly, opt to move to angular js when possible. #}
@@ -352,21 +380,10 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_jquery_ui %}
-        {% compress js %}
-        <script type="text/javascript" src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
-
-        {% if request.use_jquery_ui_multiselect %}
-            {% compress js %}
-                <script src="{% new_static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
-                <script src="{% new_static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
-            {% endcompress %}
-        {% endif %}
-
         {% if request.use_nvd3 %}
         {% compress js %}
+        <script src="{% new_static 'nvd3/lib/d3.v2.js' %}"></script>
+        <script src="{% new_static 'nvd3/lib/fisheye.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'd3/d3.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'nvd3/nv.d3.min.js' %}"></script>
         {% endcompress %}
@@ -375,6 +392,7 @@
         {% if request.use_datatables %}
         {% compress js %}
         <script src="{% new_static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
+        <script src="{% new_static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
         <script src="{% new_static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
         {% endcompress %}
         {% endif %}
@@ -392,9 +410,14 @@
         {% endcompress %}
         {% endif %}
 
+        {% if request.guided_tour %}
         {% compress js %}
-        {% block js %}{% endblock js %}
+        <script src="{% new_static 'tour/js/tour.utils.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'bootstrap-tour/build/js/bootstrap-tour.min.js' %}"></script>
         {% endcompress %}
+        {% endif %}
+
+        {% block js %}{% endblock js %}
 
         {# Report Issue #}
         {% include 'style/includes/modal_report_issue.html' %}

@@ -1,5 +1,7 @@
 import json
 from corehq.apps.data_interfaces.models import AutomaticUpdateRuleCriteria
+from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
+from corehq.apps.style import crispy as hqcrispy
 from couchdbkit import ResourceNotFound
 from crispy_forms.bootstrap import StrictButton, InlineField, FormActions, FieldWithButtons
 from django import forms
@@ -105,36 +107,42 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
     ACTION_UPDATE_AND_CLOSE = 'UPDATE_AND_CLOSE'
 
     name = TrimmedCharField(
-        label=ugettext_lazy("Name"),
+        label=ugettext_lazy("Rule Name"),
         required=True,
     )
-    case_type = TrimmedCharField(
+    case_type = forms.ChoiceField(
         label=ugettext_lazy("Case Type"),
         required=True,
     )
     server_modified_boundary = forms.IntegerField(
+        label=ugettext_lazy("enter number of days"),
         required=True,
     )
     conditions = forms.CharField(
         required=True,
     )
     action = forms.ChoiceField(
-        label=ugettext_lazy("When all conditions match"),
+        label=ugettext_lazy("Set a Case Property"),
         choices=(
-            (ACTION_CLOSE,
-                ugettext_lazy("close the case")),
             (ACTION_UPDATE_AND_CLOSE,
-                ugettext_lazy("set a case property and then close the case")),
+                ugettext_lazy("Yes")),
+            (ACTION_CLOSE,
+                ugettext_lazy("No")),
         ),
     )
     update_property_name = TrimmedCharField(
-        label=ugettext_lazy("Property"),
         required=False,
     )
     update_property_value = TrimmedCharField(
-        label=ugettext_lazy("Value"),
         required=False,
     )
+
+    def remove_quotes(self, value):
+        if isinstance(value, basestring) and len(value) >= 2:
+            for q in ("'", '"'):
+                if value.startswith(q) and value.endswith(q):
+                    return value[1:-1]
+        return value
 
     @property
     def current_values(self):
@@ -147,8 +155,31 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
             values[field_name] = value
         return values
 
+    def set_case_type_choices(self, initial):
+        case_types = [''] + get_case_types_for_domain(self.domain)
+        if initial and initial not in case_types:
+            # Include the deleted case type in the list of choices so that
+            # we always allow proper display and edit of rules
+            case_types.append(initial)
+        case_types.sort()
+        self.fields['case_type'].choices = (
+            (case_type, case_type) for case_type in case_types
+        )
+
     def __init__(self, *args, **kwargs):
+        if 'domain' not in kwargs:
+            raise Exception("Expected domain in kwargs")
+        self.domain = kwargs.pop('domain')
         super(AddAutomaticCaseUpdateRuleForm, self).__init__(*args, **kwargs)
+
+        # We can't set these fields to be required because they are displayed
+        # conditionally and we'll confuse django validation if we make them
+        # required. However, we should show the asterisk for consistency, since
+        # when they are displayed they are required.
+        self.fields['update_property_name'].label = _("Property") + '<span class="asteriskField">*</span>'
+        self.fields['update_property_value'].label = _("Value") + '<span class="asteriskField">*</span>'
+
+        self.set_case_type_choices(self.initial.get('case_type'))
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-2'
@@ -166,18 +197,28 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                     'case_type',
                     ng_model='case_type',
                 ),
-            ),
-            Fieldset(
-                _("Conditions"),
-                Field(
-                    'conditions',
-                    type='hidden',
-                    ng_value='conditions',
+                hqcrispy.B3MultiField(
+                    _("Close Case") + '<span class="asteriskField">*</span>',
+                    Div(
+                        hqcrispy.MultiInlineField(
+                            'server_modified_boundary',
+                            ng_model='server_modified_boundary',
+                        ),
+                        css_class='col-sm-6',
+                    ),
+                    Div(
+                        HTML('<label class="control-label">%s</label>' %
+                             _('days after the case was last modified.')),
+                        css_class='col-sm-6',
+                    ),
+                    help_bubble_text=_("This will close the case if it has been "
+                                       "more than the chosen number of days since "
+                                       "the case was last modified. Cases are "
+                                       "checked against this rule weekly."),
+                    css_id='server_modified_boundary_multifield',
+                    label_class=self.helper.label_class,
+                    field_class='col-sm-8 col-md-6',
                 ),
-                Div(ng_include='', src="'conditions.tpl'"),
-            ),
-            Fieldset(
-                _("Action"),
                 Field(
                     'action',
                     ng_model='action',
@@ -186,6 +227,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                     Field(
                         'update_property_name',
                         ng_model='update_property_name',
+                        css_class='case-property-typeahead',
                     ),
                     Field(
                         'update_property_value',
@@ -193,6 +235,15 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                     ),
                     ng_show='showUpdateProperty()',
                 ),
+            ),
+            Fieldset(
+                _("Filter Cases to Close (Optional)"),
+                Field(
+                    'conditions',
+                    type='hidden',
+                    ng_value='conditions',
+                ),
+                Div(ng_include='', src="'conditions.tpl'"),
             ),
             FormActions(
                 StrictButton(
@@ -206,7 +257,8 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
     def clean_server_modified_boundary(self):
         value = self.cleaned_data.get('server_modified_boundary')
         if not isinstance(value, int) or value < 30:
-            raise ValidationError(_("Please enter a whole number greater than 30"))
+            raise ValidationError(_("Please enter a whole number greater than "
+                                    "or equal to 30."))
         return value
 
     def clean_conditions(self):
@@ -232,22 +284,25 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
             if property_match_type not in valid_match_types:
                 raise ValidationError(_("Invalid match type given"))
 
-            property_value = obj.get('property_value')
-            if not isinstance(property_value, basestring):
-                raise ValidationError(_("Please specify a property value."))
+            property_value = None
+            if property_match_type != AutomaticUpdateRuleCriteria.MATCH_HAS_VALUE:
+                property_value = obj.get('property_value')
+                if not isinstance(property_value, basestring):
+                    raise ValidationError(_("Please specify a property value."))
 
-            property_value = property_value.strip()
-            if not property_value:
-                raise ValidationError(_("Please specify a property value."))
+                property_value = property_value.strip()
+                property_value = self.remove_quotes(property_value)
+                if not property_value:
+                    raise ValidationError(_("Please specify a property value."))
 
-            if property_match_type == AutomaticUpdateRuleCriteria.MATCH_DAYS_SINCE:
-                try:
-                    property_value = int(property_value)
-                except:
-                    raise ValidationError(_("Please enter a number of days that is a number."))
+                if property_match_type == AutomaticUpdateRuleCriteria.MATCH_DAYS_SINCE:
+                    try:
+                        property_value = int(property_value)
+                    except:
+                        raise ValidationError(_("Please enter a number of days that is a number."))
 
-                if property_value <= 0:
-                    raise ValidationError(_("Please enter a number of days that is positive."))
+                    if property_value <= 0:
+                        raise ValidationError(_("Please enter a number of days that is positive."))
 
             result.append(dict(
                 property_name=property_name,
@@ -271,6 +326,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         value = None
         if self._updates_case():
             value = self.cleaned_data.get('update_property_value')
+            value = self.remove_quotes(value)
             if not value:
                 raise ValidationError(_("This field is required"))
         return value

@@ -1,5 +1,8 @@
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout
 from django import forms
 from django.utils.translation import ugettext_noop
+
 
 from corehq.apps.programs.models import Program
 from corehq.apps.products.models import Product
@@ -22,7 +25,7 @@ class CurrencyField(forms.DecimalField):
 
 class ProductForm(forms.Form):
     name = forms.CharField(max_length=100)
-    code = forms.CharField(label=ugettext_noop("Product ID"), max_length=10, required=False)
+    code = forms.CharField(label=ugettext_noop("Product ID"), max_length=100, required=False)
     description = forms.CharField(max_length=500, required=False, widget=forms.Textarea)
     unit = forms.CharField(label=ugettext_noop("Units"), max_length=100, required=False)
     program_id = forms.ChoiceField(label=ugettext_noop("Program"), choices=(), required=True)
@@ -35,6 +38,10 @@ class ProductForm(forms.Form):
         kwargs['initial']['code'] = self.product.code
 
         super(ProductForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
 
         programs = Program.by_domain(self.product.domain, wrap=False)
         self.fields['program_id'].choices = tuple((prog['_id'], prog['name']) for prog in programs)
@@ -42,9 +49,16 @@ class ProductForm(forms.Form):
         # make sure to select default program if
         # this is a new product
         if not product._id:
-            self.initial['program_id'] = Program.default_for_domain(
-                self.product.domain
-            )._id
+            self.initial['program_id'] = Program.default_for_domain(self.product.domain)._id
+
+        self.helper.layout = Layout(
+            'name',
+            'code',
+            'description',
+            'unit',
+            'program_id',
+            'cost'
+        )
 
     def clean_name(self):
         name = self.cleaned_data['name']

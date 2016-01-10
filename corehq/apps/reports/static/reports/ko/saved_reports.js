@@ -60,6 +60,8 @@ var ReportConfig = function (data) {
         } else if (date_range === 'range') {
             start_date = self.start_date();
             end_date = self.end_date();
+        } else if (date_range === '') {
+            return '';
         } else {
             end_date = today;
 
@@ -70,9 +72,6 @@ var ReportConfig = function (data) {
             } else if (date_range === 'lastn') {
                 days = self.days();
             } else {
-                if (self.report_slug() === 'case_list') {
-                    return '';
-                }
                 throw "Invalid date range.";
             }
 
@@ -206,7 +205,7 @@ var ReportConfigsViewModel = function (options) {
     self.setConfigBeingEdited = function (config) {
 
         var filters = {},
-            excludeFilters = ['startdate', 'enddate', 'format'];
+            excludeFilters = ['startdate', 'enddate', 'format', 'date'];
         if (self.filterForm) {
             self.filterForm.find(":input").each(function () {
                 var el = $(this),
@@ -302,30 +301,20 @@ var ReportConfigsViewModel = function (options) {
 };
 
 $.fn.reportConfigEditor = function (options) {
-    this.each(function(i, v) {
-        options.filterForm = options.filterForm || $(v);
-        var viewModel = new ReportConfigsViewModel(options);
-
-        ko.applyBindings(viewModel, $(this).get(i));
-
-        viewModel.setConfigBeingViewed(new ReportConfig(options.defaultItem));
-    });
+    options.filterForm = options.filterForm || $(v);
+    var viewModel = new ReportConfigsViewModel(options);
+    $(this).koApplyBindings(viewModel);
+    viewModel.setConfigBeingViewed(new ReportConfig(options.defaultItem));
 };
 
 $.fn.reportUserConfigurableConfigEditor = function (options) {
-    this.each(function(i, v) {
-        options.filterForm = options.filterForm || $(v);
-        var viewModel = new ReportConfigsViewModel(options);
-
-        ko.applyBindings(viewModel, $(this).get(i));
-
-        viewModel.setUserConfigurableConfigBeingViewed(new ReportConfig(options.defaultItem));
-    });
+    options.filterForm = options.filterForm || $(v);
+    var viewModel = new ReportConfigsViewModel(options);
+    $(this).koApplyBindings(viewModel);
+    viewModel.setUserConfigurableConfigBeingViewed(new ReportConfig(options.defaultItem));
 };
 
 $.fn.reportConfigList = function (options) {
-    this.each(function(i, v) {
-        var viewModel = new ReportConfigsViewModel(options);
-        ko.applyBindings(viewModel, $(this).get(i));
-    });
+    var viewModel = new ReportConfigsViewModel(options);
+    $(this).koApplyBindings(viewModel);
 };

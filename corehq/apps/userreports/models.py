@@ -1,6 +1,8 @@
 from copy import copy, deepcopy
 import json
-from corehq.db import UCR_ENGINE_ID
+
+from corehq.apps.userreports.sql import IndicatorSqlAdapter
+from corehq.sql_db.connections import UCR_ENGINE_ID
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -78,6 +80,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     named_expressions = DictProperty()
     named_filters = DictProperty()
     meta = SchemaProperty(DataSourceMeta)
+    is_deactivated = BooleanProperty(default=False)
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
@@ -265,6 +268,11 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     def all(cls):
         for result in iter_docs(cls.get_db(), cls.all_ids()):
             yield cls.wrap(result)
+
+    def deactivate(self):
+        self.is_deactivated = True
+        self.save()
+        IndicatorSqlAdapter(self).drop_table()
 
 
 class ReportMeta(DocumentSchema):

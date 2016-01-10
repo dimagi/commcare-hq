@@ -55,8 +55,14 @@ class ConstantExpressionTest(SimpleTestCase):
             self.assertEqual(valid_constant, getter({}))
             self.assertEqual(valid_constant, getter({'some': 'random stuff'}))
 
+    def test_constant_date_conversion(self):
+        self.assertEqual(date(2015, 2, 4), ExpressionFactory.from_spec('2015-02-04')({}))
+
+    def test_constant_datetime_conversion(self):
+        self.assertEqual(datetime(2015, 2, 4, 11, 5, 24), ExpressionFactory.from_spec('2015-02-04T11:05:24Z')({}))
+
     def test_constant_auto_detection_invalid_types(self):
-        for invalid_constant in ([], {}):
+        for invalid_constant in ({}):
             with self.assertRaises(BadSpecError):
                 ExpressionFactory.from_spec(invalid_constant)
 

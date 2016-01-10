@@ -2,7 +2,6 @@
 from distutils.version import LooseVersion
 from itertools import chain
 import tempfile
-from mock import Mock
 import os
 import logging
 import hashlib
@@ -17,7 +16,7 @@ from copy import deepcopy
 from urllib2 import urlopen
 from urlparse import urljoin
 
-from couchdbkit import ResourceConflict, MultipleResultsFound
+from couchdbkit import MultipleResultsFound
 import itertools
 from lxml import etree
 from django.core.cache import cache
@@ -27,7 +26,6 @@ from django.utils.translation import override, ugettext as _, ugettext
 from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
-from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -45,7 +43,10 @@ from corehq.apps.accounting.utils import domain_has_privilege
 
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
-from corehq.apps.app_manager.xpath import dot_interpolate, LocationXpath
+from corehq.apps.app_manager.xpath import (
+    interpolate_xpath,
+    LocationXpath,
+)
 from corehq.apps.builds import get_default_build_spec
 from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.cache import cache_core
@@ -68,7 +69,11 @@ from corehq.apps.domain.models import cached_property, Domain
 from corehq.apps.app_manager import current_builds, app_strings, remote_app, \
     id_strings, commcare_settings
 from corehq.apps.app_manager.suite_xml import xml_models as suite_models
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_latest_build_doc,
+    get_latest_released_app_doc,
+)
 from corehq.apps.app_manager.util import (
     split_path,
     save_xform,
@@ -77,6 +82,7 @@ from corehq.apps.app_manager.util import (
     actions_use_usercase,
     update_unique_ids,
     app_callout_templates,
+    use_app_aware_sync,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -90,7 +96,6 @@ from .exceptions import (
     LocationXpathValidationError,
     ModuleNotFoundException,
     ModuleIdMissingException,
-    NoMatchingFilterException,
     RearrangeError,
     SuiteValidationError,
     VersioningError,
@@ -3498,7 +3503,11 @@ class ReportModule(ModuleBase):
         from .suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
         return ReportModuleSuiteHelper(self).get_custom_entries()
 
-    def get_menus(self):
+    def get_menus(self, supports_module_filter=False):
+        kwargs = {}
+        if supports_module_filter:
+            kwargs['relevant'] = interpolate_xpath(self.module_filter)
+
         menu = suite_models.LocalizedMenu(
             id=id_strings.menu_id(self),
             menu_locale_id=id_strings.module_locale(self),
@@ -3506,6 +3515,7 @@ class ReportModule(ModuleBase):
             media_audio=bool(len(self.all_audio_paths())),
             image_locale_id=id_strings.module_icon_locale(self),
             audio_locale_id=id_strings.module_audio_locale(self),
+            **kwargs
         )
         menu.commands.extend([
             suite_models.Command(id=id_strings.report_command(config.uuid))
@@ -3814,6 +3824,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     Abstract base class for Application and RemoteApp.
     Contains methods for generating the various files and zipping them into CommCare.jar
 
+    There are several flavors of Applications:
+        Application - The current state of the application has copy_of==None
+        SavedAppBuild - Whenever the app is built, a copy is created, and
+            copy_of will be set to the original application's id.
+        Released builds are SavedAppBuilds with is_released==True.  These have
+            been starred on the releases page.
     """
 
     recipients = StringProperty(default="")
@@ -3922,15 +3938,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         return self
 
-    @classmethod
-    def get_latest_build(cls, domain, app_id):
-        build = cls.view('app_manager/saved_app',
-                                     startkey=[domain, app_id, {}],
-                                     endkey=[domain, app_id],
-                                     descending=True,
-                                     limit=1).one()
-        return build if build else None
-
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)
 
@@ -3949,33 +3956,14 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 descending=True,
             ).first()
 
+    @memoized
     def get_latest_saved(self):
         """
         This looks really similar to get_latest_app, not sure why tim added
         """
-        if not hasattr(self, '_latest_saved'):
-            released = self.__class__.view('app_manager/applications',
-                startkey=['^ReleasedApplications', self.domain, self._id, {}],
-                endkey=['^ReleasedApplications', self.domain, self._id],
-                limit=1,
-                descending=True,
-                include_docs=True
-            )
-            if len(released) > 0:
-                self._latest_saved = released.all()[0]
-            else:
-                saved = self.__class__.view('app_manager/saved_app',
-                    startkey=[self.domain, self._id, {}],
-                    endkey=[self.domain, self._id],
-                    descending=True,
-                    limit=1,
-                    include_docs=True
-                )
-                if len(saved) > 0:
-                    self._latest_saved = saved.all()[0]
-                else:
-                    self._latest_saved = None  # do not return this app!
-        return self._latest_saved
+        doc = (get_latest_released_app_doc(self.domain, self._id) or
+               get_latest_build_doc(self.domain, self._id))
+        return self.__class__.wrap(doc) if doc else None
 
     def set_admin_password(self, raw_password):
         salt = os.urandom(5).encode('hex')
@@ -4043,7 +4031,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @property
     def url_base(self):
-        return get_url_base()
+        custom_base_url = getattr(self, 'custom_base_url', None)
+        return custom_base_url or get_url_base()
 
     @absolute_url_property
     def post_url(self):
@@ -4059,20 +4048,22 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @absolute_url_property
     def ota_restore_url(self):
-        return reverse('corehq.apps.ota.views.restore', args=[self.domain])
+        if use_app_aware_sync(self):
+            return reverse('app_aware_restore', args=[self.domain, self._id])
+        return reverse('ota_restore', args=[self.domain])
 
     @absolute_url_property
     def form_record_url(self):
         return '/a/%s/api/custom/pact_formdata/v1/' % self.domain
 
     @absolute_url_property
-    def hq_profile_url(self):
+    def profile_url(self):
         return "%s?latest=true" % (
             reverse('download_profile', args=[self.domain, self._id])
         )
 
     @absolute_url_property
-    def hq_media_profile_url(self):
+    def media_profile_url(self):
         return "%s?latest=true" % (
             reverse('download_media_profile', args=[self.domain, self._id])
         )
@@ -4282,7 +4273,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             if settings.BITLY_LOGIN:
                 view_name = 'corehq.apps.app_manager.views.{}'.format(url_type)
-                long_url = "{}{}".format(get_url_base(), reverse(view_name, args=[self.domain, self._id]))
+                long_url = "{}{}".format(self.url_base, reverse(view_name, args=[self.domain, self._id]))
                 shortened_url = bitly.shorten(long_url)
             else:
                 shortened_url = None
@@ -4432,6 +4423,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     # ended up not using a schema because properties is a reserved word
     profile = DictProperty()
     use_custom_suite = BooleanProperty(default=False)
+    custom_base_url = StringProperty()
     cloudcare_enabled = BooleanProperty(default=False)
     translation_strategy = StringProperty(default='select-known',
                                           choices=app_strings.CHOICES.keys())
@@ -4494,18 +4486,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         app.build_broken = False
 
         return app
-
-    @property
-    def profile_url(self):
-        return self.hq_profile_url
-
-    @property
-    def media_profile_url(self):
-        return self.hq_media_profile_url
-
-    @property
-    def url_base(self):
-        return get_url_base()
 
     @absolute_url_property
     def suite_url(self):

@@ -1,6 +1,8 @@
 import copy
 from datetime import datetime
 import json
+from corehq.apps.style.decorators import use_bootstrap3, use_datatables, \
+    use_nvd3, use_jquery_ui
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
@@ -534,7 +536,14 @@ FACET_MAPPING = [
 
 class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
-    base_template = "hqadmin/faceted_report.html"
+    base_template = "hqadmin/bootstrap3/faceted_report.html"
+    report_template_path = "reports/async/bootstrap3/tabular.html"
+
+    @use_jquery_ui
+    @use_bootstrap3
+    @use_datatables
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        self.is_bootstrap3 = True
 
 
 class AdminFacetedReport(AdminReport, ElasticTabularReport):
@@ -637,6 +646,10 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     facet_title = ugettext_noop("Project Facets")
     search_for = ugettext_noop("projects...")
     base_template = "hqadmin/domain_faceted_report.html"
+
+    @use_nvd3
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        super(AdminDomainStatsReport, self).set_bootstrap3_status(request, *args, **kwargs)
 
     @property
     def template_context(self):

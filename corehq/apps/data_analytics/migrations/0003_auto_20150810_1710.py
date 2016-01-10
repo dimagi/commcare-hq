@@ -3,6 +3,9 @@ from __future__ import unicode_literals
 
 from django.db import models, migrations
 
+from corehq.sql_db.operations import HqRunPython
+
+
 def fill_in_user_type(apps, schema_editor):
     MALTRow = apps.get_model("data_analytics", "MALTRow")
     MALTRow.objects.filter(is_web_user=True).update(user_type="WebUser")
@@ -21,5 +24,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-            migrations.RunPython(fill_in_user_type, reverse_fill_in),
+            HqRunPython(fill_in_user_type, reverse_fill_in),
     ]

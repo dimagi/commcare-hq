@@ -3,15 +3,19 @@ from casexml.apps.stock.models import StockTransaction
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.reminders.util import get_verified_number_for_recipient
+from corehq.apps.reminders.util import get_verified_number_for_recipient, get_preferred_phone_number_for_recipient
 from corehq.apps.sms.api import send_sms_to_verified_number
+from corehq.apps.users.models import CommCareUser
 from custom.ewsghana.alerts import COMPLETE_REPORT, INCOMPLETE_REPORT, \
     STOCKOUTS_MESSAGE, LOW_SUPPLY_MESSAGE, OVERSTOCKED_MESSAGE, RECEIPT_MESSAGE
-from custom.ewsghana.utils import ProductsReportHelper
+from custom.ewsghana.utils import ProductsReportHelper, send_sms
 from django.utils.translation import ugettext as _
 
 
 # Checking if report was complete or not
+from dimagi.utils.couch.database import iter_docs
+
+
 def report_completion_check(user):
     sp_id = SQLLocation.objects.get(domain=user.domain, location_id=user.location.location_id).supply_point_id
     now = datetime.datetime.utcnow()
@@ -90,17 +94,18 @@ def stock_alerts(transactions, verified_number):
     if super_message:
         stripped_message = super_message.strip().strip(';')
         super_message = _('Dear %s, %s is experiencing the following problems: ') + stripped_message
-        send_message_to_admins(user, super_message.rstrip())
+        send_message_to_admins(user, sql_location, super_message.rstrip())
     send_sms_to_verified_number(verified_number, message.rstrip())
 
 
-def send_message_to_admins(user, message):
-    users = get_users_by_location_id(user.domain, user.location.get_id)
-    in_charge_users = [
-        u
-        for u in users
-        if get_verified_number_for_recipient(u) and "In Charge" in u.user_data.get('role', [])
-    ]
+def send_message_to_admins(user, sql_location, message):
+    in_charge_users = map(CommCareUser.wrap, iter_docs(
+        CommCareUser.get_db(),
+        [in_charge.user_id for in_charge in user.sql_location.facilityincharge_set.all()]
+    ))
     for in_charge_user in in_charge_users:
-        send_sms_to_verified_number(get_verified_number_for_recipient(in_charge_user),
-                                    message % (in_charge_user.full_name, in_charge_user.location.name))
+        phone_number = get_preferred_phone_number_for_recipient(in_charge_user)
+        if not phone_number:
+            continue
+        send_sms(sql_location.domain, in_charge_user, phone_number,
+                 message % (in_charge_user.full_name, sql_location.name))

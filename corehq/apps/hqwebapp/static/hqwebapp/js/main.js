@@ -46,8 +46,8 @@ var SaveButton = {
             $retry: $('<span/>').text(SaveButton.message.RETRY).click(function () {
                 button.fire('save');
             }).addClass('btn btn-success'),
-            $saving: $('<span/>').text(SaveButton.message.SAVING).prepend('<i class="icon-refresh icon-spin"></i> ').addClass('btn disabled'),
-            $saved: $('<span/>').text(SaveButton.message.SAVED).addClass('btn disabled'),
+            $saving: $('<span/>').text(SaveButton.message.SAVING).prepend('<i class="icon-refresh icon-spin"></i> ').addClass('btn btn-default disabled'),
+            $saved: $('<span/>').text(SaveButton.message.SAVED).addClass('btn btn-default disabled'),
             ui: $('<div/>').addClass('pull-right'),
             setStateWhenReady: function (state) {
                 if (this.state === 'saving') {
@@ -196,11 +196,15 @@ var COMMCAREHQ = (function () {
         makeHqHelp: function (opts, wrap) {
             wrap = wrap === undefined ? true : wrap;
             var iconClass = "icon-question-sign";
-            if (opts.bootstrap3){
+            var containerStyle = '';
+
+            if (opts.bootstrap3) {
                 iconClass = "fa fa-question-circle";
+                containerStyle = 'height: 0; width: auto;';
             }
+
             var el = $(
-                '<div class="hq-help">' + 
+                '<div style="' + containerStyle + '" class="hq-help">' +
                     '<a href="#">' +
                         '<i class="' + iconClass + '"></i></a></div>'
                 ),

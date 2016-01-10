@@ -7,9 +7,7 @@ from django.template.loader import render_to_string
 import pytz
 import warnings
 from corehq.apps.programs.models import Program
-from corehq.apps.reports import util
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.filters.users import get_user_toggle
 from corehq.apps.reports.models import HQUserType
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
@@ -87,24 +85,6 @@ class ReportSelectField(ReportField):
         )
 
 
-class FilterUsersField(ReportField):
-    # TODO: move all this to UserTypeFilter
-    slug = "ufilter"
-    template = "reports/dont_use_fields/filter_users.html"
-    always_show_filter = False
-    can_be_empty = False
-
-    def update_context(self):
-        toggle, show_filter = self.get_user_filter(self.request)
-        self.context['show_user_filter'] = show_filter
-        self.context['toggle_users'] = toggle
-        self.context['can_be_empty'] = self.can_be_empty
-
-    @classmethod
-    def get_user_filter(cls, request):
-        return get_user_toggle(request)
-
-
 class SelectMobileWorkerMixin(object):
     slug = "select_mw"
     name = ugettext_noop("Select Mobile Worker")
@@ -127,16 +107,6 @@ class BooleanField(ReportField):
         self.context['label'] = self.label
         self.context[self.slug] = self.request.GET.get(self.slug, False)
         self.context['checked'] = self.request.GET.get(self.slug, False)
-
-
-class StrongFilterUsersField(FilterUsersField):
-    """
-        Version of the FilterUsersField that always actually uses and shows this filter
-        When using this field:
-            if using ProjectReportParametersMixin make sure filter_users_field_class is set to this
-    """
-    always_show_filter = True
-    can_be_empty = True
 
 
 class UserOrGroupField(ReportSelectField):

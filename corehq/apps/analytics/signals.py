@@ -16,6 +16,7 @@ from corehq.apps.accounting.models import (
     ProBonoStatus,
     SoftwarePlanEdition,
     Subscription,
+    SubscriptionType,
 )
 from corehq.apps.accounting.signals import subscription_upgrade_or_downgrade
 from corehq.apps.domain.signals import commcare_domain_post_save
@@ -28,7 +29,7 @@ def user_save_callback(sender, **kwargs):
     if couch_user and couch_user.is_web_user():
         properties = {}
         properties.update(_get_subscription_properties_by_user(couch_user))
-        properties.update(_get_user_domain_memberships(couch_user))
+        properties.update(_get_domain_membership_properties(couch_user))
         identify.delay(couch_user.username, properties)
         update_hubspot_properties(couch_user, properties)
 
@@ -49,38 +50,66 @@ def update_subscription_properties_by_user(couch_user):
 
 def _get_subscription_properties_by_user(couch_user):
 
+    def _is_paying_subscription(subscription):
+        NON_PAYING_SERVICE_TYPES = [
+            SubscriptionType.TRIAL,
+            SubscriptionType.EXTENDED_TRIAL,
+            SubscriptionType.SANDBOX,
+            SubscriptionType.INTERNAL,
+        ]
+
+        NON_PAYING_PRO_BONO_STATUSES = [
+            ProBonoStatus.YES,
+            ProBonoStatus.DISCOUNTED,
+        ]
+        paying = subscription.service_type not in NON_PAYING_SERVICE_TYPES
+        paying = paying and subscription.pro_bono_status not in NON_PAYING_PRO_BONO_STATUSES
+        return paying
+
     # Note: using "yes" and "no" instead of True and False because spec calls
     # for using these values. (True is just converted to "True" in KISSmetrics)
-    properties = {
-        SoftwarePlanEdition.COMMUNITY: "no",
-        SoftwarePlanEdition.STANDARD: "no",
-        SoftwarePlanEdition.PRO: "no",
-        SoftwarePlanEdition.ADVANCED: "no",
-        SoftwarePlanEdition.ENTERPRISE: "no",
-        "Pro Bono": "no",
-    }
-
+    all_subscriptions = []
+    paying_subscribed_editions = []
+    subscribed_editions = []
     for domain_name in couch_user.domains:
         plan_version, subscription = Subscription.get_subscribed_plan_by_domain(domain_name)
+        subscribed_editions.append(plan_version.plan.edition)
         if subscription is not None:
-            if subscription.pro_bono_status == ProBonoStatus.YES:
-                properties["Pro Bono"] = "yes"
-        edition = plan_version.plan.edition
-        if edition in properties:
-            properties[edition] = "yes"
+            all_subscriptions.append(subscription)
+        if subscription is not None and _is_paying_subscription(subscription):
+            paying_subscribed_editions.append(plan_version.plan.edition)
+
+    def _is_one_of_editions(edition):
+        return 'yes' if edition in subscribed_editions else 'no'
+
+    def _is_a_pro_bono_status(status):
+        return 'yes' if status in [s.pro_bono_status for s in all_subscriptions] else 'no'
+
+    def _is_on_extended_trial():
+        service_types = [s.service_type for s in all_subscriptions]
+        return 'yes' if SubscriptionType.EXTENDED_TRIAL in service_types else 'no'
+
+    def _max_edition():
+        for edition in paying_subscribed_editions:
+            assert edition in [e[0] for e in SoftwarePlanEdition.CHOICES]
+
+        return max(paying_subscribed_editions) if paying_subscribed_editions else ''
+
     return {
-        'is_on_community_plan': properties[SoftwarePlanEdition.COMMUNITY],
-        'is_on_standard_plan': properties[SoftwarePlanEdition.STANDARD],
-        'is_on_pro_plan': properties[SoftwarePlanEdition.PRO],
-        'is_on_advanced_plan': properties[SoftwarePlanEdition.ADVANCED],
-        'is_on_enterprise_plan': properties[SoftwarePlanEdition.ENTERPRISE],
-        'is_on_pro_bono_or_discounted_plan': properties["Pro Bono"],
+        'is_on_community_plan': _is_one_of_editions(SoftwarePlanEdition.COMMUNITY),
+        'is_on_standard_plan': _is_one_of_editions(SoftwarePlanEdition.STANDARD),
+        'is_on_pro_plan': _is_one_of_editions(SoftwarePlanEdition.PRO),
+        'is_on_pro_bono_plan': _is_a_pro_bono_status(ProBonoStatus.YES),
+        'is_on_discounted_plan': _is_a_pro_bono_status(ProBonoStatus.DISCOUNTED),
+        'is_on_extended_trial_plan': _is_on_extended_trial(),
+        'max_edition_of_paying_plan': _max_edition()
     }
 
 
-def _get_user_domain_memberships(couch_user):
+def _get_domain_membership_properties(couch_user):
     return {
-        "number_of_project_spaces": len(couch_user.domains)
+        "number_of_project_spaces": len(couch_user.domains),
+        "project_spaces_list": '\n'.join(couch_user.domains),
     }
 
 
@@ -103,4 +132,4 @@ def track_user_login(sender, request, user, **kwargs):
             return
 
         meta = get_meta(request)
-        track_user_sign_in_on_hubspot.delay(couch_user, request.COOKIES, meta)
+        track_user_sign_in_on_hubspot.delay(couch_user, request.COOKIES, meta, request.path)

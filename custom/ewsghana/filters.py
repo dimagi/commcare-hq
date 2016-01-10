@@ -143,6 +143,7 @@ class EWSLocationFilter(EWSRestrictionLocationFilter):
 
     @property
     def filter_context(self):
+        from custom.ewsghana import ROOT_SITE_CODE
         api_root = reverse('api_dispatch_list',
                            params={'show_administrative': False},
                            kwargs={'domain': self.domain,
@@ -153,10 +154,10 @@ class EWSLocationFilter(EWSRestrictionLocationFilter):
         if not loc_id:
             domain_membership = user.get_domain_membership(self.domain)
             if not domain_membership or not domain_membership.location_id:
-                loc_id = SQLLocation.objects.filter(
+                loc_id = SQLLocation.objects.get(
                     domain=self.domain,
-                    location_type__name='country'
-                ).first().location_id
+                    site_code=ROOT_SITE_CODE
+                ).location_id
             else:
                 loc_id = domain_membership.location_id
 

@@ -32,6 +32,7 @@
         </fieldset>
     </div>
     <form class="form form-horizontal" name="user_role" method="post">
+        {% csrf_token %}
         <input type="hidden" name="form_type" value="update-user" />
         <fieldset>
             <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Change {{ friendly_name }}'s Role{% endblocktrans %}</legend>
@@ -45,6 +46,7 @@
 
     {% if update_permissions %}
         <form class="form form-horizontal" name="user_permissions" method="post">
+            {% csrf_token %}
             <input type="hidden" name="form_type" value="update-user-permissions" />
             <fieldset>
 
@@ -60,6 +62,7 @@
 
     {% if update_form %}
         <form id="commtrack_form" class="form form-horizontal" name="" method="post">
+            {% csrf_token %}
             <input type="hidden" name="form_type" value="commtrack" />
             <fieldset>
                 {% if commtrack_enabled %}

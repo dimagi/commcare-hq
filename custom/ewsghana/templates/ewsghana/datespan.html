@@ -1,4 +1,4 @@
-{% extends 'reports/filters/base.html' %}
+{% extends 'reports/filters/bootstrap2/base.html' %}
 {% load hq_shared_tags %}
 {% block filter_content %}
 <div id="0">
@@ -126,7 +126,7 @@
         }
     });
 
-    ko.applyBindings(dateSpanModel, $('#0').get(0));
+    $('#0').koApplyBindings(dateSpanModel);
     $('#date_span_type').select2();
     $('#date_span_first').select2();
     $('#date_span_second').select2();

@@ -17,7 +17,7 @@ from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import add_msg_tags, send_sms_to_verified_number, send_sms as core_send_sms
 from corehq.apps.sms.models import SMSLog, OUTGOING
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, UserRole
 from custom.ewsghana.models import EWSGhanaConfig, EWSExtension
 from custom.ewsghana.reminders.const import DAYS_UNTIL_LATE
 
@@ -212,7 +212,7 @@ def bootstrap_user(username=TEST_USER, domain=TEST_DOMAIN,
         domain,
         username,
         password,
-        phone_numbers=[TEST_NUMBER],
+        phone_numbers=[phone_number],
         user_data=user_data,
         first_name=first_name,
         last_name=last_name
@@ -335,13 +335,23 @@ def can_receive_email(user, verified_number):
 
 @quickcache(['domain'])
 def get_country_id(domain):
-    return SQLLocation.objects.filter(domain=domain, location_type__name='country')[0].location_id
+    from custom.ewsghana import ROOT_SITE_CODE
+    return SQLLocation.objects.get(domain=domain, site_code=ROOT_SITE_CODE).location_id
 
 
 def has_input_stock_permissions(couch_user, location, domain):
-    domain_membership = couch_user.get_domain_membership(domain)
     if not couch_user.is_web_user():
         return False
+
+    domain_membership = couch_user.get_domain_membership(domain)
+
+    if not domain_membership:
+        return False
+
+    administrator_role_id = UserRole.by_domain_and_name(domain, 'Administrator')[0].get_id
+
+    if domain_membership.role_id == administrator_role_id:
+        return True
 
     try:
         location_id = EWSExtension.objects.get(user_id=couch_user.get_id, domain=domain).location_id
@@ -350,7 +360,7 @@ def has_input_stock_permissions(couch_user, location, domain):
     except EWSExtension.DoesNotExist:
         pass
 
-    if not domain_membership or not domain_membership.location_id:
+    if not domain_membership.location_id:
         return False
 
     try:

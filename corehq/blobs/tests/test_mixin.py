@@ -1,18 +1,18 @@
 from __future__ import unicode_literals
+import os
+import uuid
+from base64 import b64encode
 from hashlib import md5
-from itertools import count
+from os.path import join
 from unittest import TestCase
 from StringIO import StringIO
 
 import corehq.blobs.mixin as mod
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
-from corehq.util.test_utils import generate_cases
 from dimagi.ext.couchdbkit import Document
 
 
-class TestBlobMixin(TestCase):
-
-    keys = (md5(str(k)).hexdigest() for k in count())
+class BaseTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -23,13 +23,13 @@ class TestBlobMixin(TestCase):
         cls.db.close()
 
     def make_doc(self, type_):
-        return type_({
-            "_id": next(self.keys),
-            "_rev": next(self.keys),
-        })
+        return type_({"_id": uuid.uuid4().hex})
 
     def setUp(self):
         self.obj = self.make_doc(FakeCouchDocument)
+
+
+class TestBlobMixin(BaseTestCase):
 
     def test_put_attachment_without_name(self):
         with self.assertRaises(mod.InvalidAttachment):
@@ -52,6 +52,7 @@ class TestBlobMixin(TestCase):
         content.name = "test.1"
         self.obj.put_attachment(content)
         self.assertEqual(self.obj.fetch_attachment(content.name), "content")
+        self.assertTrue(self.obj.saved)
 
     def test_fetch_attachment_with_unicode(self):
         name = "test.1"
@@ -70,7 +71,9 @@ class TestBlobMixin(TestCase):
         name = "test.\u4500"
         content = "\u4500 is not ascii"
         self.obj.put_attachment(content, name)
+        self.obj.saved = False
         self.obj.delete_attachment(name)
+        self.assertTrue(self.obj.saved)
         with self.assertRaises(mod.ResourceNotFound):
             self.obj.fetch_attachment(name)
 
@@ -80,6 +83,35 @@ class TestBlobMixin(TestCase):
         self.obj.put_attachment(content, name, content_type="text/plain")
         self.assertEqual(self.obj.blobs[name].content_type, "text/plain")
         self.assertEqual(self.obj.blobs[name].content_length, 7)
+
+    def test_blob_directory(self):
+        name = "test.1"
+        content = StringIO(b"test_blob_directory content")
+        self.obj.put_attachment(content, name)
+        bucket = join("commcarehq_test", self.obj._id)
+        path = self.db.get_path(self.obj.blobs[name].id, bucket)
+        with open(path) as fh:
+            self.assertEqual(fh.read(), b"test_blob_directory content")
+
+    def test_put_attachment_deletes_replaced_blob(self):
+        name = "test.\u4500"
+        bucket = self.obj._blobdb_bucket()
+        self.obj.put_attachment("content 1", name)
+        path1 = self.db.get_path(self.obj.blobs[name].id, bucket)
+        self.obj.put_attachment("content 2", name)
+        path2 = self.db.get_path(self.obj.blobs[name].id, bucket)
+        self.assertNotEqual(path1, path2)
+        self.assertFalse(os.path.exists(path1), "found unexpected file: " + path1)
+        self.assertEqual(self.obj.fetch_attachment(name), "content 2")
+
+    def test_put_attachment_deletes_couch_attachment(self):
+        name = "test"
+        content = StringIO(b"content")
+        doc = self.make_doc(FallbackToCouchDocument)
+        doc._attachments = {name: {"length": 25}}
+        doc.put_attachment(content, name)
+        self.assertEqual(doc.fetch_attachment(name), "content")
+        self.assertNotIn(name, doc._attachments)
 
     def test_fallback_on_fetch_fail(self):
         name = "test.1"
@@ -91,38 +123,178 @@ class TestBlobMixin(TestCase):
         name = "test.1"
         doc = self.make_doc(FallbackToCouchDocument)
         doc._attachments[name] = {"content": b"couch content"}
-        assert doc.delete_attachment(name), "couch attachment not deleted"
-        assert name not in doc._attachments, doc._attachments
+        self.assertTrue(doc.delete_attachment(name), "couch attachment not deleted")
+        self.assertNotIn(name, doc._attachments)
 
     def test_blobs_property(self):
+        couch_digest = "md5-" + b64encode(md5(b"content").digest())
         doc = self.make_doc(FallbackToCouchDocument)
         doc._attachments["att"] = {
             "content": b"couch content",
             "content_type": None,
+            "digest": couch_digest,
             "length": 13,
         }
         doc.put_attachment("content", "blob", content_type="text/plain")
         self.assertIn("att", doc.blobs)
         self.assertIn("blob", doc.blobs)
         self.assertEqual(doc.blobs["att"].content_length, 13)
+        self.assertEqual(doc.blobs["att"].digest, couch_digest)
         self.assertEqual(doc.blobs["blob"].content_length, 7)
+        self.assertEqual(doc.blobs["blob"].digest,
+                         "md5-" + b64encode(md5(b"content").digest()))
 
+    def test_unsaved_document(self):
+        obj = FakeCouchDocument()
+        with self.assertRaises(mod.ResourceNotFound):
+            obj.put_attachment(b"content", "test.1")
 
-@generate_cases([
-    (None, None),
-    ("abc", None),
-    (None, "abc"),
-], TestBlobMixin)
-def test_unsaved_document(self, _id, _rev):
-    doc = {"_id": _id, "_rev": _rev}
-    obj = FakeCouchDocument(doc)
-    with self.assertRaises(mod.ResourceNotFound):
-        obj.put_attachment(b"content", "test.1")
+    def test_atomic_blobs_success(self):
+        name = "test.1"
+        _id = self.obj._id
+        with self.obj.atomic_blobs():
+            self.obj.put_attachment("content", name)
+        self.assertTrue(self.obj.saved)
+        self.assertEqual(self.obj._id, _id)
+        self.assertEqual(self.obj.fetch_attachment(name), "content")
+        self.assertIn(name, self.obj.blobs)
+
+    def test_atomic_blobs_success_and_new_id(self):
+        name = "test.1"
+        obj = FakeCouchDocument()
+        obj._id = None
+        with obj.atomic_blobs():
+            obj.put_attachment("content", name)
+        self.assertTrue(obj.saved)
+        self.assertTrue(obj._id is not None)
+        self.assertEqual(obj.fetch_attachment(name), "content")
+        self.assertIn(name, obj.blobs)
+
+    def test_atomic_blobs_deletes_replaced_blob(self):
+        name = "test.\u4500"
+        bucket = self.obj._blobdb_bucket()
+        with self.obj.atomic_blobs():
+            self.obj.put_attachment("content 1", name)
+        path1 = self.db.get_path(self.obj.blobs[name].id, bucket)
+        with self.obj.atomic_blobs():
+            self.obj.put_attachment("content 2", name)
+        path2 = self.db.get_path(self.obj.blobs[name].id, bucket)
+        self.assertNotEqual(path1, path2)
+        self.assertFalse(os.path.exists(path1), "found unexpected file: " + path1)
+        self.assertEqual(self.obj.fetch_attachment(name), "content 2")
+
+    def test_atomic_blobs_deletes_replaced_blob_in_same_context(self):
+        name = "test.\u4500"
+        bucket = self.obj._blobdb_bucket()
+        with self.obj.atomic_blobs():
+            self.obj.put_attachment("content 1", name)
+            path1 = self.db.get_path(self.obj.blobs[name].id, bucket)
+            self.obj.put_attachment("content 2", name)
+        path2 = self.db.get_path(self.obj.blobs[name].id, bucket)
+        self.assertNotEqual(path1, path2)
+        self.assertFalse(os.path.exists(path1), "found unexpected file: " + path1)
+        self.assertEqual(self.obj.fetch_attachment(name), "content 2")
+
+    def test_atomic_blobs_deletes_replaced_blob_in_nested_context(self):
+        name = "test.\u4500"
+        bucket = self.obj._blobdb_bucket()
+        with self.obj.atomic_blobs():
+            self.obj.put_attachment("content 1", name)
+            path1 = self.db.get_path(self.obj.blobs[name].id, bucket)
+            with self.obj.atomic_blobs():
+                self.obj.put_attachment("content 2", name)
+        path2 = self.db.get_path(self.obj.blobs[name].id, bucket)
+        self.assertNotEqual(path1, path2)
+        self.assertFalse(os.path.exists(path1), "found unexpected file: " + path1)
+        self.assertEqual(self.obj.fetch_attachment(name), "content 2")
+
+    def test_atomic_blobs_preserves_blob_replaced_in_failed_nested_context(self):
+        name = "test.\u4500"
+        bucket = self.obj._blobdb_bucket()
+        with self.obj.atomic_blobs():
+            self.obj.put_attachment("content 1", name)
+            path1 = self.db.get_path(self.obj.blobs[name].id, bucket)
+            with self.assertRaises(BlowUp):
+                with self.obj.atomic_blobs():
+                    self.obj.put_attachment("content 2", name)
+                    path2 = self.db.get_path(self.obj.blobs[name].id, bucket)
+                    raise BlowUp("fail")
+        self.assertNotEqual(path1, path2)
+        self.assertFalse(os.path.exists(path2), "found unexpected file: " + path1)
+        self.assertEqual(self.obj.fetch_attachment(name), "content 1")
+
+    def test_atomic_blobs_fail(self):
+        name = "test.1"
+        _id = self.obj._id
+        with self.assertRaises(BlowUp):
+            with self.obj.atomic_blobs():
+                self.obj.put_attachment("content", name)
+                raise BlowUp("while saving atomic blobs")
+        self.assertFalse(self.obj.saved)
+        self.assertEqual(self.obj._id, _id)
+        with self.assertRaises(mod.ResourceNotFound):
+            self.obj.fetch_attachment(name)
+        self.assertNotIn(name, self.obj.blobs)
+
+    def test_atomic_blobs_fail_does_not_delete_out_of_context_blobs(self):
+        self.obj.put_attachment("content", "outside")
+        with self.assertRaises(BlowUp):
+            with self.obj.atomic_blobs():
+                self.obj.put_attachment("content", "inside")
+                raise BlowUp("while saving atomic blobs")
+        self.assertEqual(set(self.obj.blobs), {"outside"})
+
+    def test_atomic_blobs_fail_does_not_overwrite_existing_blob(self):
+        name = "name"
+        self.obj.put_attachment("content", name)
+        with self.assertRaises(BlowUp):
+            with self.obj.atomic_blobs():
+                self.obj.put_attachment("new content", name)
+                raise BlowUp("while saving atomic blobs")
+        self.assertEqual(self.obj.blobs[name].content_length, 7)
+        self.assertEqual(self.obj.fetch_attachment(name), "content")
+        # verify cleanup
+        path = self.db.get_path(bucket=self.obj._blobdb_bucket())
+        self.assertEqual(len(os.listdir(path)), len(self.obj.blobs))
+
+    def test_atomic_blobs_fail_restores_couch_attachments(self):
+        couch_digest = "md5-" + b64encode(md5(b"content").digest())
+        doc = self.make_doc(FallbackToCouchDocument)
+        doc._attachments["att"] = {
+            "content": b"couch content",
+            "content_type": None,
+            "digest": couch_digest,
+            "length": 13,
+        }
+        with self.assertRaises(BlowUp):
+            with doc.atomic_blobs():
+                doc.put_attachment("new content", "att")
+                raise BlowUp("while saving atomic blobs")
+        self.assertEqual(doc.blobs["att"].content_length, 13)
+        self.assertEqual(doc.fetch_attachment("att"), "couch content")
+        # verify cleanup
+        path = self.db.get_path(bucket=doc._blobdb_bucket())
+        self.assertEqual(len(os.listdir(path)), 0)
 
 
 class FakeCouchDocument(mod.BlobMixin, Document):
 
     doc_type = "FakeCouchDocument"
+    saved = False
+
+    @classmethod
+    def get_db(cls):
+        class fake_db:
+            dbname = "commcarehq_test"
+
+            class server:
+                @staticmethod
+                def next_uuid():
+                    return uuid.uuid4().hex
+        return fake_db
+
+    def save(self):
+        self.saved = True
 
 
 class AttachmentFallback(object):
@@ -147,4 +319,18 @@ class AttachmentFallback(object):
 class FallbackToCouchDocument(mod.BlobMixin, AttachmentFallback, Document):
 
     doc_type = "FallbackToCouchDocument"
-    _migrating_from_couch = True
+    migrating_blobs_from_couch = True
+
+    @classmethod
+    def get_db(cls):
+        class fake_db:
+            dbname = "commcarehq_test"
+
+            @staticmethod
+            def save_doc(doc, **params):
+                pass
+        return fake_db
+
+
+class BlowUp(Exception):
+    pass

@@ -4,7 +4,8 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from casexml.apps.case.xml import V2
 from corehq import toggles
-from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic
+from corehq.apps.app_manager.models import Application
+from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.hqwebapp.models import ProjectSettingsTab
@@ -20,15 +21,15 @@ from soil import DownloadBase
 
 
 @json_error
-@login_or_digest_or_basic()
-def restore(request, domain):
+@login_or_digest_or_basic_or_apikey()
+def restore(request, domain, app_id=None):
     """
     We override restore because we have to supply our own 
     user model (and have the domain in the url)
     """
     user = request.user
     couch_user = CouchUser.from_django_user(user)
-    return get_restore_response(domain, couch_user, **get_restore_params(request))
+    return get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
 
 
 def get_restore_params(request):
@@ -41,11 +42,11 @@ def get_restore_params(request):
         'version': request.GET.get('version', "1.0"),
         'state': request.GET.get('state'),
         'items': request.GET.get('items') == 'true',
-        'force_restore_mode': request.GET.get('mode', None)
+        'force_restore_mode': request.GET.get('mode')
     }
 
 
-def get_restore_response(domain, couch_user, since=None, version='1.0',
+def get_restore_response(domain, couch_user, app_id=None, since=None, version='1.0',
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
                          force_restore_mode=None):
@@ -58,6 +59,7 @@ def get_restore_response(domain, couch_user, since=None, version='1.0',
                             status=401)
 
     project = Domain.get_by_name(domain)
+    app = Application.get_db().get(app_id) if app_id else None
     restore_config = RestoreConfig(
         project=project,
         user=couch_user.to_casexml_user(),
@@ -67,6 +69,7 @@ def get_restore_response(domain, couch_user, since=None, version='1.0',
             state_hash=state,
             include_item_count=items,
             force_restore_mode=force_restore_mode,
+            app=app,
         ),
         cache_settings=RestoreCacheSettings(
             force_cache=force_cache,

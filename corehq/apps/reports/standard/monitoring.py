@@ -1,14 +1,25 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import datetime
 from urllib import urlencode
 import math
 from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import operator
+from pygooglechart import ScatterChart
 import pytz
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
-from corehq.apps.es.forms import FormES
 from corehq.apps.reports import util
+from corehq.apps.reports.analytics.esaccessors import (
+    get_last_submission_time_for_user,
+    get_submission_counts_by_user,
+    get_completed_counts_by_user,
+    get_submission_counts_by_date,
+    get_completed_counts_by_date,
+    get_case_counts_closed_by_user,
+    get_case_counts_opened_by_user,
+    get_active_case_counts_by_owner,
+    get_total_case_counts_by_owner,
+)
 from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
@@ -27,9 +38,23 @@ from corehq.util.view_utils import absolute_reverse
 from couchforms.models import XFormInstance
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.parsing import string_to_datetime, json_format_date
+from dimagi.utils.parsing import json_format_date
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+
+
+TOO_MUCH_DATA = ugettext_noop(
+    'The filters you selected include too much data. Please change your filters and try again'
+)
+
+WorkerActivityReportData = namedtuple('WorkerActivityReportData', [
+    'avg_submissions_by_user',
+    'submissions_by_user',
+    'active_cases_by_owner',
+    'total_cases_by_owner',
+    'cases_closed_by_user',
+    'cases_opened_by_user',
+])
 
 
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -265,8 +290,11 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def rows(self):
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
         users_data = EMWF.pull_users_and_groups(
-            self.domain, self.request, True, True)
+            self.domain,
+            mobile_user_and_group_slugs,
+        )
         rows = [self.Row(self, user) for user in users_data.combined_users]
 
         total_row = self.TotalRow(rows, _("All Users"))
@@ -366,9 +394,6 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                 help_text = None
                 if info['is_fuzzy']:
                     help_text = _("This column shows Fuzzy Submissions.")
-                elif info['is_remote']:
-                    help_text = _("These forms came from "
-                                  "a Remote CommCare HQ Application.")
                 headers.add_column(
                     DataTablesColumn(
                         info['name'],
@@ -384,7 +409,11 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
     @property
     @memoized
     def selected_users(self):
-        users_data = EMWF.pull_users_and_groups(self.domain, self.request, True, True)
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        users_data = EMWF.pull_users_and_groups(
+            self.domain,
+            mobile_user_and_group_slugs,
+        )
         return users_data.combined_users
 
     @property
@@ -416,7 +445,8 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
     @property
     @memoized
     def _form_counts(self):
-        if EMWF.show_all_mobile_workers(self.request):
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        if EMWF.show_all_mobile_workers(mobile_user_and_group_slugs):
             user_ids = []
         else:
             # Don't query ALL mobile workers
@@ -489,6 +519,10 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
     def enddate(self):
         return self.datespan.enddate_utc if self.by_submission_time else self.datespan.enddate_adjusted
 
+    @property
+    def is_submission_time(self):
+        return self.date_field == 'received_on'
+
     def date_filter(self, start, end):
         return {'%s__range' % self.date_field: (start, end)}
 
@@ -514,7 +548,8 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
     @memoized
     def all_users(self):
         fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'email']
-        users = EMWF.user_es_query(self.domain, self.request).fields(fields)\
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        users = EMWF.user_es_query(self.domain, mobile_user_and_group_slugs).fields(fields)\
                 .run().hits
         users = map(util._report_user_dict, users)
         return sorted(users, key=lambda u: u['username_in_report'])
@@ -533,14 +568,18 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
             users.reverse()
         return self.paginate_list(users)
 
-    def users_by_range(self, start, end, order):
-        results = FormData.objects \
-            .filter(**self.date_filter(start, end)) \
-            .values('user_id') \
-            .annotate(Count('user_id'))
+    def users_by_range(self, datespan, order):
+        if self.is_submission_time:
+            get_counts_by_user = get_submission_counts_by_user
+        else:
+            get_counts_by_user = get_completed_counts_by_user
 
-        count_dict = dict((result['user_id'], result['user_id__count']) for result in results)
-        return self.users_sorted_by_count(count_dict, order)
+        results = get_counts_by_user(
+            self.domain,
+            datespan,
+        )
+
+        return self.users_sorted_by_count(results, order)
 
     def users_sorted_by_count(self, count_dict, order):
         # Split all_users into those in count_dict and those not.
@@ -570,23 +609,25 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
 
     @property
     def rows(self):
-        if self.datespan.is_valid():
-            self.sort_col = self.request_params.get('iSortCol_0', 0)
-            totals_col = self.column_count - 1
-            order = self.request_params.get('sSortDir_0')
-            if self.sort_col == totals_col:
-                users = self.users_by_range(self.startdate, self.enddate, order)
-            elif 0 < self.sort_col < totals_col:
-                start = self.dates[self.sort_col-1]
-                end = start + datetime.timedelta(days=1)
-                users = self.users_by_range(start, end, order)
-            else:
-                users = self.users_by_username(order)
+        if not self.datespan.is_valid():
+            return [[self.datespan.get_validation_reason()]]
 
-            rows = [self.get_row(user) for user in users]
-            self.total_row = self.get_row()
-            return rows
-        return [[self.datespan.get_validation_reason()]]
+        self.sort_col = self.request_params.get('iSortCol_0', 0)
+        totals_col = self.column_count - 1
+        order = self.request_params.get('sSortDir_0')
+
+        if self.sort_col == totals_col:
+            users = self.users_by_range(self.datespan, order)
+        elif 0 < self.sort_col < totals_col:
+            start = self.dates[self.sort_col - 1]
+            end = start + datetime.timedelta(days=1)
+            users = self.users_by_range(DateSpan(start, end), order)
+        else:
+            users = self.users_by_username(order)
+
+        rows = [self.get_row(user) for user in users]
+        self.total_row = self.get_row()
+        return rows
 
     @property
     def get_all_rows(self):
@@ -599,24 +640,22 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
         Assemble a row for a given user.
         If no user is passed, assemble a totals row.
         """
-        values = ['date']
-        results = FormData.objects.filter(**self.date_filter(self.startdate, self.enddate))
+        user_ids = map(lambda user: user.user_id, [user] if user else self.all_users)
 
-        if user:
-            results = results.filter(user_id=user.user_id)
-            values.append('user_id')
+        if self.is_submission_time:
+            get_counts_by_date = get_submission_counts_by_date
         else:
-            user_ids = [user_a.user_id for user_a in self.all_users]
-            results = results.filter(user_id__in=user_ids)
+            get_counts_by_date = get_completed_counts_by_date
 
-        results = results.extra({'date': "date(%s AT TIME ZONE '%s')" % (self.date_field, self.timezone)}) \
-            .values(*values) \
-            .annotate(Count(self.date_field))
+        results = get_counts_by_date(
+            self.domain,
+            user_ids,
+            self.datespan,
+            self.timezone,
+        )
 
-        count_field = '%s__count' % self.date_field
-        counts_by_date = dict((result['date'].isoformat(), result[count_field]) for result in results)
         date_cols = [
-            counts_by_date.get(json_format_date(date), 0)
+            results.get(json_format_date(date), 0)
             for date in self.dates
         ]
         styled_date_cols = ['<span class="muted">0</span>' if c == 0 else c for c in date_cols]
@@ -735,8 +774,11 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
                     Count('duration')
                 )
 
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
         users_data = EMWF.pull_users_and_groups(
-            self.domain, self.request, True, True)
+            self.domain,
+            mobile_user_and_group_slugs,
+        )
         user_ids = [user.user_id for user in users_data.combined_users]
 
         data_map = dict([(row['user_id'], row) for row in get_data(user_ids)])
@@ -796,8 +838,11 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
         total = 0
         total_seconds = 0
         if self.all_relevant_forms:
+            mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
             users_data = EMWF.pull_users_and_groups(
-                self.domain, self.request, True, True)
+                self.domain,
+                mobile_user_and_group_slugs,
+            )
 
             placeholders = []
             params = []
@@ -818,9 +863,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                     where=[where], params=params
                 )
             if results.count() > 5000:
-                raise TooMuchDataError(
-                    _('The filters you selected include too much data. Please change your filters and try again')
-                )
+                raise TooMuchDataError(_(TOO_MUCH_DATA))
             for row in results:
                 completion_time = (PhoneTime(row['time_end'], self.timezone)
                                    .server_time().done())
@@ -919,8 +962,11 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     @memoized
     def activity_times(self):
         all_times = []
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
         users_data = EMWF.pull_users_and_groups(
-            self.domain, self.request, True, True)
+            self.domain,
+            mobile_user_and_group_slugs,
+        )
         for user in users_data.combined_users:
             for form, info in self.all_relevant_forms.items():
                 key = make_form_couch_key(
@@ -930,13 +976,15 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
                     app_id=info['app_id'],
                     by_submission_time=self.by_submission_time,
                 )
-                data = XFormInstance.get_db().view("reports_forms/all_forms",
+                data = XFormInstance.get_db().view("all_forms/view",
                     reduce=False,
                     startkey=key+[self.datespan.startdate_param_utc],
                     endkey=key+[self.datespan.enddate_param_utc],
                 ).all()
                 all_times.extend([iso_string_to_datetime(d['key'][-1])
                                   for d in data])
+                if len(all_times) > 5000:
+                    raise TooMuchDataError()
         if self.by_submission_time:
             all_times = [ServerTime(t).user_time(self.timezone).done()
                          for t in all_times]
@@ -944,16 +992,25 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             all_times = [PhoneTime(t, self.timezone).user_time(self.timezone).done()
                          for t in all_times]
 
-        return [(t.weekday(), t.hour) for t in all_times]
+        aggregated_times = defaultdict(int)
+        for t in all_times:
+            aggregated_times[(t.weekday(), t.hour)] += 1
+        return aggregated_times
 
     @property
     def report_context(self):
-        chart_data = defaultdict(int)
-        for time in self.activity_times:
-            chart_data[time] += 1
+        error = None
+        try:
+            activity_times = self.activity_times
+            if len(activity_times) == 0:
+                error = _("Note: No submissions matched your filters.")
+        except TooMuchDataError:
+            activity_times = defaultdict(int)
+            error = _(TOO_MUCH_DATA)
+
         return dict(
-            chart_url=self.generate_chart(chart_data, timezone=self.timezone),
-            no_data=not self.activity_times,
+            chart_url=self.generate_chart(activity_times, timezone=self.timezone),
+            error=error,
             timezone=self.timezone,
         )
 
@@ -964,11 +1021,6 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             Hat tip: http://github.com/dustin/bindir/blob/master/gitaggregates.py
         """
         no_data = not data
-        try:
-            from pygooglechart import ScatterChart
-        except ImportError:
-            raise Exception("WorkerActivityTimes requires pygooglechart.")
-
         chart = ScatterChart(width, height, x_range=(-1, 24), y_range=(-1, 7))
 
         chart.add_data([(h % 24) for h in range(24 * 8)])
@@ -1018,29 +1070,24 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     fix_left_col = True
     emailable = True
 
+    NO_FORMS_TEXT = ugettext_noop('None')
+
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
-        if project and project.commtrack_enabled:
-            return False
-        else:
-            return True
+        return bool(project and project.commtrack_enabled)
 
     @property
-    @memoized
-    def case_types_filter(self):
-        case_types = filter(None, self.request.GET.getlist('case_type'))
-        if case_types:
-            return {"terms": {"type.exact": case_types}}
-        return {}
+    def case_types(self):
+        return filter(None, self.request.GET.getlist('case_type'))
 
     @property
-    def view_by(self):
-        return self.request.GET.get('view_by', None)
+    def view_by_groups(self):
+        return self.request.GET.get('view_by', None) == 'groups'
 
     @property
     def headers(self):
         CASE_TYPE_MSG = "The case type filter doesn't affect this column."
-        by_group = self.view_by == 'groups'
+        by_group = self.view_by_groups
         columns = [DataTablesColumn(_("Group"))] if by_group else [DataTablesColumn(_("User"))]
         columns.append(DataTablesColumnGroup(_("Form Data"),
             DataTablesColumn(_("# Forms Submitted"), sort_type=DTSortType.NUMERIC,
@@ -1076,251 +1123,288 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         else:
             return self.combined_users
 
-    def es_form_submissions(self, datespan=None):
-        datespan = datespan or self.datespan
-        form_query = (FormES()
-                      .domain(self.domain)
-                      .completed(gte=datespan.startdate.date(),
-                                 lte=datespan.enddate.date())
-                      .user_facet()
-                      .size(1))
-        return form_query.run()
-
-    def es_last_submissions(self, datespan=None):
+    def es_last_submissions(self):
         """
-            Creates a dict of userid => date of last submission
+        Creates a dict of userid => date of last submission
         """
-        datespan = datespan or self.datespan
+        return {
+            u["user_id"]: get_last_submission_time_for_user(self.domain, u["user_id"], self.datespan)
+            for u in self.users_to_iterate
+        }
 
-        def es_q(user_id):
-            form_query = FormES() \
-                .domain(self.domain) \
-                .user_id([user_id]) \
-                .completed(gte=datespan.startdate.date(), lte=datespan.enddate.date()) \
-                .sort("form.meta.timeEnd", desc=True) \
-                .size(1)
-            results = form_query.run().raw_hits
-            return results[0]['_source']['form']['meta']['timeEnd'] if results else None
+    @staticmethod
+    def _dates_for_linked_reports(datespan, case_list=False):
+        start_date = datespan.startdate_param
+        end_date = datespan.enddate if not case_list else datespan.enddate + datetime.timedelta(days=1)
+        end_date = end_date.strftime(datespan.format)
+        return start_date, end_date
 
-        def convert_date(date):
-            return string_to_datetime(date).date() if date else None
+    def _submit_history_link(self, owner_id, value):
+        """
+        returns a cell that is linked to the submit history report
+        """
+        base_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
+        if self.view_by_groups:
+            params = EMWF.for_reporting_group(owner_id)
+        else:
+            params = EMWF.for_user(owner_id)
 
-        return dict([(u["user_id"], convert_date(es_q(u["user_id"]))) for u in self.users_to_iterate])
+        start_date, end_date = self._dates_for_linked_reports(self.datespan)
+        params.update({
+            "startdate": start_date,
+            "enddate": end_date,
+        })
 
-    def es_case_queries(self, date_field, user_field, datespan=None):
-        datespan = datespan or self.datespan
-        case_query = case_es.CaseES() \
-            .domain(self.domain) \
-            .filter(filters.date_range(date_field, gte=datespan.startdate.date(), lte=datespan.enddate.date())) \
-            .terms_facet(user_field, user_field, size=100000) \
-            .size(1)
+        return util.numcell(
+            self._html_anchor_tag(self._make_url(base_url, params), value),
+            value,
+        )
 
-        if self.case_types_filter:
-            case_query = case_query.filter(self.case_types_filter)
+    @staticmethod
+    def _html_anchor_tag(href, value):
+        return '<a href="{}" target="_blank">{}</a>'.format(href, value)
 
-        return case_query.run()
+    @staticmethod
+    def _make_url(base_url, params):
+        return '{base_url}?{params}'.format(
+            base_url=base_url,
+            params=urlencode(params, True),
+        )
 
-    def _case_count_query(self):
-        q = (case_es.CaseES()
-             .domain(self.domain)
-             .opened_range(lte=self.datespan.enddate)
-             .NOT(case_es.closed_range(lt=self.datespan.startdate))
-             .terms_facet('owner_id', 'owner_id')
-             .size(0))
+    @staticmethod
+    def _case_query(case_type):
+        if not case_type:
+            return ''
+        return ' AND type.exact: {}'.format(case_type)
 
-        if self.case_types_filter:
-            q = q.filter(self.case_types_filter)
-
-        return q
-
-    def get_active_cases_by_owner(self):
-        q = (self._case_count_query()
-             .active_in_range(gte=self.datespan.startdate,
-                              lte=self.datespan.enddate))
-        return q.run().facets.owner_id.counts_by_term()
-
-    def get_total_cases_by_owner(self):
-        q = self._case_count_query()
-        return q.run().facets.owner_id.counts_by_term()
+    @staticmethod
+    def _case_list_url_params(query, owner_id):
+        params = {}
+        params.update(EMWF.for_user(owner_id))  # Get user slug for Users or Groups Filter
+        params.update({'search_query': query})
+        return params
 
     @property
-    def rows(self):
-        duration = (self.datespan.enddate - self.datespan.startdate) + datetime.timedelta(days=1) # adjust bc inclusive
+    def _case_list_base_url(self):
+        return absolute_reverse('project_report_dispatcher', args=(self.domain, 'case_list'))
+
+    def _case_list_url(self, query, owner_id):
+        params = WorkerActivityReport._case_list_url_params(query, owner_id)
+        return self._make_url(self._case_list_base_url, params)
+
+    def _case_list_url_cases_opened_by(self, owner_id):
+        return self._case_list_url_cases_by(owner_id, is_closed=False)
+
+    def _case_list_url_cases_closed_by(self, owner_id):
+        return self._case_list_url_cases_by(owner_id, is_closed=True)
+
+    def _case_list_url_cases_by(self, owner_id, is_closed=False):
+        start_date, end_date = self._dates_for_linked_reports(self.datespan, case_list=True)
+        prefix = 'closed' if is_closed else 'opened'
+
+        query = "{prefix}_by: {owner_id} AND {prefix}_on: [{start_date} TO {end_date}] {case_query}".format(
+            prefix=prefix,
+            owner_id=owner_id,
+            start_date=start_date,
+            end_date=end_date,
+            case_query=self._case_query(self.case_type),
+        )
+
+        return self._case_list_url(query, owner_id)
+
+    def _case_list_url_total_cases(self, owner_id):
+        start_date, end_date = self._dates_for_linked_reports(self.datespan, case_list=True)
+        # Subtract a day for inclusiveness
+        start_date = (self.datespan.startdate - datetime.timedelta(days=1)).strftime(self.datespan.format)
+
+        query = 'opened_on: [* TO {end_date}] AND NOT closed_on: [* TO {start_date}]'.format(
+            end_date=end_date,
+            start_date=start_date,
+        )
+        return self._case_list_url(query, owner_id)
+
+    def _case_list_url_active_cases(self, owner_id):
+        start_date, end_date = self._dates_for_linked_reports(self.datespan, case_list=True)
+        query = "modified_on: [{start_date} TO {end_date}]".format(
+            start_date=start_date,
+            end_date=end_date
+        )
+        return self._case_list_url(query, owner_id)
+
+    def _group_cell(self, group_id, group_name):
+        """
+        takes group info, and creates a cell that links to the user status report focused on the group
+        """
+        base_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'worker_activity'))
+        start_date, end_date = self._dates_for_linked_reports(self.datespan)
+        params = {
+            "group": group_id,
+            "startdate": start_date,
+            "enddate": end_date,
+        }
+
+        url = self._make_url(base_url, params)
+
+        return util.format_datatables_data(
+            self._html_anchor_tag(url, group_name),
+            group_name,
+        )
+
+    def _rows_by_group(self, report_data):
+        rows = []
+        active_users_by_group = {
+            g: len(filter(lambda u: report_data.submissions_by_user.get(u['user_id']), users))
+            for g, users in self.users_by_group.iteritems()
+        }
+
+        for group, users in self.users_by_group.iteritems():
+            group_name, group_id = tuple(group.split('|'))
+            if group_name == 'no_group':
+                continue
+
+            case_sharing_groups = set(reduce(operator.add, [u['group_ids'] for u in users], []))
+            active_cases = sum([int(report_data.active_cases_by_owner.get(u["user_id"].lower(), 0)) for u in users]) + \
+                sum([int(report_data.active_cases_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
+            total_cases = sum([int(report_data.total_cases_by_owner.get(u["user_id"].lower(), 0)) for u in users]) + \
+                sum([int(report_data.total_cases_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
+            active_users = int(active_users_by_group.get(group, 0))
+            total_users = len(self.users_by_group.get(group, []))
+
+            rows.append([
+                # Group Name
+                self._group_cell(group_id, group_name),
+                # Forms Submitted
+                self._submit_history_link(
+                    group_id,
+                    sum([int(report_data.submissions_by_user.get(user["user_id"], 0)) for user in users]),
+                ),
+                # Avg forms submitted
+                util.numcell(
+                    sum(
+                        [int(report_data.avg_submissions_by_user.get(user["user_id"], 0))
+                        for user in users]
+                    ) / self.num_avg_intervals
+                ),
+                # Active users
+                util.numcell("%s / %s" % (active_users, total_users),
+                             value=int((float(active_users) / total_users) * 10000) if total_users else -1,
+                             raw="%s / %s" % (active_users, total_users)),
+                # Cases opened
+                util.numcell(
+                    sum(
+                        [int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0))
+                        for user in users]
+                    )
+                ),
+                # Cases closed
+                util.numcell(
+                    sum(
+                        [int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0))
+                        for user in users]
+                    )
+                ),
+                # Active cases
+                util.numcell(active_cases),
+                # Total Cases
+                util.numcell(total_cases),
+                # Percent active cases
+                util.numcell(
+                    (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
+                ),
+            ])
+        return rows
+
+    def _rows_by_user(self, report_data):
+        rows = []
+        last_form_by_user = self.es_last_submissions()
+        for user in self.users_to_iterate:
+            active_cases = int(report_data.active_cases_by_owner.get(user["user_id"].lower(), 0)) + \
+                sum([int(report_data.active_cases_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
+            total_cases = int(report_data.total_cases_by_owner.get(user["user_id"].lower(), 0)) + \
+                sum([int(report_data.total_cases_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
+
+            cases_opened = int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0))
+            cases_closed = int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0))
+
+            if today_or_tomorrow(self.datespan.enddate):
+                active_cases_cell = util.numcell(
+                    self._html_anchor_tag(self._case_list_url_active_cases(user['user_id']), active_cases),
+                    active_cases,
+                )
+            else:
+                active_cases_cell = util.numcell(active_cases)
+
+            rows.append([
+                # Username
+                user["username_in_report"],
+                # Forms Submitted
+                self._submit_history_link(
+                    user['user_id'],
+                    report_data.submissions_by_user.get(user["user_id"], 0),
+                ),
+                # Average Forms submitted
+                util.numcell(
+                    int(report_data.avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals
+                ),
+                # Last Form submission
+                last_form_by_user.get(user["user_id"]) or _(self.NO_FORMS_TEXT),
+                # Cases opened
+                util.numcell(
+                    self._html_anchor_tag(self._case_list_url_cases_opened_by(user['user_id']), cases_opened),
+                    cases_opened,
+                ),
+                # Cases Closed
+                util.numcell(
+                    self._html_anchor_tag(self._case_list_url_cases_closed_by(user['user_id']), cases_closed),
+                    cases_closed,
+                ),
+                # Active Cases
+                active_cases_cell,
+                # Total Cases
+                util.numcell(
+                    self._html_anchor_tag(self._case_list_url_total_cases(user['user_id']), total_cases),
+                    total_cases,
+                ),
+                # Percent active
+                util.numcell(
+                    (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
+                ),
+
+            ])
+
+        return rows
+
+    def _report_data(self):
+        # Adjust to be have inclusive dates
+        duration = (self.datespan.enddate - self.datespan.startdate) + datetime.timedelta(days=1)
         avg_datespan = DateSpan(self.datespan.startdate - (duration * self.num_avg_intervals),
                                 self.datespan.startdate - datetime.timedelta(days=1))
 
         if avg_datespan.startdate.year < 1900:  # srftime() doesn't work for dates below 1900
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
 
-        form_data = self.es_form_submissions()
-        submissions_by_user = form_data.facets.user.counts_by_term()
-        avg_form_data = self.es_form_submissions(datespan=avg_datespan)
-        avg_submissions_by_user = avg_form_data.facets.user.counts_by_term()
+        return WorkerActivityReportData(
+            avg_submissions_by_user=get_submission_counts_by_user(self.domain, avg_datespan),
+            submissions_by_user=get_submission_counts_by_user(self.domain, self.datespan),
+            active_cases_by_owner=get_active_case_counts_by_owner(self.domain, self.datespan, self.case_types),
+            total_cases_by_owner=get_total_case_counts_by_owner(self.domain, self.datespan, self.case_types),
+            cases_closed_by_user=get_case_counts_closed_by_user(self.domain, self.datespan, self.case_types),
+            cases_opened_by_user=get_case_counts_opened_by_user(self.domain, self.datespan, self.case_types),
+        )
 
-        if self.view_by == 'groups':
-            active_users_by_group = {
-                g: len(filter(lambda u: submissions_by_user.get(u['user_id']), users))
-                for g, users in self.users_by_group.iteritems()
-            }
-        else:
-            last_form_by_user = self.es_last_submissions()
-
-        case_creation_data = self.es_case_queries('opened_on', 'opened_by')
-        creations_by_user = {
-            t["term"].lower(): t["count"]
-            for t in case_creation_data.facet("opened_by", "terms")
-        }
-
-        case_closure_data = self.es_case_queries('closed_on', 'closed_by')
-        closures_by_user = {
-            t["term"].lower(): t["count"]
-            for t in case_closure_data.facet("closed_by", "terms")
-        }
-        actives_by_owner = self.get_active_cases_by_owner()
-        totals_by_owner = self.get_total_cases_by_owner()
-
-        def dates_for_linked_reports(case_list=False):
-            start_date = self.datespan.startdate_param
-            end_date = self.datespan.enddate if not case_list else self.datespan.enddate + datetime.timedelta(days=1)
-            end_date = end_date.strftime(self.datespan.format)
-            return start_date, end_date
-
-        def submit_history_link(owner_id, val, type):
-            """
-            takes a row, and converts certain cells in the row to links that link to the submit history report
-            """
-            fs_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
-            if type == 'user':
-                url_args = EMWF.for_user(owner_id)
-            else:
-                assert type == 'group'
-                url_args = EMWF.for_reporting_group(owner_id)
-
-            start_date, end_date = dates_for_linked_reports()
-            url_args.update({
-                "startdate": start_date,
-                "enddate": end_date,
-            })
-
-            return util.numcell(u'<a href="{report}?{params}" target="_blank">{display}</a>'.format(
-                report=fs_url,
-                params=urlencode(url_args, True),
-                display=val,
-            ), val)
-
-        def add_case_list_links(owner_id, row):
-            """
-                takes a row, and converts certain cells in the row to links that link to the case list page
-            """
-            cl_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'case_list'))
-            url_args = EMWF.for_user(owner_id)
-
-            start_date, end_date = dates_for_linked_reports(case_list=True)
-            start_date_sub1 = self.datespan.startdate - datetime.timedelta(days=1)
-            start_date_sub1 = start_date_sub1.strftime(self.datespan.format)
-            search_strings = {
-                4: "opened_by: %s AND opened_on: [%s TO %s]" % (owner_id, start_date, end_date), # cases created
-                5: "closed_by: %s AND closed_on: [%s TO %s]" % (owner_id, start_date, end_date), # cases closed
-                7: "opened_on: [* TO %s] AND NOT closed_on: [* TO %s]" % (end_date, start_date_sub1), # total cases
-            }
-            if today_or_tomorrow(self.datespan.enddate):
-                search_strings[6] = "modified_on: [%s TO %s]" % (start_date, end_date) # active cases
-
-            if self.case_type:
-                for index, search_string in search_strings.items():
-                    search_strings[index] = search_string + " AND type.exact: %s" % self.case_type
-
-            def create_case_url(index):
-                """
-                    Given an index for a cell in a the row, creates the link to the case list page for that cell
-                """
-                url_params = {}
-                url_params.update(url_args)
-                url_params.update({"search_query": search_strings[index]})
-                return util.numcell('<a href="%s?%s" target="_blank">%s</a>' % (cl_url, urlencode(url_params, True), row[index]), row[index])
-
-            for i in search_strings:
-                row[i] = create_case_url(i)
-            return row
-
-        def group_cell(group_id, group_name):
-            """
-                takes group info, and creates a cell that links to the user status report focused on the group
-            """
-            us_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'worker_activity'))
-            start_date, end_date = dates_for_linked_reports()
-            url_args = {
-                "group": group_id,
-                "startdate": start_date,
-                "enddate": end_date,
-            }
-            return util.format_datatables_data(
-                '<a href="%s?%s" target="_blank">%s</a>' % (us_url, urlencode(url_args, True), group_name),
-                group_name
-            )
-
-        rows = []
-        NO_FORMS_TEXT = _('None')
-        if self.view_by == 'groups':
-            for group, users in self.users_by_group.iteritems():
-                group_name, group_id = tuple(group.split('|'))
-                if group_name == 'no_group':
-                    continue
-
-                case_sharing_groups = set(reduce(operator.add, [u['group_ids'] for u in users], []))
-                active_cases = sum([int(actives_by_owner.get(u["user_id"].lower(), 0)) for u in users]) + \
-                    sum([int(actives_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
-                total_cases = sum([int(totals_by_owner.get(u["user_id"].lower(), 0)) for u in users]) + \
-                    sum([int(totals_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
-                active_users = int(active_users_by_group.get(group, 0))
-                total_users = len(self.users_by_group.get(group, []))
-
-                rows.append([
-                    group_cell(group_id, group_name),
-                    submit_history_link(group_id,
-                                        sum([int(submissions_by_user.get(user["user_id"], 0)) for user in users]),
-                                        type='group'),
-                    util.numcell(sum([int(avg_submissions_by_user.get(user["user_id"], 0)) for user in users]) / self.num_avg_intervals),
-                    util.numcell("%s / %s" % (active_users, total_users),
-                                 value=int((float(active_users) / total_users) * 10000) if total_users else -1,
-                                 raw="%s / %s" % (active_users, total_users)),
-                    util.numcell(sum([int(creations_by_user.get(user["user_id"].lower(), 0)) for user in users])),
-                    util.numcell(sum([int(closures_by_user.get(user["user_id"].lower(), 0)) for user in users])),
-                    util.numcell(active_cases),
-                    util.numcell(total_cases),
-                    util.numcell((float(active_cases)/total_cases) * 100 if total_cases else 'nan', convert='float'),
-                ])
-
-        else:
-            for user in self.users_to_iterate:
-                active_cases = int(actives_by_owner.get(user["user_id"].lower(), 0)) + \
-                    sum([int(actives_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
-                total_cases = int(totals_by_owner.get(user["user_id"].lower(), 0)) + \
-                    sum([int(totals_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
-
-                rows.append(add_case_list_links(user['user_id'], [
-                    user["username_in_report"],
-                    submit_history_link(user['user_id'],
-                                        submissions_by_user.get(user["user_id"], 0),
-                                        type='user'),
-                    util.numcell(int(avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals),
-                    last_form_by_user.get(user["user_id"]) or NO_FORMS_TEXT,
-                    int(creations_by_user.get(user["user_id"].lower(),0)),
-                    int(closures_by_user.get(user["user_id"].lower(), 0)),
-                    util.numcell(active_cases) if not today_or_tomorrow(self.datespan.enddate) else active_cases,
-                    total_cases,
-                    util.numcell((float(active_cases)/total_cases) * 100 if total_cases else 'nan', convert='float'),
-                ]))
-
-        self.total_row = [_("Total")]
+    def _total_row(self, rows):
+        total_row = [_("Total")]
         summing_cols = [1, 2, 4, 5, 6, 7]
+
         for col in range(1, len(self.headers)):
             if col in summing_cols:
-                self.total_row.append(sum(filter(lambda x: not math.isnan(x), [row[col].get('sort_key', 0) for row in rows])))
+                total_row.append(
+                    sum(filter(lambda x: not math.isnan(x), [row[col].get('sort_key', 0) for row in rows]))
+                )
             else:
-                self.total_row.append('---')
+                total_row.append('---')
 
-        if self.view_by == 'groups':
+        if self.view_by_groups:
             def parse(str):
                 num, denom = tuple(str.split('/'))
                 num = int(num.strip())
@@ -1331,9 +1415,22 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 num, denom = parse(str)
                 return num + result_tuple[0], denom + result_tuple[1]
 
-            self.total_row[3] = '%s / %s' % reduce(add, [row[3]["html"] for row in rows], (0, 0))
+            total_row[3] = '%s / %s' % reduce(add, [row[3]["html"] for row in rows], (0, 0))
         else:
-            num = len(filter(lambda row: row[3] != NO_FORMS_TEXT, rows))
-            self.total_row[3] = '%s / %s' % (num, len(rows))
+            num = len(filter(lambda row: row[3] != _(self.NO_FORMS_TEXT), rows))
+            total_row[3] = '%s / %s' % (num, len(rows))
 
+        return total_row
+
+    @property
+    def rows(self):
+        report_data = self._report_data()
+
+        rows = []
+        if self.view_by_groups:
+            rows = self._rows_by_group(report_data)
+        else:
+            rows = self._rows_by_user(report_data)
+
+        self.total_row = self._total_row(rows)
         return rows

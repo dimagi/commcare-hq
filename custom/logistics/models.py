@@ -26,5 +26,8 @@ class StockDataCheckpoint(Checkpoint):
 
 @receiver(commcare_domain_pre_delete)
 def domain_pre_delete_receiver(domain, **kwargs):
-    StockDataCheckpoint.objects.filter(domain=domain.name).delete()
-    MigrationCheckpoint.objects.filter(domain=domain.name).delete()
+    from corehq.apps.domain.deletion import ModelDeletion
+    return [
+        ModelDeletion('logistics', 'StockDataCheckpoint', 'domain'),
+        ModelDeletion('logistics', 'MigrationCheckpoint', 'domain'),
+    ]

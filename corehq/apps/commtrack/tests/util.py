@@ -6,6 +6,7 @@ from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.tests.utils import generate_restore_payload
+from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from dimagi.utils.couch.database import get_safe_write_kwargs
@@ -14,15 +15,21 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import Location, LocationType, SQLLocation
-from corehq.apps.products.models import Product
-from corehq.messaging.smsbackends.test.models import TestSMSBackend
+from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
+from corehq.messaging.smsbackends.test.models import TestSMSBackend
+from corehq.util.decorators import require_debug_true
 from dimagi.utils.parsing import json_format_date
 
+from ..const import StockActions
 from ..helpers import make_supply_point
 from ..models import CommtrackConfig, ConsumptionConfig
-from ..sms import StockReportParser, process
-from ..util import get_default_requisition_config, get_or_create_default_program
+from ..sms import to_instance
+from ..util import (get_default_requisition_config,
+                    get_or_create_default_program,
+                    get_supply_point_and_location)
 
 
 TEST_DOMAIN = 'commtrack-test'
@@ -218,16 +225,30 @@ def get_single_transfer_block(src_id, dest_id, product_id, quantity, date_string
     ).strip()
 
 
-def fake_sms(user, text):
-    """
-    Fake a commtrack SMS submission for a user.
-    `text` might be "soh myproduct 100"
-    Don't use this with a real user
-    """
-    if not user.phone_number:
-        raise ValueError("User does not have a phone number")
-    if not user.get_verified_number():
-        user.save_verified_number(user.domain, user.phone_number, True, None)
-    domain_obj = Domain.get_by_name(user.domain)
-    parser = StockReportParser(domain_obj, user.get_verified_number())
-    process(user.domain, parser.parse(text.lower()))
+@require_debug_true()
+def submit_stock_update(user, site_code, product_code, balance):
+    """For local testing only."""
+    case, location = get_supply_point_and_location(user.domain, site_code)
+    product = SQLProduct.objects.get(domain=user.domain, code=product_code)
+
+    tx = StockTransactionHelper(
+        product_id=product.product_id,
+        action=StockActions.STOCKONHAND,
+        domain=user.domain,
+        quantity=balance,
+        location_id=location.location_id,
+        timestamp=datetime.utcnow(),
+        case_id=case.case_id,
+        section_id=SECTION_TYPE_STOCK,
+    )
+    xml = to_instance({
+        'timestamp': datetime.utcnow(),
+        'user': user,
+        'phone': user.phone_number or '8675309',
+        'location': location,
+        'transactions': [tx],
+    })
+    submit_form_locally(
+        instance=xml,
+        domain=user.domain,
+    )

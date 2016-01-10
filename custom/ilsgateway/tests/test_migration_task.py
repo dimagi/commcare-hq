@@ -3,6 +3,7 @@ from django.test import TestCase
 from corehq.apps.commtrack.models import Product
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from corehq.apps.locations.models import Location
+from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from corehq.apps.users.models import WebUser, CommCareUser
 from custom.ilsgateway.models import ILSGatewayConfig
@@ -46,3 +47,6 @@ class MigrationTaskTest(TestCase):
     def tearDownClass(cls):
         for user in WebUser.by_domain(TEST_DOMAIN):
             user.delete()
+
+        for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
+            vn.delete()

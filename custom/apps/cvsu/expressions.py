@@ -3,8 +3,8 @@ from couchdbkit.ext.django.schema import StringProperty
 from corehq.apps.groups.models import Group
 from corehq.apps.userreports.specs import TypeProperty
 from custom.apps.cvsu.filters import ALL_CVSU_GROUP
-from custom.apps.cvsu.models import REPORT_INCIDENT_XMLNS, FOLLOWUP_FORM_XMLNS, OUTREACH_FORM_XMLNS, IGA_FORM_XMLNS
-from custom.apps.cvsu.utils import CVSUFilters
+from custom.apps.cvsu.utils import REPORT_INCIDENT_XMLNS, FOLLOWUP_FORM_XMLNS, \
+    OUTREACH_FORM_XMLNS, IGA_FORM_XMLNS, CVSUFilters
 from dimagi.ext.jsonobject import JsonObject
 
 

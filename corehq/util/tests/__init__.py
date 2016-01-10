@@ -1,6 +1,7 @@
 from test_cache_util import *
 from test_couch import *
 from test_couchdb_management import *
+from test_datadog_utils import *
 from test_jsonobject import *
 from test_log import *
 from test_override_db import *

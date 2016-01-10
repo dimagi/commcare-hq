@@ -1,3 +1,11 @@
+from datetime import datetime
+from decimal import Decimal
+import itertools
+import json_field
+
+from django.db import models
+from django.utils.translation import ugettext as _
+
 from couchdbkit.exceptions import ResourceNotFound
 from dimagi.ext.couchdbkit import (
     Document,
@@ -7,11 +15,7 @@ from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
 )
-from datetime import datetime
-from decimal import Decimal
-from django.db import models
-from django.utils.translation import ugettext as _
-import json_field
+from dimagi.utils.couch.database import iter_docs
 
 # move these too
 from corehq.apps.commtrack.exceptions import InvalidProductException, DuplicateProductCodeException
@@ -135,79 +139,23 @@ class Product(Document):
     def get_by_code(cls, domain, code):
         if not code:
             return None
-        result = cls.view("commtrack/product_by_code",
-                          key=[domain, code.lower()],
-                          include_docs=True).first()
-        return result
+        try:
+            sql_product = SQLProduct.objects.get(domain=domain, code__iexact=code)
+        except SQLProduct.DoesNotExist:
+            return None
+        else:
+            return cls.get(sql_product.product_id)
 
     @classmethod
-    def by_program_id(cls, domain, prog_id, wrap=True, **kwargs):
-        kwargs.update(dict(
-            view_name='commtrack/product_by_program_id',
-            key=[domain, prog_id],
-            include_docs=True
-        ))
-        if wrap:
-            return Product.view(**kwargs)
-        else:
-            return [row["doc"] for row in Product.view(wrap_doc=False, **kwargs)]
-
-    @classmethod
-    def by_domain(cls, domain, wrap=True, include_archived=False, **kwargs):
-        """
-        Gets all products in a domain.
-
-        By default this filters out any archived products.
-        WARNING: this doesn't paginate correctly; it filters after the query
-        If you need pagination, use SQLProduct instead
-        """
-        kwargs.update(dict(
-            view_name='commtrack/products',
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=True
-        ))
-        if wrap:
-            products = Product.view(**kwargs)
-            if not include_archived:
-                return filter(lambda p: not p.is_archived, products)
-            else:
-                return products
-        else:
-            if not include_archived:
-                return [
-                    row["doc"] for row in Product.view(
-                        wrap_doc=False,
-                        **kwargs
-                    ) if not row["doc"].get('is_archived', False)
-                ]
-            else:
-                return [
-                    row["doc"] for row in Product.view(
-                        wrap_doc=False,
-                        **kwargs
-                    )
-                ]
-
-    @classmethod
-    def archived_by_domain(cls, domain, wrap=True, **kwargs):
-        products = cls.by_domain(domain, wrap, kwargs)
-        if wrap:
-            return filter(lambda p: p.is_archived, products)
-        else:
-            return [p for p in products if p.get('is_archived', False)]
+    def by_domain(cls, domain, wrap=True, include_archived=False):
+        queryset = SQLProduct.objects.filter(domain=domain)
+        if not include_archived:
+            queryset = queryset.filter(is_archived=False)
+        return list(queryset.couch_products(wrapped=wrap))
 
     @classmethod
     def ids_by_domain(cls, domain):
-        """
-        Gets all product ids in a domain.
-        """
-        view_results = Product.get_db().view('commtrack/products',
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=False,
-        )
-        return [row['id'] for row in view_results]
+        return list(SQLProduct.objects.filter(domain=domain).product_ids())
 
     @classmethod
     def count_by_domain(cls, domain):
@@ -317,6 +265,30 @@ class Product(Document):
         return p
 
 
+class ProductQueriesMixin(object):
+    def product_ids(self):
+        return self.values_list('product_id', flat=True)
+
+    def couch_products(self, wrapped=True):
+        """
+        Returns the couch products corresponding to this queryset.
+        """
+        ids = self.product_ids()
+        products = iter_docs(Product.get_db(), ids)
+        if wrapped:
+            return itertools.imap(Product.wrap, products)
+        return products
+
+
+class ProductQuerySet(ProductQueriesMixin, models.query.QuerySet):
+    pass
+
+
+class ProductManager(ProductQueriesMixin, models.Manager):
+    def get_queryset(self):
+        return ProductQuerySet(self.model, using=self._db)
+
+
 class SQLProduct(models.Model):
     """
     A SQL based clone of couch Products.
@@ -339,6 +311,8 @@ class SQLProduct(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
+
+    objects = ProductManager()
 
     def __unicode__(self):
         return u"{} ({})".format(self.name, self.domain)
