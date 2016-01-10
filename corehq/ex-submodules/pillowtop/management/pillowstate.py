@@ -1,4 +1,4 @@
-from corehq.elastic import get_es, get_es_new
+from corehq.elastic import get_es_new
 from pillowtop.listener import AliasedElasticPillow
 
 
