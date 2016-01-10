@@ -209,10 +209,22 @@ Once deploy is complete, kill the `--continuous` command with `^C`.
 ## Cleanup
 
 After you're confident in the change and stability of the site,
-it's time to delete the old documents still in the source db. To do this run,
+it's time to delete the old documents still in the source db.
+
+First you should clean up any doc conflicts, as that can get in the way of
+deleting stuff.
+
+```bash
+$ ./manage.py delete_doc_conflicts
+```
+
+Now you can actually delete the documents:
 
 ```bash
 $ ./manage.py run_doctype_migration user_db_migration --cleanup
 ```
 
 Keep in mind that this will likely incur some reindexing overhead in the source db.
+
+If you run `$ ./manage.py run_doctype_migration user_db_migration --stats`, you
+should see that only the target database has these doc types in it now.
