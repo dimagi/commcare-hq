@@ -57,6 +57,7 @@ branches:
   - location-delete # Cal 12/16
   - new-footer-nav # Biyeun 1/4
   - uglify-compressor # Ben 1/7
+  - es-new # Simon 1/10
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
