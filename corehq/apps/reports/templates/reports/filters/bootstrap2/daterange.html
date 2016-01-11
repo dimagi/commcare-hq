@@ -1,0 +1,31 @@
+{% extends 'reports/filters/bootstrap2/base.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block filter_js %}
+    <script>
+        $(function() {
+            $('.date-range').datepicker({{ datepicker_config|JSON }});
+        });
+    </script>
+{% endblock %}
+
+{% block filter_content %}
+    <label for="{{ css_id }}_startdate" class="sub-label">{% trans 'From' %}</label>
+    <input type="text"
+           id="{{ css_id }}_startdate"
+           name="{{ slug }}_startdate"
+           class="date-range input-small"
+           value="{{ datespan.startdate|date:"Y-m-d" }}">
+
+    <label for="{{ css_id }}_enddate" class="sub-label">{% trans 'To' %}</label>
+    <input type="text"
+           id="{{ css_id }}_enddate"
+           name="{{ slug }}_enddate"
+           class="date-range input-small"
+           value="{{ datespan.enddate|date:"Y-m-d" }}">
+
+    <span class="helptext help-inline" style="margin-left: 1.5em;">
+        {% blocktrans %}Showing {{ datespan }}.{% endblocktrans %}
+    </span>
+{% endblock %}

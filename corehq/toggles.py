@@ -169,6 +169,13 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
 
+APP_AWARE_SYNC = StaticToggle(
+    'app_aware_sync',
+    'App-aware Sync',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 BOOTSTRAP3_PREVIEW = StaticToggle(
     'bootstrap3_preview',
     'Bootstrap 3 Preview',
@@ -658,15 +665,6 @@ EWS_BROADCAST_BY_ROLE = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
 )
-
-
-AUTOMATIC_CASE_CLOSURE = StaticToggle(
-    'automatic_case_closure',
-    'Automatically Close Cases',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-)
-
 
 SMS_PERFORMANCE_FEEDBACK = StaticToggle(
     'sms_performance_feedback',

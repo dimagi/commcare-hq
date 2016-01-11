@@ -1,9 +1,9 @@
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext_noop
 import dateutil
+from corehq.apps.app_manager.dbaccessors import get_latest_build_id
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.models import Domain
-from casexml.apps.case.models import CommCareCase
-from datetime import datetime, timedelta
+from datetime import timedelta
 from pytz import timezone
 
 EMPTY_FIELD = "---"
@@ -60,7 +60,7 @@ def get_app_build(app_dict):
     if domain.use_cloudcare_releases:
         return ApplicationBase.get(app_dict['_id']).get_latest_app()['_id']
     else:
-        return ApplicationBase.get_latest_build(app_dict['domain'], app_dict['_id'])['_id']
+        return get_latest_build_id(app_dict['domain'], app_dict['_id'])
     return None
 
 

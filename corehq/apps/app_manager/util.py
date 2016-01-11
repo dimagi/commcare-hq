@@ -6,6 +6,7 @@ import itertools
 import os
 import uuid
 import yaml
+from corehq import toggles
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
@@ -604,3 +605,10 @@ def _app_callout_templates():
     while True:
         yield data
 app_callout_templates = _app_callout_templates()
+
+
+def use_app_aware_sync(app):
+    """
+    Determines whether OTA restore should sync only cases/ledgers/fixtures of the given app where possible
+    """
+    return toggles.APP_AWARE_SYNC.enabled(app.domain)

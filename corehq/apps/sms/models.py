@@ -1600,6 +1600,7 @@ class SQLMobileBackendMapping(SyncSQLToCouchMixin, models.Model):
     """
     class Meta:
         db_table = 'messaging_mobilebackendmapping'
+        unique_together = ('domain', 'backend_type', 'prefix')
 
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
@@ -1653,6 +1654,7 @@ class MigrationStatus(models.Model):
 
     MIGRATION_BACKEND = 'backend'
     MIGRATION_BACKEND_MAP = 'backend_map'
+    MIGRATION_DOMAIN_DEFAULT_BACKEND = 'domain_default_backend'
 
     class Meta:
         db_table = 'messaging_migrationstatus'
@@ -1676,3 +1678,7 @@ class MigrationStatus(models.Model):
             return True
         except cls.DoesNotExist:
             return False
+
+
+# Import signal receiver so that it gets registered
+from corehq.apps.sms.signals import sync_default_backend_mapping

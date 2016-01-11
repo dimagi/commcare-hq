@@ -95,7 +95,7 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
         for
         """
         # note: empty string is parsed as today's date
-        date = self.config.get('date', '')
+        date = self.config.get('date') or ''
 
         try:
             date = parser.parse(date).date()

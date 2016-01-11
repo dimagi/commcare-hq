@@ -3,7 +3,6 @@ import logging
 import uuid
 import tempfile
 
-import dateutil
 from lxml import etree
 from django.core.servers.basehttp import FileWrapper
 from django.utils.decorators import method_decorator
@@ -29,7 +28,7 @@ from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm, DAYS_OF_WEEK
 from pact.tasks import set_schedule_case_properties
 from pact.utils import pact_script_fields, case_script_field, submit_xform, query_per_case_submissions_facet
-from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.dbaccessors import get_latest_build_id
 
 PACT_CLOUD_APPNAME = "PACT Cloud"
 PACT_CLOUDCARE_MODULE = "PACT Cloudcare"
@@ -58,12 +57,12 @@ def get_cloudcare_app():
     ret['url_root'] = url_root
     ret['domain'] = PACT_DOMAIN
     ret['app_id'] = app_id
-    latest_build = ApplicationBase.get_latest_build(PACT_DOMAIN, app_id)
-    if latest_build is not None:
-        latest_build_id = latest_build['_id']
+    latest_build_id = get_latest_build_id(PACT_DOMAIN, app_id)
+    if latest_build_id is not None:
         ret['build_id'] = latest_build_id
     ret['module_id'] = 0
     return ret
+
 
 def get_cloudcare_url(case_id, mode):
     app_dict = get_cloudcare_app()

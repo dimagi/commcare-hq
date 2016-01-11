@@ -41,7 +41,7 @@ class Program(Document):
         Gets all programs in a domain.
         """
         kwargs = dict(
-            view_name='commtrack/program_by_code',
+            view_name='program_by_code/view',
             startkey=[domain],
             endkey=[domain, {}],
             include_docs=True
@@ -94,7 +94,7 @@ class Program(Document):
 
     @classmethod
     def get_by_code(cls, domain, code):
-        result = cls.view("commtrack/program_by_code",
+        result = cls.view("program_by_code/view",
                           key=[domain, code],
                           include_docs=True,
                           limit=1).first()
