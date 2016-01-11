@@ -4,7 +4,7 @@ from django.db import transaction
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.mixin import apply_leniency, VerifiedNumber
-from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.users.models import WebUser, CommCareUser, UserRole
 from custom.ilsgateway.models import ILSMigrationStats, ILSMigrationProblem
 from custom.logistics.mixin import UserMigrationMixin
 from custom.logistics.utils import iterate_over_api_objects
@@ -21,10 +21,8 @@ class BalanceMigration(UserMigrationMixin):
         return meta['total_count'] if meta else 0
 
     @transaction.atomic
-    def validate_sms_users(self, date=None):
-        for sms_user in iterate_over_api_objects(
-                self.endpoint.get_smsusers, filters=dict(date_updated__gte=date)
-        ):
+    def validate_sms_users(self):
+        for sms_user in iterate_over_api_objects(self.endpoint.get_smsusers):
             description = ""
             user = CommCareUser.get_by_username(self.get_username(sms_user)[0])
             if not user:
@@ -37,6 +35,9 @@ class BalanceMigration(UserMigrationMixin):
                 )
                 continue
 
+            if user.domain != self.domain:
+                description += "domain isn't correct"
+
             phone_numbers = {
                 apply_leniency(connection.phone_number) for connection in sms_user.phone_numbers
             }
@@ -45,7 +46,7 @@ class BalanceMigration(UserMigrationMixin):
                 description += "Invalid phone numbers, "
 
             phone_to_backend = {
-                connection.phone_number: connection.backend
+                apply_leniency(connection.phone_number): connection.backend
                 for connection in sms_user.phone_numbers
             }
 
@@ -60,7 +61,7 @@ class BalanceMigration(UserMigrationMixin):
 
             for phone_number in user.phone_numbers:
                 vn = VerifiedNumber.by_phone(phone_number)
-                if not vn or vn.owner_id != user.get_id:
+                if not vn or vn.owner_id != user.get_id or vn.domain != self.domain or not vn.verified:
                     description += "Phone number not verified, "
                 else:
                     backend = phone_to_backend.get(phone_number)
@@ -85,11 +86,11 @@ class BalanceMigration(UserMigrationMixin):
                 ).delete()
 
     @transaction.atomic
-    def validate_web_users(self, date=None):
+    def validate_web_users(self):
         unique_usernames = set()
-        for web_user in iterate_over_api_objects(
-            self.endpoint.get_webusers, filters=dict(date_updated__gte=date)
-        ):
+        read_only_role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
+        for web_user in iterate_over_api_objects(self.endpoint.get_webusers):
+            description = ''
             if web_user.email:
                 username = web_user.email.lower()
             else:
@@ -115,23 +116,33 @@ class BalanceMigration(UserMigrationMixin):
             if not web_user.location:
                 continue
 
+            dm = couch_web_user.get_domain_membership(self.domain)
             try:
                 sql_location = SQLLocation.objects.get(external_id=web_user.location, domain=self.domain)
-                if couch_web_user.get_domain_membership(self.domain).location_id != sql_location.location_id:
-                    ILSMigrationProblem.objects.get_or_create(
-                        domain=self.domain,
-                        object_type='webuser',
-                        description='Location not assigned',
-                        external_id=web_user.email or web_user.username
-                    )
-                else:
-                    ILSMigrationProblem.objects.filter(
-                        domain=self.domain,
-                        external_id=web_user.email or web_user.username
-                    ).delete()
+
+                if dm.location_id != sql_location.location_id:
+                    description += 'Location not assigned'
             except SQLLocation.DoesNotExist:
                 # Location is inactive in v1 or it's an error in location migration
-                continue
+                pass
+
+            if dm.role_id != read_only_role_id:
+                description += 'Invalid role'
+
+            if not description:
+                ILSMigrationProblem.objects.filter(
+                    domain=self.domain,
+                    external_id=web_user.email or web_user.username
+                ).delete()
+            else:
+                ils_migration_problem = ILSMigrationProblem.objects.get_or_create(
+                    domain=self.domain,
+                    object_type='webuser',
+                    external_id=web_user.email or web_user.username
+                )[0]
+                ils_migration_problem.description = description
+                ils_migration_problem.object_id = couch_web_user.get_id
+
         migration_stats = ILSMigrationStats.objects.get(domain=self.domain)
         migration_stats.web_users_count = len(unique_usernames)
         migration_stats.save()
@@ -150,5 +161,5 @@ class BalanceMigration(UserMigrationMixin):
         stats.sms_users_count = sms_users_count
         stats.save()
 
-        self.validate_web_users(date)
-        self.validate_sms_users(date)
+        self.validate_web_users()
+        self.validate_sms_users()

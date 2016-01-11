@@ -540,6 +540,9 @@ class ILSMigrationProblem(models.Model):
     def object_url(self):
         from corehq.apps.locations.views import EditLocationView
 
+        if not self.object_id:
+            return
+
         if self.object_type == 'smsuser':
             return reverse(
                 EditCommCareUserView.urlname, kwargs={'domain': self.domain, 'couch_user_id': self.object_id}
@@ -550,7 +553,6 @@ class ILSMigrationProblem(models.Model):
             )
         elif self.object_type == 'location':
             return reverse(EditLocationView.urlname, kwargs={'domain': self.domain, 'loc_id': self.object_id})
-        return
 
 
 @receiver(commcare_domain_pre_delete)

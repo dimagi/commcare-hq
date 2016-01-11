@@ -18,7 +18,7 @@ TEST_DOMAIN = 'ilsgateway-commtrack-migration-test'
 class MigrationTaskTest(TestCase):
 
     @classmethod
-    def setUp(cls):
+    def setUpClass(cls):
         cls.datapath = os.path.join(os.path.dirname(__file__), 'data')
         initial_bootstrap(TEST_DOMAIN)
         cls.sms_backend = TestSMSBackend(name="MOBILE_BACKEND_TEST", is_global=True)
@@ -36,8 +36,6 @@ class MigrationTaskTest(TestCase):
             product.delete()
 
     def tearDown(self):
-        self.sms_backend.delete()
-
         for product in Product.by_domain(TEST_DOMAIN):
             product.delete()
 
@@ -83,6 +81,7 @@ class MigrationTaskTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.sms_backend.delete()
         for user in WebUser.by_domain(TEST_DOMAIN):
             user.delete()
 
