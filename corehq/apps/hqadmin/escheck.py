@@ -28,7 +28,8 @@ def check_es_cluster_health():
     There are better realtime tools for monitoring ES clusters which should probably be looked at. specifically paramedic or bigdesk
     """
     ret = {}
-    cluster_health = get_es_new().cluster.health()
+    es = get_es_new()  # assign to variable to avoid weak reference error
+    cluster_health = es.cluster.health()
     ret[CLUSTER_HEALTH] = cluster_health['status']
     return ret
 
