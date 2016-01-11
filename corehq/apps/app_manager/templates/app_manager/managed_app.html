@@ -329,8 +329,7 @@
         </ul>
         </li>
     {% endif %}
-    {# TODO: nav-header is deprecated, replace with list-group or panel-group #}
-    <li class="nav-header">Actions</li>
+    <li class="text-hq-nav-header">Actions</li>
     <li class="app-name-div{% if copy_app_form and copy_app_form.is_bound %} active{% endif %}">
         <a href="{% url "view_app" domain app.id %}copy/#copy" data-toggle="tab">
             <i class="fa fa-copy"></i>
