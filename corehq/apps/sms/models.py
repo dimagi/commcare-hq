@@ -29,6 +29,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch import CouchDocLockableMixIn
+from dimagi.utils.load_balance import load_balance
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
 INCOMING = "I"
@@ -1823,6 +1824,39 @@ class SQLSMSBackend(SQLMobileBackend):
         backend type.
         """
         return []
+
+
+class PhoneLoadBalancingMixin(object):
+    """
+    If you need a backend to balance the outbound SMS load over a set of
+    phone numbers, use this mixin. To use it:
+
+    1) Include this mixin in your backend class.
+    2) Have the send() method expect an orig_phone_number kwarg, which will
+       be the phone number to send from. This parameter is always sent in for
+       instances of PhoneLoadBalancingMixin, even if there's just one phone
+       number in self.load_balancing_numbers.
+    3) Have the backend's form class use the LoadBalancingBackendFormMixin to
+       automatically set the load balancing phone numbers in the UI.
+
+    If the backend also uses rate limiting, then each phone number is rate
+    limited separately as you would expect.
+
+    (We could also just define these methods on the backend class itself, but
+    it's useful in other parts of the framework to check if a backend
+    is an instance of this mixin for performing various operations.)
+    """
+
+    def get_next_phone_number(self):
+        if (
+            not isinstance(self.load_balancing_numbers, list) or
+            len(self.load_balancing_numbers) == 0
+        ):
+            raise Exception("Expected load_balancing_numbers to not be "
+                            "empty for backend %s" % self.pk)
+
+        redis_key = 'load-balance-phones-for-backend-%s' % self.pk
+        return load_balance(redis_key, self.load_balancing_numbers)
 
 
 class BackendMap(object):
