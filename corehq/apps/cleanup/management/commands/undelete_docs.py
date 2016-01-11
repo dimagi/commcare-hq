@@ -53,6 +53,7 @@ class Command(LabelCommand):
         if database not in slugs:
             print ("Did not recognize a database called '{}'.  "
                    "Options are: {}".format(database, ", ".join(slugs)))
+            return
         slug = None if database == 'commcarehq' else database
         db = couch_config.all_dbs_by_slug[slug]
 
