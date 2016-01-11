@@ -1,5 +1,6 @@
 from datetime import datetime
 from collections import namedtuple
+from couchdbkit import ResourceNotFound
 from django.core.management.base import LabelCommand
 from dimagi.utils.chunked import chunked
 from corehq.util.couch import send_keys_to_couch, IterDB
@@ -13,7 +14,12 @@ def get_deleted_doc(db, doc_id, rev):
     start = res['_revisions']['start']
     ids = res['_revisions']['ids']
     prev_revision = "{}-{}".format(start-1, ids[1])
-    doc = db.get(doc_id, rev=prev_revision)
+    try:
+        doc = db.get(doc_id, rev=prev_revision)
+    except ResourceNotFound:
+        res.pop('_deleted')
+        res.pop('_revisions')
+        doc = res
     doc.pop('_rev')
     return doc
 
