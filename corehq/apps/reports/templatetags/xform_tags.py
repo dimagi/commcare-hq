@@ -194,7 +194,7 @@ def render_form(form, domain, options):
                 'was_edited': True,
                 'latest_version': instance.orig_id,
             })
-        if getattr(instance, 'edited_on', None):
+        if getattr(instance, 'edited_on', None) and getattr(instance, 'deprecated_form_id', None):
             info.update({
                 'is_edit': True,
                 'edited_on': instance.edited_on,
