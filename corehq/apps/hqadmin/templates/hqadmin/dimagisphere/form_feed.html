@@ -95,6 +95,10 @@
 jQuery(document).ready(function($) {
     var filter = {};
 
+    // courtesy of http://colorbrewer2.org/
+    var COUNTRY_COLORS = ['#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'];
+    var COUNTRY_ACTIVE_COLORS = ['#fef0d9','#fdcc8a','#fc8d59','#e34a33','#b30000'];
+
     var ws4redis = WS4Redis({
         uri: '{{ WEBSOCKET_URI }}form-feed?subscribe-broadcast',
         receive_message: receiveMessage,
@@ -178,25 +182,21 @@ jQuery(document).ready(function($) {
     }).addTo(map);
 
     function getColor(featureId) {
-        // courtesy of http://colorbrewer2.org/
-        var colors = ['#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'];
         var count = dimagisphere.formData.totalFormsByCountry[featureId];
         if (!count) {
-            return colors[0];
+            return COUNTRY_COLORS[0];
         }
         var activeCount = dimagisphere.formData.recentFormsByCountry[featureId];
         if (!activeCount) {
             var pct = count / dimagisphere.formData.maxFormsByCountry;
-            var index = Math.min(Math.floor(pct * colors.length), colors.length - 1);
+            var index = Math.min(Math.floor(pct * COUNTRY_COLORS.length), COUNTRY_COLORS.length - 1);
 
-            return colors[index];
+            return COUNTRY_COLORS[index];
         }
         else {
-            var activeColors = ['#fef0d9','#fdcc8a','#fc8d59','#e34a33','#b30000'];
-
             // these values are adjusted slightly to use all 5 colors, not leaving out the first color
-            var activeIndex = Math.min(activeCount, activeColors.length);
-            return activeColors[activeIndex - 1]
+            var activeIndex = Math.min(activeCount, COUNTRY_ACTIVE_COLORS.length);
+            return COUNTRY_ACTIVE_COLORS[activeIndex - 1]
         }
     }
 
@@ -302,25 +302,22 @@ jQuery(document).ready(function($) {
     var legend = L.control({position: 'bottomleft'});
 
     var createLegend = function (map) {
-        var div = L.DomUtil.create('div', 'info legend'),
-            // todo: move these out into shared variables with the getColor function
-            colors = ['#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'],
-            activeColors = ['#fef0d9','#fdcc8a','#fc8d59','#e34a33','#b30000'];
+        var div = L.DomUtil.create('div', 'info legend');
 
-        var activeCountValues = activeColors.map(function(e, i) {
+        var activeCountValues = COUNTRY_ACTIVE_COLORS.map(function(e, i) {
             return i+1;
         });
 
         // get the upper bounds for each bucket
-        var countValues = colors.map(function(e, i) {
-            var bound = dimagisphere.formData.maxFormsByCountry * (i+1) / colors.length;
-            return Math.max(0, (i < colors.length -1 && Math.floor(bound) === bound) ? bound - 1 : Math.floor(bound));
+        var countValues = COUNTRY_COLORS.map(function(e, i) {
+            var bound = dimagisphere.formData.maxFormsByCountry * (i+1) / COUNTRY_COLORS.length;
+            return Math.max(0, (i < COUNTRY_COLORS.length -1 && Math.floor(bound) === bound) ? bound - 1 : Math.floor(bound));
         });
 
         // only include legend items that are actually used right now
         // when there is a low number of maxForms, they may not all be included
         var indicesToRemove = [];
-        colors = colors.filter(function(elem, index) {
+        var colors = COUNTRY_COLORS.filter(function(elem, index) {
             if (countValues[index] <= 0 || (index > 0 && countValues[index] == countValues[index-1])) {
                 indicesToRemove.push(index);
                 return false;
@@ -338,7 +335,7 @@ jQuery(document).ready(function($) {
         // loop through our active form values and generate a label with a colored square for each value
         for (var i = 0; i < activeCountValues.length; i++) {
             div.innerHTML +=
-                '<i style="background:' + activeColors[i] + '"></i> ' +
+                '<i style="background:' + COUNTRY_ACTIVE_COLORS[i] + '"></i> ' +
                 activeCountValues[i] + (activeCountValues[i + 1] ? '<br>' : "+");
         }
 
