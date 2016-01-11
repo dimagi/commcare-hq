@@ -50,7 +50,7 @@
                 var data = {
                     url: $('#id_url').val(),
                     format: $('#id_format').val(),
-                    repeater_type: {{ repeater_type|to_javascript_string }}
+                    repeater_type: {{ repeater_type|JSON }}
                 };
                 $testLinkButton.disableButton();
 
