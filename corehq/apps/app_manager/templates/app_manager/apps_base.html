@@ -96,6 +96,13 @@
     </script>
 {% endblock %}
 
+{% block page_breadcrumbs %}
+    <ul class="breadcrumb breadcrumb-hq-section">
+        <li>{% trans 'Applications' %}</li>
+        {% block breadcrumbs %}{% endblock %}
+    </ul>
+{% endblock %}
+
 {% block page_content %}
 <div class="app-manager-content hide">
     {% if app %}
