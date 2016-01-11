@@ -3,7 +3,8 @@ from datetime import datetime, timedelta
 from celery.task import task
 from time import sleep
 from corehq.apps.sms.mixin import SMSLoadBalancingMixin, VerifiedNumber
-from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING, SMS)
+from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING, SMS,
+    PhoneLoadBalancingMixin)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
     log_sms_exception)
 from django.conf import settings
@@ -14,6 +15,7 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import soft_delete_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import release_lock
+from dimagi.utils.rate_limit import rate_limit
 from threading import Thread
 
 
@@ -99,6 +101,7 @@ def wait_and_release_lock(lock, timeout):
     t = Thread(target=_wait_and_release_lock, args=(lock, timeout, timestamp))
     t.start()
 
+
 def handle_outgoing(msg):
     """
     Should return a requeue flag, so if it returns True, the message will be
@@ -106,56 +109,39 @@ def handle_outgoing(msg):
     not be queued again.
     """
     backend = msg.outbound_backend
-    sms_interval = backend.get_sms_interval()
-    use_rate_limit = sms_interval is not None
-    use_load_balancing = (isinstance(backend, SMSLoadBalancingMixin) and
-        len(backend.phone_numbers) > 1)
-
-    if use_rate_limit or use_load_balancing:
-        client = get_redis_client()
-
-    lbi = None
+    sms_rate_limit = backend.get_sms_rate_limit()
+    use_rate_limit = sms_rate_limit is not None
+    use_load_balancing = isinstance(backend, PhoneLoadBalancingMixin)
     orig_phone_number = None
+
     if use_load_balancing:
-        lbi = backend.get_next_phone_number(client)
-        orig_phone_number = lbi.phone_number
-    elif (isinstance(backend, SMSLoadBalancingMixin) and 
-        len(backend.phone_numbers) == 1):
-        # If there's only one phone number, we don't need to go through the
-        # load balancing algorithm. But we should always pass an
-        # orig_phone_number if it's an instance of SMSLoadBalancingMixin.
-        orig_phone_number = backend.phone_numbers[0]
+        orig_phone_number = backend.get_next_phone_number()
 
     if use_rate_limit:
         if use_load_balancing:
-            lock_key = "sms-backend-%s-rate-limit-phone-%s" % (backend._id,
-                lbi.phone_number)
+            redis_key = 'sms-rate-limit-backend-%s-phone-%s' % (backend.pk, orig_phone_number)
         else:
-            lock_key = "sms-backend-%s-rate-limit" % backend._id
-        lock = client.lock(lock_key, timeout=30)
+            redis_key = 'sms-rate-limit-backend-%s' % backend.pk
 
-    if not use_rate_limit or (use_rate_limit and lock.acquire(blocking=False)):
-        if use_load_balancing:
-            lbi.finish(save_stats=True)
-        result = send_message_via_backend(msg, backend=backend, 
-            orig_phone_number=orig_phone_number)
-        if use_rate_limit:
-            wait_and_release_lock(lock, sms_interval)
+        if not rate_limit(redis_key, actions_allowed=sms_rate_limit, how_often=60):
+            # Requeue the message and try it again shortly
+            return True
 
+    result = send_message_via_backend(
+        msg,
+        backend=backend,
+        orig_phone_number=orig_phone_number
+    )
+
+    if not msg.error:
         # Only do the following if an unrecoverable error did not happen
-        if not msg.error:
-            if result:
-                handle_successful_processing_attempt(msg)
-            else:
-                handle_unsuccessful_processing_attempt(msg)
-        return False
-    else:
-        # We're using rate limiting, but couldn't acquire the lock, so
-        # another thread is sending sms with this backend. Rather than wait,
-        # we'll just put this message at the back of the queue.
-        if use_load_balancing:
-            lbi.finish(save_stats=False)
-        return True
+        if result:
+            handle_successful_processing_attempt(msg)
+        else:
+            handle_unsuccessful_processing_attempt(msg)
+
+    return False
+
 
 def handle_incoming(msg):
     try:

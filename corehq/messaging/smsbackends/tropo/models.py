@@ -79,8 +79,8 @@ class SQLTropoBackend(SQLSMSBackend):
     def get_form_class(cls):
         return TropoBackendForm
 
-    def get_sms_interval(self):
-        return 1
+    def get_sms_rate_limit(self):
+        return 60
 
     def send(self, msg, *args, **kwargs):
         phone_number = clean_phone_number(msg.phone_number)

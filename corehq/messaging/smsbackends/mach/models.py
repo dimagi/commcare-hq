@@ -94,8 +94,8 @@ class SQLMachBackend(SQLSMSBackend):
     def get_form_class(cls):
         return MachBackendForm
 
-    def get_sms_interval(self):
-        return (1.0 / self.config.max_sms_per_second)
+    def get_sms_rate_limit(self):
+        return self.config.max_sms_per_second * 60
 
     def send(self, msg, *args, **kwargs):
         config = self.config

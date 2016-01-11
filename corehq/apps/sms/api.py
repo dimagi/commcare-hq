@@ -242,22 +242,16 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
 
         if not backend:
             backend = msg.outbound_backend
-            # note: this will handle "verified" contacts that are still pending
-            # verification, thus the backend is None. it's best to only call
-            # send_sms_to_verified_number on truly verified contacts, though
-
-        if not msg.backend_id:
-            msg.backend_id = backend._id
 
         if backend.domain_is_authorized(msg.domain):
             backend.send(msg, orig_phone_number=orig_phone_number)
         else:
-            raise BackendAuthorizationException("Domain '%s' is not authorized to use backend '%s'" % (msg.domain, backend._id))
+            raise BackendAuthorizationException(
+                "Domain '%s' is not authorized to use backend '%s'" % (msg.domain, backend.pk)
+            )
 
-        try:
-            msg.backend_api = backend.__class__.get_api_id()
-        except Exception:
-            pass
+        msg.backend_api = backend.get_api_id()
+        msg.backend_id = backend.couch_id
         msg.save()
         create_billable_for_sms(msg)
         return True

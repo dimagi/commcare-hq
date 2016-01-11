@@ -20,7 +20,7 @@ from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin, MobileBackend,
     PhoneNumberInUseException, InvalidFormatException, VerifiedNumber,
-    apply_leniency, BackendMapping)
+    apply_leniency, BackendMapping, BadSMSConfigException)
 from corehq.apps.sms import util as smsutil
 from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
     MSG_MOBILE_WORKER_ANDROID_INVITATION, MSG_MOBILE_WORKER_JAVA_INVITATION,
@@ -234,11 +234,12 @@ class SMSLog(SyncCouchToSQLMixin, MessageLog):
     def outbound_backend(self):
         """appropriate outbound sms backend"""
         if self.backend_id:
-            return MobileBackend.load(self.backend_id)
+            return SQLMobileBackend.load(self.backend_id, is_couch_id=True)
         else:
-            return MobileBackend.auto_load(
+            return SQLMobileBackend.load_default_by_phone_and_domain(
+                SQLMobileBackend.SMS,
                 smsutil.clean_phone_number(self.phone_number),
-                self.domain
+                domain=self.domain
             )
 
     def __unicode__(self):
@@ -1573,10 +1574,11 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         return backend
 
     @classmethod
-    @quickcache(['backend_id'], timeout=60 * 60)
-    def get_backend_api_id(cls, backend_id):
+    @quickcache(['backend_id', 'is_couch_id'], timeout=60 * 60)
+    def get_backend_api_id(cls, backend_id, is_couch_id=False):
+        filter_args = {'couch_id': backend_id} if is_couch_id else {'pk': backend_id}
         result = (cls.objects
-                  .filter(pk=backend_id)
+                  .filter(**filter_args)
                   .values_list('hq_api_id', flat=True))
 
         if len(result) == 0:
@@ -1585,22 +1587,30 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         return result[0]
 
     @classmethod
-    @quickcache(['backend_id'], timeout=5 * 60)
-    def load(cls, backend_id, api_id=None):
+    @quickcache(['backend_id', 'is_couch_id'], timeout=5 * 60)
+    def load(cls, backend_id, api_id=None, is_couch_id=False):
         """
         backend_id - the pk of the SQLMobileBackend to load
         api_id - if you know the hq_api_id of the SQLMobileBackend, pass it
                  here for a faster lookup; otherwise, it will be looked up
                  automatically
+        couch_id - if True, then backend_id should be the couch_id to use
+                   during lookup instead of the postgres model's pk;
+                   we have to support both for a little while until all
+                   foreign keys are migrated over
         """
         backend_classes = smsutil.get_backend_classes()
-        api_id = api_id or cls.get_backend_api_id(backend_id)
+        api_id = api_id or cls.get_backend_api_id(backend_id, is_couch_id=is_couch_id)
 
         if api_id not in backend_classes:
             raise BadSMSConfigException("Unexpected backend api id found '%s' for "
                                         "backend '%s'" % (api_id, backend_id))
 
-        return backend_classes[api_id].objects.get(pk=backend_id)
+        klass = backend_classes[api_id]
+        if is_couch_id:
+            return klass.objects.get(is_couch_id=backend_id)
+        else:
+            return klass.objects.get(pk=backend_id)
 
     @classmethod
     def get_backend_from_id_and_api_id_result(cls, result):
@@ -1793,16 +1803,11 @@ class SQLSMSBackend(SQLMobileBackend):
     class Meta:
         proxy = True
 
-    def get_sms_interval(self):
+    def get_sms_rate_limit(self):
         """
         Override to use rate limiting. Return None to not use rate limiting,
-        otherwise return the number of seconds by which outbound sms requests
-        should be separated when using this backend.
-        Note that this should not be over 30 due to choice of redis lock
-        timeout. See corehq.apps.sms.tasks.handle_outgoing.
-
-        Also, this can be a fractional amount of seconds. For example, to
-        separate requests by a minimum of a quarter second, return 0.25.
+        otherwise return the maximum number of SMS that should be sent by
+        this backend instance in a one minute period.
         """
         return None
 
@@ -1854,6 +1859,11 @@ class PhoneLoadBalancingMixin(object):
         ):
             raise Exception("Expected load_balancing_numbers to not be "
                             "empty for backend %s" % self.pk)
+
+        if len(self.load_balancing_numbers) == 1:
+            # If there's just one number, no need to go through the
+            # process to figure out which one is next.
+            return self.load_balancing_numbers[0]
 
         redis_key = 'load-balance-phones-for-backend-%s' % self.pk
         return load_balance(redis_key, self.load_balancing_numbers)
