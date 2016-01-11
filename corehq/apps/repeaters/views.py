@@ -1,12 +1,18 @@
 from django.core.urlresolvers import reverse
 
 from corehq.apps.domain.views import AddRepeaterView
+from corehq.apps.style.decorators import use_select2
 from .forms import CaseRepeaterForm
 
 
 class AddCaseRepeaterView(AddRepeaterView):
     urlname = 'add_case_repeater'
     repeater_form_class = CaseRepeaterForm
+    template_name = 'repeaters/add_case_repeater.html'
+
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(AddCaseRepeaterView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):
