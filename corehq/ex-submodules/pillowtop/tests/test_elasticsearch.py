@@ -18,7 +18,7 @@ class TestElasticPillow(AliasedElasticPillow):
     es_port = 9200
     es_alias = 'pillowtop_tests'
     es_type = 'test_doc'
-    es_index = 'pillowtop_test_index'
+    es_index = 'test_pillowtop_index'
     # just for the sake of something being here
     es_meta = {
         "settings": {
