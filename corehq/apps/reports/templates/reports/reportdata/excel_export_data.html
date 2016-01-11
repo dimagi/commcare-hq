@@ -72,6 +72,7 @@
                             .attr("value", value)
                             .appendTo($form);
                 });
+                $("{% csrf_token %}").appendTo($form);
                 $form.appendTo("body");
                 $form.submit();
             }
