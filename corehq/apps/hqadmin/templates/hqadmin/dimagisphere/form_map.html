@@ -18,6 +18,29 @@
             background: rgba(255,255,255,0.8);
             border-radius: 5px;
         }
+        .info {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+        .info h4 {
+            margin: 0 0 5px;
+            color: #777;
+        }
+        .legend {
+            line-height: 18px;
+            color: #555;
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
@@ -85,7 +108,8 @@ jQuery(document).ready(function($) {
         var activeCount = dimagisphere.formData.recentFormsByCountry[featureId];
         if (!activeCount) {
             var pct = count / dimagisphere.formData.maxFormsByCountry;
-            var index = Math.min(Math.ceil(pct * colors.length), colors.length - 1);
+            var index = Math.min(Math.floor(pct * colors.length), colors.length - 1);
+
             return colors[index];
         }
         else {
@@ -167,11 +191,82 @@ jQuery(document).ready(function($) {
     function colorAll() {
         if (countriesGeo !== undefined) {
             countriesGeo.setStyle(style);
+            map.removeControl(legend);
+            legend.addTo(map);
         }
     }
 
     // update all every 5 seconds in case no activity (this is just to clear active state)
     window.setInterval(colorAll, 5000);
+
+    // add a legend
+    var legend = L.control({position: 'bottomleft'});
+
+    var createLegend = function (map) {
+        var div = L.DomUtil.create('div', 'info legend'),
+            // todo: move these out into shared variables with the getColor function
+            colors = ['#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'],
+            activeColors = ['#fef0d9','#fdcc8a','#fc8d59','#e34a33','#b30000'];
+
+        var activeGrades = activeColors.map(function(e, i) {
+            return i;
+        });
+
+        // todo: consider removing these everywhere? or bumping the values up by 1?
+        // remove the 0 grade and color because they are never used and would be inaccurate in a legend.
+        activeGrades.shift();
+        activeColors.shift();
+
+        // get the upper bounds for each bucket
+        var grades = colors.map(function(e, i) {
+            var bound = dimagisphere.formData.maxFormsByCountry * (i+1) / colors.length;
+            return Math.max(0, (i < colors.length -1 && Math.floor(bound) === bound) ? bound - 1 : Math.floor(bound));
+        });
+
+        var indicesToRemove = [];
+        colors = colors.filter(function(elem, index) {
+            if (grades[index] <= 0 || (index > 0 && grades[index] == grades[index-1])) {
+                indicesToRemove.push(index);
+                return false;
+            } else {
+                return true;
+            }
+        });
+
+        grades = grades.filter(function(elem, index) {
+            return indicesToRemove.indexOf(index) <= -1;
+        });
+
+        div.innerHTML += '<p>Recent Forms</p>';
+
+        // loop through our intervals and generate a label with a colored square for each interval
+        for (var i = 0; i < activeGrades.length; i++) {
+            div.innerHTML +=
+                '<i style="background:' + activeColors[i] + '"></i> ' +
+                activeGrades[i] + (activeGrades[i + 1] ? '<br>' : "+");
+        }
+
+        div.innerHTML += '<p>All Forms Since Opening</p>' +
+                         '<i style="background:' + 'black' + '"></i> ' + '0' + '<br>';
+
+        // loop through our intervals and generate a label with a colored square for each interval
+        for (var i = 0; i < grades.length; i++) {
+            div.innerHTML += '<i style="background:' + colors[i] + '"></i> ';
+            if (grades[i-1] !==  undefined) {
+                if (grades[i-1] +1 < grades[i]) {
+                    div.innerHTML += (grades[i-1] + 1) + '&ndash;'
+                }
+            } else if (grades[i] > 1) {
+                div.innerHTML += '1&ndash;'
+            }
+            div.innerHTML += grades[i] + '<br>';
+        }
+
+        return div;
+    };
+
+    legend.onAdd = createLegend;
+    legend.addTo(map);
 
     // simulation controls
     var simulationOn = false;
