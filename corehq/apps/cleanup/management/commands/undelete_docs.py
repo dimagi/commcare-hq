@@ -1,5 +1,6 @@
+from datetime import datetime
 from collections import namedtuple
-from django.core.management import BaseCommand
+from django.core.management.base import LabelCommand
 from dimagi.utils.chunked import chunked
 from corehq.util.couch import send_keys_to_couch, IterDB
 from corehq.util.couchdb_management import couch_config
@@ -22,14 +23,7 @@ def undelete_docs(db, doc_ids):
     with IterDB(db) as iter_db:
         for chunk in chunked(set(doc_ids), 100):
             for res in send_keys_to_couch(db, keys=set(chunk)):
-
-                print "\nDOC RESULT"
                 doc_id = res['key']
-                doc = res.get('doc')
-                print doc_id
-                print doc
-                print res
-
                 if res.get('error', None) == 'not_found':
                     results.not_found.add(doc_id)
                 elif res.get('value', {}).get('deleted', False):
@@ -39,19 +33,71 @@ def undelete_docs(db, doc_ids):
                     results.restored.add(doc_id)
                 else:
                     results.not_deleted.add(doc_id)
-    return results
+    return results, iter_db
 
 
-class Command(BaseCommand):
-    help = 'Delete document conflicts'
+class Command(LabelCommand):
+    help = ("Accepts a series of deleted document ids from stdin and "
+            "restores them to the revision immediately prior to deletion."
+            "\nUsage: './manage.py undelete_docs [database] [ids_file]'")
 
     def handle(self, *args, **options):
-        #  print args
-        #  print options
-        doc_ids = ["idontwantthisfixture", "thisfixtureisntdeleted", "thisonedoesntexist"]
-        # TODO get from cmdline - use 'fixtures'
-        db = couch_config.all_dbs_by_slug[None]
-        results = undelete_docs(db, doc_ids)
-        print "RESTORED:", results.restored
-        print "NOT_FOUND:", results.not_found
-        print "NOT_DELETED:", results.not_deleted
+        try:
+            database, ids_file = args
+        except ValueError:
+            print "Usage: './manage.py undelete_docs [database] [ids_file]'"
+            return
+
+        # figure out db to use
+        slugs = ['commcarehq'] + sorted(filter(None, couch_config.all_dbs_by_slug))
+        if database not in slugs:
+            print ("Did not recognize a database called '{}'.  "
+                   "Options are: {}".format(database, ", ".join(slugs)))
+        slug = None if database == 'commcarehq' else database
+        db = couch_config.all_dbs_by_slug[slug]
+
+        # get list of doc_ids
+        try:
+            with open(ids_file) as f:
+                doc_ids = [doc_id.strip() for doc_id in f.readlines()]
+        except IOError:
+            print "Couldn't find a file called '{}'".format(ids_file)
+            return
+
+        # confirm
+        msg = ("Are you sure you want to undelete {} docs from {}? (y/n)\n"
+               .format(len(doc_ids), db.dbname))
+        if raw_input(msg) != "y":
+            return
+
+        # actually do the work
+        results, iter_db = undelete_docs(db, doc_ids)
+
+        # Now, what happened?
+        print "Restored {} docs".format(len(results.restored))
+        print "Didn't find {} ids".format(len(results.not_found))
+        print "{} docs weren't deleted".format(len(results.not_deleted))
+
+        outfile = "delete_from_{}_{}.txt".format(iter_db.db.dbname, datetime.now())
+        with open(outfile, 'w') as f:
+            f.write('\n'.join(get_output_file(results, iter_db)))
+        print "Full results can be found in {}".format(outfile)
+
+
+def get_output_file(results, iter_db):
+    output = ["Deleting docs from {} on {}"
+              .format(iter_db.db.dbname, datetime.now())]
+
+    def write_section(header, ids):
+        output.append("\n{}".format(header))
+        output.extend(ids)
+
+    write_section("RESTORED", results.restored)
+    write_section("NOT FOUND", results.not_found)
+    write_section("NOT DELETED", results.not_deleted)
+
+    output.append("\n\nRESULTS FROM ITERDB")
+    write_section("SAVED IDS", iter_db.saved_ids)
+    write_section("DELETED IDS", iter_db.deleted_ids)
+    write_section("ERROR IDS", iter_db.error_ids)
+    return output
