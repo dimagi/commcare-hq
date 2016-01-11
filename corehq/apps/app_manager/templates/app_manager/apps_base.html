@@ -21,7 +21,9 @@
 
 {% block js %}{{ block.super }}
     {# Explicitly include these because app manager doesn't really do class-based views, can't use the decorators #}
-    <script type="text/javascript" src="{% new_static 'knockout/dist/knockout.js' %}"></script>
+    <!--script type="text/javascript" src="{% new_static 'knockout/dist/knockout.js' %}"></script-->
+    <!-- TODO: upgrade to knockout 3 -->
+    <script type="text/javascript" src="{% new_static 'knockout-2.3.0-legacy/knockout.js' %}"></script>
     <script type="text/javascript" src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
     <script type="text/javascript" src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
     <script type="text/javascript" src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
