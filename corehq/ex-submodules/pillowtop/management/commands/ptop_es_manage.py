@@ -2,7 +2,7 @@ from django.core.management.base import LabelCommand, CommandError
 import sys
 from optparse import make_option
 import simplejson
-from corehq.elastic import get_es
+from corehq.elastic import get_es_new
 from pillowtop.es_utils import assume_alias_for_pillow
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.management.pillowstate import get_pillow_states
@@ -49,7 +49,7 @@ class Command(LabelCommand):
         flip_all = options['flip_all']
         flip_single = options['pillow_class']
         code_red = options['code_red']
-        es = get_es()
+        es = get_es_new()
 
         pillows = get_all_pillow_instances()
         aliased_pillows = filter(lambda x: isinstance(x, AliasedElasticPillow), pillows)
@@ -81,7 +81,7 @@ class Command(LabelCommand):
         if flip_all:
             for pillow in aliased_pillows:
                 assume_alias_for_pillow(pillow)
-            print simplejson.dumps(es.get('_aliases'), indent=4)
+            print simplejson.dumps(es.indices.get_aliases(), indent=4)
         if flip_single is not None:
             pillow_class_name = flip_single
             pillow_to_use = filter(lambda x: x.__class__.__name__ == pillow_class_name, aliased_pillows)
@@ -92,4 +92,4 @@ class Command(LabelCommand):
 
             target_pillow = pillow_to_use[0]
             assume_alias_for_pillow(target_pillow)
-            print es.get('_aliases')
+            print es.indices.get_aliases()

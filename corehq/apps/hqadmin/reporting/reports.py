@@ -53,7 +53,6 @@ from corehq.elastic import (
     es_histogram,
     ES_MAX_CLAUSE_COUNT,
     es_query,
-    ES_URLS,
 )
 
 from casexml.apps.stock.models import StockReport, StockTransaction
@@ -898,7 +897,7 @@ def _total_until_date(histogram_type, datespan, filters=[], domain_list=None):
 
     return es_query(
         q=q,
-        es_url=ES_URLS[histogram_type],
+        es_index=histogram_type,
         size=0,
     )["hits"]["total"]
 

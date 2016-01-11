@@ -61,7 +61,7 @@ from corehq.apps.users.forms import (BaseUserInfoForm, CommtrackUserForm, Domain
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
                                       DomainRemovalRecord, UserRole, AdminUserRole, Invitation, PublicUser,
                                       DomainMembershipError)
-from corehq.elastic import ADD_TO_ES_FILTER, es_query, ES_URLS
+from corehq.elastic import ADD_TO_ES_FILTER, es_query
 from corehq.util.couch import get_document_or_404
 
 
@@ -407,7 +407,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
         default_fields = ["username", "last_name", "first_name"]
         q["query"] = search_string_query(query, default_fields)
         return es_query(
-            params={}, q=q, es_url=ES_URLS["users"],
+            params={}, q=q, es_index='users',
             size=limit, start_at=skip,
         )
 

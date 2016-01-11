@@ -74,7 +74,7 @@ from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.sql_db.connections import Session
-from corehq.elastic import parse_args_for_es, ES_URLS, run_query
+from corehq.elastic import parse_args_for_es, run_query, ES_META
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.decorators.datespan import datespan_in_request
@@ -670,8 +670,8 @@ def doc_in_es(request):
     query = {"filter": {"ids": {"values": [doc_id]}}}
     found_indices = {}
     es_doc_type = None
-    for index, url in ES_URLS.items():
-        res = run_query(url, query)
+    for index in ES_META:
+        res = run_query(index, query)
         if 'hits' in res and res['hits']['total'] == 1:
             es_doc = res['hits']['hits'][0]['_source']
             found_indices[index] = to_json(es_doc)
