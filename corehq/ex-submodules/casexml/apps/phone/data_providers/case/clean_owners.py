@@ -86,8 +86,11 @@ class CleanOwnerCaseSyncOperation(object):
                 # update the indices in the new sync log
                 if case.indices:
                     # and double check footprint for non-live cases
-                    extension_indices[case.case_id] = {index.identifier: index.referenced_id for index in case.indices
-                                                   if index.relationship == CASE_INDEX_EXTENSION}
+                    extension_indices[case.case_id] = {
+                        index.identifier: index.referenced_id
+                        for index in case.indices
+                        if index.relationship == CASE_INDEX_EXTENSION
+                    }
                     child_indices[case.case_id] = {index.identifier: index.referenced_id for index in case.indices
                                                if index.relationship == CASE_INDEX_CHILD}
                     for index in case.indices:
@@ -258,7 +261,6 @@ def _move_no_longer_owned_cases_to_dependent_list_if_necessary(restore_state, ca
         if removed_owners:
             # if we removed any owner ids, then any cases that belonged to those owners need
             # to be moved to the dependent list
-            domain = restore_state.domain
             case_ids_to_try_purging = case_accessor.get_case_ids_by_owners(list(removed_owners))
             for to_purge in case_ids_to_try_purging:
                 if to_purge in restore_state.current_sync_log.case_ids_on_phone:

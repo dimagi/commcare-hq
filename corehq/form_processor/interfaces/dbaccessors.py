@@ -174,4 +174,6 @@ class CaseAccessors(object):
     def get_all_reverse_indices_info(self, case_ids):
         return self.db_accessor.get_all_reverse_indices_info(self.domain, case_ids)
 
-CaseIndexInfo = namedtuple('CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship'])
+CaseIndexInfo = namedtuple(
+    'CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship']
+)

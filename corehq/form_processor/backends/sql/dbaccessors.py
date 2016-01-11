@@ -257,7 +257,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_all_reverse_indices_info(domain, case_ids):
-        # TODO: If the domain field is used on CommCareCaseIndexSQL in the future, this function should filter by it.
+        # TODO: If the domain field is used on CommCareCaseIndexSQL
+        # in the future, this function should filter by it.
         indexes = CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_all_reverse_indices(%s)', [case_ids])
         return [
             CaseIndexInfo(
@@ -331,7 +332,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def case_has_transactions_since_sync(case_id, sync_log_id, sync_log_date):
         with get_cursor(CaseTransaction) as cursor:
-            cursor.execute('SELECT case_has_transactions_since_sync(%s, %s, %s)', [case_id, sync_log_id, sync_log_date])
+            cursor.execute(
+                'SELECT case_has_transactions_since_sync(%s, %s, %s)', [case_id, sync_log_id, sync_log_date]
+            )
             result = cursor.fetchone()[0]
             return result
 
@@ -426,7 +429,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
         with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT case_id FROM get_case_ids_modified_with_owner_since(%s, %s, %s)', [domain, owner_id, reference_date])
+            cursor.execute(
+                'SELECT case_id FROM get_case_ids_modified_with_owner_since(%s, %s, %s)',
+                [domain, owner_id, reference_date]
+            )
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
 
@@ -447,7 +453,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         values are the last server modified date of that case.
         """
         with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT case_id, server_modified_on FROM get_case_last_modified_dates(%s, %s)', [domain, case_ids])
+            cursor.execute(
+                'SELECT case_id, server_modified_on FROM get_case_last_modified_dates(%s, %s)',
+                [domain, case_ids]
+            )
             results = fetchall_as_namedtuple(cursor)
             return dict((result.case_id, result.server_modified_on) for result in results)
 

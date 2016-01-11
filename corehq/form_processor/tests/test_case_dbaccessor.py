@@ -425,7 +425,6 @@ class CaseAccessorTestsSQL(TestCase):
         case.track_create(extension_index)
         CaseAccessorSQL.save_case(case)
 
-
         # Create irrelevant case
         other_case = _create_case()
         child_index = CommCareCaseIndexSQL(
