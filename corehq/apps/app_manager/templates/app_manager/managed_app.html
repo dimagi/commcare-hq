@@ -174,8 +174,14 @@
         </li>
         {% endif %}
         <li>
+            <a href="{% url "view_app" domain app.id %}languages/#languages-and-translations" data-toggle="tab"
+               style="vertical-align: middle;">
+                <i class="fa fa-globe"></i>
+                {% trans "Languages" %}
+            </a>
             {% if app.get_doc_type == 'Application' %}
-                <span id="langs" class="pull-right">
+                {# TODO: put in stylesheet #}
+                <span id="langs" style="position: absolute; right: 5px; top: 5px;">
                     {% if not app.is_remote_app and app.langs|length > 1%}
                         {# TODO: fix input-mini and all other sized inputs #}
                         <select name="lang" class="input-mini" style="height: 20px; margin-bottom: 0px; margin-top: 2px; padding: 0;">
@@ -190,11 +196,6 @@
                     {% endif %}
                 </span>
             {% endif %}
-            <a href="{% url "view_app" domain app.id %}languages/#languages-and-translations" data-toggle="tab"
-               style="vertical-align: middle;">
-                <i class="fa fa-globe"></i>
-                {% trans "Languages" %}
-            </a>
         </li>
         <li>
             <a href="{% url "app_summary" domain app.id %}" style="vertical-align: middle;">
