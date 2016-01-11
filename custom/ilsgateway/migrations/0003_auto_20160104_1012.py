@@ -8,7 +8,7 @@ import datetime
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('ilsgateway', '0001_initial'),
+        ('ilsgateway', '0002_auto_20160104_1600'),
     ]
 
     operations = [
