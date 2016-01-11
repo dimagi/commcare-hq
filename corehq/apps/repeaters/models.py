@@ -488,7 +488,7 @@ class RepeatRecord(Document, LockableMixIn):
                 for i in range(max_tries):
                     try:
                         resp = post_fn(payload, self.url, headers=headers)
-                        if 200 <= resp.status < 300:
+                        if 200 <= resp.status_code < 300:
                             self.update_success()
                             break
                     except Exception, e:
