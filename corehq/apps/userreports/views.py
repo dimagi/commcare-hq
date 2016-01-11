@@ -560,7 +560,7 @@ def _edit_data_source_shared(request, domain, config, read_only=False):
         'read_only': read_only
     })
     if config.is_deactivated:
-        messages.warning(
+        messages.info(
             request, _(
                 'Data source "{}" has no associated table.\n'
                 'Click "Rebuild Data Source" to recreate the table.'
