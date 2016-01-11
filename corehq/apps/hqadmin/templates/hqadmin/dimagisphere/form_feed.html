@@ -9,13 +9,75 @@
 	{% compress css %}
         <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'style/lib/bootstrap-3.2.0/dist/css/bootstrap.min.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'nvd3/src/nv.d3.css' %}" />
+        <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'reports/css/leaflet/leaflet.css' %}" />
     {% endcompress %}
+    <style>
+        .chart-wrapper, .map-wrapper {
+            display: inline-block;
+            width: 49%;
+        }
+        .chart-wrapper {
+            float:left;
+        }
+        #map {
+            height: 500px;
+        }
+        .map-info {
+            padding: 6px 8px;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            border-radius: 5px;
+        }
+        .info {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+        .info h4 {
+            margin: 0 0 5px;
+            color: #777;
+        }
+        .legend {
+            line-height: 18px;
+            color: #555;
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.7;
+        }
+        #map svg {
+            height: inherit;
+            width: inherit;
+        }
+    </style>
 </head>
 <body>
 	<div class="container-fluid">
 		{% block main_content %}
-            <h1>Incoming Forms by domain <small>This should update in real time. Also check out the <a href="{% url 'dimagisphere' %}" target="_blank">map</a></small></h1>
-            <div id="chart"><svg style='height:500px'></svg></div>
+            <h1>Incoming Forms <small>This should update in real time.</small></h1>
+            <div>
+                <div class="chart-wrapper">
+                    <h3>By Domain</h3>
+                    <div id="chart">
+                        <svg style='height:500px'></svg>
+                    </div>
+                </div>
+                <div class="map-wrapper">
+                    <h3>By Country</h3>
+                    <div id="map"></div>
+                </div>
+            </div>
+            <div id="controls" class="pull-right">Simulate:
+                <button id="controlButton" type="button" class="btn btn-default btn-xs">
+                    <span class="glyphicon glyphicon-play"></span>
+                </button>
+            </div>
 		{% endblock main_content %}
 	</div>
     {% compress js %}
@@ -24,6 +86,8 @@
         <script type="text/javascript" src="{% new_static 'd3/d3.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'nvd3/nv.d3.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'js/ws4redis.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'reports/javascripts/leaflet.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'hqadmin/js/dimagisphere_helper.js' %}"></script>
     {% endcompress %}
 
 	{% block script_panel %}
@@ -35,17 +99,29 @@ jQuery(document).ready(function($) {
         heartbeat_msg: {{ WS4REDIS_HEARTBEAT }}
     });
 
-    var formCounts = {};
+    function addDataToMap(msgObj) {
+        if (dimagisphere.addData(msgObj)) {
+            colorAll();
+            // this removes from active after a bit of time
+            window.setTimeout(function () {
+                dimagisphere.formData.recentFormsByCountry[msgObj.country] -= 1;
+            }, 1000);
+        }
+    }
 
     // receive a message though the Websocket from the server
     function receiveMessage(msg) {
         var msgObj = JSON.parse(msg);
         // var renderedMsg = '<strong>' + msgObj.username + '</strong>: ' + msgObj.message;
-        var currentCount =formCounts[msgObj.domain] || 0;
+
+        addDataToMap(msgObj);
+
+        // add data to chart
+        var currentCount = dimagisphere.formData.totalFormsByDomain[msgObj.domain] || 0;
         currentCount += 1;
-        formCounts[msgObj.domain] = currentCount;
+        dimagisphere.formData.totalFormsByDomain[msgObj.domain] = currentCount;
         if (chart !== undefined) {
-            chartData.datum(formatChartData(formCounts)).call(chart);
+            chartData.datum(formatChartData(dimagisphere.formData.totalFormsByDomain)).call(chart);
             try {
                 nv.utils.windowResize(chart.update);
             } catch (err) {
@@ -65,7 +141,7 @@ jQuery(document).ready(function($) {
           .showValues(true)
           .transitionDuration(350)
         ;
-        chartData = d3.select('#chart svg').datum(formatChartData(formCounts));
+        chartData = d3.select('#chart svg').datum(formatChartData(dimagisphere.formData.totalFormsByDomain));
         chartData.call(chart);
         nv.utils.windowResize(chart.update);
         return chart;
@@ -79,8 +155,217 @@ jQuery(document).ready(function($) {
             values: values
         }];
     }
+
+    var countriesGeo;
+    // A lot of the styling work here is modeled after http://leafletjs.com/examples/choropleth.html
+    var map = L.map('map').setView([0, 0], 3)
+    var mapId = 'mapbox.dark';
+    // todo: move to config somewhere
+    var accessToken = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA';
+    L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+        maxZoom: 10,
+        id: mapId,
+        accessToken: accessToken
+    }).addTo(map);
+
+    function getColor(featureId) {
+        // courtesy of http://colorbrewer2.org/
+        var colors = ['#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'];
+        var count = dimagisphere.formData.totalFormsByCountry[featureId];
+        if (!count) {
+            return colors[0];
+        }
+        var activeCount = dimagisphere.formData.recentFormsByCountry[featureId];
+        if (!activeCount) {
+            var pct = count / dimagisphere.formData.maxFormsByCountry;
+            var index = Math.min(Math.floor(pct * colors.length), colors.length - 1);
+
+            return colors[index];
+        }
+        else {
+            var activeColors = ['#fef0d9','#fdcc8a','#fc8d59','#e34a33','#b30000'];
+
+            // these values are adjusted slightly to use all 5 colors, not leaving out the first color
+            var activeIndex = Math.min(activeCount, activeColors.length);
+            return activeColors[activeIndex - 1]
+        }
+    }
+
+    function getOpacity(featureId) {
+        if (dimagisphere.formData.totalFormsByCountry[featureId]) {
+            return .9;
+        } else {
+            return 0;
+        }
+    }
+
+    function style(feature) {
+        return {
+            fillColor: getColor(feature.properties.name),
+            weight: 2,
+            opacity: 1,
+            color: 'white',
+            dashArray: '3',
+            fillOpacity: getOpacity(feature.properties.name)
+        };
+    }
+
+    // highlights
+    function highlightFeature(e) {
+        var layer = e.target;
+        layer.setStyle({
+            weight: 4,
+            color: '#002c5f',
+            dashArray: ''
+        });
+        if (!L.Browser.ie && !L.Browser.opera) {
+            layer.bringToFront();
+        }
+        info.update(layer.feature.properties);
+    }
+
+    function resetHighlight(e) {
+        countriesGeo.resetStyle(e.target);
+        info.update();
+    }
+
+    function onEachFeature(feature, layer) {
+        layer.on({
+            mouseover: highlightFeature,
+            mouseout: resetHighlight
+        });
+    }
+
+    // info control
+    var info = L.control();
+    info.onAdd = function (map) {
+        this._div = L.DomUtil.create('div', 'map-info');
+        this.update();
+        return this._div;
+    };
+
+    // method that we will use to update the control based on feature properties passed in
+    info.update = function (props) {
+        function _getInfoContent(countryName) {
+            var formCount = dimagisphere.formData.totalFormsByCountry[countryName];
+            var message = formCount ? formCount + ' forms' : 'no data yet';
+            return '<b>' + countryName + '</b>: ' + message;
+        }
+        this._div.innerHTML = (props ? _getInfoContent(props.name) : 'Hover over a country');
+    };
+    info.addTo(map);
+
+    // todo: should probably be getting this from somewhere else and possibly not on every page load.
+    $.getJSON('https://raw.githubusercontent.com/dimagi/world.geo.json/master/countries.geo.json', function (data) {
+        countriesGeo = L.geoJson(data, {style: style, onEachFeature: onEachFeature}).addTo(map);
+    });
+
+    function colorAll() {
+        if (countriesGeo !== undefined) {
+            countriesGeo.setStyle(style);
+            map.removeControl(legend);
+            legend.addTo(map);
+        }
+    }
+
+    // update all every 5 seconds in case no activity (this is just to clear active state)
+    window.setInterval(colorAll, 5000);
+
+    // add a legend
+    var legend = L.control({position: 'bottomleft'});
+
+    var createLegend = function (map) {
+        var div = L.DomUtil.create('div', 'info legend'),
+            // todo: move these out into shared variables with the getColor function
+            colors = ['#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'],
+            activeColors = ['#fef0d9','#fdcc8a','#fc8d59','#e34a33','#b30000'];
+
+        var activeCountValues = activeColors.map(function(e, i) {
+            return i+1;
+        });
+
+        // get the upper bounds for each bucket
+        var countValues = colors.map(function(e, i) {
+            var bound = dimagisphere.formData.maxFormsByCountry * (i+1) / colors.length;
+            return Math.max(0, (i < colors.length -1 && Math.floor(bound) === bound) ? bound - 1 : Math.floor(bound));
+        });
+
+        // only include legend items that are actually used right now
+        // when there is a low number of maxForms, they may not all be included
+        var indicesToRemove = [];
+        colors = colors.filter(function(elem, index) {
+            if (countValues[index] <= 0 || (index > 0 && countValues[index] == countValues[index-1])) {
+                indicesToRemove.push(index);
+                return false;
+            } else {
+                return true;
+            }
+        });
+
+        countValues = countValues.filter(function(elem, index) {
+            return indicesToRemove.indexOf(index) <= -1;
+        });
+
+        div.innerHTML += '<p>Recent Forms</p>';
+
+        // loop through our active form values and generate a label with a colored square for each value
+        for (var i = 0; i < activeCountValues.length; i++) {
+            div.innerHTML +=
+                '<i style="background:' + activeColors[i] + '"></i> ' +
+                activeCountValues[i] + (activeCountValues[i + 1] ? '<br>' : "+");
+        }
+
+        div.innerHTML += '<p>All Forms Since Opening</p>' +
+                         '<i style="background:' + 'black' + '"></i> ' + '0' + '<br>'; 
+
+        // loop through our form count intervals and generate a label with a colored square for each interval
+        for (var i = 0; i < countValues.length; i++) {
+            div.innerHTML += '<i style="background:' + colors[i] + '"></i> ';
+            if (countValues[i-1] !==  undefined) {
+                if (countValues[i-1] +1 < countValues[i]) {
+                    div.innerHTML += (countValues[i-1] + 1) + '&ndash;'
+                }
+            } else if (countValues[i] > 1) {
+                div.innerHTML += '1&ndash;'
+            }
+            div.innerHTML += countValues[i] + '<br>';
+        }
+
+        return div;
+    };
+
+    legend.onAdd = createLegend;
+    legend.addTo(map);
+
+    // simulation controls
+    var simulationOn = false;
+    var controlButton = $('#controlButton');
+    function setPauseButton() {
+        controlButton.children('span').removeClass('glyphicon-play').addClass('glyphicon-pause');
+    }
+    function setPlayButton() {
+        controlButton.children('span').removeClass('glyphicon-pause').addClass('glyphicon-play');
+    }
+    function simulateForms() {
+        if (simulationOn) {
+            receiveMessage(JSON.stringify(dimagisphere.generateRandomItem()));
+            window.setTimeout(simulateForms, 1200);
+        }
+    }
+    controlButton.click(function () {
+        if (!simulationOn) {
+            simulationOn = true;
+            setPauseButton()
+            simulateForms();
+        } else {
+            simulationOn = false;
+            setPlayButton();
+        }
+    });
 });
 </script>
 	{% endblock %}
+
+
 </body>
 </html>

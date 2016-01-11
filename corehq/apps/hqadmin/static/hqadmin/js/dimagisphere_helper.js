@@ -4,7 +4,8 @@ var dimagisphere = (function() {
     self.formData = {
         totalFormsByCountry: {},  // keeps track of totals per country
         recentFormsByCountry: {},  // keeps track of "active" per country - from the last second
-        maxFormsByCountry: 0
+        maxFormsByCountry: 0, // most forms that any single country has submitted
+        totalFormsByDomain: {} // keeps track of totals per domain
     };
 
     self.addData = function (dataItem) {
