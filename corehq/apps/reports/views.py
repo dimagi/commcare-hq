@@ -33,6 +33,7 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import (
     require_GET,
     require_http_methods,
@@ -463,6 +464,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             return HttpResponseRedirect(next)
 
 
+@csrf_exempt
 @login_or_digest_or_basic_or_apikey(default='digest')
 @require_form_export_permission
 @require_GET
