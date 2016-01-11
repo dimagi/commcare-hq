@@ -93,6 +93,8 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             self.case.opened_on = case_update.guess_modified_on()
         if not self.case.opened_by:
             self.case.opened_by = case_update.user_id
+        if not self.case.owner_id:
+            self.case.owner_id = case_update.user_id
 
     def _apply_update_action(self, update_action):
         self._update_known_properties(update_action)

@@ -5,11 +5,13 @@ from casexml.apps.case.const import CASE_ACTION_UPDATE
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.models import SyncLog, CaseState, SimplifiedSyncLog
+from corehq.form_processor.tests import run_with_all_backends
 from couchforms.models import XFormInstance
 
 
 class SyncLogAssertionTest(TestCase):
 
+    @run_with_all_backends
     def test_update_dependent_case(self):
         sync_log = SyncLog(
             cases_on_phone=[
@@ -30,6 +32,7 @@ class SyncLogAssertionTest(TestCase):
             for log in [sync_log, SimplifiedSyncLog.from_other_format(sync_log)]:
                 log.update_phone_lists(xform, [parent_case])
 
+    @run_with_all_backends
     def test_update_dependent_case_owner_still_present(self):
         dependent_case_state = CaseState(case_id="d1", indices=[])
         sync_log = SyncLog(

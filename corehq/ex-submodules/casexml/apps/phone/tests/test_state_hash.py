@@ -11,6 +11,7 @@ from casexml.apps.phone.exceptions import BadStateException
 from casexml.apps.phone.tests.utils import generate_restore_response, \
     get_exactly_one_wrapped_sync_log, generate_restore_payload
 from corehq.apps.domain.models import Domain
+from corehq.form_processor.tests import run_with_all_backends
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -28,6 +29,7 @@ class StateHashTest(TestCase):
         generate_restore_payload(self.project, self.user)
         self.sync_log = get_exactly_one_wrapped_sync_log()
 
+    @run_with_all_backends
     def testEmpty(self):
         empty_hash = CaseStateHash(EMPTY_HASH)
         wrong_hash = CaseStateHash("thisisntright")
@@ -50,6 +52,7 @@ class StateHashTest(TestCase):
                                              state_hash=str(wrong_hash))
         self.assertEqual(412, response.status_code)
 
+    @run_with_all_backends
     def testMismatch(self):
         self.assertEqual(CaseStateHash(EMPTY_HASH), self.sync_log.get_state_hash())
         
