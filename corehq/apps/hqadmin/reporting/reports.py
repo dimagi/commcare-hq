@@ -294,7 +294,7 @@ def get_active_users_data(domains, datespan, interval, datefield='date',
                 domains, USER_COUNT_UPPER_BOUND)
         if additional_params_es:
             sms_query = add_params_to_query(sms_query, additional_params_es)
-        users = {u['term'] for u in sms_query.run().facet('users', "terms")}
+        users = {u['term'] for u in sms_query.incoming_messages().run().facet('users', "terms")}
         if include_forms:
             users |= {
                 u['term'] for u in FormES()
