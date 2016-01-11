@@ -1,9 +1,10 @@
 import copy
+from collections import namedtuple
 from urllib import unquote
 from elasticsearch import Elasticsearch
-import rawes
 from django.conf import settings
-from rawes.elastic_exception import ElasticException
+from elasticsearch.exceptions import ElasticsearchException
+
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from pillowtop.listener import send_to_elasticsearch as send_to_es
 from corehq.pillows.mappings.app_mapping import APP_INDEX
@@ -27,27 +28,9 @@ def get_es_new():
     }])
 
 
-def get_es(timeout=30):
-    """
-    Get a handle to the configured elastic search DB
-    Returns a rawes.Elastic instance.
-
-    We are hoping to deprecate and retire this method soonish.
-    """
-    return rawes.Elastic('%s:%s' % (settings.ELASTICSEARCH_HOST,
-                                    settings.ELASTICSEARCH_PORT),
-                         timeout=timeout)
-
-
 def doc_exists_in_es(index, doc_id):
-    path = ES_URLS[index].replace('_search', doc_id)
-    try:
-        return get_es().head(path)
-    except ElasticException as e:
-        if e.status_code == 404:
-            return False
-        else:
-            raise
+    es_meta = ES_META[index]
+    return get_es_new().exists(es_meta.index, doc_id, doc_type=es_meta.type)
 
 
 def send_to_elasticsearch(index, doc, delete=False):
@@ -56,11 +39,13 @@ def send_to_elasticsearch(index, doc, delete=False):
     Duplicates the functionality of pillowtop but can be called directly.
     """
     doc_id = doc['_id']
-    path = ES_URLS[index].replace('_search', doc_id)
+    es_meta = ES_META[index]
     doc_exists = doc_exists_in_es(index, doc_id)
     return send_to_es(
-        path=path,
-        es_getter=get_es,
+        index=es_meta.index,
+        doc_type=es_meta.type,
+        doc_id=doc_id,
+        es_getter=get_es_new,
         name="{}.{} <{}>:".format(send_to_elasticsearch.__module__,
                                   send_to_elasticsearch.__name__, index),
         data=doc,
@@ -69,19 +54,20 @@ def send_to_elasticsearch(index, doc, delete=False):
         delete=delete,
     )
 
+EsMeta = namedtuple('EsMeta', 'index, type')
 
-ES_URLS = {
-    "forms": XFORM_INDEX + '/xform/_search',
-    "cases": CASE_INDEX + '/case/_search',
-    "active_cases": CASE_INDEX + '/case/_search',
-    "users": USER_INDEX + '/user/_search',
-    "users_all": USER_INDEX + '/user/_search',
-    "domains": DOMAIN_INDEX + '/hqdomain/_search',
-    "apps": APP_INDEX + '/app/_search',
-    "groups": GROUP_INDEX + '/group/_search',
-    "sms": SMS_INDEX + '/sms/_search',
-    "report_cases": REPORT_CASE_INDEX + '/report_case/_search',
-    "report_xforms": REPORT_XFORM_INDEX + '/report_xform/_search',
+ES_META = {
+    "forms": EsMeta(XFORM_INDEX, 'xform'),
+    "cases": EsMeta(CASE_INDEX, 'case'),
+    "active_cases": EsMeta(CASE_INDEX, 'case'),
+    "users": EsMeta(USER_INDEX, 'user'),
+    "users_all": EsMeta(USER_INDEX, 'user'),
+    "domains": EsMeta(DOMAIN_INDEX, 'hqdomain'),
+    "apps": EsMeta(APP_INDEX, 'app'),
+    "groups": EsMeta(GROUP_INDEX, 'group'),
+    "sms": EsMeta(SMS_INDEX, 'sms'),
+    "report_cases": EsMeta(REPORT_CASE_INDEX, 'report_case'),
+    "report_xforms": EsMeta(REPORT_XFORM_INDEX, 'report_xform'),
 }
 
 ADD_TO_ES_FILTER = {
@@ -130,8 +116,9 @@ class ESError(Exception):
     pass
 
 
-def run_query(url, q):
-    return get_es().get(url, data=q)
+def run_query(index_name, q):
+    es_meta = ES_META[index_name]
+    return get_es_new().search(es_meta.index, es_meta.type, body=q)
 
 
 def es_histogram(histo_type, domains=None, startdate=None, enddate=None,
@@ -163,13 +150,13 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None,
     q["facets"]["histo"]["facet_filter"]["and"].extend(filters)
     q["facets"]["histo"]["facet_filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, []))
 
-    es = get_es()
-    ret_data = es.get(ES_URLS[histo_type], data=q)
+    es_meta = ES_META[histo_type]
+    ret_data = get_es_new().search(es_meta.index, es_meta.type, body=q)
     return ret_data["facets"]["histo"]["entries"]
 
 
 SIZE_LIMIT = 1000000
-def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at=None, size=None, dict_only=False,
+def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_at=None, size=None, dict_only=False,
              fields=None, facet_size=None):
     if terms is None:
         terms = []
@@ -222,7 +209,6 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
         }
         q["query"]["filtered"]["query"] = query if query else {"match_all": {}}
 
-
     if fields is not None:
         q["fields"] = q.get("fields", [])
         q["fields"].extend(fields)
@@ -230,14 +216,14 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
     if dict_only:
         return q
 
-    es_url = es_url or DOMAIN_INDEX + '/hqdomain/_search'
+    es_index = es_index or 'domains'
+    es = get_es_new()
+    meta = ES_META[es_index]
 
-    es = get_es()
-    result = es.get(es_url, data=q)
-
-    if 'error' in result:
-        msg = result['error']
-        raise ESError(msg)
+    try:
+        result = es.search(meta.index, meta.type, body=q)
+    except ElasticsearchException as e:
+        raise ESError(e)
 
     return result
 

@@ -1,11 +1,13 @@
 import copy
 import uuid
 from django.test import SimpleTestCase
+
+from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings, \
     set_index_reindex_settings, set_index_normal_settings, create_index_for_pillow, assume_alias_for_pillow, \
-    pillow_index_exists, pillow_mapping_exists
+    pillow_index_exists, pillow_mapping_exists, completely_initialize_pillow_index
 from pillowtop.feed.interface import Change
-from pillowtop.listener import AliasedElasticPillow
+from pillowtop.listener import AliasedElasticPillow, send_to_elasticsearch, PillowtopIndexingError
 from pillowtop.pillow.interface import PillowRuntimeContext
 from django.conf import settings
 from .utils import require_explicit_elasticsearch_testing, get_doc_count, get_index_mapping
@@ -16,7 +18,7 @@ class TestElasticPillow(AliasedElasticPillow):
     es_port = 9200
     es_alias = 'pillowtop_tests'
     es_type = 'test_doc'
-    es_index = 'pillowtop_test_index'
+    es_index = 'test_pillowtop_index'
     # just for the sake of something being here
     es_meta = {
         "settings": {
@@ -57,9 +59,7 @@ class ElasticPillowTest(SimpleTestCase):
         pillow = TestElasticPillow(online=False)
         self.index = pillow.es_index
         self.es = pillow.get_es_new()
-        if self.es.indices.exists(self.index):
-            self.es.indices.delete(self.index)
-        self.assertFalse(self.es.indices.exists(self.index))
+        ensure_index_deleted(self.index)
 
     def test_create_index_on_pillow_creation(self):
         pillow = TestElasticPillow()
@@ -222,3 +222,74 @@ def _send_doc_to_pillow(pillow, doc_id, doc):
         document=doc
     )
     pillow.processor(change, PillowRuntimeContext(do_set_checkpoint=False))
+
+
+class TestSendToElasticsearch(SimpleTestCase):
+    def setUp(self):
+        self.pillow = TestElasticPillow(online=False)
+        self.es = self.pillow.get_es_new()
+        self.index = self.pillow.es_index
+
+        ensure_index_deleted(self.index)
+
+        completely_initialize_pillow_index(self.pillow)
+
+    def test_create_doc(self):
+        doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'foo'}
+        self._send_to_es_and_check(doc)
+
+    def _send_to_es_and_check(self, doc, update=False, delete=False, esgetter=None):
+        send_to_elasticsearch(
+            index=self.index,
+            doc_type=self.pillow.es_type,
+            doc_id=doc['_id'],
+            es_getter=esgetter or self.pillow.get_es_new,
+            name='test',
+            data=doc,
+            update=update,
+            delete=delete,
+            except_on_failure=True,
+            retries=1
+        )
+
+        if not delete:
+            self.assertEqual(1, get_doc_count(self.es, self.index))
+            es_doc = self.es.get_source(self.index, doc['_id'])
+            for prop in doc:
+                self.assertEqual(doc[prop], es_doc[prop])
+        else:
+            self.assertEqual(0, get_doc_count(self.es, self.index))
+
+    def test_update_doc(self):
+        doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
+        self._send_to_es_and_check(doc)
+
+        doc['property'] = 'bazz'
+        self._send_to_es_and_check(doc, update=True)
+
+    def test_delete_doc(self):
+        doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
+        self._send_to_es_and_check(doc)
+
+        self._send_to_es_and_check(doc, delete=True)
+
+    def test_connection_failure(self):
+        def _bad_es_getter():
+            from elasticsearch import Elasticsearch
+            return Elasticsearch(
+                [{
+                    'host': 'localhost',
+                    'port': '9000',  # bad port
+                }],
+                timeout=0,
+            )
+
+        doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
+
+        with self.assertRaises(PillowtopIndexingError):
+            self._send_to_es_and_check(doc, esgetter=_bad_es_getter)
+
+    def test_not_found(self):
+        doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
+
+        self._send_to_es_and_check(doc, delete=True)
