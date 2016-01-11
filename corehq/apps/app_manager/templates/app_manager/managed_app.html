@@ -10,13 +10,12 @@
 <style>
     .edit-form-pencil {
         position: absolute;
-        right: -5px;
-        top: 2px;
+        right: 15px;
+        top: 7px;
         opacity: 0.5;
     }
     .edit-form-li {
         position: relative;
-        width: 110%;
     }
     /* Push tooltips away from icons that trigger them */
     .tooltip {
@@ -254,7 +253,7 @@
                                             </span>
                                         </a>
                                         {% if not form.no_vellum %}
-                                            <div class="edit-form-pencil pull-right">
+                                            <div class="edit-form-pencil">
                                                 <a id="edit_pen_{{ module.id }}_{{ form.id }}" href="{% url "form_source" domain app.id module.id form.id %}">
                                                     <i class="fa fa-pencil" {% ifequal form selected_form %}style="color: white"{% endifequal %}"></i>
                                                 </a>
