@@ -7,6 +7,8 @@ import datetime
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator, classonlymethod
 from django.views.generic import View
+from elasticsearch.exceptions import ElasticsearchException
+
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
@@ -18,7 +20,7 @@ from dimagi.utils.logging import notify_exception
 
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
-from corehq.elastic import get_es, ESError
+from corehq.elastic import ESError, get_es_new
 from corehq.pillows.base import restore_property_dict, VALUE_TAG
 
 from no_exceptions.exceptions import Http400
@@ -72,7 +74,7 @@ class ESView(View):
     def __init__(self, domain):
         super(ESView, self).__init__()
         self.domain = domain.lower()
-        self.es = get_es()
+        self.es = get_es_new()
 
     def head(self, *args, **kwargs):
         raise NotImplementedError("Not implemented")
@@ -124,10 +126,9 @@ class ESView(View):
             fields.append('domain')
             es_query['fields'] = fields
 
-        es_base = self.es[self.index] if es_type is None else self.es[self.index][es_type]
-        es_results = es_base.get('_search', data=es_query)
-
-        if 'error' in es_results:
+        try:
+            es_results = self.es.search(self.index, es_type, body=es_query)
+        except ElasticsearchException as e:
             if 'query_string' in es_query.get('query', {}).get('filtered', {}).get('query', {}):
                 # the error may have been caused by a bad query string
                 # re-run with no query string to check
@@ -141,7 +142,7 @@ class ESView(View):
                     raise ESUserError("Error with elasticsearch query: %s" %
                         querystring)
 
-            msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (self.index, es_results['error'], es_query)
+            msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (self.index, str(e), es_query)
             notify_exception(None, message=msg)
             raise ESError(msg)
 
@@ -303,13 +304,11 @@ class UserES(ESView):
 
         self.validate_query(es_query)
 
-        es_base = self.es[self.index] if es_type is None else \
-            self.es[self.index][es_type]
-        es_results = es_base.get('_search', data=es_query)
-
-        if 'error' in es_results:
+        try:
+            es_results = self.es.search(self.index, es_type, body=es_query)
+        except ElasticsearchException as e:
             msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (
-                self.index, es_results['error'], es_query)
+                self.index, str(e), es_query)
             notify_exception(None, message=msg)
             return None
 

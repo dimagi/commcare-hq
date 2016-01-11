@@ -726,6 +726,12 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
     template_name = 'reminders/keyword.html'
     process_structured_message = True
 
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    @use_knockout_js
+    def dispatch(self, *args, **kwargs):
+        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+
     @property
     def parent_pages(self):
         return [
@@ -1345,6 +1351,12 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     limit_text = ugettext_noop("keywords per page")
     empty_notification = ugettext_noop("You have no keywords. Please add one!")
     loading_message = ugettext_noop("Loading keywords...")
+
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    @use_knockout_js
+    def dispatch(self, *args, **kwargs):
+        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
     @property
     def page_url(self):

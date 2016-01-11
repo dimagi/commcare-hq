@@ -1,52 +1,67 @@
 {% load humanize %}
-<h3>Deploy History</h3>
-<table class="table table-striped">
-    <thead>
-    <tr>
-        <th>Date</th>
-        <th>User</th>
-        <th>Branch</th>
-        <th>Last Commit</th>
-        <th></th>
-    </tr>
-    </thead>
-    <tbody>
-    {% for deploy in deploy_history %}
-        {% with deploy.code_snapshot.commits|first as commit%}
-        <tr>
-            <td>
-                {{ deploy.date|naturaltime }}<br/>
-                <small>{{ deploy.date }}</small>
-            </td>
-            <td>{{ deploy.user }}</td>
-            <td>{{ deploy.code_snapshot.current_branch }}</td>
-            <td>
-                {% include "hqadmin/partials/commit.html" %}
-            </td>
-            <td>{% if deploy.code_snapshot.diff_url %}<p><a href="{{ deploy.code_snapshot.diff_url  }}">diff with previous</a></p>{% endif %}
-                <a href="#{{ deploy.get_id }}" role="button" class="btn btn-small" data-toggle="modal">Details</a></td>
-        </tr>
-        {% endwith %}
-    {% endfor %}
-    </tbody>
-</table>
-{% for deploy in deploy_history %}
-    <div id="{{ deploy.get_id }}" class="modal hide fade">
-        <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-            <h3>Submodule Details</h3>
-            Deploy of branch {{ deploy.code_snapshot.current_branch }} by {{ deploy.user }} {{ deploy.date|naturaltime }}
-        </div>
-        <div class="modal-body">
-            {% for sub in deploy.code_snapshot.submodules %}
-                <h4>{{ sub.path }} {{ sub.branch }}</h4>
-                {% with sub.commits|first as commit %}
-                    {% include "hqadmin/partials/commit.html" %}
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h2 class="panel-title">
+             Deploy History
+        </h2>
+    </div>
+    <div class="panel-body">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Date</th>
+                <th>User</th>
+                <th>Branch</th>
+                <th>Last Commit</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for deploy in deploy_history %}
+                {% with deploy.code_snapshot.commits|first as commit%}
+                <tr>
+                    <td>
+                        {{ deploy.date|naturaltime }}<br/>
+                        <small>{{ deploy.date }}</small>
+                    </td>
+                    <td>{{ deploy.user }}</td>
+                    <td>{{ deploy.code_snapshot.current_branch }}</td>
+                    <td>
+                        {% include "hqadmin/partials/commit.html" %}
+                    </td>
+                    <td>{% if deploy.code_snapshot.diff_url %}<p><a href="{{ deploy.code_snapshot.diff_url  }}">diff with previous</a></p>{% endif %}
+                        <a href="#{{ deploy.get_id }}" role="button" class="btn btn-sm btn-default" data-toggle="modal">Details</a></td>
+                </tr>
                 {% endwith %}
             {% endfor %}
-        </div>
-        <div class="modal-footer">
-            <a href="#" class="btn" data-dismiss="modal">Close</a>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% for deploy in deploy_history %}
+    <div id="{{ deploy.get_id }}" class="modal hide fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">
+                        Submodule Details<br />
+                        <small>Deploy of branch {{ deploy.code_snapshot.current_branch }} by {{ deploy.user }} {{ deploy.date|naturaltime }}</small>
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    {% for sub in deploy.code_snapshot.submodules %}
+                        <h4>{{ sub.path }} {{ sub.branch }}</h4>
+                        {% with sub.commits|first as commit %}
+                            {% include "hqadmin/partials/commit.html" %}
+                        {% endwith %}
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <a href="#" class="btn btn-default" data-dismiss="modal">Close</a>
+                </div>
+            </div>
         </div>
     </div>
 {% endfor %}

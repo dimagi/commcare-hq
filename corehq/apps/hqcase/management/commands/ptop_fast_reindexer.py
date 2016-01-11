@@ -78,7 +78,6 @@ class PtopReindexer(NoArgsCommand):
                     action='store',
                     type='int',
                     dest='chunk_size',
-                    default=CHUNK_SIZE,
                     help='Number of docs to save at a time',),
     )
 
@@ -90,6 +89,7 @@ class PtopReindexer(NoArgsCommand):
     # By default this == self.pillow_class
     indexing_pillow_class = None
     file_prefix = "ptop_fast_reindex_"
+    default_chunk_size = CHUNK_SIZE
 
     def __init__(self):
         super(PtopReindexer, self).__init__()
@@ -198,7 +198,7 @@ class PtopReindexer(NoArgsCommand):
         self.indexing_pillow = self.indexing_pillow_class()
         self.db = self.doc_class.get_db()
         self.runfile = options['runfile']
-        self.chunk_size = options.get('chunk_size', CHUNK_SIZE)
+        self.chunk_size = options.get('chunk_size', None) or self.default_chunk_size
         self.start_num = options.get('seq', 0)
         self.in_place = options['in_place']
 

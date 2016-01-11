@@ -6,6 +6,8 @@ from django.core.mail import send_mail
 from datetime import datetime
 from gevent.pool import Pool
 from django.conf import settings
+from corehq.preindex.accessors import sync_design_doc, get_preindex_designs
+
 setattr(settings, 'COUCHDB_TIMEOUT', 999999)
 
 
@@ -60,14 +62,8 @@ class Command(BaseCommand):
         # pooling is only important when there's a serious reindex
         # (but when there is, boy is it important!)
         pool = Pool(self.num_pool)
-        for plugin in get_preindex_plugins():
-            plugin_class_name = plugin.__class__.__name__
-            if plugin_class_name == 'DefaultPreindexPlugin':
-                print "Preindex for app {}".format(plugin.app_label)
-            else:
-                print "Preindex for app {} using {}".format(
-                    plugin.app_label, plugin_class_name)
-            pool.spawn(plugin.sync_design_docs, temp='tmp')
+        for design in get_preindex_designs():
+            pool.spawn(sync_design_doc, design, temp='tmp')
 
         print "All apps loaded into jobs, waiting..."
         pool.join()

@@ -51,7 +51,7 @@ def product_fixture_generator_json(domain):
 class ProductFixturesProvider(object):
     id = 'commtrack:products'
 
-    def __call__(self, user, version, last_sync=None):
+    def __call__(self, user, version, last_sync=None, app=None):
 
         def get_products():
             return sorted(

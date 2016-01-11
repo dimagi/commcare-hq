@@ -1,5 +1,7 @@
+from corehq.apps.domain.models import Domain
 from corehq.apps.sms.mixin import MobileBackend, SMSLoadBalancingMixin, BackendMapping
-from corehq.apps.sms.models import SQLMobileBackend, MobileBackendInvitation, SQLMobileBackendMapping
+from corehq.apps.sms.models import (SQLMobileBackend, MobileBackendInvitation,
+    SQLMobileBackendMapping, MigrationStatus)
 from corehq.messaging.ivrbackends.kookoo.models import KooKooBackend, SQLKooKooBackend
 from corehq.messaging.smsbackends.apposit.models import AppositBackend, SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import GrapevineBackend, SQLGrapevineBackend
@@ -1476,3 +1478,92 @@ class BackendMigrationTestCase(TestCase):
         MobileBackendInvitation.objects.all().delete()
         SQLMobileBackend.objects.all().delete()
         SQLMobileBackendMapping.objects.all().delete()
+
+
+class DomainDefaultBackendMigrationTestCase(TestCase):
+    def setUp(self):
+        self.domain = Domain(name='test-domain-default-backend')
+        self.domain.save()
+
+        self.couch_backend1 = TestSMSBackend(
+            is_global=False,
+            domain=self.domain.name,
+            name='TEST1'
+        )
+        self.couch_backend1.save()
+        self.sql_backend1 = SQLTestSMSBackend.objects.get(couch_id=self.couch_backend1.get_id)
+
+        self.couch_backend2 = TestSMSBackend(
+            is_global=False,
+            domain=self.domain.name,
+            name='TEST2'
+        )
+        self.couch_backend2.save()
+        self.sql_backend2 = SQLTestSMSBackend.objects.get(couch_id=self.couch_backend2.get_id)
+
+        SQLMobileBackendMapping.objects.all().delete()
+
+        # In order for the default domain backend sync to run, the backend migration has to have run
+        MigrationStatus.set_migration_completed(MigrationStatus.MIGRATION_BACKEND)
+
+    def tearDown(self):
+        # Everything else is deleted when we delete the domain
+        MigrationStatus.objects.all().delete()
+
+    def _get_mappings(self):
+        return SQLMobileBackendMapping.objects.all()
+
+    def _test_add_default_backend(self):
+        self.assertEqual(len(self._get_mappings()), 0)
+
+        self.domain.default_sms_backend_id = self.couch_backend1.get_id
+        self.domain.save()
+
+        mappings = self._get_mappings()
+        self.assertEqual(len(mappings), 1)
+
+        self.assertFalse(mappings[0].is_global)
+        self.assertEqual(mappings[0].domain, self.domain.name)
+        self.assertEqual(mappings[0].backend_type, 'SMS')
+        self.assertEqual(mappings[0].prefix, '*')
+        self.assertEqual(mappings[0].backend_id, self.sql_backend1.id)
+
+    def _test_edit_default_backend(self):
+        self.assertEqual(len(self._get_mappings()), 1)
+
+        self.domain.default_sms_backend_id = self.couch_backend2.get_id
+        self.domain.save()
+
+        mappings = self._get_mappings()
+        self.assertEqual(len(mappings), 1)
+
+        self.assertFalse(mappings[0].is_global)
+        self.assertEqual(mappings[0].domain, self.domain.name)
+        self.assertEqual(mappings[0].backend_type, 'SMS')
+        self.assertEqual(mappings[0].prefix, '*')
+        self.assertEqual(mappings[0].backend_id, self.sql_backend2.id)
+
+    def _test_remove_default_backend(self):
+        self.assertEqual(len(self._get_mappings()), 1)
+
+        self.domain.default_sms_backend_id = None
+        self.domain.save()
+
+        mappings = self._get_mappings()
+        self.assertEqual(len(mappings), 0)
+
+    def _test_delete_domain(self):
+        self.assertEqual(len(self._get_mappings()), 0)
+
+        self.domain.default_sms_backend_id = self.couch_backend1.get_id
+        self.domain.save()
+
+        self.assertEqual(len(self._get_mappings()), 1)
+        self.domain.delete()
+        self.assertEqual(len(self._get_mappings()), 0)
+
+    def test_domain_default_migration(self):
+        self._test_add_default_backend()
+        self._test_edit_default_backend()
+        self._test_remove_default_backend()
+        self._test_delete_domain()

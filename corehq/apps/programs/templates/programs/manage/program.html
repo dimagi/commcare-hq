@@ -1,13 +1,14 @@
-{% extends "settings/bootstrap2/base_template.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
+{% load crispy_forms_tags %}
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
-    <script src="{% static 'hqwebapp/ko/base_list_view_model.js' %}"></script>
-    <script src="{% static 'commtrack/ko/products_and_programs.async.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/ko/base_list_view_model.js' %}"></script>
+    <script src="{% new_static 'commtrack/ko/products_and_programs.async.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -25,31 +26,36 @@
     {% endif %}
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     <form class="form form-horizontal" name="program" method="post">
-        {% bootstrap_form_errors form %}
-        {% bootstrap_fieldset form "Program Information" %}
-        <div class="form-actions"><button type="submit" class="btn btn-primary">
-            {% if program.get_id %}
-                {% trans 'Update Program' %}
-            {% else %}
-                {% trans 'Create Program' %}
-            {% endif %}</button></div>
+        <legend>{% trans "Program Information" %}</legend>
+        {% crispy form %}
+        <div class="form-actions">
+            <div class="col-sm-4 col-md-5 col-lg-3 col-sm-offset-3 col-md-offset-4 col-lg-offset-2">
+                <button type="submit" class="btn btn-primary">
+                    {% if program.get_id %}
+                        {% trans 'Update Program' %}
+                    {% else %}
+                        {% trans 'Create Program' %}
+                    {% endif %}
+                </button>
+            </div>
+        </div>
     </form>
 
 {% if data_list %}
     <div id="product-list">
 
-        <div class="row-fluid" data-bind="visible: !initial_load()">
-            <div class="span12">
-                <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+        <div class="row" data-bind="visible: !initial_load()">
+            <div class="col-sm-12">
+                <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
                 {% trans 'Loading products...' %}
             </div>
         </div>
 
         <div class="hide hide-until-load">
-            <div class="row-fluid" data-bind="visible: data_list().length">
-                <div class="span4">
+            <div class="row" data-bind="visible: data_list().length">
+                <div class="col-sm-4">
                     <div class="form-inline" style="margin: 1.6em 0;">
                         <label for="pagination-limit">{% trans 'Show' %}</label>
                         <select id="pagination-limit" data-bind="event: {change: update_limit}">
@@ -59,13 +65,13 @@
                         </select>
                     </div>
                 </div>
-                <div class="span8">
+                <div class="col-sm-8">
                     {% include 'users/mobile/partials/pagination.html' %}
                 </div>
             </div>
 
-            <div class="row-fluid">
-                <div class="span12">
+            <div class="row">
+                <div class="col-sm-12">
                     <div id="user-list-notification" data-bind="visible: !data_list().length" class="alert alert-info">
                         {% blocktrans %}There are no products for this program yet.{% endblocktrans %}
                     </div>

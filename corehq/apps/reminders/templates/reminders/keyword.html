@@ -1,10 +1,10 @@
-{% extends 'reminders/base_template.html' %}
+{% extends "style/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script type="text/javascript" src="{% static 'reminders/ko/reminders.keywords.ko.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'reminders/ko/reminders.keywords.ko.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -17,13 +17,13 @@
 </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     <div id="keywords-form">
         {% crispy form %}
     </div>
 
     <script type="text/html" id="ko-template-named-args">
-        <table class="table table-bordered table-striped" class="span6">
+        <table class="table table-bordered table-striped col-md-6 col-lg-6">
             <thead>
                 <tr>
                     <th>{% trans "Name" %}</th>
@@ -34,7 +34,7 @@
             <tbody data-bind="foreach: named_args">
                 <tr>
                     <td><input type="text"
-                               class="input-block-level"
+                               class="form-control"
                                placeholder="{% trans 'Name' %}"
                                data-bind="value: name,
                                           attr: {name: ('named_args.' + $index() + '.name')},
@@ -42,7 +42,7 @@
                                           event: {keyup : $parent.updateExampleStructuredSMS}
                                           " /></td>
                     <td><input type="text"
-                               class="input-block-level"
+                               class="form-control"
                                placeholder="{% trans 'XPath' %}"
                                data-bind="value: xpath,
                                           attr: {name : ('named_args.' + $index() + '.xpath')}
@@ -50,14 +50,14 @@
                     <td><button type="button"
                                 class="btn btn-danger"
                                 data-bind="click: $parent.removeNamedArg">
-                        <i class="icon-remove"></i> {% trans "Remove" %}</button></td>
+                        <i class="fa fa-remove"></i> {% trans "Remove" %}</button></td>
                 </tr>
             </tbody>
         </table>
-        <button class="btn btn-success"
+        <button class="btn btn-success pull-left"
                 type="button"
                 data-bind="click: addNamedArg">
-            <i class="icon-plus"></i> {% trans 'Add Named Answer' %}
+            <i class="fa fa-plus"></i> {% trans 'Add Named Answer' %}
         </button>
     </script>
 {% endblock %}

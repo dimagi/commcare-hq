@@ -1,0 +1,43 @@
+{# todo: this filter sucks, please fix it or get rid of it #}
+{% extends 'reports/filters/bootstrap3/base.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block filter_content %}
+{% if show_user_filter %}
+    <div id="{{ css_id }}" class="btn-group" data-toggle="buttons-checkbox">
+	    {% for user in toggle_users %}
+        <button class="btn{% if user.show %} btn-success{% else %} active{% endif %} user-type-btn"
+                data-checkfilter="user-filter-{{ user.type }}"
+                data-ufilter="{{ user.type }}"
+                id="btn-user-filter-{{ user.type }}">
+			    {{ user.name }}
+		</button>
+		{% endfor %}
+    </div>
+    {% for user in toggle_users %}
+       <input type="checkbox" name="{{ slug }}" value="{{ user.type }}" class="hide" id="user-filter-{{ user.type }}" {% if user.show %}checked="checked"{% endif %}/>
+    {% endfor %}
+{% else %}
+    <div id="{{ css_id }}" class="btn-group" data-toggle="buttons-checkbox">
+        <button class="btn btn-success">{% commcare_user %}s {% trans "Only" %}</button>
+    </div>
+{% endif %}
+
+<script type="text/javascript" src="{% new_static 'reports/javascripts/field.filter_buttons.js' %}"></script>
+<script type="text/javascript">
+    $(function() {
+        linkButtonGroup("{{ css_id }}");
+    });
+</script>
+
+<script type="text/javascript">
+    {% for user in toggle_users %}
+    $("#btn-user-filter-{{ user.type }}").on('applied-click', function(data) {
+        if(document.getElementById("user-filter-{{ user.type }}").checked ) {
+            ga_track_event(data.event_category, 'Select "user type"', '{{ user.name }}');
+        }
+    });
+    {% endfor %}
+</script>
+{% endblock %}

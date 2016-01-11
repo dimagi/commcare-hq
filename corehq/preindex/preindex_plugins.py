@@ -2,7 +2,6 @@ from abc import ABCMeta, abstractmethod
 import os
 
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.couch import sync_docs
 from dimagi.utils.couch.sync_docs import DesignInfo
 
 
@@ -20,44 +19,38 @@ class PreindexPlugin(object):
     synced = False
 
     @abstractmethod
-    def get_designs(self):
+    def _get_designs(self):
         raise NotImplementedError()
+
+    def get_designs(self):
+        used = set()
+        designs = []
+        for design in self._get_designs():
+            key = (design.db.uri, design.app_label)
+            if key not in used:
+                designs.append(design)
+            used.add(key)
+        return designs
 
     @classmethod
     def register(cls, *args, **kwargs):
         register_preindex_plugin(cls(*args, **kwargs))
 
     def sync_design_docs(self, temp=None):
+        from corehq.preindex.accessors import sync_design_doc
         if self.synced:
             # workaround emit_post_sync_signal called twice
             # https://code.djangoproject.com/ticket/17977
             # this is to speed up test initialization
             return
         self.synced = True
-        synced = set()
         for design in self.get_designs():
-            key = (design.db.uri, design.app_label)
-            if key not in synced:
-                sync_docs.sync_design_docs(
-                    db=design.db,
-                    design_dir=design.design_path,
-                    design_name=design.app_label,
-                    temp=temp,
-                )
-                synced.add(key)
+            sync_design_doc(design, temp=temp)
 
     def copy_designs(self, temp=None, delete=True):
-        copied = set()
+        from corehq.preindex.accessors import copy_design_doc
         for design in self.get_designs():
-            key = (design.db.uri, design.app_label)
-            if key not in copied:
-                sync_docs.copy_designs(
-                    db=design.db,
-                    design_name=design.app_label,
-                    temp=temp,
-                    delete=delete,
-                )
-                copied.add(key)
+            copy_design_doc(design, temp=temp, delete=delete)
 
     def __repr__(self):
         return '{cls.__name__}({self.app_label!r}, {self.dir!r})'.format(
@@ -108,7 +101,7 @@ class CouchAppsPreindexPlugin(PreindexPlugin):
         return [d for d in os.listdir(self.dir)
                 if os.path.isdir(os.path.join(self.dir, d))]
 
-    def get_designs(self):
+    def _get_designs(self):
         return [
             DesignInfo(app_label=app_label, db=db,
                        design_path=os.path.join(self.dir, app_label))
@@ -129,7 +122,7 @@ class ExtraPreindexPlugin(PreindexPlugin):
         self.dir = os.path.abspath(os.path.dirname(file))
         self.db_names = db_names
 
-    def get_designs(self):
+    def _get_designs(self):
         return [
             DesignInfo(
                 app_label=self.app_label,

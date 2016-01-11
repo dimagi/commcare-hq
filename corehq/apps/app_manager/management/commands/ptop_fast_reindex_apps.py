@@ -9,3 +9,4 @@ class Command(ElasticReindexer):
     doc_class = ApplicationBase
     view_name = 'app_manager/applications'
     pillow_class = AppPillow
+    default_chunk_size = 1000

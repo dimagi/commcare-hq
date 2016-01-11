@@ -64,6 +64,10 @@ class TermsResult(FacetResult):
     def counts_by_term(self):
         return {d['term']: d['count'] for d in self.result}
 
+    @property
+    def terms(self):
+        return [d['term'] for d in self.result]
+
 
 class TermsFacet(Facet):
     """

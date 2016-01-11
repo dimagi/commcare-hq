@@ -1,0 +1,29 @@
+{% extends 'reports/filters/bootstrap3/base.html' %}
+{% load hq_shared_tags %}
+{% block filter_content %}
+<input id="{{ css_id }}" name="{{ slug }}" type="text" class="{% block input_css_class %}span6{% endblock %}" value="{{ search_query }}">
+    {% if search_help_inline %}
+    <p class="help-block">
+        <i class="icon icon-info-sign"></i>
+        {{ search_help_inline }}
+    </p>
+    {% endif %}
+    {% if search_help_title and search_help_content %}
+        <span class="hq-help-template"
+           data-title="{{ search_help_title }}"
+           data-content="{{ search_help_content }}"
+        ></span>
+    {% endif %}
+{% endblock %}
+
+{% if search_help_title and search_help_content %}
+{% block filter_js %} {{ block.super }}
+<script type="text/javascript">
+    $(function () {
+        $('.hq-help-template').each(function () {
+            COMMCAREHQ.transformHelpTemplate($(this), true);
+        });
+    });
+</script>
+{% endblock filter_js %}
+{% endif %}

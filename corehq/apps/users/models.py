@@ -69,6 +69,8 @@ from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
+MAX_LOGIN_ATTEMPTS = 5
+
 def _add_to_list(list, obj, default):
     if obj in list:
         list.remove(obj)
@@ -2015,6 +2017,10 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     #do sync and create still work?
 
     program_id = StringProperty()
+    last_password_set = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
+
+    login_attempts = IntegerProperty(default=0)
+    attempt_date = DateProperty()
 
     def sync_from_old_couch_user(self, old_couch_user):
         super(WebUser, self).sync_from_old_couch_user(old_couch_user)
@@ -2187,6 +2193,9 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             except ResourceNotFound:
                 pass
         return None
+
+    def is_locked_out(self):
+        return self.login_attempts >= MAX_LOGIN_ATTEMPTS
 
 
 class FakeUser(WebUser):

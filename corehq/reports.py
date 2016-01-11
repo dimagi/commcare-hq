@@ -224,8 +224,6 @@ def _get_configurable_reports(project):
 
 DATA_INTERFACES = (
     (ugettext_lazy("Export Data"), (
-        export.ExcelExportReport,
-        export.CaseExportReport,
         export.DeidExportReport,
     )),
 )

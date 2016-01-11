@@ -73,11 +73,12 @@ class DomainMetadataResource(HqBaseResource):
         try:
             es_data = (DomainES()
                        .in_domains([domain.name])
+                       .size(1)
                        .run()
-                       .raw_hits[0]['_source'])
+                       .hits[0])
             return {
-                raw_hit: es_data[raw_hit]
-                for raw_hit in es_data if raw_hit[:3] == 'cp_'
+                prop_name: es_data[prop_name]
+                for prop_name in es_data if prop_name[:3] == 'cp_'
             }
         except IndexError:
             logging.exception('Problem getting calculated properties for {}'.format(domain.name))

@@ -18,25 +18,24 @@ from corehq.apps.userreports.reports.util import (
     get_expanded_columns,
     get_total_row,
 )
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 
 
 class ReportFixturesProvider(object):
     id = 'commcare:reports'
 
-    def __call__(self, user, version, last_sync=None):
+    def __call__(self, user, version, last_sync=None, app=None):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
-        # delay import so that get_apps_in_domain is mockable
-        from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
         if not toggles.MOBILE_UCR.enabled(user.domain):
             return []
 
+        apps = [app] if app else (a for a in get_apps_in_domain(user.domain, include_remote=False))
         report_configs = [
             report_config
-            for app in get_apps_in_domain(user.domain) if isinstance(app, Application)
-            # TODO: pass app_id to reduce size of fixture
-            for module in app.modules if isinstance(module, ReportModule)
+            for app_ in apps
+            for module in app_.modules if isinstance(module, ReportModule)
             for report_config in module.report_configs
         ]
         if not report_configs:

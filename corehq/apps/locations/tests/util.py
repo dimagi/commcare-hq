@@ -24,7 +24,7 @@ def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE,
 def delete_all_locations():
     ids = [
         doc['id'] for doc in
-        SupplyPointCase.get_db().view('commtrack/supply_point_by_loc', reduce=False).all()
+        SupplyPointCase.get_db().view('supply_point_by_loc/view', reduce=False).all()
     ]
     iter_bulk_delete(SupplyPointCase.get_db(), ids)
 

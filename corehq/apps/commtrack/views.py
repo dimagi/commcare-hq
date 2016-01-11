@@ -150,6 +150,11 @@ class CommTrackSettingsView(BaseCommTrackManageView):
             return HttpResponseRedirect(self.page_url)
         return self.get(request, *args, **kwargs)
 
+    @use_bootstrap3
+    @use_knockout_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseCommTrackManageView, self).dispatch(request, *args, **kwargs)
+
 
 class DefaultConsumptionView(BaseCommTrackManageView):
     urlname = 'update_default_consumption'
@@ -177,6 +182,11 @@ class DefaultConsumptionView(BaseCommTrackManageView):
                 reverse(DefaultConsumptionView.urlname, args=[self.domain])
             )
         return self.get(request, *args, **kwargs)
+
+    @use_bootstrap3
+    @use_knockout_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(DefaultConsumptionView, self).dispatch(request, *args, **kwargs)
 
 
 class SMSSettingsView(BaseCommTrackManageView):
@@ -304,6 +314,11 @@ class StockLevelsView(BaseCommTrackManageView):
             return HttpResponseRedirect(self.page_url)
         # TODO display error messages to the user...
         return self.get(request, *args, **kwargs)
+
+    @use_bootstrap3
+    @use_knockout_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(StockLevelsView, self).dispatch(request, *args, **kwargs)
 
 
 class RebuildStockStateView(BaseCommTrackManageView):
