@@ -10,8 +10,8 @@
 <style>
     .edit-form-pencil {
         position: absolute;
-        right: 15px;
-        top: 7px;
+        right: 0;
+        top: 3px;
         opacity: 0.5;
     }
     .edit-form-li {
@@ -147,8 +147,7 @@
 {% block page_navigation %}
 {% if app %}
 <nav class="app-manager-content hide">
-    {# TODO: nav-list is deprecated, replace with list-group or panel-group #}
-    <ul class="nav nav-list">
+    <ul class="nav nav-hq-sidebar">
         <li {% if release_manager %}class="active"{% endif %}>
             <a href="{% url "release_manager" domain app.id %}" id="tour-deploy-link">
                 <i class="fa fa-download"></i>
@@ -180,7 +179,7 @@
             </a>
             {% if app.get_doc_type == 'Application' %}
                 {# TODO: put in stylesheet #}
-                <span id="langs" style="position: absolute; right: 5px; top: 5px;">
+                <span id="langs" style="position: absolute; right: 5px; top: 0;">
                     {% if not app.is_remote_app and app.langs|length > 1%}
                         {# TODO: fix input-mini and all other sized inputs #}
                         <select name="lang" class="input-mini" style="height: 20px; margin-bottom: 0px; margin-top: 2px; padding: 0;">
@@ -205,7 +204,7 @@
         <li class="divider"></li>
     {% if app.get_doc_type == "Application" %}
         <li>
-        <ul class="nav nav-list sortable" style="padding-left: 0">
+        <ul class="nav nav-hq-sidebar sortable" style="padding-left: 0">
             <li class="sort-action">
                 <form method="post"
                       action="{% url "corehq.apps.app_manager.views.rearrange" domain app.id 'modules' %}">
@@ -235,7 +234,7 @@
                                 {{ module.name|html_trans:langs }}
                             </span>
                         </a>
-                        <ul class="nav nav-list {% ifequal module.id selected_module.id %}selected{% endifequal %} sortable-forms sortable">
+                        <ul class="nav nav-hq-sidebar {% ifequal module.id selected_module.id %}selected{% endifequal %} sortable-forms sortable">
                             <li class="sort-action">
                                 <form method="post"
                                       action="{% url "corehq.apps.app_manager.views.rearrange" domain app.id 'forms' %}">

@@ -70,7 +70,7 @@
         });
 
         function gen_sidebar_elements() {
-            return $('.sidebar .nav-list a:not(a:has(.fa-pencil))');
+            return $('.sidebar .nav-hq-sidebar a:not(a:has(.fa-pencil))');
         }
         var sidebar_navigator = new KeyboardNavigator();
         sidebar_navigator.init({
@@ -83,7 +83,7 @@
         });
 
         function gen_tab_elements() {
-            return $("[data-toggle='tab']:not(.sidebar .nav-list a)");
+            return $("[data-toggle='tab']:not(.sidebar .nav-hq-sidebar a)");
         }
         var tab_navigator = new KeyboardNavigator();
         tab_navigator.init({
@@ -94,9 +94,6 @@
             reset_index: false
         });
     </script>
-{% endblock %}
-
-{% block page_navigation %}
 {% endblock %}
 
 {% block page_content %}
