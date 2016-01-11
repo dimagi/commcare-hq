@@ -254,7 +254,7 @@ def is_app_active(app_id, domain):
 def apps_update_calculated_properties():
     es = get_es_new()
     q = {"filter": {"and": [{"missing": {"field": "copy_of"}}]}}
-    results = stream_es_query(q=q, ex_index='apps', size=999999, chunksize=500)
+    results = stream_es_query(q=q, es_index='apps', size=999999, chunksize=500)
     for r in results:
         calced_props = {"cp_is_active": is_app_active(r["_id"], r["_source"]["domain"])}
         es.update(APP_INDEX, ES_META['apps'].type, r["_id"], body={"doc": calced_props})

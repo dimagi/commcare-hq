@@ -64,7 +64,7 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
 
     @property
     def get_all_rows(self):
-        query_results = stream_es_query(q=self.es_query, ex_index='cases', size=999999, chunksize=100)
+        query_results = stream_es_query(q=self.es_query, es_index='cases', size=999999, chunksize=100)
         case_displays = (self.model(self, self.get_case(case))
                  for case in query_results)
 

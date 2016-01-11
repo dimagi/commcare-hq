@@ -81,7 +81,7 @@ class GroupToUserPillow(PythonPillow):
     def change_transport(self, doc_dict):
         user_ids = doc_dict.get("users", [])
         q = {"filter": {"and": [{"terms": {"_id": user_ids}}]}}
-        for user_source in stream_es_query(ex_index='users', q=q, fields=["__group_ids", "__group_names"]):
+        for user_source in stream_es_query(es_index='users', q=q, fields=["__group_ids", "__group_names"]):
             group_ids = set(user_source.get('fields', {}).get("__group_ids", []))
             group_names = set(user_source.get('fields', {}).get("__group_names", []))
             if doc_dict["name"] not in group_names or doc_dict["_id"] not in group_ids:
