@@ -273,13 +273,6 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.repeater.save()
 
         # case-creations by black-listed users shouldn't be forwarded
-        normal_user_case = CaseBlock(
-            case_id="a_case_id",
-            create=True,
-            case_type="planet",
-            owner_id="owner",
-            user_id="normal_user"
-        ).as_xml()
         black_listed_user_case = CaseBlock(
             case_id="b_case_id",
             create=True,
@@ -287,25 +280,38 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             owner_id="owner",
             user_id="black_listed_user"
         ).as_xml()
-        CaseFactory(self.domain_name).post_case_blocks([normal_user_case, black_listed_user_case])
-        # only 1 of 2 should have been forwarded
+        CaseFactory(self.domain_name).post_case_blocks([black_listed_user_case])
+        self.assertEqual(0, len(self.repeat_records(self.domain_name).all()))
+
+        # case-creations by normal users should be forwarded
+        normal_user_case = CaseBlock(
+            case_id="a_case_id",
+            create=True,
+            case_type="planet",
+            owner_id="owner",
+            user_id="normal_user"
+        ).as_xml()
+        CaseFactory(self.domain_name).post_case_blocks([normal_user_case])
         self.assertEqual(1, len(self.repeat_records(self.domain_name).all()))
 
         # case-updates by black-listed users shouldn't be forwarded
-        normal_user_case = CaseBlock(
-            case_id="a_case_id",
-            case_type="planet",
-            owner_id="owner",
-            user_id="normal_user",
-        ).as_xml()
         black_listed_user_case = CaseBlock(
             case_id="b_case_id",
             case_type="planet",
             owner_id="owner",
             user_id="black_listed_user",
         ).as_xml()
-        CaseFactory(self.domain_name).post_case_blocks([normal_user_case, black_listed_user_case])
-        # only 2 of 4 should have been forwarded
+        CaseFactory(self.domain_name).post_case_blocks([black_listed_user_case])
+        self.assertEqual(1, len(self.repeat_records(self.domain_name).all()))
+
+        # case-updates by normal users should be forwarded
+        normal_user_case = CaseBlock(
+            case_id="a_case_id",
+            case_type="planet",
+            owner_id="owner",
+            user_id="normal_user",
+        ).as_xml()
+        CaseFactory(self.domain_name).post_case_blocks([normal_user_case])
         self.assertEqual(2, len(self.repeat_records(self.domain_name).all()))
 
 
