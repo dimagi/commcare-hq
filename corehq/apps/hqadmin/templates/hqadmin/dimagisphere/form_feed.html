@@ -93,6 +93,8 @@
 	{% block script_panel %}
         <script type="text/javascript">
 jQuery(document).ready(function($) {
+    var filter = {};
+
     var ws4redis = WS4Redis({
         uri: '{{ WEBSOCKET_URI }}form-feed?subscribe-broadcast',
         receive_message: receiveMessage,
@@ -113,6 +115,8 @@ jQuery(document).ready(function($) {
     function receiveMessage(msg) {
         var msgObj = JSON.parse(msg);
         // var renderedMsg = '<strong>' + msgObj.username + '</strong>: ' + msgObj.message;
+
+        dimagisphere.formData.domainToCountry[msgObj.domain] = msgObj.country;
 
         addDataToMap(msgObj);
 
@@ -148,6 +152,11 @@ jQuery(document).ready(function($) {
     });
     function formatChartData(data) {
         var values = $.map(data, function (count, domain) { return {'domain': domain, 'count': count}; });
+        if (filter.country) {
+            values = values.filter(function(obj) {
+                return dimagisphere.formData.domainToCountry[obj.domain] === filter.country;
+            });
+        }
         // can uncomment the below line to sort by descending count (this causes colors to change over time)
         // values.sort(function (a, b) { return b.count - a.count; });
         return [{
@@ -193,6 +202,13 @@ jQuery(document).ready(function($) {
 
     function getOpacity(featureId) {
         if (dimagisphere.formData.totalFormsByCountry[featureId]) {
+            if (filter.country != null) {
+                if (featureId === filter.country) {
+                    return .9;
+                } else {
+                    return .3;
+                }
+            }
             return .9;
         } else {
             return 0;
@@ -232,7 +248,18 @@ jQuery(document).ready(function($) {
     function onEachFeature(feature, layer) {
         layer.on({
             mouseover: highlightFeature,
-            mouseout: resetHighlight
+            mouseout: resetHighlight,
+            click: function() {
+                // when a country is clicked on, we filter by country name
+                if (filter.country === layer.feature.properties.name) {
+                    filter.country = null;
+                } else {
+                    filter.country = layer.feature.properties.name;
+                    // show the name in text somewhere to avoid scanning the map? maybe in the top right?
+                }
+                chartData.datum(formatChartData(dimagisphere.formData.totalFormsByDomain)).call(chart);
+                countriesGeo.setStyle(style);
+            }
         });
     }
 
