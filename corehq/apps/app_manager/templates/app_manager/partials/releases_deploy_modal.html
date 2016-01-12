@@ -48,13 +48,15 @@
                                                 {% trans "to your Android device." %}
                                             </p>
                                             {% if multimedia_state.has_media %}
-                                            <label class="checkbox" data-bind="visible: allow_media_install">
-                                                <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">
-                                                {% trans "Include Multimedia" %}
-                                                <span data-bind="visible: !mm_supported()" class="label label-default">
-                                                    {% trans "Only supported for versions made after 2013-10-15" %}
-                                                </span>
-                                            </label>
+                                                <div class="checkbox">
+                                                    <label data-bind="visible: allow_media_install">
+                                                        <input type="checkbox" data-bind="checked: include_media, enable: mm_supported()">
+                                                        {% trans "Include Multimedia" %}
+                                                        <span data-bind="visible: !mm_supported()" class="label label-default">
+                                                            {% trans "Only supported for versions made after 2013-10-15" %}
+                                                        </span>
+                                                    </label>
+                                                </div>
                                             {% endif %}
                                             <p>
                                                 <span data-bind="visible: get_short_odk_url()">
@@ -79,7 +81,7 @@
                                             <p>
                                                 {% trans "Or" %}
                                                 <a href="#" data-bind="
-                                                    openJqm: get_odk_install_url,
+                                                    openRemoteModal: get_odk_install_url,
                                                     click: function() { ga_track_event('App Manager', 'Show Bar Code', '-'); }
                                                 ">{% trans "scan the bar code" %}</a>
                                                 {% trans "using the Barcode Scanner option within CommCare" %}
