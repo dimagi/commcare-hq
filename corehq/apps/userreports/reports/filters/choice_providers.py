@@ -123,7 +123,7 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
             return []
 
     def get_choices_for_known_values(self, values):
-        return []
+        return [Choice(v, unicode(v)) for v in values]
 
 
 class LocationChoiceProvider(ChainableChoiceProvider):
@@ -141,7 +141,6 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         # see e.g. locations.views.child_locations_for_select2
 
         locations = self._locations_query(query_context.query).order_by('name')
-
         return [
             Choice(loc.location_id, loc.display_name) for loc in
             locations[query_context.offset:query_context.offset + query_context.limit]
