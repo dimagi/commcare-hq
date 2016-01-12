@@ -233,8 +233,9 @@
                             </a>
                         </div>
                         <div data-bind="visible: editing_comment()">
-                            <form data-bind="submit: submit_new_comment">
-                                <input type="text" data-bind="value: new_comment"></input>
+                            <form class="form-inline" data-bind="submit: submit_new_comment">
+                                <div class="form-group">
+                                <input type="text" class="form-control" data-bind="value: new_comment"></input>
                                 <a href="#" data-bind="click: submit_new_comment,
                                                        visible: !pending_comment_update()">
                                     <span class="fa fa-check"></span>
@@ -242,6 +243,7 @@
                                 <a href="#" data-bind="click: function () {editing_comment(false);}, visible: !pending_comment_update()">
                                     <i class="fa fa-remove"></i>
                                 </a>
+                                </div>
                             </form>
                             <span data-bind="visible: pending_comment_update()">
                                 <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}"/>
