@@ -137,6 +137,16 @@ jQuery(document).ready(function($) {
         dimagisphere.formData.totalFormsByDomain[msgObj.domain] = currentCount;
         if (chart !== undefined) {
             chartData.datum(formatChartData(dimagisphere.formData.totalFormsByDomain)).call(chart);
+
+            // when the bar for a domain is clicked on, we can filter on that domain
+            // isn't in use with just this one chart and the map, but maybe if there are other charts added
+            d3.selectAll(".discreteBar").on('click', function(d) {
+                if (filter.domain && filter.domain === d.domain) {
+                    filter.domain = null;
+                } else {
+                    filter.domain = d.domain;
+                }
+            });
             try {
                 nv.utils.windowResize(chart.update);
             } catch (err) {
