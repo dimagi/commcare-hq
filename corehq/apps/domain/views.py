@@ -2189,7 +2189,6 @@ class AddFormRepeaterView(AddRepeaterView):
         return reverse(self.urlname, args=[self.domain])
 
     def make_repeater(self):
-        import ipdb; ipdb.set_trace()
         repeater = super(AddFormRepeaterView, self).make_repeater()
         repeater.include_app_id_param = self.add_repeater_form.cleaned_data['include_app_id_param']
         return repeater
