@@ -142,6 +142,7 @@ class BalanceMigration(UserMigrationMixin):
                 )[0]
                 ils_migration_problem.description = description
                 ils_migration_problem.object_id = couch_web_user.get_id
+                ils_migration_problem.save()
 
         migration_stats = ILSMigrationStats.objects.get(domain=self.domain)
         migration_stats.web_users_count = len(unique_usernames)
