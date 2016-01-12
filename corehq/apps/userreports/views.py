@@ -559,6 +559,13 @@ def _edit_data_source_shared(request, domain, config, read_only=False):
         'data_source': config,
         'read_only': read_only
     })
+    if config.is_deactivated:
+        messages.info(
+            request, _(
+                'Data source "{}" has no associated table.\n'
+                'Click "Rebuild Data Source" to recreate the table.'
+            ).format(config.display_name)
+        )
     return render(request, "userreports/edit_data_source.html", context)
 
 
