@@ -1,6 +1,8 @@
 import warnings
 from functools import partial
 from couchdbkit import ResourceNotFound
+from django.db.models import Q
+import operator
 from dimagi.ext.couchdbkit import *
 import itertools
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
@@ -365,6 +367,25 @@ class SQLLocation(MPTTModel):
             return cls.objects.get(location_id=location_id)
         except cls.DoesNotExist:
             return None
+
+    @staticmethod
+    def get_queryset_descendants(nodes, include_self=False):
+        """
+        Given a queryset of SQLLocation objects - return all descendants of those objects
+        (optionally including the initial queryset in the final result)
+        """
+        # this is basically copied straight from http://stackoverflow.com/a/5740724/8207
+        if not nodes:
+            return SQLLocation.objects.none()
+        filters = []
+        for n in nodes:
+            lft, rght = n.lft, n.rght
+            if include_self:
+                lft -=1
+                rght += 1
+            filters.append(Q(tree_id=n.tree_id, lft__gt=lft, rght__lt=rght))
+        q = reduce(operator.or_, filters)
+        return SQLLocation.objects.filter(q)
 
 
 def _filter_for_archived(locations, include_archive_ancestors):
