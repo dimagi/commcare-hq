@@ -282,9 +282,8 @@ class AlertsData(ReportingRatesData):
     @property
     @memoized
     def locations_ids(self):
-        locations_ids = list(self.location.get_descendants().filter(location_type__administrative=False)
-                             .values_list('location_id', flat=True))
-        return locations_ids
+        return list(self.location.get_descendants().filter(location_type__administrative=False, is_archived=False)
+                    .values_list('location_id', flat=True))
 
     def supply_points_users(self):
         locations_ids = self.locations_ids
