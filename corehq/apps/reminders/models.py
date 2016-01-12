@@ -1029,7 +1029,7 @@ class CaseReminderHandler(Document):
             return (start_date, True, False)
 
         if isinstance(start_date, date):
-            return (datetime.combine(start_date, time(0,0)), True, False)
+            return (datetime.combine(start_date, time(0, 0)), True, False)
 
         if looks_like_timestamp(start_date):
             try:
