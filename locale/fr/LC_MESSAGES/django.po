@@ -1,31 +1,26 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-# Translators:
-# Claire O'Grady <cogrady@dimagi.com>, 2015
-# Dimagi Dev <devops@dimagi.com>, 2016
-# esoergel, 2016
-# esoergel, 2016
-# Marco Horta <mhorta@dimagi.com>, 2015
+#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: CommCare HQ\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-01-12 19:41+0000\n"
-"PO-Revision-Date: 2016-01-08 19:23+0000\n"
-"Last-Translator: esoergel\n"
-"Language-Team: Portuguese (http://www.transifex.com/dimagi/commcare-hq/"
-"language/pt/)\n"
-"Language: pt\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: corehq/apps/accounting/filters.py:32
 msgid "Account Type"
-msgstr "Tipo da Conta"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:33 corehq/apps/accounting/filters.py:40
 #: corehq/apps/accounting/filters.py:48 corehq/apps/accounting/filters.py:153
@@ -47,11 +42,11 @@ msgstr "Tipo da Conta"
 #: custom/apps/cvsu/filters.py:19 custom/apps/cvsu/filters.py:26
 #: custom/fri/reports/filters.py:22 custom/m4change/filters.py:29
 msgid "All"
-msgstr "Todos"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:39
 msgid "Account Name"
-msgstr "Nome da Conta"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:47 corehq/apps/accounting/filters.py:70
 #: corehq/apps/accounting/forms.py:349
@@ -66,7 +61,7 @@ msgstr "Nome da Conta"
 #: corehq/apps/domain/forms.py:1375 corehq/apps/hqadmin/reports.py:935
 #: corehq/apps/smsbillables/filters.py:30
 msgid "Project Space"
-msgstr "Espacio do Projeto"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:62 corehq/apps/accounting/forms.py:77
 #: corehq/apps/domain/forms.py:803
@@ -83,7 +78,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/credits_tab.html:48
 #: corehq/apps/sms/filters.py:69
 msgid "Any"
-msgstr "Qualquer"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:78
 #: corehq/apps/accounting/templates/accounting/subscriptions_tab.html:20
@@ -93,11 +88,11 @@ msgstr ""
 
 #: corehq/apps/accounting/filters.py:86
 msgid "Active Status"
-msgstr "Estado Ativo"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:98
 msgid "Dimagi Contact"
-msgstr "Contato de Dimagi"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:106 corehq/apps/accounting/forms.py:102
 msgid "Entry Point"
@@ -105,19 +100,19 @@ msgstr ""
 
 #: corehq/apps/accounting/filters.py:113
 msgid "Invoicing Status"
-msgstr "Estado de Fatura"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:119
 msgid "Send invoice"
-msgstr "Mandar fatura"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:120
 msgid "Do not invoice"
-msgstr "Não faturar"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:126
 msgid "Trial Status"
-msgstr "Estado Experimental"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:127
 msgid "Show All Subscriptions (including trials)"
@@ -154,28 +149,28 @@ msgstr ""
 
 #: corehq/apps/accounting/filters.py:152
 msgid "Is Hidden"
-msgstr "Está Escondido"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:168
 #: corehq/apps/reports/standard/cases/basic.py:251
 msgid "Created By"
-msgstr "Criado Por"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:169
 msgid "Anyone"
-msgstr "Algem"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:287 corehq/apps/hqadmin/reports.py:658
 #: corehq/apps/hqadmin/reports.py:674
 msgid "Date Created"
-msgstr "Data de Criar"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:292 corehq/apps/accounting/forms.py:332
 #: corehq/apps/accounting/templates/accounting/subscriptions_tab.html:17
 #: corehq/apps/domain/forms.py:1710
 #: corehq/apps/domain/templates/domain/confirm_subscription_renewal.html:21
 msgid "Start Date"
-msgstr "Data de Começo"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:297 corehq/apps/accounting/forms.py:335
 #: corehq/apps/accounting/forms.py:671
@@ -185,40 +180,40 @@ msgstr "Data de Começo"
 #: corehq/apps/reports/templates/reports/bootstrap3/partials/save_reports_modal.html:78
 #: corehq/apps/userreports/templates/userreports/configurable_report.html:260
 msgid "End Date"
-msgstr "Data Final"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:350
 msgid "Statement Period"
-msgstr "Período do Estrato de Conta"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:355
 msgid "Due Date"
-msgstr "Data de Vencimento"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:360
 msgid "Plan Name"
-msgstr "Nome do plano"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:368 corehq/apps/accounting/forms.py:345
 #: corehq/apps/accounting/forms.py:666
 msgid "Edition"
-msgstr "Edição"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:375
 msgid "Visibility"
-msgstr "Visibilidade"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:382 corehq/apps/domain/views.py:891
 msgid "Payment Status"
-msgstr "Estado do Pagamento"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:394
 msgid "Billing Contact Name"
-msgstr "Contato de Faturamento"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:402
 msgid "Transaction ID"
-msgstr "ID de transação"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py:403
 msgid "Usually begins with 'ch_'"
@@ -230,21 +225,20 @@ msgstr ""
 
 #: corehq/apps/accounting/forms.py:86
 msgid "Account is Active"
-msgstr "Conta está ativa"
+msgstr ""
 
 #: corehq/apps/accounting/forms.py:91
 msgid "Transfer Subscriptions To"
-msgstr "Transferir as Assinaturas a"
+msgstr ""
 
 #: corehq/apps/accounting/forms.py:92
 msgid ""
 "Transfer any existing subscriptions to the Billing Account specified here."
 msgstr ""
-"Transferir assinaturas existentes á conta de faturamento indicada aqui."
 
 #: corehq/apps/accounting/forms.py:97
 msgid "Dimagi Contact Email"
-msgstr "Email do Contato de Dimagi"
+msgstr ""
 
 #: corehq/apps/accounting/forms.py:106
 msgid "Last Payment Method"
@@ -264,22 +258,18 @@ msgid ""
 "This account has subscriptions associated with it. Please specify a transfer "
 "account before deactivating."
 msgstr ""
-"Essa conta tem assinaturas associados. Por favor, especifique uma conta de "
-"transferência antes da desativação."
 
 #: corehq/apps/accounting/forms.py:209
 msgid "The transfer account can't be the same one you're trying to deactivate."
 msgstr ""
-"A conta de transferência não pode ser a mesma que você está tentando "
-"desativar."
 
 #: corehq/apps/accounting/forms.py:329
 msgid "Billing Account"
-msgstr "Conta de Faturamento"
+msgstr ""
 
 #: corehq/apps/accounting/forms.py:338
 msgid "Delay Invoice Until"
-msgstr "Demorar Faturamento Ate"
+msgstr ""
 
 #: corehq/apps/accounting/forms.py:341 corehq/apps/accounting/forms.py:662
 msgid "Core Product"
@@ -293,7 +283,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py:1692
 #: corehq/apps/domain/templates/domain/current_subscription.html:316
 msgid "Software Plan"
-msgstr "Plano de Software"
+msgstr ""
 
 #: corehq/apps/accounting/forms.py:351
 msgid "Salesforce Deployment ID"
@@ -302,7 +292,7 @@ msgstr ""
 #: corehq/apps/accounting/forms.py:354
 #: corehq/apps/accounting/templates/accounting/subscriptions_tab.html:23
 msgid "Do Not Invoice"
-msgstr "Não Faturar"
+msgstr ""
 
 #: corehq/apps/accounting/forms.py:357
 msgid "Justify why \"Do Not Invoice\""
@@ -2490,7 +2480,7 @@ msgstr ""
 #: corehq/apps/accounting/user_text.py:63
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:85
 msgid "Monthly"
-msgstr "Mes"
+msgstr ""
 
 #: corehq/apps/accounting/user_text.py:80
 msgid ""
@@ -2577,7 +2567,7 @@ msgstr ""
 #: corehq/apps/accounting/user_text.py:214
 #: corehq/apps/accounting/user_text.py:215
 msgid "CommCare Application Builder"
-msgstr "CommCare Application Builder"
+msgstr ""
 
 #: corehq/apps/accounting/user_text.py:216
 msgid "CommCare Supply Application Builder"
@@ -2588,8 +2578,6 @@ msgid ""
 "CommCare Exchange (<a href=\"http://www.commcarehq.org/exchange/\">visit the "
 "exchange</a>)"
 msgstr ""
-"CommCare Exchange (<a href=\"http://www.commcarehq.org/exchange/\">visita o "
-"exchange</a>)"
 
 #: corehq/apps/accounting/user_text.py:219
 #: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:128
@@ -2608,20 +2596,18 @@ msgid ""
 "Web-based Applications (<a href=\"https://confluence.dimagi.com/display/"
 "commcarepublic/CloudCare+-+Web+Data+Entry\">CloudCare</a>)"
 msgstr ""
-"Aplicativos da Rede (<a href=\"https://confluence.dimagi.com/display/"
-"commcarepublic/CloudCare+-+Web+Data+Entry\">CloudCare</a>)"
 
 #: corehq/apps/accounting/user_text.py:222 corehq/privileges.py:85
 msgid "Custom Branding"
-msgstr "Marca Personalizada"
+msgstr ""
 
 #: corehq/apps/accounting/user_text.py:223
 msgid "Data Export"
-msgstr "Exportação de Dados"
+msgstr ""
 
 #: corehq/apps/accounting/user_text.py:224
 msgid "Standard Reports"
-msgstr "Relatórios Padrão"
+msgstr ""
 
 #: corehq/apps/accounting/user_text.py:225 corehq/privileges.py:86
 msgid "Cross-Project Reports"
@@ -2629,19 +2615,17 @@ msgstr ""
 
 #: corehq/apps/accounting/user_text.py:226
 msgid "Custom Reports Access"
-msgstr "Acesso ao Relatórios Personalizados"
+msgstr ""
 
 #: corehq/apps/accounting/user_text.py:227
 msgid ""
 "Active Data Management (<a href=\"http://www.commcarehq.org/tour/adm/\">read "
 "more</a>)"
 msgstr ""
-"Gestão de Dados Ativa (<a href=\"http://www.commcarehq.org/tour/adm/\">ler "
-"mas</a>)"
 
 #: corehq/apps/accounting/user_text.py:228
 msgid "Outbound Messaging"
-msgstr "Mensagens da Saída"
+msgstr ""
 
 #: corehq/apps/accounting/user_text.py:229
 msgid "Rules Engine"
@@ -2683,7 +2667,7 @@ msgstr ""
 
 #: corehq/apps/accounting/user_text.py:238 corehq/privileges.py:96
 msgid "HIPAA Compliance Assurance"
-msgstr "Garantia de Cumprimento a HIPAA"
+msgstr ""
 
 #: corehq/apps/accounting/user_text.py:239
 msgid "De-identified Data"
@@ -2883,7 +2867,7 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:205
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/single_case.html:99
 msgid "Form"
-msgstr "Formulário"
+msgstr ""
 
 #: corehq/apps/app_manager/fields.py:70
 #: corehq/apps/cloudcare/templates/cloudcare/config.html:161
@@ -2956,7 +2940,7 @@ msgstr ""
 #: corehq/apps/app_manager/forms.py:20
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:342
 msgid "Copy Application"
-msgstr "Copiar Aplicativo"
+msgstr ""
 
 #: corehq/apps/app_manager/forms.py:27
 #: corehq/apps/app_manager/templates/app_manager/partials/form_tab_advanced.html:100
@@ -2964,7 +2948,7 @@ msgstr "Copiar Aplicativo"
 #: corehq/apps/reminders/templates/reminders/broadcasts_list.html:87
 #: corehq/apps/reminders/templates/reminders/list_broadcasts.html:113
 msgid "Copy"
-msgstr "Copiar"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:2061
 msgid "Case tiles may only be used for the case list (not the case details)."
@@ -2979,17 +2963,17 @@ msgstr ""
 #: corehq/apps/app_manager/models.py:3640
 #: corehq/apps/app_manager/views/apps.py:122
 msgid "Untitled Module"
-msgstr "Módulo sem Nome"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:2149
 #: corehq/apps/app_manager/models.py:2654
 #: corehq/apps/app_manager/views/modules.py:481
 msgid "Untitled Form"
-msgstr "Formulário sem Nome"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:2391
 msgid "Case property"
-msgstr "Propriedade do Caso"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:2392
 msgid "Lookup Table field"
@@ -2997,15 +2981,15 @@ msgstr ""
 
 #: corehq/apps/app_manager/models.py:2393
 msgid "custom user property"
-msgstr "Propriedade do usuário personalizada"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:2394
 msgid "custom XPath expression"
-msgstr "expressão XPath personalizada"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:2401
 msgid "Case tag"
-msgstr "Marcador do caso"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:2402
 msgid "Lookup Table tag"
@@ -3032,7 +3016,7 @@ msgstr ""
 #: custom/ewsghana/reports/email_reports.py:106
 #: custom/ilsgateway/tanzania/reports/facility_details.py:26
 msgid "Product"
-msgstr "Producto"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:2915
 #, python-brace-format
@@ -3060,47 +3044,47 @@ msgstr ""
 #: corehq/apps/sms/forms.py:731 corehq/apps/sms/views.py:1076
 #: corehq/apps/userreports/templates/userreports/configurable_report.html:207
 msgid "Description"
-msgstr "Descrição"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:3052
 #: corehq/apps/app_manager/models.py:3100
 msgid "Followup date"
-msgstr "Data de acompanhamento"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:3057
 #: corehq/apps/app_manager/models.py:3110
 msgid "Close if"
-msgstr "Fechar se"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:3109
 msgid "Latest report"
-msgstr "Último relatório"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:3130
 #: custom/_legacy/pact/templates/pact/patient/pactpatient_base.html:33
 #: custom/_legacy/pact/templates/pact/patient/pactpatient_submissions.html:31
 msgid "Care Plan"
-msgstr "Plano de Assistência"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:3151
 #: corehq/apps/reports/standard/cases/careplan.py:124
 #: custom/_legacy/pact/models.py:357
 msgid "Goal"
-msgstr "Objetivo"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:3151
 #: corehq/apps/reports/standard/cases/careplan.py:138
 #: custom/_legacy/pact/models.py:375
 msgid "Task"
-msgstr "Tarefa"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:3160
 msgid "Followup"
-msgstr "Acompanhamento"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:3174
 msgid "Last update"
-msgstr "Ultima atualização"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:3482
 #: corehq/apps/app_manager/templates/app_manager/partials/mobile_report_configs.html:6
@@ -3116,8 +3100,6 @@ msgid ""
 "Usage of lookup tables is not supported by your current subscription. Please "
 "upgrade your subscription before using this feature."
 msgstr ""
-"O uso de tabelas de pesquisa não é suportado por sua assinatura atual. Por "
-"favor, atualize sua assinatura antes de usar esse recurso."
 
 #: corehq/apps/app_manager/models.py:4113
 msgid ""
@@ -3138,7 +3120,7 @@ msgstr ""
 #: corehq/apps/app_manager/models.py:4892
 #, python-brace-format
 msgid "Copy of {name}"
-msgstr "Cópia de {name}"
+msgstr ""
 
 #: corehq/apps/app_manager/models.py:4997
 msgid ""
@@ -3187,27 +3169,26 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/admin/overview.html:22
 #: corehq/apps/hqwebapp/models.py:759
 msgid "Applications"
-msgstr "Aplicativos"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/app_view.html:332
 msgid "Try again"
-msgstr "Tente novamente"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/app_view.html:345
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:348
 msgid "Delete Application"
-msgstr "Apagar Aplicativo"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/app_view.html:350
 msgid "Delete this application"
-msgstr "Apagar esse aplicativo"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/apps_base.html:104
 msgid ""
 "Oops! We can't create that application; you already have one with the same "
 "name."
 msgstr ""
-"Epa! Não podemos criar este aplicativo; você já tem um com o mesmo nome."
 
 #: corehq/apps/app_manager/templates/app_manager/apps_base.html:114
 msgid ""
@@ -3218,32 +3199,27 @@ msgid ""
 "display/commcarepublic/Beginner+Tutorial\">Beginner Tutorial</a>.\n"
 "                "
 msgstr ""
-"\n"
-"Bem'vindo ao CommCare Application Builder.\n"
-"Antes de começar, vá pelo\n"
-"<a target=\"_blank\" href=\"https://confluence.dimagi.com/display/"
-"commcarepublic/Beginner+Tutorial\">Tutorial para Iniciantes</a>."
 
 #: corehq/apps/app_manager/templates/app_manager/apps_base.html:133
 msgid "Oops! This application was deleted."
-msgstr "Epa! Esse aplicativo foi apagado."
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/apps_base.html:135
 msgid "If you want your application back, click Restore."
-msgstr "Se você quiser que seu aplicativo de volta, clique em Restaurar."
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/apps_base.html:139
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:232
 msgid "Restore"
-msgstr "Restaurar"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/apps_base.html:142
 msgid "No thanks, get me out of here"
-msgstr "Não, obrigado, me tire daqui"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:179
 msgid "Home Screen"
-msgstr "Tela Inicial"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:180
 msgid "Module Menu"
@@ -3251,7 +3227,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:181
 msgid "Module:"
-msgstr "Módulo:"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:183
 msgid "Parent Module:"
@@ -3259,7 +3235,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:185
 msgid "Previous Screen"
-msgstr "Tela Anterior"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:193
 msgid "Link to other form"
@@ -3267,13 +3243,12 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:261
 msgid "Delete Form"
-msgstr "Apagar Formulário"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:281
 msgid ""
 "Your administrator has locked this form from edits through the form builder"
 msgstr ""
-"O administrador bloqueou este formulário de edições através do Form Builder"
 
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:290
 #: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:7
@@ -3282,7 +3257,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:299
 msgid "User Registration Properties"
-msgstr "Propiedades de registro de usuários"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:306
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:172
@@ -3299,7 +3274,7 @@ msgstr "Propiedades de registro de usuários"
 #: corehq/messaging/smsbackends/unicel/templates/unicel/backend.html:5
 #: submodules/touchforms-src/touchforms/formplayer/templates/formplayer/fullform-ui/templates.html:93
 msgid "Settings"
-msgstr "Configuração"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:310
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:354
@@ -3308,7 +3283,7 @@ msgstr "Configuração"
 #: corehq/apps/dashboard/views.py:85
 #: corehq/apps/prelogin/templates/prelogin/_sections/software_services/pricing.html:116
 msgid "Case Management"
-msgstr "Gestão de Casos"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:316
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:380
@@ -3320,7 +3295,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/module_view_advanced.html:36
 #: corehq/apps/app_manager/templates/app_manager/partials/enable_schedule.html:8
 msgid "Visit Scheduler"
-msgstr "Organizador das Visitas"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:339
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:376
@@ -3328,13 +3303,11 @@ msgid ""
 "There are errors in your form. Fix your form in order to view and edit Case "
 "Management."
 msgstr ""
-"Existem erros no seu formulário. Corrigir o seu formulário, a fim de "
-"visualizar e editar Gestão de Casos."
 
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:344
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:346
 msgid "Cases and Referrals"
-msgstr "Casos e Encaminhamentos"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:347
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:357
@@ -3343,17 +3316,12 @@ msgid ""
 "choose to save data from a form to the case, which will store the data "
 "locally on the phone to use later."
 msgstr ""
-"Cases dar-lhe uma maneira de acompanhar os pacientes, fazendas, etc ao longo "
-"do tempo. Você pode optar por guardar dados de um formulário para o caso, "
-"que irá armazenar os dados localmente no telefone para usar mais tarde."
 
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:368
 msgid ""
 "You have not created a form yet. Create a form in order to view and edit "
 "Case Management."
 msgstr ""
-"Você não criou um formulário ainda. Crie um formulário, a fim de visualizar "
-"e editar Gestão de Casos."
 
 #: corehq/apps/app_manager/templates/app_manager/form_view_base.html:383
 msgid ""
@@ -3408,32 +3376,32 @@ msgstr ""
 #: corehq/apps/export/templates/export/partial/export_list_create_export_modal.html:78
 #: corehq/apps/reports/templates/reports/partials/form_name.html:5
 msgid "User Registration"
-msgstr "Registro de Usuário"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/import_app.html:36
 msgid "Import Application"
-msgstr "Importar Aplicativo"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/import_app.html:59
 msgid "Yes, import application"
-msgstr "Sim, importa o aplicativo"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/languages.html:6
 #: corehq/apps/sms/templates/sms/languages.html:63
 msgid "Language List"
-msgstr "Lista das Idiomas"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/languages.html:8
 msgid "CommCare Translations"
-msgstr "Traduções do CommCare"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/languages.html:10
 msgid "Bulk Application Translations"
-msgstr "Traduções do Aplicativo em Massa"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/languages.html:22
 msgid "Import/Export UI Translations"
-msgstr "Importar/Exportar Traduções de UI"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/languages.html:36
 msgid ""
@@ -3460,28 +3428,20 @@ msgid ""
 "+Strings\">ODK Collect translations</a>.\n"
 "                            "
 msgstr ""
-"\n"
-"Para Android, consultar\n"
-"<a target=\"_blank\" href=\"https://github.com/dimagi/commcare-odk/blob/"
-"master/app/assets/locales/messages_ccodk_default.txt\">Traduções do "
-"CommCareODK </a>\n"
-"e <a target=\"_blank\" href=\"https://help.commcarehq.org/display/"
-"commcarepublic/CommCare+ODK+Form+Entry+Interface+Strings\">Traduções do ODK "
-"Collect </a>."
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:87
 msgid "Edit in form builder"
-msgstr "Editar no Form Builder"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:163
 #: corehq/apps/app_manager/templates/app_manager/partials/supported-languages.html:8
 #: corehq/apps/app_manager/templates/app_manager/releases.html:217
 msgid "Deploy"
-msgstr "Lançar"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:179
 msgid "Multimedia"
-msgstr "Multimídia"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:202
 #: corehq/apps/appstore/templates/appstore/deployment_info.html:53
@@ -3489,7 +3449,7 @@ msgstr "Multimídia"
 #: corehq/apps/hqwebapp/models.py:1082
 #: corehq/apps/sms/templates/sms/languages.html:15
 msgid "Languages"
-msgstr "Idiomas"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:208
 msgid "App Summary"
@@ -3500,19 +3460,19 @@ msgstr ""
 #: corehq/apps/reports/filters/forms.py:556
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:204
 msgid "Module"
-msgstr "Módulo"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:298
 msgid "New Case Module"
-msgstr "Novo Módulo de Casos"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:300
 msgid "New Care Plan Module"
-msgstr "Novo Módulo de Plano de Assistência"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:305
 msgid "New Advanced Module"
-msgstr "Novo Módulo Avançado"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html:312
 msgid "New Report Module"
@@ -3529,7 +3489,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/module_view.html:221
 #: corehq/apps/app_manager/templates/app_manager/partials/mobile_report_configs.html:18
 msgid "Module Name"
-msgstr "Nome do Módulo"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/module_view.html:230
 msgid "Source Module"
@@ -3551,15 +3511,15 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/module_view.html:248
 #: corehq/apps/app_manager/templates/app_manager/module_view_careplan.html:31
 msgid "Menu Mode"
-msgstr "Modo do Menu"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/module_view.html:252
 msgid "Display module and then forms"
-msgstr "Mostrar módulo, em seguida formulários"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/module_view.html:253
 msgid "Display only forms"
-msgstr "Mostrar só os formulários"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/module_view.html:262
 msgid "Parent Module"
@@ -3583,7 +3543,7 @@ msgstr ""
 #: corehq/apps/users/forms.py:244
 #: corehq/apps/users/templates/users/edit_commcare_user.html:121
 msgid "Basic"
-msgstr "Básico"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/module_view.html:292
 #: corehq/apps/app_manager/templates/app_manager/module_view.html:294
@@ -3597,7 +3557,7 @@ msgstr "Básico"
 #: corehq/ex-submodules/casexml/apps/case/models.py:566
 #: corehq/ex-submodules/casexml/apps/case/models.py:596
 msgid "Case Type"
-msgstr "Típo de Caso"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/module_view.html:295
 msgid ""
@@ -3606,10 +3566,6 @@ msgid ""
 "cases of this type will show in the case list. Modules with the same case "
 "type will have the same cases in their case lists."
 msgstr ""
-"por exemplo &quot;pregnancy&quot;. O nome para o tipo de caso que você está "
-"a suguir. Todos os casos que você se registrar neste módulo terá este tipo "
-"de caso, e apenas casos deste tipo irá mostrar na lista de casos. Módulos "
-"com o mesmo tipo de caso terá os mesmos casos em suas listas de caso."
 
 #: corehq/apps/app_manager/templates/app_manager/module_view.html:301
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
@@ -3618,7 +3574,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/module_view.html:307
 #: corehq/apps/app_manager/templates/app_manager/module_view.html:309
 msgid "Label for Cases"
-msgstr "Estiqueta por Casos"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/module_view.html:310
 msgid "This label will appear at the top of the phone's case select screen."
@@ -3626,7 +3582,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/module_view.html:320
 msgid "Label for Referrals"
-msgstr "Estiqueta por Acompanhamento"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/module_view_advanced.html:53
 #: corehq/apps/app_manager/templates/app_manager/module_view_advanced.html:55
@@ -3641,15 +3597,15 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/module_view_careplan.html:24
 msgid "Attached to"
-msgstr "Anexado de"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/module_view_careplan.html:35
 msgid "Display careplan inside attached module"
-msgstr "Mostrar careplan dentro módulo anexado"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/module_view_careplan.html:36
 msgid "Display careplan separately"
-msgstr "Mostrar careplan separadamente"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/ng_partials/base_summary_view.html:11
 #: corehq/apps/app_manager/templates/app_manager/ng_partials/form_summary_view.html:35
@@ -3768,23 +3724,22 @@ msgstr ""
 msgid ""
 "Install to Android by taking a picture of the image below on your phone."
 msgstr ""
-"Instalar para Android por tirar uma foto da imagem abaixo no seu telefone."
 
 #: corehq/apps/app_manager/templates/app_manager/odk_install.html:13
 msgid "You can also visit:"
-msgstr "Você também pode visitar:"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/odk_install.html:13
 msgid "in your mobile browser."
-msgstr "no seu browser móvel."
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/odk_install.html:14
 msgid "For more about CommCare on Android, visit"
-msgstr "Para mais informção do CommCare em Android, visita"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/odk_install.html:14
 msgid "Installing CommCareODK Android"
-msgstr "Instalar o CommCareODK Android"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/add_property_button.html:4
 msgid "Add Property"
@@ -5169,7 +5124,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/module_view_heading.html:10
 msgid "Delete Module"
-msgstr "Apagar Módulo"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/multimedia_ajax.html:3
 msgid "Manage Multimedia"
@@ -5280,15 +5235,15 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/new_app_buttons.html:12
 msgid "Create a Blank Application"
-msgstr "Criar um Aplicativo em Branco"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/new_app_buttons.html:17
 msgid "There are no applications at this time"
-msgstr "Não há aplicativos neste momento"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/new_app_buttons.html:22
 msgid "Copy an existing app from the CommCare Exchange"
-msgstr "Copiar um aplicativo existente do CommCare Exchange"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/new_careplan_module.html:7
 msgid "New Careplan Module"
@@ -5612,11 +5567,11 @@ msgstr ""
 
 #: corehq/apps/app_manager/translations.py:155
 msgid "App Translations Updated!"
-msgstr "Tradução do aplicativo sucedeu!"
+msgstr ""
 
 #: corehq/apps/app_manager/views/app_summary.py:16
 msgid "Summary"
-msgstr "Sumário"
+msgstr ""
 
 #: corehq/apps/app_manager/views/apps.py:84
 #, python-format
@@ -5626,43 +5581,41 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/apps.py:119
 msgid "Untitled Application"
-msgstr "Aplicativo sem Nome"
+msgstr ""
 
 #: corehq/apps/app_manager/views/apps.py:191
 msgid "U​I translation"
-msgstr "Tradução de UI"
+msgstr ""
 
 #: corehq/apps/app_manager/views/apps.py:192
 msgid "U​I translations"
-msgstr "Tradução de UI"
+msgstr ""
 
 #: corehq/apps/app_manager/views/apps.py:199
 msgid "app translation"
-msgstr "tradução do aplicativo"
+msgstr ""
 
 #: corehq/apps/app_manager/views/apps.py:200
 msgid "app translations"
-msgstr "traduções de aplicativos"
+msgstr ""
 
 #: corehq/apps/app_manager/views/apps.py:327
 msgid "You must submit a name for the application you are importing."
-msgstr "Você deve submeter um nome para o aplicativo que você está importando."
+msgstr ""
 
 #: corehq/apps/app_manager/views/apps.py:330
 msgid "You must submit the source data."
-msgstr "Você deve submeter os dados de origem."
+msgstr ""
 
 #: corehq/apps/app_manager/views/apps.py:684
 msgid "The form can not be moved into the desired module."
-msgstr "O formulário não pode ser movido para o módulo desejado."
+msgstr ""
 
 #: corehq/apps/app_manager/views/apps.py:689
 msgid ""
 "Oops. Looks like you got out of sync with us. The sidebar has been updated, "
 "so please try again."
 msgstr ""
-"Epa. Parece que você tem fora de sincronia com nos. A barra lateral foi "
-"atualizado, por favor, tente novamente."
 
 #: corehq/apps/app_manager/views/apps.py:774
 msgid ""
@@ -5681,9 +5634,6 @@ msgid ""
 "click <strong>Make New Version</strong> under <strong>Deploy</strong> for "
 "feedback on how to fix these errors."
 msgstr ""
-"Nós não conseguimos obter seus arquivos porque a sua aplicação tem erros. "
-"Por favor, clique em <strong> Faça Nova Versão </ strong> em <strong> "
-"Lançamento </ strong> para feedback sobre como corrigir esses erros."
 
 #: corehq/apps/app_manager/views/formdesigner.py:64
 msgid ""
@@ -5691,46 +5641,38 @@ msgid ""
 "has locked this form against editing in the form builder, so we have "
 "redirected you to the form's front page instead."
 msgstr ""
-"Você tentou editar este formulário no Form Builder. No entanto, o "
-"administrador bloqueou este formulário contra edição no Form Builder, então "
-"temos que lhe redirecionamos para a página inicial do formulário em seu "
-"lugar."
 
 #: corehq/apps/app_manager/views/forms.py:109
 msgid ""
 "We could not copy this form, because it is blank.In order to copy this form, "
 "please add some questions first."
 msgstr ""
-"Nós não poderíamos copiar este formulário, porque está em branco. Para "
-"copiar este formulário, por favor, adicione algumas questões primeiro."
 
 #: corehq/apps/app_manager/views/forms.py:113
 msgid ""
 "This form could not be copied because it is not compatible with the selected "
 "module."
 msgstr ""
-"Este formulário não pode ser copiado, porque não é compatível com o módulo "
-"escolhido."
 
 #: corehq/apps/app_manager/views/forms.py:537
 msgid "All Programs"
-msgstr "Todos os Programas"
+msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py:85
 msgid "Goal List"
-msgstr "Lista de Objetivos"
+msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py:86
 msgid "Goal Detail"
-msgstr "Detalhes dos Objetivos"
+msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py:97
 msgid "Task List"
-msgstr "Lista das Tarefas"
+msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py:98
 msgid "Task Detail"
-msgstr "Detalhes das Tarefas"
+msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py:191
 msgid ""
@@ -5746,19 +5688,19 @@ msgstr ""
 #: corehq/apps/reports/standard/cases/basic.py:188
 #: corehq/apps/reports/templates/reports/reportdata/case_details.html:71
 msgid "Case List"
-msgstr "Lista de Casos"
+msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py:252
 msgid "Case Detail"
-msgstr "Detalhes do Caso"
+msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py:272
 msgid "Product List"
-msgstr "Lista de Productos"
+msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py:273
 msgid "Product Detail"
-msgstr "Detalhes do Producto"
+msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py:307
 msgid "Not all forms in the module update a case."
@@ -5775,16 +5717,16 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py:486
 msgid "Caution: Advanced modules are a labs feature"
-msgstr "Advertência: Planos de assistência são função de laboratório"
+msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py:702
 #, python-brace-format
 msgid "Please set the case type for the target module '{name}'."
-msgstr "Por favor digitar o tipo de caso por modulo '{name}'."
+msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py:708
 msgid "Caution: Care Plan modules are a labs feature"
-msgstr "Advertência: Planos de assistência são função de laboratório"
+msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py:730
 msgid "Please upgrade you app to > 2.0 in order to add this module"
@@ -5792,7 +5734,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py:740
 msgid "This application already has a Careplan module"
-msgstr "Este aplicativo já tiver um módulo de Plano de Assistência"
+msgstr ""
 
 #: corehq/apps/app_manager/views/releases.py:303
 msgid "App diff"
@@ -5800,15 +5742,15 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/translations.py:45
 msgid "We found problem with following translations:"
-msgstr "Encontramos um problema com as seguintes traduções:"
+msgstr ""
 
 #: corehq/apps/app_manager/views/translations.py:56
 msgid "Something went wrong! Update failed. We're looking into it"
-msgstr "Algo deu errado! Falha na atualização. Nós estamos a olhar para ele."
+msgstr ""
 
 #: corehq/apps/app_manager/views/translations.py:59
 msgid "UI Translations Updated!"
-msgstr "Traduções de UI atualizadas!"
+msgstr ""
 
 #: corehq/apps/app_manager/xform.py:27
 msgid "Error parsing XML: {}"
@@ -5868,21 +5810,18 @@ msgstr ""
 #: corehq/apps/app_manager/xpath.py:237
 #, python-brace-format
 msgid "Type {type} must be in list of domain types: {list}"
-msgstr "Tipo {type} deve ser em lista de tipos de domínio: {list}"
+msgstr ""
 
 #: corehq/apps/app_manager/xpath.py:245
 #, python-brace-format
 msgid "Reference type {ref} cannot be a child of primary type {main}."
 msgstr ""
-"Tipo de referência {ref} não pode ser um filho do tipo primário {main}."
 
 #: corehq/apps/app_manager/xpath.py:258
 msgid ""
 "Property not correctly formatted. Must be formatted like: loacation:mytype:"
 "referencetype/property. For example: location:outlet:state/name"
 msgstr ""
-"A propriedade não formatado corretamente. Deve ser formatado como: loacation:"
-"mytype:referencetype/property. Por exemplo: location:outlet:state/name"
 
 #: corehq/apps/appstore/templates/appstore/appstore_base.html:7
 #: corehq/apps/domain/views.py:1711 corehq/apps/hqwebapp/models.py:1347
@@ -7071,7 +7010,7 @@ msgstr ""
 #: corehq/apps/sms/templates/sms/list_forwarding_rules.html:9
 #: corehq/apps/sms/views.py:102 corehq/reports.py:124
 msgid "Messaging"
-msgstr "Mensagens"
+msgstr ""
 
 #: corehq/apps/dashboard/views.py:235
 msgid "Configure and schedule SMS messages and keywords"
@@ -8685,13 +8624,6 @@ msgid ""
 "                    which you can find at the bottom of every page.\n"
 "                "
 msgstr ""
-"\n"
-"                    We would love to get your feedback as we continue to "
-"develop these features!\n"
-"                    Please let us know how it goes by reporting any problems "
-"through the \"Report an Issue\" button,\n"
-"                    which you can find at the bottom of every page.\n"
-"                "
 
 #: corehq/apps/domain/templates/domain/admin/feature_previews.html:28
 msgid "Update previews"
@@ -13001,7 +12933,7 @@ msgstr ""
 #: corehq/apps/reports/standard/__init__.py:23
 #: corehq/apps/reports/standard/monitoring.py:1060
 msgid "Project Reports"
-msgstr "Relatórios de Projeto"
+msgstr ""
 
 #: corehq/apps/hqwebapp/models.py:293
 msgid "Tools"
@@ -13045,7 +12977,7 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/models.py:703 corehq/reports.py:226
 msgid "Export Data"
-msgstr "Exportar Dados"
+msgstr ""
 
 #: corehq/apps/hqwebapp/models.py:750 corehq/apps/hqwebapp/utils.py:200
 msgid "View All"
@@ -18488,11 +18420,11 @@ msgstr ""
 
 #: corehq/apps/reports/__init__.py:8 corehq/reports.py:63
 msgid "Monitor Workers"
-msgstr "Monitorar os Trabalhadores"
+msgstr ""
 
 #: corehq/apps/reports/__init__.py:9 corehq/reports.py:72
 msgid "Inspect Data"
-msgstr "Examinar Dados"
+msgstr ""
 
 #: corehq/apps/reports/__init__.py:10
 msgid "Raw Data"
@@ -18500,11 +18432,11 @@ msgstr ""
 
 #: corehq/apps/reports/__init__.py:11 corehq/reports.py:75
 msgid "Manage Deployments"
-msgstr "Gerir Desenvolvimentos"
+msgstr ""
 
 #: corehq/apps/reports/__init__.py:12
 msgid "CommTrack"
-msgstr "CommTrack"
+msgstr ""
 
 #: corehq/apps/reports/commtrack/ledgers_by_location.py:82
 msgid "Ledgers By Location"
@@ -21743,7 +21675,6 @@ msgstr ""
 #: corehq/apps/sms/messages.py:81
 msgid "Thank you. This phone has been verified for using SMS with CommCareHQ"
 msgstr ""
-"Obrigado. Este telefone esta verificado para utilizar o SMS com CommCareHQ"
 
 #: corehq/apps/sms/messages.py:83
 msgid ""
@@ -23126,7 +23057,7 @@ msgstr ""
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:48
 #: submodules/ctable-src/ctable_view/templates/ctable/list_mappings.html:38
 msgid "Domains"
-msgstr "Domínio"
+msgstr ""
 
 #: corehq/apps/toggle_ui/templates/toggle/flags.html:67
 msgid "Active Domains"
@@ -23322,7 +23253,7 @@ msgstr ""
 #: corehq/apps/userreports/reports/builder/forms.py:972
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:179
 msgid "Columns"
-msgstr "Colunas"
+msgstr ""
 
 #: corehq/apps/userreports/reports/builder/forms.py:1017
 msgid ""
@@ -24214,7 +24145,7 @@ msgstr ""
 #: corehq/apps/users/templates/users/edit_commcare_user.html:126
 #: corehq/privileges.py:98
 msgid "Locations"
-msgstr "Localizações"
+msgstr ""
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html:130
 msgid "Permanent Actions"
@@ -24955,7 +24886,7 @@ msgstr ""
 #: corehq/apps/users/templates/users/web_users.html:422
 #: corehq/apps/users/templates/users/web_users.html:565 corehq/reports.py:232
 msgid "Edit Data"
-msgstr "Editar Dados"
+msgstr ""
 
 #: corehq/apps/users/templates/users/web_users.html:425
 msgid "View, export, and edit form and case data; reassign cases."
@@ -25400,7 +25331,7 @@ msgstr ""
 #: corehq/ex-submodules/couchexport/shortcuts.py:23
 #, python-brace-format
 msgid "No previous export with id \"{id}\" found"
-msgstr "Nenhuma exportação anterior com id \"{id}\" foi encontrado"
+msgstr ""
 
 #: corehq/ex-submodules/phonelog/reports.py:33
 msgid ""
@@ -25414,7 +25345,7 @@ msgstr ""
 
 #: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html:3
 msgid "There was an error processing your request"
-msgstr "Houve um erro ao processamento de seu pedido"
+msgstr ""
 
 #: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html:14
 msgid "Your export is ready."
@@ -25432,11 +25363,11 @@ msgstr ""
 
 #: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html:40
 msgid "Process complete."
-msgstr "Processo completo"
+msgstr ""
 
 #: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html:43
 msgid "Results"
-msgstr "Resultados"
+msgstr ""
 
 #: corehq/ex-submodules/soil/templates/soil/partials/download_in_progress.html:4
 msgid ""
@@ -25450,11 +25381,11 @@ msgstr ""
 
 #: corehq/ex-submodules/soil/templates/soil/partials/download_in_progress.html:14
 msgid "Something went wrong! "
-msgstr "Algo deu errado!"
+msgstr ""
 
 #: corehq/ex-submodules/soil/templates/soil/partials/download_in_progress.html:24
 msgid "Processed"
-msgstr "Processado"
+msgstr ""
 
 #: corehq/ex-submodules/soil/views.py:47
 msgid "An error occurred during the download."
@@ -25462,7 +25393,7 @@ msgstr ""
 
 #: corehq/feature_previews.py:52
 msgid "Advanced Submit History Filters"
-msgstr "Filtros Avançados para História dos Enviádos"
+msgstr ""
 
 #: corehq/feature_previews.py:53
 msgid ""
@@ -25470,34 +25401,26 @@ msgid ""
 "submissions. Add extra columns to the report that represent data in the "
 "forms."
 msgstr ""
-"Filtrar formulários do relatório de História dos Enviádos por os dados nos "
-"formulários enviádos. Adicionar colunas ao relatório que representan dados "
-"dos formulários."
 
 #: corehq/feature_previews.py:62
 msgid "Custom Calculations in Case List"
-msgstr "Cálculos Personalizados na Lista de Casos"
+msgstr ""
 
 #: corehq/feature_previews.py:64
 msgid ""
 "Specify a custom xpath expression to calculate a value in the case list or "
 "case detail screen."
 msgstr ""
-"Especifiar uma expressão xpath personalizada para calcular um valor na tela "
-"da lista de casos detalhada."
 
 #: corehq/feature_previews.py:70
 msgid "Icons in Case List"
-msgstr "Ícones na Lista de Casos"
+msgstr ""
 
 #: corehq/feature_previews.py:72
 msgid ""
 "Display a case property as an icon in the case list. For example, to show "
 "that a case is late, display a red square instead of \"late: yes\"."
 msgstr ""
-"Mostrar uma propriedade do caso como um ícone na lista de casoa. Por "
-"exemplo, para mostrar que um caso seja tarde, mostrar um quadrado vermelho "
-"em vez de \"tarde: sim\""
 
 #: corehq/feature_previews.py:81
 msgid "Split multi-selects in case export"
@@ -25511,7 +25434,7 @@ msgstr ""
 
 #: corehq/feature_previews.py:98
 msgid "Call Center"
-msgstr "Call Center"
+msgstr ""
 
 #: corehq/feature_previews.py:100
 msgid ""
@@ -25703,23 +25626,23 @@ msgstr ""
 
 #: corehq/privileges.py:83
 msgid "Web-Based Apps (CloudCare)"
-msgstr "Aplicativos da Rede (CloudCare)"
+msgstr ""
 
 #: corehq/privileges.py:84
 msgid "Active Data Management"
-msgstr "Gestão Ativa de Dados"
+msgstr ""
 
 #: corehq/privileges.py:88
 msgid "Outgoing Messaging"
-msgstr "Mensagens de Saída."
+msgstr ""
 
 #: corehq/privileges.py:89
 msgid "Incoming Messaging"
-msgstr "Mensagens de Entrada"
+msgstr ""
 
 #: corehq/privileges.py:90
 msgid "Reminders Framework"
-msgstr "Estrutura de Lembretes"
+msgstr ""
 
 #: corehq/privileges.py:91
 msgid "Custom Android Gateway"
@@ -25727,19 +25650,19 @@ msgstr ""
 
 #: corehq/privileges.py:92
 msgid "Bulk Case Management"
-msgstr "Gestão de Casos em Massa"
+msgstr ""
 
 #: corehq/privileges.py:93
 msgid "Bulk User Management"
-msgstr "Gestão de Usuários em Massa"
+msgstr ""
 
 #: corehq/privileges.py:94
 msgid "Add Mobile Workers Above Limit"
-msgstr "Adicionar Trabalhadores Móveis Acima do Limite"
+msgstr ""
 
 #: corehq/privileges.py:95
 msgid "De-Identified Data"
-msgstr "Dados De-identificados"
+msgstr ""
 
 #: corehq/privileges.py:97
 msgid "Custom CommCare Logo Uploader"
@@ -25767,19 +25690,19 @@ msgstr ""
 
 #: corehq/reports.py:102
 msgid "Care Plans"
-msgstr "Planos de Assistência"
+msgstr ""
 
 #: corehq/reports.py:248
 msgid "Form Based Indicators"
-msgstr "Indicador de Formulário"
+msgstr ""
 
 #: corehq/reports.py:253
 msgid "Case Based Indicators"
-msgstr "Indicador do Caso"
+msgstr ""
 
 #: corehq/reports.py:256
 msgid "Dynamic Indicators"
-msgstr "Indicadores Dinâmico"
+msgstr ""
 
 #: corehq/reports.py:259
 msgid "Couch Based Indicators"
@@ -25787,11 +25710,11 @@ msgstr ""
 
 #: corehq/reports.py:269
 msgid "Accounting Admin"
-msgstr "Administração Contábil"
+msgstr ""
 
 #: corehq/reports.py:283
 msgid "SMS Billing Administration"
-msgstr "Administração de Faturamento de SMS"
+msgstr ""
 
 #: corehq/reports.py:291
 msgid "Project Stats"
@@ -30202,7 +30125,7 @@ msgstr ""
 #: custom/reports/mc/reports/old_definitions.py:107
 #: custom/reports/mc/reports/old_definitions.py:161
 msgid "mc_section_home_visits"
-msgstr "Visitas Domiciliáres"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:8
 #: custom/reports/mc/reports/definitions.py:109
@@ -30213,7 +30136,7 @@ msgstr "Visitas Domiciliáres"
 #: custom/reports/mc/reports/sql.py:274 custom/reports/mc/reports/sql.py:417
 #: custom/reports/mc/reports/sql.py:671
 msgid "home_visits_total"
-msgstr "Total Visitas"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:10
 #: custom/reports/mc/reports/definitions.py:113
@@ -30221,13 +30144,13 @@ msgstr "Total Visitas"
 #: custom/reports/mc/reports/old_definitions.py:112
 #: custom/reports/mc/reports/sql.py:253 custom/reports/mc/reports/sql.py:397
 msgid "home_visits_pregnant"
-msgstr "Mulheres Grávidas"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:11
 #: custom/reports/mc/reports/old_definitions.py:10
 #: custom/reports/mc/reports/sql.py:400
 msgid "home_visits_postpartem"
-msgstr "Mães Pós Parto"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:12
 #: custom/reports/mc/reports/definitions.py:111
@@ -30238,7 +30161,7 @@ msgstr "Mães Pós Parto"
 #: custom/reports/mc/reports/sql.py:259 custom/reports/mc/reports/sql.py:403
 #: custom/reports/mc/reports/sql.py:660
 msgid "home_visits_newborn"
-msgstr "Recém Nacidos (0 - 1 mes)"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:13
 #: custom/reports/mc/reports/definitions.py:112
@@ -30249,172 +30172,172 @@ msgstr "Recém Nacidos (0 - 1 mes)"
 #: custom/reports/mc/reports/sql.py:263 custom/reports/mc/reports/sql.py:407
 #: custom/reports/mc/reports/sql.py:664
 msgid "home_visits_children"
-msgstr "Crianças (2 - 59 meses)"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:14
 #: custom/reports/mc/reports/old_definitions.py:13
 #: custom/reports/mc/reports/sql.py:411
 msgid "home_visits_other"
-msgstr "Outros grupos alvos"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:19
 #: custom/reports/mc/reports/old_definitions.py:18
 msgid "mc_section_rdt"
-msgstr "Total de TDR para Malária Realizados"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:20
 #: custom/reports/mc/reports/old_definitions.py:19
 #: custom/reports/mc/reports/sql.py:434
 msgid "rdt_total"
-msgstr "Total Testes Realizados"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:22
 #: custom/reports/mc/reports/old_definitions.py:21
 #: custom/reports/mc/reports/sql.py:424
 msgid "rdt_positive_children"
-msgstr "TDR positivo < 59 meses"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:23
 #: custom/reports/mc/reports/old_definitions.py:22
 #: custom/reports/mc/reports/sql.py:427
 msgid "rdt_positive_adults"
-msgstr "TDR positivo ≥ 5 anos de idade"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:24
 #: custom/reports/mc/reports/old_definitions.py:23
 #: custom/reports/mc/reports/sql.py:430
 msgid "rdt_others"
-msgstr "Outros (negativos / indeterminados) "
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:29
 #: custom/reports/mc/reports/old_definitions.py:28
 msgid "mc_section_diagnosed_cases"
-msgstr "Diagnóstico de Casos"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:30
 #: custom/reports/mc/reports/old_definitions.py:29
 #: custom/reports/mc/reports/sql.py:457
 msgid "diagnosed_total"
-msgstr "Total Casos Diagnosticados no mês"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:32
 #: custom/reports/mc/reports/old_definitions.py:31
 #: custom/reports/mc/reports/sql.py:439
 msgid "diagnosed_malaria_child"
-msgstr "Total Malária confimada < 59 meses"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:33
 #: custom/reports/mc/reports/old_definitions.py:32
 #: custom/reports/mc/reports/sql.py:442
 msgid "diagnosed_malaria_adult"
-msgstr "Total Malária Confimada ≥ 5 anos"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:34
 #: custom/reports/mc/reports/old_definitions.py:33
 #: custom/reports/mc/reports/sql.py:445
 msgid "diagnosed_diarrhea"
-msgstr "Total Diarreia"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:35
 #: custom/reports/mc/reports/old_definitions.py:34
 #: custom/reports/mc/reports/sql.py:451
 msgid "diagnosed_ari"
-msgstr "Total Infecções Respiratórios Agudas"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:40
 #: custom/reports/mc/reports/old_definitions.py:39
 msgid "mc_section_treated_cases"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:41
 #: custom/reports/mc/reports/old_definitions.py:40
 #: custom/reports/mc/reports/sql.py:478
 msgid "treated_total"
-msgstr "  Total Casos Tratados no mês"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:43
 #: custom/reports/mc/reports/old_definitions.py:42
 #: custom/reports/mc/reports/sql.py:463
 msgid "treated_malaria"
-msgstr "Total casos malária tratados"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:44
 #: custom/reports/mc/reports/old_definitions.py:43
 #: custom/reports/mc/reports/sql.py:468
 msgid "treated_diarrhea"
-msgstr "Casos de diarreia tratados"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:45
 #: custom/reports/mc/reports/old_definitions.py:44
 #: custom/reports/mc/reports/sql.py:473
 msgid "treated_ari"
-msgstr "Casos IRA Tratados"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:50
 #: custom/reports/mc/reports/definitions.py:159
 #: custom/reports/mc/reports/old_definitions.py:49
 #: custom/reports/mc/reports/old_definitions.py:170
 msgid "mc_section_transfers"
-msgstr "Transferências a Unidade Sanitária"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:51
 #: custom/reports/mc/reports/old_definitions.py:50
 #: custom/reports/mc/reports/sql.py:516
 msgid "transfer_total"
-msgstr " Total transferidos no mês"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:53
 #: custom/reports/mc/reports/old_definitions.py:52
 #: custom/reports/mc/reports/sql.py:483
 msgid "transfer_malnutrition"
-msgstr "Criança com problemas de malnutrição"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:54
 #: custom/reports/mc/reports/old_definitions.py:53
 #: custom/reports/mc/reports/sql.py:488
 msgid "transfer_incomplete_vaccination"
-msgstr "Criança com Vacina incompleta"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:55
 #: custom/reports/mc/reports/old_definitions.py:54
 #: custom/reports/mc/reports/sql.py:495
 msgid "transfer_danger_signs"
-msgstr "Sinais de perigo"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:56
 #: custom/reports/mc/reports/old_definitions.py:55
 #: custom/reports/mc/reports/sql.py:501
 msgid "transfer_prenatal_consult"
-msgstr "Mulher grávida encaminhada a consulta PN "
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:57
 #: custom/reports/mc/reports/old_definitions.py:56
 #: custom/reports/mc/reports/sql.py:504
 msgid "transfer_missing_malaria_meds"
-msgstr "Falta de antimaláricos "
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:58
 #: custom/reports/mc/reports/old_definitions.py:57
 #: custom/reports/mc/reports/sql.py:510
 msgid "transfer_other"
-msgstr "Outras causas"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:63
 #: custom/reports/mc/reports/old_definitions.py:62
 msgid "mc_section_deaths"
-msgstr "Mortes na Comunidade"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:64
 #: custom/reports/mc/reports/old_definitions.py:63
 #: custom/reports/mc/reports/sql.py:536
 msgid "deaths_total"
-msgstr "Total mortes na comunidade"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:66
 #: custom/reports/mc/reports/old_definitions.py:65
 #: custom/reports/mc/reports/sql.py:524
 msgid "deaths_newborn"
-msgstr "Recém Nacidos (0 - 1 mes)"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:67
 #: custom/reports/mc/reports/definitions.py:121
@@ -30422,42 +30345,42 @@ msgstr "Recém Nacidos (0 - 1 mes)"
 #: custom/reports/mc/reports/old_definitions.py:120
 #: custom/reports/mc/reports/sql.py:281 custom/reports/mc/reports/sql.py:527
 msgid "deaths_children"
-msgstr "Crianças (2 - 59 meses)"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:68
 #: custom/reports/mc/reports/old_definitions.py:67
 #: custom/reports/mc/reports/sql.py:530
 msgid "deaths_mothers"
-msgstr "Mortes maternas"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:69
 #: custom/reports/mc/reports/old_definitions.py:68
 msgid "deaths_other"
-msgstr "Outros grupos"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:73
 #: custom/reports/mc/reports/old_definitions.py:72
 msgid "mc_section_health_ed"
-msgstr "Palestras na Comunidade"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:75
 #: custom/reports/mc/reports/old_definitions.py:74
 #: custom/reports/mc/reports/sql.py:542
 msgid "heath_ed_talks"
-msgstr "Número de palestras no mês"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:76
 #: custom/reports/mc/reports/old_definitions.py:75
 #: custom/reports/mc/reports/sql.py:545
 msgid "heath_ed_participants"
-msgstr "Número de participantes no mês"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:84
 #: custom/reports/mc/reports/definitions.py:125
 #: custom/reports/mc/reports/old_definitions.py:83
 #: custom/reports/mc/reports/old_definitions.py:124
 msgid "mc_section_stock_balance"
-msgstr "Balanço do Stock"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:88
 msgid "stock_amox_pink"
@@ -30521,7 +30444,7 @@ msgstr ""
 #: custom/reports/mc/reports/old_definitions.py:113
 #: custom/reports/mc/reports/sql.py:256
 msgid "home_visits_non_pregnant"
-msgstr "Adultos"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:115
 #: custom/reports/mc/reports/definitions.py:162
@@ -30529,19 +30452,17 @@ msgstr "Adultos"
 #: custom/reports/mc/reports/old_definitions.py:173
 #: custom/reports/mc/reports/sql.py:267 custom/reports/mc/reports/sql.py:683
 msgid "home_visits_followup"
-msgstr "Visitas de seguimento por casos transferidos "
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:119
 #: custom/reports/mc/reports/old_definitions.py:118
 msgid "mc_section_deaths_in_community"
-msgstr "Mortes na Comunidade"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:134
 #: custom/reports/mc/reports/old_definitions.py:133
 msgid "mc_section_validation"
 msgstr ""
-"Porcentagem de pacientes observados que foram prescritos medicamentos "
-"correctos para a pneumonia"
 
 #: custom/reports/mc/reports/definitions.py:136
 #: custom/reports/mc/reports/definitions.py:163
@@ -30550,8 +30471,6 @@ msgstr ""
 #: custom/reports/mc/reports/sql.py:300 custom/reports/mc/reports/sql.py:706
 msgid "patients_given_pneumonia_meds"
 msgstr ""
-"Porcentagem de pacientes observados que foram prescritos medicamentos "
-"correctos para a pneumonia"
 
 #: custom/reports/mc/reports/definitions.py:137
 #: custom/reports/mc/reports/definitions.py:164
@@ -30560,8 +30479,6 @@ msgstr ""
 #: custom/reports/mc/reports/sql.py:320 custom/reports/mc/reports/sql.py:726
 msgid "patients_given_diarrhoea_meds"
 msgstr ""
-"Porcentagem de pacientes observados que foram prescritos medicamentos "
-"correctos para a diarreia"
 
 #: custom/reports/mc/reports/definitions.py:138
 #: custom/reports/mc/reports/definitions.py:165
@@ -30571,8 +30488,6 @@ msgstr ""
 #: custom/reports/mc/reports/sql.py:730 custom/reports/mc/reports/sql.py:744
 msgid "patients_given_malaria_meds"
 msgstr ""
-"Porcentagem de pacientes observados que foram prescritos medicamentos "
-"correctos para a febre/malária"
 
 #: custom/reports/mc/reports/definitions.py:139
 #: custom/reports/mc/reports/definitions.py:166
@@ -30580,7 +30495,7 @@ msgstr ""
 #: custom/reports/mc/reports/old_definitions.py:187
 #: custom/reports/mc/reports/sql.py:358 custom/reports/mc/reports/sql.py:764
 msgid "patients_correctly_referred"
-msgstr "Porcentagem de pacientes que foram correctamente transferidos"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:140
 #: custom/reports/mc/reports/definitions.py:167
@@ -30588,32 +30503,31 @@ msgstr "Porcentagem de pacientes que foram correctamente transferidos"
 #: custom/reports/mc/reports/old_definitions.py:190
 #: custom/reports/mc/reports/sql.py:362 custom/reports/mc/reports/sql.py:768
 msgid "cases_rdt_not_done"
-msgstr "Número de casos de febre em que não se efectou o TDR"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:141
 #: custom/reports/mc/reports/old_definitions.py:152
 #: custom/reports/mc/reports/sql.py:365
 msgid "cases_danger_signs_not_referred"
-msgstr "Número de pacientes com sinais de perigo que não foram transferidos "
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:142
 #: custom/reports/mc/reports/old_definitions.py:153
 #: custom/reports/mc/reports/sql.py:375
 msgid "cases_no_malaria_meds"
 msgstr ""
-"Número total de pacientes transferidos por causa de falta de antimaláricos"
 
 #: custom/reports/mc/reports/definitions.py:155
 #: custom/reports/mc/reports/old_definitions.py:166
 #: custom/reports/mc/reports/sql.py:668
 msgid "home_visits_adult"
-msgstr "Adultos"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:161
 #: custom/reports/mc/reports/old_definitions.py:172
 #: custom/reports/mc/reports/sql.py:676
 msgid "cases_transferred"
-msgstr "Número de casos transferidos"
+msgstr ""
 
 #: custom/reports/mc/reports/definitions.py:175
 #: custom/reports/mc/reports/old_definitions.py:198
@@ -30622,9 +30536,6 @@ msgid ""
 "Congratulations! This APE has visited {number} children this week. Call and "
 "congratulate them! Please help other supervisors learn from your success."
 msgstr ""
-"Parabéns! Visitou {number} crianças menores de 5 anos nesta semana. Por "
-"favor ligue para aqueles APEs para parabeniza-los. Partilhe as suas "
-"experiências de sucesso com outros supervisores."
 
 #: custom/reports/mc/reports/definitions.py:176
 #: custom/reports/mc/reports/old_definitions.py:199
@@ -30634,9 +30545,6 @@ msgid ""
 "pneumonia.  Please contact him/her and find out why and provide supportive "
 "supervision on use of amoxicillin."
 msgstr ""
-"Tratou {number} pacientes com o medicamento incorrecto par o tratamento de "
-"pneumonia.  Por favor contacte-lhe e procure saber as razões e lhe dê o "
-"apoio necessário para o uso correcto da amoxicilina."
 
 #: custom/reports/mc/reports/definitions.py:177
 #: custom/reports/mc/reports/old_definitions.py:200
@@ -30646,9 +30554,6 @@ msgid ""
 "diarrhoea.  Please contact them and find out why and provide supportive "
 "supervision on use of zinc and ORS."
 msgstr ""
-"Tratou {number} pacientes com o medicamento incorrecto par o tratamento de "
-"diarreia.  Por favor contacte-o e procure saber as razões e dê-lhe o apoio "
-"necessário para o uso correcto do zinco e SRO."
 
 #: custom/reports/mc/reports/definitions.py:178
 #: custom/reports/mc/reports/old_definitions.py:201
@@ -30658,9 +30563,6 @@ msgid ""
 "malaria.  Please contact them and find out why and provide supportive "
 "supervision on use of Coartem and Paracetamol."
 msgstr ""
-"P Tratou {number} pacientes com o medicamento incorrecto par o tratamento de "
-"malaria.  Por favor contacte-o e procure saber as razões e dê-lhe o apoio "
-"necessário para o uso correcto de Coartem e Paracetamol."
 
 #: custom/reports/mc/reports/definitions.py:179
 #: custom/reports/mc/reports/old_definitions.py:202
@@ -30669,9 +30571,6 @@ msgid ""
 "this week. Call those APEs to congratulate them! Please help other "
 "supervisors learn from your success."
 msgstr ""
-"Parabéns! Tranfirou todas as crianças menores de 5 anos correctamente nesta "
-"semana. Por favor ligar para aqueles APEs para parabeniza-los. Partilhe as "
-"suas experiências de sucesso com outros supervisores."
 
 #: custom/reports/mc/reports/definitions.py:180
 #: custom/reports/mc/reports/old_definitions.py:203
@@ -30681,9 +30580,6 @@ msgid ""
 "Please contact them and find out why and provide supportive supervision on "
 "correct referral."
 msgstr ""
-"Tranfirou {number} pacientes incorrectamente nesta semana. Por favor "
-"contacte-o e procure saber as razões e dê-lhe o apoio necessário para a "
-"transferencia correcta."
 
 #: custom/reports/mc/reports/definitions.py:181
 #: custom/reports/mc/reports/old_definitions.py:204
@@ -30693,101 +30589,98 @@ msgid ""
 "Please contact them and find out why and provide supportive supervision on "
 "when to perform a RDT."
 msgstr ""
-"Não fez teste rapido a {number} pacientes com febre nesta semana. Por favor "
-"contacte-o e procure saber as razões e dê-lhe o apoio necessário sobre "
-"quando fazer teste rapido para diagnosticar a malaria."
 
 #: custom/reports/mc/reports/old_definitions.py:87
 #: custom/reports/mc/reports/sql.py:600
 msgid "form/stock/stock_amox_pink"
-msgstr "Amoxicilina cor de rosa"
+msgstr ""
 
 #: custom/reports/mc/reports/old_definitions.py:88
 #: custom/reports/mc/reports/sql.py:601
 msgid "form/stock/stock_amox_green"
-msgstr "Amoxicilina cor de verde"
+msgstr ""
 
 #: custom/reports/mc/reports/old_definitions.py:89
 #: custom/reports/mc/reports/sql.py:602
 msgid "form/stock/stock_ors"
-msgstr "Pacotes SRO"
+msgstr ""
 
 #: custom/reports/mc/reports/old_definitions.py:90
 #: custom/reports/mc/reports/sql.py:603
 msgid "form/stock/stock_ra_50"
-msgstr "Artesuato Rectal (50mg)"
+msgstr ""
 
 #: custom/reports/mc/reports/old_definitions.py:91
 #: custom/reports/mc/reports/sql.py:604
 msgid "form/stock/stock_ra_200"
-msgstr "Artesuato Rectal (200mg)"
+msgstr ""
 
 #: custom/reports/mc/reports/old_definitions.py:92
 #: custom/reports/mc/reports/sql.py:605
 msgid "form/stock/stock_zinc"
-msgstr "Zinco"
+msgstr ""
 
 #: custom/reports/mc/reports/old_definitions.py:93
 #: custom/reports/mc/reports/old_definitions.py:128
 #: custom/reports/mc/reports/sql.py:606
 msgid "form/stock/stock_coartem_yellow"
-msgstr "Coartem Amarelo"
+msgstr ""
 
 #: custom/reports/mc/reports/old_definitions.py:94
 #: custom/reports/mc/reports/old_definitions.py:129
 #: custom/reports/mc/reports/sql.py:607
 msgid "form/stock/stock_coartem_blue"
-msgstr "Coartem Azul"
+msgstr ""
 
 #: custom/reports/mc/reports/old_definitions.py:95
 #: custom/reports/mc/reports/sql.py:608
 msgid "form/stock/stock_coartem_green"
-msgstr "Coartem Verde"
+msgstr ""
 
 #: custom/reports/mc/reports/old_definitions.py:96
 #: custom/reports/mc/reports/sql.py:609
 msgid "form/stock/stock_coartem_brown"
-msgstr "Coartem Castanho"
+msgstr ""
 
 #: custom/reports/mc/reports/old_definitions.py:97
 #: custom/reports/mc/reports/sql.py:610
 msgid "form/stock/stock_paracetamol_250"
-msgstr "Paracetamol (250mg)"
+msgstr ""
 
 #: custom/reports/mc/reports/old_definitions.py:98
 #: custom/reports/mc/reports/sql.py:611
 msgid "form/stock/stock_paracetamol_500"
-msgstr "Paracetamol (500mg)"
+msgstr ""
 
 #: custom/reports/mc/reports/old_definitions.py:99
 #: custom/reports/mc/reports/sql.py:612
 msgid "form/stock/stock_rdt"
-msgstr "TDR"
+msgstr ""
 
 #: custom/reports/mc/reports/old_definitions.py:100
 #: custom/reports/mc/reports/sql.py:613
 msgid "form/stock/stock_gloves"
-msgstr "Pares de luvas"
+msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:354
 msgid "mc_header_indicator"
-msgstr "Indicador"
+msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:421
 msgid "mc_report_hf_monthly"
-msgstr "Relatorio Mensal aos Supervisores dos APEs"
+msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:431
 msgid "mc_report_dist_monthly"
-msgstr "Relatorio Mensal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:441
 msgid "mc_report_dist_weekly"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: custom/reports/mc/reports/old_sql.py:508
 msgid "mc_report_hf_weekly"
-msgstr "Relatorio Semanal aos Supervisores dos APEs"
+msgstr ""
 
 #: custom/reports/mc/reports/sql.py:213
 msgid "form/stock/"
@@ -30827,7 +30720,7 @@ msgstr ""
 
 #: custom/reports/mc/templates/mc/reports/hf_weekly.html:5
 msgid "mc_msgs_title"
-msgstr "Mensagens"
+msgstr ""
 
 #: custom/requisitions/models.py:96
 msgid "Requested On"
@@ -30876,23 +30769,23 @@ msgstr ""
 
 #: custom/succeed/fields.py:13
 msgid "Care Site"
-msgstr "Cuidado do sítio"
+msgstr ""
 
 #: custom/succeed/fields.py:32 custom/succeed/reports/patient_task_list.py:151
 msgid "Responsible Party"
-msgstr "Pessoas Responsáveis"
+msgstr ""
 
 #: custom/succeed/fields.py:35
 msgid "All Roles"
-msgstr "Todas as Funções"
+msgstr ""
 
 #: custom/succeed/fields.py:47
 msgid "Patient Status"
-msgstr "O estado do paciente"
+msgstr ""
 
 #: custom/succeed/fields.py:52
 msgid "Not Active"
-msgstr "Não Ativo"
+msgstr ""
 
 #: custom/succeed/fields.py:56
 msgid "Form Group"
@@ -30900,31 +30793,31 @@ msgstr ""
 
 #: custom/succeed/fields.py:73 custom/succeed/reports/patient_task_list.py:145
 msgid "Patient Name"
-msgstr "Nome do Paciente"
+msgstr ""
 
 #: custom/succeed/fields.py:74
 msgid "All Patients"
-msgstr "Todos os pacientes"
+msgstr ""
 
 #: custom/succeed/fields.py:113
 msgid "Click to select a patient"
-msgstr "Clique para escolher um paciente"
+msgstr ""
 
 #: custom/succeed/fields.py:117
 msgid "Task Status"
-msgstr "Status da Tarefa"
+msgstr ""
 
 #: custom/succeed/fields.py:120
 msgid "All Tasks"
-msgstr "Todas as tarefas"
+msgstr ""
 
 #: custom/succeed/fields.py:125
 msgid "Only Open Tasks"
-msgstr "Somente tarefas abertas"
+msgstr ""
 
 #: custom/succeed/fields.py:126
 msgid "Only Closed Tasks"
-msgstr "Apenas as tarefas fechadas"
+msgstr ""
 
 #: custom/succeed/reports/__init__.py:84
 msgid "CM Initial contact form"
@@ -30972,7 +30865,7 @@ msgstr ""
 
 #: custom/succeed/reports/all_patients.py:116
 msgid "Patient List"
-msgstr "Lista de pacientes"
+msgstr ""
 
 #: custom/succeed/reports/patient_Info.py:22
 msgid "Ischemic Stroke"
@@ -30989,40 +30882,40 @@ msgstr ""
 #: custom/succeed/reports/patient_Info.py:37
 #, python-format
 msgid "Phone Number %s"
-msgstr "Número de telefone %s"
+msgstr ""
 
 #: custom/succeed/reports/patient_Info.py:39
 msgid "Number: "
-msgstr "Numero:"
+msgstr ""
 
 #: custom/succeed/reports/patient_Info.py:40
 msgid "Type: "
-msgstr "Tipo"
+msgstr ""
 
 #: custom/succeed/reports/patient_Info.py:41
 msgid "Best time to call: "
-msgstr "Melhor hora para ligar:"
+msgstr ""
 
 #: custom/succeed/reports/patient_Info.py:42
 msgid "Can receive text messages? "
-msgstr "Pode receber mensagens de texto?"
+msgstr ""
 
 #: custom/succeed/reports/patient_Info.py:46
 #, python-format
 msgid "Family Member %s"
-msgstr "Membro da Família %s"
+msgstr ""
 
 #: custom/succeed/reports/patient_Info.py:48
 msgid "Name: "
-msgstr "Nome:"
+msgstr ""
 
 #: custom/succeed/reports/patient_Info.py:49
 msgid "Relationship: "
-msgstr "Relacionamento:"
+msgstr ""
 
 #: custom/succeed/reports/patient_Info.py:50
 msgid "Phone number: "
-msgstr "Número de telefone:"
+msgstr ""
 
 #: custom/succeed/reports/patient_Info.py:62
 #, python-format
@@ -31032,12 +30925,12 @@ msgstr ""
 #: custom/succeed/reports/patient_Info.py:64
 #: custom/succeed/reports/patient_Info.py:79
 msgid "Value: "
-msgstr "Valor:"
+msgstr ""
 
 #: custom/succeed/reports/patient_Info.py:65
 #: custom/succeed/reports/patient_Info.py:80
 msgid "Date: "
-msgstr "Data:"
+msgstr ""
 
 #: custom/succeed/reports/patient_Info.py:77
 msgid "Baseline LDL"
@@ -31057,15 +30950,15 @@ msgstr ""
 
 #: custom/succeed/reports/patient_Info.py:90
 msgid "Randomization Date"
-msgstr "Data Aleatoria"
+msgstr ""
 
 #: custom/succeed/reports/patient_Info.py:93
 msgid "Diagnosis"
-msgstr "Diagnóstico"
+msgstr ""
 
 #: custom/succeed/reports/patient_Info.py:96
 msgid "Preferred Language"
-msgstr "Língua preferida"
+msgstr ""
 
 #: custom/succeed/reports/patient_Info.py:97
 msgid "Primary Care Provider"
@@ -31125,15 +31018,15 @@ msgstr ""
 
 #: custom/succeed/reports/patient_task_list.py:22
 msgid "Patient Tasks"
-msgstr "Tarefas do paciente"
+msgstr ""
 
 #: custom/succeed/reports/patient_task_list.py:148
 msgid "Task Name"
-msgstr "Nome da Tarefa"
+msgstr ""
 
 #: custom/succeed/reports/patient_task_list.py:155
 msgid "Action Due"
-msgstr "Ação devida"
+msgstr ""
 
 #: custom/succeed/reports/patient_task_list.py:159
 msgid "Task Type"
@@ -31145,15 +31038,15 @@ msgstr ""
 
 #: custom/succeed/templates/base_patient.html:30
 msgid "Patient Interactions"
-msgstr "Interações paciente"
+msgstr ""
 
 #: custom/succeed/templates/base_patient.html:34
 msgid "Manage Patient Status"
-msgstr "Gerenciar o estado do paciente"
+msgstr ""
 
 #: custom/succeed/templates/patient_info.html:23
 msgid "Edit Patient Info"
-msgstr "Edite Informações ao Paciente"
+msgstr ""
 
 #: custom/succeed/templates/patient_info.html:25
 msgid "Upcoming Appointments"
@@ -31178,12 +31071,12 @@ msgstr ""
 #: custom/succeed/templates/patient_interactions.html:10
 #: custom/succeed/templates/patient_tasks.html:5
 msgid "View All Tasks"
-msgstr "Ver Todas as tarefas"
+msgstr ""
 
 #: custom/succeed/templates/patient_interactions.html:11
 #: custom/succeed/templates/patient_tasks.html:7
 msgid "Add New Task"
-msgstr "Adicionar nova tarefa"
+msgstr ""
 
 #: custom/succeed/templates/patient_interactions.html:12
 msgid "View Appointments"
@@ -31195,23 +31088,23 @@ msgstr ""
 
 #: custom/succeed/templates/patient_interactions.html:19
 msgid "Visit Name"
-msgstr "Nome da visita"
+msgstr ""
 
 #: custom/succeed/templates/patient_interactions.html:20
 msgid "Target Date"
-msgstr "Data Prevista"
+msgstr ""
 
 #: custom/succeed/templates/patient_interactions.html:21
 msgid "Completed Date"
-msgstr "Data do termino"
+msgstr ""
 
 #: custom/succeed/templates/patient_interactions.html:28
 msgid "Open Form"
-msgstr "Forma aberta"
+msgstr ""
 
 #: custom/succeed/templates/patient_interactions.html:40
 msgid "Medications"
-msgstr "Medicamentos"
+msgstr ""
 
 #: custom/succeed/templates/patient_interactions.html:46
 #: custom/succeed/templates/patient_interactions.html:71
@@ -31244,11 +31137,11 @@ msgstr ""
 
 #: custom/succeed/templates/patient_interactions.html:52
 msgid "Other Meds"
-msgstr "Outros Medicamentos"
+msgstr ""
 
 #: custom/succeed/templates/patient_interactions.html:57
 msgid "Prescribed?"
-msgstr "Prescrito"
+msgstr ""
 
 #: custom/succeed/templates/patient_interactions.html:65
 #: custom/succeed/templates/patient_interactions.html:70
@@ -31261,7 +31154,7 @@ msgstr ""
 
 #: custom/succeed/templates/patient_status.html:5
 msgid "Disenroll Patient"
-msgstr "Desfiliar Paciente"
+msgstr ""
 
 #: custom/succeed/templates/patient_status.html:7
 msgid "Change Care Site/Time/MRN"
@@ -31519,12 +31412,10 @@ msgid ""
 "Please enter a correct username and password. Note that both fields are case-"
 "sensitive."
 msgstr ""
-"Por favor insira um nome de usuário e senha corretamente. Note-se que ambos "
-"os campos são sensível à capitalização."
 
 #: submodules/auditcare-src/auditcare/forms.py:16
 msgid "This account is inactive."
-msgstr "Esta conta está inativa."
+msgstr ""
 
 #: submodules/auditcare-src/auditcare/templates/auditcare/audit_views.html:5
 #: submodules/auditcare-src/auditcare/templates/auditcare/index.html:6
@@ -31548,7 +31439,7 @@ msgstr ""
 
 #: submodules/bootstrap3_crispy/crispy_forms/tests/test_layout_objects.py:111
 msgid "Enter a valid value."
-msgstr "Digite um valor válido."
+msgstr ""
 
 #: submodules/ctable-src/ctable/backends.py:145
 #, python-format
@@ -31568,7 +31459,7 @@ msgstr ""
 #: submodules/ctable-src/ctable/backends.py:157
 #, python-format
 msgid "Column types do not match: %(column)s"
-msgstr "Tipos de coluna não correspondem: %(column)s"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/delete_sql_mapping_dialog.html:6
 msgid "Delete Mapping:"
@@ -31588,7 +31479,7 @@ msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:55
 msgid "Comma separated values"
-msgstr "Valores separados por vírgulas"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:62
 #: submodules/ctable-src/ctable_view/templates/ctable/list_mappings.html:45
@@ -31597,31 +31488,31 @@ msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:77
 msgid "Schedule type"
-msgstr "Tipo horário"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:82
 msgid "Hourly"
-msgstr "De ora em hora"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:83
 msgid "Daily"
-msgstr "Diariamente"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:84
 msgid "Weekly"
-msgstr "Semana"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:92
 msgid "Schedule hour"
-msgstr "Hora do programa"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:103
 msgid "Schedule day"
-msgstr "Dia do programa"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:111
 msgid "Day of week for weekly, day of month for monthly"
-msgstr "Dia de semana para semana, dia do mês para mês"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:119
 msgid "Couch view"
@@ -31683,15 +31574,15 @@ msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:198
 msgid "Add column"
-msgstr "Adicionar coluna"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:244
 msgid "Edit Column"
-msgstr "Edição da Coluna"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:259
 msgid "Data type"
-msgstr "Tipo de dados"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:264
 msgid "String"
@@ -31699,21 +31590,20 @@ msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:267
 msgid "DateTime"
-msgstr "Data Tempo"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:279
 msgid "Leave blank for default."
-msgstr "Deixe em branco para default."
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:284
 msgid "Date Format"
-msgstr "Formato de data"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:291
 #, python-format
 msgid "Format string for date columns. Default: %%Y-%%m-%%dT%%H:%%M:%%SZ"
 msgstr ""
-"Seqüência de formato para colunas de data. Default  %%Y-%%m-%%dT%%H:%%M:%%SZ "
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:296
 msgid "Max Length"
@@ -31725,7 +31615,7 @@ msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:309
 msgid "Key"
-msgstr "chave"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/edit_mapping.html:317
 msgid "Value Attribute"
@@ -31753,7 +31643,7 @@ msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/list_mappings.html:30
 msgid "New Mapping"
-msgstr "Novo Mapeamento"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/list_mappings.html:42
 msgid "Couch View"
@@ -31761,101 +31651,97 @@ msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/list_mappings.html:43
 msgid "Schedule Status"
-msgstr "Estado de Programação"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/list_mappings.html:44
 msgid "Table name"
-msgstr "Nome da tabela "
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/list_mappings.html:50
 msgid "Key Prefix"
-msgstr "Prefixo chave"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/list_mappings.html:51
 msgid "Date Range    "
-msgstr "Período"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/list_mappings.html:109
 msgid "Disable Schedule"
-msgstr "Desativar agendamento "
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/list_mappings.html:111
 msgid "Enable Schedule"
-msgstr "Ativar agendamento"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:50
 msgid "Data extract success."
-msgstr "Dados extraídos com sucesso"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:67
 msgid "An unknown error occurred."
-msgstr "Ocorreu um erro desconhecido."
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:96
 #, python-format
 msgid "Results from running '%(name)s' mapping"
-msgstr "Resultados depois de executar '%(name)s' para o mapeamento"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:110
 msgid "Test again"
-msgstr "Teste novamente"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:138
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:255
 msgid "Clear existing data"
-msgstr "Limpiar dados existentes"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:145
 msgid ""
 "Some problems were found with the mapping that would prevent it from being "
 "run."
 msgstr ""
-"Alguns problemas foram encontrados com o mapeamento que vai impedir ser "
-"executado."
 
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:155
 msgid "Warnings"
-msgstr "Advertências"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:164
 #, python-format
 msgid "Rows processed: %(processed)s (%(matched)s matched a value column "
 msgstr ""
-"Fileiras processados: %(processed)s (%(matched)s corresponderom a um valor "
-"de coluna"
 
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:165
 msgid "Table name:"
-msgstr "Nome da tabela:"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:190
 msgid "Run mapping"
-msgstr "Execute mapeamento"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:196
 msgid "Limit rows processed"
-msgstr "Limite de linhas processadas"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:205
 msgid "Limit date range"
-msgstr "Intervalo de data limite"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:215
 msgid "Force creation of the database table"
-msgstr "Forçar a criação da tabela de banco de dados"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:223
 msgid "Are you sure you want to execute this mapping?"
-msgstr "Tem certeza de que deseja executar este mapeamento?"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:235
 #, python-format
 msgid "Running \"%(name)s\" extract"
-msgstr "Extrato \"%(name)s\" em execução"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:240
 msgid "Waiting for job to start"
-msgstr "À espera de trabalho para começar"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:259
 #, python-format
@@ -31873,17 +31759,14 @@ msgid ""
 "                Until then any reports that query the table will not run.\n"
 "            "
 msgstr ""
-"\n"
-"A tabela será recriada próxima vez que o mapeamento é run.\n"
-"Até então, todos os relatórios que consultar a tabela não run."
 
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:270
 msgid "Clear data"
-msgstr "Dados limpos"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/templates/ctable/test_mapping.html:278
 msgid "Clearing data"
-msgstr "Esclarecimento de dados"
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/views.py:61
 #, python-format
@@ -31892,7 +31775,7 @@ msgstr ""
 
 #: submodules/ctable-src/ctable_view/views.py:153
 msgid "Data successfully cleared."
-msgstr "Dados apagados com sucesso."
+msgstr ""
 
 #: submodules/ctable-src/ctable_view/views.py:159
 msgid "Mapping not found."
@@ -31971,72 +31854,3 @@ msgid ""
 "An error occurred while trying to connect to the CloudCare service. If you "
 "have problems filling in the rest of your form please report an issue."
 msgstr ""
-"Ocorreu um erro ao tentar se conectar ao serviço de CloudCare. Se você tiver "
-"problemas para preencher o restante do formulário por favor envie  um "
-"relatorio do problema usando os links de abaixo."
-
-#~ msgid "Welcome to the App Builder"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Edit a form"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Fix locations"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Conditions"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Add Condition"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Filter Name"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Create & Preview"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Select Form..."
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Select Case Type..."
-#~ msgstr "Criança com problemas de malnutrição"
-
-#~ msgid "Fixture Type"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Edit Survey"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Deactivated Users"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Scheduled report from CommCare HQ"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Create Form Export: Select Form"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Export Filters"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Read Case Study"
-#~ msgstr "Manejo de Casos"
-
-#~ msgid "Date Closed"
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Commtrack"
-#~ msgstr "CommCare Supply"
-
-#~ msgid "Create New Report > Configure Table Report"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "No more visits"
-#~ msgstr "Visitas Domiciliáres"
-
-#~ msgid "Manage SMS Backend Rates"
-#~ msgstr "Diagnóstico de Casos"
-
-#~ msgid "Company Name"
-#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
