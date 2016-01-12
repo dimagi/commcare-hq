@@ -129,7 +129,7 @@ ko.bindingHandlers.langcode = {
             b.valueUpdate.push('autocompleteclose');
             return b;
         });
-        $('input', element).addClass('short code').langcodes();
+        $('input', element).addClass('short code form-control').langcodes();
     },
     update: ko.bindingHandlers.editableString.update
 };

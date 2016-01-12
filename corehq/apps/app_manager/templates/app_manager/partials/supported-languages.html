@@ -9,11 +9,11 @@
             <th></th>
             <th></th>
             <th></th>
-            <td>
+            <th>
                 {# TODO: help-inline is deprecated, try replacing with help-block #}
                 <p class="help-inline" data-bind="text: validateGeneral()"></p>
                 <p class="help-inline" style="visibility: hidden; float:right;">.</p>
-            </td>
+            </th>
             <th></th>
         </tr>
     </thead>
@@ -38,7 +38,9 @@
                 {% endif %}
             </td>
             <td>
-                <span data-bind="langcode: langcode, valueUpdate: 'textchange', inputHandlers: {hasfocus: $root.seen}"></span>
+                <span class="form-inline"
+                      data-bind="langcode: langcode, valueUpdate: 'textchange', inputHandlers: {hasfocus: $root.seen}">
+                </span>
             </td>
             <td>
                 <span data-bind="visible: originalLangcode() && originalLangcode() !== langcode()">
@@ -55,7 +57,7 @@
         </tr>
     </tbody>
 </table>
-<button class="btn default" data-bind="click: addLanguage, disable: addLanguageDisabled">
+<button class="btn btn-default" data-bind="click: addLanguage, disable: addLanguageDisabled">
     <i class="fa fa-plus"></i>
     {% trans "Add Language" %}
 </button>
