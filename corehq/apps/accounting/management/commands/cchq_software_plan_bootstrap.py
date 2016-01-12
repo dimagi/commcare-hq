@@ -12,6 +12,7 @@ from django.apps import apps as default_apps
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
 
+from corehq.apps.accounting.exceptions import AccountingError
 from corehq.apps.accounting.models import (
     SoftwareProductType, SoftwarePlanEdition, SoftwarePlanVisibility, FeatureType,
     UNLIMITED_FEATURE_USAGE,
@@ -167,7 +168,13 @@ def ensure_plans(dry_run, verbose, for_tests, apps):
                     software_plan_version.save()
                     for product_rate in product_rates:
                         product_rate.save()
-                        software_plan_version.product_rates.add(product_rate)
+                        if hasattr(SoftwarePlanVersion, 'product_rates'):
+                            software_plan_version.product_rates.add(product_rate)
+                        elif hasattr(SoftwarePlanVersion, 'product_rate'):
+                            assert len(product_rates) == 1
+                            software_plan_version.product_rate = product_rate
+                        else:
+                            raise AccountingError('SoftwarePlanVersion does not have product_rate or product_rates field')
                     for feature_rate in feature_rates:
                         feature_rate.save()
                         software_plan_version.feature_rates.add(feature_rate)
