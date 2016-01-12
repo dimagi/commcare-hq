@@ -46,11 +46,11 @@ class ExtendSchemaTest(SimpleTestCase):
 
     def test_reconcile_delete_question_within_repeat_group(self):
         """
-        This test ensures that when you delete a question within a repeat group, that question gets deleted in
+        This test ensures that when you delete a question within a repeat group, that question stays in
         the schema
         """
 
-        schema = {
+        previous_schema = {
             'question1': 'string',
             'question2': [{
                 'inner1': 'string',
@@ -66,8 +66,8 @@ class ExtendSchemaTest(SimpleTestCase):
             }]
         }
 
-        new_schema = extend_schema(schema, schema_repeat_deleted)
+        new_schema = extend_schema(previous_schema, schema_repeat_deleted)
         self.assertEquals(
             new_schema,
-            schema_repeat_deleted,
+            previous_schema,
         )
