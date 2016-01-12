@@ -8,7 +8,7 @@ from lxml import etree as ElementTree
 class LocationFixtureProvider(object):
     id = 'user-locations'
 
-    def __call__(self, user, version, last_sync=None):
+    def __call__(self, user, version, last_sync=None, app=None):
         if user.domain in M4CHANGE_DOMAINS:
             domain = Domain.get_by_name(user.domain)
             location_id = get_commtrack_location_id(user, domain)

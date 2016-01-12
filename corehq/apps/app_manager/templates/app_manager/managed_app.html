@@ -290,7 +290,7 @@
                         <ul class="dropdown-menu" role="menu">
                             <li><a href="#" class="new-module" data-type="case">{% trans "New Case Module" %}</a></li>
                             {% if show_care_plan %}
-                            <li><a data-toggle="modal" href="#careplan-module-dialog">{% trans "New Care Plan Module" %}</a></li>
+                            <li><a data-toggle="modal" href="#careplan-module-modal">{% trans "New Care Plan Module" %}</a></li>
                             {% endif %}
                             {% if show_advanced %}
                             <li>
@@ -315,7 +315,7 @@
                             {% endif %}
                         </ul>
                     </li>
-                    {% include "app_manager/partials/new_module_dialogs.html" %}
+                    {% include "app_manager/partials/new_careplan_module.html" %}
                 {% else %}
                 <li class="sort-disabled">
                     <a href="#" class="new-module" data-type="case">

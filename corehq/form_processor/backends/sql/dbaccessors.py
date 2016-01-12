@@ -3,7 +3,8 @@ from itertools import groupby
 
 from django.db import connections, InternalError, transaction
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError
-from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
+from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor, \
+    CaseIndexInfo
 from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL,
@@ -255,6 +256,31 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return list(CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_case_indices_reverse(%s)', [case_id]))
 
     @staticmethod
+    def get_all_reverse_indices_info(domain, case_ids):
+        # TODO: If the domain field is used on CommCareCaseIndexSQL
+        # in the future, this function should filter by it.
+        indexes = CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_all_reverse_indices(%s)', [case_ids])
+        return [
+            CaseIndexInfo(
+                case_id=index.case_id,
+                identifier=index.identifier,
+                referenced_id=index.referenced_id,
+                referenced_type=index.referenced_type,
+                relationship=index.relationship_id
+            ) for index in indexes
+        ]
+
+    @staticmethod
+    def get_indexed_case_ids(domain, case_ids):
+        """
+        Given a base list of case ids, gets all ids of cases they reference (parent and host cases)
+        """
+        with get_cursor(CommCareCaseIndexSQL) as cursor:
+            cursor.execute('SELECT referenced_id FROM get_indexed_case_ids(%s, %s)', [domain, list(case_ids)])
+            results = fetchall_as_namedtuple(cursor)
+            return [result.referenced_id for result in results]
+
+    @staticmethod
     def get_reverse_indexed_cases(domain, case_ids):
         assert isinstance(case_ids, list)
 
@@ -304,6 +330,15 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         )
 
     @staticmethod
+    def case_has_transactions_since_sync(case_id, sync_log_id, sync_log_date):
+        with get_cursor(CaseTransaction) as cursor:
+            cursor.execute(
+                'SELECT case_has_transactions_since_sync(%s, %s, %s)', [case_id, sync_log_id, sync_log_date]
+            )
+            result = cursor.fetchone()[0]
+            return result
+
+    @staticmethod
     def get_case_by_location(domain, location_id):
         try:
             return CommCareCaseSQL.objects.raw(
@@ -317,6 +352,13 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     def get_case_ids_in_domain(domain, type_=None):
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute('SELECT case_id FROM get_case_ids_in_domain(%s, %s)', [domain, type_])
+            results = fetchall_as_namedtuple(cursor)
+            return [result.case_id for result in results]
+
+    @staticmethod
+    def get_case_ids_in_domain_by_owners(domain, owner_ids):
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute('SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s)', [domain, owner_ids])
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
 
@@ -369,6 +411,54 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                     )
                     logging.debug(msg)
                 raise CaseSaveError(e)
+
+    @staticmethod
+    def get_open_case_ids(domain, owner_id):
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute('SELECT case_id FROM get_open_case_ids(%s, %s)', [domain, owner_id])
+            results = fetchall_as_namedtuple(cursor)
+            return [result.case_id for result in results]
+
+    @staticmethod
+    def get_closed_case_ids(domain, owner_id):
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute('SELECT case_id FROM get_closed_case_ids(%s, %s)', [domain, owner_id])
+            results = fetchall_as_namedtuple(cursor)
+            return [result.case_id for result in results]
+
+    @staticmethod
+    def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT case_id FROM get_case_ids_modified_with_owner_since(%s, %s, %s)',
+                [domain, owner_id, reference_date]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return [result.case_id for result in results]
+
+    @staticmethod
+    def get_extension_case_ids(domain, case_ids):
+        """
+        Given a base list of case ids, get all ids of all extension cases that reference them
+        """
+        with get_cursor(CommCareCaseIndexSQL) as cursor:
+            cursor.execute('SELECT case_id FROM get_extension_case_ids(%s, %s)', [domain, list(case_ids)])
+            results = fetchall_as_namedtuple(cursor)
+            return [result.case_id for result in results]
+
+    @staticmethod
+    def get_last_modified_dates(domain, case_ids):
+        """
+        Given a list of case IDs, return a dict where the ids are keys and the
+        values are the last server modified date of that case.
+        """
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT case_id, server_modified_on FROM get_case_last_modified_dates(%s, %s)',
+                [domain, case_ids]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return dict((result.case_id, result.server_modified_on) for result in results)
 
 
 def _order_list(id_list, object_list, id_property):

@@ -8,33 +8,35 @@
     <p>
         <span>{% trans 'Graph type' %}:</span>
         <select type="text" data-bind="
-            options: $parent.graphConfig.allGraphTypes,
-            value: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).graph_type
+            options: report.graphConfig.allGraphTypes,
+            value: report.graphConfig.getCurrentGraphConfig(chart.chart_id).graph_type
         "></select>
     </p>
     <p>
         {% trans 'Configuration' %}:
-        <div data-bind="foreach: { data: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).config.keyValuePairs, as: 'keyValuePair' }">
+        <div data-bind="foreach: { data: report.graphConfig.getCurrentGraphConfig(chart.chart_id).config.keyValuePairs, as: 'keyValuePair' }">
             <p>
-                <input type="text" data-bind="value: keyValuePair[0]">
+                <input type="text" data-bind="value: keyValuePair.key">
                 <i class="fa fa-arrow-right"></i>
-                <input type="text" data-bind="value: keyValuePair[1]">
+                <input type="text" data-bind="value: keyValuePair.value">
+                <i class="fa fa-remove icon-blue" style="cursor: pointer;" data-bind="click: keyValuePair.remove"></i>
             </p>
         </div>
-        <button class="btn btn-default" data-bind="click: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).config.addConfig">
+        <button class="btn btn-default" data-bind="click: report.graphConfig.getCurrentGraphConfig(chart.chart_id).config.addConfig">
             <i class="fa fa-plus"></i>
             {% trans "Add Configuration Item" %}
         </button>
     </p>
-    <div data-bind="foreach: { data: $parent.graphConfig.getCurrentGraphConfig(chart.chart_id).chart_series, as: 'series' }">
+    <div data-bind="foreach: { data: report.graphConfig.getCurrentGraphConfig(chart.chart_id).chart_series, as: 'series' }">
         <p>
             {% trans 'Series Configuration' %}:
             <span data-bind="text: series"></span>
             <div data-bind="foreach: { data: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_configs[series].keyValuePairs, as: 'keyValuePair' }">
                 <p>
-                    <input type="text" data-bind="value: keyValuePair[0]">
+                    <input type="text" data-bind="value: keyValuePair.key">
                     <i class="fa fa-arrow-right"></i>
-                    <input type="text" data-bind="value: keyValuePair[1]">
+                    <input type="text" data-bind="value: keyValuePair.value">
+                    <i class="fa fa-remove icon-blue" style="cursor: pointer;" data-bind="click: keyValuePair.remove"></i>
                 </p>
             </div>
             <button class="btn btn-default" data-bind="click: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_configs[series].addConfig">

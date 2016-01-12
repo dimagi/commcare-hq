@@ -53,7 +53,6 @@ from corehq.elastic import (
     es_histogram,
     ES_MAX_CLAUSE_COUNT,
     es_query,
-    ES_URLS,
 )
 
 from casexml.apps.stock.models import StockReport, StockTransaction
@@ -143,8 +142,7 @@ def get_project_spaces(facets=None):
     )
     if facets:
         real_domain_query = add_params_to_query(real_domain_query, facets)
-    real_domain_query_results = real_domain_query.run().raw_hits
-    domain_names = [_['fields']['name'] for _ in real_domain_query_results]
+    domain_names = [hit['name'] for hit in real_domain_query.run().hits]
     if 'search' in facets:
         return list(set(domain_names) & set(facets['search']))
     return domain_names
@@ -296,7 +294,7 @@ def get_active_users_data(domains, datespan, interval, datefield='date',
                 domains, USER_COUNT_UPPER_BOUND)
         if additional_params_es:
             sms_query = add_params_to_query(sms_query, additional_params_es)
-        users = {u['term'] for u in sms_query.run().facet('users', "terms")}
+        users = {u['term'] for u in sms_query.incoming_messages().run().facet('users', "terms")}
         if include_forms:
             users |= {
                 u['term'] for u in FormES()
@@ -589,8 +587,7 @@ def get_domain_stats_data(domains, datespan, interval,
 
 def commtrack_form_submissions(domains, datespan, interval,
         datefield='received_on'):
-    mobile_workers = [a['_id'] for a in
-            UserES().fields([]).mobile_users().show_inactive().run().raw_hits]
+    mobile_workers = UserES().fields([]).mobile_users().show_inactive().run().doc_ids
 
     forms_after_date = (FormES()
             .domain(domains)
@@ -900,7 +897,7 @@ def _total_until_date(histogram_type, datespan, filters=[], domain_list=None):
 
     return es_query(
         q=q,
-        es_url=ES_URLS[histogram_type],
+        es_index=histogram_type,
         size=0,
     )["hits"]["total"]
 

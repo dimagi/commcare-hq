@@ -7,6 +7,7 @@ from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.database import get_db
+from corehq.apps.es import DomainES
 
 
 DOMAIN_MODULE_KEY = 'DOMAIN_MODULE_CONFIG'
@@ -74,3 +75,9 @@ def user_has_custom_top_menu(domain_name, couch_user):
     """
     return (toggles.CUSTOM_MENU_BAR.enabled(domain_name) and
             not couch_user.is_superuser)
+
+
+def get_domains_created_by_user(creating_user):
+    query = DomainES().created_by_user(creating_user)
+    data = query.run()
+    return [d['name'] for d in data.hits]

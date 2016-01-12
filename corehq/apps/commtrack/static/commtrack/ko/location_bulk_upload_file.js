@@ -15,14 +15,15 @@ $(function () {
         self = this;
         this.url = ko.computed(function() {
             return (
-                self.base_url
-                + (self.include_consumption() ? "?include_consumption=true" : "")
-                + (self.include_ids() ? "?include_ids=true" : "")
+                self.base_url + "?"
+                + (self.include_consumption() ? "include_consumption=true" : "")
+                + ((self.include_consumption() && self.include_ids()) ? "&" : "")
+                + (self.include_ids() ? "include_ids=true" : "")
             );
         });
     }
 
     $("#download_block").koApplyBindings(
-        new ConsumptionOptionsViewModel($("#download_link").get(0).href),
+        new ConsumptionOptionsViewModel($("#download_link").get(0).href)
     );
 });

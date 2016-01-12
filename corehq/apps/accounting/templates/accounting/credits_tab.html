@@ -44,7 +44,7 @@
                     <td>
                         {% if credit.feature_type %}
                         {{ credit.feature_type }}
-                        {% elif credit.feature_type == '' or credit.product_type == None and credit.feature_type == None %}
+                        {% elif credit.product_type == None and credit.feature_type == None %}
                         {% trans "Any" %}
                         {% else %}
                         --

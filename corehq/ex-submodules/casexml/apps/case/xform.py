@@ -211,12 +211,12 @@ def _get_or_update_cases(xforms, case_db):
         touches_different_owner = len(owner_ids) == 1 and case.owner_id not in potential_clean_owner_ids
 
         if (more_than_one_owner_touched or touches_different_owner):
-            yield DirtinessFlag(case._id, case.owner_id)
+            yield DirtinessFlag(case.case_id, case.owner_id)
             if extension_indices:
                 # If this case is an extension, each of the touched cases is also dirty
                 for index in case.indices:
                     referenced_case = case_db.get(index.referenced_id)
-                    yield DirtinessFlag(referenced_case._id, referenced_case.owner_id)
+                    yield DirtinessFlag(referenced_case.case_id, referenced_case.owner_id)
 
         if case.owner_id != UNOWNED_EXTENSION_OWNER_ID:
             tree_owners.add(case.owner_id)

@@ -1,6 +1,7 @@
 import json
 from django.http.response import HttpResponseServerError
 from corehq.apps.commtrack.exceptions import DuplicateProductCodeException
+from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js, use_jquery_ui
 from corehq.util.files import file_extention_from_filename
 from couchexport.writers import Excel2007ExportWriter
 from couchexport.models import Format
@@ -78,7 +79,6 @@ def unarchive_product(request, domain, prod_id, archive=True):
     })
 
 
-
 class ProductListView(BaseCommTrackManageView):
     # todo mobile workers shares this type of view too---maybe there should be a class for this?
     urlname = 'commtrack_product_list'
@@ -101,8 +101,10 @@ class ProductListView(BaseCommTrackManageView):
 
     @property
     def product_queryset(self):
-        return SQLProduct.objects.filter(domain=self.domain,
-                                         is_archived=self.show_only_inactive)
+        return (SQLProduct.objects
+                .filter(domain=self.domain,
+                        is_archived=self.show_only_inactive)
+                .order_by('name'))
 
     @property
     @memoized
@@ -126,6 +128,11 @@ class ProductListView(BaseCommTrackManageView):
             'show_inactive': self.show_only_inactive,
             'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT)
         }
+
+    @use_bootstrap3
+    @use_knockout_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProductListView, self).dispatch(request, *args, **kwargs)
 
 
 class FetchProductListView(ProductListView):
@@ -253,6 +260,11 @@ class NewProductView(BaseCommTrackManageView):
             return HttpResponseRedirect(reverse(ProductListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
+    @use_bootstrap3
+    @use_knockout_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(NewProductView, self).dispatch(request, *args, **kwargs)
+
 
 class UploadProductView(BaseCommTrackManageView):
     urlname = 'commtrack_upload_products'
@@ -307,6 +319,12 @@ class UploadProductView(BaseCommTrackManageView):
                 args=[domain, file_ref.download_id]
             )
         )
+
+    @use_bootstrap3
+    @use_knockout_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(UploadProductView, self).dispatch(request, *args, **kwargs)
+
 
 class ProductImportStatusView(BaseCommTrackManageView):
     urlname = 'product_import_status'
@@ -469,3 +487,10 @@ class ProductFieldsView(CustomDataModelMixin, BaseCommTrackManageView):
     urlname = 'product_fields_view'
     field_type = 'ProductFields'
     entity_string = _("Product")
+    template_name = "custom_data_fields/bootstrap3/custom_data_fields.html"
+
+    @use_bootstrap3
+    @use_knockout_js
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProductFieldsView, self).dispatch(request, *args, **kwargs)

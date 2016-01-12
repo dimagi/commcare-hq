@@ -29,6 +29,8 @@
     <script type="text/javascript" src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script type="text/javascript" src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
     <script type="text/javascript" src="{% new_static 'style/lib/select2/select2.js' %}"></script>
+    <!-- TODO: this used to be in form_view_base.html, is it needed? -->
+    <!--script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script-->
     <script src="{% new_static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
     <script src="{% new_static 'style/js/bootstrap-multi-typeahead.js' %}"></script>
 
@@ -41,7 +43,7 @@
 {% block js-inline %}{{ block.super }}
     <script>
     $(function () {
-        $('#deleted-app-dialog').modal({
+        $('#deleted-app-modal').modal({
             backdrop: 'static',
             keyboard: false,
             show: true
@@ -137,7 +139,7 @@
 {% block modals %}
     {{ block.super }}
     {% if app.is_deleted %}
-    <div id="deleted-app-dialog" class="modal fade">
+    <div id="deleted-app-modal" class="modal fade">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">

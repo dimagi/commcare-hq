@@ -1,4 +1,5 @@
 import os
+from dimagi.utils.couch import sync_docs
 from django.apps import apps
 from corehq.preindex.default_plugin import DefaultPreindexPlugin
 from corehq.preindex.preindex_plugins import PREINDEX_PLUGINS
@@ -29,3 +30,33 @@ def get_preindex_plugin(app_label):
             return DefaultPreindexPlugin(app_label)
         else:
             return None
+
+
+def get_preindex_designs():
+    used = set()
+    designs = []
+    for plugin in get_preindex_plugins():
+        for design in plugin.get_designs():
+            key = (design.db.uri, design.app_label)
+            if key not in used:
+                designs.append(design)
+            used.add(key)
+    return designs
+
+
+def copy_design_doc(design, temp=None, delete=True):
+    sync_docs.copy_designs(
+        db=design.db,
+        design_name=design.app_label,
+        temp=temp,
+        delete=delete,
+    )
+
+
+def sync_design_doc(design, temp=None):
+    sync_docs.sync_design_docs(
+        db=design.db,
+        design_dir=design.design_path,
+        design_name=design.app_label,
+        temp=temp,
+    )

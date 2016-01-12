@@ -36,15 +36,5 @@ class Command(BaseCommand):
         old_seq = checkpoint['seq']
         new_seq = seq.seq
         confirm("\nReset checkpoint for '{}' pillow from:\n\n{}\n\nto\n\n{}\n\n".format(pillow_name, old_seq, new_seq))
-        set_checkpoint(pillow, new_seq)
+        pillow.checkpoint.update_to(new_seq)
         print "Checkpoint updated"
-
-
-def set_checkpoint(pillow, new_seq):
-    checkpoint = pillow.get_checkpoint(verify_unchanged=True)
-    utcnow = datetime.utcnow()
-    old_seq_name = utcnow.strftime('%Y%m%d_%H%M%S_seq')
-    checkpoint[old_seq_name] = checkpoint['seq']
-    checkpoint['seq'] = new_seq
-    checkpoint['timestamp'] = datetime.now(tz=pytz.UTC).isoformat()
-    pillow.couch_db.save_doc(checkpoint)

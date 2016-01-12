@@ -4,6 +4,12 @@
 {% load djangular_tags %}
 {% load crispy_forms_tags %}
 
+
+{% block js %}{{ block.super }}
+    <script src="{% new_static 'hqwebapp/js/main.js' %}"></script>
+{% endblock %}
+
+
 {% block js-inline %}{{ block.super }}
 <script type="text/javascript">
 (function (angular, initial) {
@@ -11,6 +17,7 @@
     var autoUpdateRuleApp = angular.module('addUpdateRuleApp', ['ng.django.rmi']);
 
     autoUpdateRuleApp.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
     }]);
@@ -100,7 +107,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr ng-repeat="condition in conditions_objs" {% if form.conditions.errors %}class="has-error"{% endif %}>
+                <tr ng-repeat="condition in conditions_objs track by $index" {% if form.conditions.errors %}class="has-error"{% endif %}>
                     {% angularjs %}
                     <td>
                         <input class="case-property-typeahead textinput textInput form-control"

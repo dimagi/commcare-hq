@@ -2,20 +2,33 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 <div class="tab-pane" id="advanced">
-    <h4>XForm</h4>
+    <h4>{% trans "XForm" %}</h4>
     <ul class="nav nav-pills nav-stacked">
         <li>
-            <a class="dialog_opener" href="#">
+            <a href="#upload-xform" data-toggle="modal">
                 <i class="fa fa-arrow-up"></i>
                 {% trans "Upload" %}
             </a>
-            <div class="dialog" title="Upload XForm">
-                <form action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'xform' %}" method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <input type="file" id="xform_file_input" name="xform" />
-                    <input type="hidden" name="ajax" value="false" />
-                    <input type="submit" id="xform_file_submit" value="Upload" />
-                </form>
+            <div class="modal hide fade" id="upload-xform">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3>{% trans "Upload XForm" %}</h3>
+                </div>
+                <div class="modal-body">
+                    <form method="POST"
+                          enctype="multipart/form-data"
+                          action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'xform' %}">
+                        {% csrf_token %}
+                        <input type="file" id="xform_file_input" name="xform" />
+                        <input type="hidden" name="ajax" value="false" />
+                        <input type="submit" id="xform_file_submit" value="{% trans "Upload" %}" class="btn btn-primary" />
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal" aria-hidden="true">
+                        {% trans "Close" %}
+                    </button>
+                </div>
             </div>
         </li>
         <li>
@@ -30,37 +43,47 @@
             </a>
         </li>
         <li>
-            <a id="xform-source-opener" class="dialog_opener {% if not form.source %}disabled{% endif %}"
+            <a id="xform-source-opener" class="{% if not form.source %}disabled{% endif %}"
                     {% if is_user_registration %}
-               href="{% url "get_user_registration_source" domain app.id %}"
+               data-href="{% url "get_user_registration_source" domain app.id %}"
                     {% else %}
-               href="{% url "get_xform_source" domain app.id module.id form.id %}"
+               data-href="{% url "get_xform_source" domain app.id module.id form.id %}"
                     {% endif %}
                     >
                 <i class="fa fa-search"></i>
                 {% trans "View" %}
             </a>
-            <div class="xml-source dialog" title="XML Source">
-                <div id="source-readonly">
-                    {% trans "Double-click to select all." %}
-                    <pre id="xform-source" class="brush: xml;"></pre>
+            <div class="xml-source modal hide fade">
+                <form action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'xform' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 class="source-readonly">{% trans "XML Source" %}</h3>
+                    <h3 class="source-edit">{% trans "Edit XML Source" %}</h3>
                 </div>
-                <div id="source-edit">
-                    {% trans "You can edit your XForm here." %}<br />
-                    <form action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'xform' %}" method="POST">
-                        {% csrf_token %}
-                        <textarea name="xform" id="xform-source-edit" style="height:550px;width:90%;font-family:Monospace;">
+                <div class="modal-body">
+                    <div class="source-readonly">
+                        {% trans "Double-click to select all." %}
+                        <pre id="xform-source" class="brush: xml;"></pre>
+                    </div>
+                    <div class="source-edit">
+                        <textarea name="xform" id="xform-source-edit">
                             {% trans "Loading..." %}
                         </textarea><br />
-                        <input type="hidden" name="ajax" value="false" />
-                        <label for="cleanup">
-                            {% trans "[Beta] Clean up markup after saving (add newlines, reformat indentation, etc.): " %}
-                        </label>
-                        <input type="checkbox" id="cleanup" name="cleanup" />
-                        <br/>
-                        <input type="submit" value="Save" />
-                    </form>
+                    </div>
                 </div>
+                <div class="modal-footer">
+                    <input type="hidden" name="ajax" value="false" class="source-edit" />
+                    <input type="submit" value="{% trans "Save" %}" class="btn btn-primary source-edit" />
+                    <button type="button" class="btn btn-default" data-dismiss="modal" aria-hidden="true">
+                        {% trans "Close" %}
+                    </button>
+                    <label for="cleanup" class="checkbox source-edit pull-left">
+                        <input type="checkbox" id="cleanup" name="cleanup" />
+                        {% trans "Clean up markup after saving (add newlines, reformat indentation, etc.) " %}
+                    </label>
+                </div>
+                </form>
             </div>
         </li>
     </ul>
@@ -68,11 +91,13 @@
     <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
         {% csrf_token %}
         <p>
-        <i class="fa fa-share-square-o"></i> {% trans "Copy form to: " %}
         <select name='to_module_id'>{% for mod in app.get_modules %}
             <option value={{ mod.id }}>{{ mod.name|html_trans:langs }}</option>
             {% endfor %}</select>
-        <button class='btn btn-primary' type="submit">{% trans "Copy" %}</button>
+        <button class='btn btn-primary' type="submit">
+            <i class="fa fa-share-square-o"></i>
+            {% trans "Copy" %}
+        </button>
         </p>
     </form>
     {% endif %}

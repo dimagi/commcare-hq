@@ -10,7 +10,7 @@ class UserGroupsFixtureProvider(object):
 
     id = 'user-groups'
 
-    def __call__(self, user, version, last_sync=None):
+    def __call__(self, user, version, last_sync=None, app=None):
         """
         For a given user, return a fixture containing all the groups
         they are a part of.

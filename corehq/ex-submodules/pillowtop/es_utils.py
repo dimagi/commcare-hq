@@ -58,6 +58,7 @@ def completely_initialize_pillow_index(pillow):
     pillow_logging.info("Pillowtop [%s] Initializing mapping in ES" % pillow.get_name())
     initialize_mapping_if_necessary(pillow)
 
+
 def pillow_index_exists(pillow):
     return pillow.get_es_new().indices.exists(pillow.es_index)
 

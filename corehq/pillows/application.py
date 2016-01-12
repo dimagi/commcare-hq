@@ -34,13 +34,5 @@ class AppPillow(AliasedElasticPillow):
     default_mapping = APP_MAPPING
 
     @classmethod
-    @memoized
-    def calc_meta(cls):
-        #todo: actually do this correctly
-
-        """
-        override of the meta calculator since we're separating out all the types,
-        so we just do a hash of the "prototype" instead to determined md5
-        """
-        return cls.calc_mapping_hash({"es_meta": cls.es_meta,
-                                      "mapping": cls.default_mapping})
+    def get_unique_id(cls):
+        return APP_INDEX

@@ -1,5 +1,6 @@
 from django.conf import settings
 from corehq.apps.app_manager.util import get_correct_app_class
+from corehq.apps.es import AppES
 from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
 from django.http import Http404
@@ -14,6 +15,43 @@ def domain_has_apps(domain):
         limit=1,
     ).all()
     return len(results) > 0
+
+
+def get_latest_released_app_doc(domain, app_id, min_version=None):
+    """Get the latest starred build for the application"""
+    from .models import Application
+    key = ['^ReleasedApplications', domain, app_id]
+    app = Application.get_db().view(
+        'app_manager/applications',
+        startkey=key + [{}],
+        endkey=(key + [min_version]) if min_version is not None else key,
+        descending=True,
+        include_docs=True
+    ).first()
+    return app['doc'] if app else None
+
+
+def _get_latest_build_view(domain, app_id, include_docs):
+    from .models import Application
+    return Application.get_db().view(
+        'app_manager/saved_app',
+        startkey=[domain, app_id, {}],
+        endkey=[domain, app_id],
+        descending=True,
+        include_docs=include_docs,
+    ).first()
+
+
+def get_latest_build_doc(domain, app_id):
+    """Get the latest saved build of the application, regardless of star."""
+    res = _get_latest_build_view(domain, app_id, include_docs=True)
+    return res['doc'] if res else None
+
+
+def get_latest_build_id(domain, app_id):
+    """Get id of the latest build of the application, regardless of star."""
+    res = _get_latest_build_view(domain, app_id, include_docs=False)
+    return res['id'] if res else None
 
 
 def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
@@ -43,29 +81,12 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
             min_version = -1
 
         if target == 'build':
-            # get latest-build regardless of star
-            couch_view = 'app_manager/saved_app'
-            startkey = [domain, parent_app_id, {}]
-            endkey = [domain, parent_app_id]
+            app = get_latest_build_doc(domain, parent_app_id)
         else:
-            # get latest starred-build
-            couch_view = 'app_manager/applications'
-            startkey = ['^ReleasedApplications', domain, parent_app_id, {}]
-            endkey = ['^ReleasedApplications', domain, parent_app_id, min_version]
+            app = get_latest_released_app_doc(domain, parent_app_id, min_version=min_version)
 
-        latest_app = Application.get_db().view(
-            couch_view,
-            startkey=startkey,
-            endkey=endkey,
-            limit=1,
-            descending=True,
-            include_docs=True
-        ).one()
-
-        try:
-            app = latest_app['doc']
-        except TypeError:
-            # If no builds/starred-builds, return act as if latest=False
+        if not app:
+            # If no builds/starred-builds, act as if latest=False
             app = original_app
     else:
         try:
@@ -133,3 +154,30 @@ def get_exports_by_application(domain):
         reduce=False,
         stale=settings.COUCH_STALE_QUERY,
     )
+
+
+def get_all_apps(domain):
+    """
+    Returns a list of all the apps ever built and current Applications.
+    Used for subscription management when apps use subscription only features
+    that shouldn't be present in built apps as well as app definitions.
+    """
+    from .models import Application
+    saved_apps = Application.get_db().view(
+        'app_manager/saved_app',
+        startkey=[domain],
+        endkey=[domain, {}],
+        include_docs=True,
+    )
+    all_apps = [get_correct_app_class(row['doc']).wrap(row['doc']) for row in saved_apps]
+    all_apps.extend(get_apps_in_domain(domain))
+    return all_apps
+
+
+def get_case_types_from_apps(domain):
+    """Get the case types of modules in applications in the domain."""
+    q = (AppES()
+         .domain(domain)
+         .size(0)
+         .terms_facet('modules.case_type.exact', 'case_types'))
+    return q.run().facets.case_types.terms

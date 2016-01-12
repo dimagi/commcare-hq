@@ -63,3 +63,5 @@ CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 
 # default inactivity timeout to 1 year
 INACTIVITY_TIMEOUT = 60 * 24 * 365
+
+CACHE_REPORTS = False

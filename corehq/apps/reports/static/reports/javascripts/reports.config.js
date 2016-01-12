@@ -160,7 +160,7 @@ var HQReport = function (options) {
                 .removeClass('disabled')
                 .removeProp('disabled');
         });
-        $('#paramSelectorForm fieldset').change(function () {
+        $('#paramSelectorForm fieldset').on('change apply', function () {
             $('#paramSelectorForm button[type="submit"]')
                 .button('reset')
                 .addClass('btn-primary')

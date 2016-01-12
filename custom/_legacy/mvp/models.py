@@ -53,7 +53,7 @@ class MVPDaysSinceLastTransmission(DynamicIndicatorDefinition):
         days = []
         for user_id in user_ids:
             key = make_form_couch_key(self.domain, user_id=user_id)
-            results = XFormInstance.get_db().view("reports_forms/all_forms",
+            results = XFormInstance.get_db().view("all_forms/view",
                 reduce=False,
                 include_docs=False,
                 descending=True,

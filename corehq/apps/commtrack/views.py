@@ -12,6 +12,7 @@ from corehq.apps.commtrack.processing import plan_rebuild_stock_state, \
     rebuild_stock_state
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.sofabed.models import FormData
+from corehq.apps.style.decorators import use_knockout_js, use_bootstrap3, use_jquery_ui
 from corehq.util.timezones.conversions import ServerTime
 
 from dimagi.utils.decorators.memoized import memoized
@@ -149,6 +150,11 @@ class CommTrackSettingsView(BaseCommTrackManageView):
             return HttpResponseRedirect(self.page_url)
         return self.get(request, *args, **kwargs)
 
+    @use_bootstrap3
+    @use_knockout_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseCommTrackManageView, self).dispatch(request, *args, **kwargs)
+
 
 class DefaultConsumptionView(BaseCommTrackManageView):
     urlname = 'update_default_consumption'
@@ -176,6 +182,11 @@ class DefaultConsumptionView(BaseCommTrackManageView):
                 reverse(DefaultConsumptionView.urlname, args=[self.domain])
             )
         return self.get(request, *args, **kwargs)
+
+    @use_bootstrap3
+    @use_knockout_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(DefaultConsumptionView, self).dispatch(request, *args, **kwargs)
 
 
 class SMSSettingsView(BaseCommTrackManageView):
@@ -238,6 +249,12 @@ class SMSSettingsView(BaseCommTrackManageView):
 
         return self.get(request, *args, **kwargs)
 
+    @use_bootstrap3
+    @use_knockout_js
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
+
 
 class StockLevelsView(BaseCommTrackManageView):
     urlname = 'stock_levels'
@@ -297,6 +314,11 @@ class StockLevelsView(BaseCommTrackManageView):
             return HttpResponseRedirect(self.page_url)
         # TODO display error messages to the user...
         return self.get(request, *args, **kwargs)
+
+    @use_bootstrap3
+    @use_knockout_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(StockLevelsView, self).dispatch(request, *args, **kwargs)
 
 
 class RebuildStockStateView(BaseCommTrackManageView):

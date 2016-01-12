@@ -14,6 +14,12 @@ from corehq.apps.domain.models import Domain
 # https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
 from django.utils.functional import lazy
 import six
+
+from crispy_forms.helper import FormHelper
+from crispy_forms import layout as crispy
+from crispy_forms import bootstrap as twbscrispy
+from corehq.apps.style import crispy as hqcrispy
+
 mark_safe_lazy = lazy(mark_safe, six.text_type)
 
 
@@ -27,6 +33,25 @@ class DomainRegistrationForm(forms.Form):
     hr_name = forms.CharField(label=_('Project Name'), max_length=max_name_length)
     domain_type = forms.CharField(widget=forms.HiddenInput(), required=False,
                                   initial='commcare')
+
+    def __init__(self, *args, **kwargs):
+        super(DomainRegistrationForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = "form-horizontal"
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-6 col-md-5 col-lg-3'
+        self.helper.layout = crispy.Layout(
+            'hr_name',
+            'org',
+            'domain_type',
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Create Project"),
+                    type="submit",
+                    css_class="btn btn-primary btn-lg disable-on-submit",
+                )
+            )
+        )
 
     def clean_domain_type(self):
         data = self.cleaned_data.get('domain_type', '').strip().lower()
@@ -51,7 +76,11 @@ class NewWebUserRegistrationForm(DomainRegistrationForm):
                              help_text=_('You will use this email to log in.'))
     password = forms.CharField(label=_('Create Password'),
                                max_length=max_pwd,
-                               widget=forms.PasswordInput(render_value=False))
+                               widget=forms.PasswordInput(render_value=False,
+                                                          attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
+                               help_text=mark_safe("""
+                               <span data-bind="text: passwordHelp, css: color">
+                               """))
     create_domain = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,

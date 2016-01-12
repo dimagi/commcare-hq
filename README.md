@@ -48,7 +48,7 @@ individual project sites when necessary.
 + pip  (If you use virtualenv (see below) this will be installed automatically)
 + CouchDB >= 1.0 (1.2 recommended) (install from OS package manager (`sudo apt-get install couchdb`) or [here][couchdb])
   - Mac users: note that when installing erlang, you do NOT need to check out an older version of erlang.rb
-+ PostgreSQL >= 9.1 - (install from OS package manager (`sudo apt-get install postgresql`) or [here][postgres])
++ PostgreSQL >= 9.4 - (install from OS package manager (`sudo apt-get install postgresql`) or [here][postgres])
 + [Elasticsearch][elasticsearch] 0.90.13. In Ubuntu and other Debian derivatives,
   [download the deb package][elasticsearch], install, and then **hold** the version to prevent automatic upgrades:
 

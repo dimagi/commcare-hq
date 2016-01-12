@@ -5,7 +5,6 @@ from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_supply_point
-from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
 from corehq.apps.custom_data_fields.edit_entity import add_prefix
 
@@ -13,39 +12,6 @@ from .exceptions import LocationImportError
 from .models import Location, LocationType
 from .forms import LocationForm
 from .util import parent_child
-
-
-class LocationCache(object):
-    """
-    Used to cache locations in memory during a bulk upload for optimization
-    """
-
-    def __init__(self, domain):
-        self.domain = domain
-        # {(type,parent): {name: location}}
-        self._existing_by_type = {}
-        # {id: location}
-        self._existing_by_id = {}
-
-    def get(self, id):
-        if id not in self._existing_by_id:
-            self._existing_by_id[id] = Location.get(id)
-        return self._existing_by_id[id]
-
-    def get_by_name(self, loc_name, loc_type, parent):
-        key = (loc_type, parent._id if parent else None)
-        if key not in self._existing_by_type:
-            existing = list(Location.filter_by_type(self.domain, loc_type, parent))
-            self._existing_by_type[key] = dict((l.name, l) for l in existing)
-            self._existing_by_id.update(dict((l._id, l) for l in existing))
-        return self._existing_by_type[key].get(loc_name, None)
-
-    def add(self, location):
-        for id in location.path + [None]:
-            # this just mimics the behavior in the couch view
-            key = (location.location_type, id)
-            if key in self._existing_by_type:
-                self._existing_by_type[key][location.name] = location
 
 
 def top_level_location_types(domain):

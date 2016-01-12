@@ -11,10 +11,15 @@ function HQReportDataTables(options) {
     self.aoColumns = options.aoColumns;
     self.autoWidth = (options.autoWidth != undefined) ? options.autoWidth : true;
     self.defaultSort = (options.defaultSort != undefined) ? options.defaultSort : true;
-    self.customSort = options.customSort;
+    self.customSort = options.customSort || null;
     self.ajaxParams = options.ajaxParams || new Object();
     self.ajaxSource = options.ajaxSource;
     self.loadingText = options.loadingText || "Loading <img src='/static/hqwebapp/img/ajax-loader.gif' alt='loading indicator' />";
+    self.loadingTemplateSelector = options.loadingTemplateSelector;
+    if (self.loadingTemplateSelector !== undefined) {
+        var loadingTemplate = _.template($(self.loadingTemplateSelector).html() || self.loadingText);
+        self.loadingText = loadingTemplate({});
+    }
     self.emptyText = options.emptyText || "No data available to display. Please try changing your filters.";
     self.errorText = options.errorText || "<span class='label label-important'>Sorry!</span> There was an error with your query, it has been logged, please try another query.";
     self.badRequestErrorText = options.badRequestErrorText || options.errorText || "<span class='label label-important'>Sorry!</span> Your search query is invalid, please adjust the formatting and try again.";
@@ -85,8 +90,8 @@ function HQReportDataTables(options) {
                 sScrollX: "100%",
                 bSort: self.defaultSort
             };
-            if (self.aaSorting !== null) {
-                params.aaSorting = self.aaSorting;
+            if (self.aaSorting !== null || self.customSort !== null) {
+                params.aaSorting = self.aaSorting || self.customSort;
             }
 
             if(self.ajaxSource) {
@@ -171,14 +176,18 @@ function HQReportDataTables(options) {
             var datatable = $(this).dataTable(params);
             if (!self.datatable)
                 self.datatable = datatable;
-            if(self.customSort) {
-                datatable.fnSort( self.customSort );
-            }
-            if(self.fixColumns)
-                new FixedColumns( datatable, {
+
+            if (self.fixColumns && self.useBootstrap3) {
+                new $.fn.dataTable.FixedColumns(datatable, {
                     iLeftColumns: self.fixColsNumLeft,
                     iLeftWidth: self.fixColsWidth
-                } );
+                });
+            } else if (self.fixColumns) {
+                new FixedColumns(datatable, {
+                    iLeftColumns: self.fixColsNumLeft,
+                    iLeftWidth: self.fixColsWidth
+                });
+            }
             $(window).on('resize', function () {
                 datatable.fnAdjustColumnSizing();
             } );

@@ -6,6 +6,7 @@ from django.forms.formsets import formset_factory
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST, require_GET
 from django.views.generic.base import RedirectView
@@ -13,7 +14,10 @@ from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.sms import process
 from corehq.apps.commtrack.views import BaseCommTrackManageView
-from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.decorators import (
+    domain_admin_required,
+    login_and_domain_required,
+)
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.permissions import locations_access_required, user_can_edit_any_location
 from corehq.apps.products.models import Product, SQLProduct
@@ -25,6 +29,7 @@ from custom.ewsghana.filters import EWSDateFilter
 from custom.ewsghana.forms import InputStockForm, EWSUserSettings
 from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge, EWSExtension, EWSMigrationStats, \
     EWSMigrationProblem
+from custom.ewsghana.tasks import set_send_to_owner_field_task
 from custom.ewsghana.reports.specific_reports.dashboard_report import DashboardReport
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct, StockStatus
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData, StockLevelsReport
@@ -58,6 +63,7 @@ class InputStockView(BaseDomainView):
     section_url = ""
     template_name = 'ewsghana/input_stock.html'
 
+    @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         couch_user = self.request.couch_user
         site_code = kwargs['site_code']
@@ -113,7 +119,7 @@ class InputStockView(BaseDomainView):
                 }
                 process(self.domain, unpacked_data)
             url = make_url(
-                StockLevelsReport,
+                StockStatus,
                 self.domain,
                 '?location_id=%s&filter_by_program=%s&startdate='
                 '&enddate=&report_type=&filter_by_product=%s',
@@ -203,6 +209,13 @@ def balance_email_reports_migration(request, domain):
 @require_POST
 def migrate_email_settings_view(request, domain):
     migrate_email_settings.delay(domain)
+    return HttpResponse('OK')
+
+
+@domain_admin_required
+@require_POST
+def fix_email_reports(request, domain):
+    set_send_to_owner_field_task.delay(domain)
     return HttpResponse('OK')
 
 

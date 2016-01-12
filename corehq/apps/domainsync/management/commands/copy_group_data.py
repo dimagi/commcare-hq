@@ -95,7 +95,7 @@ class Command(LabelCommand):
             # also grab submissions that may not have included any case data
             for user_id in group.users:
                 xform_ids.update(res['id'] for res in sourcedb.view(
-                    'reports_forms/all_forms',
+                    'all_forms/view',
                     startkey=['submission user', domain.name, user_id],
                     endkey=['submission user', domain.name, user_id, {}],
                     reduce=False

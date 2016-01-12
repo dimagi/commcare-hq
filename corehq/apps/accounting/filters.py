@@ -177,7 +177,7 @@ class CreatedSubAdjMethodFilter(BaseSingleOptionFilter):
 
 
 class DateRangeFilter(BaseReportFilter):
-    template = 'reports/filters/daterange.html'
+    template = 'reports/filters/bootstrap2/daterange.html'
     default_days = 7
 
     START_DATE = 'startdate'
@@ -261,7 +261,7 @@ class OptionalFilterMixin(object):
 
 
 class OptionalDateRangeFilter(DateRangeFilter, OptionalFilterMixin):
-    template = 'reports/filters/optional_daterange.html'
+    template = 'reports/filters/bootstrap2/optional_daterange.html'
 
     @property
     def filter_context(self):
@@ -298,7 +298,7 @@ class EndDateFilter(OptionalDateRangeFilter):
 
 
 class OptionalMonthYearFilter(BaseReportFilter, OptionalFilterMixin):
-    template = 'reports/filters/optional_month_year.html'
+    template = 'reports/filters/bootstrap2/optional_month_year.html'
 
     @property
     def filter_context(self):

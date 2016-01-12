@@ -1,0 +1,41 @@
+{% load i18n %}
+{% load xforms_extras %}
+{% if show_care_plan %}
+    <div id="careplan-module-modal" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 class="modal-title">{% trans "New Careplan Module" %}</h3>
+                </div>
+                <form name="new_careplan_module" method="post"
+                      action="{% url "corehq.apps.app_manager.views.new_module" domain app.id %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <input type="hidden" name="module_type" value="careplan" />
+                        <div class="form-group">
+                            <label class="control-label" for="target_module_id">
+                                {% trans "Select the module to attach the careplan to" %}
+                            </label>
+                            <div class="controls">
+                                <select name="target_module_id" class="input">
+                                {% for module in app.get_modules %}
+                                    {% if module.case_type %}
+                                        <option value="{{ module.id }}">
+                                         {{ module.name|html_trans:langs }}
+                                        </option>
+                                    {% endif %}
+                                {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-primary" type="submit">{% trans "Create New Module" %}</button>
+                        <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endif %}

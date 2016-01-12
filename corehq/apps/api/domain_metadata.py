@@ -11,6 +11,7 @@ from corehq.apps.es.domains import DomainES
 
 from tastypie import fields
 from tastypie.exceptions import NotFound
+from tastypie.resources import Resource
 import operator
 from dimagi.utils.dates import force_to_datetime
 
@@ -50,6 +51,10 @@ class DomainMetadataResource(HqBaseResource):
     calculated_properties = fields.DictField()
     domain_properties = fields.DictField()
 
+    # using the default resource dispatch function to bypass our authorization for internal use
+    def dispatch(self, request_type, request, **kwargs):
+        return Resource.dispatch(self, request_type, request, **kwargs)
+
     def dehydrate_billing_properties(self, bundle):
         domain = _get_domain(bundle)
         plan_version, subscription = (
@@ -68,11 +73,12 @@ class DomainMetadataResource(HqBaseResource):
         try:
             es_data = (DomainES()
                        .in_domains([domain.name])
+                       .size(1)
                        .run()
-                       .raw_hits[0]['_source'])
+                       .hits[0])
             return {
-                raw_hit: es_data[raw_hit]
-                for raw_hit in es_data if raw_hit[:3] == 'cp_'
+                prop_name: es_data[prop_name]
+                for prop_name in es_data if prop_name[:3] == 'cp_'
             }
         except IndexError:
             logging.exception('Problem getting calculated properties for {}'.format(domain.name))
