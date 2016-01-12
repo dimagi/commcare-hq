@@ -103,8 +103,8 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     return app
 
 
-def get_full_apps_in_domain(domain, include_remote=True):
-    return _get_apps_in_domain(domain, full=True, include_remote=include_remote)
+def get_full_non_remote_apps_in_domain(domain):
+    return _get_apps_in_domain(domain, full=True, include_remote=False)
 
 
 def get_brief_apps_in_domain(domain, include_remote=True):
