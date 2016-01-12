@@ -125,8 +125,8 @@ class FormQuestionSchema(Document):
                 return 'form.{}'.format(xml_path.replace('/', '.'))
 
             for question in xform.get_questions(app.langs):
+                question_path = to_json_path(question['value'])
                 if question['tag'] == 'select':
-                    question_path = to_json_path(question['value'])
                     meta = self.question_schema.get(question_path, QuestionMeta(
                         repeat_context=to_json_path(question['repeat'])
                     ))
@@ -135,6 +135,8 @@ class FormQuestionSchema(Document):
                             meta.options.append(opt['value'])
 
                     self.question_schema[question_path] = meta
+                else:
+                    self.question_schema.pop(question_path, None)
 
         self.processed_apps.add(app.get_id)
         self.last_processed_version = app.version
