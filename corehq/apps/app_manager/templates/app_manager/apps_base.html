@@ -139,7 +139,8 @@
 {% block modals %}
     {{ block.super }}
     {% if app.is_deleted %}
-    <div id="deleted-app-modal" class="modal fade">
+    <!-- This will appear on page load, so don't use any animation (normally controlled by .fade) -->
+    <div id="deleted-app-modal" class="modal">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
