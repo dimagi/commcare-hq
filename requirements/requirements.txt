@@ -7,7 +7,7 @@ jsonobject-couchdbkit==0.7.1.0
 celery==3.1.18
 # required by django-digest
 decorator==4.0.4
-django==1.8.4
+django==1.8.8
 django-braces==1.8.1
 django-celery==3.1.16
 django-json-field==0.5.7
