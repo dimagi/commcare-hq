@@ -13,8 +13,8 @@
         {% blocktrans %}
             Your project does not have any mobile workers!  Only mobile workers can log into a CommCare application.
             Before you can deploy your application,
-            <a href="{% url "mobile_workers" domain %}">create your first mobile worker</a>.
-        {% blocktrans %}
+        {% endblocktrans %}
+        <a href="{% url "mobile_workers" domain %}">{% trans "create your first mobile worker" %}</a>.
     </div>
 {% else %}
     <div class="panel-group" data-bind="bootstrapCollapse: true" id="deploy-accordion">
