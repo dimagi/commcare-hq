@@ -138,7 +138,7 @@ var uiElement;
 
     uiElement = {
         input: function () {
-            return new Input($('<input type="text"/>'), function ($elem) {
+            return new Input($('<input type="text" class="form-control"/>'), function ($elem) {
                 return $elem.val();
             }, function ($elem, value) {
                 return $elem.val(value);
@@ -147,7 +147,7 @@ var uiElement;
             });
         },
         textarea: function () {
-            return new Input($('<textarea/>'), function ($elem) {
+            return new Input($('<textarea class="form-control"/>'), function ($elem) {
                 return $elem.val();
             }, function ($elem, value) {
                 return $elem.val($elem, value);
