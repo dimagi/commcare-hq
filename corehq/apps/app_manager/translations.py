@@ -711,6 +711,24 @@ def update_case_list_translations(sheet, rows, app):
         return msgs
 
     # Update the translations
+    def _update_translation(row, language_dict, require_translation=True):
+        ok_to_delete_translations = (
+            not require_translation or has_at_least_one_translation(
+                    row, 'default', app.langs
+            ))
+        if ok_to_delete_translations:
+            for lang in app.langs:
+                translation = row['default_%s' % lang]
+                if translation:
+                    language_dict[lang] = translation
+                else:
+                    language_dict.pop(lang, None)
+        else:
+            msgs.append((
+                messages.error,
+                "You must provide at least one translation" +
+                " of the case property '%s'" % row['case_property']
+            ))
 
     for row, detail in \
             zip(list_rows, short_details) + zip(detail_rows, long_details):
@@ -729,25 +747,6 @@ def update_case_list_translations(sheet, rows, app):
                 )
             ))
             continue
-
-        def _update_translation(row, language_dict, require_translation=True):
-            ok_to_delete_translations = (
-                not require_translation or has_at_least_one_translation(
-                    row, 'default', app.langs
-                ))
-            if ok_to_delete_translations:
-                for lang in app.langs:
-                    translation = row['default_%s' % lang]
-                    if translation:
-                        language_dict[lang] = translation
-                    else:
-                        language_dict.pop(lang, None)
-            else:
-                msgs.append((
-                    messages.error,
-                    "You must provide at least one translation" +
-                    " of the case property '%s'" % row['case_property']
-                ))
 
         # Update the translations for the row and all its child rows
         _update_translation(row, detail.header)
