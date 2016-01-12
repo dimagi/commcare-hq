@@ -643,6 +643,7 @@ def update_case_list_translations(sheet, rows, app):
     # rows are nested under their respective DetailColumns.
 
     condensed_rows = []
+    case_list_form_label = None
     index_of_last_enum_in_condensed = -1
     index_of_last_graph_in_condensed = -1
     for i, row in enumerate(rows):
@@ -675,6 +676,10 @@ def update_case_list_translations(sheet, rows, app):
             row['id'] = int(row['case_property'].split(" ")[-1])
             parent = condensed_rows[index_of_last_graph_in_condensed]
             parent['annotations'] = parent.get('annotations', []) + [row]
+
+        # It's a case list registration form label. Don't add it to condensed rows
+        elif row['case_property'] == 'case_list_form_label':
+            case_list_form_label = row
 
         # It's a normal case property
         else:
@@ -765,6 +770,8 @@ def update_case_list_translations(sheet, rows, app):
                 detail['graph_configuration']['locale_specific_config'][config_key],
                 False
             )
+    if case_list_form_label:
+        _update_translation(case_list_form_label, module.case_list_form.label)
 
     return msgs
 
