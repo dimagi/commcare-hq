@@ -5,7 +5,7 @@
 <script type="text/html" id="CommcareSettings.widgets.select">
     <span>
         <span data-bind="if: valueIsLegal()">
-            <select class="col-sm-3" data-bind="
+            <select class="col-sm-3 form-control" data-bind="
                 options: options,
                 value: selectedOption,
                 optionsText: 'label',
@@ -13,7 +13,7 @@
             "></select>
         </span>
         <span data-bind="if: !valueIsLegal()" >
-            <select class="col-sm-3 error" data-bind="
+            <select class="col-sm-3 form-control error" data-bind="
                 options: options,
                 value: writeSelectedOption,
                 optionsText: 'label',
@@ -26,16 +26,17 @@
 
 <script type="text/html" id="CommcareSettings.widgets.bool">
     <span class="col-sm-3">
-        <input type="checkbox" data-bind="checked: boolValue, attr: {disabled: !enabled(), id: inputId}"/>
+        <input type="checkbox"
+               data-bind="checked: boolValue, attr: {disabled: !enabled(), id: inputId}"/>
     </span>
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.customProperty">
-    <input placeholder="Key" type="text" data-bind="value: key" />
+    <input placeholder="Key" type="text" data-bind="value: key" class="form-control"/>
     &nbsp;
     <i class="fa fa-arrow-right"></i>
     &nbsp;
-    <input placeholder="Value" type="text" data-bind="value: value" />
+    <input placeholder="Value" type="text" data-bind="value: value" class="form-control" />
     <a class="btn btn-danger" data-bind="
         click: $parent.onDestroyCustomProperty
         ">
@@ -52,7 +53,7 @@
         "/>
     </a>
     <a data-toggle="modal"
-       class="btn btn-primary"
+       class="btn btn-default"
        data-bind="
         attr: {
             'data-hqmediapath': path,
@@ -84,7 +85,7 @@
 
 <script type="text/html" id="CommcareSettings.widgets.text">
     <span>
-        <input type="text" class="col-sm-6" data-bind="
+        <input type="text" class="col-sm-6 form-control" data-bind="
             value: visibleValue,
             valueUpdate: 'textchange',
             attr: {disabled: !enabled(), id: inputId}
@@ -94,7 +95,7 @@
 
 <script type="text/html" id="CommcareSettings.widgets.number">
     <span>
-        <input type="number" class="col-sm-3" data-bind="
+        <input type="number" class="col-sm-3 form-control" data-bind="
             value: visibleValue,
             valueUpdate: 'textchange',
             attr: {disabled: !enabled(), id: inputId}
@@ -104,13 +105,13 @@
 
 <script type="text/html" id="CommcareSettings.widgets.textarea">
     <span>
-        <textarea type="text" data-bind="value: value, attr: {id: inputId}" />
+        <textarea type="text" data-bind="value: value, attr: {id: inputId}" class="form-control" />
     </span>
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.password">
     <span>
-        <input type="password" data-bind="passwordSetter: visibleValue"/>
+        <input type="password" data-bind="passwordSetter: visibleValue" class="form-control" />
     </span>
 </script>
 
@@ -177,16 +178,12 @@ todo fix
                         visible: visible,
                         css: {error: hasError()}
                     ">
-                        <div class="control-label col-lg-2">
+                        <div class="col-lg-2 control-label">
                             <label data-bind="text: name, attr: {for: inputId}" class="inner-control-label"></label>
                             <span data-bind="makeHqHelp: { name: name, description: $data.description, format: $data.description_format}, visible: $data.description"></span>
                         </div>
-                        <div class="col-lg-10">
+                        <div class="col-lg-4">
                             <span data-bind="template: $data.widget_template || 'CommcareSettings.widgets.' + widget"></span>
-                            <span data-bind="visible: disabledMessage(), css: {'text-warning': !optionOK(), 'text-success': optionOK}">
-                                <i class="fa" data-bind="css: {'fa-arrow-left': !optionOK(), 'fa-check': optionOK}"></i>
-                                <span data-bind="text: disabledMessage()"></span>
-                            </span>
                             <p class="help-block" data-bind="visible: disabledButHasValue">
                                 <span data-bind="text: $data.disabled_txt"></span>
                                 <span data-bind="visible: !$data.disabled_txt">
@@ -199,11 +196,19 @@ todo fix
                                 {% endblocktrans %}
                                 </span>
                             </p>
-                            <span class="label label-info" data-bind="visible: $data.preview">{% trans "Preview" %}</span>
                             <span class="help-inline" data-bind="
                                 text: $data.warning || $parents[1].warning,
                                 visible: !$data.valueIsLegal()">
                             </span>
+                        </div>
+                        <div class="col-lg-2 control-label">
+                            <div class="pull-left">
+                                <span class="label label-info" data-bind="visible: $data.preview">{% trans "Preview" %}</span>
+                                <span data-bind="visible: disabledMessage(), css: {'text-warning': !optionOK(), 'text-success': optionOK}">
+                                    <i class="fa" data-bind="css: {'fa-arrow-left': !optionOK(), 'fa-check': optionOK}"></i>
+                                    <span data-bind="text: disabledMessage()"></span>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
