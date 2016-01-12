@@ -714,7 +714,9 @@ def export_data_source(request, domain, config_id):
     # First row is taken up by headers
     if params.format == Format.XLS and q.count() >= 65535:
         keyword_params = dict(**request.GET)
-        keyword_params.update(format=Format.CSV)
+        # use default format
+        if 'format' in keyword_params:
+            del keyword_params['format']
         return HttpResponseRedirect(
             '%s?%s' % (
                 reverse('export_configurable_data_source', args=[domain, config._id]),
