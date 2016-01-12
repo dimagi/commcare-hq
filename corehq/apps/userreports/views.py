@@ -708,7 +708,8 @@ def export_data_source(request, domain, config_id):
     if params.format == Format.XLS and q.count() >= 65535:
         keyword_params = dict(**request.GET)
         # use default format
-        del keyword_params['format']
+        if 'format' in keyword_params:
+            del keyword_params['format']
         return HttpResponseRedirect(
             '%s?%s' % (
                 reverse('export_configurable_data_source', args=[domain, config._id]),
