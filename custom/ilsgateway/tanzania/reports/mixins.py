@@ -203,7 +203,7 @@ class ProductAvailabilitySummary(ILSData):
         chart.stacked = self.chart_stacked
         for row in convert_product_data_to_stack_chart(product_availability, product_dashboard):
             chart.add_dataset(row['label'], [
-                {'x': r[0], 'y': r[1]}
+                {'x': r[0], 'y': int(round(r[1]))}
                 for r in sorted(row['data'], key=lambda x: x[0])], color=row['color']
             )
         return [chart]
