@@ -281,23 +281,22 @@ class AlertsData(ReportingRatesData):
 
     @property
     @memoized
-    def locations_ids(self):
-        return list(self.location.get_descendants().filter(location_type__administrative=False, is_archived=False)
-                    .values_list('location_id', flat=True))
+    def supply_points_locations_ids(self):
+        return list(self.get_supply_points().values_list('location_id', flat=True))
 
     def supply_points_users(self):
-        locations_ids = self.locations_ids
         query = UserES().mobile_users().domain(self.config['domain']).term(
             "location_id",
-            locations_ids
+            self.supply_points_locations_ids
         )
         with_reporters = set()
 
         for hit in query.run().hits:
             with_reporters.add(hit['location_id'])
 
-        with_in_charge = set(FacilityInCharge.objects.filter(location__location_id__in=locations_ids)
-                             .values_list('location__location_id', flat=True).distinct())
+        with_in_charge = set(FacilityInCharge.objects.filter(
+            location__location_id__in=self.supply_points_locations_ids
+        ).values_list('location__location_id', flat=True).distinct())
 
         return with_reporters, with_in_charge
 
@@ -305,8 +304,8 @@ class AlertsData(ReportingRatesData):
     @memoized
     def last_month_reporting_sp_ids(self):
         return StockState.objects.filter(
-            last_modified_date__gte=datetime.utcnow() - timedelta(days=30),
-            sql_location__location_id__in=self.locations_ids
+            last_modified_date__gte=datetime.utcnow() - timedelta(days=32),
+            sql_location__location_id__in=self.supply_points_locations_ids
         ).values_list('case_id', flat=True)
 
     @property
