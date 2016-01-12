@@ -134,6 +134,13 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
 class LocationChoiceProvider(ChainableChoiceProvider):
 
+    def __init__(self, report, filter_slug):
+        super(LocationChoiceProvider, self).__init__(report, filter_slug)
+        self.include_descendants = False
+
+    def configure(self, spec):
+        self.include_descendants = spec.get('include_descendants', self.include_descendants)
+
     def _locations_query(self, query_text):
         if query_text:
             return SQLLocation.active_objects.filter_path_by_user_input(
@@ -156,9 +163,11 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         return self._locations_query(query).count()
 
     def get_choices_for_known_values(self, values):
-        return [
-            Choice(loc.location_id, loc.display_name) for loc in
-            SQLLocation.active_objects.filter(location_id__in=values)]
+        selected_locations = SQLLocation.active_objects.filter(location_id__in=values)
+        if self.include_descendants:
+            selected_locations = SQLLocation.get_queryset_descendants(selected_locations, include_self=True)
+
+        return [Choice(loc.location_id, loc.display_name) for loc in selected_locations]
 
 
 class UserChoiceProvider(ChainableChoiceProvider):
