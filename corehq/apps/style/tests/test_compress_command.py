@@ -6,6 +6,7 @@ from django.conf import settings
 from django.template.loader_tags import ExtendsNode
 from django.core.management import call_command
 from django.test import SimpleTestCase
+from nose.plugins.attrib import attr
 from unittest.util import safe_repr
 
 B3_BASE = 'style/bootstrap3/base.html'
@@ -66,6 +67,7 @@ class TestDjangoCompressOffline(SimpleTestCase):
 
         return False
 
+    @attr("slow")
     def test_compress_offline(self):
         with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
             call_command('compress', force=True)

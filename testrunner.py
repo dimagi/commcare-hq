@@ -2,8 +2,9 @@ import datetime
 from collections import defaultdict
 from functools import wraps
 from unittest.util import strclass
-from couchdbkit import Database, ResourceNotFound
+from urlparse import urlparse
 
+from couchdbkit import Database, ResourceNotFound
 from couchdbkit.ext.django import loading
 from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
 from django.apps import AppConfig
@@ -61,23 +62,7 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
     def setup_databases(self, **kwargs):
         from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
         self.blob_db = TemporaryFilesystemBlobDB()
-        self.newdbname = self.get_test_db_name(settings.COUCH_DATABASE_NAME)
-        print "overridding the couch settings!"
-        new_db_settings = settingshelper.get_dynamic_db_settings(
-            settings.COUCH_SERVER_ROOT,
-            settings.COUCH_USERNAME,
-            settings.COUCH_PASSWORD,
-            self.newdbname,
-        )
-        settings.COUCH_DATABASE_NAME = self.newdbname
-        for (setting, value) in new_db_settings.items():
-            setattr(settings, setting, value)
-            print "set %s settting to %s" % (setting, value)
-
-        settings.COUCH_SETTINGS_HELPER = settings.COUCH_SETTINGS_HELPER._replace(
-            is_test=True)
-        settings.EXTRA_COUCHDB_DATABASES = settings.COUCH_SETTINGS_HELPER.get_extra_couchdbs()
-
+        self._assert_is_a_test_db(settings.COUCH_DATABASE_NAME)
         return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
 
     def teardown_databases(self, old_config, **kwargs):
@@ -106,10 +91,16 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
 
         Database.__init__ = asserting_init
 
+    @classmethod
+    def get_test_db_name(cls, db_uri):
+        cls._assert_is_a_test_db(db_uri)
+        return db_uri
+
     @staticmethod
     def _assert_is_a_test_db(db_uri):
-        assert db_uri.endswith('_test'), db_uri
-        assert '_test_test' not in db_uri, db_uri
+        dbname = urlparse(db_uri).path
+        assert dbname.lstrip('/').startswith('test_'), db_uri
+        assert not dbname.endswith('_test'), db_uri
 
     @staticmethod
     def _delete_db_if_exists(db):
