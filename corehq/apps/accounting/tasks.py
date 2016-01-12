@@ -6,6 +6,7 @@ import datetime
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
@@ -47,9 +48,12 @@ def activate_subscriptions(based_on_date=None):
     Activates all subscriptions starting today (or, for testing, based on the date specified)
     """
     starting_date = based_on_date or datetime.date.today()
-    starting_subscriptions = Subscription.objects.filter(date_start=starting_date)
+    starting_subscriptions = Subscription.objects.filter(
+        date_start=starting_date,
+        is_active=False,
+    )
     for subscription in starting_subscriptions:
-        if not has_subscription_already_ended(subscription) and not subscription.is_active:
+        if not has_subscription_already_ended(subscription):
             with transaction.atomic():
                 subscription.is_active = True
                 subscription.save()
@@ -65,7 +69,10 @@ def deactivate_subscriptions(based_on_date=None):
     Deactivates all subscriptions ending today (or, for testing, based on the date specified)
     """
     ending_date = based_on_date or datetime.date.today()
-    ending_subscriptions = Subscription.objects.filter(date_end=ending_date)
+    ending_subscriptions = Subscription.objects.filter(
+        date_end=ending_date,
+        is_active=True,
+    )
     for subscription in ending_subscriptions:
         with transaction.atomic():
             subscription.is_active = False
@@ -91,10 +98,33 @@ def deactivate_subscriptions(based_on_date=None):
             )
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0))
+def warn_subscriptions_still_active(based_on_date=None):
+    ending_date = based_on_date or datetime.date.today()
+    subscriptions_still_active = Subscription.objects.filter(
+        date_end__lte=ending_date,
+        is_active=True,
+    )
+    for subscription in subscriptions_still_active:
+        log_accounting_error("%s is still active." % subscription)
+
+
+def warn_subscriptions_not_active(based_on_date=None):
+    based_on_date = based_on_date or datetime.date.today()
+    subscriptions_not_active = Subscription.objects.filter(
+        Q(date_end=None) | Q(date_end__gt=based_on_date),
+        date_start__lte=based_on_date,
+        is_active=False,
+    )
+    for subscription in subscriptions_not_active:
+        log_accounting_error("%s is not active" % subscription)
+
+
+@periodic_task(run_every=crontab(minute=0, hour=5))
 def update_subscriptions():
     deactivate_subscriptions()
     activate_subscriptions()
+    warn_subscriptions_still_active()
+
 
 @periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'))
 def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
