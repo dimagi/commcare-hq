@@ -1,5 +1,5 @@
 from django.test import TestCase
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.app_manager.models import Application, RemoteApp
 from corehq.apps.domain.shortcuts import create_domain
 
@@ -28,5 +28,5 @@ class BriefViewTest(TestCase):
         self.assertEqual(len(apps), 2)
 
     def test_app_base(self):
-        apps = get_apps_in_domain(self.domain)
+        apps = get_brief_apps_in_domain(self.domain)
         self.assertEqual(len(apps), 2)

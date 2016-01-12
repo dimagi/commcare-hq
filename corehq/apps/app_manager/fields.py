@@ -5,8 +5,8 @@ from django.http import Http404
 import collections
 from django import forms
 from django.utils.translation import ugettext as _
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app, \
-    get_exports_by_application
+from corehq.apps.app_manager.dbaccessors import get_app, \
+    get_exports_by_application, get_full_apps_in_domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 from couchforms.analytics import get_exports_by_form
@@ -125,7 +125,7 @@ class ApplicationDataSourceUIHelper(object):
 
 
 def get_app_sources(domain):
-    apps = get_apps_in_domain(domain, full=True, include_remote=False)
+    apps = get_full_apps_in_domain(domain, include_remote=False)
     return {
         app._id: {
             "name": app.name,

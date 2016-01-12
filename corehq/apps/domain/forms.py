@@ -59,7 +59,7 @@ from corehq.apps.accounting.models import (
     EntryPoint,
     FundingSource
 )
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
 
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
@@ -778,7 +778,7 @@ class PrivacySecurityForm(forms.Form):
             'secure_submissions', False)
         apps_to_save = []
         if secure_submissions != domain.secure_submissions:
-            for app in get_apps_in_domain(domain.name):
+            for app in get_brief_apps_in_domain(domain.name):
                 if app.secure_submissions != secure_submissions:
                     app.secure_submissions = secure_submissions
                     apps_to_save.append(app)
