@@ -44,6 +44,12 @@ class ChoiceProvider(object):
         self.report = report
         self.filter_slug = filter_slug
 
+    def configure(self, spec):
+        """
+        Custom configuration for the choice provider can live here
+        """
+        pass
+
     @property
     def report_filter(self):
         return self.report.get_ui_filter(self.filter_slug)
