@@ -258,6 +258,12 @@ def expected_bulk_app_sheet_rows(app):
         # Populate module sheet
         rows[module_string] = []
         if not isinstance(module, ReportModule):
+            if module.case_list_form.form_id:
+                # Add row for label of case list registration form
+                rows[module_string].append(
+                        ('case_list_form_label', 'list') +
+                        tuple(module.case_list_form.label.get(lang, '') for lang in app.langs)
+                )
             for list_or_detail, case_properties in [
                 ("list", module.case_details.short.get_columns()),
                 ("detail", module.case_details.long.get_columns())
