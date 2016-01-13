@@ -511,10 +511,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @allow_remote_invocation
     def modify_user_status(self, in_data):
-        if not self.can_add_extra_users:
-            return {
-                'error': _("No Permission."),
-            }
         try:
             user_id = in_data['user_id']
         except KeyError:
@@ -528,6 +524,10 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'error': _("Please provide an is_active status."),
             }
         user = CommCareUser.get_by_user_id(user_id, self.domain)
+        if is_active and not self.can_add_extra_users:
+            return {
+                'error': _("No Permission."),
+            }
         user.is_active = is_active
         user.save()
         return {
