@@ -51,19 +51,12 @@ def make_url(report_class, domain, string_params, args):
         return None
 
 
-# Calculate last full period (Friday - Thursday)
-def calculate_last_period(enddate):
-    # checking if Thursday was already in this week
-    enddate = enddate.replace(hour=0, minute=0, second=0, microsecond=0)
-    i = enddate.weekday() - 3
-    if i < 0:
-        # today is Monday, Tuesday or Wednesday -> calculate Thursday from previous week
-        last_th = enddate + timedelta(days=-i, weeks=-1)
-    else:
-        # today is Thursday, Friday, Saturday or Sunday -> calculate Thursday from this week
-        last_th = enddate - timedelta(days=i)
-    fr_before = last_th - timedelta(days=6)
-    return fr_before, last_th + timedelta(days=1)
+# Calculate last full period (Friday - thursday)
+def calculate_last_period(enddate=datetime.utcnow()):
+    last_friday = enddate - timedelta(days=(enddate.weekday() - 4) % 7)
+    last_friday = last_friday.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_of_next_thursday = (last_friday + timedelta(days=7)) - timedelta(microseconds=1)
+    return last_friday, end_of_next_thursday
 
 
 def send_test_message(verified_number, text, metadata=None):

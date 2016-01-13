@@ -17,7 +17,7 @@ from custom.ewsghana.models import EWSExtension
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation, LocationType
 from custom.ewsghana.utils import get_descendants, filter_slugs_by_role, ews_date_format, get_products_for_locations, \
-    get_products_for_locations_by_program, get_products_for_locations_by_products
+    get_products_for_locations_by_program, get_products_for_locations_by_products, calculate_last_period
 from casexml.apps.stock.models import StockTransaction
 
 
@@ -266,13 +266,14 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
                     location = location.parent
                 loc_id = location.location_id
 
-            start_date, end_date = EWSDateFilter.last_reporting_period()
-            url = '%s?location_id=%s&filter_by_program=%s&startdate=%s&enddate=%s' % (
+            start_date, end_date = calculate_last_period()
+            url = '%s?location_id=%s&filter_by_program=%s&startdate=%s&enddate=%s&datespan_first=%s' % (
                 url,
                 loc_id,
                 program_id if program_id else '',
                 start_date.strftime('%Y-%m-%d'),
-                end_date.strftime('%Y-%m-%d')
+                end_date.strftime('%Y-%m-%d'),
+                '%s|%s' % (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
             )
 
         return url

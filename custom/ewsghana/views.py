@@ -34,7 +34,7 @@ from custom.ewsghana.reports.specific_reports.dashboard_report import DashboardR
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct, StockStatus
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData, StockLevelsReport
 from custom.ewsghana.tasks import balance_migration_task, migrate_email_settings
-from custom.ewsghana.utils import make_url, has_input_stock_permissions
+from custom.ewsghana.utils import make_url, has_input_stock_permissions, calculate_last_period
 from custom.ilsgateway.views import GlobalStats
 from custom.logistics.views import BaseConfigView
 from dimagi.utils.dates import force_to_datetime
@@ -364,7 +364,7 @@ class DashboardPageView(RedirectView):
                         url = StockStatus.get_raw_url(domain, request=self.request)
                 except EWSExtension.DoesNotExist:
                     pass
-            start_date, end_date = EWSDateFilter.last_reporting_period()
+            start_date, end_date = calculate_last_period()
             url = '%s?location_id=%s&filter_by_program=%s&startdate=%s&enddate=%s' % (
                 url,
                 loc_id or '',
