@@ -8,6 +8,7 @@ from corehq.apps.userreports.exceptions import ColumnNotFoundError
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
+from corehq.util.spreadsheets.excel import alphanumeric_sort_key
 
 DATA_SOURCE_COLUMN = 'data_source_column'
 LOCATION = 'location'
@@ -63,7 +64,8 @@ class ChoiceProvider(object):
         pass
 
     def get_sorted_choices_for_values(self, values):
-        return sorted(self.get_choices_for_values(values), key=lambda choice: choice.display)
+        return sorted(self.get_choices_for_values(values),
+                      key=lambda choice: alphanumeric_sort_key(choice.display))
 
     def get_choices_for_values(self, values):
         choices = set(self.get_choices_for_known_values(values))
