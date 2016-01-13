@@ -70,7 +70,7 @@
     },
     "CareBiharFluffPillow": {
         "advertised_name": "fluff.CareBiharFluffPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.CareBiharFluffPillow.testhq",
         "couch_filter": null,
         "couchdb_type": "CachedCouchDB",
