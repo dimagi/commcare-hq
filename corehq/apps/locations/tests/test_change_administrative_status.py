@@ -18,10 +18,13 @@ otherwise:
 Actually, it looks like the view "commtrack/supply_point_by_loc" will do just
 fine for this purpose, so we can just use that instead.
 """
-from .util import LocationHierarchyTestCase
+from django.test import TestCase
+from corehq.apps.commtrack.models import SupplyPointCase
+from corehq.apps.commtrack.tests.util import bootstrap_domain
+from .util import setup_locations_and_types
 
 
-class TestChangeToTrackStock(LocationHierarchyTestCase):
+class TestChangeStatus(TestCase):
     domain = 'test-change-administrative'
     location_type_names = ['state', 'county', 'city']
     stock_tracking_types = ['city']
@@ -37,27 +40,59 @@ class TestChangeToTrackStock(LocationHierarchyTestCase):
         ])
     ]
 
-    @classmethod
-    def setUpClass(cls):
-        super(TestChangeToTrackStock, cls).setUpClass()
+    def setUp(self):
+        self.domain_obj = bootstrap_domain(self.domain)
 
-    def assertHasSupplyPoint(self, location_name):
-        loc = self.locations[location_name]
-        msg = "'{}' does not have a supply point.".format(location_name)
-        self.assertIsNotNone(loc.supply_point_id, msg)
-        self.assertIsNotNone(loc.linked_supply_point(), msg)
+        self.location_types, self.locations = setup_locations_and_types(
+            self.domain,
+            self.location_type_names,
+            self.stock_tracking_types,
+            self.location_structure,
+        )
 
-    def assertHasNoSupplyPoint(self, location_name):
-        loc = self.locations[location_name]
-        msg = "'{}' should not have a supply point".format(location_name)
-        self.assertIsNone(loc.supply_point_id, msg)
+        self.suffolk = self.locations['Suffolk']
+        self.boston = self.locations['Boston']
+        self.county_type = self.location_types['county']
+        self.city_type = self.location_types['city']
+
+    def tearDown(self):
+        self.domain_obj.delete()
+
+    def assertHasSupplyPoint(self, location):
+        msg = "'{}' does not have a supply point.".format(location.name)
+        self.assertIsNotNone(location.supply_point_id, msg)
+        self.assertIsNotNone(location.linked_supply_point(), msg)
+
+    def assertHasNoSupplyPoint(self, location):
+        msg = "'{}' should not have a supply point".format(location.name)
+        self.assertIsNone(location.supply_point_id, msg)
 
     def test_change_to_track_stock(self):
-        self.assertHasSupplyPoint("Cambridge")
-        self.assertHasNoSupplyPoint("Middlesex")
+        self.assertHasSupplyPoint(self.boston)
+        self.assertHasNoSupplyPoint(self.suffolk)
 
-        self.location_types["county"].administrative = False
-        self.location_types["county"].save()
+        self.county_type.administrative = False
+        self.county_type.save()
 
-        # This fails
-        self.assertHasSupplyPoint("Middlesex")
+        self.assertHasSupplyPoint(self.suffolk)
+
+    def test_change_to_administrative_and_back(self):
+        # at first it should have a supply point
+        self.assertHasSupplyPoint(self.boston)
+        supply_point_id = self.boston.supply_point_id
+
+        self.city_type.administrative = True
+        self.city_type.save()
+
+        # Now that it's administrative, it shouldn't have one
+        # The case should still exist, but be closed
+        self.assertHasNoSupplyPoint(self.boston)
+        self.assertTrue(SupplyPointCase.get(supply_point_id).closed)
+
+        self.city_type.administrative = False
+        self.city_type.save()
+
+        # The same supply point case should be reopened
+        self.assertHasSupplyPoint(self.boston)
+        self.assertEqual(self.boston.supply_point_id, supply_point_id)
+        self.assertFalse(SupplyPointCase.get(supply_point_id).closed)
