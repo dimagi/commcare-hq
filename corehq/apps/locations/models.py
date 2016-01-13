@@ -1,8 +1,6 @@
 import warnings
 from functools import partial
 from couchdbkit import ResourceNotFound
-from django.db.models import Q
-import operator
 from dimagi.ext.couchdbkit import *
 import itertools
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
