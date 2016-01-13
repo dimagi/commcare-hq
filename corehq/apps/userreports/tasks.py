@@ -50,17 +50,17 @@ def _build_indicators(indicator_config_id, relevant_ids):
         except DataError as e:
             logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
 
-        if not _is_static(indicator_config_id):
-            redis_client.delete(redis_key)
-            config.meta.build.finished = True
-            try:
-                config.save()
-            except ResourceConflict:
-                current_config = DataSourceConfiguration.get(config._id)
-                # check that a new build has not yet started
-                if config.meta.build.initiated == current_config.meta.build.initiated:
-                    current_config.meta.build.finished = True
-                    current_config.save()
+    if not _is_static(indicator_config_id):
+        redis_client.delete(redis_key)
+        config.meta.build.finished = True
+        try:
+            config.save()
+        except ResourceConflict:
+            current_config = DataSourceConfiguration.get(config._id)
+            # check that a new build has not yet started
+            if config.meta.build.initiated == current_config.meta.build.initiated:
+                current_config.meta.build.finished = True
+                current_config.save()
 
 
 @task(queue='ucr_queue', ignore_result=True, acks_late=True)
