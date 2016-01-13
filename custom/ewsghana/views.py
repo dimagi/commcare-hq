@@ -14,6 +14,8 @@ from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.sms import process
 from corehq.apps.commtrack.views import BaseCommTrackManageView
+from corehq.apps.consumption.shortcuts import get_default_monthly_consumption, \
+    set_default_consumption_for_supply_point
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -34,7 +36,7 @@ from custom.ewsghana.reports.specific_reports.dashboard_report import DashboardR
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct, StockStatus
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData, StockLevelsReport
 from custom.ewsghana.tasks import balance_migration_task, migrate_email_settings
-from custom.ewsghana.utils import make_url, has_input_stock_permissions
+from custom.ewsghana.utils import make_url, has_input_stock_permissions, calculate_last_period
 from custom.ilsgateway.views import GlobalStats
 from custom.logistics.views import BaseConfigView
 from dimagi.utils.dates import force_to_datetime
@@ -109,6 +111,12 @@ class InputStockView(BaseDomainView):
                             quantity=form.cleaned_data['stock_on_hand']
                         ),
                     )
+
+                amount = form.cleaned_data['default_consumption']
+                if amount is not None:
+                    set_default_consumption_for_supply_point(
+                        self.domain, product.get_id, location.supply_point_id, amount
+                    )
             if data:
                 unpacked_data = {
                     'timestamp': datetime.utcnow(),
@@ -156,6 +164,12 @@ class InputStockView(BaseDomainView):
                     'product': product.name,
                     'stock_on_hand': int(stock_on_hand),
                     'monthly_consumption': round(monthly_consumption) if monthly_consumption else 0,
+                    'default_consumption': get_default_monthly_consumption(
+                        self.domain,
+                        product.product_id,
+                        sql_location.location_type.name,
+                        sql_location.supply_point_id
+                    ),
                     'units': product.units
                 }
             )
@@ -364,7 +378,7 @@ class DashboardPageView(RedirectView):
                         url = StockStatus.get_raw_url(domain, request=self.request)
                 except EWSExtension.DoesNotExist:
                     pass
-            start_date, end_date = EWSDateFilter.last_reporting_period()
+            start_date, end_date = calculate_last_period()
             url = '%s?location_id=%s&filter_by_program=%s&startdate=%s&enddate=%s' % (
                 url,
                 loc_id or '',

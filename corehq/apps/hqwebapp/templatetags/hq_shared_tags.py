@@ -25,7 +25,7 @@ def JSON(obj):
     if isinstance(obj, QueryDict):
         obj = dict(obj)
     try:
-        return mark_safe(json.dumps(obj, default=json_handler))
+        return mark_safe(escape_script_tags(json.dumps(obj, default=json_handler)))
     except TypeError as e:
         msg = ("Unserializable data was sent to the `|JSON` template tag.  "
                "If DEBUG is off, Django will silently swallow this error.  "
@@ -34,10 +34,9 @@ def JSON(obj):
         raise e
 
 
-@register.filter
-def to_javascript_string(obj):
+def escape_script_tags(unsafe_str):
     # seriously: http://stackoverflow.com/a/1068548/8207
-    return mark_safe(JSON(obj).replace('</script>', '<" + "/script>'))
+    return unsafe_str.replace('</script>', '<" + "/script>')
 
 
 @register.filter

@@ -26,7 +26,7 @@ EXCHANGE_RATE_DECIMAL_PLACES = 9
 
 
 def log_accounting_error(message):
-    logger.error("[BILLING] %s" % message, exc_info=True)
+    logger.error("[BILLING] %s" % message)
 
 
 def log_accounting_info(message):

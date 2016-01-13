@@ -29,7 +29,7 @@
                         endpoint: '{% url 'fixture_metadata' domain=domain %}'
                     }
                 ],
-                form: {{ form.source|to_javascript_string }},
+                form: {{ form.source|JSON }},
                 formId: '{{ form.get_unique_id }}',
                 formName: "{{ form.name|trans:app.langs|escapejs }}",
                 saveType: 'patch',

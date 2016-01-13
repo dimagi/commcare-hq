@@ -104,6 +104,19 @@ class TestBlobMixin(BaseTestCase):
         self.assertFalse(os.path.exists(path1), "found unexpected file: " + path1)
         self.assertEqual(self.obj.fetch_attachment(name), "content 2")
 
+    def test_put_attachment_failed_save_does_not_delete_replaced_blob(self):
+        name = "test.\u4500"
+        doc = self.make_doc(FailingSaveCouchDocument)
+        bucket = doc._blobdb_bucket()
+        doc.put_attachment("content 1", name)
+        old_blob = doc.blobs[name]
+        with self.assertRaises(BlowUp):
+            doc.put_attachment("content 2", name)
+        old_path = self.db.get_path(old_blob.id, bucket)
+        doc.blobs[name] = old_blob  # simulate get from couch
+        self.assertTrue(os.path.exists(old_path), "not found: " + old_path)
+        self.assertEqual(doc.fetch_attachment(name), "content 1")
+
     def test_put_attachment_deletes_couch_attachment(self):
         name = "test"
         content = StringIO(b"content")
@@ -276,6 +289,38 @@ class TestBlobMixin(BaseTestCase):
         path = self.db.get_path(bucket=doc._blobdb_bucket())
         self.assertEqual(len(os.listdir(path)), 0)
 
+    def test_atomic_blobs_fail_restores_deleted_blob(self):
+        name = "delete-fail"
+        self.obj.put_attachment("content", name)
+        with self.assertRaises(BlowUp):
+            with self.obj.atomic_blobs():
+                self.obj.delete_attachment(name)
+                raise BlowUp("while deleting blob")
+        self.assertEqual(self.obj.blobs[name].content_length, 7)
+        self.assertEqual(self.obj.fetch_attachment(name), "content")
+        # verify cleanup
+        path = self.db.get_path(bucket=self.obj._blobdb_bucket())
+        self.assertEqual(len(os.listdir(path)), len(self.obj.blobs))
+
+    def test_atomic_blobs_fail_restores_deleted_couch_attachment(self):
+        couch_digest = "md5-" + b64encode(md5(b"content").digest())
+        doc = self.make_doc(FallbackToCouchDocument)
+        doc._attachments["att"] = {
+            "content": b"couch content",
+            "content_type": None,
+            "digest": couch_digest,
+            "length": 13,
+        }
+        with self.assertRaises(BlowUp):
+            with doc.atomic_blobs():
+                doc.delete_attachment("att")
+                raise BlowUp("while deleting couch attachment")
+        self.assertEqual(doc.blobs["att"].content_length, 13)
+        self.assertEqual(doc.fetch_attachment("att"), "couch content")
+        # verify cleanup
+        path = self.db.get_path(bucket=doc._blobdb_bucket())
+        self.assertTrue(not os.path.exists(path) or len(os.listdir(path)) == 0)
+
 
 class FakeCouchDocument(mod.BlobMixin, Document):
 
@@ -295,6 +340,18 @@ class FakeCouchDocument(mod.BlobMixin, Document):
 
     def save(self):
         self.saved = True
+
+
+class FailingSaveCouchDocument(FakeCouchDocument):
+
+    allow_saves = 1
+
+    def save(self):
+        if self.allow_saves:
+            self.saved = True
+            self.allow_saves -= 1
+        else:
+            raise BlowUp("save failed")
 
 
 class AttachmentFallback(object):

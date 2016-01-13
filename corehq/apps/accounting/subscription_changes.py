@@ -78,7 +78,6 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         privileges.INBOUND_SMS,
         privileges.ROLE_BASED_ACCESS,
         privileges.DATA_CLEANUP,
-        LATER_SUBSCRIPTION_NOTIFICATION,
         privileges.COMMCARE_LOGO_UPLOADER,
     ]
     action_type = "downgrade"
@@ -161,32 +160,6 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         #         cc_user.save()
         UserRole.archive_custom_roles_for_domain(self.domain.name)
         UserRole.reset_initial_roles_for_domain(self.domain.name)
-        return True
-
-    @property
-    def response_later_subscription(self):
-        """
-        Makes sure that subscriptions beginning in the future are ended.
-        """
-        from corehq.apps.accounting.models import (
-            Subscription, SubscriptionAdjustment, SubscriptionAdjustmentReason
-        )
-        try:
-            for later_subscription in Subscription.objects.filter(
-                subscriber__domain=self.domain.name,
-                date_start__gt=self.date_start
-            ).order_by('date_start').all():
-                later_subscription.date_start = datetime.date.today()
-                later_subscription.date_end = datetime.date.today()
-                later_subscription.save()
-                SubscriptionAdjustment.record_adjustment(
-                    later_subscription,
-                    reason=SubscriptionAdjustmentReason.CANCEL,
-                    web_user=self.web_user,
-                    note="Cancelled due to changing subscription",
-                )
-        except Subscription.DoesNotExist:
-            pass
         return True
 
     @property

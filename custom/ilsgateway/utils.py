@@ -56,13 +56,6 @@ def supply_points_with_latest_status_by_datespan(locations, status_type, status_
     return [SupplyPointCase.get(id) for id in ids]
 
 
-def ils_bootstrap_domain_test_task(domain, endpoint):
-    from custom.logistics.commtrack import bootstrap_domain
-    from custom.ilsgateway.api import ILSGatewayAPI
-    return bootstrap_domain(ILSGatewayAPI(domain, endpoint))
-ils_bootstrap_domain_test_task.__test__ = False
-
-
 def send_translated_message(user, message, **kwargs):
     verified_number = user.get_verified_number()
     if not verified_number:
