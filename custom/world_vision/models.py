@@ -118,6 +118,7 @@ class WorldVisionHierarchyFluff(fluff.IndicatorDocument):
     domains = WORLD_VISION_DOMAINS
     group_by = ('domain',)
     save_direct_to_sql = True
+    kafka_topic = topics.META
 
     numerator = Numerator()
     lvl_4 = user_data('phc')
@@ -193,4 +194,3 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
 WorldVisionMotherFluffPillow = WorldVisionMotherFluff.pillow()
 WorldVisionChildFluffPillow = WorldVisionChildFluff.pillow()
 WorldVisionHierarchyFluffPillow = WorldVisionHierarchyFluff.pillow()
-

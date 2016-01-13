@@ -627,7 +627,7 @@
     },
     "WorldVisionHierarchyFluffPillow": {
         "advertised_name": "fluff.WorldVisionHierarchyFluffPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.WorldVisionHierarchyFluffPillow.testhq",
         "couch_filter": null,
         "couchdb_type": "CachedCouchDB",
