@@ -12,14 +12,13 @@
 </script>
 
 <div id="usercase-config-ko">
-    <div class="row">
-        <div class="col-sm-12">
+    <div class="clearfix">
             {% if allow_usercase %}
             <div data-bind="saveButton: saveUsercaseButton"></div>
             {% endif %}
-        </div>
     </div>
-    <div data-bind="with: caseConfigViewModel">
+    <div class="spacer"></div>
+    <div data-bind="with: caseConfigViewModel" class="container-fluid">
         <div data-bind="template: {name: 'usercase-config:case-transaction', data: usercase_transaction }"></div>
     </div>
 </div>

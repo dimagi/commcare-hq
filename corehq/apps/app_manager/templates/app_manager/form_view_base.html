@@ -363,10 +363,10 @@
                                 {% endblocktrans %}</p>
 
                                 <p>
-                                    <a href="{% url 'domain_select_plan' domain %}" class="btn btn-primary col-sm-6">
+                                    <a href="{% url 'domain_select_plan' domain %}" class="btn btn-primary">
                                         {% trans "Change your subscription" %}
                                     </a>
-                                    <a href="{% url 'drop_user_case' domain app.id %}" class="btn btn-danger col-sm-6">
+                                    <a href="{% url 'drop_user_case' domain app.id %}" class="btn btn-danger">
                                         {% trans "Remove User Case Properties" %}
                                     </a>
                                 </p>
