@@ -36,7 +36,7 @@ COMMCAREHQ.makeHqHelp = function (opts, wrap) {
     var el = $(
         '<div class="hq-help">' + 
             '<a href="#">' +
-                '<i class="icon-question-sign"></i></a></div>'
+                '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
     );
     for (var attr in ['content', 'title', 'html']) {
         $('a', el).data(attr, opts[attr]);
