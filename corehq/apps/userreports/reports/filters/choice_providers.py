@@ -169,7 +169,9 @@ class LocationChoiceProvider(ChainableChoiceProvider):
     def get_choices_for_known_values(self, values):
         selected_locations = SQLLocation.active_objects.filter(location_id__in=values)
         if self.include_descendants:
-            selected_locations = SQLLocation.get_queryset_descendants(selected_locations, include_self=True)
+            selected_locations = SQLLocation.objects.get_queryset_descendants(
+                selected_locations, include_self=True
+            )
 
         return [Choice(loc.location_id, loc.display_name) for loc in selected_locations]
 
