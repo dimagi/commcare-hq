@@ -1713,30 +1713,6 @@ class AdminTab(UITab):
                  toggles.IS_DEVELOPER.enabled(self.couch_user.username)))
 
 
-class ExchangeTab(UITab):
-    title = ugettext_noop("Exchange")
-    view = "corehq.apps.appstore.views.appstore"
-
-    @property
-    def dropdown_items(self):
-        submenu_context = None
-        if self.domain and self.couch_user.is_domain_admin(self.domain):
-            submenu_context = [
-                dropdown_dict(_("CommCare Exchange"), url=reverse("appstore")),
-                dropdown_dict(
-                    _("Publish this project"),
-                    url=reverse("domain_snapshot_settings",
-                                args=[self.domain]))
-            ]
-        return submenu_context
-
-    @property
-    def is_viewable(self):
-        couch_user = self.couch_user
-        return (self.domain and couch_user and couch_user.can_edit_apps() and
-                (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
-
-
 class MaintenanceAlert(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now_add=True)
