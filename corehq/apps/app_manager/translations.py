@@ -574,11 +574,12 @@ def update_form_translations(sheet, rows, missing_cols, app):
                             break
 
                 if trans_type == 'default':
-                    if new_translation:
-                        value_node = next(
+                    # plaintext/Markdown
+                    value_node = next(
                             n for n in text_node.findall("./{f}value")
                             if 'form' not in n.attrib
-                        )
+                    )
+                    if new_translation:
                         old_translation = etree.tostring(value_node.xml, method="text", encoding="unicode").strip()
                         markdown_node = text_node.find("./{f}value[@form='markdown']")
                         has_markdown = _looks_like_markdown(new_translation)
@@ -591,9 +592,10 @@ def update_form_translations(sheet, rows, missing_cols, app):
                                                      markdown_node,
                                                      {'form': 'markdown'})
                     _update_translation_node(new_translation,
-                                             text_node.find("./{f}value"),
-                                             {'form': trans_type}, delete_node=(not keep_value_node))
+                                             value_node,
+                                             {'form': 'default'}, delete_node=(not keep_value_node))
                 else:
+                    # audio/image/video
                     _update_translation_node(new_translation,
                                              text_node.find("./{f}value[@form='%s']" % trans_type),
                                              {'form': trans_type})
