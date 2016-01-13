@@ -35,6 +35,28 @@ def _get_redis_key_for_config(config):
     return 'ucr_queue-{}:{}'.format(config._id, rev)
 
 
+def _build_indicators(indicator_config_id, config, couchdb, adapter, redis_client, redis_key, relevant_ids):
+    for doc in iter_docs(couchdb, relevant_ids, chunksize=500):
+        try:
+            # save is a noop if the filter doesn't match
+            adapter.save(doc)
+            redis_client.srem(redis_key, doc.get('_id'))
+        except DataError as e:
+            logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
+
+        if not _is_static(indicator_config_id):
+            redis_client.delete(redis_key)
+            config.meta.build.finished = True
+            try:
+                config.save()
+            except ResourceConflict:
+                current_config = DataSourceConfiguration.get(config._id)
+                # check that a new build has not yet started
+                if config.meta.build.initiated == current_config.meta.build.initiated:
+                    current_config.meta.build.finished = True
+                    current_config.save()
+
+
 @task(queue='ucr_queue', ignore_result=True, acks_late=True)
 def rebuild_indicators(indicator_config_id):
     config = _get_config_by_id(indicator_config_id)
@@ -60,25 +82,7 @@ def rebuild_indicators(indicator_config_id):
         for docs in chunked(relevant_ids, 1000):
             redis_client.sadd(redis_key, *docs)
 
-    for doc in iter_docs(couchdb, relevant_ids, chunksize=500):
-        try:
-            # save is a noop if the filter doesn't match
-            adapter.save(doc)
-            redis_client.srem(redis_key, doc.get('_id'))
-        except DataError as e:
-            logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
-
-    if not _is_static(indicator_config_id):
-        redis_client.delete(redis_key)
-        config.meta.build.finished = True
-        try:
-            config.save()
-        except ResourceConflict:
-            current_config = DataSourceConfiguration.get(config._id)
-            # check that a new build has not yet started
-            if config.meta.build.initiated == current_config.meta.build.initiated:
-                current_config.meta.build.finished = True
-                current_config.save()
+    _build_indicators(indicator_config_id, config, couchdb, adapter, redis_client, redis_key, relevant_ids)
 
 
 def _get_db(doc_type):
