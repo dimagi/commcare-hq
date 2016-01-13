@@ -729,8 +729,7 @@ instead), but it exists because the report builder needs it.
 
 Dynamic choice lists provide a select widget that will generate a list of options dynamically.
 
-The default behavior is simply to show all possible values for a column, however you can also specify a `choice_provider` to customize this behavior.
-Currently the only supported `choice_provider` is for locations.
+The default behavior is simply to show all possible values for a column, however you can also specify a `choice_provider` to customize this behavior (see below).
 
 Simple example assuming "village" is a name:
 ```json
@@ -743,6 +742,20 @@ Simple example assuming "village" is a name:
 }
 ```
 
+#### Choice providers
+
+Currently the supported `choice_provider`s are supported:
+
+
+Field                | Description
+-------------------- | -----------
+location             | Select a location by name
+user                 | Select a user
+owner                | Select a possible case owner owner (user, group, or location)
+
+
+Location choice providers also support an "include_descendants" property to include descendant locations in the results, which defaults to `false`.
+
 Example assuming "village" is a location ID, which is converted to names using the location `choice_provider`:
 ```json
 {
@@ -752,7 +765,8 @@ Example assuming "village" is a location ID, which is converted to names using t
   "display": "Village",
   "datatype": "string",
   "choice_provider": {
-      "type": "location"
+      "type": "location",
+      "include_descendants": false
   }
 }
 ```
