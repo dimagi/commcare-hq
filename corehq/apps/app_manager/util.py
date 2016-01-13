@@ -140,8 +140,8 @@ class ParentCasePropertyBuilder(object):
 
     @memoized
     def get_other_case_sharing_apps_in_domain(self):
-        from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
-        apps = get_brief_apps_in_domain(self.app.domain, include_remote=False)
+        from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+        apps = get_apps_in_domain(self.app.domain, include_remote=False)
         return [a for a in apps if a.case_sharing and a.id != self.app.id]
 
     @memoized

@@ -18,7 +18,7 @@ from corehq.apps.userreports.reports.util import (
     get_expanded_columns,
     get_total_row,
 )
-from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 
 
 class ReportFixturesProvider(object):
@@ -31,7 +31,7 @@ class ReportFixturesProvider(object):
         if not toggles.MOBILE_UCR.enabled(user.domain):
             return []
 
-        apps = [app] if app else (a for a in get_brief_apps_in_domain(user.domain, include_remote=False))
+        apps = [app] if app else (a for a in get_apps_in_domain(user.domain, include_remote=False))
         report_configs = [
             report_config
             for app_ in apps
