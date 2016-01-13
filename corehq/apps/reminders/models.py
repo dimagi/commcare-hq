@@ -1,6 +1,7 @@
 import pytz
 from datetime import timedelta, datetime, date, time
 import re
+from collections import namedtuple
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from dimagi.ext.couchdbkit import *
@@ -1012,35 +1013,37 @@ class CaseReminderHandler(Document):
         with CriticalSection([key]):
             self._case_changed(case, now, schedule_changed, prev_definition)
 
-    def get_case_criteria_reminder_start_date(self, case, now):
+    def get_case_criteria_reminder_start_date_info(self, case, now):
         """
-        Returns (start, spawn, used_now) where:
+        Returns a namedtuple of:
             start - datetime representing the reminder start time
             spawn - True to continue with the reminder spawn or
                     False to not spawn the reminder
             used_now - True if start is just now, False otherwise
         """
+        StartDateInfo = namedtuple('StartDateInfo', 'start spawn used_now')
+
         if not self.start_date:
-            return (now, True, True)
+            return StartDateInfo(now, True, True)
 
         start_date = get_case_property(case, self.start_date)
 
         if isinstance(start_date, datetime):
-            return (start_date, True, False)
+            return StartDateInfo(start_date, True, False)
 
         if isinstance(start_date, date):
-            return (datetime.combine(start_date, time(0, 0)), True, False)
+            return StartDateInfo(datetime.combine(start_date, time(0, 0)), True, False)
 
         if looks_like_timestamp(start_date):
             try:
-                return (parse(start_date), True, False)
+                return StartDateInfo(parse(start_date), True, False)
             except Exception:
                 pass
 
         if self.use_today_if_start_date_is_blank:
-            return (now, True, True)
+            return StartDateInfo(now, True, True)
         else:
-            return (None, False, False)
+            return StartDateInfo(None, False, False)
 
     def _case_changed(self, case, now, schedule_changed, prev_definition):
         """
@@ -1074,7 +1077,7 @@ class CaseReminderHandler(Document):
                 reminder.retire()
         else:
             start_condition_reached = case_matches_criteria(case, self.start_match_type, self.start_property, self.start_value)
-            start, spawn, used_now = self.get_case_criteria_reminder_start_date(case, now)
+            start, spawn, used_now = self.get_case_criteria_reminder_start_date_info(case, now)
             if not spawn:
                 if reminder:
                     reminder.retire()

@@ -1152,55 +1152,55 @@ class ReminderDefinitionCalculationsTestCase(TestCase):
         )
 
         self.assertEqual(
-            reminder.get_case_criteria_reminder_start_date(case, now),
+            reminder.get_case_criteria_reminder_start_date_info(case, now),
             (now, True, True)
         )
 
         reminder.start_date = 'start_date_case_property'
         self.assertEqual(
-            reminder.get_case_criteria_reminder_start_date(case, now),
+            reminder.get_case_criteria_reminder_start_date_info(case, now),
             (None, False, False)
         )
 
         case.set_case_property('start_date_case_property', '')
         self.assertEqual(
-            reminder.get_case_criteria_reminder_start_date(case, now),
+            reminder.get_case_criteria_reminder_start_date_info(case, now),
             (None, False, False)
         )
 
         case.set_case_property('start_date_case_property', '   ')
         self.assertEqual(
-            reminder.get_case_criteria_reminder_start_date(case, now),
+            reminder.get_case_criteria_reminder_start_date_info(case, now),
             (None, False, False)
         )
 
         case.set_case_property('start_date_case_property', 'abcdefg')
         self.assertEqual(
-            reminder.get_case_criteria_reminder_start_date(case, now),
+            reminder.get_case_criteria_reminder_start_date_info(case, now),
             (None, False, False)
         )
 
         case.set_case_property('start_date_case_property', '2016-01-32')
         self.assertEqual(
-            reminder.get_case_criteria_reminder_start_date(case, now),
+            reminder.get_case_criteria_reminder_start_date_info(case, now),
             (None, False, False)
         )
 
         case.set_case_property('start_date_case_property', '2016-01-10')
         self.assertEqual(
-            reminder.get_case_criteria_reminder_start_date(case, now),
+            reminder.get_case_criteria_reminder_start_date_info(case, now),
             (datetime(2016, 1, 10), True, False)
         )
 
         case.set_case_property('start_date_case_property', date(2016, 1, 11))
         self.assertEqual(
-            reminder.get_case_criteria_reminder_start_date(case, now),
+            reminder.get_case_criteria_reminder_start_date_info(case, now),
             (datetime(2016, 1, 11), True, False)
         )
 
         case.set_case_property('start_date_case_property', datetime(2016, 1, 12))
         self.assertEqual(
-            reminder.get_case_criteria_reminder_start_date(case, now),
+            reminder.get_case_criteria_reminder_start_date_info(case, now),
             (datetime(2016, 1, 12), True, False)
         )
 
@@ -1217,54 +1217,54 @@ class ReminderDefinitionCalculationsTestCase(TestCase):
         )
 
         self.assertEqual(
-            reminder.get_case_criteria_reminder_start_date(case, now),
+            reminder.get_case_criteria_reminder_start_date_info(case, now),
             (now, True, True)
         )
 
         reminder.start_date = 'start_date_case_property'
         self.assertEqual(
-            reminder.get_case_criteria_reminder_start_date(case, now),
+            reminder.get_case_criteria_reminder_start_date_info(case, now),
             (now, True, True)
         )
 
         case.set_case_property('start_date_case_property', '')
         self.assertEqual(
-            reminder.get_case_criteria_reminder_start_date(case, now),
+            reminder.get_case_criteria_reminder_start_date_info(case, now),
             (now, True, True)
         )
 
         case.set_case_property('start_date_case_property', '   ')
         self.assertEqual(
-            reminder.get_case_criteria_reminder_start_date(case, now),
+            reminder.get_case_criteria_reminder_start_date_info(case, now),
             (now, True, True)
         )
 
         case.set_case_property('start_date_case_property', 'abcdefg')
         self.assertEqual(
-            reminder.get_case_criteria_reminder_start_date(case, now),
+            reminder.get_case_criteria_reminder_start_date_info(case, now),
             (now, True, True)
         )
 
         case.set_case_property('start_date_case_property', '2016-01-32')
         self.assertEqual(
-            reminder.get_case_criteria_reminder_start_date(case, now),
+            reminder.get_case_criteria_reminder_start_date_info(case, now),
             (now, True, True)
         )
 
         case.set_case_property('start_date_case_property', '2016-01-10')
         self.assertEqual(
-            reminder.get_case_criteria_reminder_start_date(case, now),
+            reminder.get_case_criteria_reminder_start_date_info(case, now),
             (datetime(2016, 1, 10), True, False)
         )
 
         case.set_case_property('start_date_case_property', date(2016, 1, 11))
         self.assertEqual(
-            reminder.get_case_criteria_reminder_start_date(case, now),
+            reminder.get_case_criteria_reminder_start_date_info(case, now),
             (datetime(2016, 1, 11), True, False)
         )
 
         case.set_case_property('start_date_case_property', datetime(2016, 1, 12))
         self.assertEqual(
-            reminder.get_case_criteria_reminder_start_date(case, now),
+            reminder.get_case_criteria_reminder_start_date_info(case, now),
             (datetime(2016, 1, 12), True, False)
         )
