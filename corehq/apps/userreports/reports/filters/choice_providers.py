@@ -129,7 +129,7 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
             return []
 
     def get_choices_for_known_values(self, values):
-        return [Choice(v, unicode(v)) for v in values]
+        return [Choice(v, unicode(v) if v is not None else '') for v in values]
 
 
 class LocationChoiceProvider(ChainableChoiceProvider):
