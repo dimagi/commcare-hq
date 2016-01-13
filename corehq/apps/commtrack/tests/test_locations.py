@@ -158,7 +158,6 @@ class MultiLocationsTest(CommTrackTest):
             user.remove_location_delegate(loc)
             self.assertEqual(submit_blocks.call_count, 0)
 
-
     def test_can_clear_locations(self):
         user = self.user
         user.clear_location_delegates()
@@ -169,10 +168,10 @@ class MultiLocationsTest(CommTrackTest):
         user = self.user
 
         loc1 = make_loc('secondloc')
-        sp1 = loc.linked_supply_point()
+        sp1 = loc1.linked_supply_point()
 
         loc2 = make_loc('thirdloc')
-        sp2 = loc.linked_supply_point()
+        sp2 = loc2.linked_supply_point()
 
         user.create_location_delegates([loc1, loc2])
 
