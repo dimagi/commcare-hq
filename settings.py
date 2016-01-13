@@ -1614,7 +1614,8 @@ COMPRESS_OFFLINE_CONTEXT = {
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
-COMPRESS_JS_COMPRESSOR = 'corehq.apps.style.uglify.JsUglifySourcemapCompressor'
+COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor' if not COMPRESS_OFFLINE else 'corehq.apps.style.uglify.JsUglifySourcemapCompressor'
+
 
 
 if 'locmem' not in CACHES:
