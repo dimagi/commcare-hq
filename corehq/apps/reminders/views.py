@@ -7,6 +7,7 @@ import pytz
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.style.decorators import use_bootstrap3, use_datatables, use_knockout_js, use_jquery_ui, \
     use_timepicker, use_select2
 from corehq.apps.translations.models import StandaloneTranslationDoc
@@ -16,9 +17,8 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.app_manager.models import Application, Form
-from corehq.apps.app_manager.util import (get_case_properties,
-    get_correct_app_class)
+from corehq.apps.app_manager.models import Form
+from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.hqwebapp.views import (CRUDPaginatedViewMixin,
     DataTablesAJAXPaginationMixin)
 from corehq import toggles
@@ -453,24 +453,9 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         return self.request.POST.get('caseType')
 
     @property
-    def app_ids(self):
-        data = Application.get_db().view(
-            'app_manager/applications_brief',
-            reduce=False,
-            startkey=[self.domain],
-            endkey=[self.domain, {}],
-        ).all()
-        return [d['id'] for d in data]
-
-    @property
     @memoized
     def apps(self):
-        result = []
-        for app_doc in iter_docs(Application.get_db(), self.app_ids):
-            app = get_correct_app_class(app_doc).wrap(app_doc)
-            if not app.is_remote_app():
-                result.append(app)
-        return result
+        return get_apps_in_domain(self.domain, include_remote=False)
 
     @property
     def search_term(self):
