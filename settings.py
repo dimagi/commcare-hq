@@ -1375,16 +1375,8 @@ PILLOWTOPS = {
         'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
-        {
-            'name': 'WorldVisionMotherFluffPillow',
-            'class': 'custom.world_vision.models.WorldVisionMotherFluffPillow',
-            'instance': 'custom.world_vision.models.get_mother_pillow',
-        },
-        {
-            'name': 'WorldVisionChildFluffPillow',
-            'class': 'custom.world_vision.models.WorldVisionChildFluffPillow',
-            'instance': 'custom.world_vision.models.get_child_pillow',
-        },
+        'custom.world_vision.models.WorldVisionMotherFluffPillow',
+        'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
         {
             'name': 'UCLAPatientFluffPillow',
