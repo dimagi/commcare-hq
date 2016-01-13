@@ -11,10 +11,10 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import send_sms_to_verified_number, send_sms_with_backend, send_sms_with_backend_name
 from corehq.apps.sms.mixin import (SMSBackend, BadSMSConfigException,
     MobileBackend, apply_leniency)
-from corehq.apps.sms.models import CommConnectCase
+from corehq.apps.sms.models import CommConnectCase, SQLMobileBackendMapping, SQLMobileBackend, MobileBackendInvitation
 from corehq.apps.sms.util import get_contact
 from corehq.apps.sms.tests.util import BaseSMSTest
-from corehq.messaging.smsbackends.test.models import TestSMSBackend
+from corehq.messaging.smsbackends.test.models import TestSMSBackend, SQLTestSMSBackend
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
@@ -24,6 +24,7 @@ from corehq.apps.users.util import format_username
 from django.conf import settings
 from django.test import TestCase
 from corehq.apps.accounting import generator
+from mock import patch
 
 
 class BackendInvocationDoc(Document):
@@ -90,363 +91,351 @@ class BackendTestCase(BaseSMSTest):
         self.create_account_and_subscription(self.domain_obj.name)
         self.domain_obj = Domain.get(self.domain_obj._id) # Prevent resource conflict
 
-        self.backend1 = TestCaseBackend(name="BACKEND1",is_global=True)
-        self.backend1.save()
+        self.backend1 = SQLTestSMSBackend.objects.create(
+            name='BACKEND1',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id()
+        )
 
-        self.backend2 = TestCaseBackend(name="BACKEND2",is_global=True)
-        self.backend2.save()
+        self.backend2 = SQLTestSMSBackend.objects.create(
+            name='BACKEND2',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id()
+        )
 
-        self.backend3 = TestCaseBackend(name="BACKEND3",is_global=True)
-        self.backend3.save()
+        self.backend3 = SQLTestSMSBackend.objects.create(
+            name='BACKEND3',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id()
+        )
 
-        self.backend4 = TestCaseBackend(name="BACKEND4",is_global=True)
-        self.backend4.save()
+        self.backend4 = SQLTestSMSBackend.objects.create(
+            name='BACKEND4',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id()
+        )
 
-        self.backend5 = TestCaseBackend(name="BACKEND5",domain=self.domain,is_global=False,authorized_domains=[])
-        self.backend5.save()
+        self.backend5 = SQLTestSMSBackend.objects.create(
+            name='BACKEND5',
+            domain=self.domain,
+            is_global=False,
+            hq_api_id=SQLTestSMSBackend.get_api_id()
+        )
 
-        self.backend6 = TestCaseBackend(name="BACKEND6",domain=self.domain2,is_global=False,authorized_domains=[self.domain])
-        self.backend6.save()
+        self.backend6 = SQLTestSMSBackend.objects.create(
+            name='BACKEND6',
+            domain=self.domain2,
+            is_global=False,
+            hq_api_id=SQLTestSMSBackend.get_api_id()
+        )
+        self.backend6.set_shared_domains([self.domain])
 
-        self.backend7 = TestCaseBackend(name="BACKEND7",domain=self.domain2,is_global=False,authorized_domains=[])
-        self.backend7.save()
-        
-        self.backend8 = TestCaseBackend(name="BACKEND",domain=self.domain,is_global=False,authorized_domains=[])
-        self.backend8.save()
+        self.backend7 = SQLTestSMSBackend.objects.create(
+            name='BACKEND7',
+            domain=self.domain2,
+            is_global=False,
+            hq_api_id=SQLTestSMSBackend.get_api_id()
+        )
 
-        self.backend9 = TestCaseBackend(name="BACKEND",domain=self.domain2,is_global=False,authorized_domains=[self.domain])
-        self.backend9.save()
+        self.backend8 = SQLTestSMSBackend.objects.create(
+            name='BACKEND',
+            domain=self.domain,
+            is_global=False,
+            hq_api_id=SQLTestSMSBackend.get_api_id()
+        )
 
-        self.backend10 = TestCaseBackend(name="BACKEND",is_global=True)
-        self.backend10.save()
+        self.backend9 = SQLTestSMSBackend.objects.create(
+            name='BACKEND',
+            domain=self.domain2,
+            is_global=False,
+            hq_api_id=SQLTestSMSBackend.get_api_id()
+        )
+        self.backend9.set_shared_domains([self.domain])
 
-        self.backend_mapping1 = BackendMapping(is_global=True,prefix="*",backend_id=self.backend1._id)
-        self.backend_mapping1.save()
+        self.backend10 = SQLTestSMSBackend.objects.create(
+            name='BACKEND',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id()
+        )
 
-        self.backend_mapping2 = BackendMapping(is_global=True,prefix="1",backend_id=self.backend2._id)
-        self.backend_mapping2.save()
+        self.backend_mapping1 = SQLMobileBackendMapping.objects.create(
+            is_global=True,
+            backend_type=SQLMobileBackend.SMS,
+            prefix='*',
+            backend=self.backend1
+        )
 
-        self.backend_mapping3 = BackendMapping(is_global=True,prefix="91",backend_id=self.backend3._id)
-        self.backend_mapping3.save()
+        self.backend_mapping2 = SQLMobileBackendMapping.objects.create(
+            is_global=True,
+            backend_type=SQLMobileBackend.SMS,
+            prefix='1',
+            backend=self.backend2
+        )
 
-        self.backend_mapping4 = BackendMapping(is_global=True,prefix="265",backend_id=self.backend4._id)
-        self.backend_mapping4.save()
+        self.backend_mapping3 = SQLMobileBackendMapping.objects.create(
+            is_global=True,
+            backend_type=SQLMobileBackend.SMS,
+            prefix='91',
+            backend=self.backend3
+        )
 
-        self.backend_mapping5 = BackendMapping(is_global=True, prefix="256", backend_id=self.backend5._id)
-        self.backend_mapping5.save()
+        self.backend_mapping4 = SQLMobileBackendMapping.objects.create(
+            is_global=True,
+            backend_type=SQLMobileBackend.SMS,
+            prefix='265',
+            backend=self.backend4
+        )
 
-        self.backend_mapping6 = BackendMapping(is_global=True, prefix="25670", backend_id=self.backend6._id)
-        self.backend_mapping6.save()
+        self.backend_mapping5 = SQLMobileBackendMapping.objects.create(
+            is_global=True,
+            backend_type=SQLMobileBackend.SMS,
+            prefix='256',
+            backend=self.backend5
+        )
 
-        self.backend_mapping7 = BackendMapping(is_global=True, prefix="25675", backend_id=self.backend7._id)
-        self.backend_mapping7.save()
+        self.backend_mapping6 = SQLMobileBackendMapping.objects.create(
+            is_global=True,
+            backend_type=SQLMobileBackend.SMS,
+            prefix='25670',
+            backend=self.backend6
+        )
+
+        self.backend_mapping7 = SQLMobileBackendMapping.objects.create(
+            is_global=True,
+            backend_type=SQLMobileBackend.SMS,
+            prefix='25675',
+            backend=self.backend7
+        )
 
         self.case = CommCareCase(domain=self.domain)
-        self.case.set_case_property("contact_phone_number","15551234567")
-        self.case.set_case_property("contact_phone_number_is_verified", "1")
+        self.case.set_case_property('contact_phone_number', '15551234567')
+        self.case.set_case_property('contact_phone_number_is_verified', '1')
         self.case.save()
 
         self.contact = CommConnectCase.wrap(self.case.to_json())
 
-        settings.SMS_LOADED_BACKENDS.append("corehq.apps.sms.tests.TestCaseBackend")
-
     def tearDown(self):
-        self.backend1.delete_invoke_doc()
+        for obj in (
+            list(MobileBackendInvitation.objects.all()) +
+            list(SQLMobileBackendMapping.objects.all())
+        ):
+            # For now we can't do bulk delete because we need to have the
+            # delete sync with couch
+            obj.delete()
+
         self.backend1.delete()
-        self.backend_mapping1.delete()
-
-        self.backend2.delete_invoke_doc()
         self.backend2.delete()
-        self.backend_mapping2.delete()
-
-        self.backend3.delete_invoke_doc()
         self.backend3.delete()
-        self.backend_mapping3.delete()
-
-        self.backend4.delete_invoke_doc()
         self.backend4.delete()
-        self.backend_mapping4.delete()
-
-        self.backend5.delete_invoke_doc()
         self.backend5.delete()
-        self.backend_mapping5.delete()
-
-        self.backend6.delete_invoke_doc()
         self.backend6.delete()
-        self.backend_mapping6.delete()
-
-        self.backend7.delete_invoke_doc()
         self.backend7.delete()
-        self.backend_mapping7.delete()
+        self.backend8.delete()
+        self.backend9.delete()
+        self.backend10.delete()
 
         self.contact.delete_verified_number()
         self.case.delete()
-
         self.domain_obj.delete()
 
         if self.site_created:
             self.site.delete()
 
-        settings.SMS_LOADED_BACKENDS.pop()
-
         super(BackendTestCase, self).tearDown()
 
     def test_multiple_country_prefixes(self):
-        self.assertEqual(MobileBackend.auto_load('256800000000')._id, self.backend5._id)
-        self.assertEqual(MobileBackend.auto_load('256700000000')._id, self.backend6._id)
-        self.assertEqual(MobileBackend.auto_load('256750000000')._id, self.backend7._id)
+        self.assertEqual(
+            SQLMobileBackend.load_default_by_phone_and_domain(
+                SQLMobileBackend.SMS,
+                '256800000000'
+            ).pk,
+            self.backend5.pk
+        )
+        self.assertEqual(
+            SQLMobileBackend.load_default_by_phone_and_domain(
+                SQLMobileBackend.SMS,
+                '256700000000'
+            ).pk,
+            self.backend6.pk
+        )
+        self.assertEqual(
+            SQLMobileBackend.load_default_by_phone_and_domain(
+                SQLMobileBackend.SMS,
+                '256750000000'
+            ).pk,
+            self.backend7.pk
+        )
 
-    def test_backend(self):
-        # Test the backend map
+    def __test_global_backend_map(self):
+        with patch(
+            'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
+            autospec=True
+        ) as mock_send:
+            self.assertTrue(send_sms(self.domain, None, '15551234567', 'Test for BACKEND2'))
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(mock_send.call_args[0][0].pk, self.backend2.pk)
 
-        self.assertTrue(send_sms(self.domain, None, "15551234567", "Test for BACKEND2"))
-        self.assertFalse(self.backend1.invoke_doc_exists())
-        self.assertTrue(self.backend2.invoke_doc_exists())
-        self.assertFalse(self.backend3.invoke_doc_exists())
-        self.assertFalse(self.backend4.invoke_doc_exists())
-        self.assertFalse(self.backend5.invoke_doc_exists())
-        self.assertFalse(self.backend6.invoke_doc_exists())
-        self.assertFalse(self.backend7.invoke_doc_exists())
-        self.assertFalse(self.backend8.invoke_doc_exists())
-        self.assertFalse(self.backend9.invoke_doc_exists())
-        self.assertFalse(self.backend10.invoke_doc_exists())
-        self.backend2.delete_invoke_doc()
-        self.assertFalse(self.backend2.invoke_doc_exists())
+        with patch(
+            'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
+            autospec=True
+        ) as mock_send:
+            self.assertTrue(send_sms(self.domain, None, '9100000000', 'Test for BACKEND3'))
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(mock_send.call_args[0][0].pk, self.backend3.pk)
 
-        self.assertTrue(send_sms(self.domain, None, "9100000000", "Test for BACKEND3"))
-        self.assertFalse(self.backend1.invoke_doc_exists())
-        self.assertFalse(self.backend2.invoke_doc_exists())
-        self.assertTrue(self.backend3.invoke_doc_exists())
-        self.assertFalse(self.backend4.invoke_doc_exists())
-        self.assertFalse(self.backend5.invoke_doc_exists())
-        self.assertFalse(self.backend6.invoke_doc_exists())
-        self.assertFalse(self.backend7.invoke_doc_exists())
-        self.assertFalse(self.backend8.invoke_doc_exists())
-        self.assertFalse(self.backend9.invoke_doc_exists())
-        self.assertFalse(self.backend10.invoke_doc_exists())
-        self.backend3.delete_invoke_doc()
-        self.assertFalse(self.backend3.invoke_doc_exists())
+        with patch(
+            'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
+            autospec=True
+        ) as mock_send:
+            self.assertTrue(send_sms(self.domain, None, '26500000000', 'Test for BACKEND4'))
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(mock_send.call_args[0][0].pk, self.backend4.pk)
 
-        self.assertTrue(send_sms(self.domain, None, "26500000000", "Test for BACKEND4"))
-        self.assertFalse(self.backend1.invoke_doc_exists())
-        self.assertFalse(self.backend2.invoke_doc_exists())
-        self.assertFalse(self.backend3.invoke_doc_exists())
-        self.assertTrue(self.backend4.invoke_doc_exists())
-        self.assertFalse(self.backend5.invoke_doc_exists())
-        self.assertFalse(self.backend6.invoke_doc_exists())
-        self.assertFalse(self.backend7.invoke_doc_exists())
-        self.assertFalse(self.backend8.invoke_doc_exists())
-        self.assertFalse(self.backend9.invoke_doc_exists())
-        self.assertFalse(self.backend10.invoke_doc_exists())
-        self.backend4.delete_invoke_doc()
-        self.assertFalse(self.backend4.invoke_doc_exists())
+        with patch(
+            'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
+            autospec=True
+        ) as mock_send:
+            self.assertTrue(send_sms(self.domain, None, '25800000000', 'Test for BACKEND1'))
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(mock_send.call_args[0][0].pk, self.backend1.pk)
 
-        self.assertTrue(send_sms(self.domain, None, "25800000000", "Test for BACKEND1"))
-        self.assertTrue(self.backend1.invoke_doc_exists())
-        self.assertFalse(self.backend2.invoke_doc_exists())
-        self.assertFalse(self.backend3.invoke_doc_exists())
-        self.assertFalse(self.backend4.invoke_doc_exists())
-        self.assertFalse(self.backend5.invoke_doc_exists())
-        self.assertFalse(self.backend6.invoke_doc_exists())
-        self.assertFalse(self.backend7.invoke_doc_exists())
-        self.assertFalse(self.backend8.invoke_doc_exists())
-        self.assertFalse(self.backend9.invoke_doc_exists())
-        self.assertFalse(self.backend10.invoke_doc_exists())
-        self.backend1.delete_invoke_doc()
-        self.assertFalse(self.backend1.invoke_doc_exists())
+    def __test_domain_default(self):
+        # Test overriding with domain-level backend
+        SQLMobileBackendMapping.set_default_domain_backend(self.domain, self.backend5)
 
-        # Test overriding with a domain-level backend
+        with patch(
+            'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
+            autospec=True
+        ) as mock_send:
+            self.assertTrue(send_sms(self.domain, None, '15551234567', 'Test for BACKEND5'))
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(mock_send.call_args[0][0].pk, self.backend5.pk)
 
-        self.domain_obj = Domain.get(self.domain_obj._id)  # Prevent resource conflict
-        self.domain_obj.default_sms_backend_id = self.backend5._id
-        self.domain_obj.save()
-
-        self.assertTrue(send_sms(self.domain, None, "15551234567", "Test for BACKEND5"))
-        self.assertFalse(self.backend1.invoke_doc_exists())
-        self.assertFalse(self.backend2.invoke_doc_exists())
-        self.assertFalse(self.backend3.invoke_doc_exists())
-        self.assertFalse(self.backend4.invoke_doc_exists())
-        self.assertTrue(self.backend5.invoke_doc_exists())
-        self.assertFalse(self.backend6.invoke_doc_exists())
-        self.assertFalse(self.backend7.invoke_doc_exists())
-        self.assertFalse(self.backend8.invoke_doc_exists())
-        self.assertFalse(self.backend9.invoke_doc_exists())
-        self.assertFalse(self.backend10.invoke_doc_exists())
-        self.backend5.delete_invoke_doc()
-        self.assertFalse(self.backend5.invoke_doc_exists())
-
+    def __test_shared_backend(self):
         # Test use of backend that another domain owns but has granted access
+        SQLMobileBackendMapping.set_default_domain_backend(self.domain, self.backend6)
 
-        self.domain_obj.default_sms_backend_id = self.backend6._id
-        self.domain_obj.save()
+        with patch(
+            'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
+            autospec=True
+        ) as mock_send:
+            self.assertTrue(send_sms(self.domain, None, '25800000000', 'Test for BACKEND6'))
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(mock_send.call_args[0][0].pk, self.backend6.pk)
 
-        self.assertTrue(send_sms(self.domain, None, "25800000000", "Test for BACKEND6"))
-        self.assertFalse(self.backend1.invoke_doc_exists())
-        self.assertFalse(self.backend2.invoke_doc_exists())
-        self.assertFalse(self.backend3.invoke_doc_exists())
-        self.assertFalse(self.backend4.invoke_doc_exists())
-        self.assertFalse(self.backend5.invoke_doc_exists())
-        self.assertTrue(self.backend6.invoke_doc_exists())
-        self.assertFalse(self.backend7.invoke_doc_exists())
-        self.assertFalse(self.backend8.invoke_doc_exists())
-        self.assertFalse(self.backend9.invoke_doc_exists())
-        self.assertFalse(self.backend10.invoke_doc_exists())
-        self.backend6.delete_invoke_doc()
-        self.assertFalse(self.backend6.invoke_doc_exists())
+        # Test trying to use a backend that another domain owns but has not granted access
+        SQLMobileBackendMapping.set_default_domain_backend(self.domain, self.backend7)
 
-        # Test backend access control
+        with patch(
+            'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
+            autospec=True
+        ) as mock_send:
+            self.assertFalse(send_sms(self.domain, None, '25800000000', 'Test Unauthorized'))
+        self.assertEqual(mock_send.call_count, 0)
 
-        self.domain_obj.default_sms_backend_id = self.backend7._id
-        self.domain_obj.save()
-
-        self.assertFalse(send_sms(self.domain, None, "25800000000", "Test for BACKEND7"))
-        self.assertFalse(self.backend1.invoke_doc_exists())
-        self.assertFalse(self.backend2.invoke_doc_exists())
-        self.assertFalse(self.backend3.invoke_doc_exists())
-        self.assertFalse(self.backend4.invoke_doc_exists())
-        self.assertFalse(self.backend5.invoke_doc_exists())
-        self.assertFalse(self.backend6.invoke_doc_exists())
-        self.assertFalse(self.backend7.invoke_doc_exists())
-        self.assertFalse(self.backend8.invoke_doc_exists())
-        self.assertFalse(self.backend9.invoke_doc_exists())
-        self.assertFalse(self.backend10.invoke_doc_exists())
-
+    def __test_verified_number_with_map(self):
         # Test sending to verified number with backend map
-
-        self.domain_obj.default_sms_backend_id = None
-        self.domain_obj.save()
+        SQLMobileBackendMapping.unset_default_domain_backend(self.domain)
 
         verified_number = self.contact.get_verified_number()
         self.assertTrue(verified_number is not None)
         self.assertTrue(verified_number.backend_id is None)
-        self.assertEqual(verified_number.phone_number, "15551234567")
+        self.assertEqual(verified_number.phone_number, '15551234567')
 
-        self.assertTrue(send_sms_to_verified_number(verified_number, "Test for BACKEND2"))
-        self.assertFalse(self.backend1.invoke_doc_exists())
-        self.assertTrue(self.backend2.invoke_doc_exists())
-        self.assertFalse(self.backend3.invoke_doc_exists())
-        self.assertFalse(self.backend4.invoke_doc_exists())
-        self.assertFalse(self.backend5.invoke_doc_exists())
-        self.assertFalse(self.backend6.invoke_doc_exists())
-        self.assertFalse(self.backend7.invoke_doc_exists())
-        self.assertFalse(self.backend8.invoke_doc_exists())
-        self.assertFalse(self.backend9.invoke_doc_exists())
-        self.assertFalse(self.backend10.invoke_doc_exists())
-        self.backend2.delete_invoke_doc()
-        self.assertFalse(self.backend2.invoke_doc_exists())
+        with patch(
+            'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
+            autospec=True
+        ) as mock_send:
+            self.assertTrue(send_sms_to_verified_number(verified_number, 'Test for BACKEND2'))
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(mock_send.call_args[0][0].pk, self.backend2.pk)
 
         # Test sending to verified number with default domain backend
+        SQLMobileBackendMapping.set_default_domain_backend(self.domain, self.backend5)
 
-        self.domain_obj.default_sms_backend_id = self.backend5._id
-        self.domain_obj.save()
+        with patch(
+            'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
+            autospec=True
+        ) as mock_send:
+            self.assertTrue(send_sms_to_verified_number(verified_number, 'Test for BACKEND5'))
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(mock_send.call_args[0][0].pk, self.backend5.pk)
 
-        self.assertTrue(send_sms_to_verified_number(verified_number, "Test for BACKEND5"))
-        self.assertFalse(self.backend1.invoke_doc_exists())
-        self.assertFalse(self.backend2.invoke_doc_exists())
-        self.assertFalse(self.backend3.invoke_doc_exists())
-        self.assertFalse(self.backend4.invoke_doc_exists())
-        self.assertTrue(self.backend5.invoke_doc_exists())
-        self.assertFalse(self.backend6.invoke_doc_exists())
-        self.assertFalse(self.backend7.invoke_doc_exists())
-        self.assertFalse(self.backend8.invoke_doc_exists())
-        self.assertFalse(self.backend9.invoke_doc_exists())
-        self.assertFalse(self.backend10.invoke_doc_exists())
-        self.backend5.delete_invoke_doc()
-        self.assertFalse(self.backend5.invoke_doc_exists())
-
+    def __test_contact_level_backend(self):
         # Test sending to verified number with a contact-level backend owned by the domain
-
-        self.case.set_case_property("contact_backend_id", "BACKEND")
+        self.case.set_case_property('contact_backend_id', 'BACKEND')
         self.case.save()
         self.contact = CommConnectCase.wrap(self.case.to_json())
         verified_number = self.contact.get_verified_number()
         self.assertTrue(verified_number is not None)
-        self.assertEqual(verified_number.backend_id, "BACKEND")
-        self.assertEqual(verified_number.phone_number, "15551234567")
+        self.assertEqual(verified_number.backend_id, 'BACKEND')
+        self.assertEqual(verified_number.phone_number, '15551234567')
 
-        self.assertTrue(send_sms_to_verified_number(verified_number, "Test for BACKEND"))
-        self.assertFalse(self.backend1.invoke_doc_exists())
-        self.assertFalse(self.backend2.invoke_doc_exists())
-        self.assertFalse(self.backend3.invoke_doc_exists())
-        self.assertFalse(self.backend4.invoke_doc_exists())
-        self.assertFalse(self.backend5.invoke_doc_exists())
-        self.assertFalse(self.backend6.invoke_doc_exists())
-        self.assertFalse(self.backend7.invoke_doc_exists())
-        self.assertTrue(self.backend8.invoke_doc_exists())
-        self.assertFalse(self.backend9.invoke_doc_exists())
-        self.assertFalse(self.backend10.invoke_doc_exists())
-        self.backend8.delete_invoke_doc()
-        self.assertFalse(self.backend8.invoke_doc_exists())
+        with patch(
+            'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
+            autospec=True
+        ) as mock_send:
+            self.assertTrue(send_sms_to_verified_number(verified_number, 'Test for domain BACKEND'))
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(mock_send.call_args[0][0].pk, self.backend8.pk)
 
         # Test sending to verified number with a contact-level backend granted to the domain by another domain
+        self.backend8.name = 'BACKEND8'
+        self.backend8.save()
 
-        self.backend8.delete()
-
-        self.assertTrue(send_sms_to_verified_number(verified_number, "Test for BACKEND"))
-        self.assertFalse(self.backend1.invoke_doc_exists())
-        self.assertFalse(self.backend2.invoke_doc_exists())
-        self.assertFalse(self.backend3.invoke_doc_exists())
-        self.assertFalse(self.backend4.invoke_doc_exists())
-        self.assertFalse(self.backend5.invoke_doc_exists())
-        self.assertFalse(self.backend6.invoke_doc_exists())
-        self.assertFalse(self.backend7.invoke_doc_exists())
-        self.assertTrue(self.backend9.invoke_doc_exists())
-        self.assertFalse(self.backend10.invoke_doc_exists())
-        self.backend9.delete_invoke_doc()
-        self.assertFalse(self.backend9.invoke_doc_exists())
+        with patch(
+            'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
+            autospec=True
+        ) as mock_send:
+            self.assertTrue(send_sms_to_verified_number(verified_number, 'Test for shared domain BACKEND'))
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(mock_send.call_args[0][0].pk, self.backend9.pk)
 
         # Test sending to verified number with a contact-level global backend
+        self.backend9.name = 'BACKEND9'
+        self.backend9.save()
 
-        self.backend9.delete()
-
-        self.assertTrue(send_sms_to_verified_number(verified_number, "Test for BACKEND"))
-        self.assertFalse(self.backend1.invoke_doc_exists())
-        self.assertFalse(self.backend2.invoke_doc_exists())
-        self.assertFalse(self.backend3.invoke_doc_exists())
-        self.assertFalse(self.backend4.invoke_doc_exists())
-        self.assertFalse(self.backend5.invoke_doc_exists())
-        self.assertFalse(self.backend6.invoke_doc_exists())
-        self.assertFalse(self.backend7.invoke_doc_exists())
-        self.assertTrue(self.backend10.invoke_doc_exists())
-        self.backend10.delete_invoke_doc()
-        self.assertFalse(self.backend10.invoke_doc_exists())
+        with patch(
+            'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
+            autospec=True
+        ) as mock_send:
+            self.assertTrue(send_sms_to_verified_number(verified_number, 'Test for global BACKEND'))
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(mock_send.call_args[0][0].pk, self.backend10.pk)
 
         # Test raising exception if contact-level backend is not found
+        self.backend10.name = 'BACKEND10'
+        self.backend10.save()
 
-        self.backend10.delete()
+        with self.assertRaises(BadSMSConfigException):
+            send_sms_to_verified_number(verified_number, 'Test for unknown BACKEND')
 
-        try:
-            self.assertTrue(send_sms_to_verified_number(verified_number, "Test for BACKEND"))
-        except BadSMSConfigException:
-            pass
-        else:
-            self.assertTrue(False)
+    def __test_send_sms_with_backend(self):
+        with patch(
+            'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
+            autospec=True
+        ) as mock_send:
+            self.assertTrue(send_sms_with_backend(self.domain, '+15551234567', 'Test for BACKEND3', self.backend3.couch_id))
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(mock_send.call_args[0][0].pk, self.backend3.pk)
 
-        # Test send_sms_with_backend
+    def __test_send_sms_with_backend_name(self):
+        with patch(
+            'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
+            autospec=True
+        ) as mock_send:
+            self.assertTrue(send_sms_with_backend_name(self.domain, '+15551234567', 'Test for BACKEND3', 'BACKEND3'))
+        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(mock_send.call_args[0][0].pk, self.backend3.pk)
 
-        self.assertTrue(send_sms_with_backend(self.domain, "+15551234567", "Test for BACKEND3", self.backend3._id))
-        self.assertFalse(self.backend1.invoke_doc_exists())
-        self.assertFalse(self.backend2.invoke_doc_exists())
-        self.assertTrue(self.backend3.invoke_doc_exists())
-        self.assertFalse(self.backend4.invoke_doc_exists())
-        self.assertFalse(self.backend5.invoke_doc_exists())
-        self.assertFalse(self.backend6.invoke_doc_exists())
-        self.assertFalse(self.backend7.invoke_doc_exists())
-        self.backend3.delete_invoke_doc()
-        self.assertFalse(self.backend3.invoke_doc_exists())
-
-        # Test send_sms_with_backend_name
-
-        self.assertTrue(send_sms_with_backend_name(self.domain, "+15551234567", "Test for BACKEND3", "BACKEND3"))
-        self.assertFalse(self.backend1.invoke_doc_exists())
-        self.assertFalse(self.backend2.invoke_doc_exists())
-        self.assertTrue(self.backend3.invoke_doc_exists())
-        self.assertFalse(self.backend4.invoke_doc_exists())
-        self.assertFalse(self.backend5.invoke_doc_exists())
-        self.assertFalse(self.backend6.invoke_doc_exists())
-        self.assertFalse(self.backend7.invoke_doc_exists())
-        self.backend3.delete_invoke_doc()
-        self.assertFalse(self.backend3.invoke_doc_exists())
+    def test_choosing_appropriate_backend_for_sending(self):
+        self.__test_global_backend_map()
+        self.__test_domain_default()
+        self.__test_shared_backend()
+        self.__test_verified_number_with_map()
+        self.__test_contact_level_backend()
+        self.__test_send_sms_with_backend()
+        self.__test_send_sms_with_backend_name()
 
     def test_sms_registration(self):
         formatted_username = format_username("tester", self.domain)
