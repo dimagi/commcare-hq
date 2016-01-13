@@ -58,7 +58,7 @@ class ExtendSchemaTest(SimpleTestCase):
             }]
         }
 
-        # Once a repeat group has been discovered, is should convert previous schema to be a list
+        # If a question in a repeat group has been deleted, the schema should still contain the question
         schema_repeat_deleted = {
             'question1': 'string',
             'question2': [{
