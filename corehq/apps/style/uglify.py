@@ -1,5 +1,6 @@
 import os
 import subprocess
+from django.conf import settings
 
 from compressor.exceptions import FilterError
 from compressor.filters import CompilerFilter
@@ -26,7 +27,13 @@ class UglifySourcemapFilter(CompilerFilter):
         infiles = []
         for infile in kwargs['content_meta']:
             # type, full_filename, relative_filename
-            infiles.append(infile[2])
+            # In debug mode we use the ful path so that in development we see changes without having to call
+            # collectstatic. This breaks the sourcemaps. In production, we want to sourcemaps to work so we
+            # use relative path which will take files from `staticfiles` automatically.
+            if settings.DEBUG:
+                infiles.append(infile[1])
+            else:
+                infiles.append(infile[2])
 
         options['infiles'] = ' '.join(f for f in infiles)
 
