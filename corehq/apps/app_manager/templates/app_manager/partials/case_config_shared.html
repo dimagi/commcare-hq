@@ -6,15 +6,17 @@
     <div data-bind="visible: type() === 'always'">
         <a href="#" data-bind="click: function () {type('if')}"><i class="fa fa-plus"></i> {% trans "Only if the answer to..." %}</a>
     </div>
-    <div data-bind="visible: type() === 'if'">
-        <a href="#" data-bind="click: function () {type('always')}"><i class="fa fa-remove"></i></a>
+    <div class="form-inline" data-bind="visible: type() === 'if'">
+        <a href="#" data-bind="click: function () {type('always')}">
+            <i class="fa fa-remove"></i>
+        </a>
         {% trans "Only if the answer to" %}
-        <input class="input-large" type="hidden" data-bind="
+        <input type="hidden" data-bind="
             questionsSelect: $root.getQuestions('select select1', false, $parent.config.allow.repeats()),
             value: question,
             optionsCaption: ' '
         "/>
-        <select class="input-medium" data-bind="
+        <select class="form-control" data-bind="
                 optstr: [
                     {label:'{% trans "is" %}',value:'='},
                     {label:'{% trans "has selected" %}',value:'selected'}
@@ -26,14 +28,14 @@
                 value: answer"></select>
         </span>
         <span data-bind="if: !$root.getAnswers({question: question()}).length">
-            <input type="text" class="code" data-bind="value: answer"/>
+            <input type="text" class="form-control" data-bind="value: answer"/>
         </span>
     </div>
     <!--/ko-->
 </script>
 
 <script type="text/html" id="case-config:case-properties:question">
-    <input class="input-large" type="hidden" data-bind="
+    <input type="hidden" data-bind="
         questionsSelect: $root.getQuestions('all', false, case_transaction.allow.repeats(), true),
         value: path,
         optionsCaption: ' '
@@ -44,7 +46,7 @@
 
 <script type="text/html" id="case-config:case-properties:property">
     <span data-bind="visible: !property.required()">
-        <input type="text" class="input-medium" data-bind="
+        <input type="text" class="form-control" data-bind="
             valueDefault: property.key,
             default: property.defaultKey,
             casePropertyTypeahead: suggestedProperties,

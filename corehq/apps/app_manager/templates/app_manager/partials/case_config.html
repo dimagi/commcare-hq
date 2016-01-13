@@ -57,13 +57,13 @@
 <div id="case-config-ko">
     <div data-bind="saveButton: saveButton"></div>
     <div data-bind="with: caseConfigViewModel">
-        <div>
-            {% trans "This form: " %}
+        <div class="form-inline">
+            {% trans "This form " %}
             {% trans "Does not use cases" as no_cases %}
             {% trans "Registers a new case" as registers_case %}
             {% trans "Updates or closes a case" as updates_case %}
             {% trans "Registers a case for a different module" as different_module %}
-            <select class="input-xlarge" data-bind="
+            <select class="form-control" data-bind="
                 optstr: [{value: 'none', label: '{{ no_cases|escapejs }}'},
                          {value: 'open', label: '{{ registers_case|escapejs }}'},
                          {value: 'update', label: '{{ updates_case|escapejs }}'},
@@ -71,12 +71,15 @@
                 value: actionType
             "></select>
         </div>
+        <div class="spacer"></div>
         <div data-bind="if: actionType() === 'update'">
-            <div data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">
+            <div class="container-fluid"
+                 data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">
             </div>
         </div>
         <div data-bind="if: actionType() === 'open'">
-            <div data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">
+            <div class="container-fluid"
+                 data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">
             </div>
         </div>
         <!--ko if: actionType() !== 'none'-->
@@ -89,11 +92,11 @@
         </header>
 
         <div data-bind="foreach: subcases" class="form">
-            <div>
+            <div class="form-inline">
                 <i class="fa fa-check"></i>
-                {% trans "Opens a case for a different case list:" %}
+                {% trans "Opens a case for a different case list" %}
                 <span class="form-group" data-bind="css: {'has-warning': !case_type()}">
-                    <select data-bind="
+                    <select class="form-control" data-bind="
                         options: $parent.caseTypes,
                         optionsText: $parent.getCaseTypeLabel,
                         value: case_type,
@@ -110,7 +113,7 @@
                     {% trans "Remove case" %}
                 </a>
             </div>
-            <div data-bind="template: 'case-config:case-transaction'"></div>
+            <div class="container-fluid" data-bind="template: 'case-config:case-transaction'"></div>
         </div>
         <div>
             <a href="#" data-bind="click: addSubCase">
