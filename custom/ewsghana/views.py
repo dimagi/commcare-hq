@@ -14,6 +14,8 @@ from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.commtrack.sms import process
 from corehq.apps.commtrack.views import BaseCommTrackManageView
+from corehq.apps.consumption.shortcuts import get_default_monthly_consumption, \
+    set_default_consumption_for_supply_point
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -109,6 +111,12 @@ class InputStockView(BaseDomainView):
                             quantity=form.cleaned_data['stock_on_hand']
                         ),
                     )
+
+                amount = form.cleaned_data['default_consumption']
+                if amount is not None:
+                    set_default_consumption_for_supply_point(
+                        self.domain, product.get_id, location.supply_point_id, amount
+                    )
             if data:
                 unpacked_data = {
                     'timestamp': datetime.utcnow(),
@@ -156,6 +164,12 @@ class InputStockView(BaseDomainView):
                     'product': product.name,
                     'stock_on_hand': int(stock_on_hand),
                     'monthly_consumption': round(monthly_consumption) if monthly_consumption else 0,
+                    'default_consumption': get_default_monthly_consumption(
+                        self.domain,
+                        product.product_id,
+                        sql_location.location_type.name,
+                        sql_location.supply_point_id
+                    ),
                     'units': product.units
                 }
             )
