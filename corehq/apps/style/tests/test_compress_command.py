@@ -69,6 +69,7 @@ class TestDjangoCompressOffline(SimpleTestCase):
 
     @attr("slow")
     def test_compress_offline(self):
+        call_command('collectstatic', verbosity=0, interactive=False)
         with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
             call_command('compress', force=True)
 
