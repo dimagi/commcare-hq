@@ -103,7 +103,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     return app
 
 
-def get_full_non_remote_apps_in_domain(domain):
+def get_full_apps_in_domain(domain, include_remote=True):
     from .models import Application
     docs = [row['doc'] for row in Application.get_db().view(
         'app_manager/applications',
@@ -112,7 +112,9 @@ def get_full_non_remote_apps_in_domain(domain):
         include_docs=True
     )]
     apps = [get_correct_app_class(doc).wrap(doc) for doc in docs]
-    return [app for app in apps if not app.is_remote_app()]
+    if not include_remote:
+        apps = [app for app in apps if not app.is_remote_app()]
+    return apps
 
 
 def get_brief_apps_in_domain(domain, include_remote=True):
@@ -169,7 +171,7 @@ def get_all_apps(domain):
         include_docs=True,
     )
     all_apps = [get_correct_app_class(row['doc']).wrap(row['doc']) for row in saved_apps]
-    all_apps.extend(get_brief_apps_in_domain(domain))
+    all_apps.extend(get_full_apps_in_domain(domain))
     return all_apps
 
 

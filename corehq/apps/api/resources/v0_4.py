@@ -17,7 +17,7 @@ from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.app_manager import util as app_manager_util
 from corehq.apps.app_manager.models import Application, RemoteApp
-from corehq.apps.app_manager.dbaccessors import get_full_non_remote_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_full_apps_in_domain
 from corehq.apps.repeaters.models import Repeater, repeater_types
 from corehq.apps.groups.models import Group
 from corehq.apps.cloudcare.api import ElasticCaseQuery
@@ -389,7 +389,7 @@ class ApplicationResource(HqBaseResource, DomainSpecificResourceMixin):
             return app_data
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        return get_full_non_remote_apps_in_domain(domain)
+        return get_full_apps_in_domain(domain, include_remote=False)
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'])
