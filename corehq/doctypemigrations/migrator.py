@@ -1,6 +1,8 @@
 from collections import namedtuple
 import logging
 import os
+from time import sleep
+from couchdbkit import ResourceNotFound
 from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
 from corehq.doctypemigrations.changes import stream_changes_forever
 from corehq.doctypemigrations.continuous_migrate import ContinuousReplicator
@@ -112,3 +114,22 @@ class Migrator(object):
     @property
     def cleanup_complete(self):
         return self._migration_model.cleanup_complete
+
+    def docs_are_replicating(self):
+        """Make a change in source_db and see if it appears in target_db."""
+        source_db, target_db = self.source_db, self.target_db
+        doc_id = "testing-replication-doc"
+        test_doc = {"doc_type": self.doc_types[0],
+                    "_id": doc_id,
+                    "description": self.docs_are_replicating.__doc__}
+        source_db.save_doc(test_doc)
+        sleep(10)
+        try:
+            replicated_doc = target_db.get(doc_id)
+        except ResourceNotFound:
+            doc_replicated = False
+        else:
+            doc_replicated = True
+            target_db.delete_doc(replicated_doc)
+        source_db.delete_doc(test_doc)
+        return doc_replicated
