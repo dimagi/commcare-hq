@@ -175,7 +175,7 @@
     },
     "FarmerRecordFluffPillow": {
         "advertised_name": "fluff.FarmerRecordFluffPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.FarmerRecordFluffPillow.testhq",
         "couch_filter": null,
         "couchdb_type": "CachedCouchDB",
@@ -204,7 +204,7 @@
     },
     "GeographyFluffPillow": {
         "advertised_name": "fluff.GeographyFluffPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.GeographyFluffPillow.testhq",
         "couch_filter": null,
         "couchdb_type": "CachedCouchDB",
