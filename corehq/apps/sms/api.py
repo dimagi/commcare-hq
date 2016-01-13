@@ -14,7 +14,8 @@ from corehq.apps.accounting.utils import domain_has_privilege, log_accounting_er
 from corehq.apps.sms.util import (clean_phone_number, clean_text,
     get_available_backends)
 from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING,
-    PhoneNumber, SMS, SelfRegistrationInvitation, MessagingEvent)
+    PhoneNumber, SMS, SelfRegistrationInvitation, MessagingEvent,
+    SQLMobileBackend)
 from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
     MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG,
     MSG_REGISTRATION_WELCOME_CASE, MSG_REGISTRATION_WELCOME_MOBILE_WORKER)
@@ -138,7 +139,7 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
         direction = OUTGOING,
         date = datetime.utcnow(),
         domain = verified_number.domain,
-        backend_id = backend._id,
+        backend_id=backend.couch_id,
         location_id=get_location_id_by_verified_number(verified_number),
         text = text
     )
@@ -164,13 +165,13 @@ def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None)
 
 def send_sms_with_backend_name(domain, phone_number, text, backend_name, metadata=None):
     phone_number = clean_phone_number(phone_number)
-    backend = MobileBackend.load_by_name(domain, backend_name)
+    backend = SQLMobileBackend.load_by_name(SQLMobileBackend.SMS, domain, backend_name)
     msg = SMSLog(
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
         date=datetime.utcnow(),
-        backend_id=backend._id,
+        backend_id=backend.couch_id,
         text=text
     )
     add_msg_tags(msg, metadata)

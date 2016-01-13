@@ -64,11 +64,20 @@ class VerifiedNumber(Document):
 
     @property
     def backend(self):
+        from corehq.apps.sms.models import SQLMobileBackend
         from corehq.apps.sms.util import clean_phone_number
-        if self.backend_id is not None and isinstance(self.backend_id, basestring) and self.backend_id.strip() != "":
-            return MobileBackend.load_by_name(self.domain, self.backend_id)
+        if isinstance(self.backend_id, basestring) and self.backend_id.strip() != '':
+            return SQLMobileBackend.load_by_name(
+                SQLMobileBackend.SMS,
+                self.domain,
+                self.backend_id
+            )
         else:
-            return MobileBackend.auto_load(clean_phone_number(self.phone_number), self.domain)
+            return SQLMobileBackend.load_default_by_phone_and_domain(
+                SQLMobileBackend.SMS,
+                clean_phone_number(self.phone_number),
+                domain=self.domain
+            )
 
     @property
     def ivr_backend(self):
