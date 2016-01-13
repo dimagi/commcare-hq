@@ -23,7 +23,7 @@ class DashboardReport(MultiReport):
     @property
     def report_config(self):
         report_config = super(DashboardReport, self).report_config
-        startdate, enddate = calculate_last_period(datetime.utcnow())
+        startdate, enddate = calculate_last_period()
         report_config.update(dict(
             startdate=startdate,
             enddate=enddate,
