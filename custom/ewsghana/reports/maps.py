@@ -75,9 +75,7 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
                 quantity = "No data"
                 months_until_stockout = None
             else:
-                monthly_consumption = None
-                if stock_states[0].daily_consumption:
-                    monthly_consumption = stock_states[0].daily_consumption * 30
+                monthly_consumption = stock_states[0].get_monthly_consumption()
                 quantity = stock_states[0].stock_on_hand
                 if not monthly_consumption:
                     months_until_stockout = None
