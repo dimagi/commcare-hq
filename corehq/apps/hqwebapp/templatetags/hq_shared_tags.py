@@ -150,7 +150,13 @@ def domains_for_user(context, request, selected_domain=None):
     ctxt = {
         'domain_list': domain_list,
         'current_domain': selected_domain,
-        'DOMAIN_TYPE': context['DOMAIN_TYPE']
+        'DOMAIN_TYPE': context['DOMAIN_TYPE'],
+        'can_publish_to_exchange': (
+            selected_domain is not None and selected_domain != 'public'
+            and request.couch_user and request.couch_user.can_edit_apps() and
+                (request.couch_user.is_member_of(selected_domain)
+                 or request.couch_user.is_superuser)
+        ),
     }
     return mark_safe(render_to_string('style/includes/domain_list_dropdown.html', ctxt))
 

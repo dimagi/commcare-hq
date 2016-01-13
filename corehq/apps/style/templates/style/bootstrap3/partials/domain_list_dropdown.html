@@ -25,4 +25,11 @@
             <i class="fa fa-exchange icon-exchange dropdown-icon"></i> {% trans 'CommCare Exchange' %}
         </a>
     </li>
+    {% if can_publish_to_exchange %}
+    <li>
+        <a href="{% url 'domain_snapshot_settings' current_domain %}">
+            <i class="fa fa-upload icon icon-upload dropdown-icon"></i> {% trans "Publish this Project" %}
+        </a>
+    </li>
+    {% endif %}
 </ul>
