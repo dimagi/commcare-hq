@@ -136,7 +136,7 @@ class FormQuestionSchema(Document):
 
                     self.question_schema[question_path] = meta
                 else:
-                    # In the event that a question was previously a multi-select and not one any longer, 
+                    # In the event that a question was previously a multi-select and not one any longer,
                     # we need to clear the question schema
                     self.question_schema.pop(question_path, None)
 
