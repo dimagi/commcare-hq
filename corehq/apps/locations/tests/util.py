@@ -62,20 +62,23 @@ def setup_locations(domain, locations, location_types):
     return locations_dict
 
 
-def setup_locations_and_types(domain, location_types, locations):
+def setup_locations_and_types(domain, location_types, stock_tracking_types, locations):
     """
     Create a hierarchy of locations.
 
     :param location_types: A flat list of location type names
+    :param stock_tracking_types: A list of names of stock tracking location_types
     :param locations: A (recursive) list defining the locations to be
         created.  Each entry is a (name, [child1, child2..]) tuple.
     :return: (location_types, locations) where each is a dictionary mapping
         string to object created
     """
-    return (
-        setup_location_types(domain, location_types),
-        setup_locations(domain, locations, location_types)
-    )
+    location_types_dict = setup_location_types(domain, location_types)
+    for loc_type in stock_tracking_types:
+        location_types_dict[loc_type].administrative = False
+        location_types_dict[loc_type].save()
+    locations_dict = setup_locations(domain, locations, location_types)
+    return (location_types_dict, locations_dict)
 
 
 class LocationHierarchyTestCase(TestCase):
@@ -90,12 +93,12 @@ class LocationHierarchyTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain_obj = bootstrap_domain(cls.domain)
-        cls.location_types = setup_location_types(cls.domain, cls.location_type_names)
-        for loc_type in cls.stock_tracking_types:
-            cls.location_types[loc_type].administrative = False
-            cls.location_types[loc_type].save()
-        # TODO why isn't this also making supply points?
-        cls.locations = setup_locations(cls.domain, cls.location_structure, cls.location_type_names)
+        cls.location_types, cls.locations = setup_locations_and_types(
+            cls.domain,
+            cls.location_type_names,
+            cls.stock_tracking_types,
+            cls.location_structure,
+        )
 
     @classmethod
     def tearDownClass(cls):
