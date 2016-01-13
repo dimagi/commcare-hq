@@ -139,22 +139,6 @@ class ExportSchema(Document, UnicodeMixIn):
         ).one()
 
     @classmethod
-    def get_all_indices(cls):
-        ret = cls.get_db().view("couchexport/schema_checkpoints",
-            reduce=True,
-            group=True,
-            group_level=1,
-        )
-        for row in ret:
-            index = row['key'][0]
-            try:
-                yield json.loads(index)
-            except ValueError:
-                # ignore this for now - should just be garbage data
-                # print "poorly formatted index key %s" % index
-                pass
-
-    @classmethod
     def get_all_checkpoints(cls, index):
         return cls.view("couchexport/schema_checkpoints",
             startkey=[json.dumps(index)],

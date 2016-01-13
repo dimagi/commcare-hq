@@ -5,6 +5,8 @@ import logging
 import urllib
 import urlparse
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT
+from corehq.util.datadog.utils import log_counter
 from corehq.util.quickcache import quickcache
 
 from dimagi.ext.couchdbkit import *
@@ -52,7 +54,7 @@ def simple_post_with_cached_timeout(data, url, expiry=60 * 60, *args, **kwargs):
         cache.set(key, 'timeout', expiry)
         raise
 
-    if not 200 <= resp.status < 300:
+    if not 200 <= resp.status_code < 300:
         cache.set(key, 'error', expiry)
     return resp
 
@@ -297,7 +299,6 @@ class FormRepeater(Repeater):
 
     """
 
-    exclude_device_reports = BooleanProperty(default=False)
     include_app_id_param = BooleanProperty(default=True)
 
     @memoized
@@ -486,7 +487,7 @@ class RepeatRecord(Document, LockableMixIn):
                 for i in range(max_tries):
                     try:
                         resp = post_fn(payload, self.url, headers=headers)
-                        if 200 <= resp.status < 300:
+                        if 200 <= resp.status_code < 300:
                             self.update_success()
                             break
                     except Exception, e:
@@ -495,6 +496,12 @@ class RepeatRecord(Document, LockableMixIn):
                 if not self.succeeded:
                     # mark it failed for later and give up
                     self.update_failure(failure_reason)
+                    log_counter(REPEATER_ERROR_COUNT, {
+                        '_id': self._id,
+                        'reason': failure_reason,
+                        'target_url': self.url,
+                    })
 
 # import signals
+# Do not remove this import, its required for the signals code to run even though not explicitly used in this file
 from corehq.apps.repeaters import signals

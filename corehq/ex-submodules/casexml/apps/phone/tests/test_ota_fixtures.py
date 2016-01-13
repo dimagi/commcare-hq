@@ -10,6 +10,7 @@ from corehq.apps.fixtures.models import (
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from casexml.apps.case.tests.util import check_xml_line_by_line
+from corehq.form_processor.tests import run_with_all_backends
 
 DOMAIN = 'fixture-test'
 SA_PROVINCES = 'sa_provinces'
@@ -69,14 +70,17 @@ class OtaFixtureTest(TestCase):
                 expected = _get_item_list_fixture(self.user.get_id, data_type.tag, data_item)
                 check_xml_line_by_line(self, expected, item_list_xml[0])
 
+    @run_with_all_backends
     def test_fixture_gen_v1(self):
         fixture_xml = generator.get_fixtures(self.casexml_user, version=V1)
         self.assertEqual(fixture_xml, [])
 
+    @run_with_all_backends
     def test_basic_fixture_generation(self):
         fixture_xml = generator.get_fixtures(self.casexml_user, version=V2)
         self._check_fixture(fixture_xml, item_lists=[SA_PROVINCES, FR_PROVINCES])
 
+    @run_with_all_backends
     def test_fixtures_by_group(self):
         fixture_xml = generator.get_fixtures(self.casexml_user, version=V2, group='case')
         self.assertEqual(list(fixture_xml), [])
@@ -84,6 +88,7 @@ class OtaFixtureTest(TestCase):
         fixture_xml = generator.get_fixtures(self.casexml_user, version=V2, group='standalone')
         self._check_fixture(fixture_xml, item_lists=[SA_PROVINCES, FR_PROVINCES])
 
+    @run_with_all_backends
     def test_fixtures_by_id(self):
         fixture_xml = generator.get_fixture_by_id('user-groups', self.casexml_user, version=V2)
         self._check_fixture([fixture_xml])

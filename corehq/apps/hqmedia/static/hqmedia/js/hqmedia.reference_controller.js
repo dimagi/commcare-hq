@@ -247,6 +247,7 @@ function BaseMediaReference (ref) {
         if (self.upload_controller) {
             self.upload_controller.uploadParams = {
                 path: self.path,
+                originalPath: self.path,
                 media_type : self.media_class,
                 old_ref: self.m_id || "",
                 replace_attachment: true

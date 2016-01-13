@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from couchdbkit import ResourceNotFound
 from datetime import datetime
+from nose.tools import nottest
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -24,7 +25,7 @@ class FormProcessorTestUtils(object):
     @classmethod
     @unit_testing_only
     def delete_all_cases(cls, domain=None):
-        assert CommCareCase.get_db().dbname.endswith('test')
+        assert CommCareCase.get_db().dbname.startswith('test_')
         view_kwargs = {}
         if domain:
             view_kwargs = {
@@ -55,7 +56,7 @@ class FormProcessorTestUtils(object):
         view = 'couchforms/all_submissions_by_domain'
         view_kwargs = {}
         if domain and user_id:
-            view = 'reports_forms/all_forms'
+            view = 'all_forms/view'
             view_kwargs = {
                 'startkey': ['submission user', domain, user_id],
                 'endkey': ['submission user', domain, user_id, {}],
@@ -133,6 +134,7 @@ def post_xform(instance_xml, attachments=None, domain='test-domain'):
         return xforms[0]
 
 
+@nottest
 def create_form_for_test(domain, case_id=None, attachments=None, save=True):
     """
     Create the models directly so that these tests aren't dependent on any

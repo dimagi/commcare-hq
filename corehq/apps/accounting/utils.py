@@ -2,6 +2,8 @@ import calendar
 from collections import namedtuple
 import datetime
 from decimal import Decimal
+import logging
+
 from django.conf import settings
 from django.template.loader import render_to_string
 from corehq.util.view_utils import absolute_reverse
@@ -18,8 +20,17 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import add_months
 from django_prbac.models import Role, UserRole
 
+logger = logging.getLogger('accounting')
 
 EXCHANGE_RATE_DECIMAL_PLACES = 9
+
+
+def log_accounting_error(message):
+    logger.error("[BILLING] %s" % message)
+
+
+def log_accounting_info(message):
+    logger.info("[BILLING] %s" % message)
 
 
 def get_first_last_days(year, month):

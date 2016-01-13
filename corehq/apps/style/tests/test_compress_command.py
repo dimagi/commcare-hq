@@ -6,15 +6,27 @@ from django.conf import settings
 from django.template.loader_tags import ExtendsNode
 from django.core.management import call_command
 from django.test import SimpleTestCase
+from nose.plugins.attrib import attr
 from unittest.util import safe_repr
+
+B3_BASE = 'style/bootstrap3/base.html'
 
 BLOCK_JS = ' block js '
 BLOCK_CSS = ' block stylesheets '
 ENDBLOCK = ' endblock '
 
+COMPRESS_JS = ' compress js '
+COMPRESS_CSS = ' compress stylesheets '
+ENDCOMPRESS = ' endcompress '
+
 DISALLOWED_TAGS = [
     ('{% if', 'You cannot use "if" tags in a compress block'),
     ('^</script>$', 'You cannot use inline JS in a compress block'),
+]
+
+IGNORED_FILES = [
+    'http://opensource.org/licenses/mit-license.html',
+    'More Info : http://www.quirksmode.org/css/box.html',
 ]
 
 
@@ -32,13 +44,19 @@ class TestDjangoCompressOffline(SimpleTestCase):
         )
 
     def _is_b3(self, filename):
+        if filename in IGNORED_FILES:
+            return  False
+
+        if filename.endswith(B3_BASE):
+            return True
+
         parser = DjangoParser(charset=settings.FILE_CHARSET)
         template = parser.parse(filename)
 
         return self._is_b3_base_template(template)
 
     def _is_b3_base_template(self, template):
-        if template.name == 'style/bootstrap3/base.html':
+        if template.name == B3_BASE:
             return True
 
         nodes = list(template.nodelist)
@@ -49,6 +67,7 @@ class TestDjangoCompressOffline(SimpleTestCase):
 
         return False
 
+    @attr("slow")
     def test_compress_offline(self):
         with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
             call_command('compress', force=True)
@@ -65,11 +84,15 @@ class TestDjangoCompressOffline(SimpleTestCase):
             if self._is_b3(filename):
                 with open(filename, 'r+') as f:
                     for line in f.readlines():
-                        if (BLOCK_JS in line or BLOCK_CSS in line) and ENDBLOCK not in line:
+                        has_start_tag = BLOCK_JS in line or BLOCK_CSS in line
+                        has_start_tag = has_start_tag or COMPRESS_JS in line or COMPRESS_CSS in line
+                        has_end_tag = ENDBLOCK in line or ENDCOMPRESS in line
+
+                        if has_start_tag and not has_end_tag:
                             in_compress_block = True
                             continue
 
-                        if ENDBLOCK in line:
+                        if has_end_tag:
                             in_compress_block = False
 
                         if in_compress_block:

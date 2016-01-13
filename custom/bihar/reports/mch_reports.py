@@ -7,7 +7,7 @@ from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.util.timezones.conversions import PhoneTime
 from dimagi.utils.decorators.memoized import memoized
-from corehq.elastic import stream_es_query, ES_URLS
+from corehq.elastic import stream_es_query
 from custom.bihar.reports.display import MCHMotherDisplay, MCHChildDisplay
 from custom.bihar.utils import get_all_owner_ids_from_group
 
@@ -64,7 +64,7 @@ class MCHBaseReport(CustomProjectReport, CaseListReport):
 
     @property
     def get_all_rows(self):
-        query_results = stream_es_query(q=self.es_query, es_url=ES_URLS["cases"], size=999999, chunksize=100)
+        query_results = stream_es_query(q=self.es_query, es_index='cases', size=999999, chunksize=100)
         case_displays = (self.model(self, self.get_case(case))
                  for case in query_results)
 

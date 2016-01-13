@@ -457,7 +457,7 @@ def delete_report(request, domain, report_id):
     if data_source.get_report_count() <= 1:
         # No other reports reference this data source.
         try:
-            delete_data_source_shared(domain, data_source._id, request)
+            data_source.deactivate()
         except Http404:
             # It's possible the data source has already been deleted, but
             # that's fine with us.
@@ -559,6 +559,13 @@ def _edit_data_source_shared(request, domain, config, read_only=False):
         'data_source': config,
         'read_only': read_only
     })
+    if config.is_deactivated:
+        messages.info(
+            request, _(
+                'Data source "{}" has no associated table.\n'
+                'Click "Rebuild Data Source" to recreate the table.'
+            ).format(config.display_name)
+        )
     return render(request, "userreports/edit_data_source.html", context)
 
 
@@ -585,6 +592,10 @@ def delete_data_source_shared(domain, config_id, request=None):
 @require_POST
 def rebuild_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
+    if config.is_deactivated:
+        config.is_deactivated = False
+        config.save()
+
     messages.success(
         request,
         _('Table "{}" is now being rebuilt. Data should start showing up soon').format(
@@ -703,7 +714,9 @@ def export_data_source(request, domain, config_id):
     # First row is taken up by headers
     if params.format == Format.XLS and q.count() >= 65535:
         keyword_params = dict(**request.GET)
-        keyword_params.update(format=Format.CSV)
+        # use default format
+        if 'format' in keyword_params:
+            del keyword_params['format']
         return HttpResponseRedirect(
             '%s?%s' % (
                 reverse('export_configurable_data_source', args=[domain, config._id]),

@@ -1,0 +1,29 @@
+{% extends 'reports/filters/bootstrap2/daterange.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block filter_js %}
+    {{ block.super }}
+
+    <script type="text/javascript">
+        $(function () {
+            bindings = {
+                showFilterName: ko.observable({{ showFilterName|BOOL }})
+            }
+            $('#{{ css_id }}_container').koApplyBindings(bindings);
+        });
+     </script>
+{% endblock %}
+
+{% block filter_content %}
+    <div id="{{ css_id }}_container">
+        <label class="checkbox">
+            <input name="{{ css_id }}_use_filter" type="checkbox" data-bind="checked: showFilterName" />
+            {% trans "Use Filter" %}
+        </label>
+
+        <div class="well" data-bind="visible: showFilterName">
+            {{ block.super }}
+        </div>
+    </div>
+{% endblock %}

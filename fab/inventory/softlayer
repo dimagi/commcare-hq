@@ -14,8 +14,8 @@ localhost ansible_connection=local
 [db0]
 10.162.36.205
 
-[es0]
-10.162.36.214
+[es1]
+10.162.36.253
 
 [pillow0]
 10.162.36.248
@@ -43,10 +43,10 @@ db0
 db0
 
 [zookeeper:children]
-es0
+es1
 
 [kafka:children]
-es0
+es1
 
 [celery:children]
 celery0
@@ -61,7 +61,7 @@ touch0
 db0
 
 [elasticsearch:children]
-es0
+es1
 
 [shared_dir_host:children]
 db0

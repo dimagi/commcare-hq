@@ -1,6 +1,11 @@
 from corehq.util.elastic import es_index
 
+##################
+# NOTE to the next person who updates this name:
+#    You should also update ReportCasePillow.get_unique_id to return `REPORT_CASE_INDEX`
+#    Also remove this comment and the corresponding comment in ReportCasePillow
 REPORT_CASE_INDEX = es_index("report_cases_czei39du507m9mmpqk3y01x72a3ux4p0")
+##################
 
 REPORT_CASE_MAPPING={'_meta': {'comment': '2013-11-05 dmyung',
            'created': None},
@@ -22,7 +27,6 @@ REPORT_CASE_MAPPING={'_meta': {'comment': '2013-11-05 dmyung',
                                                                    'type': 'string'}},
                                             'match': '*',
                                             'match_mapping_type': 'string'}}],
- 'ignore_malformed': True,
  'properties': {'actions': {'dynamic': True,
                             'properties': {'action_type': {'type': 'string'},
                                            'attachments': {'dynamic': False,

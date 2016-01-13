@@ -6,7 +6,7 @@ source .travis/utils.sh
 echo "Matrix params: MATRIX_TYPE=${MATRIX_TYPE:?Empty value for MATRIX_TYPE}, BOWER=${BOWER:-no}"
 
 if [ "${MATRIX_TYPE}" = "python" ]; then
-    pip install coverage unittest2 mock
+    pip install --exists-action w --timeout 60 --requirement=requirements/test-requirements.txt
 
     setup_elasticsearch
     setup_kafka

@@ -175,8 +175,7 @@ class APISynchronization(UserMigrationMixin):
 
     @memoized
     def _get_logistics_domains(self):
-        from custom.ewsghana.models import EWSGhanaConfig
-        return ILSGatewayConfig.get_all_enabled_domains() + EWSGhanaConfig.get_all_enabled_domains()
+        return ILSGatewayConfig.get_all_enabled_domains()
 
     def set_default_backend(self):
         domain_object = Domain.get_by_name(self.domain)
@@ -252,6 +251,11 @@ class APISynchronization(UserMigrationMixin):
             if self.domain not in user.get_domains():
                 user.add_domain_membership(self.domain, location_id=location_id)
                 user.save()
+            else:
+                dm = user.get_domain_membership(self.domain)
+                if dm.location_id != location_id:
+                    dm.location_id = location_id
+                    user.save()
         return user
 
     def edit_phone_numbers(self, ilsgateway_smsuser, user):

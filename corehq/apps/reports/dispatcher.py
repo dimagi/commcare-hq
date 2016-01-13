@@ -138,6 +138,9 @@ class ReportDispatcher(View):
             report = cls(request, domain=domain, **report_kwargs)
             report.rendered_as = render_as
             try:
+                report.set_bootstrap3_status(
+                    request, domain=domain, report_slug=report_slug, *args, **kwargs
+                )
                 return getattr(report, '%s_response' % render_as)
             except BadRequestError, e:
                 return HttpResponseBadRequest(e)

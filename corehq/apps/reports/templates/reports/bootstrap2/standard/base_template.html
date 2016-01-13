@@ -1,0 +1,232 @@
+{% extends "style/bootstrap2/two_column.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block js %}{{ block.super }}
+    {% block reports-js %}
+    {% include "imports/datatables.html" %}
+    <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+    <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/jquery.history.js' %}"></script>
+    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% static 'reports/javascripts/datepicker.js' %}"></script>
+    <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
+    <script src="{% static 'reports/javascripts/reports.async.js' %}"></script>
+    {% endblock %}
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+{% block reports-js-inline %}
+    <script type="text/javascript">
+        var standardHQReport = new HQReport({
+            domain: '{{ domain }}',
+            urlRoot: '{{ report.url_root }}',
+            slug: {{ report.slug|JSON }},
+            subReportSlug: {{ report.sub_slug|JSON }},
+            type: {{ report.type|JSON }},
+            filterSet: {{ report.filter_set|JSON }},
+            needsFilters: {{ report.needs_filters|JSON }},
+            isExportable: {{ report.is_exportable|JSON }},
+            isExportAll: {{ report.is_export_all|JSON }},
+            isEmailable: {{ report.is_emailable|JSON }},
+            emailDefaultSubject: {{ report.title|JSON }},
+            emailSuccessMessage: "{% trans 'Report successfully emailed' %}",
+            emailErrorMessage: "{% trans 'An error occurred emailing your report. Please try again.' %}",
+
+            {% if request.datespan %}
+                datespan: {
+                    startdate: '{{ datespan.startdate|date:"Y-m-d" }}',
+                    enddate: '{{ datespan.enddate|date:"Y-m-d" }}'
+                },
+            {% endif %}
+        });
+        standardHQReport.init();
+
+        {% if report.slug and report.is_async %}
+            var asyncHQReport = new HQAsyncReport({
+                standardReport: standardHQReport
+            });
+            asyncHQReport.init();
+        {% endif %}
+
+        $('.report-description-popover').popover({
+            placement: 'right',
+            trigger: 'hover'
+        });
+    </script>
+
+    <script>
+        $('#apply-btn').on('click', function() {
+            $('.hq-generic-report').trigger('apply-click');
+        });
+    </script>
+{% endblock %}
+{% endblock %}
+
+{% block head %}
+    {{ block.super }}
+    {% block reports-css %}
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+    {% endblock %}
+{% endblock %}
+
+{% block title %}{{ report.title|default:"Project Reports"|safe }}{% endblock %}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a> <span class="divider">&gt;</span>
+        </li>
+        {% if report.breadcrumbs %}
+            {% for crumb in report.breadcrumbs %}
+                <li>
+                    <a href="{{ crumb.link }}">{{ crumb.title }}</a> <span class="divider">&gt;</span>
+                </li>
+            {% endfor %}
+        {% endif %}
+        <li class="active">
+            <div id="report-title"><a href="{{ report.url }}">{% trans report.title|default:"Untitled Report"|safe %}</a></div>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block main_column %}
+    <div class="hq-accordion-control{% if report.is_async%} hide{% endif %}" id="reportFiltersAccordion">
+        {% if report.show_filters %}
+            <div id="reportFilters" class="accordion-body collapse">
+                <div class="accordion-inner">
+                    <form method="get" id="paramSelectorForm" class="form-horizontal">
+                        <div id="hq-report-filters">
+                            {% if not report.is_async %}
+                                {% include "reports/async/bootstrap2/filters.html" %}
+                            {% endif %}
+                        </div>
+                        <div class="form-actions">
+                            {% block report_filter_actions %}
+                            <button type="submit" class="btn disabled"
+                                    data-loading-text="{% trans "Generating Report..." %}"
+                                    data-standard-text="{% trans "Apply" %}"
+                                    id="apply-btn">
+                                {% trans "Apply" %}
+                            </button>
+                            {% endblock %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+        <div class="accordion-heading">
+            <div class="accordion-actions">
+                {% if report.show_filters %}
+                    <a href="#reportFilters" class="btn" id="toggle-report-filters"
+                       data-toggle="collapse" data-open-text="{% trans "Show Filter Options" %}"
+                       data-close-text="{% trans "Hide Filter Options" %}">
+                        {% trans "Filter Options" %}
+                    </a>
+                {% endif %}
+                {% block export %}
+                    {% if report.is_exportable %}
+                        <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="export-report-excel">
+                            <i class="icon icon-share"></i>
+                            {% trans "Export to" %} {% if report.export_target %}{{ report.export_target }}{% else %}Excel{% endif %}
+                        </a>
+                    {% endif %}
+                {% endblock %}
+                {% if report.is_emailable %}
+                    <a href="#email-report-modal" class="btn{% if report.needs_filters %} hide{% endif %}" data-toggle="modal" id="email-report">
+                        <i class="icon icon-envelope"></i> {% trans "Email report" %}
+                    </a>
+                {% endif %}
+
+                {% if report.is_printable %}
+                    <a href="#" class="btn{% if report.needs_filters %} hide{% endif %}" id="print-report">
+                        <i class="icon icon-print"></i> {% trans "Print" %}
+                    </a>
+                {% endif %}
+
+            </div>
+            <div id="extra-filter-info" class="accordion-extra"></div>
+        </div>
+    </div>
+
+    {% if report.is_emailable %}
+    <div id="email-report-modal" class="modal hide fade">
+        <div>
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal" data-bind="click: resetModal">×</a>
+                <h3>
+                    {% trans "Email report:" %}
+                    {{ datespan.startdate|date:"Y-m-d" }}
+                    {% if datespan.startdate %}
+                        {% trans "to" %}
+                    {% endif %}
+                    {{ datespan.enddate|date:"Y-m-d" }}
+                </h3>
+            </div>
+            <form class="form-horizontal">
+                <div class="modal-body">
+                    <div class="control-group">
+                        <label class="control-label" for="email-report-subject">{% trans "Subject" %}</label>
+                        <div class="controls">
+                            <input type="text"
+                                   id="email-report-subject"
+                                   name="subject"
+                                   data-bind="value: subject"/>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <div class="controls">
+                            <label class="checkbox"><input type="checkbox" data-bind="checked: send_to_owner" />{% trans "Send to me" %}</label>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label"
+                               for="email-report-recipient_emails">{% trans "Additional Recipients" %}</label>
+                        <div class="controls">
+                            <textarea rows="3"
+                                      id="email-report-recipient_emails"
+                                      name="recipient_emails"
+                                      data-bind="value: recipient_emails"></textarea>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label" for="email-report-notes">{% trans "Report notes" %}</label>
+                        <div class="controls">
+                            <textarea rows="3" id="email-report-notes" name="notes" data-bind="value: notes"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="pull-left">
+                    <div class="email-status text-success hide">{% trans 'Email successfully sent!' %}</div>
+                    <div class="email-status text-error hide">{% trans 'Error sending email.' %}</div></div>
+                    <div class="btn-toolbar pull-right">
+                        <a href="#" class="btn cancel-button" data-dismiss="modal" data-bind="click: resetModal">{% trans "Close" %}</a>
+                        <button class="btn btn-success send-button" type="button"
+                               data-loading-text="{% trans 'Sending...' %}"
+                               data-bind="click: sendEmail">{% trans 'Send Email' %}</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if report.special_notice %}
+    <div class="alert alert-info" style="margin-bottom: 2px">
+        <h4>{% trans 'Notice' %}</h4>
+        <p>{{ report.special_notice }}</p>
+    </div>
+    {% endif %}
+    <div id="report-content">
+        {% if not report.is_async and report.slug %}
+            {% block reportcontent %}
+            {% endblock %}
+        {% else %}
+            {% include "reports/async/bootstrap2/default.html" %}
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block column_style %}{% if layout_flush_content %}hq-flush-content{% endif %}{% endblock %}

@@ -2,11 +2,11 @@ from urllib import urlencode
 from StringIO import StringIO
 from celery.schedules import crontab
 from celery.task import periodic_task, task
-from celery.utils.log import get_task_logger
 import datetime
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
@@ -30,6 +30,8 @@ from corehq.apps.accounting.utils import (
     has_subscription_already_ended, get_dimagi_from_email_by_product,
     fmt_dollar_amount,
     get_change_status,
+    log_accounting_error,
+    log_accounting_info,
 )
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.users.models import FakeUser, WebUser
@@ -40,17 +42,18 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.email import send_HTML_email
 import corehq.apps.accounting.filters as filters
 
-logger = get_task_logger('accounting')
-
 
 def activate_subscriptions(based_on_date=None):
     """
     Activates all subscriptions starting today (or, for testing, based on the date specified)
     """
     starting_date = based_on_date or datetime.date.today()
-    starting_subscriptions = Subscription.objects.filter(date_start=starting_date)
+    starting_subscriptions = Subscription.objects.filter(
+        date_start=starting_date,
+        is_active=False,
+    )
     for subscription in starting_subscriptions:
-        if not has_subscription_already_ended(subscription) and not subscription.is_active:
+        if not has_subscription_already_ended(subscription):
             with transaction.atomic():
                 subscription.is_active = True
                 subscription.save()
@@ -66,31 +69,62 @@ def deactivate_subscriptions(based_on_date=None):
     Deactivates all subscriptions ending today (or, for testing, based on the date specified)
     """
     ending_date = based_on_date or datetime.date.today()
-    ending_subscriptions = Subscription.objects.filter(date_end=ending_date)
+    ending_subscriptions = Subscription.objects.filter(
+        date_end=ending_date,
+        is_active=True,
+    )
     for subscription in ending_subscriptions:
         with transaction.atomic():
             subscription.is_active = False
             subscription.save()
             next_subscription = subscription.next_subscription
-            if next_subscription and next_subscription.date_start == ending_date:
+            activate_next_subscription = next_subscription and next_subscription.date_start == ending_date
+            if activate_next_subscription:
                 new_plan_version = next_subscription.plan_version
                 next_subscription.is_active = True
                 next_subscription.save()
             else:
                 new_plan_version = None
             _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
+            if next_subscription and subscription.account == next_subscription.account:
+                subscription.transfer_credits(subscription=next_subscription)
+            else:
+                subscription.transfer_credits()
             subscription.subscriber.deactivate_subscription(
                 downgraded_privileges=downgraded_privs,
                 upgraded_privileges=upgraded_privs,
                 old_subscription=subscription,
-                new_subscription=next_subscription,
+                new_subscription=next_subscription if activate_next_subscription else None,
             )
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0))
+def warn_subscriptions_still_active(based_on_date=None):
+    ending_date = based_on_date or datetime.date.today()
+    subscriptions_still_active = Subscription.objects.filter(
+        date_end__lte=ending_date,
+        is_active=True,
+    )
+    for subscription in subscriptions_still_active:
+        log_accounting_error("%s is still active." % subscription)
+
+
+def warn_subscriptions_not_active(based_on_date=None):
+    based_on_date = based_on_date or datetime.date.today()
+    subscriptions_not_active = Subscription.objects.filter(
+        Q(date_end=None) | Q(date_end__gt=based_on_date),
+        date_start__lte=based_on_date,
+        is_active=False,
+    )
+    for subscription in subscriptions_not_active:
+        log_accounting_error("%s is not active" % subscription)
+
+
+@periodic_task(run_every=crontab(minute=0, hour=5))
 def update_subscriptions():
     deactivate_subscriptions()
     activate_subscriptions()
+    warn_subscriptions_still_active()
+
 
 @periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'))
 def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
@@ -99,7 +133,7 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
     """
     today = based_on_date or datetime.date.today()
     invoice_start, invoice_end = utils.get_previous_month_date_range(today)
-    logger.info("[Billing] Starting up invoices for %(start)s - %(end)s" % {
+    log_accounting_info("Starting up invoices for %(start)s - %(end)s" % {
         'start': invoice_start.strftime(USER_DATE_FORMAT),
         'end': invoice_end.strftime(USER_DATE_FORMAT),
     })
@@ -112,35 +146,33 @@ def generate_invoices(based_on_date=None, check_existing=False, is_test=False):
                 date_created__gte=today).count() != 0):
             pass
         elif is_test:
-            logger.info("[Billing] Ready to create invoice for domain %s"
-                        % domain.name)
+            log_accounting_info("Ready to create invoice for domain %s" % domain.name)
         else:
             try:
                 invoice_factory = DomainInvoiceFactory(
                     invoice_start, invoice_end, domain)
                 invoice_factory.create_invoices()
-                logger.info("[BILLING] Sent invoices for domain %s"
-                            % domain.name)
+                log_accounting_info("Sent invoices for domain %s" % domain.name)
             except CreditLineError as e:
-                logger.error(
-                    "[BILLING] There was an error utilizing credits for "
+                log_accounting_error(
+                    "There was an error utilizing credits for "
                     "domain %s: %s" % (domain.name, e)
                 )
             except BillingContactInfoError as e:
-                logger.info("BillingContactInfoError: %s" % e)
+                log_accounting_error("BillingContactInfoError: %s" % e)
             except InvoiceError as e:
-                logger.error(
-                    "[BILLING] Could not create invoice for domain %s: %s" % (
+                log_accounting_error(
+                    "Could not create invoice for domain %s: %s" % (
                     domain.name, e
                 ))
             except InvoiceAlreadyCreatedError as e:
-                logger.error(
-                    "[BILLING] Invoice already existed for domain %s: %s" % (
+                log_accounting_error(
+                    "Invoice already existed for domain %s: %s" % (
                     domain.name, e
                 ))
             except Exception as e:
-                logger.error(
-                    "[BILLING] Error occurred while creating invoice for "
+                log_accounting_error(
+                    "Error occurred while creating invoice for "
                     "domain %s: %s" % (domain.name, e)
                 )
 
@@ -199,8 +231,8 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
             file_attachments=[excel_attachment],
         )
 
-    logger.info(
-        "[BILLING] Sent Bookkeeper Invoice Summary for %(month)s "
+    log_accounting_info(
+        "Sent Bookkeeper Invoice Summary for %(month)s "
         "to %(emails)s." % {
             'month': first_of_month.strftime(USER_MONTH_FORMAT),
             'emails': ", ".join(emails)
@@ -237,7 +269,7 @@ def send_subscription_reminder_emails(num_days, exclude_trials=True):
             if not subscription.is_renewed:
                 subscription.send_ending_reminder_email()
         except Exception as e:
-            logger.error("[BILLING] %s" % e)
+            log_accounting_error(e.message)
 
 
 def send_subscription_reminder_emails_dimagi_contact(num_days):
@@ -280,7 +312,7 @@ def create_wire_credits_invoice(domain_name,
     try:
         record.send_email(contact_emails=contact_emails)
     except Exception as e:
-        logger.error("[BILLING] %s" % e)
+        log_accounting_error(e.message)
 
 
 @task(ignore_result=True)
@@ -293,8 +325,8 @@ def send_purchase_receipt(payment_record, core_product, domain,
         web_user = WebUser.get_by_username(email)
         name = web_user.first_name
     except ResourceNotFound:
-        logger.error(
-            "[BILLING] Strange. A payment attempt was made by a user that "
+        log_accounting_error(
+            "Strange. A payment attempt was made by a user that "
             "we can't seem to find! %s" % email
         )
         name = email
@@ -336,8 +368,8 @@ def weekly_digest():
         ))
 
     if not ending_in_forty_days:
-        logger.info(
-            "[Billing] Did not send summary of ending subscriptions because "
+        log_accounting_info(
+            "Did not send summary of ending subscriptions because "
             "there are none."
         )
         return
@@ -410,8 +442,8 @@ def weekly_digest():
         file_attachments=[file_attachment],
     )
 
-    logger.info(
-        "[BILLING] Sent summary of ending subscriptions from %(today)s" % {
+    log_accounting_info(
+        "Sent summary of ending subscriptions from %(today)s" % {
             'today': today.isoformat(),
         })
 

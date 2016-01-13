@@ -45,6 +45,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     new_user.is_superuser = False
     new_user.last_login = now
     new_user.date_joined = now
+    new_user.last_password_set = now
     new_user.save()
 
     return new_user
@@ -86,9 +87,13 @@ def request_new_domain(request, form, domain_type=None, new_user=True):
 
     if not new_domain.name:
         new_domain.name = new_domain._id
-        new_domain.save() # we need to get the name from the _id
+        new_domain.save()  # we need to get the name from the _id
 
-    create_30_day_trial(new_domain)
+    if new_user:
+        # Only new-user domains are eligible for Advanced trial
+        # domains with no subscription are equivalent to be on free Community plan
+        create_30_day_advanced_trial(new_domain)
+
     UserRole.init_domain_with_presets(new_domain.name)
 
     dom_req.domain = new_domain.name
@@ -260,7 +265,8 @@ You can view the %s here: %s""" % (
         logging.warning("Can't send email, but the message was:\n%s" % message)
 
 
-def create_30_day_trial(domain_obj):
+# Only new-users are eligible for advanced trial
+def create_30_day_advanced_trial(domain_obj):
     # Create a 30 Day Trial subscription to the Advanced Plan
     advanced_plan_version = DefaultProductPlan.get_default_plan_by_domain(
         domain_obj, edition=SoftwarePlanEdition.ADVANCED, is_trial=True

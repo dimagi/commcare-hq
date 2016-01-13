@@ -1,5 +1,6 @@
 [
     {
+        "id": 1,
         "username": "ilsgateway",
         "first_name": "ILS",
         "last_name": "Gateway",
@@ -12,6 +13,7 @@
         "supply_point": null
     },
     {
+        "id": 2,
         "date_joined": "2013-11-21T12:51:09",
         "email": "",
         "first_name": "Test1",
@@ -26,6 +28,7 @@
         "username": "test1"
     },
     {
+        "id": 3,
         "date_joined": "2013-11-21T12:52:06",
         "email": "test2@example.com",
         "first_name": "Test2",
@@ -40,6 +43,7 @@
         "username": "test2"
     },
     {
+        "id": 4,
         "date_joined": "2013-11-21T12:53:09",
         "email": "test3y@example.com",
         "first_name": "Test3",
@@ -54,6 +58,7 @@
         "username": "test3"
     },
     {
+        "id": 5,
         "date_joined": "2013-11-21T12:55:30",
         "email": "test4@example.com",
         "first_name": "test4",
@@ -68,6 +73,7 @@
         "username": "Test4"
     },
     {
+        "id": 6,
         "date_joined": "2013-11-21T12:57:48",
         "email": "test5@example.com",
         "first_name": "Test5",

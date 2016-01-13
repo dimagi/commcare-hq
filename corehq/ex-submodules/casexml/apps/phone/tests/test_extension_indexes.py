@@ -8,6 +8,7 @@ from casexml.apps.case.tests.util import assert_user_doesnt_have_cases, \
     assert_user_has_cases
 from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
+from corehq.form_processor.tests import run_with_all_backends
 
 
 def get_test_file_json(filename):
@@ -31,7 +32,7 @@ def test_generator(test_name, skip=False):
         self.assertEqual(sync_log.case_ids_on_phone, set(desired_cases))
         assert_user_has_cases(self, self.user, desired_cases)
         assert_user_doesnt_have_cases(self, self.user, undesired_cases)
-    return test
+    return run_with_all_backends(test)
 
 
 class TestSequenceMeta(type):

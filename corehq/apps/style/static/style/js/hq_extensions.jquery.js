@@ -6,6 +6,7 @@
             document.location = url + '?' + $.param(params);
         },
         postGo: function (url, params) {
+            params.csrfmiddlewaretoken = $.cookie('csrftoken');
             var $form = $("<form>")
                 .attr("method", "post")
                 .attr("action", url);

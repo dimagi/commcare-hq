@@ -19,7 +19,7 @@ From the following web page</b>: {{ referer }}<br/>
 Account name: {{ billing_account.name }}<br/>
 Contracted vs. Self-service: {{ billing_account.entry_point }}<br/>
 Dimagi Contact: {{ billing_account.dimagi_contact }}<br/>
-Billing Contacts: {{ billing_account.billingcontactinfo.emails }}
+Billing Contacts: {{ billing_account.billingcontactinfo.email_list }}
 {% else %}
 Not available
 {% endif %}

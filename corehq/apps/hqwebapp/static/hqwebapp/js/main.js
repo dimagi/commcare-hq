@@ -196,11 +196,15 @@ var COMMCAREHQ = (function () {
         makeHqHelp: function (opts, wrap) {
             wrap = wrap === undefined ? true : wrap;
             var iconClass = "icon-question-sign";
-            if (opts.bootstrap3){
+            var containerStyle = '';
+
+            if (opts.bootstrap3) {
                 iconClass = "fa fa-question-circle";
+                containerStyle = 'height: 0; width: auto;';
             }
+
             var el = $(
-                '<div class="hq-help">' + 
+                '<div style="' + containerStyle + '" class="hq-help">' +
                     '<a href="#">' +
                         '<i class="' + iconClass + '"></i></a></div>'
                 ),

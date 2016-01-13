@@ -133,7 +133,26 @@
         {# Core Libraries #}
         {% compress js %}
         {% include "style/includes/bootstrap3/core_libraries.html" %}
+        {% endcompress %} 
+
+        {% if formdesigner %}
+        <script src="{% new_static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
+        {% endif %}
+
+        {% if request.use_jquery_ui %}
+        {% compress js %}
+        <script type="text/javascript" src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
         {% endcompress %}
+        {% endif %}
+
+        {% if request.use_jquery_ui_multiselect %}
+            {% compress js %}
+                <script src="{% new_static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
+                <script src="{% new_static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
+            {% endcompress %}
+        {% endif %}
+
+        <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
 
         {# Up here because if daterangepicker is called from within a form widget, #}
         {# the javascript requiring the config file is run before js-inline #}
@@ -145,12 +164,11 @@
         {% endcompress %}
         {% endif %}
 
-        {% if formdesigner %}
-        <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
-        {% endif %}
-
         {% block head %}
         {% endblock %}
+
+        {# hubspot tracking events must be defined BEFORE the hubspot js is loaded #}
+        {% block hubspot %}{% endblock %}
 
         {% include 'style/includes/analytics_all.html' %}
 
@@ -309,6 +327,7 @@
         {# HQ Specific Libraries #}
         <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
         {% compress js %}
+        <script src="{% new_static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/hq-bug-report.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/layout.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/js/form_tools.js' %}"></script>
@@ -361,21 +380,10 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_jquery_ui %}
-        {% compress js %}
-        <script type="text/javascript" src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
-
-        {% if request.use_jquery_ui_multiselect %}
-            {% compress js %}
-                <script src="{% new_static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
-                <script src="{% new_static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
-            {% endcompress %}
-        {% endif %}
-
         {% if request.use_nvd3 %}
         {% compress js %}
+        <script src="{% new_static 'nvd3/lib/d3.v2.js' %}"></script>
+        <script src="{% new_static 'nvd3/lib/fisheye.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'd3/d3.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'nvd3/nv.d3.min.js' %}"></script>
         {% endcompress %}
@@ -384,6 +392,7 @@
         {% if request.use_datatables %}
         {% compress js %}
         <script src="{% new_static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
+        <script src="{% new_static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
         <script src="{% new_static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
         {% endcompress %}
         {% endif %}
@@ -403,14 +412,12 @@
 
         {% if request.guided_tour %}
         {% compress js %}
-        <script src="{% static 'tour/js/tour.utils.js' %}"></script>
+        <script src="{% new_static 'tour/js/tour.utils.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'bootstrap-tour/build/js/bootstrap-tour.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
-        {% compress js %}
         {% block js %}{% endblock js %}
-        {% endcompress %}
 
         {# Report Issue #}
         {% include 'style/includes/modal_report_issue.html' %}

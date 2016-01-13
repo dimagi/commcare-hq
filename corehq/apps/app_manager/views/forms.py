@@ -481,10 +481,10 @@ def get_form_view_context_and_template(request, domain, form, langs, is_user_reg
 
     if toggles.GUIDED_TOUR.enabled(domain):
         is_template_app = context['allow_cloudcare'] and form.source and not context['is_user_registration']
-        if is_template_app and tours.NEW_TEMPLATE_APP.is_enabled(request.user):
-            request.guided_tour = tours.NEW_TEMPLATE_APP.get_tour_data()
-        elif tours.NEW_BLANK_APP.is_enabled(request.user):
-            request.guided_tour = tours.NEW_BLANK_APP.get_tour_data()
+        if is_template_app and tours.NEW_APP.is_enabled(request.user):
+            request.guided_tour = tours.NEW_APP.get_tour_data()
+        elif tours.NEW_APP.is_enabled(request.user):
+            request.guided_tour = tours.NEW_APP.get_tour_data()
 
     if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
         module = form.get_module()

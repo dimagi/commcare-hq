@@ -66,7 +66,6 @@ CASE_MAPPING_FRAGMENT = {
 REPORT_XFORM_MAPPING = {
     "date_detection": False,
     "date_formats": DATE_FORMATS_ARR, #for parsing the explicitly defined dates
-    'ignore_malformed': True,
     'dynamic': True,
     "_meta": {
         "created": '2014-10-07', #record keeping on the index.

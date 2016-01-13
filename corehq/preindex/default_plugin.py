@@ -10,7 +10,7 @@ class DefaultPreindexPlugin(PreindexPlugin):
     def __init__(self, app_label):
         self.app_label = app_label
 
-    def get_designs(self):
+    def _get_designs(self):
         app_config = apps.get_app_config(self.app_label)
         # Instantiate here to make sure that it's instantiated after the dbs settings
         # are patched for tests

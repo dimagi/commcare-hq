@@ -6,7 +6,6 @@ from corehq.apps.reports.dispatcher import BasicReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.util import numcell
-from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.view_utils import absolute_reverse
 
@@ -22,7 +21,7 @@ class DomainStatsReport(GenericTabularReport):
     dispatcher = BasicReportDispatcher
     asynchronous = True
     section_name = 'DOMSTATS'
-    base_template = "reports/async/default.html"
+    base_template = "reports/async/bootstrap2/default.html"
     custom_params = []
     es_queried = False
 
@@ -133,4 +132,4 @@ def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=
 
     q["sort"] = sort if sort else [{"name" : {"order": "asc"}},]
 
-    return es_query(params, facets, terms, q, DOMAIN_INDEX + '/hqdomain/_search', start_at, size, fields=fields)
+    return es_query(params, facets, terms, q, 'domains', start_at, size, fields=fields)

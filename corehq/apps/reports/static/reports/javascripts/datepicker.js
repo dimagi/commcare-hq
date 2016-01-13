@@ -16,11 +16,6 @@ $(function() {
         showButtonPanel: true,
         dateFormat: 'yy-mm-dd',
         numberOfMonths: 2
-        /*onClose: function(dateText, inst) {
-            var month = $("#ui-datepicker-div .ui-datepicker-month :selected").val();
-            var year = $("#ui-datepicker-div .ui-datepicker-year :selected").val();
-            $(this).datepicker('setDate', new Date(year, month, 1));
-        }*/
     });
     $('#startdate').change(function(){
         $("#enddate").datepicker('option', 'minDate', $('#startdate').val());

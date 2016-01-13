@@ -1,6 +1,7 @@
 import uuid
 from celery.task import task
 from dimagi.utils.couch.database import iter_docs
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.hqcase.utils import submit_case_blocks, make_creating_casexml
 from corehq.apps.users.models import CommCareUser
@@ -30,6 +31,9 @@ def explode_cases(user_id, domain, factor, task=None):
 
     # copy parents
     for case in cases:
+        # skip over user as a case
+        if case.type == USERCASE_TYPE:
+            continue
         # save children for later
         if case.indices:
             child_cases.append(case)
