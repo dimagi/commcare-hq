@@ -47,12 +47,12 @@ class MaltGeneratorTest(TestCase):
 
     @classmethod
     def _setup_apps(cls):
-        cls.app = Application.new_app(cls.DOMAIN_NAME, "app 1", APP_V2)
+        cls.non_wam_app = Application.new_app(cls.DOMAIN_NAME, "app 1", APP_V2)
         cls.wam_app = Application.new_app(cls.DOMAIN_NAME, "app 2", APP_V2)
         cls.wam_app.amplifies_workers = AMPLIFIES_YES
-        cls.app.save()
+        cls.non_wam_app.save()
         cls.wam_app.save()
-        cls.app_id = cls.app._id
+        cls.non_wam_app_id = cls.non_wam_app._id
         cls.wam_app_id = cls.wam_app._id
 
     @classmethod
@@ -86,23 +86,25 @@ class MaltGeneratorTest(TestCase):
                 )
 
         out_of_range_forms = [
-            ("out_of_range_1", cls.app_id),
+            ("out_of_range_1", cls.non_wam_app_id),
             ("out_of_range_2", cls.wam_app_id),
         ]
         in_range_forms = [
             # should be included in MALT
-            ('app_form1', cls.app_id),
-            ('app_form2', cls.app_id),
-            ('app_form3', cls.app_id),
+            ('non_wam_app_form1', cls.non_wam_app_id),
+            ('non_wam_app_form2', cls.non_wam_app_id),
+            ('non_wam_app_form3', cls.non_wam_app_id),
             ('wam_app_form1', cls.wam_app_id),
             ('wam_app_form2', cls.wam_app_id),
+            # should be included in MALT
             ('missing_app_form', MISSING_APP_ID),
         ]
 
         _append_forms(out_of_range_forms, cls.out_of_range_date)
         _append_forms(in_range_forms, cls.correct_date)
 
-        sms_form = _form_data('sms_form', cls.app_id, device_id=COMMCONNECT_DEVICE_ID)
+        # should not be included in MALT
+        sms_form = _form_data('sms_form', cls.non_wam_app_id, device_id=COMMCONNECT_DEVICE_ID)
         form_data_rows.append(sms_form)
 
         FormData.objects.bulk_create(form_data_rows)
@@ -122,11 +124,11 @@ class MaltGeneratorTest(TestCase):
         self.assertEqual(int(row.num_of_forms), num_forms)
         self.assertEqual(row.wam, wam_value)
 
-    def test_two_wam_yes_apps(self):
+    def test_wam_yes_malt_counts(self):
         self._check_malt_rows(self.wam_app_id, 2, MALTRow.YES)
 
-    def test_three_wam_not_set_apps(self):
-        self._check_malt_rows(self.app_id, 3, MALTRow.NOT_SET)
+    def test_wam_not_set_malt_counts(self):
+        self._check_malt_rows(self.non_wam_app_id, 3, MALTRow.NOT_SET)
 
     def test_missing_app_id_is_included(self):
         self._check_malt_rows(MISSING_APP_ID, 1, MALTRow.NOT_SET)
