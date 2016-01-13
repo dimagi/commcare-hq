@@ -125,6 +125,7 @@ def case_transaction_adapter(transaction):
         adapt(transaction.case_id).getquoted(),
         adapt(transaction.revoked).getquoted(),
         adapt(json.dumps(transaction.details, cls=JSONEncoder)).getquoted(),
+        adapt(transaction.sync_log_id).getquoted(),
     ]
     return _adapt_fields(fields, CaseTransaction_DB_TABLE)
 

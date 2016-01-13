@@ -22,7 +22,7 @@ class CaseSyncUpdate(object):
         pairing. Should be a list of actions like [create, update, close]
         """
         ret = []
-        if not self.sync_token or not self.sync_token.phone_is_holding_case(self.case.get_id):
+        if not self.sync_token or not self.sync_token.phone_is_holding_case(self.case.case_id):
             ret.append(const.CASE_ACTION_CREATE)
         # always include an update
         ret.append(const.CASE_ACTION_UPDATE)

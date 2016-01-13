@@ -23,8 +23,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.users.models import CouchUser
-from corehq.elastic import es_query, ADD_TO_ES_FILTER, ES_URLS
-from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from dimagi.utils.parsing import json_format_datetime
 
 
@@ -62,6 +61,7 @@ def active_mobile_users(domain, *args):
 
     sms_users = {q['term'] for q in (
         SMSES()
+        .incoming_messages()
         .user_facet(size=USER_COUNT_UPPER_BOUND)
         .to_commcare_user()
         .domain(domain)
@@ -92,7 +92,7 @@ def cases_in_last(domain, days):
             "modified_on": {
                 "from": then,
                 "to": now}}}}
-    data = es_query(params={"domain.exact": domain, 'closed': False}, q=q, es_url=CASE_INDEX + '/case/_search', size=1)
+    data = es_query(params={"domain.exact": domain, 'closed': False}, q=q, es_index='cases', size=1)
     return data['hits']['total'] if data.get('hits') else 0
 
 def inactive_cases_in_last(domain, days):
@@ -110,7 +110,7 @@ def inactive_cases_in_last(domain, days):
                          "modified_on": {
                              "from": then,
                              "to": now }}}}}}
-    data = es_query(params={"domain.exact": domain, 'closed': False}, q=q, es_url=CASE_INDEX + '/case/_search', size=1)
+    data = es_query(params={"domain.exact": domain, 'closed': False}, q=q, es_index='cases', size=1)
     return data['hits']['total'] if data.get('hits') else 0
 
 
@@ -299,6 +299,7 @@ ES_CALCED_PROPS = ["cp_n_web_users", "cp_n_active_cc_users", "cp_n_cc_users",
                    "cp_n_sms_30_d", "cp_sms_ever", "cp_sms_30_d", "cp_n_sms_in_30_d",
                    "cp_n_sms_out_30_d"]
 
+
 def total_distinct_users(domains=None):
     """
     Get total number of users who've ever submitted a form.
@@ -309,7 +310,7 @@ def total_distinct_users(domains=None):
         "filter": {"and": ADD_TO_ES_FILTER["forms"][:]},
     }
 
-    res = es_query(q=q, facets=["form.meta.userID"], es_url=ES_URLS["forms"], size=0)
+    res = es_query(q=q, facets=["form.meta.userID"], es_index='forms', size=0)
 
     user_ids = reduce(list.__add__, [CouchUser.ids_by_domain(d) for d in domains], [])
     terms = [t.get('term') for t in res["facets"]["form.meta.userID"]["terms"]]

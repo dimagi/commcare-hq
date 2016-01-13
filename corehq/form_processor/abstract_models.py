@@ -117,6 +117,12 @@ class AbstractCommCareCase(object):
     def dynamic_case_properties(self):
         raise NotImplementedError()
 
+    def get_actions_for_form(self, xform):
+        raise NotImplementedError
+
+    def modified_since_sync(self, sync_log):
+        raise NotImplementedError
+
 
 class AbstractLedgerValue(six.with_metaclass(ABCMeta)):
     @abstractproperty

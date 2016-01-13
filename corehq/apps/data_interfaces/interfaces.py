@@ -243,7 +243,7 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
         results = es_query(
             params={'domain.exact': self.domain},
             q=self.filters_as_es_query(),
-            es_url=XFORM_INDEX + '/xform/_search',
+            es_index='forms',
             fields=['_id'],
         )
         form_ids = [res['_id'] for res in results.get('hits', {}).get('hits', [])]

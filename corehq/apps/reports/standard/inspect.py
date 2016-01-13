@@ -17,7 +17,6 @@ from corehq.apps.reports.generic import (GenericTabularReport,
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from corehq.toggles import SUPPORT
 from dimagi.utils.decorators.memoized import memoized
 
@@ -144,7 +143,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
         return es_query(
             params={'domain.exact': self.domain},
             q=self.filters_as_es_query(),
-            es_url=XFORM_INDEX + '/xform/_search',
+            es_index='forms',
             start_at=self.pagination.start,
             size=self.pagination.count,
         )

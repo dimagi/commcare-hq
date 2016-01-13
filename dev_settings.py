@@ -16,6 +16,8 @@ LOCAL_APPS = (
 
 TEST_RUNNER = 'testrunner.DevTestRunner'
 
+SKIP_TESTS_REQUIRING_EXTRA_SETUP = True
+
 # https://docs.djangoproject.com/en/1.8/ref/settings/#std:setting-TEST_NON_SERIALIZED_APPS
 # https://docs.djangoproject.com/en/1.8/ref/settings/#serialize
 TEST_NON_SERIALIZED_APPS = ['corehq.form_processor']

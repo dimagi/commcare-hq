@@ -120,7 +120,7 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
         # intentionally a no-op
         if self.case.indices:
             logging.info("Tried to add indices to version 1 CaseXML restore. This is not supported. "
-                         "The case id is %s, domain %s." % (self.case.get_id, self.case.domain))
+                         "The case id is %s, domain %s." % (self.case.case_id, self.case.domain))
 
     def add_attachments(self, element):
         pass

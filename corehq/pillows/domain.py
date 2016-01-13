@@ -44,7 +44,7 @@ class DomainPillow(HQPillow):
         doc_dict = super(DomainPillow, self).change_trigger(changes_dict)
         if doc_dict and doc_dict['doc_type'] == 'Domain-DUPLICATE':
             if self.doc_exists(doc_dict):
-                self.get_es().delete(path=self.get_doc_path_typed(doc_dict))
+                self.get_es_new().delete(self.es_index, self.es_type, doc_dict['_id'])
             return None
         else:
             return doc_dict

@@ -7,6 +7,9 @@ import mock
 import os
 from unittest import TestCase
 from collections import namedtuple
+from contextlib import contextmanager
+
+from unittest.case import SkipTest
 
 from fakecouch import FakeCouchDb
 from functools import wraps
@@ -31,6 +34,29 @@ def unit_testing_only(fn):
         return fn(*args, **kwargs)
     return inner
 unit_testing_only.__test__ = False
+
+
+@contextmanager
+def trap_extra_setup(*exceptions):
+    """Conditioinally skip test on error
+
+    Use this context manager to skip tests that would otherwise fail in
+    environments where some or all external dependencies have not been
+    configured. It raises `unittest.case.SkipTest` if one of the given
+    exceptions is raised and `settings.SKIP_TESTS_REQUIRING_EXTRA_SETUP`
+    is true (see dev_settings.py). Hard failures should be preserved in
+    environments where external dependencies are expected to be setup
+    (travis), so `settings.SKIP_TESTS_REQUIRING_EXTRA_SETUP` should be
+    false there.
+    """
+    assert exceptions, "at least one argument is required"
+    skip = getattr(settings, "SKIP_TESTS_REQUIRING_EXTRA_SETUP", False)
+    try:
+        yield
+    except exceptions as err:
+        if skip:
+            raise SkipTest("{}: {}".format(type(err).__name__, err))
+        raise
 
 
 class TestFileMixin(object):
@@ -109,12 +135,11 @@ def mock_out_couch(views=None, docs=None):
     You can optionally pass default return values for specific views and doc
     gets.  See the FakeCouchDb docstring for more specifics.
     """
+    db = FakeCouchDb(views=views, docs=docs)
+    def _get_db(*args):
+        return db
 
-    class FakeCouchDb_(FakeCouchDb):
-        def __init__(self):
-            super(FakeCouchDb_, self).__init__(views=views, docs=docs)
-
-    return mock.patch('dimagi.ext.couchdbkit.Document.get_db', new=FakeCouchDb_)
+    return mock.patch('dimagi.ext.couchdbkit.Document.get_db', new=_get_db)
 
 
 def NOOP(*args, **kwargs):

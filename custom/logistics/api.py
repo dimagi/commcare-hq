@@ -251,6 +251,11 @@ class APISynchronization(UserMigrationMixin):
             if self.domain not in user.get_domains():
                 user.add_domain_membership(self.domain, location_id=location_id)
                 user.save()
+            else:
+                dm = user.get_domain_membership(self.domain)
+                if dm.location_id != location_id:
+                    dm.location_id = location_id
+                    user.save()
         return user
 
     def edit_phone_numbers(self, ilsgateway_smsuser, user):

@@ -1,7 +1,6 @@
 from unittest import expectedFailure
 from django.test import SimpleTestCase
 from elasticsearch import Elasticsearch
-import rawes
 from .utils import require_elasticsearch
 
 
@@ -20,12 +19,6 @@ class RequireElasticsearchTest(SimpleTestCase):
             raise Exception('Fail!')
         with self.assertRaises(Exception):
             raise_error()
-
-    def test_no_fail_on_rawes_errors(self):
-        @require_elasticsearch
-        def rawes_fail():
-            rawes.Elastic('example.com:9999').get('nothing_here', timeout=0.1)
-        rawes_fail()
 
     def test_no_fail_on_elasticsearch_errors(self):
         @require_elasticsearch
