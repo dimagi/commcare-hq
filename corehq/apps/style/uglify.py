@@ -27,8 +27,8 @@ class UglifySourcemapFilter(CompilerFilter):
         infiles = []
         for infile in kwargs['content_meta']:
             # type, full_filename, relative_filename
-            # In debug mode we use the ful path so that in development we see changes without having to call
-            # collectstatic. This breaks the sourcemaps. In production, we want to sourcemaps to work so we
+            # In debug mode we use the full path so that in development we see changes without having to call
+            # collectstatic. This breaks the sourcemaps. In production, we want  sourcemaps to work so we
             # use relative path which will take files from `staticfiles` automatically.
             if settings.DEBUG:
                 infiles.append(infile[1])
