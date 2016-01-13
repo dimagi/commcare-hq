@@ -10,6 +10,7 @@ from django.utils.safestring import mark_safe
 
 
 # For use with node.js' uglifyjs minifier
+# Code taken from: https://roverdotcom.github.io/blog/2014/05/28/javascript-error-reporting-with-source-maps-in-django/
 class UglifySourcemapFilter(CompilerFilter):
     command = (
         "uglifyjs {infiles} -o {outfile} --source-map {mapfile}"
