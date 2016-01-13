@@ -65,7 +65,7 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tasks import rebuild_indicators, resume_building_indicators
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
     ConfigurableDataSourceEditForm,
@@ -604,6 +604,26 @@ def rebuild_data_source(request, domain, config_id):
     )
 
     rebuild_indicators.delay(config_id)
+    return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
+
+
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@require_POST
+def resume_building_data_source(request, domain, config_id):
+    config, is_static = get_datasource_config_or_404(config_id, domain)
+    if not is_static and config.meta.build.finished:
+        messages.warning(
+            request,
+            _('Table "{}" has already finished building. Rebuild table to start over.').format(
+                config.display_name
+            )
+        )
+    else:
+        messages.success(
+            request,
+            _('Resuming rebuilding table "{}".').format(config.display_name)
+        )
+        resume_building_indicators.delay(config_id)
     return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
 
 
