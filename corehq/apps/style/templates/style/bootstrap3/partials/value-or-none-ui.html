@@ -2,17 +2,17 @@
 <script type="text/html" id="value-or-none-ui-template">
     <div data-bind="visible: !hasValue()">
         <div class="btn-group" data-bind="visible: allowed()">
-            <button class="btn btn-xs" data-bind="enterInput: $data">
+            <button class="btn btn-default" data-bind="enterInput: $data">
                 <span data-bind="html: messages.add"></span>
             </button>
         </div>
         <div></div>
         <div class="btn-group" data-bind="visible: !allowed()">
-            <button class="btn btn-mini disabled" disabled="disabled">
+            <button class="btn btn-mini disabled btn-default" disabled="disabled">
                 <i class="fa fa-plus"></i>
                 <span data-bind="html: messages.add"></span>
             </button>
-            <button class="btn btn-xs dropdown-toggle" data-toggle="dropdown">
+            <button class="btn dropdown-toggle" data-toggle="dropdown">
                 <span class="caret"></span>
             </button>
             <ul class="dropdown-menu">
@@ -28,7 +28,7 @@
                 <strong data-bind="html: messages.notAllowedButExists"></strong>
                 <div>
                     <code data-bind="text: value()"></code>
-                    <a href="#" class="btn btn-xs btn-danger" data-bind="exitInput: $data">
+                    <a href="#" class="btn btn-danger" data-bind="exitInput: $data">
                         {% trans "Delete" %}
                     </a>
                 </div>
@@ -36,22 +36,28 @@
             </div>
             <div class="alert alert-info" data-bind="visible: !value()">
                 <div data-bind="html: messages.notAllowed"></div>
-                <a href="#" class="btn btn-xs" data-bind="exitInput: $data">
+                <a href="#" class="btn btn-default" data-bind="exitInput: $data">
                     {% trans "OK, close this" %}
                 </a>
             </div>
         </div>
         <div data-bind="visible: allowed()">
-            <input type="text" data-bind="
-                    value: inputValue,
-                    hasfocus: hasFocus,
-                    css: inputCss,
-                    attr: inputAttr,
-                    valueUpdate: 'textchange'
-            "/>
-            <a href="#" class="btn btn-xs btn-danger" data-bind="exitInput: $data">
-                {% trans "Delete" %}
-            </a>
+            <div class="row">
+                <div class="col-sm-9">
+                    <input type="text" class="form-control" data-bind="
+                        value: inputValue,
+                        hasfocus: hasFocus,
+                        css: inputCss,
+                        attr: inputAttr,
+                        valueUpdate: 'textchange'
+                    "/>
+                </div>
+                <div class="col-sm-3">
+                    <a href="#" class="btn btn-danger" data-bind="exitInput: $data">
+                        {% trans "Delete" %}
+                    </a>
+                </div>
+            </div>
             <div class="help-block" data-bind="visible: messages.helpText">
                 <i class="fa fa-info-circle"></i>
                 <span data-bind="html: messages.helpText"></span>

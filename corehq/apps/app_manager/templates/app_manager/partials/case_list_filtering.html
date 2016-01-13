@@ -12,7 +12,7 @@
     <div data-bind="visible: showing">
         <form class="form-horizontal">
             <div class="form-group">
-                <label class="control-label">
+                <label class="control-label col-lg-2">
                     {% trans "Filter" %}
                     <span class="hq-help-template"
                         data-title="{% trans "Filter" %}"
@@ -30,13 +30,15 @@
                         {% endblocktrans %}"
                     ></span>
                 </label>
-                <div class="controls">
-                    <input type="text" placeholder="Filter expression" class="ui-autocomplete-input"
+                <div class="col-lg-4">
+                    <input type="text" placeholder="Filter expression" class="ui-autocomplete-input form-control"
                            data-bind="value: filterText"
                     >
-                    <a data-bind="click: function(data){showing(false);}">
-                        <i class="fa fa-remove icon-blue"></i>
-                    </a>
+                </div>
+                <div class="col-lg-1">
+                    <button class="btn btn-danger" data-bind="click: function(data){showing(false);}">
+                        <i class="fa fa-remove"></i>
+                    </button>
                 </div>
             </div>
         </form>

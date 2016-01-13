@@ -13,7 +13,7 @@
 {% endblock %}
 {% block form-view %}
     {% if warnings %}
-        <div class="alert alert-warning" data-bind="visible: !contextVariables.requires_case_details()">
+        <div class="alert alert-danger" data-bind="visible: !contextVariables.requires_case_details()">
         {% for warning in warnings %}
             {{ warning }}
         {% endfor %}

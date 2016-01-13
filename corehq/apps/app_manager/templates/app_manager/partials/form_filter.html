@@ -8,13 +8,12 @@
                   data-content="{% trans "The form will not appear in this module’s form menu unless this condition is met." %}"
             ></span>
         </label>
-        <div id="form-filter" class="col-lg-4">
+        <div id="form-filter" class="col-lg-4 row">
             <div data-bind="valueOrNoneUI: {
                 value: formFilter,
                 allowed: formFilterAllowed,
-                inputCss: {wide: true},
                 inputName: 'form_filter'
-            }" class="col-sm-7">
+            }">
                 <span data-slug="add">{% trans "Add Display Condition" %}</span>
                 <span data-slug="whyNotAdd">{% trans "Why can't I add a display condition?" %}</span>
                 <span data-slug="notAllowedButExists">{% trans "Error! Display condition will be ignored." %}</span>
@@ -28,7 +27,18 @@
                             display condition may use the user case.
                     {% endblocktrans %}
                 </span>
-                <span data-slug="helpText">{% trans 'Similar to how you write display logic inside the form builder, except that you must enter <code>./</code> before a case property. <strong>For example</strong>: <code>./edd > today()</code> means "show this form if the selected case has an EDD later than today".<br/><a href="https://confluence.dimagi.com/display/commcarepublic/Common+Logic+and+Calculations#CommonLogicandCalculations-DisplayLogicforForms">Click here for more help</a>' %}</span>
+                <span data-slug="helpText">
+                    {% blocktrans %}
+                        Similar to how you write display logic inside the form builder,
+                        except that you must enter <code>./</code> before a case property.
+                        <strong>For example</strong>: <code>./edd > today()</code> means
+                        "show this form if the selected case has an EDD later than today".
+                        <br/>
+                        <a href="https://confluence.dimagi.com/display/commcarepublic/Common+Logic+and+Calculations#CommonLogicandCalculations-DisplayLogicforForms">
+                            Click here for more help
+                        </a>
+                    {% endblocktrans %}
+                </span>
             </div>
         </div>
     </div>
