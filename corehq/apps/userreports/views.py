@@ -19,7 +19,7 @@ from django.views.generic import View
 from corehq.apps.analytics.tasks import track_workflow
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
-from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.app_manager.models import Application, Form
 
 from sqlalchemy import types, exc
@@ -172,7 +172,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
     @property
     def page_context(self):
         return {
-            "has_apps": len(get_brief_apps_in_domain(self.domain)) > 0,
+            "has_apps": domain_has_apps(self.domain),
             "report": {
                 "title": _("Create New Report")
             },
