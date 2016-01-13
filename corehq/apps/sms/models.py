@@ -1528,7 +1528,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         """
         return (self.is_global or
                 domain == self.domain or
-                self.domain_is_shared(self, domain))
+                self.domain_is_shared(domain))
 
     @classmethod
     def load_default_backend(cls, backend_type, phone_number, domain=None):
@@ -1608,7 +1608,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
 
         klass = backend_classes[api_id]
         if is_couch_id:
-            return klass.objects.get(is_couch_id=backend_id)
+            return klass.objects.get(couch_id=backend_id)
         else:
             return klass.objects.get(pk=backend_id)
 
@@ -1627,7 +1627,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
             backend_type=backend_type,
             domain=domain,
             name=name
-        ).values_list('id', 'hq_api_id')
+        ).values('id', 'hq_api_id')
         return cls.get_backend_from_id_and_api_id_result(result)
 
     @classmethod
@@ -1636,10 +1636,10 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         result = cls.objects.filter(
             is_global=False,
             backend_type=backend_type,
-            mobilebackendinvation__domain=domain,
-            mobilebackendinvation__accepted=True,
+            mobilebackendinvitation__domain=domain,
+            mobilebackendinvitation__accepted=True,
             name=name
-        ).values_list('id', 'hq_api_id').order_by('domain')
+        ).values('id', 'hq_api_id').order_by('domain')
         return cls.get_backend_from_id_and_api_id_result(result)
 
     @classmethod
@@ -1649,7 +1649,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
             is_global=True,
             backend_type=backend_type,
             name=name
-        ).values_list('id', 'hq_api_id')
+        ).values('id', 'hq_api_id')
         return cls.get_backend_from_id_and_api_id_result(result)
 
     @classmethod
@@ -1919,6 +1919,42 @@ class SQLMobileBackendMapping(SyncSQLToCouchMixin, models.Model):
 
     # The backend to use for the given phone prefix
     backend = models.ForeignKey('SQLMobileBackend')
+
+    @classmethod
+    def __set_default_domain_backend(cls, domain, backend=None):
+        fields = dict(
+            is_global=False,
+            domain=domain,
+            backend_type=SQLMobileBackend.SMS,
+            prefix='*'
+        )
+
+        obj = None
+        try:
+            # We can't use get_or_create because backend is a
+            # required field
+            obj = cls.objects.get(**fields)
+        except cls.DoesNotExist:
+            pass
+
+        if not backend:
+            if obj:
+                obj.delete()
+            return
+
+        if not obj:
+            obj = cls(**fields)
+
+        obj.backend = backend
+        obj.save()
+
+    @classmethod
+    def set_default_domain_backend(cls, domain, backend):
+        cls.__set_default_domain_backend(domain, backend)
+
+    @classmethod
+    def unset_default_domain_backend(cls, domain):
+        cls.__set_default_domain_backend(domain)
 
     @classmethod
     @quickcache(['backend_type', 'domain'], timeout=5 * 60)

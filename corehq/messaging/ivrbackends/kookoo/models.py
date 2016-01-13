@@ -145,3 +145,7 @@ class SQLKooKooBackend(SQLIVRBackend):
         return [
             'api_key',
         ]
+
+    @classmethod
+    def get_api_id(cls):
+        return 'KOOKOO'
