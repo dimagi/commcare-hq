@@ -62,12 +62,15 @@ class ChoiceProvider(object):
     def query(self, query_context):
         pass
 
+    def get_sorted_choices_for_values(self, values):
+        return sorted(self.get_choices_for_values(values), key=lambda choice: choice.display)
+
     def get_choices_for_values(self, values):
         choices = set(self.get_choices_for_known_values(values))
         used_values = {value for value, _ in choices}
         for value in values:
             if value not in used_values:
-                choices.add(Choice(value, value))
+                choices.add(Choice(value, unicode(value) if value is not None else ''))
                 used_values.add(value)
         return choices
 
@@ -129,7 +132,7 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
             return []
 
     def get_choices_for_known_values(self, values):
-        return [Choice(v, unicode(v) if v is not None else '') for v in values]
+        return []
 
 
 class LocationChoiceProvider(ChainableChoiceProvider):
@@ -154,6 +157,7 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         # see e.g. locations.views.child_locations_for_select2
 
         locations = self._locations_query(query_context.query).order_by('name')
+
         return [
             Choice(loc.location_id, loc.display_name) for loc in
             locations[query_context.offset:query_context.offset + query_context.limit]
