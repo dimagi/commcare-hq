@@ -75,6 +75,7 @@ def rebuild_indicators(indicator_config_id):
         # Save the start time now in case anything goes wrong. This way we'll be
         # able to see if the rebuild started a long time ago without finishing.
         config.meta.build.initiated = datetime.datetime.utcnow()
+        config.meta.build.finished = False
         config.save()
         redis_key = _get_redis_key_for_config(config)
 
