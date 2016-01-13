@@ -4,7 +4,6 @@ from corehq.apps.app_manager.const import AMPLIFIES_NOT_SET
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
-from corehq.apps.smsforms.app import COMMCONNECT_DEVICE_ID
 from corehq.apps.sofabed.models import FormData, MISSING_APP_ID
 from corehq.apps.users.util import DEMO_USER_ID, JAVA_ADMIN_USERNAME
 from corehq.util.quickcache import quickcache
@@ -126,9 +125,7 @@ class MALTTableGenerator(object):
         start_date = monthspan.computed_startdate
         end_date = monthspan.computed_enddate
 
-        return FormData.objects.exclude(
-            device_id=COMMCONNECT_DEVICE_ID,
-        ).filter(
+        return FormData.objects.filter(
             domain=domain_name,
             received_on__range=(start_date, end_date)
         )

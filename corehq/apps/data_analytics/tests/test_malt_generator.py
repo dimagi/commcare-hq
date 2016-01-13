@@ -103,7 +103,7 @@ class MaltGeneratorTest(TestCase):
         _append_forms(out_of_range_forms, cls.out_of_range_date)
         _append_forms(in_range_forms, cls.correct_date)
 
-        # should not be included in MALT
+        # should be included in MALT
         sms_form = _form_data('sms_form', cls.non_wam_app_id, device_id=COMMCONNECT_DEVICE_ID)
         form_data_rows.append(sms_form)
 
@@ -128,7 +128,8 @@ class MaltGeneratorTest(TestCase):
         self._check_malt_rows(self.wam_app_id, 2, MALTRow.YES)
 
     def test_wam_not_set_malt_counts(self):
-        self._check_malt_rows(self.non_wam_app_id, 3, MALTRow.NOT_SET)
+        # 3 non_wam_app forms and 1 sms_form
+        self._check_malt_rows(self.non_wam_app_id, 4, MALTRow.NOT_SET)
 
     def test_missing_app_id_is_included(self):
         self._check_malt_rows(MISSING_APP_ID, 1, MALTRow.NOT_SET)
