@@ -14,7 +14,6 @@
     <link type="text/css" rel="stylesheet" media="screen" href="{% new_static 'jquery-ui/themes/redmond/jquery-ui.min.css' %}"/>
     <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'style/lib/select2/select2.css' %}" />
     <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'style/lib/select2/select2-bootstrap.css' %}" />
-    {# TODO: should this still exist? #}
     <link type="text/less" rel="stylesheet" media="all" href="{% new_static 'style/less/legacy/app_manager.less' %}"/>
     {% endcompress %}
 {% endblock %}
@@ -27,9 +26,7 @@
     <script type="text/javascript" src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
     <script type="text/javascript" src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
     <script type="text/javascript" src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <!-- TODO: upgrade jquery-ui for app manager -->
-    <!--script type="text/javascript" src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script-->
-    <script type="text/javascript" src="{% new_static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
     <script type="text/javascript" src="{% new_static 'style/lib/select2/select2.js' %}"></script>
     <!-- TODO: this used to be in form_view_base.html, is it needed? -->
     <!--script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script-->

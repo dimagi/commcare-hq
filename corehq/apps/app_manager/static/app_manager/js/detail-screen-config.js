@@ -63,7 +63,7 @@ var CC_DETAIL_SCREEN = {
             }
         }).focus(function () {
             $(this).autocomplete('search');
-        }).data("autocomplete")._renderItem = function (ul, item) {
+        }).data("ui-autocomplete")._renderItem = function (ul, item) {
             return $("<li></li>")
                 .data("item.autocomplete", item)
                 .append($("<a></a>").html(item.label))
