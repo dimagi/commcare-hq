@@ -16,24 +16,28 @@ from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSo
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 
 
+def _is_static(config_id):
+    return config_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
+
+
+def _get_config_by_id(indicator_config_id):
+    if _is_static(indicator_config_id):
+        return StaticDataSourceConfiguration.by_id(indicator_config_id)
+    else:
+        return DataSourceConfiguration.get(indicator_config_id)
+
+
+def _get_redis_key_for_config(config):
+    if _is_static(config._id):
+        rev = 'static'
+    else:
+        rev = config._rev
+    return 'ucr_queue-{}:{}'.format(config._id, rev)
+
+
 @task(queue='ucr_queue', ignore_result=True, acks_late=True)
 def rebuild_indicators(indicator_config_id):
-    def _is_static(config_id):
-        return config_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
-
-    def _get_redis_key_for_config(config):
-        if _is_static(config._id):
-            rev = 'static'
-        else:
-            rev = config._rev
-        return 'ucr_queue-{}:{}'.format(config._id, rev)
-
-    is_static = _is_static(indicator_config_id)
-    if is_static:
-        config = StaticDataSourceConfiguration.by_id(indicator_config_id)
-    else:
-        config = DataSourceConfiguration.get(indicator_config_id)
-
+    config = _get_config_by_id(indicator_config_id)
     adapter = IndicatorSqlAdapter(config)
 
     couchdb = _get_db(config.referenced_doc_type)
@@ -43,7 +47,7 @@ def rebuild_indicators(indicator_config_id):
     if len(client.smembers(redis_key)) > 0:
         relevant_ids = client.smembers(redis_key)
     else:
-        if not is_static:
+        if not _is_static(indicator_config_id):
             # Save the start time now in case anything goes wrong. This way we'll be
             # able to see if the rebuild started a long time ago without finishing.
             config.meta.build.initiated = datetime.datetime.utcnow()
@@ -64,7 +68,7 @@ def rebuild_indicators(indicator_config_id):
         except DataError as e:
             logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
 
-    if not is_static:
+    if not _is_static(indicator_config_id):
         client.delete(redis_key)
         config.meta.build.finished = True
         try:
