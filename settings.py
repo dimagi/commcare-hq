@@ -1391,11 +1391,7 @@ PILLOWTOPS = {
             'class': 'custom.succeed.models.UCLAPatientFluffPillow',
             'instance': 'custom.succeed.models.get_pillow',
         },
-        {
-            'name': 'MalariaConsortiumFluffPillow',
-            'class': 'custom.reports.mc.models.MalariaConsortiumFluffPillow',
-            'instance': 'custom.reports.mc.models.get_pillow',
-        }
+        'custom.reports.mc.models.MalariaConsortiumFluffPillow',
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
