@@ -8,6 +8,7 @@ from dimagi.ext.couchdbkit import *
 
 from datetime import datetime, timedelta
 from django.db import models, transaction
+from collections import namedtuple
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form
 from corehq.apps.domain.models import Domain
@@ -1719,14 +1720,12 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
     @property
     def config(self):
         """
-        Returns self.get_extra_fields() converted into an object so that
+        Returns self.get_extra_fields() converted into a namedtuple so that
         you can reference self.config.gateway_user_id, for example,
         instead of self.get_extra_fields()['gateway_user_id']
         """
-        config = object()
-        for name, value in self.get_extra_fields().iteritems():
-            setattr(config, name, value)
-        return config
+        BackendConfig = namedtuple('BackendConfig', self.get_available_extra_fields())
+        return BackendConfig(**self.get_extra_fields())
 
     def get_extra_fields(self):
         result = {field: None for field in self.get_available_extra_fields()}

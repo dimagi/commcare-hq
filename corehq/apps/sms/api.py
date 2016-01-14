@@ -251,7 +251,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
                 "Domain '%s' is not authorized to use backend '%s'" % (msg.domain, backend.pk)
             )
 
-        msg.backend_api = backend.get_api_id()
+        msg.backend_api = backend.hq_api_id
         msg.backend_id = backend.couch_id
         msg.save()
         create_billable_for_sms(msg)

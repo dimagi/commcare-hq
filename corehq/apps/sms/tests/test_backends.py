@@ -7,21 +7,21 @@ from corehq.apps.sms.api import (send_sms, send_sms_to_verified_number,
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.models import (SMS, CommConnectCase,
     SQLMobileBackendMapping, SQLMobileBackend, MobileBackendInvitation)
-from corehq.apps.sms import mixin as backend_api
 from corehq.apps.sms.tests.util import BaseSMSTest
-from corehq.messaging.smsbackends.unicel.models import UnicelBackend, InboundParams
-from corehq.messaging.smsbackends.mach.models import MachBackend
-from corehq.messaging.smsbackends.tropo.models import TropoBackend
-from corehq.messaging.smsbackends.http.models import HttpBackend
-from corehq.messaging.smsbackends.telerivet.models import TelerivetBackend
-from corehq.messaging.smsbackends.test.models import TestSMSBackend, SQLTestSMSBackend
-from corehq.messaging.smsbackends.grapevine.models import GrapevineBackend
-from corehq.messaging.smsbackends.twilio.models import TwilioBackend
-from corehq.messaging.smsbackends.megamobile.models import MegamobileBackend
-from corehq.messaging.smsbackends.smsgh.models import SMSGHBackend
-from corehq.messaging.smsbackends.apposit.models import AppositBackend
+from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
+from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
+from corehq.messaging.smsbackends.http.models import SQLHttpBackend
+from corehq.messaging.smsbackends.mach.models import SQLMachBackend
+from corehq.messaging.smsbackends.megamobile.models import SQLMegamobileBackend
+from corehq.messaging.smsbackends.sislog.models import SQLSislogBackend
+from corehq.messaging.smsbackends.smsgh.models import SQLSMSGHBackend
+from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
+from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
+from corehq.messaging.smsbackends.tropo.models import SQLTropoBackend
+from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
+from corehq.messaging.smsbackends.unicel.models import SQLUnicelBackend, InboundParams
+from corehq.messaging.smsbackends.yo.models import SQLYoBackend
 from dimagi.utils.parsing import json_format_datetime
-from django.test import TestCase
 from django.test.client import Client
 from django.test.utils import override_settings
 from mock import patch
@@ -31,7 +31,6 @@ from urllib import urlencode
 class AllBackendTest(BaseSMSTest):
     def setUp(self):
         super(AllBackendTest, self).setUp()
-        backend_api.TEST = True
 
         self.domain_obj = Domain(name='all-backend-test')
         self.domain_obj.save()
@@ -52,43 +51,104 @@ class AllBackendTest(BaseSMSTest):
         self.contact2.save()
         self.contact2 = CommConnectCase.wrap(self.contact2.to_json())
 
-        self.unicel_backend = UnicelBackend(name='UNICEL', is_global=True)
+        self.unicel_backend = SQLUnicelBackend(
+            name='UNICEL',
+            is_global=True,
+            hq_api_id=SQLUnicelBackend.get_api_id()
+        )
         self.unicel_backend.save()
 
-        self.mach_backend = MachBackend(name='MACH', is_global=True)
+        self.mach_backend = SQLMachBackend(
+            name='MACH',
+            is_global=True,
+            hq_api_id=SQLMachBackend.get_api_id()
+        )
         self.mach_backend.save()
 
-        self.tropo_backend = TropoBackend(name='TROPO', is_global=True)
+        self.tropo_backend = SQLTropoBackend(
+            name='TROPO',
+            is_global=True,
+            hq_api_id=SQLTropoBackend.get_api_id()
+        )
         self.tropo_backend.save()
 
-        self.http_backend = HttpBackend(name='HTTP', is_global=True)
+        self.http_backend = SQLHttpBackend(
+            name='HTTP',
+            is_global=True,
+            hq_api_id=SQLHttpBackend.get_api_id()
+        )
         self.http_backend.save()
 
-        self.telerivet_backend = TelerivetBackend(name='TELERIVET', is_global=True,
-            webhook_secret='telerivet-webhook-secret')
+        self.telerivet_backend = SQLTelerivetBackend(
+            name='TELERIVET',
+            is_global=True,
+            hq_api_id=SQLTelerivetBackend.get_api_id()
+        )
+        self.telerivet_backend.set_extra_fields(
+            **dict(
+                webhook_secret='telerivet-webhook-secret'
+            )
+        )
         self.telerivet_backend.save()
 
-        self.test_backend = TestSMSBackend(name='TEST', is_global=True)
+        self.test_backend = SQLTestSMSBackend(
+            name='TEST',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id()
+        )
         self.test_backend.save()
 
-        self.grapevine_backend = GrapevineBackend(name='GRAPEVINE', is_global=True)
+        self.grapevine_backend = SQLGrapevineBackend(
+            name='GRAPEVINE',
+            is_global=True,
+            hq_api_id=SQLGrapevineBackend.get_api_id()
+        )
         self.grapevine_backend.save()
 
-        self.twilio_backend = TwilioBackend(name='TWILIO', is_global=True)
+        self.twilio_backend = SQLTwilioBackend(
+            name='TWILIO',
+            is_global=True,
+            hq_api_id=SQLTwilioBackend.get_api_id()
+        )
         self.twilio_backend.save()
 
-        self.megamobile_backend = MegamobileBackend(name='MEGAMOBILE', is_global=True)
+        self.megamobile_backend = SQLMegamobileBackend(
+            name='MEGAMOBILE',
+            is_global=True,
+            hq_api_id=SQLMegamobileBackend.get_api_id()
+        )
         self.megamobile_backend.save()
 
-        self.smsgh_backend = SMSGHBackend(name='SMSGH', is_global=True)
+        self.smsgh_backend = SQLSMSGHBackend(
+            name='SMSGH',
+            is_global=True,
+            hq_api_id=SQLSMSGHBackend.get_api_id()
+        )
         self.smsgh_backend.save()
 
-        self.apposit_backend = AppositBackend(name='APPOSIT', is_global=True)
+        self.apposit_backend = SQLAppositBackend(
+            name='APPOSIT',
+            is_global=True,
+            hq_api_id=SQLAppositBackend.get_api_id()
+        )
         self.apposit_backend.save()
 
+        self.sislog_backend = SQLSislogBackend(
+            name='SISLOG',
+            is_global=True,
+            hq_api_id=SQLSislogBackend.get_api_id()
+        )
+        self.sislog_backend.save()
+
+        self.yo_backend = SQLYoBackend(
+            name='YO',
+            is_global=True,
+            hq_api_id=SQLYoBackend.get_api_id()
+        )
+        self.yo_backend.save()
+
     def _test_outbound_backend(self, backend, msg_text, mock_send):
-        self.domain_obj.default_sms_backend_id = backend._id
-        self.domain_obj.save()
+        SQLMobileBackendMapping.set_default_domain_backend(self.domain_obj.name, backend)
 
         send_sms(self.domain_obj.name, None, self.test_phone_number, msg_text)
         sms = SMS.objects.get(
@@ -100,6 +160,8 @@ class AllBackendTest(BaseSMSTest):
         self.assertTrue(mock_send.called)
         msg_arg = mock_send.call_args[0][0]
         self.assertEqual(msg_arg.date, sms.date)
+        self.assertEqual(sms.backend_api, backend.hq_api_id)
+        self.assertEqual(sms.backend_id, backend.couch_id)
 
     def _verify_inbound_request(self, backend_api_id, msg_text):
         sms = SMS.objects.get(
@@ -129,19 +191,23 @@ class AllBackendTest(BaseSMSTest):
         response = fcn(url, payload)
         self.assertEqual(response.status_code, 200)
 
-    @patch('corehq.messaging.smsbackends.unicel.models.UnicelBackend.send')
-    @patch('corehq.messaging.smsbackends.mach.models.MachBackend.send')
-    @patch('corehq.messaging.smsbackends.tropo.models.TropoBackend.send')
-    @patch('corehq.messaging.smsbackends.http.models.HttpBackend.send')
-    @patch('corehq.messaging.smsbackends.telerivet.models.TelerivetBackend.send')
-    @patch('corehq.messaging.smsbackends.test.models.TestSMSBackend.send')
-    @patch('corehq.messaging.smsbackends.grapevine.models.GrapevineBackend.send')
-    @patch('corehq.messaging.smsbackends.twilio.models.TwilioBackend.send')
-    @patch('corehq.messaging.smsbackends.megamobile.models.MegamobileBackend.send')
-    @patch('corehq.messaging.smsbackends.smsgh.models.SMSGHBackend.send')
-    @patch('corehq.messaging.smsbackends.apposit.models.AppositBackend.send')
+    @patch('corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend.send')
+    @patch('corehq.messaging.smsbackends.mach.models.SQLMachBackend.send')
+    @patch('corehq.messaging.smsbackends.tropo.models.SQLTropoBackend.send')
+    @patch('corehq.messaging.smsbackends.http.models.SQLHttpBackend.send')
+    @patch('corehq.messaging.smsbackends.telerivet.models.SQLTelerivetBackend.send')
+    @patch('corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send')
+    @patch('corehq.messaging.smsbackends.grapevine.models.SQLGrapevineBackend.send')
+    @patch('corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend.send')
+    @patch('corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend.send')
+    @patch('corehq.messaging.smsbackends.smsgh.models.SQLSMSGHBackend.send')
+    @patch('corehq.messaging.smsbackends.apposit.models.SQLAppositBackend.send')
+    @patch('corehq.messaging.smsbackends.sislog.models.SQLSislogBackend.send')
+    @patch('corehq.messaging.smsbackends.yo.models.SQLYoBackend.send')
     def test_outbound_sms(
             self,
+            yo_send,
+            sislog_send,
             apposit_send,
             smsgh_send,
             megamobile_send,
@@ -164,6 +230,8 @@ class AllBackendTest(BaseSMSTest):
         self._test_outbound_backend(self.megamobile_backend, 'megamobile test', megamobile_send)
         self._test_outbound_backend(self.smsgh_backend, 'smsgh test', smsgh_send)
         self._test_outbound_backend(self.apposit_backend, 'apposit test', apposit_send)
+        self._test_outbound_backend(self.sislog_backend, 'sislog test', sislog_send)
+        self._test_outbound_backend(self.yo_backend, 'yo test', yo_send)
 
     def test_unicel_inbound_sms(self):
         self._simulate_inbound_request('/unicel/in/', phone_param=InboundParams.SENDER,
@@ -182,7 +250,7 @@ class AllBackendTest(BaseSMSTest):
         additional_params = {
             'event': 'incoming_message',
             'message_type': 'sms',
-            'secret': self.telerivet_backend.webhook_secret
+            'secret': self.telerivet_backend.config.webhook_secret
         }
         self._simulate_inbound_request('/telerivet/in/', phone_param='from_number_e164',
             msg_param='content', msg_text='telerivet test', post=True,
@@ -222,13 +290,13 @@ class AllBackendTest(BaseSMSTest):
         self._simulate_inbound_request('/sislog/in/', phone_param='sender',
             msg_param='msgdata', msg_text='sislog test')
 
-        self._verify_inbound_request('SISLOG', 'sislog test')
+        self._verify_inbound_request(self.sislog_backend.get_api_id(), 'sislog test')
 
     def test_yo_inbound_sms(self):
         self._simulate_inbound_request('/yo/sms/', phone_param='sender',
             msg_param='message', msg_text='yo test')
 
-        self._verify_inbound_request('YO', 'yo test')
+        self._verify_inbound_request(self.yo_backend.get_api_id(), 'yo test')
 
     def test_smsgh_inbound_sms(self):
         user = ApiUser.create('smsgh-api-key', 'smsgh-api-key', permissions=[PERMISSION_POST_SMS])
@@ -258,7 +326,6 @@ class AllBackendTest(BaseSMSTest):
         user.delete()
 
     def tearDown(self):
-        backend_api.TEST = False
         self.contact1.get_verified_number().delete()
         self.contact1.delete()
         self.contact2.get_verified_number().delete()
@@ -275,6 +342,8 @@ class AllBackendTest(BaseSMSTest):
         self.megamobile_backend.delete()
         self.smsgh_backend.delete()
         self.apposit_backend.delete()
+        self.sislog_backend.delete()
+        self.yo_backend.delete()
         super(AllBackendTest, self).tearDown()
 
 
