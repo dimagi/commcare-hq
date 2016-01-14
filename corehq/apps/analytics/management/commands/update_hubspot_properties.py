@@ -3,8 +3,8 @@ import json
 
 from django.core.management import BaseCommand
 from django.core.management.base import CommandError
-from corehq.apps.analytics.signals import _get_domain_membership_properties, _get_subscription_properties_by_user
-from corehq.apps.analytics.tasks import _batch_track_on_hubspot, _get_ab_test_properties
+from corehq.apps.analytics.signals import get_domain_membership_properties, get_subscription_properties_by_user
+from corehq.apps.analytics.tasks import batch_track_on_hubspot, get_ab_test_properties
 from corehq.apps.es.users import UserES
 from corehq.apps.users.models import WebUser
 
@@ -24,7 +24,7 @@ class Command(BaseCommand):
         json_data = json.dumps(data_to_submit)
 
         print "Sending data to Hubspot"
-        _batch_track_on_hubspot(json_data)
+        batch_track_on_hubspot(json_data)
         print "Update success!"
 
     @classmethod
@@ -36,9 +36,9 @@ class Command(BaseCommand):
     @classmethod
     def get_user_data(cls, couch_user, property_names):
         hubspot_properties = {}
-        hubspot_properties.update(_get_subscription_properties_by_user(couch_user))
-        hubspot_properties.update(_get_domain_membership_properties(couch_user))
-        hubspot_properties.update(_get_ab_test_properties(couch_user))
+        hubspot_properties.update(get_subscription_properties_by_user(couch_user))
+        hubspot_properties.update(get_domain_membership_properties(couch_user))
+        hubspot_properties.update(get_ab_test_properties(couch_user))
 
         try:
             data = [{"property": prop, "value": hubspot_properties[prop]} for prop in property_names]

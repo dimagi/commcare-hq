@@ -55,7 +55,7 @@ def _track_on_hubspot(webuser, properties):
     )
 
 
-def _batch_track_on_hubspot(users_json):
+def batch_track_on_hubspot(users_json):
     """
     Update or create contacts on hubspot in a batch request to prevent exceeding api rate limit
 
@@ -323,7 +323,7 @@ def track_periodic_data():
 
 
 def submit_data_to_hub_and_kiss(submit_json):
-    hubspot_dispatch = (_batch_track_on_hubspot, "Error submitting periodic analytics data to Hubspot")
+    hubspot_dispatch = (batch_track_on_hubspot, "Error submitting periodic analytics data to Hubspot")
     kissmetrics_dispatch = (
         _track_periodic_data_on_kiss, "Error submitting periodic analytics data to Kissmetrics"
     )
@@ -398,7 +398,7 @@ def _log_response(data, response):
         logger.debug(message)
 
 
-def _get_ab_test_properties(user):
+def get_ab_test_properties(user):
     return {
-        'a_b_test_variable_1': 'A' if deterministic_random(user.email) > 0.5 else 'B',
+        'a_b_test_variable_1': 'A' if deterministic_random(user.username+'a_b_test_variable_1') > 0.5 else 'B',
     }
