@@ -1,5 +1,6 @@
 from django.test import TestCase
-from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain, \
+    get_apps_in_domain
 from corehq.apps.app_manager.models import Application, RemoteApp, Module
 from corehq.apps.domain.models import Domain
 from corehq.util.test_utils import DocTestMixin
@@ -47,3 +48,11 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         expected_normal_app, expected_remote_app = sorted(self.apps, key=lambda app: app.is_remote_app())
         self.assert_docs_equal(remote_app, self._make_app_brief(expected_remote_app))
         self.assert_docs_equal(normal_app, self._make_app_brief(expected_normal_app))
+
+    def test_get_apps_in_domain(self):
+        apps = get_apps_in_domain(self.domain)
+        self.assertEqual(len(apps), 2)
+        normal_app, remote_app = sorted(apps, key=lambda app: app.is_remote_app())
+        expected_normal_app, expected_remote_app = sorted(self.apps, key=lambda app: app.is_remote_app())
+        self.assert_docs_equal(remote_app, expected_remote_app)
+        self.assert_docs_equal(normal_app, expected_normal_app)
