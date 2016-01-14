@@ -47,9 +47,12 @@ individual project sites when necessary.
 + Python 2.6 or 2.7 (use 32 bit if you're on Windows see `Alternate steps for Windows` section below)
 + pip  (If you use virtualenv (see below) this will be installed automatically)
 + CouchDB >= 1.0 (1.2 recommended) (install from OS package manager (`sudo apt-get install couchdb`) or [here][couchdb])
-  - Mac users: note that when installing erlang, you do NOT need to check out an older version of erlang.rb
+   For Mac users
+       - use $ brew install couchdb
+       - note that when installing erlang, you do NOT need to check out an older version of erlang.rb
+      
 + PostgreSQL >= 9.4 - (install from OS package manager (`sudo apt-get install postgresql`) or [here][postgres])
-+ [Elasticsearch][elasticsearch] 0.90.13. In Ubuntu and other Debian derivatives,
++ [Elasticsearch][elasticsearch] 1.7.4. In Ubuntu and other Debian derivatives,
   [download the deb package][elasticsearch], install, and then **hold** the version to prevent automatic upgrades:
 
         $ sudo dpkg -i elasticsearch-0.90.13.deb
@@ -57,10 +60,15 @@ individual project sites when necessary.
 
   On Mac, the following works well:
 
-        $ brew install homebrew/versions/elasticsearch090
+        $ brew install homebrew/versions/elasticsearch17
 
 + redis >= 3.0.3 (install from OS package manager (`sudo apt-get install redis-server`) or follow these
   [installation notes][redis])
+  
+  On Mac, use:
+
+     	$ brew install redis 
+
 + [Jython][jython] 2.5.3 (optional, only needed for CloudCare). **Note**: CloudCare will _not_ work on 2.7.0 which is
   the default version at jython.org. 2.5.3 is the default version in current versions of Ubuntu
   (`sudo apt-get install jython`) but to be safe you can explicitly set and hold the version with
@@ -94,7 +102,7 @@ cluster.name: <your hostname>
 
 #### CouchDB Configuration
 
-Open http://localhost:5984/_utils/ and create a new database named `commcarehq` and add a user named `commcarehq` with password `commcarehq`.
+Start couchdb, and then open http://localhost:5984/_utils/ and create a new database named `commcarehq` and add a user named `commcarehq` with password `commcarehq`.
 
 To set up CouchDB from the command line, create the database:
 
@@ -114,7 +122,7 @@ Log in as the postgres user, and create a `commcarehq` user with password `commc
     postgres$ createdb commcarehq
     postgres$ createdb commcarehq_reporting
 
-If these commands give you difficulty, particularly for Mac users running Postgres.app, verify that the default 
+If these commands give you difficulty, **particularly for Mac users** running Postgres.app, verify that the default 
 postgres role has been created, and run the same commands without first logging in as the postgres POSIX user:
 
     $ createuser -s -r postgres  # Create the postgres role if it does not yet exist
@@ -135,7 +143,7 @@ between environments easy:
 
 ### Installing required dev packages
 
-The Python libraries you will be installing in the next step require the following packages:
+The Python libraries you will be installing in the next step require the following packages. If you are on a mac, there are brew equivalents for some but not all of these packages. You can use 'brew search' to try to find equivalents for those that are available, and don't worry about the others
 
     $ sudo apt-get install rabbitmq-server \
           libpq-dev \
@@ -152,7 +160,7 @@ The Python libraries you will be installing in the next step require the followi
 
 Once all the dependencies are in order, please do the following:
 
-    $ git clone git@github.com:dimagi/commcare-hq.git
+    $ git clone https://github.com/dimagi/commcare-hq.git
     $ cd commcare-hq
     $ git submodule update --init --recursive
     $ workon cchq  # if your "cchq" virtualenv is not already activated
