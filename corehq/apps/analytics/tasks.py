@@ -164,7 +164,7 @@ def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
             'created_account_in_hq': True,
             'is_a_commcare_user': True,
         }
-        tracking_dict.update(_get_ab_test_properties(webuser))
+        tracking_dict.update(get_ab_test_properties(webuser))
         _track_on_hubspot(webuser, tracking_dict)
         _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, cookies, meta)
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, cookies, meta)
@@ -400,5 +400,5 @@ def _log_response(data, response):
 
 def get_ab_test_properties(user):
     return {
-        'a_b_test_variable_1': 'A' if deterministic_random(user.username+'a_b_test_variable_1') > 0.5 else 'B',
+        'a_b_test_variable_1': 'A' if deterministic_random(user.username + 'a_b_test_variable_1') > 0.5 else 'B',
     }
