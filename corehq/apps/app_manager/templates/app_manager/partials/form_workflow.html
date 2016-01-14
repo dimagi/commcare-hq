@@ -31,42 +31,52 @@
                     }
                     ">
                 </div>
-                <button class="btn btn-primary" data-bind="
-                    click: onAddFormLink
-                    ">
-                    {% trans "Add link" %}
-                </button>
-                <input type="hidden" class="workflow-change-trigger" />
+                <div class="row">
+                    <button class="btn btn-primary" data-bind="click: onAddFormLink">
+                        <i class="fa fa-plus"></i>
+                        {% trans "Add link" %}
+                    </button>
+                    <input type="hidden" class="workflow-change-trigger" />
+                </div>
             </div>
         </div>
     </div>
 
     <script type="text/html" id="form-link-template">
         <div class="form-group">
-            <textarea name="form_links_xpath_expressions"
-                      placeholder="XPath Expression"
-                      rows="1"
-                      data-bind="
-                        text: formLink.xpath,
-                        value: formLink.xpath
-            "></textarea>
-            &nbsp;
-            <i class="fa fa-arrow-right"></i>
-            &nbsp;
-            <select class="input-xlarge" name="form_links_form_ids" data-bind="
-                options: $parent.forms,
-                optionsText: 'name',
-                optionsValue: 'uniqueId',
-                optionsCaption: $parent.displayUnknownForm.call($parent, formLink),
-                value: formLink.formId
-                "></select>
-            <button class="btn btn-danger" data-bind="
-                click: $parent.onDestroyFormLink.bind($parent)
-                ">
-                <i class="fa fa-trash"></i>
-            </button>
-            <input type="hidden" name="datums_json" data-bind="value: formLink.serializedDatums"/>
-            <div class="alert alert-wraning" data-bind="visible: !formLink.autoLink()">
+            <div class="row">
+                <div class="col-sm-5">
+                    <textarea name="form_links_xpath_expressions"
+                              placeholder="XPath Expression"
+                              rows="1"
+                              class="form-control"
+                              data-bind="
+                                text: formLink.xpath,
+                                value: formLink.xpath
+                    "></textarea>
+                </div>
+                <div class="col-sm-1">
+                    <i class="fa fa-arrow-right"></i>
+                </div>
+                <div class="col-sm-5">
+                    <select class="form-control" name="form_links_form_ids" data-bind="
+                        options: $parent.forms,
+                        optionsText: 'name',
+                        optionsValue: 'uniqueId',
+                        optionsCaption: $parent.displayUnknownForm.call($parent, formLink),
+                        value: formLink.formId
+                        "></select>
+                </div>
+                <div class="col-sm-1">
+                    <button class="btn btn-danger" data-bind="
+                        click: $parent.onDestroyFormLink.bind($parent)
+                        ">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                    <input type="hidden" name="datums_json" data-bind="value: formLink.serializedDatums"/>
+                </div>
+            </div>
+            <div class="help-block" data-bind="visible: !formLink.autoLink()">
                 <p>
                     {% trans "This form requires manual linking." %}
                     <button class="btn btn-default btn-sm" data-bind="click: formLink.fetchDatums, visible: !formLink.datumsFetched()">
@@ -89,7 +99,6 @@
                     </div>
                 </div>
             </div>
-
 
             <div class="alert alert-danger" data-bind="
                 visible: formLink.errors().length
