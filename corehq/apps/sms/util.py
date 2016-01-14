@@ -15,7 +15,13 @@ from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.modules import to_function
 from django.utils.translation import ugettext as _
 
+
 phone_number_plus_re = re.compile("^\+{0,1}\d+$")
+
+
+class ContactNotFoundException(Exception):
+    pass
+
 
 def strip_plus(phone_number):
     if (isinstance(phone_number, basestring) and len(phone_number) > 0
@@ -193,7 +199,7 @@ def get_contact(contact_id):
         pass
 
     if not contact:
-        raise Exception("Contact not found")
+        raise ContactNotFoundException("Contact not found")
 
     return contact
 

@@ -4,6 +4,7 @@ from .migration import *
 from .test_dbaccessors import *
 from .test_all_backends import *
 from .test_backend_migration import *
+from .test_util import *
 from .update_location_keyword_test import *
 
 from corehq.apps.domain.calculations import num_mobile_users
@@ -456,36 +457,3 @@ class BackendTestCase(BaseSMSTest):
         incoming("+9991234568", "JOIN {} WORKER tester".format(self.domain), "TEST_CASE_BACKEND")
         current_num_users = num_mobile_users(self.domain)
         self.assertEqual(prev_num_users, current_num_users)
-
-
-class TestUtilFunctions(TestCase):
-    def setUp(self):
-        self.case = CommCareCase(domain='test-domain', name='test-case')
-        self.case.save()
-
-        self.user = CommCareUser.create('test-domain', 'test-user', '123')
-
-    def test_get_contact(self):
-        contact = get_contact(self.case.get_id)
-        self.assertEqual(contact.get_id, self.case.get_id)
-        self.assertTrue(isinstance(contact, CommConnectCase))
-
-        contact = get_contact(self.user.get_id)
-        self.assertEqual(contact.get_id, self.user.get_id)
-        self.assertTrue(isinstance(contact, CommCareUser))
-
-        try:
-            get_contact('this-id-should-not-be-found')
-        except Exception:
-            pass
-        else:
-            self.assertTrue(False)
-
-    def test_apply_leniency(self):
-        self.assertEqual('16175551234', apply_leniency(' 1 (617) 555-1234 '))
-        self.assertEqual('16175551234', apply_leniency(' 1.617.555.1234 '))
-        self.assertEqual('16175551234', apply_leniency(' +1 617 555 1234 '))
-
-    def tearDown(self):
-        self.case.delete()
-        self.user.delete()
