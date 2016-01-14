@@ -213,6 +213,10 @@ that you have a 32bit version of Python installed.
 
 ### Set up your django environment
 
+Before running any of the commands below, you should have all of the following running: couchdb, redis, elasticsearch,
+and kafka. To install and run kafka, follow the instructions here: 
+https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/change_feed/README.md.
+
 Populate your database:
 
     $ ./manage.py sync_couch_views
@@ -242,8 +246,8 @@ names to the aliases.
 We use bower to manage our javascript dependencies. In order to download the required javascript packages, 
 you'll need to run `./manage.py bower install` and install `bower`. Follow these steps to install:
 
-1. Install [npm](https://www.npmjs.com/). In Ubuntu this is now bundled with NodeJS. An up-to-date version is 
-   available on the NodeSource repository.
+1. If you do not already have it, install [npm](https://www.npmjs.com/). In Ubuntu this is now bundled 
+with NodeJS. An up-to-date version is available on the NodeSource repository.
 
         $ curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
         $ sudo apt-get install -y nodejs
