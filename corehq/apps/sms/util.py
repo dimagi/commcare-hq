@@ -39,11 +39,6 @@ def clean_phone_number(text):
     cleaned_text = "%s%s" % (plus, non_decimal.sub('', text))
     return cleaned_text
 
-def clean_outgoing_sms_text(text):
-    try:
-        return urllib.quote(text)
-    except KeyError:
-        return urllib.quote(text.encode('utf-8'))
 
 def validate_phone_number(phone_number):
     if (not isinstance(phone_number, basestring) or

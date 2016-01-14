@@ -4,7 +4,7 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import CommConnectCase
-from corehq.apps.sms.util import (clean_phone_number, clean_outgoing_sms_text,
+from corehq.apps.sms.util import (clean_phone_number,
     get_contact, ContactNotFoundException)
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
@@ -25,12 +25,6 @@ class UtilTestCase(TestCase):
         phone_number = "  324 23-23421241"
         cleaned = clean_phone_number(phone_number)
         self.assertEquals(cleaned, "+3242323421241")
-
-    def testCleanOutgoingSMSText(self):
-        text = u"+this is a test شسیبشسی"
-        cleaned = clean_outgoing_sms_text(text)
-        # make sure '+' and unicode get encoded for GET properly
-        self.assertEquals(cleaned, "%2Bthis%20is%20a%20test%20%D8%B4%D8%B3%DB%8C%D8%A8%D8%B4%D8%B3%DB%8C")
 
     def test_get_contact(self):
         contact = get_contact(self.case.get_id)
