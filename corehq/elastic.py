@@ -3,7 +3,7 @@ from collections import namedtuple
 from urllib import unquote
 from elasticsearch import Elasticsearch
 from django.conf import settings
-from elasticsearch.exceptions import ElasticsearchException
+from elasticsearch.exceptions import ElasticsearchException, RequestError
 
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from pillowtop.listener import send_to_elasticsearch as send_to_es
@@ -118,7 +118,10 @@ class ESError(Exception):
 
 def run_query(index_name, q):
     es_meta = ES_META[index_name]
-    return get_es_new().search(es_meta.index, es_meta.type, body=q)
+    try:
+        return get_es_new().search(es_meta.index, es_meta.type, body=q)
+    except RequestError as e:
+        raise ESError(e)
 
 
 def es_histogram(histo_type, domains=None, startdate=None, enddate=None,
