@@ -7,6 +7,7 @@ from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotF
 from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for_module
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.util import get_cloudcare_session_data
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import skippable_quickcache
 from corehq.util.xml_utils import indent_xml
@@ -30,7 +31,7 @@ from django.template.loader import render_to_string
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
-from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
+from corehq.apps.cloudcare.api import look_up_app_json, get_filtered_cases, get_filters_from_request,\
     api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json, get_open_form_sessions
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.logging import notify_exception
