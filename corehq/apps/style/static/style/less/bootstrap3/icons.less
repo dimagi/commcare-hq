@@ -30,3 +30,9 @@
   }
 }
 
+// Make accordion icons display down/left depending on collapsed status
+a[data-toggle="collapse"].collapsed {
+  .fa-angle-double-down::before {
+    content: "\f101" !important;
+  }
+}
