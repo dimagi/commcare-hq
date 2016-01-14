@@ -1,3 +1,4 @@
+import os
 from django.conf import settings
 
 
@@ -37,6 +38,7 @@ class MigrationNotComplete(Exception):
 
 def assert_initial_complete(migrator):
     def forwards(apps, schema_editor):
-        if not migrator.last_seq and not settings.UNIT_TESTING:
+        is_fresh_install = os.environ.get('CCHQ_IS_FRESH_INSTALL')
+        if not migrator.last_seq and not settings.UNIT_TESTING and not is_fresh_install:
             raise MigrationNotComplete(MIGRATION_MESSAGE.format(slug=migrator.slug))
     return forwards

@@ -209,7 +209,7 @@ that you have a 32bit version of Python installed.
 Populate your database:
 
     $ ./manage.py sync_couch_views
-    $ ./manage.py migrate --noinput
+    $ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
     $ ./manage.py collectstatic --noinput
     $ ./manage.py compilejsi18n
 
