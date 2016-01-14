@@ -121,7 +121,7 @@ def request_new_domain(request, form, domain_type=None, new_user=True):
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=new_user)
 
     meta = get_meta(request)
-    track_created_new_project_space_on_hubspot(current_user, request.COOKIES, meta)
+    track_created_new_project_space_on_hubspot.delay(current_user, request.COOKIES, meta)
     return new_domain.name
 
 
