@@ -22,7 +22,7 @@
 {% block settings_fields %}
     <div id="detail-screen-parent" class="form-group">
         <label class="control-label col-lg-2">{% trans "Attached to" %}</label>
-        <div class="col-lg-10">
+        <div class="col-lg-4">
             <select name="parent_module" data-bind="optstr: moduleOptions, value: moduleId" class="form-control"></select>
         </div>
     </div>
@@ -30,7 +30,7 @@
         <label class="control-label col-lg-2">
             {% trans "Menu Mode" %}
         </label>
-        <div class="col-lg-10">
+        <div class="col-lg-4">
             <select type="text" name="display_separately" class="form-control"
                     data-value="{% if module.display_separately %}true{% else %}false{% endif %}">
                 <option value="false">{% trans "Display careplan inside attached module" %}</option>
