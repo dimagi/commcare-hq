@@ -29,6 +29,7 @@ HUBSPOT_SIGNIN_FORM_ID = "a2aa2df0-e4ec-469e-9769-0940924510ef"
 HUBSPOT_FORM_BUILDER_FORM_ID = "4f118cda-3c73-41d9-a5d1-e371b23b1fb5"
 HUBSPOT_APP_TEMPLATE_FORM_ID = "91f9b1d2-934d-4e7a-997e-e21e93d36662"
 HUBSPOT_CLICKED_DEPLOY_FORM_ID = "c363c637-d0b1-44f3-9d73-f34c85559f03"
+HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID = "619daf02-e043-4617-8947-a23e4589935a"
 HUBSPOT_COOKIE = 'hubspotutk'
 
 
@@ -204,6 +205,10 @@ def track_app_from_template_on_hubspot(webuser, cookies, meta):
 @task(queue="background_queue", acks_late=True, ignore_result=True)
 def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta)
+
+@task(queue="background_queue", acks_late=True, ignore_result=True)
+def track_created_new_project_space_on_hubspot(webuser, cookies, meta):
+    _send_form_to_hubspot(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, webuser, cookies, meta)
 
 
 def track_workflow(email, event, properties=None):
