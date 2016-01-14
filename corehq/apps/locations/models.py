@@ -87,12 +87,17 @@ class LocationType(models.Model):
     class Meta:
         app_label = 'locations'
 
+    @property
+    @memoized
+    def commtrack_enabled(self):
+        return Domain.get_by_name(self.domain).commtrack_enabled
+
     def _populate_stock_levels(self):
         from corehq.apps.commtrack.models import CommtrackConfig
         ct_config = CommtrackConfig.for_domain(self.domain)
         if (
             (ct_config is None)
-            or (not Domain.get_by_name(self.domain).commtrack_enabled)
+            or (not self.commtrack_enabled)
             or LOCATION_TYPE_STOCK_RATES.enabled(self.domain)
         ):
             return
@@ -105,6 +110,8 @@ class LocationType(models.Model):
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
+        if not self.commtrack_enabled:
+            self.administrative = True
         self._populate_stock_levels()
         return super(LocationType, self).save(*args, **kwargs)
 
