@@ -1,7 +1,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% if request|feature_preview_enabled:"MODULE_FILTER" %}
-<div class="form-group">
+<div class="form-group" id="module-filter">
     <label class="col-lg-2 control-label">
         {% trans "Module Filter" %}
     </label>
@@ -10,7 +10,12 @@
             class="form-control"
             placeholder="{% trans "XPath expression" %}"
             name="module_filter"
-            value="{% if module.module_filter %}{{ module.module_filter }}{% endif %}"/>
+            {% if ko_value %}
+                data-bind="value: {{ ko_value }}"
+            {% else %}
+                value="{{ value }}"
+            {% endif %}
+        >
     </div>
 </div>
 {% endif %}
