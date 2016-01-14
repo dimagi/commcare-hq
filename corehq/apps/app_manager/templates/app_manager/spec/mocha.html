@@ -2,6 +2,9 @@
 {% load hq_shared_tags %}
 
 {% block dependencies %}
+<script src="{% new_static 'knockout-2.3.0-legacy/knockout.js' %}"></script>
+<script src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+
 <script src="{% new_static 'app_manager/js/form_workflow.js' %}"></script>
 <script src="{% new_static 'app_manager/js/download_async_modal.js' %}"></script>
 <script src="{% new_static 'app_manager/js/releases.js' %}"></script>
