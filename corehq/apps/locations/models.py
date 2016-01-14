@@ -380,8 +380,11 @@ class SQLLocation(MPTTModel):
             return None
 
     def linked_supply_point(self):
-        from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location_id
-        return get_supply_point_case_by_location_id(self.domain, self.location_id)
+        from corehq.apps.commtrack.models import SupplyPointCase
+        try:
+            return SupplyPointCase.get(self.supply_point_id)
+        except:
+            return None
 
 
 def _filter_for_archived(locations, include_archive_ancestors):
@@ -511,11 +514,6 @@ class Location(CachedCouchDocumentMixin, Document):
 
             if hasattr(self, couch_prop):
                 setattr(sql_location, sql_prop, getattr(self, couch_prop))
-
-        # sync supply point id
-        sp = self.linked_supply_point()
-        if sp:
-            sql_location.supply_point_id = sp.case_id
 
         # sync parent connection
         parent_id = self.parent_id
@@ -741,8 +739,7 @@ class Location(CachedCouchDocumentMixin, Document):
                                        .couch_locations())
 
     def linked_supply_point(self):
-        from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
-        return get_supply_point_case_by_location(self)
+        return self.sql_location.linked_supply_point()
 
     @property
     def group_id(self):

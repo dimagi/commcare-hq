@@ -17,6 +17,10 @@ def get_supply_point_ids_in_domain_by_location(domain):
 
 
 def get_supply_point_case_by_location_id(domain, location_id):
+    """
+    This also returns closed supply points.
+    Please use location.linked_supply_point() instead.
+    """
     from corehq.apps.commtrack.models import SupplyPointCase
     return SupplyPointCase.view(
         'supply_point_by_loc/view',
@@ -24,7 +28,3 @@ def get_supply_point_case_by_location_id(domain, location_id):
         include_docs=True,
         classes={'CommCareCase': SupplyPointCase},
     ).one()
-
-
-def get_supply_point_case_by_location(location):
-    return get_supply_point_case_by_location_id(location.domain, location.location_id)
