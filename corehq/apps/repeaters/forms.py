@@ -129,11 +129,6 @@ class GenericRepeaterForm(forms.Form):
 
 
 class FormRepeaterForm(GenericRepeaterForm):
-    exclude_device_reports = forms.BooleanField(
-        required=False,
-        label='Exclude device reports',
-        initial=True
-    )
     include_app_id_param = forms.BooleanField(
         required=False,
         label="Include 'app_id' URL query parameter.",
@@ -143,7 +138,6 @@ class FormRepeaterForm(GenericRepeaterForm):
     def get_ordered_crispy_form_fields(self):
         fields = super(FormRepeaterForm, self).get_ordered_crispy_form_fields()
         fields.extend([
-            twbscrispy.PrependedText('exclude_device_reports', ''),
             twbscrispy.PrependedText('include_app_id_param', '')
         ])
         return fields

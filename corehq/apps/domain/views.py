@@ -2190,7 +2190,6 @@ class AddFormRepeaterView(AddRepeaterView):
 
     def make_repeater(self):
         repeater = super(AddFormRepeaterView, self).make_repeater()
-        repeater.exclude_device_reports = self.add_repeater_form.cleaned_data['exclude_device_reports']
         repeater.include_app_id_param = self.add_repeater_form.cleaned_data['include_app_id_param']
         return repeater
 

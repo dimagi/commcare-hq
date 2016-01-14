@@ -52,7 +52,9 @@ from corehq.apps.accounting.models import (
     ProBonoStatus,
     SoftwarePlanEdition,
     Subscription,
+    SubscriptionAdjustment,
     SubscriptionAdjustmentMethod,
+    SubscriptionAdjustmentReason,
     SubscriptionType,
     EntryPoint,
     FundingSource
@@ -1327,6 +1329,21 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 account_save_success = super(ConfirmSubscriptionRenewalForm, self).save()
                 if not account_save_success:
                     return False
+
+                for later_subscription in Subscription.objects.filter(
+                    subscriber__domain=self.domain.name,
+                    date_start__gt=self.date_start
+                ).order_by('date_start').all():
+                    later_subscription.date_start = datetime.date.today()
+                    later_subscription.date_end = datetime.date.today()
+                    later_subscription.save()
+                    SubscriptionAdjustment.record_adjustment(
+                        later_subscription,
+                        reason=SubscriptionAdjustmentReason.CANCEL,
+                        web_user=self.web_user,
+                        note="Cancelled due to changing subscription",
+                    )
+
                 self.current_subscription.renew_subscription(
                     web_user=self.creating_user,
                     adjustment_method=SubscriptionAdjustmentMethod.USER,

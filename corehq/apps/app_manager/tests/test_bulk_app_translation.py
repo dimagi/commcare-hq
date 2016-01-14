@@ -1,3 +1,4 @@
+# coding=utf-8
 import codecs
 import tempfile
 
@@ -142,6 +143,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
           ("Form", "module1_form1", "My more & awesome form", "", "", "", "", "", "", "", "93ea2a40df57d8f33b472f5b2b023882281722d4")
         )),
         ("module1", (
+          ("case_list_form_label", "list", "Register Mother", "Inscrivez-Mère"),
           ("name", "list", "Name", "Nom"),
           ("name", "detail", "", "Nom"),
           ("other-prop (ID Mapping Text)", "detail", "Other Prop", ""),

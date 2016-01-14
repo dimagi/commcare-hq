@@ -258,6 +258,12 @@ def expected_bulk_app_sheet_rows(app):
         # Populate module sheet
         rows[module_string] = []
         if not isinstance(module, ReportModule):
+            if module.case_list_form.form_id:
+                # Add row for label of case list registration form
+                rows[module_string].append(
+                        ('case_list_form_label', 'list') +
+                        tuple(module.case_list_form.label.get(lang, '') for lang in app.langs)
+                )
             for list_or_detail, case_properties in [
                 ("list", module.case_details.short.get_columns()),
                 ("detail", module.case_details.long.get_columns())
@@ -637,6 +643,7 @@ def update_case_list_translations(sheet, rows, app):
     # rows are nested under their respective DetailColumns.
 
     condensed_rows = []
+    case_list_form_label = None
     index_of_last_enum_in_condensed = -1
     index_of_last_graph_in_condensed = -1
     for i, row in enumerate(rows):
@@ -669,6 +676,10 @@ def update_case_list_translations(sheet, rows, app):
             row['id'] = int(row['case_property'].split(" ")[-1])
             parent = condensed_rows[index_of_last_graph_in_condensed]
             parent['annotations'] = parent.get('annotations', []) + [row]
+
+        # It's a case list registration form label. Don't add it to condensed rows
+        elif row['case_property'] == 'case_list_form_label':
+            case_list_form_label = row
 
         # It's a normal case property
         else:
@@ -705,6 +716,24 @@ def update_case_list_translations(sheet, rows, app):
         return msgs
 
     # Update the translations
+    def _update_translation(row, language_dict, require_translation=True):
+        ok_to_delete_translations = (
+            not require_translation or has_at_least_one_translation(
+                    row, 'default', app.langs
+            ))
+        if ok_to_delete_translations:
+            for lang in app.langs:
+                translation = row['default_%s' % lang]
+                if translation:
+                    language_dict[lang] = translation
+                else:
+                    language_dict.pop(lang, None)
+        else:
+            msgs.append((
+                messages.error,
+                "You must provide at least one translation" +
+                " of the case property '%s'" % row['case_property']
+            ))
 
     for row, detail in \
             zip(list_rows, short_details) + zip(detail_rows, long_details):
@@ -724,25 +753,6 @@ def update_case_list_translations(sheet, rows, app):
             ))
             continue
 
-        def _update_translation(row, language_dict, require_translation=True):
-            ok_to_delete_translations = (
-                not require_translation or has_at_least_one_translation(
-                    row, 'default', app.langs
-                ))
-            if ok_to_delete_translations:
-                for lang in app.langs:
-                    translation = row['default_%s' % lang]
-                    if translation:
-                        language_dict[lang] = translation
-                    else:
-                        language_dict.pop(lang, None)
-            else:
-                msgs.append((
-                    messages.error,
-                    "You must provide at least one translation" +
-                    " of the case property '%s'" % row['case_property']
-                ))
-
         # Update the translations for the row and all its child rows
         _update_translation(row, detail.header)
         for i, enum_value_row in enumerate(row.get('mappings', [])):
@@ -760,6 +770,8 @@ def update_case_list_translations(sheet, rows, app):
                 detail['graph_configuration']['locale_specific_config'][config_key],
                 False
             )
+    if case_list_form_label:
+        _update_translation(case_list_form_label, module.case_list_form.label)
 
     return msgs
 

@@ -293,3 +293,10 @@ class TestSendToElasticsearch(SimpleTestCase):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'bar'}
 
         self._send_to_es_and_check(doc, delete=True)
+
+    def test_conflict(self):
+        doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'foo'}
+        self._send_to_es_and_check(doc)
+
+        # attempt to create the same doc twice shouldn't fail
+        self._send_to_es_and_check(doc)

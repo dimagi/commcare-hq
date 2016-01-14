@@ -2,10 +2,10 @@
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 from collections import defaultdict
 
-import sys
 import os
 from urllib import urlencode
 from django.contrib import messages
+import settingshelper as helper
 
 # odd celery fix
 import djcelery
@@ -33,10 +33,7 @@ BASE_DIR = os.path.dirname(__file__)
 
 # gets set to False for unit tests that run without the database
 DB_ENABLED = True
-try:
-    UNIT_TESTING = 'test' == sys.argv[1]
-except IndexError:
-    UNIT_TESTING = False
+UNIT_TESTING = helper.is_testing()
 
 ADMINS = ()
 MANAGERS = ADMINS
@@ -533,9 +530,7 @@ GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 # celery
 BROKER_URL = 'django://'  # default django db based
 
-from settingshelper import celery_failure_handler
-
-CELERY_ANNOTATIONS = {'*': {'on_failure': celery_failure_handler}}
+CELERY_ANNOTATIONS = {'*': {'on_failure': helper.celery_failure_handler}}
 
 CELERY_MAIN_QUEUE = 'celery'
 
@@ -555,11 +550,10 @@ CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
 
 
 # websockets config
-from settingshelper import get_allowed_websocket_channels
 WEBSOCKET_URL = '/ws/'
 WS4REDIS_PREFIX = 'ws'
 WSGI_APPLICATION = 'ws4redis.django_runserver.application'
-WS4REDIS_ALLOWED_CHANNELS = get_allowed_websocket_channels
+WS4REDIS_ALLOWED_CHANNELS = helper.get_allowed_websocket_channels
 
 
 TEST_RUNNER = 'testrunner.TwoStageTestRunner'
@@ -1054,15 +1048,13 @@ db_settings = DATABASES["default"].copy()
 db_settings['PORT'] = db_settings.get('PORT', '5432')
 options = db_settings.get('OPTIONS')
 db_settings['OPTIONS'] = '?{}'.format(urlencode(options)) if options else ''
-
-if UNIT_TESTING and sys.argv[1] == "test":
-    # Use test database name, but only if running the test command.
-    # Django uses different database names than the ones in DATABASES
-    # when setting up for tests. However, UNIT_TESTING may be true in
-    # some cases where django is not running tests (js tests on travis),
-    # and therefore does not change the database name.
-    from django.db.backends.creation import TEST_DATABASE_PREFIX
-    db_settings['NAME'] = TEST_DATABASE_PREFIX + db_settings['NAME']
+# Use test database name, but only if running the test command.
+# Django uses different database names than the ones in DATABASES
+# when setting up for tests. However, UNIT_TESTING may be true in
+# some cases where django is not running tests (js tests on travis),
+# and therefore does not change the database name.
+db_settings['NAME'] = helper.get_db_name(db_settings['NAME'],
+                                         UNIT_TESTING and helper.is_testing())
 
 if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
     SQL_REPORTING_DATABASE_URL = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
@@ -1086,13 +1078,8 @@ INDICATOR_CONFIG = {
 }
 
 ####### Couch Forms & Couch DB Kit Settings #######
-from settingshelper import (
-    get_dynamic_db_settings,
-    CouchSettingsHelper,
-    SharedDriveConfiguration
-)
-
-_dynamic_db_settings = get_dynamic_db_settings(
+COUCH_DATABASE_NAME = helper.get_db_name(COUCH_DATABASE_NAME, UNIT_TESTING)
+_dynamic_db_settings = helper.get_dynamic_db_settings(
     COUCH_SERVER_ROOT,
     COUCH_USERNAME,
     COUCH_PASSWORD,
@@ -1214,9 +1201,11 @@ COUCHDB_APPS = [
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
-COUCH_SETTINGS_HELPER = CouchSettingsHelper(COUCH_DATABASE, COUCHDB_APPS, [
-    NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB,
-], is_test=False)
+COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
+    COUCH_DATABASE,
+    COUCHDB_APPS,
+    [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB],
+)
 COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.make_couchdb_tuples()
 EXTRA_COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.get_extra_couchdbs()
 
@@ -1231,7 +1220,7 @@ INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
 
 ### Shared drive settings ###
-SHARED_DRIVE_CONF = SharedDriveConfiguration(
+SHARED_DRIVE_CONF = helper.SharedDriveConfiguration(
     SHARED_DRIVE_ROOT,
     RESTORE_PAYLOAD_DIR_NAME,
     TRANSFER_FILE_DIR_NAME,
@@ -1365,12 +1354,7 @@ PILLOWTOPS = {
     ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
-        {
-            'name': 'OpmUserFluffPillow',
-            'class': 'custom.opm.models.OpmUserFluffPillow',
-            'instance': 'custom.opm.models.get_pillow',
-        },
-
+        'custom.opm.models.OpmUserFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
         'custom.m4change.models.LdHmisCaseFluffPillow',
         'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
@@ -1386,27 +1370,11 @@ PILLOWTOPS = {
         'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
-        {
-            'name': 'WorldVisionMotherFluffPillow',
-            'class': 'custom.world_vision.models.WorldVisionMotherFluffPillow',
-            'instance': 'custom.world_vision.models.get_mother_pillow',
-        },
-        {
-            'name': 'WorldVisionChildFluffPillow',
-            'class': 'custom.world_vision.models.WorldVisionChildFluffPillow',
-            'instance': 'custom.world_vision.models.get_child_pillow',
-        },
+        'custom.world_vision.models.WorldVisionMotherFluffPillow',
+        'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
-        {
-            'name': 'UCLAPatientFluffPillow',
-            'class': 'custom.succeed.models.UCLAPatientFluffPillow',
-            'instance': 'custom.succeed.models.get_pillow',
-        },
-        {
-            'name': 'MalariaConsortiumFluffPillow',
-            'class': 'custom.reports.mc.models.MalariaConsortiumFluffPillow',
-            'instance': 'custom.reports.mc.models.get_pillow',
-        }
+        'custom.succeed.models.UCLAPatientFluffPillow',
+        'custom.reports.mc.models.MalariaConsortiumFluffPillow',
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
@@ -1625,6 +1593,7 @@ COMPRESS_OFFLINE_CONTEXT = {
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
+COMPRESS_JS_COMPRESSOR = 'corehq.apps.style.uglify.JsUglifySourcemapCompressor'
 
 
 if 'locmem' not in CACHES:

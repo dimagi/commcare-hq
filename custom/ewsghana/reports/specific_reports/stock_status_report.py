@@ -403,7 +403,7 @@ class StockStatus(MultiReport):
         months_of_stock = defaultdict(lambda: defaultdict(dict))
         stock_state_map = {
             (stock_state.case_id, stock_state.product_id):
-            stock_state.get_monthly_consumption() if stock_state.daily_consumption else None
+            stock_state.get_monthly_consumption()
             for stock_state in stock_states
         }
 

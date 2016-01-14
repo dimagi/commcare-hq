@@ -1,6 +1,8 @@
 from django.conf.urls import patterns, url
+
 from custom.ilsgateway.views import GlobalStats, SupervisionDocumentListView, SupervisionDocumentDeleteView, \
-    SupervisionDocumentView, ReportRunListView, ReportRunDeleteView, ProductAvailabilityDeleteView
+    SupervisionDocumentView, ReportRunListView, ReportRunDeleteView, ProductAvailabilityDeleteView, \
+    BalanceMigrationView
 from custom.ilsgateway.views import ILSConfigView
 
 urlpatterns = patterns('custom.ilsgateway.views',
@@ -30,5 +32,6 @@ urlpatterns = patterns('custom.ilsgateway.views',
         ProductAvailabilityDeleteView.as_view(),
         name='product_availability_delete'
     ),
-    url(r'^fix_stock_data/$', 'fix_stock_data_view', name='fix_stock_data')
+    url(r'^fix_stock_data/$', 'fix_stock_data_view', name='fix_stock_data'),
+    url(r'^balance/$', BalanceMigrationView.as_view(), name='balance_migration')
 )

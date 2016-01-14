@@ -35,6 +35,7 @@
 {% endblock %}
 {% block filter_js %}
 <script type="text/javascript" src="{% new_static 'reports/ko/report_filter.drilldown_options.js' %}"></script>
+{% if not is_empty %}
 <script type="text/javascript">
     $(function () {
        $('#{{ css_id }}').drilldownOptionFilter({
@@ -45,4 +46,5 @@
        });
     });
 </script>
+{% endif %}
 {% endblock %}

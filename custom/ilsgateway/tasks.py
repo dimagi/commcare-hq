@@ -13,6 +13,7 @@ from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product
 from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
+from custom.ilsgateway.balance import BalanceMigration
 from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
 from custom.ilsgateway.tanzania.reminders.randr import RandrReminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
@@ -44,6 +45,11 @@ def migration_task():
 def ils_bootstrap_domain_task(domain):
     ils_config = ILSGatewayConfig.for_domain(domain)
     return ils_bootstrap_domain(ILSGatewayAPI(domain, ILSGatewayEndpoint.from_config(ils_config)))
+
+
+@task(queue='logistics_background_queue', ignore_result=True, acks_late=True)
+def balance_migration_task(domain, endpoint):
+    BalanceMigration(domain, endpoint).balance_migration()
 
 
 # Region KILIMANJARO

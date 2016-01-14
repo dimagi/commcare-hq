@@ -20,6 +20,7 @@ function chevron_toggle(show, $toggling, $chevron, $holds_toggle_state, after_fn
         $holds_toggle_state.data("show", false);
     } else {
         $toggling.show();
+        $toggling.removeClass('hide');
         $chevron
             .removeClass(chev + "right")
             .addClass(chev + "down")

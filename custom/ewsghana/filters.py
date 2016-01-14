@@ -217,15 +217,16 @@ class EWSDateFilter(BaseReportFilter):
                     ews_date_format(fridays[idx + 1] - relativedelta(days=1))
                 )
             except IndexError:
-                value = '{0}|{1}'.format(val.strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d"))
-                text = '{0} - {1}'.format(ews_date_format(val), ews_date_format(now))
+                next_thursday = val + relativedelta(days=6)
+                value = '{0}|{1}'.format(val.strftime("%Y-%m-%d"), next_thursday.strftime("%Y-%m-%d"))
+                text = '{0} - {1}'.format(ews_date_format(val), ews_date_format(next_thursday))
             finally:
                 weeks.append(dict(val=value, text=text))
         return [
             {
                 'text': 'Week (Friday - Thursday)',
                 'val': 2,
-                'firstOptions': weeks[:-1],
+                'firstOptions': weeks,
                 'secondOptions': []
             },
             {

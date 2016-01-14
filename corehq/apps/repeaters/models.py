@@ -304,7 +304,6 @@ class FormRepeater(Repeater):
 
     """
 
-    exclude_device_reports = BooleanProperty(default=False)
     include_app_id_param = BooleanProperty(default=True)
 
     @memoized

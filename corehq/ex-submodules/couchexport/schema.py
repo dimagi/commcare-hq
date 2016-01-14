@@ -49,47 +49,51 @@ def make_schema(doc):
         return "string"
 
 
-def extend_schema(schema, doc):
+def extend_schema(previous_schema, schema):
+    """
+    Reconciles the previous_schema with the new schema
+    """
+    previous_schema_kind = get_kind(previous_schema)
     schema_kind = get_kind(schema)
-    doc_kind = get_kind(doc)
 
     # 1. anything + null => anything
-    if doc_kind == "null":
-        return schema
     if schema_kind == "null":
-        return make_schema(doc)
+        return previous_schema
+    if previous_schema_kind == "null":
+        return make_schema(schema)
 
     # 2. not-list => [not-list] when compared to a list
-    if schema_kind != "list" and doc_kind == "list":
+    if previous_schema_kind != "list" and schema_kind == "list":
+        previous_schema_kind = "list"
+        previous_schema = [previous_schema]
+    if schema_kind != "list" and previous_schema_kind == "list":
         schema_kind = "list"
         schema = [schema]
-    if doc_kind != "list" and schema_kind == "list":
-        doc_kind = "list"
-        doc = [doc]
 
     # 3. not-dict => {'': not-dict} when compared to a dict
-    if schema_kind != 'dict' and doc_kind == 'dict':
+    if previous_schema_kind != 'dict' and schema_kind == 'dict':
+        if not previous_schema_kind == 'string':
+            raise SchemaInferenceError("%r is type %r but should be type 'string'!!" % (previous_schema,
+                previous_schema_kind))
+        previous_schema_kind = 'dict'
+        previous_schema = {'': previous_schema_kind}
+    if schema_kind != 'dict' and previous_schema_kind == 'dict':
         if not schema_kind == 'string':
             raise SchemaInferenceError("%r is type %r but should be type 'string'!!" % (schema, schema_kind))
         schema_kind = 'dict'
         schema = {'': schema_kind}
-    if doc_kind != 'dict' and schema_kind == 'dict':
-        if not doc_kind == 'string':
-            raise SchemaInferenceError("%r is type %r but should be type 'string'!!" % (doc, doc_kind))
-        doc_kind = 'dict'
-        doc = {'': doc_kind}
 
-    # 4. Now that schema and doc are of the same kind
-    if schema_kind == doc_kind == "dict":
-        for key in doc:
-            schema[key] = extend_schema(schema.get(key, None), doc[key])
-        return schema
-    if schema_kind == doc_kind == "list":
-        for doc_ in doc:
-            schema[0] = extend_schema(schema[0], doc_)
-        return schema
-    if schema_kind == doc_kind == "string":
+    # 4. Now that previous_schema and schema are of the same kind
+    if previous_schema_kind == schema_kind == "dict":
+        for key in schema:
+            previous_schema[key] = extend_schema(previous_schema.get(key, None), schema[key])
+        return previous_schema
+    if previous_schema_kind == schema_kind == "list":
+        for schema_ in schema:
+            previous_schema[0] = extend_schema(previous_schema[0], schema_)
+        return previous_schema
+    if previous_schema_kind == schema_kind == "string":
             return "string"
 
     # 5. We should have covered every case above, but if not, fail hard
-    raise SchemaInferenceError("Mismatched schema (%r) and doc (%r)" % (schema, doc))
+    raise SchemaInferenceError("Mismatched previous_schema (%r) and schema (%r)" % (previous_schema, schema))
