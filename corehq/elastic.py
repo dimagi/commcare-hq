@@ -5,6 +5,7 @@ from elasticsearch import Elasticsearch
 from django.conf import settings
 from elasticsearch.exceptions import ElasticsearchException, RequestError
 
+from corehq.apps.es.utils import flatten_field_dict
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from pillowtop.listener import send_to_elasticsearch as send_to_es
 from corehq.pillows.mappings.app_mapping import APP_INDEX
@@ -227,6 +228,10 @@ def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_
         result = es.search(meta.index, meta.type, body=q)
     except ElasticsearchException as e:
         raise ESError(e)
+
+    if fields is not None:
+        for res in result['hits']['hits']:
+            flatten_field_dict(res['fields'])
 
     return result
 
