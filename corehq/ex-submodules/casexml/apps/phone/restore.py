@@ -300,10 +300,11 @@ class RestoreState(object):
     restore_class = FileRestoreResponse
 
     def __init__(self, project, user, params):
+        if not project or not project.name:
+            raise Exception('you are not allowed to make a RestoreState without a domain!')
+
         self.project = project
-        self.domain = project.name if project else ''
-        _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], fail_if_debug=True)
-        _assert(self.domain, 'Restore for {} missing a domain!'.format(user.username))
+        self.domain = project.name
 
         self.user = user
         self.params = params
