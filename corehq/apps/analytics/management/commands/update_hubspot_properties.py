@@ -4,7 +4,7 @@ import json
 from django.core.management import BaseCommand
 from django.core.management.base import CommandError
 from corehq.apps.analytics.signals import _get_domain_membership_properties, _get_subscription_properties_by_user
-from corehq.apps.analytics.tasks import _batch_track_on_hubspot
+from corehq.apps.analytics.tasks import _batch_track_on_hubspot, _get_ab_test_properties
 from corehq.apps.es.users import UserES
 from corehq.apps.users.models import WebUser
 
@@ -12,7 +12,7 @@ from corehq.apps.users.models import WebUser
 class Command(BaseCommand):
     args = '<property_name_1> <property_name_2> ...'
     help = ("Updates given Hubspot properties for all users active within last 6 months. "
-            "Only subscription and domain-membership properties are supported")
+            "Only subscription, domain-membership, and A/B Test properties are supported")
 
     def handle(self, *args, **options):
         if not args:
@@ -38,6 +38,7 @@ class Command(BaseCommand):
         hubspot_properties = {}
         hubspot_properties.update(_get_subscription_properties_by_user(couch_user))
         hubspot_properties.update(_get_domain_membership_properties(couch_user))
+        hubspot_properties.update(_get_ab_test_properties(couch_user))
 
         try:
             data = [{"property": prop, "value": hubspot_properties[prop]} for prop in property_names]

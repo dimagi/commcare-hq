@@ -20,6 +20,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.toggles import deterministic_random
 
 logger = logging.getLogger('analytics')
 logger.setLevel('DEBUG')
@@ -159,10 +160,12 @@ def update_hubspot_properties(webuser, properties):
 @task(queue='background_queue', acks_late=True, ignore_result=True)
 def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
     if path.startswith(reverse("register_user")):
-        _track_on_hubspot(webuser, {
+        tracking_dict = {
             'created_account_in_hq': True,
             'is_a_commcare_user': True,
-        })
+        }
+        tracking_dict.update(_get_ab_test_properties(webuser))
+        _track_on_hubspot(webuser, tracking_dict)
         _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, cookies, meta)
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, cookies, meta)
 
@@ -393,3 +396,9 @@ def _log_response(data, response):
         logger.error(message)
     else:
         logger.debug(message)
+
+
+def _get_ab_test_properties(user):
+    return {
+        'a_b_test_variable_1': 'A' if deterministic_random(user.email) > 0.5 else 'B',
+    }
