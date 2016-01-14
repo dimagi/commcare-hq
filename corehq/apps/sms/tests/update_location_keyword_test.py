@@ -5,10 +5,9 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location, LocationType
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.messages import get_message
-from corehq.apps.sms.mixin import BackendMapping
 from corehq.apps.sms.models import SMS
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from corehq.apps.users.models import CommCareUser
-from corehq.messaging.smsbackends.test.models import TestSMSBackend
 import corehq.apps.sms.messages as messages
 
 
@@ -34,15 +33,7 @@ class UpdateLocationKeywordTest(TestCase, DomainSubscriptionMixin):
 
         cls.setup_subscription(cls.domain_obj.name, SoftwarePlanEdition.ADVANCED)
 
-        cls.backend = TestSMSBackend(name='MOBILE_BACKEND_TEST', is_global=True)
-        cls.backend.save()
-
-        cls.backend_mapping = BackendMapping(
-            is_global=True,
-            prefix="*",
-            backend_id=cls.backend._id,
-        )
-        cls.backend_mapping.save()
+        cls.backend, cls.backend_mapping = setup_default_sms_test_backend()
 
         cls.user = create_mobile_worker(cls.domain, 'test', '*****', '4444')
 
