@@ -71,9 +71,6 @@ def make_loc(code, name, domain, type, metadata=None, parent=None):
     loc = Location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
     loc.metadata = metadata or {}
     loc.save()
-    if not location_type.administrative:
-        SupplyInterface.create_from_location(domain, loc)
-        loc.save()
     return loc
 
 
