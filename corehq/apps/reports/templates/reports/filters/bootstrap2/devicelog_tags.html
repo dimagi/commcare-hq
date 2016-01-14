@@ -1,0 +1,49 @@
+{% extends 'reports/filters/bootstrap2/base.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block filter_content %}
+{% if errors_only %}
+    <script type="text/javascript">
+        $(function() {
+            $("#{{ errors_css_id }}").change(function() {
+                var multiSelect= $('#{{ css_id }}');
+                if($(this).attr("checked")) {
+                    $(this).attr("name", "{{ errors_only_slug }}");
+                    multiSelect.attr("name","");
+                    multiSelect.addClass("hide");
+                } else {
+                    $(this).attr("name", "");
+                    {% if not default_on %}multiSelect.attr("name", "{{ slug }}");{% endif %}
+                    multiSelect.removeClass("hide");
+                }
+            });
+        });
+    </script>
+    <label style="line-height: 28px;"
+           class="checkbox"
+           for="{{ errors_css_id }}">
+        <input style="margin-top: 9px;"
+               type="checkbox"
+               id="{{ errors_css_id }}"
+               value="True"
+               name="{{ errors_only_slug }}"
+               checked="checked" /> Showing Errors Only</label>
+{% endif %}
+{% if default_on %}
+    <script type="text/javascript">
+        $(function() {
+            $("#{{ css_id }}").attr("name","");
+            $("#{{ css_id }}").change(function () {
+               $(this).attr("name", "{{ slug }}");
+            });
+        });
+    </script>
+{% endif %}
+    <select
+            multiple="multiple"
+            style="height:300px" {% if errors_only %}class="hide"{% else %}name="{{ slug }}"{% endif %} id="{{ css_id }}">
+        {% for tag in logtags %}
+            <option{% if tag.show %} selected="selected"{% endif %}>{{ tag.name }}</option>
+        {% endfor %}
+    </select>
+{% endblock %}

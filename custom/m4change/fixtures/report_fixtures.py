@@ -36,7 +36,7 @@ def get_last_day_of_month(month_start, today):
 class ReportFixtureProvider(object):
     id = 'reports:m4change-mobile'
 
-    def __call__(self, user, version, last_sync=None):
+    def __call__(self, user, version, last_sync=None, app=None):
         if user.domain in M4CHANGE_DOMAINS:
             domain = Domain.get_by_name(user.domain)
             location_id = get_commtrack_location_id(user, domain)

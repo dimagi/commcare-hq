@@ -383,6 +383,13 @@ def _log_response(data, response):
         response_text = json.dumps(response.json(), indent=2, sort_keys=True)
     except Exception:
         response_text = response.status_code
-    logger.debug('Sent this data to HS: %s \nreceived: %s' %
-                 (json.dumps(data, indent=2, sort_keys=True),
-                  response_text))
+
+    message = 'Sent this data to HS: %s \nreceived: %s' % (
+        json.dumps(data, indent=2, sort_keys=True),
+        response_text
+    )
+
+    if response.status_code != 200:
+        logger.error(message)
+    else:
+        logger.debug(message)

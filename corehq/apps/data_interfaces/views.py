@@ -20,8 +20,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from django.utils.decorators import method_decorator
 from openpyxl.utils.exceptions import InvalidFileException
 from corehq.apps.data_interfaces.tasks import (
-    bulk_upload_cases_to_group, bulk_archive_forms, bulk_form_management_async,
-    run_case_update_rules_for_domain)
+    bulk_upload_cases_to_group, bulk_archive_forms, bulk_form_management_async)
 from corehq.apps.data_interfaces.forms import (
     AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm,
     AddAutomaticCaseUpdateRuleForm)
@@ -577,7 +576,8 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
         return {
             'pagination_limit_cookie_name': ('hq.pagination.limit'
                                              '.automatic_update_rule_list.%s'
-                                             % self.domain)
+                                             % self.domain),
+            'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases',
         }
 
     def _format_rule(self, rule):
@@ -673,11 +673,6 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
         return {
             'success': True,
         }
-
-    @allow_remote_invocation
-    def run_rules(self, in_data):
-        run_case_update_rules_for_domain.delay(self.domain)
-        return {}
 
 
 class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):

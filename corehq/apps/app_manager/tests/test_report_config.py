@@ -130,8 +130,8 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
         ]
         with mock_report_data(cls.data):
             with mock_report_configuration_get(cls.report_configs_by_id):
-                with mock.patch('corehq.apps.app_manager.dbaccessors.get_apps_in_domain',
-                                lambda domain: [cls.app]):
+                with mock.patch('corehq.apps.app_manager.fixtures.mobile_ucr.get_apps_in_domain',
+                                lambda domain, include_remote: [cls.app]):
                     fixture, = report_fixture_generator(cls.user, '2.0')
         cls.fixture = ElementTree.tostring(fixture)
 

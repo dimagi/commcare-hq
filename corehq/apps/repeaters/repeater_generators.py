@@ -18,7 +18,7 @@ def _get_test_form():
     from corehq.form_processor.tests.utils import TestFormMetadata
     from corehq.form_processor.tests.utils import get_simple_wrapped_form
     metadata = TestFormMetadata(domain='demo-domain', xmlns=uuid4().hex, form_name='Demo Form')
-    return get_simple_wrapped_form('test-form-' + uuid4().hex, metadata=metadata)
+    return get_simple_wrapped_form('test-form-' + uuid4().hex, metadata=metadata, save=False)
 
 
 class BasePayloadGenerator(object):

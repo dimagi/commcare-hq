@@ -75,7 +75,7 @@ class BaseReportFilter(object):
 class CheckboxFilter(BaseReportFilter):
     slug = "checkbox"
     label = "hello"
-    template = "reports/filters/checkbox.html"
+    template = "reports/filters/bootstrap2/checkbox.html"
 
     @property
     def filter_context(self):
@@ -94,7 +94,7 @@ class BaseSingleOptionFilter(BaseReportFilter):
     """
         Displays a select field.
     """
-    template = "reports/filters/single_option.html"
+    template = "reports/filters/bootstrap2/single_option.html"
     default_text = ugettext_noop("Filter by...")
     placeholder = ''
     is_paginated = False
@@ -157,7 +157,7 @@ class BaseMultipleOptionFilter(BaseSingleOptionFilter):
     """
         Displays a multiselect field.
     """
-    template = "reports/filters/multi_option.html"
+    template = "reports/filters/bootstrap2/multi_option.html"
     default_options = [] # specify a list
 
     @classmethod
@@ -174,7 +174,7 @@ class BaseSingleOptionTypeaheadFilter(BaseSingleOptionFilter):
     """
         Displays a combobox (select field with typeahead).
     """
-    template = "reports/filters/single_option_typeahead.html"
+    template = "reports/filters/bootstrap2/single_option_typeahead.html"
 
 
 class BaseDrilldownOptionFilter(BaseReportFilter):
@@ -189,7 +189,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
             and select a final option before the result is usable. For example, you can't just pick an application
             and show all of its forms, you must select exactly one form.
     """
-    template = "reports/filters/drilldown_options.html"
+    template = "reports/filters/bootstrap2/drilldown_options.html"
     use_only_last = False
     drilldown_empty_text = ugettext_noop("No Data Available")
     is_cacheable = True
@@ -316,7 +316,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
 
 
 class BaseTagsFilter(BaseReportFilter):
-    template = "reports/filters/base_tags_filter.html"
+    template = "reports/filters/bootstrap2/base_tags_filter.html"
     tags = []
 
     @property

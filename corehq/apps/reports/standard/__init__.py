@@ -21,7 +21,7 @@ from dimagi.utils.decorators.memoized import memoized
 class ProjectReport(GenericReportView):
     # overriding properties from GenericReportView
     section_name = ugettext_noop("Project Reports")
-    base_template = 'reports/base_template.html'
+    base_template = 'reports/bootstrap2/base_template.html'
     dispatcher = ProjectReportDispatcher
     asynchronous = True
 

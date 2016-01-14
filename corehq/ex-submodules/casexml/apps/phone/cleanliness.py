@@ -2,19 +2,16 @@ from collections import namedtuple
 from datetime import datetime
 from couchdbkit import ResourceNotFound
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
-from casexml.apps.case.dbaccessors import get_indexed_case_ids, \
-    get_all_reverse_indices_info, get_extension_case_ids
 from casexml.apps.case.exceptions import IllegalCaseId
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqcase.dbaccessors import get_open_case_ids, \
-    get_closed_case_ids, get_all_case_owner_ids
+from corehq.apps.hqcase.dbaccessors import get_all_case_owner_ids
 from corehq.apps.users.util import WEIRD_USER_IDS
 from django.conf import settings
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.logging import notify_exception
 
 
@@ -130,23 +127,25 @@ def hint_still_valid(domain, hint):
     """
     For a given domain/owner/cleanliness hint check if it's still valid
     """
+    casedb = CaseAccessors(domain)
     try:
-        hint_case = CommCareCase.get(hint)
+        hint_case = casedb.get_case(hint)
         hint_owner = hint_case.owner_id
-    except ResourceNotFound:
+    except CaseNotFound:
         # hint was deleted
         return False
     dependent_case_ids = set(get_dependent_case_info(domain, [hint]).all_ids)
-    return any([c['owner_id'] != hint_owner and c['owner_id'] != UNOWNED_EXTENSION_OWNER_ID
-                for c in iter_docs(CommCareCase.get_db(), dependent_case_ids)])
+    return any([c.owner_id != hint_owner and c.owner_id != UNOWNED_EXTENSION_OWNER_ID
+                for c in casedb.get_cases(list(dependent_case_ids))])
 
 
 def get_cleanliness_flag_from_scratch(domain, owner_id):
+    casedb = CaseAccessors(domain)
     footprint_info = get_case_footprint_info(domain, owner_id)
     owned_cases = footprint_info.base_ids
     cases_to_check = footprint_info.all_ids - owned_cases
     if cases_to_check:
-        closed_owned_case_ids = set(get_closed_case_ids(domain, owner_id))
+        closed_owned_case_ids = set(casedb.get_closed_case_ids(owner_id))
         cases_to_check = cases_to_check - closed_owned_case_ids - footprint_info.extension_ids
         # check extension cases that are unowned or owned by others
         extension_cases_to_check = footprint_info.extension_ids - closed_owned_case_ids - owned_cases
@@ -156,9 +155,9 @@ def get_cleanliness_flag_from_scratch(domain, owner_id):
             unowned_dependent_cases = dependent_cases - owned_cases
             extension_cases_to_check = extension_cases_to_check - dependent_cases
             dependent_cases_owned_by_other_owners = {
-                dependent_case['_id']
-                for dependent_case in iter_docs(CommCareCase.get_db(), unowned_dependent_cases)
-                if dependent_case['owner_id'] != UNOWNED_EXTENSION_OWNER_ID
+                dependent_case.case_id
+                for dependent_case in casedb.get_cases(list(unowned_dependent_cases))
+                if dependent_case.owner_id != UNOWNED_EXTENSION_OWNER_ID
             }
             if dependent_cases_owned_by_other_owners:
                 hint_id = dependent_cases & owned_cases
@@ -166,7 +165,7 @@ def get_cleanliness_flag_from_scratch(domain, owner_id):
 
         if cases_to_check:
             # it wasn't in any of the open or closed IDs - it must be dirty
-            reverse_index_infos = get_all_reverse_indices_info(domain, list(cases_to_check))
+            reverse_index_infos = casedb.get_all_reverse_indices_info(list(cases_to_check))
             reverse_index_ids = set([r.case_id for r in reverse_index_infos])
             indexed_with_right_owner = (reverse_index_ids & (owned_cases | closed_owned_case_ids))
             found_deleted_cases = False
@@ -175,8 +174,8 @@ def get_cleanliness_flag_from_scratch(domain, owner_id):
                 infos_for_this_owner = _get_info_by_case_id(reverse_index_infos, hint_id)
                 for info in infos_for_this_owner:
                     try:
-                        case = CommCareCase.get(info.referenced_id)
-                        if case.doc_type == 'CommCareCase':
+                        case = CaseAccessors(domain).get_case(info.referenced_id)
+                        if not case.is_deleted:
                             return CleanlinessFlag(False, hint_id)
                         else:
                             found_deleted_cases = True
@@ -218,8 +217,9 @@ def get_dependent_case_info(domain, cases):
 
 
 def _get_direct_dependencies(domain, cases):
-    extension_cases = set(get_extension_case_ids(domain, cases))
-    indexed_cases = set(get_indexed_case_ids(domain, cases))
+    case_accessor = CaseAccessors(domain)
+    extension_cases = set(case_accessor.get_extension_case_ids(cases))
+    indexed_cases = set(case_accessor.get_indexed_case_ids(cases))
     return DirectDependencies(
         all=extension_cases | indexed_cases,
         indexed_cases=indexed_cases,
@@ -236,7 +236,7 @@ def get_case_footprint_info(domain, owner_id):
       2) doesn't return full blown case objects but just IDs
       3) differentiates between the base set and the complete list
     """
-    open_case_ids = set(get_open_case_ids(domain, owner_id))
+    open_case_ids = set(CaseAccessors(domain).get_open_case_ids(owner_id))
     dependent_cases = get_dependent_case_info(domain, open_case_ids)
     return FootprintInfo(base_ids=set(open_case_ids),  # open cases with this owner
                          all_ids=dependent_cases.all_ids | open_case_ids,

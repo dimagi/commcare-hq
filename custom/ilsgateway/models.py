@@ -516,6 +516,12 @@ class ILSNotes(models.Model):
         app_label = 'ilsgateway'
 
 
+class ILSGatewayWebUser(models.Model):
+    # To remove after switchover
+    external_id = models.IntegerField(db_index=True)
+    email = models.CharField(max_length=128)
+
+
 @receiver(commcare_domain_pre_delete)
 def domain_pre_delete_receiver(domain, **kwargs):
     from corehq.apps.domain.deletion import ModelDeletion, CustomDeletion

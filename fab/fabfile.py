@@ -549,8 +549,7 @@ def _confirm_translated():
         return True
     return console.confirm(
         "It's Tuesday, did you update the translations from transifex? "
-        "\n(https://confluence.dimagi.com/display/commcarehq/"
-        "Internationalization+and+Localization+-+Transifex+Translations)"
+        "Try running this handy script:\n./scripts/update-translations.sh\n"
     )
 
 

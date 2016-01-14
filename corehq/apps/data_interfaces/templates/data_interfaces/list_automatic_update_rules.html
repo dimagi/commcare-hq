@@ -57,15 +57,6 @@
                 rule.action_error = '{% trans "Issue communicating with server. Try again."|escapejs %}';
             });
         },
-        manuallyRunRules: function (djangoRMI) {
-            djangoRMI.run_rules({})
-            .success(function (data) {
-                $('#run-all-rules-button').html("{% trans "Task started. Last Run timestamp will be updated when complete (refresh page to check)." %}");
-            })
-            .error(function () {
-                $('#run-all-rules-button').html("{% trans "An error occurred. Please try again." %}");
-            });
-        },
         deleteRule: function (rule, djangoRMI, paginationController) {
             $('#delete_' + rule.id).modal('hide');
             djangoRMI.update_rule({
@@ -97,12 +88,6 @@
                 <i class="fa fa-plus"></i> {% trans "Add Automatic Case Close Rule" %}
             </button>
         </a>
-        <button id="run-all-rules-button"
-                type="button"
-                class="btn btn-default"
-                ng-click="manuallyRunRules(djangoRMI);">
-                {% trans "Run All Rules" %}
-        </button>
     </div>
     <div class="row">
         <div class="col-sm-8">
@@ -113,9 +98,9 @@
             </p>
             <p>
                 {% blocktrans %}
-                This allows you to define rules that will update or close cases from CommCareHQ.
-                These rules will be run every Friday at Midnight GMT.
-                To reverse any changes, use the "Manage Forms" page.
+                Create rules for closing cases from CommCareHQ.
+                All rules run once a week on Friday at midnight GMT.
+                For more information, see the <a href="{{ help_site_url }}">Help Site</a>.
                 {% endblocktrans %}
             </p>
         </div>

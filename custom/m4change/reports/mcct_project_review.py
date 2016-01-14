@@ -6,7 +6,6 @@ from django.utils.translation import ugettext as _
 from corehq.apps.locations.models import Location
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
-from corehq.elastic import ES_URLS
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -148,7 +147,7 @@ class BaseReport(CustomProjectReport, ElasticProjectInspectionReport, ProjectRep
                     ]
                 }
 
-            es_response = es_query(params={"domain.exact": self.domain}, q=query, es_url=ES_URLS.get('cases'))
+            es_response = es_query(params={"domain.exact": self.domain}, q=query, es_index='cases')
             return [res['_source']['_id'] for res in es_response.get('hits', {}).get('hits', [])]
 
         @property
@@ -226,10 +225,10 @@ class McctProjectReview(BaseReport):
                 if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
 
             if paginated:
-                self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'),
+                self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_index='forms',
                                             start_at=self.pagination.start, size=self.pagination.count)
             else:
-                self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'))
+                self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_index='forms')
         return self.es_response
 
     @property
@@ -297,10 +296,10 @@ class McctClientApprovalPage(McctProjectReview):
 
                 q["sort"] = self.get_sorting_block() if self.get_sorting_block() else [{"form.meta.timeEnd" : {"order": "desc"}}]
                 if paginated:
-                    self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'),
+                    self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_index='forms',
                                                 start_at=self.pagination.start, size=self.pagination.count)
                 else:
-                    self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'))
+                    self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_index='forms')
         else:
             self.es_response = {'hits': {'total': 0}}
 
@@ -419,10 +418,10 @@ class McctClientLogPage(McctProjectReview):
             q["sort"] = self.get_sorting_block() \
                 if self.get_sorting_block() else [{"form.meta.timeEnd": {"order": "desc"}}]
             if paginated:
-                self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'),
+                self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_index='forms',
                                             start_at=self.pagination.start, size=self.pagination.count)
             else:
-                self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_url=ES_URLS.get('forms'))
+                self.es_response = es_query(params={"domain.exact": self.domain}, q=q, es_index='forms')
         return self.es_response
 
     def make_rows(self, es_results, with_checkbox):
