@@ -206,6 +206,7 @@ def track_app_from_template_on_hubspot(webuser, cookies, meta):
 def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta)
 
+
 @task(queue="background_queue", acks_late=True, ignore_result=True)
 def track_created_new_project_space_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, webuser, cookies, meta)
