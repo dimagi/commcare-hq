@@ -3,12 +3,13 @@ from django.conf import settings
 from django.test import SimpleTestCase
 from fakecouch import FakeCouchDb
 from kafka import KafkaConsumer
-from kafka.common import ConsumerTimeout
+from kafka.common import ConsumerTimeout, KafkaUnavailableError
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.connection import get_kafka_client
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.pillow import ChangeFeedPillow
 from corehq.apps.change_feed.data_sources import COUCH
+from corehq.util.test_utils import trap_extra_setup
 from pillowtop.feed.interface import Change
 
 
@@ -18,12 +19,13 @@ class ChangeFeedPillowTest(SimpleTestCase):
     def setUp(cls):
         cls._fake_couch = FakeCouchDb()
         cls._fake_couch.dbname = 'test-couchdb'
-        cls.consumer = KafkaConsumer(
-            topics.CASE,
-            group_id='test-consumer',
-            bootstrap_servers=[settings.KAFKA_URL],
-            consumer_timeout_ms=100,
-        )
+        with trap_extra_setup(KafkaUnavailableError):
+            cls.consumer = KafkaConsumer(
+                topics.CASE,
+                group_id='test-consumer',
+                bootstrap_servers=[settings.KAFKA_URL],
+                consumer_timeout_ms=100,
+            )
         cls.pillow = ChangeFeedPillow(cls._fake_couch, kafka=get_kafka_client(), checkpoint=None)
 
     def test_process_change(self):

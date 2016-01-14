@@ -13,14 +13,14 @@ NOSE_ARGS = [
 ]
 NOSE_PLUGINS = [
     # Disable migrations by default. Use --with-migrations to enable them.
-    'corehq.util.nose.DjangoMigrationsPlugin',
-    'corehq.util.nose.OmitDjangoInitModuleTestsPlugin',
+    'corehq.tests.nose.DjangoMigrationsPlugin',
+    'corehq.tests.nose.OmitDjangoInitModuleTestsPlugin',
 ]
 
 # these settings can be overridden with environment variables
 for key, value in {
-    'NOSE_DB_TEST_CONTEXT': 'corehq.util.nose.HqdbContext',
-    'NOSE_NON_DB_TEST_CONTEXT': 'corehq.util.nose.ErrorOnDbAccessContext',
+    'NOSE_DB_TEST_CONTEXT': 'corehq.tests.nose.HqdbContext',
+    'NOSE_NON_DB_TEST_CONTEXT': 'corehq.tests.nose.ErrorOnDbAccessContext',
 
     # ignore record_deploy_success.py because datadog may not be installed
     # (only matters when running --with-doctests)
@@ -44,6 +44,10 @@ del key, value
 
 # HqTestSuiteRunner settings
 INSTALLED_APPS = INSTALLED_APPS + list(TEST_APPS)
+
+if "SKIP_TESTS_REQUIRING_EXTRA_SETUP" not in globals():
+    SKIP_TESTS_REQUIRING_EXTRA_SETUP = False
+
 CELERY_ALWAYS_EAGER = True
 # keep a copy of the original PILLOWTOPS setting around in case other tests want it.
 _PILLOWTOPS = PILLOWTOPS
@@ -57,30 +61,6 @@ PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = True
 PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
 
 ENABLE_PRELOGIN_SITE = True
-
-
-def _set_couchdb_test_settings():
-    import settingshelper
-
-    def get_test_db_name(dbname):
-        return "%s_test" % dbname
-
-    global COUCH_DATABASE_NAME, EXTRA_COUCHDB_DATABASES
-
-    COUCH_DATABASE_NAME = get_test_db_name(COUCH_DATABASE_NAME)
-    globals().update(settingshelper.get_dynamic_db_settings(
-        COUCH_SERVER_ROOT,
-        COUCH_USERNAME,
-        COUCH_PASSWORD,
-        COUCH_DATABASE_NAME,
-    ))
-
-    EXTRA_COUCHDB_DATABASES = {
-        db_name: get_test_db_name(url)
-        for db_name, url in EXTRA_COUCHDB_DATABASES.items()
-    }
-
-_set_couchdb_test_settings()
 
 
 def _clean_up_logging_output():

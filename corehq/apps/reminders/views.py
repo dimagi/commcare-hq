@@ -599,7 +599,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         return self.get(*args, **kwargs)
 
     def process_schedule_form(self):
-        new_handler = CaseReminderHandler()
+        new_handler = CaseReminderHandler(use_today_if_start_date_is_blank=False)
         self.schedule_form.save(new_handler)
 
 

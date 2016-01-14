@@ -1,6 +1,7 @@
 from cStringIO import StringIO
 from couchdbkit import ResourceNotFound, BadValueError
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.shortcuts import render
@@ -19,6 +20,7 @@ import requests
 import requests.exceptions
 
 
+@csrf_exempt  # is used by an API
 @json_error
 @require_api_user
 def post(request):

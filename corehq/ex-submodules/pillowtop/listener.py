@@ -2,7 +2,7 @@ from functools import wraps
 import logging
 from couchdbkit.exceptions import ResourceNotFound
 from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError
+from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
 from psycopg2._psycopg import InterfaceError
 from datetime import datetime, timedelta
 import hashlib
@@ -390,7 +390,7 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, r
         except RequestError as ex:
             error_message = "Pillowtop put_robust error [%s]:\n%s\n\tpath: %s/%s/%s\n\t%s" % (
                 name,
-                ex.message or "No error message",
+                ex.error or "No error message",
                 index, doc_type, doc_id,
                 data.keys())
 
@@ -399,6 +399,8 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, r
             else:
                 pillow_logging.error(error_message)
             break
+        except ConflictError:
+            break  # ignore the error if a doc already exists when trying to create it in the index
         except NotFoundError:
             break
 

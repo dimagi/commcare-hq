@@ -49,8 +49,8 @@ class OmitDjangoInitModuleTestsPlugin(Plugin):
         loader.loadTestsFromModule = loadTestsFromModule
 
     def wantClass(self, cls):
-        key = (self.module, cls)
         if issubclass(cls, TestCase):
+            key = (self.module, cls)
             if key in self.seen:
                 log.error("ignoring duplicate test: %s in %s "
                           "(INVESTIGATE THIS)", cls, self.module)
@@ -64,7 +64,8 @@ class OmitDjangoInitModuleTestsPlugin(Plugin):
 class DjangoMigrationsPlugin(Plugin):
     """Run tests with Django migrations.
 
-    Migrations are disabled by default.
+    Migrations are disabled by default. Use the option to enable this
+    plugin (`--with-migrations`) to run tests with migrations.
     """
     # Inspired by https://gist.github.com/NotSqrt/5f3c76cd15e40ef62d09
     # See also https://github.com/henriquebastos/django-test-without-migrations
@@ -134,16 +135,11 @@ class HqdbContext(DatabaseContext):
     ``couchdbkit.ext.django.testrunner.CouchDbKitTestSuiteRunner``
     """
 
-    @staticmethod
-    def get_test_db_name(dbname):
-        return "%s_test" % dbname
-
     @classmethod
-    def get_test_db(cls, db):
-        # not copying DB would modify the db dict and add multiple "_test"
-        test_db = db.copy()
-        test_db['URL'] = cls.get_test_db_name(test_db['URL'])
-        return test_db
+    def verify_test_db(cls, app, uri):
+        if '/test_' not in uri:
+            raise ValueError("not a test db url: app=%s url=%r" % (app, uri))
+        return app
 
     def should_skip_test_setup(self):
         # FRAGILE look in sys.argv; can't get nose config from here
@@ -157,33 +153,12 @@ class HqdbContext(DatabaseContext):
         from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
         self.blob_db = TemporaryFilesystemBlobDB()
 
-        log.info("overridding the couchdbkit database settings to use a test database!")
-
-        # first pass: just implement this as a monkey-patch to the loading module
-        # overriding all the existing couchdb settings
+        # get/verify list of apps with databases to be deleted on teardown
         databases = getattr(settings, "COUCHDB_DATABASES", [])
-
-        # Convert old style to new style
         if isinstance(databases, (list, tuple)):
-            databases = dict(
-                (app_name, {'URL': uri}) for app_name, uri in databases
-            )
-
-        self.dbs = dict(
-            (app, self.get_test_db(db)) for app, db in databases.items()
-        )
-
-        old_handler = loading.couchdbkit_handler
-        couchdbkit_handler = loading.CouchdbkitHandler(self.dbs)
-        loading.couchdbkit_handler = couchdbkit_handler
-        loading.register_schema = couchdbkit_handler.register_schema
-        loading.get_schema = couchdbkit_handler.get_schema
-        loading.get_db = couchdbkit_handler.get_db
-
-        # register our dbs with the extension document classes
-        for app, value in old_handler.app_schema.items():
-            for name, cls in value.items():
-                cls.set_db(loading.get_db(app))
+            # Convert old style to new style
+            databases = {app_name: uri for app_name, uri in databases}
+        self.apps = [self.verify_test_db(*item) for item in databases.items()]
 
         sys.__stdout__.write("\n")  # newline for creating database message
         super(HqdbContext, self).setup()
@@ -197,7 +172,7 @@ class HqdbContext(DatabaseContext):
         # delete couch databases
         deleted_databases = []
         skipcount = 0
-        for app in self.dbs:
+        for app in self.apps:
             app_label = app.split('.')[-1]
             db = loading.get_db(app_label)
             if db.dbname in deleted_databases:

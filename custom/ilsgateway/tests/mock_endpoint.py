@@ -10,6 +10,9 @@ class MockEndpoint(ILSGatewayEndpoint):
         return {}, []
 
     def get_objects(self, url, params=None, filters=None, limit=1000, offset=0, **kwargs):
+        if offset > 0:
+            return {}, []
+
         if 'locations' in url:
             return self._from_json('sample_locations.json', **kwargs)
         elif 'smsusers' in url:

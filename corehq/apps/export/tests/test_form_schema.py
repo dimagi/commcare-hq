@@ -42,6 +42,29 @@ class FormQuestionSchemaTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(schema.question_schema['form.new_multi'].options, ['z_first', 'a_last'])
         self.assertEqual(schema.question_schema['form.group1.multi_level1'].options, ['item1', 'item2', '1_item'])
 
+    def test_change_multi_select(self):
+        """
+        This test ensures that when you update a multi select question to not be a multi select question, the
+        FormQuestionSchema reflects that change
+        """
+        app = Application.wrap(self.get_json('question_schema_test_app'))
+        app._id = '123'
+        app.version = 1
+
+        xmlns = 'http://openrosa.org/formdesigner/284D3F7C-9C10-48E6-97AC-C37927CBA89A'
+        schema = FormQuestionSchema(xmlns=xmlns)
+
+        schema.update_for_app(app)
+        self.assertEqual(schema.question_schema['form.multi_root'].options, ['item1', 'item2', 'item3'])
+
+        # Change the question to a different type
+        updated_form_xml = self.get_xml('question_schema_no_multi')
+        app.get_form_by_xmlns(xmlns).source = updated_form_xml
+        app.version = 2
+
+        schema.update_for_app(app)
+        self.assertNotIn('form.multi_root', schema.question_schema)
+
 
 class TestGetOrCreateSchema(SimpleTestCase):
     def setUp(self):

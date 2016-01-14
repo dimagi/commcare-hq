@@ -119,9 +119,10 @@ function makeSaveButton(messageStrings, cssClass) {
                         success = options.success || function () {},
                         error = options.error || function () {},
                         that = this;
-                    options.beforeSend = function () {
+                    options.beforeSend = function (jqXHR, settings) {
                         that.setState('saving');
                         that.nextState = 'saved';
+                        $.ajaxSettings.beforeSend(jqXHR, settings);
                         beforeSend.apply(this, arguments);
                     };
                     options.success = function (data) {

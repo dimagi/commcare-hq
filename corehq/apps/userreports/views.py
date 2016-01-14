@@ -65,7 +65,7 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tasks import rebuild_indicators, resume_building_indicators
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
     ConfigurableDataSourceEditForm,
@@ -559,6 +559,13 @@ def _edit_data_source_shared(request, domain, config, read_only=False):
         'data_source': config,
         'read_only': read_only
     })
+    if config.is_deactivated:
+        messages.info(
+            request, _(
+                'Data source "{}" has no associated table.\n'
+                'Click "Rebuild Data Source" to recreate the table.'
+            ).format(config.display_name)
+        )
     return render(request, "userreports/edit_data_source.html", context)
 
 
@@ -597,6 +604,26 @@ def rebuild_data_source(request, domain, config_id):
     )
 
     rebuild_indicators.delay(config_id)
+    return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
+
+
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@require_POST
+def resume_building_data_source(request, domain, config_id):
+    config, is_static = get_datasource_config_or_404(config_id, domain)
+    if not is_static and config.meta.build.finished:
+        messages.warning(
+            request,
+            _('Table "{}" has already finished building. Rebuild table to start over.').format(
+                config.display_name
+            )
+        )
+    else:
+        messages.success(
+            request,
+            _('Resuming rebuilding table "{}".').format(config.display_name)
+        )
+        resume_building_indicators.delay(config_id)
     return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
 
 
@@ -707,7 +734,9 @@ def export_data_source(request, domain, config_id):
     # First row is taken up by headers
     if params.format == Format.XLS and q.count() >= 65535:
         keyword_params = dict(**request.GET)
-        keyword_params.update(format=Format.CSV)
+        # use default format
+        if 'format' in keyword_params:
+            del keyword_params['format']
         return HttpResponseRedirect(
             '%s?%s' % (
                 reverse('export_configurable_data_source', args=[domain, config._id]),

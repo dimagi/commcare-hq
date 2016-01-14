@@ -717,19 +717,9 @@ class CommentMixin(DocumentSchema):
     @property
     def short_comment(self):
         """
-        Trim comment to 72 chars
-
-        >>> form = CommentMixin(
-        ...     comment=u"Twas bryllyg, and þe slythy toves "
-        ...             u"Did gyre and gymble in þe wabe: "
-        ...             u"All mimsy were þe borogoves; "
-        ...             u"And þe mome raths outgrabe."
-        ... )
-        >>> form.short_comment
-        u'Twas bryllyg, and \\xc3\\xbee slythy toves Did gyre and gymble in \\xc3\\xbee wabe: A...'
-
+        Trim comment to 500 chars (about 100 words)
         """
-        return self.comment if len(self.comment) <= 72 else self.comment[:69] + '...'
+        return self.comment if len(self.comment) <= 500 else self.comment[:497] + '...'
 
 
 class FormBase(DocumentSchema):
@@ -4244,16 +4234,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             return self.lazy_fetch_attachment("qrcode.png")
         except ResourceNotFound:
-            try:
-                from pygooglechart import QRChart
-            except ImportError:
-                raise Exception(
-                    "Aw shucks, someone forgot to install "
-                    "the google chart library on this machine "
-                    "and this feature needs it. "
-                    "To get it, run easy_install pygooglechart. "
-                    "Until you do that this won't work."
-                )
+            from pygooglechart import QRChart
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
             code.add_data(self.odk_profile_url if not with_media else self.odk_media_profile_url)
@@ -4394,6 +4375,7 @@ class SavedAppBuild(ApplicationBase):
             'built_on_date': built_on_user_time.ui_string(USER_DATE_FORMAT),
             'built_on_time': built_on_user_time.ui_string(USER_TIME_FORMAT),
             'build_label': self.built_with.get_label(),
+            'menu_item_label': self.built_with.get_menu_item_label(),
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name,
             'enable_offline_install': self.enable_offline_install,

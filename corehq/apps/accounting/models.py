@@ -1325,7 +1325,7 @@ class Subscription(models.Model):
             method=adjustment_method, note=note, web_user=web_user,
         )
 
-    def renew_subscription(self, date_end=None, note=None, web_user=None,
+    def renew_subscription(self, note=None, web_user=None,
                            adjustment_method=None,
                            service_type=None, pro_bono_status=None,
                            funding_source=None, new_version=None):
@@ -1362,7 +1362,7 @@ class Subscription(models.Model):
             subscriber=self.subscriber,
             salesforce_contract_id=self.salesforce_contract_id,
             date_start=self.date_end,
-            date_end=date_end,
+            date_end=None,
         )
         if service_type is not None:
             renewed_subscription.service_type = service_type

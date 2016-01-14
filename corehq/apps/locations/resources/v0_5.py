@@ -10,24 +10,7 @@ from corehq.util.view_utils import absolute_reverse
 from ..models import SQLLocation, LocationType
 
 
-class SQLResourceURIMixin(object):
-    def get_resource_uri(self, bundle_or_obj=None):
-        if isinstance(bundle_or_obj, Bundle):
-            obj = bundle_or_obj.obj
-        elif bundle_or_obj is None:
-            return None
-        else:
-            obj = bundle_or_obj
-
-        return absolute_reverse('api_dispatch_detail', kwargs={
-            'resource_name': self._meta.resource_name,
-            'domain': obj.domain,
-            'api_name': self._meta.api_name,
-            'pk': obj.pk
-        })
-
-
-class LocationTypeResource(SQLResourceURIMixin, ModelResource, HqBaseResource):
+class LocationTypeResource(ModelResource, HqBaseResource):
     parent = fields.ForeignKey('self', 'parent_type', null=True)
 
     class Meta:
@@ -48,6 +31,20 @@ class LocationTypeResource(SQLResourceURIMixin, ModelResource, HqBaseResource):
             "domain": ('exact',),
         }
 
+    def get_resource_uri(self, bundle_or_obj=None):
+        if isinstance(bundle_or_obj, Bundle):
+            obj = bundle_or_obj.obj
+        elif bundle_or_obj is None:
+            return None
+        else:
+            obj = bundle_or_obj
+
+        return absolute_reverse('api_dispatch_detail', kwargs={
+            'resource_name': self._meta.resource_name,
+            'domain': obj.domain,
+            'api_name': self._meta.api_name,
+            'pk': obj.pk
+        })
 
 class LocationResource(ModelResource, HqBaseResource):
     location_data = fields.DictField('metadata')

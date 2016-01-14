@@ -19,3 +19,4 @@ from .handlers.undo import *
 from .test_notifications import *
 from .ews_test_reminders import *
 from .handlers.stop import *
+from .test_calculate_last_period import *

@@ -10,7 +10,7 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
 )
 from corehq.apps.app_manager.dbaccessors import get_all_apps
-from corehq.apps.app_manager.models import Application
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
@@ -78,7 +78,6 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         privileges.INBOUND_SMS,
         privileges.ROLE_BASED_ACCESS,
         privileges.DATA_CLEANUP,
-        LATER_SUBSCRIPTION_NOTIFICATION,
         privileges.COMMCARE_LOGO_UPLOADER,
     ]
     action_type = "downgrade"
@@ -161,32 +160,6 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         #         cc_user.save()
         UserRole.archive_custom_roles_for_domain(self.domain.name)
         UserRole.reset_initial_roles_for_domain(self.domain.name)
-        return True
-
-    @property
-    def response_later_subscription(self):
-        """
-        Makes sure that subscriptions beginning in the future are ended.
-        """
-        from corehq.apps.accounting.models import (
-            Subscription, SubscriptionAdjustment, SubscriptionAdjustmentReason
-        )
-        try:
-            for later_subscription in Subscription.objects.filter(
-                subscriber__domain=self.domain.name,
-                date_start__gt=self.date_start
-            ).order_by('date_start').all():
-                later_subscription.date_start = datetime.date.today()
-                later_subscription.date_end = datetime.date.today()
-                later_subscription.save()
-                SubscriptionAdjustment.record_adjustment(
-                    later_subscription,
-                    reason=SubscriptionAdjustmentReason.CANCEL,
-                    web_user=self.web_user,
-                    note="Cancelled due to changing subscription",
-                )
-        except Subscription.DoesNotExist:
-            pass
         return True
 
     @property
@@ -303,20 +276,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         CloudCare enabled apps will have cloudcare_enabled set to false on downgrade.
         """
-        key = [self.domain.name]
-        db = Application.get_db()
-        domain_apps = db.view(
-            'app_manager/applications_brief',
-            reduce=False,
-            startkey=key,
-            endkey=key + [{}],
-        ).all()
-
-        cloudcare_enabled_apps = []
-        for app_doc in iter_docs(db, [a['id'] for a in domain_apps]):
-            if app_doc.get('cloudcare_enabled', False):
-                cloudcare_enabled_apps.append((app_doc['_id'], app_doc['name']))
-
+        cloudcare_enabled_apps = get_cloudcare_apps(self.domain.name)
         if not cloudcare_enabled_apps:
             return None
 
@@ -332,9 +292,9 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 'num_apps': num_apps,
             },
             [mark_safe('<a href="%(url)s">%(title)s</a>') % {
-                'title': a[1],
-                'url': reverse('view_app', args=[self.domain.name, a[0]])
-            } for a in cloudcare_enabled_apps],
+                'title': app.name,
+                'url': reverse('view_app', args=[self.domain.name, app.get_id])
+            } for app in cloudcare_enabled_apps],
         )
 
     @property
