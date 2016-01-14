@@ -231,7 +231,6 @@
             var form = $('#new-module-form');
             if (!form.data('clicked')) {
                 form.data('clicked', 'true');
-                // TODO: does icon-spin still work?
                 $('.new-module-icon').removeClass().addClass("fa fa-refresh icon-spin");
                 form.submit();
             }
