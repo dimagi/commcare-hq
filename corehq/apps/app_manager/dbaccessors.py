@@ -103,30 +103,31 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     return app
 
 
-def get_apps_in_domain(domain, full=False, include_remote=True):
-    """
-    Returns all apps(not builds) in a domain
-
-    full use applications when true, otherwise applications_brief
-    """
-    if full:
-        view_name = 'app_manager/applications'
-        startkey = [domain, None]
-        endkey = [domain, None, {}]
-    else:
-        view_name = 'app_manager/applications_brief'
-        startkey = [domain]
-        endkey = [domain, {}]
-
+def get_apps_in_domain(domain, include_remote=True):
     from .models import Application
-    view_results = Application.get_db().view(view_name,
-        startkey=startkey,
-        endkey=endkey,
-        include_docs=True)
+    docs = [row['doc'] for row in Application.get_db().view(
+        'app_manager/applications',
+        startkey=[domain, None],
+        endkey=[domain, None, {}],
+        include_docs=True
+    )]
+    apps = [get_correct_app_class(doc).wrap(doc) for doc in docs]
+    if not include_remote:
+        apps = [app for app in apps if not app.is_remote_app()]
+    return apps
 
-    remote_app_filter = None if include_remote else lambda app: not app.is_remote_app()
-    wrapped_apps = [get_correct_app_class(row['doc']).wrap(row['doc']) for row in view_results]
-    return filter(remote_app_filter, wrapped_apps)
+
+def get_brief_apps_in_domain(domain, include_remote=True):
+    from .models import Application
+    docs = [row['value'] for row in Application.get_db().view(
+        'app_manager/applications_brief',
+        startkey=[domain],
+        endkey=[domain, {}]
+    )]
+    apps = [get_correct_app_class(doc).wrap(doc) for doc in docs]
+    if not include_remote:
+        apps = [app for app in apps if not app.is_remote_app()]
+    return apps
 
 
 def get_built_app_ids(domain):

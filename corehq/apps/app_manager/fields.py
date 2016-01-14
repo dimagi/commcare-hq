@@ -125,7 +125,7 @@ class ApplicationDataSourceUIHelper(object):
 
 
 def get_app_sources(domain):
-    apps = get_apps_in_domain(domain, full=True, include_remote=False)
+    apps = get_apps_in_domain(domain, include_remote=False)
     return {
         app._id: {
             "name": app.name,
