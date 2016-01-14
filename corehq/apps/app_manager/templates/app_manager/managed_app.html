@@ -35,13 +35,6 @@
     {{ block.super }}
     <script>
         $(function () {
-            $('.hq-help-template').each(function () {
-                COMMCAREHQ.makeHqHelp($(this).data(), false).insertAfter(this);
-                $(this).remove();
-            });
-            $('.hq-help').hqHelp();
-        });
-        $(function () {
             COMMCAREHQ.app_manager.init({
                 appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
                 commcareVersion: {{ app.commcare_minor_release|JSON }},
