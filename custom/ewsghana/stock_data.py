@@ -1,5 +1,3 @@
-from corehq.apps.commtrack.dbaccessors import \
-    get_supply_point_case_by_location_id
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.hqcase.dbaccessors import \
     get_supply_point_case_in_domain_by_id
@@ -52,8 +50,7 @@ class EWSStockDataSynchronization(StockDataSynchronization):
         ]
 
     def get_last_processed_location(self, checkpoint):
-        supply_point = get_supply_point_case_by_location_id(
-            self.domain, checkpoint.location.location_id)
+        supply_point = checkpoint.location.linked_supply_point()
         external_id = supply_point.external_id if supply_point else None
         return external_id
 
