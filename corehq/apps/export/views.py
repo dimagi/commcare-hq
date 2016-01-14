@@ -50,6 +50,8 @@ from corehq.apps.style.forms.widgets import DateRangePickerWidget
 from corehq.apps.style.utils import format_angular_error, format_angular_success
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
+from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
+    DEID_EXPORT_PERMISSION
 from corehq.couchapps.dbaccessors import \
     get_attachment_size_by_domain_app_id_xmlns
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -72,7 +74,7 @@ def user_can_view_deid_exports(domain, couch_user):
             and couch_user.has_permission(
                 domain,
                 get_permission_name(Permissions.view_report),
-                data='corehq.apps.reports.standard.export.DeidExportReport'
+                data=DEID_EXPORT_PERMISSION
             ))
 
 
@@ -98,9 +100,9 @@ class ExportsPermissionsMixin(object):
     @property
     def has_view_permissions(self):
         if self.form_or_case == 'form':
-            report_to_check = 'corehq.apps.reports.standard.export.ExcelExportReport'
+            report_to_check = FORM_EXPORT_PERMISSION
         elif self.form_or_case == 'case':
-            report_to_check = 'corehq.apps.reports.standard.export.CaseExportReport'
+            report_to_check = CASE_EXPORT_PERMISSION
         return (self.request.couch_user.can_view_reports()
                 or self.request.couch_user.has_permission(
                     self.domain,

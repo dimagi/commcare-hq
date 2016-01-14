@@ -2,6 +2,8 @@ from copy import copy
 from datetime import datetime, timedelta, date
 import itertools
 import json
+from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
+    DEID_EXPORT_PERMISSION
 import langcodes
 import os
 import pytz
@@ -160,8 +162,10 @@ datespan_default = datespan_in_request(
     default_days=7,
 )
 
-require_form_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.export.ExcelExportReport', login_decorator=None)
-require_case_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.export.CaseExportReport', login_decorator=None)
+require_form_export_permission = require_permission(
+    Permissions.view_report, FORM_EXPORT_PERMISSION, login_decorator=None)
+require_case_export_permission = require_permission(
+    Permissions.view_report, CASE_EXPORT_PERMISSION, login_decorator=None)
 
 require_form_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.inspect.SubmitHistory', login_decorator=None)
 require_case_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.cases.basic.CaseListReport', login_decorator=None)
@@ -355,7 +359,7 @@ def export_default_or_custom_data(request, domain, export_id=None, bulk_export=F
         return _export_no_deid(request, domain, export_id, bulk_export=bulk_export)
 
 
-@require_permission('view_report', 'corehq.apps.reports.standard.export.DeidExportReport', login_decorator=None)
+@require_permission('view_report', DEID_EXPORT_PERMISSION, login_decorator=None)
 def _export_deid(request, domain, export_id=None, bulk_export=False):
     return _export_default_or_custom_data(request, domain, export_id, bulk_export=bulk_export, safe_only=True)
 
