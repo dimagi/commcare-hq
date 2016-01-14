@@ -24,9 +24,18 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         for app in cls.apps:
             app.save()
 
+        cls.decoy_apps = [
+            # this one is a build
+            Application(domain=cls.domain, copy_of=cls.apps[0].get_id),
+            # this one is in the wrong domain
+            Application(domain='decoy-domain')
+        ]
+        for app in cls.decoy_apps:
+            app.save()
+
     @classmethod
     def tearDownClass(cls):
-        for app in cls.apps:
+        for app in cls.apps + cls.decoy_apps:
             app.delete()
         # to circumvent domain.delete()'s recursive deletion that this test doesn't need
         Domain.get_db().delete_doc(cls.project)
