@@ -110,7 +110,7 @@ class SoftwareProductRateResource(ModelResource):
 
 class SoftwarePlanVersionResource(ModelResource):
     plan = fields.IntegerField('plan_id', null=True)
-    product_rates = AccToManyField(FutureRateResource, 'product_rates', full=True, null=True)
+    product_rates = ToManyField(FutureRateResource, 'product_rate', full=True, null=True, readonly=True)
     feature_rates = AccToManyField(FutureRateResource, 'feature_rates', full=True, null=True)
     role = fields.IntegerField('role_id', null=True)
 
@@ -118,6 +118,9 @@ class SoftwarePlanVersionResource(ModelResource):
         queryset = SoftwarePlanVersion.objects.all().order_by('pk')
         fields = ['id', 'date_created', 'is_active', 'last_modified']
         resource_name = 'software_plan_versions'
+
+    def dehydrate_product_rates(self, bundle):
+        return [bundle.obj.product_rate.id]
 
 
 class SubscriberResource(ModelResource):
