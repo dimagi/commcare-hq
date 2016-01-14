@@ -90,11 +90,11 @@
             windowManager: {
                 bottomOffset: $('footer').outerHeight(),
                 leftOffset: function () {
-                    return $('.sidebar').outerWidth() + 2;
+                    return $('#hq-sidebar').outerWidth() + 2;
                 },
                 topOffset: function () {
-                    return $('header').outerHeight() + 
-                        $('.hq-page-header-container').outerHeight();
+                    return $('#hq-navigation').outerHeight() + 
+                        $('.breadcrumb-hq-section').outerHeight();
                 }
             },
             csrftoken: $.cookie('csrftoken'),
@@ -257,6 +257,8 @@
 {% endblock %}
 
 {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
+
+{% block pre_page_content %}{% endblock %}
 
 {% block form-view %}
     <div id="formdesigner" class="clearfix"></div>
