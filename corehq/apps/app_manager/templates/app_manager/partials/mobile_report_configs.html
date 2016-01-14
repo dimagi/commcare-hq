@@ -6,6 +6,8 @@
     <li><a href="#reports" data-toggle="tab">{% trans "Reports" %}</a></li>
 </ul>
 
+<div class="spacer"></div>
+
 <div class="save-button-holder clearfix">
     <div data-bind="saveButton: saveButton" id="save-button"></div>
 </div>
@@ -15,9 +17,9 @@
         <div class="form-horizontal">
             <fieldset>
                 <div class="form-group" id="module-name">
-                    <label class="control-label">{% trans "Module Name" %}</label>
-                    <div class="controls">
-                        <input type="text" data-bind="value: currentModuleName">
+                    <label class="control-label col-lg-2">{% trans "Module Name" %}</label>
+                    <div class="col-lg-4">
+                        <input type="text" class="form-control" data-bind="value: currentModuleName">
                     </div>
                 </div>
                 {% include "app_manager/partials/module_filter.html" with ko_value="currentModuleFilter" %}
