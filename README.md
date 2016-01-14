@@ -171,12 +171,11 @@ There is also a separate collection of Dimagi dev oriented tools that you can in
 
     $ pip install -r requirements/dev-requirements.txt
 
-Then, edit localsettings.py and ensure that your Postgres, CouchDB, email, and
-log file settings are correct, as well as any settings required by any other
-functionality you want to use, such as SMS sending and Google Analytics.
-
-Ensure that the directories for `LOG_FILE` and `DJANGO_LOG_FILE` exist and are
-writeable.
+Enter localsettings.py and do the following:
+    - Find the `LOG_FILE` and `DJANGO_LOG_FILE` entries. Ensure that the directories for both exist 
+and are writeable. If they do not exist, create them.
+    - You may also want to add the line `from dev_settings import *` at the top of the file, which 
+      includes some useful default settings.
 
 ### Alternate steps for Windows
 On Windows it can be hard to compile some of the packages so we recommend installing those from their binary
