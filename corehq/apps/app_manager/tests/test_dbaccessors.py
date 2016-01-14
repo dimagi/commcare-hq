@@ -66,6 +66,20 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         self.assert_docs_equal(remote_app, expected_remote_app)
         self.assert_docs_equal(normal_app, expected_normal_app)
 
+    def test_get_brief_apps_exclude_remote(self):
+        apps = get_brief_apps_in_domain(self.domain, include_remote=False)
+        self.assertEqual(len(apps), 1)
+        normal_app, = apps
+        expected_normal_app, _ = sorted(self.apps, key=lambda app: app.is_remote_app())
+        self.assert_docs_equal(normal_app, self._make_app_brief(expected_normal_app))
+
+    def test_get_apps_in_domain_exclude_remote(self):
+        apps = get_apps_in_domain(self.domain, include_remote=False)
+        self.assertEqual(len(apps), 1)
+        normal_app, = apps
+        expected_normal_app, _ = sorted(self.apps, key=lambda app: app.is_remote_app())
+        self.assert_docs_equal(normal_app, expected_normal_app)
+
     def test_domain_has_apps(self):
         self.assertEqual(domain_has_apps(self.domain), True)
         self.assertEqual(domain_has_apps('somecrazydomainthathasnoapps'), False)
