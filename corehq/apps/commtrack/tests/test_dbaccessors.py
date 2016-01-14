@@ -2,7 +2,6 @@ from django.test import TestCase
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.dbaccessors import \
     get_supply_point_ids_in_domain_by_location, \
-    get_supply_points_json_in_domain_by_location, \
     get_supply_point_case_by_location_id, get_supply_point_case_by_location
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.locations.models import Location
@@ -43,13 +42,6 @@ class SupplyPointDBAccessorsTest(TestCase):
             get_supply_point_ids_in_domain_by_location(self.domain),
             {location.location_id: supply_point.case_id
              for location, supply_point in self.location_supply_point_pairs}
-        )
-
-    def test_get_supply_points_json_in_domain_by_location(self):
-        self.assertItemsEqual(
-            get_supply_points_json_in_domain_by_location(self.domain),
-            [(location.location_id, supply_point.to_json())
-             for location, supply_point in self.location_supply_point_pairs]
         )
 
     def test_get_supply_point_case_by_location_id(self):
