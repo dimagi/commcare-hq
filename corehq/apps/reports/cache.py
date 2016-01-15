@@ -13,6 +13,7 @@ class _ReportQuickCache(QuickCache):
     """
     def __call__(self, *args, **kwargs):
         report = args[0]
+        self.prefix = '{}{}'.format(self.prefix, '/b3' if report.is_bootstrap3 else '')
         if report.is_cacheable and _is_valid(report) and settings.CACHE_REPORTS:
             return super(_ReportQuickCache, self).__call__(*args, **kwargs)
         else:
