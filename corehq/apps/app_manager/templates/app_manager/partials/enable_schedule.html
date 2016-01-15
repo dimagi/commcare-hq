@@ -10,24 +10,24 @@
 
         <form>
             <div class="form-group">
-                <div class="controls">
-                    <label class="checkbox">
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox" name="has_schedule" data-bind="checked: hasSchedule" />
                         {% trans "Enable visit scheduler" %}
                         <span class="hq-help-template"
                               data-title="{% trans 'Visit Schedule' %}"
                               data-content="{% trans 'Be able to configure a visit schedule' %}"></span>
-                        <input type="checkbox" name="has_schedule" data-bind="checked: hasSchedule" />
-                        {% if not module.all_forms_require_a_case %}
-                            <div class="alert alert-danger">
-                                <strong>
-                                    {% blocktrans %}
-                                        Visit schedule will be ignored as not all
-                                        forms in the module update or close a case.
-                                    {% endblocktrans %}
-                                </strong>
-                            </div>
-                        {% endif %}
                     </label>
+                    {% if not module.all_forms_require_a_case %}
+                        <div class="alert alert-danger">
+                            <strong>
+                                {% blocktrans %}
+                                    Visit schedule will be ignored as not all
+                                    forms in the module update or close a case.
+                                {% endblocktrans %}
+                            </strong>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </form>
