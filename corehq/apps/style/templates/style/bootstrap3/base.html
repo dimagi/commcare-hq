@@ -353,14 +353,12 @@
         </script>
         {# JavaScript Display Logic Libaries #}
 
-        {% if request.use_knockout_js %}
         {% compress js %}
         <script type="text/javascript" src="{% new_static 'knockout/dist/knockout.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
         {% endcompress %}
-        {% endif %}
 
         {% if request.use_angular_js %}
         {% compress js %}

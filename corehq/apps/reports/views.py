@@ -137,7 +137,7 @@ from .models import (
 )
 
 from .standard import inspect, export, ProjectReport
-from corehq.apps.style.decorators import use_knockout_js, use_bootstrap3
+from corehq.apps.style.decorators import use_bootstrap3
 from .standard.cases.basic import CaseListReport
 from .tasks import (
     build_form_multimedia_zip,
@@ -1417,7 +1417,6 @@ def download_form(request, domain, instance_id):
 class EditFormInstance(View):
 
     @use_bootstrap3
-    @use_knockout_js
     @method_decorator(require_form_view_permission)
     @method_decorator(require_permission(Permissions.edit_data))
     def dispatch(self, request, *args, **kwargs):

@@ -32,7 +32,6 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.style.decorators import (
     use_bootstrap3,
-    use_knockout_js,
     use_select2,
     use_daterangepicker,
     use_datatables,
@@ -141,7 +140,6 @@ class ReportBuilderView(BaseDomainView):
 
     @cls_to_view_login_and_domain
     @use_bootstrap3
-    @use_knockout_js
     @use_select2
     @use_daterangepicker
     @use_datatables

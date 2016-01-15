@@ -2,7 +2,7 @@ import re
 from django.views.decorators.debug import sensitive_post_parameters
 from corehq.apps.hqwebapp.models import MySettingsTab
 from corehq.apps.settings.forms import HQPasswordChangeForm
-from corehq.apps.style.decorators import use_bootstrap3, use_select2, use_knockout_js
+from corehq.apps.style.decorators import use_bootstrap3, use_select2
 from corehq.apps.users.forms import AddPhoneNumberForm
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages
@@ -258,7 +258,6 @@ class ChangeMyPasswordView(BaseMyAccountView):
 
     @method_decorator(login_required)
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
         return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
