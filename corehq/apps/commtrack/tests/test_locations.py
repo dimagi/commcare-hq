@@ -1,9 +1,7 @@
 from corehq.apps.locations.models import Location, SQLLocation
 from casexml.apps.case.tests.util import check_user_has_case
-from casexml.apps.case.xml import V2
 from casexml.apps.case.mock import CaseBlock
 from mock import patch
-from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc, FIXED_USER
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.toggles import MULTIPLE_LOCATIONS_PER_USER, NAMESPACE_DOMAIN
@@ -76,7 +74,7 @@ class LocationsTest(CommTrackTest):
 
     def test_archive_flips_sp_cases(self):
         loc = make_loc('someloc')
-        sp = make_supply_point(self.domain.name, loc)
+        sp = loc.linked_supply_point()
 
         self.assertFalse(sp.closed)
         loc.archive()
@@ -128,7 +126,7 @@ class MultiLocationsTest(CommTrackTest):
         user = self.user
 
         loc = make_loc('secondloc')
-        sp = make_supply_point(self.domain.name, loc)
+        sp = loc.linked_supply_point()
         user.add_location_delegate(loc)
 
         self.check_supply_point(user, sp.case_id)
@@ -140,7 +138,7 @@ class MultiLocationsTest(CommTrackTest):
 
         # can't test with the original since the user already owns it
         loc = make_loc('secondloc')
-        sp = make_supply_point(self.domain.name, loc)
+        sp = loc.linked_supply_point()
         user.add_location_delegate(loc)
 
         self.check_supply_point(user, sp.case_id)
@@ -155,12 +153,10 @@ class MultiLocationsTest(CommTrackTest):
 
         # can't test with the original since the user already owns it
         loc = make_loc('secondloc')
-        make_supply_point(self.domain.name, loc)
 
         with patch('corehq.apps.users.models.CommCareUser.submit_location_block') as submit_blocks:
             user.remove_location_delegate(loc)
             self.assertEqual(submit_blocks.call_count, 0)
-
 
     def test_can_clear_locations(self):
         user = self.user
@@ -172,10 +168,10 @@ class MultiLocationsTest(CommTrackTest):
         user = self.user
 
         loc1 = make_loc('secondloc')
-        sp1 = make_supply_point(self.domain.name, loc1)
+        sp1 = loc1.linked_supply_point()
 
         loc2 = make_loc('thirdloc')
-        sp2 = make_supply_point(self.domain.name, loc2)
+        sp2 = loc2.linked_supply_point()
 
         user.create_location_delegates([loc1, loc2])
 
@@ -194,7 +190,6 @@ class MultiLocationsTest(CommTrackTest):
         user = self.user
 
         loc1 = make_loc('secondloc')
-        make_supply_point(self.domain.name, loc1)
 
         with patch('corehq.apps.users.models.CommCareUser.submit_location_block') as submit_blocks:
             user.create_location_delegates([loc1])
@@ -202,14 +197,9 @@ class MultiLocationsTest(CommTrackTest):
 
     def test_setting_existing_list_does_not_submit(self):
         user = self.user
-
         user.clear_location_delegates()
-
         loc1 = make_loc('secondloc')
-        make_supply_point(self.domain.name, loc1)
-
         loc2 = make_loc('thirdloc')
-        make_supply_point(self.domain.name, loc2)
 
         user.add_location_delegate(loc1)
         user.add_location_delegate(loc2)

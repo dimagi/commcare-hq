@@ -221,6 +221,11 @@ class SQLLocation(MPTTModel):
     # This should really be the default location manager
     active_objects = OnlyUnarchivedLocationManager()
 
+    def save(self, *args, **kwargs):
+        from corehq.apps.commtrack.models import sync_supply_point
+        self.supply_point_id = sync_supply_point(self)
+        return super(SQLLocation, self).save(*args, **kwargs)
+
     @property
     def get_id(self):
         return self.location_id
@@ -373,6 +378,10 @@ class SQLLocation(MPTTModel):
             return cls.objects.get(location_id=location_id)
         except cls.DoesNotExist:
             return None
+
+    def linked_supply_point(self):
+        from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location_id
+        return get_supply_point_case_by_location_id(self.domain, self.location_id)
 
 
 def _filter_for_archived(locations, include_archive_ancestors):

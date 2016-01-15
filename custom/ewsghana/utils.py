@@ -107,10 +107,6 @@ def make_loc(code, name, domain, type, parent=None):
     loc = Location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
     loc.save()
 
-    if not sql_type.administrative:
-        SupplyInterface.create_from_location(domain, loc)
-        loc.save()
-
     sql_location = loc.sql_location
     sql_location.products = []
     sql_location.save()

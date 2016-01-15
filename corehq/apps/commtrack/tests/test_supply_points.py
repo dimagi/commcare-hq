@@ -1,10 +1,10 @@
 from django.test import TestCase
 
-from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.tests.util import (make_loc, TEST_DOMAIN,
     bootstrap_domain)
 from datetime import datetime
+
 
 class SupplyPointTest(TestCase):
 
@@ -17,7 +17,7 @@ class SupplyPointTest(TestCase):
         self.domain.delete()
 
     def testMakeSupplyPoint(self):
-        sp = make_supply_point(TEST_DOMAIN, self.loc)
+        sp = self.loc.linked_supply_point()
         self.assertEqual("CommCareCase", sp.doc_type)
         self.assertEqual(self.loc.name, sp.name)
         self.assertEqual(TEST_DOMAIN, sp.domain)
@@ -32,7 +32,7 @@ class SupplyPointTest(TestCase):
             self.assertTrue(isinstance(getattr(sp, dateprop), datetime))
 
     def testMakeOwnedSupplyPoint(self):
-        sp = make_supply_point(TEST_DOMAIN, self.loc)
+        sp = self.loc.linked_supply_point()
         sp.owner_id = 'some-other-owner'
         sp.save()
         self.assertEqual(const.get_commtrack_user_id(TEST_DOMAIN), sp.user_id)
