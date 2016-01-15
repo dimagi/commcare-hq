@@ -1,7 +1,7 @@
 {
     "AllHmisCaseFluffPillow": {
         "advertised_name": "fluff.AllHmisCaseFluffPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.AllHmisCaseFluffPillow.testhq",
         "couch_filter": null,
         "couchdb_type": "CachedCouchDB",
@@ -17,7 +17,7 @@
     },
     "AncHmisCaseFluffPillow": {
         "advertised_name": "fluff.AncHmisCaseFluffPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.AncHmisCaseFluffPillow.testhq",
         "couch_filter": null,
         "couchdb_type": "CachedCouchDB",
@@ -129,7 +129,7 @@
     },
     "CouvertureFluffPillow": {
         "advertised_name": "fluff.CouvertureFluffPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.CouvertureFluffPillow.testhq",
         "couch_filter": null,
         "couchdb_type": "CachedCouchDB",
@@ -250,7 +250,7 @@
     },
     "ImmunizationHmisCaseFluffPillow": {
         "advertised_name": "fluff.ImmunizationHmisCaseFluffPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.ImmunizationHmisCaseFluffPillow.testhq",
         "couch_filter": null,
         "couchdb_type": "CachedCouchDB",
@@ -266,7 +266,7 @@
     },
     "IntraHealthFluffPillow": {
         "advertised_name": "fluff.IntraHealthFluffPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.IntraHealthFluffPillow.testhq",
         "couch_filter": null,
         "couchdb_type": "CachedCouchDB",
@@ -289,7 +289,7 @@
     },
     "LdHmisCaseFluffPillow": {
         "advertised_name": "fluff.LdHmisCaseFluffPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.LdHmisCaseFluffPillow.testhq",
         "couch_filter": null,
         "couchdb_type": "CachedCouchDB",
@@ -305,7 +305,7 @@
     },
     "LivraisonFluffPillow": {
         "advertised_name": "fluff.LivraisonFluffPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.LivraisonFluffPillow.testhq",
         "couch_filter": null,
         "couchdb_type": "CachedCouchDB",
@@ -382,7 +382,7 @@
     },
     "McctMonthlyAggregateFormFluffPillow": {
         "advertised_name": "fluff.McctMonthlyAggregateFormFluffPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.McctMonthlyAggregateFormFluffPillow.testhq",
         "couch_filter": null,
         "couchdb_type": "CachedCouchDB",
@@ -414,7 +414,7 @@
     },
     "ProjectIndicatorsCaseFluffPillow": {
         "advertised_name": "fluff.ProjectIndicatorsCaseFluffPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.ProjectIndicatorsCaseFluffPillow.testhq",
         "couch_filter": null,
         "couchdb_type": "CachedCouchDB",
@@ -430,7 +430,7 @@
     },
     "RecapPassageFluffPillow": {
         "advertised_name": "fluff.RecapPassageFluffPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.RecapPassageFluffPillow.testhq",
         "couch_filter": null,
         "couchdb_type": "CachedCouchDB",
@@ -446,7 +446,7 @@
     },
     "RecouvrementFluffPillow": {
         "advertised_name": "fluff.RecouvrementFluffPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.RecouvrementFluffPillow.testhq",
         "couch_filter": null,
         "couchdb_type": "CachedCouchDB",
@@ -526,7 +526,7 @@
     },
     "TauxDeRuptureFluffPillow": {
         "advertised_name": "fluff.TauxDeRuptureFluffPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.TauxDeRuptureFluffPillow.testhq",
         "couch_filter": null,
         "couchdb_type": "CachedCouchDB",
@@ -542,7 +542,7 @@
     },
     "TauxDeSatisfactionFluffPillow": {
         "advertised_name": "fluff.TauxDeSatisfactionFluffPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
+        "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "fluff.TauxDeSatisfactionFluffPillow.testhq",
         "couch_filter": null,
         "couchdb_type": "CachedCouchDB",
