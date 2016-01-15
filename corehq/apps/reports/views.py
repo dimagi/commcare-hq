@@ -297,10 +297,7 @@ def export_data(req, domain):
         return resp
     else:
         messages.error(req, "Sorry, there was no data found for the tag '%s'." % export_tag)
-        next = req.GET.get("next", "")
-        if not next:
-            next = export.ExcelExportReport.get_url(domain=domain)
-        return HttpResponseRedirect(next)
+        raise Http404()
 
 
 @require_form_export_permission
@@ -372,7 +369,6 @@ def _export_no_deid(request, domain, export_id=None, bulk_export=False):
 def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=False, safe_only=False):
     req = request.POST if request.method == 'POST' else request.GET
     async = req.get('async') == 'true'
-    next = req.get("next", "")
     format = req.get("format", "")
     export_type = req.get("type", "form")
     previous_export_id = req.get("previous_export", None)
@@ -431,7 +427,6 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
 
         export_object = export_class(index=export_tag)
 
-
     if export_type == 'form':
         _filter = filter
         filter = SerializableFunction(default_form_filter, filter=_filter)
@@ -449,8 +444,6 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             max_column_size=max_column_size,
         )
     else:
-        if not next:
-            next = export.ExcelExportReport.get_url(domain=domain)
         try:
             resp = export_object.download_data(format, filter=filter, limit=limit)
         except SchemaMismatchException, e:
@@ -460,12 +453,12 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
                 "Sorry, the export failed for %s, please try again later" \
                     % export_object.name
             )
-            return HttpResponseRedirect(next)
+            raise Http404()
         if resp:
             return resp
         else:
             messages.error(request, "Sorry, there was no data found for the tag '%s'." % export_object.name)
-            return HttpResponseRedirect(next)
+            raise Http404()
 
 
 @csrf_exempt

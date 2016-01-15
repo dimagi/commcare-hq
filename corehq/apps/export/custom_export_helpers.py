@@ -47,7 +47,6 @@ class ColumnTypesOptions(object):
 class CustomExportHelper(object):
 
     ExportSchemaClass = AbstractProperty()
-    ExportReport = AbstractProperty()
     export_title = AbstractProperty()
 
     allow_deid = False
@@ -176,9 +175,6 @@ class CustomExportHelper(object):
             'commtrack_domain': Domain.get_by_name(self.domain).commtrack_enabled,
             'minimal': self.minimal,
             'helper': {
-                'back_url': self.ExportReport.get_url(domain=self.domain),
-                'export_title': self.export_title,
-                'slug': self.ExportReport.slug,
                 'allow_deid': self.allow_deid,
                 'allow_repeats': self.allow_repeats
             }
@@ -188,7 +184,6 @@ class CustomExportHelper(object):
 class FormCustomExportHelper(CustomExportHelper):
 
     ExportSchemaClass = FormExportSchema
-    ExportReport = export.ExcelExportReport
 
     allow_repeats = True
 
@@ -405,7 +400,6 @@ class CustomColumn(object):
 class CaseCustomExportHelper(CustomExportHelper):
 
     ExportSchemaClass = CaseExportSchema
-    ExportReport = export.CaseExportReport
 
     export_type = 'case'
 
