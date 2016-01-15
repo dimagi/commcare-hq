@@ -146,13 +146,15 @@ def domains_for_user(context, request, selected_domain=None):
         'is_public': selected_domain == 'public',
         'domain_list': domain_list,
         'current_domain': selected_domain,
-        'DOMAIN_TYPE': context['DOMAIN_TYPE']
+        'DOMAIN_TYPE': context['DOMAIN_TYPE'],
+        'can_publish_to_exchange': (
+            selected_domain is not None and selected_domain != 'public'
+            and request.couch_user and request.couch_user.can_edit_apps() and
+                (request.couch_user.is_member_of(selected_domain)
+                 or request.couch_user.is_superuser)
+        ),
     }
-    template = {
-        style_utils.BOOTSTRAP_2: 'style/bootstrap2/partials/domain_list_dropdown.html',
-        style_utils.BOOTSTRAP_3: 'style/bootstrap3/partials/domain_list_dropdown.html',
-    }[style_utils.get_bootstrap_version()]
-    return mark_safe(render_to_string(template, ctxt))
+    return mark_safe(render_to_string('style/includes/domain_list_dropdown.html', ctxt))
 
 
 @register.simple_tag
