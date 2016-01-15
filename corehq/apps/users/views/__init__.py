@@ -53,7 +53,7 @@ from corehq.apps.sms.verify import (
 from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_knockout_js,
-)
+    use_angular_js)
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
 from corehq.apps.users.forms import (BaseUserInfoForm, CommtrackUserForm, DomainRequestForm,
@@ -390,6 +390,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
 
     @use_bootstrap3
     @use_knockout_js
+    @use_angular_js
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
         return super(ListWebUsersView, self).dispatch(request, *args, **kwargs)

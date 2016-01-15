@@ -37,7 +37,7 @@ from corehq.apps.style.decorators import (
     use_daterangepicker,
     use_datatables,
     use_jquery_ui,
-)
+    use_angular_js)
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
@@ -164,6 +164,10 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
     template_name = "userreports/builder_report_type_select.html"
     urlname = 'report_builder_select_type'
     page_title = ugettext_lazy('Select Report Type')
+
+    @use_angular_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(ReportBuilderTypeSelect, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):

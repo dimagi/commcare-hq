@@ -32,7 +32,8 @@ from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemException
 from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, EditDataInterfaceDispatcher,
                                                     require_can_edit_data)
-from corehq.apps.style.decorators import use_bootstrap3, use_typeahead
+from corehq.apps.style.decorators import use_bootstrap3, use_typeahead, \
+    use_angular_js
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
 from .interfaces import FormManagementMode, BulkFormManagementInterface, CaseReassignmentInterface
@@ -566,6 +567,7 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
         return get_timezone_for_user(None, self.domain)
 
     @use_bootstrap3
+    @use_angular_js
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
     def dispatch(self, *args, **kwargs):
         return super(AutomaticUpdateRuleListView, self).dispatch(*args, **kwargs)
@@ -716,6 +718,7 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
         }
 
     @use_bootstrap3
+    @use_angular_js
     @use_typeahead
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
     def dispatch(self, *args, **kwargs):

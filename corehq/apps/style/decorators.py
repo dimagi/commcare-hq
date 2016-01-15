@@ -77,6 +77,24 @@ def use_knockout_js(view_func):
     return _wrapped
 
 
+def use_angular_js(view_func):
+    """Use this decorator on the dispatch method of a TemplateView subclass
+    to enable the inclusion of the angularjs library at the base template
+    level.
+
+    Example:
+
+    @use_angular_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(MyView, self).dispatch(request, *args, **kwargs)
+    """
+    @wraps(view_func)
+    def _wrapped(class_based_view, request, *args, **kwargs):
+        request.use_angular_js = True
+        return view_func(class_based_view, request, *args, **kwargs)
+    return _wrapped
+
+
 def upgrade_knockout_js(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
     to enable the inclusion of the knockout_js 3.1 library at the base template
