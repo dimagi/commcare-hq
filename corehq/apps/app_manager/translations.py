@@ -574,26 +574,39 @@ def update_form_translations(sheet, rows, missing_cols, app):
                             break
 
                 if trans_type == 'default':
-                    if new_translation:
-                        value_node = next(
-                            n for n in text_node.findall("./{f}value")
-                            if 'form' not in n.attrib
-                        )
-                        old_translation = etree.tostring(value_node.xml, method="text", encoding="unicode").strip()
-                        markdown_node = text_node.find("./{f}value[@form='markdown']")
-                        has_markdown = _looks_like_markdown(new_translation)
-                        had_markdown = markdown_node.exists()
-                        vetoed_markdown = not had_markdown and _looks_like_markdown(old_translation)
+                    # plaintext/Markdown
+                    value_node = next(n for n in text_node.findall("./{f}value") if 'form' not in n.attrib)
+                    old_translation = etree.tostring(value_node.xml, method="text", encoding="unicode").strip()
+                    markdown_node = text_node.find("./{f}value[@form='markdown']")
+                    has_markdown = _looks_like_markdown(new_translation)
+                    had_markdown = markdown_node.exists()
+                    vetoed_markdown = not had_markdown and _looks_like_markdown(old_translation)
+                    # ^^^ Could be unreliable if it looked like Markdown
+                    # before and wasn't, but it is now. We'll have a false
+                    # negative, and we'll veto when we shouldn't.
 
-                        if not((not has_markdown and not had_markdown)    # not dealing with markdown at all
-                               or (has_markdown and vetoed_markdown)):    # looks like markdown, but markdown is off
-                            _update_translation_node(new_translation if has_markdown and not vetoed_markdown else '',
-                                                     markdown_node,
-                                                     {'form': 'markdown'})
-                    _update_translation_node(new_translation,
-                                             text_node.find("./{f}value"),
-                                             {'form': trans_type}, delete_node=(not keep_value_node))
+                    if has_markdown and not vetoed_markdown or had_markdown:
+                        # If it looks like Markdown, add it ... unless it
+                        # looked like Markdown before but it wasn't. If we
+                        # have a Markdown node, always keep it ... even if we
+                        # think it's plaintext now, we could be wrong: FB 183536
+                        _update_translation_node(
+                            new_translation,
+                            markdown_node,
+                            {'form': 'markdown'},
+                            # If all translations have been deleted, allow the
+                            # Markdown node to be deleted just as we delete
+                            # the plaintext node
+                            delete_node=(not keep_value_node)
+                        )
+                    _update_translation_node(
+                        new_translation,
+                        value_node,
+                        {'form': 'default'},
+                        delete_node=(not keep_value_node)
+                    )
                 else:
+                    # audio/video/image
                     _update_translation_node(new_translation,
                                              text_node.find("./{f}value[@form='%s']" % trans_type),
                                              {'form': trans_type})
