@@ -3,7 +3,7 @@
 {% load i18n %}
 {% if app.application_version == '2.0' %}
     <div class="form-group">
-        <label class="control-label">
+        <label class="col-lg-2 control-label">
             {% trans "Registration Form Accessible from Case List" %}
             <span class="hq-help-template"
                   data-title="{% trans "Registration Form Accessible from Case List" %}"
@@ -12,9 +12,9 @@
                   can enter the registration form to create a new case.{% endblocktrans %}"
             ></span>
         </label>
-        <div id="case-list-form" class="controls error">
+        <div id="case-list-form" class="col-lg-4 error">
             <div data-bind="visible: caseListForm() || allowed, css: { 'alert alert-danger': formMissing() || !allowed}">
-                <select data-bind="
+                <select class="form-control" data-bind="
                     optstr: caseListFormOptstr,
                     value: caseListFormProxy
                     "></select>

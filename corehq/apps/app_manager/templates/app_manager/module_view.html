@@ -301,14 +301,14 @@
                                 ></span>
                     </label>
                     <div class="col-lg-4">
-                        <input class="code" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" class="form-control" />
+                        <input class="code form-control" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
                         <span class="help-inline" id="case_type_error" style="display: none;">
                             {% trans "Case types can only include the characters a-z, 0-9, '-' and '_'" %}
                         </span>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="control-label col-lg-4">
+                    <label class="control-label col-lg-2">
                         {% trans "Label for Cases" %}
                         <span class="hq-help-template"
                               data-title="{% trans "Label for Cases" %}"
