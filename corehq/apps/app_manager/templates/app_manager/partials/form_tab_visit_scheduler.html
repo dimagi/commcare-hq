@@ -110,8 +110,8 @@
                 <fieldset>
                     <legend>{% trans "Transitions" %}</legend>
                     <div class="form-group">
-                        <div class="controls">
-                            <label class="checkbox">
+                        <div class="checkbox">
+                            <label>
                                 <input type="checkbox" data-bind="checked: transition">
                                 {% trans "Transition to the next phase" %}
                             </label>
@@ -122,8 +122,8 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <div class="controls">
-                            <label class="checkbox">
+                        <div class="checkbox">
+                            <label>
                                 <input type="checkbox"  data-bind="checked: terminate">
                                 {% trans "Terminate the schedule" %}
                             </label>
@@ -138,10 +138,12 @@
                 <fieldset>
                     <legend>{% trans "Visit Schedule" %}</legend>
                     <div class="form-group">
-                        <label class="checkbox">
-                            <input type="checkbox"  data-bind="checked: allow_unscheduled">
-                            {% trans "Allow unscheduled visits" %}
-                        </label>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox"  data-bind="checked: allow_unscheduled">
+                                {% trans "Allow unscheduled visits" %}
+                            </label>
+                        </div>
                     </div>
                     <div data-bind="foreach: {data: visits, afterRender: $parent.applyGlobalEventHandlers}">
                         <fieldset class="nested-fieldset">
@@ -154,14 +156,14 @@
                                 <span data-bind="text: $index() + 1, visible: type() !== 'repeats'""/>
                             </legend>
                             <div class="form-group">
-                                <div class="controls">
+                                <div class="form-inline">
                                     {% trans "Due" %}
-                                    <input type="number" required class="input-mini" data-bind="numericValue: due"/>
-                                    <span class="help-inline error-text" style="display:none">
+                                    <input type="number" required class="form-control" data-bind="numericValue: due"/>
+                                    <span class="help-block error-text" style="display:none">
                                         {% trans 'This field is required'%}
                                     </span>
                                     {% trans "days" %}
-                                    <select data-bind="value: type">
+                                    <select data-bind="value: type" class="form-control">
                                         <option value="before">{% trans "before the anchor date" %}</option>
                                         <option value="after">{% trans "after the anchor date" %}</option>
                                         <option value="repeats"
@@ -172,21 +174,21 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <div class="controls">
+                                <div class="form-inline">
                                     {% trans "Visit can be made up to" %}
-                                    <input type="number" required class="input-mini"
+                                    <input type="number" required class="form-control"
                                            data-bind="numericValue: starts"/>
-                                    <span class="help-inline error-text" style="display:none">
+                                    <span class="help-block error-text" style="display:none">
                                         {% trans 'This field is required'%}
                                     </span>
                                     {% trans "days early and" %}
-                                    <input type="number" class="input-mini" data-bind="numericValue: expires"/>
+                                    <input type="number" class="form-control" data-bind="numericValue: expires"/>
                                     {% trans "days late" %}
                                 </div>
                             </div>
                         </fieldset>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group container-fluid">
                         <button id="add-visit" class="btn btn-default"
                                 data-bind="click: addVisit,
                                            disable: hasRepeatVisit()">
