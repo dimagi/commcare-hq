@@ -285,14 +285,17 @@ def fixture_session_var(module):
 
 
 def menu_id(module, suffix=""):
+    menu_id_ = u'm{}.{}'.format(module.id, suffix) if suffix else u'm{}'.format(module.id)
     put_in_root = getattr(module, 'put_in_root', False)
     if put_in_root:
         # handle circular calls, if bad module workflow setup
-        return menu_id(module.root_module) if getattr(module, 'root_module', False) else ROOT
-    else:
-        if suffix:
-            suffix = ".{}".format(suffix)
-        return u"m{module.id}{suffix}".format(module=module, suffix=suffix)
+        root_id = menu_id(module.root_module) if getattr(module, 'root_module', False) else ROOT
+        # Suffix root module ID with module ID to avoid duplicates when more
+        # than one module has the same root module. (FB 188908)
+        # Don't nest if module.root_module is not set; workflow,
+        # navigation and grid style look for ROOT.
+        menu_id_ = root_id if root_id == ROOT else u'{}-{}'.format(menu_id(module.root_module), menu_id_)
+    return menu_id_
 
 
 def form_command(form, module=None):
