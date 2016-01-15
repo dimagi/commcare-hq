@@ -295,7 +295,9 @@ class GenericReportView(object):
                 klass = to_function(field, failhard=True)
             else:
                 klass = field
-            filters.append(klass(self.request, self.domain, self.timezone))
+            filters.append(
+                klass(self.request, self.domain, self.timezone, is_bootstrap3=self.is_bootstrap3)
+            )
         return filters
 
     @property
