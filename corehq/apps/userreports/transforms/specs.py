@@ -53,7 +53,7 @@ class DateFormatTransform(Transform):
         def transform_function(value):
             try:
                 return value.strftime(self.format)
-            except:
+            except Exception:
                 return value
 
         return transform_function
