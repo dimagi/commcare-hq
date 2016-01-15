@@ -34,7 +34,7 @@
                 </div>
                 <div data-bind="html: messages.notAllowed"></div>
             </div>
-            <div class="alert alert-info" data-bind="visible: !value()">
+            <div class="help-block" data-bind="visible: !value()">
                 <div data-bind="html: messages.notAllowed"></div>
                 <a href="#" class="btn btn-default" data-bind="exitInput: $data">
                     {% trans "OK, close this" %}

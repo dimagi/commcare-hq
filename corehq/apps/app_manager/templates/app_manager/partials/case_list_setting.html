@@ -19,14 +19,14 @@
 </div>
 <div class="form-group" id="{{ SLUG }}-label">
     <label class="col-lg-2 control-label">
-        Label for Menu Item
+        Label for Case List Menu Item
     </label>
     <div class="col-lg-4">
         {% input_trans case_list.label langs cssClass='form-control' %}
     </div>
     <div class="col-lg-2">
         <span class="label label-danger" id="case_list_label_error" style="display: none;">
-            {% trans "Case list requires a label" %}
+            {% trans "Case list menu item requires a label" %}
         </span>
     </div>
 </div>
@@ -57,5 +57,5 @@
 </script>
 
 <div id="{{ SLUG }}-media">
-    {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" qualifier="case_list-menu_item_" %}
+    {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon for Case List Menu Item" AUDIO_LABEL="Audio for Case List Menu Item" qualifier="case_list-menu_item_" %}
 </div>
