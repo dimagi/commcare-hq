@@ -52,7 +52,9 @@ def make_url(report_class, domain, string_params, args):
 
 
 # Calculate last full period (Friday - thursday)
-def calculate_last_period(enddate=datetime.utcnow()):
+def calculate_last_period(enddate=None):
+    if not enddate:
+        enddate = datetime.utcnow()
     last_friday = enddate - timedelta(days=(enddate.weekday() - 4) % 7)
     last_friday = last_friday.replace(hour=0, minute=0, second=0, microsecond=0)
     end_of_next_thursday = (last_friday + timedelta(days=7)) - timedelta(microseconds=1)
