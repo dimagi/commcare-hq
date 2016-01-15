@@ -13,6 +13,21 @@ from pillowtop.listener import AliasedElasticPillow, PythonPillow
 from django.conf import settings
 
 
+def cast_user_data_to_string(doc_dict):
+    """
+    Make all user_data strings
+    ES doesn't allow dynamic dicts with the same key name to have different types, so coerce everything
+    """
+    user_data = doc_dict.get('user_data', {})
+    if user_data and type(user_data) is dict:
+        for k, v in user_data.iteritems():
+            try:
+                doc_dict['user_data'][k] = unicode(v)
+            except UnicodeDecodeError:
+                doc_dict['user_data'][k] = v  # If we can't decode it, let elastic deal with it
+    return doc_dict
+
+
 class UserPillow(AliasedElasticPillow):
     """
     Simple/Common Case properties Indexer
@@ -48,21 +63,7 @@ class UserPillow(AliasedElasticPillow):
 
     def change_transform(self, doc_dict):
         super(UserPillow, self).change_transform(doc_dict)
-        doc_dict = self._cast_user_data_to_string(doc_dict)
-        return doc_dict
-
-    def _cast_user_data_to_string(self, doc_dict):
-        """
-        Make all user_data strings
-        ES doesn't allow dynamic dicts with the same key name to have different types, so coerce everything
-        """
-        user_data = doc_dict.get('user_data', {})
-        if user_data and type(user_data) is dict:
-            for k, v in user_data.iteritems():
-                try:
-                    doc_dict['user_data'][k] = unicode(v)
-                except UnicodeDecodeError:
-                    doc_dict['user_data'][k] = v  # If we can't decode it, let elastic deal with it
+        doc_dict = cast_user_data_to_string(doc_dict)
         return doc_dict
 
 
