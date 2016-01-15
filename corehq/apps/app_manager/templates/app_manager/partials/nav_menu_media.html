@@ -47,24 +47,26 @@
                         }
             ">
                 <i class="fa fa-cog"></i>
-                {% trans 'Set Icon Path...' %}
+                {% trans 'Set Icon Path' %}
             </button>
         </div>
     </div>
     <div class="form-group"
          data-bind="visible: showCustomPath">
         <label for="image_custom_path" class="control-label col-lg-2">
-            {% trans "Icon Path" %}:
+            {% trans "Icon Path" %}
         </label>
-        <div class="col-lg-10">
+        <div class="col-lg-4">
             <input type="text"
-                   class="col-sm-6 form-control"
+                   class="form-control"
                    data-bind="value: customPath,
                               valueUpdate: 'textchange'" />
             <input type="hidden"
                    class="jr-resource-field"
                    name="{{ qualifier|default_if_none:"" }}media_image"
                    data-bind="value: savedPath" />
+        </div>
+        <div class="col-lg-1">
             <button type="button"
                     class="btn btn-default"
                     data-bind="
@@ -127,7 +129,7 @@
                             analytics.usage('App Builder', 'Click Show Path for a Form or Module', 'audio');
                         }">
                 <i class="fa fa-cog"></i>
-                {% trans 'Set Audio Path...' %}
+                {% trans 'Set Audio Path' %}
             </button>
             <p data-bind="visible: isMediaMatched"
                class="help-block">
@@ -142,17 +144,19 @@
     <div class="form-group"
          data-bind="visible: showCustomPath">
         <label for="image_custom_path" class="control-label col-lg-2">
-            {% trans "Audio Path" %}:
+            {% trans "Audio Path" %}
         </label>
-        <div class="col-lg-10">
+        <div class="col-lg-4">
             <input type="text"
-                   class="col-sm-6"
+                   class="form-control"
                    data-bind="value: customPath,
                               valueUpdate: 'textchange'" />
             <input type="hidden"
                    name="{{ qualifier|default_if_none:"" }}media_audio"
                    class="jr-resource-field"
                    data-bind="value: savedPath" />
+        </div>
+        <div class="col-lg-1">
             <button type="button"
                     class="btn btn-default"
                     data-bind="
