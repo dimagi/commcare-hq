@@ -293,7 +293,6 @@ class FormCustomExportHelper(CustomExportHelper):
         if not requires_case:
             for col in case_cols:
                 col['tag'], col['show'] = 'deleted', col['selected']
-                col['allOptions'] = []
         elif not case_cols:
             column_conf.append({
                 'index': FORM_CASE_ID_PATH,
