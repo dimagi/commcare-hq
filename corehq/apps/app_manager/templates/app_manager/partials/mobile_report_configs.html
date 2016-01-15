@@ -32,7 +32,7 @@
         <fieldset>
             <table class="table" id="report-list">
                 <thead>
-                    <tr class="row form-group" >
+                    <tr class="row">
                         <th></th>
                         <th>{% trans "Report" %}</th>
                         <th>{% trans "Display Text" %}</th>
@@ -41,27 +41,31 @@
                     </tr>
                 </thead>
                 <tbody data-bind="sortable: { data: reports, as: 'report' }">
-                    <tr class="row form-group"
+                    <tr class="row"
                         data-bind="attr: {'data-order': _sortableOrder}">
                         <td>
                             <i class="grip sortable-handle" data-bind="css: COMMCAREHQ.icons.GRIP, style: {cursor: 'move'}"></i>
                         </td>
                         <td>
-                            <select data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId"></select>
+                            <select class="form-control"
+                                    data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId">
+                            </select>
                             {% include 'app_manager/partials/filter_configs.html' %}
                             {% include 'app_manager/partials/graph_configs.html' %}
                         </td>
                         <td>
-                            <input type="text" data-bind="value: display">
+                            <input type="text" class="form-control" data-bind="value: display">
                         </td>
                         <td>
-                            <input type="text" data-bind="value: xpathDescription, visible: useXpathDescription">
-                            <input type="text" data-bind="value: localizedDescription, visible: !useXpathDescription()">
-                            <label class="checkbox">
+                            <input type="text" class="form-control"
+                                   data-bind="value: xpathDescription, visible: useXpathDescription">
+                            <input type="text" class="form-control"
+                                   data-bind="value: localizedDescription, visible: !useXpathDescription()">
+                            <label>
                                 <input type="checkbox" data-bind="checked: useXpathDescription">
                                 {% trans "Use xpath expression" %}
                             </label>
-                            <div data-bind="visible: useXpathDescription">
+                            <div data-bind="visible: useXpathDescription" class="help-block">
                                 <p>
                                     <i class="fa fa-warning"></i>
                                     {% trans "Must be a valid xpath expression." %}

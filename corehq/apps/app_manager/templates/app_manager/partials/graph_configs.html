@@ -1,49 +1,72 @@
 {% load i18n %}
 
 <div data-bind="foreach: { data: graphConfig.currentCharts, as: 'chart' }">
-    <br/>
-    <p>
-        {% trans 'Chart Title' %}: <span data-bind="text: chart.title"></span>
-    </p>
-    <p>
-        <span>{% trans 'Graph type' %}:</span>
-        <select type="text" data-bind="
-            options: report.graphConfig.allGraphTypes,
-            value: report.graphConfig.getCurrentGraphConfig(chart.chart_id).graph_type
-        "></select>
-    </p>
-    <p>
-        {% trans 'Configuration' %}:
+
+    <h4>
+        {% trans 'Chart' %}: <span data-bind="text: chart.title"></span>
+    </h4>
+
+    <div class="form-inline">
+        <div class="form-group">
+            <label>{% trans 'Chart type' %}</label>
+            <select type="text" class="form-control" data-bind="
+                options: report.graphConfig.allGraphTypes,
+                value: report.graphConfig.getCurrentGraphConfig(chart.chart_id).graph_type
+            "></select>
+        </div>
+    </div>
+
+    <fieldset>
+        <h4>{% trans 'Chart Configuration' %}</h4>
         <div data-bind="foreach: { data: report.graphConfig.getCurrentGraphConfig(chart.chart_id).config.keyValuePairs, as: 'keyValuePair' }">
-            <p>
-                <input type="text" data-bind="value: keyValuePair.key">
-                <i class="fa fa-arrow-right"></i>
-                <input type="text" data-bind="value: keyValuePair.value">
-                <i class="fa fa-remove icon-blue" style="cursor: pointer;" data-bind="click: keyValuePair.remove"></i>
-            </p>
+            <div class="form-group row">
+                <div class="col-sm-5">
+                    <input class="form-control" type="text" data-bind="value: keyValuePair.key" />
+                </div>
+                <div class="col-sm-1">
+                    <i class="fa fa-arrow-right"></i>
+                </div>
+                <div class="col-sm-5">
+                    <input class="form-control" type="text" data-bind="value: keyValuePair.value" />
+                </div>
+                <div class="col-sm-1">
+                    <i class="fa fa-remove icon-blue" style="cursor: pointer;" data-bind="click: keyValuePair.remove"></i>
+                </div>
+            </div>
         </div>
         <button class="btn btn-default" data-bind="click: report.graphConfig.getCurrentGraphConfig(chart.chart_id).config.addConfig">
             <i class="fa fa-plus"></i>
             {% trans "Add Configuration Item" %}
         </button>
-    </p>
+    </fieldset>
+
     <div data-bind="foreach: { data: report.graphConfig.getCurrentGraphConfig(chart.chart_id).chart_series, as: 'series' }">
-        <p>
-            {% trans 'Series Configuration' %}:
-            <span data-bind="text: series"></span>
+        <fieldset>
+            <h4>
+                {% trans 'Series Configuration' %}:
+                <span data-bind="text: series"></span>
+            </h4>
             <div data-bind="foreach: { data: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_configs[series].keyValuePairs, as: 'keyValuePair' }">
-                <p>
-                    <input type="text" data-bind="value: keyValuePair.key">
-                    <i class="fa fa-arrow-right"></i>
-                    <input type="text" data-bind="value: keyValuePair.value">
-                    <i class="fa fa-remove icon-blue" style="cursor: pointer;" data-bind="click: keyValuePair.remove"></i>
-                </p>
+                <div class="form-group row">
+                    <div class="col-sm-5">
+                        <input class="form-control" type="text" data-bind="value: keyValuePair.key">
+                    </div>
+                    <div class="col-sm-1">
+                        <i class="fa fa-arrow-right"></i>
+                    </div>
+                    <div class="col-sm-5">
+                        <input class="form-control" type="text" data-bind="value: keyValuePair.value">
+                    </div>
+                    <div class="col-sm-1">
+                        <i class="fa fa-remove icon-blue" style="cursor: pointer;" data-bind="click: keyValuePair.remove"></i>
+                    </div>
+                </div>
             </div>
             <button class="btn btn-default" data-bind="click: report.graphConfig.getCurrentGraphConfig(chart.chart_id).series_configs[series].addConfig">
                 <i class="fa fa-plus"></i>
                 {% trans "Add Series Configuration Item" %}
             </button>
-        </p>
+        </fieldset>
     </div>
     <div data-bind="subscribeGraphs: report.graphConfig.addSubscribersToSaveButton()"></div>
 </div>
