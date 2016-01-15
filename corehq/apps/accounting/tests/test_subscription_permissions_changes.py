@@ -9,15 +9,6 @@ from corehq.apps.domain.models import Domain
 
 
 class TestSubscriptionPermissionsChanges(BaseAccountingTest):
-    dependent_apps = [
-        'corehq.apps.accounting', 'django_prbac',
-        'corehq.apps.tzmigration',
-        'corehq.apps.domain', 'corehq.apps.users', 'corehq.couchapps',
-        'corehq.apps.sms', 'corehq.apps.smsforms', 'auditcare', 'django_digest',
-        'django.contrib.admin', 'tastypie', 'corehq.apps.dropbox', 'corehq.apps.tour',
-        'touchforms.formplayer', 'corehq.apps.smsbillables', 'corehq.apps.app_manager',
-        'corehq.apps.reminders', 'corehq.apps.data_interfaces',
-    ]
 
     def setUp(self):
         super(TestSubscriptionPermissionsChanges, self).setUp()
