@@ -46,7 +46,7 @@ trunk: master
 name: autostaging
 branches:
   - kill-x_over_time  # Danny 12/11
-  - validate-xpath  # Danny 12/05
+  #- validate-xpath  # Danny 12/05
   - vellum-staging # J$ 11/13
   #- fix-toggle+two-factor-otp-only #wsp 11/17
   - two-factor-otp-only+add-tableau-dashboard  # Ethan 11/24
@@ -56,7 +56,7 @@ branches:
   - fix-toggle #wsp 12/14
   - location-delete # Cal 12/16
   - new-footer-nav # Biyeun 1/4
-  - uglify-compressor # Ben 1/7
+  #- uglify-compressor # Ben 1/7
   - tabular-reports-b3-migrate  # Biyeun 1/15
 submodules:
   submodules/touchforms-src:
