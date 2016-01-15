@@ -4,6 +4,7 @@ import operator
 from operator import contains, eq
 
 from couchdbkit import NoResultFound, MultipleResultsFound, ResourceNotFound, QueryMixin
+from corehq.apps.change_feed import topics
 from dimagi.ext.couchdbkit import StringProperty, DateProperty, DictProperty, Document
 from django.db import models
 from casexml.apps.case.models import CommCareCase
@@ -52,6 +53,7 @@ class BaseM4ChangeCaseFluff(fluff.IndicatorDocument):
     document_filter = ORFilter(_get_all_m4change_forms())
     domains = M4CHANGE_DOMAINS
     save_direct_to_sql = True
+    kafka_topic = topics.CASE
 
     class Meta:
         app_label = 'm4change'
