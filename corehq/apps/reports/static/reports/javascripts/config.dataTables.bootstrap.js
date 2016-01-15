@@ -190,8 +190,12 @@ function HQReportDataTables(options) {
             }
             $(window).on('resize', function () {
                 datatable.fnAdjustColumnSizing();
-            } );
-
+            });
+            if (self.useBootstrap3) {
+                $('.dataTables_paginate a').on('click', function () {
+                    datatable.fnAdjustColumnSizing();
+                });
+            }
 
             var $dataTablesFilter = $(".dataTables_filter");
             if($dataTablesFilter && $("#extra-filter-info")) {
