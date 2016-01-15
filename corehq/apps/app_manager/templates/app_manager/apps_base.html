@@ -24,10 +24,6 @@
     {% endcompress %}
 {% endblock %}
 
-{% block head %}{{ block.super }}
-    {% include "imports/jqmodal.html" %}
-{% endblock %}
-
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
