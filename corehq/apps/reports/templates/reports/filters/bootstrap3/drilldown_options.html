@@ -5,26 +5,26 @@
 {% if is_empty %}
 <div class="alert alert-info">{{ empty_text }}</div>
 {% else %}
-<div id="{{ css_id }}" class="well" style="padding-bottom: 0;">
+<div id="{{ css_id }}" class="well well-sm">
     <div data-bind="foreach: controls">
-        <div class="control-group"
+        <div class="form-group"
              data-bind="{% if use_last %}fadeVisibleInOnly{% else %}fadeVisible{% endif %}: is_visible">
             <label data-bind="attr: {for: '{{ css_id }}_'+slug}, text: label"
-                   class="control-label"></label>
-            <div class="controls">
-                <select  class="{{ css_class }}" data-bind="attr: {id: '{{ css_id }}_'+slug, name: '{{ slug }}_'+slug},
+                   class="control-label col-xs-4 col-md-2"></label>
+            <div class="col-xs-8 col-md-10">
+                <select  class="form-control" data-bind="attr: {id: '{{ css_id }}_'+slug, name: '{{ slug }}_'+slug},
                 options: control_options, optionsText: 'text', optionsValue: 'val', optionsCaption: default_text,
                 value: selected,
                 event: {change: function (data, event) { $parent.updateNextDrilldown(level);  }}"></select>
             </div>
         </div>
         {% if use_last %}
-        <div class="control-group" data-bind="visible: show_next_drilldown">
-            <label class="control-label">
-                <div class="label">{% trans 'Next' %}: <strong data-bind="text: label"></strong></div>
+        <div class="form-group" data-bind="visible: show_next_drilldown">
+            <label class="control-label col-xs-4 col-md-2">
+                <div class="label label-default">{% trans 'Next' %}: <strong data-bind="text: label"></strong></div>
             </label>
-            <div class="controls">
-                <select class="{{ css_class }}" disabled="disabled"></select>
+            <div class="col-xs-8 col-md-10">
+                <select class="form-control" disabled="disabled"></select>
             </div>
         </div>
         {% endif %}
