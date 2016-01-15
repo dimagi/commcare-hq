@@ -19,25 +19,17 @@
                     {% trans "Preview" %}
                 </a>
             {% endif %}
-            <button type="button"
-                    class="btn"
-                    data-toggle="modal"
+            <button type="button" class="btn" data-toggle="modal" data-target="#{{ slug }}"
                     data-bind="attr: { 'data-hqmediapath': currentPath },
                                event: {
                                     mediaUploadComplete: uploadComplete,
                                     click: passToUploadController
-                               }"
-                    data-target="#{{ slug }}">
+                               }">
                 <i class="icon icon-cloud-upload"></i>
-                <span data-bind="visible: isMediaMatched">
-                    {% trans 'Replace' %} {{ type_name }}
-                </span>
-                <span data-bind="visible: isMediaUnmatched">
-                    {% trans 'Upload' %} {{ type_name }}
-                </span>
+                <span data-bind="visible: isMediaMatched">{% trans 'Replace' %}</span>
+                <span data-bind="visible: isMediaUnmatched">{% trans 'Upload' %}</span>
             </button>
-            <button type="button"
-                    class="btn btn-danger "
+            <button type="button" class="btn btn-danger"
                     data-bind="
                         visible: isMediaMatched,
                         event: {
@@ -46,8 +38,7 @@
                     ">
                 <i class="icon icon-remove"></i>
             </button>
-            <button type="button"
-                    class="btn btn-default pull-right"
+            <button type="button" class="btn btn-default pull-right"
                     data-bind="
                         visible: showDefaultPath,
                         click: function () {
@@ -62,8 +53,8 @@
                class="help-block">
                 <i class="icon icon-info-sign"></i>
                 {% blocktrans %}
-                To hear audio on Java Phones, you must be in CommCare Sense
-                mode or Numeric Selection Mode. (On Android it will always work.)
+                    To hear audio on Java Phones, you must be in CommCare Sense
+                    mode or Numeric Selection Mode. (On Android it will always work.)
                 {% endblocktrans %}
             </p>
             {% endif %}
@@ -71,25 +62,18 @@
     </div>
     <div class="control-group"
          data-bind="visible: showCustomPath">
-        <label class="control-label">
-            {{ type_name }} {% trans "Path" %}
-        </label>
+        <label class="control-label">{% trans "Path" %}</label>
         <div class="controls">
-            <input type="text"
-                   class="span6"
+            <input type="text" class="span6"
                    data-bind="value: customPath,
                               valueUpdate: 'textchange'" />
-            <input type="hidden"
-                   class="jr-resource-field"
+            <input type="hidden" class="jr-resource-field"
                    name="{{ qualifier|default_if_none:"" }}media_{{ type }}"
                    data-bind="value: savedPath" />
-            <button type="button"
-                    class="btn"
+            <button type="button" class="btn"
                     data-bind="
                         visible: showCustomPath,
-                        event: {
-                            click: setDefaultPath,
-                        }
+                        event: { click: setDefaultPath }
                     ">
                 <i class="icon icon-remove"></i>
                 {% trans 'Use Default Path' %}

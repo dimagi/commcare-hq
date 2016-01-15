@@ -1,6 +1,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
-{% include "app_manager/partials/nav_menu_media_single_type.html" with type="image" type_name="Icon" slug=multimedia.upload_managers.icon.slug label=ICON_LABEL %}
+{% include "app_manager/partials/nav_menu_media_single_type.html" with type="image" slug=multimedia.upload_managers.icon.slug label=ICON_LABEL %}
 {% if not EXCLUDE_AUDIO %}
-    {% include "app_manager/partials/nav_menu_media_single_type.html" with type="audio" type_name="Audio" slug=multimedia.upload_managers.audio.slug label=AUDIO_LABEL %}
+    {% include "app_manager/partials/nav_menu_media_single_type.html" with type="audio" slug=multimedia.upload_managers.audio.slug label=AUDIO_LABEL %}
 {% endif %}
