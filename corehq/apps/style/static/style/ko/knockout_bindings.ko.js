@@ -325,7 +325,6 @@ ko.bindingHandlers.openModal = {
     }
 };
 
-// TODO: combine with openModal above?
 ko.bindingHandlers.openRemoteModal = {
     init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         var modal = $('<div></div>').addClass('modal fade').appendTo('body'),
