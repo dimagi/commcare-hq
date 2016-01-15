@@ -6,7 +6,7 @@
 {% block reporttable %}
 {% include report_partial %}
 {% if report.needs_filters %}
-    {% include 'reports/standard/partials/description.html' %}
+    {% include 'reports/bootstrap2/partials/description.html' %}
 {% else %}
     <table id="report_table_{{ report.slug }}" class="table table-striped datatable tabular" {% if pagination.filter %} data-filter="true"{% endif %}>
         <thead>
