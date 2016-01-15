@@ -28,6 +28,7 @@
 
 {% block page_content %}
     <form class="form form-horizontal" name="program" method="post">
+        {% csrf_token %}
         <legend>{% trans "Program Information" %}</legend>
         {% crispy form %}
         <div class="form-actions">

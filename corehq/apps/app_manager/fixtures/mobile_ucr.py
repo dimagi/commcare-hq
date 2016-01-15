@@ -129,8 +129,7 @@ class ReportFixturesProvider(object):
             # since it's actually the filter slug
             filter_elem = self._element('filter', attrib={'field': filter_slug})
             option_values = filter_options_by_field[ui_filter.field]
-            choices = ui_filter.choice_provider.get_choices_for_values(option_values)
-            choices = sorted(choices, key=lambda choice: choice.display)
+            choices = ui_filter.choice_provider.get_sorted_choices_for_values(option_values)
             for choice in choices:
                 # add the correct text from ui_filter.choice_provider
                 option_elem = self._element(

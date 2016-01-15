@@ -19,7 +19,7 @@ from django.views.generic import View
 from corehq.apps.analytics.tasks import track_workflow
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.app_manager.models import Application, Form
 
 from sqlalchemy import types, exc
@@ -65,7 +65,7 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tasks import rebuild_indicators, resume_building_indicators
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
     ConfigurableDataSourceEditForm,
@@ -172,7 +172,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
     @property
     def page_context(self):
         return {
-            "has_apps": len(get_apps_in_domain(self.domain)) > 0,
+            "has_apps": domain_has_apps(self.domain),
             "report": {
                 "title": _("Create New Report")
             },
@@ -604,6 +604,26 @@ def rebuild_data_source(request, domain, config_id):
     )
 
     rebuild_indicators.delay(config_id)
+    return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
+
+
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@require_POST
+def resume_building_data_source(request, domain, config_id):
+    config, is_static = get_datasource_config_or_404(config_id, domain)
+    if not is_static and config.meta.build.finished:
+        messages.warning(
+            request,
+            _('Table "{}" has already finished building. Rebuild table to start over.').format(
+                config.display_name
+            )
+        )
+    else:
+        messages.success(
+            request,
+            _('Resuming rebuilding table "{}".').format(config.display_name)
+        )
+        resume_building_indicators.delay(config_id)
     return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
 
 

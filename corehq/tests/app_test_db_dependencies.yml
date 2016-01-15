@@ -125,6 +125,7 @@ corehq.apps.app_manager:
   - custom.ilsgateway
   - custom.ewsghana
   - corehq.apps.smsforms
+  - corehq.apps.commtrack
 corehq.apps.commtrack:
   - auditcare
   - couchforms

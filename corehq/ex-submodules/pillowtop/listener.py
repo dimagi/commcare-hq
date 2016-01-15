@@ -390,7 +390,7 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, r
         except RequestError as ex:
             error_message = "Pillowtop put_robust error [%s]:\n%s\n\tpath: %s/%s/%s\n\t%s" % (
                 name,
-                ex.message or "No error message",
+                ex.error or "No error message",
                 index, doc_type, doc_id,
                 data.keys())
 

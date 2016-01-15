@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from mock import MagicMock, patch
 
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.mock import CaseFactory
+from casexml.apps.case.mock import CaseBlock, CaseFactory
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.case.xml import V1
 
@@ -214,7 +214,6 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
     def setUpClass(cls):
         cls.domain_name = "test-domain"
         cls.domain = create_domain(cls.domain_name)
-
         cls.repeater = CaseRepeater(
             domain=cls.domain_name,
             url="case-repeater-url",
@@ -225,7 +224,14 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
     def tearDownClass(cls):
         cls.domain.delete()
         cls.repeater.delete()
-        for repeat_record in cls.repeat_records(cls.domain_name):
+
+    def tearDown(self):
+        try:
+            # delete case, so that post of xform_xml creates new case as expected multiple-times
+            CommCareCase.get(case_id).delete()
+        except:
+            pass
+        for repeat_record in self.repeat_records(self.domain_name):
             repeat_record.delete()
 
     def test_case_close_format(self):
@@ -241,6 +247,72 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.assertXmlHasXpath(close_payload, '//*[local-name()="case"]')
         self.assertXmlHasXpath(close_payload, '//*[local-name()="close"]')
         self.assertXmlHasXpath(close_payload, '//*[local-name()="update"]')
+
+    def test_excluded_case_types_are_not_forwarded(self):
+        self.repeater.white_listed_case_types = ['planet']
+        self.repeater.save()
+
+        white_listed_case = CaseBlock(
+            case_id="a_case_id",
+            create=True,
+            case_type="planet",
+        ).as_xml()
+        CaseFactory(self.domain_name).post_case_blocks([white_listed_case])
+        self.assertEqual(1, len(self.repeat_records(self.domain_name).all()))
+
+        non_white_listed_case = CaseBlock(
+            case_id="b_case_id",
+            create=True,
+            case_type="cat",
+        ).as_xml()
+        CaseFactory(self.domain_name).post_case_blocks([non_white_listed_case])
+        self.assertEqual(1, len(self.repeat_records(self.domain_name).all()))
+
+    def test_black_listed_user_cases_do_not_forward(self):
+        self.repeater.black_listed_users = ['black_listed_user']
+        self.repeater.save()
+
+        # case-creations by black-listed users shouldn't be forwarded
+        black_listed_user_case = CaseBlock(
+            case_id="b_case_id",
+            create=True,
+            case_type="planet",
+            owner_id="owner",
+            user_id="black_listed_user"
+        ).as_xml()
+        CaseFactory(self.domain_name).post_case_blocks([black_listed_user_case])
+        self.assertEqual(0, len(self.repeat_records(self.domain_name).all()))
+
+        # case-creations by normal users should be forwarded
+        normal_user_case = CaseBlock(
+            case_id="a_case_id",
+            create=True,
+            case_type="planet",
+            owner_id="owner",
+            user_id="normal_user"
+        ).as_xml()
+        CaseFactory(self.domain_name).post_case_blocks([normal_user_case])
+        self.assertEqual(1, len(self.repeat_records(self.domain_name).all()))
+
+        # case-updates by black-listed users shouldn't be forwarded
+        black_listed_user_case = CaseBlock(
+            case_id="b_case_id",
+            case_type="planet",
+            owner_id="owner",
+            user_id="black_listed_user",
+        ).as_xml()
+        CaseFactory(self.domain_name).post_case_blocks([black_listed_user_case])
+        self.assertEqual(1, len(self.repeat_records(self.domain_name).all()))
+
+        # case-updates by normal users should be forwarded
+        normal_user_case = CaseBlock(
+            case_id="a_case_id",
+            case_type="planet",
+            owner_id="owner",
+            user_id="normal_user",
+        ).as_xml()
+        CaseFactory(self.domain_name).post_case_blocks([normal_user_case])
+        self.assertEqual(2, len(self.repeat_records(self.domain_name).all()))
 
 
 class RepeaterFailureTest(BaseRepeaterTest):
@@ -273,7 +345,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
             def get_payload(self, repeat_record, payload_doc):
                 return payload
 
-        repeat_record = self.repeater.register(case_id)
+        repeat_record = self.repeater.register(CommCareCase.get(case_id))
         with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout', side_effect=Exception('Boom!')):
             repeat_record.fire()
 
@@ -370,7 +442,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
             def get_payload(self, repeat_record, payload_doc):
                 return payload
 
-        repeat_record = self.repeater.register(case_id)
+        repeat_record = self.repeater.register(CommCareCase.get(case_id))
         post_fn = MagicMock()
         repeat_record.fire(post_fn=post_fn)
         headers = self.repeater.get_headers(repeat_record)

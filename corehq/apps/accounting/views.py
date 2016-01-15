@@ -516,8 +516,10 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         initial = {
             'feature_rates': json.dumps([fmt_feature_rate_dict(r.feature, r)
                                          for r in plan_version.feature_rates.all()] if plan_version else []),
-            'product_rates': json.dumps([fmt_product_rate_dict(r.product, r)
-                                         for r in plan_version.product_rates.all()] if plan_version else []),
+            'product_rates': json.dumps(
+                [fmt_product_rate_dict(plan_version.product_rate.product, plan_version.product_rate)]
+                if plan_version else []
+            ),
             'role_slug': plan_version.role.slug if plan_version else None,
         }
         if self.request.method == 'POST' and 'update_version' in self.request.POST:

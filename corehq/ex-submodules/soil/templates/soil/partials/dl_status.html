@@ -24,7 +24,7 @@
             </small>
             </p>
         {% endif %}
-        <form class="form-inline download-form" method="POST" action="{% url 'dropbox_upload' download_id %}">
+        <form class="form-inline download-form" method="POST" action="{% url 'dropbox_upload' download_id %}">{% csrf_token %}
             <input type="hidden" name="dropbox-next" value="" />
             <a class="btn btn-primary" href="{% url 'retrieve_download' download_id %}?get_file">
                 <i class="icon icon-white icon-download-alt"></i>
