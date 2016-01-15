@@ -534,6 +534,8 @@ FACET_MAPPING = [
 
 class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
+    is_bootstrap3 = True
+
     base_template = "hqadmin/bootstrap3/faceted_report.html"
     report_template_path = "reports/async/bootstrap3/tabular.html"
 
@@ -541,7 +543,7 @@ class AdminReport(GenericTabularReport):
     @use_bootstrap3
     @use_datatables
     def set_bootstrap3_status(self, request, *args, **kwargs):
-        self.is_bootstrap3 = True
+        pass
 
 
 class AdminFacetedReport(AdminReport, ElasticTabularReport):
