@@ -482,7 +482,9 @@ var DetailScreenConfig = (function () {
                 model: screen.model,
                 time_ago_interval: DetailScreenConfig.TIME_AGO.year,
             };
-            _.defaults(this.original, defaults);
+            _.each(_.keys(defaults), function(key) {
+                that.original[key] = that.original[key] || defaults[key];
+            });
             this.original.late_flag = _.isNumber(this.original.late_flag) ? this.original.late_flag : 30;
 
             this.original.case_tile_field = ko.utils.unwrapObservable(this.original.case_tile_field) || "";
@@ -494,7 +496,9 @@ var DetailScreenConfig = (function () {
                 hasNodeset: false,
                 nodeset: "",
             };
-            _.defaults(this.original, tabDefaults);
+            _.each(_.keys(tabDefaults), function(key) {
+                that.original[key] = that.original[key] || tabDefaults[key];
+            });
             _.extend(this, _.pick(this.original, _.keys(tabDefaults)));
 
             this.screen = screen;
