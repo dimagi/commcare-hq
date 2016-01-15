@@ -56,8 +56,8 @@
                   data-content="{% blocktrans %}When the case list contains only one case, skip over it, jumping directly to case details.{% endblocktrans %}"
             ></span>
         </label>
-        <div id="auto-select-case" class="col-lg-10 commcare-feature" data-since-version="2.24">
-            <input type="checkbox" data-bind="checked: auto_select_case" class="form-control"/>
+        <div id="auto-select-case" class="col-lg-4 checkbox commcare-feature" data-since-version="2.24">
+            <input type="checkbox" data-bind="checked: auto_select_case" />
             <input type="hidden" name="auto_select_case" data-bind="value: auto_select_case"/>
         </div>
     </div>
