@@ -1,9 +1,10 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% if not hide_field %}
-<label for="{{ select.cssId }}" class="control-label">{% trans select.label %}</label>
-<div class="controls">
+<label for="{{ select.cssId }}" class="{{ css_label_class }}">{% trans select.label %}</label>
+<div class="{{ css_field_class }}">
     <select id="{{ select.cssId }}"
+            class="form-control"
             {% if not select.use_combo_box %}class="{{ select.cssClasses }}"{% endif %}
             data-bind="{% if not select.use_combo_box %}options: select_params, optionsText: 'text', optionsValue: 'val', optionsCaption: '{% trans select.default %}',{% endif %} value: current_selection"
             name="{{ slug }}">
