@@ -56,7 +56,7 @@ def create_test_locations(domain):
         parent=test_region2
     )
     rsp2.save()
-    assign_products_to_locations(rsp, ["ad", "al"])
+    assign_products_to_locations(rsp2, ["ad", "al"])
 
     test_district = Location(
         name='Test District',
