@@ -13,17 +13,17 @@
             <li class="dropdown-header nav-header">{% trans 'Logged in As' %}</li>
             <li class="nav-login-header">
                 <div class="login-container">
-                    <div class="login-username">
+                    <p>
                         {% if user.first_name %}
                             {{ user.first_name }} {{ user.last_name }}
-                            <small>{{ user.username }}</small>
+                            <br />{{ user.username }}
                         {% else %}
                             {{ user.username }}
                         {% endif %}
-                    </div>
+                    </p>
                     {% with request.couch_user.role_label.strip as role %}
                         {% if role %}
-                        <div class="login-role">
+                        <div class="label label-default">
                             {{ role }}
                         </div>
                         {% endif %}
@@ -31,6 +31,7 @@
                 </div>
             </li>
             <li class="nav-divider divider"></li>
+            <li class="dropdown-header nav-header">{% trans 'Manage Account' %}</li>
             <li>
                 <a href="{% url "my_account_settings" %}">
                     {% trans 'My Account Settings' %}
@@ -76,7 +77,7 @@
             </li>
             <li>
                 <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}" target="_blank">
-                    <i class="fa fa-envelope icon-envelope-alt dropdown-icon"></i> {% trans "Mailing List" %}
+                    <i class="fa fa-comments icon-comments dropdown-icon"></i> {% trans "User Forum" %}
                 </a>
             </li>
         </ul>
