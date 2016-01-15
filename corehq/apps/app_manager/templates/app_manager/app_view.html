@@ -133,7 +133,7 @@
                 randID = Math.floor(Math.random() * 1000),
                 password1ID = 'password-' + randID + '-1',
                 password2ID = 'password-' + randID + '-2',
-                $popupLink = $('<a/>').attr({href: '#'}).text("Reset"),
+                $popupLink = $('<a/>').attr({href: '#'}).text("{% trans "Reset" %}"),
                 $modal = $("#password-setter"),
                 $passwordRow = $modal.find(".password"),
                 $passwordInput = $passwordRow.find("input"),
@@ -312,21 +312,21 @@
             {% trans "Please enter a password or cancel." %}
         </div>
         <div class="control-group password">
-            <label class="control-label">Password</label>
+            <label class="control-label">{% trans "Password" %}</label>
             <div class="controls">
                 <input type="password" class="form-control" />
             </div>
         </div>
         <div class="control-group repeat-password">
-            <label class="control-label">Repeat Password</label>
+            <label class="control-label">{% trans "Repeat Password" %}</label>
             <div class="controls">
                 <input type="password" class="form-control" />
             </div>
         </div>
     </div>
     <div class="modal-footer">
-        <button class="btn btn-default" data-dismiss="modal">Cancel</button>
-        <button class="btn btn-primary save">Save</button>
+        <button class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+        <button class="btn btn-primary save">{% trans "Save" %}</button>
     </div>
 </div>
 {% endblock %}
