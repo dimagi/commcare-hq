@@ -35,7 +35,7 @@ from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_datatables,
     use_knockout_js,
-)
+    use_select2)
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.dates import iso_string_to_datetime
@@ -65,6 +65,7 @@ WorkerActivityReportData = namedtuple('WorkerActivityReportData', [
 
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     exportable = True
+    is_bootstrap3 = True
 
     base_template = 'reports/bootstrap3/base_template.html'
     base_template_filters = 'reports/async/bootstrap3/filters.html'
@@ -74,6 +75,7 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
     @use_bootstrap3
     @use_datatables
     @use_knockout_js
+    @use_select2
     def set_bootstrap3_status(self, request, *args, **kwargs):
         self.is_bootstrap3 = True
 
