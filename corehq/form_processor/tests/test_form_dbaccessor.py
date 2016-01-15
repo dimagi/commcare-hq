@@ -9,7 +9,8 @@ from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
 from corehq.form_processor.parsers.form import apply_deprecation
-from corehq.form_processor.tests.utils import create_form_for_test, get_simple_form_xml, FormProcessorTestUtils
+from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils
+from corehq.form_processor.utils import get_simple_form_xml
 from corehq.sql_db.routers import db_for_read_write
 from crispy_forms.tests.utils import override_settings
 

@@ -285,7 +285,7 @@ def make_es_ready_form(metadata):
     # this is rather complicated due to form processor abstractions and ES restrictions
     # on what data needs to be in the index and is allowed in the index
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
-    from corehq.form_processor.tests.utils import get_simple_form_xml
+    from corehq.form_processor.utils import get_simple_form_xml
     from corehq.form_processor.utils import convert_xform_to_json
 
     assert metadata is not None

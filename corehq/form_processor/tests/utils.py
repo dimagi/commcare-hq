@@ -5,7 +5,6 @@ from couchdbkit import ResourceNotFound
 from datetime import datetime
 from nose.tools import nottest
 
-from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
@@ -13,7 +12,6 @@ from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.parsers.form import process_xform_xml
 from couchforms.models import XFormInstance
-from dimagi.ext import jsonobject
 from dimagi.utils.couch.database import safe_delete
 from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
@@ -144,6 +142,8 @@ def create_form_for_test(domain, case_id=None, attachments=None, save=True):
     :param save: if False return the unsaved form
     :return: form object
     """
+    from corehq.form_processor.utils import get_simple_form_xml
+
     form_id = uuid4().hex
     user_id = 'user1'
     utcnow = datetime.utcnow()
@@ -185,54 +185,3 @@ def create_form_for_test(domain, case_id=None, attachments=None, save=True):
     if save:
         FormProcessorSQL.save_processed_models(ProcessedForms(form, None), cases)
     return form
-
-
-SIMPLE_FORM = """<?xml version='1.0' ?>
-<data uiVersion="1" version="17" name="{form_name}" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
-    xmlns="{xmlns}">
-    <dalmation_count>yes</dalmation_count>
-    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
-        <n1:deviceID>DEV IL</n1:deviceID>
-        <n1:timeStart>2013-04-19T16:52:41.000-04</n1:timeStart>
-        <n1:timeEnd>{time_end}</n1:timeEnd>
-        <n1:username>eve</n1:username>
-        <n1:userID>{user_id}</n1:userID>
-        <n1:instanceID>{uuid}</n1:instanceID>
-        <n2:appVersion xmlns:n2="http://commcarehq.org/xforms"></n2:appVersion>
-    </n1:meta>
-    {case_block}
-</data>"""
-
-
-class TestFormMetadata(jsonobject.JsonObject):
-    domain = jsonobject.StringProperty(required=False)
-    xmlns = jsonobject.StringProperty(default='http://openrosa.org/formdesigner/form-processor')
-    form_name = jsonobject.StringProperty(default='New Form')
-    user_id = jsonobject.StringProperty(default='cruella_deville')
-    time_end = jsonobject.DateTimeProperty(default=datetime(2013, 4, 19, 16, 53, 2))
-    # Set this property to fake the submission time
-    received_on = jsonobject.DateTimeProperty(default=datetime.utcnow())
-
-
-def get_simple_form_xml(form_id, case_id=None, metadata=None):
-    metadata = metadata or TestFormMetadata()
-    case_block = ''
-    if case_id:
-        case_block = CaseBlock(create=True, case_id=case_id).as_string()
-    form_xml = SIMPLE_FORM.format(uuid=form_id, case_block=case_block, **metadata.to_json())
-    return form_xml
-
-
-def get_simple_wrapped_form(form_id, case_id=None, metadata=None, save=True):
-    from corehq.form_processor.utils import convert_xform_to_json
-    xml = get_simple_form_xml(form_id=form_id, metadata=metadata)
-    form_json = convert_xform_to_json(xml)
-    from corehq.form_processor.interfaces.processor import FormProcessorInterface
-    interface = FormProcessorInterface(domain=metadata.domain)
-    wrapped_form = interface.new_xform(form_json)
-    wrapped_form.domain = metadata.domain
-    interface.store_attachments(wrapped_form, [Attachment('form.xml', xml, 'text/xml')])
-    if save:
-        interface.save_processed_models([wrapped_form])
-
-    return wrapped_form
