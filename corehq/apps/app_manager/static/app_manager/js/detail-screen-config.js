@@ -594,11 +594,8 @@ var DetailScreenConfig = (function () {
             });
 
             this.late_flag_extra = uiElement.input().val(this.original.late_flag.toString());
-            this.late_flag_extra.ui.find('input').css('width', 'auto');
-            this.late_flag_extra.ui.prepend(
-                $('<span/>').css('float', 'left')
-                            .css('padding', '5px 5px 0px 0px')
-                            .text(DetailScreenConfig.message.LATE_FLAG_EXTRA_LABEL));
+            this.late_flag_extra.ui.find('input').css('width', 'auto').css("display", "inline-block");
+            this.late_flag_extra.ui.prepend($('<span>' + DetailScreenConfig.message.LATE_FLAG_EXTRA_LABEL + '</span>'));
 
             this.filter_xpath_extra = uiElement.input().val(this.original.filter_xpath.toString());
             this.filter_xpath_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.FILTER_XPATH_EXTRA_LABEL));
@@ -638,6 +635,7 @@ var DetailScreenConfig = (function () {
             this.case_tile_field.subscribe(fireChange);
 
             this.$format = $('<div/>').append(this.format.ui);
+            this.$format.find("select").css("margin-bottom", "5px");
             this.format.on('change', function () {
                 // Prevent this from running on page load before init
                 if (that.format.ui.parent().length > 0) {
@@ -1155,7 +1153,7 @@ var DetailScreenConfig = (function () {
         PLAIN_FORMAT: 'Plain',
         DATE_FORMAT: 'Date',
         TIME_AGO_FORMAT: 'Time Since or Until Date',
-        TIME_AGO_EXTRA_LABEL: ' Measuring: ',
+        TIME_AGO_EXTRA_LABEL: ' Measuring ',
         TIME_AGO_INTERVAL: {
             YEARS: 'Years since date',
             MONTHS: 'Months since date',
@@ -1170,7 +1168,7 @@ var DetailScreenConfig = (function () {
         ENUM_IMAGE_FORMAT: 'Icon',
         ENUM_EXTRA_LABEL: 'Mapping: ',
         LATE_FLAG_FORMAT: 'Late Flag',
-        LATE_FLAG_EXTRA_LABEL: 'Days late: ',
+        LATE_FLAG_EXTRA_LABEL: ' Days late ',
         FILTER_XPATH_EXTRA_LABEL: '',
         INVISIBLE_FORMAT: 'Search Only',
         ADDRESS_FORMAT: 'Address (Android/CloudCare)',

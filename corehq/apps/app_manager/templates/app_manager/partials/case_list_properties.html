@@ -38,12 +38,11 @@
                     "></i>
                 </td>
                 <!--ko if: !isTab -->
-                    <td class="form-group"
-                        data-bind="css: {'has-error': showWarning}">
+                    <td data-bind="css: {'has-error': showWarning}">
                         <div data-bind="html: CC_DETAIL_SCREEN.getFieldHtml(field.val()), visible: !field.edit"></div>
                         <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
                         <div data-bind="visible: showWarning">
-                            <span class="help-inline" data-bind="
+                            <span class="help-block" data-bind="
                                 text: DetailScreenConfig.field_format_warning_message
                             ">
                             </span>
@@ -57,7 +56,7 @@
                         <td data-bind="jqueryElement: header.ui"></td>
                         <td class="form-group" colspan="2" data-bind="css: {'has-error': showWarning}">
                             <div data-bind="jqueryElement: nodeset.ui"></div>
-                            <span class="help-inline" data-bind="text: 'A nodeset must be specified.', visible: showWarning"></span>
+                            <span class="help-block" data-bind="text: 'A nodeset must be specified.', visible: showWarning"></span>
                         </td>
                     <!--/ko-->
                     <!--ko ifnot: $data.hasNodeset -->

@@ -170,7 +170,7 @@ var uiElement;
                     this.val(this.ui.find('select').val());
                 });
 
-                this.$edit_view = $('<select/>').change(function () {
+                this.$edit_view = $('<select class="form-control"/>').change(function () {
                     that.fire('change');
                 });
                 for (i = 0; i < this.options.length; i += 1) {

@@ -1,31 +1,43 @@
 <div id="key_value_mapping_editable_template" class="hide">
     <form class="form-horizontal hq-enum-editor" action="">
         <fieldset data-bind="sortable: items">
-            {# TODO: remove control-group? what about the error class? #}
-            <div class="control-group hq-input-map"
-                 data-bind="css: {'error': $parent.isItemDuplicated(ko.utils.unwrapObservable(key))}">
-                <i class="sortable-handle icon-resize-vertical"></i>
-                {# TODO: drop input-small, input-large #}
-                <input type="text"
-                       class="input-small enum-key"
-                       placeholder="key"
-                       data-bind="value: key"/>
-                &rarr;
-                <input type="text" class="input-large enum-value" data-bind="
-                    attr: {placeholder: $parent.backup(value).value},
-                    value: value[$parent.lang]
-                "/>
-                <a href="#" class="btn btn-info btn-xs lang-text"
-                   data-bind="
-                    text: $parent.backup(value).lang,
-                    visible: !_([$parent.lang, null]).contains($parent.backup(value).lang)
-                "></a>
-                <a href="#" data-bind="click: $parent.removeItem" class="btn btn-danger">
-                    <i class="icon-white fa fa-remove"></i> Delete
-                </a>
-                {# TODO: remove help-inline #}
-                <span class="help-inline"
-                      data-bind='visible: $parent.isItemDuplicated(ko.utils.unwrapObservable(key))'>Key is duplicated.</span>
+            <div class="form-group hq-input-map container-fluid"
+                 data-bind="css: {'has-error': $parent.isItemDuplicated(ko.utils.unwrapObservable(key))}">
+                <div class="row">
+                    <div class="col-sm-1">
+                        <i class="sortable-handle fa fa-arrows-v"></i>
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="text"
+                               class="enum-key form-control"
+                               placeholder="key"
+                               data-bind="value: key"/>
+                        <div class="help-block" data-bind='visible: $parent.isItemDuplicated(ko.utils.unwrapObservable(key))'>
+                            Key is duplicated.
+                        </div>
+                    </div>
+                    <div class="col-sm-1">
+                        &rarr;
+                    </div>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control enum-value" data-bind="
+                            attr: {placeholder: $parent.backup(value).value},
+                            value: value[$parent.lang]
+                        "/>
+                    </div>
+                    <div class="col-sm-1">
+                        <a href="#" class="btn btn-info btn-xs lang-text"
+                           data-bind="
+                            text: $parent.backup(value).lang,
+                            visible: !_([$parent.lang, null]).contains($parent.backup(value).lang)
+                        "></a>
+                    </div>
+                    <div class="col-sm-1">
+                        <a href="#" data-bind="click: $parent.removeItem" class="btn btn-danger">
+                            <i class="icon-white fa fa-remove"></i>
+                        </a>
+                    </div>
+                </div>
             </div>
         </fieldset>
 
