@@ -20,6 +20,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.toggles import deterministic_random
 
 logger = logging.getLogger('analytics')
 logger.setLevel('DEBUG')
@@ -55,7 +56,7 @@ def _track_on_hubspot(webuser, properties):
     )
 
 
-def _batch_track_on_hubspot(users_json):
+def batch_track_on_hubspot(users_json):
     """
     Update or create contacts on hubspot in a batch request to prevent exceeding api rate limit
 
@@ -160,10 +161,12 @@ def update_hubspot_properties(webuser, properties):
 @task(queue='background_queue', acks_late=True, ignore_result=True)
 def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
     if path.startswith(reverse("register_user")):
-        _track_on_hubspot(webuser, {
+        tracking_dict = {
             'created_account_in_hq': True,
             'is_a_commcare_user': True,
-        })
+        }
+        tracking_dict.update(get_ab_test_properties(webuser))
+        _track_on_hubspot(webuser, tracking_dict)
         _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, cookies, meta)
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, cookies, meta)
 
@@ -326,7 +329,7 @@ def track_periodic_data():
 
 
 def submit_data_to_hub_and_kiss(submit_json):
-    hubspot_dispatch = (_batch_track_on_hubspot, "Error submitting periodic analytics data to Hubspot")
+    hubspot_dispatch = (batch_track_on_hubspot, "Error submitting periodic analytics data to Hubspot")
     kissmetrics_dispatch = (
         _track_periodic_data_on_kiss, "Error submitting periodic analytics data to Kissmetrics"
     )
@@ -399,3 +402,9 @@ def _log_response(data, response):
         logger.error(message)
     else:
         logger.debug(message)
+
+
+def get_ab_test_properties(user):
+    return {
+        'a_b_test_variable_1': 'A' if deterministic_random(user.username + 'a_b_test_variable_1') > 0.5 else 'B',
+    }
