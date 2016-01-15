@@ -1067,6 +1067,9 @@ Rounds numbers using Python's [built in formatting](https://docs.python.org/2.7/
 
 See below for a few simple examples. Read the docs for complex ones. The input to the format string will be a _number_ not a string.
 
+If the format string is not valid or the input is not a number then the original input will be returned.
+
+
 #### Round to the nearest whole number
 
 ```
