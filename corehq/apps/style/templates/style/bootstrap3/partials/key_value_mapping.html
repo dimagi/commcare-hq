@@ -16,7 +16,7 @@
                             Key is duplicated.
                         </div>
                     </div>
-                    <div class="col-sm-1">
+                    <div class="col-sm-1 text-center">
                         &rarr;
                     </div>
                     <div class="col-sm-4">
@@ -75,6 +75,7 @@
     </div>
 </div>
 
+<!-- Single read-only key/value pair -->
 <div id="key_value_mapping_display_template" class="hide">
     <div data-bind="foreach: items">
         <div>
@@ -88,6 +89,7 @@
     </div>
 </div>
 
+<<!-- Read-only version of keys and values, displayed alongside button to pop up modal -->
 <div id="key_value_mapping_template" class="hide">
     <div data-bind="template: 'key_value_mapping_display_template'"></div>
     <button class="btn btn-default" data-bind="click: openModal, visible: $data.edit">
