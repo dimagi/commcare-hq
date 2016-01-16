@@ -1,92 +1,102 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-<div id="{{ detail.type }}-list-callout-configuration" data-bind="with: caseListLookup" data-detail-type="{{ detail.type }}">
+<div id="{{ detail.type }}-list-callout-configuration" class="form-horizontal"
+     data-bind="with: caseListLookup" data-detail-type="{{ detail.type }}">
     <legend>
         {% trans "Case List Search Callout" %}
     </legend>
-    <label class="checkbox">
-        <input type="checkbox" data-bind="checked: lookup_enabled"/>
-        {% trans "Enable case list search callout" %}
-    </label>
+    <div class="form-group">
+        <label class="col-lg-2 control-label">
+            {% trans "Enable case list search callout" %}
+        </label>
+        <div class="col-lg-4 checkbox">
+            <input type="checkbox" data-bind="checked: lookup_enabled"/>
+        </div>
+    </div>
     <div data-bind="visible: lookup_enabled">
-        <form class="form-horizontal">
+        <form>
             <div class="form-group">
-                <label class="control-label" for="{{ detail.type }}-lookup-action">
+                <label class="col-lg-2 control-label" for="{{ detail.type }}-lookup-action">
                     {% trans "Action" %}
                 </label>
-                <div class="controls">
-                    <input type="text" id="{{ detail.type }}-lookup-action" data-bind="value: lookup_action" placeholder="{% trans 'ex: callout.commcarehq.org.dummycallout.LAUNCH' %}" required/>
-                    <span class="help-inline" style="display: none;">{% trans "Case list callout requires an action" %}</span>
+                <div class="col-lg-4">
+                    <input type="text" class="form-control" id="{{ detail.type }}-lookup-action"
+                           data-bind="value: lookup_action" required
+                           placeholder="{% trans 'ex: callout.commcarehq.org.dummycallout.LAUNCH' %}" />
+                    <span class="help-block" style="display: none;">
+                        {% trans "Case list callout requires an action" %}
+                    </span>
                 </div>
             </div>
             <div class="form-group">
-                <label class="control-label" for="{{ detail.type }}-lookup-name">
+                <label class="col-lg-2 control-label" for="{{ detail.type }}-lookup-name">
                     {% trans "Action Name" %}
                 </label>
-                <div class="controls">
-                    <input type="text" id="{{ detail.type }}-lookup-name" data-bind="value: lookup_name" placeholder="{% trans 'ex: Scan fingerprint'%}" required/>
-                    <span class="help-inline" style="display: none;">{% trans "Case list callout requires a name" %}</span>
+                <div class="col-lg-4">
+                    <input type="text" class="form-control" id="{{ detail.type }}-lookup-name" required
+                           data-bind="value: lookup_name" placeholder="{% trans 'ex: Scan fingerprint'%}" />
+                    <span class="help-block" style="display: none;">
+                        {% trans "Case list callout requires a name" %}
+                    </span>
                 </div>
             </div>
             <div class="form-group" id="{{ detail.type }}-extras">
-                <label class="control-label">
-                    {% trans "Extra" %}
+                <label class="col-lg-2 control-label">
+                    {% trans "Extras" %}
                 </label>
-                <div class="controls">
-                    <div class="well well-small form form-inline clearfix col-sm-6">
-                        <!-- ko foreach: extras() -->
-                        <div class="fd-kv-pair control-row clearfix" style="margin-bottom: 5px;">
-                            <div class="col-sm-3">
-                                <input class="fd-kv-key form-control" type="text" data-bind="value: key, addSaveButtonListener: true" placeholder="key" />
-                            </div>
-                            <div class="col-sm-1" style="text-align:center;">&rarr;</div>
-                            <div class="col-sm-7">
-                                <input class="fd-kv-val form-control" type="text" data-bind="value: value, addSaveButtonListener: true" placeholder="value" />
-                            </div>
-                            <div class="col-sm-1">
-                                <a href="#" class="btn fd-kv-remove-pair btn-sm btn-danger" data-bind="visible: ($parent.extras().length > 1 || !(key() === '' && value() === '')), click: function(item){ $parent.remove_item('extras', item) }">
-                                    <i class="fa fa-remove"></i>
-                                </a>
-                            </div>
+                <div class="col-lg-4">
+                    <!-- ko foreach: extras() -->
+                    <div class="fd-kv-pair row form-group">
+                        <div class="col-sm-5">
+                            <input class="fd-kv-key form-control" type="text" data-bind="value: key, addSaveButtonListener: true" placeholder="key" />
                         </div>
-                        <!-- /ko -->
-                        <a href="#"
-                           class="btn btn-default fd-kv-add-pair"
-                           data-bind="visible: show_add_extra(), click: function(){ add_item('extras') }">
-                            <i class="fa fa-plus"></i> Add Key &rarr; Value Pair
-                        </a>
-                        <span class="help-inline" style="display: none;">
-                            {% trans "At least one Extra required" %}
-                        </span>
+                        <div class="col-sm-1 text-center">&rarr;</div>
+                        <div class="col-sm-5">
+                            <input class="fd-kv-val form-control" type="text" data-bind="value: value, addSaveButtonListener: true" placeholder="value" />
+                        </div>
+                        <div class="col-sm-1">
+                            <a href="#" class="btn fd-kv-remove-pair btn-sm btn-danger"
+                               data-bind="visible: ($parent.extras().length > 1 || !(key() === '' && value() === '')), click: function(item){ $parent.remove_item('extras', item) }">
+                                <i class="fa fa-remove"></i>
+                            </a>
+                        </div>
                     </div>
+                    <!-- /ko -->
+                    <a href="#"
+                       class="btn btn-default fd-kv-add-pair"
+                       data-bind="visible: show_add_extra(), click: function(){ add_item('extras') }">
+                        <i class="fa fa-plus"></i> Add Key &rarr; Value Pair
+                    </a>
+                    <span class="help-block" style="display: none;">
+                        {% trans "At least one extra required" %}
+                    </span>
                 </div>
             </div>
             <div class="form-group" id="{{ detail.type }}-responses">
-                <label class="control-label">
-                    {% trans "Response" %}
+                <label class="control-label col-lg-2">
+                    {% trans "Responses" %}
                 </label>
-                <div class="controls">
-                    <div class="well well-small form form-inline clearfix col-sm-6">
-                        <!-- ko foreach: responses() -->
-                        <div class="fd-kv-pair control-row clearfix" style="margin-bottom: 5px;">
-                            <div class="col-sm-3">
-                                <input class="fd-kv-key form-control" type="text" data-bind="value: key, addSaveButtonListener: true" placeholder="key" />
-                            </div>
-                            <div class="col-sm-1">
-                                <a href="#" class="btn fd-kv-remove-pair btn-sm btn-danger" data-bind="visible: ($parent.responses().length > 1 || key() != ''), click: function(item){ $parent.remove_item('responses', item) }">
-                                    <i class="fa fa-remove"></i>
-                                </a>
-                            </div>
+                <div class="col-lg-4">
+                    <!-- ko foreach: responses() -->
+                    <div class="fd-kv-pair row form-group">
+                        <div class="col-sm-5">
+                            <input class="fd-kv-key form-control" type="text" data-bind="value: key, addSaveButtonListener: true" placeholder="key" />
                         </div>
-                        <!-- /ko -->
-                        <a href="#"
-                           class="btn btn-default fd-kv-add-pair"
-                           data-bind="visible: show_add_response(), click: function(){ add_item('responses') }">
-                            <i class="fa fa-plus"></i> Add Key
-                        </a>
-                        <span class="help-inline" style="display: none;">{% trans "At least one Response required" %}</span>
+                        <div class="col-sm-1">
+                            <a href="#" class="btn fd-kv-remove-pair btn-sm btn-danger"
+                               data-bind="visible: ($parent.responses().length > 1 || key() != ''), click: function(item){ $parent.remove_item('responses', item) }">
+                                <i class="fa fa-remove"></i>
+                            </a>
+                        </div>
                     </div>
+                    <!-- /ko -->
+                    <a href="#"
+                       class="btn btn-default fd-kv-add-pair"
+                       data-bind="visible: show_add_response(), click: function(){ add_item('responses') }">
+                        <i class="fa fa-plus"></i> Add Key
+                    </a>
+                    <span class="help-block" style="display: none;">{% trans "At least one response required" %}</span>
                 </div>
             </div>
             <div class="case-list-lookup-icon">

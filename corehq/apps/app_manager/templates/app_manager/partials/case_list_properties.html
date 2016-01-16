@@ -56,7 +56,8 @@
                         <td data-bind="jqueryElement: header.ui"></td>
                         <td class="form-group" colspan="2" data-bind="css: {'has-error': showWarning}">
                             <div data-bind="jqueryElement: nodeset.ui"></div>
-                            <span class="help-block" data-bind="text: 'A nodeset must be specified.', visible: showWarning"></span>
+                            <span class="help-block"
+                                  data-bind="text: 'A nodeset must be specified.', visible: showWarning"></span>
                         </td>
                     <!--/ko-->
                     <!--ko ifnot: $data.hasNodeset -->

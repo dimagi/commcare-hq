@@ -3,7 +3,8 @@
 <div data-bind="with: filter">
 
     <div class="form-group">
-        <button class="btn btn-default btn-sm" data-bind="visible: !showing(), click: function(data){data.showing(true);}">
+        <button class="btn btn-default"
+                data-bind="visible: !showing(), click: function(data){data.showing(true);}">
             <i class="fa fa-plus"></i>
             {% trans "Add filter" %}
         </button>
