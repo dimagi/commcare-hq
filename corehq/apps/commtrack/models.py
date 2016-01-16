@@ -8,6 +8,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.decorators.memoized import memoized
 
+from casexml.apps.case.cleanup import close_case
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption)
 from casexml.apps.stock.models import StockReport, DocDomainMapping
@@ -546,14 +547,29 @@ class StockExportColumn(ComplexExportColumn):
         return values
 
 
+def _make_location_admininstrative(location):
+    supply_point_id = location.supply_point_id
+    if supply_point_id:
+        close_case(supply_point_id, location.domain, const.COMMTRACK_USERNAME)
+    location.supply_point_id = None  # this will be saved soon anyways
+
+
 def sync_supply_point(loc):
     # Called on location.save()
     domain = Domain.get_by_name(loc.domain)
-    if not domain.commtrack_enabled or loc.location_type.administrative:
+    if not domain.commtrack_enabled:
+        return None
+    if loc.location_type.administrative:
+        _make_location_admininstrative(loc)
         return None
 
-    supply_point = loc.linked_supply_point()
+    from .dbaccessors import get_supply_point_by_location_id
+    supply_point = get_supply_point_by_location_id(loc.domain, loc.location_id)
     if supply_point:
+        if supply_point and supply_point.closed:
+            for action in supply_point.actions:
+                if action.action_type == 'close':
+                    action.xform.archive(user_id=const.COMMTRACK_USERNAME)
         supply_point.update_from_location(loc)
         updated_supply_point = supply_point
     else:
