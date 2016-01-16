@@ -1,7 +1,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 <div id="{{ qualifier|default_if_none:"" }}media_image">
-    <div class="form-group">
+    <div class="form-group container-fluid">
         <label class="control-label col-lg-2" for="menu_image_path">{% trans ICON_LABEL %}</label>
         <div class="col-lg-10 commcare-feature"
              data-since-version="1.3">
@@ -83,7 +83,7 @@
 </div>
 {% if not EXCLUDE_AUDIO %}
 <div id="{{ qualifier|default_if_none:"" }}media_audio">
-    <div class="form-group">
+    <div class="form-group container-fluid">
         <label class="control-label col-lg-2" for="menu_audio_path">{% trans AUDIO_LABEL %}</label>
         <div class="col-lg-10 commcare-feature"
              data-since-version="1.3">
