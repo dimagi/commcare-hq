@@ -17,11 +17,32 @@ otherwise:
 
 Actually, it looks like the view "commtrack/supply_point_by_loc" will do just
 fine for this purpose, so we can just use that instead.
+
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+client = get_redis_client()
+lock = client.lock(key, timeout=num_seconds)
+if lock.acquire(blocking=False):
+    try:
+        <process task>
+    except:
+        lock.release()
+        raise
+    lock.release()
+else:
+    <requeue task>
+basically should do what you mentioned above
+for key, that's the key that you're locking, so should just be some string
+that's the same for every task you want to lock it's also very important to
+give the lock a timeout (num_seconds) to prevent deadlocks, or in this case, to
+prevent the case where the task would always be requeued after the timeout
+though any thread can acquire that lock, so should be greater than the max
+runtime of the task
 """
 from django.test import TestCase
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from .util import setup_locations_and_types
+from corehq.apps.locations.models import SQLLocation
 
 
 class TestChangeStatus(TestCase):
@@ -60,12 +81,14 @@ class TestChangeStatus(TestCase):
 
     def assertHasSupplyPoint(self, location):
         msg = "'{}' does not have a supply point.".format(location.name)
-        self.assertIsNotNone(location.supply_point_id, msg)
-        self.assertIsNotNone(location.linked_supply_point(), msg)
+        loc = SQLLocation.objects.get(location_id=location.location_id)
+        self.assertIsNotNone(loc.supply_point_id, msg)
+        self.assertIsNotNone(loc.linked_supply_point(), msg)
 
     def assertHasNoSupplyPoint(self, location):
         msg = "'{}' should not have a supply point".format(location.name)
-        self.assertIsNone(location.supply_point_id, msg)
+        loc = SQLLocation.objects.get(location_id=location.location_id)
+        self.assertIsNone(loc.supply_point_id, msg)
 
     def test_change_to_track_stock(self):
         self.assertHasSupplyPoint(self.boston)
