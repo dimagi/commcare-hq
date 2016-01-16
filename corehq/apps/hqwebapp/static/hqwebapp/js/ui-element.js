@@ -93,9 +93,9 @@ var uiElement;
             var translated = langcodeTag.translate_delim(value);
             this.ui.find('.lang-text').remove();
             if (translated.lang) {
+                this.ui.css("position", "relative");
                 var langcode_button = langcodeTag.button_tag(
-                    $('<a href="#" class="btn btn-inverse btn-mini lang-text"'
-                      + ' style="color:#ffffff; text-decoration: none;" />'),
+                    $('<a href="#" class="btn btn-info btn-xs btn-mini lang-text" style="position: absolute; top: 6px; right: 6px;" />'),
                     translated.lang);
                 this.ui.append(langcode_button.button);
                 this.setPlaceholderValue(translated.value);
@@ -370,10 +370,10 @@ var uiElement;
                         this.$edit_view.find(".enum-value").val(map_val);
                         if (map_val == "" && translated_map_val != undefined && translated_map_val != "") {
                             this.$edit_view.find(".enum-value").attr("placeholder", translated_map_val.value);
-                            var $langcodeButton = langcodeTag.button_tag($('<a href="#" class="btn btn-inverse btn-mini lang-text" style="color:#ffffff; text-decoration: none;" />'),
+                            var $langcodeButton = langcodeTag.button_tag($('<a href="#" class="btn btn-info btn-mini btn-xs lang-text" />'),
                                 translated_map_val.lang);
-                            $langcodeButton.button.attr("style", "margin-left: 3px; margin-right: 10px;");
-                            this.$edit_view.find(".enum-value").after($langcodeButton.button);
+                            $langcodeButton.button.attr("style", "position: absolute; top: 6px; right: 6px;");
+                            this.$edit_view.find(".enum-value").css("position", "relative").after($langcodeButton.button);
                             this.on('change', function () {
                                 if (this.$edit_view.find(".enum-value").val() == "")
                                     $langcodeButton.button.show();
