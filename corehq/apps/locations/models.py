@@ -87,6 +87,10 @@ class LocationType(models.Model):
     class Meta:
         app_label = 'locations'
 
+    def __init__(self, *args, **kwargs):
+        super(LocationType, self).__init__(*args, **kwargs)
+        self._administrative_old = self.administrative
+
     @property
     @memoized
     def commtrack_enabled(self):
@@ -106,14 +110,31 @@ class LocationType(models.Model):
         self.understock_threshold = config.understock_threshold
         self.overstock_threshold = config.overstock_threshold
 
+    def _sync_administrative_status(self):
+        """Updates supply points of locations of this type"""
+        if self._administrative_old == self.administrative:
+            print "skipping"
+            return
+        for location in SQLLocation.objects.filter(location_type=self):
+            print "saving {}".format(location.name)
+            # Saving the location should be sufficient for it to pick up the
+            # new supply point.  We'll need to save it anyways to store the new
+            # supply_point_id.
+            location.save()
+        self._administrative_old = self.administrative
+
     def save(self, *args, **kwargs):
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
         if not self.commtrack_enabled:
+            # Ask Sheel if this is okay
             self.administrative = True
         self._populate_stock_levels()
-        return super(LocationType, self).save(*args, **kwargs)
+        saved = super(LocationType, self).save(*args, **kwargs)
+        # Pull this out to an asynchronous task
+        self._sync_administrative_status()
+        return saved
 
     def __unicode__(self):
         return self.name
@@ -388,6 +409,8 @@ class SQLLocation(MPTTModel):
 
     def linked_supply_point(self):
         from corehq.apps.commtrack.models import SupplyPointCase
+        if not self.supply_point_id:
+            return None
         try:
             return SupplyPointCase.get(self.supply_point_id)
         except:
