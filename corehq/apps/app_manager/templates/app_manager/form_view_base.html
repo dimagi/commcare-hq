@@ -298,23 +298,23 @@
                     </p>
                 {% elif form.source %}
                     {% if app.application_version == '1.0' %}
-                        <header class="clearfix">
-                            <h4 class="pull-left">{% trans "Cases and Referrals" %}</h4>
+                        <legend>
+                            <div class="pull-left">{% trans "Cases and Referrals" %}</div>
                             <span class="hq-help-template"
                                   data-title="{% trans "Cases and Referrals" %}"
                                   data-content="{% trans "Cases give you a way to track patients, farms, etc. over time.  You can choose to save data from a form to the case, which will store the data locally on the phone to use later." %}"
                             ></span>
-                        </header>
+                        </legend>
                         <div class="casexml" id="casexml_home">
                         </div>
                     {% else %}
-                        <header class="clearfix">
-                            <h4 class="pull-left">{% trans "Case Management" %}</h4>
+                        <legend>
+                            <div class="pull-left">{% trans "Case Management" %}</div>
                             <span class="hq-help-template"
                                 data-title="{% trans "Case Management" %}"
                                 data-content="{% trans "Cases give you a way to track patients, farms, etc. over time.  You can choose to save data from a form to the case, which will store the data locally on the phone to use later." %}"
                             ></span>
-                        </header>
+                        </legend>
                         <div class="casexml" id="casexml_home">
                             {% block case_management_content %}
                                 {% include 'app_manager/partials/case_config.html' %}

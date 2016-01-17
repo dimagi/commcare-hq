@@ -67,10 +67,7 @@
 </script>
 
 <script type="text/html" id="case-config:case-transaction:case-preload">
-    <em>{% trans "Load the following case properties into the form" %}</em>
-    <div class="alert alert-block alert-info" data-bind="visible: !case_preload().length">
-        {% trans "No case properties will be loaded" %}
-    </div>
+    <div class="panel-heading panel-title">{% trans "Load the following case properties into the form" %}</div>
     <table class="table table-condensed" data-bind="visible: case_preload().length">
         <thead>
             <tr>
@@ -97,7 +94,7 @@
                     }"></div>
                     <p class="help-inline" data-bind="html: validateProperty, visible: validateProperty"></p>
                 </td>
-                <td>
+                <td class="text-center">
                     <i class="fa fa-arrow-right"></i>
                 </td>
                 <td>
@@ -107,17 +104,19 @@
             </tr>
         </tbody>
     </table>
-    <a href="#" class="firstProperty" data-bind="click: addPreload, visible: !case_preload().length">
-        <i class="fa fa-plus"></i>
-        {% trans "Load properties" %}
-    </a>
+    <div class="panel-body">
+        <div class="alert alert-block alert-info" data-bind="visible: !case_preload().length">
+            {% trans "No case properties will be loaded" %}
+        </div>
+        <a href="#" class="firstProperty" data-bind="click: addPreload, visible: !case_preload().length">
+            <i class="fa fa-plus"></i>
+            {% trans "Load properties" %}
+        </a>
+    </div>
 </script>
 
 <script type="text/html" id="case-config:case-transaction:case-properties">
-    <em>{% trans "Save data to the following case properties" %}</em>
-    <div class="alert alert-block alert-info" data-bind="visible: !case_properties().length">
-        {% trans "No case properties will be saved" %}
-    </div>
+    <div class="panel-heading panel-title">{% trans "Save data to the following case properties" %}</div>
     <table class="table table-condensed" data-bind="visible: case_properties().length">
         <thead>
             <tr>
@@ -141,7 +140,7 @@
                 <td>
                     <div data-bind="template: 'case-config:case-properties:question'"></div>
                 </td>
-                <td>
+                <td class="text-center">
                     <i class="fa fa-arrow-right"></i>
                 </td>
                 <td>
@@ -154,8 +153,13 @@
             </tr>
         </tbody>
     </table>
-    <a href="#" class="firstProperty" data-bind="click: addProperty, visible: !case_properties().length">
-        <i class="fa fa-plus"></i>
-        {% trans "Save properties" %}
-    </a>
+    <div class="panel-body">
+        <div class="alert alert-block alert-info" data-bind="visible: !case_properties().length">
+            {% trans "No case properties will be saved" %}
+        </div>
+        <a href="#" class="firstProperty" data-bind="click: addProperty, visible: !case_properties().length">
+            <i class="fa fa-plus"></i>
+            {% trans "Save properties" %}
+        </a>
+    </div>
 </script>
