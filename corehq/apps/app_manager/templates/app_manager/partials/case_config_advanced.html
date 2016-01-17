@@ -40,9 +40,7 @@
         </div>
     </div>
     <div data-bind="if: actionType == 'open'" class="row">
-        <div class="-small">
-            <div data-bind="template: 'case-config:case-transaction:case-properties'"></div>
-        </div>
+        <div class="panel panel-default" data-bind="template: 'case-config:case-transaction:case-properties'"></div>
     </div>
     <!-- ko if:  actionType !== 'load' || !auto_select || auto_select.mode() !== 'usercase' -->
     <div class="panel panel-default">
@@ -113,12 +111,15 @@
                                                optionsCaption: 'Child case or extension case?',
                                                value: relationship"></select><br />
     
-                            <i class="fa fa-trash"></i>
-                            <a href="#" data-bind="click: $parent.removeCaseIndex">Remove index</a>
+                            <button class="btn btn-danger" data-bind="click: $parent.removeCaseIndex">
+                                <i class="fa fa-trash"></i>
+                            </button>
                         </li>
                     </ul>
     
-                    <button data-bind="click: addCaseIndex">{% trans "Add parent index" %}</button>
+                    <button class="btn btn-default" data-bind="click: addCaseIndex">
+                        {% trans "Add parent index" %}
+                    </button>
                     <span class="help-inline" data-bind="text: validate_subcase"></span>
                 </div>
                 <!-- /ko -->
@@ -294,10 +295,10 @@
                     <!-- /ko -->
                 </div>
             </div>
-            <div class="row" data-bind="visible: open_cases().length && load_update_cases().length">
+            <div data-bind="visible: open_cases().length && load_update_cases().length">
                 <hr/>
             </div>
-            <div class="row">
+            <div>
                 <legend data-bind="visible: open_cases().length">
                     {% trans "Open New Cases" %}
                 </legend>
