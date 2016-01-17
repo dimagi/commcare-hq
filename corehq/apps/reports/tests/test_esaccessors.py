@@ -9,7 +9,7 @@ from elasticsearch.exceptions import ConnectionError
 from corehq.util.elastic import delete_es_index
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
-from corehq.form_processor.tests.utils import TestFormMetadata
+from corehq.form_processor.utils import TestFormMetadata
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.const import CASE_ACTION_CREATE
 from corehq.pillows.xform import XFormPillow

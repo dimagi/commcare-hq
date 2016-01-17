@@ -570,10 +570,6 @@ COUCHLOG_BLUEPRINT_HOME = "%s%s" % (
 COUCHLOG_DATATABLES_LOC = "%s%s" % (
     STATIC_URL, "hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js")
 
-COUCHLOG_JQMODAL_LOC = "%s%s" % (STATIC_URL, "hqwebapp/js/lib/jqModal.js")
-COUCHLOG_JQMODAL_CSS_LOC = "%s%s" % (
-    STATIC_URL, "hqwebapp/stylesheets/jqModal.css")
-
 # These allow HQ to override what shows up in couchlog (add a domain column)
 COUCHLOG_TABLE_CONFIG = {"id_column": 0,
                          "archived_column": 1,
@@ -925,6 +921,8 @@ COMPRESS_PRECOMPILERS = (
     ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
 )
 COMPRESS_ENABLED = True
+COMPRESS_JS_COMPRESSOR = 'corehq.apps.style.uglify.JsUglifySourcemapCompressor'
+# use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
 
 LESS_B3_PATHS = {
     'variables': '../../../style/less/bootstrap3/includes/variables',
@@ -991,6 +989,7 @@ HQ_PRIVATE_KEY = None
 
 
 KAFKA_URL = 'localhost:9092'
+
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1593,7 +1592,7 @@ COMPRESS_OFFLINE_CONTEXT = {
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
-COMPRESS_JS_COMPRESSOR = 'corehq.apps.style.uglify.JsUglifySourcemapCompressor'
+
 
 
 if 'locmem' not in CACHES:

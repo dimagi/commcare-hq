@@ -20,6 +20,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.toggles import deterministic_random
 
 logger = logging.getLogger('analytics')
 logger.setLevel('DEBUG')
@@ -29,6 +30,7 @@ HUBSPOT_SIGNIN_FORM_ID = "a2aa2df0-e4ec-469e-9769-0940924510ef"
 HUBSPOT_FORM_BUILDER_FORM_ID = "4f118cda-3c73-41d9-a5d1-e371b23b1fb5"
 HUBSPOT_APP_TEMPLATE_FORM_ID = "91f9b1d2-934d-4e7a-997e-e21e93d36662"
 HUBSPOT_CLICKED_DEPLOY_FORM_ID = "c363c637-d0b1-44f3-9d73-f34c85559f03"
+HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID = "619daf02-e043-4617-8947-a23e4589935a"
 HUBSPOT_COOKIE = 'hubspotutk'
 
 
@@ -54,7 +56,7 @@ def _track_on_hubspot(webuser, properties):
     )
 
 
-def _batch_track_on_hubspot(users_json):
+def batch_track_on_hubspot(users_json):
     """
     Update or create contacts on hubspot in a batch request to prevent exceeding api rate limit
 
@@ -159,10 +161,12 @@ def update_hubspot_properties(webuser, properties):
 @task(queue='background_queue', acks_late=True, ignore_result=True)
 def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
     if path.startswith(reverse("register_user")):
-        _track_on_hubspot(webuser, {
+        tracking_dict = {
             'created_account_in_hq': True,
             'is_a_commcare_user': True,
-        })
+        }
+        tracking_dict.update(get_ab_test_properties(webuser))
+        _track_on_hubspot(webuser, tracking_dict)
         _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, cookies, meta)
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, cookies, meta)
 
@@ -204,6 +208,11 @@ def track_app_from_template_on_hubspot(webuser, cookies, meta):
 @task(queue="background_queue", acks_late=True, ignore_result=True)
 def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta)
+
+
+@task(queue="background_queue", acks_late=True, ignore_result=True)
+def track_created_new_project_space_on_hubspot(webuser, cookies, meta):
+    _send_form_to_hubspot(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, webuser, cookies, meta)
 
 
 def track_workflow(email, event, properties=None):
@@ -320,7 +329,7 @@ def track_periodic_data():
 
 
 def submit_data_to_hub_and_kiss(submit_json):
-    hubspot_dispatch = (_batch_track_on_hubspot, "Error submitting periodic analytics data to Hubspot")
+    hubspot_dispatch = (batch_track_on_hubspot, "Error submitting periodic analytics data to Hubspot")
     kissmetrics_dispatch = (
         _track_periodic_data_on_kiss, "Error submitting periodic analytics data to Kissmetrics"
     )
@@ -393,3 +402,9 @@ def _log_response(data, response):
         logger.error(message)
     else:
         logger.debug(message)
+
+
+def get_ab_test_properties(user):
+    return {
+        'a_b_test_variable_1': 'A' if deterministic_random(user.username + 'a_b_test_variable_1') > 0.5 else 'B',
+    }

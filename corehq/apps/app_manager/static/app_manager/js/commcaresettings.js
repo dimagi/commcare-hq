@@ -428,7 +428,7 @@ $(function () {
     ko.bindingHandlers.passwordSetter = {
         init: function (element, valueAccessor) {
             var observableValue = valueAccessor();
-            $(element).password_setter({title: ''});
+            $(element).password_setter();
             $(element).on('textchange change', function () {
                 observableValue($(element).val());
             });

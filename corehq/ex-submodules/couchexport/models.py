@@ -328,7 +328,6 @@ class ExportTable(DocumentSchema):
     index = StringProperty()
     display = StringProperty()
     columns = SchemaListProperty(ExportColumn)
-    order = ListProperty()
 
     @classmethod
     def wrap(cls, data):

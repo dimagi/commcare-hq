@@ -8,6 +8,7 @@ import warnings
 from django.conf import settings
 from django.http import Http404
 from django.utils import html, safestring
+from corehq.apps.users.permissions import get_extra_permissions
 
 from couchexport.util import SerializableFunction
 from couchforms.analytics import (
@@ -346,6 +347,10 @@ def get_possible_reports(domain_name):
                     'path': model.__module__ + '.' + model.__name__,
                     'name': model.name
                 })
+
+    for slug, name, is_visible in get_extra_permissions():
+        if is_visible(domain):
+            reports.append({'path': slug, 'name': name})
     return reports
 
 

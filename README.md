@@ -220,8 +220,12 @@ https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/change_feed/README
 Populate your database:
 
     $ ./manage.py sync_couch_views
-    $ ./manage.py migrate --noinput
+    $ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
     $ ./manage.py compilejsi18n
+
+You should run `./manage.py migrate` frequently, but only use the environment
+variable CCHQ_IS_FRESH_INSTALL during your initial setup.  It is used to skip a
+few tricky migrations that aren't necessary for new installs.
 
 Create a project. The following command will do some basic setup, create a superuser, and create a project. The 
 project-name, email, and password given here are specific to your local development environment. Ignore warnings 

@@ -1,5 +1,6 @@
 from collections import namedtuple
 from urllib import urlencode
+from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION
 from corehq.toggles import OPENLMIS
 
 from django.utils.safestring import mark_safe, mark_for_escaping
@@ -602,7 +603,7 @@ class ProjectDataTab(UITab):
                 and not self.couch_user.has_permission(
                     self.domain,
                     get_permission_name(Permissions.view_report),
-                    data='corehq.apps.reports.standard.export.ExcelExportReport'
+                    data=FORM_EXPORT_PERMISSION
                 )
                 and user_can_view_deid_exports(self.domain, self.couch_user))
 
