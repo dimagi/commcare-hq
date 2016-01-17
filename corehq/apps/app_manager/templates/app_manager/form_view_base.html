@@ -297,30 +297,17 @@
                         {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
                     </p>
                 {% elif form.source %}
-                    {% if app.application_version == '1.0' %}
-                        <legend>
-                            <div class="pull-left">{% trans "Cases and Referrals" %}</div>
-                            <span class="hq-help-template"
-                                  data-title="{% trans "Cases and Referrals" %}"
-                                  data-content="{% trans "Cases give you a way to track patients, farms, etc. over time.  You can choose to save data from a form to the case, which will store the data locally on the phone to use later." %}"
-                            ></span>
-                        </legend>
-                        <div class="casexml" id="casexml_home">
-                        </div>
-                    {% else %}
-                        <legend>
-                            <div class="pull-left">{% trans "Case Management" %}</div>
-                            <span class="hq-help-template"
-                                data-title="{% trans "Case Management" %}"
-                                data-content="{% trans "Cases give you a way to track patients, farms, etc. over time.  You can choose to save data from a form to the case, which will store the data locally on the phone to use later." %}"
-                            ></span>
-                        </legend>
-                        <div class="casexml" id="casexml_home">
-                            {% block case_management_content %}
-                                {% include 'app_manager/partials/case_config.html' %}
-                            {% endblock %}
-                        </div>
+                    <div class="help-block">
+                        Cases give you a way to track patients, farms, etc. over time. You can choose to save 
+                        data from a form to the case, which will store the data locally on the phone to use later.
+                    </div>
+                    <div class="casexml" id="casexml_home">
+                    {% if app.application_version != '1.0' %}
+                        {% block case_management_content %}
+                            {% include 'app_manager/partials/case_config.html' %}
+                        {% endblock %}
                     {% endif %}
+                    </div>
                 {% else %}
                     <p class="alert alert-warning">
                         {% trans "You have not created a form yet. Create a form in order to view and edit Case Management." %}

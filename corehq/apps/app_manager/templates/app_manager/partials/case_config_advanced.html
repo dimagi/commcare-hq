@@ -145,36 +145,40 @@
         <a href="#" data-bind="html: header" class="header"></a>
     </h3>
     <div>
-        <div>
-            <i class="fa fa-file"></i>
-            {% trans "Select case type:" %}
-            <span class="form-group" data-bind="css: {'has-warning': validate()}">
-                <select data-bind="
+                <button class="pull-right btn btn-danger"
+                        data-bind="openModal: 'remove-action-modal-template', visible: true">
+                    <i class="fa fa-trash"></i>
+                    {% trans "Remove action" %}
+                </button>
+        <div class="form-inline" data-bind="css: {'has-warning': validate()}">
+            <div class="form-group">
+                <label>{% trans "Case Type" %}</label>
+                <select class="form-control" data-bind="
                     options: config.caseTypes,
                     value: case_type,
                     optionsCaption: 'Choose a Case Type...'
                 "></select>
-                <!-- ko if: actionType == 'load'-->
+            </div>
+            <!-- ko if: actionType == 'load'-->
+            <div class="form-group">
                 &nbsp;
-                {% trans "Case list:" %}
-                <select data-bind="optstr: available_modules,
+                <label>{% trans "Case List" %}</label>
+                <select class="form-control" data-bind="optstr: available_modules,
                     optstrValue: 'id',
                     optstrText: 'module_name',
                     value: details_module">
                 </select>
-                <!-- /ko -->
+            </div>
+            <!-- /ko -->
+            <div class="form-group">
                 &nbsp;
-                {% trans "Case Tag:" %}
-                <input type="text" class="input-medium" data-bind="value: case_tag, disable: disable_tag" />
-                <span class="help-inline" data-bind="text: validate"></span>
-                <a href="#" data-bind="openModal: 'remove-action-modal-template', visible: true" class="pull-right">
-                    <i class="fa fa-trash"></i>
-                    {% trans "Remove action" %}
-                </a>
-            </span>
+                <label>{% trans "Case Tag" %}</label>
+                <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
+            </div>
+            <span class="help-block" data-bind="text: validate"></span>
         </div>
-        <div data-bind="visible: !case_type">
-            <em>{% trans "Please select a case type." %}</em>
+        <div class="help-block" data-bind="visible: !case_type">
+            {% trans "Please select a case type." %}
         </div>
         <div data-bind="visible: case_type">
             <!-- ko template: {name: 'case-config:case-action:body'} --><!-- /ko -->
@@ -254,9 +258,9 @@
     </div>
 </script>
 
-<div id="case-config-ko" class="row">
+<div id="case-config-ko">
     <div data-bind="saveButton: saveButton"></div>
-    <div data-bind="with: caseConfigViewModel" class="col-sm-11">
+    <div data-bind="with: caseConfigViewModel">
         <div class="dropdown" data-bind="visible: actionOptions().length">
             <a href="#" data-toggle="dropdown">
                 <i class="fa fa-plus icon-blue"></i>
@@ -275,9 +279,12 @@
             <i class="fa fa-plus icon-muted"></i>
             <span class="text-muted">{% trans "Add Action" %}</span>
         </div>
-        <div>
+        <div class="spacer"></div>
+        <div class="container-fluid">
             <div class="row">
-                <span data-bind="visible: load_update_cases().length"><i class="fa fa-asterisk"></i> {% trans "Load / Update / Close cases" %}</span>
+                <legend data-bind="visible: load_update_cases().length">
+                    {% trans "Load / Update / Close Cases" %}
+                </legend>
                 <div id="case-load-accordion" data-bind="foreach: load_update_cases, accordion: {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true}">
                     <!-- ko if: auto_select -->
                     <div class="group" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
@@ -291,7 +298,9 @@
                 <hr/>
             </div>
             <div class="row">
-                <span data-bind="visible: open_cases().length"><i class="fa fa-asterisk"></i> {% trans "Open new cases" %}</span>
+                <legend data-bind="visible: open_cases().length">
+                    {% trans "Open New Cases" %}
+                </legend>
                 <div id="case-open-accordion" data-bind="foreach: open_cases, accordion: {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true}">
                     <div class="group" data-bind="template: {name: 'case-config:case-action'}"></div>
                 </div>
