@@ -55,7 +55,7 @@ individual project sites when necessary.
 + [Elasticsearch][elasticsearch] 1.7.4. In Ubuntu and other Debian derivatives,
   [download the deb package][elasticsearch], install, and then **hold** the version to prevent automatic upgrades:
 
-        $ sudo dpkg -i elasticsearch-0.90.13.deb
+        $ sudo dpkg -i elasticsearch-1.7.4.deb
         $ sudo apt-mark hold elasticsearch
 
   On Mac, the following works well:
@@ -82,7 +82,7 @@ individual project sites when necessary.
  [couchdb]: http://wiki.apache.org/couchdb/Installation
  [postgres]: http://www.postgresql.org/download/
  [redis]: https://gist.github.com/mwhite/c0381c5236855993572c
- [elasticsearch]: http://www.elasticsearch.org/downloads/0-90-13/
+ [elasticsearch]: https://www.elastic.co/downloads/past-releases/elasticsearch-1-7-4
  [jython]: http://jython.org/downloads.html
 
 #### Elasticsearch Configuration (optional)
