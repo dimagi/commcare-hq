@@ -113,15 +113,31 @@ class LocationType(models.Model):
     def _sync_administrative_status(self):
         """Updates supply points of locations of this type"""
         if self._administrative_old == self.administrative:
-            print "skipping"
             return
+
         for location in SQLLocation.objects.filter(location_type=self):
-            print "saving {}".format(location.name)
             # Saving the location should be sufficient for it to pick up the
             # new supply point.  We'll need to save it anyways to store the new
             # supply_point_id.
             location.save()
+        if self.administrative:
+            self._hide_stock_states()
+        else:
+            self._unhide_stock_states()
         self._administrative_old = self.administrative
+
+    def _hide_stock_states(self):
+        from corehq.apps.commtrack.models import StockState
+        (StockState.objects
+         .filter(sql_location__location_type=self)
+         .update(sql_location=None))
+
+    def _unhide_stock_states(self):
+        from corehq.apps.commtrack.models import StockState
+        for location in SQLLocation.objects.filter(location_type=self):
+            (StockState.objects
+             .filter(case_id=location.supply_point_id)
+             .update(sql_location=location))
 
     def save(self, *args, **kwargs):
         if not self.code:
