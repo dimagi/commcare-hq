@@ -14,7 +14,7 @@ CHANNELS = {
 
 class PostgresProducer(object):
     """
-    Abstract class. Producer that pushes changes to Kafka
+    Producer that pushes changes to Kafka
     """
 
     def __init__(self, kafka, data_source_type, data_source_name):
