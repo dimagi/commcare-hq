@@ -110,46 +110,20 @@ class LocationType(models.Model):
         self.understock_threshold = config.understock_threshold
         self.overstock_threshold = config.overstock_threshold
 
-    def _sync_administrative_status(self):
-        """Updates supply points of locations of this type"""
-        if self._administrative_old == self.administrative:
-            return
-
-        for location in SQLLocation.objects.filter(location_type=self):
-            # Saving the location should be sufficient for it to pick up the
-            # new supply point.  We'll need to save it anyways to store the new
-            # supply_point_id.
-            location.save()
-        if self.administrative:
-            self._hide_stock_states()
-        else:
-            self._unhide_stock_states()
-        self._administrative_old = self.administrative
-
-    def _hide_stock_states(self):
-        from corehq.apps.commtrack.models import StockState
-        (StockState.objects
-         .filter(sql_location__location_type=self)
-         .update(sql_location=None))
-
-    def _unhide_stock_states(self):
-        from corehq.apps.commtrack.models import StockState
-        for location in SQLLocation.objects.filter(location_type=self):
-            (StockState.objects
-             .filter(case_id=location.supply_point_id)
-             .update(sql_location=location))
-
     def save(self, *args, **kwargs):
+        from .tasks import sync_administrative_status
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
         if not self.commtrack_enabled:
-            # Ask Sheel if this is okay
             self.administrative = True
         self._populate_stock_levels()
         saved = super(LocationType, self).save(*args, **kwargs)
-        # Pull this out to an asynchronous task
-        self._sync_administrative_status()
+
+        if self._administrative_old != self.administrative:
+            sync_administrative_status.delay(self)
+            self._administrative_old = self.administrative
+
         return saved
 
     def __unicode__(self):
