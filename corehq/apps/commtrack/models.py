@@ -554,27 +554,32 @@ def _make_location_admininstrative(location):
     location.supply_point_id = None  # this will be saved soon anyways
 
 
-def sync_supply_point(loc):
-    # Called on location.save()
-    domain = Domain.get_by_name(loc.domain)
-    if not domain.commtrack_enabled:
-        return None
-    if loc.location_type.administrative:
-        _make_location_admininstrative(loc)
-        return None
-
+def _reopen_or_create_supply_point(location):
     from .dbaccessors import get_supply_point_by_location_id
-    supply_point = get_supply_point_by_location_id(loc.domain, loc.location_id)
+    supply_point = get_supply_point_by_location_id(location.domain, location.location_id)
     if supply_point:
         if supply_point and supply_point.closed:
             for action in supply_point.actions:
                 if action.action_type == 'close':
                     action.xform.archive(user_id=const.COMMTRACK_USERNAME)
-        supply_point.update_from_location(loc)
-        updated_supply_point = supply_point
+        supply_point.update_from_location(location)
+        return supply_point
     else:
-        updated_supply_point = SupplyInterface.create_from_location(loc.domain, loc)
-    return updated_supply_point._id
+        return SupplyInterface.create_from_location(location.domain, location)
+
+
+def sync_supply_point(location):
+    # Called on location.save()
+    domain = Domain.get_by_name(location.domain)
+    if not domain.commtrack_enabled:
+        return None
+
+    if location.location_type.administrative:
+        _make_location_admininstrative(location)
+        return None
+    else:
+        updated_supply_point = _reopen_or_create_supply_point(location)
+        return updated_supply_point._id
 
 
 @receiver(post_save, sender=StockState)
