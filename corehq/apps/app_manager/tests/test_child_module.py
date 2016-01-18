@@ -68,7 +68,7 @@ class ModuleAsChildTestBase(TestXmlMixin):
             </text>
             <command id="m0-f0"/>
           </menu>
-          <menu id="m0-m1">
+          <menu id="m0.m1">
             <text>
               <locale id="modules.m1"/>
             </text>
