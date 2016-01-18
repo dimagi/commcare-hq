@@ -4,7 +4,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from casexml.apps.case.xml import V2
 from corehq import toggles
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
@@ -59,7 +59,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                             status=401)
 
     project = Domain.get_by_name(domain)
-    app = Application.get(app_id) if app_id else None
+    app = get_app(domain, app_id) if app_id else None
     restore_config = RestoreConfig(
         project=project,
         user=couch_user.to_casexml_user(),
