@@ -38,7 +38,7 @@ from corehq.apps.accounting.decorators import (
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui, \
-    use_jquery_ui_multiselect, use_knockout_js, use_select2
+    use_jquery_ui_multiselect, use_select2
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -448,7 +448,6 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
 
     @method_decorator(login_and_domain_required)
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
@@ -2021,7 +2020,6 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
 
     @method_decorator(domain_admin_required)
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
