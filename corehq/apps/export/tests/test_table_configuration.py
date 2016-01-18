@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase
 
 from corehq.apps.export.models import TableConfiguration, ExportColumn, \
-    ScalarItem, ExportRow
+    ScalarItem, ExportRow, MultipleChoiceItem, SplitExportColumn
 
 
 class TableConfigurationGetRowsTest(SimpleTestCase):
@@ -30,10 +30,10 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
         }
         self.assertEqual(
             [row.data for row in table_configuration.get_rows(submission)],
-            [ExportRow(['baz', 'foo']).data]
+            [['baz', 'foo']]
         )
 
-    def test_repeats(self):
+    def test_repeat(self):
         table_configuration = TableConfiguration(
             repeat_path=['form', 'repeat1'],
             columns=[
@@ -47,14 +47,52 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
         submission = {
             'form': {
                 'repeat1': [
-                    {'q1', 'foo'},
-                    {'q1', 'bar'}
+                    {'q1': 'foo'},
+                    {'q1': 'bar'}
                 ]
             }
         }
         self.assertEqual(
-            table_configuration.get_rows(submission),
-            [ExportRow(['foo']), ExportRow(['bar'])]
+            [row.data for row in table_configuration.get_rows(submission)],
+            [ExportRow(['foo']).data, ExportRow(['bar']).data]
+        )
+
+    def test_double_repeat(self):
+        table_configuration = TableConfiguration(
+            repeat_path=['form', 'repeat1', 'group1', 'repeat2'],
+            columns=[
+                ExportColumn(
+                    item=ScalarItem(
+                        path=['form', 'repeat1', 'group1', 'repeat2', 'q1'],
+                    )
+                ),
+            ]
+        )
+        submission = {
+            'form': {
+                'repeat1': [
+                    {
+                        'group1': {
+                            'repeat2': [
+                                {'q1': 'foo'},
+                                {'q1': 'bar'}
+                            ]
+                        }
+                    },
+                    {
+                        'group1': {
+                            'repeat2': [
+                                {'q1': 'beep'},
+                                {'q1': 'boop'}
+                            ]
+                        }
+                    },
+                ]
+            }
+        }
+        self.assertEqual(
+            [row.data for row in table_configuration.get_rows(submission)],
+            [['foo'], ['bar'], ['beep'], ['boop']]
         )
 
     def test_split_columns(self):
@@ -82,5 +120,5 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
         submission = {"form": {"q1": "a b d"}}
         self.assertEqual(
             [row.data for row in table_configuration.get_rows(submission)],
-            [ExportRow([1, "", 1, "", "b d"]).data]
+            [[1, "", 1, "", "b d"]]
         )
