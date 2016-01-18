@@ -2,6 +2,8 @@ from copy import copy
 from datetime import datetime, timedelta, date
 import itertools
 import json
+from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
+    DEID_EXPORT_PERMISSION
 import langcodes
 import os
 import pytz
@@ -135,7 +137,7 @@ from .models import (
 )
 
 from .standard import inspect, export, ProjectReport
-from corehq.apps.style.decorators import use_knockout_js, use_bootstrap3
+from corehq.apps.style.decorators import use_bootstrap3
 from .standard.cases.basic import CaseListReport
 from .tasks import (
     build_form_multimedia_zip,
@@ -160,8 +162,10 @@ datespan_default = datespan_in_request(
     default_days=7,
 )
 
-require_form_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.export.ExcelExportReport', login_decorator=None)
-require_case_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.export.CaseExportReport', login_decorator=None)
+require_form_export_permission = require_permission(
+    Permissions.view_report, FORM_EXPORT_PERMISSION, login_decorator=None)
+require_case_export_permission = require_permission(
+    Permissions.view_report, CASE_EXPORT_PERMISSION, login_decorator=None)
 
 require_form_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.inspect.SubmitHistory', login_decorator=None)
 require_case_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.cases.basic.CaseListReport', login_decorator=None)
@@ -293,10 +297,7 @@ def export_data(req, domain):
         return resp
     else:
         messages.error(req, "Sorry, there was no data found for the tag '%s'." % export_tag)
-        next = req.GET.get("next", "")
-        if not next:
-            next = export.ExcelExportReport.get_url(domain=domain)
-        return HttpResponseRedirect(next)
+        raise Http404()
 
 
 @require_form_export_permission
@@ -355,7 +356,7 @@ def export_default_or_custom_data(request, domain, export_id=None, bulk_export=F
         return _export_no_deid(request, domain, export_id, bulk_export=bulk_export)
 
 
-@require_permission('view_report', 'corehq.apps.reports.standard.export.DeidExportReport', login_decorator=None)
+@require_permission('view_report', DEID_EXPORT_PERMISSION, login_decorator=None)
 def _export_deid(request, domain, export_id=None, bulk_export=False):
     return _export_default_or_custom_data(request, domain, export_id, bulk_export=bulk_export, safe_only=True)
 
@@ -368,7 +369,6 @@ def _export_no_deid(request, domain, export_id=None, bulk_export=False):
 def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=False, safe_only=False):
     req = request.POST if request.method == 'POST' else request.GET
     async = req.get('async') == 'true'
-    next = req.get("next", "")
     format = req.get("format", "")
     export_type = req.get("type", "form")
     previous_export_id = req.get("previous_export", None)
@@ -427,7 +427,6 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
 
         export_object = export_class(index=export_tag)
 
-
     if export_type == 'form':
         _filter = filter
         filter = SerializableFunction(default_form_filter, filter=_filter)
@@ -445,8 +444,6 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
             max_column_size=max_column_size,
         )
     else:
-        if not next:
-            next = export.ExcelExportReport.get_url(domain=domain)
         try:
             resp = export_object.download_data(format, filter=filter, limit=limit)
         except SchemaMismatchException, e:
@@ -456,12 +453,12 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
                 "Sorry, the export failed for %s, please try again later" \
                     % export_object.name
             )
-            return HttpResponseRedirect(next)
+            raise Http404()
         if resp:
             return resp
         else:
             messages.error(request, "Sorry, there was no data found for the tag '%s'." % export_object.name)
-            return HttpResponseRedirect(next)
+            raise Http404()
 
 
 @csrf_exempt
@@ -1420,7 +1417,6 @@ def download_form(request, domain, instance_id):
 class EditFormInstance(View):
 
     @use_bootstrap3
-    @use_knockout_js
     @method_decorator(require_form_view_permission)
     @method_decorator(require_permission(Permissions.edit_data))
     def dispatch(self, request, *args, **kwargs):

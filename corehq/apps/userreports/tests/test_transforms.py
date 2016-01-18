@@ -21,6 +21,34 @@ class TransformFactoryTest(SimpleTestCase):
             })
 
 
+class NumberFormatTransformTest(SimpleTestCase):
+
+    def setUp(self):
+        self.transform = TransformFactory.get_transform({
+            "type": "number_format",
+            "format_string": "{0:.0f}"
+        }).get_transform_function()
+
+    def test_int(self):
+        self.assertEqual('11', self.transform(11))
+
+    def test_decimal(self):
+        self.assertEqual('11', self.transform(11.23))
+
+    def test_strings(self):
+        tests = (
+            ('11', '11'),
+            ('11.23', '11'),
+            ('notanumber', 'notanumber'),
+            ('', ''),
+        )
+        for input, expected_result in tests:
+            self.assertEqual(expected_result, self.transform(input))
+
+    def test_none(self):
+        self.assertEqual(None, self.transform(None))
+
+
 class CustomTransformTest(SimpleTestCase):
 
     def testInvalidCustomType(self):

@@ -17,7 +17,7 @@ from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.users.views import DefaultProjectUserSettingsView
-from corehq.apps.style.decorators import use_bootstrap3
+from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
 from django_prbac.utils import has_privilege
 from django.conf import settings
 
@@ -45,6 +45,7 @@ def default_dashboard_url(request, domain):
 class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
     @use_bootstrap3
+    @use_angular_js
     def dispatch(self, request, *args, **kwargs):
         return super(BaseDashboardView, self).dispatch(request, *args, **kwargs)
 

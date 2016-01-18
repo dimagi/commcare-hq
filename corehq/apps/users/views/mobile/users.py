@@ -60,7 +60,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
-from corehq.apps.style.decorators import use_bootstrap3, use_select2
+from corehq.apps.style.decorators import use_bootstrap3, use_select2, \
+    use_angular_js
 from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.decorators import require_can_edit_commcare_users
@@ -402,6 +403,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @use_bootstrap3
     @use_select2
+    @use_angular_js
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, *args, **kwargs):
         return super(MobileWorkerListView, self).dispatch(*args, **kwargs)

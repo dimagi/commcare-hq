@@ -358,20 +358,18 @@
         </script>
         {# JavaScript Display Logic Libaries #}
 
-        {# Use knockout explicitly, opt to move to angular js when possible. #}
-        {% if request.use_knockout_js %}
         {% compress js %}
         <script type="text/javascript" src="{% new_static 'knockout/dist/knockout.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
         {% endcompress %}
-        {% endif %}
 
-        {# always use angular js by default, as this will be our core library #}
+        {% if request.use_angular_js %}
         {% compress js %}
         {% include "style/includes/bootstrap3/angular.html" %}
         {% endcompress %}
+        {% endif %}
 
         {% if request.use_select2 %}
         {% compress js %}

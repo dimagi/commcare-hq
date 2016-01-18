@@ -1805,8 +1805,20 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             self.domain, edition=self.cleaned_data['software_plan_edition'],
         )
 
-        if not self.current_subscription or self.cleaned_data['start_date'] > datetime.date.today():
-            new_subscription = Subscription.new_domain_subscription(
+        if (
+            self.current_subscription
+            and self.current_subscription.service_type == SubscriptionType.CONTRACTED
+            and self.current_subscription.plan_version == new_plan_version
+            and self.current_subscription.date_start == self.cleaned_data['start_date']
+        ):
+            contracted_subscription = self.current_subscription
+            contracted_subscription.account = self.next_account
+            contracted_subscription.update_subscription(
+                contracted_subscription.date_start,
+                **{k: v for k, v in self.subscription_default_fields.items() if k != 'internal_change'}
+            )
+        elif not self.current_subscription or self.cleaned_data['start_date'] > datetime.date.today():
+            contracted_subscription = Subscription.new_domain_subscription(
                 self.next_account,
                 self.domain,
                 new_plan_version,
@@ -1814,7 +1826,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                 **self.subscription_default_fields
             )
         else:
-            new_subscription = self.current_subscription.change_plan(
+            contracted_subscription = self.current_subscription.change_plan(
                 new_plan_version,
                 transfer_credits=self.current_subscription.account == self.next_account,
                 account=self.next_account,
@@ -1824,14 +1836,14 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
         CreditLine.add_credit(
             self.cleaned_data['sms_credits'],
             feature_type=FeatureType.SMS,
-            subscription=new_subscription,
+            subscription=contracted_subscription,
             web_user=self.web_user,
             reason=CreditAdjustmentReason.MANUAL,
         )
         CreditLine.add_credit(
             self.cleaned_data['user_credits'],
             feature_type=FeatureType.USER,
-            subscription=new_subscription,
+            subscription=contracted_subscription,
             web_user=self.web_user,
             reason=CreditAdjustmentReason.MANUAL,
         )

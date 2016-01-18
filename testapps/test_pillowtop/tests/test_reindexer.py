@@ -6,7 +6,8 @@ from casexml.apps.case.signals import case_post_save
 from corehq.apps.es import UserES, CaseES, FormES, ESQuery
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests.utils import TestFormMetadata, FormProcessorTestUtils
+from corehq.form_processor.utils import TestFormMetadata
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
