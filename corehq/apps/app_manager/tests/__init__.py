@@ -23,6 +23,7 @@ try:
     from corehq.apps.app_manager.tests.test_form_versioning import *
     from corehq.apps.app_manager.tests.test_form_workflow import *
     from corehq.apps.app_manager.tests.test_grid_menus import *
+    from corehq.apps.app_manager.tests.test_id_strings import *
     from corehq.apps.app_manager.tests.test_media_suite import *
     from corehq.apps.app_manager.tests.test_models import *
     from corehq.apps.app_manager.tests.test_profile import *
