@@ -125,6 +125,7 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.eggs.Loader',
 )
 
+# Add this to localsettings and set it to False, so that CSRF protection is enabled on localhost
 CSRF_ALWAYS_OFF = True
 
 MIDDLEWARE_CLASSES = [
