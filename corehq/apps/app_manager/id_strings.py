@@ -294,7 +294,7 @@ def menu_id(module, suffix=""):
         # than one module has the same root module. (FB 188908)
         # Don't nest if module.root_module is not set; workflow,
         # navigation and grid style look for ROOT.
-        menu_id_ = root_id if root_id == ROOT else u'{}-{}'.format(menu_id(module.root_module), menu_id_)
+        menu_id_ = root_id if root_id == ROOT else u'{}.{}'.format(menu_id(module.root_module), menu_id_)
     return menu_id_
 
 
