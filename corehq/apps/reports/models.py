@@ -25,7 +25,6 @@ from corehq.apps.cachehq.mixins import (
 )
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from corehq.apps.domain.models import Domain
-from corehq.apps.export.models import FormQuestionSchema
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_all_daterange_slugs
 from corehq.apps.reports.dbaccessors import (
@@ -844,6 +843,7 @@ class FormExportSchema(HQExportSchema):
 
     @property
     def question_schema(self):
+        from corehq.apps.export.models import FormQuestionSchema
         return FormQuestionSchema.get_or_create(self.domain, self.app_id, self.xmlns)
 
     @property
