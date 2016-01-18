@@ -2002,13 +2002,10 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 fixture.description = request.POST["%s-description" % old_id]
                 fixture.save()
 
-            if new_domain is None:
-                messages.error(request, _("Version creation failed; please try again"))
-            else:
-                messages.success(request, (_("Created a new version of your app. This version will be posted to "
-                                             "CommCare Exchange pending approval by admins.") if publish_on_submit
-                                           else _("Created a new version of your app.")))
-                return redirect(ExchangeSnapshotsView.urlname, self.domain)
+            messages.success(request, (_("Created a new version of your app. This version will be posted to "
+                                         "CommCare Exchange pending approval by admins.") if publish_on_submit
+                                       else _("Created a new version of your app.")))
+            return redirect(ExchangeSnapshotsView.urlname, self.domain)
         return self.get(request, *args, **kwargs)
 
 
