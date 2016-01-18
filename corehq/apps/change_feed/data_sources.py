@@ -5,9 +5,10 @@ from corehq.util.exceptions import DatabaseNotFound
 from pillowtop.dao.couch import CouchDocumentStore
 
 COUCH = 'couch'
+POSTGRES = 'postgres'
 
 
-def get_document_store(data_source_type, data_source_name):
+def get_document_store(data_source_type, data_source_name=None):
     if data_source_type == COUCH:
         try:
             return CouchDocumentStore(couch_config.get_db_for_db_name(data_source_name))
@@ -16,6 +17,14 @@ def get_document_store(data_source_type, data_source_name):
             if settings.DEBUG:
                 return None
             raise
+    elif data_source_type == POSTGRES:
+        conn = psycopg2.connect(
+            database='commcarehq',
+            user='commcarehq',
+            password='commcarehq',
+        )
+        conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+        return conn
     else:
         raise UnknownDocumentStore(
             'getting document stores for backend {} is not supported!'.format(data_source_type)
