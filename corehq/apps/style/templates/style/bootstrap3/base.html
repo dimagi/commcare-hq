@@ -350,6 +350,11 @@
                 RETRY: '{% trans "Try Again"|escapejs %}',
                 ERROR_SAVING: '{% trans "There was an error deleting"|escapejs %}'
             }, 'btn btn-danger');
+
+            $('.hq-help-template').each(function () {
+                COMMCAREHQ.makeHqHelp($(this).data()).insertAfter(this);
+                $(this).remove();
+            });
         </script>
         {# JavaScript Display Logic Libaries #}
 
