@@ -1,7 +1,10 @@
 import re
 from decimal import Decimal
 
+from corehq.apps.commtrack.exceptions import NotAUserClassError
 from corehq.apps.commtrack.sms import StockAndReceiptParser, SMSError, const
+from corehq.apps.users.models import CouchUser
+from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.parsers.ledgers import StockTransactionHelper
 from custom.ewsghana.handlers import INVALID_PRODUCT_CODE
 
@@ -12,8 +15,26 @@ class ProductCodeException(Exception):
 
 class EWSStockAndReceiptParser(StockAndReceiptParser):
 
-    def __init__(self, domain, v):
-        super(EWSStockAndReceiptParser, self).__init__(domain, v)
+    def __init__(self, domain, v, location=None):
+        self.domain = domain
+        self.v = v
+
+        self.location = location
+        self.case = None
+        u = v.owner
+
+        if domain.commtrack_enabled:
+            # if user is not actually a user, we let someone else process
+            if not isinstance(u, CouchUser):
+                raise NotAUserClassError
+
+            if not self.location:
+                self.location = u.location
+
+            if self.location:
+                self.case = SupplyInterface(domain.name).get_by_location(self.location)
+
+        self.C = domain.commtrack_settings
         self.bad_codes = set()
 
     def product_from_code(self, prod_code):

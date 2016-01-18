@@ -1,3 +1,4 @@
+from collections import namedtuple
 from decimal import Decimal
 from dateutil.relativedelta import relativedelta
 from django.db.models.query_utils import Q
@@ -23,6 +24,7 @@ from custom.ewsghana.reminders.const import DAYS_UNTIL_LATE
 
 TEST_DOMAIN = 'ewsghana-receipts-test'
 TEST_BACKEND = 'MOBILE_BACKEND_TEST'
+Msg = namedtuple('Msg', ['text'])
 
 
 def get_descendants(location_id):

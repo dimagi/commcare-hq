@@ -21,6 +21,7 @@ from custom.ewsghana.handlers.helpers.formatter import EWSFormatter
 from custom.ewsghana.handlers.helpers.stock_and_receipt_parser import EWSStockAndReceiptParser, \
     ProductCodeException
 from custom.ewsghana.reminders import ERROR_MESSAGE
+from custom.ewsghana.tasks import send_soh_messages_task
 from custom.ewsghana.utils import ProductsReportHelper, send_sms
 from custom.ewsghana.alerts.alerts import SOHAlerts
 from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE
@@ -35,6 +36,8 @@ def get_transactions_by_product(transactions):
 
 
 class SOHHandler(KeywordHandler):
+
+    async_response = False
 
     def get_valid_reports(self, data):
         filtered_transactions = []
@@ -133,7 +136,7 @@ class SOHHandler(KeywordHandler):
     def send_message_to_admins(self, message):
         in_charge_users = map(CommCareUser.wrap, iter_docs(
             CommCareUser.get_db(),
-            [in_charge.user_id for in_charge in self.user.sql_location.facilityincharge_set.all()]
+            [in_charge.user_id for in_charge in self.sql_location.facilityincharge_set.all()]
         ))
         for in_charge_user in in_charge_users:
             phone_number = get_preferred_phone_number_for_recipient(in_charge_user)
@@ -141,6 +144,23 @@ class SOHHandler(KeywordHandler):
                 continue
             send_sms(self.sql_location.domain, in_charge_user, phone_number,
                      message % (in_charge_user.full_name, self.sql_location.name))
+
+    @property
+    def parser(self):
+        parser = EWSStockAndReceiptParser(self.domain_object, self.verified_contact)
+        return parser
+
+    def send_messages(self, parser, stockouts, transactions):
+        if not parser.bad_codes:
+            if self.sql_location.location_type.name == 'Regional Medical Store':
+                self.send_ms_alert(stockouts, transactions, 'RMS')
+            elif self.sql_location.location_type.name == 'Central Medical Store':
+                self.send_ms_alert(stockouts, transactions, 'CMS')
+            message, super_message = SOHAlerts(self.user, self.sql_location).get_alerts(transactions)
+            self.send_message_to_admins(super_message)
+            self.respond(message)
+        else:
+            self.send_errors(transactions, parser.bad_codes)
 
     def handle(self):
         domain = Domain.get_by_name(self.domain)
@@ -160,7 +180,7 @@ class SOHHandler(KeywordHandler):
             return True
 
         try:
-            parser = EWSStockAndReceiptParser(domain, self.verified_contact)
+            parser = self.parser
             formatted_text = EWSFormatter().format(text)
             data = parser.parse(formatted_text)
             if not data:
@@ -196,17 +216,11 @@ class SOHHandler(KeywordHandler):
 
         process(domain.name, data)
         transactions = data['transactions']
-        if not parser.bad_codes:
-            if self.sql_location.location_type.name == 'Regional Medical Store':
-                self.send_ms_alert(stockouts, transactions, 'RMS')
-            elif self.sql_location.location_type.name == 'Central Medical Store':
-                self.send_ms_alert(stockouts, transactions, 'CMS')
-            message, super_message = SOHAlerts(self.user, self.sql_location).get_alerts(transactions)
-            self.send_message_to_admins(super_message)
-            self.respond(message)
-        else:
-            self.send_errors(transactions, parser.bad_codes)
 
+        if not self.async_response:
+            self.send_messages(parser, stockouts, transactions)
+        else:
+            send_soh_messages_task.delay(self, parser, stockouts, transactions)
         return True
 
     def help(self):

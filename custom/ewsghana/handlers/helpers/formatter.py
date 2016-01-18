@@ -107,4 +107,3 @@ class EWSFormatter(object):
             result += "{} {}.{} ".format(product, soh, receipts)
 
         return result.strip()
-
