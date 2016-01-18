@@ -6,7 +6,6 @@ from custom.ewsghana.utils import ProductsReportHelper
 from django.utils.translation import ugettext as _
 
 
-
 class SOHAlerts(object):
 
     def __init__(self, user, sql_location):

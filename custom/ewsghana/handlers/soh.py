@@ -196,7 +196,7 @@ def get_transactions_by_product(transactions):
     return result
 
 
-class AlertsHandler(KeywordHandler):
+class SOHHandler(KeywordHandler):
 
     def get_valid_reports(self, data):
         filtered_transactions = []
