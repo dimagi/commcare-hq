@@ -1,6 +1,6 @@
 from corehq.apps.products.models import SQLProduct
 from custom.ewsghana.handlers import HELP_TEXT
-from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
+from custom.ewsghana.handlers.keyword import KeywordHandler
 
 
 class HelpHandler(KeywordHandler):

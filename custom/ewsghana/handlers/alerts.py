@@ -10,9 +10,9 @@ from casexml.apps.stock.models import StockTransaction
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.toggles import EWS_INVALID_REPORT_RESPONSE
+from custom.ewsghana.handlers.keyword import KeywordHandler
 from custom.ewsghana.reminders import ERROR_MESSAGE
 from custom.ewsghana.utils import ProductsReportHelper, send_sms
-from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ewsghana.alerts.alerts import stock_alerts
 from corehq.apps.commtrack.sms import *
 from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE
