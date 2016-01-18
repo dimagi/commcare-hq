@@ -20,10 +20,18 @@ class Command(BaseCommand):
             default=False,
             help="Just print the changes",
         ),
+        make_option(
+            '--undo',
+            action='store_true',
+            dest='undo',
+            default=False,
+            help="Undo the changes",
+        ),
     )
 
     def handle(self, *args, **options):
         check = options['check']
+        undo = options['undo']
 
         upgrade_checkpoints = DjangoPillowCheckpoint.objects.filter(checkpoint_id__endswith='esupgrade')
         for upgrade_cp in upgrade_checkpoints:
@@ -34,13 +42,35 @@ class Command(BaseCommand):
             except DjangoPillowCheckpoint.DoesNotExist:
                 print('Matching checkpoint not found: {}'.format(upgrade_cp.checkpoint_id))
             else:
-                print('Copying sequence from: {} -> {}'.format(
-                    upgrade_cp.checkpoint_id, current_cp.checkpoint_id
-                ))
-                if check:
-                    print('Old seq: {}'.format(current_cp.sequence))
-                    print('New seq: {}'.format(upgrade_cp.sequence))
+                if undo:
+                    self.undo(current_cp, check)
                 else:
-                    current_cp.old_sequence = current_cp.sequence
-                    current_cp.sequence = upgrade_cp.sequence
-                    current_cp.save()
+                    self.migrate(upgrade_cp, current_cp, check)
+
+    @staticmethod
+    def migrate(upgrade_cp, current_cp, check):
+        print('Copying sequence from: {} -> {}'.format(
+            upgrade_cp.checkpoint_id, current_cp.checkpoint_id
+        ))
+        if check:
+            print('Old seq: {}'.format(current_cp.sequence))
+            print('New seq: {}'.format(upgrade_cp.sequence))
+        else:
+            current_cp.old_sequence = current_cp.sequence
+            current_cp.sequence = upgrade_cp.sequence
+            current_cp.save()
+
+    @staticmethod
+    def undo(current_cp, check):
+        if not current_cp.old_sequence:
+            print('Unable to revert empty to old sequence: {}'.format(current_cp.checkpoint_id))
+            return
+
+        print('Reverting to old sequence for: {}'.format(current_cp.checkpoint_id))
+        if check:
+            print('Old seq: {}'.format(current_cp.sequence))
+            print('New seq: {}'.format(current_cp.old_sequence))
+        else:
+            current_cp.sequence = current_cp.old_sequence
+            current_cp.old_sequence = None
+            current_cp.save()
