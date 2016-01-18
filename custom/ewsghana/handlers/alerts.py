@@ -13,7 +13,7 @@ from corehq.toggles import EWS_INVALID_REPORT_RESPONSE
 from custom.ewsghana.handlers.keyword import KeywordHandler
 from custom.ewsghana.reminders import ERROR_MESSAGE
 from custom.ewsghana.utils import ProductsReportHelper, send_sms
-from custom.ewsghana.alerts.alerts import stock_alerts
+from custom.ewsghana.alerts.alerts import SOHAlerts
 from corehq.apps.commtrack.sms import *
 from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE
 
@@ -290,6 +290,18 @@ class AlertsHandler(KeywordHandler):
                         message = message % {'products_names': ', '.join(data), 'ms_type': ms_type}
                         send_sms(self.domain, user, phone_number, message)
 
+    def send_message_to_admins(self, message):
+        in_charge_users = map(CommCareUser.wrap, iter_docs(
+            CommCareUser.get_db(),
+            [in_charge.user_id for in_charge in self.user.sql_location.facilityincharge_set.all()]
+        ))
+        for in_charge_user in in_charge_users:
+            phone_number = get_preferred_phone_number_for_recipient(in_charge_user)
+            if not phone_number:
+                continue
+            send_sms(self.sql_location.domain, in_charge_user, phone_number,
+                     message % (in_charge_user.full_name, self.sql_location.name))
+
     def handle(self):
         verified_contact = self.verified_contact
         domain = Domain.get_by_name(verified_contact.domain)
@@ -350,7 +362,9 @@ class AlertsHandler(KeywordHandler):
                 self.send_ms_alert(stockouts, transactions, 'RMS')
             elif self.sql_location.location_type.name == 'Central Medical Store':
                 self.send_ms_alert(stockouts, transactions, 'CMS')
-            stock_alerts(transactions, verified_contact)
+            message, super_message = SOHAlerts(self.user, self.sql_location).get_alerts(transactions)
+            self.send_message_to_admins(super_message)
+            self.respond(message)
         else:
             self.send_errors(transactions, parser.bad_codes)
 
