@@ -3,6 +3,7 @@ from collections import defaultdict, OrderedDict
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.reminders.util import get_preferred_phone_number_for_recipient
+from corehq.apps.users.models import CommCareUser
 from custom.ewsghana.handlers import INVALID_MESSAGE, INVALID_PRODUCT_CODE, ASSISTANCE_MESSAGE,\
     MS_STOCKOUT, MS_RESOLVED_STOCKOUTS, NO_SUPPLY_POINT_MESSAGE
 from casexml.apps.stock.const import SECTION_TYPE_STOCK
@@ -16,6 +17,7 @@ from custom.ewsghana.utils import ProductsReportHelper, send_sms
 from custom.ewsghana.alerts.alerts import SOHAlerts
 from corehq.apps.commtrack.sms import *
 from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE
+from dimagi.utils.couch.database import iter_docs
 
 
 class ProductCodeException(Exception):
@@ -196,7 +198,7 @@ def get_transactions_by_product(transactions):
 
 class AlertsHandler(KeywordHandler):
 
-    def get_valid_reports(self, data, verified_contact):
+    def get_valid_reports(self, data):
         filtered_transactions = []
         excluded_products = []
         for product_id, transactions in get_transactions_by_product(data['transactions']).iteritems():
@@ -230,7 +232,7 @@ class AlertsHandler(KeywordHandler):
                     for product_id in set(excluded_products)
                 ]
             ))
-            send_sms_to_verified_number(verified_contact, message)
+            self.respond(message)
         return filtered_transactions
 
     def send_errors(self, transactions, bad_codes):
@@ -303,8 +305,7 @@ class AlertsHandler(KeywordHandler):
                      message % (in_charge_user.full_name, self.sql_location.name))
 
     def handle(self):
-        verified_contact = self.verified_contact
-        domain = Domain.get_by_name(verified_contact.domain)
+        domain = Domain.get_by_name(self.domain)
         split_text = self.msg.text.split(' ', 1)
         if split_text[0].lower() == 'soh':
             text = split_text[1]
@@ -321,13 +322,13 @@ class AlertsHandler(KeywordHandler):
             return True
 
         try:
-            parser = EWSStockAndReceiptParser(domain, verified_contact)
+            parser = EWSStockAndReceiptParser(domain, self.verified_contact)
             formatted_text = EWSFormatter().format(text)
             data = parser.parse(formatted_text)
             if not data:
                 return False
             if EWS_INVALID_REPORT_RESPONSE.enabled(self.domain):
-                filtered_transactions = self.get_valid_reports(data, verified_contact)
+                filtered_transactions = self.get_valid_reports(data)
 
                 if not filtered_transactions:
                     return True
@@ -337,15 +338,15 @@ class AlertsHandler(KeywordHandler):
         except NotAUserClassError:
             return False
         except (SMSError, NoDefaultLocationException):
-            send_sms_to_verified_number(verified_contact, unicode(INVALID_MESSAGE))
+            self.respond(unicode(INVALID_MESSAGE))
             return True
         except ProductCodeException as e:
-            send_sms_to_verified_number(verified_contact, e.message)
+            self.respond(e.message)
             return True
         except Exception, e:  # todo: should we only trap SMSErrors?
             if settings.UNIT_TESTING or settings.DEBUG:
                 raise
-            send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
+            self.respond('problem with stock report: %s' % str(e))
             return True
 
         stockouts = set()
