@@ -38,11 +38,17 @@ prevent the case where the task would always be requeued after the timeout
 though any thread can acquire that lock, so should be greater than the max
 runtime of the task
 """
+import datetime
+
+from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from django.test import TestCase
-from corehq.apps.commtrack.models import SupplyPointCase
+
+from corehq.apps.commtrack.models import SupplyPointCase, StockState
 from corehq.apps.commtrack.tests.util import bootstrap_domain
+from corehq.apps.products.models import SQLProduct
+
+from ..models import SQLLocation
 from .util import setup_locations_and_types
-from corehq.apps.locations.models import SQLLocation
 
 
 class TestChangeStatus(TestCase):
@@ -119,3 +125,32 @@ class TestChangeStatus(TestCase):
         self.assertHasSupplyPoint(self.boston)
         self.assertEqual(self.boston.supply_point_id, supply_point_id)
         self.assertFalse(SupplyPointCase.get(supply_point_id).closed)
+
+    def test_stock_states(self):
+        def has_stock_states(location):
+            return StockState.objects.filter(sql_location=location).exists()
+
+        product = SQLProduct.objects.create(
+            domain=self.domain, product_id='foo', name='foo')
+        StockState.objects.create(
+            section_id=SECTION_TYPE_STOCK,
+            case_id=self.boston.supply_point_id,
+            product_id='foo',
+            last_modified_date=datetime.datetime.now(),
+            stock_on_hand=10,
+            sql_product=product,
+            sql_location=self.boston,
+        )
+
+        # I just created a stock state, it'd better show up
+        self.assertTrue(has_stock_states(self.boston))
+
+        # making the location administrative should hide its stock states
+        self.city_type.administrative = True
+        self.city_type.save()
+        self.assertFalse(has_stock_states(self.boston))
+
+        # tracking stock again should restore the stock states
+        self.city_type.administrative = False
+        self.city_type.save()
+        self.assertTrue(has_stock_states(self.boston))
