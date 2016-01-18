@@ -271,13 +271,13 @@ var caseListLookupViewModel = function($el, state, saveButton){
             var $this = $(this);
             if ($this.val().trim().length === 0){
                 $this.closest('.form-group').addClass('has-error');
-                var $help = $this.siblings('.help-inline');
+                var $help = $this.siblings('.help-block');
                 $help.show();
                 errors.push($help.text());
             }
             else {
                 $this.closest('.form-group').removeClass('has-error');
-                $this.siblings('.help-inline').hide();
+                $this.siblings('.help-block').hide();
             }
         });
         return errors;
@@ -286,15 +286,15 @@ var caseListLookupViewModel = function($el, state, saveButton){
     var _validate_extras = function(errors){
         errors = errors || [];
         var $extra = $el.find("#" + detail_type + "-extras"),
-            $extra_help = $extra.find(".help-inline");
+            $extra_help = $extra.find(".help-block");
 
         if (!_trimmed_extras().length){
-            $extra.addClass('error');
+            $extra.addClass('has-error');
             $extra_help.show();
             errors.push($extra_help.text());
         }
         else {
-            $extra.removeClass('error');
+            $extra.removeClass('has-error');
             $extra_help.hide();
         }
         return errors;
@@ -303,15 +303,15 @@ var caseListLookupViewModel = function($el, state, saveButton){
     var _validate_responses = function(errors){
         errors = errors || [];
         var $response = $el.find("#" + detail_type + "-responses"),
-            $response_help = $response.find(".help-inline");
+            $response_help = $response.find(".help-block");
 
         if (!_trimmed_responses().length){
-            $response.addClass('error');
+            $response.addClass('has-error');
             $response_help.show();
             errors.push($response_help.text());
         }
         else {
-            $response.removeClass('error');
+            $response.removeClass('has-error');
             $response_help.hide();
         }
         return errors;
@@ -332,6 +332,7 @@ var caseListLookupViewModel = function($el, state, saveButton){
 
         if (errors.length){
             _.each(errors, function(error){
+                // TODO: this no longer exists (defined in B2 base template)
                 alert_user(error, "error");
             });
             return false;

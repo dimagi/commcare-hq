@@ -105,7 +105,7 @@
                         value: case_type,
                         optionsCaption: 'Choose a Module...'
                     "></select>
-                    <span class="help-inline" data-bind="visible: !case_type()">{% trans "Required" %}</span>
+                    <span class="help-block" data-bind="visible: !case_type()">{% trans "Required" %}</span>
                     {% if show_custom_ref %}
                         <label>{% trans "Override reference id: " %}</label>
                         <input type="text" data-bind="value: reference_id"/>

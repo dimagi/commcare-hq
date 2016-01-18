@@ -87,7 +87,7 @@
                         </div>
     
                     </span>
-                    <span class="help-inline" data-bind="text: validate_subcase"></span>
+                    <span class="help-block" data-bind="text: validate_subcase"></span>
                 </div>
                 <!-- /ko -->
             <!-- /ko -->
@@ -120,7 +120,7 @@
                     <button class="btn btn-default" data-bind="click: addCaseIndex">
                         {% trans "Add parent index" %}
                     </button>
-                    <span class="help-inline" data-bind="text: validate_subcase"></span>
+                    <span class="help-block" data-bind="text: validate_subcase"></span>
                 </div>
                 <!-- /ko -->
     
@@ -243,7 +243,7 @@
                 &nbsp;
                 {% trans "Case Tag:" %}
                 <input type="text" class="input-medium" data-bind="value: case_tag, disable: disable_tag" />
-                <span class="help-inline" data-bind="text: validate"></span>
+                <span class="help-block" data-bind="text: validate"></span>
                 <a href="#" data-bind="openModal: 'remove-action-modal-template', visible: true" class="pull-right">
                     <i class="fa fa-trash"></i>
                     {% trans "Remove action" %}

@@ -189,15 +189,15 @@
                         </fieldset>
                     </div>
                     <div class="form-group container-fluid">
+                        <span class="help-block error-text" style="display:none">
+                            {% trans 'Please add at least one visit' %}
+                        </span>
                         <button id="add-visit" class="btn btn-default"
                                 data-bind="click: addVisit,
                                            disable: hasRepeatVisit()">
                             <i class="fa fa-plus"></i>
                             {% trans "Add Visit" %}
                         </button>
-                        <span class="help-inline error-text" style="display:none">
-                            {% trans 'Please add at least one visit' %}
-                        </span>
                     </div>
                 </fieldset>
             </div>

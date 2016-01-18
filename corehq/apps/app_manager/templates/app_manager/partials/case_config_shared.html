@@ -40,8 +40,8 @@
         value: path,
         optionsCaption: ' '
     "/>
-    <p class="help-inline" data-bind="visible: required() && !path()">{% trans "Required" %}</p>
-    <p class="help-inline" data-bind="visible: !required() && !path() && key()">{% trans "Not assigned" %}</p>
+    <p class="help-block" data-bind="visible: required() && !path()">{% trans "Required" %}</p>
+    <p class="help-block" data-bind="visible: !required() && !path() && key()">{% trans "Not assigned" %}</p>
 </script>
 
 <script type="text/html" id="case-config:case-properties:property">
@@ -92,14 +92,14 @@
                         name: 'case-config:case-properties:property',
                         data: {'property': $data, 'suggestedProperties': case_transaction.suggestedPreloadProperties}
                     }"></div>
-                    <p class="help-inline" data-bind="html: validateProperty, visible: validateProperty"></p>
+                    <p class="help-block" data-bind="html: validateProperty, visible: validateProperty"></p>
                 </td>
                 <td class="text-center">
                     <i class="fa fa-arrow-right"></i>
                 </td>
                 <td>
                     <div data-bind="template: 'case-config:case-properties:question'"></div>
-                    <p class="help-inline" data-bind="html: validateQuestion, visible: validateQuestion"></p>
+                    <p class="help-block" data-bind="html: validateQuestion, visible: validateQuestion"></p>
                 </td>
             </tr>
         </tbody>
@@ -148,7 +148,7 @@
                         name: 'case-config:case-properties:property',
                         data: {property: $data, suggestedProperties: case_transaction.suggestedSaveProperties}
                     }"></div>
-                    <p class="help-inline" data-bind="html: validate, visible: validate"></p>
+                    <p class="help-block" data-bind="html: validate, visible: validate"></p>
                 </td>
             </tr>
         </tbody>

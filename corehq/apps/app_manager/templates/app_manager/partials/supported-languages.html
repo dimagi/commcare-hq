@@ -2,7 +2,7 @@
 <div data-bind="saveButton: saveButton"></div>
 <table class="table">
     <thead>
-        <tr class="row form-group" data-bind="css: {error: validateGeneral()}">
+        <tr class="row form-group" data-bind="css: {'has-error': validateGeneral()}">
             <th></th>
             <th></th>
             <th>{% if not hide_deploy_column %}{% trans "Deploy" %}{% endif %}</th>
@@ -10,9 +10,7 @@
             <th></th>
             <th></th>
             <th>
-                {# TODO: help-inline is deprecated, try replacing with help-block #}
-                <p class="help-inline" data-bind="text: validateGeneral()"></p>
-                <p class="help-inline" style="visibility: hidden; float:right;">.</p>
+                <p class="help-block" data-bind="text: validateGeneral()"></p>
             </th>
             <th></th>
         </tr>
@@ -20,7 +18,7 @@
     <tbody data-bind="sortable: languages">
         <tr class="row form-group"
             data-bind="
-                css: {error: show_error, light: !deploy()},
+                css: {'has-error': show_error, light: !deploy()},
                 attr: {'data-order': _sortableOrder}
                 ">
             <td data-bind="css: {'sortable-handle': $root.canSortLanguages}">
@@ -50,7 +48,7 @@
             <td>
                 <span class="code" data-bind="text: originalLangcode, visible: originalLangcode() !== langcode()"></span>
             </td>
-            <td><p class="help-inline" data-bind="text: message"></p></td>
+            <td><p class="help-block" data-bind="text: message"></p></td>
             <td>
                 <a href="#" data-bind="click: $root.removeLanguage">Delete</a>
             </td>

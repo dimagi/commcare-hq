@@ -122,10 +122,10 @@
                         <i class="grip fa fa-arrows-v icon-blue" style="cursor: move"></i>
                     </td>
 
-                    <td class="form-group" data-bind="css: {error: showWarning}">
+                    <td class="form-group" data-bind="css: {'has-error': showWarning}">
                         <div data-bind="jqueryElement: textField.ui"></div>
                         <div data-bind="visible: showWarning">
-                            <span class="help-inline" data-bind="
+                            <span class="help-block" data-bind="
                                 text: DetailScreenConfig.field_format_warning_message
                             "></span>
                         </div>
