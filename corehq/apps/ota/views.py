@@ -59,7 +59,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                             status=401)
 
     project = Domain.get_by_name(domain)
-    app = Application.get_db().get(app_id) if app_id else None
+    app = Application.get(app_id) if app_id else None
     restore_config = RestoreConfig(
         project=project,
         user=couch_user.to_casexml_user(),
