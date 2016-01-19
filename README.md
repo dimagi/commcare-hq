@@ -213,9 +213,7 @@ that you have a 32bit version of Python installed.
 
 ### Set up your django environment
 
-Before running any of the commands below, you should have all of the following running: couchdb, redis, elasticsearch,
-and kafka. To install and run kafka, follow the instructions here: 
-https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/change_feed/README.md.
+Before running any of the commands below, you should have all of the following running: couchdb, redis, and elasticsearch.
 
 Populate your database:
 
@@ -235,7 +233,7 @@ related to Raven for the following three commands.
 
 To set up elasticsearch indexes, first run (and then kill once you see the "Starting pillow" lines):
 
-    $ ./manage.py run_ptop --all
+    $ ./manage.py run_ptop --pillow-key=corexs
 
 This will do an initial run of the elasticsearch indexing process, but this will run as a service later. This run 
 at least creates the indices for the first time.
