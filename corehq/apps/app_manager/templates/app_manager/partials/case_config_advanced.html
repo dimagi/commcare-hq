@@ -45,21 +45,27 @@
     <!-- ko if:  actionType !== 'load' || !auto_select || auto_select.mode() !== 'usercase' -->
     <div class="panel panel-default">
         <div class="panel-body">
-            <div class="form-inline">
+            <div class="form-horizontal">
+
             <!-- ko if:  actionType === 'load' -->
                 {% if app.commtrack_enabled %}
                 <!-- ko if:  allow_product_stock -->
                 <div class="form-group">
-                    <label class="checkbox">
-                        <input type="checkbox" data-bind="checked: show_product_stock_var"/>
+                    <label class="col-lg-2 control-label">
                         {% trans "Display the Product Stock for this Supply Point after it is selected" %}
                     </label>
+                    <div class="col-lg-4">
+                        <input type="checkbox" data-bind="checked: show_product_stock_var"/>
+                    </div>
                 </div>
                 <!-- ko if: show_product_stock_var -->
-                <div class="form-group" style="margin-left: 25px;">
-                    <label class="control-label">{% trans "Only show products for this program:" %}</label>
-                    <select data-bind="optstr: $root.programs, value: product_program">
-                    </select>
+                <div class="form-group">
+                    <label class="col-lg-2 control-label">
+                        {% trans "Only show products for program" %}
+                    </label>
+                    <div class="col-lg-4">
+                        <select class="form-control" data-bind="optstr: $root.programs, value: product_program"></select>
+                    </div>
                 </div>
                 <!-- /ko -->
                 <!-- /ko -->
@@ -67,67 +73,83 @@
     
                 <!-- ko if:  !auto_select && $index() > 0 -->
                 <div class="form-group" data-bind="css: {'has-warning': validate_subcase()}">
-                    <label class="checkbox">
-                        <input type="checkbox" data-bind="checked: subcase"/>
+                    <label class="col-lg-2 control-label">
                         {% trans "This case is a subcase of the previous case" %}
                     </label>
-                    <span data-bind="if: subcase">
-                        {% if show_custom_ref %}
-                        <div>
-                            <label>{% trans "Parent reference ID:" %}</label>
-                            <input type="text" data-bind="value: case_index.reference_id"/>
+                    <div class="col-lg-4">
+                        <input type="checkbox" data-bind="checked: subcase"/>
+                        <span class="help-block" data-bind="text: validate_subcase"></span>
+                    </div>
+                </div>
+                {% if show_custom_ref %}
+                    <div class="form-group" data-bind="if: subcase">
+                        <label class="control-label col-lg-2">
+                            {% trans "Parent reference ID" %}
+                        </label>
+                        <div class="col-lg-4">
+                            <input type="text" class="form-control" data-bind="value: case_index.reference_id"/>
                         </div>
-                        {% endif %}
-    
-                        <div>
-                            <label>{% trans "Relationship:" %}</label>
-                            <select data-bind="options: relationshipTypes,
+                    </div>
+                {% endif %}
+                <div class="form-group">
+                    <label class="control-label col-lg-2">{% trans "Relationship" %}</label>
+                    <div class="col-lg-4">
+                        <select class="form-control"
+                                data-bind="options: relationshipTypes,
                                            optionsCaption: 'Child case or extension case?',
                                            value: case_index.relationship"></select>
-                        </div>
-    
-                    </span>
-                    <span class="help-block" data-bind="text: validate_subcase"></span>
+                    </div>
                 </div>
                 <!-- /ko -->
             <!-- /ko -->
     
-                <!-- ko if:  actionType === 'open' -->
+            <!-- ko if:  actionType === 'open' -->
                 <div class="form-group" data-bind="visible: allow_subcase, css: {'has-warning': validate_subcase()}">
     
-                    <span style="font-weight: bold;">Parent Indices</span>
-                    <ul data-bind="foreach: case_indices">
-                        <li>
-                            <label>{% trans "Parent Tag:" %}</label>
-                            <select data-bind="optstr: $parents[1].getCaseTags('subcase', $parent),
-                                value: tag">
-                            </select><br />
+                    <label class="control-label col-lg-2">{% trans "Parent Indices" %}</label>
+                    <div class="col-lg-4">
+                        <div data-bind="foreach: case_indices">
+                            <div class="form-group">
+                                <label>{% trans "Parent Tag" %}</label>
+                                <select class="form-control"
+                                        data-bind="optstr: $parents[1].getCaseTags('subcase', $parent), value: tag">
+                                </select>
     
-                            <label>{% trans "Reference ID:" %}</label>
-                            <input type="text" data-bind="value: reference_id"/><br />
+                                <label>{% trans "Reference ID" %}</label>
+                                <input type="text" class="form-control" data-bind="value: reference_id"/>
     
-                            <label>{% trans "Relationship:" %}</label>
-                            <select data-bind="options: $parent.relationshipTypes,
-                                               optionsCaption: 'Child case or extension case?',
-                                               value: relationship"></select><br />
+                                <label>{% trans "Relationship" %}</label>
+                                <select class="form-control"
+                                        data-bind="options: $parent.relationshipTypes,
+                                                   optionsCaption: 'Child case or extension case?',
+                                                   value: relationship"></select>
+                                <button class="btn btn-danger" data-bind="click: $parent.removeCaseIndex">
+                                    <i class="fa fa-trash"></i>
+                                    {% trans "Remove parent index" %}
+                                </button>
+                            </div>
+                        </div>
     
-                            <button class="btn btn-danger" data-bind="click: $parent.removeCaseIndex">
-                                <i class="fa fa-trash"></i>
-                            </button>
-                        </li>
-                    </ul>
-    
-                    <button class="btn btn-default" data-bind="click: addCaseIndex">
-                        {% trans "Add parent index" %}
-                    </button>
-                    <span class="help-block" data-bind="text: validate_subcase"></span>
+                        <button class="btn btn-default" data-bind="click: addCaseIndex">
+                            <i class="fa fa-plus"></i>
+                            {% trans "Add parent index" %}
+                        </button>
+                        <span class="help-block" data-bind="text: validate_subcase"></span>
+                    </div>
                 </div>
-                <!-- /ko -->
+            <!-- /ko -->
+            </div>
+        </div>
+    </div>
     
+    <div class="panel panel-default">
+        <div class="panel-body">
                 <div class="form-group">
-                    <label class="checkbox">
-                        <input type="checkbox" data-bind="checked: close_case"/>
-                        {% trans "Close this case when the form is complete" %}
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" data-bind="checked: close_case"/>
+                            {% trans "Close this case when the form is complete" %}
+                        </label>
                     </label>
                     <div data-bind="template: {
                         name: 'case-config:condition',
@@ -192,14 +214,14 @@
 
 <script type="text/html" id="auto-select:raw">
     &nbsp;
-    {% trans "XPath function:" %}
-    <input type="text" class="input-xxlarge" data-bind="value: value_key" />
+    {% trans "XPath function" %}
+    <input type="text" class="form-control" data-bind="value: value_key" />
 </script>
 
 <script type="text/html" id="auto-select:user">
     &nbsp;
     {% trans "User data key:" %}
-    <input type="text" class="input-medium" data-bind="value: value_key" />
+    <input type="text" class="form-control" data-bind="value: value_key" />
 </script>
 
 <script type="text/html" id="auto-select:case">
@@ -228,27 +250,30 @@
         <a href="#" data-bind="html: header" class="header"></a>
     </h3>
     <div>
-        <div>
-            <i class="fa fa-file"></i>
-            {% trans "Autoselect mode:" %}
-            <span class="form-group" data-bind="css: {'has-warning': validate()}">
-                <!-- ko with: auto_select -->
-                <select data-bind="
+        <button class="pull-right btn btn-danger"
+                data-bind="openModal: 'remove-action-modal-template', visible: true">
+            <i class="fa fa-trash"></i>
+            {% trans "Remove action" %}
+        </button>
+        <div class="form-inline" data-bind="css: {'has-warning': validate()}">
+            <!-- ko with: auto_select -->
+            <div class="form-group">
+                <label>{% trans "Autoselect mode" %}</label>
+                <select class="form-control" data-bind="
                     optstr: $parent.auto_select_modes,
                     value: mode,
                     optionsCaption: 'Choose a mode...'
                 "></select>
+            </div>
+            <div class="form-group">
                 <!-- ko template: {name: 'auto-select:' + mode()} --><!-- /ko -->
-                <!-- /ko -->
-                &nbsp;
-                {% trans "Case Tag:" %}
-                <input type="text" class="input-medium" data-bind="value: case_tag, disable: disable_tag" />
-                <span class="help-block" data-bind="text: validate"></span>
-                <a href="#" data-bind="openModal: 'remove-action-modal-template', visible: true" class="pull-right">
-                    <i class="fa fa-trash"></i>
-                    {% trans "Remove action" %}
-                </a>
-            </span>
+            </div>
+            <!-- /ko -->
+            <div class="form-group">
+                <label>{% trans "Case Tag" %}</label>
+                <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
+            </div>
+            <span class="help-block" data-bind="text: validate"></span>
         </div>
         <div data-bind="visible: !auto_select.mode()">
             <em>{% trans "Please select an autoselection mode." %}</em>
@@ -294,9 +319,6 @@
                     <div class="group" data-bind="template: {name: 'case-config:case-action'}"></div>
                     <!-- /ko -->
                 </div>
-            </div>
-            <div data-bind="visible: open_cases().length && load_update_cases().length">
-                <hr/>
             </div>
             <div>
                 <legend data-bind="visible: open_cases().length">
