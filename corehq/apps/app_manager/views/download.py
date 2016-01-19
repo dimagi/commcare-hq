@@ -233,7 +233,7 @@ class DownloadBuildAttachmentsView(View, ApplicationViewMixin):
                     return self.get(request, **kwargs)
                 elif self.path in ('CommCare.jad', 'CommCare.jar'):
                     self.app.create_jadjar(save=True)
-                    self.app.save()
+                    self.app.save(increment_version=False)
                     return self.get(request, **kwargs)
                 else:
                     try:
