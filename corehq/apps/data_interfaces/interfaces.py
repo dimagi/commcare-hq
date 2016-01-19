@@ -194,10 +194,10 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
         h = [
             DataTablesColumn(
                 mark_safe(
-                    """
-                    Select  <a class="select-visible btn btn-mini btn-inverse">all</a>
-                    <a class="select-none btn btn-mini btn-warning">none</a>
-                    """
+                    ugettext_lazy("""
+                    Select <a class="select-visible btn btn-xs btn-info">all</a>
+                    <a class="select-none btn btn-xs btn-default">none</a>
+                    """)
                 ),
                 sortable=False, span=3
             ),
