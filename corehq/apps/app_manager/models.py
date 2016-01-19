@@ -37,6 +37,7 @@ from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.bulk import get_docs
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -4157,35 +4158,36 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return settings
 
     def create_jadjar(self, save=False):
-        try:
-            return (
-                self.lazy_fetch_attachment('CommCare.jad'),
-                self.lazy_fetch_attachment('CommCare.jar'),
-            )
-        except (ResourceError, KeyError):
-            built_on = datetime.datetime.utcnow()
-            all_files = self.create_all_files()
-            jad_settings = {
-                'Released-on': built_on.strftime("%Y-%b-%d %H:%M"),
-            }
-            jad_settings.update(self.jad_settings)
-            jadjar = self.get_jadjar().pack(all_files, jad_settings)
-            if save:
-                self.built_with = BuildRecord(
-                    version=jadjar.version,
-                    build_number=jadjar.build_number,
-                    signed=jadjar.signed,
-                    datetime=built_on,
+        with CriticalSection(['create_jadjar_' + self._id]):
+            try:
+                return (
+                    self.lazy_fetch_attachment('CommCare.jad'),
+                    self.lazy_fetch_attachment('CommCare.jar'),
                 )
+            except (ResourceError, KeyError):
+                built_on = datetime.datetime.utcnow()
+                all_files = self.create_all_files()
+                jad_settings = {
+                    'Released-on': built_on.strftime("%Y-%b-%d %H:%M"),
+                }
+                jad_settings.update(self.jad_settings)
+                jadjar = self.get_jadjar().pack(all_files, jad_settings)
+                if save:
+                    self.built_with = BuildRecord(
+                        version=jadjar.version,
+                        build_number=jadjar.build_number,
+                        signed=jadjar.signed,
+                        datetime=built_on,
+                    )
 
-                self.lazy_put_attachment(jadjar.jad, 'CommCare.jad')
-                self.lazy_put_attachment(jadjar.jar, 'CommCare.jar')
+                    self.lazy_put_attachment(jadjar.jad, 'CommCare.jad')
+                    self.lazy_put_attachment(jadjar.jar, 'CommCare.jar')
 
-                for filepath in all_files:
-                    self.lazy_put_attachment(all_files[filepath],
-                                             'files/%s' % filepath)
+                    for filepath in all_files:
+                        self.lazy_put_attachment(all_files[filepath],
+                                                 'files/%s' % filepath)
 
-            return jadjar.jad, jadjar.jar
+                return jadjar.jad, jadjar.jar
 
     def validate_app(self):
         errors = []
