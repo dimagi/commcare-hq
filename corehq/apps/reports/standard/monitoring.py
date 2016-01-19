@@ -30,11 +30,6 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
 from corehq.apps.sofabed.dbaccessors import get_form_counts_by_user_xmlns
 from corehq.apps.sofabed.models import FormData, CaseData
-from corehq.apps.style.decorators import (
-    use_jquery_ui,
-    use_bootstrap3,
-    use_datatables,
-    use_select2)
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.dates import iso_string_to_datetime
@@ -64,18 +59,6 @@ WorkerActivityReportData = namedtuple('WorkerActivityReportData', [
 
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     exportable = True
-    is_bootstrap3 = True
-
-    base_template = 'reports/bootstrap3/base_template.html'
-    base_template_filters = 'reports/async/bootstrap3/filters.html'
-    report_template_path = 'reports/async/bootstrap3/tabular.html'
-
-    @use_jquery_ui
-    @use_bootstrap3
-    @use_datatables
-    @use_select2
-    def set_bootstrap3_status(self, request, *args, **kwargs):
-        self.is_bootstrap3 = True
 
     def get_user_link(self, user):
         user_link = self.get_raw_user_link(user)
