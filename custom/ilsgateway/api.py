@@ -382,16 +382,14 @@ class ILSGatewayAPI(APISynchronization):
                 # if user exists in db it means he was already migrated but he changed email in v1
                 old_email = ils_sql_web_user.email
                 user = WebUser.get_by_username(old_email)
-                ils_domains = ILSGatewayConfig.get_all_enabled_domains()
-                # make sure it's user migrated from ILS and username is available
-                if all([domain in ils_domains for domain in user.domains])\
-                        and not WebUser.get_by_username(email):
+                if user:
                     user.delete_domain_membership(self.domain)
                     user.save()
-                    user = self._create_web_user(email, ilsgateway_webuser, location_id, user_dict)
-                    ils_sql_web_user.email = email
-                    ils_sql_web_user.save()
-                    return user
+                user = self._create_web_user(email, ilsgateway_webuser, location_id, user_dict)
+                ils_sql_web_user.email = email
+                ils_sql_web_user.save()
+                return user
+
             else:
                 user = self._create_web_user(email, ilsgateway_webuser, location_id, user_dict)
         else:
