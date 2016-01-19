@@ -4293,7 +4293,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         copy.set_form_versions(previous_version)
         copy.set_media_versions(previous_version)
-        copy.create_jadjar(save=True)
 
         try:
             # since this hard to put in a test
