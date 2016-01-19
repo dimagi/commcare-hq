@@ -10,3 +10,4 @@ from .test_new_domain_subscription import *
 from .test_renew_subscription import *
 from .test_forms import *
 from .test_autopay import *
+from .test_subscription_permissions_changes import *

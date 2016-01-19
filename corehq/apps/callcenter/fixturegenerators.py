@@ -45,7 +45,7 @@ def should_sync(domain, last_sync, utcnow=None):
 class IndicatorsFixturesProvider(object):
     id = 'indicators'
 
-    def __call__(self, user, version, last_sync=None):
+    def __call__(self, user, version, last_sync=None, app=None):
         assert isinstance(user, CommCareUser)
 
         domain = user.project

@@ -27,7 +27,7 @@ class UserTypeFilter(BaseReportFilter):
     # note, don't use this as a guideline for anything.
     slug = "ufilter"
     label = ugettext_lazy("User Type")
-    template = "reports/filters/filter_users.html"
+    template = "reports/filters/bootstrap2/filter_users.html"
 
     @property
     def filter_context(self):
@@ -302,8 +302,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 return q.filter(id_filter)
 
     @classmethod
-    def pull_users_and_groups(cls, domain, mobile_user_and_group_slugs, simplified_users=False,
-             combined=False, include_inactive=False):
+    def pull_users_and_groups(cls, domain, mobile_user_and_group_slugs, include_inactive=False):
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
         user_types = cls.selected_user_types(mobile_user_and_group_slugs)
         group_ids = cls.selected_group_ids(mobile_user_and_group_slugs)

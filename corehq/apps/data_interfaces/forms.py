@@ -131,11 +131,9 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         ),
     )
     update_property_name = TrimmedCharField(
-        label=ugettext_lazy("Property"),
         required=False,
     )
     update_property_value = TrimmedCharField(
-        label=ugettext_lazy("Value"),
         required=False,
     )
 
@@ -158,7 +156,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         return values
 
     def set_case_type_choices(self, initial):
-        case_types = get_case_types_for_domain(self.domain)
+        case_types = [''] + get_case_types_for_domain(self.domain)
         if initial and initial not in case_types:
             # Include the deleted case type in the list of choices so that
             # we always allow proper display and edit of rules
@@ -172,8 +170,15 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         if 'domain' not in kwargs:
             raise Exception("Expected domain in kwargs")
         self.domain = kwargs.pop('domain')
-
         super(AddAutomaticCaseUpdateRuleForm, self).__init__(*args, **kwargs)
+
+        # We can't set these fields to be required because they are displayed
+        # conditionally and we'll confuse django validation if we make them
+        # required. However, we should show the asterisk for consistency, since
+        # when they are displayed they are required.
+        self.fields['update_property_name'].label = _("Property") + '<span class="asteriskField">*</span>'
+        self.fields['update_property_value'].label = _("Value") + '<span class="asteriskField">*</span>'
+
         self.set_case_type_choices(self.initial.get('case_type'))
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
@@ -193,7 +198,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                     ng_model='case_type',
                 ),
                 hqcrispy.B3MultiField(
-                    _("Close Case"),
+                    _("Close Case") + '<span class="asteriskField">*</span>',
                     Div(
                         hqcrispy.MultiInlineField(
                             'server_modified_boundary',
@@ -202,9 +207,15 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                         css_class='col-sm-6',
                     ),
                     Div(
-                        HTML(_("<p><strong>days after the case was last modified.</strong></p>")),
+                        HTML('<label class="control-label">%s</label>' %
+                             _('days after the case was last modified.')),
                         css_class='col-sm-6',
                     ),
+                    help_bubble_text=_("This will close the case if it has been "
+                                       "more than the chosen number of days since "
+                                       "the case was last modified. Cases are "
+                                       "checked against this rule weekly."),
+                    css_id='server_modified_boundary_multifield',
                     label_class=self.helper.label_class,
                     field_class='col-sm-8 col-md-6',
                 ),
@@ -246,7 +257,8 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
     def clean_server_modified_boundary(self):
         value = self.cleaned_data.get('server_modified_boundary')
         if not isinstance(value, int) or value < 30:
-            raise ValidationError(_("Please enter a whole number greater than 30"))
+            raise ValidationError(_("Please enter a whole number greater than "
+                                    "or equal to 30."))
         return value
 
     def clean_conditions(self):

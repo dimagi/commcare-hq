@@ -14,7 +14,8 @@ from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, \
+    run_with_all_backends
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from corehq.util.test_utils import flag_enabled
 from casexml.apps.case.tests.util import (
@@ -143,6 +144,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
     on the phone and the footprint.
     """
 
+    @run_with_all_backends
     def testInitialEmpty(self):
         """
         Tests that a newly created sync token has no cases attached to it.
@@ -150,6 +152,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         sync_log = get_exactly_one_wrapped_sync_log()
         self._testUpdate(sync_log.get_id, {}, {})
 
+    @run_with_all_backends
     def testOwnUpdatesDontSync(self):
         case_id = "own_updates_dont_sync"
         self._createCaseStubs([case_id])
@@ -165,6 +168,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         )
         assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
 
+    @run_with_all_backends
     def test_change_index_type(self):
         """
         Test that changing an index type updates the sync log
@@ -181,6 +185,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self._testUpdate(self.sync_log.get_id, {parent_id: [],
                                                 child_id: [parent_ref]})
 
+    @run_with_all_backends
     def test_change_index_id(self):
         """
         Test that changing an index ID updates the sync log
@@ -202,6 +207,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self._testUpdate(self.sync_log.get_id, {parent_id: [], updated_id: [],
                                                 child_id: [parent_ref]})
 
+    @run_with_all_backends
     def test_add_multiple_indices(self):
         """
         Test that adding multiple indices works as expected
@@ -226,6 +232,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self._testUpdate(self.sync_log.get_id, {parent_id: [], new_case_id: [],
                                                 child_id: [parent_ref, new_index_ref]})
 
+    @run_with_all_backends
     def test_delete_only_index(self):
         child_id, parent_id, index_id, parent_ref = self._initialize_parent_child()
         # delete the first index
@@ -235,6 +242,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
         self._testUpdate(self.sync_log.get_id, {parent_id: [], child_id: []})
 
+    @run_with_all_backends
     def test_delete_one_of_multiple_indices(self):
         # make IDs both human readable and globally unique to this test
         uid = uuid.uuid4().hex
@@ -295,6 +303,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self._testUpdate(self.sync_log.get_id, {parent_id: [], child_id: [parent_ref]})
         return (child_id, parent_id, index_id, parent_ref)
 
+    @run_with_all_backends
     def testClosedParentIndex(self):
         """
         Tests that things work properly when you have a reference to the parent
@@ -331,6 +340,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         # try a clean restore again
         assert_user_has_cases(self, self.user, [parent_id, child_id])
 
+    @run_with_all_backends
     def testAssignToNewOwner(self):
         # create parent and child
         parent_id = "mommy"
@@ -365,6 +375,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         # child should be moved, parent should still be there
         self._testUpdate(self.sync_log.get_id, {parent_id: []}, {})
 
+    @run_with_all_backends
     def testArchiveUpdates(self):
         """
         Tests that archiving a form (and changing a case) causes the
@@ -386,6 +397,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         form.archive()
         assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id, purge_restore_cache=True)
 
+    @run_with_all_backends
     def testUserLoggedIntoMultipleDevices(self):
         # test that a child case created by the same user from a different device
         # gets included in the sync
@@ -410,6 +422,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         # ensure child case is included in sync using original sync log ID
         assert_user_has_case(self, self.user, child_id, restore_id=self.sync_log.get_id)
 
+    @run_with_all_backends
     def test_tiered_parent_closing(self):
         all_ids = [uuid.uuid4().hex for i in range(3)]
         [grandparent_id, parent_id, child_id] = all_ids
@@ -448,6 +461,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
             # once the child is closed, all three are no longer relevant
             self.assertFalse(sync_log.phone_is_holding_case(id))
 
+    @run_with_all_backends
     def test_create_immediately_irrelevant_parent_case(self):
         """
         Make a case that is only relevant through a dependency at the same
@@ -472,6 +486,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
                                       referenced_id=parent_id)
         self._testUpdate(self.sync_log._id, {child_id: [index_ref]}, {parent_id: []})
 
+    @run_with_all_backends
     def test_closed_case_not_in_next_sync(self):
         # create a case
         case_id = self.factory.create_case().case_id
@@ -493,6 +508,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         last_sync = synclog_from_restore_payload(restore_config.get_payload().as_string())
         self.assertFalse(last_sync.phone_is_holding_case(case_id))
 
+    @run_with_all_backends
     def test_sync_by_user_id(self):
         # create a case with an empty owner but valid user id
         case_id = self.factory.create_case(owner_id='', user_id=USER_ID).case_id
@@ -502,10 +518,12 @@ class SyncTokenUpdateTest(SyncBaseTest):
         sync_log = synclog_from_restore_payload(payload)
         self.assertTrue(sync_log.phone_is_holding_case(case_id))
 
+    @run_with_all_backends
     def test_create_irrelevant_owner_and_update_to_irrelevant_owner_in_same_form(self):
         # this tests an edge case that used to crash on submission which is why there are no asserts
         self.factory.create_case(owner_id='irrelevant_1', update={'owner_id': 'irrelevant_2'}, strict=False)
 
+    @run_with_all_backends
     def test_create_irrelevant_owner_and_update_to_relevant_owner_in_same_form(self):
         # this tests an edge case that used to crash on submission which is why there are no asserts
         case = self.factory.create_case(owner_id='irrelevant_1', update={'owner_id': USER_ID}, strict=False)
@@ -514,41 +532,46 @@ class SyncTokenUpdateTest(SyncBaseTest):
         # override the setting on a per-test level and should be removed when the new
         # sync is fully rolled out.
         if isinstance(sync_log, SimplifiedSyncLog):
-            self.assertTrue(sync_log.phone_is_holding_case(case._id))
+            self.assertTrue(sync_log.phone_is_holding_case(case.case_id))
 
+    @run_with_all_backends
     def test_create_relevant_owner_and_update_to_empty_owner_in_same_form(self):
         case = self.factory.create_case(owner_id=USER_ID, update={'owner_id': ''}, strict=False)
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
         if isinstance(sync_log, SimplifiedSyncLog):
-            self.assertFalse(sync_log.phone_is_holding_case(case._id))
+            self.assertFalse(sync_log.phone_is_holding_case(case.case_id))
 
+    @run_with_all_backends
     def test_create_irrelevant_owner_and_update_to_empty_owner_in_same_form(self):
         case = self.factory.create_case(owner_id='irrelevant_1', update={'owner_id': ''}, strict=False)
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertFalse(sync_log.phone_is_holding_case(case._id))
+        self.assertFalse(sync_log.phone_is_holding_case(case.case_id))
 
+    @run_with_all_backends
     def test_create_relevant_owner_then_submit_again_with_no_owner(self):
         case = self.factory.create_case()
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertTrue(sync_log.phone_is_holding_case(case._id))
+        self.assertTrue(sync_log.phone_is_holding_case(case.case_id))
         self.factory.create_or_update_case(CaseStructure(
-            case_id=case._id,
+            case_id=case.case_id,
             attrs={'owner_id': None}
         ))
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertTrue(sync_log.phone_is_holding_case(case._id))
+        self.assertTrue(sync_log.phone_is_holding_case(case.case_id))
 
+    @run_with_all_backends
     def test_create_irrelevant_owner_then_submit_again_with_no_owner(self):
         case = self.factory.create_case(owner_id='irrelevant_1')
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertFalse(sync_log.phone_is_holding_case(case._id))
+        self.assertFalse(sync_log.phone_is_holding_case(case.case_id))
         self.factory.create_or_update_case(CaseStructure(
-            case_id=case._id,
+            case_id=case.case_id,
             attrs={'owner_id': None}
         ))
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertFalse(sync_log.phone_is_holding_case(case._id))
+        self.assertFalse(sync_log.phone_is_holding_case(case.case_id))
 
+    @run_with_all_backends
     def test_create_irrelevant_child_case_and_close_parent_in_same_form(self):
         # create the parent
         parent_id = self.factory.create_case().case_id
@@ -573,9 +596,10 @@ class SyncTokenUpdateTest(SyncBaseTest):
         # they should both be gone
         self._testUpdate(self.sync_log._id, {}, {})
 
+    @run_with_all_backends
     def test_create_closed_child_case_and_close_parent_in_same_form(self):
         # create the parent
-        parent_id = self.factory.create_case()._id
+        parent_id = self.factory.create_case().case_id
         # create an irrelevent child and close the parent
         child_id = uuid.uuid4().hex
         self.factory.create_or_update_cases([
@@ -598,10 +622,12 @@ class SyncTokenUpdateTest(SyncBaseTest):
         # they should both be gone
         self._testUpdate(self.sync_log._id, {}, {})
 
+    @run_with_all_backends
     def test_create_irrelevant_owner_and_close_in_same_form(self):
         # this tests an edge case that used to crash on submission which is why there are no asserts
         self.factory.create_case(owner_id='irrelevant_1', close=True)
 
+    @run_with_all_backends
     def test_reassign_and_close_in_same_form(self):
         # this tests an edge case that used to crash on submission which is why there are no asserts
         case_id = self.factory.create_case().case_id
@@ -612,8 +638,9 @@ class SyncTokenUpdateTest(SyncBaseTest):
             )
         )
 
+    @run_with_all_backends
     def test_index_after_close(self):
-        parent_id = self.factory.create_case()._id
+        parent_id = self.factory.create_case().case_id
         case_id = uuid.uuid4().hex
         case_xml = self.factory.get_case_block(case_id, create=True, close=True)
         # hackily insert an <index> block after the close
@@ -629,6 +656,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         # before this test was written, the case stayed on the sync log even though it was closed
         self.assertFalse(sync_log.phone_is_holding_case(case_id))
 
+    @run_with_all_backends
     def test_index_chain_with_closed_parents(self):
         grandparent = CaseStructure(
             case_id=uuid.uuid4().hex,
@@ -671,6 +699,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
              grandparent.case_id: []}
         )
 
+    @run_with_all_backends
     def test_reassign_case_and_sync(self):
         case = self.factory.create_case()
         # reassign from an empty sync token, simulating a web-reassignment on HQ
@@ -681,19 +710,56 @@ class SyncTokenUpdateTest(SyncBaseTest):
             ),
             form_extras={'last_sync_token': None}
         )
-        assert_user_has_case(self, self.user, case._id, restore_id=self.sync_log._id)
+        assert_user_has_case(self, self.user, case.case_id, restore_id=self.sync_log._id)
         payload = generate_restore_payload(self.project, self.user, restore_id=self.sync_log._id, version=V2)
         next_sync_log = synclog_from_restore_payload(payload)
         self.assertFalse(next_sync_log.phone_is_holding_case(case.case_id))
 
+    def test_cousins(self):
+        """http://manage.dimagi.com/default.asp?189528
+        """
+        other_owner_id = uuid.uuid4().hex
+        grandparent = CaseStructure(
+            case_id="Steffon",
+            attrs={'owner_id': other_owner_id}
+        )
+        parent_1 = CaseStructure(
+            case_id="Stannis",
+            attrs={'owner_id': other_owner_id},
+            indices=[CaseIndex(grandparent)]
+        )
+        parent_2 = CaseStructure(
+            case_id="Robert",
+            attrs={'owner_id': other_owner_id},
+            indices=[CaseIndex(grandparent)]
+        )
+        child_1 = CaseStructure(
+            case_id="Shireen",
+            indices=[CaseIndex(parent_1)]
+        )
+        child_2 = CaseStructure(
+            case_id="Joffrey",
+            indices=[CaseIndex(parent_2)]
+        )
+        self.factory.create_or_update_cases([grandparent, parent_1, parent_2, child_1, child_2])
+        assert_user_has_cases(self, self.user, [
+            grandparent.case_id,
+            parent_1.case_id,
+            parent_2.case_id,
+            child_1.case_id,
+            child_2.case_id
+        ])
+
 
 class SyncDeletedCasesTest(SyncBaseTest):
 
+    @run_with_all_backends
     def test_deleted_case_doesnt_sync(self):
         case = self.factory.create_case()
         case.soft_delete()
-        assert_user_doesnt_have_case(self, self.user, case._id)
+        assert_user_doesnt_have_case(self, self.user, case.case_id)
 
+    @run_with_all_backends
     def test_deleted_parent_doesnt_sync(self):
         parent_id = uuid.uuid4().hex
         child_id = uuid.uuid4().hex
@@ -720,6 +786,7 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
     """Makes sure the extension case trees are propertly updated
     """
 
+    @run_with_all_backends
     def test_create_extension(self):
         """creating an extension should add it to the extension_index_tree
         """
@@ -746,6 +813,7 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
         self.assertEqual(sync_log.dependent_case_ids_on_phone, set([extension.case_id]))
         self.assertEqual(sync_log.case_ids_on_phone, set([extension.case_id, host.case_id]))
 
+    @run_with_all_backends
     def test_create_multiple_indices(self):
         """creating multiple indices should add to the right tree
         """
@@ -775,6 +843,7 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
         self.assertDictEqual(sync_log.extension_index_tree.indices,
                              {extension.case_id: {'host': host.case_id}})
 
+    @run_with_all_backends
     def test_create_extension_with_extension(self):
         """creating multiple extensions should be added to the right tree
         """
@@ -809,6 +878,7 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
         self.assertDictEqual(sync_log.index_tree.indices, {})
         self.assertDictEqual(sync_log.extension_index_tree.indices, expected_extension_tree)
 
+    @run_with_all_backends
     def test_create_extension_then_delegate(self):
         """A delegated extension should still remain on the phone with the host
         """
@@ -836,6 +906,7 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
         self.assertEqual(sync_log.dependent_case_ids_on_phone, set([extension.case_id]))
         self.assertEqual(sync_log.case_ids_on_phone, set([extension.case_id, host.case_id]))
 
+    @run_with_all_backends
     def test_create_delegated_extension(self):
         case_type = 'case'
         host = CaseStructure(case_id='host',
@@ -857,6 +928,7 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
         self.assertDictEqual(sync_log.extension_index_tree.indices, expected_extension_tree)
         self.assertEqual(sync_log.case_ids_on_phone, set([host.case_id, extension.case_id]))
 
+    @run_with_all_backends
     def test_close_host(self):
         """closing a host should update the appropriate trees
         """
@@ -887,6 +959,7 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
         self.assertEqual(sync_log.dependent_case_ids_on_phone, set([]))
         self.assertEqual(sync_log.case_ids_on_phone, set([]))
 
+    @run_with_all_backends
     def test_long_chain_with_children(self):
         """
                   +----+
@@ -955,6 +1028,7 @@ class ExtensionCasesFirstSync(SyncBaseTest):
         self.restore_config = RestoreConfig(project=self.project, user=self.user)
         self.restore_state = self.restore_config.restore_state
 
+    @run_with_all_backends
     def test_is_first_extension_sync(self):
         """Before any syncs, this should return true when the toggle is enabled, otherwise false"""
         with flag_enabled('EXTENSION_CASES_SYNC_ENABLED'):
@@ -962,6 +1036,7 @@ class ExtensionCasesFirstSync(SyncBaseTest):
 
         self.assertFalse(self.restore_state.is_first_extension_sync)
 
+    @run_with_all_backends
     def test_is_first_extension_sync_after_sync(self):
         """After a sync with the extension code in place, this should be false"""
         self.factory.create_case()
@@ -989,6 +1064,7 @@ class ChangingOwnershipTest(SyncBaseTest):
         # since we got a new sync log, have to update the factory as well
         self.factory.form_extras = {'last_sync_token': self.sync_log._id}
 
+    @run_with_all_backends
     def test_change_owner_list(self):
         # create a case with the extra owner
         case_id = self.factory.create_case(owner_id=self.extra_owner_id).case_id
@@ -1019,6 +1095,7 @@ class ChangingOwnershipTest(SyncBaseTest):
 
 class SyncTokenCachingTest(SyncBaseTest):
 
+    @run_with_all_backends
     def testCaching(self):
         self.assertFalse(self.sync_log.has_cached_payload(V2))
         # first request should populate the cache
@@ -1059,6 +1136,7 @@ class SyncTokenCachingTest(SyncBaseTest):
         versioned_sync_log = synclog_from_restore_payload(versioned_payload)
         self.assertNotEqual(next_sync_log._id, versioned_sync_log._id)
 
+    @run_with_all_backends
     def test_initial_cache(self):
         restore_config = RestoreConfig(
             project=self.project,
@@ -1072,6 +1150,7 @@ class SyncTokenCachingTest(SyncBaseTest):
         cached_payload = restore_config.get_payload()
         self.assertIsInstance(cached_payload, CachedResponse)
 
+    @run_with_all_backends
     def testCacheInvalidation(self):
         original_payload = RestoreConfig(
             project=self.project,
@@ -1108,6 +1187,7 @@ class SyncTokenCachingTest(SyncBaseTest):
         # we can be explicit about why this is the case
         self.assertTrue(self.sync_log.phone_is_holding_case(case_id))
 
+    @run_with_all_backends
     def testCacheNonInvalidation(self):
         original_payload = RestoreConfig(
             project=self.project,
@@ -1141,6 +1221,7 @@ class SyncTokenCachingTest(SyncBaseTest):
         self.assertEqual(original_payload, next_payload)
         self.assertFalse(case_id in next_payload)
 
+    @run_with_all_backends
     def testCacheInvalidationAfterFileDelete(self):
         # first request should populate the cache
         original_payload = RestoreConfig(
@@ -1190,6 +1271,7 @@ class MultiUserSyncTest(SyncBaseTest):
         self.factory.form_extras = {'last_sync_token': self.sync_log._id}
         self.factory.case_defaults.update({'owner_id': SHARED_ID})
 
+    @run_with_all_backends
     def testSharedCase(self):
         # create a case by one user
         case_id = "shared_case"
@@ -1197,6 +1279,7 @@ class MultiUserSyncTest(SyncBaseTest):
         # should sync to the other owner
         assert_user_has_case(self, self.other_user, case_id, restore_id=self.other_sync_log.get_id)
 
+    @run_with_all_backends
     def testOtherUserEdits(self):
         # create a case by one user
         case_id = "other_user_edits"
@@ -1217,6 +1300,7 @@ class MultiUserSyncTest(SyncBaseTest):
         _, match = assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
         self.assertTrue("Hello!" in match.to_string())
 
+    @run_with_all_backends
     def testOtherUserAddsIndex(self):
         time = datetime.utcnow()
 
@@ -1273,6 +1357,7 @@ class MultiUserSyncTest(SyncBaseTest):
         _, orig = assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
         self.assertTrue("index" in orig.to_string())
 
+    @run_with_all_backends
     def testMultiUserEdits(self):
         time = datetime.utcnow()
 
@@ -1333,6 +1418,7 @@ class MultiUserSyncTest(SyncBaseTest):
         check_user_has_case(self, self.user, joint_change, restore_id=main_sync_log.get_id)
         check_user_has_case(self, self.other_user, joint_change, restore_id=self.other_sync_log.get_id)
 
+    @run_with_all_backends
     def testOtherUserCloses(self):
         # create a case from one user
         case_id = "other_user_closes"
@@ -1363,6 +1449,7 @@ class MultiUserSyncTest(SyncBaseTest):
         )
         self.assertFalse(next_synclog.phone_is_holding_case(case_id))
 
+    @run_with_all_backends
     def testOtherUserUpdatesUnowned(self):
         # create a case from one user and assign ownership elsewhere
         case_id = "other_user_updates_unowned"
@@ -1387,6 +1474,7 @@ class MultiUserSyncTest(SyncBaseTest):
         # make sure there are no new changes
         assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
 
+    @run_with_all_backends
     def testIndexesSync(self):
         # create a parent and child case (with index) from one user
         parent_id = "indexes_sync_parent"
@@ -1420,6 +1508,7 @@ class MultiUserSyncTest(SyncBaseTest):
                              purge_restore_cache=True)
         assert_user_has_case(self, self.other_user, case_id, restore_id=self.other_sync_log.get_id)
 
+    @run_with_all_backends
     def testOtherUserUpdatesIndex(self):
         # create a parent and child case (with index) from one user
         parent_id = "other_updates_index_parent"
@@ -1471,6 +1560,7 @@ class MultiUserSyncTest(SyncBaseTest):
         assert_user_has_case(self, self.user, parent_id, restore_id=latest_sync_log.get_id,
                              purge_restore_cache=True)
 
+    @run_with_all_backends
     def testOtherUserReassignsIndexed(self):
         # create a parent and child case (with index) from one user
         parent_id = "other_reassigns_index_parent"
@@ -1591,6 +1681,7 @@ class MultiUserSyncTest(SyncBaseTest):
         self.assertTrue("something different" in payload)
         self.assertTrue("hi changed!" in payload)
 
+    @run_with_all_backends
     def testComplicatedGatesBug(self):
         # found this bug in the wild, used the real (test) forms to fix it
         # just running through this test used to fail hard, even though there
@@ -1599,11 +1690,12 @@ class MultiUserSyncTest(SyncBaseTest):
         files = ["reg1.xml", "reg2.xml", "cf.xml", "close.xml"]
         for f in files:
             form = self._postWithSyncToken(os.path.join(folder_path, f), self.sync_log.get_id)
-            self.assertFalse(hasattr(form, "problem"))
+            self.assertFalse(hasattr(form, "problem") and form.problem)
             synclog_from_restore_payload(
                 generate_restore_payload(self.project, self.user, version="2.0")
             )
 
+    @run_with_all_backends
     def test_dependent_case_becomes_relevant_at_sync_time(self):
         """
         Make a case that is only relevant through a dependency.
@@ -1646,6 +1738,7 @@ class MultiUserSyncTest(SyncBaseTest):
         )
         self._testUpdate(latest_sync_log._id, {child_id: [index_ref], parent_id: []})
 
+    @run_with_all_backends
     def test_index_tree_conflict_handling(self):
         """
         Test that if another user changes the index tree, the original user
@@ -1726,6 +1819,7 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
         )
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    @run_with_all_backends
     def test_delegating_extensions(self):
         """Make an extension, delegate it, send it back, see what happens"""
         host = CaseStructure(case_id='host',
@@ -1798,6 +1892,7 @@ class SyncTokenReprocessingTest(SyncBaseTest):
     Tests sync token logic for fixing itself when it gets into a bad state.
     """
 
+    @run_with_all_backends
     def testUpdateNonExisting(self):
         case_id = 'non_existent'
         caseblock = CaseBlock(
@@ -1814,6 +1909,7 @@ class SyncTokenReprocessingTest(SyncBaseTest):
             # this should fail because it's a true error
             pass
 
+    @run_with_all_backends
     def testShouldHaveCase(self):
         case_id = "should_have"
         self._createCaseStubs([case_id])
@@ -1840,6 +1936,7 @@ class SyncTokenReprocessingTest(SyncBaseTest):
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
         self.assertFalse(getattr(sync_log, 'has_assert_errors', False))
 
+    @run_with_all_backends
     def testCodependencies(self):
 
         case_id1 = 'bad1'
@@ -1888,6 +1985,7 @@ class SyncTokenReprocessingTest(SyncBaseTest):
 
 class LooseSyncTokenValidationTest(SyncBaseTest):
 
+    @run_with_all_backends
     def test_submission_with_bad_log_default(self):
         with self.assertRaises(ResourceNotFound):
             post_case_blocks(
@@ -1896,6 +1994,7 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
                 domain='some-domain-without-toggle',
             )
 
+    @run_with_all_backends
     def test_submission_with_bad_log_toggle_enabled(self):
         domain = 'submission-domain-with-toggle'
 
@@ -1914,6 +2013,7 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
         # this is just asserting that an exception is not raised after the toggle is set
         _test()
 
+    @run_with_all_backends
     def test_restore_with_bad_log_default(self):
         with self.assertRaises(MissingSyncLog):
             RestoreConfig(
@@ -1925,6 +2025,7 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
                 ),
             ).get_payload()
 
+    @run_with_all_backends
     def test_restore_with_bad_log_toggle_enabled(self):
         domain = 'restore-domain-with-toggle'
 

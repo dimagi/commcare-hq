@@ -13,7 +13,7 @@ def update_analytics_indexes():
     so that calls to analytics functions return up-to-date
     """
     XFormInstance.get_db().view('couchforms/all_submissions_by_domain', limit=1).all()
-    XFormInstance.get_db().view('reports_forms/all_forms', limit=1).all()
+    XFormInstance.get_db().view('all_forms/view', limit=1).all()
     XFormInstance.get_db().view('exports_forms/by_xmlns', limit=1).all()
 
 
@@ -33,7 +33,7 @@ def get_number_of_forms_per_domain():
     return {
         row["key"][1]: row["value"]
         for row in XFormInstance.get_db().view(
-            "reports_forms/all_forms",
+            "all_forms/view",
             group=True,
             group_level=2,
             startkey=key,
@@ -47,7 +47,7 @@ def get_number_of_forms_in_domain(domain):
     from corehq.apps.reports.util import make_form_couch_key
     key = make_form_couch_key(domain)
     row = XFormInstance.get_db().view(
-        "reports_forms/all_forms",
+        "all_forms/view",
         startkey=key,
         endkey=key + [{}],
         stale=stale_ok(),
@@ -92,7 +92,7 @@ def get_first_form_submission_received(domain):
     from corehq.apps.reports.util import make_form_couch_key
     key = make_form_couch_key(domain)
     row = XFormInstance.get_db().view(
-        "reports_forms/all_forms",
+        "all_forms/view",
         reduce=False,
         startkey=key,
         endkey=key + [{}],
@@ -110,7 +110,7 @@ def get_last_form_submission_received(domain):
     from corehq.apps.reports.util import make_form_couch_key
     key = make_form_couch_key(domain)
     row = XFormInstance.get_db().view(
-        "reports_forms/all_forms",
+        "all_forms/view",
         reduce=False,
         endkey=key,
         startkey=key + [{}],
@@ -129,7 +129,7 @@ def get_last_form_submission_by_xmlns(domain, xmlns):
     from corehq.apps.reports.util import make_form_couch_key
     key = make_form_couch_key(domain, xmlns=xmlns)
     return XFormInstance.view(
-        "reports_forms/all_forms",
+        "all_forms/view",
         reduce=False,
         endkey=key,
         startkey=key + [{}],
@@ -146,7 +146,7 @@ def get_last_form_submission_for_user_for_app(domain, user_id, app_id=None):
     else:
         key = ['submission user', domain, user_id]
     xform = XFormInstance.view(
-        "reports_forms/all_forms",
+        "all_forms/view",
         startkey=key + [{}],
         endkey=key,
         include_docs=True,
@@ -165,7 +165,7 @@ def app_has_been_submitted_to_in_last_30_days(domain, app_id):
 
     key = ['submission app', domain, app_id]
     row = XFormInstance.get_db().view(
-        "reports_forms/all_forms",
+        "all_forms/view",
         startkey=key + [then],
         endkey=key + [now],
         limit=1,
@@ -177,7 +177,7 @@ def app_has_been_submitted_to_in_last_30_days(domain, app_id):
 def get_username_in_last_form_user_id_submitted(domain, user_id):
     assert domain
     user_info = XFormInstance.get_db().view(
-        'reports_forms/all_forms',
+        'all_forms/view',
         startkey=["submission user", domain, user_id],
         limit=1,
         descending=True,
@@ -192,7 +192,7 @@ def get_username_in_last_form_user_id_submitted(domain, user_id):
 def get_all_user_ids_submitted(domain):
     key = ["submission user", domain]
     submitted = XFormInstance.get_db().view(
-        'reports_forms/all_forms',
+        'all_forms/view',
         startkey=key,
         endkey=key + [{}],
         group=True,
@@ -204,7 +204,7 @@ def get_all_user_ids_submitted(domain):
 def get_all_xmlns_app_id_pairs_submitted_to_in_domain(domain):
     key = ["submission xmlns app", domain]
     results = XFormInstance.get_db().view(
-        'reports_forms/all_forms',
+        'all_forms/view',
         startkey=key,
         endkey=key + [{}],
         group=True,
@@ -220,7 +220,7 @@ def get_number_of_submissions(domain, user_id, xmlns, app_id, start, end,
                               by_submission_time=by_submission_time,
                               app_id=app_id)
     data = XFormInstance.get_db().view(
-        'reports_forms/all_forms',
+        'all_forms/view',
         reduce=True,
         startkey=key + [json_format_datetime(start)],
         endkey=key + [json_format_datetime(end)],

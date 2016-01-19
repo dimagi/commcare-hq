@@ -458,7 +458,7 @@ class EditLocationView(NewLocationView):
             submit_label=_("Update Product List"),
             prefix="products",
         )
-        form.fields['selected_ids'].choices = self.all_products
+        form.fields['selected_ids'].choices = self.active_products
         return form
 
     @property
@@ -474,9 +474,9 @@ class EditLocationView(NewLocationView):
         return form
 
     @property
-    def all_products(self):
+    def active_products(self):
         return [(p.product_id, p.name)
-                for p in SQLProduct.by_domain(self.domain)]
+                for p in SQLProduct.objects.filter(domain=self.domain, is_archived=False).all()]
 
     @property
     def products_at_location(self):

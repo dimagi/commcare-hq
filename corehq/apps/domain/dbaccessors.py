@@ -3,6 +3,17 @@ from corehq.util.couch import get_db_by_doc_type
 from corehq.util.test_utils import unit_testing_only
 
 
+def get_doc_count_in_domain_by_class(domain, doc_class):
+    doc_type = doc_class.__name__
+    row = doc_class.get_db().view(
+        "by_domain_doc_type_date/view",
+        startkey=[domain, doc_type],
+        endkey=[domain, doc_type, {}],
+        reduce=True,
+    ).one()
+    return row["value"] if row else 0
+
+
 def get_doc_ids_in_domain_by_class(domain, doc_class):
     db = doc_class.get_db()
     doc_type = doc_class.__name__

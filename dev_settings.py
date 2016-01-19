@@ -9,6 +9,9 @@ import os
 
 LOCAL_APPS = (
     'django_extensions',
+    # for tests
+    'testapps.test_elasticsearch',
+    'testapps.test_pillowtop',
 )
 
 TEST_RUNNER = 'testrunner.DevTestRunner'
@@ -60,3 +63,5 @@ CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 
 # default inactivity timeout to 1 year
 INACTIVITY_TIMEOUT = 60 * 24 * 365
+
+CACHE_REPORTS = False

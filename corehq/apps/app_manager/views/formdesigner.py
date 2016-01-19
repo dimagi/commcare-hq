@@ -120,6 +120,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
         'plugins': vellum_plugins,
         'app_callout_templates': next(app_callout_templates),
         'scheduler_data_nodes': scheduler_data_nodes,
+        'no_header': True,
     })
     return render(request, 'app_manager/form_designer.html', context)
 

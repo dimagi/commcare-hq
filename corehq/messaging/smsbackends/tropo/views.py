@@ -10,6 +10,7 @@ from corehq.apps.sms.models import CallLog, INCOMING, OUTGOING
 from datetime import datetime
 from corehq.apps.sms.util import strip_plus
 
+
 @csrf_exempt
 def sms_in(request):
     """
@@ -45,6 +46,7 @@ def sms_in(request):
     else:
         return HttpResponseBadRequest("Bad Request")
 
+
 @csrf_exempt
 def ivr_in(request):
     """
@@ -79,5 +81,3 @@ def ivr_in(request):
         return HttpResponse(t.RenderJson())
     else:
         return HttpResponseBadRequest("Bad Request")
-
-

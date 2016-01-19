@@ -10,6 +10,7 @@
 
 {% block user-view %}
 <form class="form-horizontal" method="post">
+    {% csrf_token %}
     <fieldset>
         <legend>Create new project from snapshot</legend>
         <div class="control-group{% if error_message %} error{% endif %}">

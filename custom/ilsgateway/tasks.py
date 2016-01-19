@@ -311,10 +311,10 @@ def second_district():
     district_randr_partial(15)
 
 
-@periodic_task(run_every=crontab(day_of_month="14-16", hour=14, minute=0),
+@periodic_task(run_every=crontab(day_of_month="15-17", hour=14, minute=0),
                queue="logistics_reminder_queue")
 def third_district():
-    district_randr_partial(16)
+    district_randr_partial(17)
 
 
 @periodic_task(run_every=crontab(day_of_month="26-31", hour=14, minute=15),

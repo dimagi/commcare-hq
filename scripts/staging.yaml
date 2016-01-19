@@ -45,8 +45,9 @@
 trunk: master
 name: autostaging
 branches:
+  - kill-x_over_time+es-new  # Simon 1/10
   - kill-x_over_time  # Danny 12/11
-  - synclogs-db  # Danny 12/10
+  - es-new # Simon 1/10
   - validate-xpath  # Danny 12/05
   - vellum-staging # J$ 11/13
   #- fix-toggle+two-factor-otp-only #wsp 11/17
@@ -55,31 +56,24 @@ branches:
   - requests #Simon 11/3
   - add-tableau-dashboard # TS 11/5
   - fix-toggle #wsp 12/14
-  - extended-trial-metadata # Cal 11/25
-  - cache-control # Cal 11/30
-  - saved-export-blobs # Daniel 12/3
-  - es-fix # Noah 12/7
-  - use-strict-apply-bindings # Jenny 12/7
+  - location-delete # Cal 12/16
+  - new-footer-nav # Biyeun 1/4
+  - uglify-compressor # Ben 1/7
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - sqlite-backend #wsp 12/14
+    branches: []
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
-      #- 2.24-validator  # Will 11/12
+    branches:
+      - 2.25-jar  # Will 1/12
   submodules/ctable-src:
     branches: []
   submodules/django-digest-src:
     branches: []
-  submodules/pillowtop-src:
-    branches: []
   submodules/dimagi-utils-src:
     branches: []
   submodules/django-prbac-src:
-    branches: []
-  submodules/fluff-src:
     branches: []

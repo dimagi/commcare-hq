@@ -10,6 +10,7 @@ from casexml.apps.phone.models import User, SyncLog, SimplifiedSyncLog, LOG_FORM
 from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload
 from corehq.apps.domain.models import Domain
+from corehq.form_processor.tests import run_with_all_backends
 from corehq.toggles import LEGACY_SYNC_SUPPORT
 from corehq.util.global_request.api import set_request
 
@@ -135,6 +136,7 @@ class TestNewSyncSpecifics(TestCase):
         cls.user = User(user_id=cls.user_id, username=uuid.uuid4().hex,
                         password="changeme", date_joined=datetime(2014, 6, 6))
 
+    @run_with_all_backends
     def test_legacy_support_toggle(self):
         restore_config = RestoreConfig(self.project, user=self.user)
         factory = CaseFactory(domain=self.project.name, case_defaults={'owner_id': self.user_id})

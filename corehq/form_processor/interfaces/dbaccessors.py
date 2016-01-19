@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from collections import namedtuple
 
 import six
 
@@ -87,6 +88,38 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
     def get_case_ids_in_domain(domain, type=None):
         raise NotImplementedError
 
+    @abstractmethod
+    def get_case_ids_in_domain_by_owners(domain, owner_ids):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_open_case_ids(domain, owner_id):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_closed_case_ids(domain, owner_id):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_extension_case_ids(domain, case_ids):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_indexed_case_ids(domain, case_ids):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_last_modified_dates(domain, case_ids):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_all_reverse_indices_info(domain, case_ids):
+        raise NotImplementedError
+
 
 class CaseAccessors(object):
     """
@@ -116,3 +149,31 @@ class CaseAccessors(object):
 
     def get_case_ids_in_domain(self, type=None):
         return self.db_accessor.get_case_ids_in_domain(self.domain, type)
+
+    def get_case_ids_by_owners(self, owner_ids):
+        return self.db_accessor.get_case_ids_in_domain_by_owners(self.domain, owner_ids)
+
+    def get_open_case_ids(self, owner_id):
+        return self.db_accessor.get_open_case_ids(self.domain, owner_id)
+
+    def get_case_ids_modified_with_owner_since(self, owner_id, reference_date):
+        return self.db_accessor.get_case_ids_modified_with_owner_since(self.domain, owner_id, reference_date)
+
+    def get_extension_case_ids(self, case_ids):
+        return self.db_accessor.get_extension_case_ids(self.domain, case_ids)
+
+    def get_indexed_case_ids(self, case_ids):
+        return self.db_accessor.get_indexed_case_ids(self.domain, case_ids)
+
+    def get_last_modified_dates(self, case_ids):
+        return self.db_accessor.get_last_modified_dates(self.domain, case_ids)
+
+    def get_closed_case_ids(self, owner_id):
+        return self.db_accessor.get_closed_case_ids(self.domain, owner_id)
+
+    def get_all_reverse_indices_info(self, case_ids):
+        return self.db_accessor.get_all_reverse_indices_info(self.domain, case_ids)
+
+CaseIndexInfo = namedtuple(
+    'CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship']
+)

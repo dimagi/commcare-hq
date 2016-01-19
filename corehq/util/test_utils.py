@@ -109,12 +109,11 @@ def mock_out_couch(views=None, docs=None):
     You can optionally pass default return values for specific views and doc
     gets.  See the FakeCouchDb docstring for more specifics.
     """
+    db = FakeCouchDb(views=views, docs=docs)
+    def _get_db(*args):
+        return db
 
-    class FakeCouchDb_(FakeCouchDb):
-        def __init__(self):
-            super(FakeCouchDb_, self).__init__(views=views, docs=docs)
-
-    return mock.patch('dimagi.ext.couchdbkit.Document.get_db', new=FakeCouchDb_)
+    return mock.patch('dimagi.ext.couchdbkit.Document.get_db', new=_get_db)
 
 
 def NOOP(*args, **kwargs):
@@ -256,13 +255,14 @@ def generate_cases(argsets, cls=None):
     return add_cases
 
 
-def make_es_ready_form(metadata=None):
+def make_es_ready_form(metadata):
     # this is rather complicated due to form processor abstractions and ES restrictions
     # on what data needs to be in the index and is allowed in the index
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
     from corehq.form_processor.tests.utils import get_simple_form_xml
     from corehq.form_processor.utils import convert_xform_to_json
 
+    assert metadata is not None
     metadata.domain = metadata.domain or uuid.uuid4().hex
     form_id = uuid.uuid4().hex
     form_xml = get_simple_form_xml(form_id=form_id, metadata=metadata)

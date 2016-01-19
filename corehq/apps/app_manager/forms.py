@@ -7,7 +7,9 @@ from corehq.apps.domain.models import Domain
 
 
 class CopyApplicationForm(forms.Form):
-    domain = forms.CharField(label=_("Copy this app to project:"))
+    domain = forms.CharField(
+        label=_("Copy this app to project"),
+        widget=forms.TextInput(attrs={"data-bind": "typeahead: domain_names"}))
     name = forms.CharField(required=False, label=_('Name'))
 
     def __init__(self, app_id, *args, **kwargs):

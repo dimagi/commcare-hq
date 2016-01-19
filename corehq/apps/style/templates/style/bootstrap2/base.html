@@ -1,4 +1,4 @@
-{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}<!DOCTYPE html>
+{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
 <html lang="{{ LANGUAGE_CODE }}">
     <head>
@@ -27,6 +27,7 @@
         {% endcompress %}
         {% block stylesheets %}{% endblock %}
 
+        <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
         {% include "style/includes/bootstrap2/core_libraries.html" %}
 
         {% if request.guided_tour %}
@@ -46,6 +47,9 @@
 
         {% block head %}
         {% endblock %}
+
+        {# hubspot tracking events must be defined BEFORE the hubspot js is loaded #}
+        {% block hubspot %}{% endblock %}
 
         {% include 'style/includes/analytics_all.html' %}
         {% if less_debug %}
@@ -166,6 +170,7 @@
                     <h3>{% trans "Report an Issue with CommCare HQ" %}</h3>
                 </div>
                 <form id="hqwebapp-bugReportForm" class="form-horizontal" action="{% url "bug_report" %}" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
                     <input type="hidden" id="bug-report-url" name="url"/>
                     <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
                     <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
@@ -254,6 +259,7 @@
                             {% trans "To continue using Commcare HQ, please agree to our new End User License Agreement" %}
                         </div>
                         <form id="eula-agree" action="{% url "agree_to_eula" %}" method="POST">
+                            {% csrf_token %}
                             <input name="next" type="hidden" value="{{ request.path }}" />
                             <button type="submit" class="btn btn-primary">Agree</button>
                             <a href="#" data-dismiss="modal" class="btn">Disagree</a>
@@ -268,6 +274,7 @@
                 </div>
                 <div class="modal-body">
                     <form id="keyboard-shortcuts-config-form" method="POST" action="{% url "keyboard_config" %}?next={{ request.get_full_path|urlencode }}">
+                        {% csrf_token %}
                         <div class="control-group">
                             <div class="controls">
                                 <label class="checkbox">

@@ -1,5 +1,8 @@
+from corehq.apps.domain.models import Domain
 from corehq.apps.sms.mixin import MobileBackend, SMSLoadBalancingMixin, BackendMapping
-from corehq.apps.sms.models import SQLMobileBackend, MobileBackendInvitation, SQLMobileBackendMapping
+from corehq.apps.sms.models import (SQLMobileBackend, MobileBackendInvitation,
+    SQLMobileBackendMapping, MigrationStatus)
+from corehq.messaging.ivrbackends.kookoo.models import KooKooBackend, SQLKooKooBackend
 from corehq.messaging.smsbackends.apposit.models import AppositBackend, SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import GrapevineBackend, SQLGrapevineBackend
 from corehq.messaging.smsbackends.http.models import HttpBackend, SQLHttpBackend
@@ -24,8 +27,29 @@ class BackendMigrationTestCase(TestCase):
         self._delete_all_backends()
 
     def _get_all_couch_backends(self):
-        return (MobileBackend.view('sms/global_backends', include_docs=True, reduce=False).all() +
-                MobileBackend.view('sms/backend_by_owner_domain', include_docs=True, reduce=False).all())
+        result = MobileBackend.view(
+            'sms/global_backends',
+            include_docs=True,
+            reduce=False
+        ).all()
+        result.extend(
+            MobileBackend.view(
+                'sms/backend_by_owner_domain',
+                include_docs=True,
+                reduce=False
+            ).all()
+        )
+        kookoo_backends = MobileBackend.view(
+            'all_docs/by_doc_type',
+            startkey=['KooKooBackend'],
+            endkey=['KooKooBackend', {}],
+            include_docs=True,
+            reduce=False
+        ).all()
+        for backend in kookoo_backends:
+            if not backend.base_doc.endswith('-Deleted'):
+                result.append(backend)
+        return result
 
     def _get_all_couch_backend_mappings(self):
         return BackendMapping.view('sms/backend_map', include_docs=True).all()
@@ -1295,6 +1319,72 @@ class BackendMigrationTestCase(TestCase):
 
         self._test_couch_backend_retire(couch_obj)
 
+    def test_kookoo_sql_to_couch(self):
+        sql_obj = self._test_sql_backend_create(
+            SQLKooKooBackend,
+            'IVR',
+            'KOOKOO',
+            True,
+            None,
+            'MOBILE_BACKEND_KOOKOO',
+            "KooKoo",
+            "KooKoo Description",
+            ['91'],
+            {'api_key': 'abc'},
+            None,
+            couch_class=KooKooBackend
+        )
+
+        self._test_sql_backend_update(
+            SQLTropoBackend,
+            'IVR',
+            'KOOKOO',
+            True,
+            None,
+            'MOBILE_BACKEND_KOOKOO2',
+            "KooKoo2",
+            "KooKoo Description2",
+            ['91'],
+            {'api_key': 'abc2'},
+            None,
+            sql_obj=sql_obj,
+            couch_class=KooKooBackend
+        )
+
+        self._test_sql_backend_retire(sql_obj)
+
+    def test_kookoo_couch_to_sql(self):
+        couch_obj = self._test_couch_backend_create(
+            KooKooBackend,
+            None,
+            'MOBILE_BACKEND_KOOKOO',
+            "KooKoo",
+            None,
+            [],
+            True,
+            "KooKoo Description",
+            ['91'],
+            None,
+            extra_fields={'api_key': 'abc'},
+        )
+
+        self._test_couch_backend_update(
+            KooKooBackend,
+            None,
+            'MOBILE_BACKEND_KOOKOO2',
+            "KooKoo2",
+            None,
+            [],
+            True,
+            "KooKoo Description2",
+            ['91'],
+            None,
+            couch_obj=couch_obj,
+            extra_fields={'api_key': 'abc2'},
+        )
+
+        self._test_couch_backend_retire(couch_obj)
+
     def _compare_backend_maps(self, couch_obj, sql_obj):
         self.assertEqual(couch_obj._id, sql_obj.couch_id)
         self.assertEqual(couch_obj.domain, sql_obj.domain)
@@ -1388,3 +1478,92 @@ class BackendMigrationTestCase(TestCase):
         MobileBackendInvitation.objects.all().delete()
         SQLMobileBackend.objects.all().delete()
         SQLMobileBackendMapping.objects.all().delete()
+
+
+class DomainDefaultBackendMigrationTestCase(TestCase):
+    def setUp(self):
+        self.domain = Domain(name='test-domain-default-backend')
+        self.domain.save()
+
+        self.couch_backend1 = TestSMSBackend(
+            is_global=False,
+            domain=self.domain.name,
+            name='TEST1'
+        )
+        self.couch_backend1.save()
+        self.sql_backend1 = SQLTestSMSBackend.objects.get(couch_id=self.couch_backend1.get_id)
+
+        self.couch_backend2 = TestSMSBackend(
+            is_global=False,
+            domain=self.domain.name,
+            name='TEST2'
+        )
+        self.couch_backend2.save()
+        self.sql_backend2 = SQLTestSMSBackend.objects.get(couch_id=self.couch_backend2.get_id)
+
+        SQLMobileBackendMapping.objects.all().delete()
+
+        # In order for the default domain backend sync to run, the backend migration has to have run
+        MigrationStatus.set_migration_completed(MigrationStatus.MIGRATION_BACKEND)
+
+    def tearDown(self):
+        # Everything else is deleted when we delete the domain
+        MigrationStatus.objects.all().delete()
+
+    def _get_mappings(self):
+        return SQLMobileBackendMapping.objects.all()
+
+    def _test_add_default_backend(self):
+        self.assertEqual(len(self._get_mappings()), 0)
+
+        self.domain.default_sms_backend_id = self.couch_backend1.get_id
+        self.domain.save()
+
+        mappings = self._get_mappings()
+        self.assertEqual(len(mappings), 1)
+
+        self.assertFalse(mappings[0].is_global)
+        self.assertEqual(mappings[0].domain, self.domain.name)
+        self.assertEqual(mappings[0].backend_type, 'SMS')
+        self.assertEqual(mappings[0].prefix, '*')
+        self.assertEqual(mappings[0].backend_id, self.sql_backend1.id)
+
+    def _test_edit_default_backend(self):
+        self.assertEqual(len(self._get_mappings()), 1)
+
+        self.domain.default_sms_backend_id = self.couch_backend2.get_id
+        self.domain.save()
+
+        mappings = self._get_mappings()
+        self.assertEqual(len(mappings), 1)
+
+        self.assertFalse(mappings[0].is_global)
+        self.assertEqual(mappings[0].domain, self.domain.name)
+        self.assertEqual(mappings[0].backend_type, 'SMS')
+        self.assertEqual(mappings[0].prefix, '*')
+        self.assertEqual(mappings[0].backend_id, self.sql_backend2.id)
+
+    def _test_remove_default_backend(self):
+        self.assertEqual(len(self._get_mappings()), 1)
+
+        self.domain.default_sms_backend_id = None
+        self.domain.save()
+
+        mappings = self._get_mappings()
+        self.assertEqual(len(mappings), 0)
+
+    def _test_delete_domain(self):
+        self.assertEqual(len(self._get_mappings()), 0)
+
+        self.domain.default_sms_backend_id = self.couch_backend1.get_id
+        self.domain.save()
+
+        self.assertEqual(len(self._get_mappings()), 1)
+        self.domain.delete()
+        self.assertEqual(len(self._get_mappings()), 0)
+
+    def test_domain_default_migration(self):
+        self._test_add_default_backend()
+        self._test_edit_default_backend()
+        self._test_remove_default_backend()
+        self._test_delete_domain()

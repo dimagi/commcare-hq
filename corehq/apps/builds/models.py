@@ -152,6 +152,13 @@ class BuildSpec(DocumentSchema):
         else:
             return None
 
+    def get_menu_item_label(self):
+        build_config = CommCareBuildConfig.fetch()
+        for item in build_config.menu:
+            if item.build.version == self.version:
+                return item.label or self.get_label()
+        return self.get_label()
+
     def __str__(self):
         fmt = "{self.version}/"
         fmt += "latest" if self.latest else "{self.build_number}"

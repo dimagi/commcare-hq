@@ -6,8 +6,8 @@ from custom.openlmis.api import Program
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from custom.openlmis.commtrack import sync_openlmis_program, bootstrap_domain
 
-
 TEST_DOMAIN = 'openlmis-commtrack-program-test'
+
 
 class ProgramSyncTest(TestCase):
 
@@ -17,7 +17,6 @@ class ProgramSyncTest(TestCase):
         bootstrap_domain(TEST_DOMAIN)
         for product in Product.by_domain(TEST_DOMAIN):
             product.delete()
-
 
     def testCreateProgram(self):
         with open(os.path.join(self.datapath, 'sample_program.json')) as f:

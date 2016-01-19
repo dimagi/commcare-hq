@@ -168,7 +168,6 @@ BASE_ADDRESS = 'localhost:8000'
 # Set your analytics IDs here for GA and pingdom RUM
 ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '*******',
-    'ANALYTICS_API_ID_PUBLIC_COMMCARE': '*****',
     'KISSMETRICS_KEY': '*****',
     'HUBSPOT_API_KEY': '*****',
 }
@@ -205,7 +204,9 @@ LOCAL_APPS = (
 #    'couchdebugpanel', # Adds couch info to said toolbar
 #    'devserver',       # Adds improved dev server that also prints SQL on the console (for AJAX, etc, when you cannot use debug_toolbar)
 #    'django_cpserver', # Another choice for a replacement server
-#    'dimagi.utils'     
+#    'dimagi.utils',
+#    'testapps.test_elasticsearch',
+#    'testapps.test_pillowtop',
 )
 
 # list of domains to enable ADM reporting on

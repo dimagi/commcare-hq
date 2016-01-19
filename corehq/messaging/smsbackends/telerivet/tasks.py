@@ -40,5 +40,4 @@ def process_incoming_message(*args, **kwargs):
         if kwargs["message_type"] == MESSAGE_TYPE_SMS:
             incoming_sms(from_number, kwargs["content"], TelerivetBackend.get_api_id())
         elif kwargs["message_type"] == MESSAGE_TYPE_CALL:
-            incoming_ivr(from_number, None,
-                "TELERIVET-%s" % kwargs["message_id"], None)
+            incoming_ivr(from_number, "TELERIVET-%s" % kwargs["message_id"], None)

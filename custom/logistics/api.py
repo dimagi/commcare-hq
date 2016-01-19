@@ -175,8 +175,7 @@ class APISynchronization(UserMigrationMixin):
 
     @memoized
     def _get_logistics_domains(self):
-        from custom.ewsghana.models import EWSGhanaConfig
-        return ILSGatewayConfig.get_all_enabled_domains() + EWSGhanaConfig.get_all_enabled_domains()
+        return ILSGatewayConfig.get_all_enabled_domains()
 
     def set_default_backend(self):
         domain_object = Domain.get_by_name(self.domain)

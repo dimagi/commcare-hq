@@ -13,7 +13,7 @@ from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from casexml.apps.stock.models import StockTransaction, StockReport
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category, state_stock_category
 from couchforms.models import XFormInstance
-from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, product_ids_filtered_by_program
+from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from decimal import Decimal
@@ -95,7 +95,7 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
         for
         """
         # note: empty string is parsed as today's date
-        date = self.config.get('date', '')
+        date = self.config.get('date') or ''
 
         try:
             date = parser.parse(date).date()
@@ -149,11 +149,7 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 'product_id'
             )
 
-            # take a pass over the data to format the stock on hand
-            # values properly
-            stock_results = [(p, format_decimal(soh)) for p, soh in stock_results]
-
-            yield (loc.name, stock_results)
+            yield (loc.name, {p: format_decimal(soh) for p, soh in stock_results})
 
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
@@ -237,14 +233,6 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     def slugs(self):
         return self._slug_attrib_map.keys()
 
-    def filter_by_program(self, stock_states):
-        return stock_states.filter(
-            product_id__in=product_ids_filtered_by_program(
-                self.domain,
-                self.program_id
-            )
-        )
-
     def get_data(self):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
@@ -254,22 +242,19 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             last_modified_date__gte=self.start_date,
         )
 
+        if self.program_id:
+            stock_states = stock_states.filter(sql_product__program_id=self.program_id)
+
         if len(sp_ids) == 1:
             stock_states = stock_states.filter(
                 case_id=sp_ids[0],
             )
-
-            if self.program_id:
-                stock_states = self.filter_by_program(stock_states)
 
             return self.leaf_node_data(stock_states)
         else:
             stock_states = stock_states.filter(
                 case_id__in=sp_ids,
             )
-
-            if self.program_id:
-                stock_states = self.filter_by_program(stock_states)
 
             if self.config.get('aggregate'):
                 return self.aggregated_data(stock_states)

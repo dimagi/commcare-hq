@@ -86,7 +86,8 @@ class Command(BaseCommand):
             print ("Reindexing master pillows that do not exist yet "
                    "(ones with aliases skipped)")
 
-            preindexable_pillows = filter(pillow_index_exists, aliasable_pillows)
+            preindexable_pillows = [pillow for pillow in aliasable_pillows
+                                    if not pillow_index_exists(pillow)]
 
         reindex_pillows = filter(lambda x: x.es_index in unmapped_indices,
                                  preindexable_pillows)

@@ -6,6 +6,7 @@ from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain, \
     get_cases_in_domain
+from corehq.apps.importer.exceptions import ImporterRefError, ImporterError
 from corehq.apps.importer.tasks import do_import
 from corehq.apps.importer.util import ImporterConfig, is_valid_owner
 from corehq.apps.locations.models import LocationType
@@ -29,7 +30,6 @@ class MockExcelFile(object):
     def __init__(self, header_columns=None, num_rows=0, has_errors=False, row_generator=None):
         self.header_columns = header_columns or []
         self.num_rows = num_rows
-        self.has_errors = has_errors
         self.row_generator = row_generator or default_row_generator
         self.workbook = self.Workbook()
 
@@ -90,12 +90,12 @@ class ImporterTest(TestCase):
         )
 
     def testImportNone(self):
-        res = do_import(None, self._config(), self.domain)
+        res = do_import(ImporterRefError(), self._config(), self.domain)
         self.assertEqual('EXPIRED', res['errors'])
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
     def testImporterErrors(self):
-        res = do_import(MockExcelFile(has_errors=True), self._config(), self.domain)
+        res = do_import(ImporterError(), self._config(), self.domain)
         self.assertEqual('HAS_ERRORS', res['errors'])
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 

@@ -6,33 +6,6 @@
 If you're interested in running a migration someone else already wrote,
 see [Running the doctype migration](#run-the-doctype-migration) below.
 
-To `settings.py` add variables representing
-(1) the database you're currently using for the apps you're migrating, probably set to `None` (== main db),
-and (2) the database you _will_ be using.
-Add these variables to `COUCHDB_APPS` and `EXTRA_COUCHDB_DATABASES` in the manner described below.
-to start with:
-
-```python
-
-NEW_USERS_GROUPS_DB = 'users'  # the database we will be using
-USERS_GROUPS_DB = None  # the database to use (will later be changed to NEW_USERS_GROUPS_DB)
-...
-COUCHDB_APPS = [
-...
-    ('groups', USERS_GROUPS_DB),
-    ('users', USERS_GROUPS_DB),
-...
-]
-...
-EXTRA_COUCHDB_DATABASES = get_extra_couchdbs(COUCHDB_APPS, COUCH_DATABASE, (
-    ...
-    NEW_USERS_GROUPS_DB,
-))
-```
-We have some views which are meant to work on roughly all doc types.  Take a
-look at the views referenced in `corehq/couchapps/__init__.py` and make sure to
-register the appropriate views to your new database.
-
 Do a full-text search for each doc_type you're migrating across all `map.js` files
 ```bash
 $ grep -r --include=map.js CommCareUser
@@ -49,8 +22,41 @@ from other ones:
     you may need to rewrite those functions to check both dbs
 - etc.
 
+If the doctype you're migrating is read by pillowtop, you may need to reset the
+checkpoint after the merge, or in the case of elasticsearch pillows, trigger an
+index rebuild.
+We should figure out how to better deal with this issue next time it comes up.
 
-## Add your migrator instance
+## Register the new database and migrator instance
+
+This step creates a new database and allows you to start populating it.
+The new database will not yet be used by any production code.
+
+To `settings.py` add variables representing
+(1) the database you're currently using for the apps you're migrating, probably set to `None` (== main db),
+and (2) the database you _will_ be using.
+Add these variables to `COUCHDB_APPS` and the list of extra databases in `COUCH_SETTINGS_HELPER` in the manner described below.
+to start with:
+
+```python
+
+NEW_USERS_GROUPS_DB = 'users'  # the database we will be using
+USERS_GROUPS_DB = None  # the database to use (will later be changed to NEW_USERS_GROUPS_DB)
+...
+COUCHDB_APPS = [
+...
+    ('groups', USERS_GROUPS_DB),
+    ('users', USERS_GROUPS_DB),
+...
+]
+...
+COUCH_SETTINGS_HELPER = CouchSettingsHelper(COUCH_DATABASE, COUCHDB_APPS, [
+    NEW_USERS_GROUPS_DB,
+])
+```
+We have some views which are meant to work on roughly all doc types.  Take a
+look at the views referenced in `corehq/couchapps/__init__.py` and make sure to
+register the appropriate views to your new database.
 
 In `corehq/doctypemigrations/migrator_instances.py`, add an object representing your migration
 going off the following model:
@@ -73,6 +79,10 @@ users_migration = Migrator(
     )
 )
 ```
+
+### Deploy migrator
+This can be merged whenever, as the new database will not be used until later, when you flip to it.
+
 
 ## Run the doctype migration
 
@@ -134,6 +144,8 @@ WebUser-Deleted                 0       0
 ```
 
 You'll see that by default `-Deleted`-suffixed doc_types are also added to the migration.
+
+Staging cannot create new databases, so you'll need to manually create the appropriate database through cloudant's UI.  It'll be something like `staging_commcarehq__users`.
 
 Now you can begin. Run
 
@@ -197,10 +209,22 @@ Once deploy is complete, kill the `--continuous` command with `^C`.
 ## Cleanup
 
 After you're confident in the change and stability of the site,
-it's time to delete the old documents still in the source db. To do this run,
+it's time to delete the old documents still in the source db.
+
+First you should clean up any doc conflicts, as that can get in the way of
+deleting stuff.
+
+```bash
+$ ./manage.py delete_doc_conflicts
+```
+
+Now you can actually delete the documents:
 
 ```bash
 $ ./manage.py run_doctype_migration user_db_migration --cleanup
 ```
 
 Keep in mind that this will likely incur some reindexing overhead in the source db.
+
+If you run `$ ./manage.py run_doctype_migration user_db_migration --stats`, you
+should see that only the target database has these doc types in it now.

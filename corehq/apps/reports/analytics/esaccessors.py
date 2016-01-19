@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from corehq.apps.es import FormES, UserES, GroupES
+from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters
+from corehq.apps.es.cases import closed_range
 from dimagi.utils.parsing import string_to_datetime
 
 
@@ -11,12 +12,70 @@ def get_last_submission_time_for_user(domain, user_id, datespan):
         .completed(gte=datespan.startdate.date(), lte=datespan.enddate.date()) \
         .sort("form.meta.timeEnd", desc=True) \
         .size(1)
-    results = form_query.run().raw_hits
+    results = form_query.run().hits
 
     def convert_to_date(date):
         return string_to_datetime(date).date() if date else None
 
-    return convert_to_date(results[0]['_source']['form']['meta']['timeEnd'] if results else None)
+    return convert_to_date(results[0]['form']['meta']['timeEnd'] if results else None)
+
+
+def get_active_case_counts_by_owner(domain, datespan, case_types=None):
+    return _get_case_case_counts_by_owner(domain, datespan, case_types, False)
+
+
+def get_total_case_counts_by_owner(domain, datespan, case_types=None):
+    return _get_case_case_counts_by_owner(domain, datespan, case_types, True)
+
+
+def _get_case_case_counts_by_owner(domain, datespan, case_types, is_total=False):
+    case_query = (CaseES()
+         .domain(domain)
+         .opened_range(lte=datespan.enddate)
+         .NOT(closed_range(lt=datespan.startdate))
+         .terms_facet('owner_id', 'owner_id')
+         .size(0))
+
+    if case_types:
+        case_query = case_query.filter({"terms": {"type.exact": case_types}})
+
+    if not is_total:
+        case_query = case_query.active_in_range(
+            gte=datespan.startdate,
+            lte=datespan.enddate
+        )
+
+    return case_query.run().facets.owner_id.counts_by_term()
+
+
+def get_case_counts_closed_by_user(domain, datespan, case_types=None):
+    return _get_case_counts_by_user(domain, datespan, case_types, False)
+
+
+def get_case_counts_opened_by_user(domain, datespan, case_types=None):
+    return _get_case_counts_by_user(domain, datespan, case_types, True)
+
+
+def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True):
+    date_field = 'opened_on' if is_opened else 'closed_on'
+    user_field = 'opened_by' if is_opened else 'closed_by'
+
+    case_query = (CaseES()
+        .domain(domain)
+        .filter(
+            filters.date_range(
+                date_field,
+                gte=datespan.startdate.date(),
+                lte=datespan.enddate.date(),
+            )
+        )
+        .terms_facet(user_field, 'by_user', size=100000)
+        .size(1))
+
+    if case_types:
+        case_query = case_query.filter({"terms": {"type.exact": case_types}})
+
+    return case_query.run().facets.by_user.counts_by_term()
 
 
 def get_submission_counts_by_user(domain, datespan):

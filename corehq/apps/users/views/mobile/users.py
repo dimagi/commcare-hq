@@ -441,9 +441,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'custom_field_names': [f.label for f in self.custom_data.fields],
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
-            'pagination_limit_cookie_name': ('hq.pagination.limit'
-                                             '.mobile_workers_list.%s'
-                                             % self.domain)
+            'pagination_limit_cookie_name': (
+                'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
+            'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain)
         }
 
     @property
@@ -541,21 +541,21 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         except KeyError:
             return HttpResponseBadRequest('You must specify a username')
         if username == 'admin' or username == 'demo_user':
-            return {'error': _('Username {} is reserved.'.format(username))}
+            return {'error': _(u'Username {} is reserved.').format(username)}
         if '@' in username:
             return {
-                'error': _('Username {} cannot contain "@".'.format(username))
+                'error': _(u'Username {} cannot contain "@".').format(username)
             }
         if ' ' in username:
             return {
-                'error': _('Username {} cannot contain '
-                           'spaces.'.format(username))
+                'error': _(u'Username {} cannot contain '
+                           'spaces.').format(username)
             }
         full_username = format_username(username, self.domain)
         if CommCareUser.get_by_username(full_username, strict=True):
-            result = {'error': _('Username {} is already taken'.format(username))}
+            result = {'error': _(u'Username {} is already taken').format(username)}
         else:
-            result = {'success': _('Username {} is available'.format(username))}
+            result = {'success': _(u'Username {} is available').format(username)}
         return result
 
     @allow_remote_invocation

@@ -51,9 +51,8 @@ class TestSubscriptionProperties(TestCase):
             account,
             domain_name,
             plan,
-            date_start=datetime.date.today() + datetime.timedelta(days=1),
+            date_start=datetime.date.today() - datetime.timedelta(days=1),
             date_end=datetime.date.today() + datetime.timedelta(days=5))
-        subscription.is_active = True
         subscription.save()
         cls._to_delete.append(account)
         cls._to_delete.append(subscription)
@@ -69,9 +68,7 @@ class TestSubscriptionProperties(TestCase):
         properties = _get_subscription_properties_by_user(self.user)
         self.assertEqual(properties['is_on_community_plan'], 'yes')
         self.assertEqual(properties['is_on_standard_plan'], 'no')
-        self.assertEqual(properties['is_on_advanced_plan'], 'no')
         self.assertEqual(properties['is_on_pro_plan'], 'no')
-        self.assertEqual(properties['is_on_enterprise_plan'], 'yes')
         self.assertEqual(properties['max_edition_of_paying_plan'], SoftwarePlanEdition.ENTERPRISE)
 
     def test_probono_properties(self):
@@ -99,7 +96,7 @@ class TestSubscriptionProperties(TestCase):
         plan, subscription = Subscription.get_subscribed_plan_by_domain(domain_name)
         subscription.update_subscription(
             pro_bono_status=pro_bono_status,
-            date_start=datetime.date.today() + datetime.timedelta(days=1),
+            date_start=datetime.date.today() - datetime.timedelta(days=1),
             date_end=datetime.date.today() + datetime.timedelta(days=5)
         )
 
@@ -107,6 +104,6 @@ class TestSubscriptionProperties(TestCase):
         plan, subscription = Subscription.get_subscribed_plan_by_domain(domain_name)
         subscription.update_subscription(
             service_type=SubscriptionType.EXTENDED_TRIAL,
-            date_start=datetime.date.today() + datetime.timedelta(days=1),
+            date_start=datetime.date.today() - datetime.timedelta(days=1),
             date_end=datetime.date.today() + datetime.timedelta(days=5)
         )
