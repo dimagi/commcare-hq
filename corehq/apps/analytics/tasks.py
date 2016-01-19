@@ -340,7 +340,7 @@ def submit_data_to_hub_and_kiss(submit_json):
         try:
             dispatcher(submit_json)
         except Exception, e:
-            notify_exception(None, "{msg}: {exc}".format(msg=error_message, exc=str(e)))
+            notify_exception(None, unicode("{msg}: {exc}".format(msg=error_message, exc=e)))
 
 
 def _track_periodic_data_on_kiss(submit_json):
