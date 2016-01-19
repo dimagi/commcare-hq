@@ -1,7 +1,10 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 <div class="btn-group">
-    <button class="btn" data-bind="click: addProperty">{% trans "Add Property" %}</button>
+    <button class="btn" data-bind="click: addProperty">
+        <i class="icon icon-plus"></i>
+        {% trans "Add Property" %}
+    </button>
     {% if request|toggle_enabled:'GRAPH_CREATION' %}
     <button class="btn dropdown-toggle" data-toggle="dropdown">
         <span class="caret"></span>
