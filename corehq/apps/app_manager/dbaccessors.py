@@ -1,5 +1,4 @@
 from django.conf import settings
-from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.apps.es import AppES
 from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
@@ -61,6 +60,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
 
     """
     from .models import Application
+    from corehq.apps.app_manager.util import get_correct_app_class
 
     if latest:
         try:
@@ -105,6 +105,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
 
 def get_apps_in_domain(domain, include_remote=True):
     from .models import Application
+    from corehq.apps.app_manager.util import get_correct_app_class
     docs = [row['doc'] for row in Application.get_db().view(
         'app_manager/applications',
         startkey=[domain, None],
@@ -119,6 +120,7 @@ def get_apps_in_domain(domain, include_remote=True):
 
 def get_brief_apps_in_domain(domain, include_remote=True):
     from .models import Application
+    from corehq.apps.app_manager.util import get_correct_app_class
     docs = [row['value'] for row in Application.get_db().view(
         'app_manager/applications_brief',
         startkey=[domain],
@@ -128,6 +130,15 @@ def get_brief_apps_in_domain(domain, include_remote=True):
     if not include_remote:
         apps = [app for app in apps if not app.is_remote_app()]
     return apps
+
+
+def get_app_ids_in_domain(domain):
+    from .models import Application
+    return [row['id'] for row in Application.get_db().view(
+        'app_manager/applications',
+        startkey=[domain, None],
+        endkey=[domain, None, {}]
+    )]
 
 
 def get_built_app_ids(domain):
@@ -164,6 +175,7 @@ def get_all_apps(domain):
     that shouldn't be present in built apps as well as app definitions.
     """
     from .models import Application
+    from corehq.apps.app_manager.util import get_correct_app_class
     saved_apps = Application.get_db().view(
         'app_manager/saved_app',
         startkey=[domain],

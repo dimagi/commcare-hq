@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.reports.models import ReportConfig
 from dimagi.utils.decorators.memoized import memoized
 
@@ -317,13 +317,7 @@ class AppsPaginatedContext(BasePaginatedTileContextProcessor):
     @property
     @memoized
     def applications(self):
-        key = [self.request.domain]
-        return Application.get_db().view(
-            'app_manager/applications_brief',
-            reduce=False,
-            startkey=key,
-            endkey=key+[{}],
-        ).all()
+        return get_brief_apps_in_domain(self.request.domain)
 
     @property
     def paginated_items(self):

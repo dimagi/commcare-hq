@@ -4,6 +4,7 @@ import uuid
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration import set_migration_complete
 from corehq.dbaccessors.couchapps.all_docs import \
@@ -437,10 +438,7 @@ class Domain(Document, SnapshotMixin):
         couch_user.save()
 
     def applications(self):
-        from corehq.apps.app_manager.models import ApplicationBase
-        return ApplicationBase.view('app_manager/applications_brief',
-                                    startkey=[self.name],
-                                    endkey=[self.name, {}]).all()
+        return get_brief_apps_in_domain(self.name)
 
     def full_applications(self, include_builds=True):
         from corehq.apps.app_manager.models import Application, RemoteApp
