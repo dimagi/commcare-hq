@@ -101,9 +101,7 @@ ko.bindingHandlers.casePropertyTypeahead = {
 ko.bindingHandlers.accordion = {
     init: function(element, valueAccessor) {
         var options = valueAccessor() || {};
-        setTimeout(function() {
-            $(element).accordion(options);
-        }, 0);
+        $(element).accordion(options);
 
         //handle disposal (if KO removes by the template binding)
         ko.utils.domNodeDisposal.addDisposeCallback(element, function(){

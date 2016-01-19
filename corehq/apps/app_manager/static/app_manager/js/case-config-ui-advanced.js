@@ -152,18 +152,16 @@ var AdvancedCase = (function () {
         self.caseConfigViewModel = new CaseConfigViewModel(self, params);
 
         self.applyAccordion = function (type, index) {
-            _.delay(function () {
-                var options = {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true};
-                if (index) {
-                    options.active = index;
-                }
-                if (!type || type === 'open') {
-                    $('#case-open-accordion').accordion("destroy").accordion(options);
-                }
-                if (!type || type === 'load') {
-                    $('#case-load-accordion').accordion("destroy").accordion(options);
-                }
-            });
+            var options = {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true};
+            if (index) {
+                options.active = index;
+            }
+            if (!type || type === 'open') {
+                $('#case-open-accordion').accordion("destroy").accordion(options);
+            }
+            if (!type || type === 'load') {
+                $('#case-load-accordion').accordion("destroy").accordion(options);
+            }
         };
 
         self.init = function () {
@@ -381,7 +379,7 @@ var AdvancedCase = (function () {
                 }
                 self.load_update_cases.push(LoadUpdateAction.wrap(action_data, self.config));
                 if (index > 0) {
-                    self.config.applyAccordion('open', index);
+                    self.config.applyAccordion('load', index);
                 }
             } else if (action.value === 'open') {
                 $('#case-load-accordion').accordion({active: false});
@@ -401,7 +399,7 @@ var AdvancedCase = (function () {
                     close_condition: DEFAULT_CONDITION('never')
                 }, self.config));
                 if (index > 0) {
-                    self.config.applyAccordion('load', index);
+                    self.config.applyAccordion('open', index);
                 }
             }
         };
