@@ -11,9 +11,9 @@
                         nickname: "{{ data.handler_name }}",
                         date: "{{ data.next_fire.date }}",
                         time: "{{ data.next_fire.time }}",
-                        case_name: "{{ data.case_name }}",
+                        case_name: {{ data.case_name|JSON }},
                         case_url: "{% if data.case_id %}{% url "case_details" domain data.case_id %}{% endif %}",
-                        recipient_desc: "{{ data.recipient_desc }}",
+                        recipient_desc: {{ data.recipient_desc|JSON }},
                         recipient_type: "{{ data.recipient_type }}",
                     },
                 {% endfor %}
