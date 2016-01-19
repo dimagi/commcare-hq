@@ -34,7 +34,6 @@ from corehq.apps.style.decorators import (
     use_jquery_ui,
     use_bootstrap3,
     use_datatables,
-    use_knockout_js,
     use_select2)
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
@@ -74,7 +73,6 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
     @use_jquery_ui
     @use_bootstrap3
     @use_datatables
-    @use_knockout_js
     @use_select2
     def set_bootstrap3_status(self, request, *args, **kwargs):
         self.is_bootstrap3 = True
