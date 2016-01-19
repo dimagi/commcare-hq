@@ -251,7 +251,7 @@ def download_file(request, domain, app_id, path):
                 raise Http404()
             elif path in ('CommCare.jad', 'CommCare.jar'):
                 request.app.create_jadjar(save=True)
-                request.app.save()
+                request.app.save(increment_version=False)
                 return download_file(request, domain, app_id, path)
             elif path == 'profile.ccpr':
                 # legacy: should patch build to add odk profile
