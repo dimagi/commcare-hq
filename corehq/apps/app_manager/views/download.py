@@ -231,6 +231,10 @@ class DownloadBuildAttachmentsView(View, ApplicationViewMixin):
                     add_odk_profile_after_build(self.app)
                     self.app.save()
                     return self.get(request, **kwargs)
+                elif self.path in ('CommCare.jad', 'CommCare.jar'):
+                    self.app.create_jadjar(save=True)
+                    self.app.save()
+                    return self.get(request, **kwargs)
                 else:
                     try:
                         self.resolve_path(self.path)
