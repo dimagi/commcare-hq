@@ -3,6 +3,7 @@ from django.test import SimpleTestCase
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.transforms.specs import CustomTransform
+from corehq.util.test_utils import generate_cases
 
 
 class TransformFactoryTest(SimpleTestCase):
@@ -35,18 +36,18 @@ class NumberFormatTransformTest(SimpleTestCase):
     def test_decimal(self):
         self.assertEqual('11', self.transform(11.23))
 
-    def test_strings(self):
-        tests = (
-            ('11', '11'),
-            ('11.23', '11'),
-            ('notanumber', 'notanumber'),
-            ('', ''),
-        )
-        for input, expected_result in tests:
-            self.assertEqual(expected_result, self.transform(input))
-
     def test_none(self):
         self.assertEqual(None, self.transform(None))
+
+
+@generate_cases((
+    ('11', '11'),
+    ('11.23', '11'),
+    ('notanumber', 'notanumber'),
+    ('', ''),
+), NumberFormatTransformTest)
+def test_number_format_transform_strings(self, input, expected_result):
+    self.assertEqual(expected_result, self.transform(input))
 
 
 class CustomTransformTest(SimpleTestCase):

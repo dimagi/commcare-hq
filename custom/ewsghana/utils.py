@@ -1,3 +1,4 @@
+from collections import namedtuple
 from decimal import Decimal
 from dateutil.relativedelta import relativedelta
 from django.db.models.query_utils import Q
@@ -23,6 +24,7 @@ from custom.ewsghana.reminders.const import DAYS_UNTIL_LATE
 
 TEST_DOMAIN = 'ewsghana-receipts-test'
 TEST_BACKEND = 'MOBILE_BACKEND_TEST'
+Msg = namedtuple('Msg', ['text'])
 
 
 def get_descendants(location_id):
@@ -504,3 +506,20 @@ def set_sms_notifications(domain, web_user, sms_notifications):
         extension.save()
     except EWSExtension.DoesNotExist:
         EWSExtension.objects.create(domain=domain, user_id=web_user.get_id, sms_notifications=sms_notifications)
+
+
+def get_user_location_id(user, domain):
+    dm = user.get_domain_membership(domain)
+    if not dm:
+        return
+
+    if dm.location_id:
+        return dm.location_id
+
+    try:
+        ews_extension = EWSExtension.objects.get(user_id=user.get_id, domain=domain)
+    except EWSExtension.DoesNotExist:
+        return
+
+    if ews_extension.location_id:
+        return ews_extension.location_id

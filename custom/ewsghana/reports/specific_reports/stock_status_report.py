@@ -167,13 +167,8 @@ class MonthOfStockProduct(EWSData):
 
                 sp = SQLLocation.objects.get(supply_point_id=case_id)
 
-                if sp.location_type.administrative:
-                    cls = StockLevelsReport
-                else:
-                    cls = StockStatus
-
                 url = make_url(
-                    cls,
+                    StockStatus,
                     self.config['domain'],
                     '?location_id=%s&filter_by_program=%s&startdate=%s&enddate=%s&report_type=%s',
                     (sp.location_id, self.config['program'] or ALL_OPTION, self.config['startdate'].date(),
@@ -297,7 +292,7 @@ class StockoutTable(EWSData):
             for supply_point in self.config['stockout_table_supply_points']:
                 products_set = self.config['stockouts'].get(supply_point.supply_point_id)
                 url = link_format(supply_point.name, make_url(
-                    StockLevelsReport,
+                    StockStatus,
                     self.config['domain'],
                     '?location_id=%s&startdate=%s&enddate=%s',
                     (supply_point.location_id, self.config['startdate'], self.config['enddate'])
