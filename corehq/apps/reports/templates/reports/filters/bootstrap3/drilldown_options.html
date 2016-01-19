@@ -8,7 +8,7 @@
 <div id="{{ css_id }}" class="well well-sm">
     <div data-bind="foreach: controls">
         <div class="form-group"
-             data-bind="{% if use_last %}fadeVisibleInOnly{% else %}fadeVisible{% endif %}: is_visible">
+             data-bind="visible: is_visible">
             <label data-bind="attr: {for: '{{ css_id }}_'+slug}, text: label"
                    class="control-label col-xs-4 col-md-2"></label>
             <div class="col-xs-8 col-md-10">
