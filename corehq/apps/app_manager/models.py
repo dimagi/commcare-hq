@@ -4172,7 +4172,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             jad_settings.update(self.jad_settings)
             jadjar = self.get_jadjar().pack(all_files, jad_settings)
             if save:
-                self.built_on = built_on
                 self.built_with = BuildRecord(
                     version=jadjar.version,
                     build_number=jadjar.build_number,

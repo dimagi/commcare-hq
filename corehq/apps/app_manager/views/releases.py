@@ -1,3 +1,4 @@
+import datetime
 import json
 
 from django.template.loader import render_to_string
@@ -150,6 +151,7 @@ def save_copy(request, domain, app_id):
                 user_id=request.couch_user.get_id,
                 previous_version=app.get_latest_app(released_only=False)
             )
+            copy.built_on = datetime.datetime.utcnow()
             copy.save(increment_version=False)
         finally:
             # To make a RemoteApp always available for building
