@@ -4,8 +4,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.exceptions import NotAUserClassError
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number
+from custom.ewsghana.handlers.keyword import KeywordHandler
 from custom.ewsghana.reminders import RECEIPT_CONFIRM
-from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from corehq.apps.commtrack.sms import StockReportParser, process
 
 
