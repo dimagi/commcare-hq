@@ -68,6 +68,9 @@ INACTIVITY_TIMEOUT = 60 * 24 * 365
 
 CACHE_REPORTS = False
 
+# Fail hard on csrf failures during dev
+CSRF_SOFT_MODE = False
+
 # Make a dir to use for storing attachments as blobs on the filesystem
 shared_dirname = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                               'sharedfiles')

@@ -6,7 +6,6 @@
 {% block title %}{% trans "Edit Feature Flag: " %}{{ toggle_meta.label }}{% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
     <script src="{% new_static 'hqwebapp/js/main.js' %}"></script>
 {% endblock %}
 
