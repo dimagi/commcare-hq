@@ -28,7 +28,8 @@ from corehq.apps.accounting.models import (
     Subscription, Invoice,
     SubscriptionAdjustment, SubscriptionAdjustmentReason,
     SubscriptionAdjustmentMethod,
-    BillingAccount, WirePrepaymentInvoice, WirePrepaymentBillingRecord
+    BillingAccount, WirePrepaymentInvoice, WirePrepaymentBillingRecord,
+    StripePaymentMethod,
 )
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils import (
@@ -41,6 +42,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import FakeUser, WebUser
 from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
+from corehq.util.view_utils import absolute_reverse
 
 
 @transaction.atomic()
@@ -360,6 +362,41 @@ def send_purchase_receipt(payment_record, core_product, domain,
         ugettext("Payment Received - Thank You!"), email, email_html,
         text_content=email_plaintext,
         email_from=get_dimagi_from_email_by_product(core_product),
+    )
+
+
+@task(ignore_result=True)
+def send_autopay_failed(invoice, payment_method):
+    subscription = invoice.subscription
+    auto_payer = subscription.account.auto_pay_user
+    payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
+    autopay_card = payment_method.get_autopay_card(subscription.account)
+    try:
+        recipient = WebUser.get_by_username(auto_payer).get_email()
+    except ResourceNotFound:
+        recipient = auto_payer
+    domain = invoice.get_domain()
+
+    context = {
+        'domain': domain,
+        'subscription_plan': subscription.plan_version.plan.name,
+        'billing_date': datetime.date.today(),
+        'invoice_number': invoice.invoice_number,
+        'autopay_card': autopay_card,
+        'domain_url': absolute_reverse('dashboard_default', args=[domain]),
+        'billing_info_url': absolute_reverse('domain_update_billing_info', args=[domain]),
+        'support_email': settings.INVOICING_CONTACT_EMAIL,
+    }
+
+    template_html = 'accounting/autopay_failed_email.html'
+    template_plaintext = 'accounting/autopay_failed_email.txt'
+
+    send_HTML_email(
+        subject="Subscription Payment for CommCare Invoice %s was declined" % invoice.invoice_number,
+        recipient=recipient,
+        html_content=render_to_string(template_html, context),
+        text_content=render_to_string(template_plaintext, context),
+        email_from=get_dimagi_from_email_by_product(subscription.plan_version.product_rate.product.product_type),
     )
 
 
