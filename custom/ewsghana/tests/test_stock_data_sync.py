@@ -5,7 +5,6 @@ from django.test.testcases import TestCase
 from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
-from corehq.form_processor.interfaces.supply import SupplyInterface
 from custom.ewsghana.api import EWSApi
 from custom.ewsghana.models import EWSGhanaConfig
 from custom.ewsghana.stock_data import EWSStockDataSynchronization
@@ -57,12 +56,6 @@ class TestStockDataSync(TestCase):
             location_type='Hospital',
             domain=TEST_DOMAIN
         )
-
-        l1.save()
-        l2.save()
-
-        SupplyInterface.create_from_location(TEST_DOMAIN, l1)
-        SupplyInterface.create_from_location(TEST_DOMAIN, l2)
 
         l1.save()
         l2.save()

@@ -1,6 +1,6 @@
-from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import Location
 from corehq.apps.locations.bulk import LocationImporter
 from mock import patch
@@ -16,11 +16,10 @@ def import_location(domain, loc_type, data):
 
 class LocationImportTest(CommTrackTest):
     def setUp(self):
+        super(LocationImportTest, self).setUp()
         # set up a couple locations that make tests a little more DRY
         self.test_state = make_loc('sillyparentstate', type='state')
         self.test_village = make_loc('sillyparentvillage', type='village')
-
-        return super(LocationImportTest, self).setUp()
 
     def names_of_locs(self):
         return [loc.name for loc in Location.by_domain(self.domain.name)]
@@ -78,6 +77,7 @@ class LocationImportTest(CommTrackTest):
         )
 
     def test_invalid_parent_domain(self):
+        create_domain('notright')
         parent = make_loc('someparent', domain='notright', type='village')
 
         data = {
@@ -201,16 +201,18 @@ class LocationImportTest(CommTrackTest):
             self.assertTrue(result['id'] is not None)
 
     def test_should_import_consumption(self):
-        existing = make_loc('existingloc', type='state')
-        sp = make_supply_point(self.loc.domain, existing)
+        parent = make_loc('originalparent', type='village')
+        existing = make_loc('existingloc', type='outlet', parent=parent)
+        sp = existing.linked_supply_point()
 
         data = {
             'site_code': existing.site_code,
             'name': 'existingloc',
+            'parent_site_code': parent.site_code,
             'consumption': {'pp': 77},
         }
 
-        import_location(self.domain.name, 'state', data)
+        import_location(self.domain.name, 'outlet', data)
 
         self.assertEqual(
             float(get_default_consumption(
