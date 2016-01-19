@@ -61,7 +61,12 @@ class BalanceMigration(UserMigrationMixin):
 
             for phone_number in user.phone_numbers:
                 vn = VerifiedNumber.by_phone(phone_number)
-                if not vn or vn.owner_id != user.get_id or vn.domain != self.domain or not vn.verified:
+                if vn and vn.owner_id != user.get_id and vn.domain == self.domain:
+                    description += "Phone number already assigned to user({}) from this domain, "\
+                        .format(vn.owner_id)
+                elif vn and vn.owner_id == user.get_id and vn.domain != self.domain:
+                    description += "Phone number already assigned on domain {}, ".format(vn.domain)
+                elif not vn or not vn.verified:
                     description += "Phone number not verified, "
                 else:
                     backend = phone_to_backend.get(phone_number)
