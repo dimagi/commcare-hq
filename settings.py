@@ -136,6 +136,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
+    'django_otp.middleware.OTPMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.middleware.NoCacheMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
@@ -184,7 +185,10 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     'django.core.context_processors.i18n',
 ]
 
-TEMPLATE_DIRS = []
+location = lambda x: os.path.join(os.path.dirname(os.path.realpath(__file__)), x)
+TEMPLATE_DIRS = (
+    location('corehq/apps/domain/templates/login_and_password'),
+)
 
 DEFAULT_APPS = (
     'corehq.apps.userhack',  # this has to be above auth
@@ -205,6 +209,10 @@ DEFAULT_APPS = (
     'compressor',
     'mptt',
     'tastypie',
+    'django_otp',
+    'django_otp.plugins.otp_static',
+    'django_otp.plugins.otp_totp',
+    'two_factor',
     'ws4redis',
     'statici18n',
 )
@@ -332,6 +340,7 @@ HQ_APPS = (
     'custom.bihar',
     'custom.penn_state',
     'custom.apps.gsid',
+    'custom.icds',
     'hsph',
     'mvp',
     'mvp_docs',
@@ -387,11 +396,17 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'crispy_forms',
     'django_extensions',
     'django_prbac',
+    'django_otp',
+    'django_otp.plugins.otp_static',
+    'django_otp.plugins.otp_totp',
     'djcelery',
     'djtables',
     'gunicorn',
     'langcodes',
     'luna',
+    'raven.contrib.django.raven_compat',
+    'rosetta',
+    'two_factor',
     'custom.apps.crs_reports',
     'custom.m4change',
 
