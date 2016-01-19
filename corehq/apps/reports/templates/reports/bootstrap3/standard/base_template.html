@@ -102,12 +102,14 @@
                         </div>
                         <div class="form-actions">
                             {% block report_filter_actions %}
-                            <button type="submit" class="btn disabled"
-                                    data-loading-text="{% trans "Generating Report..." %}"
-                                    data-standard-text="{% trans "Apply" %}"
-                                    id="apply-btn">
-                                {% trans "Apply" %}
-                            </button>
+                                <div class="col-xs-8 col-md-8 col-lg-9 col-xs-offset-4 col-md-offset-3 col-lg-offset-2">
+                                    <button type="submit" class="btn disabled"
+                                            data-loading-text="{% trans "Generating Report..." %}"
+                                            data-standard-text="{% trans "Apply" %}"
+                                            id="apply-btn">
+                                        {% trans "Apply" %}
+                                    </button>
+                                </div>
                             {% endblock %}
                         </div>
                     </form>
