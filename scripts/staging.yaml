@@ -57,6 +57,7 @@ branches:
   - location-delete # Cal 12/16
   - new-footer-nav # Biyeun 1/4
   - tabular-reports-b3-migrate  # Biyeun 1/15
+  - location-cases  # Ethan 1/19
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
