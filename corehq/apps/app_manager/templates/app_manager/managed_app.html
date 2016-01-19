@@ -337,7 +337,11 @@
 {% endif %}
 {% endblock %}
 
-{% block pre_page_content %}{% endblock %}
+{% block pre_page_content %}
+    {% if not formdesigner %}
+        <div class="spacer"></div>
+    {% endif %}
+{% endblock %}
 
 {% block app-content %}
     {% block form-view %}{% endblock %}
