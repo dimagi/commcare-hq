@@ -20,20 +20,15 @@
 
 {% block js %}{{ block.super }}
     {# Explicitly include these because app manager doesn't really do class-based views, can't use the decorators #}
-    <!--script type="text/javascript" src="{% new_static 'knockout/dist/knockout.js' %}"></script-->
-    <!-- TODO: upgrade to knockout 3 -->
-    <script type="text/javascript" src="{% new_static 'knockout-2.3.0-legacy/knockout.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'style/lib/select2/select2.js' %}"></script>
-    <!-- TODO: this used to be in form_view_base.html, is it needed? -->
-    <!--script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script-->
+    <script src="{% new_static 'knockout-2.3.0-legacy/knockout.js' %}"></script>
+    <script src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+    <script src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
+    <script src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
+    <script src="{% new_static 'style/lib/select2/select2.js' %}"></script>
     <script src="{% new_static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
     <script src="{% new_static 'style/js/bootstrap-multi-typeahead.js' %}"></script>
 
-    {# TODO: move things to bower? Ctrl+F "Javascript Library Management" in B3 migration guide #}
     <script src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% new_static 'langcodes/js/langcodes.js' %}"></script>
     <script src="{% new_static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>

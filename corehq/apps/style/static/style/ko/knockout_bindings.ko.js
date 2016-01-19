@@ -231,7 +231,6 @@ ko.bindingHandlers.saveButton2 = {
                     saveButton.ajax(saveOptions());
                 }
             });
-            // TODO: move to CSS
             $(element).css('vertical-align', 'top').css('display', 'inline-block');
         } else {
             saveButton = SaveButton.init({
