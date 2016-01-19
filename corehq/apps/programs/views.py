@@ -12,7 +12,7 @@ from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.programs.forms import ProgramForm
-from corehq.apps.style.decorators import use_knockout_js, use_bootstrap3
+from corehq.apps.style.decorators import use_bootstrap3
 
 
 @require_POST
@@ -34,7 +34,6 @@ class ProgramListView(BaseCommTrackManageView):
     page_title = ugettext_noop("Programs")
 
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, request, *args, **kwargs):
         return super(ProgramListView, self).dispatch(request, *args, **kwargs)
 
@@ -100,7 +99,6 @@ class NewProgramView(BaseCommTrackManageView):
         return self.get(request, *args, **kwargs)
 
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, request, *args, **kwargs):
         return super(NewProgramView, self).dispatch(request, *args, **kwargs)
 

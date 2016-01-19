@@ -51,7 +51,6 @@ from touchforms.formplayer.models import EntrySession
 from xml2json.lib import xml2json
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.style.decorators import (
-    use_knockout_js,
     use_datatables,
     use_bootstrap3,
     use_jquery_ui,
@@ -73,7 +72,6 @@ def insufficient_privilege(request, domain, *args, **kwargs):
 
 class CloudcareMain(View):
 
-    @use_knockout_js
     @use_bootstrap3
     @use_datatables
     @use_jquery_ui
@@ -545,7 +543,6 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, request, *args, **kwargs):
         return super(EditCloudcareUserPermissionsView, self).dispatch(request, *args, **kwargs)
 

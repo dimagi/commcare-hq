@@ -292,8 +292,8 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 'num_apps': num_apps,
             },
             [mark_safe('<a href="%(url)s">%(title)s</a>') % {
-                'title': app.name,
-                'url': reverse('view_app', args=[self.domain.name, app.get_id])
+                'title': app['name'],
+                'url': reverse('view_app', args=[self.domain.name, app['_id']])
             } for app in cloudcare_enabled_apps],
         )
 

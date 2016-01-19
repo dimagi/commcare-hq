@@ -19,8 +19,10 @@ import logging
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from corehq.util.soft_assert import soft_assert
-from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.toggles import deterministic_random
+
+from dimagi.utils.logging import notify_exception
+
 
 logger = logging.getLogger('analytics')
 logger.setLevel('DEBUG')
@@ -338,8 +340,7 @@ def submit_data_to_hub_and_kiss(submit_json):
         try:
             dispatcher(submit_json)
         except Exception, e:
-            logger.error(error_message)
-            logger.exception(e)
+            notify_exception(None, "{msg}: {exc}".format(msg=error_message, exc=str(e)))
 
 
 def _track_periodic_data_on_kiss(submit_json):

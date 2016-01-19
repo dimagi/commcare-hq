@@ -36,8 +36,7 @@ from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-from corehq.apps.style.decorators import use_datatables, use_knockout_js, \
-    use_jquery_ui
+from corehq.apps.style.decorators import use_datatables, use_jquery_ui
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.couchdb_management import couch_config
@@ -337,7 +336,6 @@ class SystemInfoView(BaseAdminSectionView):
     template_name = "hqadmin/system_info.html"
 
     @use_datatables
-    @use_knockout_js
     @use_jquery_ui
     @method_decorator(require_superuser_or_developer)
     def dispatch(self, request, *args, **kwargs):

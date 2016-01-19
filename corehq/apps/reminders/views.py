@@ -8,7 +8,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.style.decorators import use_bootstrap3, use_datatables, use_knockout_js, use_jquery_ui, \
+from corehq.apps.style.decorators import use_bootstrap3, use_datatables, use_jquery_ui, \
     use_timepicker, use_select2
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.const import SERVER_DATETIME_FORMAT
@@ -371,7 +371,6 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
 
     @method_decorator(reminders_framework_permission)
     @use_bootstrap3
-    @use_knockout_js
     @use_jquery_ui
     @use_timepicker
     @use_select2
@@ -713,7 +712,6 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, *args, **kwargs):
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
@@ -920,7 +918,6 @@ class CreateBroadcastView(BaseMessagingSectionView):
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_bootstrap3
-    @use_knockout_js
     @use_jquery_ui
     @use_timepicker
     def dispatch(self, *args, **kwargs):
@@ -1145,7 +1142,6 @@ class RemindersListView(BaseMessagingSectionView):
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_bootstrap3
     @use_datatables
-    @use_knockout_js
     def dispatch(self, *args, **kwargs):
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
@@ -1339,7 +1335,6 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, *args, **kwargs):
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 

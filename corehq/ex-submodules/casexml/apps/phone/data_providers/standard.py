@@ -46,6 +46,6 @@ class FixtureElementProvider(RestoreDataProvider):
             restore_state.user,
             restore_state.version,
             restore_state.last_sync_log,
-            restore_state.params.app
+            app=restore_state.params.app
         ):
             yield fixture

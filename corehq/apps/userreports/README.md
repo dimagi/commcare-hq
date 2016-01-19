@@ -1051,12 +1051,40 @@ The currently supported transform types are shown below:
 ```
 
 ### Rounding decimals
+
 Rounds decimal and floating point numbers to two decimal places.
 
 ```
 {
     "type": "custom",
     "custom_type": "short_decimal_display"
+}
+```
+
+### Generic number formatting
+
+Rounds numbers using Python's [built in formatting](https://docs.python.org/2.7/library/string.html#string-formatting).
+
+See below for a few simple examples. Read the docs for complex ones. The input to the format string will be a _number_ not a string.
+
+If the format string is not valid or the input is not a number then the original input will be returned.
+
+
+#### Round to the nearest whole number
+
+```
+{
+    "type": "number_format",
+    "custom_type": "{0:.0f}"
+}
+```
+
+#### Always round to 3 decimal places
+
+```
+{
+    "type": "number_format",
+    "custom_type": "{0:.3f}"
 }
 ```
 

@@ -3,7 +3,7 @@ import os
 import tempfile
 from StringIO import StringIO
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js, \
+from corehq.apps.style.decorators import use_bootstrap3, \
     use_select2, use_daterangepicker, use_jquery_ui, use_nvd3, use_datatables
 from dimagi.utils.modules import to_function
 from django.conf import settings
@@ -64,7 +64,6 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         return super(ConfigurableReport, self).domain
 
     @use_bootstrap3
-    @use_knockout_js
     @use_select2
     @use_daterangepicker
     @use_jquery_ui
