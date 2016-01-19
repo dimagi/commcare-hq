@@ -329,17 +329,14 @@ class AppsPaginatedContext(BasePaginatedTileContextProcessor):
             )
 
         def _get_view_app_url(app):
-            return reverse('view_app', args=[self.request.domain, app['id']])
+            return reverse('view_app', args=[self.request.domain, app.get_id])
 
         def _get_release_manager_url(app):
-            return reverse('release_manager', args=[self.request.domain, app['id']])
-
-        def _get_app_name(app):
-            return app['key'][1]
+            return reverse('release_manager', args=[self.request.domain, app.get_id])
 
         apps = self.applications[self.skip:self.skip + self.limit]
 
-        return [self._fmt_item(_get_app_name(a),
+        return [self._fmt_item(a.name,
                                _get_app_url(a),
                                None,  # description
                                None,  # full_name
