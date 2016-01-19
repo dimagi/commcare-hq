@@ -40,7 +40,9 @@
         </div>
     </div>
     <div data-bind="if: actionType == 'open'" class="row">
-        <div class="panel panel-default" data-bind="template: 'case-config:case-transaction:case-properties'"></div>
+        <div class="col-sm-12">
+            <div class="panel panel-default" data-bind="template: 'case-config:case-transaction:case-properties'"></div>
+        </div>
     </div>
     <!-- ko if:  actionType !== 'load' || !auto_select || auto_select.mode() !== 'usercase' -->
     <div class="panel panel-default">
