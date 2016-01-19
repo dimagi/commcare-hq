@@ -1,16 +1,16 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 <div class="btn-group">
-    <button class="btn btn-default" data-bind="click: addProperty">{% trans "Add Property" %}</button>
-    {% if request|feature_preview_enabled:'CALC_XPATHS' or request|toggle_enabled:'GRAPH_CREATION' %}
+    <button class="btn btn-default" data-bind="click: addProperty">
+        <i class="fa fa-plus"></i>
+        {% trans "Add Property" %}
+    </button>
+    {% if request|toggle_enabled:'GRAPH_CREATION' %}
     <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
         <span class="caret"></span>
     </button>
     <ul class="dropdown-menu">
         <li data-bind="click: addProperty"><a>{% trans "Property" %}</a></li>
-        {% if request|feature_preview_enabled:'CALC_XPATHS' %}
-        <li data-bind="click: addCalculation"><a>{% trans "Calculation" %}</a></li>
-        {% endif %}
         {% if request|toggle_enabled:'GRAPH_CREATION' %}
         <!-- ko if: COMMCAREHQ.app_manager.checkCommcareVersion("2.17") -->
         <li data-bind="click: addGraph"><a>{% trans "Graph" %}</a></li>
