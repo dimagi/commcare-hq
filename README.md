@@ -233,7 +233,7 @@ related to Raven for the following three commands.
 
 To set up elasticsearch indexes, first run (and then kill once you see the "Starting pillow" lines):
 
-    $ ./manage.py run_ptop --pillow-key=corexs
+    $ ./manage.py run_ptop --pillow-key=core
 
 This will do an initial run of the elasticsearch indexing process, but this will run as a service later. This run 
 at least creates the indices for the first time.
