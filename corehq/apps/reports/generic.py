@@ -249,36 +249,44 @@ class GenericReportView(object):
     @property
     @memoized
     def template_base(self):
-        return self.base_template
+        return self._select_bootstrap_template(self.base_template)
 
     @property
     @memoized
     def mobile_template_base(self):
-        return self.base_template_mobile or "reports/mobile/mobile_report_base.html"
+        return self._select_bootstrap_template(
+            self.base_template_mobile or "reports/mobile/mobile_report_base.html"
+        )
 
     @property
     @memoized
     def template_async_base(self):
-        return ((self.base_template_async or "reports/async/bootstrap2/default.html")
-                                        if self.asynchronous else self.template_base)
+        return self._select_bootstrap_template(
+            (self.base_template_async or "reports/async/bootstrap2/default.html")
+            if self.asynchronous else self.template_base
+        )
+
+
     @property
     @memoized
     def template_report(self):
         original_template = self.report_template_path or "reports/async/basic.html"
         if self.is_rendered_as_email:
             self.context.update(original_template=original_template)
-            return self.override_template
-        return original_template
+            return self._select_bootstrap_template(self.override_template)
+        return self._select_bootstrap_template(original_template)
 
     @property
     @memoized
     def template_report_partial(self):
-        return self.report_partial_path
+        return self._select_bootstrap_template(self.report_partial_path)
 
     @property
     @memoized
     def template_filters(self):
-        return self.base_template_filters or "reports/async/bootstrap2/filters.html"
+        return self._select_bootstrap_template(
+           self.base_template_filters or "reports/async/bootstrap2/filters.html"
+        )
 
     @property
     @memoized
@@ -686,6 +694,11 @@ class GenericReportView(object):
         reports to bootstrap 3.
         """
         pass
+
+    def _select_bootstrap_template(self, template_path):
+        if self.is_bootstrap3 and template_path is not None:
+            template_path = template_path.replace('/bootstrap2/', '/bootstrap3/')
+        return template_path
 
 
 class GenericTabularReport(GenericReportView):
