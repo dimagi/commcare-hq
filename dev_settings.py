@@ -67,3 +67,6 @@ CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 INACTIVITY_TIMEOUT = 60 * 24 * 365
 
 CACHE_REPORTS = False
+
+# Fail hard on csrf failures during dev
+CSRF_SOFT_MODE = False

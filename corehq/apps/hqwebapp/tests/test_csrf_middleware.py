@@ -23,13 +23,13 @@ class TestHQCsrfMiddleware(TestCase):
         cls.domain.delete()
 
     def test_csrf_ON(self):
-        with self.settings(CSRF_ALWAYS_OFF=False):
+        with self.settings(CSRF_SOFT_MODE=False):
             csrf_sent, csrf_missing = self._form_post_with_and_without_csrf()
             self.assertEqual(csrf_sent, 200)
             self.assertEqual(csrf_missing, 403)
 
     def test_csrf_OFF(self):
-        with self.settings(CSRF_ALWAYS_OFF=True):
+        with self.settings(CSRF_SOFT_MODE=True):
             csrf_sent, csrf_missing = self._form_post_with_and_without_csrf()
             self.assertEqual(csrf_sent, 200)
             self.assertEqual(csrf_missing, 200)

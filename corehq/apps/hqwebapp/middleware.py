@@ -24,7 +24,7 @@ class HQCsrfViewMiddleWare(CsrfViewMiddleware):
         _assert = soft_assert('{}@{}'.format('sreddy+logs', 'dimagi.com'), exponential_backoff=False)
         _assert(False, warning)
 
-        if settings.CSRF_ALWAYS_OFF and reason in [REASON_NO_CSRF_COOKIE, REASON_BAD_TOKEN]:
+        if settings.CSRF_SOFT_MODE and reason in [REASON_NO_CSRF_COOKIE, REASON_BAD_TOKEN]:
             return self._accept(request)
         else:
             return super(HQCsrfViewMiddleWare, self)._reject(request, reason)
