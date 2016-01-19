@@ -1,15 +1,16 @@
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-import requests
 from corehq import toggles
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.locations.models import SQLLocation
 
 
 @toggles.ICDS_REPORTS.required_decorator()
+@login_and_domain_required
 def tableau(request, domain, workbook, worksheet):
     # TODO: In production we should limit this to only the actual workbook, but this makes iteration much easier
     # trusted_ticket = _get_tableau_trusted_ticket(request.)
-    couch_user = request.get('couch_user', None)
+    couch_user = getattr(request, 'couch_user', None)
     location_type_name, location_name = _get_user_permissions(couch_user, domain)
 
     context = {
