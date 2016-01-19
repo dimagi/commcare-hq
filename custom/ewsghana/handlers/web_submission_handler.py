@@ -5,7 +5,7 @@ from custom.ewsghana.handlers.helpers.stock_and_receipt_parser import EWSStockAn
 from custom.ewsghana.handlers.soh import SOHHandler
 from custom.ewsghana.utils import send_sms
 
-VerifiedNumberAdapter = namedtuple('VerifiedNumberAdapter', ['owner', 'phone_number'])
+VerifiedNumberAdapter = namedtuple('VerifiedNumberAdapter', ['owner', 'phone_number', 'domain', 'owner_id'])
 
 
 class WebSubmissionHandler(SOHHandler):
@@ -24,7 +24,7 @@ class WebSubmissionHandler(SOHHandler):
     def parser(self):
         return EWSStockAndReceiptParser(
             self.domain_object,
-            VerifiedNumberAdapter(self.user, 'ewsghana-input-stock'),
+            VerifiedNumberAdapter(self.user, 'ewsghana-input-stock', self.domain, self.user.get_id),
             self.sql_location.couch_location
         )
 

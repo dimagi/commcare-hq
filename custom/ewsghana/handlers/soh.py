@@ -157,7 +157,8 @@ class SOHHandler(KeywordHandler):
             elif self.sql_location.location_type.name == 'Central Medical Store':
                 self.send_ms_alert(stockouts, transactions, 'CMS')
             message, super_message = SOHAlerts(self.user, self.sql_location).get_alerts(transactions)
-            self.send_message_to_admins(super_message)
+            if super_message:
+                self.send_message_to_admins(super_message)
             self.respond(message)
         else:
             self.send_errors(transactions, parser.bad_codes)
