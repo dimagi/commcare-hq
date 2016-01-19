@@ -330,17 +330,18 @@ def create_wire_credits_invoice(domain_name,
 def send_purchase_receipt(payment_record, core_product, domain,
                           template_html, template_plaintext,
                           additional_context):
-    email = payment_record.payment_method.web_user
+    username = payment_record.payment_method.web_user
 
     try:
-        web_user = WebUser.get_by_username(email)
+        web_user = WebUser.get_by_username(username)
+        email = web_user.get_email()
         name = web_user.first_name
     except ResourceNotFound:
         log_accounting_error(
             "Strange. A payment attempt was made by a user that "
-            "we can't seem to find! %s" % email
+            "we can't seem to find! %s" % username
         )
-        name = email
+        name = email = username
 
     context = {
         'name': name,
