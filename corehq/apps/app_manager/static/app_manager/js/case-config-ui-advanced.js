@@ -378,9 +378,7 @@ var AdvancedCase = (function () {
 
                 }
                 self.load_update_cases.push(LoadUpdateAction.wrap(action_data, self.config));
-                if (index > 0) {
-                    self.config.applyAccordion('load', index);
-                }
+                self.config.applyAccordion('load', index);
             } else if (action.value === 'open') {
                 $('#case-load-accordion').accordion({active: false});
                 var index = self.open_cases().length;
@@ -398,9 +396,7 @@ var AdvancedCase = (function () {
                     open_condition: DEFAULT_CONDITION('always'),
                     close_condition: DEFAULT_CONDITION('never')
                 }, self.config));
-                if (index > 0) {
-                    self.config.applyAccordion('open', index);
-                }
+                self.config.applyAccordion('open', index);
             }
         };
 
