@@ -317,7 +317,8 @@
                     <!-- /ko -->
                 </div>
             </div>
-            <div>
+            <div class="spacer" data-bind="visible: open_cases().length && load_update_cases().length"></div>
+            <div class="row">
                 <legend data-bind="visible: open_cases().length">
                     {% trans "Open New Cases" %}
                 </legend>
