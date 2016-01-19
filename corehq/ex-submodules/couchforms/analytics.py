@@ -295,12 +295,15 @@ def get_exports_by_form(domain):
         stale=stale_ok()
     ).all()
     form_count_breakdown = get_form_count_breakdown_for_domain(domain)
+
     for row in rows:
         key = tuple(row['key'])
         if key in form_count_breakdown:
-            row['submissions'] = form_count_breakdown.pop(key)
+            row['value']['submissions'] = form_count_breakdown.pop(key)
+
     for key, value in form_count_breakdown.items():
         rows.append({'key': list(key), 'value': {'xmlns': key[2], 'submissions': value}})
+
     rows.sort(key=lambda row: row['key'])
     return rows
 
