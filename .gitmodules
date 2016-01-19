@@ -73,3 +73,6 @@
 [submodule "corehq/apps/prelogin"]
 	path = corehq/apps/prelogin
 	url = https://github.com/dimagi/commcarehq-prelogin.git
+[submodule "submodules/formsplayer"]
+	path = submodules/formsplayer
+	url = git@github.com:dimagi/formsplayer.git

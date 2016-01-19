@@ -601,6 +601,8 @@ def _deploy_without_asking():
         _execute_with_timing(clear_services_dir)
         _set_supervisor_config()
 
+        _execute_with_timing(build_tf)
+
         do_migrate = env.should_migrate
         if do_migrate:
 
@@ -690,6 +692,14 @@ def copy_tf_localsettings():
         '{}/submodules/touchforms-src/touchforms/backend/localsettings.py'.format(
             env.code_current, env.code_root
         ))
+
+
+@task
+@roles(ROLES_TOUCHFORMS)
+def build_tf():
+    spring_dir = '{}/{}'.format(env.code_root, 'submodules/formsplayer')
+    with cd(spring_dir):
+        sudo('./gradlew build')
 
 
 @parallel
