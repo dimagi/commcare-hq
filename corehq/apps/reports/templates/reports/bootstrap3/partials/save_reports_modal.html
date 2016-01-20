@@ -1,96 +1,110 @@
 {% load i18n %}
-<div id="report-config-modal" class="hide fade" data-bind="modal: configBeingEdited">
-    <div data-bind="with: configBeingEdited">
-        <div class="modal-header">
-            <a class="close" data-bind="click: $root.unsetConfigBeingEdited">×</a>
-            <h3 data-bind="text: modalTitle"></h3>
-        </div>
-        <div class="alert alert-error" data-bind="visible: error">
-            {% trans "Some required fields are missing. Please complete them before saving." %}
-        </div>
-        <form class="form-horizontal">
-            <div class="modal-body">
-                <div class="control-group">
-                    <label class="control-label" for="name">{% trans "Name" %}</label>
-                    <div class="controls">
-                        <input type="text" id="name" data-bind="value: name"/>
-                        <span class="help-inline">
-                            <small class="label">{% trans "Required" %}</small>
-                        </span>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label class="control-label" for="description">{% trans "Description" %}</label>
-                    <div class="controls">
-                        <textarea rows="3" name="description" data-bind="value: description"></textarea>
-                    </div>
-                </div>
-
-                <div data-bind="visible: has_ucr_datespan">
-                    <div class="control-group">
-                        <label class="control-label">{% trans "Date Filter" %}</label>
-                        <div class="controls">
-                            <select data-bind="
-                                options: datespan_filters,
-                                optionsText: 'display',
-                                optionsValue: 'slug',
-                                value: datespan_slug
-                            "></select>
-                        </div>
-                    </div>
-                </div>
-
-                <div data-bind="if: ((!has_ucr_datespan()) && date_range()) || (has_ucr_datespan() && datespan_slug())">
-                    <div class="control-group">
-                        <label class="control-label" for="date_range">{% trans "Default Date Range" %}</label>
-                        <div class="controls">
-                            <select name="date_range" data-bind="value: date_range">
-                                <option value="last7">{% trans "Last 7 days" %}</option>
-                                <option value="last30">{% trans "Last 30 days" %}</option>
-                                <option value="lastmonth">{% trans "Last month" %}</option>
-                                {% if not hide_lastyear %}<option value="lastyear">{% trans "Last year" %}</option>{% endif %}
-                                <option value="lastn">{% trans "Days ago" %}</option>
-                                <option value="since">{% trans "Since a date" %}</option>
-                                <option value="range">{% trans "From a date to a date" %}</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="control-group" data-bind="visible: date_range() === 'lastn'">
-                        <label class="control-label" for="days">{% trans "Number of Days" %}</label>
-                        <div class="controls">
-                            <input type="number" name="days" min="1" step="1" data-bind="value: days"/>
-                            <span class="help-inline">
-                                <small class="label">{% trans "Required" %}</small>
-                            </span>
-                        </div>
-                    </div>
-                    <div class="control-group" data-bind="visible: date_range() == 'since' || date_range() == 'range'">
-                        <label class="control-label" for="start_date">{% trans "Begin Date" %}</label>
-                        <div class="controls">
-                            <input type="text" class="date-picker" name="start_date" data-bind="value: start_date"/>
-                            <span class="help-inline">
-                                <small class="label">{% trans "YYYY-MM-DD" %}</small>
-                                <small class="label">{% trans "Required" %}</small>
-                            </span>
-                        </div>
-                    </div>
-                    <div class="control-group" data-bind="visible: date_range() == 'range'">
-                        <label class="control-label" for="end_date">{% trans "End Date" %}</label>
-                        <div class="controls">
-                            <input type="text" id="save-end" class="date-picker" name="end_date" data-bind="value: end_date"/>
-                            <span class="help-inline">
-                                <small class="label">{% trans "YYYY-MM-DD" %}</small>
-                                <small class="label">{% trans "Required" %}</small>
-                            </span>
-                        </div>
-                    </div>
-                </div>
+<div id="report-config-modal"
+     class="modal fade"
+     data-bind="modal: configBeingEdited" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" data-bind="with: configBeingEdited">
+            <div class="modal-header">
+                <button type="button" data-bind="click: $root.unsetConfigBeingEdited" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" data-bind="text: modalTitle"></h4>
             </div>
-            <div class="modal-footer">
-                <div class="btn-toolbar">
-                    <div class="btn-group">
-                        <a href="#" class="btn" data-bind="click: $root.unsetConfigBeingEdited">Cancel</a>
+            <form class="form form-horizontal">
+                <div class="modal-body">
+                    <div class="alert alert-error" data-bind="visible: error">
+                        {% trans "Some required fields are missing. Please complete them before saving." %}
                     </div>
+                    <div class="form-group">
+                        <label class="control-label col-xs-3" for="name">{% trans "Name" %}</label>
+                        <div class="col-xs-9">
+                            <input type="text" id="name" data-bind="value: name" class="form-control" />
+                            <span class="help-inline">
+                                <small class="label">{% trans "Required" %}</small>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-xs-3" for="description">{% trans "Description" %}</label>
+                        <div class="col-xs-9">
+                            <textarea rows="3" name="description" data-bind="value: description" class="form-control"></textarea>
+                        </div>
+                    </div>
+
+                    <div data-bind="visible: has_ucr_datespan">
+                        <div class="form-group">
+                            <label class="control-label col-xs-3">{% trans "Date Filter" %}</label>
+                            <div class="col-xs-9">
+                                <select data-bind="
+                                    options: datespan_filters,
+                                    optionsText: 'display',
+                                    optionsValue: 'slug',
+                                    value: datespan_slug
+                                "></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div data-bind="if: ((!has_ucr_datespan()) && date_range()) || (has_ucr_datespan() && datespan_slug())">
+                        <div class="form-group">
+                            <label class="control-label col-xs-3" for="date_range">{% trans "Default Date Range" %}</label>
+                            <div class="col-xs-9">
+                                <select name="date_range" data-bind="value: date_range" class="form-control">
+                                    <option value="last7">{% trans "Last 7 days" %}</option>
+                                    <option value="last30">{% trans "Last 30 days" %}</option>
+                                    <option value="lastmonth">{% trans "Last month" %}</option>
+                                    {% if not hide_lastyear %}<option value="lastyear">{% trans "Last year" %}</option>{% endif %}
+                                    <option value="lastn">{% trans "Days ago" %}</option>
+                                    <option value="since">{% trans "Since a date" %}</option>
+                                    <option value="range">{% trans "From a date to a date" %}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group" data-bind="visible: date_range() === 'lastn'">
+                            <label class="control-label col-xs-3" for="days">{% trans "Number of Days" %}</label>
+                            <div class="col-xs-9">
+                                <input type="number"
+                                       name="days"
+                                       min="1"
+                                       step="1"
+                                       data-bind="value: days"
+                                       class="form-control" />
+                                <span class="help-inline">
+                                    <small class="label label-default">{% trans "Required" %}</small>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-group" data-bind="visible: date_range() == 'since' || date_range() == 'range'">
+                            <label class="control-label col-xs-3" for="start_date">{% trans "Begin Date" %}</label>
+                            <div class="col-xs-9">
+                                <input type="text"
+                                       class="date-picker form-control"
+                                       name="start_date"
+                                       data-bind="value: start_date"
+                                       placeholder="{% trans "YYYY-MM-DD" %}" />
+                                <span class="help-inline">
+                                    <small class="label label-default">{% trans "YYYY-MM-DD" %}</small>
+                                    <small class="label label-default">{% trans "Required" %}</small>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-group" data-bind="visible: date_range() == 'range'">
+                            <label class="control-label col-xs-3" for="end_date">{% trans "End Date" %}</label>
+                            <div class="col-xs-9">
+                                <input type="text"
+                                       id="save-end"
+                                       class="date-picker form-control"
+                                       name="end_date"
+                                       data-bind="value: end_date"
+                                       placeholder="{% trans "YYYY-MM-DD" %}" />
+                                <span class="help-inline">
+                                    <small class="label label-default">{% trans "YYYY-MM-DD" %}</small>
+                                    <small class="label label-default">{% trans "Required" %}</small>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" class="btn btn-default" data-bind="click: $root.unsetConfigBeingEdited">{% trans 'Cancel' %}</a>
                     <div class="btn-group"
                          onclick="
                             ga_track_event('Scheduled Reports', 'Create a saved report', '-');
@@ -101,7 +115,7 @@
                         <span data-bind="saveButton2: $root.modalSaveButton.state, saveOptions: $root.modalSaveButton.saveOptions"></span>
                     </div>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
