@@ -1859,6 +1859,9 @@ class PhoneLoadBalancingMixin(object):
     is an instance of this mixin for performing various operations.)
     """
 
+    def get_load_balance_redis_key(self):
+        return 'load-balance-phones-for-backend-%s' % self.pk
+
     def get_next_phone_number(self):
         if (
             not isinstance(self.load_balancing_numbers, list) or
@@ -1872,7 +1875,7 @@ class PhoneLoadBalancingMixin(object):
             # process to figure out which one is next.
             return self.load_balancing_numbers[0]
 
-        redis_key = 'load-balance-phones-for-backend-%s' % self.pk
+        redis_key = self.get_load_balance_redis_key()
         return load_balance(redis_key, self.load_balancing_numbers)
 
 

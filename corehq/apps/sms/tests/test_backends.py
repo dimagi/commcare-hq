@@ -5,8 +5,10 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import (send_sms, send_sms_to_verified_number,
     send_sms_with_backend, send_sms_with_backend_name)
 from corehq.apps.sms.mixin import BadSMSConfigException
-from corehq.apps.sms.models import (SMS, CommConnectCase,
-    SQLMobileBackendMapping, SQLMobileBackend, MobileBackendInvitation)
+from corehq.apps.sms.models import (SMS, SMSLog, CommConnectCase,
+    SQLMobileBackendMapping, SQLMobileBackend, MobileBackendInvitation,
+    PhoneLoadBalancingMixin)
+from corehq.apps.sms.tasks import handle_outgoing
 from corehq.apps.sms.tests.util import BaseSMSTest
 from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
@@ -21,6 +23,8 @@ from corehq.messaging.smsbackends.tropo.models import SQLTropoBackend
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.messaging.smsbackends.unicel.models import SQLUnicelBackend, InboundParams
 from corehq.messaging.smsbackends.yo.models import SQLYoBackend
+from datetime import datetime
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.parsing import json_format_datetime
 from django.test import TestCase
 from django.test.client import Client
@@ -1043,3 +1047,166 @@ class SQLMobileBackendTestCase(TestCase):
         backend1.delete()
         backend2.delete()
         backend3.delete()
+
+
+class LoadBalanceBackend(SQLTestSMSBackend, PhoneLoadBalancingMixin):
+    class Meta:
+        proxy = True
+
+    @classmethod
+    def get_api_id(cls):
+        return 'LOAD_BALANCE'
+
+
+class RateLimitBackend(SQLTestSMSBackend):
+    class Meta:
+        proxy = True
+
+    def get_sms_rate_limit(self):
+        return 10
+
+    @classmethod
+    def get_api_id(cls):
+        return 'RATE_LIMIT'
+
+
+class LoadBalanceAndRateLimitBackend(SQLTestSMSBackend, PhoneLoadBalancingMixin):
+    class Meta:
+        proxy = True
+
+    def get_sms_rate_limit(self):
+        return 10
+
+
+    @classmethod
+    def get_api_id(cls):
+        return 'LOAD_BALANCE_RATE_LIMIT'
+
+
+def mock_get_backend_classes():
+    return {
+        LoadBalanceBackend.get_api_id(): LoadBalanceBackend,
+        RateLimitBackend.get_api_id(): RateLimitBackend,
+        LoadBalanceAndRateLimitBackend.get_api_id(): LoadBalanceAndRateLimitBackend,
+    }
+
+
+@patch('corehq.apps.sms.util.get_backend_classes', new=mock_get_backend_classes)
+class LoadBalancingAndRateLimitingTestCase(BaseSMSTest):
+    def setUp(self):
+        super(LoadBalancingAndRateLimitingTestCase, self).setUp()
+        self.domain = 'load-balance-rate-limit'
+        self.domain_obj = Domain(name=self.domain)
+        self.domain_obj.save()
+        self.create_account_and_subscription(self.domain)
+        self.domain_obj = Domain.get(self.domain_obj.get_id)
+
+    def tearDown(self):
+        self.domain_obj.delete()
+        super(LoadBalancingAndRateLimitingTestCase, self).tearDown()
+
+    def create_outgoing_sms(self, backend):
+        sms = SMSLog(
+            domain=self.domain,
+            date=datetime.utcnow(),
+            direction='O',
+            phone_number='9991234567',
+            text='message',
+            backend_id=backend.couch_id
+        )
+        sms.save()
+        return sms
+
+    def delete_load_balancing_keys(self, backend):
+        # This should only be necessary when running tests locally, but doesn't
+        # hurt to run all the time.
+        client = get_redis_client().client.get_client()
+        client.delete(backend.get_load_balance_redis_key())
+
+    def assertRequeue(self, backend):
+        requeue_flag = handle_outgoing(self.create_outgoing_sms(backend))
+        self.assertTrue(requeue_flag)
+
+    def assertNotRequeue(self, backend):
+        requeue_flag = handle_outgoing(self.create_outgoing_sms(backend))
+        self.assertFalse(requeue_flag)
+
+    def test_load_balance(self):
+        backend = LoadBalanceBackend.objects.create(
+            name='BACKEND',
+            is_global=True,
+            load_balancing_numbers=['9990001', '9990002', '9990003'],
+            hq_api_id=LoadBalanceBackend.get_api_id()
+        )
+        self.delete_load_balancing_keys(backend)
+
+        for i in range(5):
+            with patch('corehq.apps.sms.tests.LoadBalanceBackend.send') as mock_send:
+                self.assertNotRequeue(backend)
+                self.assertTrue(mock_send.called)
+                self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '9990001')
+
+                self.assertNotRequeue(backend)
+                self.assertTrue(mock_send.called)
+                self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '9990002')
+
+                self.assertNotRequeue(backend)
+                self.assertTrue(mock_send.called)
+                self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '9990003')
+
+        backend.delete()
+
+    def test_rate_limit(self):
+        backend = RateLimitBackend.objects.create(
+            name='BACKEND',
+            is_global=True,
+            hq_api_id=RateLimitBackend.get_api_id()
+        )
+
+        # Requeue flag should be False until we hit the limit
+        for i in range(backend.get_sms_rate_limit()):
+            with patch('corehq.apps.sms.tests.RateLimitBackend.send') as mock_send:
+                self.assertNotRequeue(backend)
+                self.assertTrue(mock_send.called)
+
+        # Requeue flag should be True after hitting the limit
+        with patch('corehq.apps.sms.tests.RateLimitBackend.send') as mock_send:
+            self.assertRequeue(backend)
+            self.assertFalse(mock_send.called)
+
+        backend.delete()
+
+    def test_load_balance_and_rate_limit(self):
+        backend = LoadBalanceAndRateLimitBackend.objects.create(
+            name='BACKEND',
+            is_global=True,
+            load_balancing_numbers=['9990001', '9990002', '9990003'],
+            hq_api_id=LoadBalanceAndRateLimitBackend.get_api_id()
+        )
+        self.delete_load_balancing_keys(backend)
+
+        for i in range(backend.get_sms_rate_limit()):
+            with patch('corehq.apps.sms.tests.LoadBalanceAndRateLimitBackend.send') as mock_send:
+                self.assertNotRequeue(backend)
+                self.assertTrue(mock_send.called)
+                self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '9990001')
+
+                self.assertNotRequeue(backend)
+                self.assertTrue(mock_send.called)
+                self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '9990002')
+
+                self.assertNotRequeue(backend)
+                self.assertTrue(mock_send.called)
+                self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '9990003')
+
+        with patch('corehq.apps.sms.tests.LoadBalanceAndRateLimitBackend.send') as mock_send:
+            self.assertRequeue(backend)
+            self.assertFalse(mock_send.called)
+
+            self.assertRequeue(backend)
+            self.assertFalse(mock_send.called)
+
+            self.assertRequeue(backend)
+            self.assertFalse(mock_send.called)
+
+        backend.delete()
