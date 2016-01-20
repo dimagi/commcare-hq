@@ -147,3 +147,36 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.setup_subscription(self.domain_name, SoftwarePlanEdition.ADVANCED)
         self.state_code = 'my_state'
         self.location = make_loc(self.state_code, type='state', domain=self.domain_name)
+
+    def test_numeric_user_name(self):
+        """
+        Test that bulk upload doesn't choke if the user's name is a number
+        """
+        from copy import deepcopy
+        updated_user_spec = deepcopy(self.user_specs[0])
+        updated_user_spec["name"] = 1234
+
+        bulk_upload_async(
+            self.domain.name,
+            list([updated_user_spec]),
+            list([]),
+            list([])
+        )
+        self.assertEqual(self.user.full_name, "1234")
+
+    def test_empty_user_name(self):
+        """
+        This test confirms that a name of None doesn't set the users name to
+        "None" or anything like that.
+        """
+        from copy import deepcopy
+        updated_user_spec = deepcopy(self.user_specs[0])
+        updated_user_spec["name"] = None
+
+        bulk_upload_async(
+            self.domain.name,
+            list([updated_user_spec]),
+            list([]),
+            list([])
+        )
+        self.assertEqual(self.user.full_name, "")
