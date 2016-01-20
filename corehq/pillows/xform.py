@@ -19,14 +19,12 @@ def is_valid_date(txt):
         pass
     return False
 
-RESERVED = RESERVED_WORDS[:]
-RESERVED.remove('case')
 
 # modified from: http://stackoverflow.com/questions/6027558/flatten-nested-python-dictionaries-compressing-keys
 def flatten(d, parent_key='', delimiter='/'):
     items = []
     for k, v in d.items():
-        if k in RESERVED:
+        if k in RESERVED_WORDS:
             continue
         new_key = parent_key + delimiter + k if parent_key else k
         if isinstance(v, collections.MutableMapping):
