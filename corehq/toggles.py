@@ -166,7 +166,7 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     'Shadow Modules',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
+    help_link='https://github.com/dimagi/commcare-hq/blob/master/docs/advanced_app_features.rst',
 )
 
 APP_AWARE_SYNC = StaticToggle(
