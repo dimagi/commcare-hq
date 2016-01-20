@@ -31,7 +31,8 @@ from no_exceptions.exceptions import Http403
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow, track_sent_invite_on_hubspot, update_hubspot_properties
+from corehq.apps.analytics.utils import get_meta
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
 from corehq.apps.domain.models import Domain, toggles
@@ -650,6 +651,7 @@ class UserInvitationView(object):
                 track_workflow(request.couch_user.get_email(),
                                "Current user accepted a project invitation",
                                {"Current user accepted a project invitation": "yes"})
+                update_hubspot_properties.delay(request.couch_user, {'user_accepted_domain_invitation': 'yes'})
                 return HttpResponseRedirect(self.redirect_to_on_success)
             else:
                 mobile_user = CouchUser.from_django_user(request.user).is_commcare_user()
@@ -674,6 +676,7 @@ class UserInvitationView(object):
                     track_workflow(request.POST['email'],
                                    "New User Accepted a project invitation",
                                    {"New User Accepted a project invitation": "yes"})
+                    update_hubspot_properties.delay(user, {'new_user_accepted_invitation_created_account': 'yes'})
                     return HttpResponseRedirect(reverse("domain_homepage", args=[invitation.domain]))
             else:
                 if CouchUser.get_by_username(invitation.email):
@@ -843,6 +846,8 @@ class InviteWebUserView(BaseManageWebUserView):
                 track_workflow(request.couch_user.get_email(),
                                "Sent a project invitation",
                                {"Sent a project invitation": "yes"})
+                meta = get_meta(request)
+                track_sent_invite_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
                 messages.success(request, "Invitation sent to %s" % data["email"])
 
             if create_invitation:
