@@ -1,8 +1,9 @@
-{% extends 'reports/filters/bootstrap2/base.html' %}
+{% extends 'reports/filters/bootstrap3/base.html' %}
 {% load hq_shared_tags %}
 {% block filter_content %}
     <select id="{{ css_id }}"
             data-bind="value: current_selection"
+            class="form-control"
             name="{{ slug }}">
         <option></option>
         {% for option in select.options %}
