@@ -1,8 +1,8 @@
-from django.conf import settings
-from corehq.apps.es import AppES
 from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
 from django.http import Http404
+
+from corehq.apps.es import AppES
 
 
 def domain_has_apps(domain):
@@ -155,17 +155,6 @@ def get_built_app_ids(domain):
     app_ids = [data.get('value', {}).get('copy_of') for data in result]
     app_ids = list(set(app_ids))
     return [app_id for app_id in app_ids if app_id]
-
-
-def get_exports_by_application(domain):
-    from .models import Application
-    return Application.get_db().view(
-        'exports_forms/by_xmlns',
-        startkey=['^Application', domain],
-        endkey=['^Application', domain, {}],
-        reduce=False,
-        stale=settings.COUCH_STALE_QUERY,
-    )
 
 
 def get_all_apps(domain):
