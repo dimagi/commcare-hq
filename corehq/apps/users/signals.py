@@ -37,8 +37,10 @@ def update_user_in_es(sender, couch_user, **kwargs):
     """
     Automatically sync the user to elastic directly on save or delete
     """
-    send_to_elasticsearch("users", couch_user.to_json(),
-                          delete=couch_user.to_be_deleted())
+
+    from corehq.pillows.user import cast_user_data_to_string
+    doc = cast_user_data_to_string(couch_user.to_json())
+    send_to_elasticsearch("users", doc, delete=couch_user.to_be_deleted())
 
 
 def create_user_from_commcare_registration(sender, xform, **kwargs):
