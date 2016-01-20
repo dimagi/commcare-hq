@@ -15,6 +15,8 @@ from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.util import \
+    DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
 from corehq.apps.users.models import CouchUser
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse
@@ -303,7 +305,9 @@ class GenericReportView(object):
                 klass = to_function(field, failhard=True)
             else:
                 klass = field
-            filters.append(klass(self.request, self.domain, self.timezone))
+            filters.append(
+                klass(self.request, self.domain, self.timezone, is_bootstrap3=self.is_bootstrap3)
+            )
         return filters
 
     @property
@@ -475,9 +479,12 @@ class GenericReportView(object):
             Intention: This probably does not need to be overridden in general.
             Updates the context with filter information.
         """
-        self.context.update(report_filters=[dict(
-            field=f.render(),
-            slug=f.slug) for f in self.filter_classes])
+        self.context.update({
+            'report_filters': [
+                dict(field=f.render(), slug=f.slug) for f in self.filter_classes
+            ],
+            'report_filter_form_action_css_class': DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER,
+        })
 
     def update_template_context(self):
         """
