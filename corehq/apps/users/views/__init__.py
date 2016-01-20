@@ -33,10 +33,10 @@ from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow, track_sent_invite_on_hubspot, update_hubspot_properties
 from corehq.apps.analytics.utils import get_meta
-from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
 from corehq.apps.domain.models import Domain, toggles
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BasePageView, logout
@@ -293,12 +293,11 @@ class EditWebUserView(BaseEditUserView):
 
 
 def get_domain_languages(domain):
-    app_languages = [res['key'][1] for res in Application.get_db().view(
-        'languages/list',
-        startkey=[domain],
-        endkey=[domain, {}],
-        group='true'
-    ).all()]
+    query = (AppES()
+             .domain(domain)
+             .terms_facet('langs', 'languages')
+             .size(0))
+    app_languages = query.run().facets.languages.terms
 
     translation_doc = StandaloneTranslationDoc.get_obj(domain, 'sms')
     sms_languages = translation_doc.langs if translation_doc else []
