@@ -601,7 +601,7 @@ def _deploy_without_asking():
         _execute_with_timing(clear_services_dir)
         _set_supervisor_config()
 
-        _execute_with_timing(build_formsplayer)
+        _execute_with_timing(build_formplayer)
 
         do_migrate = env.should_migrate
         if do_migrate:
