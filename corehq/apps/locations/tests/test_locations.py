@@ -1,7 +1,7 @@
 from corehq.apps.groups.tests.test_groups import WrapGroupTestMixin
 from corehq.apps.locations.models import Location, LocationType, SQLLocation
 from corehq.apps.locations.tests.util import make_loc
-from corehq.apps.commtrack.helpers import make_supply_point, make_product
+from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase, SimpleTestCase
@@ -77,7 +77,7 @@ class LocationTestBase(TestCase):
         bootstrap_location_types(self.domain.name)
 
         self.loc = make_loc('loc', type='outlet', domain=self.domain.name)
-        self.sp = make_supply_point(self.domain.name, self.loc)
+        self.sp = self.loc.linked_supply_point()
 
         self.user = CommCareUser.create(
             self.domain.name,
@@ -192,8 +192,9 @@ class LocationsTest(LocationTestBase):
         )
 
         # Location.get_in_domain
-        test_village2.domain = 'rejected'
+        create_domain('rejected')
         bootstrap_location_types('rejected')
+        test_village2.domain = 'rejected'
         test_village2.save()
         self.assertEqual(
             Location.get_in_domain(self.domain.name, test_village1._id)._id,

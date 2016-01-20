@@ -7,7 +7,7 @@ from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from datetime import datetime
-from django.db import models
+from django.db import models, transaction
 import json_field
 from casexml.apps.case.cleanup import close_case
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
@@ -87,12 +87,21 @@ class LocationType(models.Model):
     class Meta:
         app_label = 'locations'
 
+    def __init__(self, *args, **kwargs):
+        super(LocationType, self).__init__(*args, **kwargs)
+        self._administrative_old = self.administrative
+
+    @property
+    @memoized
+    def commtrack_enabled(self):
+        return Domain.get_by_name(self.domain).commtrack_enabled
+
     def _populate_stock_levels(self):
         from corehq.apps.commtrack.models import CommtrackConfig
         ct_config = CommtrackConfig.for_domain(self.domain)
         if (
             (ct_config is None)
-            or (not Domain.get_by_name(self.domain).commtrack_enabled)
+            or (not self.commtrack_enabled)
             or LOCATION_TYPE_STOCK_RATES.enabled(self.domain)
         ):
             return
@@ -102,11 +111,20 @@ class LocationType(models.Model):
         self.overstock_threshold = config.overstock_threshold
 
     def save(self, *args, **kwargs):
+        from .tasks import sync_administrative_status
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
+        if not self.commtrack_enabled:
+            self.administrative = True
         self._populate_stock_levels()
-        return super(LocationType, self).save(*args, **kwargs)
+        saved = super(LocationType, self).save(*args, **kwargs)
+
+        if self._administrative_old != self.administrative:
+            sync_administrative_status.delay(self)
+            self._administrative_old = self.administrative
+
+        return saved
 
     def __unicode__(self):
         return self.name
@@ -220,6 +238,11 @@ class SQLLocation(MPTTModel):
     objects = LocationManager()
     # This should really be the default location manager
     active_objects = OnlyUnarchivedLocationManager()
+
+    def save(self, *args, **kwargs):
+        from corehq.apps.commtrack.models import sync_supply_point
+        self.supply_point_id = sync_supply_point(self)
+        return super(SQLLocation, self).save(*args, **kwargs)
 
     @property
     def get_id(self):
@@ -374,6 +397,15 @@ class SQLLocation(MPTTModel):
         except cls.DoesNotExist:
             return None
 
+    def linked_supply_point(self):
+        from corehq.apps.commtrack.models import SupplyPointCase
+        if not self.supply_point_id:
+            return None
+        try:
+            return SupplyPointCase.get(self.supply_point_id)
+        except:
+            return None
+
 
 def _filter_for_archived(locations, include_archive_ancestors):
     """
@@ -503,11 +535,6 @@ class Location(CachedCouchDocumentMixin, Document):
             if hasattr(self, couch_prop):
                 setattr(sql_location, sql_prop, getattr(self, couch_prop))
 
-        # sync supply point id
-        sp = self.linked_supply_point()
-        if sp:
-            sql_location.supply_point_id = sp.case_id
-
         # sync parent connection
         parent_id = self.parent_id
         if parent_id:
@@ -554,14 +581,7 @@ class Location(CachedCouchDocumentMixin, Document):
         self.is_archived = True
         self.save()
 
-        sp = self.linked_supply_point()
-        # sanity check that the supply point exists and is still open.
-        # this is important because if you archive a child, then try
-        # to archive the parent, we don't want to try to close again
-        if sp and not sp.closed:
-            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
-
-        _unassign_users_from_location(self.domain, self._id)
+        self._close_case_and_remove_users()
 
     def archive(self):
         """
@@ -601,6 +621,37 @@ class Location(CachedCouchDocumentMixin, Document):
         """
         for loc in [self] + self.descendants:
             loc._unarchive_single_location()
+
+    def _close_case_and_remove_users(self):
+        """
+        Closes linked supply point cases for a location and unassigns the users
+        assigned to that location.
+
+        Used by both archive and delete methods
+        """
+
+        sp = self.linked_supply_point()
+        # sanity check that the supply point exists and is still open.
+        # this is important because if you archive a child, then try
+        # to archive the parent, we don't want to try to close again
+        if sp and not sp.closed:
+            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
+
+        _unassign_users_from_location(self.domain, self._id)
+
+    def full_delete(self):
+        """
+        Delete a location and its dependants.
+        This also unassigns users assigned to the location.
+        """
+        to_delete = [self] + self.descendants
+
+        # if there are errors deleting couch locations, roll back sql delete
+        with transaction.atomic():
+            SQLLocation.objects.get(location_id=self._id).delete()
+            for loc in to_delete:
+                loc._close_case_and_remove_users()
+            Location.get_db().bulk_delete(to_delete)
 
     def save(self, *args, **kwargs):
         """
@@ -732,8 +783,7 @@ class Location(CachedCouchDocumentMixin, Document):
                                        .couch_locations())
 
     def linked_supply_point(self):
-        from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
-        return get_supply_point_case_by_location(self)
+        return self.sql_location.linked_supply_point()
 
     @property
     def group_id(self):
