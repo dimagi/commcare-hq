@@ -120,6 +120,7 @@ class CouchformsAnalyticsTest(TestCase, DocTestMixin):
 class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
     dependent_apps = ['corehq.couchapps', 'corehq.apps.domain', 'corehq.form_processor',
                       'corehq.sql_accessors']
+    maxDiff = None
 
     @classmethod
     def setUpClass(cls):
@@ -127,19 +128,23 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
         from corehq.apps.app_manager.models import Application, Module, Form
         delete_all_xforms()
         cls.domain = 'exports_forms_analytics_domain'
-        cls.app_id = uuid.uuid4().hex
-        cls.xmlns = 'my://crazy.xmlns/'
-        cls.other_xmlns = 'my://crazy.xmlns/app'
-        cls.apps = [Application(modules=[Module(forms=[Form(xmlns=cls.other_xmlns)])])]
+        cls.app_id_1 = uuid.uuid4().hex
+        cls.xmlns_1 = 'my://crazy.xmlns/'
+        cls.xmlns_2 = 'my://crazy.xmlns/app'
+        cls.apps = [
+            Application(domain=cls.domain,
+                        modules=[Module(forms=[Form(xmlns=cls.xmlns_2)])])
+        ]
         for app in cls.apps:
             app.save()
+        cls.app_id_2 = cls.apps[0]._id
         cls.forms = [
             XFormInstance(domain=cls.domain,
-                          app_id=cls.app_id, xmlns=cls.xmlns),
+                          app_id=cls.app_id_1, xmlns=cls.xmlns_1),
             XFormInstance(domain=cls.domain,
-                          app_id=cls.app_id, xmlns=cls.xmlns),
+                          app_id=cls.app_id_1, xmlns=cls.xmlns_1),
             XFormInstance(domain=cls.domain,
-                          app_id=cls.apps[0]._id, xmlns=cls.other_xmlns),
+                          app_id=cls.app_id_2, xmlns=cls.xmlns_2),
         ]
         cls.error_forms = [XFormError(domain=cls.domain)]
         cls.all_forms = cls.forms + cls.error_forms
@@ -155,7 +160,22 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
         for app in cls.apps:
             app.delete()
 
-    def test_get_form_analytics_metadata(self):
-        info = get_form_analytics_metadata(self.domain, self.app_id, self.xmlns)
-        self.assertEqual(self.xmlns, info['xmlns'])
-        self.assertEqual(2, info['submissions'])
+    def test_get_form_analytics_metadata__no_match(self):
+        self.assertIsNone(
+            get_form_analytics_metadata(self.domain, self.app_id_1, self.xmlns_2))
+
+    def test_get_form_analytics_metadata__no_app(self):
+        self.assertEqual(
+            get_form_analytics_metadata(self.domain, self.app_id_1, self.xmlns_1),
+            {'submissions': 2, 'xmlns': 'my://crazy.xmlns/'}
+        )
+
+    def test_get_form_analytics_metadata__app(self):
+        self.assertEqual(get_form_analytics_metadata(self.domain, self.app_id_2, self.xmlns_2), {
+            'app': {'id': self.app_id_2, 'langs': [], 'name': None},
+            'app_deleted': False,
+            'form': {'id': 0, 'name': {}},
+            'module': {'id': 0, 'name': {}},
+            'submissions': 1,
+            'xmlns': 'my://crazy.xmlns/app'
+        })
