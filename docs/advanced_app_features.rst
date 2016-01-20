@@ -205,4 +205,28 @@ In the simplest case, shadow module menus look exactly like other module menus. 
         <command id="m1-f0"/>
     </menu>
     
-    
+
+Menus get more complex when shadow modules are mixed with parent/child modules. In the following example, m0 is a basic module, m1 is a child of m0, and m2 is a shadow of m0. All three modules have `put_in_root=false` (see **Child Modules > Menu structure** above).  The shadow module has its own menu and also a copy of the child module's menu. This copy of the child module's menu is given the id `m1.m2` to distinguish it from `m1`, the original child module menu.
+
+.. code-block:: xml
+
+    <menu id="m0">
+        <text>
+            <locale id="modules.m0"/>
+        </text>
+        <command id="m0-f0"/>
+    </menu>
+    <menu root="m0" id="m1">
+        <text>
+            <locale id="modules.m1"/>
+        </text>
+        <command id="m1-f0"/>
+    </menu>
+    <menu root="m2" id="m1.m2">                                                                                                     <text>
+            <locale id="modules.m1"/>
+        </text>                                                                                                                     <command id="m1-f0"/>
+    </menu>
+    <menu id="m2">                                                                                                                  <text>
+            <locale id="modules.m2"/>
+        </text>                                                                                                                     <command id="m2-f0"/>
+    </menu>
