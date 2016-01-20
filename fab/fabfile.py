@@ -696,8 +696,8 @@ def copy_tf_localsettings():
 
 @task
 @roles(ROLES_TOUCHFORMS)
-def build_formsplayer():
-    spring_dir = '{}/{}'.format(env.code_root, 'submodules/formsplayer')
+def build_formplayer():
+    spring_dir = '{}/{}'.format(env.code_root, 'submodules/formplayer')
     with cd(spring_dir):
         sudo('./gradlew build')
 
@@ -1193,6 +1193,10 @@ def set_errand_boy_supervisorconf():
 def set_formsplayer_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_formsplayer.conf')
 
+@roles(ROLES_TOUCHFORMS)
+def set_formplayer_spring_supervisorconf():
+    _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_formplayer_spring.conf')
+
 @roles(ROLES_SMS_QUEUE)
 def set_sms_queue_supervisorconf():
     if 'sms_queue' in get_celery_queues():
@@ -1227,6 +1231,7 @@ def _set_supervisor_config():
     _execute_with_timing(set_djangoapp_supervisorconf)
     _execute_with_timing(set_errand_boy_supervisorconf)
     _execute_with_timing(set_formsplayer_supervisorconf)
+    _execute_with_timing(set_formplayer_spring_supervisorconf)
     _execute_with_timing(set_pillowtop_supervisorconf)
     _execute_with_timing(set_sms_queue_supervisorconf)
     _execute_with_timing(set_reminder_queue_supervisorconf)
