@@ -1975,7 +1975,11 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                                           name=new_domain.documentation_file_path)
 
             for application in new_domain.full_applications():
-                original_id = application.copied_from._id
+                # Note that application is a build. If the original app has a build then application.copied_from
+                # will be a build and application.copied_from.copy_of will be the original app ID, otherwise
+                # application.copied_from will be the original app. (FB 190587) See also self.published_apps()
+                original_id = application.copied_from.copy_of if application.copied_from.copy_of \
+                    else application.copied_from._id
                 name_field = "%s-name" % original_id
                 if name_field not in request.POST:
                     continue
