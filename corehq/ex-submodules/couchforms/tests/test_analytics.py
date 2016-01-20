@@ -14,7 +14,8 @@ from couchforms.models import XFormInstance, XFormError
 
 
 class CouchformsAnalyticsTest(TestCase, DocTestMixin):
-    dependent_apps = ['corehq.couchapps', 'corehq.apps.domain']
+    dependent_apps = ['corehq.couchapps', 'corehq.apps.domain', 'corehq.form_processor',
+                      'corehq.sql_accessors']
 
     @classmethod
     def setUpClass(cls):
