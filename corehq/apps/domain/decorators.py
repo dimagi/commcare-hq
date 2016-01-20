@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden
+from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
 from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
@@ -34,7 +35,7 @@ from corehq import privileges
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 
 ########################################################################################################
-from corehq.toggles import IS_DEVELOPER
+from corehq.toggles import IS_DEVELOPER, TWO_FACTOR_AUTH
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +82,15 @@ def login_and_domain_required(view_func):
                     # some views might not have this set
                     couch_user = CouchUser.from_django_user(user)
                 if couch_user.is_member_of(domain) or domain.is_public:
-                    return view_func(req, domain_name, *args, **kwargs)
+                    if TWO_FACTOR_AUTH.enabled(domain) and not user.is_verified():
+                        return TemplateResponse(
+                            request=req,
+                            template='two_factor/core/otp_required.html',
+                            status=403,
+                        )
+                    else:
+                        return view_func(req, domain_name, *args, **kwargs)
+
                 elif user.is_superuser and not domain.restrict_superusers:
                     # superusers can circumvent domain permissions.
                     return view_func(req, domain_name, *args, **kwargs)

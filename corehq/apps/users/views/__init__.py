@@ -19,6 +19,7 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
+from django_otp.plugins.otp_static.models import StaticToken
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -193,6 +194,17 @@ class BaseEditUserView(BaseUserSettingsView):
         return context
 
     @property
+    def backup_token(self):
+        if toggles.TWO_FACTOR_AUTH.enabled(self.request.domain):
+            device = self.editable_user.get_django_user().staticdevice_set.get_or_create(name='backup')[0]
+            token = device.token_set.first()
+            if token:
+                return device.token_set.first().token
+            else:
+                return device.token_set.create(token=StaticToken.random_token()).token
+        return None
+
+    @property
     @memoized
     def commtrack_form(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
@@ -273,6 +285,8 @@ class EditWebUserView(BaseEditUserView):
             ctx.update({'update_form': self.commtrack_form})
         if self.request.couch_user.is_superuser:
             ctx.update({'update_permissions': True})
+
+        ctx.update({'token': self.backup_token})
 
         return ctx
 
