@@ -1,6 +1,10 @@
+from itertools import groupby
 from couchdbkit import SchemaListProperty, SchemaProperty
 
 from corehq.apps.userreports.expressions.getters import NestedDictGetter
+from corehq.apps.app_manager.dbaccessors import get_built_app_ids_for_app_id
+from corehq.apps.app_manager.models import Application
+from dimagi.utils.couch.database import iter_docs
 from dimagi.ext.couchdbkit import (
     Document,
     DocumentSchema,
@@ -9,6 +13,8 @@ from dimagi.ext.couchdbkit import (
     IntegerProperty,
 )
 
+from ..const import FORM_TABLE
+
 
 class ExportItem(DocumentSchema):
     """
@@ -16,14 +22,17 @@ class ExportItem(DocumentSchema):
     path is a question path like ["my_group", "q1"] or a case property name
     like ["date_of_birth"].
     """
-    path = SchemaListProperty(StringProperty)
+    path = StringProperty()
     label = StringProperty()
     last_occurrence = IntegerProperty()
 
 
 class ExportColumn(DocumentSchema):
     item = SchemaProperty(ExportItem)
-    display = StringProperty()
+    name = StringProperty()
+    path = StringProperty()
+    label = StringProperty()
+    last_occurrence = IntegerProperty()
 
     def get_value(self, doc, base_path):
         """
@@ -43,8 +52,8 @@ class ExportColumn(DocumentSchema):
 
 class TableConfiguration(DocumentSchema):
 
-    table_name = StringProperty()
-    repeat_path = ListProperty(StringProperty)
+    name = StringProperty()
+    repeat_path = StringProperty()
     columns = ListProperty(ExportColumn)
 
     def get_rows(self, document):
@@ -89,6 +98,13 @@ class TableConfiguration(DocumentSchema):
                 new_docs.append(next_doc)
         return self._get_items_for_repeat(path[1:], new_docs)
 
+
+class FormExportConfiguration(Document):
+
+    class Meta:
+        app_label = 'export'
+
+
 class ExportRow(object):
     def __init__(self, data):
         self.data = data
@@ -100,6 +116,11 @@ class RepeatGroup(DocumentSchema):
     items = SchemaListProperty(ExportItem)
 
 
+class ExportableTable(DocumentSchema):
+    name = StringProperty()
+    items = SchemaListProperty(ExportItem)
+
+
 class ExportableItems(DocumentSchema):
     """
     An object representing the things that can be exported for a particular
@@ -107,8 +128,40 @@ class ExportableItems(DocumentSchema):
     Each item in the list is uniquely identified by its path and doc_type.
     repeats is a list of RepeatGroups, present at any level of the question hierarchy
     """
-    items = SchemaListProperty(ExportItem)
-    repeats = SchemaListProperty(RepeatGroup)
+    tables = SchemaListProperty(ExportableTable)
+
+    @staticmethod
+    def generate_conf_from_builds(domain, app_id, unique_form_id):
+        app_build_ids = get_built_app_ids_for_app_id(domain, app_id)
+        all_xform_conf = TableConfiguration()
+
+        for app in iter_docs(Application.get_db(), app_build_ids):
+            xform = app.get_form(unique_form_id).wrapped_xform()
+            xform_conf = FormExportConfiguration._generate_conf_from_xform(xform, app.langs)
+            # all_xform_conf = FormExportConfiguration._merge_conf(all_xform_conf, xform_conf)
+
+        return xform_conf
+
+    @staticmethod
+    def _generate_conf_from_xform(xform, langs):
+        questions = xform.get_questions(langs)
+        exportable_items = ExportableItems()
+
+        for table_name, table_questions in groupby(questions, lambda q: q['repeat'] or q['group']):
+            exportable_table = ExportableTable(
+                name=table_name or FORM_TABLE
+            )
+            for question in table_questions:
+                exportable_table.items.append(
+                    ExportItem(
+                        path=question['value'],
+                        label=question['label'],
+                    )
+                )
+
+            exportable_items.tables.append(exportable_table)
+
+        return exportable_items
 
 
 class ScalarItem(ExportItem):

@@ -3,6 +3,7 @@ from .new import (
     ExportItem,
     ExportColumn,
     ExportRow,
+    FormExportConfiguration,
     ExportableItems,
     TableConfiguration,
     RepeatGroup,

@@ -1,0 +1,1 @@
+FORM_TABLE = 'forms'
