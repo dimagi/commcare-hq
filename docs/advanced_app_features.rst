@@ -4,7 +4,7 @@ Advanced App Features
 See ``corehq.apps.app_manager.suite_xml.SuiteGenerator`` and ``corehq.apps.app_manager.xform.XForm`` for code.
 
 Child Modules
-~~~~~~~~~~~~~
+-------------
 In principle child modules is very simple. Making one module a child of another
 simply changes the ``menu`` elements in the *suite.xml* file. For example in the
 XML below module ``m1`` is a child of module ``m0`` and so it has its ``root``
@@ -25,6 +25,31 @@ attribute set to the ID of its parent.
         <command id="m1-f0"/>
     </menu>
 
+
+Menu structure
+~~~~~~~~~~~~~~
+As described above the basic menu structure is quite simple however there is one property in particular
+that affects the menu structure: *module.put_in_root*
+
+This property determines whether the forms in a module should be shown under the module's own menu item or
+under the parent menu item:
+
++-------------+-------------------------------------------------+
+| put_in_root | Resulting menu                                  |
++=============+=================================================+
+| True        | id="<parent menu id>"                           |
++-------------+-------------------------------------------------+
+| False       | id="<module menu id>" root="<parent menu id>"   |
++-------------+-------------------------------------------------+
+
+**Notes:**
+
+- If the module has no parent then the parent is *root*.
+- *root="root"* is equivalent to excluding the *root* attribute altogether.
+
+
+Session Variables
+~~~~~~~~~~~~~~~~~
 
 This is all good and well until we take into account the way the
 `Session <https://github.com/dimagi/commcare/wiki/Suite20#the-session>`_ works on the mobile

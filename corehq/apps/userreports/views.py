@@ -19,7 +19,7 @@ from django.views.generic import View
 from corehq.apps.analytics.tasks import track_workflow
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.app_manager.models import Application, Form
 
 from sqlalchemy import types, exc
@@ -32,12 +32,11 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.style.decorators import (
     use_bootstrap3,
-    use_knockout_js,
     use_select2,
     use_daterangepicker,
     use_datatables,
     use_jquery_ui,
-)
+    use_angular_js)
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
@@ -141,7 +140,6 @@ class ReportBuilderView(BaseDomainView):
 
     @cls_to_view_login_and_domain
     @use_bootstrap3
-    @use_knockout_js
     @use_select2
     @use_daterangepicker
     @use_datatables
@@ -165,6 +163,10 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
     urlname = 'report_builder_select_type'
     page_title = ugettext_lazy('Select Report Type')
 
+    @use_angular_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(ReportBuilderTypeSelect, self).dispatch(request, *args, **kwargs)
+
     @property
     def page_url(self):
         return "#"
@@ -172,7 +174,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
     @property
     def page_context(self):
         return {
-            "has_apps": len(get_apps_in_domain(self.domain)) > 0,
+            "has_apps": domain_has_apps(self.domain),
             "report": {
                 "title": _("Create New Report")
             },

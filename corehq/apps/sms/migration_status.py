@@ -71,3 +71,13 @@ def assert_backend_migration_complete(apps, schema_editor):
             ['migrate_backends_to_sql', 'migrate_backend_mappings_to_sql']
         )
     )
+
+
+def assert_domain_default_backend_migration_complete(apps, schema_editor):
+    assert_messaging_migration_complete(
+        MigrationInfo(
+            [MigrationStatus.MIGRATION_DOMAIN_DEFAULT_BACKEND],
+            'domain-default-backend-messaging-migration',
+            ['migrate_domain_default_backend']
+        )
+    )

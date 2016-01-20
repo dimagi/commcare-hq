@@ -12,13 +12,7 @@ import time
 from couchexport.models import ExportSchema
 
 from corehq.apps.accounting.tests import BaseAccountingTest
-from corehq.apps.accounting.models import (
-    BillingAccount,
-    DefaultProductPlan,
-    SoftwarePlanEdition,
-    Subscription,
-    SubscriptionAdjustment,
-)
+from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.domain.models import Domain
 
 FORM_TEMPLATE = """<?xml version='1.0' ?>
@@ -106,10 +100,10 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
     def testExportTokens(self):
         c = Client()
         c.login(**{'username': 'test', 'password': 'foobar'})
-        # no data = redirect
+        # no data = 404
         resp = get_export_response(c)
-        self.assertEqual(302, resp.status_code)
-        
+        self.assertEqual(404, resp.status_code)
+
         # data = data
         _submit_form()
 
@@ -120,10 +114,10 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
         self.assertTrue(_content(resp) is not None)
         self.assertTrue("X-CommCareHQ-Export-Token" in resp)
         prev_token = resp["X-CommCareHQ-Export-Token"]
-        
-        # data but no new data = redirect
+
+        # data but no new data = 404
         resp = get_export_response(c, prev_token)
-        self.assertEqual(302, resp.status_code)
+        self.assertEqual(404, resp.status_code)
 
         _submit_form()
         time.sleep(1)
@@ -135,10 +129,10 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
     def testExportFilter(self):
         c = Client()
         c.login(**{'username': 'test', 'password': 'foobar'})
-        
+
         # initially nothing
-        self.assertEqual(302, get_export_response(c).status_code)
-        
+        self.assertEqual(404, get_export_response(c).status_code)
+
         # submit, assert something
         f = get_form()
         _submit_form(f)

@@ -53,3 +53,4 @@ celerybeat-schedule
 /locale/*/*/*.mo
 .grunt
 node_modules/
+/sharedfiles/

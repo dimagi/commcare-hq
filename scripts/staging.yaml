@@ -54,9 +54,11 @@ branches:
   - requests #Simon 11/3
   - add-tableau-dashboard # TS 11/5
   - fix-toggle #wsp 12/14
+  - location-delete+location-cases  # Ethan 1/19
   - location-delete # Cal 12/16
   - new-footer-nav # Biyeun 1/4
-  - uglify-compressor # Ben 1/7
+  - tabular-reports-b3-migrate  # Biyeun 1/15
+  - location-cases  # Ethan 1/19
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

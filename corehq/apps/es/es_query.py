@@ -349,7 +349,7 @@ class ESQuerySet(object):
         if self.query._fields == []:
             return self.ids
         elif self.query._fields is not None:
-            return [flatten_field_dict(r['fields']) for r in self.raw_hits]
+            return [flatten_field_dict(r) for r in self.raw_hits]
         else:
             return [r['_source'] for r in self.raw_hits]
 

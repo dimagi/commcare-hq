@@ -12,8 +12,8 @@ def sync_default_backend_mapping(sender, domain, **kwargs):
             return
         _sync_default_backend_mapping(domain)
     except Exception:
-        notify_exception(None, message="Error syncing default backend mapping"
-                         "for domain" % domain.name)
+        notify_exception(None, message="Error syncing default backend mapping "
+                         "for domain %s" % domain.name)
 
 
 def _sync_default_backend_mapping(domain):

@@ -38,7 +38,7 @@ from corehq.apps.accounting.decorators import (
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui, \
-    use_jquery_ui_multiselect, use_knockout_js, use_select2
+    use_jquery_ui_multiselect, use_select2
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -448,7 +448,6 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
 
     @method_decorator(login_and_domain_required)
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
@@ -696,7 +695,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
         return sum([c.balance for c in credit_lines]) if credit_lines else Decimal('0.00')
 
     def get_product_summary(self, plan_version, account, subscription):
-        product_rate = plan_version.get_product_rate()
+        product_rate = plan_version.product_rate
         product_type = product_rate.product.product_type
         return {
             'name': product_type,
@@ -1943,7 +1942,6 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             elif request.POST.get('old_image', False):
                 new_domain.image_path = old.image_path
                 new_domain.image_type = old.image_type
-            new_domain.save()
 
             documentation_file = self.snapshot_settings_form.cleaned_data['documentation_file']
             if documentation_file:
@@ -1952,9 +1950,9 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             elif request.POST.get('old_documentation_file', False):
                 new_domain.documentation_file_path = old.documentation_file_path
                 new_domain.documentation_file_type = old.documentation_file_type
-            new_domain.save()
 
             if publish_on_submit:
+                new_domain.save()
                 _publish_snapshot(request, self.domain_object, published_snapshot=new_domain)
             else:
                 new_domain.published = False
@@ -1976,7 +1974,11 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                                           name=new_domain.documentation_file_path)
 
             for application in new_domain.full_applications():
-                original_id = application.copied_from._id
+                # Note that application is a build. If the original app has a build then application.copied_from
+                # will be a build and application.copied_from.copy_of will be the original app ID, otherwise
+                # application.copied_from will be the original app. (FB 190587) See also self.published_apps()
+                original_id = application.copied_from.copy_of if application.copied_from.copy_of \
+                    else application.copied_from._id
                 name_field = "%s-name" % original_id
                 if name_field not in request.POST:
                     continue
@@ -2004,13 +2006,10 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 fixture.description = request.POST["%s-description" % old_id]
                 fixture.save()
 
-            if new_domain is None:
-                messages.error(request, _("Version creation failed; please try again"))
-            else:
-                messages.success(request, (_("Created a new version of your app. This version will be posted to "
-                                             "CommCare Exchange pending approval by admins.") if publish_on_submit
-                                           else _("Created a new version of your app.")))
-                return redirect(ExchangeSnapshotsView.urlname, self.domain)
+            messages.success(request, (_("Created a new version of your app. This version will be posted to "
+                                         "CommCare Exchange pending approval by admins.") if publish_on_submit
+                                       else _("Created a new version of your app.")))
+            return redirect(ExchangeSnapshotsView.urlname, self.domain)
         return self.get(request, *args, **kwargs)
 
 
@@ -2021,7 +2020,6 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
 
     @method_decorator(domain_admin_required)
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 

@@ -32,7 +32,7 @@ from corehq.apps.sms.api import (
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
-from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js, use_timepicker, use_typeahead, \
+from corehq.apps.style.decorators import use_bootstrap3, use_timepicker, use_typeahead, \
     use_select2
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
@@ -1041,7 +1041,6 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     strict_domain_fetching = True
 
     @use_bootstrap3
-    @use_knockout_js
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         return super(DomainSmsGatewayListView, self).dispatch(request, *args, **kwargs)
@@ -1288,7 +1287,6 @@ class AddDomainGatewayView(BaseMessagingSectionView):
         return self.get(request, *args, **kwargs)
 
     @use_bootstrap3
-    @use_knockout_js
     @use_select2
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
@@ -1695,7 +1693,6 @@ class SMSSettingsView(BaseMessagingSectionView):
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_bootstrap3
-    @use_knockout_js
     @use_timepicker
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)

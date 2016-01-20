@@ -4,6 +4,7 @@ from dateutil.relativedelta import relativedelta
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
+from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
     get_number_of_cases_per_domain
 from corehq.util.dates import iso_string_to_datetime
@@ -178,12 +179,7 @@ def last_form_submission(domain, display=True):
 
 
 def has_app(domain, *args):
-    return bool(ApplicationBase.get_db().view(
-        'app_manager/applications_brief',
-        startkey=[domain],
-        endkey=[domain, {}],
-        limit=1
-    ).first())
+    return domain_has_apps(domain)
 
 
 def app_list(domain, *args):

@@ -213,7 +213,7 @@ class NonReporting(ReportingRatesData):
         if self.location_id:
             for name, location_id, date, supply_point_id in self.config['non_reporting_table']:
                 url = make_url(
-                    StockLevelsReport,
+                    ReportingRatesReport,
                     self.config['domain'],
                     '?location_id=%s&startdate=%s&enddate=%s',
                     (location_id, self.config['startdate'], self.config['enddate'])
@@ -255,7 +255,7 @@ class InCompleteReports(ReportingRatesData):
         if self.location_id:
             for name, location_id, date in self.config['incomplete_table']:
                 url = make_url(
-                    StockLevelsReport,
+                    ReportingRatesReport,
                     self.config['domain'],
                     '?location_id=%s&startdate=%s&enddate=%s',
                     (location_id, self.config['startdate'], self.config['enddate'])
@@ -317,7 +317,7 @@ class AlertsData(ReportingRatesData):
             last_month_reporting_sp_ids = self.last_month_reporting_sp_ids
             for sp in supply_points:
                 url = make_url(
-                    StockLevelsReport, self.config['domain'], '?location_id=%s&startdate=%s&enddate=%s',
+                    ReportingRatesReport, self.config['domain'], '?location_id=%s&startdate=%s&enddate=%s',
                     (sp.location_id, json_format_date(self.config['startdate']),
                      json_format_date(self.config['enddate']))
                 )
