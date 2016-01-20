@@ -1193,9 +1193,11 @@ def set_errand_boy_supervisorconf():
 def set_formsplayer_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_formsplayer.conf')
 
+
 @roles(ROLES_TOUCHFORMS)
 def set_formplayer_spring_supervisorconf():
     _rebuild_supervisor_conf_file('make_supervisor_conf', 'supervisor_formplayer_spring.conf')
+
 
 @roles(ROLES_SMS_QUEUE)
 def set_sms_queue_supervisorconf():
