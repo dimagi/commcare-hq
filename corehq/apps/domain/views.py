@@ -1942,7 +1942,6 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             elif request.POST.get('old_image', False):
                 new_domain.image_path = old.image_path
                 new_domain.image_type = old.image_type
-            new_domain.save()
 
             documentation_file = self.snapshot_settings_form.cleaned_data['documentation_file']
             if documentation_file:
@@ -1951,9 +1950,9 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             elif request.POST.get('old_documentation_file', False):
                 new_domain.documentation_file_path = old.documentation_file_path
                 new_domain.documentation_file_type = old.documentation_file_type
-            new_domain.save()
 
             if publish_on_submit:
+                new_domain.save()
                 _publish_snapshot(request, self.domain_object, published_snapshot=new_domain)
             else:
                 new_domain.published = False
@@ -2007,13 +2006,10 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 fixture.description = request.POST["%s-description" % old_id]
                 fixture.save()
 
-            if new_domain is None:
-                messages.error(request, _("Version creation failed; please try again"))
-            else:
-                messages.success(request, (_("Created a new version of your app. This version will be posted to "
-                                             "CommCare Exchange pending approval by admins.") if publish_on_submit
-                                           else _("Created a new version of your app.")))
-                return redirect(ExchangeSnapshotsView.urlname, self.domain)
+            messages.success(request, (_("Created a new version of your app. This version will be posted to "
+                                         "CommCare Exchange pending approval by admins.") if publish_on_submit
+                                       else _("Created a new version of your app.")))
+            return redirect(ExchangeSnapshotsView.urlname, self.domain)
         return self.get(request, *args, **kwargs)
 
 
