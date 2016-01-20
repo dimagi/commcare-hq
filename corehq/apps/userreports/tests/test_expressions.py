@@ -11,6 +11,7 @@ from corehq.apps.userreports.expressions.specs import (
     PropertyPathGetterSpec,
 )
 from corehq.apps.userreports.specs import EvaluationContext
+from corehq.util.test_utils import generate_cases
 
 
 class ExpressionPluginTest(SimpleTestCase):
@@ -690,3 +691,28 @@ class DocJoinExpressionTest(SimpleTestCase):
 
         same_expression = ExpressionFactory.from_spec(self.spec)
         self.assertEqual('foo', same_expression(my_doc, EvaluationContext(my_doc, 0)))
+
+
+@generate_cases([
+    ({'dob': '2015-01-20'}, 3, date(2015, 1, 23)),
+    ({'dob': '2015-01-20'}, 5, date(2015, 1, 25)),
+    ({'dob': date(2015, 1, 20)}, 3, date(2015, 1, 23)),
+    ({'dob': datetime(2015, 1, 20)}, 3, date(2015, 1, 23)),
+    ({'dob': datetime(2015, 1, 20)}, 3.0, date(2015, 1, 23)),
+    ({'dob': datetime(2015, 1, 20)}, '3.0', date(2015, 1, 23)),
+    (
+        {'dob': datetime(2015, 1, 20), 'days': '3'},
+        {'type': 'property_name', 'property_name': 'days'},
+        date(2015, 1, 23)
+    ),
+])
+def test_add_days_to_date_expression(self, source_doc, count_expression, expected_value):
+    expression = ExpressionFactory.from_spec({
+        'type': 'add_days',
+        'date_expression': {
+            'type': 'property_name',
+            'property_name': 'dob',
+        },
+        'count_expression': count_expression
+    })
+    self.assertEqual(expected_value, expression(source_doc))
