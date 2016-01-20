@@ -1,19 +1,14 @@
 from django.conf import settings
 
 from corehq.apps.hqwebapp.tasks import send_mail_async, mail_admins_async
+from corehq.util.log import get_sanitized_request_repr
 from corehq.util.global_request import get_request
 from corehq.util.soft_assert.core import SoftAssert
-from django.views.debug import get_exception_reporter_filter
 
 
 def _send_message(info, backend):
-    try:
-        request = get_request()
-        # de-sensitize requests that might have passwords
-        filter = get_exception_reporter_filter(request)
-        request_repr = filter.get_request_repr(request)
-    except Exception:
-        request_repr = "Request repr() unavailable."
+    request = get_request()
+    request_repr = get_sanitized_request_repr(request)
 
     backend(
         subject='Soft Assert: [{}] {}'.format(info.key[:8], info.msg),

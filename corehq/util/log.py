@@ -40,6 +40,17 @@ def clean_exception(exception):
     return exception
 
 
+def get_sanitized_request_repr(request):
+    """
+    Santizes sensitive data inside request object
+    """
+    if not request:
+        return "Request repr() unavailable"
+
+    filter = get_exception_reporter_filter(request)
+    return filter.get_request_repr(request)
+
+
 class HqAdminEmailHandler(AdminEmailHandler):
     """
     Custom AdminEmailHandler to include additional details which can be supplied as follows:
@@ -52,12 +63,13 @@ class HqAdminEmailHandler(AdminEmailHandler):
     """
     def get_context(self, record):
         request = None
+
         try:
             request = record.request
-            filter = get_exception_reporter_filter(request)
-            request_repr = filter.get_request_repr(request)
         except Exception:
-            request_repr = "Request repr() unavailable."
+            request = None
+
+        request_repr = get_sanitized_request_repr(request)
 
         tb_list = []
         code = None
