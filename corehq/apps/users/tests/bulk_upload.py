@@ -106,7 +106,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     @classmethod
     def tearDownClass(cls):
-        cls.teardown_subscription()
         cls.domain.delete()
 
     @property
@@ -142,6 +141,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assertEqual(self.user.location_id, self.location._id)
         self.assertEqual(self.user.location_id, self.user.user_data.get('commcare_location_id'))
+        self.teardown_subscription()
 
     def setup_location(self):
         self.setup_subscription(self.domain_name, SoftwarePlanEdition.ADVANCED)
