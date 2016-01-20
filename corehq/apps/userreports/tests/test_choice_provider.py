@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 from django.test import SimpleTestCase, TestCase
 import mock
 from corehq.apps.commtrack.tests.util import bootstrap_location_types, make_loc
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.fake.groups_fake import GroupESFake
 from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.groups.models import Group
@@ -128,7 +129,6 @@ class ChoiceProviderTestMixin(object):
         """
         pass
 
-
 class LocationChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     dependent_apps = [
         'corehq.apps.commtrack', 'corehq.apps.locations', 'corehq.apps.products',
@@ -143,6 +143,7 @@ class LocationChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
 
     @classmethod
     def setUpClass(cls):
+        cls.domain_obj = create_domain(cls.domain)
         report = ReportConfiguration(domain=cls.domain)
         bootstrap_location_types(cls.domain)
 
@@ -165,6 +166,7 @@ class LocationChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
 
     @classmethod
     def tearDownClass(cls):
+        cls.domain_obj.delete()
         delete_all_locations()
 
     def test_query_search(self):
@@ -287,6 +289,7 @@ class OwnerChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
 
     @classmethod
     def setUpClass(cls):
+        cls.domain_obj = create_domain(cls.domain)
         report = ReportConfiguration(domain=cls.domain)
         cls.group = GroupChoiceProviderTest.make_group('Group', domain=cls.domain)
         cls.mobile_worker = UserChoiceProviderTest.make_mobile_worker('mobile-worker', domain=cls.domain)
@@ -309,6 +312,7 @@ class OwnerChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     def tearDownClass(cls):
         UserESFake.reset_docs()
         GroupESFake.reset_docs()
+        cls.domain_obj.delete()
         delete_all_locations()
 
     def test_query_search(self):

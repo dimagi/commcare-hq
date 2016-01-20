@@ -31,5 +31,6 @@ settings_urls = patterns('corehq.apps.locations.views',
     url(r'^unassign_users/$', 'unassign_users', name='unassign_users'),
     url(r'^(?P<loc_id>[\w-]+)/archive/$', 'archive_location', name='archive_location'),
     url(r'^(?P<loc_id>[\w-]+)/unarchive/$', 'unarchive_location', name='unarchive_location'),
+    url(r'^(?P<loc_id>[\w-]+)/delete/$', 'delete_location', name='delete_location'),
     url(r'^(?P<loc_id>[\w-]+)/$', EditLocationView.as_view(), name=EditLocationView.urlname),
 )

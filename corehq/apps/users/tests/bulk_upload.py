@@ -2,7 +2,6 @@ from django.test import TestCase
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
-from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.users.bulkupload import UserLocMapping, SiteCodeToSupplyPointCache
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.models import CommCareUser
@@ -29,7 +28,7 @@ class UserLocMapTest(CommTrackTest):
         MULTIPLE_LOCATIONS_PER_USER.set(self.user.domain, True, NAMESPACE_DOMAIN)
 
         self.loc = make_loc('secondloc')
-        self.sp = make_supply_point(self.domain.name, self.loc)
+        self.sp = self.loc.linked_supply_point()
         self.cache = SiteCodeToSupplyPointCache(self.domain.name)
         self.mapping = UserLocMapping(self.user.username, self.user.domain, self.cache)
 
