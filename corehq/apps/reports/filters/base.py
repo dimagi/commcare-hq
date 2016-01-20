@@ -83,7 +83,7 @@ class BaseReportFilter(object):
 
     def get_bootstrap_template(self):
         if self.is_bootstrap3:
-            return self.template.replace('/bootstrap2/','/bootstrap3/')
+            return self.template.replace('/bootstrap2/', '/bootstrap3/')
         return self.template
 
 
