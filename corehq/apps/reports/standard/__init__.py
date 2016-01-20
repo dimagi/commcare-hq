@@ -12,6 +12,13 @@ from corehq.apps.reports.filters.users import UserTypeFilter
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_datatables,
+    use_jquery_ui,
+    use_select2,
+    use_daterangepicker,
+)
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.dates import DateSpan
 from django.utils.translation import ugettext_noop
@@ -21,9 +28,19 @@ from dimagi.utils.decorators.memoized import memoized
 class ProjectReport(GenericReportView):
     # overriding properties from GenericReportView
     section_name = ugettext_noop("Project Reports")
-    base_template = 'reports/bootstrap2/base_template.html'
+    base_template = 'reports/bootstrap3/base_template.html'
     dispatcher = ProjectReportDispatcher
     asynchronous = True
+
+    is_bootstrap3 = True
+
+    @use_jquery_ui
+    @use_bootstrap3
+    @use_datatables
+    @use_select2
+    @use_daterangepicker
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        pass
 
     @property
     def default_report_url(self):

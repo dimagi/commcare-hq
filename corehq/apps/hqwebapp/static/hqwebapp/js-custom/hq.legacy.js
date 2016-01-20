@@ -15,10 +15,9 @@ var COMMCAREHQ = (function () {
             var el = $(
                 '<div class="hq-help">' +
                     '<a href="#">' +
-                        '<i class="icon-question-sign" data-trigger="focus"></i></a></div>'
+                        '<i class="icon-question-sign fa fa-question-circle" data-trigger="focus"></i></a></div>'
                 ),
                 attrs = ['content', 'title', 'placement'];
-
             attrs.map(function (attr) {
                 $('a', el).data(attr, opts[attr]);
             });

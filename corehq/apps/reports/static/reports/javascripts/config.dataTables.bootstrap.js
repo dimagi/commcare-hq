@@ -99,25 +99,46 @@ function HQReportDataTables(options) {
                 params.bProcessing = true;
                 params.sAjaxSource = self.ajaxSource;
                 params.bFilter = $(this).data('filter') || false;
-                params.fnServerParams = function ( aoData ) {
-                    var ajaxParams = $.isFunction(self.ajaxParams) ? self.ajaxParams() : self.ajaxParams;
-                    for (var p in ajaxParams) {
-                        if (ajaxParams.hasOwnProperty(p)) {
-                            var currentParam = ajaxParams[p];
-                            if(_.isObject(currentParam.value)) {
-                                for (var j=0; j < currentParam.value.length; j++) {
-                                    aoData.push({
-                                        name: currentParam.name,
-                                        value: currentParam.value[j]
-                                    });
+                if (!self.useBootstrap3) {
+                    self.fnServerParams = function (aoData) {
+                        var ajaxParams = $.isFunction(self.ajaxParams) ? self.ajaxParams() : self.ajaxParams;
+                        for (var p in ajaxParams) {
+                            if (ajaxParams.hasOwnProperty(p)) {
+                                var currentParam = ajaxParams[p];
+                                if(_.isObject(currentParam.value)) {
+                                    for (var j=0; j < currentParam.value.length; j++) {
+                                        aoData.push({
+                                            name: currentParam.name,
+                                            value: currentParam.value[j]
+                                        });
+                                    }
+                                } else {
+                                    aoData.push(currentParam);
                                 }
-                            } else {
-                                aoData.push(currentParam);
                             }
                         }
-                    }
-                };
+                    };
+                }
                 params.fnServerData = function ( sSource, aoData, fnCallback, oSettings ) {
+                    var format_params = function (defParams) {
+                        var ajaxParams = $.isFunction(self.ajaxParams) ? self.ajaxParams() : self.ajaxParams;
+                        for (var p in ajaxParams) {
+                            if (ajaxParams.hasOwnProperty(p)) {
+                                var currentParam = ajaxParams[p];
+                                if(_.isObject(currentParam.value)) {
+                                    for (var j=0; j < currentParam.value.length; j++) {
+                                        defParams.push({
+                                            name: currentParam.name,
+                                            value: currentParam.value[j]
+                                        });
+                                    }
+                                } else {
+                                    defParams.push(currentParam);
+                                }
+                            }
+                        }
+                        return defParams;
+                    };
                     var custom_callback = function(data) {
                         var result = fnCallback(data); // this must be called first because datatables clears the tfoot of the table
                         var i;
@@ -140,10 +161,10 @@ function HQReportDataTables(options) {
                         }
                         return result
                     };
-
+                    
                     oSettings.jqXHR = $.ajax( {
                         "url": sSource,
-                        "data": aoData,
+                        "data": (self.useBootstrap3) ? format_params(aoData) : aoData,
                         "success": custom_callback,
                         "error": function(data) {
                             $(".dataTables_processing").hide();
@@ -190,8 +211,12 @@ function HQReportDataTables(options) {
             }
             $(window).on('resize', function () {
                 datatable.fnAdjustColumnSizing();
-            } );
-
+            });
+            if (self.useBootstrap3) {
+                $('.dataTables_paginate a').on('click', function () {
+                    datatable.fnAdjustColumnSizing();
+                });
+            }
 
             var $dataTablesFilter = $(".dataTables_filter");
             if($dataTablesFilter && $("#extra-filter-info")) {

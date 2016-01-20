@@ -1,4 +1,4 @@
-{% extends 'reports/async/bootstrap2/tabular.html' %}
+{% extends 'reports/async/bootstrap3/tabular.html' %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -29,8 +29,8 @@
 
             // bindings for 'all' button
             $XFormManagement.find('a.select-visible').click(function () {
-                $allFormsButton.attr('checked', false);
-                $checkboxes.attr('checked', true).change();
+                $allFormsButton.removeProp('checked');
+                $checkboxes.prop('checked', true).change();
                 return false;
             });
 
@@ -39,8 +39,8 @@
                 selectNone(); return false;
             });
             function selectNone() {
-                $XFormManagement.find('input.xform-checkbox:checked').attr('checked', false).change();
-                $allFormsButton.attr('checked', false);
+                $XFormManagement.find('input.xform-checkbox:checked').removeProp('checked').change();
+                $allFormsButton.removeProp('checked');
             }
 
             // bindings for form checkboxes
@@ -48,15 +48,15 @@
                 // updates text like '3 of 5 selected'
                 updateFormCounts();
                 $indicator.show();
-            })
+            });
             $checkboxes.on('click', function(){
                 $allFormsButton.attr('checked', false);
-            })
+            });
 
             // bindings for 'Select all' checkboxe
             $allFormsButton.on('click', function(){
                 if (this.checked) {
-                    $checkboxes.attr('checked', true).change();
+                    $checkboxes.prop('checked', true).change();
                     $indicator.hide();
                     enable_disable_button(1);
                     $(".selectedCount").text({{ total_xForms }});
@@ -67,7 +67,7 @@
                     $XFormManagement.find('a.select-none').click();
                     enable_disable_button(0);
                 }
-            })
+            });
 
             $XFormManagement.find('.dataTables_paginate a').mouseup(selectNone);
             $XFormManagement.find('.dataTables_length select').change(selectNone);
@@ -87,11 +87,10 @@
 
 {% block reportcontent %}
     <div id="form-management">
-        <p class="alert fade in hide page-level-alert alert-error" id="errorMessage">
+        <p class="alert fade in hide page-level-alert alert-danger" id="errorMessage">
             {% blocktrans %}
                 Something went wrong! There was an error. If you see this error repeatedly please report it as issue.
             {% endblocktrans %}
-            </span>
         </p>
         <form method="post"
               action="{% url 'xform_management' domain %}"

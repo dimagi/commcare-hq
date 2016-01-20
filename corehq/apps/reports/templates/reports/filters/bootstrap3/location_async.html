@@ -3,27 +3,31 @@
 
 {# todo: fix template to properly inherit from filters/base.html #}
 {% if make_optional %}
-<label class="control-label">{% trans "Location Filter" %}</label>
-<div class="controls">
-    <div>
-        <select data-bind="value: show_location_filter">
+<div class="form-group">
+    <label class="control-label {{ css_label_class }}">{% trans "Location Filter" %}</label>
+    <div class="{{ css_field_class }}">
+        <select class="form-control"
+                data-bind="value: show_location_filter">
             <option value="y">{% trans "On" %}</option>
             <option value="n">{% trans "Off" %}</option>
         </select>
     </div>
 </div>
 {% endif %}
-<label class="control-label" data-bind="visible: show_location_filter_bool()">{{ control_name }}</label> {# this is wrong, see filters/single_option.html for a proper implementation #}
-<div class="controls" data-bind="visible: show_location_filter_bool()">
-  <div data-bind="foreach: selected_path" style="display: inline-block;">
-      {% block location_select %}
-        <select data-bind="options: children,
-                           optionsText: 'display_name',
-                           value: selected_child,
-                           disable: !can_edit_children()"></select>
-      {% endblock %}
-  </div>
-  <img id="loc_ajax" src="{% new_static 'formplayer/img/loading_small.gif' %}" style="display: none;">
+<div class="form-group" data-bind="visible: show_location_filter_bool()">
+    <label class="control-label {{ css_label_class }}">{{ control_name }}</label> {# this is wrong, see filters/single_option.html for a proper implementation #}
+    <div class="{{ css_field_class }}">
+        <div data-bind="foreach: selected_path" style="display: inline-block;">
+            {% block location_select %}
+            <select class="form-control"
+                    data-bind="options: children,
+                               optionsText: 'display_name',
+                               value: selected_child,
+                               disable: !can_edit_children()"></select>
+            {% endblock %}
+        </div>
+        <img id="loc_ajax" src="{% new_static 'formplayer/img/loading_small.gif' %}" style="display: none;">
+    </div>
 </div>
 <input name="location_id" type="hidden" data-bind="value: selected_locid" />
 
