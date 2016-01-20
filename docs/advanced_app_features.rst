@@ -157,3 +157,30 @@ Shadow modules are designed to be used with case modules. They may behave unpred
 
 Shadow modules do not necessarily behave well when the source module uses custom case tiles. If you experience problems, make the shadow module's case tile configuration exactly matches the source module's.
 
+Entries
+~~~~~~~
+
+A shadow module duplicates all of its parent's entries. In the example below, m1 is a shadow of m0, which has one form. This results in two unique entries, one for each module, which share several properties.
+
+.. code-block:: xml
+
+    <entry>
+        <form>
+            http://openrosa.org/formdesigner/86A707AF-3A76-4B36-95AD-FF1EBFDD58D8
+        </form>
+        <command id="m0-f0">
+            <text>
+                <locale id="forms.m0f0"/>
+            </text>
+        </command>
+    </entry>
+    <entry>
+        <form>
+            http://openrosa.org/formdesigner/86A707AF-3A76-4B36-95AD-FF1EBFDD58D8
+        </form>
+        <command id="m1-f0">
+            <text>
+                <locale id="forms.m0f0"/>
+            </text>
+        </command>
+    </entry>
