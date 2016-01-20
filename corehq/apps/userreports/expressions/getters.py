@@ -86,10 +86,10 @@ def transform_date(item):
                     return iso_string_to_datetime(item, strict=True).date()
                 except ValueError:
                     return None
-        elif isinstance(item, date):
-            return item
         elif isinstance(item, datetime):
             return item.date()
+        elif isinstance(item, date):
+            return item
     return None
 
 
