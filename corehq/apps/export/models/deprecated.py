@@ -6,6 +6,7 @@ from dimagi.ext.couchdbkit import (
 )
 from corehq.apps.app_manager.exceptions import AppManagerException
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.dbaccessors import get_built_app_ids_for_app_id
 from dimagi.utils.couch.database import iter_docs
 
 
@@ -87,18 +88,14 @@ class FormQuestionSchema(Document):
             self._id = self._get_id(self.domain, self.app_id, self.xmlns)
 
     def update_schema(self):
-        key = [self.domain, self.app_id]
-        all_apps = Application.get_db().view(
-            'app_manager/saved_app',
-            startkey=key + [self.last_processed_version],
-            endkey=key + [{}],
-            reduce=False,
-            include_docs=False,
-            skip=(1 if self.last_processed_version else 0)
-        ).all()
+        all_app_ids = get_built_app_ids_for_app_id(
+            self.domain,
+            self.app_id,
+            self.last_processed_version
+        )
 
         all_seen_apps = self.apps_with_errors | self.processed_apps
-        to_process = [app['id'] for app in all_apps if app['id'] not in all_seen_apps]
+        to_process = [app_id for app_id in all_app_ids if app_id not in all_seen_apps]
         if self.app_id not in all_seen_apps:
             to_process.append(self.app_id)
 
