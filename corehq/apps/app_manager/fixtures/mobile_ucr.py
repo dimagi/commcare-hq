@@ -67,7 +67,7 @@ class ReportFixturesProvider(object):
         data_source = ReportFactory.from_spec(report)
 
         all_filter_values = {
-            filter_slug: filter.get_filter_value(user)
+            filter_slug: filter.get_filter_value(user, report.get_ui_filter(filter_slug))
             for filter_slug, filter in report_config.filters.items()
         }
         filter_values = {

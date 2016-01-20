@@ -3280,11 +3280,11 @@ class ReportAppFilter(DocumentSchema):
         else:
             return super(ReportAppFilter, cls).wrap(data)
 
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         raise NotImplementedError
 
 
-def _filter_by_case_sharing_group_id(user):
+def _filter_by_case_sharing_group_id(user, ui_filter):
     from corehq.apps.reports_core.filters import Choice
     return [
         Choice(value=group._id, display=None)
@@ -3292,17 +3292,16 @@ def _filter_by_case_sharing_group_id(user):
     ]
 
 
-def _filter_by_location_id(user):
-    from corehq.apps.reports_core.filters import Choice
-    return Choice(value=user.location_id, display=None)
+def _filter_by_location_id(user, ui_filter):
+    return ui_filter.value(**{ui_filter.name: user.location_id})
 
 
-def _filter_by_username(user):
+def _filter_by_username(user, ui_filter):
     from corehq.apps.reports_core.filters import Choice
     return Choice(value=user.username, display=None)
 
 
-def _filter_by_user_id(user):
+def _filter_by_user_id(user, ui_filter):
     from corehq.apps.reports_core.filters import Choice
     return Choice(value=user._id, display=None)
 
@@ -3318,14 +3317,14 @@ _filter_type_to_func = {
 class AutoFilter(ReportAppFilter):
     filter_type = StringProperty(choices=_filter_type_to_func.keys())
 
-    def get_filter_value(self, user):
-        return _filter_type_to_func[self.filter_type](user)
+    def get_filter_value(self, user, ui_filter):
+        return _filter_type_to_func[self.filter_type](user, ui_filter)
 
 
 class CustomDataAutoFilter(ReportAppFilter):
     custom_data_property = StringProperty()
 
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         from corehq.apps.reports_core.filters import Choice
         return Choice(value=user.user_data[self.custom_data_property], display=None)
 
@@ -3333,7 +3332,7 @@ class CustomDataAutoFilter(ReportAppFilter):
 class StaticChoiceFilter(ReportAppFilter):
     select_value = StringProperty()
 
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         from corehq.apps.reports_core.filters import Choice
         return [Choice(value=self.select_value, display=None)]
 
@@ -3341,7 +3340,7 @@ class StaticChoiceFilter(ReportAppFilter):
 class StaticChoiceListFilter(ReportAppFilter):
     value = StringListProperty()
 
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         from corehq.apps.reports_core.filters import Choice
         return [Choice(value=string_value, display=None) for string_value in self.value]
 
@@ -3357,7 +3356,7 @@ class StaticDatespanFilter(ReportAppFilter):
         required=True,
     )
 
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         start_date, end_date = get_daterange_start_end_dates(self.date_range)
         return DateSpan(startdate=start_date, enddate=end_date)
 
@@ -3377,7 +3376,7 @@ class CustomDatespanFilter(ReportAppFilter):
     date_number = StringProperty(required=True)
     date_number2 = StringProperty()
 
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         today = datetime.date.today()
         start_date = end_date = None
         days = int(self.date_number)
@@ -3410,7 +3409,7 @@ class CustomDatespanFilter(ReportAppFilter):
 
 
 class MobileSelectFilter(ReportAppFilter):
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         return None
 
 
