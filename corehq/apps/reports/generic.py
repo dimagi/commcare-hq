@@ -287,7 +287,7 @@ class GenericReportView(object):
     @memoized
     def template_filters(self):
         return self._select_bootstrap_template(
-           self.base_template_filters or "reports/async/bootstrap2/filters.html"
+            self.base_template_filters or "reports/async/bootstrap2/filters.html"
         )
 
     @property
