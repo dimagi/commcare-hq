@@ -9,7 +9,7 @@ from couchforms.analytics import domain_has_submission_in_last_30_days, \
     get_username_in_last_form_user_id_submitted, get_all_user_ids_submitted, \
     get_all_xmlns_app_id_pairs_submitted_to_in_domain, \
     get_last_form_submission_for_user_for_app, get_number_of_submissions, get_form_analytics_metadata, \
-    get_number_of_forms_of_all_types, get_number_of_forms_by_type
+    get_number_of_forms_of_all_types, get_number_of_forms_by_type, get_exports_by_form
 from couchforms.models import XFormInstance, XFormError
 
 
@@ -179,3 +179,19 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
             'submissions': 1,
             'xmlns': 'my://crazy.xmlns/app'
         })
+
+    def test_get_exports_by_form(self):
+        self.assertEqual(get_exports_by_form(self.domain), [{
+            'value': {'xmlns': 'my://crazy.xmlns/', 'submissions': 2},
+            'key': ['exports_forms_analytics_domain', self.app_id_1,
+                    'my://crazy.xmlns/']
+        }, {
+            'value': {
+                'xmlns': 'my://crazy.xmlns/app',
+                'form': {'name': {}, 'id': 0},
+                'app': {'langs': [], 'name': None, 'id': self.app_id_2},
+                'module': {'name': {}, 'id': 0},
+                'app_deleted': False, 'submissions': 1},
+            'key': ['exports_forms_analytics_domain', self.app_id_2,
+                    'my://crazy.xmlns/app']
+        }])
