@@ -184,3 +184,25 @@ A shadow module duplicates all of its parent's entries. In the example below, m1
             </text>
         </command>
     </entry>
+
+Menu structure
+~~~~~~~~~~~~~~
+
+In the simplest case, shadow module menus look exactly like other module menus. In the example below, m1 is a shadow of m0. The two modules have their own, unique menu elements.
+
+.. code-block:: xml
+
+    <menu id="m0">
+        <text>
+            <locale id="modules.m0"/>
+        </text>
+        <command id="m0-f0"/>
+    </menu>
+    <menu id="m1">
+        <text>
+            <locale id="modules.m1"/>
+            </text>
+        <command id="m1-f0"/>
+    </menu>
+    
+    
