@@ -128,85 +128,43 @@
     </script>
     {% endif %}
     <script>
-        $.fn.password_setter = function (options) {
+        $.fn.password_setter = function () {
             var that = this,
-                options = options || {},
-                title = options.title || "Set Password",
                 randID = Math.floor(Math.random() * 1000),
                 password1ID = 'password-' + randID + '-1',
                 password2ID = 'password-' + randID + '-2',
-                message = {
-                    RESET: "Reset",
-                    LABEL1: "Password",
-                    LABEL2: "Repeat Password",
-                    OK: "OK",
-                    CANCEL: "Cancel",
-                    PASSWORD_EMPTY: "You must enter a password.",
-                    PASSWORD_MISMATCH: "Try again. The passwords don't match"
-                },
-                label1 = $('<label/>').attr({'for': password1ID}).text(message.LABEL1),
-                label2 = $('<label/>').attr({'for': password2ID}).text(message.LABEL2),
-                password1 = $('<input/>').attr({type: 'password', id: password1ID}),
-                password2 = $('<input/>').attr({type: 'password', id: password2ID}),
-                popupLink = $('<a/>').attr({href: '#'}).text(message.RESET),
-                popup = $('<section/>').addClass('password-setter-popup'),
-                popupOK = $('<input/>').attr({type: 'submit'}).val(message.OK).button(),
-                popupCancel = $('<a/>').attr({href: '#'}).text(message.CANCEL).button(),
-                passwordMismatch = $('<p/>').text(message.PASSWORD_MISMATCH),
-                passwordEmpty = $('<p/>').text(message.PASSWORD_EMPTY),
-                form = $('<form/>').attr({action: ''}),
-                undefined = undefined;
-            this.hide();
-            this.after(popupLink);
-            popup.append(
-                $('<h1/>').text(title),
-                form.append(
-                    passwordMismatch,
-                    $('<table/>').append(
-                        $('<tr/>').append(
-                            $('<td/>').append(label1),
-                            $('<td/>').append(passwordEmpty, password1)
-                        ),
-                        $('<tr/>').append(
-                            $('<td/>').append(label2),
-                            $('<td/>').append(password2)
-                        )
-                    ),
-                    popupOK,
-                    popupCancel
-                )
-            );
-            passwordEmpty.hide();
-            passwordMismatch.hide();
-            popupLink.click(function (e) {
-                var position = popupLink.offset();
-                e.preventDefault();
-                popup.css({
-                    display: 'block',
-                    position: 'absolute',
-                    top: position.top,
-                    left: position.left,
-                }).addClass('ui-corner-tr ui-corner-br ui-corner-bl shadow');
-                $('body').append(popup);
-                password1.focus();
+                $popupLink = $('<a/>').attr({href: '#'}).text("{% trans "Reset" %}"),
+                $modal = $("#password-setter"),
+                $passwordRow = $modal.find(".password"),
+                $passwordInput = $passwordRow.find("input"),
+                $repeatRow = $modal.find(".repeat-password"),
+                $repeatInput = $repeatRow.find("input"),
+                $errorMismatch = $modal.find(".password-mismatch"),
+                $errorEmpty = $modal.find(".password-empty");
+
+            that.hide();
+            that.after($popupLink);
+            $popupLink.click(function() {
+                $modal.modal('show');
+                $passwordRow.find("input").focus();
             });
 
-            popupCancel.click(function (e) {
-                e.preventDefault();
-                popup.detach();
-            });
-
-            form.submit(function (e) {
-                e.preventDefault();
-                passwordEmpty.hide();
-                passwordMismatch.hide();
-                if (password1.val() && password1.val() === password2.val()) {
-                    popup.detach();
-                    that.val(password1.val()).trigger('textchange');
-                } else if (!password1.val()) {
-                    passwordEmpty.show();
-                } else {
-                    passwordMismatch.show();
+            $passwordRow.find("label").attr("for", password1ID);
+            $passwordInput.attr("id", password1ID);
+            $repeatRow.find("label").attr("for", password2ID);
+            $repeatInput.find("input").attr("id", password2ID);
+            
+            $modal.find("button.save").click(function (e) {
+                $errorMismatch.addClass("hide");
+                $errorEmpty.addClass("hide");
+                if ($passwordInput.val() !== $repeatInput.val()) {
+                    $errorMismatch.removeClass("hide");
+                } else if (!$passwordInput.val()) {
+                    $errorEmpty.removeClass("hide");
+                }
+                else {
+                    $modal.modal('hide');
+                    that.val($passwordInput.val()).trigger('textchange');
                 }
             });
         };
@@ -294,25 +252,6 @@
             background-color: #FFF;
             border-radius: 40px;
         }
-        .password-setter-popup {
-            background-color: white;
-            border: 1px solid #CCC;
-            padding: 1em;
-        }
-        .password-setter-popup h1 {
-            text-align: center;
-            font-size: 1.2em;
-        }
-        .password-setter-popup table {
-            margin: 0;
-        }
-        .password-setter-popup .ui-button {
-            float: right;
-            margin: 5px;
-        }
-        .password-setter-popup input[type='password'] {
-            width: 40px;
-        }
     </style>
 {% endblock %}
 {% block form-view %}
@@ -356,6 +295,38 @@
 
 {% block modals %}{{ block.super }}
 {% for uploader in uploaders %}
-{% include 'hqmedia/partials/multimedia_uploader.html' %}
+{% include 'hqmedia/bootstrap2/partials/multimedia_uploader.html' %}
 {% endfor %}
+<div class="modal hide fade" id="password-setter">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        <h3>{% trans "Set Password" %}</h3>
+    </div>
+    <div class="modal-body form-horizontal">
+        <div class="alert alert-danger password-mismatch hide">
+            {% trans "The passwords don't match. Please try again." %}
+        </div>
+        <div class="alert alert-danger password-empty hide">
+            {% trans "Please enter a password or cancel." %}
+        </div>
+        <div class="control-group password">
+            <label class="control-label">{% trans "Password" %}</label>
+            <div class="controls">
+                <input type="password" class="form-control" />
+            </div>
+        </div>
+        <div class="control-group repeat-password">
+            <label class="control-label">{% trans "Repeat Password" %}</label>
+            <div class="controls">
+                <input type="password" class="form-control" />
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+        <button class="btn btn-primary save">{% trans "Save" %}</button>
+    </div>
+</div>
 {% endblock %}

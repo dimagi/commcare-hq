@@ -106,6 +106,13 @@ function CustomDataFieldsModel () {
         var customDataFieldsForm = $("<form>")
             .attr("method", "post")
             .attr("action", fieldsForm.action);
+
+
+        $("<input type='hidden'>")
+            .attr("name", 'csrfmiddlewaretoken')
+            .attr("value", $.cookie('csrftoken'))
+            .appendTo(customDataFieldsForm);
+
         $('<input type="hidden">')
             .attr('name', 'data_fields')
             .attr('value', JSON.stringify(self.serialize()))

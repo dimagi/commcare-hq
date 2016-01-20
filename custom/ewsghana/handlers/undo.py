@@ -2,7 +2,7 @@ from collections import defaultdict
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.models import StockReport
 from couchforms.models import XFormInstance
-from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
+from custom.ewsghana.handlers.keyword import KeywordHandler
 
 
 class UndoHandler(KeywordHandler):

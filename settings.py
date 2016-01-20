@@ -125,7 +125,8 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.eggs.Loader',
 )
 
-CSRF_ALWAYS_OFF = True
+# Add this to localsettings and set it to False, so that CSRF protection is enabled on localhost
+CSRF_SOFT_MODE = True
 
 MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
@@ -570,10 +571,6 @@ COUCHLOG_BLUEPRINT_HOME = "%s%s" % (
 COUCHLOG_DATATABLES_LOC = "%s%s" % (
     STATIC_URL, "hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js")
 
-COUCHLOG_JQMODAL_LOC = "%s%s" % (STATIC_URL, "hqwebapp/js/lib/jqModal.js")
-COUCHLOG_JQMODAL_CSS_LOC = "%s%s" % (
-    STATIC_URL, "hqwebapp/stylesheets/jqModal.css")
-
 # These allow HQ to override what shows up in couchlog (add a domain column)
 COUCHLOG_TABLE_CONFIG = {"id_column": 0,
                          "archived_column": 1,
@@ -925,6 +922,8 @@ COMPRESS_PRECOMPILERS = (
     ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
 )
 COMPRESS_ENABLED = True
+COMPRESS_JS_COMPRESSOR = 'corehq.apps.style.uglify.JsUglifySourcemapCompressor'
+# use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
 
 LESS_B3_PATHS = {
     'variables': '../../../style/less/bootstrap3/includes/variables',
@@ -991,6 +990,7 @@ HQ_PRIVATE_KEY = None
 
 
 KAFKA_URL = 'localhost:9092'
+
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1354,12 +1354,7 @@ PILLOWTOPS = {
     ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
-        {
-            'name': 'OpmUserFluffPillow',
-            'class': 'custom.opm.models.OpmUserFluffPillow',
-            'instance': 'custom.opm.models.get_pillow',
-        },
-
+        'custom.opm.models.OpmUserFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
         'custom.m4change.models.LdHmisCaseFluffPillow',
         'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
@@ -1375,27 +1370,11 @@ PILLOWTOPS = {
         'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
-        {
-            'name': 'WorldVisionMotherFluffPillow',
-            'class': 'custom.world_vision.models.WorldVisionMotherFluffPillow',
-            'instance': 'custom.world_vision.models.get_mother_pillow',
-        },
-        {
-            'name': 'WorldVisionChildFluffPillow',
-            'class': 'custom.world_vision.models.WorldVisionChildFluffPillow',
-            'instance': 'custom.world_vision.models.get_child_pillow',
-        },
+        'custom.world_vision.models.WorldVisionMotherFluffPillow',
+        'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
-        {
-            'name': 'UCLAPatientFluffPillow',
-            'class': 'custom.succeed.models.UCLAPatientFluffPillow',
-            'instance': 'custom.succeed.models.get_pillow',
-        },
-        {
-            'name': 'MalariaConsortiumFluffPillow',
-            'class': 'custom.reports.mc.models.MalariaConsortiumFluffPillow',
-            'instance': 'custom.reports.mc.models.get_pillow',
-        }
+        'custom.succeed.models.UCLAPatientFluffPillow',
+        'custom.reports.mc.models.MalariaConsortiumFluffPillow',
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
@@ -1614,6 +1593,7 @@ COMPRESS_OFFLINE_CONTEXT = {
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
+
 
 
 if 'locmem' not in CACHES:

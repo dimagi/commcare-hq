@@ -1,3 +1,4 @@
+from collections import namedtuple
 from decimal import Decimal
 from dateutil.relativedelta import relativedelta
 from django.db.models.query_utils import Q
@@ -23,6 +24,7 @@ from custom.ewsghana.reminders.const import DAYS_UNTIL_LATE
 
 TEST_DOMAIN = 'ewsghana-receipts-test'
 TEST_BACKEND = 'MOBILE_BACKEND_TEST'
+Msg = namedtuple('Msg', ['text'])
 
 
 def get_descendants(location_id):
@@ -51,19 +53,14 @@ def make_url(report_class, domain, string_params, args):
         return None
 
 
-# Calculate last full period (Friday - Thursday)
-def calculate_last_period(enddate):
-    # checking if Thursday was already in this week
-    enddate = enddate.replace(hour=0, minute=0, second=0, microsecond=0)
-    i = enddate.weekday() - 3
-    if i < 0:
-        # today is Monday, Tuesday or Wednesday -> calculate Thursday from previous week
-        last_th = enddate + timedelta(days=-i, weeks=-1)
-    else:
-        # today is Thursday, Friday, Saturday or Sunday -> calculate Thursday from this week
-        last_th = enddate - timedelta(days=i)
-    fr_before = last_th - timedelta(days=6)
-    return fr_before, last_th + timedelta(days=1)
+# Calculate last full period (Friday - thursday)
+def calculate_last_period(enddate=None):
+    if not enddate:
+        enddate = datetime.utcnow()
+    last_friday = enddate - timedelta(days=(enddate.weekday() - 4) % 7)
+    last_friday = last_friday.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_of_next_thursday = (last_friday + timedelta(days=7)) - timedelta(microseconds=1)
+    return last_friday, end_of_next_thursday
 
 
 def send_test_message(verified_number, text, metadata=None):
@@ -509,3 +506,20 @@ def set_sms_notifications(domain, web_user, sms_notifications):
         extension.save()
     except EWSExtension.DoesNotExist:
         EWSExtension.objects.create(domain=domain, user_id=web_user.get_id, sms_notifications=sms_notifications)
+
+
+def get_user_location_id(user, domain):
+    dm = user.get_domain_membership(domain)
+    if not dm:
+        return
+
+    if dm.location_id:
+        return dm.location_id
+
+    try:
+        ews_extension = EWSExtension.objects.get(user_id=user.get_id, domain=domain)
+    except EWSExtension.DoesNotExist:
+        return
+
+    if ews_extension.location_id:
+        return ews_extension.location_id

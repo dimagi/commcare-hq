@@ -111,6 +111,13 @@ class LocationType(models.Model):
     def __unicode__(self):
         return self.name
 
+    def __repr__(self):
+        return u"LocationType(domain='{}', name='{}', administrative={})".format(
+            self.domain,
+            self.name,
+            self.administrative,
+        ).encode('utf-8')
+
     @property
     @memoized
     def can_have_children(self):
@@ -246,10 +253,11 @@ class SQLLocation(MPTTModel):
         return u"{} ({})".format(self.name, self.domain)
 
     def __repr__(self):
-        return "<SQLLocation(domain=%s, name=%s)>" % (
+        return u"SQLLocation(domain='{}', name='{}', location_type='{}')".format(
             self.domain,
-            self.name
-        )
+            self.name,
+            self.location_type.name,
+        ).encode('utf-8')
 
     @property
     def display_name(self):
@@ -436,9 +444,15 @@ class Location(CachedCouchDocumentMixin, Document):
         if location_type:
             self.location_type = location_type
 
+    def __unicode__(self):
+        return u"{} ({})".format(self.name, self.domain)
+
     def __repr__(self):
-        val = u"%s (%s)" % (self.name, self.location_type)
-        return val.encode('utf-8')
+        return u"Location(domain='{}', name='{}', location_type='{}')".format(
+            self.domain,
+            self.name,
+            self.location_type_name,
+        ).encode('utf-8')
 
     def __eq__(self, other):
         if isinstance(other, Location):
@@ -756,6 +770,11 @@ class Location(CachedCouchDocumentMixin, Document):
     @property
     def location_type_object(self):
         return self._sql_location_type or self.sql_location.location_type
+
+    @property
+    def location_type_name(self):
+        return self.location_type_object.name
+
 
 
 def _unassign_users_from_location(domain, location_id):

@@ -222,9 +222,9 @@ class DomainInvoiceFactory(object):
         return invoice
 
     def generate_line_items(self, invoice, subscription):
-        for product_rate in subscription.plan_version.product_rates.all():
-            product_factory = ProductLineItemFactory(subscription, product_rate, invoice)
-            product_factory.create()
+        product_rate = subscription.plan_version.product_rate
+        product_factory = ProductLineItemFactory(subscription, product_rate, invoice)
+        product_factory.create()
 
         for feature_rate in subscription.plan_version.feature_rates.all():
             feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(

@@ -28,8 +28,8 @@ def user_save_callback(sender, **kwargs):
     couch_user = kwargs.get("couch_user", None)
     if couch_user and couch_user.is_web_user():
         properties = {}
-        properties.update(_get_subscription_properties_by_user(couch_user))
-        properties.update(_get_domain_membership_properties(couch_user))
+        properties.update(get_subscription_properties_by_user(couch_user))
+        properties.update(get_domain_membership_properties(couch_user))
         identify.delay(couch_user.username, properties)
         update_hubspot_properties(couch_user, properties)
 
@@ -43,12 +43,12 @@ def domain_save_callback(sender, domain, **kwargs):
 
 
 def update_subscription_properties_by_user(couch_user):
-    properties = _get_subscription_properties_by_user(couch_user)
+    properties = get_subscription_properties_by_user(couch_user)
     identify.delay(couch_user.username, properties)
     update_hubspot_properties(couch_user, properties)
 
 
-def _get_subscription_properties_by_user(couch_user):
+def get_subscription_properties_by_user(couch_user):
 
     def _is_paying_subscription(subscription):
         NON_PAYING_SERVICE_TYPES = [
@@ -106,7 +106,7 @@ def _get_subscription_properties_by_user(couch_user):
     }
 
 
-def _get_domain_membership_properties(couch_user):
+def get_domain_membership_properties(couch_user):
     return {
         "number_of_project_spaces": len(couch_user.domains),
         "project_spaces_list": '\n'.join(couch_user.domains),

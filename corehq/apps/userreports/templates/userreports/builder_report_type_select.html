@@ -14,7 +14,6 @@
 {% endblock stylesheets %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
     <script src="{% new_static 'hqwebapp/js/main.js' %}"></script>
     <script src="{% new_static 'dashboard/js/hq_dashboard.ng.js' %}"></script>
 {% endblock %}

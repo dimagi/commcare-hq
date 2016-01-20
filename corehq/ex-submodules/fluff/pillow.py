@@ -1,4 +1,5 @@
 from couchdbkit import ResourceNotFound
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from dimagi.utils.read_only import ReadOnlyObject
 from pillowtop.checkpoints.manager import get_default_django_checkpoint_for_legacy_pillow_class
 from pillowtop.listener import PythonPillow, PYTHONPILLOW_CHUNK_SIZE
@@ -17,12 +18,16 @@ class FluffPillow(PythonPillow):
 
     # see explanation in IndicatorDocument for how this is used
     deleted_types = ()
+    kafka_topic = None
 
     def __init__(self, chunk_size=None, checkpoint=None, change_feed=None, preload_docs=True):
         # explicitly check against None since we want to pass chunk_size=0 through
         chunk_size = chunk_size if chunk_size is not None else PYTHONPILLOW_CHUNK_SIZE
         # fluff pillows should default to SQL checkpoints
         checkpoint = checkpoint or get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
+        if change_feed is None and self.kafka_topic:
+            change_feed = KafkaChangeFeed(topic=self.kafka_topic, group_id=self.__class__.__name__)
+            preload_docs = False  # it's never necessary preload_docs for kafka pillows
         super(FluffPillow, self).__init__(
             chunk_size=chunk_size,
             checkpoint=checkpoint,

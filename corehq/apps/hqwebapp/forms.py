@@ -3,6 +3,7 @@ import json
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
+from django.middleware.csrf import get_token
 from django.http import QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
@@ -140,7 +141,9 @@ class FormListForm(object):
     child_form_data = forms.CharField(widget=forms.HiddenInput)
     template = "style/bootstrap2/partials/form_list_form.html"
 
-    def __init__(self, data=None, *args, **kwargs):
+    def __init__(self, data=None, request=None, *args, **kwargs):
+        self.request = request
+
         if self.child_form_class is None:
             raise NotImplementedError("You must specify a child form to use"
                                       "for each row")
@@ -237,6 +240,7 @@ class FormListForm(object):
             'row_spec': self.get_row_spec(),
             'rows': map(self.form_to_json, self.child_forms),
             'errors': getattr(self, 'errors', False),
+            'csrf_token': get_token(self.request),
         }
 
     def as_table(self):

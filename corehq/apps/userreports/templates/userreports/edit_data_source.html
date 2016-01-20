@@ -31,5 +31,11 @@
     <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn">{% trans 'Preview data' %}</a>
     <a href="{% url 'configurable_data_source_json' domain data_source.get_id %}" class="btn">{% trans 'Data Source Source (Advanced)' %}</a>
 </form>
+{% if not data_source.is_deactivated %}
+<form method='post' action="{% url 'resume_build' domain data_source.get_id %}">
+    {% csrf_token %}
+    <input type="submit" value="{% trans 'Resume Build (Advanced)' %}" class="btn disable-on-submit">
+</form>
+{% endif %}
 {% endif %}
 {% endblock %}

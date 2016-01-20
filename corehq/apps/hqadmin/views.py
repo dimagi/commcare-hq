@@ -36,8 +36,7 @@ from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-from corehq.apps.style.decorators import use_datatables, use_knockout_js, \
-    use_jquery_ui
+from corehq.apps.style.decorators import use_datatables, use_jquery_ui
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.couchdb_management import couch_config
@@ -337,7 +336,6 @@ class SystemInfoView(BaseAdminSectionView):
     template_name = "hqadmin/system_info.html"
 
     @use_datatables
-    @use_knockout_js
     @use_jquery_ui
     @method_decorator(require_superuser_or_developer)
     def dispatch(self, request, *args, **kwargs):
@@ -435,28 +433,6 @@ def pillow_operation_api(request):
                 return get_response(str(e))
     else:
         return get_response("No pillow found with name '{}'".format(pillow_name))
-
-
-@require_superuser
-@cache_page(60*5)
-def all_commcare_settings(request):
-    apps = ApplicationBase.view('app_manager/applications_brief',
-                                include_docs=True)
-    filters = set()
-    for param in request.GET:
-        s_type, name = param.split('.')
-        value = request.GET.get(param)
-        filters.add((s_type, name, value))
-
-    def app_filter(settings):
-        for s_type, name, value in filters:
-            if settings[s_type].get(name) != value:
-                return False
-        return True
-
-    settings_list = [s for s in (get_settings_values(app) for app in apps)
-                     if app_filter(s)]
-    return json_response(settings_list)
 
 
 @require_superuser

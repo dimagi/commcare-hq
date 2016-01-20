@@ -192,7 +192,7 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
         product = self.data.get('additionalData[product]')
         plan_versions = SoftwarePlanVersion.objects.filter(
             plan__edition=edition
-        ).filter(product_rates__product__product_type=product)
+        ).filter(product_rate__product__product_type=product)
         if self.search_string:
             plan_versions = plan_versions.filter(
                 plan__name__contains=self.search_string)

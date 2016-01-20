@@ -939,17 +939,6 @@ class FormExportSchema(HQExportSchema):
         return False
 
 
-class FormDeidExportSchema(FormExportSchema):
-
-    @property
-    def transform(self):
-        return SerializableFunction()
-
-    @classmethod
-    def get_case(cls, doc, case_id):
-        pass
-
-
 class CaseExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
     _default_type = 'case'

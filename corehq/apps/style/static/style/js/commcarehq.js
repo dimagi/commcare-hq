@@ -36,11 +36,11 @@ COMMCAREHQ.makeHqHelp = function (opts, wrap) {
     var el = $(
         '<div class="hq-help">' + 
             '<a href="#">' +
-                '<i class="icon-question-sign"></i></a></div>'
+                '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
     );
-    for (var attr in ['content', 'title', 'html']) {
+    _.each(['content', 'title', 'html'], function(attr) {
         $('a', el).data(attr, opts[attr]);
-    }
+    });
     if (wrap) {
         el.hqHelp();
     }
@@ -204,9 +204,10 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                         success = options.success || function () {},
                         error = options.error || function () {},
                         that = this;
-                    options.beforeSend = function () {
+                    options.beforeSend = function (jqXHR, settings) {
                         that.setState('saving');
                         that.nextState = 'saved';
+                        $.ajaxSettings.beforeSend(jqXHR, settings);
                         beforeSend.apply(this, arguments);
                     };
                     options.success = function (data) {

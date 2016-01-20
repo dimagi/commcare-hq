@@ -16,7 +16,7 @@ class TestCreditLines(BaseInvoiceTestCase):
 
     def setUp(self):
         super(TestCreditLines, self).setUp()
-        self.product_rate = self.subscription.plan_version.product_rates.get()
+        self.product_rate = self.subscription.plan_version.product_rate
         self.user_rate = self.subscription.plan_version.feature_rates.filter(feature__feature_type=FeatureType.USER)[:1].get()
         num_active = random.randint(self.user_rate.monthly_limit + 1, self.user_rate.monthly_limit + 2)
         generator.arbitrary_commcare_users_for_domain(self.domain.name, num_active)

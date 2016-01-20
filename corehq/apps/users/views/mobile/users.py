@@ -60,7 +60,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
-from corehq.apps.style.decorators import use_bootstrap3, use_select2
+from corehq.apps.style.decorators import use_bootstrap3, use_select2, \
+    use_angular_js
 from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.decorators import require_can_edit_commcare_users
@@ -402,6 +403,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @use_bootstrap3
     @use_select2
+    @use_angular_js
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, *args, **kwargs):
         return super(MobileWorkerListView, self).dispatch(*args, **kwargs)
@@ -511,10 +513,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @allow_remote_invocation
     def modify_user_status(self, in_data):
-        if not self.can_add_extra_users:
-            return {
-                'error': _("No Permission."),
-            }
         try:
             user_id = in_data['user_id']
         except KeyError:
@@ -528,6 +526,10 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'error': _("Please provide an is_active status."),
             }
         user = CommCareUser.get_by_user_id(user_id, self.domain)
+        if is_active and not self.can_add_extra_users:
+            return {
+                'error': _("No Permission."),
+            }
         user.is_active = is_active
         user.save()
         return {
