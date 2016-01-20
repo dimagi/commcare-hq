@@ -119,3 +119,41 @@ which the child module forms do not. So we need to add it in:
 
 Note that we can only do this for session variables that are automatically computed and
 hence does not require user input.
+
+Shadow Modules
+--------------
+
+A shadow module is a module that piggybacks on another module's commands (the "source" module). The shadow module has its own name, case list configuration, and case detail configuration, but it uses the same forms as its source module.
+
+This is primarily for clinical workflows, where the case detail is a list of patients and the clinic wishes to be able to view differently-filtered queues of patients that ultimately use the same set of forms.
+
+Shadow modules are behind the feature flag **Shadow Modules**.
+
+Scope
+~~~~~
+
+The shadow module has its own independent:
+
+- Name
+- Menu mode (display module & forms, or forms only)
+- Media (icon, audio)
+- Case list configuration (including sorting and filtering)
+- Case detail configuration
+
+The shadow module inherits from its source:
+
+- case type
+- commands (which forms the module leads to)
+- end of form behavior
+
+Limitations
+~~~~~~~~~~~
+
+A shadow module neither **be** a parent module nor **have** a parent module
+
+A shadow module's source can be a parent module (the shadow will include a copy of the children), or have a parent module (the shadow will appear as a child of that same parent)
+
+Shadow modules are designed to be used with case modules. They may behave unpredictably if given an advanced module, reporting module, or careplan module as a source.
+
+Shadow modules do not necessarily behave well when the source module uses custom case tiles. If you experience problems, make the shadow module's case tile configuration exactly matches the source module's.
+
