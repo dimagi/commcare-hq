@@ -17,6 +17,7 @@ from corehq.apps.style.decorators import (
     use_datatables,
     use_jquery_ui,
     use_select2,
+    use_daterangepicker,
 )
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.dates import DateSpan
@@ -37,6 +38,7 @@ class ProjectReport(GenericReportView):
     @use_bootstrap3
     @use_datatables
     @use_select2
+    @use_daterangepicker
     def set_bootstrap3_status(self, request, *args, **kwargs):
         pass
 
