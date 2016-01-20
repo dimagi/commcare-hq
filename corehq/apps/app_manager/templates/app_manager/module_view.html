@@ -6,6 +6,7 @@
     <script src="{% new_static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% new_static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% new_static 'app_manager/js/graph-config.js' %}"></script>
+    {% include "app_manager/partials/xpathValidator.html" %}
     <script>
     if (window.toggles === undefined) {
         window.toggles = {};
