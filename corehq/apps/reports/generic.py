@@ -483,7 +483,6 @@ class GenericReportView(object):
             'report_filters': [
                 dict(field=f.render(), slug=f.slug) for f in self.filter_classes
             ],
-            'report_filter_form_action_css_class': DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER,
         })
 
     def update_template_context(self):
@@ -492,6 +491,9 @@ class GenericReportView(object):
             Please override template_context instead.
         """
         self.context.update(rendered_as=self.rendered_as)
+        self.context.update({
+            'report_filter_form_action_css_class': DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER,
+        })
         self.context['report'].update(
             show_filters=self.fields or not self.hide_filters,
             breadcrumbs=self.breadcrumbs,
