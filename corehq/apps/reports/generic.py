@@ -831,8 +831,10 @@ class GenericTabularReport(GenericReportView):
     _pagination = None
     @property
     def pagination(self):
-        if self._pagination is None and hasattr(self.request, 'REQUEST'):
-            self._pagination = DatatablesParams.from_request_dict(self.request.REQUEST)
+        if self._pagination is None:
+            self._pagination = DatatablesParams.from_request_dict(
+                self.request.POST if self.request.method == 'POST' else self.request.GET
+            )
         return self._pagination
 
     @property
