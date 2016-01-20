@@ -13,6 +13,9 @@ class QuestionMeta(DocumentSchema):
     options = ListProperty()
     repeat_context = StringProperty()
 
+    class Meta:
+        app_label = 'export'
+
 
 class FormQuestionSchema(Document):
     """
@@ -31,6 +34,9 @@ class FormQuestionSchema(Document):
     processed_apps = SetProperty(unicode)
     apps_with_errors = SetProperty(unicode)
     question_schema = SchemaDictProperty(QuestionMeta)
+
+    class Meta:
+        app_label = 'export'
 
     @classmethod
     def _get_id(cls, domain, app_id, xmlns):
