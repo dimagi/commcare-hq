@@ -131,7 +131,8 @@ class BalanceMigration(UserMigrationMixin):
                         description += 'location not assigned, '
                 except SQLLocation.DoesNotExist:
                     # Location is inactive in v1 or it's an error in location migration
-                    pass
+                    if dm.location_id:
+                        description += "location is assigned but shouldn't be "
 
             if dm.role_id != read_only_role_id:
                 description += 'invalid role, '
