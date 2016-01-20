@@ -95,6 +95,8 @@ class BalanceMigration(UserMigrationMixin):
         unique_usernames = set()
         read_only_role_id = UserRole.get_read_only_role_by_domain(self.domain).get_id
         for web_user in iterate_over_api_objects(self.endpoint.get_webusers):
+            if not web_user.is_active:
+                continue
             description = ''
             if web_user.email:
                 username = web_user.email.lower()
@@ -118,22 +120,21 @@ class BalanceMigration(UserMigrationMixin):
                 )
                 continue
 
-            if not web_user.location:
-                continue
+            if not couch_web_user.is_active:
+                description += "user is migrated but not active in HQ, "
 
             dm = couch_web_user.get_domain_membership(self.domain)
-            try:
-                sql_location = SQLLocation.objects.get(external_id=web_user.location, domain=self.domain)
-
-                if dm.location_id != sql_location.location_id:
-                    description += 'Location not assigned'
-            except SQLLocation.DoesNotExist:
-                # Location is inactive in v1 or it's an error in location migration
-                pass
+            if web_user.location:
+                try:
+                    sql_location = SQLLocation.objects.get(external_id=web_user.location, domain=self.domain)
+                    if dm.location_id != sql_location.location_id:
+                        description += 'location not assigned, '
+                except SQLLocation.DoesNotExist:
+                    # Location is inactive in v1 or it's an error in location migration
+                    pass
 
             if dm.role_id != read_only_role_id:
-                description += 'Invalid role'
-
+                description += 'invalid role, '
             if not description:
                 ILSMigrationProblem.objects.filter(
                     domain=self.domain,
