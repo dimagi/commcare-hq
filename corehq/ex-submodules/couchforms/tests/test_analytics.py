@@ -98,11 +98,6 @@ class CouchformsAnalyticsTest(TestCase, DocTestMixin):
                 self.domain, self.user_id, self.xmlns, self.app_id,
                 end=self.now, start=self.now - datetime.timedelta(days=100)), 2)
 
-    def test_get_form_analytics_metadata(self):
-        info = get_form_analytics_metadata(self.domain, self.app_id, self.xmlns)
-        self.assertEqual(self.xmlns, info['xmlns'])
-        self.assertEqual(2, info['submissions'])
-
     def test_get_number_of_forms_of_all_types(self):
         self.assertEqual(
             get_number_of_forms_of_all_types(self.domain),
@@ -120,3 +115,47 @@ class CouchformsAnalyticsTest(TestCase, DocTestMixin):
             get_number_of_forms_by_type(self.domain, 'XFormError'),
             len(self.error_forms)
         )
+
+
+class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
+    dependent_apps = ['corehq.couchapps', 'corehq.apps.domain', 'corehq.form_processor',
+                      'corehq.sql_accessors']
+
+    @classmethod
+    def setUpClass(cls):
+        from casexml.apps.case.tests.util import delete_all_xforms
+        from corehq.apps.app_manager.models import Application, Module, Form
+        delete_all_xforms()
+        cls.domain = 'exports_forms_analytics_domain'
+        cls.app_id = uuid.uuid4().hex
+        cls.xmlns = 'my://crazy.xmlns/'
+        cls.other_xmlns = 'my://crazy.xmlns/app'
+        cls.apps = [Application(modules=[Module(forms=[Form(xmlns=cls.other_xmlns)])])]
+        for app in cls.apps:
+            app.save()
+        cls.forms = [
+            XFormInstance(domain=cls.domain,
+                          app_id=cls.app_id, xmlns=cls.xmlns),
+            XFormInstance(domain=cls.domain,
+                          app_id=cls.app_id, xmlns=cls.xmlns),
+            XFormInstance(domain=cls.domain,
+                          app_id=cls.apps[0]._id, xmlns=cls.other_xmlns),
+        ]
+        cls.error_forms = [XFormError(domain=cls.domain)]
+        cls.all_forms = cls.forms + cls.error_forms
+        for form in cls.all_forms:
+            form.save()
+
+        update_analytics_indexes()
+
+    @classmethod
+    def tearDownClass(cls):
+        for form in cls.all_forms:
+            form.delete()
+        for app in cls.apps:
+            app.delete()
+
+    def test_get_form_analytics_metadata(self):
+        info = get_form_analytics_metadata(self.domain, self.app_id, self.xmlns)
+        self.assertEqual(self.xmlns, info['xmlns'])
+        self.assertEqual(2, info['submissions'])
