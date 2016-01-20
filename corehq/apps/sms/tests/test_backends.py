@@ -22,6 +22,7 @@ from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.messaging.smsbackends.unicel.models import SQLUnicelBackend, InboundParams
 from corehq.messaging.smsbackends.yo.models import SQLYoBackend
 from dimagi.utils.parsing import json_format_datetime
+from django.test import TestCase
 from django.test.client import Client
 from django.test.utils import override_settings
 from mock import patch
@@ -703,3 +704,342 @@ class OutgoingFrameworkTestCase(BaseSMSTest):
         self.__test_contact_level_backend()
         self.__test_send_sms_with_backend()
         self.__test_send_sms_with_backend_name()
+
+
+class SQLMobileBackendTestCase(TestCase):
+    def test_domain_is_shared(self):
+        backend = SQLTestSMSBackend.objects.create(
+            name='BACKEND',
+            domain='shared-test-1',
+            is_global=False,
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+
+        self.assertFalse(backend.domain_is_shared('shared-test-2'))
+
+        backend.set_shared_domains(['shared-test-2'])
+        self.assertTrue(backend.domain_is_shared('shared-test-2'))
+
+        backend.soft_delete()
+        self.assertFalse(backend.domain_is_shared('shared-test-2'))
+
+        backend.delete()
+
+    def test_domain_is_authorized(self):
+        backend1 = SQLTestSMSBackend.objects.create(
+            name='BACKEND1',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+
+        backend2 = SQLTestSMSBackend.objects.create(
+            name='BACKEND2',
+            domain='auth-test-1',
+            is_global=False,
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+
+        self.assertTrue(backend1.domain_is_authorized('auth-test-1'))
+        self.assertTrue(backend1.domain_is_authorized('auth-test-2'))
+        self.assertTrue(backend1.domain_is_authorized('auth-test-3'))
+
+        self.assertTrue(backend2.domain_is_authorized('auth-test-1'))
+        self.assertFalse(backend2.domain_is_authorized('auth-test-2'))
+        self.assertFalse(backend2.domain_is_authorized('auth-test-3'))
+
+        backend2.set_shared_domains(['auth-test-2'])
+        self.assertTrue(backend2.domain_is_authorized('auth-test-1'))
+        self.assertTrue(backend2.domain_is_authorized('auth-test-2'))
+        self.assertFalse(backend2.domain_is_authorized('auth-test-3'))
+
+        backend1.delete()
+        backend2.delete()
+
+    def test_load_default_by_phone_and_domain(self):
+        backend1 = SQLTestSMSBackend.objects.create(
+            name='BACKEND1',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+
+        backend2 = SQLTestSMSBackend.objects.create(
+            name='BACKEND2',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+
+        backend3 = SQLTestSMSBackend.objects.create(
+            name='BACKEND3',
+            is_global=False,
+            domain='load-default-test',
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+
+        backend4 = SQLTestSMSBackend.objects.create(
+            name='BACKEND4',
+            is_global=False,
+            domain='load-default-test',
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+
+        backend_mapping1 = SQLMobileBackendMapping.objects.create(
+            is_global=True,
+            backend_type=SQLMobileBackend.SMS,
+            prefix='*',
+            backend=backend1
+        )
+
+        backend_mapping2 = SQLMobileBackendMapping.objects.create(
+            is_global=True,
+            backend_type=SQLMobileBackend.SMS,
+            prefix='27',
+            backend=backend2
+        )
+
+        backend_mapping3 = SQLMobileBackendMapping.objects.create(
+            is_global=False,
+            domain='load-default-test',
+            backend_type=SQLMobileBackend.SMS,
+            prefix='*',
+            backend=backend3
+        )
+
+        backend_mapping4 = SQLMobileBackendMapping.objects.create(
+            is_global=False,
+            domain='load-default-test',
+            backend_type=SQLMobileBackend.SMS,
+            prefix='27',
+            backend=backend4
+        )
+
+        # Test global prefix map
+        self.assertEqual(
+            SQLMobileBackend.load_default_by_phone_and_domain(
+                SQLMobileBackend.SMS,
+                '2700000000',
+                domain='load-default-test-2'
+            ),
+            backend2
+        )
+
+        # Test domain-level prefix map
+        self.assertEqual(
+            SQLMobileBackend.load_default_by_phone_and_domain(
+                SQLMobileBackend.SMS,
+                '2700000000',
+                domain='load-default-test'
+            ),
+            backend4
+        )
+
+        # Test domain catch-all
+        backend4.soft_delete()
+        self.assertEqual(
+            SQLMobileBackend.load_default_by_phone_and_domain(
+                SQLMobileBackend.SMS,
+                '2700000000',
+                domain='load-default-test'
+            ),
+            backend3
+        )
+
+        # Test global prefix map
+        backend3.soft_delete()
+        self.assertEqual(
+            SQLMobileBackend.load_default_by_phone_and_domain(
+                SQLMobileBackend.SMS,
+                '2700000000',
+                domain='load-default-test'
+            ),
+            backend2
+        )
+
+        # Test global catch-all
+        backend2.soft_delete()
+        self.assertEqual(
+            SQLMobileBackend.load_default_by_phone_and_domain(
+                SQLMobileBackend.SMS,
+                '2700000000',
+                domain='load-default-test'
+            ),
+            backend1
+        )
+
+        # Test raising exception if nothing found
+        backend1.soft_delete()
+        with self.assertRaises(BadSMSConfigException):
+            SQLMobileBackend.load_default_by_phone_and_domain(
+                SQLMobileBackend.SMS,
+                '2700000000',
+                domain='load-default-test'
+            )
+
+        backend1.delete()
+        backend2.delete()
+        backend3.delete()
+        backend4.delete()
+
+    def test_get_backend_api_id(self):
+        backend = SQLTestSMSBackend.objects.create(
+            name='BACKEND',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+
+        self.assertEquals(
+            SQLMobileBackend.get_backend_api_id(backend.pk),
+            SQLTestSMSBackend.get_api_id()
+        )
+
+        self.assertEquals(
+            SQLMobileBackend.get_backend_api_id(backend.couch_id, is_couch_id=True),
+            SQLTestSMSBackend.get_api_id()
+        )
+
+        backend.soft_delete()
+        with self.assertRaises(SQLMobileBackend.DoesNotExist):
+            SQLMobileBackend.get_backend_api_id(backend.pk)
+
+        with self.assertRaises(SQLMobileBackend.DoesNotExist):
+            SQLMobileBackend.get_backend_api_id(backend.couch_id, is_couch_id=True)
+
+        backend.delete()
+
+    def test_load(self):
+        backend = SQLTestSMSBackend.objects.create(
+            name='BACKEND',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+
+        self.assertEquals(
+            SQLMobileBackend.load(backend.pk),
+            backend
+        )
+
+        self.assertEquals(
+            SQLMobileBackend.load(backend.pk, api_id=SQLTestSMSBackend.get_api_id()),
+            backend
+        )
+
+        self.assertEquals(
+            SQLMobileBackend.load(backend.couch_id, is_couch_id=True),
+            backend
+        )
+
+        self.assertEquals(
+            SQLMobileBackend.load(
+                backend.couch_id,
+                api_id=SQLTestSMSBackend.get_api_id(),
+                is_couch_id=True
+            ),
+            backend
+        )
+
+        backend.soft_delete()
+
+        with self.assertRaises(SQLMobileBackend.DoesNotExist):
+            SQLMobileBackend.load(backend.pk, api_id=SQLTestSMSBackend.get_api_id())
+
+        with self.assertRaises(SQLMobileBackend.DoesNotExist):
+            SQLMobileBackend.load(
+                backend.couch_id,
+                api_id=SQLTestSMSBackend.get_api_id(),
+                is_couch_id=True
+            )
+
+        with self.assertRaises(BadSMSConfigException):
+            SQLMobileBackend.load(backend.pk, api_id='this-api-id-does-not-exist')
+
+        backend.delete()
+
+    def test_load_by_name(self):
+        backend1 = SQLTestSMSBackend.objects.create(
+            name='BACKEND_BY_NAME_TEST',
+            is_global=False,
+            domain='backend-by-name-test-1',
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+
+        backend2 = SQLTestSMSBackend.objects.create(
+            name='BACKEND_BY_NAME_TEST',
+            is_global=False,
+            domain='backend-by-name-test-2',
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+        backend2.set_shared_domains(['backend-by-name-test-1'])
+
+        backend3 = SQLTestSMSBackend.objects.create(
+            name='BACKEND_BY_NAME_TEST',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+
+        self.assertEqual(
+            SQLMobileBackend.load_by_name(
+                SQLMobileBackend.SMS,
+                'backend-by-name-test-1',
+                'BACKEND_BY_NAME_TEST'
+            ),
+            backend1
+        )
+
+        self.assertEqual(
+            SQLMobileBackend.load_by_name(
+                SQLMobileBackend.SMS,
+                'backend-by-name-test-3',
+                'BACKEND_BY_NAME_TEST'
+            ),
+            backend3
+        )
+
+        backend1.soft_delete()
+        self.assertEqual(
+            SQLMobileBackend.load_by_name(
+                SQLMobileBackend.SMS,
+                'backend-by-name-test-1',
+                'BACKEND_BY_NAME_TEST'
+            ),
+            backend2
+        )
+
+        backend2.set_shared_domains([])
+        self.assertEqual(
+            SQLMobileBackend.load_by_name(
+                SQLMobileBackend.SMS,
+                'backend-by-name-test-1',
+                'BACKEND_BY_NAME_TEST'
+            ),
+            backend3
+        )
+
+        self.assertEqual(
+            SQLMobileBackend.load_by_name(
+                SQLMobileBackend.SMS,
+                'backend-by-name-test-2',
+                'BACKEND_BY_NAME_TEST'
+            ),
+            backend2
+        )
+
+        backend2.soft_delete()
+        self.assertEqual(
+            SQLMobileBackend.load_by_name(
+                SQLMobileBackend.SMS,
+                'backend-by-name-test-2',
+                'BACKEND_BY_NAME_TEST'
+            ),
+            backend3
+        )
+
+        backend3.soft_delete()
+        with self.assertRaises(BadSMSConfigException):
+            SQLMobileBackend.load_by_name(
+                SQLMobileBackend.SMS,
+                'backend-by-name-test-1',
+                'BACKEND_BY_NAME_TEST'
+            )
+
+        backend1.delete()
+        backend2.delete()
+        backend3.delete()

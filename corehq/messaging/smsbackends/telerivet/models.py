@@ -141,9 +141,8 @@ class SQLTelerivetBackend(SQLSMSBackend):
         # that it shouldn't be a performance problem. Longer term, we'll
         # move the webhook_secret to be the api_key and then we can query
         # for this directly.
-        result = cls.objects.get(
-            hq_api_id=cls.get_api_id(),
-            deleted=False
+        result = cls.active_objects.filter(
+            hq_api_id=cls.get_api_id()
         )
         result_by_webhook = {
             backend.config.webhook_secret: backend

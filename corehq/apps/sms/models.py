@@ -1448,6 +1448,11 @@ class SelfRegistrationInvitation(models.Model):
         return (success_numbers, invalid_format_numbers, numbers_in_use)
 
 
+class ActiveMobileBackendManager(models.Manager):
+    def get_queryset(self):
+        return super(ActiveMobileBackendManager, self).get_queryset().filter(deleted=False)
+
+
 class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
     SMS = 'SMS'
     IVR = 'IVR'
@@ -1456,6 +1461,9 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         (SMS, ugettext_lazy('SMS')),
         (IVR, ugettext_lazy('IVR')),
     )
+
+    objects = models.Manager()
+    active_objects = ActiveMobileBackendManager()
 
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
     backend_type = models.CharField(max_length=3, choices=TYPE_CHOICES, default=SMS)
@@ -1578,7 +1586,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
     @quickcache(['backend_id', 'is_couch_id'], timeout=60 * 60)
     def get_backend_api_id(cls, backend_id, is_couch_id=False):
         filter_args = {'couch_id': backend_id} if is_couch_id else {'pk': backend_id}
-        result = (cls.objects
+        result = (cls.active_objects
                   .filter(**filter_args)
                   .values_list('hq_api_id', flat=True))
 
@@ -1609,9 +1617,9 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
 
         klass = backend_classes[api_id]
         if is_couch_id:
-            return klass.objects.get(couch_id=backend_id)
+            return klass.active_objects.get(couch_id=backend_id)
         else:
-            return klass.objects.get(pk=backend_id)
+            return klass.active_objects.get(pk=backend_id)
 
     @classmethod
     def get_backend_from_id_and_api_id_result(cls, result):
@@ -1623,7 +1631,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
     @classmethod
     def get_owned_backend_by_name(cls, backend_type, domain, name):
         name = name.strip().upper()
-        result = cls.objects.filter(
+        result = cls.active_objects.filter(
             is_global=False,
             backend_type=backend_type,
             domain=domain,
@@ -1634,7 +1642,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
     @classmethod
     def get_shared_backend_by_name(cls, backend_type, domain, name):
         name = name.strip().upper()
-        result = cls.objects.filter(
+        result = cls.active_objects.filter(
             is_global=False,
             backend_type=backend_type,
             mobilebackendinvitation__domain=domain,
@@ -1646,7 +1654,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
     @classmethod
     def get_global_backend_by_name(cls, backend_type, name):
         name = name.strip().upper()
-        result = cls.objects.filter(
+        result = cls.active_objects.filter(
             is_global=True,
             backend_type=backend_type,
             name=name
