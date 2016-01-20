@@ -274,15 +274,15 @@ def get_form_analytics_metadata(domain, app_id, xmlns):
         stale=stale_ok(),
         group=True
     ).one()
+    form_count = get_form_count_for_domain_app_xmlns(domain, app_id, xmlns)
     if view_results:
         result = view_results['value']
-        result['submissions'] = get_form_count_for_domain_app_xmlns(domain, app_id, xmlns)
+        result['submissions'] = form_count
+        return result
+    elif form_count:
+        return {'xmlns': xmlns, 'submissions': form_count}
     else:
-        result = {
-            'xmlns': xmlns,
-            'submissions': get_form_count_for_domain_app_xmlns(domain, app_id, xmlns)
-        }
-    return result
+        return None
 
 
 def get_exports_by_form(domain):
