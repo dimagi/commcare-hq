@@ -2,27 +2,67 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% if app.application_version == '2.0' %}
-    <div class="control-group">
-        <label class="control-label">
-            {% trans "Registration Form Accessible from Case List" %}
-            <span class="hq-help-template"
-                  data-title="{% trans "Registration Form Accessible from Case List" %}"
-                  data-content="{% blocktrans %}This option can minimize duplicate case registrations by requiring
-                  mobile users to search the case list (and confirm that it doesn’t exist already) before they
-                  can enter the registration form to create a new case.{% endblocktrans %}"
-            ></span>
-        </label>
-        <div id="case-list-form" class="controls error">
-            <div data-bind="visible: caseListForm() || allowed, css: { 'alert alert-error': formMissing() || !allowed}">
-                <select data-bind="
-                    optstr: caseListFormOptstr,
-                    value: caseListFormProxy
-                    "></select>
-                <input type="hidden" name="case_list_form_id" data-bind="value: caseListForm" />
-                <span id="case_list_form-label">
-                    with label: {% input_trans module.case_list_form.label langs input_name='case_list_form_label' %}
-                </span>
-                <div data-bind="visible: !allowed">
+    <div id="case-list-form">
+        <div class="form-group">
+            <label class="col-lg-2 control-label">
+                {% trans "Registration Form Accessible from Case List" %}
+                <span class="hq-help-template"
+                      data-title="{% trans "Registration Form Accessible from Case List" %}"
+                      data-content="{% blocktrans %}This option can minimize duplicate case registrations by requiring
+                      mobile users to search the case list (and confirm that it doesn’t exist already) before they
+                      can enter the registration form to create a new case.{% endblocktrans %}"
+                ></span>
+            </label>
+            <div class="col-lg-4">
+                <div data-bind="visible: caseListForm() || allowed, css: { 'alert alert-danger': formMissing() || !allowed}">
+                    <select class="form-control" data-bind="
+                        optstr: caseListFormOptstr,
+                        value: caseListFormProxy
+                        "></select>
+                    <input type="hidden" name="case_list_form_id" data-bind="value: caseListForm" />
+                    <div data-bind="visible: formMissing()" class="help-block">
+                        {% trans "Error! The selected form does not exist." %}
+                    </div>
+                </div>
+                <div class="btn-group" data-bind="visible: !allowed && !caseListForm()">
+                    <button class="btn btn-default disabled" disabled="disabled">
+                        <span>{% trans "Not available" %}</span>
+                    </button>
+                    <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a href="#" data-bind="click: toggleMessage">
+                                {% trans "Why can't I select a registration form?" %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="help-block" data-bind="visible: messageVisible">
+                    <div>
+                        {% blocktrans %}
+                        Registration forms are only available from the case list when<br/>
+                        (1) The registration form is in a different module<br/>
+                        (2) Every form in the module updates or closes the case<br/>
+                        (3) The case list does not have parent case selection configured.<br/>
+                        (4) The module's "Menu Mode" is configured as "Display module and then forms".<br/>
+                        To learn more, see our <a href="https://help.commcarehq.org/display/commcarepublic/Minimize+Duplicates" target="_blank">Help Site</a>
+                        {% endblocktrans %}
+                    </div>
+                    <a href="#" class="btn btn-default btn-xs" data-bind="click: toggleMessage">
+                        {% trans "OK, close this" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="form-group" id="case_list_form-label">
+            <label class="col-lg-2 control-label">
+                {% trans "Label for Registration Form" %}
+            </label>
+            <div class="col-lg-4">
+                {% input_trans module.case_list_form.label langs input_name='case_list_form_label' cssClass='form-control' %}
+                <div data-bind="visible: !allowed" class="help-block">
                     {%  trans "Error! Registration form will be ignored since this module is not allowed to have one for the following reason:" %}<br/>
                     <ul><li data-bind="text: now_allowed_reason"></li></ul>
                     {% blocktrans %}
@@ -30,39 +70,6 @@
                         <a href="https://help.commcarehq.org/display/commcarepublic/Minimize+Duplicates#MinimizeDuplicates-Limitations" target="_blank">Help Site</a>
                     {% endblocktrans %}
                 </div>
-                <div data-bind="visible: formMissing()">
-                    {% trans "Error! The selected form does not exist." %}
-                </div>
-            </div>
-            <div class="btn-group" data-bind="visible: !allowed && !caseListForm()">
-                <button class="btn disabled" disabled="disabled">
-                    <span>{% trans "Not available" %}</span>
-                </button>
-                <button class="btn dropdown-toggle" data-toggle="dropdown">
-                    <span class="caret"></span>
-                </button>
-                <ul class="dropdown-menu">
-                    <li>
-                        <a href="#" data-bind="click: toggleMessage">
-                            {% trans "Why can't I select a registration form?" %}
-                        </a>
-                    </li>
-                </ul>
-            </div>
-            <div class="alert alert-info" data-bind="visible: messageVisible">
-                <div>
-                    {% blocktrans %}
-                    Registration forms are only available from the case list when<br/>
-                    (1) The registration form is in a different module<br/>
-                    (2) Every form in the module updates or closes the case<br/>
-                    (3) The case list does not have parent case selection configured.<br/>
-                    (4) The module's "Menu Mode" is configured as "Display module and then forms".<br/>
-                    To learn more, see our <a href="https://help.commcarehq.org/display/commcarepublic/Minimize+Duplicates" target="_blank">Help Site</a>
-                    {% endblocktrans %}
-                </div>
-                <a href="#" class="btn btn-mini" data-bind="click: toggleMessage">
-                    {% trans "OK, close this" %}
-                </a>
             </div>
         </div>
     </div>

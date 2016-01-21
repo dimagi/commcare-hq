@@ -4,21 +4,16 @@
 {% load reports_core_tags %}
 {% load i18n %}
 
-{% block head %}{{ block.super }}
-    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
-{% endblock %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'app_manager/js/report-module.js' %}"></script>
-    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reports_core/js/choice-list-api.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/report-module.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'reports_core/js/choice-list-api.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     {% include "app_manager/partials/report_configs_js.html" %}
 {% endblock %}
 {% block form-view %}
     {% if warnings %}
-        <div class="alert alert-warning" data-bind="visible: !contextVariables.requires_case_details()">
+        <div class="alert alert-danger" data-bind="visible: !contextVariables.requires_case_details()">
         {% for warning in warnings %}
             {{ warning }}
         {% endfor %}

@@ -25,39 +25,55 @@
 <div data-bind="with: customXMLViewModel">
     <div data-bind="visible: enabled">
         <legend>{% trans "Custom Case List XML" %}</legend>
-        <textarea class="span6" data-bind="value: xml"></textarea>
+        <div class="row">
+            <div class="col-sm-6">
+                <textarea class="form-control" data-bind="value: xml"></textarea>
+            </div>
+        </div>
+        <div class="spacer"></div>
     </div>
 </div>
+
 <legend>
     {% trans "Display Properties" %}
 </legend>
 
 <div data-bind="with: shortScreen">
     {% if request|toggle_enabled:'CASE_LIST_TILE' %}
-    <select data-bind="value: useCaseTiles">
-        <option value="no">Don't Use Case Tiles</option>
-        <option value="yes">Use Case Tiles</option>
-    </select>
+    <div class="row">
+        <div class="col-sm-6">
+            <select data-bind="value: useCaseTiles" class="form-control">
+                <option value="no">{% trans "Don't Use Case Tiles" %}</option>
+                <option value="yes">{% trans "Use Case Tiles" %}</option>
+            </select>
+        </div>
+    </div>
     {% endif %}
 
     {% if request|toggle_enabled:'SHOW_PERSIST_CASE_CONTEXT_SETTING' %}
     <div data-bind="visible: useCaseTiles() == 'no'">
-        <label class="checkbox">
-            <input type="checkbox" data-bind="checked: persistCaseContext">
-            {% trans "Show the case name at the top of the screen when filling out forms" %}
-        </label>
+        <div class="checkbox">
+            <label>
+                <input type="checkbox" data-bind="checked: persistCaseContext">
+                {% trans "Show the case name at the top of the screen when filling out forms" %}
+            </label>
+        </div>
     </div>
     {% endif %}
 
     <div data-bind="visible: useCaseTiles() == 'yes' || window.toggles.CASE_LIST_CUSTOM_XML">
-        <label class="checkbox">
-            <input type="checkbox" data-bind="checked: persistTileOnForms">
-            Use this case list tile persistently in forms
-        </label>
-        <label class="checkbox" data-bind="visible: persistTileOnForms()">
-            <input type="checkbox" data-bind="checked: enableTilePullDown">
-            Embed case details in case tile pull-down
-        </label>
+        <div class="checkbox">
+            <label>
+                <input type="checkbox" data-bind="checked: persistTileOnForms">
+                {% trans "Use this case list tile persistently in forms" %}
+            </label>
+        </div>
+        <div class="checkbox" data-bind="visible: persistTileOnForms()">
+            <label>
+                <input type="checkbox" data-bind="checked: enableTilePullDown">
+                {% trans "Embed case details in case tile pull-down" %}
+            </label>
+        </div>
     </div>
     {% include 'app_manager/partials/case_list_properties.html' %}
 </div>
@@ -103,23 +119,20 @@
             <tbody data-bind="foreach: sortRows(), sortableList: sortRows">
                 <tr>
                     <td>
-                        <i class="grip
-                                icon-resize-vertical
-                                icon-blue"
-                           style="cursor: move"></i>
+                        <i class="grip fa fa-arrows-v icon-blue" style="cursor: move"></i>
                     </td>
 
-                    <td class="control-group" data-bind="css: {error: showWarning}">
+                    <td class="form-group" data-bind="css: {'has-error': showWarning}">
                         <div data-bind="jqueryElement: textField.ui"></div>
                         <div data-bind="visible: showWarning">
-                            <span class="help-inline" data-bind="
+                            <span class="help-block" data-bind="
                                 text: DetailScreenConfig.field_format_warning_message
                             "></span>
                         </div>
                     </td>
 
                     <td>
-                        <select data-bind="value: direction">
+                        <select class="form-control" data-bind="value: direction">
                             <option value="ascending"
                                     data-bind="text: ascendText">
                             </option>
@@ -130,7 +143,7 @@
                     </td>
 
                     <td>
-                        <select data-bind="value: type">
+                        <select class="form-control" data-bind="value: type">
                             <option value="plain">
                                 {% trans "Plain" %}
                             </option>
@@ -153,7 +166,7 @@
 
                     <td>
                         <a data-bind="click: $root.sortRows.removeSortRow">
-                            <i class="icon-remove icon-blue"></i>
+                            <i class="fa fa-remove icon-blue"></i>
                         </a>
                     </td>
                 </tr>
@@ -161,14 +174,16 @@
         </table>
     </div>
 
-    <div class="control-group">
-        <button class="btn btn-small" data-bind="
+    <div class="form-group">
+        <button class="btn btn-default btn-sm" data-bind="
             click: function(data){data.addSortRow('', '', '', true);}"
         >
-            <i class="icon icon-plus"></i>
+            <i class="fa fa-plus"></i>
             {% trans "Add sort property" %}
         </button>
     </div>
+
+    <div class="spacer"></div>
 
 {% endif %}
 </div>
@@ -176,22 +191,32 @@
 
 {% if detail.parent_select %}
 <div data-bind="with: parentSelect, DetailScreenConfig_notifyShortScreenOnChange: $root">
-    <div data-bind="visible: moduleOptions().length">
+    <div data-bind="visible: moduleOptions().length" class="form-horizontal">
         <legend>{% trans "Parent Child Selection" %}</legend>
-        <label class="checkbox">
-            <input type="checkbox" data-bind="checked: active"/>
-            {% trans "Select Parent First" %}
-        </label>
-        <div data-bind="visible: active">
-            {% trans "Use Case List from module" %}
-            <select data-bind="optstr: moduleOptions, value: moduleId"></select>
+        <div class="form-group">
+            <label class="control-label col-lg-2">
+                {% trans "Select Parent First" %}
+            </label>
+            <div class="col-lg-4 checkbox">
+                <input type="checkbox" data-bind="checked: active"/>
+            </div>
         </div>
+        <div class="form-group" data-bind="visible: active">
+            <label class="control-label col-lg-2">
+                {% trans "Use Case List from module" %}
+            </label>
+            <div class="col-lg-4">
+                <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>
+            </div>
+        </div>
+        <div class="spacer"></div>
     </div>
 </div>
 {% endif %}
 
 {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
     {% include "app_manager/partials/case_list_lookup.html" %}
+    <div class="spacer"></div>
 {% endif %}
 
 {% if detail.fixture_select and request|toggle_enabled:"FIXTURE_CASE_SELECTION" %}

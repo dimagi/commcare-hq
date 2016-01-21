@@ -19,12 +19,12 @@ var mk_translation_ui = function (spec) {
                 this.value = uiElement.input().val(value);
                 this.solid = true;
 
-                this.$delete = $('<i></i>').addClass(COMMCAREHQ.icons.DELETE).click(function () {
+                this.$delete = $('<button class="btn btn-danger"><i></i></button>').addClass(COMMCAREHQ.icons.DELETE).click(function () {
                     $(this).remove();
                     translation_ui.deleteTranslation(that.key.val());
                 }).css({cursor: 'pointer'}).attr('title', "Delete Translation");
                 
-                this.$add = $('<i></i>').addClass(COMMCAREHQ.icons.ADD).click(function () {
+                this.$add = $('<button class="btn btn-default"><i></i></button>').addClass(COMMCAREHQ.icons.ADD).click(function () {
                     // remove any trailing whitespace from the input box
                     that.key.val($.trim(that.key.val()));
                     if (that.key.val() && !translation_ui.translations[that.key.val()]) {
@@ -36,13 +36,12 @@ var mk_translation_ui = function (spec) {
                         that.key.$edit_view.focus();
                     }
                 }).css({cursor: 'pointer'}).attr('title', "Add Translation").hide();
-                this.$error = $('<span></span>').addClass('alert alert-error');
-                this.ui = $('<tr/>');
-                $('<td/>').append(this.key.ui).appendTo(this.ui);
-                $('<td/>').append(this.value.ui).appendTo(this.ui);
-                $('<td/>').append(this.$delete).appendTo(this.ui);
-                $('<td/>').append(this.$add).appendTo(this.ui);
-                $('<td/>').append(this.$error).appendTo(this.ui);
+                this.$error = $('<span></span>').addClass('label label-danger');
+                this.ui = $('<div/>').addClass("row").addClass("form-group");
+                $('<div/>').addClass("col-sm-3").append(this.key.ui).appendTo(this.ui);
+                $('<div/>').addClass("col-sm-3").append(this.value.ui).appendTo(this.ui);
+                $('<div/>').addClass("col-sm-1").append(this.$delete).append(this.$add).appendTo(this.ui);
+                $('<div/>').addClass("col-sm-5").append(this.$error).appendTo(this.ui);
                 this.$error.hide()
 
                 var helperFunction = function () {
@@ -105,9 +104,8 @@ var mk_translation_ui = function (spec) {
             return Translation;
         }()),
         $home = $('<div/>'),
-        $table = $("<table></table>"),
-        $list_tbody = $('<tbody/>').appendTo($table),
-        $adder_tbody = $('<tbody/>').appendTo($table),
+        $list = $('<div/>').appendTo($home),
+        $adder = $('<div/>').appendTo($home),
         $bootstrap = $('<a/>').attr('href', '').text('Auto fill translations').click(function (e) {
             e.preventDefault();
             $.ajax({
@@ -201,7 +199,7 @@ var mk_translation_ui = function (spec) {
             translation_ui.translations[translation.key.val()] = translation;
             translation.ui.detach();
             translation.setSolid(true);
-            $list_tbody.append(translation.ui.hide());
+            $list.append(translation.ui.hide());
             translation.ui.fadeIn();
         } else {
             translation.$error.text('Parameters formatting problem!');
@@ -214,7 +212,7 @@ var mk_translation_ui = function (spec) {
     translation_ui.appendAdder = function () {
         var adder = Translation.init("", "");
         adder.setSolid(false);
-        $adder_tbody.append(adder.ui);
+        $adder.append(adder.ui);
     };
     translation_ui.render = function () {
         var key,
@@ -231,7 +229,7 @@ var mk_translation_ui = function (spec) {
             for (i = 0; i < keys.length; i += 1) {
                 key = keys[i];
                 translation = translation_ui.translations[key];
-                translation.ui.appendTo($list_tbody);
+                translation.ui.appendTo($list);
             }
         }
         if (translation_ui.allow_autofill) {
@@ -239,7 +237,7 @@ var mk_translation_ui = function (spec) {
             COMMCAREHQ.transformHelpTemplate($bootstrap.siblings(".hq-help-template"), true);
         }
         translation_ui.appendAdder();
-        $home.append($table);
+        $home.append($home);
     };
     translation_ui.validate_translation = function(translation) {
         var patt = /\$.*?}/g;

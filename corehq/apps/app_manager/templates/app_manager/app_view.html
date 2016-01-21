@@ -4,15 +4,13 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/commcaresettings.js' %}"></script>
     {% if app.get_doc_type == "Application" %}
-        <script src="{% static 'translations/js/translations.js' %}"></script>
+        <script src="{% new_static 'translations/js/translations.js' %}"></script>
     {% endif %}
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
-    <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
-    <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/supported-languages.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
@@ -61,7 +59,7 @@
                 return self;
             }());
             $("#multimedia").koApplyBindings(multimedia_tab);
-            $('#multimedia-shower').on('show', function () {
+            $('#multimedia-shower').on('show.bs.tab', function () {
                 if (multimedia_tab.load_state() === null) {
                     multimedia_tab.load_if_necessary();
                 }
@@ -211,7 +209,7 @@
     {% endif %}
 {% endblock %}
 
-{% block head %}{{ block.super }}
+{% block stylesheets %}{{ block.super }}
     <style>
         .sortable-handle {
             cursor: move;
@@ -236,12 +234,6 @@
             padding: 2px;
             margin: 1px;
         }
-        #supported-languages .light {
-            color: #BBB;
-        }
-        #supported-languages td {
-            vertical-align: baseline;
-        }
         #default-language-help {
             position: absolute;
             /*width: 100%;*/
@@ -264,11 +256,12 @@
         {% if app.get_doc_type == "Application" %}
             <div class="tab-pane multimedia" id="multimedia">
                 <div data-bind="if: load_state() === 'loading'">
-                    <i class="icon-large icon-refresh icon-spin" style="margin: 70px 0 0 200px;"></i>
+                    <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                    {% trans "Loading ..." %}
                 </div>
                 <div data-bind="html: multimedia_page_html"></div>
                 <div data-bind="if: load_state() === 'error'">
-                    <button class="btn" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
+                    <button class="btn btn-default" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
                 </div>
             </div>
 
@@ -285,7 +278,7 @@
             <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger disable-on-submit">
-                    <i class="icon-trash"></i>
+                    <i class="fa fa-trash"></i>
                     {% trans "Delete this application" %}
                 </button>
             </form>
@@ -295,38 +288,43 @@
 
 {% block modals %}{{ block.super }}
 {% for uploader in uploaders %}
-{% include 'hqmedia/bootstrap2/partials/multimedia_uploader.html' %}
+{% include 'hqmedia/bootstrap3/partials/multimedia_uploader.html' %}
 {% endfor %}
-<div class="modal hide fade" id="password-setter">
-    <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">
-            <span aria-hidden="true">&times;</span>
-        </button>
-        <h3>{% trans "Set Password" %}</h3>
-    </div>
-    <div class="modal-body form-horizontal">
-        <div class="alert alert-danger password-mismatch hide">
-            {% trans "The passwords don't match. Please try again." %}
-        </div>
-        <div class="alert alert-danger password-empty hide">
-            {% trans "Please enter a password or cancel." %}
-        </div>
-        <div class="control-group password">
-            <label class="control-label">{% trans "Password" %}</label>
-            <div class="controls">
-                <input type="password" class="form-control" />
+<<<<<<< HEAD
+<div class="modal fade" id="password-setter">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h3 class="modal-title">{% trans "Set Password" %}</h3>
+            </div>
+            <div class="modal-body form-horizontal">
+                <div class="alert alert-danger password-mismatch hide">
+                    {% trans "The passwords don't match. Please try again." %}
+                </div>
+                <div class="alert alert-danger password-empty hide">
+                    {% trans "Please enter a password or cancel." %}
+                </div>
+                <div class="form-group password">
+                    <label class="col-sm-4 control-label">{% trans "Password" %}</label>
+                    <div class="col-sm-8">
+                        <input type="password" class="form-control" />
+                    </div>
+                </div>
+                <div class="form-group repeat-password">
+                    <label class="col-sm-4 control-label">{% trans "Repeat Password" %}</label>
+                    <div class="col-sm-8">
+                        <input type="password" class="form-control" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button class="btn btn-primary save">{% trans "Save" %}</button>
             </div>
         </div>
-        <div class="control-group repeat-password">
-            <label class="control-label">{% trans "Repeat Password" %}</label>
-            <div class="controls">
-                <input type="password" class="form-control" />
-            </div>
-        </div>
-    </div>
-    <div class="modal-footer">
-        <button class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-        <button class="btn btn-primary save">{% trans "Save" %}</button>
     </div>
 </div>
 {% endblock %}
