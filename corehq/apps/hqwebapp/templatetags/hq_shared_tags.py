@@ -131,12 +131,11 @@ def new_static(url, **kwargs):
 
 @quickcache(['request.couch_user.username'])
 def _get_domain_list(request):
-    domain_list = Domain.active_for_user(request.couch_user)
-    domain_list = [dict(
-        url=reverse('domain_homepage', args=[d.name]),
-        name=d.long_display_name()
-    ) for d in domain_list]
-    return domain_list
+    domains = Domain.active_for_user(request.couch_user)
+    return [{
+        'url': reverse('domain_homepage', args=[domain.name]),
+        'name': domain.long_display_name(),
+    } for domain in domains]
 
 
 @register.simple_tag(takes_context=True)
