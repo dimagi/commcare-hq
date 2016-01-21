@@ -1,8 +1,8 @@
 from corehq.util.elastic import es_index
 
-USER_INDEX = es_index("hqusers_2015-11-12_1638")
+USER_INDEX = es_index("hqusers_2016-01-20_1610")
 USER_MAPPING={'_all': {'analyzer': 'standard'},
- '_meta': {'comment': 'Ethan modified on 2015-11-12',
+ '_meta': {'comment': 'Simon modified on 2016-01-20',
            'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
@@ -84,7 +84,7 @@ USER_MAPPING={'_all': {'analyzer': 'standard'},
                 'password': {'type': 'string'},
                 'registering_device_id': {'type': 'string'},
                 'status': {'type': 'string'},
-                'user_data': {'dynamic': True, 'type': 'object'},
+                'user_data': {'type': 'object', 'enabled': False},
                 'username': {'fields': {'exact': {'include_in_all': False,
                                                   'index': 'not_analyzed',
                                                   'type': 'string'},

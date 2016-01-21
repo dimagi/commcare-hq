@@ -47,20 +47,28 @@ individual project sites when necessary.
 + Python 2.6 or 2.7 (use 32 bit if you're on Windows see `Alternate steps for Windows` section below)
 + pip  (If you use virtualenv (see below) this will be installed automatically)
 + CouchDB >= 1.0 (1.2 recommended) (install from OS package manager (`sudo apt-get install couchdb`) or [here][couchdb])
-  - Mac users: note that when installing erlang, you do NOT need to check out an older version of erlang.rb
+   For Mac users
+       - use $ brew install couchdb
+       - note that when installing erlang, you do NOT need to check out an older version of erlang.rb
+      
 + PostgreSQL >= 9.4 - (install from OS package manager (`sudo apt-get install postgresql`) or [here][postgres])
-+ [Elasticsearch][elasticsearch] 0.90.13. In Ubuntu and other Debian derivatives,
++ [Elasticsearch][elasticsearch] 1.7.4. In Ubuntu and other Debian derivatives,
   [download the deb package][elasticsearch], install, and then **hold** the version to prevent automatic upgrades:
 
-        $ sudo dpkg -i elasticsearch-0.90.13.deb
+        $ sudo dpkg -i elasticsearch-1.7.4.deb
         $ sudo apt-mark hold elasticsearch
 
   On Mac, the following works well:
 
-        $ brew install homebrew/versions/elasticsearch090
+        $ brew install homebrew/versions/elasticsearch17
 
 + redis >= 3.0.3 (install from OS package manager (`sudo apt-get install redis-server`) or follow these
   [installation notes][redis])
+  
+  On Mac, use:
+
+     	$ brew install redis 
+
 + [Jython][jython] 2.5.3 (optional, only needed for CloudCare). **Note**: CloudCare will _not_ work on 2.7.0 which is
   the default version at jython.org. 2.5.3 is the default version in current versions of Ubuntu
   (`sudo apt-get install jython`) but to be safe you can explicitly set and hold the version with
@@ -74,7 +82,7 @@ individual project sites when necessary.
  [couchdb]: http://wiki.apache.org/couchdb/Installation
  [postgres]: http://www.postgresql.org/download/
  [redis]: https://gist.github.com/mwhite/c0381c5236855993572c
- [elasticsearch]: http://www.elasticsearch.org/downloads/0-90-13/
+ [elasticsearch]: https://www.elastic.co/downloads/past-releases/elasticsearch-1-7-4
  [jython]: http://jython.org/downloads.html
 
 #### Elasticsearch Configuration (optional)
@@ -94,7 +102,7 @@ cluster.name: <your hostname>
 
 #### CouchDB Configuration
 
-Open http://localhost:5984/_utils/ and create a new database named `commcarehq` and add a user named `commcarehq` with password `commcarehq`.
+Start couchdb, and then open http://localhost:5984/_utils/ and create a new database named `commcarehq` and add a user named `commcarehq` with password `commcarehq`.
 
 To set up CouchDB from the command line, create the database:
 
@@ -114,7 +122,7 @@ Log in as the postgres user, and create a `commcarehq` user with password `commc
     postgres$ createdb commcarehq
     postgres$ createdb commcarehq_reporting
 
-If these commands give you difficulty, particularly for Mac users running Postgres.app, verify that the default 
+If these commands give you difficulty, **particularly for Mac users** running Postgres.app, verify that the default 
 postgres role has been created, and run the same commands without first logging in as the postgres POSIX user:
 
     $ createuser -s -r postgres  # Create the postgres role if it does not yet exist
@@ -135,7 +143,7 @@ between environments easy:
 
 ### Installing required dev packages
 
-The Python libraries you will be installing in the next step require the following packages:
+The Python libraries you will be installing in the next step require the following packages. If you are on a mac, there are brew equivalents for some but not all of these packages. You can use 'brew search' to try to find equivalents for those that are available, and don't worry about the others
 
     $ sudo apt-get install rabbitmq-server \
           libpq-dev \
@@ -152,7 +160,7 @@ The Python libraries you will be installing in the next step require the followi
 
 Once all the dependencies are in order, please do the following:
 
-    $ git clone git@github.com:dimagi/commcare-hq.git
+    $ git clone https://github.com/dimagi/commcare-hq.git
     $ cd commcare-hq
     $ git submodule update --init --recursive
     $ workon cchq  # if your "cchq" virtualenv is not already activated
@@ -163,12 +171,11 @@ There is also a separate collection of Dimagi dev oriented tools that you can in
 
     $ pip install -r requirements/dev-requirements.txt
 
-Then, edit localsettings.py and ensure that your Postgres, CouchDB, email, and
-log file settings are correct, as well as any settings required by any other
-functionality you want to use, such as SMS sending and Google Analytics.
-
-Ensure that the directories for `LOG_FILE` and `DJANGO_LOG_FILE` exist and are
-writeable.
+Enter localsettings.py and do the following:
+    - Find the `LOG_FILE` and `DJANGO_LOG_FILE` entries. Ensure that the directories for both exist 
+and are writeable. If they do not exist, create them.
+    - You may also want to add the line `from dev_settings import *` at the top of the file, which 
+      includes some useful default settings.
 
 ### Alternate steps for Windows
 On Windows it can be hard to compile some of the packages so we recommend installing those from their binary
@@ -206,11 +213,12 @@ that you have a 32bit version of Python installed.
 
 ### Set up your django environment
 
+Before running any of the commands below, you should have all of the following running: couchdb, redis, and elasticsearch.
+
 Populate your database:
 
     $ ./manage.py sync_couch_views
     $ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
-    $ ./manage.py collectstatic --noinput
     $ ./manage.py compilejsi18n
 
 You should run `./manage.py migrate` frequently, but only use the environment
@@ -225,7 +233,7 @@ related to Raven for the following three commands.
 
 To set up elasticsearch indexes, first run (and then kill once you see the "Starting pillow" lines):
 
-    $ ./manage.py run_ptop --all
+    $ ./manage.py run_ptop --pillow-key=core
 
 This will do an initial run of the elasticsearch indexing process, but this will run as a service later. This run 
 at least creates the indices for the first time.
@@ -240,8 +248,8 @@ names to the aliases.
 We use bower to manage our javascript dependencies. In order to download the required javascript packages, 
 you'll need to run `./manage.py bower install` and install `bower`. Follow these steps to install:
 
-1. Install [npm](https://www.npmjs.com/). In Ubuntu this is now bundled with NodeJS. An up-to-date version is 
-   available on the NodeSource repository.
+1. If you do not already have it, install [npm](https://www.npmjs.com/). In Ubuntu this is now bundled 
+with NodeJS. An up-to-date version is available on the NodeSource repository.
 
         $ curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
         $ sudo apt-get install -y nodejs

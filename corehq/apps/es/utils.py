@@ -15,7 +15,7 @@ def values_list(hits, *fields, **kwargs):
         return [tuple(hit[field] for field in fields) for hit in hits]
 
 
-def flatten_field_dict(field_dict):
+def flatten_field_dict(results):
     """
     In ElasticSearch 1.3, the return format was changed such that field
     values are always returned as lists, where as previously they would
@@ -25,6 +25,7 @@ def flatten_field_dict(field_dict):
 
     https://www.elastic.co/guide/en/elasticsearch/reference/1.3/_return_values.html
     """
+    field_dict = results.get('fields', {})
     for key, val in field_dict.iteritems():
         new_val = val
         if type(val) == list and len(val) == 1:
