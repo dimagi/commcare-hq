@@ -1,4 +1,18 @@
 FROM python:2.7
 ENV PYTHONUNBUFFERED 1
+
+RUN wget -O jdk.tar.gz --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/7u67-b01/jdk-7u67-linux-x64.tar.gz \
+ && tar -xzf jdk.tar.gz \
+ && mkdir -p /usr/lib/jvm \
+ && mv ./jdk1.7.0* /usr/lib/jvm/jdk1.7.0 \
+ && update-alternatives --install "/usr/bin/java" "java" "/usr/lib/jvm/jdk1.7.0/bin/java" 1 \
+ && update-alternatives --install "/usr/bin/javac" "javac" "/usr/lib/jvm/jdk1.7.0/bin/javac" 1 \
+ && update-alternatives --install "/usr/bin/javaws" "javaws" "/usr/lib/jvm/jdk1.7.0/bin/javaws" 1 \
+ && update-alternatives --auto java
+
+RUN pip install --upgrade pip
+
 WORKDIR /mnt
 ADD . /mnt/
+ENV PYTHONUSERBASE /mnt/vendor
+RUN pip install -r requirements/requirements.txt -r requirements/dev-requirements.txt --user --upgrade

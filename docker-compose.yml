@@ -4,11 +4,13 @@ postgres:
     POSTGRES_USER: commcarehq
     POSTGRES_PASSWORD: commcarehq
   volumes:
-    - /var/lib/postgresql:/var/lib/postgresql
+    - ./docker/data/postgresql:/var/lib/postgresql
+  ports:
+    - "5432:5432"
 couch:
   image: klaemo/couchdb:latest
   volumes:
-    - /var/lib/couchdb:/usr/local/var/lib/couchdb
+    - ./docker/data/couchdb:/usr/local/var/lib/couchdb
   ports:
     - "5984:5984"
 redis:
@@ -20,29 +22,21 @@ elasticsearch:
   ports:
     - "9200:9200"
   volumes:
-    - /usr/share/elasticsearch/data:/usr/share/elasticsearch/data
-vendor:
-  image: python:2.7
-  working_dir: /mnt
-  volumes:
-    - .:/mnt
-  environment:
-    PYTHONUSERBASE: /mnt/vendor
-  command: pip install -r requirements/requirements.txt -r requirements/dev-requirements.txt --user --upgrade
+    - ./docker/data/elasticsearch:/usr/share/elasticsearch/data
 web:
   build: .
   dockerfile: Dockerfile_dev
   working_dir: /mnt
-  command: python manage.py runserver 0.0.0.0:8000
+  command: /bin/bash -c /mnt/docker/wait.sh
   volumes:
     - .:/mnt
   ports:
     - "8000:8000"
   environment:
     PYTHONUSERBASE: /mnt/vendor
+    START_CMD: "python manage.py runserver 0.0.0.0:8000"
   links:
     - postgres
     - couch
     - redis
     - elasticsearch
-    - vendor
