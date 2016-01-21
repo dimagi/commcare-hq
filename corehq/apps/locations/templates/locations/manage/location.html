@@ -151,6 +151,7 @@
       <div class="tab-pane {% if form_tab == "users" %}active{% endif %}" id="users">
         <div class="row-fluid">
           <form class="form disable-on-submit" id="edit_users" action="" method='post'>
+            {% csrf_token %}
             <legend>{% trans 'Specify Users At This Location' %}</legend>
             {% if request|toggle_enabled:'ADD_USERS_FROM_LOCATION' %}
             <div class="btn-toolbar">

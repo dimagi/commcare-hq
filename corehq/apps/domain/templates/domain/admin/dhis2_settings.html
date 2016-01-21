@@ -5,6 +5,7 @@
 
 {% block main_column %}
     <form id="dhis2-settings-form" class="form form-horizontal" name="update_dhis2_settings" method="post">
+        {% csrf_token %}
         {% bootstrap_form_errors dhis2_settings_form %}
         {% bootstrap_fieldset dhis2_settings_form "DHIS2 API Settings" %}
         <div class="form-actions">

@@ -15,6 +15,7 @@
     {% crispy form %}
 {% if report.get_id %}
 <form method='post' action="{% url 'delete_configurable_report' domain report.get_id %}" >
+	{% csrf_token %}
     <input type="submit" value="{% trans 'Delete Report'%}" class="btn btn-danger disable-on-submit">
     <a href="{% url 'configurable' domain report.get_id %}" class="btn">{% trans 'View report' %}</a>
     <a href="{% url 'configurable_report_json' domain report.get_id %}" class="btn">{% trans 'Report Source (Advanced)' %}</a>
