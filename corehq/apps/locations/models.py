@@ -648,9 +648,9 @@ class Location(CachedCouchDocumentMixin, Document):
 
         # if there are errors deleting couch locations, roll back sql delete
         with transaction.atomic():
-            SQLLocation.objects.get(location_id=self._id).delete()
             for loc in to_delete:
                 loc._close_case_and_remove_users()
+            SQLLocation.objects.get(location_id=self._id).delete()
             Location.get_db().bulk_delete(to_delete)
 
     def save(self, *args, **kwargs):
