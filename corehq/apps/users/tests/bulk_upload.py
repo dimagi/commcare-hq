@@ -1,5 +1,4 @@
 from django.test import TestCase
-from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
 from corehq.apps.commtrack.helpers import make_supply_point
@@ -8,7 +7,6 @@ from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
 from corehq.toggles import MULTIPLE_LOCATIONS_PER_USER, NAMESPACE_DOMAIN
-from dimagi.utils.decorators.memoized import memoized
 from mock import patch
 
 
