@@ -24,12 +24,28 @@ from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import safe_strftime
+from corehq.apps.style.decorators import (
+    use_jquery_ui,
+    use_bootstrap3,
+    use_datatables,
+    use_select2,
+    use_daterangepicker,
+)
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     """
     Base class for all deployments reports
     """
+    is_bootstrap3 = True
+
+    @use_jquery_ui
+    @use_bootstrap3
+    @use_datatables
+    @use_select2
+    @use_daterangepicker
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        pass
    
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
