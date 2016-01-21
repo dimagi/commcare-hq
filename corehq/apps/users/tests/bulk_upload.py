@@ -124,6 +124,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(self.user_specs[0]['phone-number'], self.user.phone_number)
         self.assertEqual(self.user_specs[0]['name'], self.user.name)
 
+    @patch('corehq.apps.users.bulkupload.domain_has_privilege', lambda x, y: True)
     def test_location_update(self):
         self.setup_location()
         from copy import deepcopy
@@ -138,10 +139,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assertEqual(self.user.location_id, self.location._id)
         self.assertEqual(self.user.location_id, self.user.user_data.get('commcare_location_id'))
-        self.teardown_subscription()
 
     def setup_location(self):
-        self.setup_subscription(self.domain_name, SoftwarePlanEdition.ADVANCED)
         self.state_code = 'my_state'
         self.location = make_loc(self.state_code, type='state', domain=self.domain_name)
 
