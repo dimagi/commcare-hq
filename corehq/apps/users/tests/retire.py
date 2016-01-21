@@ -13,6 +13,13 @@ from corehq.form_processor.models import UserArchivedRebuild
 
 
 class RetireUserTestCase(TestCase):
+    dependent_apps = [
+        'corehq.apps.users', 'django_digest', 'auditcare', 'casexml.apps.case',
+        'corehq.form_processor', 'django.contrib.admin', 'corehq.apps.tzmigration',
+        'django_prbac', 'corehq.couchapps', 'tastypie', 'couchforms', 'corehq.apps.tour',
+        'corehq.apps.sms', 'corehq.apps.smsforms', 'corehq.apps.dropbox',
+        'corehq.apps.hqcase', 'touchforms.formplayer', 'corehq.sql_accessors'
+    ]
 
     def setUp(self):
         self.domain = 'test'
