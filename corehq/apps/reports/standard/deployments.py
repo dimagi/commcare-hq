@@ -57,6 +57,7 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
 
 def _build_html(version_info):
     version = version_info.build_version or _("Unknown")
+
     def fmt(title, extra_class=u'label-default', extra_text=u''):
         return format_html(
             u'<span class="label{extra_class}" title="{title}">'
@@ -66,6 +67,7 @@ def _build_html(version_info):
             extra_class=extra_class,
             extra_text=extra_text,
         )
+
     if version_info.source == BuildVersionSource.BUILD_ID:
         return fmt(title=_("This was taken from build id"),
                    extra_class=u' label-success')
