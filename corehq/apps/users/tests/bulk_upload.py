@@ -88,12 +88,11 @@ class UserLocMapTest(CommTrackTest):
 
 class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.domain_name = 'mydomain'
-        cls.domain = Domain(name=cls.domain_name)
-        cls.domain.save()
-        cls.user_specs = [{
+    def setUp(self):
+        self.domain_name = 'mydomain'
+        self.domain = Domain(name=self.domain_name)
+        self.domain.save()
+        self.user_specs = [{
             u'username': u'hello',
             u'user_id': u'should not update',
             u'name': u'Another One',
@@ -104,9 +103,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             u'email': None
         }]
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.domain.delete()
+    def tearDown(self):
+        self.domain.delete()
 
     @property
     @memoized
