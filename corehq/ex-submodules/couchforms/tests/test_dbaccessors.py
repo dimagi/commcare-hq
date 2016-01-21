@@ -6,8 +6,12 @@ from corehq.apps.hqadmin.dbaccessors import get_number_of_forms_in_all_domains
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.util.test_utils import TestFileMixin
 from corehq.form_processor.utils import get_simple_wrapped_form, TestFormMetadata
-from couchforms.dbaccessors import get_forms_by_type, \
-    get_form_ids_by_type
+from couchforms.dbaccessors import (
+    get_forms_by_type,
+    get_form_ids_by_type,
+    get_deleted_form_ids_for_user,
+    get_form_ids_for_user,
+)
 from couchforms.models import XFormInstance, XFormError
 
 
@@ -19,23 +23,30 @@ class TestDBAccessors(TestCase):
         delete_all_xforms()
         cls.domain = 'evelyn'
         cls.now = datetime.datetime.utcnow()
+        cls.user_id1 = 'xzy'
+        cls.user_id2 = 'abc'
 
         metadata1 = TestFormMetadata(
             domain=cls.domain,
-            user_id='xzy',
+            user_id=cls.user_id1,
             received_on=cls.now - datetime.timedelta(days=10),
         )
         metadata2 = TestFormMetadata(
             domain=cls.domain,
-            user_id='abc',
+            user_id=cls.user_id2,
             received_on=cls.now,
         )
 
         xform1 = get_simple_wrapped_form('123', metadata=metadata1)
         xform2 = get_simple_wrapped_form('456', metadata=metadata2)
+
         xform_error = get_simple_wrapped_form('789', metadata=metadata2)
         xform_error = XFormError.wrap(xform_error.to_json())
         xform_error.save()
+
+        cls.xform_deleted = get_simple_wrapped_form('101', metadata=metadata2)
+        cls.xform_deleted.doc_type += '-Deleted'
+        cls.xform_deleted.save()
 
         cls.xforms = [
             xform1,
@@ -72,3 +83,20 @@ class TestDBAccessors(TestCase):
             get_number_of_forms_in_all_domains(),
             len(self.xforms)
         )
+
+    def test_get_deleted_form_ids_for_user(self):
+        ids = get_deleted_form_ids_for_user(self.user_id2)
+        self.assertEqual(len(ids), 1)
+        self.assertEqual(ids[0], self.xform_deleted.form_id)
+
+        ids = get_deleted_form_ids_for_user(self.user_id1)
+        self.assertEqual(len(ids), 0)
+
+    def test_get_form_ids_for_user(self):
+        ids = get_form_ids_for_user(self.domain, self.user_id1)
+        self.assertEqual(len(ids), 1)
+        self.assertEqual(ids[0], self.xforms[0].form_id)
+
+        ids = get_form_ids_for_user(self.domain, self.user_id2)
+        self.assertEqual(len(ids), 1)
+        self.assertEqual(ids[0], self.xforms[1].form_id)

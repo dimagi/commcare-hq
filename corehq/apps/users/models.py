@@ -19,6 +19,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
+from couchforms.dbaccessors import get_deleted_form_ids_for_user, get_form_ids_for_user
 from corehq.apps.sofabed.models import CaseData
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.soft_assert import soft_assert
@@ -1569,19 +1570,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_forms(self, deleted=False, wrap=True):
         if deleted:
-            view_name = 'deleted_data/deleted_forms_by_user'
-            startkey = [self.user_id]
+            doc_ids = get_deleted_form_ids_for_user(self.user_id)
         else:
-            view_name = 'all_forms/view'
-            startkey = ['submission user', self.domain, self.user_id]
+            doc_ids = get_form_ids_for_user(self.domain, self.user_id)
 
-        db = XFormInstance.get_db()
-        doc_ids = [r['id'] for r in db.view(view_name,
-            startkey=startkey,
-            endkey=startkey + [{}],
-            reduce=False,
-            include_docs=False,
-        )]
         if wrap:
             for doc in iter_docs(db, doc_ids):
                 yield XFormInstance.wrap(doc)
