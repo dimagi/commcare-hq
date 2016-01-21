@@ -1,15 +1,17 @@
+import os
 import datetime
 from django.test import TestCase
 
 from corehq.apps.hqadmin.dbaccessors import get_number_of_forms_in_all_domains
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.util.test_utils import TestFileMixin
+from corehq.form_processor.utils import get_simple_wrapped_form, TestFormMetadata
 from couchforms.dbaccessors import get_forms_by_type, \
     get_form_ids_by_type
 from couchforms.models import XFormInstance, XFormError
 
 
 class TestDBAccessors(TestCase):
-    dependent_apps = ['corehq.couchapps', 'corehq.apps.domain', 'corehq.form_processor']
 
     @classmethod
     def setUpClass(cls):
@@ -17,16 +19,29 @@ class TestDBAccessors(TestCase):
         delete_all_xforms()
         cls.domain = 'evelyn'
         cls.now = datetime.datetime.utcnow()
-        cls.xforms = [
-            XFormInstance(_id='xform_1',
-                          received_on=cls.now - datetime.timedelta(days=10)),
-            XFormInstance(_id='xform_2', received_on=cls.now)
-        ]
-        cls.xform_errors = [XFormError(_id='xform_error_1')]
 
-        for form in cls.xforms + cls.xform_errors:
-            form.domain = cls.domain
-            form.save()
+        metadata1 = TestFormMetadata(
+            domain=cls.domain,
+            user_id='xzy',
+            received_on=cls.now - datetime.timedelta(days=10),
+        )
+        metadata2 = TestFormMetadata(
+            domain=cls.domain,
+            user_id='abc',
+            received_on=cls.now,
+        )
+
+        xform1 = get_simple_wrapped_form('123', metadata=metadata1)
+        xform2 = get_simple_wrapped_form('456', metadata=metadata2)
+        xform_error = get_simple_wrapped_form('789', metadata=metadata2)
+        xform_error = XFormError.wrap(xform_error.to_json())
+        xform_error.save()
+
+        cls.xforms = [
+            xform1,
+            xform2,
+        ]
+        cls.xform_errors = [xform_error]
 
     @classmethod
     def tearDownClass(cls):
