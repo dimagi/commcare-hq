@@ -1,7 +1,7 @@
-{% extends "two_factor/_base.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load future i18n two_factor %}
 
-{% block focus-content %}
+{% block page_content %}
   <h1>{% block title %}{% trans "Account Security" %}{% endblock %}</h1>
 
   {% if default_device %}
@@ -46,13 +46,17 @@
           class="btn btn-info">{% trans "Show Codes" %}</a></p>
 
     <h3>{% trans "Disable Two-Factor Authentication" %}</h3>
-    <p>{% blocktrans %}However we strongly discourage you to do so, you can
+    <p>{% blocktrans %}However strongly we discourage you to do so, you can
       also disable two-factor authentication for your account.{% endblocktrans %}</p>
-    <p><a class="btn btn-default" href="{% url 'two_factor:disable' %}">
+    <p><a class="btn btn-danger" href="{% url 'two_factor:disable' %}">
       {% trans "Disable Two-Factor Authentication" %}</a></p>
 
     <h3>{% trans "New Phone" %}</h3>
-    <p>{% blocktrans %}Getting a new phone? This one's for you.{% endblocktrans %}</p>
+    <p>{% blocktrans %}
+        If you would like to enable a new phone as your primary device you can do so.
+        Clicking below will disable your current default device so make sure you have a backup device or
+        tokens available in case you are unable to complete the process.
+    {% endblocktrans %}</p>
     <p><a class="btn btn-default" href="{% url 'new_phone' %}">
       {% trans "Set Up New Phone" %}</a></p>
   {% else %}

@@ -1,7 +1,7 @@
-{% extends "two_factor/_base_focus.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load future i18n %}
 
-{% block focus-content %}
+{% block page_content %}
   <h1>{% block title %}{% trans "Disable Two-factor Authentication" %}{% endblock %}</h1>
   <p>{% blocktrans %}You are about to disable two-factor authentication. This
     compromises your account security, are you sure?{% endblocktrans %}</p>

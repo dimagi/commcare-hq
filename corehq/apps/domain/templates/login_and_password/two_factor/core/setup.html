@@ -1,7 +1,8 @@
-{% extends "two_factor/_base_focus.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load i18n %}
+{% load crispy_forms_tags %}
 
-{% block focus-content %}
+{% block page_content %}
   <h1>{% block title %}{% trans "Enable Two-Factor Authentication" %}{% endblock %}</h1>
   {% if wizard.steps.current == 'welcome' %}
     <p>{% blocktrans %}Follow the steps in this wizard to enable two-factor
@@ -36,14 +37,8 @@
       account.{% endblocktrans %}</p>
   {% endif %}
 
-  <form action="" method="post" class="form-horizontal">{% csrf_token %}
-    {% include "two_factor/_wizard_forms.html" %}
-
-    {# hidden submit button to enable [enter] key #}
-    <div style="display: none"><input type="submit" value=""/></div>
-
-    <div class="form-actions">
-    {% include "two_factor/_wizard_actions.html" %}
-    </div>
+  <form action="" method="post" class="form-horizontal" >{% csrf_token %}
+    {{ wizard.management_form }}
+    {% crispy wizard.form %}
   </form>
 {% endblock %}

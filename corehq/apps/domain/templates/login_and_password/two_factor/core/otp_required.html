@@ -1,7 +1,7 @@
-{% extends "two_factor/_base_focus.html" %}
+{% extends "style/bootstrap3/base_page.html" %}
 {% load i18n future %}
 
-{% block focus-content %}
+{% block page_content %}
   <h1>{% block title %}{% trans "Permission Denied" %}{% endblock %}</h1>
 
   <p>{% blocktrans %}The page you requested, enforces users to verify using

@@ -1,7 +1,7 @@
-{% extends "two_factor/_base_focus.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load future i18n %}
 
-{% block focus-content %}
+{% block page_content %}
   <h1>{% block title %}{% trans "Backup Tokens" %}{% endblock %}</h1>
   <p>{% blocktrans %}Backup tokens can be used when your primary and backup
       phone numbers aren't available. The backup tokens below can be used
@@ -22,7 +22,7 @@
 
   <form method="post">{% csrf_token %}{{ form }}
     <a href="{% url 'two_factor:profile'%}"
-       class="pull-right btn btn-link">{% trans "Back to Account Security" %}</a>
+       class="pull-right btn btn-link">{% trans "Back to Profile" %}</a>
     <button class="btn btn-primary" type="submit">{% trans "Generate Tokens" %}</button>
   </form>
 {% endblock %}
