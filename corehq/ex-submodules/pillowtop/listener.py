@@ -27,6 +27,8 @@ from pillowtop.es_utils import completely_initialize_pillow_index
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
+from pillowtop.utils import prepare_bulk_payloads
+
 try:
     from corehq.util.soft_assert import soft_assert
     _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']), fail_if_debug=True)
@@ -523,11 +525,18 @@ class AliasedElasticPillow(BasicPillow):
         self.allow_updates = False
         self.bulk = True
         bstart = datetime.utcnow()
-        bulk_payload = '\n'.join(map(simplejson.dumps, self.bulk_builder(changes))) + "\n"
+        bulk_changes = self.bulk_builder(changes)
+
+        max_payload_size = pow(10, 8)  # ~ 100Mb
+        payloads = prepare_bulk_payloads(bulk_changes, max_payload_size)
+        if len(payloads) > 1:
+            pillow_logging.info("%s,payload split into %s parts" % (self.get_name(), len(payloads)))
+
         pillow_logging.info(
             "%s,prepare_bulk,%s" % (self.get_name(), str(ms_from_timedelta(datetime.utcnow() - bstart) / 1000.0)))
         send_start = datetime.utcnow()
-        self.send_bulk(bulk_payload)
+        for payload in payloads:
+            self.send_bulk(payload)
         pillow_logging.info(
             "%s,send_bulk,%s" % (self.get_name(), str(ms_from_timedelta(datetime.utcnow() - send_start) / 1000.0)))
 
