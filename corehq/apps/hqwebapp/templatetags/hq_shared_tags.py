@@ -129,9 +129,9 @@ def new_static(url, **kwargs):
     return url
 
 
-@quickcache(['request.couch_user.username'])
-def _get_domain_list(request):
-    domains = Domain.active_for_user(request.couch_user)
+@quickcache(['couch_user.username'])
+def _get_domain_list(couch_user):
+    domains = Domain.active_for_user(couch_user)
     return [{
         'url': reverse('domain_homepage', args=[domain.name]),
         'name': domain.long_display_name(),
@@ -146,7 +146,7 @@ def domains_for_user(context, request, selected_domain=None):
     the user doc updates via save.
     """
 
-    domain_list = _get_domain_list(request)
+    domain_list = _get_domain_list(request.couch_user)
     ctxt = {
         'domain_list': domain_list,
         'current_domain': selected_domain,
