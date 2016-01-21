@@ -149,7 +149,7 @@ The shadow module inherits from its source:
 Limitations
 ~~~~~~~~~~~
 
-A shadow module neither **be** a parent module nor **have** a parent module
+A shadow module can neither **be** a parent module nor **have** a parent module
 
 A shadow module's source can be a parent module (the shadow will include a copy of the children), or have a parent module (the shadow will appear as a child of that same parent)
 
