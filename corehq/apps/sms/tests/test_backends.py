@@ -7,7 +7,7 @@ from corehq.apps.sms.api import (send_sms, send_sms_to_verified_number,
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.models import (SMS, SMSLog, CommConnectCase,
     SQLMobileBackendMapping, SQLMobileBackend, MobileBackendInvitation,
-    PhoneLoadBalancingMixin)
+    PhoneLoadBalancingMixin, BackendMap)
 from corehq.apps.sms.tasks import handle_outgoing
 from corehq.apps.sms.tests.util import BaseSMSTest
 from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
@@ -1210,3 +1210,179 @@ class LoadBalancingAndRateLimitingTestCase(BaseSMSTest):
             self.assertFalse(mock_send.called)
 
         backend.delete()
+
+
+class SQLMobileBackendMappingTestCase(TestCase):
+    def test_backend_map(self):
+        backend_map = BackendMap(
+            1, {
+                '1': 2,
+                '27': 3,
+                '256': 4,
+                '25670': 5,
+                '25675': 6,
+            }
+        )
+
+        self.assertEqual(backend_map.get_backend_id_by_prefix('910000000'), 1)
+        self.assertEqual(backend_map.get_backend_id_by_prefix('100000000'), 2)
+        self.assertEqual(backend_map.get_backend_id_by_prefix('200000000'), 1)
+        self.assertEqual(backend_map.get_backend_id_by_prefix('250000000'), 1)
+        self.assertEqual(backend_map.get_backend_id_by_prefix('270000000'), 3)
+        self.assertEqual(backend_map.get_backend_id_by_prefix('256000000'), 4)
+        self.assertEqual(backend_map.get_backend_id_by_prefix('256700000'), 5)
+        self.assertEqual(backend_map.get_backend_id_by_prefix('256750000'), 6)
+
+    def assertNoDomainDefaultBackend(self, domain):
+        self.assertEqual(
+            SQLMobileBackendMapping.objects.filter(domain=domain).count(),
+            0
+        )
+
+    def assertDomainDefaultBackend(self, domain, backend):
+        mapping = SQLMobileBackendMapping.objects.get(domain=domain)
+        self.assertFalse(mapping.is_global)
+        self.assertEqual(mapping.domain, domain)
+        self.assertEqual(mapping.backend_type, SQLMobileBackend.SMS)
+        self.assertEqual(mapping.prefix, '*')
+        self.assertEqual(mapping.backend_id, backend.pk)
+
+    def test_set_default_domain_backend(self):
+        backend1 = SQLTestSMSBackend.objects.create(
+            name='BACKEND1',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+
+        backend2 = SQLTestSMSBackend.objects.create(
+            name='BACKEND2',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+
+        domain = 'domain-default-backend-test'
+        self.assertNoDomainDefaultBackend(domain)
+
+        SQLMobileBackendMapping.set_default_domain_backend(domain, backend1)
+        self.assertDomainDefaultBackend(domain, backend1)
+
+        SQLMobileBackendMapping.set_default_domain_backend(domain, backend2)
+        self.assertDomainDefaultBackend(domain, backend2)
+
+        SQLMobileBackendMapping.unset_default_domain_backend(domain)
+        self.assertNoDomainDefaultBackend(domain)
+
+        backend1.delete()
+        backend2.delete()
+
+    def test_get_prefix_to_backend_map(self):
+        backend1 = SQLTestSMSBackend.objects.create(
+            name='BACKEND1',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+
+        backend2 = SQLTestSMSBackend.objects.create(
+            name='BACKEND2',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+
+        backend3 = SQLTestSMSBackend.objects.create(
+            name='BACKEND3',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+
+        backend4 = SQLTestSMSBackend.objects.create(
+            name='BACKEND4',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+
+        backend5 = SQLTestSMSBackend.objects.create(
+            name='BACKEND5',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+
+        backend6 = SQLTestSMSBackend.objects.create(
+            name='BACKEND6',
+            is_global=True,
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+        )
+
+        backend_mapping1 = SQLMobileBackendMapping.objects.create(
+            is_global=True,
+            backend_type=SQLMobileBackend.SMS,
+            prefix='*',
+            backend=backend1
+        )
+
+        backend_mapping2 = SQLMobileBackendMapping.objects.create(
+            is_global=True,
+            backend_type=SQLMobileBackend.SMS,
+            prefix='27',
+            backend=backend2
+        )
+
+        backend_mapping3 = SQLMobileBackendMapping.objects.create(
+            is_global=True,
+            backend_type=SQLMobileBackend.SMS,
+            prefix='1',
+            backend=backend3
+        )
+
+        backend_mapping4 = SQLMobileBackendMapping.objects.create(
+            is_global=False,
+            domain='prefix-backend-map-test',
+            backend_type=SQLMobileBackend.SMS,
+            prefix='*',
+            backend=backend4
+        )
+
+        backend_mapping5 = SQLMobileBackendMapping.objects.create(
+            is_global=False,
+            domain='prefix-backend-map-test',
+            backend_type=SQLMobileBackend.SMS,
+            prefix='256',
+            backend=backend5
+        )
+
+        backend_mapping6 = SQLMobileBackendMapping.objects.create(
+            is_global=False,
+            domain='prefix-backend-map-test',
+            backend_type=SQLMobileBackend.SMS,
+            prefix='25670',
+            backend=backend6
+        )
+
+        global_backend_map = SQLMobileBackendMapping.get_prefix_to_backend_map(SQLMobileBackend.SMS)
+        self.assertEqual(global_backend_map.catchall_backend_id, backend1.pk)
+        self.assertEqual(global_backend_map.backend_map_dict, {
+            '27': backend2.pk,
+            '1': backend3.pk,
+        })
+
+        domain_backend_map = SQLMobileBackendMapping.get_prefix_to_backend_map(
+            SQLMobileBackend.SMS,
+            domain='prefix-backend-map-test'
+        )
+        self.assertEqual(domain_backend_map.catchall_backend_id, backend4.pk)
+        self.assertEqual(domain_backend_map.backend_map_dict, {
+            '256': backend5.pk,
+            '25670': backend6.pk,
+        })
+
+        backend_mapping1.delete()
+        backend_mapping2.delete()
+        backend_mapping3.delete()
+        backend_mapping4.delete()
+        backend_mapping5.delete()
+        backend_mapping6.delete()
+        backend1.delete()
+        backend2.delete()
+        backend3.delete()
+        backend4.delete()
+        backend5.delete()
+        backend6.delete()

@@ -1931,11 +1931,11 @@ class SQLMobileBackendMapping(SyncSQLToCouchMixin, models.Model):
     backend = models.ForeignKey('SQLMobileBackend')
 
     @classmethod
-    def __set_default_domain_backend(cls, domain, backend=None):
+    def __set_default_domain_backend(cls, domain, backend_type, backend=None):
         fields = dict(
             is_global=False,
             domain=domain,
-            backend_type=SQLMobileBackend.SMS,
+            backend_type=backend_type,
             prefix='*'
         )
 
@@ -1959,12 +1959,12 @@ class SQLMobileBackendMapping(SyncSQLToCouchMixin, models.Model):
         obj.save()
 
     @classmethod
-    def set_default_domain_backend(cls, domain, backend):
-        cls.__set_default_domain_backend(domain, backend)
+    def set_default_domain_backend(cls, domain, backend, backend_type=SQLMobileBackend.SMS):
+        cls.__set_default_domain_backend(domain, backend_type, backend=backend)
 
     @classmethod
-    def unset_default_domain_backend(cls, domain):
-        cls.__set_default_domain_backend(domain)
+    def unset_default_domain_backend(cls, domain, backend_type=SQLMobileBackend.SMS):
+        cls.__set_default_domain_backend(domain, backend_type)
 
     @classmethod
     @quickcache(['backend_type', 'domain'], timeout=5 * 60)
