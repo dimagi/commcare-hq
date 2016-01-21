@@ -57,7 +57,7 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
 
 def _build_html(version_info):
     version = version_info.build_version or _("Unknown")
-    def fmt(title, extra_class=u'', extra_text=u''):
+    def fmt(title, extra_class=u'label-default', extra_text=u''):
         return format_html(
             u'<span class="label{extra_class}" title="{title}">'
             u'{extra_text}{version}</span>',
@@ -231,7 +231,7 @@ class SyncHistoryReport(DeploymentsReport):
                     )
                 else:
                     return format_datatables_data(
-                        '<span class="label">{text}</span>'.format(
+                        '<span class="label label-default">{text}</span>'.format(
                             text=_("Unknown"),
                         ),
                         -1,
@@ -248,7 +248,7 @@ class SyncHistoryReport(DeploymentsReport):
                 if not sync_log.had_state_error:
                     return u'<span class="label label-success">&#10003;</span>'
                 else:
-                    return (u'<span class="label label-important">X</span>'
+                    return (u'<span class="label label-danger">X</span>'
                             u'State error {}<br>Expected hash: {:.10}...').format(
                         _naturaltime_with_hover(sync_log.error_date),
                         sync_log.error_hash,
@@ -299,7 +299,7 @@ def _fmt_date(date):
         return _bootstrap_class(delta, timedelta(days=7), timedelta(days=3))
 
     if not date:
-        return format_datatables_data(u'<span class="label">{0}</span>'.format(_("Never")), -1)
+        return format_datatables_data(u'<span class="label label-default">{0}</span>'.format(_("Never")), -1)
     else:
         return format_datatables_data(
             u'<span class="{cls}">{text}</span>'.format(
@@ -320,7 +320,7 @@ def _bootstrap_class(obj, severe, warn):
     assumes bigger is worse and default is good.
     """
     if obj > severe:
-        return "label label-important"
+        return "label label-danger"
     elif obj > warn:
         return "label label-warning"
     else:
