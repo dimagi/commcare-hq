@@ -1,5 +1,3 @@
-import time
-
 from django.test import TestCase
 from pillowtop.es_utils import completely_initialize_pillow_index
 from pillowtop.tests import require_explicit_elasticsearch_testing
@@ -19,8 +17,6 @@ class TestDomainLanguages(TestCase):
         cls.domain = 'test-languages'
 
         cls.pillow = AppPillow(online=False)
-        cls.es = cls.pillow.get_es_new()
-        cls.index = cls.pillow.es_index
         completely_initialize_pillow_index(cls.pillow)
 
         cls.app1 = Application.new_app(cls.domain, 'My Application 1', APP_V2)
@@ -31,7 +27,8 @@ class TestDomainLanguages(TestCase):
         cls.app2.langs = ['fr']
         cls.app2.save()
         cls.pillow.send_robust(cls.app2.to_json())
-        time.sleep(2)  # I think this is necessary for faceted queries
+
+        cls.pillow.get_es_new().indices.refresh(cls.pillow.es_index)
 
     @classmethod
     def tearDownClass(cls):
