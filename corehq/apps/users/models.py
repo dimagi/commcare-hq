@@ -19,7 +19,6 @@ from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
-from couchforms.dbaccessors import get_deleted_form_ids_for_user, get_form_ids_for_user
 from corehq.apps.sofabed.models import CaseData
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
