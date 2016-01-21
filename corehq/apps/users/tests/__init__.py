@@ -12,3 +12,4 @@ from .test_analytics import *
 from .test_db_accessors import *
 from .test_get_owner_ids import *
 from .test_signals import *
+from .test_user_model import *

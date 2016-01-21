@@ -13,7 +13,11 @@ from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
     get_last_modified_dates
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
-from couchforms.dbaccessors import get_forms_by_type
+from couchforms.dbaccessors import (
+    get_forms_by_type,
+    get_deleted_form_ids_for_user,
+    get_form_ids_for_user,
+)
 from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.couch.database import iter_docs
 
@@ -39,6 +43,14 @@ class FormAccessorCouch(AbstractFormAccessor):
     @staticmethod
     def update_form_problem_and_state(form):
         form.save()
+
+    @staticmethod
+    def get_deleted_form_ids_for_user(user_id):
+        return get_deleted_form_ids_for_user(user_id)
+
+    @staticmethod
+    def get_form_ids_for_user(domain, user_id):
+        return get_form_ids_for_user(domain, user_id)
 
 
 class CaseAccessorCouch(AbstractCaseAccessor):

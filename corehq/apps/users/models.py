@@ -22,6 +22,7 @@ from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from couchforms.dbaccessors import get_deleted_form_ids_for_user, get_form_ids_for_user
 from corehq.apps.sofabed.models import CaseData
 from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from couchdbkit.resource import ResourceNotFound
@@ -1569,13 +1570,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return user
 
     def get_forms(self, deleted=False, wrap=True):
+        accessor = FormAccessors(self.domain)
         if deleted:
-            doc_ids = get_deleted_form_ids_for_user(self.user_id)
+            doc_ids = accessor.get_deleted_form_ids_for_user(self.user_id)
         else:
-            doc_ids = get_form_ids_for_user(self.domain, self.user_id)
+            doc_ids = accessor.get_form_ids_for_user(self.domain, self.user_id)
 
         if wrap:
-            for doc in iter_docs(db, doc_ids):
+            for doc in iter_docs(XFormInstance.get_db(), doc_ids):
                 yield XFormInstance.wrap(doc)
         else:
             for id in doc_ids:
