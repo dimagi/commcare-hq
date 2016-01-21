@@ -60,6 +60,7 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
         "This report will only show data for users whose phone numbers have "
         "been verified. Phone numbers can be verified from the Settings and "
         "Users tab.")
+    is_bootstrap3 = True
 
     @property
     def headers(self):
