@@ -1,20 +1,27 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% if request|feature_preview_enabled:"MODULE_FILTER" %}
-<div class="control-group">
+<div class="control-group" id="module-filter">
     <label class="control-label">
         {% trans "Module Filter" %}
     </label>
-    <div class="controls commcare-feature" data-since-version="2.20" id="module-filter">
+    <div class="controls commcare-feature" data-since-version="2.20">
         <input type="text"
             placeholder="{% trans "XPath expression" %}"
             name="module_filter"
-            data-bind="xpathValidator: xpath"/>
+            {% if ko_value %}
+                data-bind="xpathValidator: {{ ko_value }}"
+            {% else %}
+                data-bind="xpathValidator: xpath"
+            {% endif %}
+        />
     </div>
 </div>
+{% if not ko_value %}
 <script>
 $(function () {
-    $('#module-filter').koApplyBindings({xpath: {{ module.module_filter|JSON }} || ''});
+    $('#module-filter').koApplyBindings({xpath: {{ value|JSON }} || ''});
 });
 </script>
+{% endif %}
 {% endif %}
