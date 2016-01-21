@@ -107,7 +107,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.domain.delete()
 
     @property
-    @memoized
     def user(self):
         return CommCareUser.get_by_username('{}@{}.commcarehq.org'.format(
             self.user_specs[0]['username'],
