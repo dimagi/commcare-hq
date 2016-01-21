@@ -81,9 +81,11 @@ def _get_unique_key(format_str, fn, *args, **kwargs):
     return ("{}-" + format_str).format(fn.__name__, **kwargs)
 
 
-def locking_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3):
+def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
+                queue='background_queue'):
     """
-    Define a locking celery task to prevent race conditions.
+    Define a task to be executed one at a time.  If another serial_task with
+    the same unique_key is currently in process, this will retry after a delay.
 
     :param unique_key: string used to lock the task.  There will be one lock
         per unique value.  You may use any arguments that will be passed to the
@@ -96,7 +98,7 @@ def locking_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3
         maximum length of the task.
 
     Usage:
-        @locking_task("{user.username}-{from}", default_retry_delay=2)
+        @serial_task("{user.username}-{from}", default_retry_delay=2)
         def greet(user, from="Dimagi"):
             ...
 
@@ -105,7 +107,7 @@ def locking_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3
     """
     def decorator(fn):
         # register task with celery.  Note that this still happens on import
-        @task(bind=True, queue='background_queue', ignore_result=True,
+        @task(bind=True, queue=queue, ignore_result=True,
               default_retry_delay=default_retry_delay, max_retries=max_retries)
         def _inner(self, *args, **kwargs):
             if settings.UNIT_TESTING:  # Don't depend on redis

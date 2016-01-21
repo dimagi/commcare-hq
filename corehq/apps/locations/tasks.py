@@ -1,10 +1,10 @@
-from corehq.util.decorators import locking_task
+from corehq.util.decorators import serial_task
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 
 
-@locking_task("{location_type.domain}-{location_type.pk}",
-              default_retry_delay=30, max_retries=3)
+@serial_task("{location_type.domain}-{location_type.pk}",
+             default_retry_delay=30, max_retries=3)
 def sync_administrative_status(location_type):
     """Updates supply points of locations of this type"""
     for location in SQLLocation.objects.filter(location_type=location_type):
