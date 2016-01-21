@@ -1,9 +1,7 @@
-from urllib import urlencode
-from StringIO import StringIO
-from celery.schedules import crontab
-from celery.task import periodic_task, task
 import datetime
-from couchdbkit import ResourceNotFound
+from StringIO import StringIO
+from urllib import urlencode
+
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
@@ -11,7 +9,14 @@ from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
 
-from corehq.apps.domain.models import Domain
+from celery.schedules import crontab
+from celery.task import periodic_task, task
+from couchdbkit import ResourceNotFound
+from couchexport.export import export_from_tables
+from couchexport.models import Format
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.django.email import send_HTML_email
+
 from corehq.apps.accounting import utils
 from corehq.apps.accounting.exceptions import (
     InvoiceError, CreditLineError,
@@ -19,13 +24,13 @@ from corehq.apps.accounting.exceptions import (
     InvoiceAlreadyCreatedError
 )
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
-
 from corehq.apps.accounting.models import (
     Subscription, Invoice,
     SubscriptionAdjustment, SubscriptionAdjustmentReason,
     SubscriptionAdjustmentMethod,
     BillingAccount, WirePrepaymentInvoice, WirePrepaymentBillingRecord
 )
+from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils import (
     has_subscription_already_ended, get_dimagi_from_email_by_product,
     fmt_dollar_amount,
@@ -33,14 +38,9 @@ from corehq.apps.accounting.utils import (
     log_accounting_error,
     log_accounting_info,
 )
-from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import FakeUser, WebUser
 from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
-from couchexport.export import export_from_tables
-from couchexport.models import Format
-from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.django.email import send_HTML_email
-import corehq.apps.accounting.filters as filters
 
 
 @transaction.atomic()
