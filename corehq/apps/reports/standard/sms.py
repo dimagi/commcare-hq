@@ -49,6 +49,13 @@ from corehq.apps.reminders.views import (
     EditScheduledReminderView
 )
 from couchforms.models import XFormInstance
+from corehq.apps.style.decorators import (
+    use_jquery_ui,
+    use_bootstrap3,
+    use_datatables,
+    use_select2,
+    use_daterangepicker,
+)
 
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
@@ -61,6 +68,15 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
         "This report will only show data for users whose phone numbers have "
         "been verified. Phone numbers can be verified from the Settings and "
         "Users tab.")
+    is_bootstrap3 = True
+
+    @use_jquery_ui
+    @use_bootstrap3
+    @use_datatables
+    @use_select2
+    @use_daterangepicker
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        pass
 
     @property
     def headers(self):
