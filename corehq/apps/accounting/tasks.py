@@ -72,7 +72,7 @@ def activate_subscriptions(based_on_date=None):
 
 
 @transaction.atomic()
-def _deactivate_subscription(subscription):
+def _deactivate_subscription(subscription, ending_date):
     subscription.is_active = False
     subscription.save()
     next_subscription = subscription.next_subscription
@@ -106,7 +106,7 @@ def deactivate_subscriptions(based_on_date=None):
         is_active=True,
     )
     for subscription in ending_subscriptions:
-        _deactivate_subscription(subscription)
+        _deactivate_subscription(subscription, ending_date)
 
 
 def warn_subscriptions_still_active(based_on_date=None):
