@@ -1063,6 +1063,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         from .utils import domain_restricts_superusers
         super(Domain, self).clear_caches()
         self.get_by_name.clear(self.__class__, self.name)
+        domain_restricts_superusers.clear(self.name)
 
 
 class TransferDomainRequest(models.Model):
