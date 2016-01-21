@@ -70,8 +70,7 @@ submodules:
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - 2.25-jar  # Will 1/12
+    branches: []
   submodules/ctable-src:
     branches: []
   submodules/django-digest-src:
