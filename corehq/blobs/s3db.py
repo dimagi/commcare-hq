@@ -1,11 +1,8 @@
 from __future__ import absolute_import
 import base64
 import re
-import shutil
-import sys
-from contextlib import contextmanager, closing
+from contextlib import contextmanager
 from hashlib import md5
-from os.path import sep
 from uuid import uuid4
 
 from corehq.blobs import BlobInfo
@@ -19,6 +16,7 @@ CHUNK_SIZE = 4096
 DEFAULT_S3_BUCKET = "blobdb"
 DEFAULT_BUCKET = "_default"
 SAFENAME = re.compile("^[a-z0-9_./-]+$", re.IGNORECASE)
+
 
 class S3BlobDB(object):
 
@@ -50,8 +48,8 @@ class S3BlobDB(object):
         """
         name = self.get_unique_name(basename)
         path = self.get_path(name, bucket)
-        length = 0
         data = content.read()
+        length = len(data)
         digest = md5(data)
         with self.s3_bucket(True) as s3_bucket:
             s3_bucket.put_object(Key=path, Body=data)
@@ -76,7 +74,7 @@ class S3BlobDB(object):
                 if err.response["Error"]["Code"] == "NoSuchKey":
                     raise NotFound(name, bucket)
                 raise
-            return closing(resp["Body"])  # body stream
+            return ClosingContextProxy(resp["Body"])  # body stream
 
     def delete(self, name=None, bucket=DEFAULT_BUCKET):
         """Delete a blob
@@ -141,3 +139,18 @@ def safejoin(root, subpath):
     """Join root to subpath ensuring that the result is actually inside root
     """
     return safepath(root) + "/" + safepath(subpath)
+
+
+class ClosingContextProxy(object):
+
+    def __init__(self, obj):
+        self.obj = obj
+
+    def __getattr__(self, name):
+        return getattr(self.obj, name)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.obj.close()
