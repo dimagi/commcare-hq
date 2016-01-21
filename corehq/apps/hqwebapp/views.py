@@ -54,7 +54,6 @@ from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.hqwebapp.doc_info import get_doc_info
-from corehq.toggles import TWO_FACTOR_AUTH
 from corehq.util.cache_utils import ExponentialBackoff
 from corehq.util.context_processors import get_domain_type
 from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
@@ -210,7 +209,7 @@ def redirect_to_default(req, domain=None):
                     url = reverse('landing_page')
             else:
                 url = reverse('landing_page')
-    elif TWO_FACTOR_AUTH.enabled(domain) and not req.user.is_verified():
+    elif domain and Domain.get_by_name(domain).two_factor_auth and not req.user.is_verified():
         return TemplateResponse(
             request=req,
             template='two_factor/core/otp_required.html',

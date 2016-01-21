@@ -194,7 +194,7 @@ class BaseEditUserView(BaseUserSettingsView):
 
     @property
     def backup_token(self):
-        if toggles.TWO_FACTOR_AUTH.enabled(self.request.domain):
+        if Domain.get_by_name(self.request.domain).two_factor_auth:
             device = self.editable_user.get_django_user().staticdevice_set.get_or_create(name='backup')[0]
             token = device.token_set.first()
             if token:

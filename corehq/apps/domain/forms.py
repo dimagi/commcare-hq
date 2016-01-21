@@ -737,6 +737,11 @@ class PrivacySecurityForm(forms.Form):
         label=ugettext_lazy("HIPAA compliant"),
         required=False,
     )
+    two_factor_auth = BooleanField(
+        label=ugettext_lazy("Two Factor Authentication"),
+        required=False,
+        help_text=ugettext_lazy("All web users on this project will be logged out after 30 minutes of inactivity")
+    )
 
     def __init__(self, *args, **kwargs):
         user_name = kwargs.pop('user_name')
@@ -751,6 +756,9 @@ class PrivacySecurityForm(forms.Form):
         self.helper[2] = twbscrispy.PrependedText('secure_sessions', '')
         self.helper[3] = twbscrispy.PrependedText('allow_domain_requests', '')
         self.helper[4] = twbscrispy.PrependedText('hipaa_compliant', '')
+        self.helper[5] = twbscrispy.PrependedText('two_factor_auth', '')
+        if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
+            self.helper.layout.pop(5)
         if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
             self.helper.layout.pop(4)
         if not SECURE_SESSIONS_CHECKBOX.enabled(domain):

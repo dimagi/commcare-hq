@@ -697,12 +697,6 @@ VIEW_BUILD_SOURCE = StaticToggle(
 #     [NAMESPACE_DOMAIN]
 # )
 
-TWO_FACTOR_AUTH = StaticToggle(
-    'two_factor_auth',
-    "Enforce two factor auth before accessing the domain",
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
-)
 
 EWS_WEB_USER_EXTENSION = StaticToggle(
     'ews_web_user_extension',

@@ -31,7 +31,7 @@ from corehq.apps.users.models import CouchUser
 from corehq import privileges
 
 ########################################################################################################
-from corehq.toggles import IS_DEVELOPER, TWO_FACTOR_AUTH
+from corehq.toggles import IS_DEVELOPER
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ def login_and_domain_required(view_func):
                     # some views might not have this set
                     couch_user = CouchUser.from_django_user(user)
                 if couch_user.is_member_of(domain) or domain.is_public:
-                    if TWO_FACTOR_AUTH.enabled(domain) and not user.is_verified():
+                    if domain.two_factor_auth and not user.is_verified():
                         return TemplateResponse(
                             request=req,
                             template='two_factor/core/otp_required.html',
@@ -195,8 +195,8 @@ login_or_api_key = login_or_api_key_ex()
 def two_factor_check(api_key):
     def _outer(fn):
         @wraps(fn)
-        def _inner(request, *args, **kwargs):
-            if not api_key and TWO_FACTOR_AUTH.enabled(request.domain):
+        def _inner(request, domain, *args, **kwargs):
+            if not api_key and Domain.get_by_name(domain).two_factor_auth:
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
                 print token
                 if token and match_token(request.user, token):
@@ -205,7 +205,7 @@ def two_factor_check(api_key):
                     return HttpResponse(json.dumps({"error": "must send X-CommcareHQ-OTP header"}),
                                         content_type='application/json',
                                         status=401)
-            return fn(request, *args, **kwargs)
+            return fn(request, domain, *args, **kwargs)
         return _inner
     return _outer
 
