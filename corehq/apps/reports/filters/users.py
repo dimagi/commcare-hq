@@ -42,6 +42,7 @@ class UserTypeFilter(BaseReportFilter):
         return get_user_toggle(request)
 
 
+#todo eventually inherit from BaseSingleOptionFilter once crs_reports have been migrated to b3
 class SelectMobileWorkerFilter(BaseSingleOptionTypeaheadFilter):
     slug = 'individual'
     label = ugettext_noop("Select Mobile Worker")

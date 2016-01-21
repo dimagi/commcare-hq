@@ -1,24 +1,3 @@
-{% extends 'reports/filters/bootstrap3/base.html' %}
-{% load hq_shared_tags %}
-{% block filter_content %}
-    <select id="{{ css_id }}"
-            data-bind="value: current_selection"
-            name="{{ slug }}">
-        <option></option>
-        {% for option in select.options %}
-            <option value="{{ option.val }}">{{ option.text }}</option>
-        {% endfor %}
-    </select>
-{% endblock %}
-{% block filter_js %}
-<script type="text/javascript">
-    $(function () {
-        $('#{{ css_id }}').parent().koApplyBindings({
-            current_selection: ko.observable('{{ select.selected|safe|default:'' }}'),
-        });
-        $('#{{ css_id }}').combobox({
-            placeholder: '{{ select.default_text|safe }}'
-        });
-    });
-</script>
-{% endblock %}
+{% extends 'reports/filters/bootstrap3/single_option.html' %}
+{# note this is here to support legacy crs custom reports which have not been migrated to b3 #}
+{# once those are migrated we can cleanup this template #todo #}
