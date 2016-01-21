@@ -87,12 +87,17 @@ class LocationType(models.Model):
     class Meta:
         app_label = 'locations'
 
+    @property
+    @memoized
+    def commtrack_enabled(self):
+        return Domain.get_by_name(self.domain).commtrack_enabled
+
     def _populate_stock_levels(self):
         from corehq.apps.commtrack.models import CommtrackConfig
         ct_config = CommtrackConfig.for_domain(self.domain)
         if (
             (ct_config is None)
-            or (not Domain.get_by_name(self.domain).commtrack_enabled)
+            or (not self.commtrack_enabled)
             or LOCATION_TYPE_STOCK_RATES.enabled(self.domain)
         ):
             return
@@ -105,6 +110,8 @@ class LocationType(models.Model):
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
+        if not self.commtrack_enabled:
+            self.administrative = True
         self._populate_stock_levels()
         return super(LocationType, self).save(*args, **kwargs)
 
@@ -220,6 +227,11 @@ class SQLLocation(MPTTModel):
     objects = LocationManager()
     # This should really be the default location manager
     active_objects = OnlyUnarchivedLocationManager()
+
+    def save(self, *args, **kwargs):
+        from corehq.apps.commtrack.models import sync_supply_point
+        self.supply_point_id = sync_supply_point(self)
+        return super(SQLLocation, self).save(*args, **kwargs)
 
     @property
     def get_id(self):
@@ -374,6 +386,13 @@ class SQLLocation(MPTTModel):
         except cls.DoesNotExist:
             return None
 
+    def linked_supply_point(self):
+        from corehq.apps.commtrack.models import SupplyPointCase
+        try:
+            return SupplyPointCase.get(self.supply_point_id)
+        except:
+            return None
+
 
 def _filter_for_archived(locations, include_archive_ancestors):
     """
@@ -502,11 +521,6 @@ class Location(CachedCouchDocumentMixin, Document):
 
             if hasattr(self, couch_prop):
                 setattr(sql_location, sql_prop, getattr(self, couch_prop))
-
-        # sync supply point id
-        sp = self.linked_supply_point()
-        if sp:
-            sql_location.supply_point_id = sp.case_id
 
         # sync parent connection
         parent_id = self.parent_id
@@ -732,8 +746,7 @@ class Location(CachedCouchDocumentMixin, Document):
                                        .couch_locations())
 
     def linked_supply_point(self):
-        from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
-        return get_supply_point_case_by_location(self)
+        return self.sql_location.linked_supply_point()
 
     @property
     def group_id(self):

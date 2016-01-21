@@ -20,13 +20,11 @@ from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.models import Location, SQLLocation
-from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.quickcache import quickcache
 from . import const
 from .const import StockActions, RequisitionActions, DAYS_IN_MONTH
-from .dbaccessors import get_supply_point_case_by_location
 
 
 STOCK_ACTION_ORDER = [
@@ -359,9 +357,6 @@ class SupplyPointCase(CommCareCase):
             if self.location.parent:
                 data['location_parent_name'] = self.location.parent.name
 
-        # todo
-        #data['last_reported'] = None
-
         return data
 
     @classmethod
@@ -551,38 +546,19 @@ class StockExportColumn(ComplexExportColumn):
         return values
 
 
-def sync_location_supply_point(loc):
-    """
-    This method syncs the location/supply point connection
-    and is triggered whenever a location is edited or created.
-    """
-    # circular import
-    from corehq.apps.domain.models import Domain
-
+def sync_supply_point(loc):
+    # Called on location.save()
     domain = Domain.get_by_name(loc.domain)
-    if not domain.commtrack_enabled:
-        return
+    if not domain.commtrack_enabled or loc.location_type.administrative:
+        return None
 
-    def _needs_supply_point(loc, domain):
-        """Exclude administrative-only locs"""
-        return loc.location_type in [loc_type.name for loc_type in domain.location_types if not loc_type.administrative]
-
-    if _needs_supply_point(loc, domain):
-        supply_point = get_supply_point_case_by_location(loc)
-        if supply_point:
-            supply_point.update_from_location(loc)
-            updated_supply_point = supply_point
-        else:
-            updated_supply_point = SupplyInterface.create_from_location(loc.domain, loc)
-
-        # need to sync this sp change to the sql location
-        # but saving the doc will trigger a loop
-        try:
-            sql_loc = SQLLocation.objects.get(location_id=loc.location_id)
-            sql_loc.supply_point_id = updated_supply_point._id
-            sql_loc.save()
-        except SQLLocation.DoesNotExist:
-            pass
+    supply_point = loc.linked_supply_point()
+    if supply_point:
+        supply_point.update_from_location(loc)
+        updated_supply_point = supply_point
+    else:
+        updated_supply_point = SupplyInterface.create_from_location(loc.domain, loc)
+    return updated_supply_point._id
 
 
 @receiver(post_save, sender=StockState)
@@ -601,16 +577,6 @@ def update_domain_mapping(sender, instance, *args, **kwargs):
             domain_name=domain_name,
         )
         mapping.save()
-
-
-@receiver(location_edited)
-def post_loc_edited(sender, loc=None, **kwargs):
-    sync_location_supply_point(loc)
-
-
-@receiver(location_created)
-def post_loc_created(sender, loc=None, **kwargs):
-    sync_location_supply_point(loc)
 
 
 @receiver(xform_archived)
