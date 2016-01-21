@@ -43,16 +43,16 @@ from dimagi.utils.django.email import send_HTML_email
 import corehq.apps.accounting.filters as filters
 
 
+@transaction.atomic()
 def _activate_subscription(subscription):
     if not has_subscription_already_ended(subscription):
-        with transaction.atomic():
-            subscription.is_active = True
-            subscription.save()
-            upgraded_privs = get_change_status(None, subscription.plan_version).upgraded_privs
-            subscription.subscriber.activate_subscription(
-                upgraded_privileges=upgraded_privs,
-                subscription=subscription,
-            )
+        subscription.is_active = True
+        subscription.save()
+        upgraded_privs = get_change_status(None, subscription.plan_version).upgraded_privs
+        subscription.subscriber.activate_subscription(
+            upgraded_privileges=upgraded_privs,
+            subscription=subscription,
+        )
 
 
 def activate_subscriptions(based_on_date=None):
@@ -68,29 +68,29 @@ def activate_subscriptions(based_on_date=None):
         _activate_subscription(subscription)
 
 
+@transaction.atomic()
 def _deactivate_subscription(subscription):
-    with transaction.atomic():
-        subscription.is_active = False
-        subscription.save()
-        next_subscription = subscription.next_subscription
-        activate_next_subscription = next_subscription and next_subscription.date_start == ending_date
-        if activate_next_subscription:
-            new_plan_version = next_subscription.plan_version
-            next_subscription.is_active = True
-            next_subscription.save()
-        else:
-            new_plan_version = None
-        _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
-        if next_subscription and subscription.account == next_subscription.account:
-            subscription.transfer_credits(subscription=next_subscription)
-        else:
-            subscription.transfer_credits()
-        subscription.subscriber.deactivate_subscription(
-            downgraded_privileges=downgraded_privs,
-            upgraded_privileges=upgraded_privs,
-            old_subscription=subscription,
-            new_subscription=next_subscription if activate_next_subscription else None,
-        )
+    subscription.is_active = False
+    subscription.save()
+    next_subscription = subscription.next_subscription
+    activate_next_subscription = next_subscription and next_subscription.date_start == ending_date
+    if activate_next_subscription:
+        new_plan_version = next_subscription.plan_version
+        next_subscription.is_active = True
+        next_subscription.save()
+    else:
+        new_plan_version = None
+    _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
+    if next_subscription and subscription.account == next_subscription.account:
+        subscription.transfer_credits(subscription=next_subscription)
+    else:
+        subscription.transfer_credits()
+    subscription.subscriber.deactivate_subscription(
+        downgraded_privileges=downgraded_privs,
+        upgraded_privileges=upgraded_privs,
+        old_subscription=subscription,
+        new_subscription=next_subscription if activate_next_subscription else None,
+    )
 
 
 def deactivate_subscriptions(based_on_date=None):
