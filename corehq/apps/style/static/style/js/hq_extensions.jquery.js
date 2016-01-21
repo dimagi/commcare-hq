@@ -45,9 +45,43 @@
     $.fn.closest_form = function () {
         return this.closest('form, .form');
     };
+
     $.fn.my_serialize = function () {
         var data = this.find('[name]').serialize();
         return data;
     };
 
+    $.fn.addSpinnerToButton = function () {
+        $(this).prepend('<i class="fa fa-refresh fa-spin icon-refresh icon-spin"></i> ');
+    };
+
+    $.fn.removeSpinnerFromButton = function () {
+        $(this).find('i').remove();
+    };
+
+    $.fn.disableButtonNoSpinner = function () {
+        $(this).attr('disabled', 'disabled')
+            .addClass('disabled');
+    };
+
+    $.fn.disableButton = function () {
+        $(this).disableButtonNoSpinner();
+        $(this).addSpinnerToButton();
+    };
+
+    $.fn.enableButton = function () {
+        $(this).removeSpinnerFromButton();
+        $(this).removeClass('disabled')
+            .removeAttr('disabled');
+    };
+
+    $.fn.koApplyBindings = function (context) {
+        if (!this.length) {
+            throw new Error("No element passed to koApplyBindings");
+        }
+        if (this.length > 1) {
+            throw new Error("Multiple elements passed to koApplyBindings");
+        }
+        return ko.applyBindings(context, this.get(0));
+    };
 }());
