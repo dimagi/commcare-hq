@@ -7,7 +7,7 @@ DATABASES = {
         'NAME': 'commcarehq',
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
-        'HOST': 'postres',
+        'HOST': 'postgres',
         'PORT': '5432',
         'TEST': {
             'SERIALIZE': False,

@@ -1,8 +1,10 @@
-postres:
+postgres:
   image: postgres:9.4
   environment:
     POSTGRES_USER: commcarehq
     POSTGRES_PASSWORD: commcarehq
+  volumes:
+    - /var/lib/postgresql:/var/lib/postgresql
 couch:
   image: klaemo/couchdb:latest
   volumes:
@@ -19,11 +21,28 @@ elasticsearch:
     - "9200:9200"
   volumes:
     - /usr/share/elasticsearch/data:/usr/share/elasticsearch/data
+vendor:
+  image: python:2.7
+  working_dir: /mnt
+  volumes:
+    - .:/mnt
+  environment:
+    PYTHONUSERBASE: /mnt/vendor
+  command: pip install -r requirements/requirements.txt -r requirements/dev-requirements.txt --user --upgrade
 web:
   build: .
   dockerfile: Dockerfile_dev
+  working_dir: /mnt
   command: python manage.py runserver 0.0.0.0:8000
   volumes:
-    - .:/code
+    - .:/mnt
   ports:
     - "8000:8000"
+  environment:
+    PYTHONUSERBASE: /mnt/vendor
+  links:
+    - postgres
+    - couch
+    - redis
+    - elasticsearch
+    - vendor
