@@ -128,16 +128,16 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
         from corehq.apps.app_manager.models import Application, Module, Form
         delete_all_xforms()
         cls.domain = 'exports_forms_analytics_domain'
-        cls.app_id_1 = uuid.uuid4().hex
+        cls.app_id_1 = 'a' + uuid.uuid4().hex
+        cls.app_id_2 = 'b' + uuid.uuid4().hex
         cls.xmlns_1 = 'my://crazy.xmlns/'
         cls.xmlns_2 = 'my://crazy.xmlns/app'
         cls.apps = [
-            Application(domain=cls.domain,
+            Application(_id=cls.app_id_2, domain=cls.domain,
                         modules=[Module(forms=[Form(xmlns=cls.xmlns_2)])])
         ]
         for app in cls.apps:
             app.save()
-        cls.app_id_2 = cls.apps[0]._id
         cls.forms = [
             XFormInstance(domain=cls.domain,
                           app_id=cls.app_id_1, xmlns=cls.xmlns_1),
