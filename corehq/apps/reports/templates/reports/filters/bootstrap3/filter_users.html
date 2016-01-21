@@ -7,7 +7,7 @@
 {% if show_user_filter %}
     <div id="{{ css_id }}" class="btn-group" data-toggle="buttons-checkbox">
 	    {% for user in toggle_users %}
-        <button class="btn{% if user.show %} btn-success{% else %} active{% endif %} user-type-btn"
+        <button class="btn btn-default {% if user.show %} btn-success{% else %} active{% endif %} user-type-btn"
                 data-checkfilter="user-filter-{{ user.type }}"
                 data-ufilter="{{ user.type }}"
                 id="btn-user-filter-{{ user.type }}">
