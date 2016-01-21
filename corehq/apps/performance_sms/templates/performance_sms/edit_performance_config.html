@@ -22,7 +22,9 @@
     {% crispy form %}
     {% if editing %}
         <form method='post' action="{% url 'performance_sms.delete_performance_messages' domain form.config.get_id %}" >
+            {% csrf_token %}
             <input type="submit" value="{% trans 'Delete'%}" class="btn btn-danger disable-on-submit">
+            }
         </form>
     {% endif %}
 {% endblock %}
