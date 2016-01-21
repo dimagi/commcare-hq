@@ -147,12 +147,8 @@ def domains_for_user(context, request, selected_domain=None):
     the user doc updates via save.
     """
 
-    if selected_domain != 'public':
-        domain_list = _get_domain_list(request)
-    else:
-        domain_list = []
+    domain_list = _get_domain_list(request)
     ctxt = {
-        'is_public': selected_domain == 'public',
         'domain_list': domain_list,
         'current_domain': selected_domain,
         'DOMAIN_TYPE': context['DOMAIN_TYPE']
