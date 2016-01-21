@@ -36,3 +36,8 @@ class AppPillow(AliasedElasticPillow):
     @classmethod
     def get_unique_id(cls):
         return APP_INDEX
+
+    def change_transform(self, doc_dict):
+        # perform any lazy migrations
+        doc = self.document_class.wrap(doc_dict)
+        return doc.to_json()
