@@ -42,6 +42,14 @@ from dimagi.utils.parsing import json_format_date
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_datatables,
+    use_jquery_ui,
+    use_select2,
+    use_daterangepicker,
+)
+
 
 TOO_MUCH_DATA = ugettext_noop(
     'The filters you selected include too much data. Please change your filters and try again'
@@ -59,6 +67,15 @@ WorkerActivityReportData = namedtuple('WorkerActivityReportData', [
 
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     exportable = True
+    is_bootstrap3 = True
+
+    @use_jquery_ui
+    @use_bootstrap3
+    @use_datatables
+    @use_select2
+    @use_daterangepicker
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        pass
 
     def get_user_link(self, user):
         user_link = self.get_raw_user_link(user)
@@ -939,6 +956,15 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
     flush_layout = True
     report_template_path = "reports/async/basic.html"
+    is_bootstrap3 = True
+
+    @use_jquery_ui
+    @use_bootstrap3
+    @use_datatables
+    @use_select2
+    @use_daterangepicker
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        pass
 
 
 class WorkerActivityTimes(WorkerMonitoringChartBase,
