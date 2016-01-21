@@ -5,6 +5,8 @@ import logging
 import urllib
 import urlparse
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT
+from corehq.util.datadog.utils import log_counter
 from corehq.util.quickcache import quickcache
 
 from dimagi.ext.couchdbkit import *
@@ -52,7 +54,7 @@ def simple_post_with_cached_timeout(data, url, expiry=60 * 60, *args, **kwargs):
         cache.set(key, 'timeout', expiry)
         raise
 
-    if not 200 <= resp.status < 300:
+    if not 200 <= resp.status_code < 300:
         cache.set(key, 'error', expiry)
     return resp
 
@@ -198,19 +200,24 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         return generator.get_payload(repeat_record, self.payload_doc(repeat_record))
 
     def register(self, payload, next_check=None):
-        try:
-            payload_id = payload.get_id
-        except Exception:
-            payload_id = payload
+        if not self.allowed_to_forward(payload):
+            return
+
         repeat_record = RepeatRecord(
             repeater_id=self.get_id,
             repeater_type=self.doc_type,
             domain=self.domain,
             next_check=next_check or datetime.utcnow(),
-            payload_id=payload_id
+            payload_id=payload.get_id
         )
         repeat_record.save()
         return repeat_record
+
+    def allowed_to_forward(self, payload):
+        """
+        Return True/False depending on whether the payload meets forawrding criteria or not
+        """
+        return True
 
     def clear_caches(self):
         if self.__class__ == Repeater:
@@ -297,7 +304,6 @@ class FormRepeater(Repeater):
 
     """
 
-    exclude_device_reports = BooleanProperty(default=False)
     include_app_id_param = BooleanProperty(default=True)
 
     @memoized
@@ -335,6 +341,18 @@ class CaseRepeater(Repeater):
     """
 
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
+    white_listed_case_types = StringListProperty(default=[])  # empty value means all case-types are accepted
+    black_listed_users = StringListProperty(default=[])  # users who caseblock submissions should be ignored
+
+    def allowed_to_forward(self, payload):
+        allowed_case_type = not self.white_listed_case_types or payload.type in self.white_listed_case_types
+        allowed_user = self.payload_user(payload) not in self.black_listed_users
+        return allowed_case_type and allowed_user
+
+    @classmethod
+    def payload_user(cls, payload):
+        # get the user_id who submitted the payload, note, it's not the owner_id
+        return payload.actions[-1].user_id
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -486,7 +504,7 @@ class RepeatRecord(Document, LockableMixIn):
                 for i in range(max_tries):
                     try:
                         resp = post_fn(payload, self.url, headers=headers)
-                        if 200 <= resp.status < 300:
+                        if 200 <= resp.status_code < 300:
                             self.update_success()
                             break
                     except Exception, e:
@@ -495,6 +513,12 @@ class RepeatRecord(Document, LockableMixIn):
                 if not self.succeeded:
                     # mark it failed for later and give up
                     self.update_failure(failure_reason)
+                    log_counter(REPEATER_ERROR_COUNT, {
+                        '_id': self._id,
+                        'reason': failure_reason,
+                        'target_url': self.url,
+                    })
 
 # import signals
+# Do not remove this import, its required for the signals code to run even though not explicitly used in this file
 from corehq.apps.repeaters import signals

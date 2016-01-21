@@ -30,10 +30,10 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemException
-from corehq.apps.reports.standard.export import ExcelExportReport
 from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, EditDataInterfaceDispatcher,
                                                     require_can_edit_data)
-from corehq.apps.style.decorators import use_bootstrap3, use_typeahead
+from corehq.apps.style.decorators import use_bootstrap3, use_typeahead, \
+    use_angular_js
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
 from .interfaces import FormManagementMode, BulkFormManagementInterface, CaseReassignmentInterface
@@ -567,6 +567,7 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
         return get_timezone_for_user(None, self.domain)
 
     @use_bootstrap3
+    @use_angular_js
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
     def dispatch(self, *args, **kwargs):
         return super(AutomaticUpdateRuleListView, self).dispatch(*args, **kwargs)
@@ -576,7 +577,8 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
         return {
             'pagination_limit_cookie_name': ('hq.pagination.limit'
                                              '.automatic_update_rule_list.%s'
-                                             % self.domain)
+                                             % self.domain),
+            'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases',
         }
 
     def _format_rule(self, rule):
@@ -716,6 +718,7 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
         }
 
     @use_bootstrap3
+    @use_angular_js
     @use_typeahead
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
     def dispatch(self, *args, **kwargs):

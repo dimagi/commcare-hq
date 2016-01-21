@@ -51,6 +51,9 @@ def _build_choice_list_filter(spec, report):
 
 def _build_dynamic_choice_list_filter(spec, report):
     wrapped = DynamicChoiceListFilterSpec.wrap(spec)
+    choice_provider_spec = wrapped.get_choice_provider_spec()
+    choice_provider = FilterChoiceProviderFactory.from_spec(choice_provider_spec)(report, wrapped.slug)
+    choice_provider.configure(choice_provider_spec)
     return DynamicChoiceListFilter(
         name=wrapped.slug,
         datatype=wrapped.datatype,
@@ -58,7 +61,7 @@ def _build_dynamic_choice_list_filter(spec, report):
         label=wrapped.display,
         show_all=wrapped.show_all,
         url_generator=dynamic_choice_list_url,
-        choice_provider=FilterChoiceProviderFactory.from_spec(wrapped.get_choice_provider_spec())(report, wrapped.slug),
+        choice_provider=choice_provider,
     )
 
 

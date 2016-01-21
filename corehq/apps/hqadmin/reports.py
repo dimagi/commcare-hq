@@ -1,6 +1,8 @@
 import copy
 from datetime import datetime
 import json
+from corehq.apps.style.decorators import use_bootstrap3, use_datatables, \
+    use_nvd3, use_jquery_ui
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
@@ -11,8 +13,6 @@ from corehq.apps.reports.generic import ElasticTabularReport, GenericTabularRepo
 from corehq.apps.reports.standard.domains import DomainStatsReport, es_domain_query
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
-from corehq.pillows.mappings.app_mapping import APP_INDEX
-from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.apps.app_manager.commcare_settings import get_custom_commcare_settings
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 
@@ -534,7 +534,14 @@ FACET_MAPPING = [
 
 class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
-    base_template = "hqadmin/faceted_report.html"
+    base_template = "hqadmin/bootstrap3/faceted_report.html"
+    report_template_path = "reports/async/bootstrap3/tabular.html"
+
+    @use_jquery_ui
+    @use_bootstrap3
+    @use_datatables
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        self.is_bootstrap3 = True
 
 
 class AdminFacetedReport(AdminReport, ElasticTabularReport):
@@ -547,7 +554,7 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
     es_facet_list = []
     es_facet_mapping = []
     section_name = ugettext_noop("ADMINREPORT")
-    es_url = ''
+    es_index = None
 
     @property
     def template_context(self):
@@ -606,7 +613,7 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
         q["sort"] = self.get_sorting_block()
         start_at = self.pagination.start
         size = size if size is not None else self.pagination.count
-        return es_query(params, self.es_facet_list, terms, q, self.es_url, start_at, size, facet_size=25)
+        return es_query(params, self.es_facet_list, terms, q, self.es_index, start_at, size, facet_size=25)
 
     @property
     def es_results(self):
@@ -638,6 +645,10 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     search_for = ugettext_noop("projects...")
     base_template = "hqadmin/domain_faceted_report.html"
 
+    @use_nvd3
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        super(AdminDomainStatsReport, self).set_bootstrap3_status(request, *args, **kwargs)
+
     @property
     def template_context(self):
         ctxt = super(AdminDomainStatsReport, self).template_context
@@ -666,8 +677,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("Deployment Country"), prop_name="deployment.countries.exact"),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_active_cc_users",
-                help_text=_("the number of mobile workers who have submitted a form or sent or received an SMS "
-                            "in the last 30 days.  Includes deactivated workers.")),
+                help_text=_("the number of mobile workers who have submitted a form or an SMS in the last 30 days. "
+                            "Includes deactivated workers.")),
             DataTablesColumn(_("# Mobile Workers"), sort_type=DTSortType.NUMERIC,
                              prop_name="cp_n_cc_users",
                              help_text=_("Does not include deactivated users.")),
@@ -817,7 +828,7 @@ class AdminUserReport(AdminFacetedReport):
     facet_title = ugettext_noop("User Facets")
     search_for = ugettext_noop("users...")
     default_sort = {'username.exact': 'asc'}
-    es_url = USER_INDEX + '/user/_search'
+    es_index = 'users'
 
     es_facet_list = [
         "is_active",  # this is NOT "has submitted a form in the last 30 days"
@@ -885,7 +896,7 @@ class AdminAppReport(AdminFacetedReport):
     facet_title = ugettext_noop("App Facets")
     search_for = ugettext_noop("apps...")
     default_sort = {'name.exact': 'asc'}
-    es_url = APP_INDEX + '/app/_search'
+    es_index = 'apps'
 
     excluded_properties = ["_id", "_rev", "_attachments", "admin_password_charset", "short_odk_url", "version",
                            "admin_password", "built_on", ]

@@ -1,14 +1,11 @@
-{% extends "hqadmin/hqadmin_base_report.html" %}
+{% extends "hqadmin/bootstrap3/hqadmin_base_report.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load humanize %}
-{% block report-title %}System Info{% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/main.js' %}"></script>
+    <script src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -205,7 +202,7 @@
                     case ('STOPPED'):
                         return 'label-warning';
                     default:
-                        return 'label-important';
+                        return 'label-danger';
                 }
             });
 
@@ -219,7 +216,7 @@
                     case (hours <= 12):
                         return 'label-warning';
                     default:
-                        return 'label-important';
+                        return 'label-danger';
                 }
             });
 
@@ -351,303 +348,327 @@
 
 {% endblock js-inline %}
 {% block reportcontent %}
-    <div class="row-fluid">
-        {% with deploy_history|first as last_deploy %}
-        <span class="label label-info pull-right">Last deployed on {{ last_deploy.date|date:"d M Y" }}
-         at {{ last_deploy.date|date:"H:i:s"}} UTC ({{ last_deploy.date|naturaltime}} ago) by {{ last_deploy.user }}</span>
-        {% endwith %}
-    </div>
-    <div class="row-fluid">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th></th>
-                    <th>Quick Links</th>
-                    <th>Current Worker</th>
-                    <th>Redis Status</th>
-                    <th>Celery Status</th>
-                    <th>Elasticsearch Status</th>
-                </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td><img src="{% static 'hqwebapp/img/dm.jpg' %}" alt="dan's legacy"></td>
-                <td>
-                    <ul>
-                        <li><a href="{% url 'view_recent_changes' %}">Recent couch changes</a></li>
-                        <li>
-                            <div id="autorefresh">
-                                Auto refresh <a href="#" data-bind="click: toggleRefresh, text: refreshStatusText"></a></span>
-                            </div>
-                        </li>
-                        <li>
-                            <a href="{% url "raw_couch" %}">Look for a doc in couch</a>
-                        </li>
-                    </ul>
-                </td>
-                <td><strong>{{ current_system }}</strong></td>
-                <td>
-                    {{ redis_status }}
-                    <br>
-                    {{ redis_results }}
-                </td>
-                <td>
-                    {{ rabbitmq_status }} {% if rabbitmq_url %}(<a href="{{ rabbitmq_url }}">Admin</a>){% endif %}
-                    <hr>
-                    {% trans "Celery Heartbeat " %}
-                    {% if heartbeat %}
-                        <span class="label label-success">OK</span>
-                    {% else %}
-                        <span class="label label-important">DOWN</span>
-                    {% endif %}
-                    <hr>
-                    {{ worker_status }}<br>
-                </td>
-                <td>
-                    <dl class="dl-horizontal">
-                    <dt>Cluster Status</dt>
-                        <dd>
-                            {% if cluster_health == "green" %}
-                                <span class="label label-success">Great</span>
-                            {% endif %}
-                            {% if cluster_health == "yellow" %}
-                                <span class="label label-warning">..aight</span>
-                            {% endif %}
-                            {% if cluster_health == "red" %}
-                                <span class="label label-important">Bad</span>
-                            {% endif %}
-                        </dd>
-                        <dt>Index Status</dt>
-                        <dd>
-                            <a href="{% url "system_ajax" %}?api=stale_pillows" target="_blank">Check (slow!)</a>
-                        </dd>
-                        <dt>Check ES doc</dt>
-                        <dd>
-                            <a href="{% url "doc_in_es" %}">Look for a doc in ES</a>
-                        </dd>
-
-                    {% for es_status in es_index_status %}
-                        {% for k, v in es_status.items %}
-                            <dt>{{ k }}</dt>
-                            <dd>
-                                {% if v.status %}
-                                    <span class="label label-success">OK</span>
-                                {% else %}
-                                    <span class="label label-important">Bad</span>
-                                {% endif %}
-                                {{ v.message }}
-                            </dd>
-                        {% endfor %}
-                    {% endfor %}
-                    </dl>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
-    <div class="row-fluid" id="pillowtop-status">
-        <h3>
-            Pillowtop Status
-            <small data-bind="if: loading()">
-                <i class="icon-refresh icon-spin"></i>
-            </small>
-            <small data-bind="if: !loading() && !autoRefresh()">
-                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
-            </small>
-        </h3>
-        <p class="text-error" data-bind="visible: error, text: error"></p>
-        <table class="table table-striped" data-bind="visible: !error()">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Supervisor Status</th>
-                    <th>Time since last checkpoint</th>
-                    <th title="seq / db_seq">Reindex Progress</th>
-                    <th title="db_seq - seq"># Changes behind</th>
-                    <th title="seq / db_seq">Seq / Total Seq</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody data-bind="foreach: models">
-                <tr data-bind="css: overall_status, attr: {id: name}">
-                    <td><code data-bind="text: name"></code></td>
-                    <td>
-                            <label data-bind="text: supervisor_state, css: supervisor_state_css" class="label"></label>
-                            <span data-bind="makeHqHelp: { name: 'Info', description: supervisor_message, format: 'html'}, visible: supervisor_message"></span>
-                    </td>
-                    <td><label data-bind="text: time_since_last, css: checkpoint_status_css" class="label"></label></td>
-                    <td>
-                        <div class="progress progress-striped progress-mini active" data-bind="visible: show_progress()">
-                            <div class="bar" data-bind="style: {width: ((seq() * 100)/db_seq()) + '%'}"></div>
-                        </div>
-                        <div data-bind="visible: !show_progress()">
-                            <span>All caught up</span>
-                        </div>
-                    </td>
-                    <td>
-                        <span data-bind="text: db_seq() - seq()"></span>
-                    </td>
-                    <td>
-                        <span data-bind="text: seq"></span>
-                        / <span data-bind="text: db_seq"></span>
-                    </td>
-                    <td>
-                        {% if user_is_support %}
-                        <button class="btn" type="button" data-bind="
-                            click: reset_checkpoint,
-                            disable: disabled">{% trans "Reset" %}</button>
-                        <button class="btn" type="button" data-bind="
-                            click: start_stop,
-                            text: start_stop_text,
-                            disable: disabled"></button>
-                        {% endif %}
-                        <button class="btn" type="button" data-bind="
-                            click: refresh,
-                            disable: disabled">
-                            <i class="icon-refresh" data-bind="css: {'icon-spin': operation_in_progress}"></i>
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    {% if is_bigcouch %}
-    <div class="row-fluid" id="couchblock">
-        <h3>
-            Couch Tasks
-            <small data-bind="if: loading()">
-                <i class="icon-refresh icon-spin"></i>
-            </small>
-            <small data-bind="if: !loading() && !autoRefresh()">
-                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
-            </small>
-        </h3>
-        <p class="text-error" data-bind="visible: error, text: error"></p>
-        <div class="row" data-bind="visible: !error(), foreach: models">
-            <strong data-bind="text: design_document"></strong>
-             (<span data-bind="text: tasks().length"></span>)
-            <a href="#" data-bind="click: showDetails"> <i class="icon-plus-sign"></i></a>
-            <div class="progress" data-bind="foreach: tasks">
-              <div class="bar"  data-bind="style: { width: progress_contribution() + '%'}, css: {'bar-success': ($index() % 2 === 0) }"></div>
+    <div class="row" style="margin-top: 15px;">
+        <div class="col-sm-12">
+            {% with deploy_history|first as last_deploy %}
+            <div class="alert alert-info">
+                Last deployed on {{ last_deploy.date|date:"d M Y" }}
+                at {{ last_deploy.date|date:"H:i:s"}} UTC ({{ last_deploy.date|naturaltime}} ago) by {{ last_deploy.user }}
             </div>
-            <div class="well" data-bind="attr: {id: details_id}, foreach: tasks" style="display: none">
-                <table class="table">
-                    <tbody>
+            {% endwith %}
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h2 class="panel-title">General Status</h2>
+        </div>
+        <div class="panel-body">
+            <table class="table table-striped">
+                <thead>
                     <tr>
+                        <th></th>
+                        <th>Quick Links</th>
+                        <th>Current Worker</th>
+                        <th>Redis Status</th>
+                        <th>Celery Status</th>
+                        <th>Elasticsearch Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><img src="{% new_static 'hqwebapp/img/dm.jpg' %}" alt="dan's legacy"></td>
+                    <td>
+                        <ul>
+                            <li><a href="{% url 'view_recent_changes' %}">Recent couch changes</a></li>
+                            <li>
+                                <div id="autorefresh">
+                                    Auto refresh <a href="#" data-bind="click: toggleRefresh, text: refreshStatusText"></a></span>
+                                </div>
+                            </li>
+                            <li>
+                                <a href="{% url "raw_couch" %}">Look for a doc in couch</a>
+                            </li>
+                        </ul>
+                    </td>
+                    <td><strong>{{ current_system }}</strong></td>
+                    <td>
+                        {{ redis_status }}
+                        <br>
+                        {{ redis_results }}
+                    </td>
+                    <td>
+                        {{ rabbitmq_status }} {% if rabbitmq_url %}(<a href="{{ rabbitmq_url }}">Admin</a>){% endif %}
+                        <hr>
+                        {% trans "Celery Heartbeat " %}
+                        {% if heartbeat %}
+                            <span class="label label-success">OK</span>
+                        {% else %}
+                            <span class="label label-danger">DOWN</span>
+                        {% endif %}
+                        <hr>
+                        {{ worker_status }}<br>
+                    </td>
+                    <td>
+                        <dl class="dl-horizontal">
+                        <dt>Cluster Status</dt>
+                            <dd>
+                                {% if cluster_health == "green" %}
+                                    <span class="label label-success">Great</span>
+                                {% endif %}
+                                {% if cluster_health == "yellow" %}
+                                    <span class="label label-warning">..aight</span>
+                                {% endif %}
+                                {% if cluster_health == "red" %}
+                                    <span class="label label-danger">Bad</span>
+                                {% endif %}
+                            </dd>
+                            <dt>Index Status</dt>
+                            <dd>
+                                <a href="{% url "system_ajax" %}?api=stale_pillows" target="_blank">Check (slow!)</a>
+                            </dd>
+                            <dt>Check ES doc</dt>
+                            <dd>
+                                <a href="{% url "doc_in_es" %}">Look for a doc in ES</a>
+                            </dd>
+
+                        {% for es_status in es_index_status %}
+                            {% for k, v in es_status.items %}
+                                <dt>{{ k }}</dt>
+                                <dd>
+                                    {% if v.status %}
+                                        <span class="label label-success">OK</span>
+                                    {% else %}
+                                        <span class="label label-danger">Bad</span>
+                                    {% endif %}
+                                    {{ v.message }}
+                                </dd>
+                            {% endfor %}
+                        {% endfor %}
+                        </dl>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="panel panel-default" id="pillowtop-status">
+        <div class="panel-heading">
+            <h2 class="panel-title">
+                Pillowtop Status
+                <small data-bind="if: loading()">
+                    <i class="fa fa-refresh fa-spin"></i>
+                </small>
+                <small data-bind="if: !loading() && !autoRefresh()">
+                    <a class="btn btn-default btn-xs" href="#" data-bind="click: refresh"><i class="fa fa-refresh"></i></a>
+                </small>
+            </h2>
+        </div>
+        <div class="panel-body">
+            <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
+            <table class="table table-striped" data-bind="visible: !error()">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Supervisor Status</th>
+                        <th>Time since last checkpoint</th>
+                        <th title="seq / db_seq">Reindex Progress</th>
+                        <th title="db_seq - seq"># Changes behind</th>
+                        <th title="seq / db_seq">Seq / Total Seq</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody data-bind="foreach: models">
+                    <tr data-bind="css: overall_status, attr: {id: name}">
+                        <td><code data-bind="text: name"></code></td>
                         <td>
-                            <div class="progress">
-                              <div class="bar"  data-bind="style: { width: progress() + '%'}"></div>
+                                <label data-bind="text: supervisor_state, css: supervisor_state_css" class="label"></label>
+                                <span data-bind="makeHqHelp: { name: 'Info', description: supervisor_message, format: 'html'}, visible: supervisor_message"></span>
+                        </td>
+                        <td><label data-bind="text: time_since_last, css: checkpoint_status_css" class="label"></label></td>
+                        <td>
+                            <div class="progress" data-bind="visible: show_progress()">
+                                <div class="progress-bar progress-bar-striped active" data-bind="style: {width: ((seq() * 100)/db_seq()) + '%'}"></div>
+                            </div>
+                            <div data-bind="visible: !show_progress()">
+                                <span>All caught up</span>
                             </div>
                         </td>
                         <td>
-                            <p class="help-inline">
-                                <span data-bind="text: changes_done"></span> of
-                                <span data-bind="text: total_changes"></span>
-                            </p>
+                            <span data-bind="text: db_seq() - seq()"></span>
+                        </td>
+                        <td>
+                            <span data-bind="text: seq"></span>
+                            / <span data-bind="text: db_seq"></span>
+                        </td>
+                        <td>
+                            {% if user_is_support %}
+                            <button class="btn btn-default" type="button" data-bind="
+                                click: reset_checkpoint,
+                                disable: disabled">{% trans "Reset" %}</button>
+                            <button class="btn btn-default" type="button" data-bind="
+                                click: start_stop,
+                                text: start_stop_text,
+                                disable: disabled"></button>
+                            {% endif %}
+                            <button class="btn btn-default" type="button" data-bind="
+                                click: refresh,
+                                disable: disabled">
+                                <i class="fa fa-refresh" data-bind="css: {'fa-spin': operation_in_progress}"></i>
+                            </button>
                         </td>
                     </tr>
-                    </tbody>
-                </table>
-                <em data-bind="text: database"></em>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if is_bigcouch %}
+    <div class="panel panel-default" id="couchblock">
+        <div class="panel-heading">
+            <h2 class="panel-title">
+                 Couch Tasks
+                <small data-bind="if: loading()">
+                    <i class="fa fa-refresh fa-spin"></i>
+                </small>
+                <small data-bind="if: !loading() && !autoRefresh()">
+                    <a class="btn btn-xs btn-default" href="#" data-bind="click: refresh"><i class="fa fa-refresh"></i></a>
+                </small>
+            </h2>
+        </div>
+        <div class="panel-body">
+            <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
+            <div class="row" data-bind="visible: !error(), foreach: models">
+                <strong data-bind="text: design_document"></strong>
+                 (<span data-bind="text: tasks().length"></span>)
+                <a href="#" data-bind="click: showDetails"> <i class="fa fa-plus-circle"></i></a>
+                <div class="progress" data-bind="foreach: tasks">
+                  <div class="progress-bar"  data-bind="style: { width: progress_contribution() + '%'}, css: {'bar-success': ($index() % 2 === 0) }"></div>
+                </div>
+                <div class="well" data-bind="attr: {id: details_id}, foreach: tasks" style="display: none">
+                    <table class="table">
+                        <tbody>
+                        <tr>
+                            <td>
+                                <div class="progress">
+                                  <div class="progress-bar"  data-bind="style: { width: progress() + '%'}"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <p class="help-inline">
+                                    <span data-bind="text: changes_done"></span> of
+                                    <span data-bind="text: total_changes"></span>
+                                </p>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <em data-bind="text: database"></em>
 
+                </div>
             </div>
         </div>
     </div>
     {% else %}
-    <div class="row-fluid" id="couchblock">
-        <h3>
-            Couch Tasks
-            <small data-bind="if: loading()">
-                <i class="icon-refresh icon-spin"></i>
-            </small>
-            <small data-bind="if: !loading() && !autoRefresh()">
-                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
-            </small>
-        </h3>
-        <p class="text-error" data-bind="visible: error, text: error"></p>
-        <table class="table table-striped" data-bind="visible: !error()">
-            <thead>
-            <tr>
-                <th>PID</th>
-                <th>Type</th>
-                <th>DB</th>
-                <th>Design Doc</th>
-                <th>Started</th>
-                <th>Updated</th>
-                <th class="span2">Progress</th>
-                <th></th>
-            </tr>
-            </thead>
-            <tbody data-bind="foreach: models">
-            <tr>
-                <td data-bind="text: pid"></td>
-                <td data-bind="text: name"></td>
-                <td data-bind="text: database"></td>
-                <td data-bind="text: design_document"></td>
-                <td data-bind="text: started_on"></td>
-                <td data-bind="text: updated_on"></td>
-                <td>
-                    <div class="progress progress-striped active">
-                        <div class="bar" data-bind="style: {width: progress()}"></div>
-                    </div>
-                </td>
-                <td>
-                    <p class="help-inline" data-bind="text: total_changes"></p>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+    <div class="panel panel-default" id="couchblock">
+        <div class="panel-heading">
+            <h2 class="panel-title">
+                 Couch Tasks
+                <small data-bind="if: loading()">
+                    <i class="fa fa-refresh fa-spin"></i>
+                </small>
+                <small data-bind="if: !loading() && !autoRefresh()">
+                    <a class="btn btn-xs btn-default" href="#" data-bind="click: refresh"><i class="fa fa-refresh"></i></a>
+                </small>
+            </h2>
+        </div>
+        <div class="panel-body">
+            <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
+            <table class="table table-striped" data-bind="visible: !error()">
+                <thead>
+                <tr>
+                    <th>PID</th>
+                    <th>Type</th>
+                    <th>DB</th>
+                    <th>Design Doc</th>
+                    <th>Started</th>
+                    <th>Updated</th>
+                    <th class="span2">Progress</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody data-bind="foreach: models">
+                <tr>
+                    <td data-bind="text: pid"></td>
+                    <td data-bind="text: name"></td>
+                    <td data-bind="text: database"></td>
+                    <td data-bind="text: design_document"></td>
+                    <td data-bind="text: started_on"></td>
+                    <td data-bind="text: updated_on"></td>
+                    <td>
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped active" data-bind="style: {width: progress()}"></div>
+                        </div>
+                    </td>
+                    <td>
+                        <p class="help-inline" data-bind="text: total_changes"></p>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
     {% endif %}
 
-    <div class="row-fluid" id="celeryblock">
-        <h3>
-            Celery Monitor <small><a href="{{ celery_flower_url }}">Flower</a> (must be vpn'd in)</small>
-            <small data-bind="if: loading()">
-                <i class="icon-refresh icon-spin"></i>
-            </small>
-            <small data-bind="if: !loading() && !autoRefresh()">
-                <a class="btn btn-mini" href="#" data-bind="click: refresh"><i class="icon-refresh"></i></a>
-            </small>
-        </h3>
-        <p class="text-error" data-bind="visible: error, text: error"></p>
-        <table class="table table-striped" data-bind="visible: !error()">
-            <thead>
-            <tr>
-                <th>Task Name</th>
-                <th>State</th>
-                <th>Retries</th>
-                <th>Received</th>
-                <th>Started</th>
-                <th>Succeeded</th>
-                <th>Runtime</th>
-                <th>Args</th>
-            </tr>
-            </thead>
-            <tbody data-bind="foreach: models">
-            <tr>
-                <td data-bind="text: name"></td>
-                <td data-bind="text: state"></td>
-                <td data-bind="text: retries"></td>
-                <td data-bind="text: received"></td>
-                <td data-bind="text: started"></td>
-                <td data-bind="text: succeeded"></td>
-                <td data-bind="text: runtime"></td>
-                <td>
-                    <a href="#" data-bind="click: toggleArgs">Show / Hide args</a>
-                    <div data-bind="attr: {id: uuid}" style="display: none">
-                        args: <pre><span data-bind="text: args"></span></pre><br>
-                        kwargs:<pre><span data-bind="text: kwargs"></span></pre>
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+    <div class="panel panel-default" id="celeryblock">
+        <div class="panel-heading">
+            <h2 class="panel-title">
+                 Celery Monitor <small><a href="{{ celery_flower_url }}">Flower</a> (must be vpn'd in)</small>
+                <small data-bind="if: loading()">
+                    <i class="fa fa-refresh fa-spin"></i>
+                </small>
+                <small data-bind="if: !loading() && !autoRefresh()">
+                    <a class="btn btn-xs btn-default" href="#" data-bind="click: refresh"><i class="fa fa-refresh"></i></a>
+                </small>
+            </h2>
+        </div>
+        <div class="panel-body">
+            <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
+            <table class="table table-striped" data-bind="visible: !error()">
+                <thead>
+                <tr>
+                    <th>Task Name</th>
+                    <th>State</th>
+                    <th>Retries</th>
+                    <th>Received</th>
+                    <th>Started</th>
+                    <th>Succeeded</th>
+                    <th>Runtime</th>
+                    <th>Args</th>
+                </tr>
+                </thead>
+                <tbody data-bind="foreach: models">
+                <tr>
+                    <td data-bind="text: name"></td>
+                    <td data-bind="text: state"></td>
+                    <td data-bind="text: retries"></td>
+                    <td data-bind="text: received"></td>
+                    <td data-bind="text: started"></td>
+                    <td data-bind="text: succeeded"></td>
+                    <td data-bind="text: runtime"></td>
+                    <td>
+                        <a href="#" data-bind="click: toggleArgs">Show / Hide args</a>
+                        <div data-bind="attr: {id: uuid}" style="display: none">
+                            args: <pre><span data-bind="text: args"></span></pre><br>
+                            kwargs:<pre><span data-bind="text: kwargs"></span></pre>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <div class="row-fluid">
     {% include "hqadmin/partials/deploy_history.html" %}
-    </div>
+
 {% endblock %}
 
 {% block modals %}{{ block.super }}

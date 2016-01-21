@@ -22,16 +22,15 @@ class DashboardReport(MultiReport):
 
     @property
     def report_config(self):
-        startdate, enddate = calculate_last_period(datetime.utcnow())
-        return dict(
-            domain=self.domain,
+        report_config = super(DashboardReport, self).report_config
+        startdate, enddate = calculate_last_period()
+        report_config.update(dict(
             startdate=startdate,
             enddate=enddate,
-            location_id=self.request.GET.get('location_id') or get_country_id(self.domain),
-            user=self.request.couch_user,
             program=None,
             products=None
-        )
+        ))
+        return report_config
 
     def data(self):
         complete = 0

@@ -12,12 +12,12 @@ def get_last_submission_time_for_user(domain, user_id, datespan):
         .completed(gte=datespan.startdate.date(), lte=datespan.enddate.date()) \
         .sort("form.meta.timeEnd", desc=True) \
         .size(1)
-    results = form_query.run().raw_hits
+    results = form_query.run().hits
 
     def convert_to_date(date):
         return string_to_datetime(date).date() if date else None
 
-    return convert_to_date(results[0]['_source']['form']['meta']['timeEnd'] if results else None)
+    return convert_to_date(results[0]['form']['meta']['timeEnd'] if results else None)
 
 
 def get_active_case_counts_by_owner(domain, datespan, case_types=None):
@@ -144,11 +144,11 @@ def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission
 def get_group_stubs(group_ids):
     return (GroupES()
         .group_ids(group_ids)
-        .values(['_id', 'name', 'case_sharing', 'reporting']))
+        .values('_id', 'name', 'case_sharing', 'reporting'))
 
 
 def get_user_stubs(user_ids):
     return (UserES()
         .user_ids(user_ids)
         .show_inactive()
-        .values(['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active']))
+        .values('_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active'))

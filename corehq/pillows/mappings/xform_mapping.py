@@ -7,7 +7,6 @@ XFORM_INDEX = es_index("xforms_20150403-1728")
 XFORM_MAPPING = {
     "date_detection": False,
     "date_formats": DATE_FORMATS_ARR,  # for parsing the explicitly defined dates
-    'ignore_malformed': True,
     'dynamic': False,
     "_meta": {
         "created": '2013-08-13',

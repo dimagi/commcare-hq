@@ -1,9 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
-from functools import partial
 import itertools
 import celery
-from celery.canvas import chain
 from django.db import transaction
 from casexml.apps.stock.const import TRANSACTION_TYPE_LA
 from casexml.apps.stock.models import StockReport, StockTransaction

@@ -93,7 +93,7 @@ class CustomDataModelMixin(object):
     Each entity type must provide a subclass of this mixin.
     """
     urlname = None
-    template_name = "custom_data_fields/custom_data_fields.html"
+    template_name = "custom_data_fields/bootstrap2/custom_data_fields.html"
     field_type = None
     entity_string = None  # User, Group, Location, Product...
 

@@ -16,7 +16,7 @@ class OverrideDBTest(TestCase):
         cls.normal_get_db = CommCareCase.get_db
 
     def setUp(self):
-        self.assertEqual(self.normal_db.dbname, 'commcarehq_test')
+        self.assertEqual(self.normal_db.dbname, 'test_commcarehq')
 
     @classmethod
     def tearDownClass(cls):

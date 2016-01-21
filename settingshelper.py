@@ -1,7 +1,14 @@
 from collections import namedtuple
 import os
+import sys
 import tempfile
 import uuid
+
+from django.db.backends.creation import TEST_DATABASE_PREFIX
+
+
+def is_testing():
+    return len(sys.argv) > 1 and sys.argv[1] == "test"
 
 
 class SharedDriveConfiguration(object):
@@ -29,6 +36,16 @@ class SharedDriveConfiguration(object):
             raise Exception('Shared folder is not a directory: {}'.format(name))
 
         return path
+
+    def get_unset_reason(self, name):
+        if not self.shared_drive_path:
+            return "invalid shared drive path: %r" % (self.shared_drive_path,)
+        if not os.path.isdir(self.shared_drive_path):
+            return "shared drive path is not a directory: %r" % (self.shared_drive_path,)
+        directory = getattr(self, name + "_name")
+        if not directory:
+            return name + " is empty or not configured in settings"
+        return None
 
     @property
     def restore_dir(self):
@@ -79,9 +96,16 @@ def get_dynamic_db_settings(server_root, username, password, dbname,
     }
 
 
+def get_db_name(dbname, is_test):
+    """Get databse name (possibly with test prefix)
+
+    :param is_test: Add test prefix if true.
+    """
+    return (TEST_DATABASE_PREFIX + dbname) if is_test else dbname
+
+
 class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
-                          ['couch_database_url', 'couchdb_apps', 'extra_db_names',
-                           'is_test'])):
+                          ['couch_database_url', 'couchdb_apps', 'extra_db_names'])):
     def make_couchdb_tuples(self):
         """
         Helper function to generate couchdb tuples
@@ -91,10 +115,7 @@ class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
         return [self._make_couchdb_tuple(row) for row in self.couchdb_apps]
 
     def _format_db_uri(self, db_uri):
-        if self.is_test:
-            return '{}_test'.format(db_uri)
-        else:
-            return db_uri
+        return db_uri
 
     def _make_couchdb_tuple(self, row):
         if isinstance(row, basestring):

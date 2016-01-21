@@ -5,7 +5,7 @@ from corehq.apps.reports.analytics.couchaccessors import guess_form_name_from_su
     update_reports_analytics_indexes, get_all_form_definitions_grouped_by_app_and_xmlns, SimpleFormInfo, \
     get_all_form_details, get_form_details_for_xmlns, get_form_details_for_app_and_module, \
     get_form_details_for_app_and_xmlns, get_form_details_for_app
-from corehq.form_processor.tests.utils import TestFormMetadata, get_simple_wrapped_form
+from corehq.form_processor.utils import TestFormMetadata, get_simple_wrapped_form
 
 
 class ReportsAnalyticsTest(TestCase):

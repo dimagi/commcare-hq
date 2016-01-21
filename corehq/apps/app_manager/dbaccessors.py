@@ -1,8 +1,8 @@
-from django.conf import settings
-from corehq.apps.app_manager.util import get_correct_app_class
 from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
 from django.http import Http404
+
+from corehq.apps.es import AppES
 
 
 def domain_has_apps(domain):
@@ -16,6 +16,43 @@ def domain_has_apps(domain):
     return len(results) > 0
 
 
+def get_latest_released_app_doc(domain, app_id, min_version=None):
+    """Get the latest starred build for the application"""
+    from .models import Application
+    key = ['^ReleasedApplications', domain, app_id]
+    app = Application.get_db().view(
+        'app_manager/applications',
+        startkey=key + [{}],
+        endkey=(key + [min_version]) if min_version is not None else key,
+        descending=True,
+        include_docs=True
+    ).first()
+    return app['doc'] if app else None
+
+
+def _get_latest_build_view(domain, app_id, include_docs):
+    from .models import Application
+    return Application.get_db().view(
+        'app_manager/saved_app',
+        startkey=[domain, app_id, {}],
+        endkey=[domain, app_id],
+        descending=True,
+        include_docs=include_docs,
+    ).first()
+
+
+def get_latest_build_doc(domain, app_id):
+    """Get the latest saved build of the application, regardless of star."""
+    res = _get_latest_build_view(domain, app_id, include_docs=True)
+    return res['doc'] if res else None
+
+
+def get_latest_build_id(domain, app_id):
+    """Get id of the latest build of the application, regardless of star."""
+    res = _get_latest_build_view(domain, app_id, include_docs=False)
+    return res['id'] if res else None
+
+
 def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     """
     Utility for getting an app, making sure it's in the domain specified, and wrapping it in the right class
@@ -23,6 +60,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
 
     """
     from .models import Application
+    from corehq.apps.app_manager.util import get_correct_app_class
 
     if latest:
         try:
@@ -43,29 +81,12 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
             min_version = -1
 
         if target == 'build':
-            # get latest-build regardless of star
-            couch_view = 'app_manager/saved_app'
-            startkey = [domain, parent_app_id, {}]
-            endkey = [domain, parent_app_id]
+            app = get_latest_build_doc(domain, parent_app_id)
         else:
-            # get latest starred-build
-            couch_view = 'app_manager/applications'
-            startkey = ['^ReleasedApplications', domain, parent_app_id, {}]
-            endkey = ['^ReleasedApplications', domain, parent_app_id, min_version]
+            app = get_latest_released_app_doc(domain, parent_app_id, min_version=min_version)
 
-        latest_app = Application.get_db().view(
-            couch_view,
-            startkey=startkey,
-            endkey=endkey,
-            limit=1,
-            descending=True,
-            include_docs=True
-        ).one()
-
-        try:
-            app = latest_app['doc']
-        except TypeError:
-            # If no builds/starred-builds, return act as if latest=False
+        if not app:
+            # If no builds/starred-builds, act as if latest=False
             app = original_app
     else:
         try:
@@ -82,30 +103,42 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     return app
 
 
-def get_apps_in_domain(domain, full=False, include_remote=True):
-    """
-    Returns all apps(not builds) in a domain
-
-    full use applications when true, otherwise applications_brief
-    """
-    if full:
-        view_name = 'app_manager/applications'
-        startkey = [domain, None]
-        endkey = [domain, None, {}]
-    else:
-        view_name = 'app_manager/applications_brief'
-        startkey = [domain]
-        endkey = [domain, {}]
-
+def get_apps_in_domain(domain, include_remote=True):
     from .models import Application
-    view_results = Application.get_db().view(view_name,
-        startkey=startkey,
-        endkey=endkey,
-        include_docs=True)
+    from corehq.apps.app_manager.util import get_correct_app_class
+    docs = [row['doc'] for row in Application.get_db().view(
+        'app_manager/applications',
+        startkey=[domain, None],
+        endkey=[domain, None, {}],
+        include_docs=True
+    )]
+    apps = [get_correct_app_class(doc).wrap(doc) for doc in docs]
+    if not include_remote:
+        apps = [app for app in apps if not app.is_remote_app()]
+    return apps
 
-    remote_app_filter = None if include_remote else lambda app: not app.is_remote_app()
-    wrapped_apps = [get_correct_app_class(row['doc']).wrap(row['doc']) for row in view_results]
-    return filter(remote_app_filter, wrapped_apps)
+
+def get_brief_apps_in_domain(domain, include_remote=True):
+    from .models import Application
+    from corehq.apps.app_manager.util import get_correct_app_class
+    docs = [row['value'] for row in Application.get_db().view(
+        'app_manager/applications_brief',
+        startkey=[domain],
+        endkey=[domain, {}]
+    )]
+    apps = [get_correct_app_class(doc).wrap(doc) for doc in docs]
+    if not include_remote:
+        apps = [app for app in apps if not app.is_remote_app()]
+    return apps
+
+
+def get_app_ids_in_domain(domain):
+    from .models import Application
+    return [row['id'] for row in Application.get_db().view(
+        'app_manager/applications',
+        startkey=[domain, None],
+        endkey=[domain, None, {}]
+    )]
 
 
 def get_built_app_ids(domain):
@@ -124,12 +157,29 @@ def get_built_app_ids(domain):
     return [app_id for app_id in app_ids if app_id]
 
 
-def get_exports_by_application(domain):
+def get_all_apps(domain):
+    """
+    Returns a list of all the apps ever built and current Applications.
+    Used for subscription management when apps use subscription only features
+    that shouldn't be present in built apps as well as app definitions.
+    """
     from .models import Application
-    return Application.get_db().view(
-        'exports_forms/by_xmlns',
-        startkey=['^Application', domain],
-        endkey=['^Application', domain, {}],
-        reduce=False,
-        stale=settings.COUCH_STALE_QUERY,
+    from corehq.apps.app_manager.util import get_correct_app_class
+    saved_apps = Application.get_db().view(
+        'app_manager/saved_app',
+        startkey=[domain],
+        endkey=[domain, {}],
+        include_docs=True,
     )
+    all_apps = [get_correct_app_class(row['doc']).wrap(row['doc']) for row in saved_apps]
+    all_apps.extend(get_apps_in_domain(domain))
+    return all_apps
+
+
+def get_case_types_from_apps(domain):
+    """Get the case types of modules in applications in the domain."""
+    q = (AppES()
+         .domain(domain)
+         .size(0)
+         .terms_facet('modules.case_type.exact', 'case_types'))
+    return q.run().facets.case_types.terms

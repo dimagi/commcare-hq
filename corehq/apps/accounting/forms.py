@@ -79,10 +79,8 @@ class BillingAccountBasicForm(forms.Form):
                                             required=False)
     currency = forms.ChoiceField(label="Currency")
 
-    emails = forms.CharField(
+    email_list = forms.CharField(
         label=ugettext_lazy('Client Contact Emails'),
-        widget=forms.Textarea,
-        max_length=BillingContactInfo._meta.get_field('emails').max_length,
     )
     is_active = forms.BooleanField(
         label=ugettext_lazy("Account is Active"),
@@ -112,6 +110,7 @@ class BillingAccountBasicForm(forms.Form):
         label=ugettext_lazy("Prepay or Postpay"),
         choices=PreOrPostPay.CHOICES
     )
+    account_basic = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, account, *args, **kwargs):
         self.account = account
@@ -121,7 +120,7 @@ class BillingAccountBasicForm(forms.Form):
                 'name': account.name,
                 'salesforce_account_id': account.salesforce_account_id,
                 'currency': account.currency.code,
-                'emails': contact_info.emails,
+                'email_list': ','.join(contact_info.email_list),
                 'is_active': account.is_active,
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
@@ -160,13 +159,14 @@ class BillingAccountBasicForm(forms.Form):
             crispy.Fieldset(
                 'Basic Information',
                 'name',
-                crispy.Field('emails', css_class='input-xxlarge'),
+                crispy.Field('email_list', css_class='input-xxlarge'),
                 'dimagi_contact',
                 'salesforce_account_id',
                 'currency',
                 'entry_point',
                 'last_payment_method',
                 'pre_or_post_pay',
+                'account_basic',
                 crispy.Div(*additional_fields),
             ),
             FormActions(
@@ -174,7 +174,8 @@ class BillingAccountBasicForm(forms.Form):
                     crispy.Submit(
                         'account_basic',
                         'Update Basic Information'
-                        if account is not None else 'Add New Account'
+                        if account is not None else 'Add New Account',
+                        css_class='disable-on-submit',
                     )
                 )
             )
@@ -190,18 +191,8 @@ class BillingAccountBasicForm(forms.Form):
             raise ValidationError(_("Name '%s' is already taken.") % name)
         return name
 
-    def clean_emails(self):
-        account_contact_emails = self.cleaned_data['emails']
-        if account_contact_emails != '':
-            invalid_emails = []
-            for email in account_contact_emails.split(','):
-                email_no_whitespace = email.strip()
-                # TODO - validate emails
-            if len(invalid_emails) != 0:
-                raise ValidationError(
-                    _("Invalid emails: %s") % ', '.join(invalid_emails)
-                )
-        return account_contact_emails
+    def clean_email_list(self):
+        return self.cleaned_data['email_list'].split(',')
 
     def clean_active_accounts(self):
         transfer_subs = self.cleaned_data['active_accounts']
@@ -240,7 +231,7 @@ class BillingAccountBasicForm(forms.Form):
         contact_info, _ = BillingContactInfo.objects.get_or_create(
             account=account,
         )
-        contact_info.emails = self.cleaned_data['emails']
+        contact_info.email_list = self.cleaned_data['email_list']
         contact_info.save()
 
         return account
@@ -269,11 +260,13 @@ class BillingAccountBasicForm(forms.Form):
         contact_info, _ = BillingContactInfo.objects.get_or_create(
             account=account,
         )
-        contact_info.emails = self.cleaned_data['emails']
+        contact_info.email_list = self.cleaned_data['email_list']
         contact_info.save()
 
 
 class BillingAccountContactForm(forms.ModelForm):
+
+    account_contact = forms.CharField(widget=forms.HiddenInput, required=False)
 
     class Meta:
         model = BillingContactInfo
@@ -386,6 +379,7 @@ class SubscriptionForm(forms.Form):
         choices=FundingSource.CHOICES,
         initial=FundingSource.CLIENT,
     )
+    set_subscription = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, subscription, account_id, web_user, *args, **kwargs):
         # account_id is not referenced if subscription is not None
@@ -426,7 +420,7 @@ class SubscriptionForm(forms.Form):
                 'plan_name': subscription.plan_version,
             })
             try:
-                plan_product = subscription.plan_version.product_rates.all()[0].product.product_type
+                plan_product = subscription.plan_version.product_rate.product.product_type
                 self.fields['plan_product'].initial = plan_product
             except (IndexError, SoftwarePlanVersion.DoesNotExist):
                 plan_product = (
@@ -549,12 +543,16 @@ class SubscriptionForm(forms.Form):
                 'auto_generate_credits',
                 'service_type',
                 'pro_bono_status',
-                'funding_source'
+                'funding_source',
+                'set_subscription'
             ),
             FormActions(
                 crispy.ButtonHolder(
-                    crispy.Submit('set_subscription',
-                           '%s Subscription' % ('Update' if self.is_existing else 'Create'))
+                    crispy.Submit(
+                        'set_subscription',
+                        '%s Subscription' % ('Update' if self.is_existing else 'Create'),
+                        css_class='disable-on-submit',
+                    )
                 )
             )
         )
@@ -626,7 +624,7 @@ class SubscriptionForm(forms.Form):
                 not self.cleaned_data['do_not_invoice']
                 and (
                     not BillingContactInfo.objects.filter(account=account).exists()
-                    or not account.billingcontactinfo.emails
+                    or not account.billingcontactinfo.email_list
                 )
             ):
                 from corehq.apps.accounting.views import ManageBillingAccountView
@@ -650,11 +648,6 @@ class SubscriptionForm(forms.Form):
         if end_date:
             if start_date > end_date:
                 raise ValidationError(_("End date must be after start date."))
-            if (
-                self.subscription and self.subscription.date_end != end_date
-                and end_date <= datetime.date.today()
-            ):
-                raise ValidationError(_("End date must be in the future."))
 
         return self.cleaned_data
 
@@ -722,7 +715,7 @@ class ChangeSubscriptionForm(forms.Form):
                 StrictButton(
                     "Change Subscription",
                     type="submit",
-                    css_class="btn-primary",
+                    css_class="btn-primary disable-on-submit",
                 ),
             ),
         )
@@ -754,6 +747,7 @@ class CreditForm(forms.Form):
     )
     product_type = forms.ChoiceField(required=False, label=ugettext_lazy("Product Type"))
     feature_type = forms.ChoiceField(required=False, label=ugettext_lazy("Feature Type"))
+    adjust = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, account, subscription, *args, **kwargs):
         self.account = account
@@ -763,10 +757,7 @@ class CreditForm(forms.Form):
         product_choices = [('', 'Any')]
         product_choices.extend(SoftwareProductType.CHOICES)
         self.fields['product_type'].choices = product_choices
-
-        feature_choices = [('', 'Any')]
-        feature_choices.extend(FeatureType.CHOICES)
-        self.fields['feature_type'].choices = feature_choices
+        self.fields['feature_type'].choices = FeatureType.CHOICES
 
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
@@ -777,10 +768,15 @@ class CreditForm(forms.Form):
                 crispy.Field('rate_type', data_bind="value: rateType"),
                 crispy.Div('product_type', data_bind="visible: showProduct"),
                 crispy.Div('feature_type', data_bind="visible: showFeature"),
+                'adjust'
             ),
             FormActions(
                 crispy.ButtonHolder(
-                    crispy.Submit('adjust_credit', 'Update Credit')
+                    crispy.Submit(
+                        'adjust_credit',
+                        'Update Credit',
+                        css_class='disable-on-submit',
+                    ),
                 )
             )
         )
@@ -822,6 +818,7 @@ class CancelForm(forms.Form):
     note = forms.CharField(
         widget=forms.TextInput,
     )
+    cancel_subscription = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, subscription, *args, **kwargs):
         super(CancelForm, self).__init__(*args, **kwargs)
@@ -833,11 +830,12 @@ class CancelForm(forms.Form):
             crispy.Fieldset(
                 'Cancel Subscription',
                 crispy.Field('note', **({'readonly': True} if can_cancel else {})),
+                'cancel_subscription'
             ),
             FormActions(
                 StrictButton(
                     'CANCEL SUBSCRIPTION',
-                    css_class='btn-danger',
+                    css_class='btn-danger disable-on-submit',
                     name='cancel_subscription',
                     type='submit',
                     **({'disabled': True} if can_cancel else {})
@@ -848,6 +846,7 @@ class CancelForm(forms.Form):
 
 class SuppressSubscriptionForm(forms.Form):
     submit_kwarg = 'suppress_subscription'
+    suppress_subscription = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, subscription, *args, **kwargs):
         self.subscription = subscription
@@ -861,6 +860,7 @@ class SuppressSubscriptionForm(forms.Form):
                 crispy.HTML('Warning: this can only be undone by a developer.'),
                 css_class='alert alert-error',
             ),
+            'suppress_subscription'
         ]
         if self.subscription.is_active:
             fields.append(crispy.Div(
@@ -876,7 +876,7 @@ class SuppressSubscriptionForm(forms.Form):
             FormActions(
                 StrictButton(
                     'Suppress Subscription',
-                    css_class='btn-danger',
+                    css_class='btn-danger disable-on-submit',
                     name=self.submit_kwarg,
                     type='submit',
                     **({'disabled': True} if self.subscription.is_active else {})
@@ -917,8 +917,11 @@ class PlanInformationForm(forms.Form):
             ),
             FormActions(
                 crispy.ButtonHolder(
-                    crispy.Submit('plan_information',
-                           '%s Software Plan' % ('Update' if plan is not None else 'Create'))
+                    crispy.Submit(
+                        'plan_information',
+                        '%s Software Plan' % ('Update' if plan is not None else 'Create'),
+                        css_class='disable-on-submit',
+                    )
                 )
             )
         )
@@ -1176,7 +1179,7 @@ class SoftwarePlanVersionForm(forms.Form):
             FormActions(
                 StrictButton(
                     'Update Plan Version',
-                    css_class='btn-primary',
+                    css_class='btn-primary disable-on-submit',
                     type="submit",
                 ),
             )
@@ -1246,7 +1249,10 @@ class SoftwarePlanVersionForm(forms.Form):
     @memoized
     def current_products_to_rates(self):
         if self.plan_version is not None:
-            return dict([(r.product.id, r) for r in self.plan_version.product_rates.all()])
+            product_rate = self.plan_version.product_rate
+            return {
+                product_rate.product.id: product_rate
+            }
         else:
             return {}
 
@@ -1362,7 +1368,7 @@ class SoftwarePlanVersionForm(forms.Form):
         rate_ids = lambda x: set([r.id for r in x])
         if (not self.is_update
             and (self.plan_version is None
-                 or rate_ids(rate_instances).symmetric_difference(rate_ids(self.plan_version.product_rates.all())))):
+                 or rate_ids(rate_instances).symmetric_difference(rate_ids([self.plan_version.product_rate])))):
             self.is_update = True
         return original_data
 
@@ -1423,9 +1429,9 @@ class SoftwarePlanVersionForm(forms.Form):
             feature_rate.save()
             new_version.feature_rates.add(feature_rate)
 
-        for product_rate in self.new_product_rates:
-            product_rate.save()
-            new_version.product_rates.add(product_rate)
+        product_rate = self.new_product_rates[0]  # always contains one item
+        product_rate.save()
+        new_version.product_rate = product_rate
 
         new_version.save()
         messages.success(request, 'The version for %s Software Plan was successfully updated.' % new_version.plan.name)
@@ -1613,7 +1619,7 @@ class TriggerInvoiceForm(forms.Form):
             FormActions(
                 StrictButton(
                     "Trigger Invoice",
-                    css_class="btn-primary",
+                    css_class="btn-primary disable-on-submit",
                     type="submit",
                 ),
             )
@@ -1682,7 +1688,7 @@ class TriggerBookkeeperEmailForm(forms.Form):
             FormActions(
                 StrictButton(
                     "Trigger Bookkeeper Email",
-                    css_class="btn-primary",
+                    css_class="btn-primary disable-on-submit",
                     type="submit",
                 ),
             )
@@ -1729,7 +1735,7 @@ class TestReminderEmailFrom(forms.Form):
                 StrictButton(
                     "Send Reminder Emails",
                     type="submit",
-                    css_class='btn-primary'
+                    css_class='btn-primary disable-on-submit'
                 )
             )
         )
@@ -1762,6 +1768,8 @@ class AdjustBalanceForm(forms.Form):
     invoice_id = forms.CharField(
         widget=forms.HiddenInput(),
     )
+
+    adjust = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, invoice, *args, **kwargs):
         self.invoice = invoice
@@ -1798,6 +1806,7 @@ class AdjustBalanceForm(forms.Form):
                 crispy.Field('method'),
                 crispy.Field('note'),
                 crispy.Field('invoice_id'),
+                'adjust',
                 css_class='modal-body',
                 css_id="adjust-balance-form-%d" % invoice.id
             ),
@@ -1806,11 +1815,13 @@ class AdjustBalanceForm(forms.Form):
                     crispy.Submit(
                         'adjust_balance',
                         'Apply',
+                        css_class='disable-on-submit',
                         data_loading_text='Submitting...',
                     ),
                     crispy.Button(
                         'close',
                         'Close',
+                        css_class='disable-on-submit',
                         data_dismiss='modal',
                     ),
                 ),
@@ -1936,7 +1947,7 @@ class InvoiceInfoForm(forms.Form):
                         'Adjust Balance',
                         data_toggle='modal',
                         data_target='#adjustBalanceModal-%d' % invoice.id,
-                        css_class='disabled' if invoice.is_wire else '',
+                        css_class=('disabled' if invoice.is_wire else '') + ' disable-on-submit',
                     ),
                 ),
             ),
@@ -1949,6 +1960,7 @@ class ResendEmailForm(forms.Form):
         label="Additional Recipients:",
         required=False,
     )
+    resend = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, invoice, *args, **kwargs):
         self.invoice = invoice
@@ -1962,6 +1974,7 @@ class ResendEmailForm(forms.Form):
                     ', '.join(invoice.email_recipients)
                 ),
                 crispy.Field('additional_recipients'),
+                'resend',
                 css_class='modal-body',
             ),
             FormActions(
@@ -1969,11 +1982,13 @@ class ResendEmailForm(forms.Form):
                     crispy.Submit(
                         'resend_email',
                         'Send Email',
+                        css_class='disable-on-submit',
                         data_loading_text='Submitting...',
                     ),
                     crispy.Button(
                         'close',
                         'Close',
+                        css_class='disable-on-submit',
                         data_dismiss='modal',
                     ),
                 ),
@@ -1997,7 +2012,8 @@ class ResendEmailForm(forms.Form):
 
 
 class SuppressInvoiceForm(forms.Form):
-    submit_kwarg = 'suppress_invoice'
+    submit_kwarg = 'suppress'
+    suppress = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, invoice, *args, **kwargs):
         self.invoice = invoice
@@ -2011,12 +2027,13 @@ class SuppressInvoiceForm(forms.Form):
                 crispy.Div(
                     crispy.HTML('Warning: this can only be undone by a developer.'),
                     css_class='alert alert-error',
-                )
+                ),
+                'suppress',
             ),
             FormActions(
                 StrictButton(
                     'Suppress Invoice',
-                    css_class='btn-danger',
+                    css_class='btn-danger disable-on-submit',
                     name=self.submit_kwarg,
                     type='submit',
                 ),
@@ -2046,7 +2063,7 @@ class CreateAdminForm(forms.Form):
             ),
             StrictButton(
                 mark_safe('<i class="icon-plus"></i> %s' % "Add Admin"),
-                css_class="btn-success",
+                css_class="btn-success disable-on-submit",
                 type="submit",
             )
         )

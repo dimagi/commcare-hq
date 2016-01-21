@@ -11,13 +11,14 @@ from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstr
 from corehq.apps.domain.utils import DOMAIN_MODULE_KEY
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.sms.models import SMS
 from corehq.apps.users.models import WebUser, UserRole
 from django.test.client import Client
-from custom.ewsghana import StockLevelsReport
 from custom.ewsghana.api import EWSApi, Product, Location
 from custom.ewsghana.models import EWSExtension
+from custom.ewsghana.reports.specific_reports.stock_status_report import StockStatus
 from custom.ewsghana.tests.mock_endpoint import MockEndpoint
-from custom.ewsghana.utils import make_url
+from custom.ewsghana.utils import make_url, create_backend
 from dimagi.utils.couch.database import get_db
 
 TEST_DOMAIN = 'ewsghana-test-input-stock'
@@ -53,6 +54,7 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
         cls.api_object = EWSApi(TEST_DOMAIN, cls.endpoint)
         cls.api_object.prepare_commtrack_config()
         cls.api_object.prepare_custom_fields()
+        cls.api_object.create_or_edit_roles()
         cls.datapath = os.path.join(os.path.dirname(__file__), 'data')
 
         with open(os.path.join(cls.datapath, 'sample_products.json')) as f:
@@ -101,7 +103,10 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
 
         cls.username5 = 'ews_user5'
         cls.password5 = 'dummy'
-        cls.web_user5 = WebUser.create(TEST_DOMAIN, cls.username5, cls.password5)
+        cls.web_user5 = WebUser.create(TEST_DOMAIN, cls.username5, cls.password5, first_name='test',
+                                       last_name='test2')
+        cls.web_user5.set_default_phone_number('1111')
+        cls.web_user5.save()
         domain_membership = cls.web_user5.get_domain_membership(TEST_DOMAIN)
         domain_membership.location_id = cls.test_district.location_id
         domain_membership.role_id = UserRole.get_read_only_role_by_domain(cls.domain.name).get_id
@@ -118,6 +123,15 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
         cls.web_user6.eula.signed = True
         cls.web_user6.save()
 
+        cls.admin_username = 'admin'
+        cls.admin_password = 'dummy'
+        cls.admin = WebUser.create(TEST_DOMAIN, cls.admin_username, cls.admin_password)
+        domain_membership = cls.admin.get_domain_membership(TEST_DOMAIN)
+        domain_membership.role_id = UserRole.by_domain_and_name(cls.domain.name, 'Administrator')[0].get_id
+
+        cls.admin.eula.signed = True
+        cls.admin.save()
+
         EWSExtension.objects.create(
             user_id=cls.web_user6.get_id,
             domain=TEST_DOMAIN,
@@ -127,6 +141,7 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
         cls.ad = SQLProduct.objects.get(domain=TEST_DOMAIN, code='ad')
         cls.al = SQLProduct.objects.get(domain=TEST_DOMAIN, code='al')
 
+        cls.mapping, cls.backend = create_backend()
         cls.client = Client()
 
     def setUp(self):
@@ -192,6 +207,17 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
         self.assertEqual(tsactive.products.count(), 2)
         self.assertEqual(len(list(formset)), tsactive.products.count())
 
+    def test_admin_web_user_access(self):
+        self.client.login(username=self.admin_username, password=self.admin_password)
+
+        view_url = reverse('input_stock', kwargs={'domain': TEST_DOMAIN, 'site_code': 'tsactive'})
+        response = self.client.get(view_url, follow=True)
+        self.assertEqual(response.status_code, 200)
+
+        view_url = reverse('input_stock', kwargs={'domain': TEST_DOMAIN, 'site_code': 'rsp'})
+        response = self.client.get(view_url, follow=True)
+        self.assertEqual(response.status_code, 200)
+
     def test_web_user_report_submission(self):
         self.client.login(username=self.username5, password=self.password5)
         view_url = reverse('input_stock', kwargs={'domain': TEST_DOMAIN, 'site_code': 'tsactive'})
@@ -214,13 +240,19 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
 
         response = self.client.post(view_url, data=data)
         url = make_url(
-            StockLevelsReport,
+            StockStatus,
             self.domain,
             '?location_id=%s&filter_by_program=all&startdate='
             '&enddate=&report_type=&filter_by_product=all',
             (tsactive.location_id, )
         )
         self.assertRedirects(response, url)
+        messages = SMS.objects.filter(domain=TEST_DOMAIN)
+        self.assertEqual(messages.count(), 1)
+        self.assertEqual(
+            messages[0].text,
+            'Dear test test2, thank you for reporting the commodities you have. You received ad 30 al 17.'
+        )
 
         stock_states = StockState.objects.filter(case_id=tsactive.supply_point_id)
         stock_transactions = StockTransaction.objects.filter(case_id=tsactive.supply_point_id)
@@ -269,7 +301,7 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
 
         response = self.client.post(view_url, data=data)
         url = make_url(
-            StockLevelsReport,
+            StockStatus,
             self.domain,
             '?location_id=%s&filter_by_program=all&startdate='
             '&enddate=&report_type=&filter_by_product=all',
@@ -292,6 +324,8 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
 
     @classmethod
     def tearDownClass(cls):
+        cls.backend.delete()
+        cls.mapping.delete()
         cls.web_user1.delete()
         cls.domain.delete()
         cls.teardown_subscription()

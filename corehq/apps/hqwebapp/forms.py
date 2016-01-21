@@ -3,9 +3,13 @@ import json
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
+from django.middleware.csrf import get_token
 from django.http import QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
+from django.utils.safestring import mark_safe
+
+from corehq.apps.users.models import CouchUser
 
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -20,6 +24,23 @@ class EmailAuthenticationForm(AuthenticationForm):
     def clean_username(self):
         username = self.cleaned_data['username'].lower()
         return username
+
+    def clean(self):
+        lockout_message = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password.'))
+        username = self.cleaned_data['username']
+        try:
+            cleaned_data = super(EmailAuthenticationForm, self).clean()
+        except ValidationError:
+            user = CouchUser.get_by_username(username)
+            if user and user.is_web_user() and user.is_locked_out():
+                raise ValidationError(lockout_message)
+            else:
+                raise
+        user = CouchUser.get_by_username(username)
+        if user and user.is_web_user() and user.is_locked_out():
+            raise ValidationError(lockout_message)
+        return cleaned_data
+
 
 
 class CloudCareAuthenticationForm(EmailAuthenticationForm):
@@ -49,7 +70,7 @@ class BulkUploadForm(forms.Form):
                 ),
             ),
             StrictButton(
-                ('<i class="icon-cloud-upload"></i> Upload %s'
+                ('<i class="fa fa-cloud-upload"></i> Upload %s'
                  % plural_noun.title()),
                 css_class='btn-primary',
                 data_bind='disable: !file()',
@@ -120,7 +141,9 @@ class FormListForm(object):
     child_form_data = forms.CharField(widget=forms.HiddenInput)
     template = "style/bootstrap2/partials/form_list_form.html"
 
-    def __init__(self, data=None, *args, **kwargs):
+    def __init__(self, data=None, request=None, *args, **kwargs):
+        self.request = request
+
         if self.child_form_class is None:
             raise NotImplementedError("You must specify a child form to use"
                                       "for each row")
@@ -217,6 +240,7 @@ class FormListForm(object):
             'row_spec': self.get_row_spec(),
             'rows': map(self.form_to_json, self.child_forms),
             'errors': getattr(self, 'errors', False),
+            'csrf_token': get_token(self.request),
         }
 
     def as_table(self):

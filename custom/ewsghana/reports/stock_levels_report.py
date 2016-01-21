@@ -1,3 +1,4 @@
+import collections
 from collections import OrderedDict
 from datetime import timedelta
 from itertools import chain
@@ -13,11 +14,13 @@ from corehq.apps.commtrack.models import StockState
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import Axis
+from corehq.apps.users.models import WebUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter, EWSRestrictionLocationFilter
-from custom.ewsghana.models import FacilityInCharge
+from custom.ewsghana.models import FacilityInCharge, EWSExtension
 from custom.ewsghana.reports import EWSData, MultiReport, EWSLineChart, ProductSelectionPane
 from custom.ewsghana.utils import has_input_stock_permissions, ews_date_format
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
@@ -87,12 +90,11 @@ class FacilityReportData(EWSData):
         ).order_by('-last_modified_date')
 
         for state in stock_states:
-            if state.daily_consumption:
-                monthly_consumption = round(state.get_monthly_consumption())
+            monthly_consumption = state.get_monthly_consumption()
+            max_level = 0
+            if monthly_consumption:
+                monthly_consumption = round(monthly_consumption)
                 max_level = round(monthly_consumption * float(loc.location_type.overstock_threshold))
-            else:
-                monthly_consumption = None
-                max_level = 0
 
             state_grouping[state.product_id] = {
                 'commodity': state.sql_product.name,
@@ -203,7 +205,7 @@ class InventoryManagementData(EWSData):
             sql_product__in=loc.products,
         )
 
-        consumptions = {ss.product_id: ss.daily_consumption for ss in stoke_states}
+        consumptions = {ss.product_id: ss.get_daily_consumption() for ss in stoke_states}
         st = StockTransaction.objects.filter(
             case_id=loc.supply_point_id,
             sql_product__in=loc.products,
@@ -317,17 +319,26 @@ class UsersData(EWSData):
             'url': reverse(EditCommCareUserView.urlname, args=[self.config['domain'], sms_user.get_id])
         }
 
-        web_users = [
-            {
-                'id': web_user['_id'],
-                'first_name': web_user['first_name'],
-                'last_name': web_user['last_name'],
-                'email': web_user['email']
-            }
-            for web_user in UserES().web_users().domain(self.config['domain']).term(
-                "domain_memberships.location_id", self.config['location_id']
-            ).run().hits
-        ]
+        web_users_from_extension = list(iter_docs(
+            WebUser.get_db(),
+            EWSExtension.objects.filter(domain=self.domain,
+                                        location_id=self.location_id).values_list('user_id', flat=True)
+        ))
+
+        WebUserInfo = collections.namedtuple('WebUserInfo', 'id first_name last_name email')
+
+        web_users = {
+            WebUserInfo(
+                id=web_user['_id'],
+                first_name=web_user['first_name'],
+                last_name=web_user['last_name'],
+                email=web_user['email']
+            )
+            for web_user in (UserES().web_users().domain(self.config['domain']).term(
+                "domain_memberships.location_id", self.location_id
+            ).run().hits + web_users_from_extension)
+        }
+
         return render_to_string('ewsghana/partials/users_tables.html', {
             'users': [user_to_dict(user) for user in users],
             'domain': self.domain,
@@ -347,17 +358,16 @@ class StockLevelsReport(MultiReport):
 
     @property
     def report_config(self):
+        report_config = super(StockLevelsReport, self).report_config
         program = self.request.GET.get('filter_by_program')
         products = self.request.GET.getlist('filter_by_product')
-        return dict(
-            domain=self.domain,
+        report_config.update(dict(
             startdate=self.datespan.startdate_utc,
             enddate=self.datespan.enddate_utc,
-            location_id=self.request.GET.get('location_id'),
             program=program if program != ALL_OPTION else None,
-            products=products if products and products[0] != ALL_OPTION else [],
-            user=self.request.couch_user
-        )
+            products=products if products and products[0] != ALL_OPTION else []
+        ))
+        return report_config
 
     @property
     @memoized

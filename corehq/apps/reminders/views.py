@@ -7,8 +7,9 @@ import pytz
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render
-from corehq.apps.style.decorators import use_bootstrap3, use_knockout_js, use_jquery_ui, use_timepicker, \
-    use_datatables
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.style.decorators import use_bootstrap3, use_datatables, use_jquery_ui, \
+    use_timepicker, use_select2
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
@@ -16,9 +17,8 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.app_manager.models import Application, Form
-from corehq.apps.app_manager.util import (get_case_properties,
-    get_correct_app_class)
+from corehq.apps.app_manager.models import Form
+from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.hqwebapp.views import (CRUDPaginatedViewMixin,
     DataTablesAJAXPaginationMixin)
 from corehq import toggles
@@ -73,7 +73,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from casexml.apps.case.models import CommCareCase
 from dateutil.parser import parse
-from corehq.apps.sms.util import close_task
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count, iter_docs
 from custom.ewsghana.forms import EWSBroadcastForm
@@ -370,6 +369,14 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     template_name = 'reminders/manage_scheduled_reminder.html'
     ui_type = UI_SIMPLE_FIXED
 
+    @method_decorator(reminders_framework_permission)
+    @use_bootstrap3
+    @use_jquery_ui
+    @use_timepicker
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(CreateScheduledReminderView, self).dispatch(request, *args, **kwargs)
+
     @property
     def reminder_form_class(self):
         return {
@@ -445,24 +452,9 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         return self.request.POST.get('caseType')
 
     @property
-    def app_ids(self):
-        data = Application.get_db().view(
-            'app_manager/applications_brief',
-            reduce=False,
-            startkey=[self.domain],
-            endkey=[self.domain, {}],
-        ).all()
-        return [d['id'] for d in data]
-
-    @property
     @memoized
     def apps(self):
-        result = []
-        for app_doc in iter_docs(Application.get_db(), self.app_ids):
-            app = get_correct_app_class(app_doc).wrap(app_doc)
-            if not app.is_remote_app():
-                result.append(app)
-        return result
+        return get_apps_in_domain(self.domain, include_remote=False)
 
     @property
     def search_term(self):
@@ -574,10 +566,6 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     def _format_response(self, resp_list):
         return [{'text': r, 'id': r} for r in resp_list]
 
-    @method_decorator(reminders_framework_permission)
-    def dispatch(self, request, *args, **kwargs):
-        return super(CreateScheduledReminderView, self).dispatch(request, *args, **kwargs)
-
     def post(self, *args, **kwargs):
         if self.action in [
             'search_case_type',
@@ -595,7 +583,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
         return self.get(*args, **kwargs)
 
     def process_schedule_form(self):
-        new_handler = CaseReminderHandler()
+        new_handler = CaseReminderHandler(use_today_if_start_date_is_blank=False)
         self.schedule_form.save(new_handler)
 
 
@@ -721,6 +709,11 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
     page_title = ugettext_noop("New Structured Keyword")
     template_name = 'reminders/keyword.html'
     process_structured_message = True
+
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    def dispatch(self, *args, **kwargs):
+        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
     @property
     def parent_pages(self):
@@ -925,7 +918,6 @@ class CreateBroadcastView(BaseMessagingSectionView):
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_bootstrap3
-    @use_knockout_js
     @use_jquery_ui
     @use_timepicker
     def dispatch(self, *args, **kwargs):
@@ -1147,6 +1139,12 @@ class RemindersListView(BaseMessagingSectionView):
     urlname = "list_reminders_new"
     page_title = ugettext_noop("Reminder Definitions")
 
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    @use_datatables
+    def dispatch(self, *args, **kwargs):
+        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
@@ -1334,6 +1332,11 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     limit_text = ugettext_noop("keywords per page")
     empty_notification = ugettext_noop("You have no keywords. Please add one!")
     loading_message = ugettext_noop("Loading keywords...")
+
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    def dispatch(self, *args, **kwargs):
+        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
     @property
     def page_url(self):

@@ -9,7 +9,6 @@
 
 {% block js %}
     {{ block.super }}
-    <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
     <script src="{% static 'hqwebapp/js/main.js' %}"></script>
 {% endblock %}
 
@@ -57,7 +56,7 @@
                         {% endfor %}
 
                         <option disabled>{% trans "From unknown or deleted applications:" %}</option>
-                        {% for case_type in case_types_from_cases %}
+                        {% for case_type in unrecognized_case_types %}
                         <option value="{{case_type|escape}}">{{case_type|escape}}</option>
                         {% endfor %}
                     </select>

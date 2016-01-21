@@ -32,11 +32,12 @@ from no_exceptions.exceptions import Http403
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.app_manager.models import Application
+from corehq.apps.analytics.tasks import track_workflow, track_sent_invite_on_hubspot, update_hubspot_properties
+from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
 from corehq.apps.domain.models import Domain, toggles
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BasePageView, logout
@@ -53,7 +54,7 @@ from corehq.apps.sms.verify import (
 )
 from corehq.apps.style.decorators import (
     use_bootstrap3,
-    use_knockout_js,
+    use_angular_js,
 )
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
@@ -62,7 +63,7 @@ from corehq.apps.users.forms import (BaseUserInfoForm, CommtrackUserForm, Domain
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
                                       DomainRemovalRecord, UserRole, AdminUserRole, Invitation, PublicUser,
                                       DomainMembershipError)
-from corehq.elastic import ADD_TO_ES_FILTER, es_query, ES_URLS
+from corehq.elastic import ADD_TO_ES_FILTER, es_query
 from corehq.util.couch import get_document_or_404
 
 
@@ -306,12 +307,11 @@ class EditWebUserView(BaseEditUserView):
 
 
 def get_domain_languages(domain):
-    app_languages = [res['key'][1] for res in Application.get_db().view(
-        'languages/list',
-        startkey=[domain],
-        endkey=[domain, {}],
-        group='true'
-    ).all()]
+    query = (AppES()
+             .domain(domain)
+             .terms_facet('langs', 'languages')
+             .size(0))
+    app_languages = query.run().facets.languages.terms
 
     translation_doc = StandaloneTranslationDoc.get_obj(domain, 'sms')
     sms_languages = translation_doc.langs if translation_doc else []
@@ -403,7 +403,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     urlname = 'web_users'
 
     @use_bootstrap3
-    @use_knockout_js
+    @use_angular_js
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
         return super(ListWebUsersView, self).dispatch(request, *args, **kwargs)
@@ -421,7 +421,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
         default_fields = ["username", "last_name", "first_name"]
         q["query"] = search_string_query(query, default_fields)
         return es_query(
-            params={}, q=q, es_url=ES_URLS["users"],
+            params={}, q=q, es_index='users',
             size=limit, start_at=skip,
         )
 
@@ -664,6 +664,7 @@ class UserInvitationView(object):
                 track_workflow(request.couch_user.get_email(),
                                "Current user accepted a project invitation",
                                {"Current user accepted a project invitation": "yes"})
+                update_hubspot_properties.delay(request.couch_user, {'user_accepted_domain_invitation': 'yes'})
                 return HttpResponseRedirect(self.redirect_to_on_success)
             else:
                 mobile_user = CouchUser.from_django_user(request.user).is_commcare_user()
@@ -688,6 +689,7 @@ class UserInvitationView(object):
                     track_workflow(request.POST['email'],
                                    "New User Accepted a project invitation",
                                    {"New User Accepted a project invitation": "yes"})
+                    update_hubspot_properties.delay(user, {'new_user_accepted_invitation_created_account': 'yes'})
                     return HttpResponseRedirect(reverse("domain_homepage", args=[invitation.domain]))
             else:
                 if CouchUser.get_by_username(invitation.email):
@@ -857,6 +859,8 @@ class InviteWebUserView(BaseManageWebUserView):
                 track_workflow(request.couch_user.get_email(),
                                "Sent a project invitation",
                                {"Sent a project invitation": "yes"})
+                meta = get_meta(request)
+                track_sent_invite_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
                 messages.success(request, "Invitation sent to %s" % data["email"])
 
             if create_invitation:

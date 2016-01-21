@@ -2,7 +2,6 @@
 from distutils.version import LooseVersion
 from itertools import chain
 import tempfile
-from mock import Mock
 import os
 import logging
 import hashlib
@@ -17,7 +16,7 @@ from copy import deepcopy
 from urllib2 import urlopen
 from urlparse import urljoin
 
-from couchdbkit import ResourceConflict, MultipleResultsFound
+from couchdbkit import MultipleResultsFound
 import itertools
 from lxml import etree
 from django.core.cache import cache
@@ -27,7 +26,6 @@ from django.utils.translation import override, ugettext as _, ugettext
 from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
-from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -71,7 +69,11 @@ from corehq.apps.domain.models import cached_property, Domain
 from corehq.apps.app_manager import current_builds, app_strings, remote_app, \
     id_strings, commcare_settings
 from corehq.apps.app_manager.suite_xml import xml_models as suite_models
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_latest_build_doc,
+    get_latest_released_app_doc,
+)
 from corehq.apps.app_manager.util import (
     split_path,
     save_xform,
@@ -80,6 +82,7 @@ from corehq.apps.app_manager.util import (
     actions_use_usercase,
     update_unique_ids,
     app_callout_templates,
+    use_app_aware_sync,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -93,7 +96,6 @@ from .exceptions import (
     LocationXpathValidationError,
     ModuleNotFoundException,
     ModuleIdMissingException,
-    NoMatchingFilterException,
     RearrangeError,
     SuiteValidationError,
     VersioningError,
@@ -715,19 +717,9 @@ class CommentMixin(DocumentSchema):
     @property
     def short_comment(self):
         """
-        Trim comment to 72 chars
-
-        >>> form = CommentMixin(
-        ...     comment=u"Twas bryllyg, and þe slythy toves "
-        ...             u"Did gyre and gymble in þe wabe: "
-        ...             u"All mimsy were þe borogoves; "
-        ...             u"And þe mome raths outgrabe."
-        ... )
-        >>> form.short_comment
-        u'Twas bryllyg, and \\xc3\\xbee slythy toves Did gyre and gymble in \\xc3\\xbee wabe: A...'
-
+        Trim comment to 500 chars (about 100 words)
         """
-        return self.comment if len(self.comment) <= 72 else self.comment[:69] + '...'
+        return self.comment if len(self.comment) <= 500 else self.comment[:497] + '...'
 
 
 class FormBase(DocumentSchema):
@@ -3288,11 +3280,11 @@ class ReportAppFilter(DocumentSchema):
         else:
             return super(ReportAppFilter, cls).wrap(data)
 
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         raise NotImplementedError
 
 
-def _filter_by_case_sharing_group_id(user):
+def _filter_by_case_sharing_group_id(user, ui_filter):
     from corehq.apps.reports_core.filters import Choice
     return [
         Choice(value=group._id, display=None)
@@ -3300,17 +3292,16 @@ def _filter_by_case_sharing_group_id(user):
     ]
 
 
-def _filter_by_location_id(user):
-    from corehq.apps.reports_core.filters import Choice
-    return Choice(value=user.location_id, display=None)
+def _filter_by_location_id(user, ui_filter):
+    return ui_filter.value(**{ui_filter.name: user.location_id})
 
 
-def _filter_by_username(user):
+def _filter_by_username(user, ui_filter):
     from corehq.apps.reports_core.filters import Choice
     return Choice(value=user.username, display=None)
 
 
-def _filter_by_user_id(user):
+def _filter_by_user_id(user, ui_filter):
     from corehq.apps.reports_core.filters import Choice
     return Choice(value=user._id, display=None)
 
@@ -3326,14 +3317,14 @@ _filter_type_to_func = {
 class AutoFilter(ReportAppFilter):
     filter_type = StringProperty(choices=_filter_type_to_func.keys())
 
-    def get_filter_value(self, user):
-        return _filter_type_to_func[self.filter_type](user)
+    def get_filter_value(self, user, ui_filter):
+        return _filter_type_to_func[self.filter_type](user, ui_filter)
 
 
 class CustomDataAutoFilter(ReportAppFilter):
     custom_data_property = StringProperty()
 
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         from corehq.apps.reports_core.filters import Choice
         return Choice(value=user.user_data[self.custom_data_property], display=None)
 
@@ -3341,7 +3332,7 @@ class CustomDataAutoFilter(ReportAppFilter):
 class StaticChoiceFilter(ReportAppFilter):
     select_value = StringProperty()
 
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         from corehq.apps.reports_core.filters import Choice
         return [Choice(value=self.select_value, display=None)]
 
@@ -3349,7 +3340,7 @@ class StaticChoiceFilter(ReportAppFilter):
 class StaticChoiceListFilter(ReportAppFilter):
     value = StringListProperty()
 
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         from corehq.apps.reports_core.filters import Choice
         return [Choice(value=string_value, display=None) for string_value in self.value]
 
@@ -3365,7 +3356,7 @@ class StaticDatespanFilter(ReportAppFilter):
         required=True,
     )
 
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         start_date, end_date = get_daterange_start_end_dates(self.date_range)
         return DateSpan(startdate=start_date, enddate=end_date)
 
@@ -3385,7 +3376,7 @@ class CustomDatespanFilter(ReportAppFilter):
     date_number = StringProperty(required=True)
     date_number2 = StringProperty()
 
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         today = datetime.date.today()
         start_date = end_date = None
         days = int(self.date_number)
@@ -3418,7 +3409,7 @@ class CustomDatespanFilter(ReportAppFilter):
 
 
 class MobileSelectFilter(ReportAppFilter):
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         return None
 
 
@@ -3822,6 +3813,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     Abstract base class for Application and RemoteApp.
     Contains methods for generating the various files and zipping them into CommCare.jar
 
+    There are several flavors of Applications:
+        Application - The current state of the application has copy_of==None
+        SavedAppBuild - Whenever the app is built, a copy is created, and
+            copy_of will be set to the original application's id.
+        Released builds are SavedAppBuilds with is_released==True.  These have
+            been starred on the releases page.
     """
 
     recipients = StringProperty(default="")
@@ -3930,15 +3927,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         return self
 
-    @classmethod
-    def get_latest_build(cls, domain, app_id):
-        build = cls.view('app_manager/saved_app',
-                                     startkey=[domain, app_id, {}],
-                                     endkey=[domain, app_id],
-                                     descending=True,
-                                     limit=1).one()
-        return build if build else None
-
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)
 
@@ -3957,33 +3945,14 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 descending=True,
             ).first()
 
+    @memoized
     def get_latest_saved(self):
         """
         This looks really similar to get_latest_app, not sure why tim added
         """
-        if not hasattr(self, '_latest_saved'):
-            released = self.__class__.view('app_manager/applications',
-                startkey=['^ReleasedApplications', self.domain, self._id, {}],
-                endkey=['^ReleasedApplications', self.domain, self._id],
-                limit=1,
-                descending=True,
-                include_docs=True
-            )
-            if len(released) > 0:
-                self._latest_saved = released.all()[0]
-            else:
-                saved = self.__class__.view('app_manager/saved_app',
-                    startkey=[self.domain, self._id, {}],
-                    endkey=[self.domain, self._id],
-                    descending=True,
-                    limit=1,
-                    include_docs=True
-                )
-                if len(saved) > 0:
-                    self._latest_saved = saved.all()[0]
-                else:
-                    self._latest_saved = None  # do not return this app!
-        return self._latest_saved
+        doc = (get_latest_released_app_doc(self.domain, self._id) or
+               get_latest_build_doc(self.domain, self._id))
+        return self.__class__.wrap(doc) if doc else None
 
     def set_admin_password(self, raw_password):
         salt = os.urandom(5).encode('hex')
@@ -4068,7 +4037,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @absolute_url_property
     def ota_restore_url(self):
-        return reverse('corehq.apps.ota.views.restore', args=[self.domain])
+        if use_app_aware_sync(self):
+            return reverse('app_aware_restore', args=[self.domain, self._id])
+        return reverse('ota_restore', args=[self.domain])
 
     @absolute_url_property
     def form_record_url(self):
@@ -4262,16 +4233,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             return self.lazy_fetch_attachment("qrcode.png")
         except ResourceNotFound:
-            try:
-                from pygooglechart import QRChart
-            except ImportError:
-                raise Exception(
-                    "Aw shucks, someone forgot to install "
-                    "the google chart library on this machine "
-                    "and this feature needs it. "
-                    "To get it, run easy_install pygooglechart. "
-                    "Until you do that this won't work."
-                )
+            from pygooglechart import QRChart
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
             code.add_data(self.odk_profile_url if not with_media else self.odk_media_profile_url)
@@ -4412,6 +4374,7 @@ class SavedAppBuild(ApplicationBase):
             'built_on_date': built_on_user_time.ui_string(USER_DATE_FORMAT),
             'built_on_time': built_on_user_time.ui_string(USER_TIME_FORMAT),
             'build_label': self.built_with.get_label(),
+            'menu_item_label': self.built_with.get_menu_item_label(),
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name,
             'enable_offline_install': self.enable_offline_install,

@@ -835,8 +835,12 @@ class FormExportSchema(HQExportSchema):
             for column in [column for table in self.tables for column in table.columns]:
                 if isinstance(column, SplitColumn):
                     question = self.question_schema.question_schema.get(column.index)
-                    column.options = question.options
-                    column.ignore_extras = True
+                    # this is to workaround a bug where a "special" column was incorrectly
+                    # being flagged as a SplitColumn.
+                    # https://github.com/dimagi/commcare-hq/pull/9915
+                    if question:
+                        column.options = question.options
+                        column.ignore_extras = True
 
     def update_question_schema(self):
         schema = self.question_schema
@@ -937,17 +941,6 @@ class FormExportSchema(HQExportSchema):
         if form and isinstance(form, Form):
             return bool(form.active_actions())
         return False
-
-
-class FormDeidExportSchema(FormExportSchema):
-
-    @property
-    def transform(self):
-        return SerializableFunction()
-
-    @classmethod
-    def get_case(cls, doc, case_id):
-        pass
 
 
 class CaseExportSchema(HQExportSchema):

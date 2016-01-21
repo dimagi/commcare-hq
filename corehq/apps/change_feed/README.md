@@ -17,6 +17,16 @@ This can be accomplished using the following script (assuming you have an approp
 ansible-playbook -i inventories/development -e '@vars/dev.yml' deploy_stack.yml --tags=kafka
 ```
 
+### Setup on Mac
+
+You can follow the quick start guide above, or you can use brew to install kafka (it installs a slightly older version 0.8).
+
+```
+brew install kafka
+cd /usr/local/opt/kafka/libexec
+./bin/zookeeper-server-start.sh config/zookeeper.properties & ./bin/kafka-server-start.sh config/server.properties
+```
+
 # Configuration
 
 If you use the default configuration you should not have to do anything.

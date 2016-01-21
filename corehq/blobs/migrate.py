@@ -51,11 +51,14 @@ models' attachments to the blob database:
    Then modify the new migration, adding an operation:
    ```
    operations = [
-       migrations.RunPython(*assert_migration_complete("<your_slug>"))
+       HqRunPython(*assert_migration_complete("<your_slug>"))
    ]
    ```
    Don't forget to put
-   `from corehq.blobs.migrate import assert_migration_complete`
+   ```
+   from corehq.blobs.migrate import assert_migration_complete
+   from corehq.sql_db.operations import HqRunPython
+   ```
    at the top of the file.
 
 7. Deploy.
@@ -87,7 +90,9 @@ Run these commands to procede with migrations:
 ./manage.py migrate
 
 Note: --file=FILE is optional and can be omitted if you do not want to
-keep a copy of the pre-migrated couch documents.
+keep a copy of the couch documents that were migrated. Also note that
+the copy of the couch documents will not include attachment content
+because `get_all_docs_with_doc_types()` does not support that.
 
 See also:
 https://github.com/dimagi/commcare-hq/blob/master/corehq/blobs/migrate.py

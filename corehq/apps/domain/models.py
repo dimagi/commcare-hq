@@ -4,6 +4,7 @@ import uuid
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration import set_migration_complete
 from corehq.dbaccessors.couchapps.all_docs import \
@@ -439,10 +440,7 @@ class Domain(Document, SnapshotMixin):
         couch_user.save()
 
     def applications(self):
-        from corehq.apps.app_manager.models import ApplicationBase
-        return ApplicationBase.view('app_manager/applications_brief',
-                                    startkey=[self.name],
-                                    endkey=[self.name, {}]).all()
+        return get_brief_apps_in_domain(self.name)
 
     def full_applications(self, include_builds=True):
         from corehq.apps.app_manager.models import Application, RemoteApp
@@ -635,7 +633,7 @@ class Domain(Document, SnapshotMixin):
         from corehq.apps.app_manager.dbaccessors import get_app
         from corehq.apps.reminders.models import CaseReminderHandler
         from corehq.apps.fixtures.models import FixtureDataItem
-        from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+        from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
         from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
         from corehq.apps.fixtures.models import FixtureDataType
         from corehq.apps.users.models import UserRole
@@ -683,7 +681,7 @@ class Domain(Document, SnapshotMixin):
                 if app:
                     return app._id, app.doc_type
 
-            for app in get_apps_in_domain(self.name):
+            for app in get_brief_apps_in_domain(self.name):
                 doc_id, doc_type = app.get_id, app.doc_type
                 original_doc_id = doc_id
                 if copy_by_id and doc_id not in copy_by_id:

@@ -1,7 +1,10 @@
 import hashlib
 import json
 import os
-import collections
+from collections import (
+    namedtuple,
+    OrderedDict
+)
 from tempfile import gettempdir
 
 from datetime import datetime
@@ -37,7 +40,7 @@ CaseAttachmentSQL_DB_TABLE = 'form_processor_caseattachmentsql'
 CaseTransaction_DB_TABLE = 'form_processor_casetransaction'
 
 
-class Attachment(collections.namedtuple('Attachment', 'name raw_content content_type')):
+class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
     @property
     @memoized
     def content(self):
@@ -415,7 +418,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     type = models.CharField(max_length=255)
     name = models.CharField(max_length=255, null=True)
 
-    owner_id = models.CharField(max_length=255)
+    owner_id = models.CharField(max_length=255, null=False)
 
     opened_on = models.DateTimeField(null=True)
     opened_by = models.CharField(max_length=255, null=True)
@@ -458,7 +461,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         return self.deleted
 
     def dynamic_case_properties(self):
-        return self.case_json
+        return OrderedDict(sorted(self.case_json.iteritems()))
 
     def to_json(self):
         from .serializers import CommCareCaseSQLSerializer
@@ -526,6 +529,27 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     @memoized
     def case_attachments(self):
         return {attachment.name: attachment for attachment in self.get_attachments()}
+
+    def modified_since_sync(self, sync_log):
+        if self.server_modified_on >= sync_log.date:
+            # check all of the transactions since last sync for one that had a different sync token
+            from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+            return CaseAccessorSQL.case_has_transactions_since_sync(self.case_id, sync_log._id, sync_log.date)
+        return False
+
+    def get_actions_for_form(self, xform):
+        from casexml.apps.case.xform import get_case_updates
+        updates = [u for u in get_case_updates(xform) if u.id == self.case_id]
+        actions = [a for update in updates for a in update.actions]
+        normalized_actions = [
+            CaseAction(
+                action_type=a.action_type_slug,
+                updated_known_properties=a.get_known_properties(),
+                indices=a.indices
+            ) for a in actions
+        ]
+        return normalized_actions
+
 
     def on_tracked_models_cleared(self, model_class=None):
         self._saved_indices.reset_cache(self)
@@ -657,6 +681,7 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         related_name="transaction_set", related_query_name="transaction"
     )
     form_id = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning
+    sync_log_id = models.CharField(max_length=255, null=True)
     server_date = models.DateTimeField(null=False)
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     revoked = models.BooleanField(default=False, null=False)
@@ -706,6 +731,7 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         return CaseTransaction(
             case=case,
             form_id=xform.form_id,
+            sync_log_id=xform.last_sync_token,
             server_date=xform.received_on,
             type=transaction_type,
             revoked=not xform.is_normal
@@ -725,6 +751,7 @@ class CaseTransaction(DisabledDbMixin, models.Model):
             "CaseTransaction("
             "case_id='{self.case_id}', "
             "form_id='{self.form_id}', "
+            "sync_log_id='{self.sync_log_id}', "
             "type='{self.type}', "
             "server_date='{self.server_date}', "
             "revoked='{self.revoked}'"
@@ -788,3 +815,5 @@ class LedgerValue(models.Model):
     section_id = models.CharField(max_length=100, db_index=True)
     balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
     last_modified = models.DateTimeField(auto_now=True)
+
+CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])

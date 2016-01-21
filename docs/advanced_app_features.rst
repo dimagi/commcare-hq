@@ -4,7 +4,7 @@ Advanced App Features
 See ``corehq.apps.app_manager.suite_xml.SuiteGenerator`` and ``corehq.apps.app_manager.xform.XForm`` for code.
 
 Child Modules
-~~~~~~~~~~~~~
+-------------
 In principle child modules is very simple. Making one module a child of another
 simply changes the ``menu`` elements in the *suite.xml* file. For example in the
 XML below module ``m1`` is a child of module ``m0`` and so it has its ``root``
@@ -25,6 +25,31 @@ attribute set to the ID of its parent.
         <command id="m1-f0"/>
     </menu>
 
+
+Menu structure
+~~~~~~~~~~~~~~
+As described above the basic menu structure is quite simple however there is one property in particular
+that affects the menu structure: *module.put_in_root*
+
+This property determines whether the forms in a module should be shown under the module's own menu item or
+under the parent menu item:
+
++-------------+-------------------------------------------------+
+| put_in_root | Resulting menu                                  |
++=============+=================================================+
+| True        | id="<parent menu id>"                           |
++-------------+-------------------------------------------------+
+| False       | id="<module menu id>" root="<parent menu id>"   |
++-------------+-------------------------------------------------+
+
+**Notes:**
+
+- If the module has no parent then the parent is *root*.
+- *root="root"* is equivalent to excluding the *root* attribute altogether.
+
+
+Session Variables
+~~~~~~~~~~~~~~~~~
 
 This is all good and well until we take into account the way the
 `Session <https://github.com/dimagi/commcare/wiki/Suite20#the-session>`_ works on the mobile
@@ -94,3 +119,114 @@ which the child module forms do not. So we need to add it in:
 
 Note that we can only do this for session variables that are automatically computed and
 hence does not require user input.
+
+Shadow Modules
+--------------
+
+A shadow module is a module that piggybacks on another module's commands (the "source" module). The shadow module has its own name, case list configuration, and case detail configuration, but it uses the same forms as its source module.
+
+This is primarily for clinical workflows, where the case detail is a list of patients and the clinic wishes to be able to view differently-filtered queues of patients that ultimately use the same set of forms.
+
+Shadow modules are behind the feature flag **Shadow Modules**.
+
+Scope
+~~~~~
+
+The shadow module has its own independent:
+
+- Name
+- Menu mode (display module & forms, or forms only)
+- Media (icon, audio)
+- Case list configuration (including sorting and filtering)
+- Case detail configuration
+
+The shadow module inherits from its source:
+
+- case type
+- commands (which forms the module leads to)
+- end of form behavior
+
+Limitations
+~~~~~~~~~~~
+
+A shadow module can neither **be** a parent module nor **have** a parent module
+
+A shadow module's source can be a parent module (the shadow will include a copy of the children), or have a parent module (the shadow will appear as a child of that same parent)
+
+Shadow modules are designed to be used with case modules. They may behave unpredictably if given an advanced module, reporting module, or careplan module as a source.
+
+Shadow modules do not necessarily behave well when the source module uses custom case tiles. If you experience problems, make the shadow module's case tile configuration exactly matches the source module's.
+
+Entries
+~~~~~~~
+
+A shadow module duplicates all of its parent's entries. In the example below, m1 is a shadow of m0, which has one form. This results in two unique entries, one for each module, which share several properties.
+
+.. code-block:: xml
+
+    <entry>
+        <form>
+            http://openrosa.org/formdesigner/86A707AF-3A76-4B36-95AD-FF1EBFDD58D8
+        </form>
+        <command id="m0-f0">
+            <text>
+                <locale id="forms.m0f0"/>
+            </text>
+        </command>
+    </entry>
+    <entry>
+        <form>
+            http://openrosa.org/formdesigner/86A707AF-3A76-4B36-95AD-FF1EBFDD58D8
+        </form>
+        <command id="m1-f0">
+            <text>
+                <locale id="forms.m0f0"/>
+            </text>
+        </command>
+    </entry>
+
+Menu structure
+~~~~~~~~~~~~~~
+
+In the simplest case, shadow module menus look exactly like other module menus. In the example below, m1 is a shadow of m0. The two modules have their own, unique menu elements.
+
+.. code-block:: xml
+
+    <menu id="m0">
+        <text>
+            <locale id="modules.m0"/>
+        </text>
+        <command id="m0-f0"/>
+    </menu>
+    <menu id="m1">
+        <text>
+            <locale id="modules.m1"/>
+            </text>
+        <command id="m1-f0"/>
+    </menu>
+    
+
+Menus get more complex when shadow modules are mixed with parent/child modules. In the following example, m0 is a basic module, m1 is a child of m0, and m2 is a shadow of m0. All three modules have `put_in_root=false` (see **Child Modules > Menu structure** above).  The shadow module has its own menu and also a copy of the child module's menu. This copy of the child module's menu is given the id `m1.m2` to distinguish it from `m1`, the original child module menu.
+
+.. code-block:: xml
+
+    <menu id="m0">
+        <text>
+            <locale id="modules.m0"/>
+        </text>
+        <command id="m0-f0"/>
+    </menu>
+    <menu root="m0" id="m1">
+        <text>
+            <locale id="modules.m1"/>
+        </text>
+        <command id="m1-f0"/>
+    </menu>
+    <menu root="m2" id="m1.m2">                                                                                                     <text>
+            <locale id="modules.m1"/>
+        </text>                                                                                                                     <command id="m1-f0"/>
+    </menu>
+    <menu id="m2">                                                                                                                  <text>
+            <locale id="modules.m2"/>
+        </text>                                                                                                                     <command id="m2-f0"/>
+    </menu>

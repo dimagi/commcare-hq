@@ -20,7 +20,7 @@ from django.shortcuts import render
 from django.views.decorators.cache import cache_page
 from django.views.generic import FormView
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.template.loader import render_to_string
 from django.http import (
     HttpResponseRedirect,
@@ -36,6 +36,8 @@ from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+from corehq.apps.style.decorators import use_datatables, use_jquery_ui
+from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.couchdb_management import couch_config
 from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorException, all_pillows_supervisor_status, \
@@ -71,7 +73,7 @@ from corehq.apps.sofabed.models import FormData, CaseData
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.sql_db.connections import Session
-from corehq.elastic import parse_args_for_es, ES_URLS, run_query
+from corehq.elastic import parse_args_for_es, run_query, ES_META
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.decorators.datespan import datespan_in_request
@@ -125,6 +127,18 @@ def contact_email(request):
     response["Access-Control-Max-Age"] = "1000"
     response["Access-Control-Allow-Headers"] = "*"
     return response
+
+
+class BaseAdminSectionView(BaseB3SectionPageView):
+    section_name = ugettext_lazy("Admin Reports")
+
+    @property
+    def section_url(self):
+        return reverse('default_admin_report')
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
 
 
 class AuthenticateAs(BasePageView):
@@ -316,30 +330,41 @@ def system_ajax(request):
     return HttpResponse('{}', content_type='application/json')
 
 
-@require_superuser_or_developer
-def system_info(request):
-    environment = settings.SERVER_ENVIRONMENT
+class SystemInfoView(BaseAdminSectionView):
+    page_title = ugettext_lazy("System Info")
+    urlname = 'system_info'
+    template_name = "hqadmin/system_info.html"
 
-    context = get_hqadmin_base_context(request)
-    context['couch_update'] = request.GET.get('couch_update', 5000)
-    context['celery_update'] = request.GET.get('celery_update', 10000)
-    context['db_update'] = request.GET.get('db_update', 30000)
-    context['celery_flower_url'] = getattr(settings, 'CELERY_FLOWER_URL', None)
+    @use_datatables
+    @use_jquery_ui
+    @method_decorator(require_superuser_or_developer)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseAdminSectionView, self).dispatch(request, *args, **kwargs)
 
-    context['is_bigcouch'] = is_bigcouch()
-    context['rabbitmq_url'] = get_rabbitmq_management_url()
-    context['hide_filters'] = True
-    context['current_system'] = socket.gethostname()
-    context['deploy_history'] = HqDeploy.get_latest(environment, limit=5)
+    @property
+    def page_context(self):
+        environment = settings.SERVER_ENVIRONMENT
 
-    context['user_is_support'] = hasattr(request, 'user') and SUPPORT.enabled(request.user.username)
+        context = get_hqadmin_base_context(self.request)
+        context['couch_update'] = self.request.GET.get('couch_update', 5000)
+        context['celery_update'] = self.request.GET.get('celery_update', 10000)
+        context['db_update'] = self.request.GET.get('db_update', 30000)
+        context['self.request'] = getattr(settings, 'CELERY_FLOWER_URL', None)
 
-    context.update(check_redis())
-    context.update(check_rabbitmq())
-    context.update(check_celery_health())
-    context.update(check_es_cluster_health())
+        context['is_bigcouch'] = is_bigcouch()
+        context['rabbitmq_url'] = get_rabbitmq_management_url()
+        context['hide_filters'] = True
+        context['current_system'] = socket.gethostname()
+        context['deploy_history'] = HqDeploy.get_latest(environment, limit=5)
 
-    return render(request, "hqadmin/system_info.html", context)
+        context['user_is_support'] = hasattr(self.request, 'user') and SUPPORT.enabled(self.request.user.username)
+
+        context.update(check_redis())
+        context.update(check_rabbitmq())
+        context.update(check_celery_health())
+        context.update(check_es_cluster_health())
+
+        return context
 
 
 @require_POST
@@ -408,28 +433,6 @@ def pillow_operation_api(request):
                 return get_response(str(e))
     else:
         return get_response("No pillow found with name '{}'".format(pillow_name))
-
-
-@require_superuser
-@cache_page(60*5)
-def all_commcare_settings(request):
-    apps = ApplicationBase.view('app_manager/applications_brief',
-                                include_docs=True)
-    filters = set()
-    for param in request.GET:
-        s_type, name = param.split('.')
-        value = request.GET.get(param)
-        filters.add((s_type, name, value))
-
-    def app_filter(settings):
-        for s_type, name, value in filters:
-            if settings[s_type].get(name) != value:
-                return False
-        return True
-
-    settings_list = [s for s in (get_settings_values(app) for app in apps)
-                     if app_filter(s)]
-    return json_response(settings_list)
 
 
 @require_superuser
@@ -609,7 +612,7 @@ def loadtest(request):
 
 def _lookup_id_in_couch(doc_id, db_name=None):
     if db_name:
-        dbs = [couch_config.get_db(db_name)]
+        dbs = [couch_config.get_db(None if db_name == 'commcarehq' else db_name)]
     else:
         dbs = couch_config.all_dbs_by_slug.values()
 
@@ -643,8 +646,8 @@ def doc_in_es(request):
     query = {"filter": {"ids": {"values": [doc_id]}}}
     found_indices = {}
     es_doc_type = None
-    for index, url in ES_URLS.items():
-        res = run_query(url, query)
+    for index in ES_META:
+        res = run_query(index, query)
         if 'hits' in res and res['hits']['total'] == 1:
             es_doc = res['hits']['hits'][0]['_source']
             found_indices[index] = to_json(es_doc)
@@ -667,7 +670,8 @@ def raw_couch(request):
     doc_id = request.GET.get("id")
     db_name = request.GET.get("db_name", None)
     context = _lookup_id_in_couch(doc_id, db_name) if doc_id else {}
-    context['all_databases'] = couch_config.all_dbs_by_slug.keys()
+    other_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
+    context['all_databases'] = ['commcarehq'] + other_dbs
     return render(request, "hqadmin/raw_couch.html", context)
 
 

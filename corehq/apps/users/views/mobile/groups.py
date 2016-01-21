@@ -9,6 +9,7 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.reports.util import _report_user_dict
@@ -173,7 +174,7 @@ class EditGroupMembersView(BaseGroupsView):
     @memoized
     def all_users(self):
         return map(_report_user_dict, sorted(
-            CommCareUser.es_fakes(self.domain, wrap=False),
+            UserES().domain(self.domain).run().hits,
             key=lambda user: user['username']
         ))
 

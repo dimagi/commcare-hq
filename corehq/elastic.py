@@ -1,9 +1,11 @@
 import copy
+from collections import namedtuple
 from urllib import unquote
 from elasticsearch import Elasticsearch
-import rawes
 from django.conf import settings
-from rawes.elastic_exception import ElasticException
+from elasticsearch.exceptions import ElasticsearchException, RequestError
+
+from corehq.apps.es.utils import flatten_field_dict
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from pillowtop.listener import send_to_elasticsearch as send_to_es
 from corehq.pillows.mappings.app_mapping import APP_INDEX
@@ -27,27 +29,9 @@ def get_es_new():
     }])
 
 
-def get_es(timeout=30):
-    """
-    Get a handle to the configured elastic search DB
-    Returns a rawes.Elastic instance.
-
-    We are hoping to deprecate and retire this method soonish.
-    """
-    return rawes.Elastic('%s:%s' % (settings.ELASTICSEARCH_HOST,
-                                    settings.ELASTICSEARCH_PORT),
-                         timeout=timeout)
-
-
 def doc_exists_in_es(index, doc_id):
-    path = ES_URLS[index].replace('_search', doc_id)
-    try:
-        return get_es().head(path)
-    except ElasticException as e:
-        if e.status_code == 404:
-            return False
-        else:
-            raise
+    es_meta = ES_META[index]
+    return get_es_new().exists(es_meta.index, doc_id, doc_type=es_meta.type)
 
 
 def send_to_elasticsearch(index, doc, delete=False):
@@ -56,11 +40,13 @@ def send_to_elasticsearch(index, doc, delete=False):
     Duplicates the functionality of pillowtop but can be called directly.
     """
     doc_id = doc['_id']
-    path = ES_URLS[index].replace('_search', doc_id)
+    es_meta = ES_META[index]
     doc_exists = doc_exists_in_es(index, doc_id)
     return send_to_es(
-        path=path,
-        es_getter=get_es,
+        index=es_meta.index,
+        doc_type=es_meta.type,
+        doc_id=doc_id,
+        es_getter=get_es_new,
         name="{}.{} <{}>:".format(send_to_elasticsearch.__module__,
                                   send_to_elasticsearch.__name__, index),
         data=doc,
@@ -69,19 +55,20 @@ def send_to_elasticsearch(index, doc, delete=False):
         delete=delete,
     )
 
+EsMeta = namedtuple('EsMeta', 'index, type')
 
-ES_URLS = {
-    "forms": XFORM_INDEX + '/xform/_search',
-    "cases": CASE_INDEX + '/case/_search',
-    "active_cases": CASE_INDEX + '/case/_search',
-    "users": USER_INDEX + '/user/_search',
-    "users_all": USER_INDEX + '/user/_search',
-    "domains": DOMAIN_INDEX + '/hqdomain/_search',
-    "apps": APP_INDEX + '/app/_search',
-    "groups": GROUP_INDEX + '/group/_search',
-    "sms": SMS_INDEX + '/sms/_search',
-    "report_cases": REPORT_CASE_INDEX + '/report_case/_search',
-    "report_xforms": REPORT_XFORM_INDEX + '/report_xform/_search',
+ES_META = {
+    "forms": EsMeta(XFORM_INDEX, 'xform'),
+    "cases": EsMeta(CASE_INDEX, 'case'),
+    "active_cases": EsMeta(CASE_INDEX, 'case'),
+    "users": EsMeta(USER_INDEX, 'user'),
+    "users_all": EsMeta(USER_INDEX, 'user'),
+    "domains": EsMeta(DOMAIN_INDEX, 'hqdomain'),
+    "apps": EsMeta(APP_INDEX, 'app'),
+    "groups": EsMeta(GROUP_INDEX, 'group'),
+    "sms": EsMeta(SMS_INDEX, 'sms'),
+    "report_cases": EsMeta(REPORT_CASE_INDEX, 'report_case'),
+    "report_xforms": EsMeta(REPORT_XFORM_INDEX, 'report_xform'),
 }
 
 ADD_TO_ES_FILTER = {
@@ -130,13 +117,17 @@ class ESError(Exception):
     pass
 
 
-def run_query(url, q):
-    return get_es().get(url, data=q)
+def run_query(index_name, q):
+    es_meta = ES_META[index_name]
+    try:
+        return get_es_new().search(es_meta.index, es_meta.type, body=q)
+    except RequestError as e:
+        raise ESError(e)
 
 
-def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff=None,
-        interval="day", q=None, filters=[]):
-    q = q or {"query": {"match_all":{}}}
+def es_histogram(histo_type, domains=None, startdate=None, enddate=None,
+        interval="day", filters=[]):
+    q = {"query": {"match_all":{}}}
 
     if domains is not None:
         q["query"] = {"bool": {"must": [q["query"], {"in": {"domain.exact": domains}}]}}
@@ -160,19 +151,16 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None, tz_diff
         "size": 0
     })
 
-    if tz_diff:
-        q["facets"]["histo"]["date_histogram"]["time_zone"] = tz_diff
-
     q["facets"]["histo"]["facet_filter"]["and"].extend(filters)
     q["facets"]["histo"]["facet_filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, []))
 
-    es = get_es()
-    ret_data = es.get(ES_URLS[histo_type], data=q)
+    es_meta = ES_META[histo_type]
+    ret_data = get_es_new().search(es_meta.index, es_meta.type, body=q)
     return ret_data["facets"]["histo"]["entries"]
 
 
 SIZE_LIMIT = 1000000
-def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at=None, size=None, dict_only=False,
+def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_at=None, size=None, dict_only=False,
              fields=None, facet_size=None):
     if terms is None:
         terms = []
@@ -225,7 +213,6 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
         }
         q["query"]["filtered"]["query"] = query if query else {"match_all": {}}
 
-
     if fields is not None:
         q["fields"] = q.get("fields", [])
         q["fields"].extend(fields)
@@ -233,98 +220,20 @@ def es_query(params=None, facets=None, terms=None, q=None, es_url=None, start_at
     if dict_only:
         return q
 
-    es_url = es_url or DOMAIN_INDEX + '/hqdomain/_search'
+    es_index = es_index or 'domains'
+    es = get_es_new()
+    meta = ES_META[es_index]
 
-    es = get_es()
-    result = es.get(es_url, data=q)
+    try:
+        result = es.search(meta.index, meta.type, body=q)
+    except ElasticsearchException as e:
+        raise ESError(e)
 
-    if 'error' in result:
-        msg = result['error']
-        raise ESError(msg)
+    if fields is not None:
+        for res in result['hits']['hits']:
+            flatten_field_dict(res)
 
     return result
-
-
-def es_wrapper(index, domain=None, q=None, doc_type=None, fields=None,
-        start_at=None, size=None, sort_by=None, order=None, return_count=False,
-        filters=None):
-    """
-    This is a flat wrapper for es_query.
-
-    To sort, specify the path to the relevant field
-    and the order ("asc" or "desc"), or provide a list of tuples to sort by
-    multiple fields.
-    eg: sort_by=form.meta.timeStart, order="asc"
-    eg: sort_by=[(form.meta.timeStart, "asc"), ("name", "desc")]
-    """
-    if index not in ES_URLS:
-        msg = "%s is not a valid ES index.  Available options are: %s" % (
-            index, ', '.join(ES_URLS.keys()))
-        raise IndexError(msg)
-
-    # query components
-    match_all = {"match_all": {}}
-    if isinstance(q, dict):
-        query_string = q
-    else:
-        query_string = {"query_string": {"query": q}}
-    doc_type_filter = {"term": {"doc_type": doc_type}}
-    domain_filter = {"or": [
-        {"term": {"domain.exact": domain}},
-        {"term": {"domain_memberships.domain.exact": domain}},
-    ]}
-
-    # actual query
-    query = {"query": {
-        "filtered": {
-            "filter": {"and": []},
-            "query": query_string if q else match_all
-        }
-    }}
-
-    # add filters
-    es_filters = query["query"]["filtered"]["filter"]["and"]
-    if domain:
-        es_filters.append(domain_filter)
-    if doc_type:
-        es_filters.append(doc_type_filter)
-    if not doc_type and not domain:
-        es_filters.append(match_all)
-    if filters:
-        es_filters.extend(filters)
-    es_filters.extend(ADD_TO_ES_FILTER.get(index, [])[:])
-    if sort_by:
-        if isinstance(sort_by, list):
-            assert(order == None),\
-                'order must be None if sort_by is a list. Usage: sort_by=[("name", "asc"),("dob", "desc")]'
-        else:
-            sort_by = [(sort_by, order)]
-        sort = []
-        for sort_key, sort_order in sort_by:
-            assert(sort_order in ['asc', 'desc']),\
-                'Sort order must be "asc" or "desc"'
-            sort.append({sort_key: {'order': sort_order}})
-        query['sort'] = sort
-
-    # make query
-    res = es_query(
-        es_url=ES_URLS[index],
-        q=query,
-        fields=fields,
-        start_at=start_at,
-        size=size,
-    )
-
-    # parse results
-    if fields is not None:
-        hits = [r['fields'] for r in res['hits']['hits']]
-    else:
-        hits = [r['_source'] for r in res['hits']['hits']]
-
-    if return_count:
-        total = res['hits']['total']
-        return total, hits
-    return hits
 
 
 def stream_es_query(chunksize=100, **kwargs):
@@ -338,18 +247,6 @@ def stream_es_query(chunksize=100, **kwargs):
             return
         for hit in res["hits"]["hits"]:
             yield hit
-
-
-def stream_esquery(esquery, chunksize=SIZE_LIMIT):
-    size = esquery._size if esquery._size is not None else SIZE_LIMIT
-    start = esquery._start if esquery._start is not None else 0
-    for chunk_start in range(start, start + size, chunksize):
-        es_query_set = esquery.size(chunksize).start(chunk_start).run()
-        if not es_query_set.raw_hits:
-            break
-        else:
-            for hit in es_query_set.raw_hits:
-                yield hit
 
 
 def parse_args_for_es(request, prefix=None):
@@ -408,15 +305,3 @@ def fill_mapping_with_facets(facet_mapping, results, params=None):
                 for choice in facet_dict["choices"]:
                     choice["display"] = facet_dict.get('mapping').get(choice["name"], choice["name"])
     return facet_mapping
-
-DAY_VALUE = 86400000
-def format_histo_data(data, name, min_t=None, max_t=None):
-    data = dict([(d["time"], d["count"]) for d in data])
-    times = data.keys()
-    min_t, max_t = min_t or min(times), max_t or max(times)
-    time = min_t
-    values = []
-    while time <= max_t:
-        values.append([time, data.get(time, 0)])
-        time += DAY_VALUE
-    return {"key": name, "values": values}

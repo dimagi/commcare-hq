@@ -1,0 +1,37 @@
+{% load i18n %}
+
+<div class="modal hide fade" id="{{ uploader.slug }}">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3>{% trans "Upload" %} {{ uploader.media_type|title }}</h3>
+    </div>
+    <div class="modal-body form form-horizontal">
+        <div class="control-group">
+            <label class="control-label">
+                {% trans 'Select New' %} {{ uploader.media_type|title }}
+            </label>
+            <div class="controls">
+                <div class="hqm-select-files-container">
+                    <button class="hqm-select btn btn-primary" role="button">{% trans 'Select File' %}</button>
+                </div>
+                <div class="hqm-queue">
+
+                </div>
+            </div>
+        </div>
+        <div class="control-group hqm-existing hide">
+            <label class="control-label">
+                {% trans 'Current' %} {{ uploader.media_type|title }}
+            </label>
+            <div class="controls">
+            </div>
+        </div>
+        <div class="hqm-upload-form">
+            {% include 'hqmedia/bootstrap2/partials/hqm_upload_form.html' %}
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal">{% trans 'Close' %}</a>
+        <a href="#" class="btn disabled hqm-upload hqm-upload-confirm"><i class="icon-cloud-upload"></i> {% trans "Begin Upload" %}</a>
+    </div>
+</div>

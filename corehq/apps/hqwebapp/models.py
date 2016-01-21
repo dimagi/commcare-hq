@@ -1,5 +1,6 @@
 from collections import namedtuple
 from urllib import urlencode
+from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION
 from corehq.toggles import OPENLMIS
 
 from django.utils.safestring import mark_safe, mark_for_escaping
@@ -17,7 +18,7 @@ from corehq.apps.accounting.utils import (
     domain_has_privilege,
     is_accounting_admin
 )
-from corehq.apps.app_manager.dbaccessors import domain_has_apps
+from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import (
     RealProjectSpacesReport,
@@ -602,7 +603,7 @@ class ProjectDataTab(UITab):
                 and not self.couch_user.has_permission(
                     self.domain,
                     get_permission_name(Permissions.view_report),
-                    data='corehq.apps.reports.standard.export.ExcelExportReport'
+                    data=FORM_EXPORT_PERMISSION
                 )
                 and user_can_view_deid_exports(self.domain, self.couch_user))
 
@@ -710,7 +711,7 @@ class ProjectDataTab(UITab):
             from corehq.apps.data_interfaces.views \
                 import ArchiveFormView, AutomaticUpdateRuleListView
 
-            if self.can_use_data_cleanup and toggles.AUTOMATIC_CASE_CLOSURE.enabled(self.domain):
+            if self.can_use_data_cleanup:
                 edit_section[0][1].append({
                     'title': AutomaticUpdateRuleListView.page_title,
                     'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
@@ -769,12 +770,7 @@ class ApplicationsTab(UITab):
     def dropdown_items(self):
         # todo async refresh submenu when on the applications page and
         # you change the application name
-        from corehq.apps.app_manager.models import Application
-        key = [self.domain]
-        apps = Application.get_db().view('app_manager/applications_brief',
-                             reduce=False,
-                             startkey=key,
-                             endkey=key + [{}],).all()
+        apps = get_brief_apps_in_domain(self.domain)
         submenu_context = []
         if not apps:
             return submenu_context
@@ -782,21 +778,15 @@ class ApplicationsTab(UITab):
         submenu_context.append(dropdown_dict(_('My Applications'),
                                is_header=True))
         for app in apps:
-            app_info = app['value']
-            if app_info:
-                app_id = app_info['_id']
-                app_name = app_info['name']
-                app_doc_type = app_info['doc_type']
+            url = reverse('view_app', args=[self.domain, app.get_id]) if self.couch_user.can_edit_apps() \
+                else reverse('release_manager', args=[self.domain, app.get_id])
+            app_title = self.make_app_title(app.name, app.doc_type)
 
-                url = reverse('view_app', args=[self.domain, app_id]) if self.couch_user.can_edit_apps() \
-                    else reverse('release_manager', args=[self.domain, app_id])
-                app_title = self.make_app_title(app_name, app_doc_type)
-
-                submenu_context.append(dropdown_dict(
-                    app_title,
-                    url=url,
-                    data_id=app_id,
-                ))
+            submenu_context.append(dropdown_dict(
+                app_title,
+                url=url,
+                data_id=app.get_id,
+            ))
 
         if self.couch_user.can_edit_apps():
             submenu_context.append(dropdown_dict(None, is_divider=True))
@@ -1754,3 +1744,5 @@ class MaintenanceAlert(models.Model):
     @property
     def html(self):
         return mark_up_urls(self.text)
+
+from .signals import *

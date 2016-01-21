@@ -1,4 +1,4 @@
-{% extends "reports/base_template.html" %}
+{% extends "reports/bootstrap2/base_template.html" %}
 {% load case_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -68,7 +68,7 @@ $(function() {
                 <!-- /ko -->
             </tbody>
         </table>
-        {% include "reports/partials/save_reports_modal.html" %}
+        {% include "reports/bootstrap2/partials/save_reports_modal.html" %}
     </div>
 
     {% if report.show %}

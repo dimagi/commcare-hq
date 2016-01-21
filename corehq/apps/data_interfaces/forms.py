@@ -156,7 +156,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         return values
 
     def set_case_type_choices(self, initial):
-        case_types = get_case_types_for_domain(self.domain)
+        case_types = [''] + get_case_types_for_domain(self.domain)
         if initial and initial not in case_types:
             # Include the deleted case type in the list of choices so that
             # we always allow proper display and edit of rules
@@ -211,6 +211,11 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                              _('days after the case was last modified.')),
                         css_class='col-sm-6',
                     ),
+                    help_bubble_text=_("This will close the case if it has been "
+                                       "more than the chosen number of days since "
+                                       "the case was last modified. Cases are "
+                                       "checked against this rule weekly."),
+                    css_id='server_modified_boundary_multifield',
                     label_class=self.helper.label_class,
                     field_class='col-sm-8 col-md-6',
                 ),
@@ -252,7 +257,8 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
     def clean_server_modified_boundary(self):
         value = self.cleaned_data.get('server_modified_boundary')
         if not isinstance(value, int) or value < 30:
-            raise ValidationError(_("Please enter a whole number greater than 30"))
+            raise ValidationError(_("Please enter a whole number greater than "
+                                    "or equal to 30."))
         return value
 
     def clean_conditions(self):

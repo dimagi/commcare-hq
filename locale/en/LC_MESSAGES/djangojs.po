@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-22 19:58+0000\n"
+"POT-Creation-Date: 2016-01-19 20:04+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -33,6 +33,18 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:164
 msgid "Auto-set by "
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/password.js:22
+msgid "Your password is too weak! Try adding numbers or symbols!"
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/password.js:24
+msgid "Your password is almost strong enough!"
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/password.js:26
+msgid "Good Job! Your password is strong!"
 msgstr ""
 
 #: corehq/apps/reports_core/templates/reports_core/filters/datespan_filter/datespan_filter.js:18

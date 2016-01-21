@@ -5,7 +5,6 @@
 {% block head %}{{ block.super }}
     {% include "imports/datatables.html" %}
     <script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
     <script src="{% static 'hqwebapp/js/main.js' %}"></script>
 {% endblock %}
 
@@ -44,6 +43,7 @@
 {% block main_column %}
     {% include "style/bootstrap2/partials/time_notice.html" %}
     <form action="" method="post">
+        {% csrf_token %}
         <table id="reminder_error_table" class="table table-striped datatable">
             <thead>
                 <tr>

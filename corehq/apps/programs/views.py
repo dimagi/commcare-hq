@@ -12,6 +12,7 @@ from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.programs.forms import ProgramForm
+from corehq.apps.style.decorators import use_bootstrap3
 
 
 @require_POST
@@ -31,6 +32,10 @@ class ProgramListView(BaseCommTrackManageView):
     urlname = 'commtrack_program_list'
     template_name = 'programs/manage/programs.html'
     page_title = ugettext_noop("Programs")
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProgramListView, self).dispatch(request, *args, **kwargs)
 
 
 class FetchProgramListView(ProgramListView):
@@ -92,6 +97,10 @@ class NewProgramView(BaseCommTrackManageView):
             messages.success(request, _("Program saved!"))
             return HttpResponseRedirect(reverse(ProgramListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(NewProgramView, self).dispatch(request, *args, **kwargs)
 
 
 class EditProgramView(NewProgramView):

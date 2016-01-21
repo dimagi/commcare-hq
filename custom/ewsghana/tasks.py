@@ -220,3 +220,8 @@ def set_send_to_owner_field_task(domain):
                 notification.send_to_owner = True
                 notification.save()
     balance_migration_task.delay(domain)
+
+
+@task(queue='logistics_reminder_queue')
+def send_soh_messages_task(alerts_obj, parser, stockouts, transactions):
+    alerts_obj.send_messages(parser, stockouts, transactions)

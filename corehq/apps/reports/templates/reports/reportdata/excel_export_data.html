@@ -1,4 +1,4 @@
-{% extends report_base|default:"reports/async/default.html" %}
+{% extends report_base|default:"reports/async/bootstrap2/default.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -72,6 +72,7 @@
                             .attr("value", value)
                             .appendTo($form);
                 });
+                $("{% csrf_token %}").appendTo($form);
                 $form.appendTo("body");
                 $form.submit();
             }

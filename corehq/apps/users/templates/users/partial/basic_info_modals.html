@@ -14,7 +14,7 @@
               action="{% url "delete_phone_number" domain couch_user.couch_id %}"
               {% endif %}
               method="POST">
-
+            {% csrf_token %}
             <input type="hidden" name="form_type" value="delete-phone-number"/>
             <input type="hidden" name="phone_number" value="{{ phone_number.number }}"/>
 
@@ -39,6 +39,7 @@
                   name="reverify_phone_number"
                   action="{% url "verify_phone_number" domain couch_user.couch_id %}?phone_number={{phone_number.number|urlencode}}"
                   method="post">
+                {% csrf_token %}
                 <div class="modal-body">
                     <p>
                     {% blocktrans %}

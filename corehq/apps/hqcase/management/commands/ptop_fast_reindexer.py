@@ -34,7 +34,12 @@ class PaginateViewLogHandler(object):
             total_emitted,
             total_emitted + kwargs['limit'] - 1)
         )
-        self.log('  startkey={}, startkey_docid={!r}'.format(kwargs.get('startkey'), kwargs.get('startkey_docid')))
+        startkey = kwargs.get('startkey')
+        if isinstance(startkey, basestring):
+            startkey = startkey.encode('utf8')
+        elif isinstance(startkey, list):
+            startkey = [i.encode('utf8') for i in startkey if isinstance(i, basestring)]
+        self.log('  startkey={}, startkey_docid={!r}'.format(startkey, kwargs.get('startkey_docid')))
 
     def view_ending(self, db, view_name, kwargs, total_emitted, time):
         self.log('View call took {}'.format(time))
@@ -68,7 +73,7 @@ class PtopReindexer(NoArgsCommand):
                     action='store_true',
                     dest='noinput',
                     default=False,
-                    help='Skip important confirmation warnings?!?!'),
+                    help='Skip important confirmation warnings.'),
         make_option('--runfile',
                     action='store',
                     dest='runfile',
@@ -78,7 +83,6 @@ class PtopReindexer(NoArgsCommand):
                     action='store',
                     type='int',
                     dest='chunk_size',
-                    default=CHUNK_SIZE,
                     help='Number of docs to save at a time',),
     )
 
@@ -90,6 +94,7 @@ class PtopReindexer(NoArgsCommand):
     # By default this == self.pillow_class
     indexing_pillow_class = None
     file_prefix = "ptop_fast_reindex_"
+    default_chunk_size = CHUNK_SIZE
 
     def __init__(self):
         super(PtopReindexer, self).__init__()
@@ -186,9 +191,11 @@ class PtopReindexer(NoArgsCommand):
         with open(self.get_seq_filename(), 'r') as fin:
             return fin.read()
 
-    def view_data_file_iter(self):
+    def view_data_file_iter(self, start=0):
         with open(self.get_dump_filename(), 'r') as fin:
-            for line in fin:
+            for line_count, line in enumerate(fin):
+                if line_count < start:
+                    continue
                 yield json.loads(line)
 
     def _bootstrap(self, options):
@@ -198,32 +205,14 @@ class PtopReindexer(NoArgsCommand):
         self.indexing_pillow = self.indexing_pillow_class()
         self.db = self.doc_class.get_db()
         self.runfile = options['runfile']
-        self.chunk_size = options.get('chunk_size', CHUNK_SIZE)
+        self.chunk_size = options.get('chunk_size', None) or self.default_chunk_size
         self.start_num = options.get('seq', 0)
         self.in_place = options['in_place']
 
     def handle(self, *args, **options):
-        if not options['noinput']:
-            confirm = raw_input("""
-        ### %s Fast Reindex !!! ###
-        You have requested to do an elastic index reset via fast track.
-        This will IRREVERSIBLY REMOVE
-        ALL index data in the case index and will take a while to reload.
-        Are you sure you want to do this. Also you MUST have run_ptop disabled for this to run.
-
-        Type 'yes' to continue, or 'no' to cancel: """ % self.indexing_pillow_class.__name__)
-
-            if confirm != 'yes':
-                self.log("\tReset cancelled.")
-                return
-
-            confirm_ptop = raw_input("""\tAre you sure you disabled run_ptop? """)
-            if confirm_ptop != "yes":
-                return
-
-            confirm_alias = raw_input("""\tAre you sure you are not blowing away a production index? """)
-            if confirm_alias != "yes":
-                return
+        if not options['noinput'] and not _ask_user_to_proceed(self.indexing_pillow_class.__name__):
+            self.log("\tReset cancelled by user.")
+            return
 
         self._bootstrap(options)
         start = datetime.utcnow()
@@ -296,19 +285,16 @@ class PtopReindexer(NoArgsCommand):
         start = self.start_num
         end = start + self.chunk_size
 
-        json_iter = self.view_data_file_iter()
+        json_iter = self.view_data_file_iter(start)
 
         bulk_slice = []
-        for curr_counter, json_doc in enumerate(json_iter):
-            if curr_counter < start:
-                continue
-            else:
-                bulk_slice.append(json_doc)
-                if len(bulk_slice) == self.chunk_size:
-                    self.send_bulk(bulk_slice, start, end)
-                    bulk_slice = []
-                    start += self.chunk_size
-                    end += self.chunk_size
+        for json_doc in json_iter:
+            bulk_slice.append(json_doc)
+            if len(bulk_slice) == self.chunk_size:
+                self.send_bulk(bulk_slice, start, end)
+                bulk_slice = []
+                start += self.chunk_size
+                end += self.chunk_size
 
         self.send_bulk(bulk_slice, start, end)
 
@@ -348,6 +334,31 @@ class PtopReindexer(NoArgsCommand):
 
     def pre_complete_hook(self):
         pass
+
+
+def _ask_user_to_proceed(pillow_name):
+    confirm = raw_input("""
+        ### %s Fast Reindex !!! ###
+
+        You have requested to do an elastic index reset via fast track.
+        This will IRREVERSIBLY REMOVE ALL index data in the associated index.
+        Also, you MUST have run_ptop disabled for this to run.
+
+        Are you sure you want to do this?
+
+        Type 'yes' to continue, or 'no' to cancel: """ % pillow_name)
+
+    if confirm != 'yes':
+        return False
+
+    confirm_ptop = raw_input("""\tAre you sure you disabled run_ptop? """)
+    if confirm_ptop != "yes":
+        return False
+
+    confirm_alias = raw_input("""\tAre you sure you are not blowing away a production index? """)
+    if confirm_alias != "yes":
+        return False
+    return True
 
 
 class ElasticReindexer(PtopReindexer):

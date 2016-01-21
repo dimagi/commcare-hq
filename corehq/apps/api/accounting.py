@@ -110,7 +110,6 @@ class SoftwareProductRateResource(ModelResource):
 
 class SoftwarePlanVersionResource(ModelResource):
     plan = fields.IntegerField('plan_id', null=True)
-    product_rates = AccToManyField(FutureRateResource, 'product_rates', full=True, null=True)
     feature_rates = AccToManyField(FutureRateResource, 'feature_rates', full=True, null=True)
     role = fields.IntegerField('role_id', null=True)
 
@@ -118,6 +117,10 @@ class SoftwarePlanVersionResource(ModelResource):
         queryset = SoftwarePlanVersion.objects.all().order_by('pk')
         fields = ['id', 'date_created', 'is_active', 'last_modified']
         resource_name = 'software_plan_versions'
+
+    def dehydrate(self, bundle):
+        bundle.data['product_rates'] = [bundle.obj.product_rate.id]
+        return bundle
 
 
 class SubscriberResource(ModelResource):
@@ -130,12 +133,16 @@ class SubscriberResource(ModelResource):
 
 class BillingContactInfoResource(ModelResource):
     account = fields.IntegerField('account_id')
+    emails = fields.CharField(readonly=True)
 
     class Meta(AccountingResourceMeta):
         queryset = BillingContactInfo.objects.all().order_by('pk')
-        fields = ['id', 'first_name', 'last_name', 'emails', 'phone_number', 'company_name', 'first_line',
+        fields = ['id', 'first_name', 'last_name', 'phone_number', 'company_name', 'first_line',
                   'second_line', 'city', 'state_province_region', 'postal_code', 'country', 'last_modified']
         resource_name = 'billing_contact_info'
+
+    def dehydrate_emails(self, bundle):
+        return ','.join(bundle.obj.email_list)
 
 
 class BillingAccountResource(ModelResource):

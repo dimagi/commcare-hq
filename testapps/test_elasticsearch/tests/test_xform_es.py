@@ -2,10 +2,12 @@ from collections import namedtuple
 import uuid
 import datetime
 from django.test import SimpleTestCase
+from elasticsearch.exceptions import ConnectionError
+
 from corehq.apps.es import FormES
-from corehq.form_processor.tests.utils import TestFormMetadata
+from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.xform import XFormPillow
-from corehq.util.test_utils import make_es_ready_form
+from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 from pillowtop.tests import require_explicit_elasticsearch_testing
 
 
@@ -19,7 +21,8 @@ class XFormESTestCase(SimpleTestCase):
     def setUpClass(cls):
         cls.now = datetime.datetime.utcnow()
         cls.forms = []
-        cls.pillow = XFormPillow()
+        with trap_extra_setup(ConnectionError):
+            cls.pillow = XFormPillow()
 
     def setUp(self):
         self.test_id = uuid.uuid4().hex

@@ -1,9 +1,12 @@
 from collections import defaultdict
 from datetime import datetime
+
+from django.core.urlresolvers import reverse
 from django.dispatch.dispatcher import receiver
 from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.signals import location_edited
-
+from corehq.apps.users.views import EditWebUserView
+from corehq.apps.users.views.mobile import EditCommCareUserView
 from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
 from django.db import models, connection
 
@@ -514,6 +517,48 @@ class ILSNotes(models.Model):
 
     class Meta:
         app_label = 'ilsgateway'
+
+
+class ILSMigrationStats(models.Model):
+    products_count = models.IntegerField(default=0)
+    locations_count = models.IntegerField(default=0)
+    sms_users_count = models.IntegerField(default=0)
+    web_users_count = models.IntegerField(default=0)
+    domain = models.CharField(max_length=128, db_index=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+
+class ILSMigrationProblem(models.Model):
+    domain = models.CharField(max_length=128, db_index=True)
+    object_id = models.CharField(max_length=128, null=True)
+    object_type = models.CharField(max_length=30)
+    description = models.CharField(max_length=128)
+    external_id = models.CharField(max_length=128)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    @property
+    def object_url(self):
+        from corehq.apps.locations.views import EditLocationView
+
+        if not self.object_id:
+            return
+
+        if self.object_type == 'smsuser':
+            return reverse(
+                EditCommCareUserView.urlname, kwargs={'domain': self.domain, 'couch_user_id': self.object_id}
+            )
+        elif self.object_type == 'webuser':
+            return reverse(
+                EditWebUserView.urlname, kwargs={'domain': self.domain, 'couch_user_id': self.object_id}
+            )
+        elif self.object_type == 'location':
+            return reverse(EditLocationView.urlname, kwargs={'domain': self.domain, 'loc_id': self.object_id})
+
+
+class ILSGatewayWebUser(models.Model):
+    # To remove after switchover
+    external_id = models.IntegerField(db_index=True)
+    email = models.CharField(max_length=128)
 
 
 @receiver(commcare_domain_pre_delete)

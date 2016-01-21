@@ -1,3 +1,4 @@
+from corehq.apps.change_feed import topics
 import fluff
 from casexml.apps.case.models import CommCareCase
 from corehq.fluff.calculators.case import CasePropertyFilter
@@ -80,6 +81,8 @@ class GeographyFluff(fluff.IndicatorDocument):
     group_by = ('domain',)
 
     save_direct_to_sql = True
+    kafka_topic = topics.CASE
+
     numerator = Numerator()
     lvl_1 = case_property('lvl_1')
     lvl_2 = case_property('lvl_2')
@@ -98,6 +101,8 @@ class FarmerRecordFluff(fluff.IndicatorDocument):
                 fluff.AttributeGetter('practices', lambda c: get_practices(c)))
 
     save_direct_to_sql = True
+    kafka_topic = topics.CASE
+
     lvl_1 = case_property('lvl_1')
     lvl_2 = case_property('lvl_2')
     lvl_3 = case_property('lvl_3')

@@ -1,13 +1,16 @@
 import calendar
 from decimal import Decimal
 import datetime
-import logging
 from django.db import transaction
 from django.db.models import F, Q, Min, Max
 from django.template.loader import render_to_string
 
 from django.utils.translation import ugettext as _
-from corehq.apps.accounting.utils import ensure_domain_instance
+from corehq.apps.accounting.utils import (
+    ensure_domain_instance,
+    log_accounting_error,
+    log_accounting_info,
+)
 from corehq.apps.domain.models import Domain
 from dimagi.utils.decorators.memoized import memoized
 
@@ -26,11 +29,10 @@ from corehq.apps.accounting.models import (
     EntryPoint, WireInvoice, WireBillingRecord,
     SMALL_INVOICE_THRESHOLD, WirePrepaymentBillingRecord,
     WirePrepaymentInvoice,
+    UNLIMITED_FEATURE_USAGE,
 )
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
-
-logger = logging.getLogger('accounting')
 
 
 DEFAULT_DAYS_UNTIL_DUE = 30
@@ -113,7 +115,7 @@ class DomainInvoiceFactory(object):
             entry_point=EntryPoint.SELF_STARTED,
         )[0]
         if account.date_confirmed_extra_charges is None:
-            logger.info(
+            log_accounting_info(
                 "Did not generate invoice because date_confirmed_extra_charges "
                 "was null for domain %s" % self.domain.name
             )
@@ -152,8 +154,10 @@ class DomainInvoiceFactory(object):
     def create_invoice_for_subscription(self, subscription):
         if subscription.is_trial:
             # Don't create invoices for trial subscriptions
-            logger.info("[BILLING] Skipping invoicing for Subscription "
-                        "%s because it's a trial." % subscription.pk)
+            log_accounting_info(
+                "Skipping invoicing for Subscription %s because it's a trial."
+                % subscription.pk
+            )
             return
 
         if subscription.date_start > self.date_start:
@@ -212,15 +216,15 @@ class DomainInvoiceFactory(object):
             record.send_email()
         except InvoiceEmailThrottledError as e:
             if not self.logged_throttle_error:
-                logger.error("[BILLING] %s" % e)
+                log_accounting_error(e.message)
                 self.logged_throttle_error = True
 
         return invoice
 
     def generate_line_items(self, invoice, subscription):
-        for product_rate in subscription.plan_version.product_rates.all():
-            product_factory = ProductLineItemFactory(subscription, product_rate, invoice)
-            product_factory.create()
+        product_rate = subscription.plan_version.product_rate
+        product_factory = ProductLineItemFactory(subscription, product_rate, invoice)
+        product_factory.create()
 
         for feature_rate in subscription.plan_version.feature_rates.all():
             feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(
@@ -241,6 +245,7 @@ class DomainWireInvoiceFactory(object):
         if self.domain is None:
             raise InvoiceError("Domain '{}' is not a valid domain on HQ!".format(self.domain))
 
+    @transaction.atomic()
     def create_wire_invoice(self, balance):
 
         # Gather relevant invoices
@@ -291,7 +296,7 @@ class DomainWireInvoiceFactory(object):
         except InvoiceEmailThrottledError as e:
             # Currently wire invoices are never throttled
             if not self.logged_throttle_error:
-                logger.error("[BILLING] %s" % e)
+                log_accounting_error(e.message)
                 self.logged_throttle_error = True
 
         return wire_invoice
@@ -462,7 +467,7 @@ class UserLineItemFactory(FeatureLineItemFactory):
 
     @property
     def num_excess_users(self):
-        if self.rate.monthly_limit == -1:
+        if self.rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
             return 0
         else:
             return max(self.num_users - self.rate.monthly_limit, 0)
@@ -513,7 +518,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
     @property
     @memoized
     def unit_description(self):
-        if self.rate.monthly_limit == -1:
+        if self.rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
             return _("%(num_sms)d SMS Message%(plural)s") % {
                 'num_sms': self.num_sms,
                 'plural': '' if self.num_sms == 1 else 's',
@@ -526,7 +531,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
                 'monthly_limit': self.rate.monthly_limit,
             }
         else:
-            assert self.rate.monthly_limit != -1
+            assert self.rate.monthly_limit != UNLIMITED_FEATURE_USAGE
             assert self.rate.monthly_limit < self.num_sms
             num_extra = self.num_sms - self.rate.monthly_limit
             assert num_extra > 0
@@ -562,7 +567,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
     @property
     @memoized
     def is_within_monthly_limit(self):
-        if self.rate.monthly_limit == -1:
+        if self.rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
             return True
         else:
             return self.num_sms <= self.rate.monthly_limit

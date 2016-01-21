@@ -2,6 +2,7 @@ from copy import deepcopy
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.data_providers.case.utils import CaseSyncUpdate
 from casexml.apps.phone.xml import get_case_element
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.toggles import ENABLE_LOADTEST_USERS
 
 
@@ -22,12 +23,12 @@ def transform_loadtest_update(update, factor):
     case IDs and names mapped to have the factor appended.
     """
     def _map_id(id, count):
-        return '{}-{}'.format(id, count)
+        return u'{}-{}'.format(id, count)
     case = CommCareCase.wrap(deepcopy(update.case._doc))
     case._id = _map_id(case._id, factor)
     for index in case.indices:
         index.referenced_id = _map_id(index.referenced_id, factor)
-    case.name = '{} ({})'.format(case.name, factor)
+    case.name = u'{} ({})'.format(case.name, factor)
     return CaseSyncUpdate(case, update.sync_token, required_updates=update.required_updates)
 
 
@@ -44,3 +45,6 @@ def append_update_to_response(response, update, restore_state):
         current_count += 1
         if current_count < restore_state.loadtest_factor:
             update = transform_loadtest_update(original_update, current_count)
+        #only add user case on the first iteration
+        if original_update.case.type == USERCASE_TYPE:
+            return

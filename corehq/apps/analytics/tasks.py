@@ -17,8 +17,12 @@ import KISSmetrics
 import logging
 
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from corehq.util.soft_assert import soft_assert
-from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.toggles import deterministic_random
+
+from dimagi.utils.logging import notify_exception
+
 
 logger = logging.getLogger('analytics')
 logger.setLevel('DEBUG')
@@ -28,6 +32,8 @@ HUBSPOT_SIGNIN_FORM_ID = "a2aa2df0-e4ec-469e-9769-0940924510ef"
 HUBSPOT_FORM_BUILDER_FORM_ID = "4f118cda-3c73-41d9-a5d1-e371b23b1fb5"
 HUBSPOT_APP_TEMPLATE_FORM_ID = "91f9b1d2-934d-4e7a-997e-e21e93d36662"
 HUBSPOT_CLICKED_DEPLOY_FORM_ID = "c363c637-d0b1-44f3-9d73-f34c85559f03"
+HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID = "619daf02-e043-4617-8947-a23e4589935a"
+HUBSPOT_INVITATION_SENT_FORM = "5aa8f696-4aab-4533-b026-bd64c7e06942"
 HUBSPOT_COOKIE = 'hubspotutk'
 
 
@@ -53,7 +59,7 @@ def _track_on_hubspot(webuser, properties):
     )
 
 
-def _batch_track_on_hubspot(users_json):
+def batch_track_on_hubspot(users_json):
     """
     Update or create contacts on hubspot in a batch request to prevent exceeding api rate limit
 
@@ -156,16 +162,15 @@ def update_hubspot_properties(webuser, properties):
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
-def track_created_hq_account_on_hubspot(webuser, cookies, meta):
-    _track_on_hubspot(webuser, {
-        'created_account_in_hq': True,
-        'is_a_commcare_user': True,
-    })
-    _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, cookies, meta)
-
-
-@task(queue='background_queue', acks_late=True, ignore_result=True)
-def track_user_sign_in_on_hubspot(webuser, cookies, meta):
+def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
+    if path.startswith(reverse("register_user")):
+        tracking_dict = {
+            'created_account_in_hq': True,
+            'is_a_commcare_user': True,
+        }
+        tracking_dict.update(get_ab_test_properties(webuser))
+        _track_on_hubspot(webuser, tracking_dict)
+        _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, cookies, meta)
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, cookies, meta)
 
 
@@ -208,6 +213,16 @@ def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta)
 
 
+@task(queue="background_queue", acks_late=True, ignore_result=True)
+def track_created_new_project_space_on_hubspot(webuser, cookies, meta):
+    _send_form_to_hubspot(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, webuser, cookies, meta)
+
+
+@task(queue="background_queue", acks_late=True, ignore_result=True)
+def track_sent_invite_on_hubspot(webuser, cookies, meta):
+    _send_form_to_hubspot(HUBSPOT_INVITATION_SENT_FORM, webuser, cookies, meta)
+
+
 def track_workflow(email, event, properties=None):
     """
     Record an event in KISSmetrics.
@@ -244,7 +259,7 @@ def identify(email, properties):
         # TODO: Consider adding some error handling for bad/failed requests.
 
 
-@periodic_task(run_every=crontab(minute="0", hour="2"), queue='background_queue')
+@periodic_task(run_every=crontab(minute="0", hour="0"), queue='background_queue')
 def track_periodic_data():
     """
     Sync data that is neither event or page based with hubspot/Kissmetrics
@@ -322,7 +337,7 @@ def track_periodic_data():
 
 
 def submit_data_to_hub_and_kiss(submit_json):
-    hubspot_dispatch = (_batch_track_on_hubspot, "Error submitting periodic analytics data to Hubspot")
+    hubspot_dispatch = (batch_track_on_hubspot, "Error submitting periodic analytics data to Hubspot")
     kissmetrics_dispatch = (
         _track_periodic_data_on_kiss, "Error submitting periodic analytics data to Kissmetrics"
     )
@@ -331,8 +346,7 @@ def submit_data_to_hub_and_kiss(submit_json):
         try:
             dispatcher(submit_json)
         except Exception, e:
-            logger.error(error_message)
-            logger.exception(e)
+            notify_exception(None, u"{msg}: {exc}".format(msg=error_message, exc=e))
 
 
 def _track_periodic_data_on_kiss(submit_json):
@@ -385,6 +399,19 @@ def _log_response(data, response):
         response_text = json.dumps(response.json(), indent=2, sort_keys=True)
     except Exception:
         response_text = response.status_code
-    logger.debug('Sent this data to HS: %s \nreceived: %s' %
-                 (json.dumps(data, indent=2, sort_keys=True),
-                  response_text))
+
+    message = 'Sent this data to HS: %s \nreceived: %s' % (
+        json.dumps(data, indent=2, sort_keys=True),
+        response_text
+    )
+
+    if response.status_code != 200:
+        logger.error(message)
+    else:
+        logger.debug(message)
+
+
+def get_ab_test_properties(user):
+    return {
+        'a_b_test_variable_1': 'A' if deterministic_random(user.username + 'a_b_test_variable_1') > 0.5 else 'B',
+    }

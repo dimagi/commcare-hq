@@ -117,9 +117,17 @@ class Command(BaseCommand):
         if cleanup:
             confirmation = raw_input(
                 "Cleanup will remove doc_types ({}) from db {}\n"
+                "I recommend running './manage.py delete_doc_conflicts' "
+                "first or some docs might not actually be deleted.\n"
                 "Are you sure you want to proceed? [y/n]"
                 .format(', '.join(migrator.doc_types), migrator.source_db))
             if confirmation == 'y':
+                if migrator.docs_are_replicating():
+                    self.stdout.write(
+                        "It looks like replication is still happening, please track "
+                        "down and cancel before attempting to cleanup, lest you "
+                        "replicate the deletions. Yikes!")
+                    return
                 self.handle_cleanup(migrator)
 
     @staticmethod

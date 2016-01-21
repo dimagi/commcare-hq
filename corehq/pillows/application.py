@@ -1,4 +1,5 @@
 from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.pillows.mappings.app_mapping import APP_INDEX, APP_MAPPING
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.listener import AliasedElasticPillow
@@ -34,13 +35,10 @@ class AppPillow(AliasedElasticPillow):
     default_mapping = APP_MAPPING
 
     @classmethod
-    @memoized
-    def calc_meta(cls):
-        #todo: actually do this correctly
+    def get_unique_id(cls):
+        return APP_INDEX
 
-        """
-        override of the meta calculator since we're separating out all the types,
-        so we just do a hash of the "prototype" instead to determined md5
-        """
-        return cls.calc_mapping_hash({"es_meta": cls.es_meta,
-                                      "mapping": cls.default_mapping})
+    def change_transform(self, doc_dict):
+        # perform any lazy migrations
+        doc = get_correct_app_class(doc_dict).wrap(doc_dict)
+        return doc.to_json()

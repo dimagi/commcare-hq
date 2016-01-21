@@ -1,25 +1,28 @@
 import json
+from datetime import datetime
+import urllib
+
 from couchdbkit.exceptions import ResourceNotFound
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.utils.translation import ugettext as _
+from django.core.urlresolvers import reverse
+
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.util import iter_cases
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain, \
     get_case_ids_in_domain_by_owner
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.models import ApplicationBase
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.safe_index import safe_index
-from casexml.apps.phone.caselogic import get_footprint, get_related_cases
-from datetime import datetime
-from corehq.elastic import get_es
-import urllib
-from django.utils.translation import ugettext as _
+from casexml.apps.phone.caselogic import get_footprint
+from corehq.elastic import get_es_new, ES_META
 from dimagi.utils.parsing import json_format_date
 from touchforms.formplayer.models import EntrySession
-from django.core.urlresolvers import reverse
+
 
 CLOUDCARE_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'  # todo: add '.%fZ'?
 
@@ -310,18 +313,19 @@ class ElasticCaseQuery(object):
             'size': self.offset + self.limit,
         }
 
+
 def es_filter_cases(domain, filters=None):
     """
     Filter cases using elastic search
     (Domain, Filters?) -> [CommCareCase]
     """
-    
-    
     q = ElasticCaseQuery(domain, filters)
-    res = get_es().get('hqcases/_search', data=q.get_query())
+    meta = ES_META['cases']
+    res = get_es_new().search(meta.index, body=q.get_query())
     # this is ugly, but for consistency / ease of deployment just
     # use this to return everything in the expected format for now
     return [CommCareCase.wrap(r["_source"]) for r in res['hits']['hits'] if r["_source"]]
+
 
 def get_filters_from_request(request, limit_top_level=None):
     """
@@ -346,10 +350,6 @@ def get_filters_from_request(request, limit_top_level=None):
             del filters[system_property]
     return filters
 
-def get_cloudcare_apps(domain):
-    return map(lambda app: app._doc,
-               ApplicationBase.view('cloudcare/cloudcare_apps', 
-                                    startkey=[domain], endkey=[domain, {}]))
 
 def get_app_json(app):
     if not app:

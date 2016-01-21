@@ -4,11 +4,12 @@ import uuid
 from datetime import datetime
 from django.test import SimpleTestCase
 from dimagi.utils.dates import DateSpan
+from elasticsearch.exceptions import ConnectionError
 
 from corehq.util.elastic import delete_es_index
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
-from corehq.form_processor.tests.utils import TestFormMetadata
+from corehq.form_processor.utils import TestFormMetadata
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.const import CASE_ACTION_CREATE
 from corehq.pillows.xform import XFormPillow
@@ -26,14 +27,15 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_user_stubs,
     get_group_stubs,
 )
-from corehq.util.test_utils import make_es_ready_form
+from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 
 
 class BaseESAccessorsTest(SimpleTestCase):
 
     def setUp(self):
         self.domain = 'esdomain'
-        self.pillow = self.pillow_class()
+        with trap_extra_setup(ConnectionError):
+            self.pillow = self.pillow_class()
 
     def tearDown(self):
         delete_es_index(self.pillow.es_index)

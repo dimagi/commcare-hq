@@ -7,6 +7,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext as _
 
+from commcare_translations import load_translations
 from corehq.apps.app_manager import app_strings
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
@@ -99,6 +100,7 @@ def process_ui_translation_upload(app, trans_file):
 
     workbook = WorkbookJSONReader(trans_file)
     translations = workbook.get_worksheet(title='translations')
+    valid_translatable_strings = load_translations('en', 2)
 
     default_trans = get_default_translations_for_download(app)
     lang_with_defaults = app.langs[get_index_for_defaults(app.langs)]
@@ -111,6 +113,8 @@ def process_ui_translation_upload(app, trans_file):
                 for param in all_parameters:
                     if not re.match("\$\{[0-9]+}", param):
                         error_properties.append(row["property"] + ' - ' + row[lang])
+                if row["property"] not in valid_translatable_strings:
+                    error_properties.append(row["property"] + " is not a known property")
                 if not (lang_with_defaults == lang
                         and row[lang] == default_trans.get(row["property"], "")):
                     trans_dict[lang].update({row["property"]: row[lang]})

@@ -1,6 +1,5 @@
 from datetime import date
 import json
-import logging
 
 from django.conf import settings
 from django.contrib import messages
@@ -63,17 +62,14 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import (
     fmt_feature_rate_dict, fmt_product_rate_dict,
-    has_subscription_already_ended
-)
+    has_subscription_already_ended,
+    log_accounting_error)
 from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMixin
 from corehq import privileges, toggles
 from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.models import Role, Grant
 
 from urllib import urlencode
-
-
-logger = logging.getLogger('accounting')
 
 
 @requires_privilege_raise404(privileges.ACCOUNTING_ADMIN)
@@ -168,7 +164,7 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
     @memoized
     def credit_form(self):
         if (self.request.method == 'POST'
-                and 'adjust_credit' in self.request.POST):
+                and 'adjust' in self.request.POST):
             return CreditForm(self.account, None, self.request.POST)
         return CreditForm(self.account, None)
 
@@ -204,15 +200,15 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
             self.contact_form.save()
             messages.success(request, "Account Contact Info successfully updated.")
             return HttpResponseRedirect(self.page_url)
-        elif ('adjust_credit' in self.request.POST
+        elif ('adjust' in self.request.POST
               and self.credit_form.is_valid()):
             try:
                 if self.credit_form.adjust_credit(web_user=request.user.username):
                     messages.success(request, "Successfully adjusted credit.")
                     return HttpResponseRedirect(self.page_url)
             except CreditLineError as e:
-                logger.error(
-                    "[BILLING] failed to add credit in admin UI due to: %s"
+                log_accounting_error(
+                    "failed to add credit in admin UI due to: %s"
                     % e
                 )
                 messages.error(request, "Issue adding credit: %s" % e)
@@ -333,7 +329,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     @property
     @memoized
     def credit_form(self):
-        if self.request.method == 'POST' and 'adjust_credit' in self.request.POST:
+        if self.request.method == 'POST' and 'adjust' in self.request.POST:
             return CreditForm(self.subscription.account, self.subscription,
                               self.request.POST)
         return CreditForm(self.subscription.account, self.subscription)
@@ -413,7 +409,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
                 messages.error(request,
                                "Could not update subscription due to: %s" % e)
             return HttpResponseRedirect(self.page_url)
-        elif 'adjust_credit' in self.request.POST and self.credit_form.is_valid():
+        elif 'adjust' in self.request.POST and self.credit_form.is_valid():
             if self.credit_form.adjust_credit(web_user=request.user.username):
                 return HttpResponseRedirect(self.page_url)
         elif ('cancel_subscription' in self.request.POST
@@ -520,8 +516,10 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         initial = {
             'feature_rates': json.dumps([fmt_feature_rate_dict(r.feature, r)
                                          for r in plan_version.feature_rates.all()] if plan_version else []),
-            'product_rates': json.dumps([fmt_product_rate_dict(r.product, r)
-                                         for r in plan_version.product_rates.all()] if plan_version else []),
+            'product_rates': json.dumps(
+                [fmt_product_rate_dict(plan_version.product_rate.product, plan_version.product_rate)]
+                if plan_version else []
+            ),
             'role_slug': plan_version.role.slug if plan_version else None,
         }
         if self.request.method == 'POST' and 'update_version' in self.request.POST:
@@ -770,13 +768,13 @@ class InvoiceSummaryViewBase(AccountingSectionView):
         return SuppressInvoiceForm(self.invoice)
 
     def post(self, request, *args, **kwargs):
-        if 'adjust_balance' in self.request.POST:
+        if 'adjust' in self.request.POST:
             if self.adjust_balance_form.is_valid():
                 self.adjust_balance_form.adjust_balance(
                     web_user=self.request.user.username,
                 )
                 return HttpResponseRedirect(request.META.get('HTTP_REFERER') or self.page_url)
-        elif 'resend_email' in self.request.POST:
+        elif 'resend' in self.request.POST:
             if self.resend_email_form.is_valid():
                 try:
                     self.resend_email_form.resend_email()

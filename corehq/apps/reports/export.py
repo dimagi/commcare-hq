@@ -6,7 +6,6 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import FormExportSchema
 from corehq.elastic import stream_es_query
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 import couchexport
 from couchexport.export import get_headers, get_writer, export_raw, get_formatted_rows
 from couchexport.models import DefaultExportSchema, Format, SavedExportSchema
@@ -254,7 +253,7 @@ def save_metadata_export_to_tempfile(domain, format, datespan=None, user_ids=Non
     if user_ids is not None:
         q["filter"]["and"].append({"terms": {"form.meta.userID": user_ids}})
 
-    results = stream_es_query(params={"domain.exact": domain}, q=q, es_url=XFORM_INDEX + '/xform/_search', size=999999)
+    results = stream_es_query(params={"domain.exact": domain}, q=q, es_index='forms', size=999999)
     data = (_form_data_to_row(res["_source"]) for res in results)
 
     with os.fdopen(fd, 'w') as temp:

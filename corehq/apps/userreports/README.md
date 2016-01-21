@@ -86,6 +86,7 @@ related_doc     | A way to reference something in another document | `form.case.
 root_doc        | A way to reference the root document explicitly (only needed when making a data source from repeat/child data) | `repeat.parent.name`
 nested          | A way to chain any two expressions together | `f1(f2(doc))`
 dict            | A way to emit a dictionary of key/value pairs | `{"name": "test", "value": f(doc)}`
+add_days        | A way to add days to a date | `my_date + timedelta(days=15)`
 
 
 ### JSON snippets for expressions
@@ -301,6 +302,23 @@ Here is a simple example that demonstrates the structure. The keys of `propertie
             "property_name": "prop2"
         }
     }
+}
+```
+
+#### "Add Days" expressions
+
+Below is a simple example that demonstrates the structure.
+The expression below will add 28 days to a property called "dob".
+The date_expression and count_expression can be any valid expressions, or simply constants.
+
+```json
+{
+    "type": "add_days",
+    "date_expression": {
+        "type": "property_name",
+        "property_name": "dob",
+    },
+    "count_expression": 28
 }
 ```
 
@@ -729,8 +747,7 @@ instead), but it exists because the report builder needs it.
 
 Dynamic choice lists provide a select widget that will generate a list of options dynamically.
 
-The default behavior is simply to show all possible values for a column, however you can also specify a `choice_provider` to customize this behavior.
-Currently the only supported `choice_provider` is for locations.
+The default behavior is simply to show all possible values for a column, however you can also specify a `choice_provider` to customize this behavior (see below).
 
 Simple example assuming "village" is a name:
 ```json
@@ -743,6 +760,20 @@ Simple example assuming "village" is a name:
 }
 ```
 
+#### Choice providers
+
+Currently the supported `choice_provider`s are supported:
+
+
+Field                | Description
+-------------------- | -----------
+location             | Select a location by name
+user                 | Select a user
+owner                | Select a possible case owner owner (user, group, or location)
+
+
+Location choice providers also support an "include_descendants" property to include descendant locations in the results, which defaults to `false`.
+
 Example assuming "village" is a location ID, which is converted to names using the location `choice_provider`:
 ```json
 {
@@ -752,7 +783,8 @@ Example assuming "village" is a location ID, which is converted to names using t
   "display": "Village",
   "datatype": "string",
   "choice_provider": {
-      "type": "location"
+      "type": "location",
+      "include_descendants": false
   }
 }
 ```
@@ -1037,12 +1069,40 @@ The currently supported transform types are shown below:
 ```
 
 ### Rounding decimals
+
 Rounds decimal and floating point numbers to two decimal places.
 
 ```
 {
     "type": "custom",
     "custom_type": "short_decimal_display"
+}
+```
+
+### Generic number formatting
+
+Rounds numbers using Python's [built in formatting](https://docs.python.org/2.7/library/string.html#string-formatting).
+
+See below for a few simple examples. Read the docs for complex ones. The input to the format string will be a _number_ not a string.
+
+If the format string is not valid or the input is not a number then the original input will be returned.
+
+
+#### Round to the nearest whole number
+
+```
+{
+    "type": "number_format",
+    "custom_type": "{0:.0f}"
+}
+```
+
+#### Always round to 3 decimal places
+
+```
+{
+    "type": "number_format",
+    "custom_type": "{0:.3f}"
 }
 ```
 

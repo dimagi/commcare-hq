@@ -13,10 +13,12 @@ from custom.ewsghana.filters import EWSRestrictionLocationFilter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
+from custom.ewsghana.models import EWSExtension
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation, LocationType
 from custom.ewsghana.utils import get_descendants, filter_slugs_by_role, ews_date_format, get_products_for_locations, \
-    get_products_for_locations_by_program, get_products_for_locations_by_products
+    get_products_for_locations_by_program, get_products_for_locations_by_products, calculate_last_period, \
+    get_user_location_id
 from casexml.apps.stock.models import StockTransaction
 
 
@@ -72,10 +74,7 @@ class EWSData(object):
 
     @property
     def location_id(self):
-        from custom.ewsghana import ROOT_SITE_CODE
-        return self.config.get('location_id') or get_object_or_404(
-            SQLLocation, domain=self.domain, site_code=ROOT_SITE_CODE
-        ).location_id
+        return self.config.get('location_id')
 
     @property
     @memoized
@@ -110,6 +109,7 @@ class ReportingRatesData(EWSData):
 
     default_rows = 50
 
+    @memoized
     def get_supply_points(self, location_id=None):
         location = SQLLocation.objects.get(location_id=location_id) if location_id else self.location
 
@@ -165,15 +165,51 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
 
     @property
     @memoized
-    def location(self):
+    def root_location(self):
         from custom.ewsghana import ROOT_SITE_CODE
+        return get_object_or_404(
+            SQLLocation, site_code=ROOT_SITE_CODE, domain=self.domain, is_archived=False
+        )
+
+    @property
+    @memoized
+    def user_location(self):
+        user = self.request.couch_user
+        dm = user.get_domain_membership(self.domain)
+        if not dm:
+            return
+
+        if dm.location_id:
+            return get_object_or_404(
+                SQLLocation, domain=self.domain, location_id=dm.location_id, is_archived=False
+            )
+
+        try:
+            ews_extension = EWSExtension.objects.get(user_id=user.get_id, domain=self.domain)
+        except EWSExtension.DoesNotExist:
+            return
+
+        if ews_extension.location_id:
+            return get_object_or_404(
+                SQLLocation, domain=self.domain, location_id=ews_extension.location_id, is_archived=False
+            )
+
+    @property
+    @memoized
+    def location(self):
         loc_id = self.request_params.get('location_id')
         if loc_id:
-            return get_object_or_404(SQLLocation, location_id=loc_id, is_archived=False)
+            return get_object_or_404(SQLLocation, location_id=loc_id, domain=self.domain, is_archived=False)
         else:
-            return get_object_or_404(
-                SQLLocation, site_code=ROOT_SITE_CODE, domain=self.domain, is_archived=False
-            )
+            user_location = self.user_location
+            if user_location:
+                return user_location
+            return self.root_location
+
+    @property
+    @memoized
+    def location_id(self):
+        return self.location.location_id
 
     @property
     def report_subtitles(self):
@@ -225,20 +261,25 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
             else:
                 program_id = 'all'
 
-            loc_id = ''
-            if dm.location_id:
-                location = SQLLocation.objects.get(location_id=dm.location_id)
-                if cls.__name__ == "DashboardReport" and not location.location_type.administrative:
-                    location = location.parent
-                loc_id = location.location_id
+            location_id = get_user_location_id(user, domain)
+            if location_id:
+                try:
+                    location = SQLLocation.active_objects.get(location_id=location_id)
+                    if cls.__name__ == "DashboardReport":
+                        if not location.location_type.administrative:
+                            location = location.parent
+                            location_id = location.location_id
+                except SQLLocation.DoesNotExist:
+                    location_id = None
 
-            start_date, end_date = EWSDateFilter.last_reporting_period()
-            url = '%s?location_id=%s&filter_by_program=%s&startdate=%s&enddate=%s' % (
+            start_date, end_date = calculate_last_period()
+            url = '%s?location_id=%s&filter_by_program=%s&startdate=%s&enddate=%s&datespan_first=%s' % (
                 url,
-                loc_id,
+                location_id or '',
                 program_id if program_id else '',
                 start_date.strftime('%Y-%m-%d'),
-                end_date.strftime('%Y-%m-%d')
+                end_date.strftime('%Y-%m-%d'),
+                '%s|%s' % (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
             )
 
         return url
@@ -257,9 +298,8 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
     def report_config(self):
         return dict(
             domain=self.domain,
-            startdate=self.datespan.startdate,
-            enddate=self.datespan.enddate,
-            location_id=self.request.GET.get('location_id'),
+            location_id=self.location_id,
+            user=self.request.couch_user
         )
 
     def report_filters(self):
