@@ -1,18 +1,16 @@
 from __future__ import absolute_import
-import base64
 import re
 from contextlib import contextmanager
-from hashlib import md5
 from uuid import uuid4
 
 from corehq.blobs import BlobInfo
 from corehq.blobs.exceptions import BadName, NotFound
 
 import boto3
+from botocore.handlers import calculate_md5
 from botocore.exceptions import ClientError
 from botocore.utils import fix_s3_host
 
-CHUNK_SIZE = 4096
 DEFAULT_S3_BUCKET = "blobdb"
 DEFAULT_BUCKET = "_default"
 SAFENAME = re.compile("^[a-z0-9_./-]+$", re.IGNORECASE)
@@ -32,7 +30,7 @@ class S3BlobDB(object):
         # https://github.com/boto/boto3/issues/259
         self.db.meta.client.meta.events.unregister('before-sign.s3', fix_s3_host)
 
-    def put(self, content, basename="", bucket=DEFAULT_BUCKET):
+    def put(self, content, basename="", bucket=DEFAULT_BUCKET, content_md5=None):
         """Put a blob in persistent storage
 
         :param content: A file-like object in binary read mode.
@@ -42,19 +40,27 @@ class S3BlobDB(object):
         :param bucket: Optional bucket name used to partition blob data
         in the persistent storage medium. This may be delimited with
         slashes (/). It must be a valid relative path.
+        :param content_md5: RFC-1864-compliant Content-MD5 header value.
+        If this parameter is omitted or its value is `None` then content
+        must be a seekable file-like object. NOTE: the value should not
+        be prefixed with `md5-` even though we store it that way.
         :returns: A `BlobInfo` named tuple. The returned object has a
         `name` member that must be used to get or delete the blob. It
         should not be confused with the optional `basename` parameter.
         """
         name = self.get_unique_name(basename)
         path = self.get_path(name, bucket)
-        data = content.read()
-        length = len(data)
-        digest = md5(data)
+        if content_md5 is None:
+            params = {"body": content, "headers": {}}
+            calculate_md5(params)
+            content_md5 = params["headers"]["Content-MD5"]
         with self.s3_bucket(True) as s3_bucket:
-            s3_bucket.put_object(Key=path, Body=data)
-        b64digest = base64.b64encode(digest.digest())
-        return BlobInfo(name, length, "md5-" + b64digest)
+            obj = s3_bucket.put_object(
+                Key=path,
+                Body=content,
+                ContentMD5=content_md5,
+            )
+        return BlobInfo(name, obj.content_length, "md5-" + content_md5)
 
     def get(self, name, bucket=DEFAULT_BUCKET):
         """Get a blob
@@ -97,7 +103,7 @@ class S3BlobDB(object):
             for objects in pages:
                 resp = s3_bucket.delete_objects(Delete={"Objects": objects})
                 if success:
-                    deleted = set(d["Key"] for d in resp["Deleted"])
+                    deleted = set(d["Key"] for d in resp.get("Deleted", []))
                     success = all(o["Key"] in deleted for o in objects)
         return success
 
@@ -130,7 +136,7 @@ class S3BlobDB(object):
 
 
 def safepath(path):
-    if not SAFENAME.match(path) or ".." in path or path.startswith(("/", ".")):
+    if path.startswith(("/", ".")) or ".." in path or not SAFENAME.match(path):
         raise BadName(u"unsafe path name: %r" % path)
     return path
 
