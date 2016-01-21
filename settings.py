@@ -126,7 +126,7 @@ TEMPLATE_LOADERS = (
 )
 
 # Add this to localsettings and set it to False, so that CSRF protection is enabled on localhost
-CSRF_SOFT_MODE = True
+CSRF_SOFT_MODE = False
 
 MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
