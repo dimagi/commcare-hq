@@ -358,8 +358,8 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 field='gender',
                 format='enum-image',
                 enum=[
-                    MappingItem(key='male', value={'en': 'Male'}),
-                    MappingItem(key='female', value={'en': 'Female'}),
+                    MappingItem(key='male', value={'en': 'jr://icons/male-icon.png'}),
+                    MappingItem(key='female', value={'en': 'jr://icons/female-icon.png'}),
                 ],
                 case_tile_field='sex'
             ),
@@ -391,11 +391,11 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         app_strings = commcare_translations.loads(app.create_app_strings('en'))
         self.assertEqual(
             app_strings['m0.case_short.case_gender_1.enum.kfemale'],
-            'Female'
+            'jr://icons/female-icon.png'
         )
         self.assertEqual(
             app_strings['m0.case_short.case_gender_1.enum.kmale'],
-            'Male'
+            'jr://icons/male-icon.png'
         )
 
     def test_case_tile_pull_down(self):
