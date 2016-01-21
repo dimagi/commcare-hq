@@ -1,9 +1,7 @@
-from urllib import urlencode
-from StringIO import StringIO
-from celery.schedules import crontab
-from celery.task import periodic_task, task
 import datetime
-from couchdbkit import ResourceNotFound
+from StringIO import StringIO
+from urllib import urlencode
+
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
@@ -11,7 +9,14 @@ from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
 
-from corehq.apps.domain.models import Domain
+from celery.schedules import crontab
+from celery.task import periodic_task, task
+from couchdbkit import ResourceNotFound
+from couchexport.export import export_from_tables
+from couchexport.models import Format
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.django.email import send_HTML_email
+
 from corehq.apps.accounting import utils
 from corehq.apps.accounting.exceptions import (
     InvoiceError, CreditLineError,
@@ -19,13 +24,13 @@ from corehq.apps.accounting.exceptions import (
     InvoiceAlreadyCreatedError
 )
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
-
 from corehq.apps.accounting.models import (
     Subscription, Invoice,
     SubscriptionAdjustment, SubscriptionAdjustmentReason,
     SubscriptionAdjustmentMethod,
     BillingAccount, WirePrepaymentInvoice, WirePrepaymentBillingRecord
 )
+from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils import (
     has_subscription_already_ended, get_dimagi_from_email_by_product,
     fmt_dollar_amount,
@@ -33,14 +38,20 @@ from corehq.apps.accounting.utils import (
     log_accounting_error,
     log_accounting_info,
 )
-from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import FakeUser, WebUser
 from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
-from couchexport.export import export_from_tables
-from couchexport.models import Format
-from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.django.email import send_HTML_email
-import corehq.apps.accounting.filters as filters
+
+
+@transaction.atomic()
+def _activate_subscription(subscription):
+    subscription.is_active = True
+    subscription.save()
+    upgraded_privs = get_change_status(None, subscription.plan_version).upgraded_privs
+    subscription.subscriber.activate_subscription(
+        upgraded_privileges=upgraded_privs,
+        subscription=subscription,
+    )
 
 
 def activate_subscriptions(based_on_date=None):
@@ -52,16 +63,37 @@ def activate_subscriptions(based_on_date=None):
         date_start=starting_date,
         is_active=False,
     )
+    starting_subscriptions = filter(
+        lambda subscription: not has_subscription_already_ended(subscription),
+        starting_subscriptions
+    )
     for subscription in starting_subscriptions:
-        if not has_subscription_already_ended(subscription):
-            with transaction.atomic():
-                subscription.is_active = True
-                subscription.save()
-                upgraded_privs = get_change_status(None, subscription.plan_version).upgraded_privs
-                subscription.subscriber.activate_subscription(
-                    upgraded_privileges=upgraded_privs,
-                    subscription=subscription,
-                )
+        _activate_subscription(subscription)
+
+
+@transaction.atomic()
+def _deactivate_subscription(subscription, ending_date):
+    subscription.is_active = False
+    subscription.save()
+    next_subscription = subscription.next_subscription
+    activate_next_subscription = next_subscription and next_subscription.date_start == ending_date
+    if activate_next_subscription:
+        new_plan_version = next_subscription.plan_version
+        next_subscription.is_active = True
+        next_subscription.save()
+    else:
+        new_plan_version = None
+    _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
+    if next_subscription and subscription.account == next_subscription.account:
+        subscription.transfer_credits(subscription=next_subscription)
+    else:
+        subscription.transfer_credits()
+    subscription.subscriber.deactivate_subscription(
+        downgraded_privileges=downgraded_privs,
+        upgraded_privileges=upgraded_privs,
+        old_subscription=subscription,
+        new_subscription=next_subscription if activate_next_subscription else None,
+    )
 
 
 def deactivate_subscriptions(based_on_date=None):
@@ -74,28 +106,7 @@ def deactivate_subscriptions(based_on_date=None):
         is_active=True,
     )
     for subscription in ending_subscriptions:
-        with transaction.atomic():
-            subscription.is_active = False
-            subscription.save()
-            next_subscription = subscription.next_subscription
-            activate_next_subscription = next_subscription and next_subscription.date_start == ending_date
-            if activate_next_subscription:
-                new_plan_version = next_subscription.plan_version
-                next_subscription.is_active = True
-                next_subscription.save()
-            else:
-                new_plan_version = None
-            _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
-            if next_subscription and subscription.account == next_subscription.account:
-                subscription.transfer_credits(subscription=next_subscription)
-            else:
-                subscription.transfer_credits()
-            subscription.subscriber.deactivate_subscription(
-                downgraded_privileges=downgraded_privs,
-                upgraded_privileges=upgraded_privs,
-                old_subscription=subscription,
-                new_subscription=next_subscription if activate_next_subscription else None,
-            )
+        _deactivate_subscription(subscription, ending_date)
 
 
 def warn_subscriptions_still_active(based_on_date=None):
