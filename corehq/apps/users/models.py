@@ -66,6 +66,7 @@ from dimagi.utils.django.database import get_unique_value
 from xml.etree import ElementTree
 
 from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
+from dimagi.utils.parsing import json_format_datetime
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -1634,7 +1635,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def retire(self):
         suffix = DELETED_SUFFIX
         deletion_id = random_hex()
-        deletion_date = datetime.utcnow()
+        deletion_date = json_format_datetime(datetime.utcnow())
         deleted_cases = set()
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
