@@ -45,14 +45,13 @@ import corehq.apps.accounting.filters as filters
 
 @transaction.atomic()
 def _activate_subscription(subscription):
-    if not has_subscription_already_ended(subscription):
-        subscription.is_active = True
-        subscription.save()
-        upgraded_privs = get_change_status(None, subscription.plan_version).upgraded_privs
-        subscription.subscriber.activate_subscription(
-            upgraded_privileges=upgraded_privs,
-            subscription=subscription,
-        )
+    subscription.is_active = True
+    subscription.save()
+    upgraded_privs = get_change_status(None, subscription.plan_version).upgraded_privs
+    subscription.subscriber.activate_subscription(
+        upgraded_privileges=upgraded_privs,
+        subscription=subscription,
+    )
 
 
 def activate_subscriptions(based_on_date=None):
@@ -63,6 +62,10 @@ def activate_subscriptions(based_on_date=None):
     starting_subscriptions = Subscription.objects.filter(
         date_start=starting_date,
         is_active=False,
+    )
+    starting_subscriptions = filter(
+        lambda subscription: not has_subscription_already_ended(subscription),
+        starting_subscriptions
     )
     for subscription in starting_subscriptions:
         _activate_subscription(subscription)
