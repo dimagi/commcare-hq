@@ -61,6 +61,7 @@ branches:
   - b3-app-manager # Jenny 1/20
   - validate-xpath  # Danny 12/05
   - formplayer-toggle # Ben/Will 1/21/16
+  - java-tf-deploy # Ben/Will 1/21/16
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
