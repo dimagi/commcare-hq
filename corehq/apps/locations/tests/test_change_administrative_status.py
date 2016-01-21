@@ -74,7 +74,6 @@ class TestChangeStatus(TestCase):
         self.assertIsNone(loc.supply_point_id, msg)
 
     def test_change_to_track_stock(self):
-        self.assertHasSupplyPoint(self.boston)
         self.assertHasNoSupplyPoint(self.suffolk)
 
         self.county_type.administrative = False

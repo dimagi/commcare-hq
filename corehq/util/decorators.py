@@ -70,8 +70,12 @@ class CouldNotAqcuireLock(Exception):
     pass
 
 
+# Sorry this is so magic
 def _get_unique_key(format_str, fn, *args, **kwargs):
-    # Sorry this is so magic
+    """
+    Lines args and kwargs up with those specified in the definition of fn and
+    passes the result to `format_str.format()`.
+    """
     varnames = fn.func_code.co_varnames
     kwargs.update(dict(zip(varnames, args)))
     return ("{}-" + format_str).format(fn.__name__, **kwargs)
