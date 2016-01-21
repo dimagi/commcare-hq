@@ -699,6 +699,7 @@ def copy_tf_localsettings():
 def build_formplayer():
     spring_dir = '{}/{}'.format(env.code_root, 'submodules/formplayer')
     with cd(spring_dir):
+        sudo('gradle wrapper')
         sudo('./gradlew build')
 
 
