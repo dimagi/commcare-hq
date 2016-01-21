@@ -28,6 +28,7 @@ from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.feature_previews import MODULE_FILTER
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
+import commcare_translations
 
 
 class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
@@ -343,6 +344,59 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def test_case_tile_suite(self):
         self._test_generic_suite("app_case_tiles", "suite-case-tiles")
+
+    def test_case_detail_icon_mapping(self):
+        app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+
+        module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'c'},
+                model='case',
+                field='gender',
+                format='enum-image',
+                enum=[
+                    MappingItem(key='male', value={'en': 'Male'}),
+                    MappingItem(key='female', value={'en': 'Female'}),
+                ],
+                case_tile_field='sex'
+            ),
+        ]
+
+        icon_mapping_spec = """
+            <partial>
+              <template form="image" width="13%">
+                <text>
+                  <xpath function="if(gender = 'male', $kmale, if(gender = 'female', $kfemale, ''))">
+                    <variable name="kfemale">
+                      <locale id="m0.case_short.case_gender_1.enum.kfemale"/>
+                    </variable>
+                    <variable name="kmale">
+                      <locale id="m0.case_short.case_gender_1.enum.kmale"/>
+                    </variable>
+                  </xpath>
+                </text>
+              </template>
+            </partial>
+        """
+        # check correct suite is generated
+        self.assertXmlPartialEqual(
+            icon_mapping_spec,
+            app.create_suite(),
+            './detail/field/template[@form="image"]'
+        )
+        # check icons map correctly
+        app_strings = commcare_translations.loads(app.create_app_strings('en'))
+        self.assertEqual(
+            app_strings['m0.case_short.case_gender_1.enum.kfemale'],
+            'Female'
+        )
+        self.assertEqual(
+            app_strings['m0.case_short.case_gender_1.enum.kmale'],
+            'Male'
+        )
 
     def test_case_tile_pull_down(self):
         app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
