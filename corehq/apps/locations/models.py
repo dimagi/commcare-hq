@@ -118,9 +118,10 @@ class LocationType(models.Model):
         if not self.commtrack_enabled:
             self.administrative = True
         self._populate_stock_levels()
+        is_not_first_save = self.pk is not None
         saved = super(LocationType, self).save(*args, **kwargs)
 
-        if self._administrative_old != self.administrative:
+        if is_not_first_save and self._administrative_old != self.administrative:
             sync_administrative_status.delay(self)
             self._administrative_old = self.administrative
 
