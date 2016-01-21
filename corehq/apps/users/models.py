@@ -1567,7 +1567,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         user._hq_user = self # don't tell anyone that we snuck this here
         return user
 
-    def get_forms(self, deleted=False, wrap=True, include_docs=False):
+    def get_forms(self, deleted=False, wrap=True):
         if deleted:
             view_name = 'deleted_data/deleted_forms_by_user'
             startkey = [self.user_id]
@@ -1582,9 +1582,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             reduce=False,
             include_docs=False,
         )]
-        if wrap or include_docs:
+        if wrap:
             for doc in iter_docs(db, doc_ids):
-                yield XFormInstance.wrap(doc) if wrap else doc
+                yield XFormInstance.wrap(doc)
         else:
             for id in doc_ids:
                 yield id
@@ -1645,7 +1645,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             for case in caselist:
                 deleted_cases.add(case['_id'])
 
-        for form_id_list in chunked(self.get_forms(wrap=False, include_docs=False), 50):
+        for form_id_list in chunked(self.get_forms(wrap=False), 50):
             tag_forms_as_deleted_rebuild_associated_cases.delay(
                 self.user_id, self.domain, form_id_list, deletion_id, deleted_cases=deleted_cases
             )
