@@ -216,7 +216,8 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_form_ids_for_user(domain, user_id):
-        pass
+        with get_cursor(XFormInstanceSQL) as cursor:
+            return cursor.execute('SELECT form_id FROM get_forms_by_user_id(%s)', [user_id])
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):

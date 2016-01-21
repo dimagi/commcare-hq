@@ -2,27 +2,32 @@ from django.test import TestCase
 
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.utils import get_simple_wrapped_form, TestFormMetadata
+from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
 
 
 class UserModelTest(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.domain = 'my-domain'
-        cls.user = CommCareUser.create(
-            domain=cls.domain,
+    def setUp(self):
+        self.domain = 'my-domain'
+        self.user = CommCareUser.create(
+            domain=self.domain,
             username='birdman',
             password='***',
         )
-        cls.user.save()
+        self.user.save()
 
-        metadata = TestFormMetadata(
-            domain=cls.user.domain,
-            user_id=cls.user._id,
+        self.metadata = TestFormMetadata(
+            domain=self.user.domain,
+            user_id=self.user._id,
         )
-        get_simple_wrapped_form('123', metadata=metadata)
 
+    def tearDown(self):
+        self.user.delete()
+        FormProcessorTestUtils.delete_all_xforms(self.domain)
+
+    @run_with_all_backends
     def test_get_forms(self):
+        get_simple_wrapped_form('123', metadata=self.metadata)
         forms = list(self.user.get_forms())
 
         self.assertEqual(len(forms), 1)
