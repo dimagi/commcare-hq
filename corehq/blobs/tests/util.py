@@ -54,7 +54,8 @@ class TemporaryS3BlobDB(TemporaryBlobDBMixin, S3BlobDB):
 
     def __init__(self, settings):
         settings = dict(settings)
-        settings["s3_bucket"] = "test-blobdb"
+        settings.setdefault("s3_bucket", "test-blobdb")
+        assert settings["s3_bucket"].startswith("test-"), settings["s3_bucket"]
         super(TemporaryS3BlobDB, self).__init__(settings)
 
     def clean_db(self):
