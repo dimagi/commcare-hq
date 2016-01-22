@@ -69,6 +69,7 @@ class SoftAssertHelpersTest(SimpleTestCase):
     @override_settings(DEBUG=False)
     def test_request_sanitization(self):
         raw_request = RequestFactory().post('/accounts/login/', {'username': 'sreddy', 'password': 'mypass'})
+        # Django setting to mark request sensitive
         raw_request.sensitive_post_parameters = '__ALL__'
         santized_request = get_sanitized_request_repr(raw_request)
 
