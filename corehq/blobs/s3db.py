@@ -18,14 +18,14 @@ SAFENAME = re.compile("^[a-z0-9_./-]+$", re.IGNORECASE)
 
 class S3BlobDB(object):
 
-    def __init__(self, settings):
+    def __init__(self, config):
         self.db = boto3.resource(
             's3',
-            endpoint_url=settings.get("url"),
-            aws_access_key_id=settings.get("access_key"),
-            aws_secret_access_key=settings.get("secret_key"),
+            endpoint_url=config.get("url"),
+            aws_access_key_id=config.get("access_key"),
+            aws_secret_access_key=config.get("secret_key"),
         )
-        self.s3_bucket_name = settings.get("s3_bucket", DEFAULT_S3_BUCKET)
+        self.s3_bucket_name = config.get("s3_bucket", DEFAULT_S3_BUCKET)
         self.s3_bucket_exists = False
         # https://github.com/boto/boto3/issues/259
         self.db.meta.client.meta.events.unregister('before-sign.s3', fix_s3_host)
