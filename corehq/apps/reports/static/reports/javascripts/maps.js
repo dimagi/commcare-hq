@@ -124,9 +124,18 @@ function initTable(data, config) {
             return true;
         }
     );
-    var table = new HQReportDataTables({
-        aoColumns: colSorting
-    });
+    if (window.USE_BOOTSTRAP_3) {
+        var table = new HQReportDataTables({
+            aoColumns: colSorting,
+            useBootstrap3: true,
+            paginationType: 'bs_normal'
+        });
+    } else {
+        var table = new HQReportDataTables({
+            aoColumns: colSorting
+        });
+    }
+
     table.render();
     return table.datatable;
 }
@@ -175,7 +184,7 @@ function initTableHeader(config, data, mkRow) {
                 $cell.attr('colspan', e.span);
             }
             if (e.terminal) {
-                $cell.prepend('<i class="icon-white"></i>&nbsp;');
+                $cell.prepend('<i class="fa icon-white"></i>&nbsp;');
                 $cell.attr('rowspan', totalMaxDepth - depth);
             }
         });

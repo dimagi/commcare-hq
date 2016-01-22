@@ -3,6 +3,9 @@
 
 {% block js-libs %}
     {{ block.super }}
+    <script style="text/javascript">
+        window.USE_BOOTSTRAP_3 = true;
+    </script>
     <script src="{% static 'reports/javascripts/maps.js' %}"></script>
     <script src="{% static 'reports/javascripts/maps_utils.js' %}"></script>
 {% endblock js-libs %}

@@ -9,12 +9,11 @@
     <div class="panel-body">
         <div class="hq-graphic-report">
             {% block style %}
-            <link rel="stylesheet" href="{% static 'reports/css/leaflet/leaflet.css' %}" />
             <link rel="stylesheet" href="{% static 'reports/css/maps.css' %}" />
             {% endblock style %}
             {% block js-libs %}
-            <script src="{% static 'reports/javascripts/leaflet.js' %}"></script>
-            <script src="{% static 'reports/javascripts/jquery.color.js' %}"></script>
+            <script type="text/javascript" src="{% new_static 'jquery-color/jquery.color.js' %}"></script>
+            <script type="text/javascript" src="{% new_static 'leaflet/dist/leaflet.js' %}"></script>
             {% endblock js-libs %}
             {% block js-script %}
             <script>
@@ -98,7 +97,7 @@
 
             <script type="text/template" id="metrics-group">
                 <div class="choice" data-bind="if: name() != '_root', click: onclick">
-                    <i data-bind="visible: group, css: { 'fa fa-caret-right': !expanded(), 'fa fa-caret-down': expanded }"></i>
+                    <i class="fa" data-bind="visible: group, css: { 'fa-caret-right': !expanded(), 'fa-caret-down': expanded }"></i>
                     <span data-bind="text: name, css: { selected: selected }"></span>
                 </div>
 
