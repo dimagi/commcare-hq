@@ -45,7 +45,7 @@ var CC_DETAIL_SCREEN = {
                     var label = value;
                     if (CC_DETAIL_SCREEN.isAttachmentProperty(value)) {
                         label = (
-                            '<span class="icon-paper-clip"></span> ' +
+                            '<i class="fa fa-paperclip"></i> ' +
                             label.substring(label.indexOf(":") + 1)
                         );
                     }
@@ -63,7 +63,7 @@ var CC_DETAIL_SCREEN = {
             }
         }).focus(function () {
             $(this).autocomplete('search');
-        }).data("autocomplete")._renderItem = function (ul, item) {
+        }).data("ui-autocomplete")._renderItem = function (ul, item) {
             return $("<li></li>")
                 .data("item.autocomplete", item)
                 .append($("<a></a>").html(item.label))
@@ -270,14 +270,14 @@ var caseListLookupViewModel = function($el, state, saveButton){
         $el.find('input[required]').each(function(){
             var $this = $(this);
             if ($this.val().trim().length === 0){
-                $this.closest('.control-group').addClass('error');
-                var $help = $this.siblings('.help-inline');
+                $this.closest('.form-group').addClass('has-error');
+                var $help = $this.siblings('.help-block');
                 $help.show();
                 errors.push($help.text());
             }
             else {
-                $this.closest('.control-group').removeClass('error');
-                $this.siblings('.help-inline').hide();
+                $this.closest('.form-group').removeClass('has-error');
+                $this.siblings('.help-block').hide();
             }
         });
         return errors;
@@ -286,15 +286,15 @@ var caseListLookupViewModel = function($el, state, saveButton){
     var _validate_extras = function(errors){
         errors = errors || [];
         var $extra = $el.find("#" + detail_type + "-extras"),
-            $extra_help = $extra.find(".help-inline");
+            $extra_help = $extra.find(".help-block");
 
         if (!_trimmed_extras().length){
-            $extra.addClass('error');
+            $extra.addClass('has-error');
             $extra_help.show();
             errors.push($extra_help.text());
         }
         else {
-            $extra.removeClass('error');
+            $extra.removeClass('has-error');
             $extra_help.hide();
         }
         return errors;
@@ -303,15 +303,15 @@ var caseListLookupViewModel = function($el, state, saveButton){
     var _validate_responses = function(errors){
         errors = errors || [];
         var $response = $el.find("#" + detail_type + "-responses"),
-            $response_help = $response.find(".help-inline");
+            $response_help = $response.find(".help-block");
 
         if (!_trimmed_responses().length){
-            $response.addClass('error');
+            $response.addClass('has-error');
             $response_help.show();
             errors.push($response_help.text());
         }
         else {
-            $response.removeClass('error');
+            $response.removeClass('has-error');
             $response_help.hide();
         }
         return errors;
@@ -332,6 +332,7 @@ var caseListLookupViewModel = function($el, state, saveButton){
 
         if (errors.length){
             _.each(errors, function(error){
+                // TODO: this no longer exists (defined in B2 base template)
                 alert_user(error, "error");
             });
             return false;
@@ -482,7 +483,9 @@ var DetailScreenConfig = (function () {
                 model: screen.model,
                 time_ago_interval: DetailScreenConfig.TIME_AGO.year,
             };
-            _.defaults(this.original, defaults);
+            _.each(_.keys(defaults), function(key) {
+                that.original[key] = that.original[key] || defaults[key];
+            });
             this.original.late_flag = _.isNumber(this.original.late_flag) ? this.original.late_flag : 30;
 
             this.original.case_tile_field = ko.utils.unwrapObservable(this.original.case_tile_field) || "";
@@ -494,7 +497,9 @@ var DetailScreenConfig = (function () {
                 hasNodeset: false,
                 nodeset: "",
             };
-            _.defaults(this.original, tabDefaults);
+            _.each(_.keys(tabDefaults), function(key) {
+                that.original[key] = that.original[key] || tabDefaults[key];
+            });
             _.extend(this, _.pick(this.original, _.keys(tabDefaults)));
 
             this.screen = screen;
@@ -535,8 +540,8 @@ var DetailScreenConfig = (function () {
                 if (that.isTab) {
                     // hack to wait until the input's there to prepend the Tab: label.
                     setTimeout(function () {
-                        that.header.ui.addClass('input-prepend').prepend($('<span class="add-on">Tab</span>'));
-                        that.nodeset.ui.addClass('input-prepend').prepend($('<span class="add-on">Nodeset</span>'));
+                        that.header.ui.addClass('input-group').prepend($('<span class="input-group-addon">Tab</span>'));
+                        that.nodeset.ui.addClass('input-group').prepend($('<span class="input-group-addon">Nodeset</span>'));
                     }, 0);
 
                     // Observe nodeset values for the sake of validation
@@ -590,11 +595,8 @@ var DetailScreenConfig = (function () {
             });
 
             this.late_flag_extra = uiElement.input().val(this.original.late_flag.toString());
-            this.late_flag_extra.ui.find('input').css('width', 'auto');
-            this.late_flag_extra.ui.prepend(
-                $('<span/>').css('float', 'left')
-                            .css('padding', '5px 5px 0px 0px')
-                            .text(DetailScreenConfig.message.LATE_FLAG_EXTRA_LABEL));
+            this.late_flag_extra.ui.find('input').css('width', 'auto').css("display", "inline-block");
+            this.late_flag_extra.ui.prepend($('<span>' + DetailScreenConfig.message.LATE_FLAG_EXTRA_LABEL + '</span>'));
 
             this.filter_xpath_extra = uiElement.input().val(this.original.filter_xpath.toString());
             this.filter_xpath_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.FILTER_XPATH_EXTRA_LABEL));
@@ -634,6 +636,7 @@ var DetailScreenConfig = (function () {
             this.case_tile_field.subscribe(fireChange);
 
             this.$format = $('<div/>').append(this.format.ui);
+            this.$format.find("select").css("margin-bottom", "5px");
             this.format.on('change', function () {
                 // Prevent this from running on page load before init
                 if (that.format.ui.parent().length > 0) {
@@ -1151,7 +1154,7 @@ var DetailScreenConfig = (function () {
         PLAIN_FORMAT: 'Plain',
         DATE_FORMAT: 'Date',
         TIME_AGO_FORMAT: 'Time Since or Until Date',
-        TIME_AGO_EXTRA_LABEL: ' Measuring: ',
+        TIME_AGO_EXTRA_LABEL: ' Measuring ',
         TIME_AGO_INTERVAL: {
             YEARS: 'Years since date',
             MONTHS: 'Months since date',
@@ -1166,7 +1169,7 @@ var DetailScreenConfig = (function () {
         ENUM_IMAGE_FORMAT: 'Icon',
         ENUM_EXTRA_LABEL: 'Mapping: ',
         LATE_FLAG_FORMAT: 'Late Flag',
-        LATE_FLAG_EXTRA_LABEL: 'Days late: ',
+        LATE_FLAG_EXTRA_LABEL: ' Days late ',
         FILTER_XPATH_EXTRA_LABEL: '',
         INVISIBLE_FORMAT: 'Search Only',
         ADDRESS_FORMAT: 'Address (Android/CloudCare)',
