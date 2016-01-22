@@ -9,7 +9,8 @@
     <div class="panel-body">
         <div class="hq-graphic-report">
             {% block style %}
-            <link rel="stylesheet" href="{% static 'reports/css/maps.css' %}" />
+            <link rel="stylesheet" href="{% new_static 'leaflet/dist/leaflet.css' %}" />
+            <link rel="stylesheet" href="{% new_static 'reports/css/maps.css' %}" />
             {% endblock style %}
             {% block js-libs %}
             <script type="text/javascript" src="{% new_static 'jquery-color/jquery.color.js' %}"></script>
