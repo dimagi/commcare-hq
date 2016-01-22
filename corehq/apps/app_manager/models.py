@@ -3552,9 +3552,7 @@ class ReportModule(ModuleBase):
         )
 
     def validate_for_build(self):
-        # Overrides super without calling it, intentionally,
-        # because I don't think anything in super is relevant to ReportModules
-        errors = []
+        errors = super(ReportModule, self).validate_for_build()
         if not self.check_report_validity().is_valid:
             errors.append({
                 'type': 'report config ref invalid',
