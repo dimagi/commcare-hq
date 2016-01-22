@@ -21,8 +21,8 @@ class S3BlobDB(object):
         self.db = boto3.resource(
             's3',
             endpoint_url=config.get("url"),
-            aws_access_key_id=config.get("access_key"),
-            aws_secret_access_key=config.get("secret_key"),
+            aws_access_key_id=config.get("access_key", ""),
+            aws_secret_access_key=config.get("secret_key", ""),
         )
         self.s3_bucket_name = config.get("s3_bucket", DEFAULT_S3_BUCKET)
         self._s3_bucket_exists = False
@@ -74,7 +74,7 @@ class S3BlobDB(object):
         try:
             resp = self._s3_bucket().Object(path).get()
         except ClientError as err:
-            if err.response["Error"]["Code"] == "NoSuchKey":
+            if is_not_found(err):
                 raise NotFound(name, bucket)
             raise
         return ClosingContextProxy(resp["Body"])  # body stream
@@ -109,7 +109,7 @@ class S3BlobDB(object):
             try:
                 self.db.meta.client.head_bucket(Bucket=self.s3_bucket_name)
             except ClientError as err:
-                if err.response["Error"]["Code"] != "404":
+                if not is_not_found(err):
                     raise
                 self.db.create_bucket(Bucket=self.s3_bucket_name)
             self._s3_bucket_exists = True
@@ -141,6 +141,11 @@ def safejoin(root, subpath):
     """Join root to subpath ensuring that the result is actually inside root
     """
     return safepath(root) + "/" + safepath(subpath)
+
+
+def is_not_found(err):
+    return (err.response["Error"]["Code"] == "NoSuchKey" or
+            err.response["Error"]["Code"] == "404")
 
 
 class ClosingContextProxy(object):
