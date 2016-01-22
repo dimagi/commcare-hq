@@ -1,7 +1,21 @@
+from urllib import urlencode
+
+from django.utils import translation
 from django.utils.translation import ugettext as _
+from django.utils.translation import pgettext
 from twilio.rest import TwilioRestClient
+from django.contrib.sites.models import Site
+from django.core.urlresolvers import reverse
 
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
+
+
+VOICE_LANGUAGES = ('en', 'en-gb', 'es', 'fr', 'it', 'de', 'da-DK', 'de-DE',
+                   'en-AU', 'en-CA', 'en-GB', 'en-IN', 'en-US', 'ca-ES',
+                   'es-ES', 'es-MX', 'fi-FI', 'fr-CA', 'fr-FR', 'it-IT',
+                   'ja-JP', 'ko-KR', 'nb-NO', 'nl-NL', 'pl-PL', 'pt-BR',
+                   'pt-PT', 'ru-RU', 'sv-SE', 'zh-CN', 'zh-HK', 'zh-TW')
+
 
 class Gateway(object):
 
@@ -18,3 +32,21 @@ class Gateway(object):
             to=device.number,
             from_=self.from_number,
             body=message)
+
+    def make_call(self, device, token):
+        locale = translation.get_language()
+        validate_voice_locale(locale)
+
+        url = reverse('two_factor:twilio_call_app', kwargs={'token': token})
+        url = '%s?%s' % (url, urlencode({'locale': locale}))
+        uri = 'https://%s%s' % (Site.objects.get_current().domain, url)
+        self.client.calls.create(to=device.number, from_=self.from_number,
+                                 url=uri, method='GET', if_machine='Hangup', timeout=15)
+
+
+def validate_voice_locale(locale):
+    with translation.override(locale):
+        voice_locale = pgettext('twilio_locale', 'en')
+        if voice_locale not in VOICE_LANGUAGES:
+            raise NotImplementedError('The language "%s" is not '
+                                      'supported by Twilio' % voice_locale)

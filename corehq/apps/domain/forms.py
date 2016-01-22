@@ -744,7 +744,7 @@ class PrivacySecurityForm(forms.Form):
     two_factor_auth = BooleanField(
         label=ugettext_lazy("Two Factor Authentication"),
         required=False,
-        help_text=ugettext_lazy("All web users on this project will be logged out after 30 minutes of inactivity")
+        help_text=ugettext_lazy("All web users on this project will be required to enable two factor authentication")
     )
 
     def __init__(self, *args, **kwargs):
@@ -782,6 +782,7 @@ class PrivacySecurityForm(forms.Form):
         domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
         domain.allow_domain_requests = self.cleaned_data.get('allow_domain_requests', False)
         domain.secure_sessions = self.cleaned_data.get('secure_sessions', False)
+        domain.two_factor_auth = self.cleaned_data.get('two_factor_auth', False)
         secure_submissions = self.cleaned_data.get(
             'secure_submissions', False)
         apps_to_save = []

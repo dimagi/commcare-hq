@@ -5,6 +5,8 @@ from corehq.apps.settings.views import (
     TwoFactorBackupTokensView, TwoFactorDisableView, TwoFactorPhoneSetupView,
     NewPhoneView
 )
+from two_factor.urls import urlpatterns as tf_urls
+from two_factor.gateways.twilio.urls import urlpatterns as tf_twilio_urls
 
 urlpatterns = patterns(
     'corehq.apps.hqwebapp.views',
@@ -38,7 +40,7 @@ urlpatterns = patterns(
     url(r'^account/two_factor/backup/tokens/$', TwoFactorBackupTokensView.as_view(), name=TwoFactorBackupTokensView.urlname),
     url(r'^account/two_factor/disable/$', TwoFactorDisableView.as_view(), name=TwoFactorDisableView.urlname),
     url(r'^account/two_factor/backup/phone/register/$', TwoFactorPhoneSetupView.as_view(), name=TwoFactorPhoneSetupView.urlname),
-    url(r'', include('two_factor.urls', 'two_factor')),
+    url(r'', include(tf_urls + tf_twilio_urls, 'two_factor')),
     url(r'^account/two_factor/new_phone/$', NewPhoneView.as_view(), name=NewPhoneView.urlname)
 )
 
