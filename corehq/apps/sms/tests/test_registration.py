@@ -6,8 +6,6 @@ from corehq.apps.sms.tests.util import BaseSMSTest
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
-from django.conf import settings
-from django.contrib.sites.models import Site
 
 
 class RegistrationTestCase(BaseSMSTest):

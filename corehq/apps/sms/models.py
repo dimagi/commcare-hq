@@ -11,7 +11,6 @@ from django.db import models, transaction
 from collections import namedtuple
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form
-from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.migration import (SyncCouchToSQLMixin,

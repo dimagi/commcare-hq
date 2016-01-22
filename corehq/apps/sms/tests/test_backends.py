@@ -25,7 +25,6 @@ from corehq.messaging.smsbackends.unicel.models import SQLUnicelBackend, Inbound
 from corehq.messaging.smsbackends.yo.models import SQLYoBackend
 from datetime import datetime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.parsing import json_format_datetime
 from django.test import TestCase
 from django.test.client import Client
 from django.test.utils import override_settings
@@ -687,7 +686,9 @@ class OutgoingFrameworkTestCase(BaseSMSTest):
             'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
             autospec=True
         ) as mock_send:
-            self.assertTrue(send_sms_with_backend(self.domain, '+15551234567', 'Test for BACKEND3', self.backend3.couch_id))
+            self.assertTrue(
+                send_sms_with_backend(self.domain, '+15551234567', 'Test for BACKEND3', self.backend3.couch_id)
+            )
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args[0][0].pk, self.backend3.pk)
 
@@ -696,7 +697,9 @@ class OutgoingFrameworkTestCase(BaseSMSTest):
             'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send',
             autospec=True
         ) as mock_send:
-            self.assertTrue(send_sms_with_backend_name(self.domain, '+15551234567', 'Test for BACKEND3', 'BACKEND3'))
+            self.assertTrue(
+                send_sms_with_backend_name(self.domain, '+15551234567', 'Test for BACKEND3', 'BACKEND3')
+            )
         self.assertEqual(mock_send.call_count, 1)
         self.assertEqual(mock_send.call_args[0][0].pk, self.backend3.pk)
 
@@ -790,21 +793,21 @@ class SQLMobileBackendTestCase(TestCase):
             hq_api_id=SQLTestSMSBackend.get_api_id(),
         )
 
-        backend_mapping1 = SQLMobileBackendMapping.objects.create(
+        SQLMobileBackendMapping.objects.create(
             is_global=True,
             backend_type=SQLMobileBackend.SMS,
             prefix='*',
             backend=backend1
         )
 
-        backend_mapping2 = SQLMobileBackendMapping.objects.create(
+        SQLMobileBackendMapping.objects.create(
             is_global=True,
             backend_type=SQLMobileBackend.SMS,
             prefix='27',
             backend=backend2
         )
 
-        backend_mapping3 = SQLMobileBackendMapping.objects.create(
+        SQLMobileBackendMapping.objects.create(
             is_global=False,
             domain='load-default-test',
             backend_type=SQLMobileBackend.SMS,
@@ -812,7 +815,7 @@ class SQLMobileBackendTestCase(TestCase):
             backend=backend3
         )
 
-        backend_mapping4 = SQLMobileBackendMapping.objects.create(
+        SQLMobileBackendMapping.objects.create(
             is_global=False,
             domain='load-default-test',
             backend_type=SQLMobileBackend.SMS,
@@ -1080,7 +1083,6 @@ class LoadBalanceAndRateLimitBackend(SQLTestSMSBackend, PhoneLoadBalancingMixin)
 
     def get_sms_rate_limit(self):
         return 10
-
 
     @classmethod
     def get_api_id(cls):

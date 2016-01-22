@@ -91,7 +91,7 @@ class SQLTropoBackend(SQLSMSBackend):
             'token': config.messaging_token,
             'numberToDial': phone_number,
             'msg': text,
-            '_send_sms' : 'true',
+            '_send_sms': 'true',
         })
         url = 'https://api.tropo.com/1.0/sessions?%s' % params
         response = urlopen(url, timeout=settings.SMS_GATEWAY_TIMEOUT).read()
