@@ -365,7 +365,7 @@ def send_purchase_receipt(payment_record, core_product, domain,
     )
 
 
-@task(ignore_result=True)
+@task(queue='background_queue', ignore_result=True)
 def send_autopay_failed(invoice, payment_method):
     subscription = invoice.subscription
     auto_payer = subscription.account.auto_pay_user
