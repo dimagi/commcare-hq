@@ -18,7 +18,8 @@ redis:
   ports:
     - "6379:6379"
 elasticsearch:
-  image: elasticsearch:1.7.4
+  build: ./docker
+  dockerfile: Dockerfile_es
   ports:
     - "9200:9200"
   volumes:
