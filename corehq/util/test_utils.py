@@ -282,17 +282,14 @@ def generate_cases(argsets, cls=None):
 
 
 def get_form_ready_to_save(metadata):
-    from corehq.form_processor.interfaces.processor import FormProcessorInterface
+    from corehq.form_processor.parsers.form import process_xform_xml
     from corehq.form_processor.utils import get_simple_form_xml
-    from corehq.form_processor.utils import convert_xform_to_json
 
     assert metadata is not None
     metadata.domain = metadata.domain or uuid.uuid4().hex
     form_id = uuid.uuid4().hex
     form_xml = get_simple_form_xml(form_id=form_id, metadata=metadata)
-    form_json = convert_xform_to_json(form_xml)
-    wrapped_form = FormProcessorInterface(domain=metadata.domain).new_xform(form_json)
-    wrapped_form.domain = metadata.domain
+    wrapped_form = process_xform_xml(metadata.domain, form_xml).submitted_form
     wrapped_form.received_on = metadata.received_on
     return wrapped_form
 
