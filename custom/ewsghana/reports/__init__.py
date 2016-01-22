@@ -224,7 +224,7 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
             Date range: {3} - {4}
             """.format(
                 self.location.name,
-                Program.get(program).name if program != ALL_OPTION else ALL_OPTION.title(),
+                Program.get(program).name if program and program != ALL_OPTION else ALL_OPTION.title(),
                 ", ".join(
                     [p.name for p in SQLProduct.objects.filter(product_id__in=products)]
                 ) if products != ALL_OPTION and products else ALL_OPTION.title(),
