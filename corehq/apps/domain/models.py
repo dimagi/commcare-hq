@@ -331,6 +331,8 @@ class Domain(Document, SnapshotMixin):
     # when turned on, users who enter the domain are logged out after 30 minutes of inactivity
     secure_sessions = BooleanProperty(default=False)
 
+    two_factor_auth = BooleanProperty(default=False)
+
     @property
     def domain_type(self):
         """
