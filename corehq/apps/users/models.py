@@ -66,6 +66,7 @@ from dimagi.utils.django.database import get_unique_value
 from xml.etree import ElementTree
 
 from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
+from dimagi.utils.parsing import json_format_datetime
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -1634,24 +1635,26 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def retire(self):
         suffix = DELETED_SUFFIX
         deletion_id = random_hex()
+        deletion_date = json_format_datetime(datetime.utcnow())
         deleted_cases = set()
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
             self.base_doc += suffix
             self['-deletion_id'] = deletion_id
+            self['-deletion_date'] = deletion_date
 
         for caselist in chunked(self._get_case_docs(), 50):
-            tag_cases_as_deleted_and_remove_indices.delay(self.domain, caselist, deletion_id)
+            tag_cases_as_deleted_and_remove_indices.delay(self.domain, caselist, deletion_id, deletion_date)
             for case in caselist:
                 deleted_cases.add(case['_id'])
 
         for form_id_list in chunked(self.get_forms(wrap=False, include_docs=False), 50):
             tag_forms_as_deleted_rebuild_associated_cases.delay(
-                self.user_id, self.domain, form_id_list, deletion_id, deleted_cases=deleted_cases
+                self.user_id, self.domain, form_id_list, deletion_id, deletion_date, deleted_cases=deleted_cases
             )
 
         for phone_number in self.get_verified_numbers(True).values():
-            phone_number.retire(deletion_id)
+            phone_number.retire(deletion_id=deletion_id, deletion_date=deletion_date)
 
         try:
             django_user = self.get_django_user()
