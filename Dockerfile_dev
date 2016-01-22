@@ -1,6 +1,16 @@
 FROM python:2.7
 ENV PYTHONUNBUFFERED 1
 
+RUN curl -sL https://deb.nodesource.com/setup_5.x | bash -
+
+RUN apt-get update && apt-get -y install \
+    nodejs \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN npm -g install bower
+RUN echo '{ "allow_root": true }' > /root/.bowerrc
+
 RUN wget -O jdk.tar.gz --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/7u67-b01/jdk-7u67-linux-x64.tar.gz \
  && tar -xzf jdk.tar.gz \
  && mkdir -p /usr/lib/jvm \
@@ -14,5 +24,8 @@ RUN pip install --upgrade pip
 
 WORKDIR /mnt
 ADD . /mnt/
-ENV PYTHONUSERBASE /mnt/vendor
+ENV PYTHONUSERBASE /mnt/docker/data/python
 RUN pip install -r requirements/requirements.txt -r requirements/dev-requirements.txt --user --upgrade
+
+ENTRYPOINT ["/mnt/docker/entrypoint.sh"]
+CMD ["help"]

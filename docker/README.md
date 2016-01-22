@@ -36,3 +36,22 @@ Caveats
 
 * CloudCare is not currently part of this set up. It should probably be another docker image, different from CommCareHQ.
 * Some CommCareHQ pages trigger errors, probably because of missing components / misconfigurations.
+
+
+Docker Compose
+==============
+
+Initial setup
+-------------
+* Install [Docker](http://docs.docker.com/installation)
+* Install [Docker Compose](https://docs.docker.com/compose/install/)
+* If you want to run the containers in a VM install [Docker Machine](https://docs.docker.com/machine/install-machine/)
+* Bootstrap the setup:
+
+```
+  $ sudo docker-compose build
+  $ sudo docker-compose run --service-ports web bash 
+```
+
+You are now in the `web` containers shell and can do the rest of the setup
+as described in the CommCare HQ Readme section **Set up your django environment**

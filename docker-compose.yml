@@ -27,14 +27,13 @@ web:
   build: .
   dockerfile: Dockerfile_dev
   working_dir: /mnt
-  command: /bin/bash -c /mnt/docker/wait.sh
+  command: python manage.py runserver 0.0.0.0:8000
   volumes:
     - .:/mnt
   ports:
     - "8000:8000"
   environment:
-    PYTHONUSERBASE: /mnt/vendor
-    START_CMD: "python manage.py runserver 0.0.0.0:8000"
+    PYTHONUSERBASE: /mnt/docker/data/python
   links:
     - postgres
     - couch

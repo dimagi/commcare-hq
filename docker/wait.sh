@@ -11,7 +11,6 @@ for service in $SERVICES; do
 
     echo -n "waiting for TCP connection to $service @ $host:$port..."
 
-#    while ! nc -w 1 $host $port 2>/dev/null
     while ! exec 6<>/dev/tcp/${host}/${port}
     do
       echo -n .
@@ -22,5 +21,3 @@ for service in $SERVICES; do
 done
 
 echo "ALL SERVICES READY"
-
-exec $START_CMD
