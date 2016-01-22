@@ -490,6 +490,13 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     def get_export_schema(export_id):
         return SavedExportSchema.get(export_id)
 
+    def get_export_object(self, export_id):
+        """Must return either a FormExportSchema or CaseExportSchema object
+        """
+        raise NotImplementedError(
+            "Must implement get_export_object."
+        )
+
     @property
     def export_id(self):
         return self.kwargs.get('export_id')
@@ -543,13 +550,6 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
         """
         raise NotImplementedError(
             "Must return a SerializableFunction for get_filters."
-        )
-
-    def get_export_object(self, export_id):
-        """Must return either a FormExportSchema or CaseExportSchema object
-        """
-        raise NotImplementedError(
-            "Must implement get_export_object."
         )
 
     @allow_remote_invocation
@@ -705,6 +705,9 @@ class DownloadFormExportView(BaseDownloadExportView):
     def get_export_schema(export_id):
         return FormExportSchema.get(export_id)
 
+    def get_export_object(self, export_id):
+        return FormExportSchema.get(export_id)
+
     @property
     def export_list_url(self):
         return reverse(FormExportListView.urlname, args=(self.domain,))
@@ -741,9 +744,6 @@ class DownloadFormExportView(BaseDownloadExportView):
         export_filter = SerializableFunction(default_form_filter,
                                              filter=form_filter)
         return export_filter
-
-    def get_export_object(self, export_id):
-        return FormExportSchema.get(export_id)
 
     @allow_remote_invocation
     def has_multimedia(self, in_data):
@@ -813,6 +813,9 @@ class DownloadCaseExportView(BaseDownloadExportView):
     def get_export_schema(export_id):
         return CaseExportSchema.get(export_id)
 
+    def get_export_object(self, export_id):
+        return CaseExportSchema.get(export_id)
+
     @property
     def export_list_url(self):
         return reverse(CaseExportListView.urlname, args=(self.domain,))
@@ -841,9 +844,6 @@ class DownloadCaseExportView(BaseDownloadExportView):
         if not filter_form.is_valid():
             raise ExportFormValidationException()
         return filter_form.get_case_filter()
-
-    def get_export_object(self, export_id):
-        return CaseExportSchema.get(export_id)
 
 
 class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProjectDataView):
