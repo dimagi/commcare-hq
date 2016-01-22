@@ -1190,8 +1190,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return None
 
     def clear_quickcache_for_user(self):
+        from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list
         self.get_by_username.clear(self.__class__, self.username)
         Domain.active_for_couch_user.clear(self)
+        _get_domain_list.clear(self)
 
     @classmethod
     def get_by_default_phone(cls, phone_number):
