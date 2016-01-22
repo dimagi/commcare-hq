@@ -1,5 +1,6 @@
 from shutil import rmtree
 from tempfile import mkdtemp
+from uuid import uuid4
 
 import corehq.blobs as blobs
 from corehq.blobs.fsdb import FilesystemBlobDB
@@ -52,11 +53,13 @@ class TemporaryFilesystemBlobDB(TemporaryBlobDBMixin, FilesystemBlobDB):
 
 class TemporaryS3BlobDB(TemporaryBlobDBMixin, S3BlobDB):
 
-    def __init__(self, settings):
-        settings = dict(settings)
-        settings.setdefault("s3_bucket", "test-blobdb")
-        assert settings["s3_bucket"].startswith("test-"), settings["s3_bucket"]
-        super(TemporaryS3BlobDB, self).__init__(settings)
+    def __init__(self, config):
+        name_parts = ["test", config.get("s3_bucket", "blobdb"), uuid4().hex]
+        config = dict(config)
+        config["s3_bucket"] = "-".join(name_parts)
+        super(TemporaryS3BlobDB, self).__init__(config)
+        assert self.s3_bucket_name == config["s3_bucket"], \
+            (self.s3_bucket_name, config)
 
     def clean_db(self):
         if not self._s3_bucket_exists:
