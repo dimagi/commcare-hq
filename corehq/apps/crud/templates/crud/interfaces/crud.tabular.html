@@ -38,6 +38,7 @@
             <h3><span class="label label-success">Create New</span> {{ crud_item.type }}</h3>
         </div>
         <form class="form-horizontal" action="" method="post">
+            {% csrf_token %}
             <div class="modal-body" style="overflow-y: scroll; max-height: 500px;">
             </div>
             <div class="modal-footer">
@@ -52,6 +53,7 @@
             <h3><span class="label label-info">Update</span> {{ crud_item.type }}</h3>
         </div>
         <form class="form-horizontal" action="" method="post">
+            {% csrf_token %}
             <div class="modal-body" style="overflow-y: scroll; max-height: 500px;">
             </div>
             <div class="modal-footer">

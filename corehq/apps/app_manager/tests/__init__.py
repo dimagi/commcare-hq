@@ -7,6 +7,7 @@ try:
     from .test_repeater import *
     from .test_translations import *
     from corehq.apps.app_manager.tests.test_advanced_suite import *
+    from corehq.apps.app_manager.tests.test_analytics import *
     from corehq.apps.app_manager.tests.test_app_manager import *
     from corehq.apps.app_manager.tests.test_build_errors import *
     from corehq.apps.app_manager.tests.test_bulk_app_translation import *

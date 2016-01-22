@@ -283,4 +283,4 @@ def get_exports_by_form(domain):
         endkey=[domain, {}],
         group=True,
         stale=stale_ok()
-    )
+    ).all()

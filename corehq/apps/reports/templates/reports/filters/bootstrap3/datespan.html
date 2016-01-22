@@ -2,38 +2,45 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block filter_content %}
-    <input type="text" id="filter_range" class="date-range-picker" value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}" />
-
-    <!-- Since a lot parts of commcarehq are using 'startdate' and 'enddate' parameters, we could keep them for backward compatibility -->
-    <input type="hidden"
-           id="{{ css_id }}_startdate"
-           name="{% ifnotequal slug 'datespan' %}{{ slug }}_{% endifnotequal %}startdate"
-           class="date-picker input-small"
-           value="{{ datespan.startdate|date:"Y-m-d" }}">
-    <input type="hidden"
-           id="{{ css_id }}_enddate"
-           name="{% ifnotequal slug 'datespan' %}{{ slug }}_{% endifnotequal %}enddate"
-           class="date-picker input-small"
-           value="{{ datespan.enddate|date:"Y-m-d" }}">
-
-    <span class="helptext help-inline" style="margin-left: 1.5em;">
-        {% if timezone %}
-        {% blocktrans %}This report's timezone is {{ timezone }}.{% endblocktrans %}
-        {% endif %}
-    </span>
+    <div class="row">
+        <div class="col-xs-6">
+            <input type="text"
+                   id="filter_range"
+                   class="date-range-picker form-control"
+                   value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}" />
+            <!-- Since a lot parts of commcarehq are using 'startdate' and 'enddate' parameters, we could keep them for backward compatibility -->
+            <input type="hidden"
+                   id="{{ css_id }}_startdate"
+                   name="{% ifnotequal slug 'datespan' %}{{ slug }}_{% endifnotequal %}startdate"
+                   class="date-picker input-small"
+                   value="{{ datespan.startdate|date:"Y-m-d" }}">
+            <input type="hidden"
+                   id="{{ css_id }}_enddate"
+                   name="{% ifnotequal slug 'datespan' %}{{ slug }}_{% endifnotequal %}enddate"
+                   class="date-picker input-small"
+                   value="{{ datespan.enddate|date:"Y-m-d" }}">
+        </div>
+        <div class="col-xs-6">
+            <p class="help-block">
+                {% if timezone %}
+                {% blocktrans %}This report's timezone is {{ timezone }}.{% endblocktrans %}
+                {% endif %}
+            </p>
+        </div>
+    </div>
 {% endblock %}
 {% block filter_js %}
 {% ifequal slug 'datespan'  %}
-    <link rel="stylesheet" type="text/css" href="{% new_static "reports/css/daterangepicker-bs2.css" %}">
-    <script type="text/javascript" src="{% new_static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'reports/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'reports/javascripts/daterangepicker.js' %}"></script>
     <script type="text/javascript">
         $(function () {
             var separator = '{{ separator }}';
             var report_labels = JSON.parse('{{ report_labels|safe }}');
 
-            $('#filter_range').createDateRangePicker(report_labels, separator);
+            $('#filter_range').createBootstrap3DateRangePicker(
+                report_labels, separator,
+                '{{ datespan.startdate|date:"Y-m-d" }}',
+                '{{ datespan.enddate|date:"Y-m-d" }}'
+            );
             $('#filter_range').on('change apply', function(ev, picker) {
                 var dates = $(this).val().split(separator);
                 $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.startdate', dates[0]);

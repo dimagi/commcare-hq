@@ -38,7 +38,7 @@
 
 {% block reporttable %}
 {% if report.needs_filters %}
-    {% include 'reports/standard/partials/description.html' %}
+    {% include 'reports/bootstrap2/partials/description.html' %}
 {% else %}
     <div class={{ report.slug }}>
         {% for thisreport in reports %}
