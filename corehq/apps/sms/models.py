@@ -270,6 +270,7 @@ class SMS(SyncSQLToCouchMixin, models.Model):
     ERROR_INVALID_DIRECTION = 'INVALID_DIRECTION'
     ERROR_PHONE_NUMBER_OPTED_OUT = 'PHONE_NUMBER_OPTED_OUT'
     ERROR_INVALID_DESTINATION_NUMBER = 'INVALID_DESTINATION_NUMBER'
+    ERROR_MESSAGE_TOO_LONG = 'MESSAGE_TOO_LONG'
 
     ERROR_MESSAGES = {
         ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:
@@ -282,6 +283,8 @@ class SMS(SyncSQLToCouchMixin, models.Model):
             ugettext_noop('Phone number has opted out of receiving SMS.'),
         ERROR_INVALID_DESTINATION_NUMBER:
             ugettext_noop("The gateway can't reach the destination number."),
+        ERROR_MESSAGE_TOO_LONG:
+            ugettext_noop("The gateway could not process the message because it was too long."),
     }
 
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
