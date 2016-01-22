@@ -1,5 +1,7 @@
 import math
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, RequestFactory
+from django.test.utils import override_settings
+from corehq.util.log import get_sanitized_request_repr
 from corehq.util.soft_assert.core import SoftAssert
 from corehq.util.soft_assert.api import _send_message
 from corehq.util.cache_utils import ExponentialBackoff
@@ -63,6 +65,19 @@ class SoftAssertHelpersTest(SimpleTestCase):
             expected = n in powers_of_two
             self.assertEqual(actual, expected,
                              '_number_is_power_of_two: {}'.format(actual))
+
+    @override_settings(DEBUG=False)
+    def test_request_sanitization(self):
+        raw_request = RequestFactory().post('/accounts/login/', {'username': 'sreddy', 'password': 'mypass'})
+        raw_request.sensitive_post_parameters = '__ALL__'
+        santized_request = get_sanitized_request_repr(raw_request)
+
+        # raw request exposes password
+        self.assertTrue('mypass' in str(raw_request))
+
+        # sanitized_request should't expose password
+        self.assertFalse('mypass' in santized_request)
+        self.assertTrue('*******' in santized_request)
 
     def test_send_message(self):
 
