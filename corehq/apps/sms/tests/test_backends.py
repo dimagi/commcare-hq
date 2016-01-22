@@ -711,6 +711,10 @@ class OutgoingFrameworkTestCase(BaseSMSTest):
 
 
 class SQLMobileBackendTestCase(TestCase):
+    def assertBackendsEqual(self, backend1, backend2):
+        self.assertEqual(backend1.pk, backend2.pk)
+        self.assertEqual(backend1.__class__, backend2.__class__)
+
     def test_domain_is_shared(self):
         backend = SQLTestSMSBackend.objects.create(
             name='BACKEND',
@@ -817,7 +821,7 @@ class SQLMobileBackendTestCase(TestCase):
         )
 
         # Test global prefix map
-        self.assertEqual(
+        self.assertBackendsEqual(
             SQLMobileBackend.load_default_by_phone_and_domain(
                 SQLMobileBackend.SMS,
                 '2700000000',
@@ -827,7 +831,7 @@ class SQLMobileBackendTestCase(TestCase):
         )
 
         # Test domain-level prefix map
-        self.assertEqual(
+        self.assertBackendsEqual(
             SQLMobileBackend.load_default_by_phone_and_domain(
                 SQLMobileBackend.SMS,
                 '2700000000',
@@ -838,7 +842,7 @@ class SQLMobileBackendTestCase(TestCase):
 
         # Test domain catch-all
         backend4.soft_delete()
-        self.assertEqual(
+        self.assertBackendsEqual(
             SQLMobileBackend.load_default_by_phone_and_domain(
                 SQLMobileBackend.SMS,
                 '2700000000',
@@ -849,7 +853,7 @@ class SQLMobileBackendTestCase(TestCase):
 
         # Test global prefix map
         backend3.soft_delete()
-        self.assertEqual(
+        self.assertBackendsEqual(
             SQLMobileBackend.load_default_by_phone_and_domain(
                 SQLMobileBackend.SMS,
                 '2700000000',
@@ -860,7 +864,7 @@ class SQLMobileBackendTestCase(TestCase):
 
         # Test global catch-all
         backend2.soft_delete()
-        self.assertEqual(
+        self.assertBackendsEqual(
             SQLMobileBackend.load_default_by_phone_and_domain(
                 SQLMobileBackend.SMS,
                 '2700000000',
@@ -916,22 +920,22 @@ class SQLMobileBackendTestCase(TestCase):
             hq_api_id=SQLTestSMSBackend.get_api_id(),
         )
 
-        self.assertEquals(
+        self.assertBackendsEqual(
             SQLMobileBackend.load(backend.pk),
             backend
         )
 
-        self.assertEquals(
+        self.assertBackendsEqual(
             SQLMobileBackend.load(backend.pk, api_id=SQLTestSMSBackend.get_api_id()),
             backend
         )
 
-        self.assertEquals(
+        self.assertBackendsEqual(
             SQLMobileBackend.load(backend.couch_id, is_couch_id=True),
             backend
         )
 
-        self.assertEquals(
+        self.assertBackendsEqual(
             SQLMobileBackend.load(
                 backend.couch_id,
                 api_id=SQLTestSMSBackend.get_api_id(),
@@ -979,7 +983,7 @@ class SQLMobileBackendTestCase(TestCase):
             hq_api_id=SQLTestSMSBackend.get_api_id(),
         )
 
-        self.assertEqual(
+        self.assertBackendsEqual(
             SQLMobileBackend.load_by_name(
                 SQLMobileBackend.SMS,
                 'backend-by-name-test-1',
@@ -988,7 +992,7 @@ class SQLMobileBackendTestCase(TestCase):
             backend1
         )
 
-        self.assertEqual(
+        self.assertBackendsEqual(
             SQLMobileBackend.load_by_name(
                 SQLMobileBackend.SMS,
                 'backend-by-name-test-3',
@@ -998,7 +1002,7 @@ class SQLMobileBackendTestCase(TestCase):
         )
 
         backend1.soft_delete()
-        self.assertEqual(
+        self.assertBackendsEqual(
             SQLMobileBackend.load_by_name(
                 SQLMobileBackend.SMS,
                 'backend-by-name-test-1',
@@ -1008,7 +1012,7 @@ class SQLMobileBackendTestCase(TestCase):
         )
 
         backend2.set_shared_domains([])
-        self.assertEqual(
+        self.assertBackendsEqual(
             SQLMobileBackend.load_by_name(
                 SQLMobileBackend.SMS,
                 'backend-by-name-test-1',
@@ -1017,7 +1021,7 @@ class SQLMobileBackendTestCase(TestCase):
             backend3
         )
 
-        self.assertEqual(
+        self.assertBackendsEqual(
             SQLMobileBackend.load_by_name(
                 SQLMobileBackend.SMS,
                 'backend-by-name-test-2',
@@ -1027,7 +1031,7 @@ class SQLMobileBackendTestCase(TestCase):
         )
 
         backend2.soft_delete()
-        self.assertEqual(
+        self.assertBackendsEqual(
             SQLMobileBackend.load_by_name(
                 SQLMobileBackend.SMS,
                 'backend-by-name-test-2',
