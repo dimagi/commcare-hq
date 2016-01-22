@@ -7,6 +7,7 @@
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
+    {% include "app_manager/partials/xpathValidator.html" %}
     <script>
     if (window.toggles === undefined) {
         window.toggles = {};
@@ -254,11 +255,7 @@
                         </select>
                     </div>
                 </div>
-                {% if module.module_filter %}
-                    {% include "app_manager/partials/module_filter.html" with value=module.module_filter %}
-                {% else %}
-                    {% include "app_manager/partials/module_filter.html" with value="" %}
-                {% endif %}
+                {% include "app_manager/partials/module_filter.html" with value=module.module_filter %}
                 {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
                 {% if child_module_enabled %}
                 <div class="control-group">
