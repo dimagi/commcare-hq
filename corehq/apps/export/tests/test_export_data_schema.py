@@ -4,7 +4,6 @@ from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import XForm
 from corehq.apps.export.models import ExportDataSchema
-from corehq.apps.export.const import FORM_TABLE
 
 
 class TestExportDataSchema(SimpleTestCase, TestXmlMixin):

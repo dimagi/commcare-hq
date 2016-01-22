@@ -1,1 +1,0 @@
-FORM_TABLE = 'forms'

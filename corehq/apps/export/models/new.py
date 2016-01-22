@@ -14,8 +14,6 @@ from dimagi.ext.couchdbkit import (
     IntegerProperty,
 )
 
-from ..const import FORM_TABLE
-
 
 Question = namedtuple('Question', [
     'type',
