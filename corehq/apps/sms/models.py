@@ -1662,7 +1662,6 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         return cls.get_backend_from_id_and_api_id_result(result)
 
     @classmethod
-    @quickcache(['backend_type', 'domain', 'name'], timeout=5 * 60)
     def load_by_name(cls, backend_type, domain, name):
         """
         Attempts to load the backend with the given name.
@@ -1754,11 +1753,18 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
 
         self.extra_fields = result
 
+    def __clear_shared_domain_cache(self, new_domains):
+        current_domains = self.mobilebackendinvitation_set.values_list('domain', flat=True)
+        # Clear the cache for domains in new_domains or current_domains, but not both
+        for domain in set(current_domains) ^ set(new_domains):
+            self.domain_is_shared.clear(self, domain)
+
     def set_shared_domains(self, domains):
         if self.id is None:
             raise Exception("Please call .save() on the backend before "
                 "calling set_shared_domains()")
         with transaction.atomic():
+            self.__clear_shared_domain_cache(domains)
             self.mobilebackendinvitation_set.all().delete()
             self.mobilebackendinvitation_set = [
                 MobileBackendInvitation(
@@ -1773,12 +1779,30 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
     def soft_delete(self):
         with transaction.atomic():
             self.deleted = True
+            self.__clear_shared_domain_cache([])
             self.mobilebackendinvitation_set.all().delete()
             for mapping in self.sqlmobilebackendmapping_set.all():
                 # TODO: Can do a bulk delete once the two-way sync
                 # with couch is no longer necessary
                 mapping.delete()
             self.save()
+
+    def __clear_caches(self):
+        if self.pk:
+            self.load.clear(SQLMobileBackend, self.pk, is_couch_id=False)
+            self.get_backend_api_id.clear(SQLMobileBackend, self.pk, is_couch_id=False)
+
+        if self.couch_id:
+            self.load.clear(SQLMobileBackend, self.couch_id, is_couch_id=True)
+            self.get_backend_api_id.clear(SQLMobileBackend, self.couch_id, is_couch_id=True)
+
+    def save(self, *args, **kwargs):
+        self.__clear_caches()
+        return super(SQLMobileBackend, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.__clear_caches()
+        return super(SQLMobileBackend, self).delete(*args, **kwargs)
 
     def _migration_sync_to_couch(self, couch_obj):
         couch_obj.domain = self.domain
@@ -1989,6 +2013,17 @@ class SQLMobileBackendMapping(SyncSQLToCouchMixin, models.Model):
                 backend_map[instance.prefix] = instance.backend_id
 
         return BackendMap(catchall_backend_id, backend_map)
+
+    def __clear_prefix_to_backend_map_cache(self):
+        self.get_prefix_to_backend_map.clear(self.__class__, self.backend_type, domain=self.domain)
+
+    def save(self, *args, **kwargs):
+        self.__clear_prefix_to_backend_map_cache()
+        return super(SQLMobileBackendMapping, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.__clear_prefix_to_backend_map_cache()
+        return super(SQLMobileBackendMapping, self).delete(*args, **kwargs)
 
     @classmethod
     def _migration_get_couch_model_class(cls):
