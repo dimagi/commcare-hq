@@ -46,6 +46,14 @@ Initial setup
 * Install [Docker](http://docs.docker.com/installation)
 * Install [Docker Compose](https://docs.docker.com/compose/install/)
 * If you want to run the containers in a VM install [Docker Machine](https://docs.docker.com/machine/install-machine/)
+* Make your `localsettings.py` extend `dockersettings.py` and comment out / delete your current
+settings for PostgreSQL, Redis, CouchDB, Elasticsearch
+
+```python
+from dockersettings import *
+# DATABASES ..
+```
+
 * Bootstrap the setup:
 
 ```
@@ -59,22 +67,25 @@ as described in the CommCare HQ Readme section **Set up your django environment*
 
 General usage
 -------------
-**Run the django server in the background**
+**Run the django server**
 
 ```
-  $ sudo docker-compose up -d
+  $ sudo docker-compose up
+  $ sudo docker-compose up -d  # run in background
 ```
 
 **Check logs**
 
 ```
   $ sudo docker-compose logs web
-  $ sudo docker-services logs
+  $ sudo docker-services logs [postgres|elasticsearch|redis|couch]
 ```
 
 **Start fresh**
 
 ```
+  $ ./docker/docker-services.sh down
+  $ ./docker/docker-services.sh start
   $ sudo docker-compose down
   $ sudo docker-compose up
 ```
