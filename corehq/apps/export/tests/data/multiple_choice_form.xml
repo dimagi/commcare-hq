@@ -5,39 +5,44 @@
 		<model>
 			<instance>
 				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="undefined" uiVersion="1" version="1" name="Buy Candy Corn">
+					<question1 />
 					<question2 />
-					<question3>
-						<question1 />
-					</question3>
 				</data>
 			</instance>
-			<bind nodeset="/data/question2" type="xsd:string" />
-			<bind nodeset="/data/question3" />
-			<bind nodeset="/data/question3/question1" type="xsd:string" />
+			<bind nodeset="/data/question1" type="xsd:string" />
+			<bind nodeset="/data/question2" />
 			<itext>
 				<translation lang="en" default="">
+					<text id="question1-label">
+						<value>question1</value>
+					</text>
 					<text id="question2-label">
 						<value>question2</value>
 					</text>
-					<text id="question3-label">
-						<value>question3</value>
+					<text id="question2-choice1-label">
+						<value>choice1</value>
 					</text>
-					<text id="question3/question1-label">
-						<value>question1</value>
+					<text id="question2-choice2-label">
+						<value>choice2</value>
 					</text>
 				</translation>
 			</itext>
 		</model>
 	</h:head>
 	<h:body>
-		<input ref="/data/question2">
-			<label ref="jr:itext('question2-label')" />
+		<input ref="/data/question1">
+			<label ref="jr:itext('question1-label')" />
 		</input>
-		<group ref="/data/question3">
-			<label ref="jr:itext('question3-label')" />
-			<input ref="/data/question3/question1">
-				<label ref="jr:itext('question3/question1-label')" />
-			</input>
-		</group>
+		<select ref="/data/question2">
+			<label ref="jr:itext('question2-label')" />
+			<item>
+				<label ref="jr:itext('question2-choice1-label')" />
+				<value>choice1</value>
+			</item>
+			<item>
+				<label ref="jr:itext('question2-choice2-label')" />
+				<value>choice2</value>
+			</item>
+		</select>
 	</h:body>
 </h:html>

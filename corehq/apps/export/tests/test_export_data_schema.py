@@ -17,37 +17,55 @@ class TestExportDataSchema(SimpleTestCase, TestXmlMixin):
     def test_basic_xform_parsing(self):
         form_xml = self.get_xml('basic_form')
 
-        items = ExportDataSchema._generate_conf_from_xform(
+        schema = ExportDataSchema._generate_schema_from_xform(
             XForm(form_xml),
             ['en'],
             1
         )
 
-        self.assertEqual(len(items.tables), 1)
+        self.assertEqual(len(schema.group_schemas), 1)
 
-        table = items.tables[0]
+        group_schema = schema.group_schemas[0]
 
-        self.assertEqual(len(table.items), 2)
-        self.assertEqual(table.items[0].path, '/data/question1')
-        self.assertEqual(table.items[1].path, '/data/question2')
+        self.assertEqual(len(group_schema.items), 2)
+        self.assertEqual(group_schema.items[0].path, ['data', 'question1'])
+        self.assertEqual(group_schema.items[1].path, ['data', 'question2'])
 
-    def test_xform_parsing_with_group(self):
-        form_xml = self.get_xml('group_form')
+    def test_xform_parsing_with_repeat_group(self):
+        form_xml = self.get_xml('repeat_group_form')
 
-        items = ExportDataSchema._generate_conf_from_xform(
+        schema = ExportDataSchema._generate_schema_from_xform(
             XForm(form_xml),
             ['en'],
             1
         )
 
-        self.assertEqual(len(items.tables), 2)
+        self.assertEqual(len(schema.group_schemas), 2)
 
-        table = items.tables[0]
-        self.assertEqual(len(table.items), 1)
-        self.assertEqual(table.name, FORM_TABLE)
-        self.assertEqual(table.items[0].path, '/data/question2')
+        group_schema = schema.group_schemas[0]
+        self.assertEqual(len(group_schema.items), 1)
+        self.assertEqual(group_schema.path, None)
+        self.assertEqual(group_schema.items[0].path, ['data', 'question1'])
 
-        table = items.tables[1]
-        self.assertEqual(len(table.items), 1)
-        self.assertEqual(table.name, '/data/question3')
-        self.assertEqual(table.items[0].path, '/data/question3/question1')
+        group_schema = schema.group_schemas[1]
+        self.assertEqual(len(group_schema.items), 1)
+        self.assertEqual(group_schema.path, ['data', 'question3'])
+        self.assertEqual(group_schema.items[0].path, ['data', 'question3', 'question4'])
+
+    def test_xform_parsing_with_multiple_choice(self):
+        form_xml = self.get_xml('multiple_choice_form')
+        schema = ExportDataSchema._generate_schema_from_xform(
+            XForm(form_xml),
+            ['en'],
+            1
+        )
+
+        self.assertEqual(len(schema.group_schemas), 1)
+        group_schema = schema.group_schemas[0]
+
+        self.assertEqual(len(group_schema.items), 2)
+        self.assertEqual(group_schema.items[0].path, ['data', 'question1'])
+
+        self.assertEqual(group_schema.items[1].path, ['data', 'question2'])
+        self.assertEqual(group_schema.items[1].options[0].value, 'choice1')
+        self.assertEqual(group_schema.items[1].options[1].value, 'choice2')
