@@ -22,11 +22,11 @@ setup_kafka() {
 
 setup_moto_s3_server() {
     mkdir -p moto-s3 && cd moto-s3
-    test -d moto-env || virtualenv ./moto-env
+    test -d env || virtualenv env
     # todo: switch to https://github.com/spulec/moto.git when PR is merged
     # https://github.com/spulec/moto/pull/518
     test -d moto || git clone https://github.com/dimagi/moto.git
-    cd moto
-    ../moto-env/bin/pip install -e .
-    ../moto-env/bin/moto_server -H localhost -p 5000 s3 &
+    env/bin/pip install -e ./moto
+    env/bin/moto_server -H localhost -p 5000 s3 &
+    cd ..
 }

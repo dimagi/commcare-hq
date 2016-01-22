@@ -56,11 +56,10 @@ Finally, add the following to `localsettings.py`:
 ## Alternate/easier/faster testing setup using moto (probably not as robust)
 
     mkdir moto-s3 && cd moto-s3
-    virtualenv moto-env
+    virtualenv env
     git clone https://github.com/dimagi/moto.git
-    cd moto
-    ../moto-env/bin/pip install -e .
-    ../moto-env/bin/moto_server -p 5000 &
+    env/bin/pip install -e ./moto
+    env/bin/moto_server -p 5000
 
 Add the following to localsettings.py
 
