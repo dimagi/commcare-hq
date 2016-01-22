@@ -57,7 +57,7 @@ Finally, add the following to `localsettings.py`:
 
     mkdir moto-s3 && cd moto-s3
     virtualenv moto-env
-    git clone -b fix-s3-server https://github.com/millerdev/moto.git
+    git clone https://github.com/dimagi/moto.git
     cd moto
     ../moto-env/bin/pip install -e .
     ../moto-env/bin/moto_server -p 5000 &
