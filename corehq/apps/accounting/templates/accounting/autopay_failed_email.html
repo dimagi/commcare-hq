@@ -13,13 +13,12 @@ if your billing information correctly matches your credit card.
 <p>
 Here are the details of your declined payment:
 <br/>
-Billed To: {{ autopay_card.brand }} card with the last four digits {{ autopay_card.last4 }} expiring {{ autopay_card.exp_month }}/{{ autopay_card.exp_year }}
-<br/>
-Subscription plan: {{ subscription_plan }}
-<br/>
-Billing date: {{ billing_date }}
-<br/>
-Invoice #: {{ invoice_number }}
+<ul>
+    <li>Billed To: {{ autopay_card.brand }} card with the last four digits {{ autopay_card.last4 }} expiring {{ autopay_card.exp_month }}/{{ autopay_card.exp_year }}</li>
+    <li>Subscription plan: {{ subscription_plan }}</li>
+    <li>Billing date: {{ billing_date }}</li>
+    <li>Invoice #: {{ invoice_number }}</li>
+</ul>
 </p>
 
 <p>
