@@ -10,6 +10,7 @@
     "jquery-timeago": "1.2.0",
     "jquery-ui": "1.11.4",
     "jquery-ui-1.8.23-legacy": "jquery-ui#1.8.23",
+    "leaflet": "0.7.7",
     "angular": "1.4.4",
     "angular-route": "1.4.4",
     "angular-resource": "1.4.4",
