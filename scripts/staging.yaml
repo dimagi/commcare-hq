@@ -60,8 +60,8 @@ branches:
   - b3-app-manager+validate-xpath # Jenny 1/20
   - b3-app-manager # Jenny 1/20
   - validate-xpath  # Danny 12/05
-  - formplayer-toggle # Ben/Will 1/21/16
-  - java-tf-deploy # Ben/Will 1/21/16
+#  - formplayer-toggle # Ben/Will 1/21/16
+#  - java-tf-deploy # Ben/Will 1/21/16
   # B3 Report Migration branches
   - b3-reports-worker-monitoring  # Biyeun 1/21
   - b3-reports-inspect-data  # Biyeun 1/21
