@@ -12,10 +12,10 @@ from dimagi.utils.logging import notify_exception
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege, log_accounting_error
 from corehq.apps.sms.util import (clean_phone_number, clean_text,
-    get_available_backends)
+    get_backend_classes)
 from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING,
     PhoneNumber, SMS, SelfRegistrationInvitation, MessagingEvent,
-    SQLMobileBackend)
+    SQLMobileBackend, SQLSMSBackend)
 from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
     MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG,
     MSG_REGISTRATION_WELCOME_CASE, MSG_REGISTRATION_WELCOME_MOBILE_WORKER)
@@ -470,10 +470,11 @@ def is_opt_message(text, keyword_list):
 
 
 def get_opt_keywords(msg):
-    backend_classes = get_available_backends(index_by_api_id=True)
-    backend_class = backend_classes.get(msg.backend_api, SMSBackend)
-    return (backend_class.get_opt_in_keywords(),
-        backend_class.get_opt_out_keywords())
+    backend_class = get_backend_classes().get(msg.backend_api, SQLSMSBackend)
+    return (
+        backend_class.get_opt_in_keywords(),
+        backend_class.get_opt_out_keywords()
+    )
 
 
 def process_incoming(msg, delay=True):
