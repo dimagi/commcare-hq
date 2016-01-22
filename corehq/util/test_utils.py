@@ -281,9 +281,7 @@ def generate_cases(argsets, cls=None):
     return add_cases
 
 
-def make_es_ready_form(metadata):
-    # this is rather complicated due to form processor abstractions and ES restrictions
-    # on what data needs to be in the index and is allowed in the index
+def get_form_ready_to_save(metadata):
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
     from corehq.form_processor.utils import get_simple_form_xml
     from corehq.form_processor.utils import convert_xform_to_json
@@ -296,6 +294,13 @@ def make_es_ready_form(metadata):
     wrapped_form = FormProcessorInterface(domain=metadata.domain).new_xform(form_json)
     wrapped_form.domain = metadata.domain
     wrapped_form.received_on = metadata.received_on
+    return wrapped_form
+
+
+def make_es_ready_form(metadata):
+    # this is rather complicated due to form processor abstractions and ES restrictions
+    # on what data needs to be in the index and is allowed in the index
+    wrapped_form = get_form_ready_to_save(metadata)
     json_form = wrapped_form.to_json()
     json_form['form']['meta'].pop('appVersion')  # hack - ES chokes on this
     return WrappedJsonFormPair(wrapped_form, json_form)
