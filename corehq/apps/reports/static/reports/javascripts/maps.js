@@ -124,14 +124,15 @@ function initTable(data, config) {
             return true;
         }
     );
+    var table;
     if (window.USE_BOOTSTRAP_3) {
-        var table = new HQReportDataTables({
+        table = new HQReportDataTables({
             aoColumns: colSorting,
             useBootstrap3: true,
             paginationType: 'bs_normal'
         });
     } else {
-        var table = new HQReportDataTables({
+        table = new HQReportDataTables({
             aoColumns: colSorting
         });
     }
