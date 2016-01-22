@@ -99,7 +99,7 @@ class TableConfiguration(DocumentSchema):
         return self._get_items_for_repeat(path[1:], new_docs)
 
 
-class FormExportConfiguration(Document):
+class ExportInstance(Document):
 
     class Meta:
         app_label = 'export'
@@ -121,7 +121,7 @@ class ExportableTable(DocumentSchema):
     items = SchemaListProperty(ExportItem)
 
 
-class ExportableItems(DocumentSchema):
+class ExportDataSchema(DocumentSchema):
     """
     An object representing the things that can be exported for a particular
     form xmlns or case type.
@@ -137,15 +137,15 @@ class ExportableItems(DocumentSchema):
 
         for app in iter_docs(Application.get_db(), app_build_ids):
             xform = app.get_form(unique_form_id).wrapped_xform()
-            xform_conf = FormExportConfiguration._generate_conf_from_xform(xform, app.langs)
-            # all_xform_conf = FormExportConfiguration._merge_conf(all_xform_conf, xform_conf)
+            xform_conf = ExportDataSchema._generate_conf_from_xform(xform, app.langs, app.version)
+            # all_xform_conf = ExportDataSchema._merge_conf(all_xform_conf, xform_conf)
 
         return xform_conf
 
     @staticmethod
     def _generate_conf_from_xform(xform, langs):
         questions = xform.get_questions(langs)
-        exportable_items = ExportableItems()
+        exportable_items = ExportDataSchema()
 
         for table_name, table_questions in groupby(questions, lambda q: q['repeat'] or q['group']):
             exportable_table = ExportableTable(

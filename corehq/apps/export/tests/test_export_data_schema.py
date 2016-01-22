@@ -3,10 +3,11 @@ import os
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import XForm
-from corehq.apps.export.models import ExportableItems
+from corehq.apps.export.models import ExportDataSchema
 from corehq.apps.export.const import FORM_TABLE
 
-class TestExportableItemsFromXForm(SimpleTestCase, TestXmlMixin):
+
+class TestExportDataSchema(SimpleTestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)
 
@@ -16,9 +17,10 @@ class TestExportableItemsFromXForm(SimpleTestCase, TestXmlMixin):
     def test_basic_xform_parsing(self):
         form_xml = self.get_xml('basic_form')
 
-        items = ExportableItems._generate_conf_from_xform(
+        items = ExportDataSchema._generate_conf_from_xform(
             XForm(form_xml),
             ['en'],
+            1
         )
 
         self.assertEqual(len(items.tables), 1)
@@ -32,9 +34,10 @@ class TestExportableItemsFromXForm(SimpleTestCase, TestXmlMixin):
     def test_xform_parsing_with_group(self):
         form_xml = self.get_xml('group_form')
 
-        items = ExportableItems._generate_conf_from_xform(
+        items = ExportDataSchema._generate_conf_from_xform(
             XForm(form_xml),
             ['en'],
+            1
         )
 
         self.assertEqual(len(items.tables), 2)
