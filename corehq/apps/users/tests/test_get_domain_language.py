@@ -1,6 +1,5 @@
 from django.test import TestCase
 from pillowtop.es_utils import completely_initialize_pillow_index
-from pillowtop.tests import require_explicit_elasticsearch_testing
 
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application
@@ -12,7 +11,6 @@ from corehq.apps.users.views import get_domain_languages
 
 class TestDomainLanguages(TestCase):
     @classmethod
-    @require_explicit_elasticsearch_testing
     def setUpClass(cls):
         cls.domain = 'test-languages'
 
