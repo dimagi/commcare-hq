@@ -490,13 +490,6 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     def get_export_schema(export_id):
         return SavedExportSchema.get(export_id)
 
-    def get_export_object(self, export_id):
-        """Must return either a FormExportSchema or CaseExportSchema object
-        """
-        raise NotImplementedError(
-            "Must implement get_export_object."
-        )
-
     @property
     def export_id(self):
         return self.kwargs.get('export_id')
@@ -608,7 +601,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     def _get_download_task(self, export_specs, export_filter, max_column_size=2000):
         try:
             export_data = export_specs[0]
-            export_object = self.get_export_object(export_data['export_id'])
+            export_object = self.get_export_schema(export_data['export_id'])
         except (KeyError, IndexError):
             raise ExportAsyncException(
                 _("You need to pass a list of at least one export schema.")
@@ -705,9 +698,6 @@ class DownloadFormExportView(BaseDownloadExportView):
     def get_export_schema(export_id):
         return FormExportSchema.get(export_id)
 
-    def get_export_object(self, export_id):
-        return FormExportSchema.get(export_id)
-
     @property
     def export_list_url(self):
         return reverse(FormExportListView.urlname, args=(self.domain,))
@@ -751,7 +741,7 @@ class DownloadFormExportView(BaseDownloadExportView):
         """
         try:
             size_hash = get_attachment_size_by_domain_app_id_xmlns(self.domain)
-            export_object = self.get_export_object(self.export_id)
+            export_object = self.get_export_schema(self.export_id)
             hash_key = (export_object.app_id, export_object.xmlns
                         if hasattr(export_object, 'xmlns') else '')
             has_multimedia = hash_key in size_hash
@@ -811,9 +801,6 @@ class DownloadCaseExportView(BaseDownloadExportView):
 
     @staticmethod
     def get_export_schema(export_id):
-        return CaseExportSchema.get(export_id)
-
-    def get_export_object(self, export_id):
         return CaseExportSchema.get(export_id)
 
     @property
