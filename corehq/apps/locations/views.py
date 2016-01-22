@@ -375,6 +375,7 @@ def delete_location(request, domain, loc_id):
         )
     })
 
+
 def location_descendants_count(request, domain, loc_id):
     location = SQLLocation.objects.get(location_id=loc_id)
     if location.domain != domain:
