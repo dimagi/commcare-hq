@@ -4,7 +4,7 @@ import uuid
 from base64 import b64encode
 from hashlib import md5
 from os.path import join
-from unittest import TestCase, SkipTest
+from unittest import TestCase
 from StringIO import StringIO
 
 from botocore.exceptions import ClientError
@@ -13,6 +13,7 @@ from django.conf import settings
 import corehq.blobs.mixin as mod
 from corehq.blobs.s3db import ClosingContextProxy
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, TemporaryS3BlobDB
+from corehq.util.test_utils import trap_extra_setup
 from dimagi.ext.couchdbkit import Document
 
 
@@ -348,10 +349,9 @@ class TestBlobMixinWithS3Backend(TestBlobMixin):
 
     @classmethod
     def setUpClass(cls):
-        s3_settings = getattr(settings, "S3_BLOB_DB_SETTINGS", None)
-        if s3_settings is None:
-            raise SkipTest("S3_BLOB_DB_SETTINGS not configured")
-        cls.db = TemporaryS3BlobDB(s3_settings)
+        with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
+            config = settings.S3_BLOB_DB_SETTINGS
+        cls.db = TemporaryS3BlobDB(config)
 
     class TestBlob(object):
 

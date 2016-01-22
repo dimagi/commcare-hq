@@ -52,31 +52,40 @@ Finally, add the following to `localsettings.py`:
             "access_key": "admin key value",
             "secret_key": "admin secret value",
         }
+
+## Alternate/easier/faster testing setup using moto (probably not as robust)
+
+    mkdir moto-s3 && cd moto-s3
+    virtualenv moto-env
+    git clone -b fix-s3-server https://github.com/millerdev/moto.git
+    cd moto
+    ../moto-env/bin/pip install -e .
+    ../moto-env/bin/moto_server -p 5000 &
+
+Add the following to localsettings.py
+
+    S3_BLOB_DB_SETTINGS = {"url": "http://127.0.0.1:5000"}
+
 """
 from __future__ import unicode_literals
 from os.path import join
-from unittest import TestCase, SkipTest
+from unittest import TestCase
 from StringIO import StringIO
 
 from django.conf import settings
 
 import corehq.blobs.s3db as mod
 from corehq.blobs.tests.util import TemporaryS3BlobDB
-from corehq.util.test_utils import generate_cases
+from corehq.util.test_utils import generate_cases, trap_extra_setup
 
 
 class TestS3BlobDB(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # use trap_extra_setup when Riak CS is setup on travis (or maybe
-        # use something more lightweight like the options mentioned on
-        # http://stackoverflow.com/questions/6615988)
-        #with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
-        s3_settings = getattr(settings, "S3_BLOB_DB_SETTINGS", None)
-        if s3_settings is None:
-            raise SkipTest("S3_BLOB_DB_SETTINGS not configured")
-        cls.db = TemporaryS3BlobDB(s3_settings)
+        with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
+            config = settings.S3_BLOB_DB_SETTINGS
+        cls.db = TemporaryS3BlobDB(config)
 
     @classmethod
     def tearDownClass(cls):

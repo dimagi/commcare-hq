@@ -26,6 +26,10 @@ COUCH_USERNAME = ''
 COUCH_PASSWORD = ''
 COUCH_DATABASE_NAME = 'commcarehq'
 
+####### S3 mock server config ######
+# See also utils.sh setup_moto_s3_server
+S3_BLOB_DB_SETTINGS = {"url": "http://localhost:5000"}
+
 ######## Email setup ########
 # email settings: these ones are the custom hq ones
 EMAIL_LOGIN = "notifications@dimagi.com"

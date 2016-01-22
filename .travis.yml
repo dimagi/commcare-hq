@@ -4,6 +4,7 @@ cache:
   directories:
     - $HOME/.cache/pip
     - $HOME/virtualenv/python$TRAVIS_PYTHON_VERSION.9
+    - $HOME/moto-s3
 python:
   - "2.7"
 env:
