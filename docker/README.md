@@ -79,8 +79,21 @@ General usage
 
 Notes
 -----
+**rebuild**
 After changing any of the python requirements the `web` image will need to be rebuilt:
 
 ```
   $ sudo docker-compose build web
 ```
+
+**data location**
+By default the data for ES, PG and Couch is stored in `./docker/data`. To change this
+you must set an environment variable to point to the new root location:
+
+```
+DOCKER_DATA_ROOT=~/.dockerdata/
+```
+
+The path must end in a `/`.
+
+If you're running docker with `sudo` you will need to use `sudo -E`.

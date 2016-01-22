@@ -5,13 +5,13 @@ postgres:
     POSTGRES_USER: commcarehq
     POSTGRES_PASSWORD: commcarehq
   volumes:
-    - ./docker/data/postgresql:/var/lib/postgresql/data
+    - ${DOCKER_DATA_ROOT}./docker/data/postgresql:/var/lib/postgresql/data
   ports:
     - "5432:5432"
 couch:
   image: klaemo/couchdb:latest
   volumes:
-    - ./docker/data/couchdb:/usr/local/var/lib/couchdb
+    - ${DOCKER_DATA_ROOT}./docker/data/couchdb:/usr/local/var/lib/couchdb
   ports:
     - "5984:5984"
 redis:
@@ -24,7 +24,7 @@ elasticsearch:
   ports:
     - "9200:9200"
   volumes:
-    - ./docker/data/elasticsearch:/usr/share/elasticsearch/data
+    - ${DOCKER_DATA_ROOT}./docker/data/elasticsearch:/usr/share/elasticsearch/data
 web:
   build: .
   dockerfile: Dockerfile_dev
