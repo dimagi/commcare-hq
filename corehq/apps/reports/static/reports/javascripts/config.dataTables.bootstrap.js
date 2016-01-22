@@ -100,7 +100,7 @@ function HQReportDataTables(options) {
                 params.sAjaxSource = self.ajaxSource;
                 params.bFilter = $(this).data('filter') || false;
                 if (!self.useBootstrap3) {
-                    self.fnServerParams = function (aoData) {
+                    params.fnServerParams = function (aoData) {
                         var ajaxParams = $.isFunction(self.ajaxParams) ? self.ajaxParams() : self.ajaxParams;
                         for (var p in ajaxParams) {
                             if (ajaxParams.hasOwnProperty(p)) {
