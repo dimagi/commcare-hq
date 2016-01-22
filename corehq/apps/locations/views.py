@@ -375,6 +375,14 @@ def delete_location(request, domain, loc_id):
         )
     })
 
+def location_descendants_count(request, domain, loc_id):
+    location = SQLLocation.objects.get(location_id=loc_id)
+    if location.domain != domain:
+        raise Http404()
+    count = len(location.get_descendants(include_self=True))
+    return json_response({
+        'count': count
+    })
 
 @can_edit_location
 def unarchive_location(request, domain, loc_id):

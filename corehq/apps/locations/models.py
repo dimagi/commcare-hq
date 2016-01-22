@@ -558,7 +558,7 @@ class Location(CachedCouchDocumentMixin, Document):
 
     def archive(self):
         """
-        Mark a location and its dependants as archived.
+        Mark a location and its descendants as archived.
         This will cause it (and its data) to not show up in default Couch and
         SQL views.  This also unassigns users assigned to the location.
         """
