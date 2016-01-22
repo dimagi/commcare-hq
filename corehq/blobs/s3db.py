@@ -25,7 +25,7 @@ class S3BlobDB(object):
             aws_secret_access_key=config.get("secret_key"),
         )
         self.s3_bucket_name = config.get("s3_bucket", DEFAULT_S3_BUCKET)
-        self.s3_bucket_exists = False
+        self._s3_bucket_exists = False
         # https://github.com/boto/boto3/issues/259
         self.db.meta.client.meta.events.unregister('before-sign.s3', fix_s3_host)
 
@@ -53,7 +53,7 @@ class S3BlobDB(object):
             params = {"body": content, "headers": {}}
             calculate_md5(params)
             content_md5 = params["headers"]["Content-MD5"]
-        obj = self.s3_bucket(create=True).put_object(
+        obj = self._s3_bucket(create=True).put_object(
             Key=path,
             Body=content,
             ContentMD5=content_md5,
@@ -72,7 +72,7 @@ class S3BlobDB(object):
         """
         path = self.get_path(name, bucket)
         try:
-            resp = self.s3_bucket().Object(path).get()
+            resp = self._s3_bucket().Object(path).get()
         except ClientError as err:
             if err.response["Error"]["Code"] == "NoSuchKey":
                 raise NotFound(name, bucket)
@@ -90,7 +90,7 @@ class S3BlobDB(object):
         """
         path = self.get_path(name, bucket)
         success = True
-        s3_bucket = self.s3_bucket()
+        s3_bucket = self._s3_bucket()
         if name is None:
             summaries = s3_bucket.objects.filter(Prefix=path + "/")
             pages = ([{"Key": o.key} for o in page]
@@ -104,15 +104,15 @@ class S3BlobDB(object):
                 success = all(o["Key"] in deleted for o in objects)
         return success
 
-    def s3_bucket(self, create=False):
-        if create and not self.s3_bucket_exists:
+    def _s3_bucket(self, create=False):
+        if create and not self._s3_bucket_exists:
             try:
                 self.db.meta.client.head_bucket(Bucket=self.s3_bucket_name)
             except ClientError as err:
                 if err.response["Error"]["Code"] != "404":
                     raise
                 self.db.create_bucket(Bucket=self.s3_bucket_name)
-            self.s3_bucket_exists = True
+            self._s3_bucket_exists = True
         return self.db.Bucket(self.s3_bucket_name)
 
     @staticmethod

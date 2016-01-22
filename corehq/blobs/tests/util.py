@@ -59,10 +59,10 @@ class TemporaryS3BlobDB(TemporaryBlobDBMixin, S3BlobDB):
         super(TemporaryS3BlobDB, self).__init__(settings)
 
     def clean_db(self):
-        if not self.s3_bucket_exists:
+        if not self._s3_bucket_exists:
             return
         assert self.s3_bucket_name.startswith("test-"), self.s3_bucket_name
-        s3_bucket = self.s3_bucket()
+        s3_bucket = self._s3_bucket()
         summaries = s3_bucket.objects.all()
         for page in summaries.pages():
             objects = [{"Key": o.key} for o in page]
