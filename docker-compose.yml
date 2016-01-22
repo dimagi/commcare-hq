@@ -1,10 +1,11 @@
 postgres:
-  image: postgres:9.4
+  build: ./docker
+  dockerfile: Dockerfile_pg
   environment:
     POSTGRES_USER: commcarehq
     POSTGRES_PASSWORD: commcarehq
   volumes:
-    - ./docker/data/postgresql:/var/lib/postgresql
+    - ./docker/data/postgresql:/var/lib/postgresql/data
   ports:
     - "5432:5432"
 couch:
