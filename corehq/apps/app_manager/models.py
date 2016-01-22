@@ -1520,7 +1520,8 @@ class MappingItem(DocumentSchema):
 
     @property
     def contains_boolean_expression(self):
-        True
+        # todo
+        return True
 
     @property
     def key_as_variable(self):
@@ -1531,10 +1532,7 @@ class MappingItem(DocumentSchema):
         The prepended characters prevent the variable name from starting with a
         numeral, which is illegal.
         """
-        if " " not in self.key:
-            return 'k{key}'.format(key=self.key)
-        else:
-            return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
+        return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
 
     def key_as_condition(self, property):
         if self.contains_boolean_expression:
