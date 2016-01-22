@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 import re
-from contextlib import contextmanager
 from uuid import uuid4
 
 from corehq.blobs import BlobInfo
@@ -54,12 +53,11 @@ class S3BlobDB(object):
             params = {"body": content, "headers": {}}
             calculate_md5(params)
             content_md5 = params["headers"]["Content-MD5"]
-        with self.s3_bucket(True) as s3_bucket:
-            obj = s3_bucket.put_object(
-                Key=path,
-                Body=content,
-                ContentMD5=content_md5,
-            )
+        obj = self.s3_bucket(create=True).put_object(
+            Key=path,
+            Body=content,
+            ContentMD5=content_md5,
+        )
         return BlobInfo(name, obj.content_length, "md5-" + content_md5)
 
     def get(self, name, bucket=DEFAULT_BUCKET):
@@ -73,14 +71,13 @@ class S3BlobDB(object):
         object should be closed when finished reading.
         """
         path = self.get_path(name, bucket)
-        with self.s3_bucket() as s3_bucket:
-            try:
-                resp = s3_bucket.Object(path).get()
-            except ClientError as err:
-                if err.response["Error"]["Code"] == "NoSuchKey":
-                    raise NotFound(name, bucket)
-                raise
-            return ClosingContextProxy(resp["Body"])  # body stream
+        try:
+            resp = self.s3_bucket().Object(path).get()
+        except ClientError as err:
+            if err.response["Error"]["Code"] == "NoSuchKey":
+                raise NotFound(name, bucket)
+            raise
+        return ClosingContextProxy(resp["Body"])  # body stream
 
     def delete(self, name=None, bucket=DEFAULT_BUCKET):
         """Delete a blob
@@ -93,21 +90,20 @@ class S3BlobDB(object):
         """
         path = self.get_path(name, bucket)
         success = True
-        with self.s3_bucket() as s3_bucket:
-            if name is None:
-                summaries = s3_bucket.objects.filter(Prefix=path + "/")
-                pages = ([{"Key": o.key} for o in page]
-                         for page in summaries.pages())
-            else:
-                pages = [[{"Key": path}]]
-            for objects in pages:
-                resp = s3_bucket.delete_objects(Delete={"Objects": objects})
-                if success:
-                    deleted = set(d["Key"] for d in resp.get("Deleted", []))
-                    success = all(o["Key"] in deleted for o in objects)
+        s3_bucket = self.s3_bucket()
+        if name is None:
+            summaries = s3_bucket.objects.filter(Prefix=path + "/")
+            pages = ([{"Key": o.key} for o in page]
+                     for page in summaries.pages())
+        else:
+            pages = [[{"Key": path}]]
+        for objects in pages:
+            resp = s3_bucket.delete_objects(Delete={"Objects": objects})
+            if success:
+                deleted = set(d["Key"] for d in resp.get("Deleted", []))
+                success = all(o["Key"] in deleted for o in objects)
         return success
 
-    @contextmanager
     def s3_bucket(self, create=False):
         if create and not self.s3_bucket_exists:
             try:
@@ -117,7 +113,7 @@ class S3BlobDB(object):
                     raise
                 self.db.create_bucket(Bucket=self.s3_bucket_name)
             self.s3_bucket_exists = True
-        yield self.db.Bucket(self.s3_bucket_name)
+        return self.db.Bucket(self.s3_bucket_name)
 
     @staticmethod
     def get_unique_name(basename):

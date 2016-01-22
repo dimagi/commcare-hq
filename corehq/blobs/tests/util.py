@@ -62,9 +62,9 @@ class TemporaryS3BlobDB(TemporaryBlobDBMixin, S3BlobDB):
         if not self.s3_bucket_exists:
             return
         assert self.s3_bucket_name.startswith("test-"), self.s3_bucket_name
-        with self.s3_bucket() as s3_bucket:
-            summaries = s3_bucket.objects.all()
-            for page in summaries.pages():
-                objects = [{"Key": o.key} for o in page]
-                s3_bucket.delete_objects(Delete={"Objects": objects})
-            s3_bucket.delete()
+        s3_bucket = self.s3_bucket()
+        summaries = s3_bucket.objects.all()
+        for page in summaries.pages():
+            objects = [{"Key": o.key} for o in page]
+            s3_bucket.delete_objects(Delete={"Objects": objects})
+        s3_bucket.delete()
