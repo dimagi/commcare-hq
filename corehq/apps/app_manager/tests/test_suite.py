@@ -353,34 +353,40 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         module.case_details.short.columns = [
             DetailColumn(
-                header={'en': 'c'},
+                header={'en': 'Age range'},
                 model='case',
-                field='gender',
+                field='age',
                 format='enum-image',
                 enum=[
-                    MappingItem(key='male', value={'en': 'jr://icons/male-icon.png'}),
-                    MappingItem(key='female', value={'en': 'jr://icons/female-icon.png'}),
+                    MappingItem(key='10', value={'en': 'jr://icons/10-year-old.png'}),
+                    MappingItem(key='age > 50', value={'en': 'jr://icons/old-icon.png'}),
                 ],
-                case_tile_field='sex'
             ),
         ]
+        import hashlib
+
+        hash_of_key1 = hashlib.md5('10').hexdigest()[:8]
+        hash_of_key2 = hashlib.md5('age > 10').hexdigest()[:8]
 
         icon_mapping_spec = """
             <partial>
               <template form="image" width="13%">
                 <text>
-                  <xpath function="if(gender = 'male', $kmale, if(gender = 'female', $kfemale, ''))">
-                    <variable name="kfemale">
-                      <locale id="m0.case_short.case_gender_1.enum.kfemale"/>
+                  <xpath function="if(age = '10', $h{hash_of_key1}, if((age > 50, $h{hash_of_key2}, ''))">
+                    <variable name="h{hash_of_key2}">
+                      <locale id="m0.case_short.case_gender_1.enum.h{hash_of_key2}"/>
                     </variable>
-                    <variable name="kmale">
-                      <locale id="m0.case_short.case_gender_1.enum.kmale"/>
+                    <variable name="h{hash_of_key1}">
+                      <locale id="m0.case_short.case_gender_1.enum.h{hash_of_key1}"/>
                     </variable>
                   </xpath>
                 </text>
               </template>
             </partial>
-        """
+        """.format(
+            hash_of_key1=hash_of_key1,
+            hash_of_key2=hash_of_key2,
+        )
         # check correct suite is generated
         self.assertXmlPartialEqual(
             icon_mapping_spec,
@@ -390,12 +396,12 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         # check icons map correctly
         app_strings = commcare_translations.loads(app.create_app_strings('en'))
         self.assertEqual(
-            app_strings['m0.case_short.case_gender_1.enum.kfemale'],
-            'jr://icons/female-icon.png'
+            app_strings['m0.case_short.case_gender_1.enum.h{hash_of_key2}'.format(hash_of_key2=hash_of_key2,)],
+            'jr://icons/old-icon.png'
         )
         self.assertEqual(
-            app_strings['m0.case_short.case_gender_1.enum.kmale'],
-            'jr://icons/male-icon.png'
+            app_strings['m0.case_short.case_gender_1.enum.h{hash_of_key1}'.format(hash_of_key1=hash_of_key1,)],
+            'jr://icons/10-year-old.png'
         )
 
     def test_case_tile_pull_down(self):
