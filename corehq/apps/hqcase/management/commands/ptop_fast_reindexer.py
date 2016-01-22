@@ -35,11 +35,7 @@ class PaginateViewLogHandler(object):
             total_emitted + kwargs['limit'] - 1)
         )
         startkey = kwargs.get('startkey')
-        if isinstance(startkey, basestring):
-            startkey = startkey.encode('utf8')
-        elif isinstance(startkey, list):
-            startkey = [i.encode('utf8') for i in startkey if isinstance(i, basestring)]
-        self.log('  startkey={}, startkey_docid={!r}'.format(startkey, kwargs.get('startkey_docid')))
+        self.log(u'  startkey={!r}, startkey_docid={!r}'.format(startkey, kwargs.get('startkey_docid')))
 
     def view_ending(self, db, view_name, kwargs, total_emitted, time):
         self.log('View call took {}'.format(time))
