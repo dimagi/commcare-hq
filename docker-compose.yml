@@ -1,43 +1,17 @@
-postgres:
-  build: ./docker
-  dockerfile: Dockerfile_pg
-  environment:
-    POSTGRES_USER: commcarehq
-    POSTGRES_PASSWORD: commcarehq
-  volumes:
-    - ${DOCKER_DATA_ROOT}./docker/data/postgresql:/var/lib/postgresql/data
-  ports:
-    - "5432:5432"
-couch:
-  image: klaemo/couchdb:latest
-  volumes:
-    - ${DOCKER_DATA_ROOT}./docker/data/couchdb:/usr/local/var/lib/couchdb
-  ports:
-    - "5984:5984"
-redis:
-  image: redis
-  ports:
-    - "6379:6379"
-elasticsearch:
-  build: ./docker
-  dockerfile: Dockerfile_es
-  ports:
-    - "9200:9200"
-  volumes:
-    - ${DOCKER_DATA_ROOT}./docker/data/elasticsearch:/usr/share/elasticsearch/data
 web:
   build: .
-  dockerfile: Dockerfile_dev
+  dockerfile: ./docker/Dockerfile_web
   working_dir: /mnt
   command: python manage.py runserver 0.0.0.0:8000
   volumes:
     - .:/mnt
+    - ~/.dockerdata/python:/vendor
   ports:
     - "8000:8000"
   environment:
-    PYTHONUSERBASE: /mnt/docker/data/python
-  links:
-    - postgres
-    - couch
-    - redis
-    - elasticsearch
+    PYTHONUSERBASE: /vendor
+  external_links:
+    - hqservice_postgres_1:postgres
+    - hqservice_couch_1:couch
+    - hqservice_redis_1:redis
+    - hqservice_elasticsearch_1:elasticsearch

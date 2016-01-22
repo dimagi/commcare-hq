@@ -22,10 +22,18 @@ RUN wget -O jdk.tar.gz --no-check-certificate --no-cookies --header "Cookie: ora
 
 RUN pip install --upgrade pip
 
+RUN mkdir /vendor
+VOLUME ["/vendor"]
+ENV PYTHONUSERBASE /vendor
+
+COPY requirements/requirements.txt /vendor/requirements.txt
+COPY requirements/dev-requirements.txt /vendor/dev-requirements.txt
+COPY requirements/test-requirements.txt /vendor/test-requirements.txt
+
+RUN pip install -r /vendor/requirements.txt -r /vendor/dev-requirements.txt --user --upgrade
+
 WORKDIR /mnt
 ADD . /mnt/
-ENV PYTHONUSERBASE /mnt/docker/data/python
-RUN pip install -r requirements/requirements.txt -r requirements/dev-requirements.txt --user --upgrade
 
 ENTRYPOINT ["/mnt/docker/entrypoint.sh"]
 CMD ["help"]

@@ -49,7 +49,8 @@ Initial setup
 * Bootstrap the setup:
 
 ```
-  $ sudo docker-compose build
+  $ ./docker/docker-services.sh -h
+  $ ./docker/docker-services.sh start
   $ sudo docker-compose run web bash
 ```
 
@@ -67,7 +68,8 @@ General usage
 **Check logs**
 
 ```
-  $ sudo docker-compose logs <web|redis|postgres|elasticsearch|couch>
+  $ sudo docker-compose logs web
+  $ sudo docker-services logs
 ```
 
 **Start fresh**
@@ -85,15 +87,3 @@ After changing any of the python requirements the `web` image will need to be re
 ```
   $ sudo docker-compose build web
 ```
-
-**data location**
-By default the data for ES, PG and Couch is stored in `./docker/data`. To change this
-you must set an environment variable to point to the new root location:
-
-```
-DOCKER_DATA_ROOT=~/.dockerdata/
-```
-
-The path must end in a `/`.
-
-If you're running docker with `sudo` you will need to use `sudo -E`.
