@@ -91,7 +91,7 @@
                             {% blocktrans with module_name=error.module.name|trans:langs %}
                             There are references to reports that are deleted in the
                             <a href="{{ module_url }}">{{ module_name }}</a> module.
-                            You may re-save the module to deleted them.
+                            You may re-save the module to delete them.
                             {% endblocktrans %}
                         {% case "module filter has xpath error" %}
                             {% url "view_module" domain app.id error.module.id as module_url %}
