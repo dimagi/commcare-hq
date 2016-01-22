@@ -50,8 +50,37 @@ Initial setup
 
 ```
   $ sudo docker-compose build
-  $ sudo docker-compose run --service-ports web bash 
+  $ sudo docker-compose run web bash
 ```
 
 You are now in the `web` containers shell and can do the rest of the setup
 as described in the CommCare HQ Readme section **Set up your django environment**
+
+General usage
+-------------
+**Run the django server in the background**
+
+```
+  $ sudo docker-compose up -d
+```
+
+**Check logs**
+
+```
+  $ sudo docker-compose logs <web|redis|postgres|elasticsearch|couch>
+```
+
+**Start fresh**
+
+```
+  $ sudo docker-compose down
+  $ sudo docker-compose up
+```
+
+Notes
+-----
+After changing any of the python requirements the `web` image will need to be rebuilt:
+
+```
+  $ sudo docker-compose build web
+```
