@@ -873,6 +873,17 @@ class FormBase(DocumentSchema):
                 except FormNotFoundException:
                     errors.append(dict(type='bad form link', **meta))
 
+        # this isn't great but two of FormBase's subclasses have form_filter
+        if hasattr(self, 'form_filter') and self.form_filter:
+            is_valid, message = validate_xpath(self.form_filter)
+            if not is_valid:
+                error = {
+                    'type': 'form filter has xpath error',
+                    'xpath_error': message,
+                }
+                error.update(meta)
+                errors.append(error)
+
         errors.extend(self.extended_build_validation(meta, xml_valid, validate_module))
 
         return errors

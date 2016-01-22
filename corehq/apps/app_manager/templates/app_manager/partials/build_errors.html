@@ -96,8 +96,16 @@
                         {% case "module filter has xpath error" %}
                             {% url "view_module" domain app.id error.module.id as module_url %}
                             {% blocktrans with module_name=error.module.name|trans:langs %}
-                            Module Filter has syntax errors in
+                            Module Filter has syntax errors in the
                             <a href="{{ module_url }}">{{ module_name }}</a> module.
+                            {% endblocktrans %}
+                        {% case "form filter has xpath error" %}
+                            {% url "view_module" domain app.id error.module.id as module_url %}
+                            {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
+                            Display Condition has syntax errors
+                            in the <a href="{{ form_url }}">{{ form_name }}</a> form
+                            in the <a href="{{ module_url }}">{{ module_name }}</a> module.
                             {% endblocktrans %}
                         {% case "all forms in case list module must load the same cases" %}
                             {% url "view_module" domain app.id error.module.id as module_url %}
