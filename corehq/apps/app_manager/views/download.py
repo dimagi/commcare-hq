@@ -229,10 +229,6 @@ class DownloadBuildAttachmentsView(View, ApplicationViewMixin):
         else:
             full_path = 'files/%s' % path
 
-        def resolve_path(path):
-            return RegexURLResolver(
-                r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
-
         try:
             assert self.app.copy_of
             obj = CachedObject('{id}::{path}'.format(
@@ -264,7 +260,7 @@ class DownloadBuildAttachmentsView(View, ApplicationViewMixin):
                     return self.get(request, path, **kwargs)
                 else:
                     try:
-                        resolve_path(path)
+                        self.resolve_path(path)
                     except Resolver404:
                         # ok this was just a url that doesn't exist
                         # todo: log since it likely exposes a mobile bug
@@ -290,11 +286,17 @@ class DownloadBuildAttachmentsView(View, ApplicationViewMixin):
                                 pass
                     raise Http404()
             try:
-                callback, callback_args, callback_kwargs = resolve_path(path)
+                callback, callback_args, callback_kwargs = self.resolve_path(path)
             except Resolver404:
                 raise Http404()
 
             return callback(request, self.domain, self.app_id, *callback_args, **callback_kwargs)
+
+    @staticmethod
+    def resolve_path(path):
+        return RegexURLResolver(
+            r'^', 'corehq.apps.app_manager.download_urls'
+        ).resolve(path)
 
 
 @safe_download
