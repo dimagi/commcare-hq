@@ -47,7 +47,7 @@ def mock_wrap_context():
         MockModel.wrap = func
 
 
-class GetDocMockTestCase(TestCase):
+class GetDocMockTestCase(SimpleTestCase):
     """
     Tests get_document_or_404 with mocking
     """
