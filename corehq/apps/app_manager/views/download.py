@@ -206,8 +206,8 @@ class DownloadBuildAttachmentsView(View, ApplicationViewMixin):
     name = 'app_download_file'
 
     @method_decorator(safe_download)
-    def get(self, request, path, **kwargs):
-        if path == "app.json":
+    def get(self, request, **kwargs):
+        if self.path == "app.json":
             return JsonResponse(self.app.to_json())
 
         content_type_map = {
@@ -218,16 +218,16 @@ class DownloadBuildAttachmentsView(View, ApplicationViewMixin):
             'txt': 'text/plain',
         }
         try:
-            content_type = content_type_map[path.split('.')[-1]]
+            content_type = content_type_map[self.path.split('.')[-1]]
         except KeyError:
             content_type = None
         response = HttpResponse(content_type=content_type)
 
-        if path in ('CommCare.jad', 'CommCare.jar'):
-            set_file_download(response, path)
-            full_path = path
+        if self.path in ('CommCare.jad', 'CommCare.jar'):
+            set_file_download(response, self.path)
+            full_path = self.path
         else:
-            full_path = 'files/%s' % path
+            full_path = 'files/%s' % self.path
 
         try:
             assert self.app.copy_of
@@ -252,15 +252,15 @@ class DownloadBuildAttachmentsView(View, ApplicationViewMixin):
             if self.app.copy_of:
                 if request.META.get('HTTP_USER_AGENT') == 'bitlybot':
                     raise Http404()
-                elif path == 'profile.ccpr':
+                elif self.path == 'profile.ccpr':
                     # legacy: should patch build to add odk profile
                     # which wasn't made on build for a long time
                     add_odk_profile_after_build(self.app)
                     self.app.save()
-                    return self.get(request, path, **kwargs)
+                    return self.get(request, **kwargs)
                 else:
                     try:
-                        self.resolve_path(path)
+                        self.resolve_path(self.path)
                     except Resolver404:
                         # ok this was just a url that doesn't exist
                         # todo: log since it likely exposes a mobile bug
@@ -270,7 +270,7 @@ class DownloadBuildAttachmentsView(View, ApplicationViewMixin):
                     else:
                         # this resource should exist but doesn't
                         logging.error(
-                            'Expected build resource %s not found' % path,
+                            'Expected build resource %s not found' % self.path,
                             extra={'request': request}
                         )
                         if not self.app.build_broken:
@@ -286,7 +286,7 @@ class DownloadBuildAttachmentsView(View, ApplicationViewMixin):
                                 pass
                     raise Http404()
             try:
-                callback, callback_args, callback_kwargs = self.resolve_path(path)
+                callback, callback_args, callback_kwargs = self.resolve_path(self.path)
             except Resolver404:
                 raise Http404()
 
@@ -297,6 +297,10 @@ class DownloadBuildAttachmentsView(View, ApplicationViewMixin):
         return RegexURLResolver(
             r'^', 'corehq.apps.app_manager.download_urls'
         ).resolve(path)
+
+    @property
+    def path(self):
+        return self.kwargs['path']
 
 
 @safe_download
