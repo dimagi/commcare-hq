@@ -210,19 +210,7 @@ class DownloadBuildAttachmentsView(View, ApplicationViewMixin):
         if self.path == "app.json":
             return JsonResponse(self.app.to_json())
 
-        content_type_map = {
-            'ccpr': 'commcare/profile',
-            'jad': 'text/vnd.sun.j2me.app-descriptor',
-            'jar': 'application/java-archive',
-            'xml': 'application/xml',
-            'txt': 'text/plain',
-        }
-        try:
-            content_type = content_type_map[self.path.split('.')[-1]]
-        except KeyError:
-            content_type = None
-        response = HttpResponse(content_type=content_type)
-
+        response = HttpResponse(content_type=self.content_type)
         if self.path in ('CommCare.jad', 'CommCare.jar'):
             set_file_download(response, self.path)
             full_path = self.path
@@ -240,7 +228,7 @@ class DownloadBuildAttachmentsView(View, ApplicationViewMixin):
                 if type(payload) is unicode:
                     payload = payload.encode('utf-8')
                 buffer = StringIO(payload)
-                metadata = {'content_type': content_type}
+                metadata = {'content_type': self.content_type}
                 obj.cache_put(buffer, metadata, timeout=None)
             else:
                 _, buffer = obj.get()
@@ -301,6 +289,20 @@ class DownloadBuildAttachmentsView(View, ApplicationViewMixin):
     @property
     def path(self):
         return self.kwargs['path']
+
+    @property
+    def content_type(self):
+        content_type_map = {
+            'ccpr': 'commcare/profile',
+            'jad': 'text/vnd.sun.j2me.app-descriptor',
+            'jar': 'application/java-archive',
+            'xml': 'application/xml',
+            'txt': 'text/plain',
+        }
+        try:
+            return content_type_map[self.path.split('.')[-1]]
+        except KeyError:
+            return None
 
 
 @safe_download
