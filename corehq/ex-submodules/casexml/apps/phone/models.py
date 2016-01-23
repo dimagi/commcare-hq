@@ -722,7 +722,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         incoming_extensions = _reverse_index_map(self.extension_index_tree.indices)
         available = {case for case in relevant
                      if case not in self.closed_cases
-                     and not self.extension_index_tree.indices.get(case) or self.index_tree.indices.get(case)}
+                     and (not self.extension_index_tree.indices.get(case) or self.index_tree.indices.get(case))}
         new_available = set() | available
         while new_available:
             case_to_check = new_available.pop()
