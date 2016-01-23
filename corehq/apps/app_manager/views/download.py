@@ -218,24 +218,7 @@ class DownloadBuildAttachmentsView(View, ApplicationViewMixin):
             full_path = 'files/%s' % self.path
 
         try:
-            assert self.app.copy_of
-            obj = CachedObject('{id}::{path}'.format(
-                id=self.app._id,
-                path=full_path,
-            ))
-            if not obj.is_cached():
-                payload = self.app.fetch_attachment(full_path)
-                if type(payload) is unicode:
-                    payload = payload.encode('utf-8')
-                buffer = StringIO(payload)
-                metadata = {'content_type': self.content_type}
-                obj.cache_put(buffer, metadata, timeout=None)
-            else:
-                _, buffer = obj.get()
-                payload = buffer.getvalue()
-            response.write(payload)
-            response['Content-Length'] = len(response.content)
-            return response
+            return self.get_download(response, full_path)
         except (ResourceNotFound, AssertionError):
             if self.app.copy_of:
                 if request.META.get('HTTP_USER_AGENT') == 'bitlybot':
@@ -279,6 +262,26 @@ class DownloadBuildAttachmentsView(View, ApplicationViewMixin):
                 raise Http404()
 
             return callback(request, self.domain, self.app_id, *callback_args, **callback_kwargs)
+
+    def get_download(self, response, full_path):
+        assert self.app.copy_of
+        obj = CachedObject('{id}::{path}'.format(
+            id=self.app._id,
+            path=full_path,
+        ))
+        if not obj.is_cached():
+            payload = self.app.fetch_attachment(full_path)
+            if type(payload) is unicode:
+                payload = payload.encode('utf-8')
+            buffer = StringIO(payload)
+            metadata = {'content_type': self.content_type}
+            obj.cache_put(buffer, metadata, timeout=None)
+        else:
+            _, buffer = obj.get()
+            payload = buffer.getvalue()
+        response.write(payload)
+        response['Content-Length'] = len(response.content)
+        return response
 
     @staticmethod
     def resolve_path(path):
