@@ -4320,6 +4320,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         except AssertionError:
             raise
 
+        copy.built_on = datetime.datetime.utcnow()
         copy.build_comment = comment
         copy.comment_from = user_id
         if user_id:
