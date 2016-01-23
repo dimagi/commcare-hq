@@ -1,6 +1,11 @@
 from django.conf.urls import patterns, url, include
 from corehq.apps.app_manager.view_helpers import DynamicTemplateView
-from corehq.apps.app_manager.views import DownloadCCZ, AppSummaryView, AppDiffView
+from corehq.apps.app_manager.views import (
+    AppDiffView,
+    AppSummaryView,
+    DownloadBuildAttachmentsView,
+    DownloadCCZ,
+)
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 
@@ -142,8 +147,8 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^download/(?P<app_id>[\w-]+)/CommCare.ccz$', DownloadCCZ.as_view(),
         name=DownloadCCZ.name),
     url(r'^download/(?P<app_id>[\w-]+)/multimedia/', include(media_download_urls)),
-    url(r'^download/(?P<app_id>[\w-]+)/(?P<path>.*)$', 'download_file',
-        name='app_download_file'),
+    url(r'^download/(?P<app_id>[\w-]+)/(?P<path>.*)$', DownloadBuildAttachmentsView.as_view(),
+        name=DownloadBuildAttachmentsView.name),
     url(r'^download/(?P<app_id>[\w-]+)/',
         include('corehq.apps.app_manager.download_urls')),
     url(r'^formdefs/(?P<app_id>[\w-]+)/', 'formdefs', name='formdefs'),

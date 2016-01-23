@@ -28,7 +28,6 @@ from corehq.apps.app_manager.views.cli import (
 )
 from corehq.apps.app_manager.views.download import (
     download_app_strings,
-    download_file,
     download_index,
     download_jad,
     download_jar,
@@ -42,6 +41,7 @@ from corehq.apps.app_manager.views.download import (
     download_test_jar,
     download_user_registration,
     download_xform,
+    DownloadBuildAttachmentsView,
     DownloadCCZ,
     validate_form_for_build,
 )
