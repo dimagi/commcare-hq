@@ -5,11 +5,9 @@ import json
 import logging
 import mock
 import os
-from unittest import TestCase
+from unittest import TestCase, SkipTest
 from collections import namedtuple
 from contextlib import contextmanager
-
-from unittest.case import SkipTest
 
 from fakecouch import FakeCouchDb
 from functools import wraps
@@ -37,7 +35,7 @@ unit_testing_only.__test__ = False
 
 
 @contextmanager
-def trap_extra_setup(*exceptions):
+def trap_extra_setup(*exceptions, **kw):
     """Conditioinally skip test on error
 
     Use this context manager to skip tests that would otherwise fail in
@@ -50,12 +48,16 @@ def trap_extra_setup(*exceptions):
     false there.
     """
     assert exceptions, "at least one argument is required"
+    msg = kw.pop("msg", "")
+    assert not kw, "unknown keyword args: {}".format(kw)
     skip = getattr(settings, "SKIP_TESTS_REQUIRING_EXTRA_SETUP", False)
     try:
         yield
     except exceptions as err:
         if skip:
-            raise SkipTest("{}: {}".format(type(err).__name__, err))
+            if msg:
+                msg += ": "
+            raise SkipTest("{}{}: {}".format(msg, type(err).__name__, err))
         raise
 
 
