@@ -17,6 +17,9 @@ server_started() {
 
 if [ "${MATRIX_TYPE}" = "python" ]; then
     coverage run manage.py test --noinput --failfast --traceback --verbosity=2 --testrunner=$TESTRUNNER
+elif [ "${MATRIX_TYPE}" = "python-sharded" ]; then
+    TESTAPPS="sql_db form_processor couchforms case receiverwrapper"
+    coverage run manage.py test --noinput --failfast --traceback --verbosity=2 $TESTAPPS
 elif [ "${MATRIX_TYPE}" = "javascript" ]; then
     psql -c 'create database commcarehq' -U postgres
     python manage.py sync_couch_views

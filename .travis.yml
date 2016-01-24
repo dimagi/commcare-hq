@@ -1,5 +1,5 @@
 language: python
-sudo: false
+sudo: true
 cache:
   directories:
     - $HOME/.cache/pip
@@ -12,10 +12,12 @@ env:
     - COUCHDB_USER=""
     - COUCHDB_PW=""
     - TRAVIS_INSTALL="y"
+    - PGVERSION="9.1"
   matrix:
-    - MATRIX_TYPE=javascript BOWER=yes
-    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunnerCatchall BOWER=yes
-    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunner0
+#    - MATRIX_TYPE=javascript BOWER=yes
+#    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunnerCatchall BOWER=yes
+#    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunner0
+    - MATRIX_TYPE=python-sharded USE_PARTITIONED_DATABASE=True
 branches:
   only:
     - master
@@ -30,13 +32,13 @@ before_install:
   - "uname -a"
   - "lsb_release -a"
 install:
+  - ".travis/matrix-installs.sh"
   - ".travis/misc-setup.sh"
   - "curl -X PUT http://localhost:5984/commcarehq_test"  # this is an auth test
   - "scripts/uninstall-requirements.sh"
   - "time (pip install --exists-action w -r requirements/requirements.txt --timeout 60)"
   - "pip install coveralls"
   - "cp .travis/localsettings.py localsettings.py"
-  - ".travis/matrix-installs.sh"
 script: ".travis/matrix-runner.sh"
 after_success:
   - coverage report

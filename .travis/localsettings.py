@@ -19,6 +19,59 @@ DATABASES = {
     }
 }
 
+
+USE_PARTITIONED_DATABASE = bool(os.environ.get('USE_PARTITIONED_DATABASE', False))
+
+if USE_PARTITIONED_DATABASE:
+
+    PARTITION_DATABASE_CONFIG = {
+        'shards': {
+            'p1': [0, 1],
+            'p2': [2, 3]
+        },
+        'groups': {
+            'main': ['default'],
+            'proxy': ['proxy'],
+            'form_processing': ['p1', 'p2'],
+        }
+    }
+
+    DATABASES.update({
+        'proxy': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'commcarehq_proxy',
+            'USER': 'postgres',
+            'PASSWORD': '',
+            'HOST': 'localhost',
+            'PORT': '5432',
+            'TEST': {
+                'SERIALIZE': False,
+            },
+        },
+        'p1': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'commcarehq_p1',
+            'USER': 'postgres',
+            'PASSWORD': '',
+            'HOST': 'localhost',
+            'PORT': '5432',
+            'TEST': {
+                'SERIALIZE': False,
+            },
+        },
+        'p2': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'commcarehq_p2',
+            'USER': 'postgres',
+            'PASSWORD': '',
+            'HOST': 'localhost',
+            'PORT': '5432',
+            'TEST': {
+                'SERIALIZE': False,
+            },
+        },
+    })
+
 ####### Couch Config ######
 COUCH_HTTPS = False
 COUCH_SERVER_ROOT = '127.0.0.1:5984'
