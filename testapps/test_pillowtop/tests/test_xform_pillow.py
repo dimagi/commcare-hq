@@ -36,7 +36,7 @@ class XFormPillowTest(TestCase):
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_xform_pillow_sql(self):
         metadata = TestFormMetadata(domain=self.domain)
-        form = get_form_ready_to_save(metadata)
+        form = get_form_ready_to_save(metadata, is_db_test=True)
         FormProcessorInterface(domain=self.domain).save_processed_models([form])
         results = FormES().run()
         self.assertEqual(1, results.total)
