@@ -194,18 +194,18 @@
     <div data-bind="visible: moduleOptions().length" class="form-horizontal">
         <legend>{% trans "Parent Child Selection" %}</legend>
         <div class="form-group">
-            <label class="control-label col-lg-2">
+            <label class="control-label col-sm-2">
                 {% trans "Select Parent First" %}
             </label>
-            <div class="col-lg-4 checkbox">
+            <div class="col-sm-4 checkbox">
                 <input type="checkbox" data-bind="checked: active"/>
             </div>
         </div>
         <div class="form-group" data-bind="visible: active">
-            <label class="control-label col-lg-2">
+            <label class="control-label col-sm-2">
                 {% trans "Use Case List from module" %}
             </label>
-            <div class="col-lg-4">
+            <div class="col-sm-4">
                 <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>
             </div>
         </div>

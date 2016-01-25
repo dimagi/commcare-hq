@@ -2,14 +2,14 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 <div class="form-group">
-    <label class="col-lg-2 control-label">
+    <label class="col-sm-2 control-label">
         {% trans LABEL %}
         <span class="hq-help-template"
               data-title="{% trans LABEL %}"
               data-content="{% trans DESC %}"
         ></span>
     </label>
-    <div class="col-lg-4">
+    <div class="col-sm-4">
         <select class="form-control" type="text" name="{{ SLUG }}-show"
                 data-value="{% if case_list.show %}true{% else %}false{% endif %}">
             <option value="false">Don't Show</option>
@@ -18,13 +18,13 @@
     </div>
 </div>
 <div class="form-group" id="{{ SLUG }}-label">
-    <label class="col-lg-2 control-label">
+    <label class="col-sm-2 control-label">
         Label for Case List Menu Item
     </label>
-    <div class="col-lg-4">
+    <div class="col-sm-4">
         {% input_trans case_list.label langs cssClass='form-control' %}
     </div>
-    <div class="col-lg-2">
+    <div class="col-sm-2">
         <span class="label label-danger" id="case_list_label_error" style="display: none;">
             {% trans "Case list menu item requires a label" %}
         </span>

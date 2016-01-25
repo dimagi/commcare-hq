@@ -4,12 +4,12 @@
 <script src="{% static 'xpath/xpath.js"' %}></script>
 <script type="text/html" id="XPathValidator.template">
 <div class="row">
-    <div class="col-lg-11 js-xpath-input-target">
+    <div class="col-sm-11 js-xpath-input-target">
         <input type="text" class="form-control"
             data-bind="attr: {name: input.getAttribute('name'), placeholder: input.getAttribute('placeholder')},
                        value: xpathValidator.xpathText, valueUpdate: 'textchange'"/>
     </div>
-    <div class="col-lg-1">
+    <div class="col-sm-1">
         <div data-bind="if: xpathValidator.xpathText() && !xpathValidator.error()">
             <i class="fa fa-check"></i>
         </div>

@@ -2,10 +2,10 @@
 {% load i18n %}
 {% if request|feature_preview_enabled:"MODULE_FILTER" %}
 <div class="form-group" id="module-filter">
-    <label class="col-lg-2 control-label">
+    <label class="col-sm-2 control-label">
         {% trans "Module Filter" %}
     </label>
-    <div class="col-lg-4 commcare-feature" data-since-version="2.20">
+    <div class="col-sm-4 commcare-feature" data-since-version="2.20">
         <input type="text"
             class="form-control"
             placeholder="{% trans "XPath expression" %}"

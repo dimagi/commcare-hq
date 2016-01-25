@@ -12,8 +12,8 @@
                 <div class="modal-body" style="max-height:372px; overflow-y: scroll;">
                     <form class="form-horizontal">
                       <div class="form-group">
-                        <label class="col-lg-2 control-label" for="graphType">{% trans "Graph Type" %}</label>
-                        <div class="col-lg-4">
+                        <label class="col-sm-2 control-label" for="graphType">{% trans "Graph Type" %}</label>
+                        <div class="col-sm-4">
                             <select id="graphType" class="form-control" data-bind="
                                 options: availableGraphTypes,
                                 value: selectedGraphType
@@ -36,8 +36,8 @@
                                 <div data-bind="foreach: series">
                                     <form class="form-horizontal">
                                         <div class="form-group">
-                                            <label class="col-lg-2 control-label">{% trans "Source" %}</label>
-                                            <div class="col-lg-4">
+                                            <label class="col-sm-2 control-label">{% trans "Source" %}</label>
+                                            <div class="col-sm-4">
                                                 <select class="form-control" data-bind="
                                                     value: selectedSource,
                                                     options: sourceOptions,
@@ -45,7 +45,7 @@
                                                 ">
                                                 </select>
                                             </div>
-                                            <div class="col-lg-6">
+                                            <div class="col-sm-6">
                                                 <button class="btn btn-danger pull-right" data-bind="click: $parent.removeSeries">
                                                     <i class="fa fa-trash"></i> {% trans "Delete Series" %}
                                                 </button>
@@ -56,34 +56,34 @@
                                             </div>
                                         </div>
                                         <div class="form-group" data-bind="visible: showDataPath">
-                                            <label class="col-lg-2 control-label">{% trans "Path" %}</label>
-                                            <div class="col-lg-4">
+                                            <label class="col-sm-2 control-label">{% trans "Path" %}</label>
+                                            <div class="col-sm-4">
                                                 <input type="text" class="form-control" data-bind="value: dataPath" />
                                             </div>
                                         </div>
                                         <div class="form-group">
-                                            <label class="col-lg-2 control-label" data-bind="text: xLabel"></label>
-                                            <div class="col-lg-4">
+                                            <label class="col-sm-2 control-label" data-bind="text: xLabel"></label>
+                                            <div class="col-sm-4">
                                                 <input type="text" class="form-control" data-bind="value: xFunction" />
                                             </div>
                                         </div>
                                         <div class="form-group">
-                                            <label class="col-lg-2 control-label" data-bind="text: yLabel"></label>
-                                            <div class="col-lg-4">
+                                            <label class="col-sm-2 control-label" data-bind="text: yLabel"></label>
+                                            <div class="col-sm-4">
                                                 <input type="text" class="form-control" data-bind="value: yFunction" />
                                             </div>
                                         </div>
                                         <!-- ko if: 'radiusFunction' in $data -->
                                         <div class="form-group">
-                                            <label class="col-lg-2 control-label">{% trans "Radius" %}</label>
-                                            <div class="col-lg-4">
+                                            <label class="col-sm-2 control-label">{% trans "Radius" %}</label>
+                                            <div class="col-sm-4">
                                                 <input type="text" class="form-control" data-bind="value: radiusFunction" />
                                             </div>
                                         </div>
                                         <!-- /ko -->
                                         <div class="form-group">
-                                            <div class="col-lg-2 control-label"></div>
-                                            <div class="col-lg-10">
+                                            <div class="col-sm-2 control-label"></div>
+                                            <div class="col-sm-10">
                                                 <div data-bind="foreach: configPairs">
                                                     <div data-bind="template: 'graph_property_value_mapping_inputs'"></div>
                                                 </div>

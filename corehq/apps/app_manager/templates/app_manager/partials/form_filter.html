@@ -1,14 +1,14 @@
 {% load i18n %}
 {% if app.application_version == '2.0' %}
     <div class="form-group">
-        <label class="control-label col-lg-2">
+        <label class="control-label col-sm-2">
             {% trans "Display Condition" %}
             <span class="hq-help-template"
                   data-title="{% trans "Display Condition" %}"
                   data-content="{% trans "The form will not appear in this module’s form menu unless this condition is met." %}"
             ></span>
         </label>
-        <div id="form-filter" class="col-lg-4 row">
+        <div id="form-filter" class="col-sm-4 row">
             <div data-bind="valueOrNoneUI: {
                 value: formFilter,
                 allowed: formFilterAllowed,

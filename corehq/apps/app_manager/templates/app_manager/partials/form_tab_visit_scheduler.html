@@ -16,22 +16,22 @@
             <fieldset>
                 <legend>{% trans "Form Settings" %}</legend>
                 <div class="form-group">
-                    <label class="control-label col-lg-2">
+                    <label class="control-label col-sm-2">
                         {% trans "This form has a schedule" %}
                         <span class="hq-help-template"
                                   data-title="{% trans 'Schedule Phase' %}"
                                   data-content="{% trans 'Forms that do not have a schedule are always shown' %}">
                         </span>
                     </label>
-                    <div class="col-lg-4">
+                    <div class="col-sm-4">
                         <input type="checkbox" data-bind="checked: scheduleEnabled" />
                     </div>
                 </div>
                 <div class="form-group" data-bind="visible: scheduleEnabled">
-                    <label class="col-lg-2 control-label">
+                    <label class="col-sm-2 control-label">
                         {% trans "Form Abbreviation" %}
                     </label>
-                    <div class="col-lg-4">
+                    <div class="col-sm-4">
                         <input type="text" class="form-control" id="schedule_form_id"
                                required data-bind="value: schedule_form_id">
                         <span class="help-block error-text" style="display:none">
@@ -40,7 +40,7 @@
                     </div>
                 </div>
                 <div class="form-group" data-bind="visible: scheduleEnabled">
-                    <label class="col-lg-2 control-label">
+                    <label class="col-sm-2 control-label">
                         {% trans "Schedule Phase" %}
                         {% url "view_module" domain app.id module.id as module_url %}
                         <span class="hq-help-template"
@@ -50,7 +50,7 @@
                               {% endblocktrans %}>
                         </span>
                     </label>
-                    <div class="col-lg-4">
+                    <div class="col-sm-4">
                         <select id="achor" class="form-control" required
                                 data-bind="options: all_schedule_phase_anchors,
                                            optionsCaption: '{% trans "Please select a phase..." %}',

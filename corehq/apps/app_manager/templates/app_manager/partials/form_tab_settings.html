@@ -6,20 +6,20 @@
         {% csrf_token %}
         <div class="save-button-holder clearfix"></div>
         <div class="form-group">
-            <label class="col-lg-2 control-label">{% trans "Form Name" %}</label>
-            <div class="col-lg-4">
+            <label class="col-sm-2 control-label">{% trans "Form Name" %}</label>
+            <div class="col-sm-4">
                 {% input_trans form.name langs cssClass='form-control' %}
             </div>
         </div>
         <div class="form-group">
-            <label class="control-label col-lg-2" for="comment-id">
+            <label class="control-label col-sm-2" for="comment-id">
                 {% trans "Comment" %}
                 <span class="hq-help-template"
                       data-title="{% trans "Comment" %}"
                       data-content="{% blocktrans %}Comments to document or explain this form for other app builders or maintainers.{% endblocktrans %}"
                 ></span>
             </label>
-            <div id="form-comment" class="col-lg-4">
+            <div id="form-comment" class="col-sm-4">
                 <textarea id="comment-id" name="comment" class="form-control">{{ form.comment }}</textarea>
             </div>
         </div>
@@ -52,12 +52,12 @@
                 {% if allow_form_filtering %}
                     {% include "app_manager/partials/form_filter.html" %}
                 {% else  %}
-                    <div class="col-lg-6 label label-default">{% trans 'Form filtering is disabled for this form' %}</div>
+                    <div class="col-sm-6 label label-default">{% trans 'Form filtering is disabled for this form' %}</div>
                 {% endif %}
                 {% if allow_form_workflow %}
                     {% include "app_manager/partials/form_workflow.html" %}
                 {% else %}
-                    <div class="col-lg-6 label label-default">{% trans 'Form workflows are disabled for this form' %}</div>
+                    <div class="col-sm-6 label label-default">{% trans 'Form workflows are disabled for this form' %}</div>
                 {% endif %}
 
             </div>
@@ -79,7 +79,7 @@
             </div>
             {% if request|toggle_enabled:'NO_VELLUM' %}
             <div class="form-group">
-                <label class="control-label col-lg-2">
+                <label class="control-label col-sm-2">
                     {% trans "Disallow editing form in Form Builder" %}
                     <span class="hq-help-template"
                           data-title="{% trans "Disallow editing form in Form Builder" %}"
@@ -87,7 +87,7 @@
                                         use this option to disallow editing in the Form Builder.{% endblocktrans %}"
                     ></span>
                 </label>
-                <div class="col-lg-4" id="no-vellum">
+                <div class="col-sm-4" id="no-vellum">
                      <input type="checkbox" value="true"
                             data-bind="checked: no_vellum"/>
                      <input type="hidden" name="no_vellum" data-bind="value: no_vellum"/>

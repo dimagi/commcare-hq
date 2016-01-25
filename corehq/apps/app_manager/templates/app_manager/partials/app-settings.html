@@ -182,11 +182,11 @@ todo fix
                         visible: visible,
                         css: {error: hasError()}
                     ">
-                        <div class="col-lg-2 control-label">
+                        <div class="col-sm-2 control-label">
                             <label data-bind="html: name, attr: {for: inputId}" class="inner-control-label"></label>
                             <span data-bind="makeHqHelp: { name: name, description: $data.description, format: $data.description_format}, visible: $data.description"></span>
                         </div>
-                        <div class="col-lg-4">
+                        <div class="col-sm-4">
                             <span data-bind="template: $data.widget_template || 'CommcareSettings.widgets.' + widget"></span>
                             <p class="help-block" data-bind="visible: disabledButHasValue">
                                 <span data-bind="text: $data.disabled_txt"></span>
@@ -201,7 +201,7 @@ todo fix
                                 </span>
                             </p>
                         </div>
-                        <div class="col-lg-2 control-label">
+                        <div class="col-sm-2 control-label">
                             <div class="pull-left">
                                 <span class="label label-danger" data-bind="
                                     text: $data.warning || $parents[1].warning,

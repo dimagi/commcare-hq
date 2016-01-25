@@ -2,14 +2,14 @@
 {% load hq_shared_tags %}
 {% if app.application_version == '2.0' %}
     <div class="form-group">
-        <label class="control-label col-lg-2">
+        <label class="control-label col-sm-2">
             {% trans "Auto Capture Location" %}
             <span class="hq-help-template"
                   data-title="{% trans "Auto Capture Location" %}"
                   data-content="{% blocktrans %}On CommCare Android, have this form automatically capture the user's current geo-location.{% endblocktrans %}"
             ></span>
         </label>
-        <div id="auto-gps-capture" class="col-lg-4 commcare-feature checkbox" data-since-version="2.14">
+        <div id="auto-gps-capture" class="col-sm-4 commcare-feature checkbox" data-since-version="2.14">
             {% if app.auto_gps_capture %}
                 <input type="checkbox" value="true" disabled="disabled"
                        data-bind="checked: true"/>

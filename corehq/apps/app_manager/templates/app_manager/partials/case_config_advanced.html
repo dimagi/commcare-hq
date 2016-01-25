@@ -53,19 +53,19 @@
                 {% if app.commtrack_enabled %}
                 <!-- ko if:  allow_product_stock -->
                 <div class="form-group">
-                    <label class="col-lg-2 control-label">
+                    <label class="col-sm-2 control-label">
                         {% trans "Display the Product Stock for this Supply Point after it is selected" %}
                     </label>
-                    <div class="col-lg-4">
+                    <div class="col-sm-4">
                         <input type="checkbox" data-bind="checked: show_product_stock_var"/>
                     </div>
                 </div>
                 <!-- ko if: show_product_stock_var -->
                 <div class="form-group">
-                    <label class="col-lg-2 control-label">
+                    <label class="col-sm-2 control-label">
                         {% trans "Only show products for program" %}
                     </label>
-                    <div class="col-lg-4">
+                    <div class="col-sm-4">
                         <select class="form-control" data-bind="optstr: $root.programs, value: product_program"></select>
                     </div>
                 </div>
@@ -75,27 +75,27 @@
     
                 <!-- ko if:  !auto_select && $index() > 0 -->
                 <div class="form-group" data-bind="css: {'has-warning': validate_subcase()}">
-                    <label class="col-lg-2 control-label">
+                    <label class="col-sm-2 control-label">
                         {% trans "This case is a subcase of the previous case" %}
                     </label>
-                    <div class="col-lg-4">
+                    <div class="col-sm-4">
                         <input type="checkbox" data-bind="checked: subcase"/>
                         <span class="help-block" data-bind="text: validate_subcase"></span>
                     </div>
                 </div>
                 {% if show_custom_ref %}
                     <div class="form-group" data-bind="if: subcase">
-                        <label class="control-label col-lg-2">
+                        <label class="control-label col-sm-2">
                             {% trans "Parent reference ID" %}
                         </label>
-                        <div class="col-lg-4">
+                        <div class="col-sm-4">
                             <input type="text" class="form-control" data-bind="value: case_index.reference_id"/>
                         </div>
                     </div>
                 {% endif %}
                 <div class="form-group">
-                    <label class="control-label col-lg-2">{% trans "Relationship" %}</label>
-                    <div class="col-lg-4">
+                    <label class="control-label col-sm-2">{% trans "Relationship" %}</label>
+                    <div class="col-sm-4">
                         <select class="form-control"
                                 data-bind="options: relationshipTypes,
                                            optionsCaption: 'Child case or extension case?',
@@ -108,8 +108,8 @@
             <!-- ko if:  actionType === 'open' -->
                 <div class="form-group" data-bind="visible: allow_subcase, css: {'has-warning': validate_subcase()}">
     
-                    <label class="control-label col-lg-2">{% trans "Parent Indices" %}</label>
-                    <div class="col-lg-4">
+                    <label class="control-label col-sm-2">{% trans "Parent Indices" %}</label>
+                    <div class="col-sm-4">
                         <div data-bind="foreach: case_indices">
                             <div class="form-group">
                                 <label>{% trans "Parent Tag" %}</label>
