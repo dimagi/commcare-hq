@@ -13,6 +13,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
     IntegerProperty,
 )
+from corehq.apps.export.const import CASE_HISTORY_PROPERTIES
 
 
 class ExportItem(DocumentSchema):
@@ -247,15 +248,15 @@ class FormExportDataSchema(ExportDataSchema):
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             app = Application.wrap(app_doc)
             xform = app.get_form(unique_form_id).wrapped_xform()
-            xform_conf = ExportDataSchema._generate_schema_from_xform(xform, app.langs, app.version)
-            all_xform_conf = ExportDataSchema._merge_schema(all_xform_conf, xform_conf)
+            xform_conf = FormExportDataSchema._generate_schema_from_xform(xform, app.langs, app.version)
+            all_xform_conf = FormExportDataSchema._merge_schema(all_xform_conf, xform_conf)
 
         return all_xform_conf
 
     @staticmethod
     def _generate_schema_from_xform(xform, langs, appVersion):
         questions = xform.get_questions(langs)
-        schema = ExportDataSchema()
+        schema = FormExportDataSchema()
 
         for group_path, group_questions in groupby(questions, lambda q: q['repeat']):
             # If group_path is None, that means the questions are part of the form and not a repeat group
@@ -266,7 +267,7 @@ class FormExportDataSchema(ExportDataSchema):
             )
             for question in group_questions:
                 # Create ExportItem based on the question type
-                item = ExportDataSchema.datatype_mapping[question['type']].create_from_question(
+                item = FormExportDataSchema.datatype_mapping[question['type']].create_from_question(
                     question,
                     appVersion,
                 )
@@ -274,6 +275,69 @@ class FormExportDataSchema(ExportDataSchema):
 
             schema.group_schemas.append(group_schema)
 
+        return schema
+
+
+class CaseExportDataSchema(ExportDataSchema):
+
+    @staticmethod
+    def generate_schema_from_builds(domain, app_id, case_type):
+        app_build_ids = get_built_app_ids_for_app_id(domain, app_id)
+        all_case_schema = CaseExportDataSchema()
+
+        for app_doc in iter_docs(Application.get_db(), app_build_ids):
+            app = Application.wrap(app_doc)
+            case_type_metadata = filter(
+                lambda case_type_meta: case_type_meta.name == case_type,
+                app.get_case_metadata().case_types
+            )[0]
+            case_schema = CaseExportDataSchema._generate_schema_from_case_meta(
+                case_type_metadata,
+                app.version,
+            )
+            case_history_schema = CaseExportDataSchema._generate_schema_from_case_history(
+                app.version,
+            )
+
+            all_case_schema = CaseExportDataSchema._merge_schema(all_case_schema, case_schema)
+            all_case_schema = CaseExportDataSchema._merge_schema(all_case_schema, case_history_schema)
+
+        return all_case_schema
+
+    @staticmethod
+    def _generate_schema_from_case_meta(case_type_metadata, appVersion):
+        properties = case_type_metadata.properties
+        schema = CaseExportDataSchema()
+
+        group_schema = ExportGroupSchema(
+            path=[case_type_metadata.name],
+            last_occurrence=appVersion,
+        )
+
+        for prop in properties:
+            group_schema.items.append(ScalarItem(
+                path=[prop.name],
+                label=prop.name,
+                last_occurrence=appVersion,
+            ))
+
+        schema.group_schemas.append(group_schema)
+        return schema
+
+    @staticmethod
+    def _generate_schema_for_case_history(appVersion):
+        schema = CaseExportDataSchema()
+        group_schema = ExportGroupSchema(
+            path=['history'],
+            last_occurrence=appVersion,
+        )
+        for prop in CASE_HISTORY_PROPERTIES:
+            group_schema.items.append(ScalarItem(
+                path=[prop],
+                label=prop,
+                last_occurrence=appVersion,
+            ))
+        schema.group_schemas.append(group_schema)
         return schema
 
 

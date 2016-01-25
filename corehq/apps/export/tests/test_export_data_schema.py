@@ -3,7 +3,9 @@ import os
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import XForm, Application
-from corehq.apps.export.models import FormExportDataSchema
+from corehq.apps.reports.formdetails.readable import CaseTypeMeta, CaseProperty
+from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema
+from corehq.apps.export.const import CASE_HISTORY_PROPERTIES
 
 
 class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
@@ -65,6 +67,45 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(group_schema.items[1].path, ['data', 'question2'])
         self.assertEqual(group_schema.items[1].options[0].value, 'choice1')
         self.assertEqual(group_schema.items[1].options[1].value, 'choice2')
+
+
+class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
+
+    def _build_case_type_metadata(self, *case_properties):
+        case_type_metadata = CaseTypeMeta(
+            name='candy',
+            properties=[]
+        )
+        for case_prop in case_properties:
+            case_type_metadata.properties.append(CaseProperty(
+                name=case_prop
+            ))
+
+        return case_type_metadata
+
+    def test_case_type_metadata_parsing(self):
+
+        case_type_metadata = self._build_case_type_metadata('my_case_property', 'my_second_case_property')
+        schema = CaseExportDataSchema._generate_schema_from_case_meta(
+            case_type_metadata,
+            1,
+        )
+        self.assertEqual(len(schema.group_schemas), 1)
+        group_schema = schema.group_schemas[0]
+
+        self.assertEqual(group_schema.items[0].path, ['my_case_property'])
+        self.assertEqual(group_schema.items[0].last_occurrence, 1)
+        self.assertEqual(group_schema.items[1].path, ['my_second_case_property'])
+        self.assertEqual(group_schema.items[1].last_occurrence, 1)
+
+    def test_case_history_parsing(self):
+        schema = CaseExportDataSchema._generate_schema_for_case_history(1)
+
+        self.assertEqual(len(schema.group_schemas), 1)
+        group_schema = schema.group_schemas[0]
+
+        for idx, prop in enumerate(CASE_HISTORY_PROPERTIES):
+            self.assertEqual(group_schema.items[idx].path, [prop])
 
 
 class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
@@ -198,3 +239,24 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         )
 
         self.assertEqual(len(schema.group_schemas), 1)
+
+
+class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
+    file_path = ['data']
+    root = os.path.dirname(__file__)
+
+    @classmethod
+    def test_basic_application_schema(cls):
+        cls.current_app = Application.wrap(cls.get_json('basic_case_application'))
+
+        cls.first_build = Application.wrap(cls.get_json('basic_case_application'))
+        cls.first_build._id = '123'
+        cls.first_build.copy_of = cls.current_app.get_id
+        cls.first_build.version = 3
+
+        cls.apps = [
+            cls.current_app,
+            cls.first_build,
+        ]
+        for app in cls.apps:
+            app.save()
