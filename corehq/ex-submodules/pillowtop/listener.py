@@ -492,8 +492,7 @@ class AliasedElasticPillow(BasicPillow):
 
     def change_transport(self, doc_dict):
         """
-        Override the elastic transport to go to the index + the type being a string between the
-        domain and case type
+        Save the document to ElasticSearch
         """
         try:
             if not self.bulk:
