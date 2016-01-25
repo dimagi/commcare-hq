@@ -240,11 +240,9 @@ function CommcareSettings(options) {
         });
         section.reallyCollapse = ko.computed(function () {
             var el = document.getElementById(section.id);
-            return section.collapse
-                && (!el || !el.classList.contains("in"))
-                && !_(section.settings).some(function (setting) {
-                    return setting.hasError();
-            });
+            return section.collapse &&
+                (!el || !el.classList.contains("in")) &&
+                !_(section.settings).some(function (setting) { return setting.hasError(); });
         });
     });
 

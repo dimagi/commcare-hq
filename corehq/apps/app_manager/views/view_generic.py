@@ -39,6 +39,7 @@ from corehq.apps.app_manager.models import (
 )
 from django_prbac.utils import has_privilege
 
+
 @use_bootstrap3
 @retry_resource(3)
 def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
