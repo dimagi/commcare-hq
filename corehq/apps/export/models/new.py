@@ -1,5 +1,5 @@
 from itertools import groupby
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from couchdbkit import SchemaListProperty, SchemaProperty
 
 from corehq.apps.userreports.expressions.getters import NestedDictGetter

@@ -3,7 +3,6 @@ import os
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import XForm, Application
-from corehq.apps.domain.models import Domain
 from corehq.apps.export.models import ExportDataSchema
 
 
