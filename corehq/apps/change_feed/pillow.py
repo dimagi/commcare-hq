@@ -1,14 +1,12 @@
 from kafka import KeyedProducer
-from kafka.common import KafkaUnavailableError
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import data_sources
-from corehq.apps.change_feed.connection import get_kafka_client
+from corehq.apps.change_feed.connection import get_kafka_client_or_none
 from corehq.apps.change_feed.topics import get_topic
 from corehq.apps.change_feed.utils import send_to_kafka
 from corehq.apps.users.models import CommCareUser
 from corehq.util.couchdb_management import couch_config
 from couchforms.models import all_known_formlike_doc_types
-import logging
 from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoint_store, \
     PillowCheckpointEventHandler
 from pillowtop.couchdb import CachedCouchDB
@@ -42,7 +40,6 @@ class KafkaProcessor(PillowProcessor):
                 domain=change.document.get('domain', None),
                 is_deletion=change.deleted,
             )
-
             send_to_kafka(self._producer, get_topic(document_type), change_meta)
 
 
@@ -63,7 +60,7 @@ class ChangeFeedPillow(PythonPillow):
 
 def get_default_couch_db_change_feed_pillow():
     default_couch_db = CachedCouchDB(CommCareCase.get_db().uri, readonly=False)
-    kafka_client = _get_kafka_client_or_none()
+    kafka_client = get_kafka_client_or_none()
     return ChangeFeedPillow(
         couch_db=default_couch_db,
         kafka=kafka_client,
@@ -76,7 +73,7 @@ def get_user_groups_db_kafka_pillow():
     # flip the main one over as well
     user_groups_couch_db = couch_config.get_db_for_class(CommCareUser)
     pillow_name = 'UserGroupsDbKafkaPillow'
-    kafka_client = _get_kafka_client_or_none()
+    kafka_client = get_kafka_client_or_none()
     processor = KafkaProcessor(
         kafka_client, data_source_type=data_sources.COUCH, data_source_name=user_groups_couch_db.dbname
     )
@@ -91,14 +88,6 @@ def get_user_groups_db_kafka_pillow():
             checkpoint=checkpoint, checkpoint_frequency=100,
         ),
     )
-
-
-def _get_kafka_client_or_none():
-    try:
-        return get_kafka_client()
-    except KafkaUnavailableError:
-        logging.warning('Ignoring missing kafka client during unit testing')
-        return None
 
 
 def _get_document_type(document_or_none):
