@@ -71,8 +71,8 @@ class TableConfiguration(DocumentSchema):
         :param document: dictionary representation of a form submission or case
         :return: List of ExportRows
         """
-        # Note that repeat_items will be [document] if self.repeat_path is []
-        repeat_items = self._get_items_for_repeat(self.repeat_path, [document])
+        # Note that sub_documents will be [document] if self.repeat_path is []
+        sub_documents = self._get_sub_documents(self.repeat_path, [document])
         rows = []
         for item in repeat_items:
             row = ExportRow(data=[
@@ -81,14 +81,14 @@ class TableConfiguration(DocumentSchema):
             rows.append(row)
         return rows
 
-    def _get_items_for_repeat(self, path, docs):
+    def _get_sub_documents(self, path, docs):
         """
         Return each instance of a repeat group at the path from the given docs.
         If path is [], just return the docs
 
-        >>> TableConfiguration()._get_items_for_repeat(['foo'], [{'foo': {'bar': 'a'}}, {'foo': {'bar': 'b'}}])
+        >>> TableConfiguration()._get_sub_documents(['foo'], [{'foo': {'bar': 'a'}}, {'foo': {'bar': 'b'}}])
         [{'bar': 'a'}, {'bar': 'b'}]
-        >>> TableConfiguration()._get_items_for_repeat(['foo', 'bar'], [{'foo': [{'bar': {'baz': 'a'}}, {'bar': {'baz': 'b'}},]}]
+        >>> TableConfiguration()._get_sub_documents(['foo', 'bar'], [{'foo': [{'bar': {'baz': 'a'}}, {'bar': {'baz': 'b'}},]}]
         [{'baz': 'a'}, {'baz': 'b'}]
 
         :param path: A list of a strings
@@ -105,7 +105,7 @@ class TableConfiguration(DocumentSchema):
                 new_docs.extend(next_doc)
             else:
                 new_docs.append(next_doc)
-        return self._get_items_for_repeat(path[1:], new_docs)
+        return self._get_sub_documents(path[1:], new_docs)
 
 
 class ExportInstance(Document):
