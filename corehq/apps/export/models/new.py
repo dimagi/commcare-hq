@@ -58,10 +58,7 @@ class ExportItem(DocumentSchema):
 
 class ExportColumn(DocumentSchema):
     item = SchemaProperty(ExportItem)
-    name = StringProperty()
-    path = ListProperty()
     label = StringProperty()
-    last_occurrence = IntegerProperty()
 
     def get_value(self, doc, base_path):
         """
