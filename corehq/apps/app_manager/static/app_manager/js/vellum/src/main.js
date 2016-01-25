@@ -11,8 +11,6 @@ require.config({
         "local-deps": [
             "underscore", 
             "jquery.jstree", 
-            "jquery.bootstrap-popout", 
-            "jquery.bootstrap-stickyover", 
             "save-button", 
             "ckeditor", 
             "ckeditor-jquery", 
