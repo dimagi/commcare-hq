@@ -46,12 +46,12 @@ class KafkaChangeFeed(ChangeFeed):
                 offset = 0
             # this is how you tell the consumer to start from a certain point in the sequence
             consumer.set_topic_partitions((self._topic, self._partition, offset))
-        for message in consumer:
-            try:
+        try:
+            for message in consumer:
                 yield change_from_kafka_message(message)
-            except ConsumerTimeout:
-                assert not forever, 'Kafka pillow should not timeout when waiting forever!'
-                # no need to do anything since this is just telling us we've reached the end of the feed
+        except ConsumerTimeout:
+            assert not forever, 'Kafka pillow should not timeout when waiting forever!'
+            # no need to do anything since this is just telling us we've reached the end of the feed
 
     def get_latest_change_id(self):
         consumer = self._get_consumer(MIN_TIMEOUT)
