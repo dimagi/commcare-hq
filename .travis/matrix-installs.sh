@@ -25,3 +25,7 @@ if [ "${BOWER:-no}" = "yes" ]; then
     npm install -g bower
     bower install
 fi
+
+if [ "${NODE:-no}" = "yes" ]; then
+    npm install
+fi
