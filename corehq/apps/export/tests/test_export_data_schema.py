@@ -1,8 +1,9 @@
 import os
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.models import XForm
+from corehq.apps.app_manager.models import XForm, Application
+from corehq.apps.domain.models import Domain
 from corehq.apps.export.models import ExportDataSchema
 
 
@@ -160,3 +161,41 @@ class TestMergingExportDataSchema(SimpleTestCase, TestXmlMixin):
 
         self.assertEqual(group_schema2.last_occurrence, 1)
         self.assertEqual(len(group_schema2.items), 1)
+
+
+class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
+    file_path = ['data']
+    root = os.path.dirname(__file__)
+
+    @classmethod
+    def setUpClass(cls):
+        cls.current_app = Application.wrap(cls.get_json('basic_application'))
+
+        cls.first_build = Application.wrap(cls.get_json('basic_application'))
+        cls.first_build._id = '123'
+        cls.first_build.copy_of = cls.current_app.get_id
+        cls.first_build.version = 3
+
+        cls.apps = [
+            cls.current_app,
+            cls.first_build,
+        ]
+        for app in cls.apps:
+            app.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        for app in cls.apps:
+            app.delete()
+        # to circumvent domain.delete()'s recursive deletion that this test doesn't need
+
+    def test_basic_application_schema(self):
+        app = self.current_app
+
+        schema = ExportDataSchema.generate_schema_from_builds(
+            app.domain,
+            app._id,
+            'b68a311749a6f45bdfda015b895d607012c91613'
+        )
+
+        self.assertEqual(len(schema.group_schemas), 1)

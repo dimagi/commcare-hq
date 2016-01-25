@@ -214,7 +214,8 @@ class ExportDataSchema(DocumentSchema):
         app_build_ids = get_built_app_ids_for_app_id(domain, app_id)
         all_xform_conf = ExportDataSchema()
 
-        for app in iter_docs(Application.get_db(), app_build_ids):
+        for app_doc in iter_docs(Application.get_db(), app_build_ids):
+            app = Application.wrap(app_doc)
             xform = app.get_form(unique_form_id).wrapped_xform()
             xform_conf = ExportDataSchema._generate_schema_from_xform(xform, app.langs, app.version)
             all_xform_conf = ExportDataSchema._merge_schema(all_xform_conf, xform_conf)
