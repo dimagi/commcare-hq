@@ -191,7 +191,8 @@ class MultipleChoiceItem(ExportItem):
 
 class ExportGroupSchema(DocumentSchema):
     """
-    An object that represents a logical group of questions in the form
+    An object representing the `ExportItem`s that would appear in a single export table, such as all the
+    questions in a particular repeat group, or all the questions not in any repeat group.
     """
     path = ListProperty()
     items = SchemaListProperty(ExportItem)
@@ -201,9 +202,7 @@ class ExportGroupSchema(DocumentSchema):
 class ExportDataSchema(DocumentSchema):
     """
     An object representing the things that can be exported for a particular
-    form xmlns or case type.
-    Each item in the list is uniquely identified by its path and doc_type.
-    repeats is a list of RepeatGroups, present at any level of the question hierarchy
+    form xmlns or case type. It contains a list of ExportGroupSchema.
     """
     group_schemas = SchemaListProperty(ExportGroupSchema)
     datatype_mapping = defaultdict(lambda: ScalarItem, {
