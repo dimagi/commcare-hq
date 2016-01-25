@@ -41,14 +41,14 @@ class XFormPillowTest(TestCase):
     def test_xform_pillow_sql(self):
         with trap_extra_setup(KafkaUnavailableError):
             consumer = KafkaConsumer(
-                topics.SQL_FORM,
+                topics.FORM_SQL,
                 group_id='test-sql-form-consumer',
                 bootstrap_servers=[settings.KAFKA_URL],
                 consumer_timeout_ms=100,
             )
 
         # have to get the seq id before the change is processed
-        kafka_seq = consumer.offsets()['fetch'][(topics.SQL_FORM, 0)]
+        kafka_seq = consumer.offsets()['fetch'][(topics.FORM_SQL, 0)]
 
         metadata = TestFormMetadata(domain=self.domain)
         form = get_form_ready_to_save(metadata, is_db_test=True)

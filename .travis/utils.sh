@@ -20,8 +20,8 @@ setup_kafka() {
     kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic case --zookeeper localhost:2181
     kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic form --zookeeper localhost:2181
     kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic meta --zookeeper localhost:2181
-    kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic sql-case --zookeeper localhost:2181
-    kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic sql-form --zookeeper localhost:2181
+    kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic case-sql --zookeeper localhost:2181
+    kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic form-sql --zookeeper localhost:2181
 }
 
 setup_moto_s3_server() {

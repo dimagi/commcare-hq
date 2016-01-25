@@ -142,7 +142,7 @@ def get_sql_xform_to_elasticsearch_pillow():
         name='SqlXFormToElasticsearchPillow',
         document_store=None,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topic=topics.SQL_FORM, group_id='sql-forms-to-es'),
+        change_feed=KafkaChangeFeed(topic=topics.FORM_SQL, group_id='sql-forms-to-es'),
         processor=XFormToElasticProcessor(),
         change_processed_event_handler=PillowCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100,

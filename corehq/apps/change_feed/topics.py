@@ -6,8 +6,7 @@ FORM = 'form'
 META = 'meta'
 
 # new models
-SQL_FORM = 'sql-form'
-SQL_CASE = 'sql-case'
+FORM_SQL = 'form-sql'
 
 
 def get_topic(document_type):
