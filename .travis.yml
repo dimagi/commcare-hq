@@ -14,9 +14,9 @@ env:
     - COUCHDB_PW=""
     - TRAVIS_INSTALL="y"
   matrix:
-#    - MATRIX_TYPE=javascript BOWER=yes
+    - MATRIX_TYPE=javascript BOWER=yes
     - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunnerCatchall BOWER=yes
-#    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunner0
+    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunner0
 branches:
   only:
     - master
