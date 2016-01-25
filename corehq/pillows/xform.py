@@ -60,11 +60,7 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
     or None, if the form should not be saved to elasticsearch
     """
     if doc_dict.get('domain', None) is None:
-        #If the domain is still None (especially when doing updates via the _changes feed)
-        #skip and do nothing
-        #the reason being is that changes on the xform instance do not necessarily add
-        #domain to it, so we need to wait until the domain is at least populated before
-        #going through with indexing this xform
+        # if there is no domain don't bother processing it
         return None
     else:
         doc_ret = copy.deepcopy(doc_dict)
