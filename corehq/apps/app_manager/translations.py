@@ -1,4 +1,5 @@
-from collections import OrderedDict
+# coding=utf-8
+from collections import defaultdict, OrderedDict
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from lxml import etree
@@ -20,6 +21,26 @@ from django.contrib import messages
 from django.utils.translation import ugettext as _
 
 
+def get_unicode_dicts(iterable):
+    """
+    Iterates iterable and returns a list of dictionaries with keys and values converted to Unicode
+
+    >>> gen = ({'0': None, 2: 'two', u'3': 0xc0ffee} for i in range(3))
+    >>> get_unicode_dicts(gen)
+    [{u'2': u'two', u'0': None, u'3': u'12648430'},
+     {u'2': u'two', u'0': None, u'3': u'12648430'},
+     {u'2': u'two', u'0': None, u'3': u'12648430'}]
+
+    """
+    def none_or_unicode(val):
+        return unicode(val) if val is not None else val
+
+    rows = []
+    for row in iterable:
+        rows.append({unicode(k): none_or_unicode(v) for k, v in row.iteritems()})
+    return rows
+
+
 def process_bulk_app_translation_upload(app, f):
     """
     Process the bulk upload file for the given app.
@@ -31,10 +52,6 @@ def process_bulk_app_translation_upload(app, f):
     :return: Returns a list of message tuples. The first item in each tuple is
     a function like django.contrib.messages.error, and the second is a string.
     """
-
-    def none_or_unicode(val):
-        return unicode(val) if val is not None else val
-
     msgs = []
 
     headers = expected_bulk_app_sheet_headers(app)
@@ -55,10 +72,7 @@ def process_bulk_app_translation_upload(app, f):
 
     for sheet in workbook.worksheets:
         # sheet.__iter__ can only be called once, so cache the result
-        rows = [row for row in sheet]
-        # Convert every key and value to a string
-        for i in xrange(len(rows)):
-            rows[i] = {unicode(k): none_or_unicode(v) for k, v in rows[i].iteritems()}
+        rows = get_unicode_dicts(sheet)
 
         # CHECK FOR REPEAT SHEET
         if sheet.worksheet.title in processed_sheets:
@@ -532,6 +546,43 @@ def update_form_translations(sheet, rows, missing_cols, app):
     def _looks_like_markdown(str):
         return re.search(r'^\d+[\.\)] |^\*|~~.+~~|# |\*{1,3}\S+\*{1,3}|\[.+\]\(\S+\)', str)
 
+    def get_markdown_node(text_node_):
+        return text_node_.find("./{f}value[@form='markdown']")
+
+    def get_value_node(text_node_):
+        return next(n for n in text_node_.findall("./{f}value")
+                    if 'form' not in n.attrib or n.get('form') == 'default')
+
+    def had_markdown(text_node_):
+        """
+        Returns True if a Markdown node currently exists for a translation.
+        """
+        markdown_node_ = get_markdown_node(text_node_)
+        return markdown_node_.exists()
+
+    def is_markdown_vetoed(text_node_):
+        """
+        Return True if the value looks like Markdown but there is no
+        Markdown node. It means the user has explicitly told form
+        builder that the value isn't Markdown.
+        """
+        value_node_ = get_value_node(text_node_)
+        old_trans = etree.tostring(value_node_.xml, method="text", encoding="unicode").strip()
+        return _looks_like_markdown(old_trans) and not had_markdown(text_node_)
+
+    # Aggregate Markdown vetoes, and translations that currently have Markdown
+    vetoes = defaultdict(lambda: False)  # By default, Markdown is not vetoed for a label
+    markdowns = defaultdict(lambda: False)  # By default, Markdown is not in use
+    for lang in app.langs:
+        # If Markdown is vetoed for one language, we apply that veto to other languages too. i.e. If a user has
+        # told HQ that "**stars**" in an app's English translation is not Markdown, then we must assume that
+        # "**étoiles**" in the French translation is not Markdown either.
+        for row in rows:
+            label_id = row['label']
+            text_node = itext.find("./{f}translation[@lang='%s']/{f}text[@id='%s']" % (lang, label_id))
+            vetoes[label_id] = vetoes[label_id] or is_markdown_vetoed(text_node)
+            markdowns[label_id] = markdowns[label_id] or had_markdown(text_node)
+
     # Update the translations
     for lang in app.langs:
         translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
@@ -574,26 +625,28 @@ def update_form_translations(sheet, rows, missing_cols, app):
                             break
 
                 if trans_type == 'default':
-                    if new_translation:
-                        value_node = next(
-                            n for n in text_node.findall("./{f}value")
-                            if 'form' not in n.attrib
+                    # plaintext/Markdown
+                    if _looks_like_markdown(new_translation) and not vetoes[label_id] or markdowns[label_id]:
+                        # If it looks like Markdown, add it ... unless it
+                        # looked like Markdown before but it wasn't. If we
+                        # have a Markdown node, always keep it. FB 183536
+                        _update_translation_node(
+                            new_translation,
+                            get_markdown_node(text_node),
+                            {'form': 'markdown'},
+                            # If all translations have been deleted, allow the
+                            # Markdown node to be deleted just as we delete
+                            # the plaintext node
+                            delete_node=(not keep_value_node)
                         )
-                        old_translation = etree.tostring(value_node.xml, method="text", encoding="unicode").strip()
-                        markdown_node = text_node.find("./{f}value[@form='markdown']")
-                        has_markdown = _looks_like_markdown(new_translation)
-                        had_markdown = markdown_node.exists()
-                        vetoed_markdown = not had_markdown and _looks_like_markdown(old_translation)
-
-                        if not((not has_markdown and not had_markdown)    # not dealing with markdown at all
-                               or (has_markdown and vetoed_markdown)):    # looks like markdown, but markdown is off
-                            _update_translation_node(new_translation if has_markdown and not vetoed_markdown else '',
-                                                     markdown_node,
-                                                     {'form': 'markdown'})
-                    _update_translation_node(new_translation,
-                                             text_node.find("./{f}value"),
-                                             {'form': trans_type}, delete_node=(not keep_value_node))
+                    _update_translation_node(
+                        new_translation,
+                        get_value_node(text_node),
+                        {'form': 'default'},
+                        delete_node=(not keep_value_node)
+                    )
                 else:
+                    # audio/video/image
                     _update_translation_node(new_translation,
                                              text_node.find("./{f}value[@form='%s']" % trans_type),
                                              {'form': trans_type})
