@@ -1,9 +1,8 @@
-from kafka import KeyedProducer
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
+from corehq.apps.change_feed.producer import ChangeProducer
 from corehq.apps.change_feed.topics import get_topic
-from corehq.apps.change_feed.utils import send_to_kafka
 from corehq.apps.users.models import CommCareUser
 from corehq.util.couchdb_management import couch_config
 from couchforms.models import all_known_formlike_doc_types
@@ -23,7 +22,7 @@ class KafkaProcessor(PillowProcessor):
     """
     def __init__(self, kafka, data_source_type, data_source_name):
         self._kafka = kafka
-        self._producer = KeyedProducer(self._kafka)
+        self._producer = ChangeProducer(self._kafka)
         self._data_source_type = data_source_type
         self._data_source_name = data_source_name
 
@@ -40,7 +39,7 @@ class KafkaProcessor(PillowProcessor):
                 domain=change.document.get('domain', None),
                 is_deletion=change.deleted,
             )
-            send_to_kafka(self._producer, get_topic(document_type), change_meta)
+            self._producer.send_change(get_topic(document_type), change_meta)
 
 
 class ChangeFeedPillow(PythonPillow):
