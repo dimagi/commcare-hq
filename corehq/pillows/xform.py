@@ -4,7 +4,6 @@ from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
 from .base import HQPillow
 from couchforms.const import RESERVED_WORDS
