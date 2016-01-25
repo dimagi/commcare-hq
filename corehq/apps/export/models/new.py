@@ -61,9 +61,8 @@ class ExportColumn(DocumentSchema):
 
 
 class TableConfiguration(DocumentSchema):
-
     name = StringProperty()
-    repeat_path = StringProperty()
+    repeat_path = ListProperty()
     columns = ListProperty(ExportColumn)
 
     def get_rows(self, document):
@@ -110,6 +109,7 @@ class TableConfiguration(DocumentSchema):
 
 
 class ExportInstance(Document):
+    tables = ListProperty(TableConfiguration)
 
     class Meta:
         app_label = 'export'
