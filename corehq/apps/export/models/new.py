@@ -200,7 +200,7 @@ class ExportDataSchema(DocumentSchema):
     })
 
     @staticmethod
-    def _merge_schema(schema1, schema2):
+    def _merge_schema(*schemas):
         """Merges two ExportDataSchemas together
 
         :param schema1: The first ExportDataSchema
@@ -225,13 +225,16 @@ class ExportDataSchema(DocumentSchema):
             group_schema.items = items
             return group_schema
 
-        group_schemas = _merge_lists(
-            schema1.group_schemas,
-            schema2.group_schemas,
-            keyfn=lambda group_schema: _list_path_to_string(group_schema.path),
-            resolvefn=resolvefn,
-            copyfn=lambda group_schema: ExportGroupSchema(group_schema.to_json())
-        )
+        previous_schema = schemas[0]
+        for current_schema in schemas[1:]:
+            group_schemas = _merge_lists(
+                previous_schema.group_schemas,
+                current_schema.group_schemas,
+                keyfn=lambda group_schema: _list_path_to_string(group_schema.path),
+                resolvefn=resolvefn,
+                copyfn=lambda group_schema: ExportGroupSchema(group_schema.to_json())
+            )
+            previous_schema = current_schema
 
         schema.group_schemas = group_schemas
 
@@ -299,8 +302,11 @@ class CaseExportDataSchema(ExportDataSchema):
                 app.version,
             )
 
-            all_case_schema = CaseExportDataSchema._merge_schema(all_case_schema, case_schema)
-            all_case_schema = CaseExportDataSchema._merge_schema(all_case_schema, case_history_schema)
+            all_case_schema = CaseExportDataSchema._merge_schema(
+                all_case_schema,
+                case_schema,
+                case_history_schema
+            )
 
         return all_case_schema
 
