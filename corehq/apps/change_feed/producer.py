@@ -63,7 +63,7 @@ class ChangeProducer(object):
         return self._producer
 
     def send_change(self, topic, change_meta):
-        if not self._has_error:
+        if self.producer:
             send_to_kafka(self.producer, topic, change_meta)
 
 
