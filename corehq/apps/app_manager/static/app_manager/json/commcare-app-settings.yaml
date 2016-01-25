@@ -146,7 +146,7 @@
   disabled_txt: Oops! This setting has been discontinued. We recommend you change this setting to Version 2, and it will no longer appear on your settings page.
 
 - id: auto_gps_capture
-  name: 'Auto Capture Location<br>(all forms)'
+  name: 'Auto Capture Location<br />(all forms)'
   description: >
     On CommCare Android, have this form automatically capture the user's current geo-location.
   widget: bool

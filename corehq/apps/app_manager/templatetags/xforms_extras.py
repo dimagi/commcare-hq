@@ -61,12 +61,11 @@ def input_trans(name, langs=None, input_name='name', cssClass=''):
             if langs and lang == langs[0]:
                 return template % {"value": name[lang], "placeholder": ""}
             else:
-                return template % {"value": "", "placeholder": name[lang]} + \
-                    LANG_BUTTON % {
-                        "lang": lang,
-                        "extra_class": " langcode-input",
-                        "extra_style": "position: absolute; top: 6px; right: 15px"
-                    }
+                return template % {"value": "", "placeholder": name[lang]} + LANG_BUTTON % {
+                    "lang": lang,
+                    "extra_class": " langcode-input",
+                    "extra_style": "position: absolute; top: 6px; right: 15px"
+                }
     default = "Untitled"
     if 'en' in name:
         default = name['en']
