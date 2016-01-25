@@ -1,15 +1,27 @@
 import collections
 import copy
 from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.elastic import get_es_new
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
 from .base import HQPillow
 from couchforms.const import RESERVED_WORDS
 from couchforms.models import XFormInstance
 from dateutil import parser
+from dimagi.utils.decorators.memoized import memoized
+from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoint_store, \
+    PillowCheckpointEventHandler
+from pillowtop.listener import send_to_elasticsearch
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processor import PillowProcessor
 
 
 UNKNOWN_VERSION = 'XXX'
 UNKNOWN_UIVERSION = 'XXX'
+XFORM_ES_TYPE = 'xform'
+
 
 def is_valid_date(txt):
     try:
@@ -38,7 +50,7 @@ class XFormPillow(HQPillow):
     document_class = XFormInstance
     couch_filter = "couchforms/xforms"
     es_alias = "xforms"
-    es_type = "xform"
+    es_type = XFORM_ES_TYPE
     es_index = XFORM_INDEX
     include_docs = False
 
@@ -94,3 +106,52 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
             form_props = ["%s:%s" % (k, v) for k, v in flatten(doc_ret['form']).iteritems()]
             doc_ret["__props_for_querying"] = form_props
         return doc_ret
+
+
+class XFormToElasticProcessor(PillowProcessor):
+
+    @property
+    @memoized
+    def elasticsearch(self):
+        return get_es_new()
+
+    def process_change(self, pillow_instance, change, do_set_checkpoint):
+        # if you don't worry about the various configuration options for reindexing,
+        # bootstrapping / dealing with the elasticsearch index, and bulk operations,
+        # this is all the current code does too
+        form_ready_to_go = transform_xform_for_elasticsearch(change.get_document())
+        # todo: this is required for our queries, figure out how best to deal with it
+        form_ready_to_go['doc_type'] = 'XFormInstance'
+        doc_exists = self.elasticsearch.exists(XFORM_INDEX, change.id, XFORM_ES_TYPE)
+        send_to_elasticsearch(
+            index=XFORM_INDEX,
+            doc_type=XFORM_ES_TYPE,
+            doc_id=change.id,
+            es_getter=get_es_new,
+            name=pillow_instance.get_name(),
+            data=form_ready_to_go,
+            update=doc_exists,
+        )
+
+
+def get_form_from_change(change):
+    assert change.metadata and change.metadata.domain, 'all sql changes need to have proper metadata set'
+    form_accessors = FormAccessors(domain=change.metadata.domain)
+    return form_accessors.get_form(change.get_document())
+
+
+def get_sql_xform_to_elasticsearch_pillow():
+    checkpoint = PillowCheckpoint(
+        get_django_checkpoint_store(),
+        'sql-xforms-to-elasticsearch',
+    )
+    return ConstructedPillow(
+        name='SqlXFormToElasticsearchPillow',
+        document_store=None,
+        checkpoint=checkpoint,
+        change_feed=KafkaChangeFeed(topic=topics.SQL_FORM, group_id='sql-forms-to-es'),
+        processor=XFormToElasticProcessor(),
+        change_processed_event_handler=PillowCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100,
+        ),
+    )
