@@ -36,7 +36,7 @@ unit_testing_only.__test__ = False
 
 @contextmanager
 def trap_extra_setup(*exceptions, **kw):
-    """Conditioinally skip test on error
+    """Conditionally skip test on error
 
     Use this context manager to skip tests that would otherwise fail in
     environments where some or all external dependencies have not been
