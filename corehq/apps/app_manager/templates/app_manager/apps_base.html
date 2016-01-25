@@ -24,7 +24,24 @@
     <script src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
     <script src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
     <script src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
+
+    <!--
+        jQuery UI needs to be included before Bootstrap's JavaScript, otherwise the two
+        tooltip widgets conflict. The B3 base template takes care of that when you use the
+        @use_jquery_ui decorator, but app manager doesn't, so instead include only the pieces
+        actually used in app manager (no tooltip).
+    -->
+    <script src="{% new_static 'jquery-ui/ui/minified/core.min.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/ui/minified/widget.min.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/ui/minified/mouse.min.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/ui/minified/position.min.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/ui/minified/accordion.min.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/ui/minified/autocomplete.min.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/ui/minified/draggable.min.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/ui/minified/droppable.min.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/ui/minified/menu.min.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/ui/minified/sortable.min.js' %}"></script>
+
     <script src="{% new_static 'style/lib/select2/select2.js' %}"></script>
     <script src="{% new_static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
     <script src="{% new_static 'style/js/bootstrap-multi-typeahead.js' %}"></script>
