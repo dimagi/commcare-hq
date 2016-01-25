@@ -8,7 +8,6 @@ from corehq.apps.hqwebapp.models import (
     ApplicationsTab,
     CloudcareTab,
     MessagingTab,
-    ExchangeTab,
     AdminTab
 )
 from corehq.apps.styleguide.tabs import SGExampleTab
@@ -23,7 +22,6 @@ MENU_TABS = (
     ApplicationsTab,
     CloudcareTab,
     MessagingTab,
-    ExchangeTab,
     AdminTab,
     SGExampleTab,
 )

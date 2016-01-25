@@ -1,12 +1,13 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% if request|feature_preview_enabled:"MODULE_FILTER" %}
-<div class="control-group" id="module-filter">
-    <label class="control-label">
+<div class="form-group" id="module-filter">
+    <label class="col-sm-2 control-label">
         {% trans "Module Filter" %}
     </label>
-    <div class="controls commcare-feature" data-since-version="2.20">
+    <div class="col-sm-4 commcare-feature" data-since-version="2.20">
         <input type="text"
+            class="form-control"
             placeholder="{% trans "XPath expression" %}"
             name="module_filter"
             {% if ko_value %}

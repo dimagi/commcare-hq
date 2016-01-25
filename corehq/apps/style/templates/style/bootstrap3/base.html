@@ -203,7 +203,7 @@
                         {% block tabs %}
                             {% format_main_menu %}
                         {% endblock %}
-                        <div class="btn-toolbar pull-right">
+                        <div class="nav-settings-bar pull-right">
                         {% if request.user.is_authenticated %}
                             {% include 'style/includes/global_navigation_bar.html' %}
                         {% else %}
@@ -242,17 +242,15 @@
                                     </div>
                                 {% endfor %}
                             {% endif %}
+                            <div id="message-alerts" data-bind="foreach: alerts">
+                                <div data-bind="attr: {'class': alert_class}">
+                                    <a class="close" data-dismiss="alert" href="#">&times;</a>
+                                    <span data-bind="text: message"></span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-
                 </div>
-                {# todo: handle with angular #}
-    {#            <div id="message-alerts" data-bind="foreach: alerts">#}
-    {#                <div data-bind="attr: {'class': alert_class}">#}
-    {#                    <a class="close" data-dismiss="alert" href="#">&times;</a>#}
-    {#                    <span data-bind="text: message"></span>#}
-    {#                </div>#}
-    {#            </div>#}
             {% endif %}
             {% block content %}{% endblock content %}
         </div>
@@ -261,52 +259,34 @@
                  role="navigation"
                  class="navbar navbar-inverse navbar-hq-footer">
                 <div class="container-fluid">
-                    <div class="navbar-header">
-                        <a href="http://www.commcarehq.org/">
-                            <img src="{% new_static 'hqwebapp/img/commcare-flower-footer.png' %}" alt="CommCare" />
-                        </a>
-                        <a href="http://www.dimagi.com/">
-                            <img src="{% static 'hqwebapp/img/dimagi-footer.png' %}"
-                                 alt="Powered by Dimagi, Inc." />
-                        </a>
-                    </div>
-                    <p class="text-align-center pull-left text-hq-copyright">
-                        {% blocktrans %}
-                            <a href="http://www.commcarehq.org/">CommCare HQ</a>
-                            is copyright &copy;
-                        {% endblocktrans %}{% now "Y" %}
-                        <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
-                        {% if user.is_authenticated %}
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <a href="http://www.commcarehq.org/" class="footer-link-img">
+                                <img src="{% new_static 'hqwebapp/img/commcare-flower-footer.png' %}"
+                                     alt="CommCare"
+                                     height="30"  />
+                            </a>
+                            <a href="http://www.dimagi.com/" class="footer-link-img">
+                                <img src="{% static 'hqwebapp/img/dimagi-footer.png' %}"
+                                     alt="Powered by Dimagi, Inc."
+                                     height="20"/>
+                            </a>
+                        &nbsp;
+                            {% blocktrans %}
+                                <a href="http://www.commcarehq.org/">CommCare HQ</a>
+                                is copyright &copy;
+                            {% endblocktrans %}{% now "Y" %}
+                            <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
+                            {% if user.is_authenticated %}
+                                &nbsp;|&nbsp;
+                                <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>.
+                            {% endif %}
+                            <a href="{% url "eula" %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
                             &nbsp;|&nbsp;
-                            <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>.
-                        {% endif %}
-                        <br />
-                        <a href="{% url "eula" %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
-                        &nbsp;|&nbsp;
-                        <a href="{% trans 'http://www.dimagi.com/policy' %}">{% trans 'Privacy' %}</a>
-                        &nbsp;|&nbsp;
-                        <a href="{% url 'product_agreement' %}">{% trans 'Product Subscription Agreement' %}</a>
-                    </p>
-                    <div class="btn-toolbar pull-right">
-                        <button type="button"
-                                class="btn btn-footer-highlight"
-                                data-toggle="modal"
-                                data-target="#modalReportIssue">
-                            <i class="fa fa-comment"></i>&nbsp;
-                            {% trans 'Report an Issue' %}
-                        </button>
-                        <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}"
-                           target="_blank"
-                           class="btn btn-footer">
-                            <i class="fa fa-info-circle"></i>&nbsp;
-                            {% trans 'CommCare Help Site' %}
-                        </a>
-                        <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}"
-                           target="_blank"
-                           class="btn btn-footer">
-                            <i class="fa fa-envelope"></i>&nbsp;
-                            {% trans 'Mailing List' %}
-                        </a>
+                            <a href="{% trans 'http://www.dimagi.com/policy' %}">{% trans 'Privacy' %}</a>
+                            &nbsp;|&nbsp;
+                            <a href="{% url 'product_agreement' %}">{% trans 'Product Subscription Agreement' %}</a>
+                        </div>
                     </div>
                 </div>
             </nav>
@@ -361,6 +341,40 @@
         <script type="text/javascript" src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
         {% endcompress %}
+
+        <script type="text/javascript">
+            /*
+                This is the knockout-based, javascript analog of messages in Django.
+
+                Use the function `alert_user` to make a message appear on the page.
+                This accepts two args, message, and emphasis.  Emphasis corresponds to bootstrap
+                styling, and can be "success", "danger", "info", or "warning"
+
+                alert_user("Awesome job!", "success");
+            */
+            function message_alert (message, tags) {
+                var alert_obj = {
+                    "message": message,
+                    "alert_class": "alert fade in alert-block alert-full page-level-alert"
+                }
+                if (tags) {
+                    alert_obj.alert_class += " " + tags;
+                };
+                return alert_obj;
+            }
+            var message_alerts = ko.observableArray();
+
+            function alert_user (message, emphasis) {
+                message_alerts.push(message_alert(message, "alert-" + emphasis));
+            }
+
+            var message_element = $("#message-alerts").get(0);
+            ko.cleanNode(message_element);
+            $(message_element).koApplyBindings({
+                alerts: message_alerts,
+            });
+
+        </script>
 
         {% if request.use_angular_js %}
         {% compress js %}
