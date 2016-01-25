@@ -134,12 +134,6 @@ class XFormToElasticProcessor(PillowProcessor):
         )
 
 
-def get_form_from_change(change):
-    assert change.metadata and change.metadata.domain, 'all sql changes need to have proper metadata set'
-    form_accessors = FormAccessors(domain=change.metadata.domain)
-    return form_accessors.get_form(change.get_document())
-
-
 def get_sql_xform_to_elasticsearch_pillow():
     checkpoint = PillowCheckpoint(
         get_django_checkpoint_store(),
