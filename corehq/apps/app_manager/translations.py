@@ -550,7 +550,8 @@ def update_form_translations(sheet, rows, missing_cols, app):
         return text_node_.find("./{f}value[@form='markdown']")
 
     def get_value_node(text_node_):
-        return next(n for n in text_node_.findall("./{f}value") if 'form' not in n.attrib)
+        return next(n for n in text_node_.findall("./{f}value")
+                    if 'form' not in n.attrib or n.get('form') == 'default')
 
     def had_markdown(text_node_):
         """
@@ -641,7 +642,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
                     _update_translation_node(
                         new_translation,
                         get_value_node(text_node),
-                        {'form': 'default'},  # TODO: Is this going to break get_value_node(). If not, why not?
+                        {'form': 'default'},
                         delete_node=(not keep_value_node)
                     )
                 else:
