@@ -23,6 +23,9 @@ class XFormPillowTest(TestCase):
         self.elasticsearch = self.pillow.get_es_new()
         delete_es_index(self.pillow.es_index)
 
+    def tearDown(self):
+        delete_es_index(self.pillow.es_index)
+
     def test_xform_pillow_couch(self):
         metadata = TestFormMetadata(domain=self.domain)
         form = get_form_ready_to_save(metadata)
