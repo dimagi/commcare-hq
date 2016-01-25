@@ -17,10 +17,6 @@
     .edit-form-li {
         position: relative;
     }
-    /* Push tooltips away from icons that trigger them */
-    .tooltip {
-        margin-right: 12px;
-    }
 </style>
 {% endblock %}
 
@@ -70,7 +66,7 @@
         $(function () {
             $('.edit-form-pencil').hide().tooltip({
                 title: "{% trans "Edit in form builder" %}",
-                placement: 'left'
+                placement: 'auto',
             });
             $('.edit-form-li').each(function () {
                 if ($(this).is('.active') && {{ formdesigner|JSON }}) {
