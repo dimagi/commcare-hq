@@ -51,45 +51,50 @@ class XFormPillow(HQPillow):
         return XFORM_INDEX
 
     def change_transform(self, doc_dict, include_props=True):
-        if doc_dict.get('domain', None) is None:
-            #If the domain is still None (especially when doing updates via the _changes feed)
-            #skip and do nothing
-            #the reason being is that changes on the xform instance do not necessarily add
-            #domain to it, so we need to wait until the domain is at least populated before
-            #going through with indexing this xform
-            return None
-        else:
-            doc_ret = copy.deepcopy(doc_dict)
-
-            if 'meta' in doc_ret['form']:
-                if not is_valid_date(doc_ret['form']['meta'].get('timeEnd', None)):
-                    doc_ret['form']['meta']['timeEnd'] = None
-                if not is_valid_date(doc_ret['form']['meta'].get('timeStart', None)):
-                    doc_ret['form']['meta']['timeStart'] = None
-
-                # Some docs have their @xmlns and #text here
-                if isinstance(doc_ret['form']['meta'].get('appVersion'), dict):
-                    doc_ret['form']['meta']['appVersion'] = doc_ret['form']['meta']['appVersion'].get('#text')
-
-            case_blocks = extract_case_blocks(doc_ret)
-            for case_dict in case_blocks:
-                for date_modified_key in ['date_modified', '@date_modified']:
-                    if not is_valid_date(case_dict.get(date_modified_key, None)):
-                        if case_dict.get(date_modified_key) == '':
-                            case_dict[date_modified_key] = None
-                        else:
-                            case_dict.pop(date_modified_key, None)
-
-                # convert all mapped dict properties to nulls if they are empty strings
-                for object_key in ['index', 'attachment', 'create', 'update']:
-                    if object_key in case_dict and not isinstance(case_dict[object_key], dict):
-                        case_dict[object_key] = None
-
-            doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
-            if include_props:
-                form_props = ["%s:%s" % (k, v) for k, v in flatten(doc_ret['form']).iteritems()]
-                doc_ret["__props_for_querying"] = form_props
-            return doc_ret
+        return transform_xform_for_elasticsearch(doc_dict, include_props)
 
 
+def transform_xform_for_elasticsearch(doc_dict, include_props=True):
+    """
+    Given an XFormInstance, return a copy that is ready to be sent to elasticsearch,
+    or None, if the form should not be saved to elasticsearch
+    """
+    if doc_dict.get('domain', None) is None:
+        #If the domain is still None (especially when doing updates via the _changes feed)
+        #skip and do nothing
+        #the reason being is that changes on the xform instance do not necessarily add
+        #domain to it, so we need to wait until the domain is at least populated before
+        #going through with indexing this xform
+        return None
+    else:
+        doc_ret = copy.deepcopy(doc_dict)
 
+        if 'meta' in doc_ret['form']:
+            if not is_valid_date(doc_ret['form']['meta'].get('timeEnd', None)):
+                doc_ret['form']['meta']['timeEnd'] = None
+            if not is_valid_date(doc_ret['form']['meta'].get('timeStart', None)):
+                doc_ret['form']['meta']['timeStart'] = None
+
+            # Some docs have their @xmlns and #text here
+            if isinstance(doc_ret['form']['meta'].get('appVersion'), dict):
+                doc_ret['form']['meta']['appVersion'] = doc_ret['form']['meta']['appVersion'].get('#text')
+
+        case_blocks = extract_case_blocks(doc_ret)
+        for case_dict in case_blocks:
+            for date_modified_key in ['date_modified', '@date_modified']:
+                if not is_valid_date(case_dict.get(date_modified_key, None)):
+                    if case_dict.get(date_modified_key) == '':
+                        case_dict[date_modified_key] = None
+                    else:
+                        case_dict.pop(date_modified_key, None)
+
+            # convert all mapped dict properties to nulls if they are empty strings
+            for object_key in ['index', 'attachment', 'create', 'update']:
+                if object_key in case_dict and not isinstance(case_dict[object_key], dict):
+                    case_dict[object_key] = None
+
+        doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
+        if include_props:
+            form_props = ["%s:%s" % (k, v) for k, v in flatten(doc_ret['form']).iteritems()]
+            doc_ret["__props_for_querying"] = form_props
+        return doc_ret
