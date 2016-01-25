@@ -5,33 +5,33 @@
     <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'all' %}">
         {% csrf_token %}
         <div class="save-button-holder clearfix"></div>
-        <div class="control-group">
-            <label class="control-label">{% trans "Form Name" %}</label>
-            <div class="controls">
-                {% input_trans form.name langs %}
+        <div class="form-group">
+            <label class="col-sm-2 control-label">{% trans "Form Name" %}</label>
+            <div class="col-sm-4">
+                {% input_trans form.name langs cssClass='form-control' %}
             </div>
         </div>
-        <div class="control-group">
-            <label class="control-label" for="comment-id">
+        <div class="form-group">
+            <label class="control-label col-sm-2" for="comment-id">
                 {% trans "Comment" %}
                 <span class="hq-help-template"
                       data-title="{% trans "Comment" %}"
                       data-content="{% blocktrans %}Comments to document or explain this form for other app builders or maintainers.{% endblocktrans %}"
                 ></span>
             </label>
-            <div id="form-comment" class="controls">
-                <textarea id="comment-id" name="comment">{{ form.comment }}</textarea>
+            <div id="form-comment" class="col-sm-4">
+                <textarea id="comment-id" name="comment" class="form-control">{{ form.comment }}</textarea>
             </div>
         </div>
 
         <legend>
-        <a class="accordion-toggle collapsed" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-multimedia">
-            <i class="icon-double-angle-down"></i>
+        <a class="collapsed" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-multimedia">
+            <i class="fa fa-angle-double-down"></i>
             <span data-bind="text: title">Media</span>
         </a>
         </legend>
         <div class="collapse" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-multimedia" style="overflow: hidden;">
-            <div class="control-group" data-bind="
+            <div class="form-group" data-bind="
                 visible: visible,
                 css: {error: hasError()}">
                 {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
@@ -39,38 +39,42 @@
         </div>
 
         <legend>
-        <a class="accordion-toggle collapsed" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-logic">
-            <i class="icon-double-angle-down"></i>
+        <a class="collapsed" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-logic">
+            <i class="fa fa-angle-double-down"></i>
             <span data-bind="text: title">Logic</span>
         </a>
         </legend>
         <div class="collapse" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-logic" style="overflow: hidden;">
-            <div class="control-group" data-bind="
+            <div class="form-group" data-bind="
                 visible: visible,
                 css: {error: hasError()}">
 
                 {% if allow_form_filtering %}
                     {% include "app_manager/partials/form_filter.html" %}
                 {% else  %}
-                    <div class="label">{% trans 'Form filtering is disabled for this form' %}</div>
+                    <div class="container-fluid">
+                        <div class="alert alert-info">{% trans 'Form filtering is disabled for this form' %}</div>
+                    </div>
                 {% endif %}
                 {% if allow_form_workflow %}
                     {% include "app_manager/partials/form_workflow.html" %}
                 {% else %}
-                    <div class="label">{% trans 'Form workflows are disabled for this form' %}</div>
+                    <div class="container-fluid">
+                        <div class="alert alert-info">{% trans 'Form workflows are disabled for this form' %}</div>
+                    </div>
                 {% endif %}
 
             </div>
         </div>
 
         <legend>
-        <a class="accordion-toggle collapsed" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-advanced">
-            <i class="icon-double-angle-down"></i>
+        <a class="collapsed" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-advanced">
+            <i class="fa fa-angle-double-down"></i>
             <span data-bind="text: title">Advanced</span>
         </a>
         </legend>
         <div class="collapse" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-advanced" style="overflow: hidden;">
-            <div class="control-group" data-bind="
+            <div class="form-group" data-bind="
                 visible: visible,
                 css: {error: hasError()}">
 
@@ -78,8 +82,8 @@
 
             </div>
             {% if request|toggle_enabled:'NO_VELLUM' %}
-            <div class="control-group">
-                <label class="control-label">
+            <div class="form-group">
+                <label class="control-label col-sm-2">
                     {% trans "Disallow editing form in Form Builder" %}
                     <span class="hq-help-template"
                           data-title="{% trans "Disallow editing form in Form Builder" %}"
@@ -87,7 +91,7 @@
                                         use this option to disallow editing in the Form Builder.{% endblocktrans %}"
                     ></span>
                 </label>
-                <div class="controls" id="no-vellum">
+                <div class="col-sm-4" id="no-vellum">
                      <input type="checkbox" value="true"
                             data-bind="checked: no_vellum"/>
                      <input type="hidden" name="no_vellum" data-bind="value: no_vellum"/>
