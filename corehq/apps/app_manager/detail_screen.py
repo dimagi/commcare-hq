@@ -358,7 +358,7 @@ class EnumImage(Enum):
         parts = []
         for i, item in enumerate(self.column.enum):
 
-            xpath_fragment_template = u"if({key_as_condition}, {key_as_var_name}, ".format(
+            xpath_fragment_template = u"if({key_as_condition}, {key_as_var_name}".format(
                 key_as_condition=item.key_as_condition(self.xpath),
                 key_as_var_name=item.key_as_xpath_variable(i, type)
             )
@@ -366,7 +366,7 @@ class EnumImage(Enum):
             parts.append(xpath_fragment_template)
 
         parts.append(u"''")
-        parts.append(u")" * len(self.column.enum))
+        parts.append(u")" * (len(self.column.enum) - 1))
         return ''.join(parts)
 
 
