@@ -45,12 +45,18 @@ class FormAccessorCouch(AbstractFormAccessor):
         form.save()
 
     @staticmethod
-    def get_deleted_form_ids_for_user(user_id):
-        return get_deleted_form_ids_for_user(user_id)
+    def get_deleted_forms_for_user(user_id, ids_only=False):
+        doc_ids = get_deleted_form_ids_for_user(user_id)
+        if ids_only:
+            return doc_ids
+        return [XFormInstance.wrap(doc) for doc in iter_docs(XFormInstance.get_db(), doc_ids)]
 
     @staticmethod
-    def get_form_ids_for_user(domain, user_id):
-        return get_form_ids_for_user(domain, user_id)
+    def get_forms_for_user(domain, user_id, ids_only=False):
+        doc_ids = get_form_ids_for_user(domain, user_id)
+        if ids_only:
+            return doc_ids
+        return [XFormInstance.wrap(doc) for doc in iter_docs(XFormInstance.get_db(), doc_ids)]
 
 
 class CaseAccessorCouch(AbstractCaseAccessor):

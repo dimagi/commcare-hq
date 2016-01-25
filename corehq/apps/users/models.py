@@ -1571,16 +1571,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def get_forms(self, deleted=False, wrap=True):
         accessor = FormAccessors(self.domain)
         if deleted:
-            doc_ids = accessor.get_deleted_form_ids_for_user(self.user_id)
+            forms_or_form_ids = accessor.get_deleted_forms_for_user(self.user_id)
         else:
-            doc_ids = accessor.get_form_ids_for_user(self.domain, self.user_id)
+            forms_or_form_ids = accessor.get_forms_for_user(self.domain, self.user_id, ids_only=not wrap)
 
-        if wrap:
-            for doc in iter_docs(XFormInstance.get_db(), doc_ids):
-                yield XFormInstance.wrap(doc)
-        else:
-            for id in doc_ids:
-                yield id
+        for form_or_form_id in forms_or_form_ids:
+            yield form_or_form_id
 
     @property
     def form_count(self):

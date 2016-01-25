@@ -211,13 +211,15 @@ class FormAccessorSQL(AbstractFormAccessor):
             cursor.execute('SELECT delete_all_forms(%s, %s)', [domain, user_id])
 
     @staticmethod
-    def get_deleted_form_ids_for_user(user_id):
+    def get_deleted_forms_for_user(user_id):
         pass
 
     @staticmethod
-    def get_form_ids_for_user(domain, user_id):
-        with get_cursor(XFormInstanceSQL) as cursor:
-            return cursor.execute('SELECT form_id FROM get_forms_by_user_id(%s)', [user_id])
+    def get_forms_for_user(domain, user_id, ids_only=False):
+        forms = list(XFormInstanceSQL.objects.raw('SELECT * from get_forms_by_user_id(%s)', [user_id]))
+        if ids_only:
+            return [form.form_id for form in forms]
+        return forms
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
