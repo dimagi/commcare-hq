@@ -363,7 +363,6 @@ HQ_APPS = (
 
     'custom.dhis2',
     'custom.openclinica',
-    'custom.guinea_backup',
 
 )
 
