@@ -15,22 +15,6 @@ from dimagi.ext.couchdbkit import (
 )
 
 
-Question = namedtuple('Question', [
-    'type',
-    'label',
-    'value',
-    'repeat',
-    'group',
-    'relevant',
-    'required',
-    'tag',
-    'options',
-    'translations',
-    'calculate',
-])
-Question.__new__.__defaults__ = (None,) * len(Question._fields)  # Defaults all fields to None
-
-
 class ExportItem(DocumentSchema):
     """
     An item for export.
@@ -44,8 +28,8 @@ class ExportItem(DocumentSchema):
     @classmethod
     def create_from_question(cls, question, appVersion):
         return cls(
-            path=_string_path_to_list(question.value),
-            label=question.label,
+            path=_string_path_to_list(question['value']),
+            label=question['label'],
             last_occurrence=appVersion,
         )
 
@@ -165,7 +149,7 @@ class MultipleChoiceItem(ExportItem):
     def create_from_question(cls, question, appVersion):
         item = super(MultipleChoiceItem, cls).create_from_question(question, appVersion)
 
-        for option in question.options:
+        for option in question['options']:
             item.options.append(Option(
                 last_occurrence=appVersion,
                 value=option['value']
@@ -235,11 +219,9 @@ class ExportDataSchema(DocumentSchema):
                 last_occurrence=appVersion,
             )
             for question in group_questions:
-                wrapped_question = Question(**question)
-
                 # Create ExportItem based on the question type
-                item = ExportDataSchema.datatype_mapping[wrapped_question.type].create_from_question(
-                    wrapped_question,
+                item = ExportDataSchema.datatype_mapping[question['type']].create_from_question(
+                    question,
                     appVersion,
                 )
                 group_schema.items.append(item)
