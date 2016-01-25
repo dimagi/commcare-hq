@@ -8,7 +8,6 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.tests.utils import generate_restore_payload
 from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.form_processor.interfaces.supply import SupplyInterface
 from dimagi.utils.couch.database import get_safe_write_kwargs
 
 from corehq.apps.domain.models import Domain
@@ -24,7 +23,6 @@ from corehq.util.decorators import require_debug_true
 from dimagi.utils.parsing import json_format_date
 
 from ..const import StockActions
-from ..helpers import make_supply_point
 from ..models import CommtrackConfig, ConsumptionConfig
 from ..sms import to_instance
 from ..util import (get_default_requisition_config,
@@ -82,9 +80,6 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
         last_name=last_name
     )
     if home_loc == setup.loc.site_code:
-        if not SupplyInterface(domain).get_by_location(setup.loc):
-            make_supply_point(domain, setup.loc)
-
         user.set_location(setup.loc)
 
     user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
@@ -129,8 +124,11 @@ def bootstrap_products(domain):
 
 
 def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, parent=None):
+    if not Domain.get_by_name(domain):
+        raise AssertionError("You can't make a location on a fake domain")
     name = name or code
-    LocationType.objects.get_or_create(domain=domain, name=type)
+    LocationType.objects.get_or_create(domain=domain, name=type,
+                                       defaults={'administrative': False})
     loc = Location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
     loc.save()
     return loc
@@ -170,8 +168,7 @@ class CommTrackTest(TestCase):
         self.domain = Domain.get(self.domain._id)
 
         self.loc = make_loc('loc1')
-        self.sp = make_supply_point(self.domain.name, self.loc)
-        self.loc.save()
+        self.sp = self.loc.linked_supply_point()
         self.users = [bootstrap_user(self, **user_def) for user_def in self.user_definitions]
 
         # everyone should be in a group.
