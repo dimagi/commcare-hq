@@ -6,6 +6,7 @@ from .new import (
     ExportInstance,
     ExportDataSchema,
     FormExportDataSchema,
+    CaseExportDataSchema,
     ExportGroupSchema,
     TableConfiguration,
     ScalarItem,
