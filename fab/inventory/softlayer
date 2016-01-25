@@ -14,9 +14,6 @@ localhost ansible_connection=local
 [db0]
 10.162.36.205
 
-[es1]
-10.162.36.253
-
 [es2]
 10.162.36.221 elasticsearch_node_name=es2
 
@@ -46,10 +43,10 @@ db0
 db0
 
 [zookeeper:children]
-es1
+es2
 
 [kafka:children]
-es1
+es2
 
 [celery:children]
 celery0
