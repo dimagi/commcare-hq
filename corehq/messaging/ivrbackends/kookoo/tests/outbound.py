@@ -23,7 +23,7 @@ def mock_kookoo_outbound_api(*args, **kwargs):
     return "<request><status>queued</status><message>%s</message></request>" % session_id
 
 
-@patch('corehq.messaging.ivrbackends.kookoo.models.KooKooBackend.invoke_kookoo_outbound_api',
+@patch('corehq.messaging.ivrbackends.kookoo.models.SQLKooKooBackend.invoke_kookoo_outbound_api',
     new=mock_kookoo_outbound_api)
 class KooKooTestCase(TouchformsTestCase):
     """
