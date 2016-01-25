@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import json
 import time
 
@@ -29,7 +30,7 @@ def send_to_kafka(producer, topic, change_meta):
         raise
     except Exception as e:
         _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']))
-        _assert(False, u'Problem sending change to kafka {}: {} ({})'.format(
+        _assert(False, 'Problem sending change to kafka {}: {} ({})'.format(
             change_meta.to_json(), e, type(e)
         ))
         raise
