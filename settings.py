@@ -337,7 +337,6 @@ HQ_APPS = (
     'mvp_docs',
     'mvp_indicators',
     'custom.opm',
-    'pathindia',
     'pact',
 
     'custom.apps.care_benin',
@@ -1162,7 +1161,6 @@ COUCHDB_APPS = [
     'hsph',
     'mvp',
     ('mvp_docs', MVP_INDICATOR_DB),
-    'pathindia',
     'pact',
     'accounting',
     'succeed',

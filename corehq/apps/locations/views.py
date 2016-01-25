@@ -8,7 +8,7 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 
 from couchdbkit import ResourceNotFound, MultipleResultsFound
 from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
@@ -359,6 +359,31 @@ def archive_location(request, domain, loc_id):
         )
     })
 
+
+@require_http_methods(['DELETE'])
+@can_edit_location
+def delete_location(request, domain, loc_id):
+    loc = Location.get(loc_id)
+    if loc.domain != domain:
+        raise Http404()
+    loc.full_delete()
+    return json_response({
+        'success': True,
+        'message': _("Location '{location_name}' has successfully been {action}.").format(
+            location_name=loc.name,
+            action=_("deleted"),
+        )
+    })
+
+
+def location_descendants_count(request, domain, loc_id):
+    location = SQLLocation.objects.get(location_id=loc_id)
+    if location.domain != domain:
+        raise Http404()
+    count = len(location.get_descendants(include_self=True))
+    return json_response({
+        'count': count
+    })
 
 @can_edit_location
 def unarchive_location(request, domain, loc_id):

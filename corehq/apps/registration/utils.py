@@ -187,7 +187,7 @@ def send_domain_registration_email(recipient, domain_name, guid, full_name):
     message_plaintext = render_to_string('registration/email/confirm_account.txt', params)
     message_html = render_to_string('registration/email/confirm_account.html', params)
 
-    subject = ugettext('Please Confirm your CommCare HQ Account')
+    subject = ugettext('Activate your CommCare project')
 
     try:
         send_html_email_async.delay(subject, recipient, message_html,

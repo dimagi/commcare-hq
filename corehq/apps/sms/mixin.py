@@ -91,11 +91,10 @@ class VerifiedNumber(Document):
         else:
             return None
 
-    def retire(self, deletion_id=None):
+    def retire(self, deletion_id=None, deletion_date=None):
         self.doc_type += DELETED_SUFFIX
-        if deletion_id:
-            self['-deletion_id'] = deletion_id
-
+        self['-deletion_id'] = deletion_id
+        self['-deletion_date'] = deletion_date
         self.save()
 
     @classmethod
