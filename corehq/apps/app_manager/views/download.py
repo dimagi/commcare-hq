@@ -3,7 +3,6 @@ import logging
 import os
 from StringIO import StringIO
 
-from couchdbkit import ResourceConflict, ResourceNotFound
 from django.contrib import messages
 from django.core.urlresolvers import RegexURLResolver, Resolver404
 from django.http import HttpResponse, Http404, JsonResponse
@@ -13,19 +12,22 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
 
+from couchdbkit import ResourceConflict, ResourceNotFound
+from dimagi.utils.django.cached_object import CachedObject
+from dimagi.utils.web import json_response
+
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import safe_download
-from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
-    AppManagerException, FormNotFoundException
+from corehq.apps.app_manager.exceptions import (
+    AppManagerException,
+    FormNotFoundException,
+    ModuleNotFoundException,
+)
 from corehq.apps.app_manager.util import add_odk_profile_after_build
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
-from corehq.util.global_request import get_request
 from corehq.util.view_utils import set_file_download
-from dimagi.utils.django.cached_object import CachedObject
-from dimagi.utils.web import json_response
-
 
 BAD_BUILD_MESSAGE = _("Sorry: this build is invalid. Try deleting it and rebuilding. "
                     "If error persists, please contact us at commcarehq-support@dimagi.com")
