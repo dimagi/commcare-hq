@@ -225,16 +225,16 @@ class ExportDataSchema(DocumentSchema):
             group_schema.items = items
             return group_schema
 
-        previous_schema = schemas[0]
+        previous_group_schemas = schemas[0].group_schemas
         for current_schema in schemas[1:]:
             group_schemas = _merge_lists(
-                previous_schema.group_schemas,
+                previous_group_schemas,
                 current_schema.group_schemas,
                 keyfn=lambda group_schema: _list_path_to_string(group_schema.path),
                 resolvefn=resolvefn,
                 copyfn=lambda group_schema: ExportGroupSchema(group_schema.to_json())
             )
-            previous_schema = current_schema
+            previous_group_schemas = group_schemas
 
         schema.group_schemas = group_schemas
 

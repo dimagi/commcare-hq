@@ -71,21 +71,9 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
 
 class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
 
-    def _build_case_type_metadata(self, *case_properties):
-        case_type_metadata = CaseTypeMeta(
-            name='candy',
-            properties=[]
-        )
-        for case_prop in case_properties:
-            case_type_metadata.properties.append(CaseProperty(
-                name=case_prop
-            ))
-
-        return case_type_metadata
-
     def test_case_type_metadata_parsing(self):
 
-        case_type_metadata = self._build_case_type_metadata('my_case_property', 'my_second_case_property')
+        case_type_metadata = _build_case_type_metadata('my_case_property', 'my_second_case_property')
         schema = CaseExportDataSchema._generate_schema_from_case_meta(
             case_type_metadata,
             1,
@@ -203,6 +191,43 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(group_schema2.items), 1)
 
 
+class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
+
+    def test_basic_case_prop_merge(self):
+        case_type_metadata = _build_case_type_metadata(
+            'my_case_property',
+            'my_second_case_property'
+        )
+        schema1 = CaseExportDataSchema._generate_schema_from_case_meta(
+            case_type_metadata,
+            1,
+        )
+        case_type_metadata = _build_case_type_metadata(
+            'my_case_property',
+            'my_third_case_property'
+        )
+        schema2 = CaseExportDataSchema._generate_schema_from_case_meta(
+            case_type_metadata,
+            2,
+        )
+        schema3 = CaseExportDataSchema._generate_schema_for_case_history(2)
+
+        merged = CaseExportDataSchema._merge_schemas(schema1, schema2, schema3)
+
+        self.assertEqual(len(merged.group_schemas), 2)
+        group_schema1 = merged.group_schemas[0]
+        group_schema2 = merged.group_schemas[1]
+
+        self.assertEqual(group_schema1.last_occurrence, 2)
+        self.assertEqual(len(group_schema1.items), 3)
+
+        items = filter(lambda i: i.last_occurrence == 1, group_schema1.items)
+        self.assertEqual(len(items), 1)
+
+        self.assertEqual(group_schema2.last_occurrence, 2)
+        self.assertEqual(len(group_schema2.items), len(CASE_HISTORY_PROPERTIES))
+
+
 class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)
@@ -260,3 +285,15 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         ]
         for app in cls.apps:
             app.save()
+
+def _build_case_type_metadata(*case_properties):
+    case_type_metadata = CaseTypeMeta(
+        name='candy',
+        properties=[]
+    )
+    for case_prop in case_properties:
+        case_type_metadata.properties.append(CaseProperty(
+            name=case_prop
+        ))
+
+    return case_type_metadata
