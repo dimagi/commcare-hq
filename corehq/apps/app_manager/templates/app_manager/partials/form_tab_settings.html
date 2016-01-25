@@ -52,12 +52,16 @@
                 {% if allow_form_filtering %}
                     {% include "app_manager/partials/form_filter.html" %}
                 {% else  %}
-                    <div class="col-sm-6 label label-default">{% trans 'Form filtering is disabled for this form' %}</div>
+                    <div class="container-fluid">
+                        <div class="alert alert-info">{% trans 'Form filtering is disabled for this form' %}</div>
+                    </div>
                 {% endif %}
                 {% if allow_form_workflow %}
                     {% include "app_manager/partials/form_workflow.html" %}
                 {% else %}
-                    <div class="col-sm-6 label label-default">{% trans 'Form workflows are disabled for this form' %}</div>
+                    <div class="container-fluid">
+                        <div class="alert alert-info">{% trans 'Form workflows are disabled for this form' %}</div>
+                    </div>
                 {% endif %}
 
             </div>
