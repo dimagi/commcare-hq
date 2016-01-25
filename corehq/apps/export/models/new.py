@@ -200,7 +200,7 @@ class ExportDataSchema(DocumentSchema):
     })
 
     @staticmethod
-    def _merge_schema(*schemas):
+    def _merge_schemas(*schemas):
         """Merges two ExportDataSchemas together
 
         :param schema1: The first ExportDataSchema
@@ -252,7 +252,7 @@ class FormExportDataSchema(ExportDataSchema):
             app = Application.wrap(app_doc)
             xform = app.get_form(unique_form_id).wrapped_xform()
             xform_conf = FormExportDataSchema._generate_schema_from_xform(xform, app.langs, app.version)
-            all_xform_conf = FormExportDataSchema._merge_schema(all_xform_conf, xform_conf)
+            all_xform_conf = FormExportDataSchema._merge_schemas(all_xform_conf, xform_conf)
 
         return all_xform_conf
 
@@ -302,7 +302,7 @@ class CaseExportDataSchema(ExportDataSchema):
                 app.version,
             )
 
-            all_case_schema = CaseExportDataSchema._merge_schema(
+            all_case_schema = CaseExportDataSchema._merge_schemas(
                 all_case_schema,
                 case_schema,
                 case_history_schema
