@@ -511,6 +511,13 @@
         "name": "SMSPillow",
         "unique_id": "708c77f8e5fe00286fa5791e9fa7d45f"
     },
+    "SqlXFormToElasticsearchPillow": {
+        "advertised_name": "SqlXFormToElasticsearchPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "sql-xforms-to-elasticsearch",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "SqlXFormToElasticsearchPillow"
+    },
     "StaticDataSourcePillow": {
         "advertised_name": "corehq.apps.userreports.pillow.StaticDataSourcePillow.testhq",
         "change_feed_type": "CouchChangeFeed",
