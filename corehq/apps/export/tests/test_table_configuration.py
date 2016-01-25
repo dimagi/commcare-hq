@@ -97,7 +97,6 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
             [['foo'], ['bar'], ['beep'], ['boop']]
         )
 
-
     def test_split_columns(self):
         # TODO: It probably makes more sense to test columns independently...
         # I'm assuming they will have some sort of get_value(document) property
