@@ -199,43 +199,6 @@ class ExportDataSchema(DocumentSchema):
     })
 
     @staticmethod
-    def generate_schema_from_builds(domain, app_id, unique_form_id):
-        app_build_ids = get_built_app_ids_for_app_id(domain, app_id)
-        all_xform_conf = ExportDataSchema()
-
-        for app_doc in iter_docs(Application.get_db(), app_build_ids):
-            app = Application.wrap(app_doc)
-            xform = app.get_form(unique_form_id).wrapped_xform()
-            xform_conf = ExportDataSchema._generate_schema_from_xform(xform, app.langs, app.version)
-            all_xform_conf = ExportDataSchema._merge_schema(all_xform_conf, xform_conf)
-
-        return all_xform_conf
-
-    @staticmethod
-    def _generate_schema_from_xform(xform, langs, appVersion):
-        questions = xform.get_questions(langs)
-        schema = ExportDataSchema()
-
-        for group_path, group_questions in groupby(questions, lambda q: q['repeat']):
-            # If group_path is None, that means the questions are part of the form and not a repeat group
-            # inside of the form
-            group_schema = ExportGroupSchema(
-                path=_string_path_to_list(group_path),
-                last_occurrence=appVersion,
-            )
-            for question in group_questions:
-                # Create ExportItem based on the question type
-                item = ExportDataSchema.datatype_mapping[question['type']].create_from_question(
-                    question,
-                    appVersion,
-                )
-                group_schema.items.append(item)
-
-            schema.group_schemas.append(group_schema)
-
-        return schema
-
-    @staticmethod
     def _merge_schema(schema1, schema2):
         """Merges two ExportDataSchemas together
 
@@ -270,6 +233,46 @@ class ExportDataSchema(DocumentSchema):
         )
 
         schema.group_schemas = group_schemas
+
+        return schema
+
+
+class FormExportDataSchema(ExportDataSchema):
+
+    @staticmethod
+    def generate_schema_from_builds(domain, app_id, unique_form_id):
+        app_build_ids = get_built_app_ids_for_app_id(domain, app_id)
+        all_xform_conf = ExportDataSchema()
+
+        for app_doc in iter_docs(Application.get_db(), app_build_ids):
+            app = Application.wrap(app_doc)
+            xform = app.get_form(unique_form_id).wrapped_xform()
+            xform_conf = ExportDataSchema._generate_schema_from_xform(xform, app.langs, app.version)
+            all_xform_conf = ExportDataSchema._merge_schema(all_xform_conf, xform_conf)
+
+        return all_xform_conf
+
+    @staticmethod
+    def _generate_schema_from_xform(xform, langs, appVersion):
+        questions = xform.get_questions(langs)
+        schema = ExportDataSchema()
+
+        for group_path, group_questions in groupby(questions, lambda q: q['repeat']):
+            # If group_path is None, that means the questions are part of the form and not a repeat group
+            # inside of the form
+            group_schema = ExportGroupSchema(
+                path=_string_path_to_list(group_path),
+                last_occurrence=appVersion,
+            )
+            for question in group_questions:
+                # Create ExportItem based on the question type
+                item = ExportDataSchema.datatype_mapping[question['type']].create_from_question(
+                    question,
+                    appVersion,
+                )
+                group_schema.items.append(item)
+
+            schema.group_schemas.append(group_schema)
 
         return schema
 
