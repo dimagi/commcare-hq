@@ -187,13 +187,16 @@ var HQAsyncReport = function (o) {
         self.updateReport(true, window.location.search.substr(1));
     });
 
-    self.loadingIssueModal.on('hide', function () {
+    var hideLoadingIssueModal = function () {
         if (self.issueAttempts > 0) {
             self.hqLoading = $('.hq-loading');
             self.hqLoading.find('.js-loading-spinner').addClass('hide');
             self.hqLoading.find('h4').text('We were unsuccessful loading the report:').attr('style', 'margin-bottom: 10px;');
         }
-    });
+    };
+
+    self.loadingIssueModal.on('hide', hideLoadingIssueModal);  // B2 event
+    self.loadingIssueModal.on('hide.bs.modal', hideLoadingIssueModal);  // B2 event
 
 
 };

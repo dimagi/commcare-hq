@@ -197,7 +197,6 @@ var COMMCAREHQ = (function () {
             wrap = wrap === undefined ? true : wrap;
             var iconClass = "icon-question-sign";
             var containerStyle = '';
-
             if (opts.bootstrap3) {
                 iconClass = "fa fa-question-circle";
                 containerStyle = 'height: 0; width: auto;';
@@ -218,9 +217,11 @@ var COMMCAREHQ = (function () {
             return el;
         },
         transformHelpTemplate: function ($template, wrap) {
-            var $help = COMMCAREHQ.makeHqHelp($template.data(), wrap);
-            $help.insertAfter($template);
-            $template.remove();
+            if ($template.data()) {
+                var $help = COMMCAREHQ.makeHqHelp($template.data(), wrap);
+                $help.insertAfter($template);
+                $template.remove();
+            }
         },
         initBlock: function ($elem) {
             $('.submit_on_click', $elem).on("click", function (e) {

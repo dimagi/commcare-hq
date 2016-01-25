@@ -3,33 +3,6 @@
 {% load field_tags %}
 
 {% block title %}{% trans "Invitation to join the " %}{{ invite_to }} {{ invite_type }}{% endblock title %}
-
-{% block hubspot %}{{ block.super }}
-    <script type="text/javascript">
-        var _hsq = window._hsq = window._hsq || [];
-        {% if request.user.is_authenticated %}
-            _hsq.push(['trackClick', '#js-accept-invitation', 'user_accepted_domain_invitation']);
-        {% else %}
-            _hsq.push(['trackClick', '#js-create-account', 'new_user_accepted_invitation_created_account']);
-        {% endif %}
-        {% if request.couch_user %}
-            _hsq.push(['identify', {
-                email: '{{ request.couch_user.username }}',
-                firstname: '{{ request.couch_user.first_name }}',
-                lastname: '{{ request.couch_user.last_name }}',
-                invite_type: '{{ invite_type }}',
-                invite_to: '{{ invite_to }}'
-            }]);
-        {% else %}
-            _hsq.push(['identify', {
-                email: '{{ invited_user }}',
-                invite_type: '{{ invite_type }}',
-                invite_to: '{{ invite_to }}'
-            }]);
-        {% endif %}
-    </script>
-{% endblock %}
-
 {% block js-inline  %}{{ block.super }}
     {% url "eula_basic" as eula_url %}
     {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
@@ -58,7 +31,7 @@
                             to accept the invitation to join the CommCare HQ {{ invite_type }} <strong>{{ invite_to }}</strong> as <strong>{{ username }}</strong>?</p>
                             {% endblocktrans %}
                         </fieldset>
-                        <button type="submit" id="js-accept-invitation" class="btn btn-primary btn-large">Accept Invitation</button>
+                        <button type="submit" class="btn btn-primary btn-large">Accept Invitation</button>
                     </form>
                 {% else %}
                     <p><strong>{% trans 'Note' %}:</strong> {% trans "You are signed in as a mobile user, to accept this invitation, you must be a web user." %}</p>
@@ -68,7 +41,7 @@
             <div class="span4">
                 <aside class="well">
                     <h3>{% blocktrans with formatted_username|safe as username %}Not {{ username }}?{% endblocktrans %}</h3>
-                    <a href="?create=true" id="js-create-account" class="btn">{% trans "Create an Account" %}</a><br />
+                    <a href="?create=true" class="btn">{% trans "Create an Account" %}</a><br />
                     {% trans "or" %}<br />
                     <a href="?switch=true" class="btn">{% trans "Switch Accounts" %}</a>
                 </aside>

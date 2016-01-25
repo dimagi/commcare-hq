@@ -1,12 +1,17 @@
 {% load hq_shared_tags %}
-<label class="control-label">{{ control_name }}</label>
-<div class="controls">
-    <div data-bind="foreach: selected_path" style="display: inline-block;">
-        <select data-bind="options: children, optionsText: 'display_name', value: selected_child"></select>
+<div class="form-group">
+    <label class="{{ css_label_class }}">{{ control_name }}</label>
+    <div class="{{ css_field_class }}">
+        <div data-bind="foreach: selected_path">
+            <select class="form-control"
+                    data-bind="options: children,
+                               optionsText: 'display_name',
+                               value: selected_child"></select>
+        </div>
+        <i class="fa fa-spin fa-spinner hide" id="fdi_ajax"></i>
+        <input name="fixture_id" type="hidden" data-bind="value: selected_fixtid" />
     </div>
-    <img id="fdi_ajax" src="/static/formplayer/img/loading_small.gif" style="display: none;">
 </div>
-<input name="fixture_id" type="hidden" data-bind="value: selected_fixtid" />
 
 <script type="text/javascript">
 
@@ -18,9 +23,9 @@
         params["parent_ref_name"] = hierarchy[depth]["parent_ref"];
         params["child_type"] = hierarchy[depth]["id"];
         params["references"] = hierarchy[depth]["references"];
-        $('#fdi_ajax').show();
+        $('#fdi_ajax').removeClass('hide');
         $.getJSON(LOAD_FDIS_URL, params, function(allData) {
-            $('#fdi_ajax').hide();
+            $('#fdi_ajax').addClass('hide');
             callback(allData.objects);
         });
     };

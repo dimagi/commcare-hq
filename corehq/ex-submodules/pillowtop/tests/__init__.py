@@ -1,3 +1,4 @@
+from .test_bulk import *
 from .test_changes import *
 from .test_checkpoints import *
 from .test_config import *
