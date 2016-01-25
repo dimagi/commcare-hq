@@ -1,5 +1,4 @@
 from django.test import TestCase
-from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
 from corehq.apps.commtrack.helpers import make_supply_point
@@ -8,7 +7,6 @@ from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
 from corehq.toggles import MULTIPLE_LOCATIONS_PER_USER, NAMESPACE_DOMAIN
-from dimagi.utils.decorators.memoized import memoized
 from mock import patch
 
 
@@ -88,12 +86,11 @@ class UserLocMapTest(CommTrackTest):
 
 class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.domain_name = 'mydomain'
-        cls.domain = Domain(name=cls.domain_name)
-        cls.domain.save()
-        cls.user_specs = [{
+    def setUp(self):
+        self.domain_name = 'mydomain'
+        self.domain = Domain(name=self.domain_name)
+        self.domain.save()
+        self.user_specs = [{
             u'username': u'hello',
             u'user_id': u'should not update',
             u'name': u'Another One',
@@ -104,13 +101,10 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             u'email': None
         }]
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.teardown_subscription()
-        cls.domain.delete()
+    def tearDown(self):
+        self.domain.delete()
 
     @property
-    @memoized
     def user(self):
         return CommCareUser.get_by_username('{}@{}.commcarehq.org'.format(
             self.user_specs[0]['username'],
@@ -128,6 +122,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(self.user_specs[0]['phone-number'], self.user.phone_number)
         self.assertEqual(self.user_specs[0]['name'], self.user.name)
 
+    @patch('corehq.apps.users.bulkupload.domain_has_privilege', lambda x, y: True)
     def test_location_update(self):
         self.setup_location()
         from copy import deepcopy
@@ -144,6 +139,38 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(self.user.location_id, self.user.user_data.get('commcare_location_id'))
 
     def setup_location(self):
-        self.setup_subscription(self.domain_name, SoftwarePlanEdition.ADVANCED)
         self.state_code = 'my_state'
         self.location = make_loc(self.state_code, type='state', domain=self.domain_name)
+
+    def test_numeric_user_name(self):
+        """
+        Test that bulk upload doesn't choke if the user's name is a number
+        """
+        from copy import deepcopy
+        updated_user_spec = deepcopy(self.user_specs[0])
+        updated_user_spec["name"] = 1234
+
+        bulk_upload_async(
+            self.domain.name,
+            list([updated_user_spec]),
+            list([]),
+            list([])
+        )
+        self.assertEqual(self.user.full_name, "1234")
+
+    def test_empty_user_name(self):
+        """
+        This test confirms that a name of None doesn't set the users name to
+        "None" or anything like that.
+        """
+        from copy import deepcopy
+        updated_user_spec = deepcopy(self.user_specs[0])
+        updated_user_spec["name"] = None
+
+        bulk_upload_async(
+            self.domain.name,
+            list([updated_user_spec]),
+            list([]),
+            list([])
+        )
+        self.assertEqual(self.user.full_name, "")

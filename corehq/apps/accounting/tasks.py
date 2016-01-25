@@ -1,9 +1,7 @@
-from urllib import urlencode
-from StringIO import StringIO
-from celery.schedules import crontab
-from celery.task import periodic_task, task
 import datetime
-from couchdbkit import ResourceNotFound
+from StringIO import StringIO
+from urllib import urlencode
+
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
@@ -11,7 +9,14 @@ from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
 
-from corehq.apps.domain.models import Domain
+from celery.schedules import crontab
+from celery.task import periodic_task, task
+from couchdbkit import ResourceNotFound
+from couchexport.export import export_from_tables
+from couchexport.models import Format
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.django.email import send_HTML_email
+
 from corehq.apps.accounting import utils
 from corehq.apps.accounting.exceptions import (
     InvoiceError, CreditLineError,
@@ -19,13 +24,14 @@ from corehq.apps.accounting.exceptions import (
     InvoiceAlreadyCreatedError
 )
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
-
 from corehq.apps.accounting.models import (
     Subscription, Invoice,
     SubscriptionAdjustment, SubscriptionAdjustmentReason,
     SubscriptionAdjustmentMethod,
-    BillingAccount, WirePrepaymentInvoice, WirePrepaymentBillingRecord
+    BillingAccount, WirePrepaymentInvoice, WirePrepaymentBillingRecord,
+    StripePaymentMethod,
 )
+from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils import (
     has_subscription_already_ended, get_dimagi_from_email_by_product,
     fmt_dollar_amount,
@@ -33,14 +39,21 @@ from corehq.apps.accounting.utils import (
     log_accounting_error,
     log_accounting_info,
 )
-from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import FakeUser, WebUser
 from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
-from couchexport.export import export_from_tables
-from couchexport.models import Format
-from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.django.email import send_HTML_email
-import corehq.apps.accounting.filters as filters
+from corehq.util.view_utils import absolute_reverse
+
+
+@transaction.atomic()
+def _activate_subscription(subscription):
+    subscription.is_active = True
+    subscription.save()
+    upgraded_privs = get_change_status(None, subscription.plan_version).upgraded_privs
+    subscription.subscriber.activate_subscription(
+        upgraded_privileges=upgraded_privs,
+        subscription=subscription,
+    )
 
 
 def activate_subscriptions(based_on_date=None):
@@ -52,16 +65,37 @@ def activate_subscriptions(based_on_date=None):
         date_start=starting_date,
         is_active=False,
     )
+    starting_subscriptions = filter(
+        lambda subscription: not has_subscription_already_ended(subscription),
+        starting_subscriptions
+    )
     for subscription in starting_subscriptions:
-        if not has_subscription_already_ended(subscription):
-            with transaction.atomic():
-                subscription.is_active = True
-                subscription.save()
-                upgraded_privs = get_change_status(None, subscription.plan_version).upgraded_privs
-                subscription.subscriber.activate_subscription(
-                    upgraded_privileges=upgraded_privs,
-                    subscription=subscription,
-                )
+        _activate_subscription(subscription)
+
+
+@transaction.atomic()
+def _deactivate_subscription(subscription, ending_date):
+    subscription.is_active = False
+    subscription.save()
+    next_subscription = subscription.next_subscription
+    activate_next_subscription = next_subscription and next_subscription.date_start == ending_date
+    if activate_next_subscription:
+        new_plan_version = next_subscription.plan_version
+        next_subscription.is_active = True
+        next_subscription.save()
+    else:
+        new_plan_version = None
+    _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
+    if next_subscription and subscription.account == next_subscription.account:
+        subscription.transfer_credits(subscription=next_subscription)
+    else:
+        subscription.transfer_credits()
+    subscription.subscriber.deactivate_subscription(
+        downgraded_privileges=downgraded_privs,
+        upgraded_privileges=upgraded_privs,
+        old_subscription=subscription,
+        new_subscription=next_subscription if activate_next_subscription else None,
+    )
 
 
 def deactivate_subscriptions(based_on_date=None):
@@ -74,28 +108,7 @@ def deactivate_subscriptions(based_on_date=None):
         is_active=True,
     )
     for subscription in ending_subscriptions:
-        with transaction.atomic():
-            subscription.is_active = False
-            subscription.save()
-            next_subscription = subscription.next_subscription
-            activate_next_subscription = next_subscription and next_subscription.date_start == ending_date
-            if activate_next_subscription:
-                new_plan_version = next_subscription.plan_version
-                next_subscription.is_active = True
-                next_subscription.save()
-            else:
-                new_plan_version = None
-            _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
-            if next_subscription and subscription.account == next_subscription.account:
-                subscription.transfer_credits(subscription=next_subscription)
-            else:
-                subscription.transfer_credits()
-            subscription.subscriber.deactivate_subscription(
-                downgraded_privileges=downgraded_privs,
-                upgraded_privileges=upgraded_privs,
-                old_subscription=subscription,
-                new_subscription=next_subscription if activate_next_subscription else None,
-            )
+        _deactivate_subscription(subscription, ending_date)
 
 
 def warn_subscriptions_still_active(based_on_date=None):
@@ -319,17 +332,18 @@ def create_wire_credits_invoice(domain_name,
 def send_purchase_receipt(payment_record, core_product, domain,
                           template_html, template_plaintext,
                           additional_context):
-    email = payment_record.payment_method.web_user
+    username = payment_record.payment_method.web_user
 
     try:
-        web_user = WebUser.get_by_username(email)
+        web_user = WebUser.get_by_username(username)
+        email = web_user.get_email()
         name = web_user.first_name
     except ResourceNotFound:
         log_accounting_error(
             "Strange. A payment attempt was made by a user that "
-            "we can't seem to find! %s" % email
+            "we can't seem to find! %s" % username
         )
-        name = email
+        name = email = username
 
     context = {
         'name': name,
@@ -348,6 +362,41 @@ def send_purchase_receipt(payment_record, core_product, domain,
         ugettext("Payment Received - Thank You!"), email, email_html,
         text_content=email_plaintext,
         email_from=get_dimagi_from_email_by_product(core_product),
+    )
+
+
+@task(queue='background_queue', ignore_result=True)
+def send_autopay_failed(invoice, payment_method):
+    subscription = invoice.subscription
+    auto_payer = subscription.account.auto_pay_user
+    payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)
+    autopay_card = payment_method.get_autopay_card(subscription.account)
+    try:
+        recipient = WebUser.get_by_username(auto_payer).get_email()
+    except ResourceNotFound:
+        recipient = auto_payer
+    domain = invoice.get_domain()
+
+    context = {
+        'domain': domain,
+        'subscription_plan': subscription.plan_version.plan.name,
+        'billing_date': datetime.date.today(),
+        'invoice_number': invoice.invoice_number,
+        'autopay_card': autopay_card,
+        'domain_url': absolute_reverse('dashboard_default', args=[domain]),
+        'billing_info_url': absolute_reverse('domain_update_billing_info', args=[domain]),
+        'support_email': settings.INVOICING_CONTACT_EMAIL,
+    }
+
+    template_html = 'accounting/autopay_failed_email.html'
+    template_plaintext = 'accounting/autopay_failed_email.txt'
+
+    send_HTML_email(
+        subject="Subscription Payment for CommCare Invoice %s was declined" % invoice.invoice_number,
+        recipient=recipient,
+        html_content=render_to_string(template_html, context),
+        text_content=render_to_string(template_plaintext, context),
+        email_from=get_dimagi_from_email_by_product(subscription.plan_version.product_rate.product.product_type),
     )
 
 

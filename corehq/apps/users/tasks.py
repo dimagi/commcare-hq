@@ -43,12 +43,13 @@ def bulk_upload_async(domain, user_specs, group_specs, location_specs):
 
 
 @task(rate_limit=2, queue='background_queue', ignore_result=True)  # limit this to two bulk saves a second so cloudant has time to reindex
-def tag_cases_as_deleted_and_remove_indices(domain, docs, deletion_id):
+def tag_cases_as_deleted_and_remove_indices(domain, docs, deletion_id, deletion_date):
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.apps.reminders.tasks import delete_reminders_for_cases
     for doc in docs:
         doc['doc_type'] += DELETED_SUFFIX
         doc['-deletion_id'] = deletion_id
+        doc['-deletion_date'] = deletion_date
     CommCareCase.get_db().bulk_save(docs)
     case_ids = [doc['_id'] for doc in docs]
     _remove_indices_from_deleted_cases_task.delay(domain, case_ids)
@@ -58,7 +59,7 @@ def tag_cases_as_deleted_and_remove_indices(domain, docs, deletion_id):
 
 @task(rate_limit=2, queue='background_queue', ignore_result=True, acks_late=True)
 def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list, deletion_id,
-                                                  deleted_cases=None):
+                                                  deletion_date, deleted_cases=None):
     """
     Upon user deletion, mark associated forms as deleted and prep cases
     for a rebuild.
@@ -75,6 +76,7 @@ def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list,
         if not is_deleted(form):
             form['doc_type'] += DELETED_SUFFIX
             form['-deletion_id'] = deletion_id
+            form['-deletion_date'] = deletion_date
             forms_to_save.append(form)
 
         # rebuild all cases anyways since we don't know if this has run or not if the task was killed

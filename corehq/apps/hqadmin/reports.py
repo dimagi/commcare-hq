@@ -534,6 +534,8 @@ FACET_MAPPING = [
 
 class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
+    is_bootstrap3 = True
+
     base_template = "hqadmin/bootstrap3/faceted_report.html"
     report_template_path = "reports/async/bootstrap3/tabular.html"
 
@@ -541,7 +543,7 @@ class AdminReport(GenericTabularReport):
     @use_bootstrap3
     @use_datatables
     def set_bootstrap3_status(self, request, *args, **kwargs):
-        self.is_bootstrap3 = True
+        pass
 
 
 class AdminFacetedReport(AdminReport, ElasticTabularReport):
@@ -677,8 +679,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("Deployment Country"), prop_name="deployment.countries.exact"),
             DataTablesColumn(_("# Active Mobile Workers"), sort_type=DTSortType.NUMERIC,
                 prop_name="cp_n_active_cc_users",
-                help_text=_("the number of mobile workers who have submitted a form or sent or received an SMS "
-                            "in the last 30 days.  Includes deactivated workers.")),
+                help_text=_("the number of mobile workers who have submitted a form or an SMS in the last 30 days. "
+                            "Includes deactivated workers.")),
             DataTablesColumn(_("# Mobile Workers"), sort_type=DTSortType.NUMERIC,
                              prop_name="cp_n_cc_users",
                              help_text=_("Does not include deactivated users.")),

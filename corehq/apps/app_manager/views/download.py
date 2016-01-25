@@ -3,25 +3,31 @@ import logging
 import os
 from StringIO import StringIO
 
-from couchdbkit import ResourceConflict, ResourceNotFound
 from django.contrib import messages
 from django.core.urlresolvers import RegexURLResolver, Resolver404
 from django.http import HttpResponse, Http404, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
+from django.views.generic import View
 
-from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.decorators import safe_download
-from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
-    AppManagerException, FormNotFoundException
-from corehq.apps.app_manager.util import add_odk_profile_after_build
-from corehq.apps.app_manager.views.utils import back_to_main, get_langs
-from corehq.apps.hqmedia.views import DownloadMultimediaZip
-from corehq.util.view_utils import set_file_download
+from couchdbkit import ResourceConflict, ResourceNotFound
 from dimagi.utils.django.cached_object import CachedObject
 from dimagi.utils.web import json_response
 
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.decorators import safe_download
+from corehq.apps.app_manager.exceptions import (
+    AppManagerException,
+    FormNotFoundException,
+    ModuleNotFoundException,
+)
+from corehq.apps.app_manager.util import add_odk_profile_after_build
+from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
+from corehq.apps.app_manager.views.utils import back_to_main, get_langs
+from corehq.apps.hqmedia.views import DownloadMultimediaZip
+from corehq.util.view_utils import set_file_download
 
 BAD_BUILD_MESSAGE = _("Sorry: this build is invalid. Try deleting it and rebuilding. "
                     "If error persists, please contact us at commcarehq-support@dimagi.com")
@@ -198,46 +204,79 @@ class DownloadCCZ(DownloadMultimediaZip):
         super(DownloadCCZ, self).check_before_zipping()
 
 
-@safe_download
-def download_file(request, domain, app_id, path):
-    if path == "app.json":
-        return JsonResponse(request.app.to_json())
+class DownloadBuildAttachmentsView(View, ApplicationViewMixin):
+    name = 'app_download_file'
 
-    content_type_map = {
-        'ccpr': 'commcare/profile',
-        'jad': 'text/vnd.sun.j2me.app-descriptor',
-        'jar': 'application/java-archive',
-        'xml': 'application/xml',
-        'txt': 'text/plain',
-    }
-    try:
-        content_type = content_type_map[path.split('.')[-1]]
-    except KeyError:
-        content_type = None
-    response = HttpResponse(content_type=content_type)
+    @method_decorator(safe_download)
+    def get(self, request, **kwargs):
+        if self.path == "app.json":
+            return JsonResponse(self.app.to_json())
 
-    if path in ('CommCare.jad', 'CommCare.jar'):
-        set_file_download(response, path)
-        full_path = path
-    else:
-        full_path = 'files/%s' % path
+        response = HttpResponse(content_type=self.content_type)
+        if self.path in ('CommCare.jad', 'CommCare.jar'):
+            set_file_download(response, self.path)
+            full_path = self.path
+        else:
+            full_path = 'files/%s' % self.path
 
-    def resolve_path(path):
-        return RegexURLResolver(
-            r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
+        try:
+            return self.get_download(response, full_path)
+        except (ResourceNotFound, AssertionError):
+            if self.app.copy_of:
+                if request.META.get('HTTP_USER_AGENT') == 'bitlybot':
+                    raise Http404()
+                elif self.path == 'profile.ccpr':
+                    # legacy: should patch build to add odk profile
+                    # which wasn't made on build for a long time
+                    add_odk_profile_after_build(self.app)
+                    self.app.save()
+                    return self.get(request, **kwargs)
+                else:
+                    try:
+                        self.resolve_path(self.path)
+                    except Resolver404:
+                        # ok this was just a url that doesn't exist
+                        # todo: log since it likely exposes a mobile bug
+                        # logging was removed because such a mobile bug existed
+                        # and was spamming our emails
+                        pass
+                    else:
+                        # this resource should exist but doesn't
+                        logging.error(
+                            'Expected build resource %s not found' % self.path,
+                            extra={'request': request}
+                        )
+                        if not self.app.build_broken:
+                            self.app.build_broken = True
+                            self.app.build_broken_reason = 'incomplete-build'
+                            try:
+                                self.app.save()
+                            except ResourceConflict:
+                                # this really isn't a big deal:
+                                # It'll get updated next time a resource is request'd;
+                                # in fact the conflict is almost certainly from
+                                # another thread doing this exact update
+                                pass
+                    raise Http404()
+            try:
+                callback, callback_args, callback_kwargs = self.resolve_path(self.path)
+            except Resolver404:
+                raise Http404()
 
-    try:
-        assert request.app.copy_of
+            return callback(request, self.domain, self.app_id, *callback_args, **callback_kwargs)
+
+    def get_download(self, response, full_path):
+        assert self.app.copy_of
         obj = CachedObject('{id}::{path}'.format(
-            id=request.app._id,
+            id=self.app._id,
             path=full_path,
         ))
         if not obj.is_cached():
-            payload = request.app.fetch_attachment(full_path)
+            payload = self.app.fetch_attachment(full_path)
             if type(payload) is unicode:
                 payload = payload.encode('utf-8')
             buffer = StringIO(payload)
-            metadata = {'content_type': content_type}
+            metadata = {'content_type': self.content_type}
             obj.cache_put(buffer, metadata, timeout=None)
         else:
             _, buffer = obj.get()
@@ -245,53 +284,30 @@ def download_file(request, domain, app_id, path):
         response.write(payload)
         response['Content-Length'] = len(response.content)
         return response
-    except (ResourceNotFound, AssertionError):
-        if request.app.copy_of:
-            if request.META.get('HTTP_USER_AGENT') == 'bitlybot':
-                raise Http404()
-            elif path in ('CommCare.jad', 'CommCare.jar'):
-                request.app.create_jadjar(save=True)
-                request.app.save(increment_version=False)
-                return download_file(request, domain, app_id, path)
-            elif path == 'profile.ccpr':
-                # legacy: should patch build to add odk profile
-                # which wasn't made on build for a long time
-                add_odk_profile_after_build(request.app)
-                request.app.save()
-                return download_file(request, domain, app_id, path)
-            else:
-                try:
-                    resolve_path(path)
-                except Resolver404:
-                    # ok this was just a url that doesn't exist
-                    # todo: log since it likely exposes a mobile bug
-                    # logging was removed because such a mobile bug existed
-                    # and was spamming our emails
-                    pass
-                else:
-                    # this resource should exist but doesn't
-                    logging.error(
-                        'Expected build resource %s not found' % path,
-                        extra={'request': request}
-                    )
-                    if not request.app.build_broken:
-                        request.app.build_broken = True
-                        request.app.build_broken_reason = 'incomplete-build'
-                        try:
-                            request.app.save()
-                        except ResourceConflict:
-                            # this really isn't a big deal:
-                            # It'll get updated next time a resource is request'd;
-                            # in fact the conflict is almost certainly from
-                            # another thread doing this exact update
-                            pass
-                raise Http404()
-        try:
-            callback, callback_args, callback_kwargs = resolve_path(path)
-        except Resolver404:
-            raise Http404()
 
-        return callback(request, domain, app_id, *callback_args, **callback_kwargs)
+    @staticmethod
+    def resolve_path(path):
+        return RegexURLResolver(
+            r'^', 'corehq.apps.app_manager.download_urls'
+        ).resolve(path)
+
+    @property
+    def path(self):
+        return self.kwargs['path']
+
+    @property
+    def content_type(self):
+        content_type_map = {
+            'ccpr': 'commcare/profile',
+            'jad': 'text/vnd.sun.j2me.app-descriptor',
+            'jar': 'application/java-archive',
+            'xml': 'application/xml',
+            'txt': 'text/plain',
+        }
+        try:
+            return content_type_map[self.path.split('.')[-1]]
+        except KeyError:
+            return None
 
 
 @safe_download

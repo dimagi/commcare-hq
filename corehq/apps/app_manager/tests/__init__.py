@@ -7,10 +7,12 @@ try:
     from .test_repeater import *
     from .test_translations import *
     from corehq.apps.app_manager.tests.test_advanced_suite import *
+    from corehq.apps.app_manager.tests.test_analytics import *
     from corehq.apps.app_manager.tests.test_app_manager import *
     from corehq.apps.app_manager.tests.test_build_errors import *
     from corehq.apps.app_manager.tests.test_bulk_app_translation import *
     from corehq.apps.app_manager.tests.test_bulk_ui_translation import *
+    from corehq.apps.app_manager.tests.test_case_detail_distance import *
     from corehq.apps.app_manager.tests.test_case_list_form import *
     from corehq.apps.app_manager.tests.test_case_list_lookup import *
     from corehq.apps.app_manager.tests.test_case_meta import *

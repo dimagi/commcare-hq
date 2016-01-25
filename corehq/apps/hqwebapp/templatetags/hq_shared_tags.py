@@ -10,6 +10,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.http import QueryDict
 from corehq.apps.domain.models import Domain
+from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.web import json_handler
 
@@ -128,6 +129,15 @@ def new_static(url, **kwargs):
     return url
 
 
+@quickcache(['couch_user.username'])
+def _get_domain_list(couch_user):
+    domains = Domain.active_for_user(couch_user)
+    return [{
+        'url': reverse('domain_homepage', args=[domain.name]),
+        'name': domain.long_display_name(),
+    } for domain in domains]
+
+
 @register.simple_tag(takes_context=True)
 def domains_for_user(context, request, selected_domain=None):
     """
@@ -135,15 +145,9 @@ def domains_for_user(context, request, selected_domain=None):
     Cache the entire string alongside the couch_user's doc_id that can get invalidated when
     the user doc updates via save.
     """
-    domain_list = []
-    if selected_domain != 'public':
-        domain_list = Domain.active_for_user(request.couch_user)
-    domain_list = [dict(
-        url=reverse('domain_homepage', args=[d.name]),
-        name=d.long_display_name()
-    ) for d in domain_list]
+
+    domain_list = _get_domain_list(request.couch_user)
     ctxt = {
-        'is_public': selected_domain == 'public',
         'domain_list': domain_list,
         'current_domain': selected_domain,
         'DOMAIN_TYPE': context['DOMAIN_TYPE']

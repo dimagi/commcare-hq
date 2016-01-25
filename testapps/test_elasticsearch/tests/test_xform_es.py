@@ -8,7 +8,6 @@ from corehq.apps.es import FormES
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.xform import XFormPillow
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
-from pillowtop.tests import require_explicit_elasticsearch_testing
 
 
 WrappedJsonFormPair = namedtuple('WrappedJsonFormPair', ['wrapped_form', 'json_form'])
@@ -17,7 +16,6 @@ WrappedJsonFormPair = namedtuple('WrappedJsonFormPair', ['wrapped_form', 'json_f
 class XFormESTestCase(SimpleTestCase):
 
     @classmethod
-    @require_explicit_elasticsearch_testing
     def setUpClass(cls):
         cls.now = datetime.datetime.utcnow()
         cls.forms = []

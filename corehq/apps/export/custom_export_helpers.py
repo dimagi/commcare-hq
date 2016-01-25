@@ -409,7 +409,7 @@ class CaseCustomExportHelper(CustomExportHelper):
     meta_properties = ["_id", "closed", "closed_by", "closed_on", "domain", "computed_modified_on_",
                        "server_modified_on", "modified_on", "opened_by", "opened_on", "owner_id",
                        "user_id", "type", "version", "external_id"]
-    server_properties = ["_rev", "doc_type", "-deletion_id", "initial_processing_complete"]
+    server_properties = ["_rev", "doc_type", "-deletion_id", "-deletion_date" "initial_processing_complete"]
     row_properties = ["id"]
 
     @property

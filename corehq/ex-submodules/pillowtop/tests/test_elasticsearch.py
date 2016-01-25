@@ -1,4 +1,3 @@
-import copy
 import uuid
 from django.test import SimpleTestCase
 
@@ -10,7 +9,7 @@ from pillowtop.feed.interface import Change
 from pillowtop.listener import AliasedElasticPillow, send_to_elasticsearch, PillowtopIndexingError
 from pillowtop.pillow.interface import PillowRuntimeContext
 from django.conf import settings
-from .utils import require_explicit_elasticsearch_testing, get_doc_count, get_index_mapping
+from .utils import get_doc_count, get_index_mapping
 
 
 class TestElasticPillow(AliasedElasticPillow):
@@ -54,7 +53,6 @@ class TestElasticPillow(AliasedElasticPillow):
 
 class ElasticPillowTest(SimpleTestCase):
 
-    @require_explicit_elasticsearch_testing
     def setUp(self):
         pillow = TestElasticPillow(online=False)
         self.index = pillow.es_index

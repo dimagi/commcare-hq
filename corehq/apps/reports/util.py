@@ -29,6 +29,12 @@ from corehq.util.timezones.utils import get_timezone_for_user
 
 from .models import HQUserType, TempCommCareUser
 
+DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER = 'col-xs-4 col-md-3 col-lg-2 control-label'
+DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER = 'col-xs-8 col-md-8 col-lg-9'
+DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER = (
+    'col-xs-8 col-md-8 col-lg-9 col-xs-offset-4 col-md-offset-3 col-lg-offset-2'
+)
+
 
 def make_form_couch_key(domain, by_submission_time=True,
                    xmlns=None, user_id=Ellipsis, app_id=None):

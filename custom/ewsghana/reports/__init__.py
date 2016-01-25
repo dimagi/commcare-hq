@@ -17,7 +17,8 @@ from custom.ewsghana.models import EWSExtension
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation, LocationType
 from custom.ewsghana.utils import get_descendants, filter_slugs_by_role, ews_date_format, get_products_for_locations, \
-    get_products_for_locations_by_program, get_products_for_locations_by_products, calculate_last_period
+    get_products_for_locations_by_program, get_products_for_locations_by_products, calculate_last_period, \
+    get_user_location_id
 from casexml.apps.stock.models import StockTransaction
 
 
@@ -223,7 +224,7 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
             Date range: {3} - {4}
             """.format(
                 self.location.name,
-                Program.get(program).name if program != ALL_OPTION else ALL_OPTION.title(),
+                Program.get(program).name if program and program != ALL_OPTION else ALL_OPTION.title(),
                 ", ".join(
                     [p.name for p in SQLProduct.objects.filter(product_id__in=products)]
                 ) if products != ALL_OPTION and products else ALL_OPTION.title(),
@@ -260,17 +261,21 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
             else:
                 program_id = 'all'
 
-            loc_id = ''
-            if dm.location_id:
-                location = SQLLocation.objects.get(location_id=dm.location_id)
-                if cls.__name__ == "DashboardReport" and not location.location_type.administrative:
-                    location = location.parent
-                loc_id = location.location_id
+            location_id = get_user_location_id(user, domain)
+            if location_id:
+                try:
+                    location = SQLLocation.active_objects.get(location_id=location_id)
+                    if cls.__name__ == "DashboardReport":
+                        if not location.location_type.administrative:
+                            location = location.parent
+                            location_id = location.location_id
+                except SQLLocation.DoesNotExist:
+                    location_id = None
 
             start_date, end_date = calculate_last_period()
             url = '%s?location_id=%s&filter_by_program=%s&startdate=%s&enddate=%s&datespan_first=%s' % (
                 url,
-                loc_id,
+                location_id or '',
                 program_id if program_id else '',
                 start_date.strftime('%Y-%m-%d'),
                 end_date.strftime('%Y-%m-%d'),

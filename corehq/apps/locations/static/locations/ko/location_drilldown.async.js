@@ -1,8 +1,8 @@
 function api_get_children(loc_uuid, callback) {
   var params = (loc_uuid ? {parent_id: loc_uuid} : {});
-  $('#loc_ajax').show();
+  $('#loc_ajax').show().removeClass('hide');
   $.getJSON(LOAD_LOCS_URL, params, function(allData) {
-      $('#loc_ajax').hide();
+      $('#loc_ajax').hide().addClass('hide');
       callback(allData.objects);
     });
 }
