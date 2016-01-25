@@ -3,17 +3,17 @@ import os
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import XForm, Application
-from corehq.apps.export.models import ExportDataSchema
+from corehq.apps.export.models import FormExportDataSchema
 
 
-class TestExportDataSchema(SimpleTestCase, TestXmlMixin):
+class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)
 
     def test_basic_xform_parsing(self):
         form_xml = self.get_xml('basic_form')
 
-        schema = ExportDataSchema._generate_schema_from_xform(
+        schema = FormExportDataSchema._generate_schema_from_xform(
             XForm(form_xml),
             ['en'],
             1
@@ -30,7 +30,7 @@ class TestExportDataSchema(SimpleTestCase, TestXmlMixin):
     def test_xform_parsing_with_repeat_group(self):
         form_xml = self.get_xml('repeat_group_form')
 
-        schema = ExportDataSchema._generate_schema_from_xform(
+        schema = FormExportDataSchema._generate_schema_from_xform(
             XForm(form_xml),
             ['en'],
             1
@@ -50,7 +50,7 @@ class TestExportDataSchema(SimpleTestCase, TestXmlMixin):
 
     def test_xform_parsing_with_multiple_choice(self):
         form_xml = self.get_xml('multiple_choice_form')
-        schema = ExportDataSchema._generate_schema_from_xform(
+        schema = FormExportDataSchema._generate_schema_from_xform(
             XForm(form_xml),
             ['en'],
             1
@@ -67,25 +67,25 @@ class TestExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(group_schema.items[1].options[1].value, 'choice2')
 
 
-class TestMergingExportDataSchema(SimpleTestCase, TestXmlMixin):
+class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)
 
     def _get_merged_schema(self, form_name1, form_name2):
         form_xml = self.get_xml(form_name1)
         form_xml2 = self.get_xml(form_name2)
-        schema = ExportDataSchema._generate_schema_from_xform(
+        schema = FormExportDataSchema._generate_schema_from_xform(
             XForm(form_xml),
             ['en'],
             1
         )
-        schema2 = ExportDataSchema._generate_schema_from_xform(
+        schema2 = FormExportDataSchema._generate_schema_from_xform(
             XForm(form_xml2),
             ['en'],
             2
         )
 
-        return ExportDataSchema._merge_schema(schema, schema2)
+        return FormExportDataSchema._merge_schema(schema, schema2)
 
     def test_simple_merge(self):
         """Tests merging of a form that adds a question to the form"""
@@ -191,7 +191,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
     def test_basic_application_schema(self):
         app = self.current_app
 
-        schema = ExportDataSchema.generate_schema_from_builds(
+        schema = FormExportDataSchema.generate_schema_from_builds(
             app.domain,
             app._id,
             'b68a311749a6f45bdfda015b895d607012c91613'
