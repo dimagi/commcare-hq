@@ -32,16 +32,22 @@
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.customProperty">
-    <input placeholder="Key" type="text" data-bind="value: key" class="form-control"/>
-    &nbsp;
-    <i class="fa fa-arrow-right"></i>
-    &nbsp;
-    <input placeholder="Value" type="text" data-bind="value: value" class="form-control" />
-    <a class="btn btn-danger" data-bind="
-        click: $parent.onDestroyCustomProperty
-        ">
-        <i class="fa fa-trash"></i>
-    </a>
+    <div class="row">
+            <div class="col-sm-5">
+                <input placeholder="Key" type="text" data-bind="value: key" class="form-control"/>
+            </div>
+            <div class="col-sm-1 text-center">
+                <i class="fa fa-arrow-right"></i>
+            </div>
+            <div class="col-sm-5">
+                <input placeholder="Value" type="text" data-bind="value: value" class="form-control" />
+            </div>
+            <div class="col-sm-1">
+                <button class="btn btn-danger" data-bind="click: $parent.onDestroyCustomProperty">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </div>
+    </div>
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.image_uploader">
@@ -231,17 +237,12 @@ todo fix
                     <span>{% trans "Custom Properties" %}</span>
                 </a>
             </legend>
-            <div
-                class="collapse"
-                data-bind="
-                    attr: { id: customPropertyType }
-                ">
-
+            <div class="collapse col-sm-6" data-bind="attr: { id: customPropertyType }">
                 <div class="custom-property-list" data-bind="
                     foreach: customProperties,
                     as: 'customProperty'
                     ">
-                    <div class="form-group" data-bind="
+                    <div class="form-group container-fluid" data-bind="
                         template: {
                             name: 'CommcareSettings.widgets.customProperty'
                         }
@@ -249,13 +250,10 @@ todo fix
                     </div>
 
                 </div>
-                <div class="form-group">
-                    <button class="btn btn-primary" data-bind="
-                        click: onAddCustomProperty
-                        ">
-                        {% trans "Add Custom Property" %}
-                    </button>
-                </div>
+                <button class="btn btn-default" data-bind="click: onAddCustomProperty">
+                    <i class="fa fa-plus"></i>
+                    {% trans "Add Custom Property" %}
+                </button>
             </div>
         </fieldset>
         {% endif %}
