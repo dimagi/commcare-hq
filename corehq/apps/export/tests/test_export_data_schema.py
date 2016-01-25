@@ -10,9 +10,6 @@ class TestExportDataSchema(SimpleTestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)
 
-    def setUp(self):
-        pass
-
     def test_basic_xform_parsing(self):
         form_xml = self.get_xml('basic_form')
 
@@ -68,3 +65,98 @@ class TestExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(group_schema.items[1].path, ['data', 'question2'])
         self.assertEqual(group_schema.items[1].options[0].value, 'choice1')
         self.assertEqual(group_schema.items[1].options[1].value, 'choice2')
+
+
+class TestMergingExportDataSchema(SimpleTestCase, TestXmlMixin):
+    file_path = ['data']
+    root = os.path.dirname(__file__)
+
+    def _get_merged_schema(self, form_name1, form_name2):
+        form_xml = self.get_xml(form_name1)
+        form_xml2 = self.get_xml(form_name2)
+        schema = ExportDataSchema._generate_schema_from_xform(
+            XForm(form_xml),
+            ['en'],
+            1
+        )
+        schema2 = ExportDataSchema._generate_schema_from_xform(
+            XForm(form_xml2),
+            ['en'],
+            2
+        )
+
+        return ExportDataSchema._merge_schema(schema, schema2)
+
+    def test_simple_merge(self):
+        """Tests merging of a form that adds a question to the form"""
+        merged = self._get_merged_schema('basic_form', 'basic_form_version2')
+
+        self.assertEqual(len(merged.group_schemas), 1)
+
+        group_schema = merged.group_schemas[0]
+        self.assertEqual(len(group_schema.items), 3)
+        self.assertTrue(all(map(lambda item: item.last_occurrence == 2, group_schema.items)))
+
+    def test_merge_deleted(self):
+        """Tests merging of a form that deletes a question from its form"""
+        merged = self._get_merged_schema('basic_form', 'basic_form_version2_delete')
+
+        self.assertEqual(len(merged.group_schemas), 1)
+
+        group_schema = merged.group_schemas[0]
+        self.assertEqual(len(group_schema.items), 2)
+
+        v1items = filter(lambda item: item.last_occurrence == 1, group_schema.items)
+        v2items = filter(lambda item: item.last_occurrence == 2, group_schema.items)
+
+        self.assertEqual(
+            len(v2items),
+            1,
+            'There should be 1 item that was found in the second version. There was {}'.format(len(v2items))
+        )
+        self.assertEqual(
+            len(v1items),
+            1,
+            'There should be 1 item that was found in the first version. There was {}'.format(len(v1items))
+        )
+
+    def test_multiple_choice_merge(self):
+        """Tests merging of a form that changes the options to a multiple choice question"""
+        merged = self._get_merged_schema('multiple_choice_form', 'multiple_choice_form_version2')
+
+        self.assertEqual(len(merged.group_schemas), 1)
+
+        group_schema = merged.group_schemas[0]
+        self.assertEqual(len(group_schema.items), 2)
+
+        v2items = filter(lambda item: item.last_occurrence == 2, group_schema.items)
+        self.assertEqual(
+            len(v2items),
+            2,
+        )
+
+        multichoice = filter(lambda item: item.path == ['data', 'question2'], group_schema.items)[0]
+        self.assertEqual(len(multichoice.options), 3)
+        self.assertEqual(
+            len(filter(lambda o: o.last_occurrence == 2, multichoice.options)),
+            2,
+        )
+
+        self.assertEqual(
+            len(filter(lambda o: o.last_occurrence == 1, multichoice.options)),
+            1,
+        )
+
+    def test_merge_repeat_group_changed_id(self):
+        """This tests merging forms that change a question to a repeat group"""
+        merged = self._get_merged_schema('repeat_group_form', 'repeat_group_form_version2')
+
+        self.assertEqual(len(merged.group_schemas), 2)
+        group_schema1 = merged.group_schemas[0]
+        group_schema2 = merged.group_schemas[1]
+
+        self.assertEqual(group_schema1.last_occurrence, 2)
+        self.assertEqual(len(group_schema1.items), 2)
+
+        self.assertEqual(group_schema2.last_occurrence, 1)
+        self.assertEqual(len(group_schema2.items), 1)

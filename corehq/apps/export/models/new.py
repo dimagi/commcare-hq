@@ -42,12 +42,18 @@ class ExportItem(DocumentSchema):
     last_occurrence = IntegerProperty()
 
     @classmethod
-    def create(cls, question, appVersion):
+    def create_from_question(cls, question, appVersion):
         return cls(
             path=_string_path_to_list(question.value),
             label=question.label,
             last_occurrence=appVersion,
         )
+
+    @classmethod
+    def merge(cls, one, two):
+        item = cls(one.to_json())
+        item.last_occurrence = max(one.last_occurrence, two.last_occurrence)
+        return item
 
 
 class ExportColumn(DocumentSchema):
@@ -159,14 +165,30 @@ class MultipleChoiceItem(ExportItem):
     options = SchemaListProperty(Option)
 
     @classmethod
-    def create(cls, question, appVersion):
-        item = super(MultipleChoiceItem, cls).create(question, appVersion)
+    def create_from_question(cls, question, appVersion):
+        item = super(MultipleChoiceItem, cls).create_from_question(question, appVersion)
 
         for option in question.options:
             item.options.append(Option(
                 last_occurrence=appVersion,
                 value=option['value']
             ))
+        return item
+
+    @classmethod
+    def merge(cls, one, two):
+        item = super(MultipleChoiceItem, cls).merge(one, two)
+        options = _merge_lists(one.options, two.options,
+            keyfn=lambda i: i.value,
+            resolvefn=lambda option1, option2:
+                Option(
+                    value=option1.value,
+                    last_occurrence=max(option1.last_occurrence, option2.last_occurrence)
+                ),
+            copyfn=lambda option: Option(option.to_json())
+        )
+
+        item.options = options
         return item
 
 
@@ -176,6 +198,7 @@ class ExportGroupSchema(DocumentSchema):
     """
     path = ListProperty()
     items = SchemaListProperty(ExportItem)
+    last_occurrence = IntegerProperty()
 
 
 class ExportDataSchema(DocumentSchema):
@@ -198,9 +221,9 @@ class ExportDataSchema(DocumentSchema):
         for app in iter_docs(Application.get_db(), app_build_ids):
             xform = app.get_form(unique_form_id).wrapped_xform()
             xform_conf = ExportDataSchema._generate_schema_from_xform(xform, app.langs, app.version)
-            # all_xform_conf = ExportDataSchema._merge_schema(all_xform_conf, xform_conf)
+            all_xform_conf = ExportDataSchema._merge_schema(all_xform_conf, xform_conf)
 
-        return xform_conf
+        return all_xform_conf
 
     @staticmethod
     def _generate_schema_from_xform(xform, langs, appVersion):
@@ -212,10 +235,13 @@ class ExportDataSchema(DocumentSchema):
             # inside of the form
             group_schema = ExportGroupSchema(
                 path=_string_path_to_list(group_path),
+                last_occurrence=appVersion,
             )
             for question in group_questions:
                 wrapped_question = Question(**question)
-                item = ExportDataSchema.datatype_mapping[wrapped_question.type].create(
+
+                # Create ExportItem based on the question type
+                item = ExportDataSchema.datatype_mapping[wrapped_question.type].create_from_question(
                     wrapped_question,
                     appVersion,
                 )
@@ -225,6 +251,92 @@ class ExportDataSchema(DocumentSchema):
 
         return schema
 
+    @staticmethod
+    def _merge_schema(schema1, schema2):
+        """Merges two ExportDataSchemas together
+
+        :param schema1: The first ExportDataSchema
+        :param schema2: The second ExportDataSchema
+        :returns: The merged ExportDataSchema
+        """
+
+        schema = ExportDataSchema()
+
+        def resolvefn(group_schema1, group_schema2):
+            group_schema = ExportGroupSchema(
+                path=group_schema1.path,
+                last_occurrence=max(group_schema1.last_occurrence, group_schema2.last_occurrence),
+            )
+            items = _merge_lists(
+                group_schema1.items,
+                group_schema2.items,
+                keyfn=lambda item: '{}:{}'.format(_list_path_to_string(item.path), item.doc_type),
+                resolvefn=lambda item1, item2: item1.__class__.merge(item1, item2),
+                copyfn=lambda item: item.__class__(item.to_json()),
+            )
+            group_schema.items = items
+            return group_schema
+
+        group_schemas = _merge_lists(
+            schema1.group_schemas,
+            schema2.group_schemas,
+            keyfn=lambda group_schema: _list_path_to_string(group_schema.path),
+            resolvefn=resolvefn,
+            copyfn=lambda group_schema: ExportGroupSchema(group_schema.to_json())
+        )
+
+        schema.group_schemas = group_schemas
+
+        return schema
+
 
 def _string_path_to_list(path):
     return path if path is None else path[1:].split('/')
+
+
+def _list_path_to_string(path, separator='.'):
+    if not path or (len(path) == 1 and path[0] is None):
+        return ''
+    return separator.join(path)
+
+
+def _merge_lists(one, two, keyfn, resolvefn, copyfn):
+    """Merges two lists. The alogorithm is to first iterate over the first list. If the item in the first list
+    does not exist in the second list, add that item to the merged list. If the item does exist in the second
+    list, resolve the conflict using the resolvefn. After the first list has been iterated over, simply append
+    any items in the second list that have not already been added.
+
+    :param one: The first list to be merged.
+    :param two: The second list to be merged.
+    :param keyfn: A function that takes an element from the list as an argument and returns a unique
+        identifier for that item.
+    :param resolvefn: A function that takes two elements that resolve to the same key and returns a single
+        element that has resolved the conflict between the two elements.
+    :param copyfn: A function that takes an element as its argument and returns a copy of it.
+    :returns: A list of the merged elements
+    """
+
+    merged = []
+    two_keys = set(map(lambda obj: keyfn(obj), two))
+
+    for obj in one:
+
+        if keyfn(obj) in two_keys:
+            # If obj exists in both list, must merge
+            two_keys.remove(keyfn(obj))
+            new_obj = resolvefn(
+                obj,
+                filter(lambda other: keyfn(other) == keyfn(obj), two)[0],
+            )
+        else:
+            new_obj = copyfn(obj)
+
+        merged.append(new_obj)
+
+    # Filter any objects we've already added by merging
+    filtered = filter(lambda obj: keyfn(obj) in two_keys, two)
+    merged.extend(
+        # Map objects to new object
+        map(lambda obj: copyfn(obj), filtered)
+    )
+    return merged
