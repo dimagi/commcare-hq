@@ -364,7 +364,7 @@
                   "default": 0,
                   "cases": {
                     "Kirehe": 82946,
-                    "Nyagatare": 61471,
+                    "Nyagatare": 61471
                   },
                   "type": "switch",
                   "switch_on": {
