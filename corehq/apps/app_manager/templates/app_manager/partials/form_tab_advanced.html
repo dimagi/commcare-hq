@@ -2,104 +2,118 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 <div class="tab-pane" id="advanced">
-    <h4>{% trans "XForm" %}</h4>
-    <ul class="nav nav-pills nav-stacked">
-        <li>
-            <a href="#upload-xform" data-toggle="modal">
-                <i class="icon-arrow-up"></i>
-                {% trans "Upload" %}
-            </a>
-            <div class="modal hide fade" id="upload-xform">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h3>{% trans "Upload XForm" %}</h3>
-                </div>
-                <div class="modal-body">
-                    <form method="POST"
-                          enctype="multipart/form-data"
-                          action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'xform' %}">
-                        {% csrf_token %}
-                        <input type="file" id="xform_file_input" name="xform" />
-                        <input type="hidden" name="ajax" value="false" />
-                        <input type="submit" id="xform_file_submit" value="{% trans "Upload" %}" class="btn btn-primary" />
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal" aria-hidden="true">
-                        {% trans "Close" %}
-                    </button>
-                </div>
-            </div>
-        </li>
-        <li>
-            <a {% if not form.source %}class="disabled"{% endif %}{% if is_user_registration %}
-               href="{% url "get_user_registration_source" domain app.id %}?download=true"
-            {% else %}
-               href="{% url "get_xform_source" domain app.id module.id form.id %}?download=true"
-            {% endif %}
-                    >
-                <i class="icon-arrow-down"></i>
-                {% trans "Download" %}
-            </a>
-        </li>
-        <li>
-            <a id="xform-source-opener" class="{% if not form.source %}disabled{% endif %}"
-                    {% if is_user_registration %}
-               data-href="{% url "get_user_registration_source" domain app.id %}"
-                    {% else %}
-               data-href="{% url "get_xform_source" domain app.id module.id form.id %}"
-                    {% endif %}
-                    >
-                <i class="icon-search"></i>
-                {% trans "View" %}
-            </a>
-            <div class="xml-source modal hide fade">
-                <form action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'xform' %}" method="POST">
-                {% csrf_token %}
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h3 class="source-readonly">{% trans "XML Source" %}</h3>
-                    <h3 class="source-edit">{% trans "Edit XML Source" %}</h3>
-                </div>
-                <div class="modal-body">
-                    <div class="source-readonly">
-                        {% trans "Double-click to select all." %}
-                        <pre id="xform-source" class="brush: xml;"></pre>
-                    </div>
-                    <div class="source-edit">
-                        <textarea name="xform" id="xform-source-edit">
-                            {% trans "Loading..." %}
-                        </textarea><br />
+    <fieldset>
+        <legend>{% trans "XForm" %}</legend>
+        <ul class="nav nav-pills nav-stacked">
+            <li>
+                <a href="#upload-xform" data-toggle="modal">
+                    <i class="fa fa-arrow-up"></i>
+                    {% trans "Upload" %}
+                </a>
+                <div class="modal fade" id="upload-xform">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                <h3 class="modal-title">{% trans "Upload XForm" %}</h3>
+                            </div>
+                            <div class="modal-body">
+                                <form method="POST"
+                                      enctype="multipart/form-data"
+                                      action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'xform' %}">
+                                    {% csrf_token %}
+                                    <input type="file" id="xform_file_input" name="xform" />
+                                    <input type="hidden" name="ajax" value="false" />
+                                    <button type="submit" id="xform_file_submit" class="btn btn-primary">
+                                        {% trans "Upload" %}
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal" aria-hidden="true">
+                                    {% trans "Close" %}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <input type="hidden" name="ajax" value="false" class="source-edit" />
-                    <input type="submit" value="{% trans "Save" %}" class="btn btn-primary source-edit" />
-                    <button type="button" class="btn btn-default" data-dismiss="modal" aria-hidden="true">
-                        {% trans "Close" %}
-                    </button>
-                    <label for="cleanup" class="checkbox source-edit pull-left">
-                        <input type="checkbox" id="cleanup" name="cleanup" />
-                        {% trans "Clean up markup after saving (add newlines, reformat indentation, etc.) " %}
-                    </label>
+            </li>
+            <li>
+                <a {% if not form.source %}class="disabled"{% endif %}{% if is_user_registration %}
+                   href="{% url "get_user_registration_source" domain app.id %}?download=true"
+                {% else %}
+                   href="{% url "get_xform_source" domain app.id module.id form.id %}?download=true"
+                {% endif %}
+                        >
+                    <i class="fa fa-arrow-down"></i>
+                    {% trans "Download" %}
+                </a>
+            </li>
+            <li>
+                <a id="xform-source-opener" class="{% if not form.source %}disabled{% endif %}"
+                        {% if is_user_registration %}
+                   data-href="{% url "get_user_registration_source" domain app.id %}"
+                        {% else %}
+                   data-href="{% url "get_xform_source" domain app.id module.id form.id %}"
+                        {% endif %}
+                        >
+                    <i class="fa fa-search"></i>
+                    {% trans "View" %}
+                </a>
+                <div class="xml-source modal fade">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'xform' %}" method="POST">
+                            {% csrf_token %}
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                <h3 class="modal-title source-readonly">{% trans "XML Source" %}</h3>
+                                <h3 class="modal-title source-edit">{% trans "Edit XML Source" %}</h3>
+                            </div>
+                            <div class="modal-body">
+                                <div class="source-readonly">
+                                    {% trans "Double-click to select all." %}
+                                    <pre id="xform-source" class="brush: xml;"></pre>
+                                </div>
+                                <div class="source-edit">
+                                    <textarea name="xform" id="xform-source-edit" class="form-control">
+                                        {% trans "Loading..." %}
+                                    </textarea><br />
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <input type="hidden" name="ajax" value="false" class="source-edit" />
+                                <button type="submit" class="btn btn-primary source-edit" />{% trans "Save" %}</button>
+                                <button type="button" class="btn btn-default" data-dismiss="modal" aria-hidden="true">
+                                    {% trans "Close" %}
+                                </button>
+                                <div class="checkbox source-edit pull-left">
+                                    <label for="cleanup">
+                                        <input type="checkbox" id="cleanup" name="cleanup" />
+                                        {% trans "Clean up markup after saving (add newlines, reformat indentation, etc.) " %}
+                                    </label>
+                                </div>
+                            </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-                </form>
-            </div>
-        </li>
-    </ul>
+            </li>
+        </ul>
+    </fieldset>
     {% if allow_form_copy%}
     <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
         {% csrf_token %}
-        <p>
-        {% trans "Copy form to " %}
-        <select name='to_module_id'>{% for mod in app.get_modules %}
-            <option value={{ mod.id }}>{{ mod.name|html_trans:langs }}</option>
-            {% endfor %}</select>
-        <button class='btn btn-primary' type="submit">
-            <i class="icon-copy"></i>
-            {% trans "Copy" %}
-        </button>
-        </p>
+        <fieldset>
+            <legend>{% trans "Copy Form to a Different Module" %}</legend>
+            <select name='to_module_id' class='form-control'>{% for mod in app.get_modules %}
+                <option value={{ mod.id }}>{{ mod.name|html_trans:langs }}</option>
+                {% endfor %}</select>
+            <button class='btn btn-default' type="submit">
+                <i class="fa fa-copy"></i>
+                {% trans "Copy" %}
+            </button>
+        </fieldset>
     </form>
     {% endif %}
 </div>

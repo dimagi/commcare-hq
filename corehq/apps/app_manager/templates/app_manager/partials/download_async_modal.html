@@ -20,12 +20,14 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <a class="close" data-dismiss="modal">&times;</a>
-                <h3>{% trans "Downloading Your File" %}</h3>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h3 class="modal-title">{% trans "Downloading Your File" %}</h3>
             </div>
             <div class="modal-body">
                 <div id="{{element_id}}-downloading">
-                  <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                  <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
                   {% trans 'Processing data. Please wait...' %}
                 </div>
                 <div class="hide" id="{{element_id}}-download-progress"></div>
