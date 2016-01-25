@@ -18,7 +18,6 @@ from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
-from django.contrib.auth.views import login as django_login
 from django.contrib.auth.views import logout as django_logout
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest,\
@@ -31,7 +30,15 @@ from django.core.urlresolvers import reverse
 from django.core.mail.message import EmailMessage
 from django.template import loader
 from django.template.context import RequestContext
+from django.template.response import TemplateResponse
 from restkit import Resource
+from two_factor.views import LoginView, SetupView
+from two_factor.forms import (
+    AuthenticationTokenForm, BackupTokenForm, MethodForm,
+    TOTPDeviceForm, PhoneNumberForm, PhoneNumberForm,
+    DeviceValidationForm
+)
+
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.app_manager.models import Application
@@ -202,6 +209,12 @@ def redirect_to_default(req, domain=None):
                     url = reverse('landing_page')
             else:
                 url = reverse('landing_page')
+    elif domain and Domain.get_by_name(domain).two_factor_auth and not req.user.is_verified():
+        return TemplateResponse(
+            request=req,
+            template='two_factor/core/otp_required.html',
+            status=403,
+        )
     else:
         if domain:
             domain = normalize_domain_name(domain)
@@ -236,7 +249,7 @@ def landing_page(req, template_name="home.html"):
     if req.user.is_authenticated():
         return HttpResponseRedirect(reverse('homepage'))
     req.base_template = settings.BASE_TEMPLATE
-    return django_login(req, template_name=template_name, authentication_form=EmailAuthenticationForm)
+    return HQLoginView.as_view()(req)
 
 
 def yui_crossdomain(req):
@@ -352,9 +365,9 @@ def _login(req, domain_name, template_name):
         else:
             return HttpResponseRedirect(reverse('domain_homepage', args=[domain_name]))
 
-    if req.method == 'POST' and domain_name and '@' not in req.POST.get('username', '@'):
+    if req.method == 'POST' and domain_name and '@' not in req.POST.get('auth-username', '@'):
         req.POST._mutable = True
-        req.POST['username'] = format_username(req.POST['username'], domain_name)
+        req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
         req.POST._mutable = False
 
     req.base_template = settings.BASE_TEMPLATE
@@ -369,10 +382,8 @@ def _login(req, domain_name, template_name):
             'allow_domain_requests': domain.allow_domain_requests,
         })
 
-    authentication_form = EmailAuthenticationForm if not domain_name else CloudCareAuthenticationForm
-    return django_login(req, template_name=template_name,
-                        authentication_form=authentication_form,
-                        extra_context=context)
+    auth_view = HQLoginView if not domain_name else CloudCareLoginView
+    return auth_view.as_view(extra_context=context)(req)
 
 
 def login(req, domain_type='commcare'):
@@ -399,6 +410,28 @@ def domain_login(req, domain, template_name="login_and_password/login.html"):
     req.project = project
 
     return _login(req, domain, template_name)
+
+
+class HQLoginView(LoginView):
+    form_list = [
+        ('auth', EmailAuthenticationForm),
+        ('token', AuthenticationTokenForm),
+        ('backup', BackupTokenForm),
+    ]
+    extra_context = {}
+
+    def get_context_data(self, **kwargs):
+        context = super(HQLoginView, self).get_context_data(**kwargs)
+        context.update(self.extra_context)
+        return context
+
+
+class CloudCareLoginView(HQLoginView):
+    form_list = [
+        ('auth', CloudCareAuthenticationForm),
+        ('token', AuthenticationTokenForm),
+        ('backup', BackupTokenForm),
+    ]
 
 
 def is_mobile_url(url):
