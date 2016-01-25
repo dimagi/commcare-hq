@@ -212,7 +212,7 @@ class ExportDataSchema(DocumentSchema):
     @staticmethod
     def generate_schema_from_builds(domain, app_id, unique_form_id):
         app_build_ids = get_built_app_ids_for_app_id(domain, app_id)
-        all_xform_conf = TableConfiguration()
+        all_xform_conf = ExportDataSchema()
 
         for app in iter_docs(Application.get_db(), app_build_ids):
             xform = app.get_form(unique_form_id).wrapped_xform()
