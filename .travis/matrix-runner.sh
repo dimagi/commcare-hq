@@ -16,7 +16,7 @@ server_started() {
 }
 
 if [ "${MATRIX_TYPE}" = "python" ]; then
-    coverage run manage.py test --noinput --failfast --traceback --verbosity=2 --testrunner=$TESTRUNNER
+    coverage run manage.py test test_pillowtop --noinput --failfast --traceback --verbosity=2 --testrunner=$TESTRUNNER
 elif [ "${MATRIX_TYPE}" = "javascript" ]; then
     psql -c 'create database commcarehq' -U postgres
     python manage.py sync_couch_views
