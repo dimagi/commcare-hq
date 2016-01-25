@@ -2,7 +2,6 @@ import logging
 from django.utils.translation import ugettext
 import uuid
 from datetime import datetime, date, timedelta
-from django.contrib.auth.models import User
 from django.template.loader import render_to_string
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount,
@@ -11,7 +10,6 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.registration.models import RegistrationRequest
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.name_to_url import name_to_url
 from dimagi.utils.web import get_ip, get_url_base, get_site_domain
 from django.conf import settings
@@ -40,9 +38,10 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     new_user.eula.signed = True
     new_user.eula.date = now
     new_user.eula.type = 'End User License Agreement'
-    if ip: new_user.eula.user_ip = ip
+    if ip:
+        new_user.eula.user_ip = ip
 
-    new_user.is_staff = False # Can't log in to admin site
+    new_user.is_staff = False  # Can't log in to admin site
     new_user.is_active = True
     new_user.is_superuser = False
     new_user.last_login = now
@@ -53,7 +52,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     return new_user
 
 
-def request_new_domain(request, form, domain_type=None, is_new_user=True):
+def request_new_domain(request, form, is_new_user=True):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user)
 
@@ -83,9 +82,6 @@ def request_new_domain(request, form, domain_type=None, is_new_user=True):
 
         # ensure no duplicate domain documents get created on cloudant
         new_domain.save(**get_safe_write_kwargs())
-
-    if domain_type == 'commtrack':
-        new_domain.convert_to_commtrack()
 
     if not new_domain.name:
         new_domain.name = new_domain._id
