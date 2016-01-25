@@ -14,8 +14,8 @@ localhost ansible_connection=local
 [db0]
 10.162.36.205
 
-[es1]
-10.162.36.253
+[es2]
+10.162.36.221 elasticsearch_node_name=es2
 
 [pillow0]
 10.162.36.248
@@ -61,7 +61,7 @@ touch0
 db0
 
 [elasticsearch:children]
-es1
+es2
 
 [shared_dir_host:children]
 db0
