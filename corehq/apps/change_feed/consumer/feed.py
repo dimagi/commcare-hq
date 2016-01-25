@@ -72,7 +72,11 @@ class KafkaChangeFeed(ChangeFeed):
 def change_from_kafka_message(message):
     change_meta = change_meta_from_kafka_message(message.value)
     try:
-        document_store = get_document_store(change_meta.data_source_type, change_meta.data_source_name)
+        document_store = get_document_store(
+            data_source_type=change_meta.data_source_type,
+            data_source_name=change_meta.data_source_name,
+            domain=change_meta.domain
+        )
     except UnknownDocumentStore:
         document_store = None
     return Change(
