@@ -53,12 +53,12 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     return new_user
 
 
-def request_new_domain(request, form, domain_type=None, new_user=True):
+def request_new_domain(request, form, domain_type=None, is_new_user=True):
     now = datetime.utcnow()
     current_user = CouchUser.from_django_user(request.user)
 
     dom_req = RegistrationRequest()
-    if new_user:
+    if is_new_user:
         dom_req.request_time = now
         dom_req.request_ip = get_ip(request)
         dom_req.activation_guid = uuid.uuid1().hex
@@ -78,7 +78,7 @@ def request_new_domain(request, form, domain_type=None, new_user=True):
         if form.cleaned_data.get('domain_timezone'):
             new_domain.default_timezone = form.cleaned_data['domain_timezone']
 
-        if not new_user:
+        if not is_new_user:
             new_domain.is_active = True
 
         # ensure no duplicate domain documents get created on cloudant
@@ -91,7 +91,7 @@ def request_new_domain(request, form, domain_type=None, new_user=True):
         new_domain.name = new_domain._id
         new_domain.save()  # we need to get the name from the _id
 
-    if new_user:
+    if is_new_user:
         # Only new-user domains are eligible for Advanced trial
         # domains with no subscription are equivalent to be on free Community plan
         create_30_day_advanced_trial(new_domain)
@@ -110,7 +110,7 @@ def request_new_domain(request, form, domain_type=None, new_user=True):
         dom_req.requesting_user_username = request.user.username
         dom_req.new_user_username = request.user.username
 
-    if new_user:
+    if is_new_user:
         dom_req.save()
         send_domain_registration_email(request.user.email,
                                        dom_req.domain,
@@ -118,7 +118,7 @@ def request_new_domain(request, form, domain_type=None, new_user=True):
                                        request.user.get_full_name())
     else:
         send_global_domain_registration_email(request.user, new_domain.name)
-    send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=new_user)
+    send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=is_new_user)
 
     meta = get_meta(request)
     track_created_new_project_space_on_hubspot.delay(current_user, request.COOKIES, meta)

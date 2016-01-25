@@ -26,6 +26,7 @@ from corehq.apps.registration.utils import activate_new_user, send_new_request_u
 from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.couch.resource_conflict import retry_resource
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip
 from corehq.util.context_processors import get_per_domain_context
 
@@ -80,7 +81,7 @@ def register_user(request, domain_type=None):
                 if form.cleaned_data['create_domain']:
                     try:
                         requested_domain = request_new_domain(
-                            request, form, new_user=True, domain_type=domain_type)
+                            request, form, is_new_user=True, domain_type=domain_type)
                     except NameUnavailableException:
                         context.update({
                             'error_msg': _('Project name already taken - please try another'),
@@ -117,19 +118,23 @@ class RegisterDomainView(TemplateView):
         return super(RegisterDomainView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        active_domains_for_user = Domain.active_for_user(request.user)
-        if len(active_domains_for_user) <= 0 and not request.user.is_superuser:
-            domains_for_user = Domain.active_for_user(request.user, is_active=False)
-            if len(domains_for_user) > 0:
+        if self.is_new_user:
+            pending_domains = Domain.active_for_user(request.user, is_active=False)
+            if len(pending_domains) > 0:
                 context = get_domain_context(kwargs.get('domain_type') or 'commcare')
                 context['requested_domain'] = domains_for_user[0]
                 return render(request, 'registration/confirmation_waiting.html', context)
         return super(RegisterDomainView, self).get(request, *args, **kwargs)
 
+    @property
+    @memoized
+    def is_new_user(self):
+        user = self.request.user
+        return not (Domain.active_for_user(user) or user.is_superuser)
+
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         domain_type = kwargs.get('domain_type') or 'commcare'
-        is_new = False
         referer_url = request.GET.get('referer', '')
         nextpage = request.POST.get('next')
         form = DomainRegistrationForm(request.POST)
@@ -148,7 +153,7 @@ class RegisterDomainView(TemplateView):
 
             try:
                 domain_name = request_new_domain(
-                    request, form, new_user=is_new, domain_type=domain_type)
+                    request, form, is_new_user=self.is_new_user, domain_type=domain_type)
             except NameUnavailableException:
                 context.update({
                     'error_msg': _('Project name already taken - please try another'),
@@ -156,7 +161,7 @@ class RegisterDomainView(TemplateView):
                 })
                 return render(request, 'error.html', context)
 
-            if is_new:
+            if self.is_new_user:
                 context.update({
                     'alert_message': _("An email has been sent to %s.") % request.user.username,
                     'requested_domain': domain_name,
@@ -179,16 +184,11 @@ class RegisterDomainView(TemplateView):
             raise Http404()
 
         context = super(RegisterDomainView, self).get_context_data(**kwargs)
-        context .update(get_domain_context(domain_type))
-        is_new = False
-
-        active_domains_for_user = Domain.active_for_user(request.user)
-        if len(active_domains_for_user) <= 0 and not request.user.is_superuser:
-            is_new = True
+        context.update(get_domain_context(domain_type))
 
         context.update({
             'form': kwargs.get('form') or DomainRegistrationForm(initial={'domain_type': domain_type}),
-            'is_new': is_new,
+            'is_new_user': self.is_new_user,
         })
         return context
 
