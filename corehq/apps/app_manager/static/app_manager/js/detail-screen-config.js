@@ -330,10 +330,9 @@ var caseListLookupViewModel = function($el, state, saveButton){
             _validate_responses(errors);
         }
 
-        if (errors.length){
+        if (errors.length) {
             _.each(errors, function(error){
-                // TODO: this no longer exists (defined in B2 base template)
-                alert_user(error, "error");
+                alert_user(error, "danger");
             });
             return false;
         }
