@@ -243,6 +243,17 @@ class ExportDataSchema(DocumentSchema):
 
         return schema
 
+    @staticmethod
+    def generate_schema_from_builds(domain, app_id, identifier):
+        """Builds a schema from Application builds for a given identifier (either form_id or case type)
+
+        :param domain: The domain that the export belongs to
+        :param app_id: The app_id that the export belongs to
+        :param identifier: The unique identifier of the item being exported
+        :returns: Returns a ExportDataSchema instance
+        """
+        raise NotImplementedError()
+
 
 class FormExportDataSchema(ExportDataSchema):
 
