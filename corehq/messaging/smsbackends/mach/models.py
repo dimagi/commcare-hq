@@ -117,8 +117,8 @@ class SQLMachBackend(SQLSMSBackend):
             return
 
         raise SyniverseException(
-            "Error %s sending SMS from Syniverse backend %s, see documentation"
-            "for details." % (error_code, self.pk)
+            "Received error code %s while sending SMS from Syniverse backend "
+            "%s, see documentation for details." % (error_code, self.pk)
         )
 
     def handle_response(self, msg, response):
