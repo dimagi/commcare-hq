@@ -1,4 +1,3 @@
-global.SchemeNumber = require('js-xpath/lib/schemeNumber').SchemeNumber;
 var xpath = require('js-xpath/xpath');
 var fs = require('fs');
 var data = fs.readFileSync('/dev/stdin').toString();
