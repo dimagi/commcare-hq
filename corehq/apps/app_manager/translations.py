@@ -21,6 +21,26 @@ from django.contrib import messages
 from django.utils.translation import ugettext as _
 
 
+def get_unicode_dicts(iterable):
+    """
+    Iterates iterable and returns a list of dictionaries with keys and values converted to Unicode
+
+    >>> gen = ({'0': None, 2: 'two', u'3': 0xc0ffee} for i in range(3))
+    >>> get_unicode_dicts(gen)
+    [{u'2': u'two', u'0': None, u'3': u'12648430'},
+     {u'2': u'two', u'0': None, u'3': u'12648430'},
+     {u'2': u'two', u'0': None, u'3': u'12648430'}]
+
+    """
+    def none_or_unicode(val):
+        return unicode(val) if val is not None else val
+
+    rows = []
+    for row in iterable:
+        rows.append({unicode(k): none_or_unicode(v) for k, v in row.iteritems()})
+    return rows
+
+
 def process_bulk_app_translation_upload(app, f):
     """
     Process the bulk upload file for the given app.
@@ -32,10 +52,6 @@ def process_bulk_app_translation_upload(app, f):
     :return: Returns a list of message tuples. The first item in each tuple is
     a function like django.contrib.messages.error, and the second is a string.
     """
-
-    def none_or_unicode(val):
-        return unicode(val) if val is not None else val
-
     msgs = []
 
     headers = expected_bulk_app_sheet_headers(app)
@@ -56,10 +72,7 @@ def process_bulk_app_translation_upload(app, f):
 
     for sheet in workbook.worksheets:
         # sheet.__iter__ can only be called once, so cache the result
-        rows = [row for row in sheet]
-        # Convert every key and value to a string
-        for i in xrange(len(rows)):
-            rows[i] = {unicode(k): none_or_unicode(v) for k, v in rows[i].iteritems()}
+        rows = get_unicode_dicts(sheet)
 
         # CHECK FOR REPEAT SHEET
         if sheet.worksheet.title in processed_sheets:
