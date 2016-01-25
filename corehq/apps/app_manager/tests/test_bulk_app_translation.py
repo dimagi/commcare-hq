@@ -4,6 +4,9 @@ import tempfile
 
 from django.test import SimpleTestCase
 from StringIO import StringIO
+
+from mock import patch
+
 from corehq.util.spreadsheets.excel import WorkbookJSONReader
 
 from couchexport.export import export_raw
@@ -11,9 +14,12 @@ from couchexport.models import Format
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.translations import \
-    process_bulk_app_translation_upload, expected_bulk_app_sheet_rows, \
-    expected_bulk_app_sheet_headers
+from corehq.apps.app_manager.translations import (
+    process_bulk_app_translation_upload,
+    expected_bulk_app_sheet_rows,
+    expected_bulk_app_sheet_headers,
+    update_form_translations,
+    get_unicode_dicts)
 
 
 class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
@@ -369,3 +375,86 @@ class RenameLangTest(SimpleTestCase):
 
         self.assertNotIn('en', form2.name)
         self.assertIn('fra', form2.name)
+
+
+class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
+
+    file_path = ('data', 'bulk_app_translation', 'aggregate')
+
+    headers = (
+        ('Modules_and_forms', (
+            'Type', 'sheet_name',
+            'default_en', 'default_afr', 'default_fra',
+            'label_for_cases_en', 'label_for_cases_afr', 'label_for_cases_fra',
+            'icon_filepath_en', 'icon_filepath_afr', 'icon_filepath_fra',
+            'audio_filepath_en', 'audio_filepath_afr', 'audio_filepath_fra',
+            'unique_id'
+        )),
+        ('module1', (
+            'case_property', 'list_or_detail', 'default_en', 'default_fra', 'default_fra'
+        )),
+        ('module1_form1', (
+            'label',
+            'default_en', 'default_afr', 'default_fra',
+            'audio_en', 'audio_afr', 'audio_fra',
+            'image_en', 'image_afr', 'image_fra',
+            'video_en', 'video_afr', 'video_fra',
+        ))
+    )
+    data = (
+        ('Modules_and_forms',
+         (('Module', 'module1',
+           'Untitled Module', 'Ongetitelde Module', 'Module Sans Titre',
+           'Cases', 'Sake', 'Les Cas',
+           '', '', '',
+           '', '', '',
+           'deadbeef'),
+          ('Form', 'module1_form1',
+           'Untitled Form', 'Ongetitelde Form', 'Formulaire Sans Titre',
+           'Cases', 'Sake', 'Les Cas',
+           '', '', '',
+           '', '', '',
+           'c0ffee'))),
+
+        ('module1',
+         (('name', 'list', 'Name', 'Naam', 'Nom'),
+          ('name', 'detail', 'Name', 'Naam', 'Nom'))),
+
+        ('module1_form1',
+         (('with_markdown-label',
+           '*With* Markdown', '*Met* Markdown', '*Avec* le Markdown',
+           '', '', '', '', '', '', '', '', ''),
+          ('markdown_veto-label',
+           '*Without* Markdown', '*Sonder* Markdown', '*Sans* le Markdown',
+           '', '', '', '', '', '', '', '', ''))))
+
+    def get_worksheet(self, title):
+        string_io = StringIO()
+        export_raw(self.headers, self.data, string_io, format=Format.XLS_2007)
+        string_io.seek(0)
+        workbook = WorkbookJSONReader(string_io)  # __init__ will read string_io
+        return workbook.worksheets_by_title[title]
+
+    def setUp(self):
+        self.app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        self.app.build_langs = self.app.langs = ['en', 'afr', 'fra']
+        module1 = self.app.add_module(Module.new_module('module', None))
+        form1 = self.app.new_form(module1.id, "Untitled Form", None)
+        form1.source = self.get_xml('initial_xform')
+
+        self.form1_worksheet = self.get_worksheet('module1_form1')
+
+    def test_markdown_node(self):
+        """
+        If one translation has a Markdown node, the label should be a Markdown label
+        If Markdown is vetoed for one language, it should be vetoed for the label
+        """
+        missing_cols = set()
+        sheet = self.form1_worksheet
+        rows = get_unicode_dicts(sheet)
+        with patch('corehq.apps.app_manager.translations.save_xform') as save_xform_patch:
+            msgs = update_form_translations(sheet, rows, missing_cols, self.app)
+            self.assertEqual(msgs, [])
+            expected_xform = self.get_xml('expected_xform').decode('utf-8')
+            self.maxDiff = None
+            self.assertEqual(save_xform_patch.call_args[0][2], expected_xform)
