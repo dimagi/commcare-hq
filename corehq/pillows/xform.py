@@ -51,7 +51,7 @@ class XFormPillow(HQPillow):
         return XFORM_INDEX
 
     def change_transform(self, doc_dict, include_props=True):
-        if self.get_domain(doc_dict) is None:
+        if doc_dict.get('domain', None) is None:
             #If the domain is still None (especially when doing updates via the _changes feed)
             #skip and do nothing
             #the reason being is that changes on the xform instance do not necessarily add
