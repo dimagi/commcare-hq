@@ -743,3 +743,11 @@ TF_USES_SQLITE_BACKEND = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
+
+
+CASE_LIST_DISTANCE_SORT = StaticToggle(
+    'case_list_distance_sort',
+    'Allow sorting by distance from current location in the case list',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
