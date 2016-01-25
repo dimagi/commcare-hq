@@ -8,3 +8,4 @@ CASE_HISTORY_PROPERTIES = [
     'xform_name',
     'sync_log_id',
 ]
+CASE_HISTORY_GROUP_NAME = 'history'

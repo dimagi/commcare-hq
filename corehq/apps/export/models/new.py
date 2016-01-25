@@ -13,7 +13,10 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
     IntegerProperty,
 )
-from corehq.apps.export.const import CASE_HISTORY_PROPERTIES
+from corehq.apps.export.const import (
+    CASE_HISTORY_PROPERTIES,
+    CASE_HISTORY_GROUP_NAME,
+)
 
 
 class ExportItem(DocumentSchema):
@@ -329,7 +332,7 @@ class CaseExportDataSchema(ExportDataSchema):
     def _generate_schema_for_case_history(appVersion):
         schema = CaseExportDataSchema()
         group_schema = ExportGroupSchema(
-            path=['history'],
+            path=[CASE_HISTORY_GROUP_NAME],
             last_occurrence=appVersion,
         )
         for prop in CASE_HISTORY_PROPERTIES:
