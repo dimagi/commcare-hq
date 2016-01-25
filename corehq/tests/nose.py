@@ -113,15 +113,19 @@ class ErrorOnDbAccessContext(object):
         mock_couch = Mock(side_effect=error, spec=[])
 
         # register our dbs with the extension document classes
+        self.real_couch_dbs = dbs = []
         old_handler = loading.couchdbkit_handler
         for app, value in old_handler.app_schema.items():
             for name, cls in value.items():
+                dbs.append((cls, cls.get_db()))
                 cls.set_db(mock_couch)
 
     def teardown(self):
         """Enable database access"""
         from django.conf import settings
         settings.DB_ENABLED = self.original_db_enabled
+        for cls, db in self.real_couch_dbs:
+            cls.set_db(db)
         self.db_patch.stop()
 
 

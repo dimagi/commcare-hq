@@ -167,9 +167,6 @@
         {% block head %}
         {% endblock %}
 
-        {# hubspot tracking events must be defined BEFORE the hubspot js is loaded #}
-        {% block hubspot %}{% endblock %}
-
         {% include 'style/includes/analytics_all.html' %}
 
         {% if less_debug %}

@@ -5,11 +5,9 @@ import json
 import logging
 import mock
 import os
-from unittest import TestCase
+from unittest import TestCase, SkipTest
 from collections import namedtuple
 from contextlib import contextmanager
-
-from unittest.case import SkipTest
 
 from fakecouch import FakeCouchDb
 from functools import wraps
@@ -37,7 +35,7 @@ unit_testing_only.__test__ = False
 
 
 @contextmanager
-def trap_extra_setup(*exceptions):
+def trap_extra_setup(*exceptions, **kw):
     """Conditioinally skip test on error
 
     Use this context manager to skip tests that would otherwise fail in
@@ -50,12 +48,16 @@ def trap_extra_setup(*exceptions):
     false there.
     """
     assert exceptions, "at least one argument is required"
+    msg = kw.pop("msg", "")
+    assert not kw, "unknown keyword args: {}".format(kw)
     skip = getattr(settings, "SKIP_TESTS_REQUIRING_EXTRA_SETUP", False)
     try:
         yield
     except exceptions as err:
         if skip:
-            raise SkipTest("{}: {}".format(type(err).__name__, err))
+            if msg:
+                msg += ": "
+            raise SkipTest("{}{}: {}".format(msg, type(err).__name__, err))
         raise
 
 
@@ -281,21 +283,30 @@ def generate_cases(argsets, cls=None):
     return add_cases
 
 
-def make_es_ready_form(metadata):
-    # this is rather complicated due to form processor abstractions and ES restrictions
-    # on what data needs to be in the index and is allowed in the index
+def get_form_ready_to_save(metadata, is_db_test=False):
+    from corehq.form_processor.parsers.form import process_xform_xml
+    from corehq.form_processor.utils import get_simple_form_xml, convert_xform_to_json
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
-    from corehq.form_processor.utils import get_simple_form_xml
-    from corehq.form_processor.utils import convert_xform_to_json
 
     assert metadata is not None
     metadata.domain = metadata.domain or uuid.uuid4().hex
     form_id = uuid.uuid4().hex
     form_xml = get_simple_form_xml(form_id=form_id, metadata=metadata)
-    form_json = convert_xform_to_json(form_xml)
-    wrapped_form = FormProcessorInterface(domain=metadata.domain).new_xform(form_json)
-    wrapped_form.domain = metadata.domain
+
+    if is_db_test:
+        wrapped_form = process_xform_xml(metadata.domain, form_xml).submitted_form
+    else:
+        form_json = convert_xform_to_json(form_xml)
+        wrapped_form = FormProcessorInterface(domain=metadata.domain).new_xform(form_json)
+        wrapped_form.domain = metadata.domain
     wrapped_form.received_on = metadata.received_on
+    return wrapped_form
+
+
+def make_es_ready_form(metadata, is_db_test=False):
+    # this is rather complicated due to form processor abstractions and ES restrictions
+    # on what data needs to be in the index and is allowed in the index
+    wrapped_form = get_form_ready_to_save(metadata, is_db_test=is_db_test)
     json_form = wrapped_form.to_json()
     json_form['form']['meta'].pop('appVersion')  # hack - ES chokes on this
     return WrappedJsonFormPair(wrapped_form, json_form)

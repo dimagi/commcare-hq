@@ -1,7 +1,7 @@
 # coding=utf-8
+import sqlalchemy
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn
-from sqlalchemy.sql.expression import alias
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 
@@ -745,31 +745,38 @@ class IntraHealthQueryMeta(QueryMeta):
 class SumAndAvgQueryMeta(IntraHealthQueryMeta):
 
     def _build_query(self, table, filter_values):
+        key_column = table.c[self.key]
+        sum_query = sqlalchemy.alias(
+            sqlalchemy.select(
+                self.group_by + [sqlalchemy.func.sum(key_column).label('sum_col')] + [table.c.month],
+                group_by=self.group_by + [table.c.month],
+                whereclause=AND(self.filters).build_expression(table),
+            ), name='s')
 
-        sum_query = alias(select(self.group_by + ["SUM(%s) AS sum_col" % self.key] + ['month'],
-                                 group_by=self.group_by + ['month'],
-                                 whereclause=AND(self.filters).build_expression(table),
-                                 ), name='s')
-
-        return select(self.group_by + ['AVG(s.sum_col) AS %s' % self.key],
-                      group_by=self.group_by,
-                      from_obj=sum_query
-                      ).params(filter_values)
+        return select(
+            self.group_by + [sqlalchemy.func.avg(sum_query.c.sum_col).label(self.key)],
+            group_by=self.group_by,
+            from_obj=sum_query
+        ).params(filter_values)
 
 
 class CountUniqueAndSumQueryMeta(IntraHealthQueryMeta):
 
     def _build_query(self, table, filter_values):
+        key_column = table.c[self.key]
+        subquery = sqlalchemy.alias(
+            sqlalchemy.select(
+                self.group_by + [sqlalchemy.func.count(sqlalchemy.distinct(key_column)).label('count_unique')],
+                group_by=self.group_by + [table.c.month],
+                whereclause=AND(self.filters).build_expression(table),
+            ),
+            name='cq')
 
-        count_uniq = alias(select(self.group_by + ["COUNT(DISTINCT(%s)) AS count_unique" % self.key],
-                                  group_by=self.group_by + ['month'],
-                                  whereclause=AND(self.filters).build_expression(table),
-                                  ), name='cq')
-
-        return select(self.group_by + ['SUM(cq.count_unique) AS %s' % self.key],
-                      group_by=self.group_by,
-                      from_obj=count_uniq
-                      ).params(filter_values)
+        return sqlalchemy.select(
+            self.group_by + [sqlalchemy.func.sum(subquery.c.count_unique).label(self.key)],
+            group_by=self.group_by,
+            from_obj=subquery
+        ).params(filter_values)
 
 
 class IntraHealthCustomColumn(CustomQueryColumn):

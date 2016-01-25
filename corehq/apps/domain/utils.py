@@ -54,6 +54,7 @@ def get_domain_module_map():
     return hardcoded
 
 
+@quickcache(['domain'])
 def domain_restricts_superusers(domain):
     domain = Domain.get_by_name(domain)
     if not domain:

@@ -69,6 +69,7 @@
 
 {% block main_column %}
 <form action="" method="post">
+    {% csrf_token %}
     <h4>{% trans "SMS Country-Connection Map" %}</h4>
     <div class="form-block">
         {{ form.backend_map.errors }}

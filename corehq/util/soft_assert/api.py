@@ -1,11 +1,15 @@
 from django.conf import settings
 
 from corehq.apps.hqwebapp.tasks import send_mail_async, mail_admins_async
+from corehq.util.log import get_sanitized_request_repr
 from corehq.util.global_request import get_request
 from corehq.util.soft_assert.core import SoftAssert
 
 
 def _send_message(info, backend):
+    request = get_request()
+    request_repr = get_sanitized_request_repr(request)
+
     backend(
         subject='Soft Assert: [{}] {}'.format(info.key[:8], info.msg),
         message=('Message: {info.msg}\n'
@@ -13,7 +17,7 @@ def _send_message(info, backend):
                  'Traceback:\n{info.traceback}\n'
                  'Request:\n{request}\n'
                  'Occurrences to date: {info.count}\n').format(
-                info=info, request=get_request())
+                info=info, request=request_repr)
     )
 
 

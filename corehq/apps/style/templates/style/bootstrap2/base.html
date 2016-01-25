@@ -48,9 +48,6 @@
         {% block head %}
         {% endblock %}
 
-        {# hubspot tracking events must be defined BEFORE the hubspot js is loaded #}
-        {% block hubspot %}{% endblock %}
-
         {% include 'style/includes/analytics_all.html' %}
         {% if less_debug %}
             <script src="{% static 'style/lib/lessjs/less-1.3.1.min.js' %}"></script>
@@ -232,7 +229,8 @@
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-primary"
                                 data-loading-text="{% trans "Submitting Report..." %}"
-                                data-complete-text="{% trans "Back to CommCare HQ" %}">
+                                data-error-text="{% trans "Failed. Retry Issue Submission" %}"
+                                data-success-text="{% trans "Success! Back to CommCare HQ" %}">
                             {% trans "Submit Report" %}
                         </button>
                         <button id="bug-report-cancel" class="btn" data-dismiss="modal"

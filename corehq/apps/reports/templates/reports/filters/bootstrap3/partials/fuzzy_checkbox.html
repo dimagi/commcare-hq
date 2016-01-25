@@ -1,12 +1,13 @@
 {% load i18n %}
-{#<div class="alert alert-warning">#}
-    {% trans "This project looks like it has some submissions we don't recognize.  Don't worry this can usually be fixed." %}  
-    Please contact <a href="mailto:{{ support_email }}">CommCare Support</a>.
-{#</div>#}
-<label class="checkbox">
-    <input type="checkbox" name="{{ hide_fuzzy.slug }}" value="yes" {% if hide_fuzzy.checked %}checked{% endif %} /> {% trans 'Hide Fuzzy Submissions' %}
-    <span class="hq-help-template"
-      data-title="{% trans "Hide Fuzzy Submissions?" %}"
-      data-content="{% trans "Some of the submissions included in the report results could not be matched with precision to your selected applications. This hides those submissions so that only the most accurate submissions remain." %}"
-    ></span>
-</label>
+{% trans "This project looks like it has some submissions we don't recognize.  Don't worry this can usually be fixed." %}
+Please contact <a href="mailto:{{ support_email }}">CommCare Support</a>.
+<div class="checkbox">
+    <label>
+        <input type="checkbox" name="{{ hide_fuzzy.slug }}" value="yes" {% if hide_fuzzy.checked %}checked{% endif %} /> {% trans 'Hide Fuzzy Submissions' %}
+        <span class="hq-help-template"
+          data-title="{% trans "Hide Fuzzy Submissions?" %}"
+          data-content="{% trans "Some of the submissions included in the report results could not be matched with precision to your selected applications. This hides those submissions so that only the most accurate submissions remain." %}"
+          data-bootstrap3="true"
+        ></span>
+    </label>
+</div>
