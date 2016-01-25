@@ -1641,10 +1641,14 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
         Select2BillingInfoHandler,
     ]
 
+    @method_decorator(require_POST)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ConfirmSubscriptionRenewalView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def next_plan_version(self):
-        new_edition = self.request.POST.get('plan_edition', "").title()
+        new_edition = self.request.POST.get('plan_edition').title()
         plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain, new_edition)
         if plan_version is None:
             log_accounting_error(
