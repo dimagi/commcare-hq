@@ -286,6 +286,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         for app in cls.apps:
             app.save()
 
+
 def _build_case_type_metadata(*case_properties):
     case_type_metadata = CaseTypeMeta(
         name='candy',
