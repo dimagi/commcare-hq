@@ -1,6 +1,6 @@
 from itertools import groupby
-from collections import defaultdict
-from couchdbkit import SchemaListProperty, SchemaProperty
+from collections import defaultdict, OrderedDict
+from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty
 
 from corehq.apps.userreports.expressions.getters import NestedDictGetter
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids_for_app_id
@@ -74,11 +74,16 @@ class TableConfiguration(DocumentSchema):
         # Note that sub_documents will be [document] if self.repeat_path is []
         sub_documents = self._get_sub_documents(self.repeat_path, [document])
         rows = []
-        for item in repeat_items:
-            row = ExportRow(data=[
-                col.get_value(item, self.repeat_path) for col in self.columns
-            ])
-            rows.append(row)
+        for doc in sub_documents:
+
+            row_data = []
+            for col in self.columns:
+                val = col.get_value(doc, self.repeat_path)
+                if isinstance(val, list):
+                    row_data.extend(val)
+                else:
+                    row_data.append(val)
+            rows.append(ExportRow(data=row_data))
         return rows
 
     def _get_sub_documents(self, path, docs):
@@ -319,3 +324,47 @@ def _merge_lists(one, two, keyfn, resolvefn, copyfn):
         map(lambda obj: copyfn(obj), filtered)
     )
     return merged
+
+
+class SplitExportColumn(ExportColumn):
+    """
+    This class is used to split a value into multiple columns based
+    on a set of pre-defined options. It splits the data value assuming it
+    is space separated.
+
+    The outputs will have one column for each 'option' and one additional
+    column for any values from the data don't appear in the options.
+
+    Each column will have a value of 1 if the data value contains the
+    option for that column otherwise the column will be blank.
+
+    e.g.
+    options = ['a', 'b']
+    column_headers = ['col a', 'col b', 'col extra']
+
+    data_val = 'a c d'
+    output = [1, '', 'c d']
+    """
+    item = SchemaProperty(MultipleChoiceItem)
+    ignore_extras = BooleanProperty()
+
+    def get_value(self, doc, base_path):
+        """
+        Get the value of self.item of the given doc.
+        When base_path is [], doc is a form submission or case,
+        when base_path is non empty, doc is a repeat group from a form submission.
+        :param doc: A form submission or instance of a repeat group in a submission or case
+        :param base_path:
+        :return:
+        """
+        value = super(SplitExportColumn, self).get_value(doc, base_path)
+        if not isinstance(value, basestring):
+            return [None] * len(self.item.options) + [] if self.ignore_extras else [value]
+
+        selected = OrderedDict((x, 1) for x in value.split(" "))
+        row = []
+        for option in self.item.options:
+            row.append(selected.pop(option.value, None))
+        if not self.ignore_extras:
+            row.append(" ".join(selected.keys()))
+        return row

@@ -2,6 +2,8 @@ from django.test import SimpleTestCase
 
 from corehq.apps.export.models import TableConfiguration, ExportColumn, \
     ScalarItem, ExportRow
+from corehq.apps.export.models.new import SplitExportColumn, MultipleChoiceItem, \
+    Option
 
 
 class TableConfigurationGetRowsTest(SimpleTestCase):
