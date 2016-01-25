@@ -133,6 +133,7 @@ def get_backend_classes():
     Returns a dictionary of {api id: class} for all installed SMS and IVR
     backends.
     """
+    from corehq.apps.sms.mixin import BadSMSConfigException
     result = {}
     backend_classes = (
         settings.SMS_LOADED_SQL_BACKENDS +
@@ -143,8 +144,8 @@ def get_backend_classes():
         cls = to_function(backend_class)
         api_id = cls.get_api_id()
         if api_id in result:
-            raise Exception("Cannot have more than one backend with the same "
-                            "api id. Duplicate found for: %s" % api_id)
+            raise BadSMSConfigException("Cannot have more than one backend with the same "
+                                        "api id. Duplicate found for: %s" % api_id)
         result[api_id] = cls
     return result
 
