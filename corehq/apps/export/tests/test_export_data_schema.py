@@ -126,7 +126,7 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
             2
         )
 
-        return FormExportDataSchema._merge_schema(schema, schema2)
+        return FormExportDataSchema._merge_schemas(schema, schema2)
 
     def test_simple_merge(self):
         """Tests merging of a form that adds a question to the form"""
