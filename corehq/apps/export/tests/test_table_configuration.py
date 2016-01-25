@@ -105,21 +105,21 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
                 SplitExportColumn(
                     item=MultipleChoiceItem(
                         path=['form', 'q1'],
-                        options=['a', 'c']
+                        options=[Option(value='a'), Option(value='c')]
                     ),
-                    ignore_extras=False
+                    ignore_extras=True
                 ),
                 SplitExportColumn(
                     item=MultipleChoiceItem(
                         path=['form', 'q1'],
-                        options=['a', 'c']
+                        options=[Option(value='a'), Option(value='c')]
                     ),
-                    ignore_extras=True
+                    ignore_extras=False
                 ),
             ]
         )
         submission = {"form": {"q1": "a b d"}}
         self.assertEqual(
             [row.data for row in table_configuration.get_rows(submission)],
-            [[1, "", 1, "", "b d"]]
+            [[1, None, 1, None, "b d"]]
         )
