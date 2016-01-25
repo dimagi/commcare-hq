@@ -33,7 +33,7 @@ def delete_all_locations():
     SQLLocation.objects.all().delete()
 
 
-def _setup_location_types(domain, location_types):
+def setup_location_types(domain, location_types):
     location_types_dict = {}
     previous = None
     for name in location_types:
@@ -41,13 +41,13 @@ def _setup_location_types(domain, location_types):
             domain=domain,
             name=name,
             parent_type=previous,
-            administrative=False,
+            administrative=True,
         )
         location_types_dict[name] = previous = location_type
     return location_types_dict
 
 
-def _setup_locations(domain, locations, location_types):
+def setup_locations(domain, locations, location_types):
     locations_dict = {}
 
     def create_locations(locations, types, parent):
@@ -62,27 +62,31 @@ def _setup_locations(domain, locations, location_types):
     return locations_dict
 
 
-def setup_locations_and_types(domain, location_types, locations):
+def setup_locations_and_types(domain, location_types, stock_tracking_types, locations):
     """
     Create a hierarchy of locations.
 
     :param location_types: A flat list of location type names
+    :param stock_tracking_types: A list of names of stock tracking location_types
     :param locations: A (recursive) list defining the locations to be
         created.  Each entry is a (name, [child1, child2..]) tuple.
     :return: (location_types, locations) where each is a dictionary mapping
         string to object created
     """
-    return (
-        _setup_location_types(domain, location_types),
-        _setup_locations(domain, locations, location_types)
-    )
+    location_types_dict = setup_location_types(domain, location_types)
+    for loc_type in stock_tracking_types:
+        location_types_dict[loc_type].administrative = False
+        location_types_dict[loc_type].save()
+    locations_dict = setup_locations(domain, locations, location_types)
+    return (location_types_dict, locations_dict)
 
 
 class LocationHierarchyTestCase(TestCase):
     """
-    Sets up and tears down a hierarchy for you based on the two class attrs
+    Sets up and tears down a hierarchy for you based on the class attrs
     """
     location_type_names = []
+    stock_tracking_types = []
     location_structure = []
     domain = 'test-domain'
 
@@ -90,7 +94,10 @@ class LocationHierarchyTestCase(TestCase):
     def setUpClass(cls):
         cls.domain_obj = bootstrap_domain(cls.domain)
         cls.location_types, cls.locations = setup_locations_and_types(
-            cls.domain, cls.location_type_names, cls.location_structure
+            cls.domain,
+            cls.location_type_names,
+            cls.stock_tracking_types,
+            cls.location_structure,
         )
 
     @classmethod
