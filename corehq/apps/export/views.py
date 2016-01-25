@@ -54,7 +54,7 @@ from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PE
     DEID_EXPORT_PERMISSION
 from corehq.couchapps.dbaccessors import \
     get_attachment_size_by_domain_app_id_xmlns
-from corehq.util import get_document_or_404
+from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
 from couchexport.models import SavedExportSchema, ExportSchema
 from couchexport.schema import build_latest_schema
@@ -489,7 +489,10 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
 
     @staticmethod
     def get_export_schema(domain, export_id):
-        return get_document_or_404(SavedExportSchema, domain, export_id)
+        doc = get_document_or_404_lite(SavedExportSchema, export_id)
+        if doc.index[0] == domain:
+            return doc
+        raise Http404(_(u"Export not found"))
 
     @property
     def export_id(self):
@@ -697,7 +700,10 @@ class DownloadFormExportView(BaseDownloadExportView):
 
     @staticmethod
     def get_export_schema(domain, export_id):
-        return get_document_or_404(FormExportSchema, domain, export_id)
+        doc = get_document_or_404_lite(FormExportSchema, export_id)
+        if doc.index[0] == domain:
+            return doc
+        raise Http404(_(u"Export not found"))
 
     @property
     def export_list_url(self):
@@ -802,7 +808,10 @@ class DownloadCaseExportView(BaseDownloadExportView):
 
     @staticmethod
     def get_export_schema(domain, export_id):
-        return get_document_or_404(CaseExportSchema, domain, export_id)
+        doc = get_document_or_404_lite(CaseExportSchema, export_id)
+        if doc.index[0] == domain:
+            return doc
+        raise Http404(_("Export not found"))
 
     @property
     def export_list_url(self):
