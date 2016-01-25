@@ -51,7 +51,7 @@
                 onReady: function () {
                     var less_error_id = "#less-error-message\\:static-style-less-hqstyle-core",
                         less_error = $(less_error_id);
-                    if (less_error) {
+                    if (less_error.length) {
                         console.log("hiding less error:", less_error_id);
                         console.log(less_error.text());
                         less_error.hide();
