@@ -76,6 +76,7 @@ class FormProcessorSQL(object):
     def _publish_changes(processed_forms, cases):
         # todo: form deprecations?
         publish_form_saved(processed_forms.submitted)
+        cases = cases or []
         for case in cases:
             publish_case_saved(case)
 
