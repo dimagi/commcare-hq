@@ -6,11 +6,15 @@ from dimagi.utils.subprocess_manager import subprocess_context
 XpathValidationResponse = namedtuple('XpathValidationResponse', ['is_valid', 'message'])
 
 
-def validate_xpath(xpath):
+def validate_xpath(xpath, allow_case_hashtags=False):
     with subprocess_context() as subprocess:
         path = get_xpath_validator_path()
-        p = subprocess.Popen(['node', path], stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if allow_case_hashtags:
+            cmd = ['node', path, '--allow-case-hashtags']
+        else:
+            cmd = ['node', path]
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
         stdout, stderr = p.communicate(xpath)
         exit_code = p.wait()
         if exit_code == 0:

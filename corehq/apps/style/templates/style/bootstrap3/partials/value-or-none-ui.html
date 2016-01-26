@@ -45,7 +45,7 @@
             <div class="row">
                 <div class="col-sm-9">
                     <input type="text" class="form-control" data-bind="
-                        xpathValidator: inputValue,
+                        xpathValidator: {text: inputValue, allowCaseHashtags: true},
                         hasfocus: hasFocus,
                         css: inputCss,
                         attr: inputAttr
