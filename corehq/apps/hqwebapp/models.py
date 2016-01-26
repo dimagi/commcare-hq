@@ -1,5 +1,6 @@
 from collections import namedtuple
 from urllib import urlencode
+from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION
 from corehq.toggles import OPENLMIS
 
@@ -25,7 +26,6 @@ from corehq.apps.hqadmin.reports import (
     CommConnectProjectSpacesReport,
     CommTrackProjectSpacesReport,
 )
-from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import (
     dropdown_dict,
     sidebar_to_dropdown
@@ -279,10 +279,7 @@ class ProjectReportsTab(UITab):
 
     @property
     def is_viewable(self):
-        return (self.domain and self.project and
-                not self.project.is_snapshot and
-                (self.couch_user.can_view_reports() or
-                 self.couch_user.get_viewable_reports()))
+        return user_can_view_reports(self.project, self.couch_user)
 
     @property
     def sidebar_items(self):
@@ -362,7 +359,11 @@ class DashboardTab(UITab):
         if self.domain and self.project and not self.project.is_snapshot and self.couch_user:
             # domain hides Dashboard tab if user is non-admin
             if not user_has_custom_top_menu(self.domain, self.couch_user):
-                return domain_has_apps(self.domain)
+                if self.couch_user.is_commcare_user():
+                    # only show the dashboard tab if the user has been assigned a custom role
+                    return self.couch_user.get_domain_membership(self.domain).role is not None
+                else:
+                    return domain_has_apps(self.domain)
         return False
 
     @property

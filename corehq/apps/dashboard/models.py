@@ -34,7 +34,7 @@ class Tile(object):
         """Whether or not the tile is visible on the dashboard (permissions).
         :return: Boolean
         """
-        return self.tile_config.visibility_check(self.request)
+        return bool(self.tile_config.visibility_check(self.request))
 
     @property
     @memoized
