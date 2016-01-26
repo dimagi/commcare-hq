@@ -15,14 +15,14 @@
     <table class="table table-condensed">
         {% for file in files %}
             <tr>
-                <td class="col-md-3">
+                <td class="col-sm-3">
                     {% if file.source %}
                         <a class="toggle-next" href="#">{{ file.name }}</a>
                     {% else %}
                         {{ file.name }}
                     {% endif %}
                 </td>
-                <td class="col-md-9">
+                <td class="col-sm-9">
                     {% block file_description %}{% endblock %}
                 </td>
             </tr>
