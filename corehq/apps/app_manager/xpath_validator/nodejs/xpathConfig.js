@@ -1,5 +1,5 @@
 if (typeof require !== 'undefined' && typeof exports !== 'undefined') {
-    var Parser = require('js-xpath/parser').Parser;
+    var parser = require('js-xpath/parser');
     var xpath = require('js-xpath/xpath');
 }
 
@@ -18,12 +18,12 @@ var XPATH_CONFIG = (function () {
     }
 
     function configureHashtags(allowCaseHashtags) {
-        var parser = new Parser();
-            parser.setXPathModels = function(models) {
-            parser.yy.xpathmodels = models;
+        var p = new parser.Parser();
+        p.setXPathModels = function(models) {
+            p.yy.xpathmodels = models;
         };
         var replacements = getAllowedHashtags(allowCaseHashtags);
-        parser.setXPathModels(xpath.makeXPathModels({
+        p.setXPathModels(xpath.makeXPathModels({
             isValidNamespace: function (namespace) {
                 return replacements.hasOwnProperty('#' + namespace);
             },
@@ -38,7 +38,7 @@ var XPATH_CONFIG = (function () {
                 return xpath_.toXPath();
             }
         }));
-        return parser;
+        return p;
     }
     return {'configureHashtags': configureHashtags};
 }());

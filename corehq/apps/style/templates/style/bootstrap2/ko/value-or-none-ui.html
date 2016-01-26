@@ -43,7 +43,7 @@
         </div>
         <div data-bind="visible: allowed()">
             <input type="text" data-bind="
-                    xpathValidator: inputValue,
+                    xpathValidator: {text: inputValue, allowCaseHashtags: true},
                     hasfocus: hasFocus,
                     css: inputCss,
                     attr: inputAttr

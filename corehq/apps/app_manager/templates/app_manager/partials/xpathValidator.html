@@ -1,7 +1,9 @@
 {% load hq_shared_tags %}
 <script src="{% static 'xpath/lib/biginteger.js' %}"></script>
 <script src="{% static 'xpath/lib/schemeNumber.js' %}"></script>
-<script src="{% static 'xpath/xpath.js"' %}></script>
+<script src="{% static 'xpath/xpath.js' %}"></script>
+<script src="{% static 'xpath/parser.js' %}"></script>
+<script src="{% static 'app_manager/js/xpathConfig.js' %}"></script>
 <script type="text/html" id="XPathValidator.template">
     <div class="span3 js-xpath-input-target">
         <input type="text"
@@ -33,11 +35,18 @@ ko.bindingHandlers.xpathValidator = (function () {
      */
     var XPathValidator = function (xpathText) {
         var self = {};
-        if (ko.isObservable(xpathText)) {
-            self.xpathText = xpathText;
+        if (xpathText.hasOwnProperty('text')) {
+            self.xpathText = xpathText.text;
+            self.allowCaseHashtags = !!xpathText.allowCaseHashtags;
         } else {
-            self.xpathText = ko.observable(xpathText);
+            self.xpathText = xpathText;
+            self.allowCaseHashtags = false;
         }
+
+        if (!ko.isObservable(self.xpathText)){
+            self.xpathText = ko.observable(self.xpathText);
+        }
+
         self.error = ko.observable('');
         self.errorTitle = ko.computed(function () {
             var errorLines = self.error().split('\n');
@@ -54,7 +63,7 @@ ko.bindingHandlers.xpathValidator = (function () {
             var error = '';
             if (self.xpathText()) {
                 try {
-                    xpath.parse(value);
+                    XPATH_CONFIG.configureHashtags(self.allowCaseHashtags).parse(value);
                 } catch (e) {
                     error = e.message;
                 }
