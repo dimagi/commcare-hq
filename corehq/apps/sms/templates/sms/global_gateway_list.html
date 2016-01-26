@@ -34,11 +34,14 @@
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
                             <h4 class="modal-title">
-                                Delete the SMS Connection '<span data-bind="text: name"></span>'.
+                                Delete the SMS Connection '<span data-bind="text: name"></span>'
                             </h4>
                         </div>
                         <div class="modal-body">
-                            <p>Are you sure you want to delete the SMS Connection '<span data-bind="text: name"></span>'?</p>
+                            <h2><strong>READ THIS IMPORTANT NOTICE CAREFULLY BEFORE CONTINUING</strong></h2>
+                            <p>Deleting a global backend causes all backend mapping references to it to be deleted as well, including
+                            default backend settings for all domains that reference this backend. Only proceed if you are confident you
+                            understand the repercussions of this irreversible action.</p>
                         </div>
                         <div class="modal-footer">
                             <a href="#" class="btn btn-danger delete-item-confirm">
