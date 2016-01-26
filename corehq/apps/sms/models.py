@@ -1569,6 +1569,10 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
 
         return False
 
+    def get_authorized_domain_list(self):
+        return (self.mobilebackendinvitation_set.filter(accepted=True)
+                .order_by('domain').values_list('domain', flat=True))
+
     @classmethod
     def get_domain_backends(cls, backend_type, domain, count_only=False, offset=None, limit=None):
         domain_owned_backends = models.Q(is_global=False, domain=domain)

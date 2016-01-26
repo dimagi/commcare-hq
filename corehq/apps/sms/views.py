@@ -1310,12 +1310,12 @@ class EditDomainGatewayView(AddDomainGatewayView):
     @memoized
     def backend(self):
         try:
-            backend = self.backend_class.get(self.backend_id)
+            backend = self.backend_class.objects.get(pk=self.backend_id)
         except ResourceNotFound:
             raise Http404()
         if backend.is_global or backend.domain != self.domain:
             raise Http404()
-        if backend.doc_type != self.backend_class_name:
+        if backend.hq_api_id != self.backend_class.get_api_id():
             raise Http404()
         return backend
 
@@ -1323,22 +1323,26 @@ class EditDomainGatewayView(AddDomainGatewayView):
     @memoized
     def backend_form(self):
         form_class = self.backend_class.get_form_class()
-        initial = {}
-        for field in form_class():
-            if field.name not in self.ignored_fields:
-                if field.name == 'authorized_domains':
-                    initial[field.name] = ','.join(self.backend.authorized_domains)
-                else:
-                    initial[field.name] = getattr(self.backend, field.name, None)
-            initial['give_other_domains_access'] = len(self.backend.authorized_domains) > 0
-            if self.use_load_balancing:
-                initial["phone_numbers"] = json.dumps(
-                    [{"phone_number": p} for p in self.backend.phone_numbers])
+        authorized_domains = self.backend.get_authorized_domain_list()
+        initial = {
+            'name': self.backend.name,
+            'description': self.backend.description,
+            'give_other_domains_access': len(authorized_domains) > 0,
+            'authorized_domains': ','.join(authorized_domains),
+            'reply_to_phone_number': self.backend.reply_to_phone_number,
+        }
+        initial.update(self.backend.get_extra_fields())
+
+        if self.use_load_balancing:
+            initial['phone_numbers'] = json.dumps(
+                [{'phone_number': p} for p in self.backend.load_balancing_numbers]
+            )
+
         if self.request.method == 'POST':
             form = form_class(self.request.POST, initial=initial,
                               button_text=self.button_text)
             form._cchq_domain = self.domain
-            form._cchq_backend_id = self.backend._id
+            form._cchq_backend_id = self.backend.pk
             return form
         return form_class(initial=initial, button_text=self.button_text)
 
