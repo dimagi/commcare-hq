@@ -123,9 +123,9 @@ class ArrayIndexExpressionSpec(JsonObject):
 
 class SwitchExpressionSpec(JsonObject):
     type = TypeProperty('switch')
-    switch_on = DictProperty(required=True)
-    cases = DictProperty(required=True)
-    default = DictProperty(required=True)
+    switch_on = DefaultProperty(required=True)
+    cases = DefaultProperty(required=True)
+    default = DefaultProperty(required=True)
 
     def configure(self, switch_on_expression, case_expressions, default_expression):
         self._switch_on_expression = switch_on_expression
