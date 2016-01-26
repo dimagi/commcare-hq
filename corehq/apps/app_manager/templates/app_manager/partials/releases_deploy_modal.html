@@ -51,34 +51,40 @@
                                     </label>
                                     {% endif %}
                                     <p>
-                                        <span data-bind="visible: get_short_odk_url()">
+                                        <span data-bind="visible: get_app_code()">
                                             {% blocktrans %}
-                                                Install by typing the following URL
-                                                into the CommCare application install screen:
+                                            Open the app on your Android and use one of the following installation methods:
                                             {% endblocktrans %}
-                                            <code class="bitly"><a data-bind="
-                                                attr: {
-                                                    href: get_short_odk_url(),
-                                                    title: get_short_odk_url_phonetic()
-                                                },
-                                                text: get_short_odk_url()
-                                            "></a></code>
                                         </span>
-                                        <img data-bind="visible: generating_url()"
-                                            src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
-                                        <span class="text-warning" data-bind="visible: !get_short_odk_url() && !generating_url()">
-                                            {% trans "No short code available; try making another version." %}
+                                        <span data-bind="visible: !get_app_code() && !generating_url()">
+                                            {% blocktrans %}
+                                            Open the app on your Android and use the following installation method:
+                                            {% endblocktrans %}
                                         </span>
                                     </p>
-                                    <p>
-                                        {% trans "Or" %}
-                                        <a href="#" data-bind="
-                                            openRemoteModal: get_odk_install_url,
-                                            click: function() { ga_track_event('App Manager', 'Show Bar Code', '-'); }
-                                        ">
-                                        {% trans "scan the bar code" %}
-                                        </a>
-                                        {% trans "using the Barcode Scanner option within CommCare" %}
+                                    <ul>
+                                        <li>
+                                            <a href="#" data-bind="
+                                                openRemoteModal: get_odk_install_url,
+                                                click: function() { ga_track_event('App Manager', 'Show Bar Code', '-'); }
+                                            ">
+                                                {% trans "Scan Application Barcode" %}
+                                            </a>
+                                        </li>
+                                        <li data-bind="visible: get_app_code()">
+                                                Enter App Code:
+                                                <code class="bitly" data-bind="text: get_app_code()"></code>
+                                        </li>
+                                    </ul>
+                                    <img data-bind="visible: generating_url()"
+                                         src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                                    <p data-bind="visible: !get_app_code() && !generating_url()">
+                                        <span class="text-warning">
+                                            {% blocktrans %}
+                                            (No app code available. If you would like to use an app code instead
+                                            of scanning the application barcode, try making another version.)
+                                            {% endblocktrans %}
+                                        </span>
                                     </p>
                                 </div>
                                 <div class="tab-pane">
