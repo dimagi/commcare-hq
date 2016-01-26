@@ -4,17 +4,17 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-<script src="{% static 'hqwebapp/js/lib/require.js' %}"></script>
-{% if not vellum_debug %}
-<link href="{% static 'app_manager/js/vellum/style.css' %}" type="text/css" rel="stylesheet"></link>
-{% elif vellum_debug == "dev-min" %}
-<link href="{% static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"></link>
-{% endif %}
+    <script src="{% new_static 'hqwebapp/js/lib/require.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
+    {% if not vellum_debug %}
+        <link href="{% new_static 'app_manager/js/vellum/style.css' %}" type="text/css" rel="stylesheet"></link>
+    {% elif vellum_debug == "dev-min" %}
+        <link href="{% new_static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"></link>
+    {% endif %}
     <script>
-        var CKEDITOR_BASEPATH = "{% static 'app_manager/js/vellum/lib/ckeditor/' %}";
+        var CKEDITOR_BASEPATH = "{% new_static 'app_manager/js/vellum/lib/ckeditor/' %}";
 
         var VELLUM_OPTIONS = {
             plugins: {{ plugins|JSON }},
@@ -51,7 +51,7 @@
                 onReady: function () {
                     var less_error_id = "#less-error-message\\:static-style-less-hqstyle-core",
                         less_error = $(less_error_id);
-                    if (less_error) {
+                    if (less_error.length) {
                         console.log("hiding less error:", less_error_id);
                         console.log(less_error.text());
                         less_error.hide();
@@ -90,11 +90,11 @@
             windowManager: {
                 bottomOffset: $('footer').outerHeight(),
                 leftOffset: function () {
-                    return $('.sidebar').outerWidth() + 2;
+                    return $('#hq-sidebar').outerWidth() + 2;
                 },
                 topOffset: function () {
-                    return $('header').outerHeight() + 
-                        $('.hq-page-header-container').outerHeight();
+                    return $('#hq-navigation').outerHeight() + 
+                        $('.breadcrumb-hq-section').outerHeight();
                 }
             },
             csrftoken: $.cookie('csrftoken'),
@@ -112,11 +112,11 @@
                 * set settings.VELLUM_DEBUG to "dev" or "dev-min"
             {% endcomment %}
             {% if not vellum_debug %}
-            baseUrl: "{% static 'app_manager/js/vellum/src' %}",
+            baseUrl: "{% new_static 'app_manager/js/vellum/src' %}",
             {% elif vellum_debug == "dev-min" %}
-            baseUrl: "{% static 'formdesigner/_build/src' %}",
+            baseUrl: "{% new_static 'formdesigner/_build/src' %}",
             {% else %}
-            baseUrl: "{% static 'formdesigner/src' %}",
+            baseUrl: "{% new_static 'formdesigner/src' %}",
             {% endif %}
             // handle very bad connections
             waitSeconds: 60,
@@ -149,7 +149,7 @@
         };
 
         function gen_sidebar_elements() {
-            return $('.sidebar .nav-list a:not(a:has(.icon-pencil))');
+            return $('.sidebar .nav-hq-sidebar a:not(a:has(.fa-pencil))');
         }
         var sidebar_navigator = new KeyboardNavigator();
         sidebar_navigator.init({
@@ -269,11 +269,10 @@
     {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
     {% if form.id != None %}
     <li>
-        <span class="divider">&gt;</span>
         <a href="{% url "view_form" domain app.id module.id form.id %}">
             {{ form.name|trans:app.langs }}
         </a>
     </li>
     {% endif %}
-    <li><span class="divider">&gt;</span> <i class="icon-pencil"></i> Edit</li>
+    <li><i class="fa fa-pencil"></i> Edit</li>
 {% endblock %}
