@@ -49,9 +49,8 @@ while [[ $# > 0 ]]; do
             exit
             ;;
         *)
-            echo "ERROR: unknown parameter \"$PARAM\""
-            usage
-            exit 1
+            runner $@
+            exit
             ;;
     esac
     shift
