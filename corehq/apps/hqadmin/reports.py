@@ -828,13 +828,14 @@ class AdminDomainMapReport(AdminDomainStatsReport):
     name = ugettext_noop('Project Map')
     facet_title = ugettext_noop("Project Facets")
     search_for = ugettext_noop("projects...")
-    base_template = "hqadmin/project_map/project_map.html"
+    base_template = "hqadmin/project_map.html"
 
     exportable = False
 
     def set_bootstrap3_status(self, request, *args, **kwargs):
         super(AdminDomainStatsReport, self).set_bootstrap3_status(request, *args, **kwargs)
 
+    # an only slightly modified (so far) version AdminDomainStatsReport.rows
     @property
     def rows(self):
         domains = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
@@ -854,6 +855,7 @@ class AdminDomainMapReport(AdminDomainStatsReport):
                 if dom.get("cp_last_form", None):
                     first_form_default_message = _("Unable to parse date")
 
+                # todo: can probably remove lots of these
                 yield [
                     dom.get("hr_name") or dom.get("name"),
                     self.get_name_or_link(dom, internal_settings=True),

@@ -20,20 +20,18 @@ jQuery(document).ready(function($) {
         that.refreshProjectData = function (filter) {
             // todo: use filters to filter ES search query
             $.ajax({
-                url: 'http://localhost:8000/hq/admin/json/project_map/',
+                url: 'http://localhost:8000/hq/admin/json/project_map/' + window.location.search,
                 dataType: 'json',
                 success: function (data) {
                     var tempProjects = {};
                     // data.aaData seems to hold the information. not sure though if this is the best way of getting the data. hmm.
                     data.aaData.forEach(function (project) {
                         var countryNamesIndex = 5;
-                        // todo: figure out a better thing to do about mismatch between country NAMES and Names
                         if (project[countryNamesIndex].length < 1) {
                             //todo: deal with no listed deployment country. just ignore??
                         } else {
                             // this will use only the first listed country
                             var countryName = project[countryNamesIndex][0].toLowerCase();
-                            console.log(project[countryNamesIndex]);
                             if (!tempProjects[countryName]) {
                                 tempProjects[countryName] = {};
                             }
@@ -96,7 +94,9 @@ jQuery(document).ready(function($) {
                 table.append(row);
                 cell = $(document.createElement('td'));
                 row.append(cell);
-                cell.append($(document.createElement('a')).text(projectName).addClass('project-link'));
+                // todo: potentially parse the anchor tags on page load to allow the state of country/project selection to be carried/shared
+                //       in the url without changing/reloading the page on click
+                cell.append($(document.createElement('a')).text(projectName).addClass('project-link').attr("href", "#"+projectName));
                 propertiesToShow.forEach(function(propertyName) {
                     cell = $(document.createElement('td'));
                     row.append(cell);
