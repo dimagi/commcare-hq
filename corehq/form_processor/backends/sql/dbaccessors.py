@@ -132,6 +132,14 @@ class FormAccessorSQL(AbstractFormAccessor):
         FormAccessorSQL._archive_unarchive_form(form, user_id, False)
 
     @staticmethod
+    def update_state(form_id, state):
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute(
+                'SELECT update_form_state(%s, %s)',
+                [form_id, state]
+            )
+
+    @staticmethod
     @transaction.atomic
     def _archive_unarchive_form(form, user_id, archive):
         from casexml.apps.case.xform import get_case_ids_from_form
