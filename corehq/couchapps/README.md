@@ -48,7 +48,7 @@ defines a design doc. In this directory will be some number of views.
             map.js
             reduce.js
          + saved_app/
-         + types_by_module/
+         + forms_by_xmlns/
 ```
 
 This creates a single design doc with three views.  Here's what they might look
@@ -57,7 +57,8 @@ like in action:
 ```python
 Application.view("app_manager/builds_by_date", ...)
 Application.view("app_manager/saved_app", ...)
-Application.view("app_manager/types_by_module", ...)
+# in our hypothetical example, this view works on doc_type "XFormInstance"
+Application.view("app_manager/forms_by_xmlns", ...)
 ```
 
 Because of the limitations mentioned above, you can instead create your views
@@ -66,20 +67,32 @@ might look like is:
 
 ```
 - couchapps/
-   - app_manager_builds_by_date
+   - app_builds_by_date
       - views
          - view
             map.js
             reduce.js
-   + app_manager_saved_app
-   + app_manager_types_by_module
+   + saved_apps
+   + forms_by_xmlns
 ```
 
 Where the convention `corehq/couchapps/<view name>/views/view/` produces the
 following views:
 
 ```python
-Application.view("app_manager_builds_by_date/view", ...)
-Application.view("app_manager_saved_app/view", ...)
-Application.view("app_manager_types_by_module/view", ...)
+Application.view("app_builds_by_date/view", ...)
+Application.view("saved_apps/view", ...)
+XFormInstance.view("forms_by_xmlns/view", ...)
 ```
+
+#### Benefits
+With this new structure, you can make a change to `"app_builds_by_date"`
+without needing to also reindex `"saved_apps"` and `"forms_by_xmlns"`.
+
+In the example above, the `forms_by_xmlns` view operates on XFormInstance, but
+for some reason lives in `app_manager`.  By moving it here, you can explicitly
+choose in which dbs to include that view.
+
+Writing `Application.view("app_manager/forms_by_xmlns", ...)` should seem a
+little weird to you, because it makes sense for views to be associated with the
+doc type they operate on, not the module (if the two disagree).
