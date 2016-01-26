@@ -3,7 +3,7 @@ from collections import defaultdict, OrderedDict
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty
 
 from corehq.apps.userreports.expressions.getters import NestedDictGetter
-from corehq.apps.app_manager.dbaccessors import get_built_app_ids_for_app_id
+from corehq.apps.app_manager.dbaccessors import get_built_app_ids_for_app_id, get_all_app_ids
 from corehq.apps.app_manager.models import Application
 from dimagi.utils.couch.database import iter_docs
 from dimagi.ext.couchdbkit import (
@@ -294,8 +294,14 @@ class FormExportDataSchema(ExportDataSchema):
 class CaseExportDataSchema(ExportDataSchema):
 
     @staticmethod
-    def generate_schema_from_builds(domain, app_id, case_type):
-        app_build_ids = get_built_app_ids_for_app_id(domain, app_id)
+    def generate_schema_from_builds(domain, case_type):
+        """Builds a schema from Application builds for a given identifier
+
+        :param domain: The domain that the export belongs to
+        :param unique_form_id: The unique identifier of the item being exported
+        :returns: Returns a ExportDataSchema instance
+        """
+        app_build_ids = get_all_app_ids(domain)
         all_case_schema = CaseExportDataSchema()
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
