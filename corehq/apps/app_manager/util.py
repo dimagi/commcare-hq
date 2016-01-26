@@ -265,7 +265,7 @@ def get_casedb_schema(app):
     """
     case_types = app.get_case_types()
     per_type_defaults = get_per_type_defaults(app.domain, case_types)
-    builder = ParentCasePropertyBuilder(app, ['name'], per_type_defaults)
+    builder = ParentCasePropertyBuilder(app, ['case_name'], per_type_defaults)
     related = builder.get_parent_type_map(case_types)
     map = builder.get_case_property_map(case_types, include_parent_properties=False)
     return {
