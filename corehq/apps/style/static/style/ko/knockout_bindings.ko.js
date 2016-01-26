@@ -133,6 +133,7 @@ ko.bindingHandlers.langcode = {
     },
     update: ko.bindingHandlers.editableString.update
 };
+
 ko.bindingHandlers.sortable = {
     updateSortableList: function (itemList) {
         _(itemList()).each(function (item, index) {
