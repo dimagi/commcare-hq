@@ -5,20 +5,22 @@
 <script src="{% static 'xpath/parser.js' %}"></script>
 <script src="{% static 'app_manager/js/xpathConfig.js' %}"></script>
 <script type="text/html" id="XPathValidator.template">
-    <div class="span3 js-xpath-input-target">
-        <input type="text"
+<div class="row">
+    <div class="col-sm-11 js-xpath-input-target">
+        <input type="text" class="form-control"
             data-bind="attr: {name: input.getAttribute('name'), placeholder: input.getAttribute('placeholder')},
                        value: xpathValidator.xpathText, valueUpdate: 'textchange'"/>
     </div>
-    <div class="span1">
+    <div class="col-sm-1">
         <div data-bind="if: xpathValidator.xpathText() && !xpathValidator.error()">
-            <i class="icon icon-ok"></i>
+            <i class="fa fa-check"></i>
         </div>
         <div data-bind="if: xpathValidator.error">
-            <i class="icon icon-exclamation-sign"
+            <i class="fa fa-exclamation-circle"
                data-bind="popover: {title: xpathValidator.errorTitle, trigger: 'hover', html: true, content: xpathValidator.errorHtml}"></i>
         </div>
     </div>
+</div>
 </script>
 <script>
 ko.bindingHandlers.xpathValidator = (function () {
