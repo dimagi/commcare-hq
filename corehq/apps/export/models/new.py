@@ -109,11 +109,35 @@ class ExportColumn(DocumentSchema):
             selected=not is_deleted and is_main_table,
         )
 
+    def get_header(self):
+        return self.label
 
 class TableConfiguration(DocumentSchema):
     name = StringProperty()
     path = ListProperty()
     columns = ListProperty(ExportColumn)
+
+    @property
+    def identifier(self):
+        """
+        Return a hashable identifier for this table.
+        Useful for storing TableConfigurations in dictionaries.
+        """
+        return tuple(self.repeat_path)
+
+    def get_headers(self):
+        """
+        Return a list of column headers
+        """
+        headers = []
+        for column in self.columns:
+            col_headers = column.get_header()
+            if isinstance(col_headers, list):
+                col_headers.extend(col_headers)
+            else:
+                headers.append(col_headers)
+        # TODO: Always return a list to avoid having to do this dance
+        return headers
 
     def get_rows(self, document):
         """
@@ -164,6 +188,8 @@ class TableConfiguration(DocumentSchema):
 
 
 class ExportInstance(Document):
+
+    domain = StringProperty()
     tables = ListProperty(TableConfiguration)
 
     class Meta:
@@ -190,6 +216,12 @@ class ExportInstance(Document):
             instance.tables.append(table)
         return instance
 
+
+class CaseExportInstance(ExportInstance):
+    case_type = StringProperty()
+
+class FormExportInstance(ExportInstance):
+    xmlns = StringProperty()
 
 class ExportRow(object):
     def __init__(self, data):
@@ -649,3 +681,7 @@ class SplitExportColumn(ExportColumn):
         if not self.ignore_extras:
             row.append(" ".join(selected.keys()))
         return row
+
+    def get_header(self):
+        # TODO: Don't return the same header for every sub-column!
+        return [self.label] * len(self.options)
