@@ -10,6 +10,7 @@ from couchdbkit import ResourceNotFound
 import pytz
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
+from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.shortcuts import render
@@ -53,7 +54,7 @@ from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
                                    DEFAULT, CUSTOM, SendRegistrationInviationsForm,
                                    WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
                                    WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL, ComposeMessageForm)
-from corehq.apps.sms.util import get_available_backends, get_contact, get_backend_classes
+from corehq.apps.sms.util import get_contact, get_sms_backend_classes
 from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty as country_name_from_code
 from corehq.apps.groups.models import Group
@@ -543,60 +544,83 @@ def delete_forwarding_rule(request, domain, forwarding_rule_id):
     return HttpResponseRedirect(reverse("list_forwarding_rules", args=[domain]))
 
 
-@require_superuser
-def global_backend_map(request):
-    backend_classes = get_available_backends()
-    global_backends = SMSBackend.view(
-        "sms/global_backends",
-        classes=backend_classes,
-        include_docs=True,
-        reduce=False
-    ).all()
-    current_map = {}
-    catchall_entry = None
-    for entry in BackendMapping.view("sms/backend_map", startkey=["*"], endkey=["*", {}], include_docs=True).all():
-        if entry.prefix == "*":
-            catchall_entry = entry
-        else:
-            current_map[entry.prefix] = entry
-    if request.method == "POST":
-        form = BackendMapForm(request.POST)
-        if form.is_valid():
-            new_backend_map = form.cleaned_data.get("backend_map")
-            new_catchall_backend_id = form.cleaned_data.get("catchall_backend_id")
-            for prefix, entry in current_map.items():
-                if prefix not in new_backend_map:
-                    current_map[prefix].delete()
-                    del current_map[prefix]
-            for prefix, backend_id in new_backend_map.items():
-                if prefix in current_map:
-                    current_map[prefix].backend_id = backend_id
-                    current_map[prefix].save()
-                else:
-                    current_map[prefix] = BackendMapping(is_global=True, prefix=prefix, backend_id=backend_id)
-                    current_map[prefix].save()
-            if new_catchall_backend_id is None:
-                if catchall_entry is not None:
-                    catchall_entry.delete()
-                    catchall_entry = None
-            else:
-                if catchall_entry is None:
-                    catchall_entry = BackendMapping(is_global=True, prefix="*", backend_id=new_catchall_backend_id)
-                else:
-                    catchall_entry.backend_id = new_catchall_backend_id
-                catchall_entry.save()
-            messages.success(request, _("Changes Saved."))
-    else:
+
+class GlobalBackendMap(BaseAdminSectionView):
+    urlname = 'global_backend_map'
+    template_name = 'sms/backend_map.html'
+    page_title = ugettext_lazy("Global Prefix to Backend Mapping")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    @memoized
+    def backends(self):
+        return SQLMobileBackend.get_global_backends(SQLMobileBackend.SMS)
+
+    @property
+    @memoized
+    def backend_map_form(self):
+        if self.request.method == 'POST':
+            return BackendMapForm(self.request.POST, backends=self.backends)
+
+        backend_map = SQLMobileBackendMapping.get_prefix_to_backend_map(SQLMobileBackend.SMS)
         initial = {
-            "catchall_backend_id" : catchall_entry.backend_id if catchall_entry is not None else None,
-            "backend_map" : [{"prefix" : prefix, "backend_id" : entry.backend_id} for prefix, entry in current_map.items()],
+            'catchall_backend_id': backend_map.catchall_backend_id,
+            'backend_map': json.dumps([
+                {'prefix': prefix, 'backend_id': backend_id}
+                for prefix, backend_id in backend_map.backend_map_tuples
+            ]),
         }
-        form = BackendMapForm(initial=initial)
-    context = {
-        "backends" : global_backends,
-        "form" : form,
-    }
-    return render(request, "sms/backend_map.html", context)
+        return BackendMapForm(initial=initial, backends=self.backends)
+
+    @use_bootstrap3
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(GlobalBackendMap, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.backend_map_form,
+            'backends': self.backends,
+        }
+
+    def post(self, request, *args, **kwargs):
+        form = self.backend_map_form
+        if form.is_valid():
+            new_backend_map = form.cleaned_data.get('backend_map')
+            new_catchall_backend_id = form.cleaned_data.get('catchall_backend_id')
+
+            with transaction.atomic():
+                SQLMobileBackendMapping.get_prefix_to_backend_map.clear(
+                    SQLMobileBackendMapping, SQLMobileBackend.SMS
+                )
+                SQLMobileBackendMapping.objects.filter(
+                    is_global=True,
+                    backend_type=SQLMobileBackend.SMS,
+                ).delete()
+
+                for prefix, backend_id in new_backend_map.items():
+                    SQLMobileBackendMapping.objects.create(
+                        is_global=True,
+                        backend_type=SQLMobileBackend.SMS,
+                        prefix=prefix,
+                        backend_id=backend_id
+                    )
+
+                if new_catchall_backend_id:
+                    SQLMobileBackendMapping.objects.create(
+                        is_global=True,
+                        backend_type=SQLMobileBackend.SMS,
+                        prefix='*',
+                        backend_id=new_catchall_backend_id
+                    )
+
+            messages.success(request, _("Changes Saved."))
+            return HttpResponseRedirect(reverse(self.urlname))
+        return self.get(request, *args, **kwargs)
 
 
 @require_permission(Permissions.edit_data)
@@ -1064,7 +1088,7 @@ class AddGatewayViewMixin(object):
         # Regular users can only create/edit Telerivet backends for now
         if not self.is_superuser and self.hq_api_id != SQLTelerivetBackend.get_api_id():
             raise Http404()
-        backend_classes = get_backend_classes()
+        backend_classes = get_sms_backend_classes()
         try:
             return backend_classes[self.hq_api_id]
         except KeyError:

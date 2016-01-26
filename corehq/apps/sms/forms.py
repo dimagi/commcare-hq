@@ -25,6 +25,7 @@ from corehq.apps.sms.util import (get_available_backends, validate_phone_number,
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
+from corehq.apps.hqwebapp.crispy import ErrorsOnlyField
 from dimagi.utils.django.fields import TrimmedCharField
 from dimagi.utils.couch.database import iter_docs
 from django.conf import settings
@@ -863,30 +864,107 @@ class BackendForm(Form):
 
 
 class BackendMapForm(Form):
-    catchall_backend_id = CharField(required=False)
-    backend_map = RecordListField(input_name="backend_map")
+    catchall_backend_id = ChoiceField(
+        label=ugettext_lazy("Catch-All Gateway"),
+        required=False
+    )
+    backend_map = CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        backends = kwargs.pop('backends')
+        super(BackendMapForm, self).__init__(*args, **kwargs)
+        self.set_catchall_choices(backends)
+        self.setup_crispy()
+
+    def set_catchall_choices(self, backends):
+        backend_choices = [('', _("(none)"))]
+        backend_choices.extend([
+            (backend.pk, backend.name) for backend in backends
+        ])
+        self.fields['catchall_backend_id'].choices = backend_choices
+
+    def setup_crispy(self):
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.label_class = 'col-sm-2 col-md-2'
+        self.helper.field_class = 'col-sm-5 col-md-5'
+        self.helper.form_method = 'POST'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Default Gateways"),
+                hqcrispy.B3MultiField(
+                    _("Default Gateway by Prefix"),
+                    ErrorsOnlyField('backend_map'),
+                    crispy.Div(
+                        data_bind="template: {"
+                                  " name: 'ko-template-backend-map', "
+                                  " data: $data"
+                                  "}"
+                    ),
+                ),
+                'catchall_backend_id',
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Save"),
+                    type="submit",
+                    css_class='btn-primary'
+                ),
+            ),
+        )
+
+    def _clean_prefix(self, prefix):
+        try:
+            prefix = int(prefix)
+            if prefix <= 0:
+                raise ValueError()
+        except (ValueError, TypeError):
+            raise ValidationError(_("Please enter a positive number for the prefix."))
+
+        return str(prefix)
+
+    def _clean_backend_id(self, backend_id):
+        try:
+            backend_id = int(backend_id)
+        except (ValueError, TypeError):
+            raise ValidationError(_("Invalid Backend Specified."))
+
+        try:
+            backend = SQLMobileBackend.load(backend_id)
+        except:
+            raise ValidationError(_("Invalid Backend Specified."))
+
+        if (
+            backend.deleted or
+            not backend.is_global or
+            backend.backend_type != SQLMobileBackend.SMS
+        ):
+            raise ValidationError(_("Invalid Backend Specified."))
+
+        return backend_id
 
     def clean_backend_map(self):
+        value = self.cleaned_data.get('backend_map')
+        try:
+            value = json.loads(value)
+        except:
+            raise ValidationError(_("An unexpected error occurred. Please reload and try again"))
+
         cleaned_value = {}
-        for record in self.cleaned_data.get("backend_map", []):
-            prefix = record["prefix"].strip()
-            try:
-                prefix = int(prefix)
-                assert prefix > 0
-            except (ValueError, AssertionError):
-                raise ValidationError(_("Please enter a positive number for the prefix."))
-            prefix = str(prefix)
+        for mapping in value:
+            prefix = self._clean_prefix(mapping.get('prefix'))
             if prefix in cleaned_value:
-                raise ValidationError(_("Prefix is specified twice:") + prefix)
-            cleaned_value[prefix] = record["backend_id"]
+                raise ValidationError(_("Prefix is specified twice: %s") % prefix)
+
+            cleaned_value[prefix] = self._clean_backend_id(mapping.get('backend_id'))
         return cleaned_value
 
     def clean_catchall_backend_id(self):
-        value = self.cleaned_data.get("catchall_backend_id", None)
-        if value == "":
+        value = self.cleaned_data.get('catchall_backend_id')
+        if not value:
             return None
-        else:
-            return value
+
+        return self._clean_backend_id(value)
 
 
 class SendRegistrationInviationsForm(Form):

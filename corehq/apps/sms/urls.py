@@ -10,7 +10,8 @@ from corehq.apps.sms.views import (
     ComposeMessageView,
     GlobalSmsGatewayListView,
     AddGlobalGatewayView,
-    EditGlobalGatewayView)
+    EditGlobalGatewayView,
+    GlobalBackendMap)
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 
 urlpatterns = patterns('corehq.apps.sms.views',
@@ -57,7 +58,7 @@ sms_admin_interface_urls = patterns('corehq.apps.sms.views',
         name=AddGlobalGatewayView.urlname),
     url(r'^edit_global_gateway/(?P<hq_api_id>[\w-]+)/(?P<backend_id>[\w-]+)/$',
         EditGlobalGatewayView.as_view(), name=EditGlobalGatewayView.urlname),
-    url(r'^global_backend_map/$', 'global_backend_map', name='global_backend_map'),
+    url(r'^global_backend_map/$', GlobalBackendMap.as_view(), name=GlobalBackendMap.urlname),
     url(SMSAdminInterfaceDispatcher.pattern(), SMSAdminInterfaceDispatcher.as_view(),
         name=SMSAdminInterfaceDispatcher.name()),
 )
