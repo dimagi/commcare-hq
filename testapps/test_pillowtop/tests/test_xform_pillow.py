@@ -1,7 +1,4 @@
-from django.conf import settings
 from django.test import TestCase, override_settings
-from kafka import KafkaConsumer
-from kafka.common import KafkaUnavailableError
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.es import FormES
@@ -10,7 +7,8 @@ from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.xform import XFormPillow, get_sql_xform_to_elasticsearch_pillow
 from corehq.util.elastic import delete_es_index
-from corehq.util.test_utils import get_form_ready_to_save, trap_extra_setup
+from corehq.util.test_utils import get_form_ready_to_save
+from testapps.test_pillowtop.utils import get_test_kafka_consumer
 
 
 class XFormPillowTest(TestCase):
@@ -42,13 +40,7 @@ class XFormPillowTest(TestCase):
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_xform_pillow_sql(self):
-        with trap_extra_setup(KafkaUnavailableError):
-            consumer = KafkaConsumer(
-                topics.FORM_SQL,
-                group_id='test-sql-form-consumer',
-                bootstrap_servers=[settings.KAFKA_URL],
-                consumer_timeout_ms=100,
-            )
+        consumer = get_test_kafka_consumer(topics.FORM_SQL)
 
         # have to get the seq id before the change is processed
         kafka_seq = consumer.offsets()['fetch'][(topics.FORM_SQL, 0)]
