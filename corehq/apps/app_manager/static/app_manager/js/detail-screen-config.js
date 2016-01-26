@@ -1176,6 +1176,7 @@ var DetailScreenConfig = (function () {
         AUDIO_FORMAT: 'Audio',
         CALC_XPATH_FORMAT: 'Calculate',
         CALC_XPATH_EXTRA_LABEL: '',
+        DISTANCE_FORMAT: 'Distance from current location',
 
         ADD_COLUMN: 'Add to list',
         COPY_COLUMN: 'Duplicate',
@@ -1218,6 +1219,12 @@ var DetailScreenConfig = (function () {
     if (window.feature_previews.CALC_XPATHS) {
         DetailScreenConfig.MENU_OPTIONS.push(
             {value: "calculate", label: DetailScreenConfig.message.CALC_XPATH_FORMAT + ' (Preview!)'}
+        );
+    }
+
+    if (window.toggles.CASE_LIST_DISTANCE_SORT) {
+        DetailScreenConfig.MENU_OPTIONS.push(
+            {value: "distance", label: DetailScreenConfig.message.DISTANCE_FORMAT + ' (Preview!)'}
         );
     }
     DetailScreenConfig.field_format_warning_message = "Must begin with a letter and contain only letters, numbers, '-', and '_'";

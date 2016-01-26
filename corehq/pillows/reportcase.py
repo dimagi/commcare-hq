@@ -21,8 +21,8 @@ class ReportCasePillow(CasePillow):
         return '8c10a7564b6af5052f8b86693bf6ac07'
 
     def change_transform(self, doc_dict):
-        if self.get_domain(doc_dict) not in getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', []):
-            #full indexing is only enabled for select domains on an opt-in basis
+        if doc_dict.get('domain', None) not in getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', []):
+            # full indexing is only enabled for select domains on an opt-in basis
             return None
         doc_ret = copy.deepcopy(doc_dict)
         convert_property_dict(doc_ret, self.default_mapping, override_root_keys=['_id', 'doc_type', '_rev', '#export_tag'])
