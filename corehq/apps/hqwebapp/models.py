@@ -1615,15 +1615,17 @@ class SMSAdminTab(UITab):
     @property
     @memoized
     def sidebar_items(self):
+        from corehq.apps.sms.views import (GlobalSmsGatewayListView,
+            AddGlobalGatewayView, EditGlobalGatewayView)
         items = super(SMSAdminTab, self).sidebar_items
         items.append((_('SMS Connectivity'), [
             {'title': _('SMS Connections'),
-             'url': reverse('list_backends'),
+             'url': reverse(GlobalSmsGatewayListView.urlname),
              'subpages': [
                  {'title': _('Add Connection'),
-                  'urlname': 'add_backend'},
+                  'urlname': AddGlobalGatewayView.urlname},
                  {'title': _('Edit Connection'),
-                  'urlname': 'edit_backend'},
+                  'urlname': EditGlobalGatewayView.urlname},
             ]},
             {'title': _('SMS Country-Connection Map'),
              'url': reverse('global_backend_map')},

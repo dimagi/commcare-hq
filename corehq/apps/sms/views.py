@@ -16,6 +16,7 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from casexml.apps.case.models import CommCareCase
 from corehq import privileges
+from corehq.apps.hqadmin.views import BaseAdminSectionView
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
 from corehq.apps.reminders.util import can_use_survey_reminders
@@ -677,11 +678,6 @@ def _list_backends(request, show_global=False, domain=None):
 def list_backends(request):
     # We need to keep this until we move over the admin sms gateway UIs
     return _list_backends(request, True)
-
-
-@require_superuser
-def default_sms_admin_interface(request):
-    return HttpResponseRedirect(reverse("list_backends"))
 
 
 @require_superuser
@@ -1357,6 +1353,126 @@ class EditDomainGatewayView(AddDomainGatewayView):
     @property
     def page_url(self):
         return reverse(self.urlname, kwargs=self.kwargs)
+
+
+class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
+    template_name = "sms/global_gateway_list.html"
+    urlname = 'list_global_backends'
+    page_title = ugettext_noop("SMS Connectivity")
+
+    @use_bootstrap3
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(GlobalSmsGatewayListView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def parameters(self):
+        return self.request.POST if self.request.method == 'POST' else self.request.GET
+
+    @property
+    @memoized
+    def total(self):
+        return SQLMobileBackend.get_global_backends(SQLMobileBackend.SMS, count_only=True)
+
+    @property
+    def column_names(self):
+        return [
+            _("Connection"),
+            _("Description"),
+            _("Supported Countries"),
+            _("Actions"),
+        ]
+
+    @property
+    def page_context(self):
+        context = self.pagination_context
+        context.update({
+            'initiate_new_form': InitiateAddSMSBackendForm(is_superuser=self.request.couch_user.is_superuser),
+        })
+        return context
+
+    @property
+    def paginated_list(self):
+        backends = SQLMobileBackend.get_global_backends(
+            SQLMobileBackend.SMS,
+            offset=self.skip,
+            limit=self.limit
+        )
+
+        for backend in backends:
+            yield {
+                'itemData': self._fmt_backend_data(backend),
+                'template': 'gateway-template',
+            }
+
+    def _fmt_backend_data(self, backend):
+        if len(backend.supported_countries) > 0:
+            if backend.supported_countries[0] == '*':
+                supported_country_names = _('Multiple%s') % '*'
+            else:
+                supported_country_names = ', '.join(
+                    [_(country_name_from_code(int(c))) for c in backend.supported_countries])
+        else:
+            supported_country_names = ''
+        return {
+            'id': backend.pk,
+            'name': backend.name,
+            'description': backend.description,
+            'supported_countries': supported_country_names,
+            'editUrl': reverse(
+                EditGlobalGatewayView.urlname,
+                args=[backend.hq_api_id, backend.pk]
+            ),
+            'deleteModalId': 'delete_%s' % backend.pk,
+        }
+
+    def _get_backend_from_item_id(self, item_id):
+        try:
+            item_id = int(item_id)
+            backend = SQLMobileBackend.load(item_id)
+            return item_id, backend
+        except (BadSMSConfigException, SQLMobileBackend.DoesNotExist, TypeError, ValueError):
+            raise Http404()
+
+    def get_deleted_item_data(self, item_id):
+        item_id, backend = self._get_backend_from_item_id(item_id)
+
+        if not backend.is_global:
+            raise Http404()
+
+        # Do not actually delete so that linkage always exists between SMS and
+        # MobileBackend for billable history
+        backend.soft_delete()
+
+        return {
+            'itemData': self._fmt_backend_data(backend),
+            'template': 'gateway-deleted-template',
+        }
+
+    @property
+    def allowed_actions(self):
+        actions = super(GlobalSmsGatewayListView, self).allowed_actions
+        return actions + ['new_backend']
+
+    def post(self, request, *args, **kwargs):
+        if self.action == 'new_backend':
+            hq_api_id = request.POST['hq_api_id']
+            return HttpResponseRedirect(reverse(AddGlobalGatewayView.urlname, args=[hq_api_id]))
+        return self.paginate_crud_response
+
+
+class AddGlobalGatewayView(AddDomainGatewayView):
+    urlname = 'add_global_gateway'
+    pass
+
+
+class EditGlobalGatewayView(EditDomainGatewayView):
+    urlname = 'edit_global_gateway'
+    pass
 
 
 class SubscribeSMSView(BaseMessagingSectionView):

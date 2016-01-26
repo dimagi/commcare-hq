@@ -1599,6 +1599,23 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         return [cls.load(pk) for pk in result]
 
     @classmethod
+    def get_global_backends(cls, backend_type, count_only=False, offset=None, limit=None):
+        result = SQLMobileBackend.objects.filter(
+            is_global=True,
+            deleted=False,
+            backend_type=backend_type
+        )
+
+        if count_only:
+            return result.count()
+
+        result = result.order_by('name').values_list('id', flat=True)
+        if offset is not None and limit is not None:
+            result = result[offset:offset + limit]
+
+        return [cls.load(pk) for pk in result]
+
+    @classmethod
     def get_domain_default_backend(cls, backend_type, domain, id_only=False):
         result = SQLMobileBackendMapping.objects.filter(
             is_global=False,
