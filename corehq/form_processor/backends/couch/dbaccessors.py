@@ -45,7 +45,7 @@ class FormAccessorCouch(AbstractFormAccessor):
         form.save()
 
     @staticmethod
-    def get_deleted_forms_for_user(user_id, ids_only=False):
+    def get_deleted_forms_for_user(domain, user_id, ids_only=False):
         doc_ids = get_deleted_form_ids_for_user(user_id)
         if ids_only:
             return doc_ids

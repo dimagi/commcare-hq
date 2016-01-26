@@ -1571,7 +1571,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def get_forms(self, deleted=False, wrap=True):
         accessor = FormAccessors(self.domain)
         if deleted:
-            forms_or_form_ids = accessor.get_deleted_forms_for_user(self.user_id, ids_only=not wrap)
+            forms_or_form_ids = accessor.get_deleted_forms_for_user(
+                self.domain,
+                self.user_id,
+                ids_only=not wrap
+            )
         else:
             forms_or_form_ids = accessor.get_forms_for_user(self.domain, self.user_id, ids_only=not wrap)
 
