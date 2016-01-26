@@ -17,45 +17,46 @@ jQuery(document).ready(function($) {
         var projectsByCountryThenName = {};
         var maxNumProjects = 0;
         
-        that.refreshProjectData = function (filter) {
-            // todo: use filters to filter ES search query
+        that.refreshProjectData = function (filter, callback) {
             $.ajax({
                 url: 'http://localhost:8000/hq/admin/json/project_map/' + window.location.search,
                 dataType: 'json',
-                success: function (data) {
-                    var tempProjects = {};
-                    // data.aaData seems to hold the information. not sure though if this is the best way of getting the data. hmm.
-                    data.aaData.forEach(function (project) {
-                        var countryNamesIndex = 5;
-                        if (project[countryNamesIndex].length < 1) {
-                            //todo: deal with no listed deployment country. just ignore??
-                        } else {
-                            // this will use only the first listed country
-                            var countryName = project[countryNamesIndex][0].toLowerCase();
-                            if (!tempProjects[countryName]) {
-                                tempProjects[countryName] = {};
-                            }
-                            tempProjects[countryName][project[0]] = {
-                                'Link': project[1],
-                                'Date Created': project[2].substring(0,10),
-                                'Organization': project[3],
-                                'Deployment Date': project[4].substring(0,10),
-                                '# Forms Submitted': project[13],
-                                '# Active Mobile Workers': project[6],
-                                'Notes': project[17],
-                                'Sector': project[23],
-                                'Sub-Sector': project[24]
-                            };
+            }).done(function (data) {
+                var tempProjects = {};
+                // data.aaData seems to hold the information. not sure though if this is the best way of getting the data. hmm.
+                data.aaData.forEach(function (project) {
+                    var countryNamesIndex = 5;
+                    if (project[countryNamesIndex].length < 1) {
+                        //todo: deal with no listed deployment country. just ignore??
+                    } else {
+                        // this will use only the first listed country
+                        var countryName = project[countryNamesIndex][0].toLowerCase();
+                        if (!tempProjects[countryName]) {
+                            tempProjects[countryName] = {};
                         }
-                    });
-                    projectsByCountryThenName = tempProjects;
-    
-                    maxNumProjects = Math.max(...Object.keys(projectsByCountryThenName).map(function(countryName) {
-                        return Object.keys(projectsByCountryThenName[countryName]).length;
-                    }));
+                        tempProjects[countryName][project[0]] = {
+                            'Link': project[1],
+                            'Date Created': project[2].substring(0,10),
+                            'Organization': project[3],
+                            'Deployment Date': project[4].substring(0,10),
+                            '# Forms Submitted': project[13],
+                            '# Active Mobile Workers': project[6],
+                            'Notes': project[17],
+                            'Sector': project[23],
+                            'Sub-Sector': project[24]
+                        };
+                    }
+                });
 
-                    colorAll();
-                }
+                projectsByCountryThenName = tempProjects;
+
+                maxNumProjects = Math.max(...Object.keys(projectsByCountryThenName).map(function(countryName) {
+                    return Object.keys(projectsByCountryThenName[countryName]).length;
+                }));
+
+                colorAll();
+
+                callback();
             });
         };
 
@@ -94,9 +95,7 @@ jQuery(document).ready(function($) {
                 table.append(row);
                 cell = $(document.createElement('td'));
                 row.append(cell);
-                // todo: potentially parse the anchor tags on page load to allow the state of country/project selection to be carried/shared
-                //       in the url without changing/reloading the page on click
-                cell.append($(document.createElement('a')).text(projectName).addClass('project-link').attr("href", "#"+projectName));
+                cell.append($(document.createElement('a')).text(projectName).addClass('project-link'));
                 propertiesToShow.forEach(function(propertyName) {
                     cell = $(document.createElement('td'));
                     row.append(cell);
@@ -137,6 +136,8 @@ jQuery(document).ready(function($) {
             var modalContent = $('.modal-content');
             modalContent.addClass('show-table');
             modalContent.removeClass('show-project-info');
+
+            window.location.hash = $('.country-name').text();
         };
 
         that.showProjectInfo = function(countryName, projectIdentifier) {
@@ -146,6 +147,8 @@ jQuery(document).ready(function($) {
             var modalContent = $('.modal-content');
             modalContent.removeClass('show-table');
             modalContent.addClass('show-project-info');
+
+            window.location.hash ='#' + countryName + '#' + projectIdentifier;
         };
 
         Object.freeze(that);
@@ -154,13 +157,17 @@ jQuery(document).ready(function($) {
 
     $(document).on('click', '.project-link', function(evt) {
         // todo: start storing the name of the selected country in a global variable or something, not pulling it out of the DOM when needed
-        modalController.showProjectInfo($('.country-name').text(), $(this).text());
+        var projectName = $(this).text();
+        modalController.showProjectInfo($('.country-name').text(), projectName);
     });
 
     $(document).on('click', '.back', function(evt) {
         modalController.showProjectsTable($('.country-name').text());
     });
 
+    $('#modal').on('hidden.bs.modal', function (e) {
+         window.location.hash = '';
+    });
 
     var countriesGeo;
     // A lot of the styling work here is modeled after http://leafletjs.com/examples/choropleth.html
@@ -307,6 +314,19 @@ jQuery(document).ready(function($) {
     // todo: should probably be getting this from somewhere else and possibly not on every page load.
     $.getJSON('https://raw.githubusercontent.com/dimagi/world.geo.json/master/countries.geo.json', function (data) {
         countriesGeo = L.geoJson(data, {style: style, onEachFeature: onEachFeature}).addTo(map);
-        dataController.refreshProjectData({});
+        dataController.refreshProjectData({}, function() {
+            // if url contains reference to a project and/or a country, load that project/country
+            var references = window.location.hash.substring(1).split('#');
+            if (references.length === 2) {
+                // country, then project
+                modalController.showProjectsTable(references[0]); // or otherwise make it so that the back button knows which country to go to
+                modalController.showProjectInfo(references[0], references[1]);
+                $('#modal').modal();
+            } else if (references.length === 1 && references[0].length > 0) {
+                // just a country
+                modalController.showProjectsTable(references[0]);
+                $('#modal').modal();
+            }
+        });
     });
 });
