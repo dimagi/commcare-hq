@@ -1,4 +1,5 @@
-import datetime, time
+import datetime
+import time
 from mock import patch
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
