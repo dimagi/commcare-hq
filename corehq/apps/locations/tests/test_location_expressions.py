@@ -1,6 +1,7 @@
 import uuid
 from django.test import TestCase, SimpleTestCase
 from fakecouch import FakeCouchDb
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType, Location
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import EvaluationContext
@@ -11,6 +12,7 @@ class TestLocationTypeExpression(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain_name = "test-domain"
+        cls.domain_obj = create_domain(cls.domain_name)
         cls.location_type = LocationType(
             domain=cls.domain_name,
             name="state",
@@ -39,8 +41,7 @@ class TestLocationTypeExpression(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.location.delete()
-        cls.location_type.delete()
+        cls.domain_obj.delete()
 
     def _check_expression(self, doc, expected, domain=None):
         domain = domain or self.domain_name
