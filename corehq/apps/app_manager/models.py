@@ -3317,8 +3317,7 @@ def _filter_by_case_sharing_group_id(user, ui_filter):
 
 
 def _filter_by_location_id(user, ui_filter):
-    from corehq.apps.reports_core.filters import Choice
-    return Choice(value=user.location_id, display=None)
+    return _filter_type_to_func[self.filter_type](user, ui_filter)
 
 
 def _filter_by_username(user, ui_filter):
@@ -3342,7 +3341,7 @@ _filter_type_to_func = {
 class AutoFilter(ReportAppFilter):
     filter_type = StringProperty(choices=_filter_type_to_func.keys())
 
-    def get_filter_value(self, user, ui_filter, ui_filter):
+    def get_filter_value(self, user, ui_filter):
         return _filter_type_to_func[self.filter_type](user)
 
 
