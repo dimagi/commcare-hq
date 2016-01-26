@@ -1188,9 +1188,11 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         return self.paginate_crud_response
 
 
-class AddDomainGatewayView(BaseMessagingSectionView):
-    urlname = 'add_domain_gateway'
-    template_name = 'sms/add_gateway.html'
+class AddGatewayViewMixin(object):
+    """
+    A mixin to help extract the common functionality between adding/editing
+    domain-level backends and adding/editing global backends.
+    """
     page_title = ugettext_noop("Add SMS Connection")
 
     @property
@@ -1220,16 +1222,6 @@ class AddDomainGatewayView(BaseMessagingSectionView):
         return issubclass(self.backend_class, PhoneLoadBalancingMixin)
 
     @property
-    @memoized
-    def backend(self):
-        return self.backend_class(
-            domain=self.domain,
-            is_global=False,
-            backend_type=SQLMobileBackend.SMS,
-            hq_api_id=self.backend_class.get_api_id()
-        )
-
-    @property
     def page_name(self):
         return _("Add %s Connection") % self.backend_class.get_generic_name()
 
@@ -1238,33 +1230,12 @@ class AddDomainGatewayView(BaseMessagingSectionView):
         return _("Create %s SMS Connection") % self.backend_class.get_generic_name()
 
     @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain, self.hq_api_id])
-
-    @property
-    @memoized
-    def backend_form(self):
-        form_class = self.backend_class.get_form_class()
-        if self.request.method == 'POST':
-            form = form_class(self.request.POST, button_text=self.button_text)
-            form._cchq_domain = self.domain
-            return form
-        return form_class(button_text=self.button_text)
-
-    @property
     def page_context(self):
         return {
             'form': self.backend_form,
             'button_text': self.button_text,
             'use_load_balancing': self.use_load_balancing,
         }
-
-    @property
-    def parent_pages(self):
-        return [{
-            'title': DomainSmsGatewayListView.page_title,
-            'url': reverse(DomainSmsGatewayListView.urlname, args=[self.domain]),
-        }]
 
     def post(self, request, *args, **kwargs):
         if self.backend_form.is_valid():
@@ -1282,9 +1253,68 @@ class AddDomainGatewayView(BaseMessagingSectionView):
                 self.backend.load_balancing_numbers = self.backend_form.cleaned_data['phone_numbers']
 
             self.backend.save()
-            self.backend.set_shared_domains(self.backend_form.cleaned_data.get('authorized_domains'))
-            return HttpResponseRedirect(reverse(DomainSmsGatewayListView.urlname, args=[self.domain]))
+            if not self.backend.is_global:
+                self.backend.set_shared_domains(self.backend_form.cleaned_data.get('authorized_domains'))
+            return self.redirect_to_gateway_list()
         return self.get(request, *args, **kwargs)
+
+    @property
+    def backend(self):
+        raise NotImplementedError()
+
+    @property
+    def page_url(self):
+        raise NotImplementedError()
+
+    @property
+    def backend_form(self):
+        raise NotImplementedError()
+
+    @property
+    def parent_pages(self):
+        raise NotImplementedError()
+
+    def redirect_to_gateway_list(self):
+        raise NotImplementedError()
+
+
+class AddDomainGatewayView(AddGatewayViewMixin, BaseMessagingSectionView):
+    urlname = 'add_domain_gateway'
+    template_name = 'sms/add_gateway.html'
+
+    @property
+    @memoized
+    def backend(self):
+        return self.backend_class(
+            domain=self.domain,
+            is_global=False,
+            backend_type=SQLMobileBackend.SMS,
+            hq_api_id=self.backend_class.get_api_id()
+        )
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.hq_api_id])
+
+    @property
+    @memoized
+    def backend_form(self):
+        form_class = self.backend_class.get_form_class()
+        if self.request.method == 'POST':
+            form = form_class(self.request.POST, button_text=self.button_text)
+            form._cchq_domain = self.domain
+            return form
+        return form_class(button_text=self.button_text)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': DomainSmsGatewayListView.page_title,
+            'url': reverse(DomainSmsGatewayListView.urlname, args=[self.domain]),
+        }]
+
+    def redirect_to_gateway_list(self):
+        return HttpResponseRedirect(reverse(DomainSmsGatewayListView.urlname, args=[self.domain]))
 
     @use_bootstrap3
     @use_select2
@@ -1309,9 +1339,12 @@ class EditDomainGatewayView(AddDomainGatewayView):
             backend = self.backend_class.objects.get(pk=self.backend_id)
         except ResourceNotFound:
             raise Http404()
-        if backend.is_global or backend.domain != self.domain:
-            raise Http404()
-        if backend.hq_api_id != self.backend_class.get_api_id():
+        if (
+            backend.is_global or
+            backend.domain != self.domain or
+            backend.hq_api_id != self.backend_class.get_api_id() or
+            backend.deleted
+        ):
             raise Http404()
         return backend
 
@@ -1465,14 +1498,106 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
         return self.paginate_crud_response
 
 
-class AddGlobalGatewayView(AddDomainGatewayView):
+class AddGlobalGatewayView(AddGatewayViewMixin, BaseAdminSectionView):
     urlname = 'add_global_gateway'
-    pass
+    template_name = 'sms/add_gateway.html'
+
+    @property
+    @memoized
+    def backend(self):
+        return self.backend_class(
+            is_global=True,
+            backend_type=SQLMobileBackend.SMS,
+            hq_api_id=self.backend_class.get_api_id()
+        )
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.hq_api_id])
+
+    @property
+    @memoized
+    def backend_form(self):
+        form_class = self.backend_class.get_form_class()
+        if self.request.method == 'POST':
+            form = form_class(self.request.POST, button_text=self.button_text)
+            return form
+        return form_class(button_text=self.button_text)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': GlobalSmsGatewayListView.page_title,
+            'url': reverse(GlobalSmsGatewayListView.urlname),
+        }]
+
+    def redirect_to_gateway_list(self):
+        return HttpResponseRedirect(reverse(GlobalSmsGatewayListView.urlname))
+
+    @use_bootstrap3
+    @use_select2
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(AddGlobalGatewayView, self).dispatch(request, *args, **kwargs)
 
 
-class EditGlobalGatewayView(EditDomainGatewayView):
+class EditGlobalGatewayView(AddGlobalGatewayView):
     urlname = 'edit_global_gateway'
-    pass
+    page_title = ugettext_noop("Edit SMS Connection")
+
+    @property
+    def backend_id(self):
+        return self.kwargs['backend_id']
+
+    @property
+    @memoized
+    def backend(self):
+        try:
+            backend = self.backend_class.objects.get(pk=self.backend_id)
+        except ResourceNotFound:
+            raise Http404()
+        if (
+            not backend.is_global or
+            backend.deleted or
+            backend.hq_api_id != self.backend_class.get_api_id()
+        ):
+            raise Http404()
+        return backend
+
+    @property
+    @memoized
+    def backend_form(self):
+        form_class = self.backend_class.get_form_class()
+        initial = {
+            'name': self.backend.name,
+            'description': self.backend.description,
+            'reply_to_phone_number': self.backend.reply_to_phone_number,
+        }
+        initial.update(self.backend.get_extra_fields())
+
+        if self.use_load_balancing:
+            initial['phone_numbers'] = json.dumps(
+                [{'phone_number': p} for p in self.backend.load_balancing_numbers]
+            )
+
+        if self.request.method == 'POST':
+            form = form_class(self.request.POST, initial=initial,
+                              button_text=self.button_text)
+            form._cchq_backend_id = self.backend.pk
+            return form
+        return form_class(initial=initial, button_text=self.button_text)
+
+    @property
+    def page_name(self):
+        return _("Edit %s Connection") % self.backend_class.get_generic_name()
+
+    @property
+    def button_text(self):
+        return _("Update %s SMS Connection") % self.backend_class.get_generic_name()
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, kwargs=self.kwargs)
 
 
 class SubscribeSMSView(BaseMessagingSectionView):

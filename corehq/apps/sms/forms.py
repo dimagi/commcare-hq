@@ -746,6 +746,33 @@ class BackendForm(Form):
         label=ugettext_noop("Reply-To Phone Number"),
     )
 
+    @property
+    def is_global_backend(self):
+        return self._cchq_domain is None
+
+    @property
+    def general_fields(self):
+        fields = [
+            crispy.Field('name', css_class='input-xxlarge'),
+            crispy.Field('description', css_class='input-xxlarge', rows="3"),
+            crispy.Field('reply_to_phone_number', css_class='input-xxlarge'),
+        ]
+
+        if not self.is_global_backend:
+            fields.extend([
+                crispy.Field(
+                    twbscrispy.PrependedText(
+                        'give_other_domains_access', '', data_bind="checked: share_backend"
+                    )
+                ),
+                crispy.Div(
+                    'authorized_domains',
+                    data_bind="visible: showAuthorizedDomains",
+                ),
+            ])
+
+        return fields
+
     def __init__(self, *args, **kwargs):
         button_text = kwargs.pop('button_text', _("Create SMS Connection"))
         super(BackendForm, self).__init__(*args, **kwargs)
@@ -757,18 +784,7 @@ class BackendForm(Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('General Settings'),
-                crispy.Field('name', css_class='input-xxlarge'),
-                crispy.Field('description', css_class='input-xxlarge', rows="3"),
-                crispy.Field('reply_to_phone_number', css_class='input-xxlarge'),
-                crispy.Field(
-                    twbscrispy.PrependedText(
-                        'give_other_domains_access', '', data_bind="checked: share_backend"
-                    )
-                ),
-                crispy.Div(
-                    'authorized_domains',
-                    data_bind="visible: showAuthorizedDomains",
-                ),
+                *self.general_fields
             ),
             self.gateway_specific_fields,
             crispy.Fieldset(
@@ -803,7 +819,7 @@ class BackendForm(Form):
         if re.compile("\s").search(value) is not None:
             raise ValidationError(_("Name may not contain any spaces."))
 
-        if self._cchq_domain is None:
+        if self.is_global_backend:
             # We're using the form to create a global backend, so
             # ensure name is not duplicated among other global backends
             is_unique = SQLMobileBackend.name_is_unique(
