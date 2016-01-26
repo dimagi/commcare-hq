@@ -33,3 +33,25 @@ data node
 ...mmcare_location_id) &gt; 0, instance('co
 -----------------------^
 """))
+
+    def test_good_hashtag(self):
+        self.assertEqual(
+            validate_xpath('#session'),
+            XpathValidationResponse(is_valid=True, message=None))
+
+    def test_bad_hashtag(self):
+        self.assertEqual(
+            validate_xpath('#hashtag'),
+            XpathValidationResponse(is_valid=False,
+                                    message="hashtag is not a valid # expression\n"))
+
+    def test_case_hashtag(self):
+        self.assertEqual(
+            validate_xpath('#case', allow_case_hashtags=True),
+            XpathValidationResponse(is_valid=True, message=None))
+
+    def test_disallowed_case_hashtag(self):
+        self.assertEqual(
+            validate_xpath('#case', allow_case_hashtags=False),
+            XpathValidationResponse(is_valid=False,
+                                    message="case is not a valid # expression\n"))
