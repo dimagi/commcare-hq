@@ -45,7 +45,7 @@ The following commands assumes that you have updated your localsettings as descr
 **Print the help**
 
 ```
-  $ .dockerhq.sh --help
+  $ ./dockerhq.sh --help
 ```
 
 **Start/stop the services (couch, postgres, elastic, redis)**
