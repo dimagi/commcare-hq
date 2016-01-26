@@ -11,7 +11,7 @@
             <i class="fa fa-remove"></i>
         </a>
         {% trans "Only if the answer to" %}
-        <input type="hidden" data-bind="
+        <input type="hidden" class="form-control" data-bind="
             questionsSelect: $root.getQuestions('select select1', false, $parent.config.allow.repeats()),
             value: question,
             optionsCaption: ' '
@@ -35,7 +35,7 @@
 </script>
 
 <script type="text/html" id="case-config:case-properties:question">
-    <input type="hidden" data-bind="
+    <input type="hidden" class="form-control" data-bind="
         questionsSelect: $root.getQuestions('all', false, case_transaction.allow.repeats(), true),
         value: path,
         optionsCaption: ' '
