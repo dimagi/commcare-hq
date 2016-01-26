@@ -1567,6 +1567,10 @@ CASEXML_FORCE_DOMAIN_CHECK = True
 # the group shown here, plus a second group consisting of everything else
 TRAVIS_TEST_GROUPS = (
     (
+        # tests that depend on kafka are at the top of this because they should
+        # run first due to a travis/kafka bug we are trying to sort out.
+        # https://github.com/dimagi/commcare-hq/pull/10034#issuecomment-174868270
+        'test_pillowtop', 'change_feed',
         'accounting', 'api', 'app_manager', 'appstore',
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
         'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
