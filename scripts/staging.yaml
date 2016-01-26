@@ -45,6 +45,8 @@
 trunk: master
 name: autostaging
 branches:
+  - b3-app-manager+fix-hashtag-validation  # danny 1/26
+  - new-footer-nav+fix-hashtag-validation  # danny 1/26
   - fix-hashtag-validation  # danny 1/26
   - fab-npm  # danny 1/26
   - kill-x_over_time  # Danny 12/11
