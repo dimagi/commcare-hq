@@ -1,6 +1,7 @@
 # Standard Library imports
 from functools import wraps
 import logging
+import json
 from base64 import b64decode
 
 # Django imports
@@ -8,7 +9,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden
+from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden, HttpResponse
+from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
 from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
@@ -25,6 +27,8 @@ from python_digest import parse_digest_credentials
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
 from dimagi.utils.web import json_response
+
+from django_otp import match_token
 
 # CCHQ imports
 from corehq.apps.domain.models import Domain
@@ -81,7 +85,15 @@ def login_and_domain_required(view_func):
                     # some views might not have this set
                     couch_user = CouchUser.from_django_user(user)
                 if couch_user.is_member_of(domain) or domain.is_public:
-                    return view_func(req, domain_name, *args, **kwargs)
+                    if domain.two_factor_auth and not user.is_verified():
+                        return TemplateResponse(
+                            request=req,
+                            template='two_factor/core/otp_required.html',
+                            status=403,
+                        )
+                    else:
+                        return view_func(req, domain_name, *args, **kwargs)
+
                 elif user.is_superuser and not domain.restrict_superusers:
                     # superusers can circumvent domain permissions.
                     return view_func(req, domain_name, *args, **kwargs)
@@ -125,7 +137,7 @@ def api_key():
     return real_decorator
 
 
-def _login_or_challenge(challenge_fn, allow_cc_users=False):
+def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False):
     # ensure someone is logged in, or challenge
     # challenge_fn should itself be a decorator that can handle authentication
     def _outer(fn):
@@ -134,6 +146,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False):
             if not request.user.is_authenticated():
                 @check_lockout
                 @challenge_fn
+                @two_factor_check(api_key)
                 def _inner(request, domain, *args, **kwargs):
                     request.couch_user = couch_user = CouchUser.from_django_user(request.user)
                     if (
@@ -182,10 +195,28 @@ def login_or_digest_or_basic_or_apikey(default=BASIC):
 
 
 def login_or_api_key_ex(allow_cc_users=False):
-    return _login_or_challenge(api_key(), allow_cc_users=allow_cc_users)
+    return _login_or_challenge(api_key(), allow_cc_users=allow_cc_users, api_key=True)
 
 
 login_or_api_key = login_or_api_key_ex()
+
+
+def two_factor_check(api_key):
+    def _outer(fn):
+        @wraps(fn)
+        def _inner(request, domain, *args, **kwargs):
+            if not api_key and Domain.get_by_name(domain).two_factor_auth:
+                token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
+                print token
+                if token and match_token(request.user, token):
+                    return fn(request, *args, **kwargs)
+                else:
+                    return HttpResponse(json.dumps({"error": "must send X-CommcareHQ-OTP header"}),
+                                        content_type='application/json',
+                                        status=401)
+            return fn(request, domain, *args, **kwargs)
+        return _inner
+    return _outer
 
 # For views that are inside a class
 # todo where is this being used? can be replaced with decorator below
