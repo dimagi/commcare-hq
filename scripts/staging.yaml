@@ -45,7 +45,7 @@
 trunk: master
 name: autostaging
 branches:
-  - fab npm  # danny 1/26
+  - fab-npm  # danny 1/26
   - kill-x_over_time  # Danny 12/11
   - vellum-staging # J$ 11/13
   #- fix-toggle+two-factor-otp-only #wsp 11/17
