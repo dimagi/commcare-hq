@@ -1542,6 +1542,54 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
                 self.domain_is_shared(domain))
 
     @classmethod
+    def get_domain_backends(cls, backend_type, domain, count_only=False, offset=None, limit=None):
+        domain_owned_backends = models.Q(is_global=False, domain=domain)
+        domain_shared_backends = models.Q(
+            is_global=False,
+            mobilebackendinvitation__domain=domain,
+            mobilebackendinvitation__accepted=True
+        )
+        global_backends = models.Q(is_global=True)
+
+        result = SQLMobileBackend.objects.filter(
+            (domain_owned_backends | domain_shared_backends | global_backends),
+            deleted=False,
+            backend_type=backend_type
+        )
+
+        if count_only:
+            return result.count()
+
+        result = result.order_by('name').values_list('id', flat=True)
+        if offset is not None and limit is not None:
+            result = result[offset:offset + limit]
+
+        return [cls.load(pk) for pk in result]
+
+    @classmethod
+    def get_domain_default_backend(cls, backend_type, domain, id_only=False):
+        result = SQLMobileBackendMapping.objects.filter(
+            is_global=False,
+            domain=domain,
+            backend_type=backend_type,
+            prefix='*'
+        ).values_list('backend_id', flat=True)
+
+        if len(result) > 1:
+            raise cls.MultipleObjectsReturned(
+                "More than one default backend found for backend_type %s, "
+                "domain %s" % (backend_type, domain)
+            )
+        elif len(result) == 1:
+            if id_only:
+                return result[0]
+            else:
+                return cls.load(result[0])
+        else:
+            return None
+
+
+    @classmethod
     def load_default_backend(cls, backend_type, phone_number, domain=None):
         """
         Chooses the appropriate backend based on the phone number's

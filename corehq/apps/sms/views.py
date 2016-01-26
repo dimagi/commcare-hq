@@ -10,6 +10,7 @@ from couchdbkit import ResourceNotFound
 import pytz
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -40,7 +41,8 @@ from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.apps.sms.models import (
     SMSLog, INCOMING, OUTGOING, ForwardingRule,
-    LastReadMessage, MessagingEvent, SelfRegistrationInvitation
+    LastReadMessage, MessagingEvent, SelfRegistrationInvitation,
+    SQLMobileBackend, SQLMobileBackendMapping, PhoneLoadBalancingMixin
 )
 from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
     SMSLoadBalancingMixin, UnrecognizedBackendException)
@@ -50,7 +52,7 @@ from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
                                    DEFAULT, CUSTOM, SendRegistrationInviationsForm,
                                    WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
                                    WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL, ComposeMessageForm)
-from corehq.apps.sms.util import get_available_backends, get_contact
+from corehq.apps.sms.util import get_available_backends, get_contact, get_backend_classes
 from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty as country_name_from_code
 from corehq.apps.groups.models import Group
@@ -1056,17 +1058,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     @property
     @memoized
     def total(self):
-        domain_backends = SMSBackend.get_db().view(
-            "sms/backend_by_domain",
-            startkey=[self.domain],
-            endkey=[self.domain, {}],
-            reduce=True,
-        ).first() or {}
-        global_backends = SMSBackend.get_db().view(
-            'sms/global_backends',
-            reduce=True,
-        ).first() or {}
-        return domain_backends.get('value', 0) + global_backends.get('value', 0)
+        return SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, self.domain, count_only=True)
 
     @property
     def column_names(self):
@@ -1088,23 +1080,18 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
 
     @property
     def paginated_list(self):
-        all_backends = []
-        all_backends += SMSBackend.view(
-            "sms/backend_by_domain",
-            classes=self.backend_classes,
-            startkey=[self.domain],
-            endkey=[self.domain, {}],
-            reduce=False,
-            include_docs=True
-        ).all()
-        all_backends += SMSBackend.view(
-            'sms/global_backends',
-            classes=self.backend_classes,
-            reduce=False,
-            include_docs=True
-        ).all()
+        backends = SQLMobileBackend.get_domain_backends(
+            SQLMobileBackend.SMS,
+            self.domain,
+            offset=self.skip,
+            limit=self.limit
+        )
+        default_backend = SQLMobileBackend.get_domain_default_backend(
+            SQLMobileBackend.SMS,
+            self.domain
+        )
 
-        if len(all_backends) > 0 and not self.domain_object.default_sms_backend_id:
+        if len(backends) > 0 and not default_backend:
             yield {
                 'itemData': {
                     'id': 'nodefault',
@@ -1113,23 +1100,19 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
                 },
                 'template': 'gateway-automatic-template',
             }
-        elif self.domain_object.default_sms_backend_id:
-            default_backend = SMSBackend.get_wrapped(self.domain_object.default_sms_backend_id)
+        elif default_backend:
             yield {
                 'itemData': self._fmt_backend_data(default_backend),
                 'template': 'gateway-default-template',
             }
-        for backend in all_backends:
-            if not backend._id == self.domain_object.default_sms_backend_id:
+
+        default_backend_id = default_backend.pk if default_backend else None
+        for backend in backends:
+            if backend.pk != default_backend_id:
                 yield {
                     'itemData': self._fmt_backend_data(backend),
                     'template': 'gateway-template',
                 }
-
-    @property
-    @memoized
-    def backend_classes(self):
-        return get_available_backends()
 
     def _fmt_backend_data(self, backend):
         is_editable = not backend.is_global and backend.domain == self.domain
@@ -1142,47 +1125,59 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         else:
             supported_country_names = ''
         return {
-            'id': backend._id,
+            'id': backend.pk,
             'name': backend.name,
             'description': backend.description,
             'supported_countries': supported_country_names,
             'editUrl': reverse(
                 EditDomainGatewayView.urlname,
-                args=[self.domain, backend.__class__.__name__, backend._id]
+                args=[self.domain, backend.hq_api_id, backend.pk]
             ) if is_editable else "",
             'canDelete': is_editable,
             'isGlobal': backend.is_global,
             'isShared': not backend.is_global and backend.domain != self.domain,
-            'deleteModalId': 'delete_%s' % backend._id,
+            'deleteModalId': 'delete_%s' % backend.pk,
         }
 
-    def get_deleted_item_data(self, item_id):
+    def _get_backend_from_item_id(self, item_id):
         try:
-            backend = SMSBackend.get_wrapped(item_id)
-        except UnrecognizedBackendException:
+            item_id = int(item_id)
+            backend = SQLMobileBackend.load(item_id)
+            return item_id, backend
+        except (BadSMSConfigException, SQLMobileBackend.DoesNotExist, TypeError, ValueError):
             raise Http404()
-        if (backend.is_global or backend.domain != self.domain or
-            backend.base_doc != "MobileBackend"):
+
+    def get_deleted_item_data(self, item_id):
+        item_id, backend = self._get_backend_from_item_id(item_id)
+
+        if backend.is_global or backend.domain != self.domain:
             raise Http404()
-        if self.domain_object.default_sms_backend_id == backend._id:
-            self.domain_object.default_sms_backend_id = None
-            self.domain_object.save()
-        # Do not actually delete so that linkage always exists between SMSLog and MobileBackend
-        backend.retire()
+
+        # Do not actually delete so that linkage always exists between SMS and
+        # MobileBackend for billable history
+        backend.soft_delete()
+
         return {
             'itemData': self._fmt_backend_data(backend),
             'template': 'gateway-deleted-template',
         }
 
     def refresh_item(self, item_id):
-        backend = SMSBackend.get_wrapped(item_id)
+        item_id, backend = self._get_backend_from_item_id(item_id)
+
         if not backend.domain_is_authorized(self.domain):
             raise Http404()
-        if self.domain_object.default_sms_backend_id == item_id:
-            self.domain_object.default_sms_backend_id = None
+
+        domain_default_backend_id = SQLMobileBackend.get_domain_default_backend(
+            SQLMobileBackend.SMS,
+            self.domain,
+            id_only=True
+        )
+
+        if domain_default_backend_id == item_id:
+            SQLMobileBackendMapping.unset_default_domain_backend(self.domain)
         else:
-            self.domain_object.default_sms_backend_id = item_id
-        self.domain_object.save()
+            SQLMobileBackendMapping.set_default_domain_backend(self.domain, backend)
 
     @property
     def allowed_actions(self):
@@ -1191,8 +1186,8 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
 
     def post(self, request, *args, **kwargs):
         if self.action == 'new_backend':
-            backend_type = request.POST['backend_type']
-            return HttpResponseRedirect(reverse(AddDomainGatewayView.urlname, args=[self.domain, backend_type]))
+            hq_api_id = request.POST['hq_api_id']
+            return HttpResponseRedirect(reverse(AddDomainGatewayView.urlname, args=[self.domain, hq_api_id]))
         return self.paginate_crud_response
 
 

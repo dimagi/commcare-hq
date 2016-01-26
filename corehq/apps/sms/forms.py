@@ -20,7 +20,8 @@ from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.reminders.forms import RecordListField, validate_time
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from corehq.apps.sms.util import (get_available_backends, validate_phone_number, strip_plus)
+from corehq.apps.sms.util import (get_available_backends, validate_phone_number, strip_plus,
+    get_backend_classes)
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
@@ -943,23 +944,22 @@ class InitiateAddSMSBackendForm(Form):
         initial='new_backend',
         widget=forms.HiddenInput(),
     )
-    backend_type = ChoiceField(
+    hq_api_id = ChoiceField(
         required=False,
         label="Connection Type",
     )
 
     def __init__(self, is_superuser=False, *args, **kwargs):
         super(InitiateAddSMSBackendForm, self).__init__(*args, **kwargs)
-        backend_classes = get_available_backends()
+
+        from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
+        backend_classes = get_backend_classes()
         backend_choices = []
-        for name, klass in backend_classes.items():
-            if is_superuser or name == "TelerivetBackend":
-                try:
-                    friendly_name = klass.get_generic_name()
-                except NotImplementedError:
-                    friendly_name = name
-                backend_choices.append((name, friendly_name))
-        self.fields['backend_type'].choices = backend_choices
+        for api_id, klass in backend_classes.items():
+            if is_superuser or api_id == SQLTelerivetBackend.get_api_id():
+                friendly_name = klass.get_generic_name()
+                backend_choices.append((api_id, friendly_name))
+        self.fields['hq_api_id'].choices = backend_choices
 
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
@@ -969,7 +969,7 @@ class InitiateAddSMSBackendForm(Form):
             hqcrispy.B3MultiField(
                 _("Create Another Connection"),
                 InlineField('action'),
-                Div(InlineField('backend_type'), css_class='col-sm-6 col-md-6 col-lg-4'),
+                Div(InlineField('hq_api_id'), css_class='col-sm-6 col-md-6 col-lg-4'),
                 Div(StrictButton(
                     mark_safe('<i class="fa fa-plus"></i> Add Another Gateway'),
                     css_class='btn-success',
