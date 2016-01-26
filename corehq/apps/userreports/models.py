@@ -165,7 +165,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     @property
     @memoized
-    def indicators(self):
+    def default_indicators(self):
         default_indicators = [IndicatorFactory.from_spec({
             "column_id": "doc_id",
             "type": "expression",
@@ -190,9 +190,16 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             default_indicators.append(IndicatorFactory.from_spec({
                 "type": "repeat_iteration",
             }, self._get_factory_context()))
+
+        return default_indicators
+
+    @property
+    @memoized
+    def indicators(self):
+
         return CompoundIndicator(
             self.display_name,
-            default_indicators + [
+            self.default_indicators + [
                 IndicatorFactory.from_spec(indicator, self._get_factory_context())
                 for indicator in self.configured_indicators
             ]
