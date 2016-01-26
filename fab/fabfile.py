@@ -595,6 +595,7 @@ def _deploy_without_asking():
         # handle static files
         _execute_with_timing(version_static)
         _execute_with_timing(_bower_install)
+        _execute_with_timing(_npm_install)
         _execute_with_timing(_do_collectstatic)
         _execute_with_timing(_do_compress)
 
@@ -1055,6 +1056,14 @@ def _bower_install(use_current_release=False):
     with cd(env.code_root if not use_current_release else env.code_current):
         sudo('bower prune --production --config.interactive=false')
         sudo('bower update --production --config.interactive=false')
+
+
+@parallel
+@roles(ROLES_DJANGO)
+def _npm_install():
+    with cd(env.code_root):
+        sudo('npm update --production')
+        sudo('npm prune --production')
 
 
 @roles(ROLES_DJANGO)
