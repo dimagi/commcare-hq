@@ -39,6 +39,7 @@ class UserModelTest(TestCase):
         self.assertEqual(len(form_ids), 1)
         self.assertEqual(form_ids[0], '123')
 
+    @run_with_all_backends
     def test_get_deleted_forms(self):
         form = get_simple_wrapped_form('deleted', metadata=self.metadata)
         form.doc_type = form.doc_type + '-Deleted'
