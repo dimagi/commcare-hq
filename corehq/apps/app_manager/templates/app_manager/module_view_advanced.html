@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
+{% block js-inline %}{{ block.super }}
     {% if module.has_schedule or request|toggle_enabled:"VISIT_SCHEDULER" %}
         <script type="text/javascript" src="{% new_static 'app_manager/js/visit-scheduler.js' %}"></script>
         <script type="text/javascript">
@@ -17,9 +17,6 @@
          visitScheduler.init();
         </script>
     {% endif %}
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
     <script>
         $(function(){
             $('#auto-select-case').koApplyBindings({
