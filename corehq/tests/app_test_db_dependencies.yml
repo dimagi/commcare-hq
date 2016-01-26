@@ -12,6 +12,7 @@ testapps.test_elasticsearch: []
 testapps.test_pillowtop:
   - auditcare
   - django_digest
+  - casexml.apps.case
   - corehq.apps.domain
   - corehq.apps.hqadmin
   - corehq.apps.users
