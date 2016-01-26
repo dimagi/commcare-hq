@@ -45,7 +45,7 @@
 trunk: master
 name: autostaging
 branches:
-  - server-side-xpath-validation  # Danny 1/22
+  - fab npm  # danny 1/26
   - kill-x_over_time  # Danny 12/11
   - vellum-staging # J$ 11/13
   #- fix-toggle+two-factor-otp-only #wsp 11/17
@@ -68,7 +68,7 @@ branches:
   - b3-reports-manage-deployments  # Biyeun 1/21
   - b3-reports-messaging  # Biyeun 1/21
   - finish-two-factor # Cal 1/21
-#  - lazy-jar # Nick P 1/25 (removing temporarily)
+  - lazy-jar # Nick P 1/25
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
