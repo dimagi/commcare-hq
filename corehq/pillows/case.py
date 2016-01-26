@@ -5,6 +5,7 @@ from dimagi.utils.couch import LockManager
 from dimagi.utils.decorators.memoized import memoized
 from .base import HQPillow
 import logging
+from pillowtop.es_utils import doc_exists
 from pillowtop.listener import lock_manager
 
 
@@ -32,7 +33,7 @@ class CasePillow(HQPillow):
             super(CasePillow, self).change_trigger(changes_dict)
         )
         if doc_dict and doc_dict['doc_type'] == 'CommCareCase-Deleted':
-            if self.doc_exists(doc_dict):
+            if doc_exists(self, doc_dict):
                 self.get_es_new().delete(self.es_index, self.es_type, doc_dict['_id'])
             return None
         else:

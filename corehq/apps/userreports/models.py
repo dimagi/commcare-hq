@@ -1,5 +1,6 @@
 from copy import copy, deepcopy
 import json
+from datetime import datetime
 
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.sql_db.connections import UCR_ENGINE_ID
@@ -81,6 +82,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     named_filters = DictProperty()
     meta = SchemaProperty(DataSourceMeta)
     is_deactivated = BooleanProperty(default=False)
+    last_modified = DateTimeProperty()
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
@@ -88,6 +90,10 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     def __unicode__(self):
         return u'{} - {}'.format(self.domain, self.display_name)
+
+    def save(self, **params):
+        self.last_modified = datetime.utcnow()
+        super(DataSourceConfiguration, self).save(**params)
 
     def filter(self, document):
         filter_fn = self._get_main_filter()

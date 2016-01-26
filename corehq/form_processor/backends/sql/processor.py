@@ -6,6 +6,7 @@ from django.db import transaction
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
+from corehq.form_processor.change_publishers import publish_form_saved
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from couchforms.const import ATTACHMENT_NAME
@@ -64,12 +65,18 @@ class FormProcessorSQL(object):
                 FormAccessorSQL.save_deprecated_form(processed_forms.deprecated)
 
             FormAccessorSQL.save_new_form(processed_forms.submitted)
-
             if cases:
                 for case in cases:
                     CaseAccessorSQL.save_case(case)
             for stock_update in stock_updates or []:
                 stock_update.commit()
+            cls._publish_changes(processed_forms, cases)
+
+    @staticmethod
+    def _publish_changes(processed_forms, cases):
+        # todo: publish cases, deprecations?
+        publish_form_saved(processed_forms.submitted)
+
 
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):

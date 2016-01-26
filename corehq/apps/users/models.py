@@ -105,21 +105,6 @@ class OldPermissions(object):
 
 
 
-class OldRoles(object):
-    ROLES = (
-        ('edit-apps', 'App Editor', set([OldPermissions.EDIT_APPS])),
-        ('field-implementer', 'Field Implementer', set([OldPermissions.EDIT_COMMCARE_USERS])),
-        ('read-only', 'Read Only', set([]))
-    )
-
-    @classmethod
-    def get_role_labels(cls):
-        return tuple([('admin', 'Admin')] + [(key, label) for (key, label, _) in cls.ROLES])
-
-    @classmethod
-    def get_role_mapping(cls):
-        return dict([(key, perms) for (key, _, perms) in cls.ROLES])
-
 class Permissions(DocumentSchema):
     edit_web_users = BooleanProperty(default=False)
     edit_commcare_users = BooleanProperty(default=False)
@@ -428,9 +413,12 @@ class DomainMembership(Membership):
                 for old_permission in old_permissions:
                     if old_permission == 'view-report':
                         continue
+                    # If this hasn't fired by March 2016 we can delete this code
+                    # and the OldPermissions model
+                    _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']), fail_if_debug=True)
+                    _assert(False, 'Old Permissions found in the wild!')
                     new_permission = OldPermissions.to_new(old_permission)
                     custom_permissions[new_permission] = True
-
                 if not view_report_list:
                     # Anyone whose report permissions haven't been explicitly taken away/reduced
                     # should be able to see reports by default
