@@ -248,3 +248,21 @@ def get_backend_name(backend_id):
         return None
 
     return doc.get('name', None)
+
+
+def set_domain_default_backend_to_test_backend(domain):
+    """
+    Pass in the name of the domain to set the domain's default
+    sms backend to be the test backend.
+    """
+    from corehq.apps.sms.models import SQLMobileBackend, SQLMobileBackendMapping
+    test_backend = SQLMobileBackend.get_global_backend_by_name(
+        SQLMobileBackend.SMS,
+        'MOBILE_BACKEND_TEST'
+    )
+    if not test_backend:
+        raise Exception("Expected MOBILE_BACKEND_TEST to be created")
+    SQLMobileBackendMapping.set_default_domain_backend(
+        domain,
+        test_backend
+    )
