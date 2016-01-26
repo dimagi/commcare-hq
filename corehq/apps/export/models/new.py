@@ -15,6 +15,7 @@ from dimagi.ext.couchdbkit import (
     IntegerProperty,
 )
 from corehq.apps.export.const import (
+    PROPERTY_TAG_UPDATE,
     CASE_HISTORY_PROPERTIES,
     CASE_HISTORY_GROUP_NAME,
 )
@@ -28,6 +29,7 @@ class ExportItem(DocumentSchema):
     """
     path = ListProperty()
     label = StringProperty()
+    tag = StringProperty()
     last_occurrence = IntegerProperty()
 
     @classmethod
@@ -351,18 +353,31 @@ class CaseExportDataSchema(ExportDataSchema):
         return schema
 
     @staticmethod
-    def _generate_schema_for_case_history(appVersion):
+    def _generate_schema_for_case_history(case_property_mapping, appVersion):
+        assert len(case_property_mapping.keys()) == 1
         schema = CaseExportDataSchema()
+
         group_schema = ExportGroupSchema(
             path=[CASE_HISTORY_GROUP_NAME],
             last_occurrence=appVersion,
         )
-        for prop in CASE_HISTORY_PROPERTIES:
+        for system_prop in CASE_HISTORY_PROPERTIES:
             group_schema.items.append(ScalarItem(
-                path=[prop],
-                label=prop,
+                path=[system_prop.name],
+                label=system_prop.name,
+                tag=system_prop.tag,
                 last_occurrence=appVersion,
             ))
+
+        for case_type, case_properties in case_property_mapping.iteritems():
+            for prop in case_properties:
+                group_schema.items.append(ScalarItem(
+                    path=[prop],
+                    label=prop,
+                    tag=PROPERTY_TAG_UPDATE,
+                    last_occurrence=appVersion,
+                ))
+
         schema.group_schemas.append(group_schema)
         return schema
 

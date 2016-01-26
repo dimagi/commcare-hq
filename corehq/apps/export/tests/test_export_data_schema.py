@@ -3,9 +3,8 @@ import os
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import XForm, Application
-from corehq.apps.reports.formdetails.readable import CaseTypeMeta, CaseProperty
 from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema
-from corehq.apps.export.const import CASE_HISTORY_PROPERTIES
+from corehq.apps.export.const import CASE_HISTORY_PROPERTIES, PROPERTY_TAG_UPDATE
 
 
 class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
@@ -89,13 +88,19 @@ class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(group_schema.items[1].last_occurrence, 1)
 
     def test_case_history_parsing(self):
-        schema = CaseExportDataSchema._generate_schema_for_case_history(1)
+        schema = CaseExportDataSchema._generate_schema_for_case_history({
+            'candy': ['my_case_property', 'my_second_case_property']
+        }, 1)
 
         self.assertEqual(len(schema.group_schemas), 1)
         group_schema = schema.group_schemas[0]
 
         for idx, prop in enumerate(CASE_HISTORY_PROPERTIES):
-            self.assertEqual(group_schema.items[idx].path, [prop])
+            self.assertEqual(group_schema.items[idx].path, [prop.name])
+            self.assertEqual(group_schema.items[idx].tag, prop.tag)
+
+        update_items = filter(lambda item: item.tag == PROPERTY_TAG_UPDATE, group_schema.items)
+        self.assertEqual(len(update_items), 2)
 
 
 class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
@@ -210,7 +215,7 @@ class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
             case_property_mapping,
             2,
         )
-        schema3 = CaseExportDataSchema._generate_schema_for_case_history(2)
+        schema3 = CaseExportDataSchema._generate_schema_for_case_history(case_property_mapping, 2)
 
         merged = CaseExportDataSchema._merge_schemas(schema1, schema2, schema3)
 
