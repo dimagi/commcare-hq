@@ -361,7 +361,11 @@ class DashboardTab(UITab):
         if self.domain and self.project and not self.project.is_snapshot and self.couch_user:
             # domain hides Dashboard tab if user is non-admin
             if not user_has_custom_top_menu(self.domain, self.couch_user):
-                return domain_has_apps(self.domain)
+                if self.couch_user.is_commcare_user():
+                    # only show the dashboard tab if the user has been assigned a custom role
+                    return self.couch_user.get_domain_membership(self.domain).role is not None
+                else:
+                    return domain_has_apps(self.domain)
         return False
 
     @property
