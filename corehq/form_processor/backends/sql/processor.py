@@ -6,7 +6,7 @@ from django.db import transaction
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
-from corehq.form_processor.change_publishers import publish_form_saved
+from corehq.form_processor.change_publishers import publish_form_saved, publish_case_saved
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from couchforms.const import ATTACHMENT_NAME
@@ -74,9 +74,10 @@ class FormProcessorSQL(object):
 
     @staticmethod
     def _publish_changes(processed_forms, cases):
-        # todo: publish cases, deprecations?
+        # todo: form deprecations?
         publish_form_saved(processed_forms.submitted)
-
+        for case in cases:
+            publish_case_saved(case)
 
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
