@@ -7,23 +7,6 @@
     <script src="{% new_static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% new_static 'app_manager/js/graph-config.js' %}"></script>
     {% include "app_manager/partials/xpathValidator.html" %}
-    <script>
-    if (window.toggles === undefined) {
-        window.toggles = {};
-    }
-    if (window.feature_previews === undefined) {
-        window.feature_previews = {};
-    }
-    window.feature_previews.ENUM_IMAGE = {{ request|feature_preview_enabled:"ENUM_IMAGE"|BOOL }};
-    window.feature_previews.CALC_XPATHS = {{ request|feature_preview_enabled:"CALC_XPATHS"|BOOL }};
-    window.toggles.MM_CASE_PROPERTIES = {{ request|toggle_enabled:"MM_CASE_PROPERTIES"|BOOL }};
-    window.toggles.CASE_LIST_DISTANCE_SORT = {{ request|toggle_enabled:"CASE_LIST_DISTANCE_SORT"|BOOL }};
-    window.toggles.GRAPH_CREATION = {{ request|toggle_enabled:"GRAPH_CREATION"|BOOL }};
-    window.toggles.CASE_LIST_CUSTOM_XML = {{ request|toggle_enabled:"CASE_LIST_CUSTOM_XML"|BOOL }};
-    window.toggles.CASE_LIST_TILE = {{ request|toggle_enabled:"CASE_LIST_TILE"|BOOL }};
-    window.toggles.CASE_LIST_LOOKUP = {{ request|toggle_enabled:"CASE_LIST_LOOKUP"|BOOL }}
-    window.toggles.FIXTURE_CASE_SELECTION = {{ request|toggle_enabled:"FIXTURE_CASE_SELECTION"|BOOL }}
-    </script>
     <script src="{% new_static 'app_manager/js/detail-screen-config.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
@@ -31,6 +14,24 @@
     {% include "app_manager/partials/nav_menu_media_js_common.html" %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_menu_item qualifier='case_list-menu_item_' %}
+
+    <script>
+        if (window.toggles === undefined) {
+            window.toggles = {};
+        }
+        if (window.feature_previews === undefined) {
+            window.feature_previews = {};
+        }
+        window.feature_previews.ENUM_IMAGE = {{ request|feature_preview_enabled:"ENUM_IMAGE"|BOOL }};
+        window.feature_previews.CALC_XPATHS = {{ request|feature_preview_enabled:"CALC_XPATHS"|BOOL }};
+        window.toggles.MM_CASE_PROPERTIES = {{ request|toggle_enabled:"MM_CASE_PROPERTIES"|BOOL }};
+        window.toggles.CASE_LIST_DISTANCE_SORT = {{ request|toggle_enabled:"CASE_LIST_DISTANCE_SORT"|BOOL }};
+        window.toggles.GRAPH_CREATION = {{ request|toggle_enabled:"GRAPH_CREATION"|BOOL }};
+        window.toggles.CASE_LIST_CUSTOM_XML = {{ request|toggle_enabled:"CASE_LIST_CUSTOM_XML"|BOOL }};
+        window.toggles.CASE_LIST_TILE = {{ request|toggle_enabled:"CASE_LIST_TILE"|BOOL }};
+        window.toggles.CASE_LIST_LOOKUP = {{ request|toggle_enabled:"CASE_LIST_LOOKUP"|BOOL }}
+        window.toggles.FIXTURE_CASE_SELECTION = {{ request|toggle_enabled:"FIXTURE_CASE_SELECTION"|BOOL }}
+    </script>
 
     {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
         {% for detail in details %}

@@ -5,15 +5,15 @@
 {% load crispy_forms_tags %}
 {% block js %}{{ block.super }}
     <script src="{% new_static 'app_manager/js/commcaresettings.js' %}"></script>
-    {% if app.get_doc_type == "Application" %}
-        <script src="{% new_static 'translations/js/translations.js' %}"></script>
-    {% endif %}
     <script src="{% new_static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
     <script src="{% new_static 'app_manager/js/supported-languages.js' %}"></script>
     <script type="text/javascript" src="{% new_static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
+    {% if app.get_doc_type == "Application" %}
+        <script src="{% new_static 'translations/js/translations.js' %}"></script>
+    {% endif %}
     {% if app %}
     <script>
         COMMCAREHQ.appView = {
