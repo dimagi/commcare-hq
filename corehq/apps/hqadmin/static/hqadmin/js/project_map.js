@@ -71,39 +71,44 @@ jQuery(document).ready(function($) {
 
         // todo: should maybe rename this
         that.getProjectsTable = function (countryName) {
-            countryName = countryName.toLowerCase();
-            var table = $(document.createElement('table')).addClass("table").addClass("table-hover").addClass("table-condensed");
-            var projectsInfo = projectsByCountryThenName[countryName] || {};
-            var propertiesToShow = [];
-            var propertiesToShow = ['Sector', 'Organization', 'Deployment Date'];
+            if (that.getNumProjects(countryName) < 1) {
+                return $(document.createElement('p')).text('There are no projects matching the criteria.').addClass('center');
+            } else {
+                countryName = countryName.toLowerCase();
 
-            var row;
-            var cell;
-            row = $(document.createElement('tr')).addClass('header-row');
-            table.append(row);
-            cell = $(document.createElement('th'));
-            row.append(cell);
-            cell.text('Name');
-            propertiesToShow.forEach(function(propertyName) {
+                var table = $(document.createElement('table')).addClass("table").addClass("table-hover").addClass("table-condensed");
+                var projectsInfo = projectsByCountryThenName[countryName] || {};
+                var propertiesToShow = [];
+                var propertiesToShow = ['Sector', 'Organization', 'Deployment Date'];
+
+                var row;
+                var cell;
+                row = $(document.createElement('tr')).addClass('header-row');
+                table.append(row);
                 cell = $(document.createElement('th'));
                 row.append(cell);
-                cell.text(propertyName);
-            });
-
-            Object.keys(projectsInfo).forEach(function(projectName) {
-                row = $(document.createElement('tr'));
-                table.append(row);
-                cell = $(document.createElement('td'));
-                row.append(cell);
-                cell.append($(document.createElement('a')).text(projectName).addClass('project-link'));
+                cell.text('Name');
                 propertiesToShow.forEach(function(propertyName) {
+                    cell = $(document.createElement('th'));
+                    row.append(cell);
+                    cell.text(propertyName);
+                });
+
+                Object.keys(projectsInfo).forEach(function(projectName) {
+                    row = $(document.createElement('tr'));
+                    table.append(row);
                     cell = $(document.createElement('td'));
                     row.append(cell);
-                    cell.text(projectsInfo[projectName][propertyName] || "");
+                    cell.append($(document.createElement('a')).text(projectName).addClass('project-link'));
+                    propertiesToShow.forEach(function(propertyName) {
+                        cell = $(document.createElement('td'));
+                        row.append(cell);
+                        cell.text(projectsInfo[projectName][propertyName] || "");
+                    });
                 });
-            });
 
-            return table;
+                return table;
+            }
         };
 
         // todo: think about reformatting this
