@@ -27,7 +27,24 @@ class CasePillowTest(TestCase):
         # make a case
         case_id = uuid.uuid4().hex
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
+        case = self._make_a_case(case_id, case_name)
 
+        # send to elasticsearch
+        self.pillow.process_changes(since=0, forever=False)
+        self.elasticsearch.indices.refresh(self.pillow.es_index)
+
+        # verify there
+        results = CaseES().run()
+        self.assertEqual(1, results.total)
+        case_doc = results.hits[0]
+        self.assertEqual(self.domain, case_doc['domain'])
+        self.assertEqual(case_id, case_doc['_id'])
+        self.assertEqual(case_name, case_doc['name'])
+
+        # cleanup
+        case.delete()
+
+    def _make_a_case(self, case_id, case_name):
         # this avoids having to deal with all the reminders code bootstrap
         with drop_connected_signals(case_post_save):
             form, cases = post_case_blocks(
@@ -39,16 +56,5 @@ class CasePillowTest(TestCase):
                     ).as_xml()
                 ], domain=self.domain
             )
-
         self.assertEqual(1, len(cases))
-
-        self.pillow.process_changes(since=0, forever=False)
-        self.elasticsearch.indices.refresh(self.pillow.es_index)
-
-        results = CaseES().run()
-        self.assertEqual(1, results.total)
-        case_doc = results.hits[0]
-        self.assertEqual(self.domain, case_doc['domain'])
-        self.assertEqual(case_id, case_doc['_id'])
-        self.assertEqual(case_name, case_doc['name'])
-        cases[0].delete()
+        return cases[0]
