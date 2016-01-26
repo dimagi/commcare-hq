@@ -17,7 +17,7 @@
                  {% if allow_domain_requests %}
                    href="{% url "domain_request" domain %}"
                  {% else %}
-                   href="{% url "register_user" DOMAIN_TYPE %}"
+                   href="{% url "register_user" %}"
                  {% endif %}
               >
                 {% if allow_domain_requests %}
