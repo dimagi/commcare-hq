@@ -1519,6 +1519,10 @@ class MappingItem(DocumentSchema):
     value = DictProperty()
 
     @property
+    def contains_boolean_expression(self):
+        True
+
+    @property
     def key_as_variable(self):
         """
         Return an xml variable name to represent this key.
@@ -1531,6 +1535,23 @@ class MappingItem(DocumentSchema):
             return 'k{key}'.format(key=self.key)
         else:
             return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
+
+    def key_as_condition(self, property):
+        if self.contains_boolean_expression:
+            return u"{key}".format(key=self.key)
+        else:
+            return u"{property} = '{key}'".format(
+                property=property,
+                key=self.key
+            )
+
+    def key_as_xpath_variable(self, index, type):
+        if type == "sort":
+            key_as_var = "{i}, ".format(i=index)
+        elif type == "display":
+            key_as_var = "${var_name}, ".format(var_name=self.key_as_variable)
+
+        return key_as_var
 
 
 class GraphAnnotations(IndexedSchema):
