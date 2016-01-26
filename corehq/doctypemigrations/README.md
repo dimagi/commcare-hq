@@ -22,10 +22,6 @@ from other ones:
     you may need to rewrite those functions to check both dbs
 - etc.
 
-If the doctype you're migrating is read by pillowtop, you may need to reset the
-checkpoint after the merge, or in the case of elasticsearch pillows, trigger an
-index rebuild.
-We should figure out how to better deal with this issue next time it comes up.
 
 ## Register the new database and migrator instance
 
@@ -54,9 +50,10 @@ COUCH_SETTINGS_HELPER = CouchSettingsHelper(COUCH_DATABASE, COUCHDB_APPS, [
     NEW_USERS_GROUPS_DB,
 ])
 ```
-We have some views which are meant to work on roughly all doc types.  Take a
-look at the views referenced in `corehq/couchapps/__init__.py` and make sure to
-register the appropriate views to your new database.
+We have some views which aren't tied to modules, some of which are meant to
+work on roughly all doc types.  Take a look at `corehq/couchapps/__init__.py`
+and make sure to register the appropriate views to your new database.  That
+module's README should have some more context.
 
 In `corehq/doctypemigrations/migrator_instances.py`, add an object representing your migration
 going off the following model:
@@ -79,6 +76,17 @@ users_migration = Migrator(
     )
 )
 ```
+You'll want to be deliberate about assembling the list of doc types, but as a
+starting point, you can try:
+```python
+import inspect
+from corehq.apps.app_manager import model
+for name, obj in inspect.getmembers(models):
+    if inspect.isclass(obj) and issubclass(obj, models.Document):
+        print name
+```
+(do make sure that you're including only doc types defined *in* the app)
+
 
 ### Deploy migrator
 This can be merged whenever, as the new database will not be used until later, when you flip to it.
@@ -172,7 +180,8 @@ If you're running this after the blocking migration has already been added to th
 
 ## Flipping the db
 
-Once you're confident the two databases are in sync and sync'ing in realtime, you'll need to make two commits.
+Once you're confident the two databases are in sync and sync'ing in realtime,
+you'll need to make some commits.
 
 ### Commit 1: Add a blocking django migration
 Add a blocking django migration to keep anyone from deploying before migrating:
@@ -202,12 +211,24 @@ And then actually do the flip; edit `settings.py`:
 + USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 ```
 
+### Commit 3 [maybe]: Use new views
+If there are views with different names in the old and new dbs, your flip PR
+should also update those names.
+
+### Commit 4 [maybe]: Flip pillowtop and/or elasticsearch
+If a doctype you're migrating is read by pillowtop, you'll need to reset the
+checkpoint after the merge.  If it's an elasticsearch pillow, you can instead
+trigger an index rebuild by updating the index name in the appropriate mapping
+file.
+
+### Do it!
 PR, and merge it. Then while `--continuous` is still running, deploy it.
 
 Once deploy is complete, kill the `--continuous` command with `^C`.
 
 ## Cleanup
 
+### Delete documents from old db
 After you're confident in the change and stability of the site,
 it's time to delete the old documents still in the source db.
 
@@ -228,3 +249,8 @@ Keep in mind that this will likely incur some reindexing overhead in the source 
 
 If you run `$ ./manage.py run_doctype_migration user_db_migration --stats`, you
 should see that only the target database has these doc types in it now.
+
+
+### Stop syncing irrelevant views to the old db
+If you synced any `couchapps` views to both dbs for the migration, you should
+register those only to the new db (in `corehq/couchapps/__init__.py`).
