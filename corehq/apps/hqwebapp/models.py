@@ -1,5 +1,6 @@
 from collections import namedtuple
 from urllib import urlencode
+from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION
 from corehq.toggles import OPENLMIS
 
@@ -278,10 +279,7 @@ class ProjectReportsTab(UITab):
 
     @property
     def is_viewable(self):
-        return (self.domain and self.project and
-                not self.project.is_snapshot and
-                (self.couch_user.can_view_reports() or
-                 self.couch_user.get_viewable_reports()))
+        return user_can_view_reports(self.project, self.couch_user)
 
     @property
     def sidebar_items(self):
