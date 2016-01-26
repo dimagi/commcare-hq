@@ -6,6 +6,7 @@ web:
   volumes:
     - .:/mnt
     - ~/.dockerdata/python:/vendor
+    - ~/.dockerdata/sharedfiles:/sharedfiles
   ports:
     - "8000:8000"
   environment:

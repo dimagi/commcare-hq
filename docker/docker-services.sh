@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ES_CLUSTER_NAME=$(hostname)
 PROJECT_NAME=hqservice
 
@@ -16,7 +17,7 @@ function usage() {
 function runner() {
     sudo \
         env ES_CLUSTER_NAME=$ES_CLUSTER_NAME \
-        docker-compose -f docker/docker-compose-services.yml -p $PROJECT_NAME $@
+        docker-compose -f $DIR/docker-compose-services.yml -p $PROJECT_NAME $@
 }
 
 while [[ $# > 0 ]]; do

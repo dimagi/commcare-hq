@@ -50,23 +50,46 @@ Initial setup
 settings for PostgreSQL, Redis, CouchDB, Elasticsearch
 
 ```python
-from dockersettings import *
+from docker.dockersettings import *
 # DATABASES ..
 ```
+
+See `docker/localsettings-docker.py` for an example.
 
 * Bootstrap the setup:
 
 ```
-  $ ./docker/docker-services.sh -h
-  $ ./docker/docker-services.sh start
-  $ sudo docker-compose run web bash
+  $ ./docker/bootstrap.sh
 ```
 
-You are now in the `web` containers shell and can do the rest of the setup
-as described in the CommCare HQ Readme section **Set up your django environment**
+This will do the following:
 
+* build all the images (if not already built)
+* run all the service containers
+* migrate the DB and sync the Couch views
+* bootstrap a superuser and domain:
+  * username: admin@example.com
+  * password: password
+  * domain: demo
+* run the Django dev server
+
+If all goes according to plan you should be able to log into CommCare: http://localhost:8000
+
+    
 General usage
 -------------
+The following commands assumes that you have updated your localsettings as described above.
+
+**Strat/stop the services (couch, postgres, elastic, redis)**
+
+```
+  $ ./docker/docker-services.sh start
+  $ ./docker/docker-services.sh stop
+  
+  # For more usages
+  $ ./docker/docker-services.sh --help 
+```
+
 **Run the django server**
 
 ```
@@ -77,8 +100,8 @@ General usage
 **Check logs**
 
 ```
-  $ sudo docker-compose logs web
-  $ sudo docker-services logs [postgres|elasticsearch|redis|couch]
+  $ sudo docker-compose logs web  # assuming you're running the Django server in the background
+  $ sudo ./docker/docker-services.sh logs [postgres|elasticsearch|redis|couch]
 ```
 
 **Start fresh**
