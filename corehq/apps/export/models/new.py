@@ -13,6 +13,10 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
     IntegerProperty,
 )
+from corehq.apps.export.const import (
+    CASE_HISTORY_PROPERTIES,
+    CASE_HISTORY_GROUP_NAME,
+)
 
 
 class ExportItem(DocumentSchema):
@@ -199,44 +203,7 @@ class ExportDataSchema(DocumentSchema):
     })
 
     @staticmethod
-    def generate_schema_from_builds(domain, app_id, unique_form_id):
-        app_build_ids = get_built_app_ids_for_app_id(domain, app_id)
-        all_xform_conf = ExportDataSchema()
-
-        for app_doc in iter_docs(Application.get_db(), app_build_ids):
-            app = Application.wrap(app_doc)
-            xform = app.get_form(unique_form_id).wrapped_xform()
-            xform_conf = ExportDataSchema._generate_schema_from_xform(xform, app.langs, app.version)
-            all_xform_conf = ExportDataSchema._merge_schema(all_xform_conf, xform_conf)
-
-        return all_xform_conf
-
-    @staticmethod
-    def _generate_schema_from_xform(xform, langs, appVersion):
-        questions = xform.get_questions(langs)
-        schema = ExportDataSchema()
-
-        for group_path, group_questions in groupby(questions, lambda q: q['repeat']):
-            # If group_path is None, that means the questions are part of the form and not a repeat group
-            # inside of the form
-            group_schema = ExportGroupSchema(
-                path=_string_path_to_list(group_path),
-                last_occurrence=appVersion,
-            )
-            for question in group_questions:
-                # Create ExportItem based on the question type
-                item = ExportDataSchema.datatype_mapping[question['type']].create_from_question(
-                    question,
-                    appVersion,
-                )
-                group_schema.items.append(item)
-
-            schema.group_schemas.append(group_schema)
-
-        return schema
-
-    @staticmethod
-    def _merge_schema(schema1, schema2):
+    def _merge_schemas(*schemas):
         """Merges two ExportDataSchemas together
 
         :param schema1: The first ExportDataSchema
@@ -261,16 +228,136 @@ class ExportDataSchema(DocumentSchema):
             group_schema.items = items
             return group_schema
 
-        group_schemas = _merge_lists(
-            schema1.group_schemas,
-            schema2.group_schemas,
-            keyfn=lambda group_schema: _list_path_to_string(group_schema.path),
-            resolvefn=resolvefn,
-            copyfn=lambda group_schema: ExportGroupSchema(group_schema.to_json())
-        )
+        previous_group_schemas = schemas[0].group_schemas
+        for current_schema in schemas[1:]:
+            group_schemas = _merge_lists(
+                previous_group_schemas,
+                current_schema.group_schemas,
+                keyfn=lambda group_schema: _list_path_to_string(group_schema.path),
+                resolvefn=resolvefn,
+                copyfn=lambda group_schema: ExportGroupSchema(group_schema.to_json())
+            )
+            previous_group_schemas = group_schemas
 
         schema.group_schemas = group_schemas
 
+        return schema
+
+    @staticmethod
+    def generate_schema_from_builds(domain, app_id, identifier):
+        """Builds a schema from Application builds for a given identifier (either form_id or case type)
+
+        :param domain: The domain that the export belongs to
+        :param app_id: The app_id that the export belongs to
+        :param identifier: The unique identifier of the item being exported
+        :returns: Returns a ExportDataSchema instance
+        """
+        raise NotImplementedError()
+
+
+class FormExportDataSchema(ExportDataSchema):
+
+    @staticmethod
+    def generate_schema_from_builds(domain, app_id, unique_form_id):
+        app_build_ids = get_built_app_ids_for_app_id(domain, app_id)
+        all_xform_conf = ExportDataSchema()
+
+        for app_doc in iter_docs(Application.get_db(), app_build_ids):
+            app = Application.wrap(app_doc)
+            xform = app.get_form(unique_form_id).wrapped_xform()
+            xform_conf = FormExportDataSchema._generate_schema_from_xform(xform, app.langs, app.version)
+            all_xform_conf = FormExportDataSchema._merge_schemas(all_xform_conf, xform_conf)
+
+        return all_xform_conf
+
+    @staticmethod
+    def _generate_schema_from_xform(xform, langs, appVersion):
+        questions = xform.get_questions(langs)
+        schema = FormExportDataSchema()
+
+        for group_path, group_questions in groupby(questions, lambda q: q['repeat']):
+            # If group_path is None, that means the questions are part of the form and not a repeat group
+            # inside of the form
+            group_schema = ExportGroupSchema(
+                path=_string_path_to_list(group_path),
+                last_occurrence=appVersion,
+            )
+            for question in group_questions:
+                # Create ExportItem based on the question type
+                item = FormExportDataSchema.datatype_mapping[question['type']].create_from_question(
+                    question,
+                    appVersion,
+                )
+                group_schema.items.append(item)
+
+            schema.group_schemas.append(group_schema)
+
+        return schema
+
+
+class CaseExportDataSchema(ExportDataSchema):
+
+    @staticmethod
+    def generate_schema_from_builds(domain, app_id, case_type):
+        app_build_ids = get_built_app_ids_for_app_id(domain, app_id)
+        all_case_schema = CaseExportDataSchema()
+
+        for app_doc in iter_docs(Application.get_db(), app_build_ids):
+            app = Application.wrap(app_doc)
+            case_type_metadata = filter(
+                lambda case_type_meta: case_type_meta.name == case_type,
+                app.get_case_metadata().case_types
+            )[0]
+            case_schema = CaseExportDataSchema._generate_schema_from_case_meta(
+                case_type_metadata,
+                app.version,
+            )
+            case_history_schema = CaseExportDataSchema._generate_schema_from_case_history(
+                app.version,
+            )
+
+            all_case_schema = CaseExportDataSchema._merge_schemas(
+                all_case_schema,
+                case_schema,
+                case_history_schema
+            )
+
+        return all_case_schema
+
+    @staticmethod
+    def _generate_schema_from_case_meta(case_type_metadata, appVersion):
+        properties = case_type_metadata.properties
+        schema = CaseExportDataSchema()
+
+        group_schema = ExportGroupSchema(
+            path=[case_type_metadata.name],
+            last_occurrence=appVersion,
+        )
+
+        for prop in properties:
+            group_schema.items.append(ScalarItem(
+                path=[prop.name],
+                label=prop.name,
+                last_occurrence=appVersion,
+            ))
+
+        schema.group_schemas.append(group_schema)
+        return schema
+
+    @staticmethod
+    def _generate_schema_for_case_history(appVersion):
+        schema = CaseExportDataSchema()
+        group_schema = ExportGroupSchema(
+            path=[CASE_HISTORY_GROUP_NAME],
+            last_occurrence=appVersion,
+        )
+        for prop in CASE_HISTORY_PROPERTIES:
+            group_schema.items.append(ScalarItem(
+                path=[prop],
+                label=prop,
+                last_occurrence=appVersion,
+            ))
+        schema.group_schemas.append(group_schema)
         return schema
 
 

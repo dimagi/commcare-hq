@@ -3,17 +3,19 @@ import os
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import XForm, Application
-from corehq.apps.export.models import ExportDataSchema
+from corehq.apps.reports.formdetails.readable import CaseTypeMeta, CaseProperty
+from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema
+from corehq.apps.export.const import CASE_HISTORY_PROPERTIES
 
 
-class TestExportDataSchema(SimpleTestCase, TestXmlMixin):
+class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)
 
     def test_basic_xform_parsing(self):
         form_xml = self.get_xml('basic_form')
 
-        schema = ExportDataSchema._generate_schema_from_xform(
+        schema = FormExportDataSchema._generate_schema_from_xform(
             XForm(form_xml),
             ['en'],
             1
@@ -30,7 +32,7 @@ class TestExportDataSchema(SimpleTestCase, TestXmlMixin):
     def test_xform_parsing_with_repeat_group(self):
         form_xml = self.get_xml('repeat_group_form')
 
-        schema = ExportDataSchema._generate_schema_from_xform(
+        schema = FormExportDataSchema._generate_schema_from_xform(
             XForm(form_xml),
             ['en'],
             1
@@ -50,7 +52,7 @@ class TestExportDataSchema(SimpleTestCase, TestXmlMixin):
 
     def test_xform_parsing_with_multiple_choice(self):
         form_xml = self.get_xml('multiple_choice_form')
-        schema = ExportDataSchema._generate_schema_from_xform(
+        schema = FormExportDataSchema._generate_schema_from_xform(
             XForm(form_xml),
             ['en'],
             1
@@ -67,25 +69,52 @@ class TestExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(group_schema.items[1].options[1].value, 'choice2')
 
 
-class TestMergingExportDataSchema(SimpleTestCase, TestXmlMixin):
+class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
+
+    def test_case_type_metadata_parsing(self):
+
+        case_type_metadata = _build_case_type_metadata('my_case_property', 'my_second_case_property')
+        schema = CaseExportDataSchema._generate_schema_from_case_meta(
+            case_type_metadata,
+            1,
+        )
+        self.assertEqual(len(schema.group_schemas), 1)
+        group_schema = schema.group_schemas[0]
+
+        self.assertEqual(group_schema.items[0].path, ['my_case_property'])
+        self.assertEqual(group_schema.items[0].last_occurrence, 1)
+        self.assertEqual(group_schema.items[1].path, ['my_second_case_property'])
+        self.assertEqual(group_schema.items[1].last_occurrence, 1)
+
+    def test_case_history_parsing(self):
+        schema = CaseExportDataSchema._generate_schema_for_case_history(1)
+
+        self.assertEqual(len(schema.group_schemas), 1)
+        group_schema = schema.group_schemas[0]
+
+        for idx, prop in enumerate(CASE_HISTORY_PROPERTIES):
+            self.assertEqual(group_schema.items[idx].path, [prop])
+
+
+class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)
 
     def _get_merged_schema(self, form_name1, form_name2):
         form_xml = self.get_xml(form_name1)
         form_xml2 = self.get_xml(form_name2)
-        schema = ExportDataSchema._generate_schema_from_xform(
+        schema = FormExportDataSchema._generate_schema_from_xform(
             XForm(form_xml),
             ['en'],
             1
         )
-        schema2 = ExportDataSchema._generate_schema_from_xform(
+        schema2 = FormExportDataSchema._generate_schema_from_xform(
             XForm(form_xml2),
             ['en'],
             2
         )
 
-        return ExportDataSchema._merge_schema(schema, schema2)
+        return FormExportDataSchema._merge_schemas(schema, schema2)
 
     def test_simple_merge(self):
         """Tests merging of a form that adds a question to the form"""
@@ -162,6 +191,43 @@ class TestMergingExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(group_schema2.items), 1)
 
 
+class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
+
+    def test_basic_case_prop_merge(self):
+        case_type_metadata = _build_case_type_metadata(
+            'my_case_property',
+            'my_second_case_property'
+        )
+        schema1 = CaseExportDataSchema._generate_schema_from_case_meta(
+            case_type_metadata,
+            1,
+        )
+        case_type_metadata = _build_case_type_metadata(
+            'my_case_property',
+            'my_third_case_property'
+        )
+        schema2 = CaseExportDataSchema._generate_schema_from_case_meta(
+            case_type_metadata,
+            2,
+        )
+        schema3 = CaseExportDataSchema._generate_schema_for_case_history(2)
+
+        merged = CaseExportDataSchema._merge_schemas(schema1, schema2, schema3)
+
+        self.assertEqual(len(merged.group_schemas), 2)
+        group_schema1 = merged.group_schemas[0]
+        group_schema2 = merged.group_schemas[1]
+
+        self.assertEqual(group_schema1.last_occurrence, 2)
+        self.assertEqual(len(group_schema1.items), 3)
+
+        items = filter(lambda i: i.last_occurrence == 1, group_schema1.items)
+        self.assertEqual(len(items), 1)
+
+        self.assertEqual(group_schema2.last_occurrence, 2)
+        self.assertEqual(len(group_schema2.items), len(CASE_HISTORY_PROPERTIES))
+
+
 class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)
@@ -191,10 +257,44 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
     def test_basic_application_schema(self):
         app = self.current_app
 
-        schema = ExportDataSchema.generate_schema_from_builds(
+        schema = FormExportDataSchema.generate_schema_from_builds(
             app.domain,
             app._id,
             'b68a311749a6f45bdfda015b895d607012c91613'
         )
 
         self.assertEqual(len(schema.group_schemas), 1)
+
+
+class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
+    file_path = ['data']
+    root = os.path.dirname(__file__)
+
+    @classmethod
+    def test_basic_application_schema(cls):
+        cls.current_app = Application.wrap(cls.get_json('basic_case_application'))
+
+        cls.first_build = Application.wrap(cls.get_json('basic_case_application'))
+        cls.first_build._id = '123'
+        cls.first_build.copy_of = cls.current_app.get_id
+        cls.first_build.version = 3
+
+        cls.apps = [
+            cls.current_app,
+            cls.first_build,
+        ]
+        for app in cls.apps:
+            app.save()
+
+
+def _build_case_type_metadata(*case_properties):
+    case_type_metadata = CaseTypeMeta(
+        name='candy',
+        properties=[]
+    )
+    for case_prop in case_properties:
+        case_type_metadata.properties.append(CaseProperty(
+            name=case_prop
+        ))
+
+    return case_type_metadata
