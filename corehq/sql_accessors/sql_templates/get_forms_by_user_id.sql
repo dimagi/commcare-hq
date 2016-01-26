@@ -5,7 +5,7 @@ BEGIN
     RETURN QUERY
     SELECT * FROM form_processor_xforminstancesql WHERE
         user_id = p_user_id AND
-        domain = domain AND
+        domain = p_domain AND
         state = p_state
 END;
 $$ LANGUAGE plpgsql;
