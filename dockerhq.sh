@@ -8,6 +8,8 @@ mkdir -p $DOCKER_DATA_HOME
 
 XDG_CACHE_HOME=${XDG_CACHE_HOME:-$HOME/.cache}
 
+PROJECT_NAME="commcarehq"
+
 function usage() {
     case $1 in
         runserver)
@@ -55,7 +57,7 @@ function usage() {
 function runner() {
     sudo \
         env DOCKER_DATA_HOME=$DOCKER_DATA_HOME XDG_CACHE_HOME=$XDG_CACHE_HOME\
-        docker-compose -f $DIR/docker/docker-compose-web.yml $@
+        docker-compose -f $DIR/docker/docker-compose-web.yml -p $PROJECT_NAME $@
 }
 
 key="$1"
@@ -87,6 +89,10 @@ case $key in
         ;;
     bootstrap)
         $DIR/docker/bootstrap.sh
+        ;;
+    ps)
+        runner ps
+        $DIR/docker/docker-services.sh ps
         ;;
     *)
         runner $key $@
