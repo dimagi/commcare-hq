@@ -44,6 +44,10 @@ class AbstractXFormInstance(object):
     def is_submission_error_log(self):
         raise NotImplementedError()
 
+    @property
+    def is_deleted(self):
+        raise NotImplementedError()
+
     def auth_context(self):
         raise NotImplementedError()
 

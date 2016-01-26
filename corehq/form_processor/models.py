@@ -139,6 +139,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     DUPLICATE = 4
     ERROR = 8
     SUBMISSION_ERROR_LOG = 16
+    DELETED = 32
     STATES = (
         (NORMAL, 'normal'),
         (ARCHIVED, 'archived'),
@@ -146,6 +147,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         (DUPLICATE, 'duplicate'),
         (ERROR, 'error'),
         (SUBMISSION_ERROR_LOG, 'submission_error'),
+        (DELETED, 'deleted'),
     )
 
     form_id = models.CharField(max_length=255, unique=True, db_index=True)
@@ -214,6 +216,10 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     @property
     def is_submission_error_log(self):
         return self.state == self.SUBMISSION_ERROR_LOG
+
+    @property
+    def is_deleted(self):
+        return self.state == self.DELETED
 
     @property
     @memoized
