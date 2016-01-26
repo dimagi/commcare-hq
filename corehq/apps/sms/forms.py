@@ -21,7 +21,7 @@ from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.reminders.forms import RecordListField, validate_time
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.sms.util import (get_available_backends, validate_phone_number, strip_plus,
-    get_backend_classes)
+    get_sms_backend_classes)
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
@@ -972,7 +972,7 @@ class InitiateAddSMSBackendForm(Form):
         super(InitiateAddSMSBackendForm, self).__init__(*args, **kwargs)
 
         from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
-        backend_classes = get_backend_classes()
+        backend_classes = get_sms_backend_classes()
         backend_choices = []
         for api_id, klass in backend_classes.items():
             if is_superuser or api_id == SQLTelerivetBackend.get_api_id():

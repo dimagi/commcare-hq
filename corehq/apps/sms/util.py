@@ -127,20 +127,14 @@ def get_available_backends(index_by_api_id=False, backend_type='SMS'):
     return result
 
 
-@memoized
-def get_backend_classes():
+def _get_backend_classes(backend_list):
     """
-    Returns a dictionary of {api id: class} for all installed SMS and IVR
-    backends.
+    Returns a dictionary of {api id: class} for all installed SMS backends.
     """
     from corehq.apps.sms.mixin import BadSMSConfigException
     result = {}
-    backend_classes = (
-        settings.SMS_LOADED_SQL_BACKENDS +
-        settings.IVR_LOADED_SQL_BACKENDS
-    )
 
-    for backend_class in backend_classes:
+    for backend_class in backend_list:
         cls = to_function(backend_class)
         api_id = cls.get_api_id()
         if api_id in result:
@@ -148,6 +142,24 @@ def get_backend_classes():
                                         "api id. Duplicate found for: %s" % api_id)
         result[api_id] = cls
     return result
+
+
+@memoized
+def get_sms_backend_classes():
+    return _get_backend_classes(settings.SMS_LOADED_SQL_BACKENDS)
+
+
+@memoized
+def get_ivr_backend_classes():
+    return _get_backend_classes(settings.IVR_LOADED_SQL_BACKENDS)
+
+
+@memoized
+def get_backend_classes():
+    return _get_backend_classes(
+        settings.SMS_LOADED_SQL_BACKENDS +
+        settings.IVR_LOADED_SQL_BACKENDS
+    )
 
 
 CLEAN_TEXT_REPLACEMENTS = (
