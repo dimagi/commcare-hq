@@ -1207,7 +1207,11 @@ COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
 COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.make_couchdb_tuples()
 EXTRA_COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.get_extra_couchdbs()
 
-INSTALLED_APPS += LOCAL_APPS
+# note: the only reason LOCAL_APPS come before INSTALLED_APPS is because of
+# a weird travis issue with kafka. if for any reason this order causes problems
+# it can be reverted whenever that's figured out.
+# https://github.com/dimagi/commcare-hq/pull/10034#issuecomment-174868270
+INSTALLED_APPS = LOCAL_APPS + INSTALLED_APPS
 
 if ENABLE_PRELOGIN_SITE:
     INSTALLED_APPS += PRELOGIN_APPS
@@ -1567,10 +1571,6 @@ CASEXML_FORCE_DOMAIN_CHECK = True
 # the group shown here, plus a second group consisting of everything else
 TRAVIS_TEST_GROUPS = (
     (
-        # tests that depend on kafka are at the top of this because they should
-        # run first due to a travis/kafka bug we are trying to sort out.
-        # https://github.com/dimagi/commcare-hq/pull/10034#issuecomment-174868270
-        'test_pillowtop', 'change_feed',
         'accounting', 'api', 'app_manager', 'appstore',
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
         'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
