@@ -3,38 +3,36 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
-    <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/guidGenerator.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/key-value-mapping.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/graph-config.js' %}"></script>
     {% include "app_manager/partials/xpathValidator.html" %}
-    <script>
-    if (window.toggles === undefined) {
-        window.toggles = {};
-    }
-    if (window.feature_previews === undefined) {
-        window.feature_previews = {};
-    }
-    window.feature_previews.ENUM_IMAGE = {{ request|feature_preview_enabled:"ENUM_IMAGE"|BOOL }};
-    window.feature_previews.CALC_XPATHS = {{ request|feature_preview_enabled:"CALC_XPATHS"|BOOL }};
-    window.toggles.MM_CASE_PROPERTIES = {{ request|toggle_enabled:"MM_CASE_PROPERTIES"|BOOL }};
-    window.toggles.CASE_LIST_DISTANCE_SORT = {{ request|toggle_enabled:"CASE_LIST_DISTANCE_SORT"|BOOL }};
-    window.toggles.GRAPH_CREATION = {{ request|toggle_enabled:"GRAPH_CREATION"|BOOL }};
-    window.toggles.CASE_LIST_CUSTOM_XML = {{ request|toggle_enabled:"CASE_LIST_CUSTOM_XML"|BOOL }};
-    window.toggles.CASE_LIST_TILE = {{ request|toggle_enabled:"CASE_LIST_TILE"|BOOL }};
-    window.toggles.CASE_LIST_LOOKUP = {{ request|toggle_enabled:"CASE_LIST_LOOKUP"|BOOL }}
-    window.toggles.FIXTURE_CASE_SELECTION = {{ request|toggle_enabled:"FIXTURE_CASE_SELECTION"|BOOL }}
-    </script>
-    <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
-{% endblock %}
-{% block head %}{{ block.super }}
-    <link rel="stylesheet" href="{% static 'app_manager/css/graph-configuration.css' %}"/>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
-    {% include "style/bootstrap2/ko/value-or-none-ui.html" %}
+    {% include "style/bootstrap3/partials/value-or-none-ui.html" %}
     {% include "app_manager/partials/nav_menu_media_js_common.html" %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_menu_item qualifier='case_list-menu_item_' %}
+
+    <script>
+        if (window.toggles === undefined) {
+            window.toggles = {};
+        }
+        if (window.feature_previews === undefined) {
+            window.feature_previews = {};
+        }
+        window.feature_previews.ENUM_IMAGE = {{ request|feature_preview_enabled:"ENUM_IMAGE"|BOOL }};
+        window.feature_previews.CALC_XPATHS = {{ request|feature_preview_enabled:"CALC_XPATHS"|BOOL }};
+        window.toggles.MM_CASE_PROPERTIES = {{ request|toggle_enabled:"MM_CASE_PROPERTIES"|BOOL }};
+        window.toggles.CASE_LIST_DISTANCE_SORT = {{ request|toggle_enabled:"CASE_LIST_DISTANCE_SORT"|BOOL }};
+        window.toggles.GRAPH_CREATION = {{ request|toggle_enabled:"GRAPH_CREATION"|BOOL }};
+        window.toggles.CASE_LIST_CUSTOM_XML = {{ request|toggle_enabled:"CASE_LIST_CUSTOM_XML"|BOOL }};
+        window.toggles.CASE_LIST_TILE = {{ request|toggle_enabled:"CASE_LIST_TILE"|BOOL }};
+        window.toggles.CASE_LIST_LOOKUP = {{ request|toggle_enabled:"CASE_LIST_LOOKUP"|BOOL }}
+        window.toggles.FIXTURE_CASE_SELECTION = {{ request|toggle_enabled:"FIXTURE_CASE_SELECTION"|BOOL }}
+    </script>
+    <!-- detail-screen-config.js depends on the previews & toggles defined above. -->
+    <script src="{% new_static 'app_manager/js/detail-screen-config.js' %}"></script>
 
     {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
         {% for detail in details %}
@@ -49,7 +47,7 @@
     {% if case_list_form_options %}
         {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_form qualifier='case_list_form_' %}
     {% endif %}
-    {% include 'style/bootstrap2/partials/key_value_mapping.html' %}
+    {% include 'style/bootstrap3/partials/key_value_mapping.html' %}
     {% include 'app_manager/partials/graph_configuration_modal.html' %}
 
     <script>
@@ -104,10 +102,10 @@
                     $(this).val(valueNoSpaces);
                 }
                 if (!valueNoSpaces.match(/^[\w-]+$/g)) {
-                    $(this).closest('.control-group').addClass('error');
-                    $('#case_type_error').css('display', 'inline');
+                    $(this).closest('.form-group').addClass('has-error');
+                    $('#case_type_error').css('display', 'block');
                 } else {
-                    $(this).closest('.control-group').removeClass('error');
+                    $(this).closest('.form-group').removeClass('has-error');
                     $('#case_type_error').css('display', 'none');
                 }
             });
@@ -212,6 +210,7 @@
     {% endfor %}
     {% endblock %}{# endblock tab-headers #}
 </ul>
+<div class="spacer"></div>
 <div class="tab-content">
     {% block tab-content %}
     <div class="tab-pane active" id="module-settings">
@@ -219,20 +218,20 @@
             {% csrf_token %}
             <div class="save-button-holder clearfix"></div>
             <fieldset>
-                <div class="control-group">
-                    <label class="control-label">{% trans "Module Name" %}</label>
-                    <div class="controls">
-                        {% input_trans module.name langs %}
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">{% trans "Module Name" %}</label>
+                    <div class="col-sm-4">
+                        {% input_trans module.name langs cssClass='form-control' %}
                     </div>
                 </div>
                 {% block settings_fields %}
                 {% if module.module_type == 'shadow' %}
-                <div class="control-group">
-                    <label class="control-label">
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">
                         {% trans "Source Module" %}
                     </label>
-                    <div class="controls">
-                        <select type="text" name="source_module_id" data-value="{{ module.source_module_id}}">
+                    <div class="col-sm-4">
+                        <select type="text" name="source_module_id" data-value="{{ module.source_module_id}}" class="form-control">
                         <option value="">{% trans "None" %}</option>
                         {% for mod in app.modules %}
                             {% if mod.module_type == 'basic' %}
@@ -245,12 +244,13 @@
                     </div>
                 </div>
                 {% endif %}
-                 <div class="control-group">
-                    <label class="control-label">
+                 <div class="form-group">
+                    <label class="col-sm-2 control-label">
                         {% trans "Menu Mode" %}
                     </label>
-                    <div class="controls">
-                        <select type="text" name="put_in_root" data-value="{% if module.put_in_root %}true{% else %}false{% endif %}">
+                    <div class="col-sm-4">
+                        <select type="text" name="put_in_root" class="form-control"
+                                data-value="{% if module.put_in_root %}true{% else %}false{% endif %}">
                             <option value="false">{% trans "Display module and then forms" %}</option>
                             <option value="true">{% trans "Display only forms" %}</option>
                         </select>
@@ -259,12 +259,12 @@
                 {% include "app_manager/partials/module_filter.html" with value=module.module_filter %}
                 {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
                 {% if child_module_enabled %}
-                <div class="control-group">
-                    <label class="control-label">
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">
                         {% trans "Parent Module" %}
                     </label>
-                    <div class="controls">
-                        <select type="text" name="root_module_id" data-value="{{ module.root_module_id}}">
+                    <div class="col-sm-4">
+                        <select type="text" name="root_module_id" data-value="{{ module.root_module_id}}" class="form-control">
                         <option value="">{% trans "No Parent" %}</option>
                         {% for mod in valid_parent_modules %}
                             <option value="{{mod.unique_id}}">{{ mod.name|trans:langs }}</option>
@@ -273,10 +273,10 @@
                     </div>
                 </div>
                 {% endif %}
-                <div class="control-group">
-                    <label class="control-label" for="comment-id">{% trans "Comment" %}</label>
-                    <div class="controls">
-                        <textarea id="comment-id" name="comment">{{ module.comment }}</textarea>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label" for="comment-id">{% trans "Comment" %}</label>
+                    <div class="col-sm-4">
+                        <textarea id="comment-id" name="comment" class="form-control">{{ module.comment }}</textarea>
                     </div>
                 </div>
                 {% endblock %}
@@ -289,40 +289,40 @@
             <div class="save-button-holder clearfix"></div>
             <fieldset>
                 <legend>{% trans "Basic" %}</legend>
-                <div class="control-group">
-                    <label class="control-label">
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">
                         {% trans "Case Type" %}
                         <span class="hq-help-template"
                               data-title="{% trans "Case Type" %}"
                               data-content="{% trans "e.g. &quot;pregnancy&quot;. The name for the type of case you are tracking. All cases you register in this module will have this case type, and only cases of this type will show in the case list. Modules with the same case type will have the same cases in their case lists." %}"
                                 ></span>
                     </label>
-                    <div class="controls">
-                        <input class="code" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
-                        <span class="help-inline" id="case_type_error" style="display: none;">
+                    <div class="col-sm-4">
+                        <input class="code form-control" type="text" id="case_type" name="case_type" value="{{ module.case_type }}" />
+                        <span class="help-block" id="case_type_error" style="display: none;">
                             {% trans "Case types can only include the characters a-z, 0-9, '-' and '_'" %}
                         </span>
                     </div>
                 </div>
-                <div class="control-group">
-                    <label class="control-label">
+                <div class="form-group">
+                    <label class="control-label col-sm-2">
                         {% trans "Label for Cases" %}
                         <span class="hq-help-template"
                               data-title="{% trans "Label for Cases" %}"
                               data-content="{% trans "This label will appear at the top of the phone's case select screen." %}"
                         ></span>
                     </label>
-                    <div class="controls">
-                        <input type="text" name="case_label" value="{{ module.case_label|trans:langs }}" />
+                    <div class="col-sm-4">
+                        <input type="text" name="case_label" value="{{ module.case_label|trans:langs }}" class="form-control" />
                     </div>
                 </div>
                 {% if app.application_version == '1.0' %}
-                <div class="control-group">
-                    <label class="control-label">
+                <div class="form-group">
+                    <label class="control-label col-sm-2">
                         {% trans "Label for Referrals" %}
                     </label>
-                    <div class="controls">
-                        <input type="text" name="referral_label" value="{{ module.referral_label|trans:langs }}" />
+                    <div class="col-sm-4">
+                        <input type="text" name="referral_label" value="{{ module.referral_label|trans:langs }}" class="form-control" />
                     </div>
                 </div>
                 {% endif %}
