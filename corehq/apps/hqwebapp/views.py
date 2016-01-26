@@ -73,14 +73,7 @@ def pg_check():
 
 
 def couch_check():
-    """check couch"""
-
-    #in reality when things go wrong with couch and postgres (as of this
-    # writing) - it's far from graceful, so this will # likely never be
-    # reached because another exception will fire first - but for
-    # completeness  sake, this check is done  here to verify our calls will
-    # work, and if other error handling allows the request to get this far.
-
+    """Confirm CouchDB is up and running, by hitting an arbitrary view."""
     try:
         results = Application.view('app_manager/builds_by_date', limit=1).all()
     except Exception:
