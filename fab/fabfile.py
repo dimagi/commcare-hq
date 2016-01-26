@@ -1062,8 +1062,10 @@ def _bower_install(use_current_release=False):
 @roles(ROLES_DJANGO)
 def _npm_install():
     with cd(env.code_root):
+        # this currently removes js-xpath for some reason
+        # can uncomment later when pruning actually matter
+        # sudo('npm prune --production')
         sudo('npm update --production')
-        sudo('npm prune --production')
 
 
 @roles(ROLES_DJANGO)
