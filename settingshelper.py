@@ -162,3 +162,22 @@ def get_allowed_websocket_channels(request, channels):
         raise PermissionDenied(
             'Not allowed to subscribe or to publish to websockets without superuser permissions!'
         )
+
+
+def fix_logger_obfuscation(fix_logger_obfuscation_, logging_config):
+    if fix_logger_obfuscation_:
+        # this is here because the logging config cannot import
+        # corehq.util.log.HqAdminEmailHandler, for example, if there
+        # is a syntax error in any module imported by corehq/__init__.py
+        # Setting FIX_LOGGER_ERROR_OBFUSCATION = True in
+        # localsettings.py will reveal the real error.
+        # Note that changing this means you will not be able to use/test anything
+        # related to email logging.
+        for handler in logging_config["handlers"].values():
+            if handler["class"].startswith("corehq."):
+                if fix_logger_obfuscation_ != 'quiet':
+                    print "{} logger is being changed to {}".format(
+                        handler['class'],
+                        'logging.StreamHandler'
+                    )
+                handler["class"] = "logging.StreamHandler"

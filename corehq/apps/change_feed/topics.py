@@ -5,6 +5,9 @@ CASE = 'case'
 FORM = 'form'
 META = 'meta'
 
+# new models
+FORM_SQL = 'form-sql'
+
 
 def get_topic(document_type):
     if document_type in ('CommCareCase', 'CommCareCase-Deleted'):

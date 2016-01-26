@@ -54,3 +54,4 @@ celerybeat-schedule
 .grunt
 node_modules/
 /sharedfiles/
+docker/data

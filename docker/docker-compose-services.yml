@@ -1,0 +1,28 @@
+postgres:
+  build: .
+  dockerfile: Dockerfile_pg
+  environment:
+    POSTGRES_USER: commcarehq
+    POSTGRES_PASSWORD: commcarehq
+  volumes:
+    - ${DOCKER_DATA_HOME}/postgresql:/var/lib/postgresql/data
+  ports:
+    - "5432:5432"
+couch:
+  image: klaemo/couchdb:latest
+  volumes:
+    - ${DOCKER_DATA_HOME}/couchdb:/usr/local/var/lib/couchdb
+  ports:
+    - "5984:5984"
+redis:
+  image: redis
+  ports:
+    - "6379:6379"
+elasticsearch:
+  build: .
+  dockerfile: Dockerfile_es
+  command: elasticsearch --cluster.name=${ES_CLUSTER_NAME}
+  ports:
+    - "9200:9200"
+  volumes:
+    - ${DOCKER_DATA_HOME}/elasticsearch:/usr/share/elasticsearch/data

@@ -1,6 +1,10 @@
 from django.test import TestCase
-from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain, \
-    get_apps_in_domain, domain_has_apps
+from corehq.apps.app_manager.dbaccessors import (
+    get_brief_apps_in_domain,
+    get_apps_in_domain,
+    domain_has_apps,
+    get_built_app_ids_for_app_id,
+)
 from corehq.apps.app_manager.models import Application, RemoteApp, Module
 from corehq.apps.domain.models import Domain
 from corehq.util.test_utils import DocTestMixin
@@ -15,20 +19,23 @@ class DBAccessorsTest(TestCase, DocTestMixin):
     def setUpClass(cls):
         cls.project = Domain(name=cls.domain)
         cls.project.save()
+        cls.first_saved_version = 2
         cls.apps = [
             # .wrap adds lots of stuff in, but is hard to call directly
             # this workaround seems to work
-            Application.wrap(Application(domain=cls.domain, name='foo', modules=[Module()]).to_json()),
-            RemoteApp.wrap(RemoteApp(domain=cls.domain, name='bar').to_json()),
+            Application.wrap(Application(domain=cls.domain, name='foo', version=1, modules=[Module()]).to_json()),
+            RemoteApp.wrap(RemoteApp(domain=cls.domain, version=1, name='bar').to_json()),
         ]
         for app in cls.apps:
             app.save()
 
         cls.decoy_apps = [
             # this one is a build
-            Application(domain=cls.domain, copy_of=cls.apps[0].get_id),
+            Application(domain=cls.domain, copy_of=cls.apps[0].get_id, version=cls.first_saved_version),
+            # this one is another build
+            Application(domain=cls.domain, copy_of=cls.apps[0].get_id, version=12),
             # this one is in the wrong domain
-            Application(domain='decoy-domain')
+            Application(domain='decoy-domain', version=5)
         ]
         for app in cls.decoy_apps:
             app.save()
@@ -83,3 +90,11 @@ class DBAccessorsTest(TestCase, DocTestMixin):
     def test_domain_has_apps(self):
         self.assertEqual(domain_has_apps(self.domain), True)
         self.assertEqual(domain_has_apps('somecrazydomainthathasnoapps'), False)
+
+    def test_get_built_app_ids_for_app_id(self):
+        app_ids = get_built_app_ids_for_app_id(self.domain, self.apps[0].get_id)
+        self.assertEqual(len(app_ids), 2)
+
+        app_ids = get_built_app_ids_for_app_id(self.domain, self.apps[0].get_id, self.first_saved_version)
+        self.assertEqual(len(app_ids), 1)
+        self.assertEqual(self.decoy_apps[1].get_id, app_ids[0])

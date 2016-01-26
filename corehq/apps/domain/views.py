@@ -1641,6 +1641,10 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
         Select2BillingInfoHandler,
     ]
 
+    @method_decorator(require_POST)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ConfirmSubscriptionRenewalView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def next_plan_version(self):
