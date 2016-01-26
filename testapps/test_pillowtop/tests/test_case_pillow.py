@@ -1,7 +1,5 @@
 import uuid
 from django.test import TestCase, override_settings
-from kafka import KafkaConsumer
-from kafka.common import KafkaUnavailableError
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import post_case_blocks
@@ -12,7 +10,6 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case import CasePillow
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup
 from testapps.test_pillowtop.utils import get_test_kafka_consumer
 
 
