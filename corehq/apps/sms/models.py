@@ -1637,7 +1637,6 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         else:
             return None
 
-
     @classmethod
     def load_default_backend(cls, backend_type, phone_number, domain=None):
         """

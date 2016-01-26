@@ -11,7 +11,6 @@ import pytz
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.db import transaction
-from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -47,7 +46,7 @@ from corehq.apps.sms.models import (
     SQLMobileBackend, SQLMobileBackendMapping, PhoneLoadBalancingMixin
 )
 from corehq.apps.sms.mixin import (SMSBackend, BackendMapping, VerifiedNumber,
-    SMSLoadBalancingMixin, UnrecognizedBackendException)
+    SMSLoadBalancingMixin, UnrecognizedBackendException, BadSMSConfigException)
 from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
                                    InitiateAddSMSBackendForm, SubscribeSMSForm,
                                    SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
@@ -542,7 +541,6 @@ def delete_forwarding_rule(request, domain, forwarding_rule_id):
         raise Http404
     forwarding_rule.retire()
     return HttpResponseRedirect(reverse("list_forwarding_rules", args=[domain]))
-
 
 
 class GlobalBackendMap(BaseAdminSectionView):

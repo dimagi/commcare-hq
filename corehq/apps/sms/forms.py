@@ -20,7 +20,7 @@ from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.reminders.forms import RecordListField, validate_time
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from corehq.apps.sms.util import (get_available_backends, validate_phone_number, strip_plus,
+from corehq.apps.sms.util import (validate_phone_number, strip_plus,
     get_sms_backend_classes)
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.users.models import CommCareUser
