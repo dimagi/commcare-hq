@@ -23,14 +23,17 @@ RUN wget -O jdk.tar.gz --no-check-certificate --no-cookies --header "Cookie: ora
 RUN pip install --upgrade pip
 
 RUN mkdir /vendor
-VOLUME ["/vendor"]
 ENV PYTHONUSERBASE /vendor
 
 COPY requirements/requirements.txt /vendor/requirements.txt
 COPY requirements/dev-requirements.txt /vendor/dev-requirements.txt
 COPY requirements/test-requirements.txt /vendor/test-requirements.txt
 
-RUN pip install -r /vendor/requirements.txt -r /vendor/dev-requirements.txt --user --upgrade
+RUN pip install \
+    -r /vendor/requirements.txt \
+    -r /vendor/dev-requirements.txt \
+    ipython \
+    --user --upgrade
 
 WORKDIR /mnt
 ADD . /mnt/

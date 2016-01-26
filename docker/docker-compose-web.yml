@@ -1,12 +1,12 @@
 web:
-  build: .
+  build: ../
   dockerfile: ./docker/Dockerfile_web
   working_dir: /mnt
   command: python manage.py runserver 0.0.0.0:8000
   volumes:
-    - .:/mnt
-    - ~/.dockerdata/python:/vendor
-    - ~/.dockerdata/sharedfiles:/sharedfiles
+    - ../:/mnt
+    - ${DOCKER_DATA_HOME}/python:/vendor
+    - ${DOCKER_DATA_HOME}/sharedfiles:/sharedfiles
   ports:
     - "8000:8000"
   environment:
