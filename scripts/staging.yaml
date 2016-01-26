@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - fix-hashtag-validation  # danny 1/26
   - fab-npm  # danny 1/26
   - kill-x_over_time  # Danny 12/11
   - vellum-staging # J$ 11/13
