@@ -1542,6 +1542,34 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
                 self.domain_is_shared(domain))
 
     @classmethod
+    def name_is_unique(cls, name, domain=None, backend_id=None):
+        if domain:
+            result = cls.objects.filter(
+                is_global=False,
+                domain=domain,
+                name=name,
+                deleted=False
+            )
+        else:
+            result = cls.objects.filter(
+                is_global=True,
+                name=name,
+                deleted=False
+            )
+
+        result = result.values_list('id', flat=True)
+        if len(result) == 0:
+            return True
+
+        if len(result) == 1:
+            if result[0] == backend_id:
+                return True
+            else:
+                return False
+
+        return False
+
+    @classmethod
     def get_domain_backends(cls, backend_type, domain, count_only=False, offset=None, limit=None):
         domain_owned_backends = models.Q(is_global=False, domain=domain)
         domain_shared_backends = models.Q(

@@ -15,7 +15,7 @@ from corehq.apps.style.crispy import FieldWithHelpBubble
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids
 from corehq.apps.app_manager.models import Application
-from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD
+from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD, SQLMobileBackend
 from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.reminders.forms import RecordListField, validate_time
@@ -803,22 +803,25 @@ class BackendForm(Form):
         if re.compile("\s").search(value) is not None:
             raise ValidationError(_("Name may not contain any spaces."))
 
-        backend_classes = get_available_backends()
         if self._cchq_domain is None:
-            # Ensure name is not duplicated among other global backends
-            backend = SMSBackend.view(
-                "sms/global_backends",
-                classes=backend_classes,
-                key=[value],
-                include_docs=True,
-                reduce=False
-            ).one()
+            # We're using the form to create a global backend, so
+            # ensure name is not duplicated among other global backends
+            is_unique = SQLMobileBackend.name_is_unique(
+                value,
+                backend_id=self._cchq_backend_id
+            )
         else:
-            # Ensure name is not duplicated among other backends owned by this domain
-            backend = SMSBackend.view("sms/backend_by_owner_domain", classes=backend_classes, key=[self._cchq_domain, value], include_docs=True).one()
-        if backend is not None and backend._id != self._cchq_backend_id:
+            # We're using the form to create a domain-level backend, so
+            # ensure name is not duplicated among other backends owned by this domain
+            is_unique = SQLMobileBackend.name_is_unique(
+                value,
+                domain=self._cchq_domain,
+                backend_id=self._cchq_backend_id
+            )
+
+        if not is_unique:
             raise ValidationError(_("Name is already in use."))
-        
+
         return value
 
     def clean_authorized_domains(self):

@@ -62,6 +62,7 @@ from corehq.apps.domain.decorators import (
     domain_admin_required,
     require_superuser,
 )
+from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.spreadsheets.excel import WorkbookJSONReader
@@ -1201,37 +1202,36 @@ class AddDomainGatewayView(BaseMessagingSectionView):
         return self.request.couch_user.is_superuser
 
     @property
-    def backend_class_name(self):
-        return self.kwargs.get('backend_class_name')
-
-    @property
-    def ignored_fields(self):
-        return [
-            'give_other_domains_access',
-            'phone_numbers',
-        ]
+    @memoized
+    def hq_api_id(self):
+        return self.kwargs.get('hq_api_id')
 
     @property
     @memoized
     def backend_class(self):
         # Superusers can create/edit any backend
         # Regular users can only create/edit Telerivet backends for now
-        if not self.is_superuser and self.backend_class_name != "TelerivetBackend":
+        if not self.is_superuser and self.hq_api_id != SQLTelerivetBackend.get_api_id():
             raise Http404()
-        backend_classes = get_available_backends()
+        backend_classes = get_backend_classes()
         try:
-            return backend_classes[self.backend_class_name]
+            return backend_classes[self.hq_api_id]
         except KeyError:
             raise Http404()
 
     @property
     def use_load_balancing(self):
-        return issubclass(self.backend_class, SMSLoadBalancingMixin)
+        return issubclass(self.backend_class, PhoneLoadBalancingMixin)
 
     @property
     @memoized
     def backend(self):
-        return self.backend_class(domain=self.domain, is_global=False)
+        return self.backend_class(
+            domain=self.domain,
+            is_global=False,
+            backend_type=SQLMobileBackend.SMS,
+            hq_api_id=self.backend_class.get_api_id()
+        )
 
     @property
     def page_name(self):
@@ -1243,7 +1243,7 @@ class AddDomainGatewayView(BaseMessagingSectionView):
 
     @property
     def page_url(self):
-        return reverse(self.urlname, args=[self.domain, self.backend_class_name])
+        return reverse(self.urlname, args=[self.domain, self.hq_api_id])
 
     @property
     @memoized
@@ -1272,12 +1272,21 @@ class AddDomainGatewayView(BaseMessagingSectionView):
 
     def post(self, request, *args, **kwargs):
         if self.backend_form.is_valid():
+            self.backend.name = self.backend_form.cleaned_data.get('name')
+            self.backend.description = self.backend_form.cleaned_data.get('description')
+            self.backend.reply_to_phone_number = self.backend_form.cleaned_data.get('reply_to_phone_number')
+
+            extra_fields = {}
             for key, value in self.backend_form.cleaned_data.items():
-                if key not in self.ignored_fields:
-                    setattr(self.backend, key, value)
+                if key in self.backend.get_available_extra_fields():
+                    extra_fields[key] = value
+            self.backend.set_extra_fields(**extra_fields)
+
             if self.use_load_balancing:
-                self.backend.x_phone_numbers = self.backend_form.cleaned_data["phone_numbers"]
+                self.backend.load_balancing_numbers = self.backend_form.cleaned_data['phone_numbers']
+
             self.backend.save()
+            self.backend.set_shared_domains(self.backend_form.cleaned_data.get('authorized_domains'))
             return HttpResponseRedirect(reverse(DomainSmsGatewayListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
