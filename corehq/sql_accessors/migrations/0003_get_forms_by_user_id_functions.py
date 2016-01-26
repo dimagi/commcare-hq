@@ -7,7 +7,8 @@ from corehq.sql_db.operations import RawSQLMigration
 from corehq.form_processor.models import XFormInstanceSQL
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
-    'normal_state': XFormInstanceSQL.NORMAL
+    'normal_state': XFormInstanceSQL.NORMAL,
+    'deleted_state': XFormInstanceSQL.DELETED,
 })
 
 
@@ -19,4 +20,5 @@ class Migration(migrations.Migration):
 
     operations = [
         migrator.get_migration('get_forms_by_user_id.sql'),
+        migrator.get_migration('get_deleted_forms_by_user_id.sql'),
     ]
