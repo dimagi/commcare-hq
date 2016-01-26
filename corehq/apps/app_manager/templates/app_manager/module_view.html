@@ -7,7 +7,6 @@
     <script src="{% new_static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% new_static 'app_manager/js/graph-config.js' %}"></script>
     {% include "app_manager/partials/xpathValidator.html" %}
-    <script src="{% new_static 'app_manager/js/detail-screen-config.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     {% include "style/bootstrap3/partials/value-or-none-ui.html" %}
@@ -32,6 +31,8 @@
         window.toggles.CASE_LIST_LOOKUP = {{ request|toggle_enabled:"CASE_LIST_LOOKUP"|BOOL }}
         window.toggles.FIXTURE_CASE_SELECTION = {{ request|toggle_enabled:"FIXTURE_CASE_SELECTION"|BOOL }}
     </script>
+    <!-- detail-screen-config.js depends on the previews & toggles defined above. -->
+    <script src="{% new_static 'app_manager/js/detail-screen-config.js' %}"></script>
 
     {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
         {% for detail in details %}
