@@ -5,7 +5,7 @@
 
 {% block js %}{{ block.super }}
     {% if module.has_schedule or request|toggle_enabled:"VISIT_SCHEDULER" %}
-        <script type="text/javascript" src="{% static 'app_manager/js/visit-scheduler.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'app_manager/js/visit-scheduler.js' %}"></script>
         <script type="text/javascript">
          var visitScheduler = new VisitScheduler.ModuleScheduler({
              home: $('#module-scheduler'),
@@ -48,16 +48,16 @@
 {% endblock %}
 
 {% block case_management_advanced_fields %}{{ block.super }}
-    <div class="control-group">
-        <label class="control-label">
+    <div class="form-group">
+        <label class="control-label col-sm-2">
             {% trans "Auto Select Case" %}
             <span class="hq-help-template"
                   data-title="{% trans "Auto Select Case" %}"
                   data-content="{% blocktrans %}When the case list contains only one case, skip over it, jumping directly to case details.{% endblocktrans %}"
             ></span>
         </label>
-        <div id="auto-select-case" class="controls commcare-feature" data-since-version="2.24">
-            <input type="checkbox" data-bind="checked: auto_select_case"/>
+        <div id="auto-select-case" class="col-sm-4 checkbox commcare-feature" data-since-version="2.24">
+            <input type="checkbox" data-bind="checked: auto_select_case" />
             <input type="hidden" name="auto_select_case" data-bind="value: auto_select_case"/>
         </div>
     </div>
