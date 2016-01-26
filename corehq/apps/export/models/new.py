@@ -353,9 +353,7 @@ class SplitExportColumn(ExportColumn):
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
         when base_path is non empty, doc is a repeat group from a form submission.
-        :param doc: A form submission or instance of a repeat group in a submission or case
-        :param base_path:
-        :return:
+        doc is a form submission or instance of a repeat group in a submission or case
         """
         value = super(SplitExportColumn, self).get_value(doc, base_path)
         if not isinstance(value, basestring):
