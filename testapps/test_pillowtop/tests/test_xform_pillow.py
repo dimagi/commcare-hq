@@ -6,7 +6,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.xform import XFormPillow, get_sql_xform_to_elasticsearch_pillow
-from corehq.util.elastic import delete_es_index
+from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import get_form_ready_to_save
 from testapps.test_pillowtop.utils import get_test_kafka_consumer
 
@@ -22,7 +22,7 @@ class XFormPillowTest(TestCase):
         delete_es_index(self.pillow.es_index)
 
     def tearDown(self):
-        delete_es_index(self.pillow.es_index)
+        ensure_index_deleted(self.pillow.es_index)
 
     def test_xform_pillow_couch(self):
         metadata = TestFormMetadata(domain=self.domain)
