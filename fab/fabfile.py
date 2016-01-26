@@ -702,10 +702,20 @@ def copy_components():
         sudo('mkdir {}/bower_components'.format(env.code_root))
 
 
+@parallel
+@roles(ROLES_ALL_SRC)
+def copy_node_modules():
+    if files.exists('{}/node_modules'.format(env.code_current)):
+        sudo('cp -r {}/node_modules {}/node_modules'.format(env.code_current, env.code_root))
+    else:
+        sudo('mkdir {}/node_modules'.format(env.code_root))
+
+
 def copy_release_files():
     execute(copy_localsettings)
     execute(copy_tf_localsettings)
     execute(copy_components)
+    execute(copy_node_modules)
 
 
 @task
