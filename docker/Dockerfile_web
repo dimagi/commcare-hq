@@ -8,7 +8,11 @@ RUN apt-get update && apt-get -y install \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-RUN npm -g install bower
+RUN npm -g install \
+    bower \
+    grunt-cli \
+    uglify-js
+
 RUN echo '{ "allow_root": true }' > /root/.bowerrc
 
 RUN wget -O jdk.tar.gz --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/7u67-b01/jdk-7u67-linux-x64.tar.gz \
