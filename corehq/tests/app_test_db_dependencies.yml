@@ -16,6 +16,7 @@ testapps.test_pillowtop:
   - corehq.apps.domain
   - corehq.apps.hqadmin
   - corehq.apps.users
+  - corehq.apps.tzmigration
   - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
