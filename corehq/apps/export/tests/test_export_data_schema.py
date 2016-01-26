@@ -73,9 +73,11 @@ class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
 
     def test_case_type_metadata_parsing(self):
 
-        case_type_metadata = _build_case_type_metadata('my_case_property', 'my_second_case_property')
-        schema = CaseExportDataSchema._generate_schema_from_case_meta(
-            case_type_metadata,
+        case_property_mapping = {
+            'candy': ['my_case_property', 'my_second_case_property']
+        }
+        schema = CaseExportDataSchema._generate_schema_from_case_property_mapping(
+            case_property_mapping,
             1,
         )
         self.assertEqual(len(schema.group_schemas), 1)
@@ -194,20 +196,18 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
 class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
 
     def test_basic_case_prop_merge(self):
-        case_type_metadata = _build_case_type_metadata(
-            'my_case_property',
-            'my_second_case_property'
-        )
-        schema1 = CaseExportDataSchema._generate_schema_from_case_meta(
-            case_type_metadata,
+        case_property_mapping = {
+            'candy': ['my_case_property', 'my_second_case_property']
+        }
+        schema1 = CaseExportDataSchema._generate_schema_from_case_property_mapping(
+            case_property_mapping,
             1,
         )
-        case_type_metadata = _build_case_type_metadata(
-            'my_case_property',
-            'my_third_case_property'
-        )
-        schema2 = CaseExportDataSchema._generate_schema_from_case_meta(
-            case_type_metadata,
+        case_property_mapping = {
+            'candy': ['my_case_property', 'my_third_case_property']
+        }
+        schema2 = CaseExportDataSchema._generate_schema_from_case_property_mapping(
+            case_property_mapping,
             2,
         )
         schema3 = CaseExportDataSchema._generate_schema_for_case_history(2)
@@ -269,9 +269,10 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
 class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)
+    domain = 'aspace'
 
     @classmethod
-    def test_basic_application_schema(cls):
+    def setUpClass(cls):
         cls.current_app = Application.wrap(cls.get_json('basic_case_application'))
 
         cls.first_build = Application.wrap(cls.get_json('basic_case_application'))
@@ -286,15 +287,11 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         for app in cls.apps:
             app.save()
 
+    def test_basic_application_schema(self):
+        schema = CaseExportDataSchema.generate_schema_from_builds(self.domain, 'candy')
 
-def _build_case_type_metadata(*case_properties):
-    case_type_metadata = CaseTypeMeta(
-        name='candy',
-        properties=[]
-    )
-    for case_prop in case_properties:
-        case_type_metadata.properties.append(CaseProperty(
-            name=case_prop
-        ))
+        self.assertEqual(len(schema.group_schemas), 2)
 
-    return case_type_metadata
+        group_schema = schema.group_schemas[0]
+        self.assertEqual(group_schema.last_occurrence, 3)
+        self.assertEqual(len(group_schema.items), 2)

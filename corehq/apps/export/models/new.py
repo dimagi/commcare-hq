@@ -5,6 +5,7 @@ from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty
 from corehq.apps.userreports.expressions.getters import NestedDictGetter
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids_for_app_id, get_all_app_ids
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.util import get_case_properties
 from dimagi.utils.couch.database import iter_docs
 from dimagi.ext.couchdbkit import (
     Document,
@@ -306,15 +307,16 @@ class CaseExportDataSchema(ExportDataSchema):
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             app = Application.wrap(app_doc)
-            case_type_metadata = filter(
-                lambda case_type_meta: case_type_meta.name == case_type,
-                app.get_case_metadata().case_types
-            )[0]
-            case_schema = CaseExportDataSchema._generate_schema_from_case_meta(
-                case_type_metadata,
+            case_property_mapping = get_case_properties(
+                app,
+                [case_type],
+                include_parent_properties=False
+            )
+            case_schema = CaseExportDataSchema._generate_schema_from_case_property_mapping(
+                case_property_mapping,
                 app.version,
             )
-            case_history_schema = CaseExportDataSchema._generate_schema_from_case_history(
+            case_history_schema = CaseExportDataSchema._generate_schema_for_case_history(
                 app.version,
             )
 
@@ -327,23 +329,25 @@ class CaseExportDataSchema(ExportDataSchema):
         return all_case_schema
 
     @staticmethod
-    def _generate_schema_from_case_meta(case_type_metadata, appVersion):
-        properties = case_type_metadata.properties
+    def _generate_schema_from_case_property_mapping(case_property_mapping, appVersion):
+        # we should only generate for one case type
+        assert len(case_property_mapping.keys()) == 1
         schema = CaseExportDataSchema()
 
-        group_schema = ExportGroupSchema(
-            path=[case_type_metadata.name],
-            last_occurrence=appVersion,
-        )
-
-        for prop in properties:
-            group_schema.items.append(ScalarItem(
-                path=[prop.name],
-                label=prop.name,
+        for case_type, case_properties in case_property_mapping.iteritems():
+            group_schema = ExportGroupSchema(
+                path=[case_type],
                 last_occurrence=appVersion,
-            ))
+            )
+            for prop in case_properties:
+                group_schema.items.append(ScalarItem(
+                    path=[prop],
+                    label=prop,
+                    last_occurrence=appVersion,
+                ))
 
-        schema.group_schemas.append(group_schema)
+            schema.group_schemas.append(group_schema)
+
         return schema
 
     @staticmethod
