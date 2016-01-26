@@ -6,6 +6,7 @@ from corehq.pillows.mappings.domain_mapping import DOMAIN_MAPPING, DOMAIN_INDEX
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from django_countries.data import COUNTRIES
+from pillowtop.es_utils import doc_exists
 
 
 class DomainPillow(HQPillow):
@@ -43,7 +44,7 @@ class DomainPillow(HQPillow):
     def change_trigger(self, changes_dict):
         doc_dict = super(DomainPillow, self).change_trigger(changes_dict)
         if doc_dict and doc_dict['doc_type'] == 'Domain-DUPLICATE':
-            if self.doc_exists(doc_dict):
+            if doc_exists(self, doc_dict):
                 self.get_es_new().delete(self.es_index, self.es_type, doc_dict['_id'])
             return None
         else:
