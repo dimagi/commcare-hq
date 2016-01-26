@@ -19,10 +19,6 @@ class TropoBackend(SMSBackend):
         return "Tropo"
 
     @classmethod
-    def get_template(cls):
-        return "tropo/backend.html"
-
-    @classmethod
     def get_form_class(cls):
         return TropoBackendForm
 
@@ -70,10 +66,6 @@ class SQLTropoBackend(SQLSMSBackend):
     @classmethod
     def get_generic_name(cls):
         return "Tropo"
-
-    @classmethod
-    def get_template(cls):
-        return 'tropo/backend.html'
 
     @classmethod
     def get_form_class(cls):

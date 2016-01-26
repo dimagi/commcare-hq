@@ -36,10 +36,6 @@ class TelerivetBackend(SMSBackend):
         return "Telerivet (Android)"
 
     @classmethod
-    def get_template(cls):
-        return "telerivet/backend.html"
-
-    @classmethod
     def get_form_class(cls):
         return TelerivetBackendForm
 
@@ -105,10 +101,6 @@ class SQLTelerivetBackend(SQLSMSBackend):
     @classmethod
     def get_generic_name(cls):
         return "Telerivet (Android)"
-
-    @classmethod
-    def get_template(cls):
-        return 'telerivet/backend.html'
 
     @classmethod
     def get_form_class(cls):

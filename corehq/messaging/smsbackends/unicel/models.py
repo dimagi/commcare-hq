@@ -57,10 +57,6 @@ class UnicelBackend(SMSBackend):
         return "Unicel"
 
     @classmethod
-    def get_template(cls):
-        return "unicel/backend.html"
-
-    @classmethod
     def get_form_class(cls):
         return UnicelBackendForm
 
@@ -120,10 +116,6 @@ class SQLUnicelBackend(SQLSMSBackend):
     @classmethod
     def get_generic_name(cls):
         return "Unicel"
-
-    @classmethod
-    def get_template(cls):
-        return 'unicel/backend.html'
 
     @classmethod
     def get_form_class(cls):

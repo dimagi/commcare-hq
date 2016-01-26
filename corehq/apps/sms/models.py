@@ -1800,15 +1800,6 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         raise NotImplementedError("Please implement this method")
 
     @classmethod
-    def get_template(cls):
-        """
-        This method should return the path to the Django template which will
-        be used to capture values for this backend's specific properties.
-        This template should extend sms/add_backend.html
-        """
-        return 'sms/add_backend.html'
-
-    @classmethod
     def get_form_class(cls):
         """
         This method should return a subclass of corehq.apps.sms.forms.BackendForm

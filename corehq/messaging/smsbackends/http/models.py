@@ -107,10 +107,6 @@ class HttpBackend(SMSBackend):
         return "HTTP"
 
     @classmethod
-    def get_template(cls):
-        return "sms/http_backend.html"
-
-    @classmethod
     def get_form_class(cls):
         return HttpBackendForm
 
@@ -183,10 +179,6 @@ class SQLHttpBackend(SQLSMSBackend):
     @classmethod
     def get_generic_name(cls):
         return "HTTP"
-
-    @classmethod
-    def get_template(cls):
-        return 'sms/http_backend.html'
 
     @classmethod
     def get_form_class(cls):
