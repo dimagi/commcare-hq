@@ -187,15 +187,6 @@ class VerifiedNumber(Document):
 def add_plus(phone_number):
     return ('+' + phone_number) if not phone_number.startswith('+') else phone_number
 
-def get_global_prefix_backend_mapping():
-    result = {}
-    for entry in BackendMapping.view("sms/backend_map", startkey=["*"], endkey=["*", {}], include_docs=True).all():
-        if entry.prefix == "*":
-            result[""] = entry.backend_id
-        else:
-            result[entry.prefix] = entry.backend_id
-    return result
-
 
 class SMSLoadBalancingInfo(object):
     def __init__(self, phone_number, stats_key=None, stats=None,
@@ -339,29 +330,6 @@ class SMSLoadBalancingMixin(Document):
                 raise
             info = SMSLoadBalancingInfo(self.phone_numbers[0])
         return info
-
-
-class BackendMapping(SyncCouchToSQLMixin, Document):
-    domain = StringProperty()
-    is_global = BooleanProperty()
-    prefix = StringProperty()
-    backend_type = StringProperty(choices=['SMS', 'IVR'], default='SMS')
-    backend_id = StringProperty() # Couch Document id of a MobileBackend
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        from corehq.apps.sms.models import SQLMobileBackendMapping
-        return SQLMobileBackendMapping
-
-    def _migration_sync_to_sql(self, sql_object):
-        from corehq.apps.sms.models import SQLMobileBackend
-        sql_object.couch_id = self._id
-        sql_object.is_global = self.is_global
-        sql_object.domain = self.domain
-        sql_object.backend_type = self.backend_type
-        sql_object.prefix = self.prefix
-        sql_object.backend = SQLMobileBackend.objects.get(couch_id=self.backend_id)
-        sql_object.save(sync_to_couch=False)
 
 
 def apply_leniency(contact_phone_number):

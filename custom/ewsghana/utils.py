@@ -11,7 +11,7 @@ from datetime import timedelta, datetime
 from dateutil import rrule
 from dateutil.rrule import MO
 from django.utils import html
-from corehq.apps.sms.mixin import VerifiedNumber, BackendMapping
+from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
