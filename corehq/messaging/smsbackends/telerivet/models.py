@@ -98,6 +98,58 @@ class SQLTelerivetBackend(SQLSMSBackend):
             'country_code',
         ]
 
+    @classmethod
+    def get_api_id(cls):
+        return 'TELERIVET'
+
+    @classmethod
+    def get_generic_name(cls):
+        return "Telerivet (Android)"
+
+    @classmethod
+    def get_template(cls):
+        return 'telerivet/backend.html'
+
+    @classmethod
+    def get_form_class(cls):
+        return TelerivetBackendForm
+
+    def send(self, msg, *args, **kwargs):
+        text = msg.text.encode('utf-8')
+        config = self.config
+        params = {
+            'phone_id': str(config.phone_id),
+            'to_number': clean_phone_number(msg.phone_number),
+            'content': text,
+            'message_type': MESSAGE_TYPE_SMS,
+        }
+        url = 'https://api.telerivet.com/v1/projects/%s/messages/outgoing' % str(config.project_id)
+
+        result = requests.post(
+            url,
+            auth=(str(config.api_key), ''),
+            data=params,
+            verify=True,
+            timeout=settings.SMS_GATEWAY_TIMEOUT,
+        )
+
+        result = result.json()
+
+    @classmethod
+    def by_webhook_secret(cls, webhook_secret):
+        # This isn't ideal right now, but this table has so few records
+        # that it shouldn't be a performance problem. Longer term, we'll
+        # move the webhook_secret to be the api_key and then we can query
+        # for this directly.
+        result = cls.active_objects.filter(
+            hq_api_id=cls.get_api_id()
+        )
+        result_by_webhook = {
+            backend.config.webhook_secret: backend
+            for backend in result
+        }
+        return result_by_webhook.get(webhook_secret)
+
 
 class IncomingRequest(models.Model):
     """

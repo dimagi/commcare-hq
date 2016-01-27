@@ -1288,6 +1288,26 @@ IVR_LOADED_BACKENDS = [
     'corehq.messaging.ivrbackends.kookoo.models.KooKooBackend',
 ]
 
+SMS_LOADED_SQL_BACKENDS = [
+    'corehq.messaging.smsbackends.apposit.models.SQLAppositBackend',
+    'corehq.messaging.smsbackends.grapevine.models.SQLGrapevineBackend',
+    'corehq.messaging.smsbackends.http.models.SQLHttpBackend',
+    'corehq.messaging.smsbackends.mach.models.SQLMachBackend',
+    'corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend',
+    'corehq.messaging.smsbackends.sislog.models.SQLSislogBackend',
+    'corehq.messaging.smsbackends.smsgh.models.SQLSMSGHBackend',
+    'corehq.messaging.smsbackends.telerivet.models.SQLTelerivetBackend',
+    'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend',
+    'corehq.messaging.smsbackends.tropo.models.SQLTropoBackend',
+    'corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend',
+    'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
+    'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
+]
+
+IVR_LOADED_SQL_BACKENDS = [
+    'corehq.messaging.ivrbackends.kookoo.models.SQLKooKooBackend',
+]
+
 IVR_BACKEND_MAP = {
     "91": "MOBILE_BACKEND_KOOKOO",
 }
