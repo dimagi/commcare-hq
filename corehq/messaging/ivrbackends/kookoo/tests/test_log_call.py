@@ -11,6 +11,7 @@ class KooKooLogCallTestCase(LogCallTestCase):
     def setUp(self):
         super(KooKooLogCallTestCase, self).setUp()
         self.backend = SQLKooKooBackend(
+            backend_type=SQLKooKooBackend.IVR,
             name='MOBILE_BACKEND_KOOKOO',
             is_global=True,
             hq_api_id=SQLKooKooBackend.get_api_id()

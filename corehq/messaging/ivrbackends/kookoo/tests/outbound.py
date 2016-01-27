@@ -33,6 +33,7 @@ class KooKooTestCase(TouchformsTestCase):
     def setUp(self):
         super(KooKooTestCase, self).setUp()
         self.ivr_backend = SQLKooKooBackend(
+            backend_type=SQLKooKooBackend.IVR,
             name="MOBILE_BACKEND_KOOKOO",
             is_global=True,
             api_key="xyz",
