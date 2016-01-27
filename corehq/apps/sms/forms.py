@@ -775,7 +775,7 @@ class BackendForm(Form):
         return fields
 
     def __init__(self, *args, **kwargs):
-        button_text = kwargs.pop('button_text', _("Create SMS Connection"))
+        button_text = kwargs.pop('button_text', _("Create SMS Gateway"))
         self._cchq_domain = kwargs.pop('domain')
         self._cchq_backend_id = kwargs.pop('backend_id')
         super(BackendForm, self).__init__(*args, **kwargs)
@@ -1045,7 +1045,7 @@ class InitiateAddSMSBackendForm(Form):
     )
     hq_api_id = ChoiceField(
         required=False,
-        label="Connection Type",
+        label="Gateway Type",
     )
 
     def __init__(self, is_superuser=False, *args, **kwargs):
@@ -1066,7 +1066,7 @@ class InitiateAddSMSBackendForm(Form):
         self.helper.form_class = "form form-horizontal"
         self.helper.layout = crispy.Layout(
             hqcrispy.B3MultiField(
-                _("Create Another Connection"),
+                _("Create Another Gateway"),
                 InlineField('action'),
                 Div(InlineField('hq_api_id'), css_class='col-sm-6 col-md-6 col-lg-4'),
                 Div(StrictButton(

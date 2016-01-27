@@ -546,7 +546,7 @@ def delete_forwarding_rule(request, domain, forwarding_rule_id):
 class GlobalBackendMap(BaseAdminSectionView):
     urlname = 'global_backend_map'
     template_name = 'sms/backend_map.html'
-    page_title = ugettext_lazy("Global Prefix to Backend Mapping")
+    page_title = ugettext_lazy("Default Gateways")
 
     @property
     def page_url(self):
@@ -935,7 +935,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     @property
     def column_names(self):
         return [
-            _("Connection"),
+            _("Gateway"),
             _("Description"),
             _("Supported Countries"),
             _("Status"),
@@ -1068,7 +1068,6 @@ class AddGatewayViewMixin(object):
     A mixin to help extract the common functionality between adding/editing
     domain-level backends and adding/editing global backends.
     """
-    page_title = ugettext_noop("Add SMS Connection")
 
     @property
     def is_superuser(self):
@@ -1098,11 +1097,11 @@ class AddGatewayViewMixin(object):
 
     @property
     def page_name(self):
-        return _("Add %s Connection") % self.backend_class.get_generic_name()
+        return _("Add %s Gateway") % self.backend_class.get_generic_name()
 
     @property
     def button_text(self):
-        return _("Create %s SMS Connection") % self.backend_class.get_generic_name()
+        return _("Create %s Gateway") % self.backend_class.get_generic_name()
 
     @property
     def page_context(self):
@@ -1156,6 +1155,7 @@ class AddGatewayViewMixin(object):
 class AddDomainGatewayView(AddGatewayViewMixin, BaseMessagingSectionView):
     urlname = 'add_domain_gateway'
     template_name = 'sms/add_gateway.html'
+    page_title = ugettext_lazy("Add SMS Gateway")
 
     @property
     @memoized
@@ -1208,7 +1208,7 @@ class AddDomainGatewayView(AddGatewayViewMixin, BaseMessagingSectionView):
 
 class EditDomainGatewayView(AddDomainGatewayView):
     urlname = 'edit_domain_gateway'
-    page_title = ugettext_noop("Edit SMS Connection")
+    page_title = ugettext_lazy("Edit SMS Gateway")
 
     @property
     def backend_id(self):
@@ -1266,11 +1266,11 @@ class EditDomainGatewayView(AddDomainGatewayView):
 
     @property
     def page_name(self):
-        return _("Edit %s Connection") % self.backend_class.get_generic_name()
+        return _("Edit %s Gateway") % self.backend_class.get_generic_name()
 
     @property
     def button_text(self):
-        return _("Update %s SMS Connection") % self.backend_class.get_generic_name()
+        return _("Update %s Gateway") % self.backend_class.get_generic_name()
 
     @property
     def page_url(self):
@@ -1303,7 +1303,7 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
     @property
     def column_names(self):
         return [
-            _("Connection"),
+            _("Gateway"),
             _("Description"),
             _("Supported Countries"),
             _("Actions"),
@@ -1390,6 +1390,7 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
 class AddGlobalGatewayView(AddGatewayViewMixin, BaseAdminSectionView):
     urlname = 'add_global_gateway'
     template_name = 'sms/add_gateway.html'
+    page_title = ugettext_lazy("Add SMS Gateway")
 
     @property
     @memoized
@@ -1440,7 +1441,7 @@ class AddGlobalGatewayView(AddGatewayViewMixin, BaseAdminSectionView):
 
 class EditGlobalGatewayView(AddGlobalGatewayView):
     urlname = 'edit_global_gateway'
-    page_title = ugettext_noop("Edit SMS Connection")
+    page_title = ugettext_lazy("Edit SMS Gateway")
 
     @property
     def backend_id(self):
@@ -1494,11 +1495,11 @@ class EditGlobalGatewayView(AddGlobalGatewayView):
 
     @property
     def page_name(self):
-        return _("Edit %s Connection") % self.backend_class.get_generic_name()
+        return _("Edit %s Gateway") % self.backend_class.get_generic_name()
 
     @property
     def button_text(self):
-        return _("Update %s SMS Connection") % self.backend_class.get_generic_name()
+        return _("Update %s Gateway") % self.backend_class.get_generic_name()
 
     @property
     def page_url(self):

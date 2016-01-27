@@ -1056,11 +1056,11 @@ class MessagingTab(UITab):
                 'url': reverse(DomainSmsGatewayListView.urlname, args=[self.domain]),
                 'subpages': [
                     {
-                        'title': _("Add Connection"),
+                        'title': _("Add Gateway"),
                         'urlname': AddDomainGatewayView.urlname,
                     },
                     {
-                        'title': _("Edit Connection"),
+                        'title': _("Edit Gateway"),
                         'urlname': EditDomainGatewayView.urlname,
                     },
                 ],
@@ -1620,15 +1620,15 @@ class SMSAdminTab(UITab):
             AddGlobalGatewayView, EditGlobalGatewayView)
         items = super(SMSAdminTab, self).sidebar_items
         items.append((_('SMS Connectivity'), [
-            {'title': _('SMS Connections'),
+            {'title': _('Gateways'),
              'url': reverse(GlobalSmsGatewayListView.urlname),
              'subpages': [
-                 {'title': _('Add Connection'),
+                 {'title': _('Add Gateway'),
                   'urlname': AddGlobalGatewayView.urlname},
-                 {'title': _('Edit Connection'),
+                 {'title': _('Edit Gateway'),
                   'urlname': EditGlobalGatewayView.urlname},
             ]},
-            {'title': _('SMS Country-Connection Map'),
+            {'title': _('Default Gateways'),
              'url': reverse('global_backend_map')},
         ]))
         return items
