@@ -10,5 +10,5 @@ CouchAppsPreindexPlugin.register('couchapps', __file__, {
         settings.NEW_DOMAINS_DB),
     'by_domain_doc_type_date': (
         None, settings.NEW_USERS_GROUPS_DB, settings.NEW_FIXTURES_DB, 'meta',
-        settings.NEW_DOMAINS_DB),
+        settings.NEW_DOMAINS_DB, settings.SYNCLOGS_DB),
 })
