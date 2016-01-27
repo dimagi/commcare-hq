@@ -38,14 +38,19 @@ class TestMigratingBlobDB(get_base_class()):
             self.assertEqual(fh.read(), b"content")
 
     def test_copy_blob_masks_old_blob(self):
-        # techincally this is an impossible scenario since fsdb should
-        # always have the same content as s3db after copy_blob
-        info = self.fsdb.put(StringIO(b"fs content"), "test")
-        self.db.copy_blob(StringIO(b"s3 content"), info, mod.DEFAULT_BUCKET)
+        content = StringIO(b"fs content")
+        info = self.fsdb.put(content, "test")
+        content.seek(0)
+        self.db.copy_blob(content, info, mod.DEFAULT_BUCKET)
         self.assertEndsWith(
             self.fsdb.get_path(info.name), "/" + self.db.get_path(info.name))
-        with self.db.get(info.name) as fh:
-            self.assertEqual(fh.read(), b"s3 content")
+        def blow_up(*args, **kw):
+            raise Boom("should not be called")
+        with replattr(self.fsdb, "get", blow_up, sigcheck=False):
+            with self.assertRaises(Boom):
+                self.fsdb.get(info.name)
+            with self.db.get(info.name) as fh:
+                self.assertEqual(fh.read(), b"fs content")
 
     def test_delete_from_both_fs_and_s3(self):
         name = "test"
@@ -58,3 +63,7 @@ class TestMigratingBlobDB(get_base_class()):
 
     def assertEndsWith(self, a, b):
         assert a.endswith(b), (a, b)
+
+
+class Boom(Exception):
+    pass
