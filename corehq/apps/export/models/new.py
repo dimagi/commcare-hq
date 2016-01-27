@@ -195,7 +195,7 @@ class ExportGroupSchema(DocumentSchema):
     last_occurrence = IntegerProperty()
 
 
-class ExportDataSchema(DocumentSchema):
+class ExportDataSchema(Document):
     """
     An object representing the things that can be exported for a particular
     form xmlns or case type. It contains a list of ExportGroupSchema.
