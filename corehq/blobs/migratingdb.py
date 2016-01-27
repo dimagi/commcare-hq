@@ -2,8 +2,7 @@
 """
 from __future__ import absolute_import
 
-from corehq.blobs import DEFAULT_BUCKET
-from corehq.blobs.exceptions import BadName, NotFound
+from corehq.blobs.exceptions import NotFound
 
 
 class MigratingBlobDB(object):
