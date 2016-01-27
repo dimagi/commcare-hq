@@ -3318,7 +3318,7 @@ def _filter_by_location_id(user, ui_filter):
 
 def _filter_by_username(user, ui_filter):
     from corehq.apps.reports_core.filters import Choice
-    return Choice(value=user.username, display=None)
+    return Choice(value=user.raw_username, display=None)
 
 
 def _filter_by_user_id(user, ui_filter):
