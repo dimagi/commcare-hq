@@ -5,7 +5,7 @@ from corehq.apps.commtrack.dbaccessors.supply_point_case_by_domain_external_id i
     get_supply_point_case_by_domain_external_id
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.sms.mixin import MobileBackend, apply_leniency, PhoneNumberInUseException, InvalidFormatException, \
+from corehq.apps.sms.mixin import apply_leniency, PhoneNumberInUseException, InvalidFormatException, \
     VerifiedNumber
 from corehq.apps.sms.util import set_domain_default_backend_to_test_backend
 from corehq.form_processor.interfaces.supply import SupplyInterface

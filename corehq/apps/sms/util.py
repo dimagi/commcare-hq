@@ -7,7 +7,6 @@ from couchdbkit.resource import ResourceNotFound
 from corehq.apps.users.models import CouchUser, CommCareUser
 from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_block_from_template
-from corehq.apps.sms.mixin import MobileBackend
 from corehq.util.quickcache import quickcache
 from django.core.exceptions import ValidationError
 from dimagi.utils.decorators.memoized import memoized
@@ -216,11 +215,9 @@ def get_backend_name(backend_id):
         return None
 
     try:
-        doc = MobileBackend.get_db().get(backend_id)
-    except ResourceNotFound:
+        return SQLMobileBackend.load(backend_id, is_couch_id=True).name
+    except:
         return None
-
-    return doc.get('name', None)
 
 
 def set_domain_default_backend_to_test_backend(domain):

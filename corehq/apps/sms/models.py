@@ -18,7 +18,7 @@ from dimagi.utils.couch.migration import (SyncCouchToSQLMixin,
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.signals import case_post_save
-from corehq.apps.sms.mixin import (CommCareMobileContactMixin, MobileBackend,
+from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
     PhoneNumberInUseException, InvalidFormatException, VerifiedNumber,
     apply_leniency, BackendMapping, BadSMSConfigException)
 from corehq.apps.sms import util as smsutil
@@ -1890,19 +1890,13 @@ class SQLMobileBackend(models.Model):
                     accepted=True,
                 ) for domain in domains
             ]
-        # TODO: Remove the below line once the two-way sync with
-        # couch is no longer necessary.
-        self.save()
 
     def soft_delete(self):
         with transaction.atomic():
             self.deleted = True
             self.__clear_shared_domain_cache([])
             self.mobilebackendinvitation_set.all().delete()
-            for mapping in self.sqlmobilebackendmapping_set.all():
-                # TODO: Can do a bulk delete once the two-way sync
-                # with couch is no longer necessary
-                mapping.delete()
+            self.sqlmobilebackendmapping_set.all().delete()
             self.save()
 
     def __clear_caches(self):

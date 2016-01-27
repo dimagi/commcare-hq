@@ -1,4 +1,4 @@
-from corehq.apps.sms.mixin import MobileBackend, UnrecognizedBackendException
+from corehq.apps.sms.mixin import UnrecognizedBackendException
 from corehq.apps.sms.models import SQLMobileBackend
 from corehq.apps.sms.util import get_available_backends
 

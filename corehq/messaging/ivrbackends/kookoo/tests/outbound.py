@@ -1,7 +1,6 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.tests.util import TouchformsTestCase
-from corehq.apps.sms.mixin import MobileBackend
 from corehq.apps.sms.models import CallLog
 from corehq.apps.sms.util import register_sms_contact
 from corehq.apps.reminders.models import (CaseReminderHandler,
