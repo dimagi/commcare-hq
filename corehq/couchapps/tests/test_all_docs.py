@@ -33,7 +33,8 @@ class AllDocsTest(TestCase):
              get_db('users').uri: ['users_db_doc'],
              get_db('meta').uri: [],
              get_db('fixtures').uri: [],
-             get_db('domains').uri: []}
+             get_db('domains').uri: [],
+             get_db('apps').uri: []}
         )
 
     def test_get_doc_count_by_type(self):
