@@ -102,8 +102,8 @@ class FormProcessorInterface(object):
         """
         return self.processor.is_duplicate(xform_id, domain=domain)
 
-    def new_xform(self, instance_xml):
-        return self.processor.new_xform(instance_xml)
+    def new_xform(self, form_json):
+        return self.processor.new_xform(form_json)
 
     def xformerror_from_xform_instance(self, instance, error_message, with_new_id=False):
         return self.processor.xformerror_from_xform_instance(instance, error_message, with_new_id=with_new_id)

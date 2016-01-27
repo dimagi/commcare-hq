@@ -48,7 +48,7 @@
         <div id="preview_text"
              style="display:none!important">
             {% blocktrans %}
-                Dear {{ full_name }}, please confirm your CommCare HQ Account!
+                Dear {{ full_name }}, please activate your CommCare HQ Account!
             {% endblocktrans %}
         </div>
         <!-- extra space for preview -->
@@ -65,37 +65,20 @@
 
             <p>
                 {% blocktrans %}Welcome to CommCare!{% endblocktrans %}
+                {% blocktrans %}Please click the button below to activate your CommCare project <strong>{{ domain }}</strong>.{% endblocktrans %}
             </p>
-
-            <p>
-                {% blocktrans %}
-                As a first step, please confirm your email address and activate
-                your new CommCare project titled <strong>{{ domain }}</strong>.
-                {% endblocktrans %}
-            </p>
-
             <p style="text-align: center;">
                 <a class="btn"
                    href="{{ registration_link }}"
                    style="color: #ffffff; text-decoration: none; padding: 10px 15px; background-color: #004ebc; border-radius: 5px; font-size: 20px; -moz-border-radius: 5px; -webkit-border-radius: 5px; display: inline-block; cursor: pointer;">
-                    {% trans "Confirm CommCare Account" %}
+                    {% trans "Activate CommCare" %}
                 </a>
             </p>
-
             <p>
                 {% blocktrans %}
-                You will not be able to use your project until you have
-                confirmed your email address.
+                Once you do this, our team will be in touch with some helpful tips for getting started!
                 {% endblocktrans %}
             </p>
-
-            <p>
-                {% blocktrans %}
-                Once you have confirmed, our team will be in touch with some helpful tips for
-                getting started!
-                {% endblocktrans %}
-            </p>
-
             <p>
                 {% blocktrans %}
                 Cheers,<br />

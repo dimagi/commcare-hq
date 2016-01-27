@@ -7,7 +7,7 @@ from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from datetime import datetime
-from django.db import models
+from django.db import models, transaction
 import json_field
 from casexml.apps.case.cleanup import close_case
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
@@ -582,18 +582,11 @@ class Location(CachedCouchDocumentMixin, Document):
         self.is_archived = True
         self.save()
 
-        sp = self.linked_supply_point()
-        # sanity check that the supply point exists and is still open.
-        # this is important because if you archive a child, then try
-        # to archive the parent, we don't want to try to close again
-        if sp and not sp.closed:
-            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
-
-        _unassign_users_from_location(self.domain, self._id)
+        self._close_case_and_remove_users()
 
     def archive(self):
         """
-        Mark a location and its dependants as archived.
+        Mark a location and its descendants as archived.
         This will cause it (and its data) to not show up in default Couch and
         SQL views.  This also unassigns users assigned to the location.
         """
@@ -629,6 +622,37 @@ class Location(CachedCouchDocumentMixin, Document):
         """
         for loc in [self] + self.descendants:
             loc._unarchive_single_location()
+
+    def _close_case_and_remove_users(self):
+        """
+        Closes linked supply point cases for a location and unassigns the users
+        assigned to that location.
+
+        Used by both archive and delete methods
+        """
+
+        sp = self.linked_supply_point()
+        # sanity check that the supply point exists and is still open.
+        # this is important because if you archive a child, then try
+        # to archive the parent, we don't want to try to close again
+        if sp and not sp.closed:
+            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
+
+        _unassign_users_from_location(self.domain, self._id)
+
+    def full_delete(self):
+        """
+        Delete a location and its dependants.
+        This also unassigns users assigned to the location.
+        """
+        to_delete = [self] + self.descendants
+
+        # if there are errors deleting couch locations, roll back sql delete
+        with transaction.atomic():
+            for loc in to_delete:
+                loc._close_case_and_remove_users()
+            SQLLocation.objects.get(location_id=self._id).delete()
+            Location.get_db().bulk_delete(to_delete)
 
     def save(self, *args, **kwargs):
         """

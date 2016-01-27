@@ -130,17 +130,23 @@ var HQReport = function (options) {
             $(self.toggleFiltersButton).button('open');
         }
 
-        $(self.filterAccordion).on('hidden', function (data) {
+        var hiddenFilterButtonStatus = function (data) {
             if (!(data.target && $(data.target).hasClass('modal'))) {
                 _setShowFilterCookie(false);
                 $(self.toggleFiltersButton).button('open');
             }
-        });
+        };
 
-        $(self.filterAccordion).on('show', function () {
+        $(self.filterAccordion).on('hidden', hiddenFilterButtonStatus);  // B2 event
+        $(self.filterAccordion).on('hidden.bs.collapse', hiddenFilterButtonStatus);  // B3 event
+
+        var showFilterButtonStatus = function () {
             _setShowFilterCookie(true);
             $(self.toggleFiltersButton).button('close');
-        });
+        };
+
+        $(self.filterAccordion).on('show', showFilterButtonStatus);  // B2 event
+        $(self.filterAccordion).on('show.bs.collapse', showFilterButtonStatus);  // B3 event
 
     };
 

@@ -4,6 +4,7 @@ cache:
   directories:
     - $HOME/.cache/pip
     - $HOME/virtualenv/python$TRAVIS_PYTHON_VERSION.9
+    - $HOME/moto-s3
 python:
   - "2.7"
 env:
@@ -14,7 +15,8 @@ env:
     - TRAVIS_INSTALL="y"
   matrix:
     - MATRIX_TYPE=javascript BOWER=yes
-    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunnerCatchall BOWER=yes
+    # need node installs for app_manager.XpathValidatorTest
+    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunnerCatchall BOWER=yes NODE=yes
     - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunner0
 branches:
   only:

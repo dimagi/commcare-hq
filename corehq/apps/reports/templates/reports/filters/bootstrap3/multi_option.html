@@ -3,7 +3,7 @@
 {% block filter_content %}
     {% if not endpoint %}
         <select id="{{ css_id }}"
-            class="{{ css_class }}"
+            class="{{ css_class }} form-control"
             multiple="true"
             data-bind="options: select_params, optionsText: 'text', optionsValue: 'val', selectedOptions: current_selection"
             placeholder="{{ select.placeholder }}"
@@ -12,13 +12,13 @@
         <input type="text"
             id="{{ css_id }}"
             data-ajax-select2="true"
-            class="{{ css_class }}"
+            class="{{ css_class }} form-control"
             placeholder="{{ select.placeholder }}"
-            name="{{ slug }}"></input>
+            name="{{ slug }}" />
     {% endif %}
 {% endblock %}
 {% block filter_js %}
-<link href="{% new_static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
+<link href="{% new_static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet"/>
 <script src="{% new_static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
 <script type="text/javascript">
     $(function () {

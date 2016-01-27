@@ -231,7 +231,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_
 
     if fields is not None:
         for res in result['hits']['hits']:
-            flatten_field_dict(res['fields'])
+            flatten_field_dict(res)
 
     return result
 

@@ -98,6 +98,47 @@ class SQLGrapevineBackend(SQLSMSBackend):
             'authentication_code',
         ]
 
+    @classmethod
+    def get_opt_in_keywords(cls):
+        return ['START']
+
+    @classmethod
+    def get_opt_out_keywords(cls):
+        return ['STOP', 'END', 'CANCEL', 'UNSUBSCRIBE', 'QUIT']
+
+    @classmethod
+    def get_api_id(cls):
+        return 'GVI'
+
+    @classmethod
+    def get_generic_name(cls):
+        return "Grapevine"
+
+    @classmethod
+    def get_template(cls):
+        return 'grapevine/backend.html'
+
+    @classmethod
+    def get_form_class(cls):
+        return GrapevineBackendForm
+
+    def send(self, msg, *args, **kwargs):
+        phone_number = clean_phone_number(msg.phone_number)
+        text = msg.text.encode('utf-8')
+
+        config = self.config
+        data = TEMPLATE.format(
+            affiliate_code=escape(config.affiliate_code),
+            auth_code=escape(config.authentication_code),
+            message=escape(text),
+            msisdn=escape(phone_number)
+        )
+
+        url = 'http://www.gvi.bms9.vine.co.za/httpInputhandler/ApplinkUpload'
+        req = urllib2.Request(url, data)
+        response = urllib2.urlopen(req, timeout=settings.SMS_GATEWAY_TIMEOUT)
+        resp = response.read()
+
 
 class SmsMessage(object):
     phonenumber = ''

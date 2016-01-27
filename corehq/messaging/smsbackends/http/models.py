@@ -175,3 +175,51 @@ class SQLHttpBackend(SQLSMSBackend):
             # a dictionary of additional parameters that will be sent in the request (optional)
             'additional_params',
         ]
+
+    @classmethod
+    def get_api_id(cls):
+        return 'HTTP'
+
+    @classmethod
+    def get_generic_name(cls):
+        return "HTTP"
+
+    @classmethod
+    def get_template(cls):
+        return 'sms/http_backend.html'
+
+    @classmethod
+    def get_form_class(cls):
+        return HttpBackendForm
+
+    def send(self, msg, *args, **kwargs):
+        config = self.config
+        if config.additional_params:
+            params = config.additional_params.copy()
+        else:
+            params = {}
+
+        phone_number = msg.phone_number
+        if config.include_plus:
+            phone_number = clean_phone_number(phone_number)
+        else:
+            phone_number = strip_plus(phone_number)
+
+        try:
+            text = msg.text.encode("iso-8859-1")
+        except UnicodeEncodeError:
+            text = msg.text.encode("utf-8")
+        params[config.message_param] = text
+        params[config.number_param] = phone_number
+
+        url_params = urlencode(params)
+        try:
+            if config.method == "GET":
+                response = urlopen("%s?%s" % (config.url, url_params),
+                    timeout=settings.SMS_GATEWAY_TIMEOUT).read()
+            else:
+                response = urlopen(config.url, url_params,
+                    timeout=settings.SMS_GATEWAY_TIMEOUT).read()
+        except Exception as e:
+            msg = "Error sending message from backend: '{}'\n\n{}".format(self.pk, str(e))
+            raise BackendProcessingException(msg), None, sys.exc_info()[2]

@@ -164,7 +164,6 @@ class BlobMixin(Document):
         def atomic_blobs_context():
             if self._id is None:
                 self._id = self.get_db().server.next_uuid()
-            non_atomic_blobs = dict(self.blobs)
             old_external_blobs = dict(self.external_blobs)
             if self.migrating_blobs_from_couch:
                 if self._attachments:

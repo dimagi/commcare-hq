@@ -86,6 +86,7 @@ related_doc     | A way to reference something in another document | `form.case.
 root_doc        | A way to reference the root document explicitly (only needed when making a data source from repeat/child data) | `repeat.parent.name`
 nested          | A way to chain any two expressions together | `f1(f2(doc))`
 dict            | A way to emit a dictionary of key/value pairs | `{"name": "test", "value": f(doc)}`
+add_days        | A way to add days to a date | `my_date + timedelta(days=15)`
 
 
 ### JSON snippets for expressions
@@ -301,6 +302,23 @@ Here is a simple example that demonstrates the structure. The keys of `propertie
             "property_name": "prop2"
         }
     }
+}
+```
+
+#### "Add Days" expressions
+
+Below is a simple example that demonstrates the structure.
+The expression below will add 28 days to a property called "dob".
+The date_expression and count_expression can be any valid expressions, or simply constants.
+
+```json
+{
+    "type": "add_days",
+    "date_expression": {
+        "type": "property_name",
+        "property_name": "dob",
+    },
+    "count_expression": 28
 }
 ```
 

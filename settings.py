@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
+import importlib
 from collections import defaultdict
 
 import os
@@ -332,12 +333,12 @@ HQ_APPS = (
     'custom.bihar',
     'custom.penn_state',
     'custom.apps.gsid',
+    'custom.icds',
     'hsph',
     'mvp',
     'mvp_docs',
     'mvp_indicators',
     'custom.opm',
-    'pathindia',
     'pact',
 
     'custom.apps.care_benin',
@@ -364,7 +365,6 @@ HQ_APPS = (
 
     'custom.dhis2',
     'custom.openclinica',
-    'custom.guinea_backup',
 
 )
 
@@ -994,32 +994,26 @@ KAFKA_URL = 'localhost:9092'
 
 try:
     # try to see if there's an environmental variable set for local_settings
-    if os.environ.get('CUSTOMSETTINGS', None) == "demo":
-        # this sucks, but is a workaround for supporting different settings
-        # in the same environment
-        from settings_demo import *
+    custom_settings = os.environ.get('CUSTOMSETTINGS', None)
+    if custom_settings:
+        if custom_settings == 'demo':
+            from settings_demo import *
+        else:
+            custom_settings_module = importlib.import_module(custom_settings)
+            try:
+                attrlist = custom_settings_module.__all__
+            except AttributeError:
+                attrlist = dir(custom_settings_module)
+            for attr in attrlist:
+                globals()[attr] = getattr(custom_settings_module, attr)
     else:
         from localsettings import *
-        _fix_logger_obfuscation = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
-        if _fix_logger_obfuscation:
-            # this is here because the logging config cannot import
-            # corehq.util.log.HqAdminEmailHandler, for example, if there
-            # is a syntax error in any module imported by corehq/__init__.py
-            # Setting FIX_LOGGER_ERROR_OBFUSCATION = True in
-            # localsettings.py will reveal the real error.
-            # Note that changing this means you will not be able to use/test anything
-            # related to email logging.
-            for handler in LOGGING["handlers"].values():
-                if handler["class"].startswith("corehq."):
-                    if _fix_logger_obfuscation != 'quiet':
-                        print "{} logger is being changed to {}".format(
-                            handler['class'],
-                            'logging.StreamHandler'
-                        )
-                    handler["class"] = "logging.StreamHandler"
 except ImportError:
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
+
+fix_logger_obfuscation_ = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
+helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
 
 if DEBUG:
     try:
@@ -1162,7 +1156,6 @@ COUCHDB_APPS = [
     'hsph',
     'mvp',
     ('mvp_docs', MVP_INDICATOR_DB),
-    'pathindia',
     'pact',
     'accounting',
     'succeed',
@@ -1209,7 +1202,11 @@ COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
 COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.make_couchdb_tuples()
 EXTRA_COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.get_extra_couchdbs()
 
-INSTALLED_APPS += LOCAL_APPS
+# note: the only reason LOCAL_APPS come before INSTALLED_APPS is because of
+# a weird travis issue with kafka. if for any reason this order causes problems
+# it can be reverted whenever that's figured out.
+# https://github.com/dimagi/commcare-hq/pull/10034#issuecomment-174868270
+INSTALLED_APPS = LOCAL_APPS + INSTALLED_APPS
 
 if ENABLE_PRELOGIN_SITE:
     INSTALLED_APPS += PRELOGIN_APPS
@@ -1290,6 +1287,26 @@ SMS_LOADED_BACKENDS = [
 
 IVR_LOADED_BACKENDS = [
     'corehq.messaging.ivrbackends.kookoo.models.KooKooBackend',
+]
+
+SMS_LOADED_SQL_BACKENDS = [
+    'corehq.messaging.smsbackends.apposit.models.SQLAppositBackend',
+    'corehq.messaging.smsbackends.grapevine.models.SQLGrapevineBackend',
+    'corehq.messaging.smsbackends.http.models.SQLHttpBackend',
+    'corehq.messaging.smsbackends.mach.models.SQLMachBackend',
+    'corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend',
+    'corehq.messaging.smsbackends.sislog.models.SQLSislogBackend',
+    'corehq.messaging.smsbackends.smsgh.models.SQLSMSGHBackend',
+    'corehq.messaging.smsbackends.telerivet.models.SQLTelerivetBackend',
+    'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend',
+    'corehq.messaging.smsbackends.tropo.models.SQLTropoBackend',
+    'corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend',
+    'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
+    'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
+]
+
+IVR_LOADED_SQL_BACKENDS = [
+    'corehq.messaging.ivrbackends.kookoo.models.SQLKooKooBackend',
 ]
 
 IVR_BACKEND_MAP = {
@@ -1392,19 +1409,14 @@ PILLOWTOPS = {
             'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
         },
         {
-            'name': 'KafkaCaseConsumerPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_case_consumer_pillow',
-        },
-        {
-            'name': 'LoggingPythonDemoPillow',
-            'class': 'corehq.apps.change_feed.consumer.pillow.LoggingPythonPillow',
-            'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_python_pillow_consumer',
-        },
-        {
             'name': 'BlobDeletionPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.blobs.pillow.get_blob_deletion_pillow',
+        },
+        {
+            'name': 'SqlXFormToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_sql_xform_to_elasticsearch_pillow',
         },
     ]
 }

@@ -33,6 +33,7 @@ HUBSPOT_FORM_BUILDER_FORM_ID = "4f118cda-3c73-41d9-a5d1-e371b23b1fb5"
 HUBSPOT_APP_TEMPLATE_FORM_ID = "91f9b1d2-934d-4e7a-997e-e21e93d36662"
 HUBSPOT_CLICKED_DEPLOY_FORM_ID = "c363c637-d0b1-44f3-9d73-f34c85559f03"
 HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID = "619daf02-e043-4617-8947-a23e4589935a"
+HUBSPOT_INVITATION_SENT_FORM = "5aa8f696-4aab-4533-b026-bd64c7e06942"
 HUBSPOT_COOKIE = 'hubspotutk'
 
 
@@ -217,6 +218,11 @@ def track_created_new_project_space_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, webuser, cookies, meta)
 
 
+@task(queue="background_queue", acks_late=True, ignore_result=True)
+def track_sent_invite_on_hubspot(webuser, cookies, meta):
+    _send_form_to_hubspot(HUBSPOT_INVITATION_SENT_FORM, webuser, cookies, meta)
+
+
 def track_workflow(email, event, properties=None):
     """
     Record an event in KISSmetrics.
@@ -325,7 +331,7 @@ def track_periodic_data():
             end_time,
             sys.getsizeof(submit_json)
         )
-    _soft_assert(processing_time.seconds < 10, msg)
+    _soft_assert(processing_time.seconds < 100, msg)
 
     submit_data_to_hub_and_kiss(submit_json)
 
@@ -340,7 +346,7 @@ def submit_data_to_hub_and_kiss(submit_json):
         try:
             dispatcher(submit_json)
         except Exception, e:
-            notify_exception(None, "{msg}: {exc}".format(msg=error_message, exc=str(e)))
+            notify_exception(None, u"{msg}: {exc}".format(msg=error_message, exc=e))
 
 
 def _track_periodic_data_on_kiss(submit_json):

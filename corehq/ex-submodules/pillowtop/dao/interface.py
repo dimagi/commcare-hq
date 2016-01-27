@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 
 
@@ -18,3 +19,12 @@ class DocumentStore(object):
     @abstractmethod
     def delete_document(self, doc_id):
         pass
+
+
+class ReadOnlyDocumentStore(DocumentStore):
+
+    def save_document(self, doc_id, document):
+        raise NotImplementedError('This document store is read only!')
+
+    def delete_document(self, doc_id):
+        raise NotImplementedError('This document store is read only!')
