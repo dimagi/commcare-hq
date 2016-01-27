@@ -702,6 +702,7 @@ VIEW_BUILD_SOURCE = StaticToggle(
 #     [NAMESPACE_DOMAIN]
 # )
 
+
 EWS_WEB_USER_EXTENSION = StaticToggle(
     'ews_web_user_extension',
     'Enable EWSGhana web user extension',
