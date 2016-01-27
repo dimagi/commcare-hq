@@ -69,6 +69,102 @@
         </td>
     </tr>
     {% endif %}
+
+    {% if credits.subscription %}
+    <tr>
+        <th align="right">
+            <span style="text-decoration:underline;">{% trans 'Subscription Credits Remaining' %}</span>
+        </th>
+    </tr>
+    {% endif %}
+    {% if credits.subscription.product %}
+    <tr>
+        <th align="right">
+            {% trans 'Plan Credits' %}:
+        </th>
+        <td>
+            {{ credits.subscription.product.amount }}
+        </td>
+    </tr>
+    {% endif %}
+    {% if credits.subscription.user %}
+    <tr>
+        <th align="right">
+            {% trans 'User Credits' %}:
+        </th>
+        <td>
+            {{ credits.subscription.user.amount }}
+        </td>
+    </tr>
+    {% endif %}
+    {% if credits.subscription.sms %}
+    <tr>
+        <th align="right">
+            {% trans 'SMS Credits' %}:
+        </th>
+        <td>
+            {{ credits.subscription.sms.amount }}
+        </td>
+    </tr>
+    {% endif %}
+    {% if credits.subscription.general %}
+    <tr>
+        <th align="right">
+            {% trans 'General Credits' %}:
+        </th>
+        <td>
+            {{ credits.subscription.general.amount }}
+        </td>
+    </tr>
+    {% endif %}
+
+    {% if credits.account %}
+    <tr>
+        <th align="right">
+            <span style="text-decoration:underline;">{% trans 'Account Credits Remaining' %}</span>
+        </th>
+    </tr>
+    {% endif %}
+    {% if credits.account.product %}
+    <tr>
+        <th align="right">
+            {% trans 'Plan Credits' %}:
+        </th>
+        <td>
+            {{ credits.account.product.amount }}
+        </td>
+    </tr>
+    {% endif %}
+    {% if credits.account.user %}
+    <tr>
+        <th align="right">
+            {% trans 'User Credits' %}:
+        </th>
+        <td>
+            {{ credits.account.user.amount }}
+        </td>
+    </tr>
+    {% endif %}
+    {% if credits.account.sms %}
+    <tr>
+        <th align="right">
+            {% trans 'SMS Credits' %}:
+        </th>
+        <td>
+            {{ credits.account.sms.amount }}
+        </td>
+    </tr>
+    {% endif %}
+    {% if credits.account.general %}
+    <tr>
+        <th align="right">
+            {% trans 'General Credits' %}:
+        </th>
+        <td>
+            {{ credits.account.general.amount }}
+        </td>
+    </tr>
+    {% endif %}
 </table>
 
 {% if is_total_balance_due %}
