@@ -13,7 +13,7 @@ from django.conf import settings
 import corehq.blobs.mixin as mod
 from corehq.blobs import DEFAULT_BUCKET
 from corehq.blobs.s3db import ClosingContextProxy, is_not_found
-from corehq.blobs.fsdb2s3db import FsToS3BlobDB
+from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.tests.util import (TemporaryBlobDBMixin,
     TemporaryFilesystemBlobDB, TemporaryS3BlobDB)
 from corehq.util.test_utils import trap_extra_setup
@@ -389,23 +389,23 @@ class TestBlobMixinWithS3Backend(TestBlobMixin):
             return []
 
 
-class TestBlobMixinWithFsDbToS3DbBeforeCopyToS3(TestBlobMixinWithS3Backend):
+class TestBlobMixinWithMigratingDbBeforeCopyToNew(TestBlobMixinWithS3Backend):
 
     @classmethod
     def setUpClass(cls):
-        super(TestBlobMixinWithFsDbToS3DbBeforeCopyToS3, cls).setUpClass()
-        cls.db = PutToFsBlobDB(cls.db, TemporaryFilesystemBlobDB())
+        super(TestBlobMixinWithMigratingDbBeforeCopyToNew, cls).setUpClass()
+        cls.db = PutInOldBlobDB(cls.db, TemporaryFilesystemBlobDB())
 
     class TestBlob(TestBlobMixinWithS3Backend.TestBlob):
 
         def __init__(self, db, name, bucket):
-            self.db = db.s3db
-            self.path = db.s3db.get_path(name, bucket)
-            self.fspath = db.fsdb.get_path(name, bucket)
+            self.db = db.new_db
+            self.path = db.new_db.get_path(name, bucket)
+            self.fspath = db.old_db.get_path(name, bucket)
 
         @property
         def super(self):
-            return super(TestBlobMixinWithFsDbToS3DbBeforeCopyToS3.TestBlob, self)
+            return super(TestBlobMixinWithMigratingDbBeforeCopyToNew.TestBlob, self)
 
         def exists(self):
             return self.super.exists() or os.path.exists(self.fspath)
@@ -419,35 +419,36 @@ class TestBlobMixinWithFsDbToS3DbBeforeCopyToS3(TestBlobMixinWithS3Backend):
             return self.super.listdir() or os.listdir(self.fspath)
 
 
-class TestBlobMixinWithFsDbToS3DbAfterCopyToS3(TestBlobMixinWithFsDbToS3DbBeforeCopyToS3):
+class TestBlobMixinWithMigratingDbAfterCopyToNew(TestBlobMixinWithMigratingDbBeforeCopyToNew):
 
     @classmethod
     def setUpClass(cls):
         # intentional call to super super setUpClass
-        super(TestBlobMixinWithFsDbToS3DbBeforeCopyToS3, cls).setUpClass()
-        cls.db = PutToFsCopyToS3BlobDB(cls.db, TemporaryFilesystemBlobDB())
+        super(TestBlobMixinWithMigratingDbBeforeCopyToNew, cls).setUpClass()
+        cls.db = PutInOldCopyToNewBlobDB(cls.db, TemporaryFilesystemBlobDB())
 
 
-class PutToFsBlobDB(TemporaryBlobDBMixin, FsToS3BlobDB):
+class PutInOldBlobDB(TemporaryBlobDBMixin, MigratingBlobDB):
 
     def put(self, *args, **kw):
-        return self.fsdb.put(*args, **kw)
+        return self.old_db.put(*args, **kw)
 
     def clean_db(self):
-        self.fsdb.close()
-        self.s3db.close()
+        self.old_db.close()
+        self.new_db.close()
 
 
-class PutToFsCopyToS3BlobDB(TemporaryBlobDBMixin, FsToS3BlobDB):
+class PutInOldCopyToNewBlobDB(TemporaryBlobDBMixin, MigratingBlobDB):
 
     def put(self, content, basename="", bucket=DEFAULT_BUCKET):
-        info = self.fsdb.put(content, basename, bucket)
-        self.copy_to_s3(info, bucket)
+        info = self.old_db.put(content, basename, bucket)
+        content.seek(0)
+        self.copy_blob(content, info, bucket)
         return info
 
     def clean_db(self):
-        self.fsdb.close()
-        self.s3db.close()
+        self.old_db.close()
+        self.new_db.close()
 
 
 class FakeCouchDocument(mod.BlobMixin, Document):

@@ -108,6 +108,25 @@ class S3BlobDB(object):
             success = False
         return success
 
+    def copy_blob(self, content, info, bucket):
+        """Copy blob from other blob database
+
+        :param content: File-like blob content object.
+        :param info: `BlobInfo` object.
+        :param bucket: Bucket name.
+        """
+        if info.digest and info.digest.startswith("md5-"):
+            content_md5 = info.digest[4:]
+        else:
+            params = {"body": content, "headers": {}}
+            calculate_md5(params)
+            content_md5 = params["headers"]["Content-MD5"]
+        self._s3_bucket(create=True).put_object(
+            Key=self.get_path(info.name, bucket),
+            Body=content,
+            ContentMD5=content_md5,
+        )
+
     def _s3_bucket(self, create=False):
         if create and not self._s3_bucket_exists:
             try:

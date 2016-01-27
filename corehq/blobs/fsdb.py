@@ -93,6 +93,15 @@ class FilesystemBlobDB(object):
         remove(path)
         return True
 
+    def copy_blob(self, content, info, bucket):
+        """Copy blob from other blob database
+
+        :param content: File-like blob content object.
+        :param info: `BlobInfo` object.
+        :param bucket: Bucket name.
+        """
+        raise NotImplementedError
+
     @staticmethod
     def get_unique_name(basename):
         if not basename:
