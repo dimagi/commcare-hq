@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import re
 from uuid import uuid4
 
-from corehq.blobs import BlobInfo
+from corehq.blobs import BlobInfo, DEFAULT_BUCKET
 from corehq.blobs.exceptions import BadName, NotFound
 
 import boto3
@@ -11,7 +11,6 @@ from botocore.exceptions import ClientError
 from botocore.utils import fix_s3_host
 
 DEFAULT_S3_BUCKET = "blobdb"
-DEFAULT_BUCKET = "_default"
 SAFENAME = re.compile("^[a-z0-9_./-]+$", re.IGNORECASE)
 
 

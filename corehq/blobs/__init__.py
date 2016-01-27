@@ -3,6 +3,7 @@ from functools import partial
 
 from .exceptions import Error
 
+DEFAULT_BUCKET = "_default"
 _db = []  # singleton/global, stack for tests to push temporary dbs
 
 

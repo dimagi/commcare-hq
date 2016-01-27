@@ -11,11 +11,10 @@ from hashlib import md5
 from os.path import commonprefix, exists, isabs, isdir, dirname, join, realpath, sep
 from uuid import uuid4
 
-from corehq.blobs import BlobInfo
+from corehq.blobs import BlobInfo, DEFAULT_BUCKET
 from corehq.blobs.exceptions import BadName, NotFound
 
 CHUNK_SIZE = 4096
-DEFAULT_BUCKET = "_default"
 SAFENAME = re.compile("^[a-z0-9_./-]+$", re.IGNORECASE)
 
 
