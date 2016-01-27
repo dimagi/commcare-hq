@@ -2,9 +2,10 @@ import json
 from dimagi.utils.logging import notify_error
 from django.conf import settings
 from kafka import KafkaConsumer
-from kafka.common import ConsumerTimeout
+from kafka.common import ConsumerTimeout, KafkaConfigurationError, KafkaUnavailableError
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
+import logging
 from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
 
 
@@ -25,6 +26,9 @@ class KafkaChangeFeed(ChangeFeed):
         self._topic = topic
         self._group_id = group_id
         self._partition = partition
+
+    def __unicode__(self):
+        return u'KafkaChangeFeed: topic: {}, group: {}'.format(self._topic, self._group_id)
 
     def iter_changes(self, since, forever):
         # a special value of since=None will start from the end of the change stream
@@ -56,7 +60,15 @@ class KafkaChangeFeed(ChangeFeed):
     def get_latest_change_id(self):
         consumer = self._get_consumer(MIN_TIMEOUT)
         # we have to fetch one change to populate the highwater offset
-        consumer.next()
+        try:
+            consumer.next()
+        except (ConsumerTimeout, KafkaConfigurationError, KafkaUnavailableError) as e:
+            # kafka seems to be having issues. log it and move on
+            logging.exception(u'Problem getting latest change form kafka for {}: {}'.format(
+                self,
+                e,
+            ))
+            return None
         return consumer.offsets('highwater')[(self._topic, self._partition)]
 
     def _get_consumer(self, timeout, auto_offset_reset='smallest'):
