@@ -1583,11 +1583,13 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         )
         global_backends = models.Q(is_global=True)
 
+        # The left join to MobileBackendInvitation may cause there to be
+        # duplicates here, so we need to call .distinct()
         result = SQLMobileBackend.objects.filter(
             (domain_owned_backends | domain_shared_backends | global_backends),
             deleted=False,
             backend_type=backend_type
-        )
+        ).distinct()
 
         if count_only:
             return result.count()

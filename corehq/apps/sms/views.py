@@ -1176,10 +1176,17 @@ class AddDomainGatewayView(AddGatewayViewMixin, BaseMessagingSectionView):
     def backend_form(self):
         form_class = self.backend_class.get_form_class()
         if self.request.method == 'POST':
-            form = form_class(self.request.POST, button_text=self.button_text)
-            form._cchq_domain = self.domain
-            return form
-        return form_class(button_text=self.button_text)
+            return form_class(
+                self.request.POST,
+                button_text=self.button_text,
+                domain=self.domain,
+                backend_id=None
+            )
+        return form_class(
+            button_text=self.button_text,
+            domain=self.domain,
+            backend_id=None
+        )
 
     @property
     def parent_pages(self):
@@ -1243,12 +1250,19 @@ class EditDomainGatewayView(AddDomainGatewayView):
             )
 
         if self.request.method == 'POST':
-            form = form_class(self.request.POST, initial=initial,
-                              button_text=self.button_text)
-            form._cchq_domain = self.domain
-            form._cchq_backend_id = self.backend.pk
-            return form
-        return form_class(initial=initial, button_text=self.button_text)
+            return form_class(
+                self.request.POST,
+                initial=initial,
+                button_text=self.button_text,
+                domain=self.domain,
+                backend_id=self.backend.pk
+            )
+        return form_class(
+            initial=initial,
+            button_text=self.button_text,
+            domain=self.domain,
+            backend_id=self.backend.pk
+        )
 
     @property
     def page_name(self):
@@ -1395,9 +1409,17 @@ class AddGlobalGatewayView(AddGatewayViewMixin, BaseAdminSectionView):
     def backend_form(self):
         form_class = self.backend_class.get_form_class()
         if self.request.method == 'POST':
-            form = form_class(self.request.POST, button_text=self.button_text)
-            return form
-        return form_class(button_text=self.button_text)
+            return form_class(
+                self.request.POST,
+                button_text=self.button_text,
+                domain=None,
+                backend_id=None
+            )
+        return form_class(
+            button_text=self.button_text,
+            domain=None,
+            backend_id=None
+        )
 
     @property
     def parent_pages(self):
@@ -1456,11 +1478,19 @@ class EditGlobalGatewayView(AddGlobalGatewayView):
             )
 
         if self.request.method == 'POST':
-            form = form_class(self.request.POST, initial=initial,
-                              button_text=self.button_text)
-            form._cchq_backend_id = self.backend.pk
-            return form
-        return form_class(initial=initial, button_text=self.button_text)
+            return form_class(
+                self.request.POST,
+                initial=initial,
+                button_text=self.button_text,
+                domain=None,
+                backend_id=self.backend.pk
+            )
+        return form_class(
+            initial=initial,
+            button_text=self.button_text,
+            domain=None,
+            backend_id=self.backend.pk
+        )
 
     @property
     def page_name(self):

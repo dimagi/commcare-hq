@@ -776,6 +776,8 @@ class BackendForm(Form):
 
     def __init__(self, *args, **kwargs):
         button_text = kwargs.pop('button_text', _("Create SMS Connection"))
+        self._cchq_domain = kwargs.pop('domain')
+        self._cchq_backend_id = kwargs.pop('backend_id')
         super(BackendForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
