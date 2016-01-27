@@ -43,7 +43,8 @@ def clean_exception(exception):
 
 def get_sanitized_request_repr(request):
     """
-    Santizes sensitive data inside request object
+    Santizes sensitive data inside request object, if request has been marked sensitive
+    via Django decorator, django.views.decorators.debug.sensitive_post_parameters
     """
     if isinstance(request, HttpRequest):
         filter = get_exception_reporter_filter(request)

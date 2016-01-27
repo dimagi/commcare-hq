@@ -437,7 +437,7 @@ def pillow_operation_api(request):
 
 @require_superuser
 @require_GET
-def admin_restore(request):
+def admin_restore(request, app_id=None):
     full_username = request.GET.get('as', '')
     if not full_username or '@' not in full_username:
         return HttpResponseBadRequest('Please specify a user using ?as=user@domain')
@@ -451,7 +451,8 @@ def admin_restore(request):
         return HttpResponseNotFound('User %s not found.' % full_username)
 
     overwrite_cache = request.GET.get('ignore_cache') == 'true'
-    return get_restore_response(user.domain, user, overwrite_cache=overwrite_cache, **get_restore_params(request))
+    return get_restore_response(user.domain, user, overwrite_cache=overwrite_cache, app_id=app_id,
+                                **get_restore_params(request))
 
 @require_superuser
 def management_commands(request, template="hqadmin/management_commands.html"):
