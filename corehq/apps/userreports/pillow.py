@@ -70,7 +70,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
                 migration_context = get_migration_context(connection, table_map.keys())
                 diffs = compare_metadata(migration_context, metadata)
 
-            tables_to_rebuild = get_tables_to_rebuild(diffs, table_map.keys())
+            tables_to_rebuild = set(get_tables_to_rebuild(diffs, table_map.keys()))
             for table_name in tables_to_rebuild:
                 sql_adapter = table_map[table_name]
                 try:
