@@ -249,8 +249,3 @@ Keep in mind that this will likely incur some reindexing overhead in the source 
 
 If you run `$ ./manage.py run_doctype_migration user_db_migration --stats`, you
 should see that only the target database has these doc types in it now.
-
-
-### Stop syncing irrelevant views to the old db
-If you synced any `couchapps` views to both dbs for the migration, you should
-register those only to the new db (in `corehq/couchapps/__init__.py`).

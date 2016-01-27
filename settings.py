@@ -1100,7 +1100,6 @@ SYNCLOGS_DB = 'synclogs'
 
 COUCHDB_APPS = [
     'api',
-    'app_manager',
     'appstore',
     'builds',
     'case',
