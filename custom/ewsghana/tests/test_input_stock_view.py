@@ -12,13 +12,14 @@ from corehq.apps.domain.utils import DOMAIN_MODULE_KEY
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.models import SMS
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from corehq.apps.users.models import WebUser, UserRole
 from django.test.client import Client
 from custom.ewsghana.api import EWSApi, Product, Location
 from custom.ewsghana.models import EWSExtension
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockStatus
 from custom.ewsghana.tests.mock_endpoint import MockEndpoint
-from custom.ewsghana.utils import make_url, create_backend
+from custom.ewsghana.utils import make_url
 from dimagi.utils.couch.database import get_db
 
 TEST_DOMAIN = 'ewsghana-test-input-stock'
@@ -141,7 +142,7 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
         cls.ad = SQLProduct.objects.get(domain=TEST_DOMAIN, code='ad')
         cls.al = SQLProduct.objects.get(domain=TEST_DOMAIN, code='al')
 
-        cls.mapping, cls.backend = create_backend()
+        cls.backend, cls.mapping = setup_default_sms_test_backend()
         cls.client = Client()
 
     def setUp(self):
@@ -324,8 +325,8 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
 
     @classmethod
     def tearDownClass(cls):
-        cls.backend.delete()
         cls.mapping.delete()
+        cls.backend.delete()
         cls.web_user1.delete()
         cls.domain.delete()
         cls.teardown_subscription()

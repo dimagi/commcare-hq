@@ -128,20 +128,6 @@ def assign_products_to_location(location, products):
     sql_location.save()
 
 
-def create_backend():
-    backend = TestSMSBackend(
-        domain=None,
-        name=TEST_BACKEND,
-        authorized_domains=[],
-        is_global=True,
-    )
-    backend._id = backend.name
-    backend.save()
-    sms_backend_mapping = BackendMapping(is_global=True, prefix="*", backend_id=backend.get_id)
-    sms_backend_mapping.save()
-    return sms_backend_mapping, backend
-
-
 def prepare_domain(domain_name):
     domain = create_domain(domain_name)
     domain.convert_to_commtrack()
