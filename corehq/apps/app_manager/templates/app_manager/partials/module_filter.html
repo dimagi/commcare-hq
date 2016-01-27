@@ -9,12 +9,16 @@
         <input type="text"
             placeholder="{% trans "XPath expression" %}"
             name="module_filter"
-            {% if ko_value %}
-                data-bind="xpathValidator: {{ ko_value }}"
-            {% else %}
-                data-bind="xpathValidator: xpath"
-            {% endif %}
-        />
+            data-bind="xpathValidator: {
+                text: {% if ko_value %}{{ ko_value }}{% else %}xpath{% endif %},
+                allowCaseHashtags: false,
+                errorHtml: $('#module-filter-xpath-error-html').html()
+            }"/>
+        <script type="text/html" id="module-filter-xpath-error-html">
+            There is something wrong with the logic in the Module Filter.
+            Check to make sure your parentheses match.
+            Read more about Module Filters <a href="https://confluence.dimagi.com/display/commcarepublic/Module+Filtering">here</a>.
+        </script>
     </div>
 </div>
 {% if not ko_value %}
