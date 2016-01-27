@@ -1,4 +1,6 @@
 FROM python:2.7
+MAINTAINER Dimagi <devops@dimagi.com>
+
 ENV PYTHONUNBUFFERED 1
 
 RUN curl -sL https://deb.nodesource.com/setup_5.x | bash -
@@ -22,7 +24,8 @@ RUN wget -O jdk.tar.gz --no-check-certificate --no-cookies --header "Cookie: ora
  && update-alternatives --install "/usr/bin/java" "java" "/usr/lib/jvm/jdk1.7.0/bin/java" 1 \
  && update-alternatives --install "/usr/bin/javac" "javac" "/usr/lib/jvm/jdk1.7.0/bin/javac" 1 \
  && update-alternatives --install "/usr/bin/javaws" "javaws" "/usr/lib/jvm/jdk1.7.0/bin/javaws" 1 \
- && update-alternatives --auto java
+ && update-alternatives --auto java \
+ && rm -f jdk.tar.gz
 
 RUN pip install --upgrade pip
 
@@ -37,10 +40,10 @@ RUN pip install \
     -r /vendor/requirements.txt \
     -r /vendor/dev-requirements.txt \
     ipython \
-    --user --upgrade
+    --user --upgrade \
+    && rm -rf /root/.cache/pip
 
 WORKDIR /mnt
-ADD . /mnt/
 
 ENTRYPOINT ["/mnt/docker/entrypoint.sh"]
 CMD ["help"]

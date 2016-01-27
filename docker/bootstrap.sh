@@ -9,4 +9,3 @@ sudo docker-compose -f $DOCKER_DIR/docker-compose-web.yml run web /mnt/docker/bo
 
 web_runner run -e CUSTOMSETTINGS="docker.localsettings-docker" \
     web python manage.py runserver 0.0.0.0:8000
-

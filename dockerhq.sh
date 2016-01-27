@@ -69,7 +69,6 @@ case $key in
         web_runner run web bash
         ;;
     rebuild)
-        $DOCKER_DIR/docker-services.sh down
         web_runner down
         web_runner build
         ;;
