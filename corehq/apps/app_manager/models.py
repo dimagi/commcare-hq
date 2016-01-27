@@ -1519,10 +1519,9 @@ class MappingItem(DocumentSchema):
     value = DictProperty()
 
     @property
-    def contains_boolean_expression(self):
-        # todo
+    def treat_as_expression(self):
         special_chars = '{}()[]=<>."\'/'
-        return any([special_char in self.key for special_char in special_chars])
+        return any(special_char in self.key for special_char in special_chars)
 
     @property
     def key_as_variable(self):
@@ -1533,14 +1532,13 @@ class MappingItem(DocumentSchema):
         The prepended characters prevent the variable name from starting with a
         numeral, which is illegal.
         """
-        # todo - rewrite commen
-        if ' ' in self.key or self.contains_boolean_expression:
+        if ' ' in self.key or self.treat_as_expression:
             return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
         else:
             return 'k{key}'.format(key=self.key)
 
     def key_as_condition(self, property):
-        if self.contains_boolean_expression:
+        if self.treat_as_expression:
             return u"{key}".format(key=self.key)
         else:
             return u"{property} = '{key}'".format(
