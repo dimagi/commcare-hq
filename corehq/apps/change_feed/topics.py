@@ -6,6 +6,7 @@ FORM = 'form'
 META = 'meta'
 
 # new models
+CASE_SQL = 'case-sql'
 FORM_SQL = 'form-sql'
 
 
