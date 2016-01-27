@@ -919,15 +919,9 @@
             "transform": {},
             "is_nullable": true,
             "expression": {
-              "default": {
-                "constant": 0,
-                "type": "constant"
-              },
+              "default": 0,
               "cases": {
-                "Senegal": {
-                  "constant": 31816,
-                  "type": "constant"
-                },
+                "Senegal": 31816,
                 "Rwanda": 213329,
                 "Zambia": 539348,
                 "Ethiopia": 670303,
