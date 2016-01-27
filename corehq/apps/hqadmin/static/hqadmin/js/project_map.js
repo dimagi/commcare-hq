@@ -69,8 +69,7 @@ jQuery(document).ready(function($) {
             return maxNumProjects;
         };
 
-        // todo: should maybe rename this
-        that.getProjectsTable = function (countryName) {
+        that.getProjectsTableElement = function (countryName) {
             if (that.getNumProjects(countryName) < 1) {
                 return $(document.createElement('p')).text('There are no projects matching the criteria.').addClass('center');
             } else {
@@ -81,10 +80,12 @@ jQuery(document).ready(function($) {
                 var propertiesToShow = [];
                 var propertiesToShow = ['Sector', 'Organization', 'Deployment Date'];
 
+                var thead = $(document.createElement('thead'));
+                table.append(thead);
                 var row;
                 var cell;
-                row = $(document.createElement('tr')).addClass('header-row');
-                table.append(row);
+                row = $(document.createElement('tr'));
+                thead.append(row);
                 cell = $(document.createElement('th'));
                 row.append(cell);
                 cell.text('Name');
@@ -94,9 +95,12 @@ jQuery(document).ready(function($) {
                     cell.text(propertyName);
                 });
 
+                var tbody = $(document.createElement('tbody'));
+                table.append(tbody);
+
                 Object.keys(projectsInfo).forEach(function(projectName) {
                     row = $(document.createElement('tr'));
-                    table.append(row);
+                    tbody.append(row);
                     cell = $(document.createElement('td'));
                     row.append(cell);
                     cell.append($(document.createElement('a')).text(projectName).addClass('project-link'));
@@ -111,20 +115,31 @@ jQuery(document).ready(function($) {
             }
         };
 
-        // todo: think about reformatting this
         that.getProjectInfoHtml = function (countryName, projectIdentifier) {
             countryName = countryName.toLowerCase();
             var projectInfo = (projectsByCountryThenName[countryName] || {})[projectIdentifier] || {};
-            var propertiesToShow = [];
-            var propertiesToShow = ['Sector', 'Sub-Sector', 'Organization', 'Deployment Date',
-                                    '# Active Mobile Workers', '# Forms Submitted', 'Notes'];
+            var propertiesToShowLeft = ['Sector', 'Sub-Sector', 'Organization', 'Deployment Date',
+                                    '# Active Mobile Workers', '# Forms Submitted'];
+            var propertiesToShowRight = ['Notes'];
 
-            var html = '';
-            propertiesToShow.forEach(function (propertyName) {
-                html += '<h5>' + propertyName + ':</h5><span>' + (projectInfo[propertyName] || "") + '</span><br>';
+            var leftDiv = $(document.createElement('div')).addClass('col-md-6');
+            var rightDiv = $(document.createElement('div')).addClass('col-md-6');
+            var parentDiv = $(document.createElement('div')).addClass('clearfix').append(leftDiv).append(rightDiv);
+
+
+            propertiesToShowLeft.forEach(function (propertyName) {
+                leftDiv.append($(document.createElement('h5')).text(propertyName + ':'));
+                leftDiv.append($(document.createElement('span')).text(projectInfo[propertyName] || ""));
+                leftDiv.append($(document.createElement('br')));
             });
 
-            return html;
+            propertiesToShowRight.forEach(function (propertyName) {
+                rightDiv.append($(document.createElement('h5')).text(propertyName + ':'));
+                rightDiv.append($(document.createElement('span')).text(projectInfo[propertyName] || ""));
+                rightDiv.append($(document.createElement('br')));
+            });
+
+            return parentDiv;
         };
 
         Object.freeze(that);
@@ -136,7 +151,7 @@ jQuery(document).ready(function($) {
 
         that.showProjectsTable = function(countryName) {
             $('.country-name').text(countryName);
-            $('.modal-body').empty().append(dataController.getProjectsTable(countryName));
+            $('.modal-body').empty().append(dataController.getProjectsTableElement(countryName));
 
             var modalContent = $('.modal-content');
             modalContent.addClass('show-table');
