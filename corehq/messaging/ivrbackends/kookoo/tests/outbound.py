@@ -8,7 +8,7 @@ from corehq.apps.reminders.models import (CaseReminderHandler,
     METHOD_IVR_SURVEY, RECIPIENT_CASE, REMINDER_TYPE_DEFAULT,
     CASE_CRITERIA, CaseReminderEvent, FIRE_TIME_DEFAULT,
     EVENT_AS_SCHEDULE, MATCH_EXACT, RECIPIENT_OWNER)
-from corehq.messaging.ivrbackends.kookoo.models import KooKooBackend
+from corehq.messaging.ivrbackends.kookoo.models import SQLKooKooBackend
 from mock import patch
 from time import sleep
 from datetime import datetime, time
@@ -32,11 +32,11 @@ class KooKooTestCase(TouchformsTestCase):
 
     def setUp(self):
         super(KooKooTestCase, self).setUp()
-        self.ivr_backend = KooKooBackend(
-            _id="MOBILE_BACKEND_KOOKOO",
+        self.ivr_backend = SQLKooKooBackend(
             name="MOBILE_BACKEND_KOOKOO",
             is_global=True,
             api_key="xyz",
+            hq_api_id=SQLKooKooBackend.get_api_id()
         )
         self.ivr_backend.save()
 
