@@ -3,13 +3,13 @@
 │ │ └── jquery#1.11.3
 │ └── jquery#1.11.3 (3.0.0-beta1 available)
 ├── Caret.js#0.2.2
-├── MediaUploader#a59039cd38
+├── MediaUploader#06e78218ed
 ├── XMLWriter#ab8760d6e0
 ├── chai#3.4.2
 ├── equivalent-xml-js#7de21be295
 ├── fuse.js#1.2.2 (latest is 1.3.1)
 ├── jquery#1.11.3 (latest is 3.0.0-beta1)
-├── js-xpath#f4f0c78d1d extraneous
+├── js-xpath#050770493c extraneous
 ├── jsdiff#1.4.0 (latest is 2.2.1)
 ├─┬ jstree#3.1.1 (latest is 3.2.1)
 │ └── jquery#1.11.3 (3.0.0-beta1 available)
