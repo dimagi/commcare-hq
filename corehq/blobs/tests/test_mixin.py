@@ -11,8 +11,11 @@ from botocore.exceptions import ClientError
 from django.conf import settings
 
 import corehq.blobs.mixin as mod
-from corehq.blobs.s3db import ClosingContextProxy
-from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, TemporaryS3BlobDB
+from corehq.blobs import DEFAULT_BUCKET
+from corehq.blobs.s3db import ClosingContextProxy, is_not_found
+from corehq.blobs.fsdb2s3db import FsToS3BlobDB
+from corehq.blobs.tests.util import (TemporaryBlobDBMixin,
+    TemporaryFilesystemBlobDB, TemporaryS3BlobDB)
 from corehq.util.test_utils import trap_extra_setup
 from dimagi.ext.couchdbkit import Document
 
@@ -367,7 +370,7 @@ class TestBlobMixinWithS3Backend(TestBlobMixin):
             try:
                 self.s3_bucket.Object(self.path).load()
             except ClientError as err:
-                if err.response["Error"]["Code"] != "404":
+                if not is_not_found(err):
                     raise
                 return False
             return True
@@ -378,7 +381,73 @@ class TestBlobMixinWithS3Backend(TestBlobMixin):
 
         def listdir(self):
             summaries = self.s3_bucket.objects.filter(Prefix=self.path + "/")
-            return [o.key for o in summaries]
+            try:
+                return [o.key for o in summaries]
+            except ClientError as err:
+                if not is_not_found(err):
+                    raise
+            return []
+
+
+class TestBlobMixinWithFsDbToS3DbBeforeCopyToS3(TestBlobMixinWithS3Backend):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestBlobMixinWithFsDbToS3DbBeforeCopyToS3, cls).setUpClass()
+        cls.db = PutToFsBlobDB(cls.db, TemporaryFilesystemBlobDB())
+
+    class TestBlob(TestBlobMixinWithS3Backend.TestBlob):
+
+        def __init__(self, db, name, bucket):
+            self.db = db.s3db
+            self.path = db.s3db.get_path(name, bucket)
+            self.fspath = db.fsdb.get_path(name, bucket)
+
+        @property
+        def super(self):
+            return super(TestBlobMixinWithFsDbToS3DbBeforeCopyToS3.TestBlob, self)
+
+        def exists(self):
+            return self.super.exists() or os.path.exists(self.fspath)
+
+        def open(self):
+            if self.super.exists():
+                return self.super.open()
+            return open(self.fspath)
+
+        def listdir(self):
+            return self.super.listdir() or os.listdir(self.fspath)
+
+
+class TestBlobMixinWithFsDbToS3DbAfterCopyToS3(TestBlobMixinWithFsDbToS3DbBeforeCopyToS3):
+
+    @classmethod
+    def setUpClass(cls):
+        # intentional call to super super setUpClass
+        super(TestBlobMixinWithFsDbToS3DbBeforeCopyToS3, cls).setUpClass()
+        cls.db = PutToFsCopyToS3BlobDB(cls.db, TemporaryFilesystemBlobDB())
+
+
+class PutToFsBlobDB(TemporaryBlobDBMixin, FsToS3BlobDB):
+
+    def put(self, *args, **kw):
+        return self.fsdb.put(*args, **kw)
+
+    def clean_db(self):
+        self.fsdb.close()
+        self.s3db.close()
+
+
+class PutToFsCopyToS3BlobDB(TemporaryBlobDBMixin, FsToS3BlobDB):
+
+    def put(self, content, basename="", bucket=DEFAULT_BUCKET):
+        info = self.fsdb.put(content, basename, bucket)
+        self.copy_to_s3(info, bucket)
+        return info
+
+    def clean_db(self):
+        self.fsdb.close()
+        self.s3db.close()
 
 
 class FakeCouchDocument(mod.BlobMixin, Document):

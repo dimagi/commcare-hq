@@ -90,17 +90,22 @@ class S3BlobDB(object):
         path = self.get_path(name, bucket)
         success = True
         s3_bucket = self._s3_bucket()
-        if name is None:
-            summaries = s3_bucket.objects.filter(Prefix=path + "/")
-            pages = ([{"Key": o.key} for o in page]
-                     for page in summaries.pages())
-        else:
-            pages = [[{"Key": path}]]
-        for objects in pages:
-            resp = s3_bucket.delete_objects(Delete={"Objects": objects})
-            if success:
-                deleted = set(d["Key"] for d in resp.get("Deleted", []))
-                success = all(o["Key"] in deleted for o in objects)
+        try:
+            if name is None:
+                summaries = s3_bucket.objects.filter(Prefix=path + "/")
+                pages = ([{"Key": o.key} for o in page]
+                         for page in summaries.pages())
+            else:
+                pages = [[{"Key": path}]]
+            for objects in pages:
+                resp = s3_bucket.delete_objects(Delete={"Objects": objects})
+                if success:
+                    deleted = set(d["Key"] for d in resp.get("Deleted", []))
+                    success = all(o["Key"] in deleted for o in objects)
+        except ClientError as err:
+            if not is_not_found(err):
+                raise
+            success = False
         return success
 
     def _s3_bucket(self, create=False):
@@ -142,9 +147,9 @@ def safejoin(root, subpath):
     return safepath(root) + "/" + safepath(subpath)
 
 
-def is_not_found(err):
-    return (err.response["Error"]["Code"] == "NoSuchKey" or
-            err.response["Error"]["Code"] == "404")
+def is_not_found(err, not_found_codes=["NoSuchKey", "NoSuchBucket", "404"]):
+    return (err.response["Error"]["Code"] in not_found_codes or
+        err.response.get("Errors", {}).get("Error", {}).get("Code") in not_found_codes)
 
 
 class ClosingContextProxy(object):
