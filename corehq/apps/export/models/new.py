@@ -33,11 +33,11 @@ class ExportItem(DocumentSchema):
     last_occurrence = IntegerProperty()
 
     @classmethod
-    def create_from_question(cls, question, appVersion):
+    def create_from_question(cls, question, app_version):
         return cls(
             path=_string_path_to_list(question['value']),
             label=question['label'],
-            last_occurrence=appVersion,
+            last_occurrence=app_version,
         )
 
     @classmethod
@@ -70,16 +70,16 @@ class ExportColumn(DocumentSchema):
         return NestedDictGetter(path)(doc)
 
     @staticmethod
-    def create_default_from_export_item(group_schema_path, item, appVersion):
+    def create_default_from_export_item(group_schema_path, item, app_version):
         """Creates a default ExportColumn given an item
 
         :param group_schema_path: The path of the group_schema that the item belongs to
         :param item: An ExportItem instance
-        :param appVersion: The app version that the column export is for
+        :param app_version: The app version that the column export is for
         :returns: An ExportColumn instance
         """
 
-        is_deleted = item.last_occurrence != appVersion
+        is_deleted = item.last_occurrence != app_version
         is_main_table = group_schema_path is None
 
         return ExportColumn(
@@ -181,12 +181,12 @@ class MultipleChoiceItem(ExportItem):
     options = SchemaListProperty(Option)
 
     @classmethod
-    def create_from_question(cls, question, appVersion):
-        item = super(MultipleChoiceItem, cls).create_from_question(question, appVersion)
+    def create_from_question(cls, question, app_version):
+        item = super(MultipleChoiceItem, cls).create_from_question(question, app_version)
 
         for option in question['options']:
             item.options.append(Option(
-                last_occurrence=appVersion,
+                last_occurrence=app_version,
                 value=option['value']
             ))
         return item
@@ -296,7 +296,7 @@ class FormExportDataSchema(ExportDataSchema):
         return all_xform_conf
 
     @staticmethod
-    def _generate_schema_from_xform(xform, langs, appVersion):
+    def _generate_schema_from_xform(xform, langs, app_version):
         questions = xform.get_questions(langs)
         schema = FormExportDataSchema()
 
@@ -305,13 +305,13 @@ class FormExportDataSchema(ExportDataSchema):
             # inside of the form
             group_schema = ExportGroupSchema(
                 path=_string_path_to_list(group_path),
-                last_occurrence=appVersion,
+                last_occurrence=app_version,
             )
             for question in group_questions:
                 # Create ExportItem based on the question type
                 item = FormExportDataSchema.datatype_mapping[question['type']].create_from_question(
                     question,
-                    appVersion,
+                    app_version,
                 )
                 group_schema.items.append(item)
 
@@ -358,7 +358,7 @@ class CaseExportDataSchema(ExportDataSchema):
         return all_case_schema
 
     @staticmethod
-    def _generate_schema_from_case_property_mapping(case_property_mapping, appVersion):
+    def _generate_schema_from_case_property_mapping(case_property_mapping, app_version):
         """Generates the schema for the main Case tab on the export page"""
         assert len(case_property_mapping.keys()) == 1
         schema = CaseExportDataSchema()
@@ -366,13 +366,13 @@ class CaseExportDataSchema(ExportDataSchema):
         for case_type, case_properties in case_property_mapping.iteritems():
             group_schema = ExportGroupSchema(
                 path=[case_type],
-                last_occurrence=appVersion,
+                last_occurrence=app_version,
             )
             for prop in case_properties:
                 group_schema.items.append(ScalarItem(
                     path=[prop],
                     label=prop,
-                    last_occurrence=appVersion,
+                    last_occurrence=app_version,
                 ))
 
             schema.group_schemas.append(group_schema)
@@ -380,21 +380,21 @@ class CaseExportDataSchema(ExportDataSchema):
         return schema
 
     @staticmethod
-    def _generate_schema_for_case_history(case_property_mapping, appVersion):
+    def _generate_schema_for_case_history(case_property_mapping, app_version):
         """Generates the schema for the Case History tab on the export page"""
         assert len(case_property_mapping.keys()) == 1
         schema = CaseExportDataSchema()
 
         group_schema = ExportGroupSchema(
             path=[CASE_HISTORY_GROUP_NAME],
-            last_occurrence=appVersion,
+            last_occurrence=app_version,
         )
         for system_prop in CASE_HISTORY_PROPERTIES:
             group_schema.items.append(ScalarItem(
                 path=[system_prop.name],
                 label=system_prop.name,
                 tag=system_prop.tag,
-                last_occurrence=appVersion,
+                last_occurrence=app_version,
             ))
 
         for case_type, case_properties in case_property_mapping.iteritems():
@@ -403,7 +403,7 @@ class CaseExportDataSchema(ExportDataSchema):
                     path=[prop],
                     label=prop,
                     tag=PROPERTY_TAG_UPDATE,
-                    last_occurrence=appVersion,
+                    last_occurrence=app_version,
                 ))
 
         schema.group_schemas.append(group_schema)
