@@ -51,8 +51,8 @@ class ExportColumn(DocumentSchema):
     item = SchemaProperty(ExportItem)
     label = StringProperty()
     # Determines whether or not to show the column in the UI Config without clicking advanced
-    show = BooleanProperty()
-    selected = BooleanProperty()
+    show = BooleanProperty(default=False)
+    selected = BooleanProperty(default=False)
 
     def get_value(self, doc, base_path):
         """
