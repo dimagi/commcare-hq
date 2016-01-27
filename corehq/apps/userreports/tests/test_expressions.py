@@ -266,10 +266,7 @@ class SwitchExpressionTest(SimpleTestCase):
                     'property_name': 'apple'
                 }
             },
-            'default': {
-                'type': 'constant',
-                'constant': 'orange'
-            },
+            'default': 'orange',
         }
         self.expression = ExpressionFactory.from_spec(spec)
 

@@ -9,8 +9,8 @@
                 {# must use "if" here instead of "visible" #}
                 {# otherwise src will be "#" which makes an unneccessary request for the current page #}
                 <a data-bind="if: isMediaMatched, attr: {href: url}" target="_blank">
-                    <img data-bind="attr: {src: thumbnailUrl}" />
-                </a>
+                    <img data-bind="attr: {src: thumbnailUrl}"
+                /></a>
             {% elif type == "audio" %}
                 <a data-bind="visible: isMediaMatched, attr: {href: url}"
                    class="btn btn-default"

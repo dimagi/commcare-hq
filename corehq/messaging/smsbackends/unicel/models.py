@@ -113,6 +113,43 @@ class SQLUnicelBackend(SQLSMSBackend):
             'sender',
         ]
 
+    @classmethod
+    def get_api_id(cls):
+        return 'UNICEL'
+
+    @classmethod
+    def get_generic_name(cls):
+        return "Unicel"
+
+    @classmethod
+    def get_template(cls):
+        return 'unicel/backend.html'
+
+    @classmethod
+    def get_form_class(cls):
+        return UnicelBackendForm
+
+    def send(self, message, *args, **kwargs):
+        config = self.config
+        phone_number = clean_phone_number(message.phone_number).replace('+', '')
+        params = [(OutboundParams.DESTINATION, phone_number),
+                  (OutboundParams.USERNAME, config.username),
+                  (OutboundParams.PASSWORD, config.password),
+                  (OutboundParams.SENDER, config.sender)]
+        try:
+            text = str(message.text)
+            # it's ascii
+            params.append((OutboundParams.MESSAGE, text))
+        except UnicodeEncodeError:
+            params.extend(UNICODE_PARAMS)
+            encoded = message.text.encode('utf_16_be').encode('hex').upper()
+            params.append((OutboundParams.MESSAGE, encoded))
+
+        data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params)),
+            timeout=settings.SMS_GATEWAY_TIMEOUT).read()
+
+        return data
+
 
 def create_from_request(request):
     """

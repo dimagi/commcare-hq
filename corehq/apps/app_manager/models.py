@@ -874,7 +874,7 @@ class FormBase(DocumentSchema):
 
         # this isn't great but two of FormBase's subclasses have form_filter
         if hasattr(self, 'form_filter') and self.form_filter:
-            is_valid, message = validate_xpath(self.form_filter)
+            is_valid, message = validate_xpath(self.form_filter, allow_case_hashtags=True)
             if not is_valid:
                 error = {
                     'type': 'form filter has xpath error',

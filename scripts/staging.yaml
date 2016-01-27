@@ -45,7 +45,9 @@
 trunk: master
 name: autostaging
 branches:
-  - server-side-xpath-validation  # Danny 1/22
+#  - b3-app-manager+new-footer-nav+fix-hashtag-validation  # danny 1/26
+  - b3-app-manager+fix-hashtag-validation  # danny 1/26
+#  - new-footer-nav+fix-hashtag-validation  # danny 1/26
   - kill-x_over_time  # Danny 12/11
   - vellum-staging # J$ 11/13
   #- fix-toggle+two-factor-otp-only #wsp 11/17
@@ -54,12 +56,11 @@ branches:
   - requests #Simon 11/3
   - add-tableau-dashboard # TS 11/5
   - location-delete+location-cases  # Ethan 1/19
-  - location-delete # Cal 12/16
   #- tabular-reports-b3-migrate  # Biyeun 1/15
   - location-cases  # Ethan 1/19
-  - b3-app-manager+new-footer-nav # Jenny 1/25
+#  - b3-app-manager+new-footer-nav # Jenny 1/25
   - b3-app-manager # Jenny 1/20
-  - new-footer-nav # Biyeun 1/4
+#  - new-footer-nav # Biyeun 1/4
 #  - formplayer-toggle # Ben/Will 1/21/16
 #  - java-tf-deploy # Ben/Will 1/21/16
   # B3 Report Migration branches

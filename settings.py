@@ -333,6 +333,7 @@ HQ_APPS = (
     'custom.bihar',
     'custom.penn_state',
     'custom.apps.gsid',
+    'custom.icds',
     'hsph',
     'mvp',
     'mvp_docs',
@@ -1288,6 +1289,26 @@ IVR_LOADED_BACKENDS = [
     'corehq.messaging.ivrbackends.kookoo.models.KooKooBackend',
 ]
 
+SMS_LOADED_SQL_BACKENDS = [
+    'corehq.messaging.smsbackends.apposit.models.SQLAppositBackend',
+    'corehq.messaging.smsbackends.grapevine.models.SQLGrapevineBackend',
+    'corehq.messaging.smsbackends.http.models.SQLHttpBackend',
+    'corehq.messaging.smsbackends.mach.models.SQLMachBackend',
+    'corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend',
+    'corehq.messaging.smsbackends.sislog.models.SQLSislogBackend',
+    'corehq.messaging.smsbackends.smsgh.models.SQLSMSGHBackend',
+    'corehq.messaging.smsbackends.telerivet.models.SQLTelerivetBackend',
+    'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend',
+    'corehq.messaging.smsbackends.tropo.models.SQLTropoBackend',
+    'corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend',
+    'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
+    'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
+]
+
+IVR_LOADED_SQL_BACKENDS = [
+    'corehq.messaging.ivrbackends.kookoo.models.SQLKooKooBackend',
+]
+
 IVR_BACKEND_MAP = {
     "91": "MOBILE_BACKEND_KOOKOO",
 }
@@ -1386,16 +1407,6 @@ PILLOWTOPS = {
             'name': 'UserGroupsDbKafkaPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
-        },
-        {
-            'name': 'KafkaCaseConsumerPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_case_consumer_pillow',
-        },
-        {
-            'name': 'LoggingPythonDemoPillow',
-            'class': 'corehq.apps.change_feed.consumer.pillow.LoggingPythonPillow',
-            'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_python_pillow_consumer',
         },
         {
             'name': 'BlobDeletionPillow',

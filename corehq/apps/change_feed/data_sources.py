@@ -7,6 +7,7 @@ from pillowtop.dao.couch import CouchDocumentStore
 
 COUCH = 'couch'
 FORM_SQL = 'form-sql'
+CASE_SQL = 'case-sql'
 
 
 def get_document_store(data_source_type, data_source_name, domain):

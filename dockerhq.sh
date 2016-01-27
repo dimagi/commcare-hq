@@ -28,7 +28,7 @@ function usage() {
             echo "Run the Django shell"
             echo ""
             ;;
-        rebiuld)
+        rebuild)
             echo "Rebuild the 'web' image"
             echo ""
             ;;
