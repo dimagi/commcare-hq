@@ -69,7 +69,7 @@ class ExportColumn(DocumentSchema):
 
 class TableConfiguration(DocumentSchema):
     name = StringProperty()
-    repeat_path = ListProperty()
+    path = ListProperty()
     columns = ListProperty(ExportColumn)
 
     def get_rows(self, document):
@@ -78,14 +78,14 @@ class TableConfiguration(DocumentSchema):
         :param document: dictionary representation of a form submission or case
         :return: List of ExportRows
         """
-        # Note that sub_documents will be [document] if self.repeat_path is []
-        sub_documents = self._get_sub_documents(self.repeat_path, [document])
+        # Note that sub_documents will be [document] if self.path is []
+        sub_documents = self._get_sub_documents(self.path, [document])
         rows = []
         for doc in sub_documents:
 
             row_data = []
             for col in self.columns:
-                val = col.get_value(doc, self.repeat_path)
+                val = col.get_value(doc, self.path)
                 if isinstance(val, list):
                     row_data.extend(val)
                 else:
