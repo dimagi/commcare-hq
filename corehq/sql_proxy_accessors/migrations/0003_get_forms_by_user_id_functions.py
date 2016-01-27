@@ -20,4 +20,5 @@ class Migration(migrations.Migration):
 
     operations = [
         migrator.get_migration('get_forms_by_user_id.sql'),
+        migrator.get_migration('update_form_state.sql'),
     ]

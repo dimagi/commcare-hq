@@ -14,7 +14,6 @@ class UserModelTest(TestCase):
             username='birdman',
             password='***',
         )
-        self.user.save()
 
         self.metadata = TestFormMetadata(
             domain=self.user.domain,
@@ -23,7 +22,7 @@ class UserModelTest(TestCase):
         get_simple_wrapped_form('123', metadata=self.metadata)
 
     def tearDown(self):
-        self.user.delete()
+        CommCareUser.get_db().delete_doc(self.user._id)
         FormProcessorTestUtils.delete_all_xforms(self.domain)
 
     @run_with_all_backends
@@ -42,12 +41,11 @@ class UserModelTest(TestCase):
     @run_with_all_backends
     def test_get_deleted_forms(self):
         form = get_simple_wrapped_form('deleted', metadata=self.metadata)
-        form.doc_type = form.doc_type + '-Deleted'
-        form.save()
+        form.soft_delete()
 
         form_ids = list(self.user.get_forms(wrap=False))
         self.assertEqual(len(form_ids), 1)
 
         deleted_forms = list(self.user.get_forms(deleted=True))
         self.assertEqual(len(deleted_forms), 1)
-        self.assertEqual(deleted_forms[0]['_id'], 'deleted')
+        self.assertEqual(deleted_forms[0].form_id, 'deleted')
