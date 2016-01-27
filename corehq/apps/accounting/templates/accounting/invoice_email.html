@@ -72,19 +72,21 @@
 </table>
 
 {% if is_total_balance_due %}
-    {% if is_small_invoice %}
-        {% blocktrans %}
-        Please note that the due date for this {{ month_name }} payment has been
-        postponed, as the amount due this month is less than $100. However as
-        your total balance is now beyond $100, please note that you have to pay
-        your balance within the next 30 days.
-        {% endblocktrans %}
-    {% else  %}
-        {% blocktrans %}
-        Your total balance is now beyond $100, please note that you have to pay
-        your balance within the next 30 days.
-        {% endblocktrans %}
-    {% endif %}
+    <p>
+        {% if is_small_invoice %}
+            {% blocktrans %}
+            Please note that the due date for this {{ month_name }} payment has been
+            postponed, as the amount due this month is less than $100. However as
+            your total balance is now beyond $100, please note that you have to pay
+            your balance within the next 30 days.
+            {% endblocktrans %}
+        {% else  %}
+            {% blocktrans %}
+            Your total balance is now beyond $100, please note that you have to pay
+            your balance within the next 30 days.
+            {% endblocktrans %}
+        {% endif %}
+    </p>
 
     <p>
         {% if can_view_statement %}
