@@ -6,6 +6,7 @@ from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.tests.utils import generate_restore_payload
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.form_processor.interfaces.supply import SupplyInterface
@@ -19,7 +20,6 @@ from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
-from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from corehq.util.decorators import require_debug_true
 from dimagi.utils.parsing import json_format_date
 
@@ -37,7 +37,7 @@ TEST_LOCATION_TYPE = 'outlet'
 TEST_USER = 'commtrack-user'
 TEST_NUMBER = '5551234'
 TEST_PASSWORD = 'secret'
-TEST_BACKEND = 'test-backend'
+TEST_BACKEND = 'MOBILE_BACKEND_TEST'
 
 ROAMING_USER = {
     'username': TEST_USER + '-roaming',
@@ -149,8 +149,7 @@ class CommTrackTest(TestCase):
         StockReport.objects.all().delete()
         StockTransaction.objects.all().delete()
 
-        self.backend = TestSMSBackend(name=TEST_BACKEND.upper(), is_global=True)
-        self.backend.save()
+        self.backend, self.backend_mapping = setup_default_sms_test_backend()
 
         self.domain = bootstrap_domain()
         bootstrap_location_types(self.domain.name)
@@ -186,6 +185,7 @@ class CommTrackTest(TestCase):
 
     def tearDown(self):
         SQLLocation.objects.all().delete()
+        self.backend_mapping.delete()
         self.backend.delete()
         for u in self.users:
             u.delete()
