@@ -1409,16 +1409,6 @@ PILLOWTOPS = {
             'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
         },
         {
-            'name': 'KafkaCaseConsumerPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_case_consumer_pillow',
-        },
-        {
-            'name': 'LoggingPythonDemoPillow',
-            'class': 'corehq.apps.change_feed.consumer.pillow.LoggingPythonPillow',
-            'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_python_pillow_consumer',
-        },
-        {
             'name': 'BlobDeletionPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.blobs.pillow.get_blob_deletion_pillow',
