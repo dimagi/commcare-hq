@@ -1521,6 +1521,10 @@ class MappingItem(DocumentSchema):
 
     @property
     def treat_as_expression(self):
+        """
+        Returns if whether the key can be treated as a valid expression that can be included in
+        condition-predicate of an if-clause for e.g. if(<expression>, value, ...)
+        """
         special_chars = '{}()[]=<>."\'/'
         return any(special_char in self.key for special_char in special_chars)
 
@@ -1528,8 +1532,11 @@ class MappingItem(DocumentSchema):
     def key_as_variable(self):
         """
         Return an xml variable name to represent this key.
-        If the key has no spaces, return the key with "k" prepended.
-        If the key does contain spaces, return a hash of the key with "h" prepended.
+
+        If the key contains spaces or a condition-predicate of an if-clause,
+        return a hash of the key with "h" prepended.
+        If not, return the key with "k" prepended.
+
         The prepended characters prevent the variable name from starting with a
         numeral, which is illegal.
         """
