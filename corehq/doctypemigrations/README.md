@@ -23,21 +23,36 @@ from other ones:
 - etc.
 
 
-## Register the new database and migrator instance
+## Setting up the migration
 
+### Register the new database
 This step creates a new database and allows you to start populating it.
 The new database will not yet be used by any production code.
 
-To `settings.py` add variables representing
-(1) the database you're currently using for the apps you're migrating, probably set to `None` (== main db),
-and (2) the database you _will_ be using.
-Add these variables to `COUCHDB_APPS` and the list of extra databases in `COUCH_SETTINGS_HELPER` in the manner described below.
-to start with:
+Add variables to `settings.py` representing (1) the database you're currently
+using for the apps you're migrating, probably set to `None` (== main db), and
+(2) the database you _will_ be using.
+
+Add the new db to the list of extra databases in `COUCH_SETTINGS_HELPER`.
 
 ```python
+# settings.py
 
 NEW_USERS_GROUPS_DB = 'users'  # the database we will be using
 USERS_GROUPS_DB = None  # the database to use (will later be changed to NEW_USERS_GROUPS_DB)
+...
+COUCH_SETTINGS_HELPER = CouchSettingsHelper(
+    COUCH_DATABASE,
+    COUCHDB_APPS,
+    [NEW_USERS_GROUPS_DB],  # list of secondary databases to register
+)
+```
+
+### Specify which database to read/write docs to
+You'll be migrating at module-level granularity, so replace the modules'
+entries in `COUCHDB_APPS` with a `('module_name', DB_TO_USE_FOR_MODULE)` tuple.
+```python
+# settings.py
 ...
 COUCHDB_APPS = [
 ...
@@ -45,16 +60,11 @@ COUCHDB_APPS = [
     ('users', USERS_GROUPS_DB),
 ...
 ]
-...
-COUCH_SETTINGS_HELPER = CouchSettingsHelper(COUCH_DATABASE, COUCHDB_APPS, [
-    NEW_USERS_GROUPS_DB,
-])
 ```
-We have some views which aren't tied to modules, some of which are meant to
-work on roughly all doc types.  Take a look at `corehq/couchapps/__init__.py`
-and make sure to register the appropriate views to your new database.  That
-module's README should have some more context.
+Remember, `USERS_GROUPS_DB` will point to the main db until you flip it to the
+new one in a later step.
 
+### Register the migrator instance
 In `corehq/doctypemigrations/migrator_instances.py`, add an object representing your migration
 going off the following model:
 
@@ -87,6 +97,30 @@ for name, obj in inspect.getmembers(models):
 ```
 (do make sure that you're including only doc types defined *in* the app)
 
+### Specify which databases need which views
+The migrator instance will take care of syncing documents to the new db, but
+you also need to control which views to start indexing in the new db. Enter
+`ExtraPreindexPlugin`.  In a module's `AppConfig`, you can register that
+module's design docs to additional databases:
+
+```python
+from corehq.preindex import ExtraPreindexPlugin
+from django.apps import AppConfig
+from django.conf import settings
+
+class UsersAppConfig(AppConfig):
+    name = 'corehq.apps.users'
+
+    def ready(self):
+        ExtraPreindexPlugin.register('users', __file__, settings.NEW_USERS_GROUPS_DB)
+```
+There, now the module's views will be in both the old database (as per the line
+in `COUCHDB_APPS`), and the new database.
+
+We have some views which aren't tied to modules, some of which are meant to
+work on roughly all doc types.  Take a look at `corehq/couchapps/__init__.py`
+and make sure to register the appropriate views to your new database.  That
+module's README should have some more context.
 
 ### Deploy migrator
 This can be merged whenever, as the new database will not be used until later, when you flip to it.
