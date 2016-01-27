@@ -1,7 +1,6 @@
 from datetime import datetime
 from corehq.apps.sms.models import (CallLog, INCOMING, OUTGOING,
     MessagingSubEvent, MessagingEvent, SQLMobileBackend)
-from corehq.apps.ivr.models import IVRBackend
 from corehq.apps.sms.mixin import VerifiedNumber, MobileBackend
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.smsforms.app import start_session, _get_responses

@@ -1,5 +1,5 @@
 from corehq.apps.ivr.api import log_error, GatewayConnectionError
-from corehq.apps.ivr.models import IVRBackend, SQLIVRBackend
+from corehq.apps.ivr.models import SQLIVRBackend
 from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.sms.util import strip_plus
 from dimagi.ext.couchdbkit import StringProperty
