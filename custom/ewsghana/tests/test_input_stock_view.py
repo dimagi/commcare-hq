@@ -19,6 +19,7 @@ from custom.ewsghana.models import EWSExtension
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockStatus
 from custom.ewsghana.tests.mock_endpoint import MockEndpoint
 from custom.ewsghana.utils import make_url, create_backend
+from custom.ewsghana.tests.test_utils import create_test_locations
 from dimagi.utils.couch.database import get_db
 
 TEST_DOMAIN = 'ewsghana-test-input-stock'
@@ -61,9 +62,7 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
             for p in json.loads(f.read()):
                 cls.api_object.product_sync(Product(p))
 
-        with open(os.path.join(cls.datapath, 'sample_locations.json')) as f:
-            for loc in json.loads(f.read()):
-                cls.api_object.location_sync(Location(loc))
+        create_test_locations(TEST_DOMAIN)
 
         cls.test_facility3 = SQLLocation.objects.get(domain=TEST_DOMAIN, site_code='tsactive')
         cls.testregion2 = SQLLocation.objects.get(domain=TEST_DOMAIN, site_code='testregion2')
