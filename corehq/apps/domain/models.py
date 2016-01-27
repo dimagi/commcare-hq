@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.exceptions import DomainDeleteException
 from corehq.apps.tzmigration import set_migration_complete
 from corehq.dbaccessors.couchapps.all_docs import \
@@ -201,7 +202,7 @@ class DayTimeWindow(DocumentSchema):
     end_time = TimeProperty()
 
 
-class Domain(Document, SnapshotMixin):
+class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the
        domain-level, including user membership, permission to
@@ -612,7 +613,6 @@ class Domain(Document, SnapshotMixin):
             # mark any new domain as timezone migration complete
             set_migration_complete(self.name)
         super(Domain, self).save(**params)
-        Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
         from corehq.apps.domain.signals import commcare_domain_post_save
         results = commcare_domain_post_save.send_robust(sender='domain', domain=self)
@@ -876,7 +876,6 @@ class Domain(Document, SnapshotMixin):
     def delete(self):
         self._pre_delete()
         super(Domain, self).delete()
-        Domain.get_by_name.clear(Domain, self.name)  # clear the domain cache
 
     def _pre_delete(self):
         from corehq.apps.domain.signals import commcare_domain_pre_delete
@@ -1059,6 +1058,12 @@ class Domain(Document, SnapshotMixin):
         """
         from corehq.apps.commtrack.util import make_domain_commtrack
         make_domain_commtrack(self)
+
+    def clear_caches(self):
+        from .utils import domain_restricts_superusers
+        super(Domain, self).clear_caches()
+        self.get_by_name.clear(self.__class__, self.name)
+        domain_restricts_superusers.clear(self.name)
 
 
 class TransferDomainRequest(models.Model):

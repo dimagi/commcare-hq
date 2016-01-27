@@ -43,6 +43,7 @@
 {% block main_column %}
     {% include "style/bootstrap2/partials/time_notice.html" %}
     <form action="" method="post">
+        {% csrf_token %}
         <table id="reminder_error_table" class="table table-striped datatable">
             <thead>
                 <tr>

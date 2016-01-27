@@ -9,6 +9,7 @@
     "grunt-contrib-watch": "^0.6.1",
     "grunt-mocha": "^0.4.13",
     "mocha": "^2.3.3",
-    "uglifyjs": "^2.4.10"
+    "uglifyjs": "^2.4.10",
+    "js-xpath": "dimagi/js-xpath#v0.0.2-rc1"
   }
 }

@@ -8,6 +8,7 @@ from corehq.apps.users.models import WebUser
 
 class MockReport(object):
     is_cacheable = False
+    is_bootstrap3 = False
 
     def __init__(self, request, is_cacheable=True):
         self.request = request

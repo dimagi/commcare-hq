@@ -428,7 +428,7 @@ class AutoPayInvoicePaymentHandler(object):
             try:
                 payment_record = payment_method.create_charge(autopay_card, amount_in_dollars=amount)
             except stripe.error.CardError:
-                self._handle_card_declined(invoice)
+                self._handle_card_declined(invoice, payment_method)
                 continue
             except payment_method.STRIPE_GENERIC_ERROR as e:
                 self._handle_card_errors(invoice, e)
@@ -462,12 +462,15 @@ class AutoPayInvoicePaymentHandler(object):
         except:
             self._handle_email_failure(payment_record)
 
-    def _handle_card_declined(self, invoice):
+    def _handle_card_declined(self, invoice, payment_method):
+        from corehq.apps.accounting.tasks import send_autopay_failed
         log_accounting_error(
             "[Autopay] An automatic payment failed for invoice: {} "
-            "because the card was declined. This invoice will not be automatically paid."
+            "because the card was declined. This invoice will not be automatically paid. "
+            "Not necessarily actionable, but be aware that this happened."
             .format(invoice.id)
         )
+        send_autopay_failed.delay(invoice, payment_method)
 
     def _handle_card_errors(self, invoice, e):
         log_accounting_error(

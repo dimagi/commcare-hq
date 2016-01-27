@@ -66,6 +66,7 @@ from dimagi.utils.django.database import get_unique_value
 from xml.etree import ElementTree
 
 from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
+from dimagi.utils.parsing import json_format_datetime
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -103,21 +104,6 @@ class OldPermissions(object):
         return cls.old_to_new[old_permission]
 
 
-
-class OldRoles(object):
-    ROLES = (
-        ('edit-apps', 'App Editor', set([OldPermissions.EDIT_APPS])),
-        ('field-implementer', 'Field Implementer', set([OldPermissions.EDIT_COMMCARE_USERS])),
-        ('read-only', 'Read Only', set([]))
-    )
-
-    @classmethod
-    def get_role_labels(cls):
-        return tuple([('admin', 'Admin')] + [(key, label) for (key, label, _) in cls.ROLES])
-
-    @classmethod
-    def get_role_mapping(cls):
-        return dict([(key, perms) for (key, _, perms) in cls.ROLES])
 
 class Permissions(DocumentSchema):
     edit_web_users = BooleanProperty(default=False)
@@ -427,9 +413,12 @@ class DomainMembership(Membership):
                 for old_permission in old_permissions:
                     if old_permission == 'view-report':
                         continue
+                    # If this hasn't fired by March 2016 we can delete this code
+                    # and the OldPermissions model
+                    _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']), fail_if_debug=True)
+                    _assert(False, 'Old Permissions found in the wild!')
                     new_permission = OldPermissions.to_new(old_permission)
                     custom_permissions[new_permission] = True
-
                 if not view_report_list:
                     # Anyone whose report permissions haven't been explicitly taken away/reduced
                     # should be able to see reports by default
@@ -1189,8 +1178,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return None
 
     def clear_quickcache_for_user(self):
+        from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list
         self.get_by_username.clear(self.__class__, self.username)
         Domain.active_for_couch_user.clear(self)
+        _get_domain_list.clear(self)
 
     @classmethod
     def get_by_default_phone(cls, phone_number):
@@ -1634,24 +1625,26 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def retire(self):
         suffix = DELETED_SUFFIX
         deletion_id = random_hex()
+        deletion_date = json_format_datetime(datetime.utcnow())
         deleted_cases = set()
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
             self.base_doc += suffix
             self['-deletion_id'] = deletion_id
+            self['-deletion_date'] = deletion_date
 
         for caselist in chunked(self._get_case_docs(), 50):
-            tag_cases_as_deleted_and_remove_indices.delay(self.domain, caselist, deletion_id)
+            tag_cases_as_deleted_and_remove_indices.delay(self.domain, caselist, deletion_id, deletion_date)
             for case in caselist:
                 deleted_cases.add(case['_id'])
 
         for form_id_list in chunked(self.get_forms(wrap=False, include_docs=False), 50):
             tag_forms_as_deleted_rebuild_associated_cases.delay(
-                self.user_id, self.domain, form_id_list, deletion_id, deleted_cases=deleted_cases
+                self.user_id, self.domain, form_id_list, deletion_id, deletion_date, deleted_cases=deleted_cases
             )
 
         for phone_number in self.get_verified_numbers(True).values():
-            phone_number.retire(deletion_id)
+            phone_number.retire(deletion_id=deletion_id, deletion_date=deletion_date)
 
         try:
             django_user = self.get_django_user()

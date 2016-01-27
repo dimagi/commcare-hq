@@ -10,11 +10,18 @@
             placeholder="{% trans "XPath expression" %}"
             name="module_filter"
             {% if ko_value %}
-                data-bind="value: {{ ko_value }}"
+                data-bind="xpathValidator: {{ ko_value }}"
             {% else %}
-                value="{{ value }}"
+                data-bind="xpathValidator: xpath"
             {% endif %}
-        >
+        />
     </div>
 </div>
+{% if not ko_value %}
+<script>
+$(function () {
+    $('#module-filter').koApplyBindings({xpath: {{ value|JSON }} || ''});
+});
+</script>
+{% endif %}
 {% endif %}

@@ -331,7 +331,7 @@ def track_periodic_data():
             end_time,
             sys.getsizeof(submit_json)
         )
-    _soft_assert(processing_time.seconds < 10, msg)
+    _soft_assert(processing_time.seconds < 100, msg)
 
     submit_data_to_hub_and_kiss(submit_json)
 
@@ -346,7 +346,7 @@ def submit_data_to_hub_and_kiss(submit_json):
         try:
             dispatcher(submit_json)
         except Exception, e:
-            notify_exception(None, "{msg}: {exc}".format(msg=error_message, exc=str(e)))
+            notify_exception(None, u"{msg}: {exc}".format(msg=error_message, exc=e))
 
 
 def _track_periodic_data_on_kiss(submit_json):

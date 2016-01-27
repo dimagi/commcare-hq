@@ -33,21 +33,15 @@ def is_commtrack(project, request):
         return False
 
 
-def get_domain_type(project, request):
-    if is_commtrack(project, request):
-        return COMMTRACK
-    else:
-        return COMMCARE
-
-
 def get_per_domain_context(project, request=None):
-    domain_type = get_domain_type(project, request)
-    if domain_type == COMMTRACK:
+    if is_commtrack(project, request):
+        domain_type = COMMTRACK
         logo_url = static('hqstyle/img/commcaresupply-logo.png')
         site_name = "CommCare Supply"
         public_site = "http://www.commtrack.org"
         can_be_your = _("mobile logistics solution")
     else:
+        domain_type = COMMCARE
         logo_url = static('hqstyle/img/commcare-logo.png')
         site_name = "CommCare HQ"
         public_site = "http://www.commcarehq.org"
@@ -78,14 +72,13 @@ def current_url_name(request):
     """
     Adds the name for the matched url pattern for the current request to the
     request context.
-    
     """
     try:
         match = resolve(request.path)
         url_name = match.url_name
     except Http404:
         url_name = None
-    
+
     return {
         'current_url_name': url_name
     }

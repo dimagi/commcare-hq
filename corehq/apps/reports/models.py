@@ -25,7 +25,6 @@ from corehq.apps.cachehq.mixins import (
 )
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from corehq.apps.domain.models import Domain
-from corehq.apps.export.models import FormQuestionSchema
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_all_daterange_slugs
 from corehq.apps.reports.dbaccessors import (
@@ -835,8 +834,12 @@ class FormExportSchema(HQExportSchema):
             for column in [column for table in self.tables for column in table.columns]:
                 if isinstance(column, SplitColumn):
                     question = self.question_schema.question_schema.get(column.index)
-                    column.options = question.options
-                    column.ignore_extras = True
+                    # this is to workaround a bug where a "special" column was incorrectly
+                    # being flagged as a SplitColumn.
+                    # https://github.com/dimagi/commcare-hq/pull/9915
+                    if question:
+                        column.options = question.options
+                        column.ignore_extras = True
 
     def update_question_schema(self):
         schema = self.question_schema
@@ -844,6 +847,7 @@ class FormExportSchema(HQExportSchema):
 
     @property
     def question_schema(self):
+        from corehq.apps.export.models import FormQuestionSchema
         return FormQuestionSchema.get_or_create(self.domain, self.app_id, self.xmlns)
 
     @property

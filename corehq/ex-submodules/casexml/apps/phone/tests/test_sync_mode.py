@@ -715,6 +715,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
         next_sync_log = synclog_from_restore_payload(payload)
         self.assertFalse(next_sync_log.phone_is_holding_case(case.case_id))
 
+    @run_with_all_backends
     def test_cousins(self):
         """http://manage.dimagi.com/default.asp?189528
         """
