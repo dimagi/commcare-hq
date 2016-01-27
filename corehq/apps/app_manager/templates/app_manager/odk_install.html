@@ -1,28 +1,32 @@
 {% load i18n %}
-<div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal">
-        <span aria-hidden="true">&times;</span>
-    </button>
-    <h3>
-        {% trans "Install to Android by taking a picture of the image below on your phone." %}
-    </h3>
-</div>
-<div class="modal-body">
-    <p style="text-align:center;">
-        <img src="{{ qr_code }}" width=250 alt="Download" >
-    </p>
-    <p>
-        {% trans "You can also visit:" %}
-        <code><a href="{{ profile_url }}">{{ profile_url }}</a></code>
-        {% trans "in your mobile browser." %}
-    </p>
-    <p>
-        {% trans "For more about CommCare on Android, visit" %}
-        <a href="https://confluence.dimagi.com/display/commcarepublic/Installing+CommCareODK+Android">
-            {% trans "Installing CommCareODK Android" %}
-        </a>
-    </p>
-</div>
-<div class="modal-footer">
-    <a href="#" class="btn btn-default" data-dismiss="modal">Close</a>
+<div class="modal-dialog modal-lg">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title">
+                {% trans "Install to Android by taking a picture of the image below on your phone." %}
+            </h4>
+        </div>
+        <div class="modal-body">
+            <p style="text-align:center;">
+                <img src="{{ qr_code }}" width=250 alt="Download" >
+            </p>
+            <p>
+                {% trans "You can also visit:" %}
+                <code><a href="{{ profile_url }}">{{ profile_url }}</a></code>
+                {% trans "in your mobile browser." %}
+            </p>
+            <p>
+                {% trans "For more about CommCare on Android, visit" %}
+                <a href="https://confluence.dimagi.com/display/commcarepublic/Installing+CommCareODK+Android">
+                    {% trans "Installing CommCareODK Android" %}
+                </a>
+            </p>
+        </div>
+        <div class="modal-footer">
+            <a href="#" class="btn btn-default" data-dismiss="modal">Close</a>
+        </div>
+    </div>
 </div>

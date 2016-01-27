@@ -4,7 +4,10 @@ from django.utils.safestring import mark_safe
 
 register = template.Library()
 
-LANG_BUTTON = ' <span style="color: #FFFFFF; text-decoration:none;" class="btn btn-mini btn-inverse btn-langcode-preprocessed%(extra_class)s">%(lang)s</span>'
+LANG_BUTTON = '''
+    <span class="btn btn-xs btn-info btn-langcode-preprocessed%(extra_class)s"
+          style="%(extra_style)s">%(lang)s</span>
+'''
 EMPTY_LABEL = '<span class="label label-info">Empty</span>'
 
 
@@ -23,7 +26,7 @@ def trans(name, langs=None, include_lang=True, use_delim=True):
         if use_delim:
             suffix = lambda lang: ' [%s]' % lang
         else:
-            suffix = lambda lang: LANG_BUTTON % {"lang": html.escape(lang), "extra_class": ""}
+            suffix = lambda lang: LANG_BUTTON % {"lang": html.escape(lang), "extra_class": "", "extra_style": ""}
     else:
         suffix = lambda lang: ""
     for lang in langs:
@@ -45,17 +48,24 @@ def html_name(name):
 
 
 @register.simple_tag
-def input_trans(name, langs=None, input_name='name'):
+def input_trans(name, langs=None, input_name='name', cssClass=''):
     if langs is None:
         langs = ["default"]
-    template = '<input type="text" name="{}" value="%(value)s" placeholder="%(placeholder)s" />'.format(input_name)
+    template = '''
+        <input type="text" name="{}" class="{}" value="%(value)s"
+               placeholder="%(placeholder)s"
+               style="position: relative;" />
+    '''.format(input_name, cssClass)
     for lang in langs:
         if lang in name:
             if langs and lang == langs[0]:
                 return template % {"value": name[lang], "placeholder": ""}
             else:
-                return template % {"value": "", "placeholder": name[lang]} + \
-                       LANG_BUTTON % {"lang": lang, "extra_class": " langcode-input"}
+                return template % {"value": "", "placeholder": name[lang]} + LANG_BUTTON % {
+                    "lang": lang,
+                    "extra_class": " langcode-input",
+                    "extra_style": "position: absolute; top: 6px; right: 15px"
+                }
     default = "Untitled"
     if 'en' in name:
         default = name['en']
