@@ -5,7 +5,7 @@ from corehq.apps.accounting.utils import fmt_dollar_amount, log_accounting_error
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.sms.mixin import SMSBackend
-from corehq.apps.sms.models import INCOMING, OUTGOING
+from corehq.apps.sms.models import INCOMING, OUTGOING, SQLMobileBackend
 from corehq.apps.sms.util import get_backend_by_class_name
 from corehq.apps.smsbillables.exceptions import SMSRateCalculatorError
 from corehq.apps.smsbillables.models import SmsGatewayFeeCriteria, SmsGatewayFee, SmsUsageFee
@@ -114,11 +114,7 @@ class PublicSMSRatesAsyncHandler(BaseAsyncHandler):
 
     @quickcache(['country_code'], timeout=24 * 60 * 60)
     def get_rate_table(self, country_code):
-        backends = SMSBackend.view(
-            'sms/global_backends',
-            reduce=False,
-            include_docs=True,
-        ).all()
+        backends = SQLMobileBackend.get_global_backends(SQLMobileBackend.SMS)
 
         def _directed_fee(direction, backend_api_id, backend_instance_id):
             gateway_fee = SmsGatewayFee.get_by_criteria(
@@ -135,12 +131,11 @@ class PublicSMSRatesAsyncHandler(BaseAsyncHandler):
 
         rate_table = []
 
-        from corehq.messaging.smsbackends.test.models import TestSMSBackend
+        from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 
         for backend_instance in backends:
-            backend_instance = backend_instance.wrap_correctly()
             # Skip Testing backends
-            if isinstance(backend_instance, TestSMSBackend):
+            if isinstance(backend_instance, SQLTestSMSBackend):
                 continue
 
             # skip if country is not in supported countries
@@ -151,10 +146,14 @@ class PublicSMSRatesAsyncHandler(BaseAsyncHandler):
 
             gateway_fee_incoming = _directed_fee(
                 INCOMING,
-                backend_instance.incoming_api_id or backend_instance.get_api_id(),
-                backend_instance._id
+                backend_instance.hq_api_id,
+                backend_instance.couch_id
             )
-            gateway_fee_outgoing = _directed_fee(OUTGOING, backend_instance.get_api_id(), backend_instance._id)
+            gateway_fee_outgoing = _directed_fee(
+                OUTGOING,
+                backend_instance.hq_api_id,
+                backend_instance.couch_id
+            )
 
             if gateway_fee_outgoing or gateway_fee_incoming:
                 rate_table.append({
