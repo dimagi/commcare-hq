@@ -333,7 +333,7 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @staticmethod
     def _generate_schema_from_case_property_mapping(case_property_mapping, appVersion):
-        # we should only generate for one case type
+        """Generates the schema for the main Case tab on the export page"""
         assert len(case_property_mapping.keys()) == 1
         schema = CaseExportDataSchema()
 
@@ -355,6 +355,7 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @staticmethod
     def _generate_schema_for_case_history(case_property_mapping, appVersion):
+        """Generates the schema for the Case History tab on the export page"""
         assert len(case_property_mapping.keys()) == 1
         schema = CaseExportDataSchema()
 
