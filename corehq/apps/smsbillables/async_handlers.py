@@ -5,7 +5,6 @@ from corehq.apps.accounting.utils import fmt_dollar_amount, log_accounting_error
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.sms.models import INCOMING, OUTGOING, SQLMobileBackend
-from corehq.apps.sms.util import get_backend_by_class_name
 from corehq.apps.smsbillables.exceptions import SMSRateCalculatorError
 from corehq.apps.smsbillables.models import SmsGatewayFeeCriteria, SmsGatewayFee, SmsUsageFee
 from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty

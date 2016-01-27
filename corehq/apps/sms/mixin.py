@@ -7,7 +7,6 @@ from decimal import Decimal
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import MultipleResultsFound
 from dimagi.utils.couch import release_lock
-from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings

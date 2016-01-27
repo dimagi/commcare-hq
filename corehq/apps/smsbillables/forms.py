@@ -4,7 +4,6 @@ from django import forms
 from django_countries.data import COUNTRIES
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.sms.models import INCOMING, OUTGOING, SQLMobileBackend
-from corehq.apps.sms.util import get_backend_by_class_name
 from phonenumbers import country_code_for_region
 
 
