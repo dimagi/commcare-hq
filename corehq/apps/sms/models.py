@@ -1575,6 +1575,10 @@ class SQLMobileBackend(models.Model):
 
     @classmethod
     def get_domain_backends(cls, backend_type, domain, count_only=False, offset=None, limit=None):
+        """
+        Returns all the backends that the given domain has access to (that is,
+        owned backends, shared backends, and global backends).
+        """
         domain_owned_backends = models.Q(is_global=False, domain=domain)
         domain_shared_backends = models.Q(
             is_global=False,
@@ -1608,6 +1612,14 @@ class SQLMobileBackend(models.Model):
             backend_type=backend_type,
             hq_api_id=cls.get_api_id()
         ).all()
+
+    @classmethod
+    def get_global_backend_ids(cls, backend_type, couch_id=False):
+        id_field = 'couch_id' if couch_id else 'id'
+        return SQLMobileBackend.active_objects.filter(
+            backend_type=backend_type,
+            is_global=True
+        ).values_list(id_field, flat=True)
 
     @classmethod
     def get_global_backends(cls, backend_type, count_only=False, offset=None, limit=None):
@@ -1705,8 +1717,8 @@ class SQLMobileBackend(models.Model):
         return result[0]
 
     @classmethod
-    @quickcache(['backend_id', 'is_couch_id'], timeout=5 * 60)
-    def load(cls, backend_id, api_id=None, is_couch_id=False):
+    @quickcache(['backend_id', 'is_couch_id', 'include_deleted'], timeout=5 * 60)
+    def load(cls, backend_id, api_id=None, is_couch_id=False, include_deleted=False):
         """
         backend_id - the pk of the SQLMobileBackend to load
         api_id - if you know the hq_api_id of the SQLMobileBackend, pass it
@@ -1725,10 +1737,16 @@ class SQLMobileBackend(models.Model):
                                         "backend '%s'" % (api_id, backend_id))
 
         klass = backend_classes[api_id]
-        if is_couch_id:
-            return klass.active_objects.get(couch_id=backend_id)
+
+        if include_deleted:
+            result = klass.objects
         else:
-            return klass.active_objects.get(pk=backend_id)
+            result = klass.active_objects
+
+        if is_couch_id:
+            return result.get(couch_id=backend_id)
+        else:
+            return result.get(pk=backend_id)
 
     @classmethod
     def get_backend_from_id_and_api_id_result(cls, result):

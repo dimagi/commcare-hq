@@ -2,7 +2,7 @@ import re
 from urllib import urlencode
 from urllib2 import urlopen
 import sys
-from corehq.apps.sms.mixin import SMSBackend, BackendProcessingException
+from corehq.apps.sms.mixin import BackendProcessingException
 from corehq.apps.sms.forms import BackendForm
 from corehq.apps.reminders.forms import RecordListField
 from django.forms.fields import *

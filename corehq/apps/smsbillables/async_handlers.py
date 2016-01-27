@@ -4,7 +4,6 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.accounting.utils import fmt_dollar_amount, log_accounting_error
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
 from corehq.apps.hqwebapp.encoders import LazyEncoder
-from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import INCOMING, OUTGOING, SQLMobileBackend
 from corehq.apps.sms.util import get_backend_by_class_name
 from corehq.apps.smsbillables.exceptions import SMSRateCalculatorError
@@ -26,8 +25,7 @@ class SMSRatesAsyncHandler(BaseAsyncHandler):
     def get_rate_response(self):
         gateway = self.data.get('gateway')
         try:
-            backend = SMSBackend.get(gateway)
-            backend_api_id = get_backend_by_class_name(backend.doc_type).get_api_id()
+            backend_api_id = SQLMobileBackend.get_backend_api_id(gateway, is_couch_id=True)
         except Exception as e:
             log_accounting_error(
                 "Failed to get backend for calculating an sms rate due to: %s"
@@ -62,8 +60,7 @@ class SMSRatesSelect2AsyncHandler(BaseAsyncHandler):
     def country_code_response(self):
         gateway = self.data.get('gateway')
         try:
-            backend = SMSBackend.get(gateway)
-            backend_api_id = get_backend_by_class_name(backend.doc_type).get_api_id()
+            backend_api_id = SQLMobileBackend.get_backend_api_id(gateway, is_couch_id=True)
         except Exception:
             return []
         direction = self.data.get('direction')

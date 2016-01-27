@@ -1,5 +1,4 @@
 from django.conf import settings
-from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.apps.sms.forms import BackendForm
 

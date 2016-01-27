@@ -9,7 +9,6 @@ from tastypie.serializers import Serializer
 from tastypie.throttle import CacheThrottle
 from corehq.messaging.smsbackends.grapevine.forms import GrapevineBackendForm
 from corehq.apps.sms.util import clean_phone_number
-from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import SQLSMSBackend
 from dimagi.ext.couchdbkit import *
 from xml.sax.saxutils import escape, unescape

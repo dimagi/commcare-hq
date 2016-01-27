@@ -1,7 +1,6 @@
 import urllib
 from django.conf import settings
 import urllib2
-from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import SQLSMSBackend, SMS
 from dimagi.ext.couchdbkit import *
 from corehq.messaging.smsbackends.mach.forms import MachBackendForm

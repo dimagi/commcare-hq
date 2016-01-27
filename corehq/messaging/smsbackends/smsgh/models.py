@@ -1,5 +1,4 @@
 import requests
-from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import SMS, SQLSMSBackend
 from corehq.apps.sms.util import strip_plus
 from corehq.messaging.smsbackends.smsgh.forms import SMSGHBackendForm

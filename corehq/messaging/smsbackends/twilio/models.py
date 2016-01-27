@@ -1,5 +1,4 @@
 import logging
-from corehq.apps.sms.mixin import SMSBackend, SMSLoadBalancingMixin
 from corehq.apps.sms.models import SQLSMSBackend, PhoneLoadBalancingMixin
 from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.twilio.forms import TwilioBackendForm

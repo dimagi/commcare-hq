@@ -2,7 +2,6 @@ import random
 import datetime
 import string
 from decimal import Decimal
-from corehq.apps.sms.mixin import SMSBackend
 
 from dimagi.utils.data import generator as data_gen
 from corehq.apps.accounting.models import Currency

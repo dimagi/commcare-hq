@@ -2,7 +2,6 @@ import logging
 from urllib import urlencode, quote
 from urllib2 import urlopen
 from corehq.apps.sms.util import strip_plus
-from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import SMSLog, SQLSMSBackend
 from dimagi.ext.couchdbkit import *
 from corehq.messaging.smsbackends.megamobile.forms import MegamobileBackendForm

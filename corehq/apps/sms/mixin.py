@@ -499,60 +499,6 @@ class SMSLoadBalancingMixin(Document):
             info = SMSLoadBalancingInfo(self.phone_numbers[0])
         return info
 
-class SMSBackend(MobileBackend):
-    backend_type = "SMS"
-
-    def get_sms_interval(self):
-        """
-        Override to use rate limiting. Return None to not use rate limiting,
-        otherwise return the number of seconds by which outbound sms requests
-        should be separated when using this backend.
-        Note that this should not be over 30 due to choice of redis lock 
-        timeout. See corehq.apps.sms.tasks.handle_outgoing.
-
-        Also, this can be a fractional amount of seconds. For example, to
-        separate requests by a minimum of a quarter second, return 0.25.
-        """
-        return None
-
-    def send(self, msg, *args, **kwargs):
-        raise NotImplementedError("send() method not implemented")
-
-    @classmethod
-    def get_opt_in_keywords(cls):
-        """
-        Override to specify a set of opt-in keywords to use for this
-        backend type.
-        """
-        return []
-
-    @classmethod
-    def get_opt_out_keywords(cls):
-        """
-        Override to specify a set of opt-out keywords to use for this
-        backend type.
-        """
-        return []
-
-    @classmethod
-    def get_wrapped(cls, backend_id):
-        try:
-            backend = SMSBackend.get(backend_id)
-        except ResourceNotFound:
-            raise UnrecognizedBackendException("Backend %s not found" %
-                backend_id)
-        return backend.wrap_correctly()
-
-    def wrap_correctly(self):
-        from corehq.apps.sms.util import get_available_backends
-        backend_classes = get_available_backends()
-        doc_type = self.doc_type
-        if doc_type in backend_classes:
-            return backend_classes[doc_type].wrap(self.to_json())
-        else:
-            raise UnrecognizedBackendException("Backend %s has an "
-                "unrecognized doc type." % self._id)
-
 
 class BackendMapping(SyncCouchToSQLMixin, Document):
     domain = StringProperty()

@@ -1,7 +1,6 @@
 from urllib import urlencode
 from urllib2 import urlopen
 from corehq.apps.sms.util import clean_phone_number
-from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import SQLSMSBackend
 from dimagi.ext.couchdbkit import *
 from corehq.messaging.smsbackends.tropo.forms import TropoBackendForm

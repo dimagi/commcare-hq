@@ -19,7 +19,7 @@ from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING,
 from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
     MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG,
     MSG_REGISTRATION_WELCOME_CASE, MSG_REGISTRATION_WELCOME_MOBILE_WORKER)
-from corehq.apps.sms.mixin import (MobileBackend, VerifiedNumber, SMSBackend,
+from corehq.apps.sms.mixin import (MobileBackend, VerifiedNumber,
     BadSMSConfigException)
 from corehq.apps.domain.models import Domain
 from datetime import datetime

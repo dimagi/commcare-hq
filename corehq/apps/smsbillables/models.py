@@ -6,8 +6,7 @@ from django.db import models
 from corehq.apps.accounting import models as accounting
 from corehq.apps.accounting.models import Currency
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
-from corehq.apps.sms.mixin import SMSBackend
-from corehq.apps.sms.models import DIRECTION_CHOICES
+from corehq.apps.sms.models import DIRECTION_CHOICES, SQLMobileBackend
 from corehq.apps.sms.phonenumbers_helper import get_country_code_and_national_number
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.sms.util import clean_phone_number
@@ -242,7 +241,11 @@ class SmsUsageFee(models.Model):
 
 @quickcache(['sms_backend_id'])
 def _sms_backend_is_global(sms_backend_id):
-    return SMSBackend.get(sms_backend_id).is_global
+    return SQLMobileBackend.load(
+        sms_backend_id,
+        is_couch_id=True,
+        include_deleted=True
+    ).is_global
 
 
 class SmsBillable(models.Model):
