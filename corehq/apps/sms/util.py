@@ -108,25 +108,6 @@ def update_contact(domain, case_id, user_id, contact_phone_number=None, contact_
     submit_case_block_from_template(domain, "sms/xml/update_contact.xml", context, user_id=user_id)
 
 
-def get_available_backends(index_by_api_id=False, backend_type='SMS'):
-    result = {}
-    if backend_type == 'SMS':
-        backend_classes = settings.SMS_LOADED_BACKENDS
-    elif backend_type == 'IVR':
-        backend_classes = settings.IVR_LOADED_BACKENDS
-    else:
-        raise Exception("Unknown backend_type %s requested" % backend_type)
-
-    for backend_class in backend_classes:
-        klass = to_function(backend_class)
-        if index_by_api_id:
-            api_id = klass.get_api_id()
-            result[api_id] = klass
-        else:
-            result[klass.__name__] = klass
-    return result
-
-
 def _get_backend_classes(backend_list):
     """
     Returns a dictionary of {api id: class} for all installed SMS backends.
@@ -210,14 +191,6 @@ def get_contact(contact_id):
         raise ContactNotFoundException("Contact not found")
 
     return contact
-
-
-def get_backend_by_class_name(class_name):
-    backends = dict([(d.split('.')[-1], d) for d in settings.SMS_LOADED_BACKENDS])
-    backend_path = backends.get(class_name)
-    if backend_path is not None:
-        return to_function(backend_path)
-    return None
 
 
 def touchforms_error_is_config_error(touchforms_error):
