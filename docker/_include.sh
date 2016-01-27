@@ -12,5 +12,5 @@ PROJECT_NAME="commcarehq"
 function web_runner() {
     sudo \
         env DOCKER_DATA_HOME=$DOCKER_DATA_HOME XDG_CACHE_HOME=$XDG_CACHE_HOME\
-        docker-compose -f $DOCKER_DIR/docker-compose-web.yml -p $PROJECT_NAME $@
+        docker-compose -f $DOCKER_DIR/docker-compose-hq.yml -p $PROJECT_NAME $@
 }

@@ -42,8 +42,3 @@ RUN pip install \
     ipython \
     --user --upgrade \
     && rm -rf /root/.cache/pip
-
-WORKDIR /mnt
-
-ENTRYPOINT ["/mnt/docker/entrypoint.sh"]
-CMD ["help"]

@@ -5,7 +5,7 @@
 $DOCKER_DIR/docker-services.sh start
 
 web_runner run web /mnt/docker/bootstrap_internal.sh
-sudo docker-compose -f $DOCKER_DIR/docker-compose-web.yml run web /mnt/docker/bootstrap_internal.sh
+sudo docker-compose -f $DOCKER_DIR/docker-compose-hq.yml run web /mnt/docker/bootstrap_internal.sh
 
 web_runner run -e CUSTOMSETTINGS="docker.localsettings-docker" \
     web python manage.py runserver 0.0.0.0:8000
