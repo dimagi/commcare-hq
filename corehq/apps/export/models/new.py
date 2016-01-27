@@ -80,7 +80,7 @@ class ExportColumn(DocumentSchema):
         """
 
         is_deleted = item.last_occurrence != app_version
-        is_main_table = group_schema_path is None
+        is_main_table = group_schema_path == [None]
 
         return ExportColumn(
             item=item,
@@ -148,6 +148,22 @@ class ExportInstance(Document):
 
     class Meta:
         app_label = 'export'
+
+    @staticmethod
+    def generate_instance_from_schema(schema, app_version):
+        """Given an ExportDataSchema, this will generate an ExportInstance"""
+        instance = ExportInstance()
+
+        for group_schema in schema.group_schemas:
+            table = TableConfiguration(
+                path=group_schema.path
+            )
+            table.columns = map(
+                lambda item: ExportColumn.create_default_from_export_item(table.path, item, app_version),
+                group_schema.items,
+            )
+            instance.tables.append(table)
+        return instance
 
 
 class ExportRow(object):
