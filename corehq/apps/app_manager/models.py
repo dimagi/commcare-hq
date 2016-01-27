@@ -45,6 +45,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
 from corehq.apps.app_manager.xpath import (
+    dot_interpolate,
     interpolate_xpath,
     LocationXpath,
 )
@@ -1539,7 +1540,8 @@ class MappingItem(DocumentSchema):
 
     def key_as_condition(self, property):
         if self.treat_as_expression:
-            return u"{key}".format(key=self.key)
+            condition = dot_interpolate(self.key, property)
+            return u"{condition}".format(condition=condition)
         else:
             return u"{property} = '{key}'".format(
                 property=property,
