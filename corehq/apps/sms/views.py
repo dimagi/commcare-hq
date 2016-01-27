@@ -46,7 +46,7 @@ from corehq.apps.sms.models import (
     SQLMobileBackend, SQLMobileBackendMapping, PhoneLoadBalancingMixin
 )
 from corehq.apps.sms.mixin import (VerifiedNumber,
-    SMSLoadBalancingMixin, UnrecognizedBackendException, BadSMSConfigException)
+    UnrecognizedBackendException, BadSMSConfigException)
 from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
                                    InitiateAddSMSBackendForm, SubscribeSMSForm,
                                    SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
