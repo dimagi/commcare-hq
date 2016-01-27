@@ -50,6 +50,9 @@ class ExportItem(DocumentSchema):
 class ExportColumn(DocumentSchema):
     item = SchemaProperty(ExportItem)
     label = StringProperty()
+    # Determines whether or not to show the column in the UI Config without clicking advanced
+    show = BooleanProperty()
+    selected = BooleanProperty()
 
     def get_value(self, doc, base_path):
         """
@@ -65,6 +68,26 @@ class ExportColumn(DocumentSchema):
         # Get the path from the doc root to the desired ExportItem
         path = self.item.path[len(base_path):]
         return NestedDictGetter(path)(doc)
+
+    @staticmethod
+    def create_default_from_export_item(group_schema_path, item, appVersion):
+        """Creates a default ExportColumn given an item
+
+        :param group_schema_path: The path of the group_schema that the item belongs to
+        :param item: An ExportItem instance
+        :param appVersion: The app version that the column export is for
+        :returns: An ExportColumn instance
+        """
+
+        is_deleted = item.last_occurrence != appVersion
+        is_main_table = group_schema_path is None
+
+        return ExportColumn(
+            item=item,
+            label=item.label,
+            show=not is_deleted,
+            selected=not is_deleted and is_main_table,
+        )
 
 
 class TableConfiguration(DocumentSchema):
