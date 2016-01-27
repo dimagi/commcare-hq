@@ -1601,6 +1601,15 @@ class SQLMobileBackend(models.Model):
         return [cls.load(pk) for pk in result]
 
     @classmethod
+    def get_global_backends_for_this_class(cls, backend_type):
+        return cls.objects.filter(
+            is_global=True,
+            deleted=False,
+            backend_type=backend_type,
+            hq_api_id=cls.get_api_id()
+        ).all()
+
+    @classmethod
     def get_global_backends(cls, backend_type, count_only=False, offset=None, limit=None):
         result = SQLMobileBackend.objects.filter(
             is_global=True,
