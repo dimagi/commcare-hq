@@ -152,10 +152,6 @@ class SQLHttpBackend(SQLSMSBackend):
         proxy = True
 
     @classmethod
-    def _migration_get_couch_model_class(cls):
-        return HttpBackend
-
-    @classmethod
     def get_available_extra_fields(cls):
         return [
             # the url to send to

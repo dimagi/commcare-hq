@@ -1455,7 +1455,7 @@ class ActiveMobileBackendManager(models.Manager):
         return super(ActiveMobileBackendManager, self).get_queryset().filter(deleted=False)
 
 
-class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
+class SQLMobileBackend(models.Model):
     SMS = 'SMS'
     IVR = 'IVR'
 
@@ -1895,31 +1895,6 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         self.__clear_caches()
         return super(SQLMobileBackend, self).delete(*args, **kwargs)
 
-    def _migration_sync_to_couch(self, couch_obj):
-        couch_obj.domain = self.domain
-        couch_obj.name = self.name
-        couch_obj.display_name = self.display_name
-        couch_obj.authorized_domains = [
-            i.domain for i in self.mobilebackendinvitation_set.all()
-        ]
-        couch_obj.is_global = self.is_global
-        couch_obj.description = self.description
-        couch_obj.supported_countries = self.supported_countries
-        couch_obj.reply_to_phone_number = self.reply_to_phone_number
-        couch_obj.backend_type = self.backend_type
-        couch_obj.reply_to_phone_number = self.reply_to_phone_number
-        for k, v in self.get_extra_fields().iteritems():
-            setattr(couch_obj, k, v)
-
-        if self.load_balancing_numbers:
-            couch_obj.x_phone_numbers = self.load_balancing_numbers
-
-        if self.deleted:
-            if not couch_obj.base_doc.endswith('-Deleted'):
-                couch_obj.base_doc += '-Deleted'
-
-        couch_obj.save(sync_to_sql=False)
-
 
 class SQLSMSBackend(SQLMobileBackend):
     class Meta:
@@ -2018,7 +1993,7 @@ class BackendMap(object):
         return self.catchall_backend_id
 
 
-class SQLMobileBackendMapping(SyncSQLToCouchMixin, models.Model):
+class SQLMobileBackendMapping(models.Model):
     """
     A SQLMobileBackendMapping instance is used to map SMS or IVR traffic
     to a given backend based on phone prefix.
@@ -2115,18 +2090,6 @@ class SQLMobileBackendMapping(SyncSQLToCouchMixin, models.Model):
     def delete(self, *args, **kwargs):
         self.__clear_prefix_to_backend_map_cache()
         return super(SQLMobileBackendMapping, self).delete(*args, **kwargs)
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return BackendMapping
-
-    def _migration_sync_to_couch(self, couch_obj):
-        couch_obj.domain = self.domain
-        couch_obj.is_global = self.is_global
-        couch_obj.prefix = self.prefix
-        couch_obj.backend_type = self.backend_type
-        couch_obj.backend_id = self.backend.couch_id
-        couch_obj.save(sync_to_sql=False)
 
 
 class MobileBackendInvitation(models.Model):

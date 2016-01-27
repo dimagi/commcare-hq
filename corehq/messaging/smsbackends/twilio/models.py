@@ -77,10 +77,6 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
         proxy = True
 
     @classmethod
-    def _migration_get_couch_model_class(cls):
-        return TwilioBackend
-
-    @classmethod
     def get_available_extra_fields(cls):
         return [
             'account_sid',

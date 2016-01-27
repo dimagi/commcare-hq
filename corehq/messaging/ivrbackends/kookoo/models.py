@@ -137,10 +137,6 @@ class SQLKooKooBackend(SQLIVRBackend):
         proxy = True
 
     @classmethod
-    def _migration_get_couch_model_class(cls):
-        return KooKooBackend
-
-    @classmethod
     def get_available_extra_fields(cls):
         return [
             'api_key',

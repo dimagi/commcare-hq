@@ -103,10 +103,6 @@ class SQLSMSGHBackend(SQLSMSBackend):
         proxy = True
 
     @classmethod
-    def _migration_get_couch_model_class(cls):
-        return SMSGHBackend
-
-    @classmethod
     def get_available_extra_fields(cls):
         return [
             'from_number',
