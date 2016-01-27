@@ -3,16 +3,22 @@
 {% include 'app_manager/partials/case_config_shared.html' %}
 
 <script type="text/html" id="remove-action-modal-template">
-    <div class="modal-header">
-        <a href="#" class="close" data-dismiss="modal">×</a>
-        <h3>{% trans "Remove Form Action?" %}</h3>
-    </div>
-    <div class="modal-body">
-        <p>{% trans "Are you sure you want to remove this action?" %}</p>
-    </div>
-    <div class="modal-footer">
-        <a href="#" class="btn" data-dismiss="modal">{% trans "Cancel" %}</a>
-        <a class="btn btn-danger" href="#" data-bind="click: $parent.removeFormAction" data-dismiss="modal">{% trans "Remove Action" %}</a>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">{% trans "Remove Form Action?" %}</h4>
+            </div>
+            <div class="modal-body">
+                <p>{% trans "Are you sure you want to remove this action?" %}</p>
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+                <a class="btn btn-danger" href="#" data-bind="click: $parent.removeFormAction" data-dismiss="modal">{% trans "Remove Action" %}</a>
+            </div>
+        </div>
     </div>
 </script>
 
@@ -23,107 +29,131 @@
         data: {condition: open_condition, config: $data},
     }"></div>
     <!-- /ko -->
-    <div data-bind="if: actionType == 'load'" class="row-fluid">
-        <div class="well well-small span6">
-            <div data-bind="template: 'case-config:case-transaction:case-preload'"></div>
+    <div data-bind="if: actionType == 'load'" class="row">
+        <div class="col-sm-6">
+            <div class="panel panel-default"
+                 data-bind="template: 'case-config:case-transaction:case-preload'"></div>
         </div>
-        <div class="well well-small span6">
-            <div data-bind="template: 'case-config:case-transaction:case-properties'"></div>
+        <div class="col-sm-6">
+            <div class="panel panel-default"
+                 data-bind="template: 'case-config:case-transaction:case-properties'"></div>
         </div>
     </div>
-    <div data-bind="if: actionType == 'open'" class="row-fluid">
-        <div class="well well-small">
-            <div data-bind="template: 'case-config:case-transaction:case-properties'"></div>
+    <div data-bind="if: actionType == 'open'" class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-default" data-bind="template: 'case-config:case-transaction:case-properties'"></div>
         </div>
     </div>
     <!-- ko if:  actionType !== 'load' || !auto_select || auto_select.mode() !== 'usercase' -->
-    <div class="well well-small">
-        <div class="form-inline">
-        <!-- ko if:  actionType === 'load' -->
-            {% if app.commtrack_enabled %}
-            <!-- ko if:  allow_product_stock -->
-            <div class="control-group">
-                <label class="checkbox">
-                    <input type="checkbox" data-bind="checked: show_product_stock_var"/>
-                    {% trans "Display the Product Stock for this Supply Point after it is selected" %}
-                </label>
-            </div>
-            <!-- ko if: show_product_stock_var -->
-            <div class="control-group" style="margin-left: 25px;">
-                <label class="control-label">{% trans "Only show products for this program:" %}</label>
-                <select data-bind="optstr: $root.programs, value: product_program">
-                </select>
-            </div>
-            <!-- /ko -->
-            <!-- /ko -->
-            {% endif %}
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <div class="form-horizontal">
 
-            <!-- ko if:  !auto_select && $index() > 0 -->
-            <div class="control-group" data-bind="css: {warning: validate_subcase()}">
-                <label class="checkbox">
-                    <input type="checkbox" data-bind="checked: subcase"/>
-                    {% trans "This case is a subcase of the previous case" %}
-                </label>
-                <span data-bind="if: subcase">
-                    {% if show_custom_ref %}
-                    <div>
-                        <label>{% trans "Parent reference ID:" %}</label>
-                        <input type="text" data-bind="value: case_index.reference_id"/>
+            <!-- ko if:  actionType === 'load' -->
+                {% if app.commtrack_enabled %}
+                <!-- ko if:  allow_product_stock -->
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">
+                        {% trans "Display the Product Stock for this Supply Point after it is selected" %}
+                    </label>
+                    <div class="col-sm-4">
+                        <input type="checkbox" data-bind="checked: show_product_stock_var"/>
                     </div>
-                    {% endif %}
-
-                    <div>
-                        <label>{% trans "Relationship:" %}</label>
-                        <select data-bind="options: relationshipTypes,
-                                       optionsCaption: 'Child case or extension case?',
-                                       value: case_index.relationship"></select>
+                </div>
+                <!-- ko if: show_product_stock_var -->
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">
+                        {% trans "Only show products for program" %}
+                    </label>
+                    <div class="col-sm-4">
+                        <select class="form-control" data-bind="optstr: $root.programs, value: product_program"></select>
                     </div>
-
-                </span>
-                <span class="help-inline" data-bind="text: validate_subcase"></span>
-            </div>
-            <!-- /ko -->
-        <!-- /ko -->
-
-            <!-- ko if:  actionType === 'open' -->
-            <div class="control-group" data-bind="visible: allow_subcase, css: {warning: validate_subcase()}">
-
-                <span style="font-weight: bold;">Parent Indices</span>
-                <ul data-bind="foreach: case_indices">
-                    <li>
-                        <label>{% trans "Parent Tag:" %}</label>
-                        <select data-bind="optstr: $parents[1].getCaseTags('subcase', $parent),
-                            value: tag">
-                        </select><br />
-
-                        <label>{% trans "Reference ID:" %}</label>
-                        <input type="text" data-bind="value: reference_id"/><br />
-
-                        <label>{% trans "Relationship:" %}</label>
-                        <select data-bind="options: $parent.relationshipTypes,
+                </div>
+                <!-- /ko -->
+                <!-- /ko -->
+                {% endif %}
+    
+                <!-- ko if:  !auto_select && $index() > 0 -->
+                <div class="form-group" data-bind="css: {'has-warning': validate_subcase()}">
+                    <label class="col-sm-2 control-label">
+                        {% trans "This case is a subcase of the previous case" %}
+                    </label>
+                    <div class="col-sm-4">
+                        <input type="checkbox" data-bind="checked: subcase"/>
+                        <span class="help-block" data-bind="text: validate_subcase"></span>
+                    </div>
+                </div>
+                {% if show_custom_ref %}
+                    <div class="form-group" data-bind="if: subcase">
+                        <label class="control-label col-sm-2">
+                            {% trans "Parent reference ID" %}
+                        </label>
+                        <div class="col-sm-4">
+                            <input type="text" class="form-control" data-bind="value: case_index.reference_id"/>
+                        </div>
+                    </div>
+                {% endif %}
+                <div class="form-group">
+                    <label class="control-label col-sm-2">{% trans "Relationship" %}</label>
+                    <div class="col-sm-4">
+                        <select class="form-control"
+                                data-bind="options: relationshipTypes,
                                            optionsCaption: 'Child case or extension case?',
-                                           value: relationship"></select><br />
-
-                        <i class="icon-trash"></i>
-                        <a href="#" data-bind="click: $parent.removeCaseIndex">Remove index</a>
-                    </li>
-                </ul>
-
-                <button data-bind="click: addCaseIndex">{% trans "Add parent index" %}</button>
-                <span class="help-inline" data-bind="text: validate_subcase"></span>
-            </div>
+                                           value: case_index.relationship"></select>
+                    </div>
+                </div>
+                <!-- /ko -->
+            <!-- /ko -->
+    
+            <!-- ko if:  actionType === 'open' -->
+                <div class="form-group" data-bind="visible: allow_subcase, css: {'has-warning': validate_subcase()}">
+    
+                    <label class="control-label col-sm-2">{% trans "Parent Indices" %}</label>
+                    <div class="col-sm-4">
+                        <div data-bind="foreach: case_indices">
+                            <div class="form-group">
+                                <label>{% trans "Parent Tag" %}</label>
+                                <select class="form-control"
+                                        data-bind="optstr: $parents[1].getCaseTags('subcase', $parent), value: tag">
+                                </select>
+    
+                                <label>{% trans "Reference ID" %}</label>
+                                <input type="text" class="form-control" data-bind="value: reference_id"/>
+    
+                                <label>{% trans "Relationship" %}</label>
+                                <select class="form-control"
+                                        data-bind="options: $parent.relationshipTypes,
+                                                   optionsCaption: 'Child case or extension case?',
+                                                   value: relationship"></select>
+                                <button class="btn btn-danger" data-bind="click: $parent.removeCaseIndex">
+                                    <i class="fa fa-trash"></i>
+                                    {% trans "Remove parent index" %}
+                                </button>
+                            </div>
+                        </div>
+    
+                        <button class="btn btn-default" data-bind="click: addCaseIndex">
+                            <i class="fa fa-plus"></i>
+                            {% trans "Add parent index" %}
+                        </button>
+                        <span class="help-block" data-bind="text: validate_subcase"></span>
+                    </div>
+                </div>
             <!-- /ko -->
 
-            <div class="control-group">
-                <label class="checkbox">
-                    <input type="checkbox" data-bind="checked: close_case"/>
-                    {% trans "Close this case when the form is complete" %}
-                </label>
-                <div data-bind="template: {
-                    name: 'case-config:condition',
-                    data: {condition: close_condition, config: $data},
-                    if: close_case
-                }"></div>
+                <div class="form-group">
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" data-bind="checked: close_case"/>
+                            {% trans "Close this case when the form is complete" %}
+                        </label>
+                    </div>
+                    <div data-bind="template: {
+                        name: 'case-config:condition',
+                        data: {condition: close_condition, config: $data},
+                        if: close_case
+                    }"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -135,36 +165,40 @@
         <a href="#" data-bind="html: header" class="header"></a>
     </h3>
     <div>
-        <div>
-            <i class="icon-file"></i>
-            {% trans "Select case type:" %}
-            <span class="control-group" data-bind="css: {warning: validate()}">
-                <select data-bind="
+                <button class="pull-right btn btn-danger"
+                        data-bind="openModal: 'remove-action-modal-template', visible: true">
+                    <i class="fa fa-trash"></i>
+                    {% trans "Remove action" %}
+                </button>
+        <div class="form-inline" data-bind="css: {'has-warning': validate()}">
+            <div class="form-group">
+                <label>{% trans "Case Type" %}</label>
+                <select class="form-control" data-bind="
                     options: config.caseTypes,
                     value: case_type,
                     optionsCaption: 'Choose a Case Type...'
                 "></select>
-                <!-- ko if: actionType == 'load'-->
+            </div>
+            <!-- ko if: actionType == 'load'-->
+            <div class="form-group">
                 &nbsp;
-                {% trans "Case list:" %}
-                <select data-bind="optstr: available_modules,
+                <label>{% trans "Case List" %}</label>
+                <select class="form-control" data-bind="optstr: available_modules,
                     optstrValue: 'id',
                     optstrText: 'module_name',
                     value: details_module">
                 </select>
-                <!-- /ko -->
+            </div>
+            <!-- /ko -->
+            <div class="form-group">
                 &nbsp;
-                {% trans "Case Tag:" %}
-                <input type="text" class="input-medium" data-bind="value: case_tag, disable: disable_tag" />
-                <span class="help-inline" data-bind="text: validate"></span>
-                <a href="#" data-bind="openModal: 'remove-action-modal-template', visible: true" class="pull-right">
-                    <i class="icon-trash"></i>
-                    {% trans "Remove action" %}
-                </a>
-            </span>
+                <label>{% trans "Case Tag" %}</label>
+                <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
+            </div>
+            <span class="help-block" data-bind="text: validate"></span>
         </div>
-        <div data-bind="visible: !case_type">
-            <em>{% trans "Please select a case type." %}</em>
+        <div class="help-block" data-bind="visible: !case_type">
+            {% trans "Please select a case type." %}
         </div>
         <div data-bind="visible: case_type">
             <!-- ko template: {name: 'case-config:case-action:body'} --><!-- /ko -->
@@ -177,14 +211,14 @@
 
 <script type="text/html" id="auto-select:raw">
     &nbsp;
-    {% trans "XPath function:" %}
-    <input type="text" class="input-xxlarge" data-bind="value: value_key" />
+    {% trans "XPath function" %}
+    <input type="text" class="form-control" data-bind="value: value_key" />
 </script>
 
 <script type="text/html" id="auto-select:user">
     &nbsp;
     {% trans "User data key:" %}
-    <input type="text" class="input-medium" data-bind="value: value_key" />
+    <input type="text" class="form-control" data-bind="value: value_key" />
 </script>
 
 <script type="text/html" id="auto-select:case">
@@ -213,27 +247,30 @@
         <a href="#" data-bind="html: header" class="header"></a>
     </h3>
     <div>
-        <div>
-            <i class="icon-file"></i>
-            {% trans "Autoselect mode:" %}
-            <span class="control-group" data-bind="css: {warning: validate()}">
-                <!-- ko with: auto_select -->
-                <select data-bind="
+        <button class="pull-right btn btn-danger"
+                data-bind="openModal: 'remove-action-modal-template', visible: true">
+            <i class="fa fa-trash"></i>
+            {% trans "Remove action" %}
+        </button>
+        <div class="form-inline" data-bind="css: {'has-warning': validate()}">
+            <!-- ko with: auto_select -->
+            <div class="form-group">
+                <label>{% trans "Autoselect mode" %}</label>
+                <select class="form-control" data-bind="
                     optstr: $parent.auto_select_modes,
                     value: mode,
                     optionsCaption: 'Choose a mode...'
                 "></select>
+            </div>
+            <div class="form-group">
                 <!-- ko template: {name: 'auto-select:' + mode()} --><!-- /ko -->
-                <!-- /ko -->
-                &nbsp;
-                {% trans "Case Tag:" %}
-                <input type="text" class="input-medium" data-bind="value: case_tag, disable: disable_tag" />
-                <span class="help-inline" data-bind="text: validate"></span>
-                <a href="#" data-bind="openModal: 'remove-action-modal-template', visible: true" class="pull-right">
-                    <i class="icon-trash"></i>
-                    {% trans "Remove action" %}
-                </a>
-            </span>
+            </div>
+            <!-- /ko -->
+            <div class="form-group">
+                <label>{% trans "Case Tag" %}</label>
+                <input type="text" class="form-control" data-bind="value: case_tag, disable: disable_tag" />
+            </div>
+            <span class="help-block" data-bind="text: validate"></span>
         </div>
         <div data-bind="visible: !auto_select.mode()">
             <em>{% trans "Please select an autoselection mode." %}</em>
@@ -244,12 +281,12 @@
     </div>
 </script>
 
-<div id="case-config-ko" class="row">
+<div id="case-config-ko">
     <div data-bind="saveButton: saveButton"></div>
-    <div data-bind="with: caseConfigViewModel" class="span11">
+    <div data-bind="with: caseConfigViewModel">
         <div class="dropdown" data-bind="visible: actionOptions().length">
             <a href="#" data-toggle="dropdown">
-                <i class="icon-plus icon-blue"></i>
+                <i class="fa fa-plus icon-blue"></i>
                 <span>{% trans "Add Action" %}</span><span class="caret"></span>
             </a>
             <ul class="dropdown-menu" role="menu" data-bind="foreach: actionOptions">
@@ -262,12 +299,15 @@
             </ul>
         </div>
         <div data-bind="visible: !actionOptions().length">
-            <i class="icon-plus icon-muted"></i>
-            <span class="muted">{% trans "Add Action" %}</span>
+            <i class="fa fa-plus icon-muted"></i>
+            <span class="text-muted">{% trans "Add Action" %}</span>
         </div>
-        <div>
-            <div class="row-fluid">
-                <span data-bind="visible: load_update_cases().length"><i class="icon-asterisk"></i> {% trans "Load / Update / Close cases" %}</span>
+        <div class="spacer"></div>
+        <div class="container-fluid">
+            <div class="row">
+                <legend data-bind="visible: load_update_cases().length">
+                    {% trans "Load / Update / Close Cases" %}
+                </legend>
                 <div id="case-load-accordion" data-bind="foreach: load_update_cases, accordion: {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true}">
                     <!-- ko if: auto_select -->
                     <div class="group" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
@@ -277,11 +317,11 @@
                     <!-- /ko -->
                 </div>
             </div>
-            <div class="row" data-bind="visible: open_cases().length && load_update_cases().length">
-                <hr/>
-            </div>
-            <div class="row-fluid">
-                <span data-bind="visible: open_cases().length"><i class="icon-asterisk"></i> {% trans "Open new cases" %}</span>
+            <div class="spacer" data-bind="visible: open_cases().length && load_update_cases().length"></div>
+            <div class="row">
+                <legend data-bind="visible: open_cases().length">
+                    {% trans "Open New Cases" %}
+                </legend>
                 <div id="case-open-accordion" data-bind="foreach: open_cases, accordion: {header: '> div > h3', heightStyle: 'content', collapsible: true, autoFill: true}">
                     <div class="group" data-bind="template: {name: 'case-config:case-action'}"></div>
                 </div>

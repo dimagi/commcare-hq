@@ -5,12 +5,8 @@
 
 {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
 
-{% block head %}
-    {{ block.super }}
-    <link href="{% static 'hqwebapp/js/lib/select2/select2.css' %}" rel="stylesheet"/>
-    <link rel="stylesheet" href="{% static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
-    <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
-    <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
+{% block stylesheets %}{{ block.super }}
+    <link rel="stylesheet" href="{% new_static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
     <style>
         .casexml ul {
             margin-left: 15px;
@@ -18,98 +14,56 @@
         input[type="radio"]{
             margin: 3px 5px 5px 0px;
         }
-        #xform-links ul {
-            display: block;
-        }
-        #xform-links li {
-            display: inline-block;
-            border-left: 1px solid #DDD;
-            padding: 0 5px;
-        }
-        #xform-links li:first-child {
-            border-left: none;
-            padding-left: 0;
-        }
-        #xform-links a {
-            display: inline-block;
-            border: 1px solid transparent;
-            padding: 5px 10px;
-            vertical-align: middle;
-
-            border-radius: 15px;
-            -moz-border-radius: 15px;
-        }
-        #xform-links a:hover {
-            border: 1px solid #BBB;
-            background: #EEE;
-            text-decoration: none;
-        }
-        #xform-links a:active {
-            border: 1px solid #BBB;
-            background: #DDD;
-            text-decoration: none;
-        }
-        #xform-links a.disabled {
-            pointer-events: none;
-            cursor: default;
-            color: #888;
-        }
         .bigdrop {
             width: 600px !important;
         }
-        .nested-fieldset{
+        .nested-fieldset {
             margin-left: 50px;
         }
-        .nested-fieldset .controls{
+        .nested-fieldset .form-inline {
             margin-left: 50px;
         }
-        .nested-fieldset legend{
-            font-size: 1rem;
-        }
     </style>
-    {% if app.application_version == '2.0' %}
-    <style>
-        #open-referral-action,
-        #update-referral-action,
-        #close-referral-action,
-        #referral-preload-action {
-            display: none;
-        }
-        .indent {
-            margin-left: 15px;
-        }
-    </style>
-    {% endif %}
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
-    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_subscribables.ko.js' %}"></script>
-    <script src="{% static 'jquery.caret/dist/jquery.caret-1.5.2.min.js' %}"></script>
-
-    {% if app.application_version == '2.0' %}
-        <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
-        <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
-        {% block js_extra %}
-            <script src="{% static 'app_manager/js/case-config-ui-2.js' %}"></script>
-        {% endblock %}
-    {% else %}
-        <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
-        <script src="{% static 'app_manager/js/case-config-ui-1.js' %}"></script>
-    {% endif %}
-    {% include "app_manager/partials/xpathValidator.html" %}
+    <script src="{% new_static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
+    <script src="{% new_static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
+    <script src="{% new_static 'style/ko/knockout_subscribables.ko.js' %}"></script>
+    <script src="{% new_static 'jquery.caret/dist/jquery.caret-1.5.2.min.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    {% include "style/bootstrap2/ko/value-or-none-ui.html" %}
+    {% if app.application_version == '2.0' %}
+        <script src="{% new_static 'app_manager/js/case-knockout-bindings.js' %}"></script>
+        <script src="{% new_static 'app_manager/js/case-config-utils.js' %}"></script>
+        {% block js_extra %}
+            <script src="{% new_static 'app_manager/js/case-config-ui-2.js' %}"></script>
+        {% endblock %}
+        <style>
+            #open-referral-action,
+            #update-referral-action,
+            #close-referral-action,
+            #referral-preload-action {
+                display: none;
+            }
+            .indent {
+                margin-left: 15px;
+            }
+        </style>
+    {% else %}
+        <script src="{% new_static 'app_manager/js/ejs.min.js' %}"></script>
+        <script src="{% new_static 'app_manager/js/case-config-ui-1.js' %}"></script>
+    {% endif %}
+
+    {% include "app_manager/partials/form_filter/value-or-none-ui.html" %}
+    {% include "app_manager/partials/xpathValidator.html" %}
     {% if not is_user_registration %}
         {% include "app_manager/partials/nav_menu_media_js_common.html" %}
         {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
     {% endif %}
     {% if allow_form_workflow %}
-        <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
+        <script src="{% new_static 'app_manager/js/form_workflow.js' %}"></script>
     {% endif %}
     <script>
         $(function(){
@@ -258,7 +212,7 @@
             <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
                 {% csrf_token %}
                 <button type="submit" class="disable-on-submit btn btn-danger">
-                    <i class="icon-trash"></i>
+                    <i class="fa fa-trash"></i>
                     {% trans "Delete Form" %}
                 </button>
             </form>
@@ -274,20 +228,20 @@
                                  {% endif %}
                                  "
                                  class="btn btn-primary">
-            <i class="icon-pencil"></i>
+            <i class="fa fa-pencil"></i>
             {% trans "Edit" %}
         </a>
         {% else %}
         <button class="btn btn-primary disabled" disabled="disabled"
                 title="{% trans "Your administrator has locked this form from edits through the form builder"|force_escape %}">
-            <i class="icon-pencil"></i>
+            <i class="fa fa-pencil"></i>
             {% trans "Edit" %}
         </button>
         {% endif %}
         {% if allow_cloudcare %}
             {% if form.source and not is_user_registration %}
-            <a id="cloudcare-preview-url" href="#" target="_blank" class="btn">
-                <i class="icon-play"></i>
+            <a id="cloudcare-preview-url" href="#" target="_blank" class="btn btn-default">
+                <i class="fa fa-play"></i>
                 {% trans "Preview Form" %}
             </a>
             {% endif %}
@@ -329,6 +283,7 @@
                 <a href="#advanced" data-toggle="tab">{% trans "Advanced" %}</a>
             </li>
         </ul>
+        <br>
         <div class="tab-content">
             {% if nav_form %}
                 {% include "app_manager/partials/form_tab_settings.html" %}
@@ -340,30 +295,17 @@
                         {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
                     </p>
                 {% elif form.source %}
-                    {% if app.application_version == '1.0' %}
-                        <header class="clearfix">
-                            <h4 class="pull-left">{% trans "Cases and Referrals" %}</h4>
-                            <span class="hq-help-template"
-                                  data-title="{% trans "Cases and Referrals" %}"
-                                  data-content="{% trans "Cases give you a way to track patients, farms, etc. over time.  You can choose to save data from a form to the case, which will store the data locally on the phone to use later." %}"
-                            ></span>
-                        </header>
-                        <div class="casexml" id="casexml_home">
-                        </div>
-                    {% else %}
-                        <header class="clearfix">
-                            <h4 class="pull-left">{% trans "Case Management" %}</h4>
-                            <span class="hq-help-template"
-                                data-title="{% trans "Case Management" %}"
-                                data-content="{% trans "Cases give you a way to track patients, farms, etc. over time.  You can choose to save data from a form to the case, which will store the data locally on the phone to use later." %}"
-                            ></span>
-                        </header>
-                        <div class="casexml" id="casexml_home">
-                            {% block case_management_content %}
-                                {% include 'app_manager/partials/case_config.html' %}
-                            {% endblock %}
-                        </div>
+                    <div class="help-block">
+                        Cases give you a way to track patients, farms, etc. over time. You can choose to save 
+                        data from a form to the case, which will store the data locally on the phone to use later.
+                    </div>
+                    <div class="casexml" id="casexml_home">
+                    {% if app.application_version != '1.0' %}
+                        {% block case_management_content %}
+                            {% include 'app_manager/partials/case_config.html' %}
+                        {% endblock %}
                     {% endif %}
+                    </div>
                 {% else %}
                     <p class="alert alert-warning">
                         {% trans "You have not created a form yet. Create a form in order to view and edit Case Management." %}
@@ -387,7 +329,7 @@
                     <div class="casexml" id="usercasexml_home">
                         {% block usercase_management_content %}
                             {%  if form.uses_usercase and not allow_usercase %}
-                                <div class="container-fluid span6">
+                                <div class="container-fluid col-sm-6">
                                 <p>{% blocktrans %}
                                     The User Case feature is no longer available because of the change in your
                                     CommCare subscription. Although currently-deployed applications will still
@@ -403,10 +345,10 @@
                                 {% endblocktrans %}</p>
 
                                 <p>
-                                    <a href="{% url 'domain_select_plan' domain %}" class="btn btn-primary span6">
+                                    <a href="{% url 'domain_select_plan' domain %}" class="btn btn-primary">
                                         {% trans "Change your subscription" %}
                                     </a>
-                                    <a href="{% url 'drop_user_case' domain app.id %}" class="btn btn-danger span6">
+                                    <a href="{% url 'drop_user_case' domain app.id %}" class="btn btn-danger">
                                         {% trans "Remove User Case Properties" %}
                                     </a>
                                 </p>
@@ -440,7 +382,6 @@
     {{ block.super }}
     {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
     <li>
-        <span class="divider">&gt;</span>
         {% if is_user_registration %}
             <span class="app-manager-title">{% trans "User Registration" %}</span>
         {% else %}
