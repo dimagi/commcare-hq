@@ -319,6 +319,7 @@ class CaseExportDataSchema(ExportDataSchema):
                 app.version,
             )
             case_history_schema = CaseExportDataSchema._generate_schema_for_case_history(
+                case_property_mapping,
                 app.version,
             )
 

@@ -230,7 +230,10 @@ class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(items), 1)
 
         self.assertEqual(group_schema2.last_occurrence, 2)
-        self.assertEqual(len(group_schema2.items), len(CASE_HISTORY_PROPERTIES))
+        self.assertEqual(
+            len(group_schema2.items),
+            len(CASE_HISTORY_PROPERTIES) + len(case_property_mapping['candy'])
+        )
 
 
 class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
@@ -291,6 +294,11 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         ]
         for app in cls.apps:
             app.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        for app in cls.apps:
+            app.delete()
 
     def test_basic_application_schema(self):
         schema = CaseExportDataSchema.generate_schema_from_builds(self.domain, 'candy')
