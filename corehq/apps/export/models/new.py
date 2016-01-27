@@ -205,6 +205,9 @@ class ExportDataSchema(Document):
         'MSelect': MultipleChoiceItem,
     })
 
+    class Meta:
+        app_label = 'export'
+
     @staticmethod
     def _merge_schemas(*schemas):
         """Merges two ExportDataSchemas together
