@@ -115,6 +115,7 @@ class TableConfiguration(DocumentSchema):
 
 class ExportInstance(Document):
     tables = ListProperty(TableConfiguration)
+    split_columns = BooleanProperty(default=False)
 
     class Meta:
         app_label = 'export'
