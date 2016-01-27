@@ -24,7 +24,6 @@ class CCHQPRBACMiddleware(object):
     Neither domains nor users currently have roles in the PRBAC tables.
     """
 
-    @method_decorator(sensitive_post_parameters('password'))
     def process_view(self, request, view_func, view_args, view_kwargs):
         self.apply_prbac(request)
         return None
