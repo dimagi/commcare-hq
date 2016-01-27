@@ -9,7 +9,6 @@
     {% include "app_manager/partials/xpathValidator.html" %}
 {% endblock %}
 {% block js-inline %}{{ block.super }}
-    {% include "style/bootstrap3/partials/value-or-none-ui.html" %}
     {% include "app_manager/partials/nav_menu_media_js_common.html" %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_menu_item qualifier='case_list-menu_item_' %}
