@@ -6,6 +6,6 @@ branches:
 before_install:
   - "./dockerhq.sh services start"
   - "./dockerhq.sh ps"
-script: "./dockerhq.sh run -e CUSTOMSETTINGS="docker.localsettings-docker" web python manage.py test form_processor"
+script: './dockerhq.sh run -e CUSTOMSETTINGS="docker.localsettings-docker" web python manage.py test form_processor'
 services:
   - docker
