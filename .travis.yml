@@ -3,6 +3,12 @@ sudo: required
 branches:
   only:
     - master
+env:
+  matrix:
+    - MATRIX_TYPE=javascript BOWER=yes NODE=yes DOCKER=yes
+    # need node installs for app_manager.XpathValidatorTest
+    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunnerCatchall BOWER=yes NODE=yes DOCKER=yes
+    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunner0 DOCKER=yes
 before_install:
   - "./dockerhq.sh travis build"
   - "./dockerhq.sh travis up -d"

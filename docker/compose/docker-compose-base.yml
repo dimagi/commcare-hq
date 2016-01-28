@@ -41,3 +41,12 @@ moto:
   command: s3
   expose:
     - "5000"
+
+kafka:
+  build: .
+  image: spotify/kafka
+  environment:
+    ADVERTISED_PORT: 9092
+  expose:
+    - "2181"
+    - "9092"

@@ -1,3 +1,5 @@
+TRAVIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 setup_elasticsearch() {
     es_version=0.90.13
 
@@ -22,6 +24,24 @@ setup_kafka() {
     kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic meta --zookeeper localhost:2181
     kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic case-sql --zookeeper localhost:2181
     kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic form-sql --zookeeper localhost:2181
+}
+
+create_topics() {
+    topics_script=$1
+    zookeeper_ip=$2
+    topics=$3
+
+    for topic in $topics; do
+        $TRAVIS_DIR/../dockerhq.sh travis run --rm kafka $topics_script --create --partitions 1 --replication-factor 1 --zookeeper $zookeeper_ip:2181 --topic $topic
+    done
+}
+
+setup_kafka_docker() {
+    kafka_topics=$(./dockerhq.sh travis run --rm kafka find /opt -name kafka-topics.sh | tr -d '\n' | tr -d '\r')
+    CID=$(sudo docker ps -fq ancestor=spotify/kafka -f status=running)
+    zookeeper_ip=$(sudo docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${CID} | tr -d '\n' | tr -d '\r')
+    echo $zookeeper_ip
+    create_topics $kafka_topics $zookeeper_ip "case form meta case-sql form-sql"
 }
 
 setup_moto_s3_server() {

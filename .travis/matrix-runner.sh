@@ -16,16 +16,27 @@ server_started() {
 }
 
 if [ "${MATRIX_TYPE}" = "python" ]; then
-    coverage run manage.py test --noinput --failfast --traceback --verbosity=2 --testrunner=$TESTRUNNER
+    command="coverage run manage.py test --noinput --failfast --traceback --verbosity=2 --testrunner=$TESTRUNNER"
+    if [ "${DOCKER}" = "yes" ]; then
+        './dockerhq.sh travis run -e CUSTOMSETTINGS="docker.localsettings_docker_sharded" web_test $command'
+    else
+        $command
+    fi
 elif [ "${MATRIX_TYPE}" = "javascript" ]; then
-    psql -c 'create database commcarehq' -U postgres
-    python manage.py sync_couch_views
-    python manage.py migrate --noinput
-    python manage.py runserver 8000 &  # Used to run mocha browser tests
+    if [ "${DOCKER}" = "yes" ]; then
+        python manage.py migrate --noinput
 
-    if server_started; then
         grunt mocha
     else
-        exit 1
+        psql -c 'create database commcarehq' -U postgres
+        python manage.py sync_couch_views
+        python manage.py migrate --noinput
+        python manage.py runserver 8000 &  # Used to run mocha browser tests
+
+        if server_started; then
+            grunt mocha
+        else
+            exit 1
+        fi
     fi
 fi

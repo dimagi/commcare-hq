@@ -9,6 +9,7 @@ web_test:
     - redis_test:redis
     - elasticsearch_test:elasticsearch
     - moto:moto
+    - kafka:kafka
 
 postgres_test:
   extends:
@@ -40,6 +41,11 @@ moto:
   extends:
     file: docker-compose-base.yml
     service: moto
+
+kafka:
+  extends:
+    file: docker-compose-base.yml
+    service: kafka
 
 data_test:
   image: redis
