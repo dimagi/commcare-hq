@@ -175,6 +175,7 @@ class EWSScriptTest(TestScript):
         cls.sms_backend.delete()
         CommCareUser.get_by_username('stella').delete()
         CommCareUser.get_by_username('super').delete()
+        FacilityInCharge.objects.all().delete()
         delete_all_locations()
         LocationType.objects.all().delete()
         for product in Product.by_domain(TEST_DOMAIN):

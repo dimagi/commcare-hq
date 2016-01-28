@@ -34,7 +34,8 @@ class PaginateViewLogHandler(object):
             total_emitted,
             total_emitted + kwargs['limit'] - 1)
         )
-        self.log('  startkey={}, startkey_docid={!r}'.format(kwargs.get('startkey'), kwargs.get('startkey_docid')))
+        startkey = kwargs.get('startkey')
+        self.log(u'  startkey={!r}, startkey_docid={!r}'.format(startkey, kwargs.get('startkey_docid')))
 
     def view_ending(self, db, view_name, kwargs, total_emitted, time):
         self.log('View call took {}'.format(time))
@@ -186,9 +187,11 @@ class PtopReindexer(NoArgsCommand):
         with open(self.get_seq_filename(), 'r') as fin:
             return fin.read()
 
-    def view_data_file_iter(self):
+    def view_data_file_iter(self, start=0):
         with open(self.get_dump_filename(), 'r') as fin:
-            for line in fin:
+            for line_count, line in enumerate(fin):
+                if line_count < start:
+                    continue
                 yield json.loads(line)
 
     def _bootstrap(self, options):
@@ -278,19 +281,16 @@ class PtopReindexer(NoArgsCommand):
         start = self.start_num
         end = start + self.chunk_size
 
-        json_iter = self.view_data_file_iter()
+        json_iter = self.view_data_file_iter(start)
 
         bulk_slice = []
-        for curr_counter, json_doc in enumerate(json_iter):
-            if curr_counter < start:
-                continue
-            else:
-                bulk_slice.append(json_doc)
-                if len(bulk_slice) == self.chunk_size:
-                    self.send_bulk(bulk_slice, start, end)
-                    bulk_slice = []
-                    start += self.chunk_size
-                    end += self.chunk_size
+        for json_doc in json_iter:
+            bulk_slice.append(json_doc)
+            if len(bulk_slice) == self.chunk_size:
+                self.send_bulk(bulk_slice, start, end)
+                bulk_slice = []
+                start += self.chunk_size
+                end += self.chunk_size
 
         self.send_bulk(bulk_slice, start, end)
 
@@ -309,7 +309,7 @@ class PtopReindexer(NoArgsCommand):
         bulk_start = datetime.utcnow()
         while retries < MAX_TRIES:
             try:
-                self.log('Sending chunk to ES')
+                self.log('Sending chunk to ES: %s:%s' % (start, end))
                 assert isinstance(self.pillow, AliasedElasticPillow)
                 self.pillow.process_bulk(filtered_slice)
                 break

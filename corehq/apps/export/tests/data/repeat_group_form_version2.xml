@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+	<h:head>
+		<h:title>Buy Candy Corn</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="undefined" uiVersion="1" version="1" name="Buy Candy Corn">
+					<question1 />
+					<question3 />
+				</data>
+			</instance>
+			<bind nodeset="/data/question1" type="xsd:string" />
+			<bind nodeset="/data/question3" type="xsd:string" />
+			<itext>
+				<translation lang="en" default="">
+					<text id="question1-label">
+						<value>question1</value>
+					</text>
+					<text id="question3-label">
+						<value>question3</value>
+					</text>
+				</translation>
+			</itext>
+		</model>
+	</h:head>
+	<h:body>
+		<input ref="/data/question1">
+			<label ref="jr:itext('question1-label')" />
+		</input>
+		<input ref="/data/question3">
+			<label ref="jr:itext('question3-label')" />
+		</input>
+	</h:body>
+</h:html>

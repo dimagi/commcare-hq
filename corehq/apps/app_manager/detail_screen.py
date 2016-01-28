@@ -86,6 +86,8 @@ class FormattedDetailColumn(object):
     template_width = None
     template_form = None
 
+    SORT_TYPE = 'string'
+
     def __init__(self, app, module, detail, column, sort_element=None,
                  order=None, detail_type=None):
         self.app = app
@@ -141,7 +143,7 @@ class FormattedDetailColumn(object):
         if self.sort_xpath_function:
             sort = sx.Sort(
                 text=sx.Text(xpath_function=self.sort_xpath_function),
-                type='string',
+                type=self.SORT_TYPE,
             )
 
         if self.sort_element:
@@ -273,6 +275,13 @@ class Date(FormattedDetailColumn):
 class TimeAgo(FormattedDetailColumn):
     XPATH_FUNCTION = u"if({xpath} = '', '', string(int((today() - date({xpath})) div {column.time_ago_interval})))"
     SORT_XPATH_FUNCTION = u"{xpath}"
+
+
+@register_format_type('distance')
+class Distance(FormattedDetailColumn):
+    XPATH_FUNCTION = u"if(here() = '', '', if({xpath} = '', '', concat(round(distance({xpath}, here()) div 1000), ' km')))"
+    SORT_XPATH_FUNCTION = u'round(distance({xpath}, here()))'
+    SORT_TYPE = 'double'
 
 
 @register_format_type('phone')

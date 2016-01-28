@@ -3,6 +3,7 @@ import calendar
 
 from django.conf import settings
 from django.utils.translation import ugettext_lazy, ugettext as _
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.casegroups.dbaccessors import get_case_group_meta_in_domain
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 
@@ -94,15 +95,10 @@ class SelectApplicationFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        apps_for_domain = Application.get_db().view(
-            "app_manager/applications_brief",
-            startkey=[self.domain],
-            endkey=[self.domain, {}],
-            include_docs=True
-        ).all()
-        return [(app['value']['_id'], _("%(name)s [up to build %(version)s]") % {
-            'name': app['value']['name'],
-            'version': app['value']['version']}) for app in apps_for_domain]
+        apps_for_domain = get_brief_apps_in_domain(self.domain)
+        return [(app.get_id, _("%(name)s [up to build %(version)s]") % {
+            'name': app.name,
+            'version': app.version}) for app in apps_for_domain]
 
 
 class MultiCaseGroupFilter(BaseMultipleOptionFilter):

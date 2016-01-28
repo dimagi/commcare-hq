@@ -8,6 +8,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.decorators.memoized import memoized
 
+from casexml.apps.case.cleanup import close_case
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption)
 from casexml.apps.stock.models import StockReport, DocDomainMapping
@@ -405,7 +406,7 @@ DEFAULT_CONSUMPTION = 10.  # per month
 
 class ActiveManager(models.Manager):
     """
-    Filter any object that is associated to an archived product.
+    Filter any object that is associated to an archived product
     """
 
     def get_queryset(self):
@@ -546,19 +547,39 @@ class StockExportColumn(ComplexExportColumn):
         return values
 
 
-def sync_supply_point(loc):
+def _make_location_admininstrative(location):
+    supply_point_id = location.supply_point_id
+    if supply_point_id:
+        close_case(supply_point_id, location.domain, const.COMMTRACK_USERNAME)
+    location.supply_point_id = None  # this will be saved soon anyways
+
+
+def _reopen_or_create_supply_point(location):
+    from .dbaccessors import get_supply_point_by_location_id
+    supply_point = get_supply_point_by_location_id(location.domain, location.location_id)
+    if supply_point:
+        if supply_point and supply_point.closed:
+            for action in supply_point.actions:
+                if action.action_type == 'close':
+                    action.xform.archive(user_id=const.COMMTRACK_USERNAME)
+        supply_point.update_from_location(location)
+        return supply_point
+    else:
+        return SupplyInterface.create_from_location(location.domain, location)
+
+
+def sync_supply_point(location):
     # Called on location.save()
-    domain = Domain.get_by_name(loc.domain)
-    if not domain.commtrack_enabled or loc.location_type.administrative:
+    domain = Domain.get_by_name(location.domain)
+    if not domain.commtrack_enabled:
         return None
 
-    supply_point = loc.linked_supply_point()
-    if supply_point:
-        supply_point.update_from_location(loc)
-        updated_supply_point = supply_point
+    if location.location_type.administrative:
+        _make_location_admininstrative(location)
+        return None
     else:
-        updated_supply_point = SupplyInterface.create_from_location(loc.domain, loc)
-    return updated_supply_point._id
+        updated_supply_point = _reopen_or_create_supply_point(location)
+        return updated_supply_point._id
 
 
 @receiver(post_save, sender=StockState)

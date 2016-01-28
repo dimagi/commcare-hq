@@ -3,7 +3,12 @@ from collections import namedtuple
 from datetime import datetime
 import importlib
 
+import sys
+
+import simplejson
 from django.conf import settings
+
+from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_utc_datetime
 
 from pillowtop.exceptions import PillowNotFoundError
@@ -135,3 +140,18 @@ def get_pillow_json(pillow_config):
         'time_since_last': time_since_last,
         'hours_since_last': hours_since_last
     }
+
+
+def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):
+    payloads = ['']
+    for bulk_chunk in chunked(bulk_changes, chunk_size):
+        current_payload = payloads[-1]
+        payload_chunk = '\n'.join(map(simplejson.dumps, bulk_chunk)) + '\n'
+        appended_payload = current_payload + payload_chunk
+        new_payload_size = sys.getsizeof(appended_payload)
+        if new_payload_size > max_size:
+            payloads.append(payload_chunk)
+        else:
+            payloads[-1] = appended_payload
+
+    return filter(None, payloads)

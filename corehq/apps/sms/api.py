@@ -12,9 +12,10 @@ from dimagi.utils.logging import notify_exception
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege, log_accounting_error
 from corehq.apps.sms.util import (clean_phone_number, clean_text,
-    get_available_backends)
+    get_backend_classes)
 from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING,
-    PhoneNumber, SMS, SelfRegistrationInvitation, MessagingEvent)
+    PhoneNumber, SMS, SelfRegistrationInvitation, MessagingEvent,
+    SQLMobileBackend, SQLSMSBackend)
 from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
     MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG,
     MSG_REGISTRATION_WELCOME_CASE, MSG_REGISTRATION_WELCOME_MOBILE_WORKER)
@@ -138,7 +139,7 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
         direction = OUTGOING,
         date = datetime.utcnow(),
         domain = verified_number.domain,
-        backend_id = backend._id,
+        backend_id=backend.couch_id,
         location_id=get_location_id_by_verified_number(verified_number),
         text = text
     )
@@ -164,13 +165,13 @@ def send_sms_with_backend(domain, phone_number, text, backend_id, metadata=None)
 
 def send_sms_with_backend_name(domain, phone_number, text, backend_name, metadata=None):
     phone_number = clean_phone_number(phone_number)
-    backend = MobileBackend.load_by_name(domain, backend_name)
+    backend = SQLMobileBackend.load_by_name(SQLMobileBackend.SMS, domain, backend_name)
     msg = SMSLog(
         domain=domain,
         phone_number=phone_number,
         direction=OUTGOING,
         date=datetime.utcnow(),
-        backend_id=backend._id,
+        backend_id=backend.couch_id,
         text=text
     )
     add_msg_tags(msg, metadata)
@@ -242,22 +243,16 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
 
         if not backend:
             backend = msg.outbound_backend
-            # note: this will handle "verified" contacts that are still pending
-            # verification, thus the backend is None. it's best to only call
-            # send_sms_to_verified_number on truly verified contacts, though
-
-        if not msg.backend_id:
-            msg.backend_id = backend._id
 
         if backend.domain_is_authorized(msg.domain):
             backend.send(msg, orig_phone_number=orig_phone_number)
         else:
-            raise BackendAuthorizationException("Domain '%s' is not authorized to use backend '%s'" % (msg.domain, backend._id))
+            raise BackendAuthorizationException(
+                "Domain '%s' is not authorized to use backend '%s'" % (msg.domain, backend.pk)
+            )
 
-        try:
-            msg.backend_api = backend.__class__.get_api_id()
-        except Exception:
-            pass
+        msg.backend_api = backend.hq_api_id
+        msg.backend_id = backend.couch_id
         msg.save()
         create_billable_for_sms(msg)
         return True
@@ -475,10 +470,11 @@ def is_opt_message(text, keyword_list):
 
 
 def get_opt_keywords(msg):
-    backend_classes = get_available_backends(index_by_api_id=True)
-    backend_class = backend_classes.get(msg.backend_api, SMSBackend)
-    return (backend_class.get_opt_in_keywords(),
-        backend_class.get_opt_out_keywords())
+    backend_class = get_backend_classes().get(msg.backend_api, SQLSMSBackend)
+    return (
+        backend_class.get_opt_in_keywords(),
+        backend_class.get_opt_out_keywords()
+    )
 
 
 def process_incoming(msg, delay=True):

@@ -280,13 +280,6 @@
         "include_docs": false,
         "name": "IntraHealthFluffPillow"
     },
-    "KafkaCaseConsumerPillow": {
-        "advertised_name": "KafkaCaseConsumerPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "kafka-demo-case-pillow-checkpoint",
-        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
-        "name": "KafkaCaseConsumerPillow"
-    },
     "LdHmisCaseFluffPillow": {
         "advertised_name": "fluff.LdHmisCaseFluffPillow.testhq",
         "change_feed_type": "KafkaChangeFeed",
@@ -318,19 +311,6 @@
         "full_class_name": "custom.intrahealth.models.LivraisonFluffPillow",
         "include_docs": false,
         "name": "LivraisonFluffPillow"
-    },
-    "LoggingPythonDemoPillow": {
-        "advertised_name": "corehq.apps.change_feed.consumer.pillow.LoggingPythonPillow.testhq",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "kafka-demo-python-pillow-checkpoint",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://127.0.0.1:5984/test_commcarehq",
-        "document_class": null,
-        "extra_args": {},
-        "full_class_name": "corehq.apps.change_feed.consumer.pillow.LoggingPythonPillow",
-        "include_docs": false,
-        "name": "LoggingPythonDemoPillow"
     },
     "MVPCaseIndicatorPillow": {
         "advertised_name": "mvp_docs.pillows.MVPCaseIndicatorPillow.testhq",
@@ -511,6 +491,13 @@
         "name": "SMSPillow",
         "unique_id": "708c77f8e5fe00286fa5791e9fa7d45f"
     },
+    "SqlXFormToElasticsearchPillow": {
+        "advertised_name": "SqlXFormToElasticsearchPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "sql-xforms-to-elasticsearch",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "SqlXFormToElasticsearchPillow"
+    },
     "StaticDataSourcePillow": {
         "advertised_name": "corehq.apps.userreports.pillow.StaticDataSourcePillow.testhq",
         "change_feed_type": "CouchChangeFeed",
@@ -593,21 +580,21 @@
         "name": "UserGroupsDbKafkaPillow"
     },
     "UserPillow": {
-        "advertised_name": "corehq.pillows.user.UserPillow.test_hqusers_2015-11-12_1638.testhq",
+        "advertised_name": "corehq.pillows.user.UserPillow.test_hqusers_2016-01-20_1610.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.user.UserPillow.test_hqusers_2015-11-12_1638.testhq",
+        "checkpoint_id": "corehq.pillows.user.UserPillow.test_hqusers_2016-01-20_1610.testhq",
         "couch_filter": "users/all_users",
         "couchdb_type": "Database",
         "couchdb_uri": "http://127.0.0.1:5984/test_commcarehq__users",
         "document_class": "CommCareUser",
         "es_alias": "hqusers",
-        "es_index": "test_hqusers_2015-11-12_1638",
+        "es_index": "test_hqusers_2016-01-20_1610",
         "es_type": "user",
         "extra_args": {},
         "full_class_name": "corehq.pillows.user.UserPillow",
         "include_docs": true,
         "name": "UserPillow",
-        "unique_id": "test_hqusers_2015-11-12_1638"
+        "unique_id": "test_hqusers_2016-01-20_1610"
     },
     "WorldVisionChildFluffPillow": {
         "advertised_name": "fluff.WorldVisionChildFluffPillow.testhq",

@@ -596,6 +596,13 @@ LINK_SUPPLY_POINT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+ICDS_REPORTS = StaticToggle(
+    'icds_reports',
+    'Enable access to the Tableau dashboard for ICDS',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     'multiple_choice_custom_field',
     'Allow project to use multiple choice field in custom fields',
@@ -740,6 +747,14 @@ CUSTOM_APP_BASE_URL = StaticToggle(
 TF_USES_SQLITE_BACKEND = StaticToggle(
     'tf_sql_backend',
     'Use a SQLite backend for Touchforms',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
+CASE_LIST_DISTANCE_SORT = StaticToggle(
+    'case_list_distance_sort',
+    'Allow sorting by distance from current location in the case list',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )

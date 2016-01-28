@@ -12,23 +12,6 @@
 {% block js-inline %} {{ block.super }}
 <script type="text/javascript">
 
-    var _post = function (elem, url, options) {
-        var options = options || {};
-        var success = options.success || "{% trans "Sync Successful" %}";
-        var error = options.error || "{% trans "Error!" %}";
-        $(elem).addClass("disabled").html("{% trans "Syncing..." %}");
-        $.ajax({
-            type: 'POST',
-            url: url,
-            success: function() {
-                $(elem).html(success);
-            },
-            error: function() {
-                $(elem).html(error).addClass("btn-danger");
-            }
-        });
-    };
-
     $(function() {
         var loc_types = {{ location_types|JSON }};
         var commtrack_enabled = {{ commtrack_enabled|JSON }};
@@ -108,7 +91,17 @@
                             </th>
                             <!-- /ko -->
                             {% if commtrack_enabled %}
-                            <th>{% trans "Tracks Stock" %}</th>
+                            <th>
+                                {% trans "Tracks Stock" %}
+                                <span class="hq-help-template"
+                                      data-title="{% trans "Tracks Stock" %}"
+                                      data-content="{% blocktrans %}
+                                          Does this location keep inventory and track stock?
+                                          Note that changing this property will update all
+                                          locations of this level accordingly.
+                                      {% endblocktrans %}">
+                                </span>
+                            </th>
                             {% endif %}
                             <th>
                                 {% trans "Owns Cases" %}

@@ -10,11 +10,18 @@ from corehq.apps.hqcase.utils import submit_case_block_from_template
 from corehq.apps.sms.mixin import MobileBackend
 from corehq.util.quickcache import quickcache
 from django.core.exceptions import ValidationError
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.modules import to_function
 from django.utils.translation import ugettext as _
 
+
 phone_number_plus_re = re.compile("^\+{0,1}\d+$")
+
+
+class ContactNotFoundException(Exception):
+    pass
+
 
 def strip_plus(phone_number):
     if (isinstance(phone_number, basestring) and len(phone_number) > 0
@@ -32,11 +39,6 @@ def clean_phone_number(text):
     cleaned_text = "%s%s" % (plus, non_decimal.sub('', text))
     return cleaned_text
 
-def clean_outgoing_sms_text(text):
-    try:
-        return urllib.quote(text)
-    except KeyError:
-        return urllib.quote(text.encode('utf-8'))
 
 def validate_phone_number(phone_number):
     if (not isinstance(phone_number, basestring) or
@@ -124,6 +126,30 @@ def get_available_backends(index_by_api_id=False, backend_type='SMS'):
             result[klass.__name__] = klass
     return result
 
+
+@memoized
+def get_backend_classes():
+    """
+    Returns a dictionary of {api id: class} for all installed SMS and IVR
+    backends.
+    """
+    from corehq.apps.sms.mixin import BadSMSConfigException
+    result = {}
+    backend_classes = (
+        settings.SMS_LOADED_SQL_BACKENDS +
+        settings.IVR_LOADED_SQL_BACKENDS
+    )
+
+    for backend_class in backend_classes:
+        cls = to_function(backend_class)
+        api_id = cls.get_api_id()
+        if api_id in result:
+            raise BadSMSConfigException("Cannot have more than one backend with the same "
+                                        "api id. Duplicate found for: %s" % api_id)
+        result[api_id] = cls
+    return result
+
+
 CLEAN_TEXT_REPLACEMENTS = (
     # Common emoticon replacements
     (":o", ": o"),
@@ -169,7 +195,7 @@ def get_contact(contact_id):
         pass
 
     if not contact:
-        raise Exception("Contact not found")
+        raise ContactNotFoundException("Contact not found")
 
     return contact
 

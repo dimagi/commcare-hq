@@ -18,4 +18,19 @@ setup_kafka() {
     nohup bash -c "cd kafka && bin/kafka-server-start.sh config/server.properties &"
     sleep 10
     kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic case --zookeeper localhost:2181
+    kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic form --zookeeper localhost:2181
+    kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic meta --zookeeper localhost:2181
+    kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic case-sql --zookeeper localhost:2181
+    kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic form-sql --zookeeper localhost:2181
+}
+
+setup_moto_s3_server() {
+    mkdir -p moto-s3 && cd moto-s3
+    test -d env || virtualenv env
+    # todo: switch to https://github.com/spulec/moto.git when PR is merged
+    # https://github.com/spulec/moto/pull/518
+    test -d moto || git clone https://github.com/dimagi/moto.git
+    env/bin/pip install -e ./moto
+    env/bin/moto_server -H localhost -p 5000 s3 &
+    cd ..
 }

@@ -1,4 +1,5 @@
 import datetime
+import time
 from mock import patch
 from django.test import SimpleTestCase, TestCase
 from jsonobject.exceptions import BadValueError
@@ -118,6 +119,23 @@ class DataSourceConfigurationDbTest(TestCase):
 
         results = DataSourceConfiguration.by_domain('not-foo')
         self.assertEqual(0, len(results))
+
+    def test_last_modified_date(self):
+        start = datetime.datetime.utcnow()
+        time.sleep(.01)
+        data_source = DataSourceConfiguration(
+            domain='mod-test', table_id='mod-test', referenced_doc_type='mod-test'
+        )
+        data_source.save()
+        self.assertTrue(start < data_source.last_modified)
+        time.sleep(.01)
+        between = datetime.datetime.utcnow()
+        self.assertTrue(between > data_source.last_modified)
+        time.sleep(.01)
+        data_source.save()
+        time.sleep(.01)
+        self.assertTrue(between < data_source.last_modified)
+        self.assertTrue(datetime.datetime.utcnow() > data_source.last_modified)
 
     def test_get_all(self):
         self.assertEqual(3, len(list(DataSourceConfiguration.all())))

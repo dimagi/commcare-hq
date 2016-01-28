@@ -62,3 +62,37 @@ class SQLTropoBackend(SQLSMSBackend):
         return [
             'messaging_token',
         ]
+
+    @classmethod
+    def get_api_id(cls):
+        return 'TROPO'
+
+    @classmethod
+    def get_generic_name(cls):
+        return "Tropo"
+
+    @classmethod
+    def get_template(cls):
+        return 'tropo/backend.html'
+
+    @classmethod
+    def get_form_class(cls):
+        return TropoBackendForm
+
+    def get_sms_rate_limit(self):
+        return 60
+
+    def send(self, msg, *args, **kwargs):
+        phone_number = clean_phone_number(msg.phone_number)
+        text = msg.text.encode('utf-8')
+        config = self.config
+        params = urlencode({
+            'action': 'create',
+            'token': config.messaging_token,
+            'numberToDial': phone_number,
+            'msg': text,
+            '_send_sms': 'true',
+        })
+        url = 'https://api.tropo.com/1.0/sessions?%s' % params
+        response = urlopen(url, timeout=settings.SMS_GATEWAY_TIMEOUT).read()
+        return response

@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.reports.models import ReportConfig
 from dimagi.utils.decorators.memoized import memoized
 
@@ -34,7 +34,7 @@ class Tile(object):
         """Whether or not the tile is visible on the dashboard (permissions).
         :return: Boolean
         """
-        return self.tile_config.visibility_check(self.request)
+        return bool(self.tile_config.visibility_check(self.request))
 
     @property
     @memoized
@@ -317,13 +317,7 @@ class AppsPaginatedContext(BasePaginatedTileContextProcessor):
     @property
     @memoized
     def applications(self):
-        key = [self.request.domain]
-        return Application.get_db().view(
-            'app_manager/applications_brief',
-            reduce=False,
-            startkey=key,
-            endkey=key+[{}],
-        ).all()
+        return get_brief_apps_in_domain(self.request.domain)
 
     @property
     def paginated_items(self):
@@ -335,17 +329,14 @@ class AppsPaginatedContext(BasePaginatedTileContextProcessor):
             )
 
         def _get_view_app_url(app):
-            return reverse('view_app', args=[self.request.domain, app['id']])
+            return reverse('view_app', args=[self.request.domain, app.get_id])
 
         def _get_release_manager_url(app):
-            return reverse('release_manager', args=[self.request.domain, app['id']])
-
-        def _get_app_name(app):
-            return app['key'][1]
+            return reverse('release_manager', args=[self.request.domain, app.get_id])
 
         apps = self.applications[self.skip:self.skip + self.limit]
 
-        return [self._fmt_item(_get_app_name(a),
+        return [self._fmt_item(a.name,
                                _get_app_url(a),
                                None,  # description
                                None,  # full_name

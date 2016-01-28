@@ -63,13 +63,12 @@ class LockedFormProcessingResult(FormProcessingResult):
 
 def process_xform_xml(domain, instance, attachments=None):
     """
-    Create a new xform to ready to be saved to couchdb in a thread-safe manner
-    Returns a LockManager containing the new XFormInstance and its lock,
+    Create a new xform to ready to be saved to a database in a thread-safe manner
+    Returns a LockManager containing the new XFormInstance(SQL) and its lock,
     or raises an exception if anything goes wrong.
 
     attachments is a dictionary of the request.FILES that are not the xform;
     key is parameter name, value is django MemoryFile object stream
-
     """
     attachments = attachments or {}
 

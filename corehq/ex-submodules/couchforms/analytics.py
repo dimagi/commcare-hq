@@ -12,9 +12,11 @@ def update_analytics_indexes():
     Mostly for testing; wait until analytics data sources are up to date
     so that calls to analytics functions return up-to-date
     """
+    from corehq.apps.app_manager.models import Application
     XFormInstance.get_db().view('couchforms/all_submissions_by_domain', limit=1).all()
     XFormInstance.get_db().view('all_forms/view', limit=1).all()
-    XFormInstance.get_db().view('exports_forms/by_xmlns', limit=1).all()
+    XFormInstance.get_db().view('exports_forms_by_xform/view', limit=1).all()
+    Application.get_db().view('exports_forms_by_app/view', limit=1).all()
 
 
 def domain_has_submission_in_last_30_days(domain):
@@ -265,22 +267,69 @@ def get_form_analytics_metadata(domain, app_id, xmlns):
     }
     """
     # todo: wrap this return value in a class/stucture
-    view_results = XFormInstance.get_db().view(
-        'exports_forms/by_xmlns',
+    from corehq.apps.app_manager.models import Application
+    view_results = Application.get_db().view(
+        'exports_forms_by_app/view',
         key=[domain, app_id, xmlns],
         stale=stale_ok(),
         group=True
     ).one()
+    form_count = get_form_count_for_domain_app_xmlns(domain, app_id, xmlns)
     if view_results:
-        return view_results['value']
-    return None
+        result = view_results['value']
+        result['submissions'] = form_count
+        return result
+    elif form_count:
+        return {'xmlns': xmlns, 'submissions': form_count}
+    else:
+        return None
 
 
 def get_exports_by_form(domain):
-    return XFormInstance.get_db().view(
-        'exports_forms/by_xmlns',
+    from corehq.apps.app_manager.models import Application
+    rows = Application.get_db().view(
+        'exports_forms_by_app/view',
         startkey=[domain],
         endkey=[domain, {}],
         group=True,
         stale=stale_ok()
+    ).all()
+    form_count_breakdown = get_form_count_breakdown_for_domain(domain)
+
+    for row in rows:
+        key = tuple(row['key'])
+        if key in form_count_breakdown:
+            row['value']['submissions'] = form_count_breakdown.pop(key)
+
+    for key, value in form_count_breakdown.items():
+        rows.append({'key': list(key), 'value': {'xmlns': key[2], 'submissions': value}})
+
+    rows.sort(key=lambda row: row['key'])
+    return rows
+
+
+def get_form_count_breakdown_for_domain(domain):
+    rows = XFormInstance.get_db().view(
+        'exports_forms_by_xform/view',
+        startkey=[domain],
+        endkey=[domain, {}],
+        group=True,
     )
+    result = {}
+    for row in rows:
+        domain, app_id, xmlns = row['key']
+        result[(domain, app_id, xmlns)] = row['value']
+    return result
+
+
+def get_form_count_for_domain_app_xmlns(domain, app_id, xmlns):
+    row = XFormInstance.get_db().view(
+        'exports_forms_by_xform/view',
+        startkey=[domain, app_id, xmlns],
+        endkey=[domain, app_id, xmlns, {}],
+        group=True,
+    ).one()
+    if row:
+        return row['value']
+    else:
+        return 0

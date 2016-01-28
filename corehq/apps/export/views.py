@@ -54,6 +54,7 @@ from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PE
     DEID_EXPORT_PERMISSION
 from corehq.couchapps.dbaccessors import \
     get_attachment_size_by_domain_app_id_xmlns
+from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
 from couchexport.models import SavedExportSchema, ExportSchema
 from couchexport.schema import build_latest_schema
@@ -487,8 +488,11 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
         raise NotImplementedError("You must implement download_export_form.")
 
     @staticmethod
-    def get_export_schema(export_id):
-        return SavedExportSchema.get(export_id)
+    def get_export_schema(domain, export_id):
+        doc = get_document_or_404_lite(SavedExportSchema, export_id)
+        if doc.index[0] == domain:
+            return doc
+        raise Http404(_(u"Export not found"))
 
     @property
     def export_id(self):
@@ -509,10 +513,10 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
             and not self.request.is_ajax()
         ):
             raw_export_list = json.loads(self.request.POST['export_list'])
-            exports = map(lambda e: self.get_export_schema(e['id']),
+            exports = map(lambda e: self.get_export_schema(self.domain, e['id']),
                           raw_export_list)
         elif self.export_id:
-            exports = [self.get_export_schema(self.export_id)]
+            exports = [self.get_export_schema(self.domain, self.export_id)]
 
         if not self.has_view_permissions:
             if self.has_deid_view_permissions:
@@ -543,13 +547,6 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
         """
         raise NotImplementedError(
             "Must return a SerializableFunction for get_filters."
-        )
-
-    def get_export_object(self, export_id):
-        """Must return either a FormExportSchema or CaseExportSchema object
-        """
-        raise NotImplementedError(
-            "Must implement get_export_object."
         )
 
     @allow_remote_invocation
@@ -608,7 +605,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     def _get_download_task(self, export_specs, export_filter, max_column_size=2000):
         try:
             export_data = export_specs[0]
-            export_object = self.get_export_object(export_data['export_id'])
+            export_object = self.get_export_schema(self.domain, export_data['export_id'])
         except (KeyError, IndexError):
             raise ExportAsyncException(
                 _("You need to pass a list of at least one export schema.")
@@ -702,8 +699,11 @@ class DownloadFormExportView(BaseDownloadExportView):
     form_or_case = 'form'
 
     @staticmethod
-    def get_export_schema(export_id):
-        return FormExportSchema.get(export_id)
+    def get_export_schema(domain, export_id):
+        doc = get_document_or_404_lite(FormExportSchema, export_id)
+        if doc.index[0] == domain:
+            return doc
+        raise Http404(_(u"Export not found"))
 
     @property
     def export_list_url(self):
@@ -742,16 +742,13 @@ class DownloadFormExportView(BaseDownloadExportView):
                                              filter=form_filter)
         return export_filter
 
-    def get_export_object(self, export_id):
-        return FormExportSchema.get(export_id)
-
     @allow_remote_invocation
     def has_multimedia(self, in_data):
         """Checks to see if this form export has multimedia available to export
         """
         try:
             size_hash = get_attachment_size_by_domain_app_id_xmlns(self.domain)
-            export_object = self.get_export_object(self.export_id)
+            export_object = self.get_export_schema(self.domain, self.export_id)
             hash_key = (export_object.app_id, export_object.xmlns
                         if hasattr(export_object, 'xmlns') else '')
             has_multimedia = hash_key in size_hash
@@ -777,7 +774,7 @@ class DownloadFormExportView(BaseDownloadExportView):
                     _("Please check that you've submitted all required filters.")
                 )
             download = DownloadBase()
-            export_object = self.get_export_schema(export_specs[0]['export_id'])
+            export_object = self.get_export_schema(self.domain, export_specs[0]['export_id'])
             task_kwargs = filter_form.get_multimedia_task_kwargs(
                 export_object, download.download_id
             )
@@ -810,8 +807,11 @@ class DownloadCaseExportView(BaseDownloadExportView):
     form_or_case = 'case'
 
     @staticmethod
-    def get_export_schema(export_id):
-        return CaseExportSchema.get(export_id)
+    def get_export_schema(domain, export_id):
+        doc = get_document_or_404_lite(CaseExportSchema, export_id)
+        if doc.index[0] == domain:
+            return doc
+        raise Http404(_("Export not found"))
 
     @property
     def export_list_url(self):
@@ -841,9 +841,6 @@ class DownloadCaseExportView(BaseDownloadExportView):
         if not filter_form.is_valid():
             raise ExportFormValidationException()
         return filter_form.get_case_filter()
-
-    def get_export_object(self, export_id):
-        return CaseExportSchema.get(export_id)
 
 
 class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProjectDataView):

@@ -10,6 +10,7 @@ if [ "${MATRIX_TYPE}" = "python" ]; then
 
     setup_elasticsearch
     setup_kafka
+    setup_moto_s3_server
 elif [ "${MATRIX_TYPE}" = "javascript" ]; then
     npm install -g grunt
     npm install -g grunt-cli
@@ -23,4 +24,8 @@ if [ "${BOWER:-no}" = "yes" ]; then
     npm install -g uglify-js
     npm install -g bower
     bower install
+fi
+
+if [ "${NODE:-no}" = "yes" ]; then
+    npm install
 fi

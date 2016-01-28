@@ -2,6 +2,7 @@ from corehq.apps.locations.models import Location, SQLLocation
 from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.mock import CaseBlock
 from mock import patch
+from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc, FIXED_USER
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.toggles import MULTIPLE_LOCATIONS_PER_USER, NAMESPACE_DOMAIN
@@ -84,6 +85,43 @@ class LocationsTest(CommTrackTest):
         loc.unarchive()
         sp = SupplyPointCase.get(sp.case_id)
         self.assertFalse(sp.closed)
+
+    def test_full_delete(self):
+        test_loc = make_loc(
+            'test_loc',
+            type='state',
+            parent=self.user.location
+        )
+        test_loc.save()
+
+        original_count = len(list(Location.by_domain(self.domain.name)))
+
+        loc = self.user.location
+        loc.full_delete()
+
+        # it should also delete children
+        self.assertEqual(
+            len(list(Location.by_domain(self.domain.name))),
+            original_count - 2
+        )
+        self.assertEqual(
+            len(Location.root_locations(self.domain.name)),
+            0
+        )
+        # permanently gone from sql db
+        self.assertEqual(
+            len(SQLLocation.objects.all()),
+            0
+        )
+
+    def test_delete_closes_sp_cases(self):
+        loc = make_loc('test_loc')
+        sp = make_supply_point(self.domain.name, loc)
+
+        self.assertFalse(sp.closed)
+        loc.full_delete()
+        sp = SupplyPointCase.get(sp.case_id)
+        self.assertTrue(sp.closed)
 
 
 class MultiLocationsTest(CommTrackTest):

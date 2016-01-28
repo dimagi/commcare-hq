@@ -436,30 +436,8 @@ def pillow_operation_api(request):
 
 
 @require_superuser
-@cache_page(60*5)
-def all_commcare_settings(request):
-    apps = ApplicationBase.view('app_manager/applications_brief',
-                                include_docs=True)
-    filters = set()
-    for param in request.GET:
-        s_type, name = param.split('.')
-        value = request.GET.get(param)
-        filters.add((s_type, name, value))
-
-    def app_filter(settings):
-        for s_type, name, value in filters:
-            if settings[s_type].get(name) != value:
-                return False
-        return True
-
-    settings_list = [s for s in (get_settings_values(app) for app in apps)
-                     if app_filter(s)]
-    return json_response(settings_list)
-
-
-@require_superuser
 @require_GET
-def admin_restore(request):
+def admin_restore(request, app_id=None):
     full_username = request.GET.get('as', '')
     if not full_username or '@' not in full_username:
         return HttpResponseBadRequest('Please specify a user using ?as=user@domain')
@@ -473,7 +451,8 @@ def admin_restore(request):
         return HttpResponseNotFound('User %s not found.' % full_username)
 
     overwrite_cache = request.GET.get('ignore_cache') == 'true'
-    return get_restore_response(user.domain, user, overwrite_cache=overwrite_cache, **get_restore_params(request))
+    return get_restore_response(user.domain, user, overwrite_cache=overwrite_cache, app_id=app_id,
+                                **get_restore_params(request))
 
 @require_superuser
 def management_commands(request, template="hqadmin/management_commands.html"):

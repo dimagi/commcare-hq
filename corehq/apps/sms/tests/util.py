@@ -10,9 +10,9 @@ from corehq.apps.accounting.tests import BaseAccountingTest
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.dbaccessors import \
     get_one_case_in_domain_by_external_id
-from corehq.messaging.smsbackends.test.models import TestSMSBackend
-from corehq.apps.sms.mixin import BackendMapping
-from corehq.apps.sms.models import SMSLog, CallLog
+from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
+from corehq.apps.sms.models import (SMSLog, CallLog,
+    SQLMobileBackend, SQLMobileBackendMapping)
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.groups.models import Group
 from corehq.apps.reminders.models import (SurveyKeyword, SurveyKeywordAction,
@@ -29,6 +29,23 @@ from casexml.apps.case.mock import CaseBlock
 
 def time_parser(value):
     return parse(value).time()
+
+
+def setup_default_sms_test_backend():
+    backend = SQLTestSMSBackend.objects.create(
+        name='MOBILE_BACKEND_TEST',
+        is_global=True,
+        hq_api_id=SQLTestSMSBackend.get_api_id()
+    )
+
+    backend_mapping = SQLMobileBackendMapping.objects.create(
+        is_global=True,
+        backend_type=SQLMobileBackend.SMS,
+        prefix='*',
+        backend=backend,
+    )
+
+    return (backend, backend_mapping)
 
 
 class BaseSMSTest(BaseAccountingTest, DomainSubscriptionMixin):
@@ -290,11 +307,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         self.domain_obj = self.create_domain(self.domain)
         self.create_web_user("touchforms_user", "123")
 
-        self.backend = TestSMSBackend(name="TEST", is_global=True)
-        self.backend.save()
-        self.backend_mapping = BackendMapping(is_global=True, prefix="*",
-            backend_id=self.backend._id)
-        self.backend_mapping.save()
+        self.backend, self.backend_mapping = setup_default_sms_test_backend()
 
         settings.DEBUG = True
 
@@ -310,6 +323,6 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             group.delete()
         self.domain_obj.delete()
         self.site.delete()
-        self.backend.delete()
         self.backend_mapping.delete()
+        self.backend.delete()
         self.teardown_subscription()

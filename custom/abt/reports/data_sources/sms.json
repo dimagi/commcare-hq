@@ -361,27 +361,10 @@
                   }
                 },
                 "Rwanda": {
-                  "default": {
-                    "constant": 0,
-                    "type": "constant"
-                  },
+                  "default": 0,
                   "cases": {
-                    "Kirehe": {
-                      "constant": 80192,
-                      "type": "constant"
-                    },
-                    "Nyagatare": {
-                      "constant": 33861,
-                      "type": "constant"
-                    },
-                    "Bugesera": {
-                      "constant": 74639,
-                      "type": "constant"
-                    },
-                    "Gisagara": {
-                      "constant": 24638,
-                      "type": "constant"
-                    }
+                    "Kirehe": 82946,
+                    "Nyagatare": 61471
                   },
                   "type": "switch",
                   "switch_on": {
@@ -518,147 +501,29 @@
                   }
                 },
                 "Rwanda": {
-                  "default": {
-                    "constant": 0,
-                    "type": "constant"
-                  },
+                  "default": 0,
                   "cases": {
-                    "Mwogo": {
-                      "constant": 4813,
-                      "type": "constant"
-                    },
-                    "Nyamugali": {
-                      "constant": 8878,
-                      "type": "constant"
-                    },
-                    "Shyara": {
-                      "constant": 3700,
-                      "type": "constant"
-                    },
-                    "Kamabuye": {
-                      "constant": 4821,
-                      "type": "constant"
-                    },
-                    "Kigina": {
-                      "constant": 6321,
-                      "type": "constant"
-                    },
-                    "Ngeruka": {
-                      "constant": 7058,
-                      "type": "constant"
-                    },
-                    "Mimuri": {
-                      "constant": 6497,
-                      "type": "constant"
-                    },
-                    "Ntarama": {
-                      "constant": 3489,
-                      "type": "constant"
-                    },
-                    "Mareba": {
-                      "constant": 4897,
-                      "type": "constant"
-                    },
-                    "Gashora": {
-                      "constant": 4841,
-                      "type": "constant"
-                    },
-                    "Nasho": {
-                      "constant": 6189,
-                      "type": "constant"
-                    },
-                    "Mahama": {
-                      "constant": 5531,
-                      "type": "constant"
-                    },
-                    "Rilima": {
-                      "constant": 5101,
-                      "type": "constant"
-                    },
-                    "Musaza": {
-                      "constant": 5960,
-                      "type": "constant"
-                    },
-                    "Nyamata": {
-                      "constant": 5989,
-                      "type": "constant"
-                    },
-                    "Mayange": {
-                      "constant": 6858,
-                      "type": "constant"
-                    },
-                    "Gatore": {
-                      "constant": 6264,
-                      "type": "constant"
-                    },
-                    "Kirehe": {
-                      "constant": 5497,
-                      "type": "constant"
-                    },
-                    "Karangazi": {
-                      "constant": 11232,
-                      "type": "constant"
-                    },
-                    "Mushikiri": {
-                      "constant": 6509,
-                      "type": "constant"
-                    },
-                    "Nyagatare": {
-                      "constant": 8033,
-                      "type": "constant"
-                    },
-                    "Kigarama": {
-                      "constant": 7256,
-                      "type": "constant"
-                    },
-                    "Ruhuha": {
-                      "constant": 5727,
-                      "type": "constant"
-                    },
-                    "Mpanga": {
-                      "constant": 7804,
-                      "type": "constant"
-                    },
-                    "Nyarubaye": {
-                      "constant": 4524,
-                      "type": "constant"
-                    },
-                    "Mukindo": {
-                      "constant": 6350,
-                      "type": "constant"
-                    },
-                    "Gikonko": {
-                      "constant": 5906,
-                      "type": "constant"
-                    },
-                    "Gahara": {
-                      "constant": 9459,
-                      "type": "constant"
-                    },
-                    "Nyarugenge": {
-                      "constant": 5081,
-                      "type": "constant"
-                    },
-                    "Rweru": {
-                      "constant": 5497,
-                      "type": "constant"
-                    },
-                    "Musenyi": {
-                      "constant": 6766,
-                      "type": "constant"
-                    },
-                    "Mamba": {
-                      "constant": 7754,
-                      "type": "constant"
-                    },
-                    "Katabagyemu": {
-                      "constant": 8099,
-                      "type": "constant"
-                    },
-                    "Nyanza": {
-                      "constant": 4628,
-                      "type": "constant"
-                    }
+                    "Gahara": 9697,
+                    "Gatore": 6062,
+                    "Kigina": 6454,
+                    "Kirehe": 5476,
+                    "Kigarama": 7581,
+                    "Musheri": 5692,
+                    "Mukama": 5946,
+                    "Matimba": 4651,
+                    "Mimuri": 6857,
+                    "Mahama": 6029,
+                    "Mpanga": 7663,
+                    "Musaza": 6618,
+                    "Mushikiri": 6454,
+                    "Nyagatare": 8347,
+                    "Nasho": 7029,
+                    "Nyamugari": 9494,
+                    "Nyarubuye": 4389,
+                    "Rwimiyaga": 10945,
+                    "Rukomo": 7928,
+                    "Rwempasha": 3743,
+                    "Tabagwe": 7362
                   },
                   "type": "switch",
                   "switch_on": {
@@ -686,45 +551,45 @@
                     "type": "constant"
                   },
                   "cases": {
-        "chitambo": {"type": "constant", "constant": 1867},
-        "luano": {"type": "constant", "constant": 957},
-        "mkushi": {"type": "constant", "constant": 8424},
-        "serenje": {"type": "constant", "constant": 4502},
-        "chadiza": {"type": "constant", "constant": 14432},
-        "chipata": {"type": "constant", "constant": 40981},
-        "katete": {"type": "constant", "constant": 25407},
-        "lundazi": {"type": "constant", "constant": 26101},
-        "mambwe": {"type": "constant", "constant": 8528},
-        "nyimba": {"type": "constant", "constant": 14168},
-        "petauke": {"type": "constant", "constant": 33123},
-        "sinda": {"type": "constant", "constant": 6639},
-        "vubwi": {"type": "constant", "constant": 5462},
-        "chembe": {"type": "constant", "constant": 5366},
-        "chiengi": {"type": "constant", "constant": 31683},
-        "chipili": {"type": "constant", "constant": 1328},
-        "kawambwa": {"type": "constant", "constant": 16133},
-        "mansa": {"type": "constant", "constant": 23624},
-        "milenge": {"type": "constant", "constant": 2381},
-        "mwansabombwe": {"type": "constant", "constant": 8720},
-        "mwense": {"type": "constant", "constant": 19970},
-        "nchelenge": {"type": "constant", "constant": 26169},
-        "samfya": {"type": "constant", "constant": 30787},
-        "chama": {"type": "constant", "constant": 17293},
-        "chinsali": {"type": "constant", "constant": 7018},
-        "isoka": {"type": "constant", "constant": 6134},
-        "mafinga": {"type": "constant", "constant": 6341},
-        "mpika": {"type": "constant", "constant": 12001},
-        "nakonde": {"type": "constant", "constant": 12115},
-        "shiwangandu": {"type": "constant", "constant": 5001},
-        "chilubi": {"type": "constant", "constant": 17995},
-        "kaputa": {"type": "constant", "constant": 10854},
-        "kasama": {"type": "constant", "constant": 17769},
-        "luwingu": {"type": "constant", "constant": 16127},
-        "mbala": {"type": "constant", "constant": 12895},
-        "mporokoso": {"type": "constant", "constant": 10746},
-        "mpulungu": {"type": "constant", "constant": 9184},
-        "mungwi": {"type": "constant", "constant": 11890},
-        "nsama": {"type": "constant", "constant": 9233}
+                    "chitambo": {"type": "constant", "constant": 1867},
+                    "luano": {"type": "constant", "constant": 957},
+                    "mkushi": {"type": "constant", "constant": 8424},
+                    "serenje": {"type": "constant", "constant": 4502},
+                    "chadiza": {"type": "constant", "constant": 14432},
+                    "chipata": {"type": "constant", "constant": 40981},
+                    "katete": {"type": "constant", "constant": 25407},
+                    "lundazi": {"type": "constant", "constant": 26101},
+                    "mambwe": {"type": "constant", "constant": 8528},
+                    "nyimba": {"type": "constant", "constant": 14168},
+                    "petauke": {"type": "constant", "constant": 33123},
+                    "sinda": {"type": "constant", "constant": 6639},
+                    "vubwi": {"type": "constant", "constant": 5462},
+                    "chembe": {"type": "constant", "constant": 5366},
+                    "chiengi": {"type": "constant", "constant": 31683},
+                    "chipili": {"type": "constant", "constant": 1328},
+                    "kawambwa": {"type": "constant", "constant": 16133},
+                    "mansa": {"type": "constant", "constant": 23624},
+                    "milenge": {"type": "constant", "constant": 2381},
+                    "mwansabombwe": {"type": "constant", "constant": 8720},
+                    "mwense": {"type": "constant", "constant": 19970},
+                    "nchelenge": {"type": "constant", "constant": 26169},
+                    "samfya": {"type": "constant", "constant": 30787},
+                    "chama": {"type": "constant", "constant": 17293},
+                    "chinsali": {"type": "constant", "constant": 7018},
+                    "isoka": {"type": "constant", "constant": 6134},
+                    "mafinga": {"type": "constant", "constant": 6341},
+                    "mpika": {"type": "constant", "constant": 12001},
+                    "nakonde": {"type": "constant", "constant": 12115},
+                    "shiwangandu": {"type": "constant", "constant": 5001},
+                    "chilubi": {"type": "constant", "constant": 17995},
+                    "kaputa": {"type": "constant", "constant": 10854},
+                    "kasama": {"type": "constant", "constant": 17769},
+                    "luwingu": {"type": "constant", "constant": 16127},
+                    "mbala": {"type": "constant", "constant": 12895},
+                    "mporokoso": {"type": "constant", "constant": 10746},
+                    "mpulungu": {"type": "constant", "constant": 9184},
+                    "mungwi": {"type": "constant", "constant": 11890},
+                    "nsama": {"type": "constant", "constant": 9233}
                   },
                   "type": "switch",
                   "switch_on": {
@@ -1054,35 +919,14 @@
             "transform": {},
             "is_nullable": true,
             "expression": {
-              "default": {
-                "constant": 0,
-                "type": "constant"
-              },
+              "default": 0,
               "cases": {
-                "Senegal": {
-                  "constant": 31816,
-                  "type": "constant"
-                },
-                "Rwanda": {
-                  "constant": 213329,
-                  "type": "constant"
-                },
-                "Zambia": {
-                    "constant": 539348,
-                    "type": "constant"
-                },
-                "Ethiopia": {
-                    "constant": 670303,
-                    "type": "constant"
-                },
-                "Mali": {
-                    "type": "constant",
-                    "constant": 135717
-                },
-                "Madagascar": {
-                    "type": "constant",
-                    "constant": 72120
-                }
+                "Senegal": 31816,
+                "Rwanda": 144417,
+                "Zambia": 539348,
+                "Ethiopia": 670303,
+                "Mali": 135717,
+                "Madagascar": 72120
               },
               "type": "switch",
               "switch_on": {

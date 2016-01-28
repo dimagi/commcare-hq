@@ -31,8 +31,6 @@ class DomainRegistrationForm(forms.Form):
 
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
     hr_name = forms.CharField(label=_('Project Name'), max_length=max_name_length)
-    domain_type = forms.CharField(widget=forms.HiddenInput(), required=False,
-                                  initial='commcare')
 
     def __init__(self, *args, **kwargs):
         super(DomainRegistrationForm, self).__init__(*args, **kwargs)
@@ -43,7 +41,6 @@ class DomainRegistrationForm(forms.Form):
         self.helper.layout = crispy.Layout(
             'hr_name',
             'org',
-            'domain_type',
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     _("Create Project"),
@@ -52,10 +49,6 @@ class DomainRegistrationForm(forms.Form):
                 )
             )
         )
-
-    def clean_domain_type(self):
-        data = self.cleaned_data.get('domain_type', '').strip().lower()
-        return data if data else 'commcare'
 
     def clean(self):
         for field in self.cleaned_data:
