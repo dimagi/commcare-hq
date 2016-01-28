@@ -403,20 +403,19 @@ class TestBlobMixinWithMigratingDbBeforeCopyToNew(TestBlobMixinWithS3Backend):
             self.path = db.new_db.get_path(name, bucket)
             self.fspath = db.old_db.get_path(name, bucket)
 
-        @property
-        def super(self):
-            return super(TestBlobMixinWithMigratingDbBeforeCopyToNew.TestBlob, self)
-
         def exists(self):
-            return self.super.exists() or os.path.exists(self.fspath)
+            super_ = super(TestBlobMixinWithMigratingDbBeforeCopyToNew.TestBlob, self)
+            return super_.exists() or os.path.exists(self.fspath)
 
         def open(self):
-            if self.super.exists():
-                return self.super.open()
+            super_ = super(TestBlobMixinWithMigratingDbBeforeCopyToNew.TestBlob, self)
+            if super_.exists():
+                return super_.open()
             return open(self.fspath)
 
         def listdir(self):
-            return self.super.listdir() or os.listdir(self.fspath)
+            super_ = super(TestBlobMixinWithMigratingDbBeforeCopyToNew.TestBlob, self)
+            return super_.listdir() or os.listdir(self.fspath)
 
 
 class TestBlobMixinWithMigratingDbAfterCopyToNew(TestBlobMixinWithMigratingDbBeforeCopyToNew):
