@@ -251,7 +251,7 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
             if self.consumption_config.use_supply_point_type_default_consumption:
                 try:
                     supply_point = SupplyInterface(self.domain).get_supply_point(case_id)
-                    facility_type = supply_point.location.location_type
+                    facility_type = supply_point.sql_location.location_type_name
                 except ResourceNotFound:
                     pass
             return get_default_monthly_consumption(self.domain, product_id, facility_type, case_id)
@@ -352,11 +352,15 @@ class SupplyPointCase(CommCareCase):
             'location_site_code': None,
             'location_parent_name': None,
         })
-        if self.location:
-            data['location_type'] = self.location.location_type
-            data['location_site_code'] = self.location.site_code
-            if self.location.parent:
-                data['location_parent_name'] = self.location.parent.name
+        try:
+            location = self.sql_location
+        except SQLLocation.DoesNotExist:
+            pass
+        else:
+            data['location_type'] = location.location_type_name
+            data['location_site_code'] = location.site_code
+            if location.parent:
+                data['location_parent_name'] = location.parent.name
 
         return data
 
