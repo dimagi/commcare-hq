@@ -1,5 +1,5 @@
 postgres:
-  build: .
+  build: ../dockerfiles
   dockerfile: Dockerfile_pg
   environment:
     POSTGRES_USER: commcarehq
@@ -18,19 +18,26 @@ redis:
     - "6379"
 
 elasticsearch:
-  build: .
+  build: ../dockerfiles
   dockerfile: Dockerfile_es
   expose:
     - "9200"
 
 web:
-  build: ../
-  dockerfile: ./docker/Dockerfile_commcarehq
+  build: ../../
+  dockerfile: ./docker/dockerfiles/Dockerfile_commcarehq
   working_dir: /mnt
   command: python manage.py runserver 0.0.0.0:8000
   volumes:
-    - ../:/mnt
+    - ../../:/mnt
   expose:
     - "8000"
   environment:
     PYTHONUSERBASE: /vendor
+
+moto:
+  build: ../dockerfiles
+  dockerfile: Dockerfile_moto
+  command: s3
+  expose:
+    - "5000"

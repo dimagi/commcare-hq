@@ -4,9 +4,9 @@ branches:
   only:
     - master
 before_install:
-  - "sudo docker-compose -f docker/docker-compose-test.yml build"
-  - "sudo docker-compose -f docker/docker-compose-test.yml up -d"
-  - "sudo docker-compose -f docker/docker-compose-test.yml ps"
-script: 'sudo docker-compose -f docker/docker-compose-test.yml run -e CUSTOMSETTINGS="docker.localsettings_docker_sharded" web_test python manage.py test form_processor'
+  - "./dockerhq.sh travis build"
+  - "./dockerhq.sh travis up -d"
+  - "./dockerhq.sh travis ps"
+script: './dockerhq.sh travis run -e CUSTOMSETTINGS="docker.localsettings_docker_sharded" web_test python manage.py test form_processor'
 services:
   - docker

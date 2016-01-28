@@ -60,6 +60,10 @@ function rebuild() {
     web_runner build
 }
 
+function travis_runner() {
+    sudo docker-compose -f $DOCKER_DIR/compose/docker-compose-travis.yml $@
+}
+
 key="$1"
 shift
 
@@ -69,6 +73,9 @@ case $key in
         ;;
     services)
         $DOCKER_DIR/docker-services.sh $@
+        ;;
+    travis)
+        travis_runner $@
         ;;
     migrate)
         web_runner run web python manage.py migrate $@

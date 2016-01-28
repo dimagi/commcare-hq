@@ -96,3 +96,5 @@ ELASTICSEARCH_HOST = 'elasticsearch'
 ELASTICSEARCH_PORT = 9200
 
 SHARED_DRIVE_ROOT = '/sharedfiles'
+
+# S3_BLOB_DB_SETTINGS = {"url": "http://moto:5000"}

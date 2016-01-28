@@ -2,12 +2,13 @@ web_test:
   extends:
     file: docker-compose-base.yml
     service: web
-  dockerfile: ./docker/Dockerfile_commcarehq_test
+  dockerfile: ./docker/dockerfiles/Dockerfile_commcarehq_test
   links:
     - postgres_test:postgres
     - couch_test:couch
     - redis_test:redis
     - elasticsearch_test:elasticsearch
+    - moto:moto
 
 postgres_test:
   extends:
@@ -34,6 +35,11 @@ elasticsearch_test:
     service: elasticsearch
   volumes_from:
     - data_test
+
+moto:
+  extends:
+    file: docker-compose-base.yml
+    service: moto
 
 data_test:
   image: redis
