@@ -33,8 +33,7 @@ class CasePillowTest(TestCase):
         case = self._make_a_case(case_id, case_name)
 
         # send to elasticsearch
-        self.pillow.process_changes(since=0, forever=False)
-        self.elasticsearch.indices.refresh(self.pillow.es_index)
+        self._sync_couch_cases_to_es()
 
         # verify there
         results = CaseES().run()
@@ -43,6 +42,34 @@ class CasePillowTest(TestCase):
         self.assertEqual(self.domain, case_doc['domain'])
         self.assertEqual(case_id, case_doc['_id'])
         self.assertEqual(case_name, case_doc['name'])
+
+        # cleanup
+        case.delete()
+
+    def test_case_soft_deletion(self):
+        # make a case
+        case_id = uuid.uuid4().hex
+        case_name = 'case-name-{}'.format(uuid.uuid4().hex)
+        case = self._make_a_case(case_id, case_name)
+
+        # send to elasticsearch
+        self._sync_couch_cases_to_es()
+
+        # verify there
+        results = CaseES().run()
+        self.assertEqual(1, results.total)
+
+        seq_before_deletion = self.pillow.get_change_feed().get_latest_change_id()
+
+        # soft delete the case
+        case.soft_delete()
+
+        # sync to elasticsearch
+        self._sync_couch_cases_to_es(since=seq_before_deletion)
+
+        # ensure not there anymore
+        results = CaseES().run()
+        self.assertEqual(0, results.total)
 
         # cleanup
         case.delete()
@@ -91,3 +118,7 @@ class CasePillowTest(TestCase):
             )
         self.assertEqual(1, len(cases))
         return cases[0]
+
+    def _sync_couch_cases_to_es(self, since=0):
+        self.pillow.process_changes(since=since, forever=False)
+        self.elasticsearch.indices.refresh(self.pillow.es_index)
