@@ -1,38 +1,31 @@
-from StringIO import StringIO
 import datetime
-from tempfile import NamedTemporaryFile
 from decimal import Decimal
 import itertools
+from StringIO import StringIO
+from tempfile import NamedTemporaryFile
 
-import json_field
-from couchdbkit import ResourceNotFound
-from django.db.models import F
-from django.db.models.manager import Manager
-
-from corehq.util.quickcache import quickcache
-from corehq.util.global_request import get_request
-from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
-import stripe
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
+from django.db.models import F
+from django.db.models.manager import Manager
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy as _
-from corehq.const import USER_DATE_FORMAT
-from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.web import get_site_domain
 from django.utils.html import strip_tags
-
+from django.utils.translation import ugettext_lazy as _
 from django_prbac.models import Role
 
+import json_field
+import stripe
+
+from couchdbkit import ResourceNotFound
+from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cached_object import CachedObject
+from dimagi.utils.web import get_site_domain
 
-from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.users.models import WebUser
-
+from corehq.apps.accounting.emails import send_subscription_change_alert
 from corehq.apps.accounting.exceptions import (
     CreditLineError, AccountingError, SubscriptionAdjustmentError,
     SubscriptionChangeError, NewSubscriptionError, InvoiceEmailThrottledError,
@@ -40,6 +33,9 @@ from corehq.apps.accounting.exceptions import (
 )
 from corehq.apps.accounting.invoice_pdf import InvoiceTemplate
 from corehq.apps.accounting.signals import subscription_upgrade_or_downgrade
+from corehq.apps.accounting.subscription_changes import (
+    DomainDowngradeActionHandler, DomainUpgradeActionHandler,
+)
 from corehq.apps.accounting.utils import (
     get_privileges, get_first_last_days,
     get_address_from_invoice, get_dimagi_from_email_by_product,
@@ -50,11 +46,12 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
     quantize_accounting_decimal,
 )
-from corehq.apps.accounting.subscription_changes import (
-    DomainDowngradeActionHandler, DomainUpgradeActionHandler,
-)
-from corehq.apps.accounting.emails import send_subscription_change_alert
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.users.models import WebUser
+from corehq.const import USER_DATE_FORMAT
+from corehq.util.quickcache import quickcache
+from corehq.util.view_utils import absolute_reverse
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
