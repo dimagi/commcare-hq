@@ -319,7 +319,7 @@ class FormExportDataSchema(ExportDataSchema):
         :returns: Returns a ExportDataSchema instance
         """
         app_build_ids = get_built_app_ids_for_app_id(domain, app_id)
-        all_xform_conf = ExportDataSchema()
+        all_xform_schema = ExportDataSchema()
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             app = Application.wrap(app_doc)
@@ -327,15 +327,15 @@ class FormExportDataSchema(ExportDataSchema):
             if not xform:
                 continue
             xform = xform.wrapped_xform()
-            xform_conf = FormExportDataSchema._generate_schema_from_xform(
+            xform_schema = FormExportDataSchema._generate_schema_from_xform(
                 xform,
                 app.langs,
                 app.copy_of,
                 app.version,
             )
-            all_xform_conf = FormExportDataSchema._merge_schemas(all_xform_conf, xform_conf)
+            all_xform_schema = FormExportDataSchema._merge_schemas(all_xform_schema, xform_schema)
 
-        return all_xform_conf
+        return all_xform_schema
 
     @staticmethod
     def _generate_schema_from_xform(xform, langs, app_id, app_version):
