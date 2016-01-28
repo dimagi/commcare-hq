@@ -111,7 +111,7 @@ class S3BlobDB(object):
         """Copy blob from other blob database
 
         :param content: File-like blob content object.
-        :param info: `BlobInfo` or `BlobMeta` object.
+        :param info: `BlobInfo` object.
         :param bucket: Bucket name.
         """
         if info.digest and info.digest.startswith("md5-"):
@@ -120,11 +120,8 @@ class S3BlobDB(object):
             params = {"body": content, "headers": {}}
             calculate_md5(params)
             content_md5 = params["headers"]["Content-MD5"]
-        # HACK adapt to subtle interface difference
-        # TODO add BlobMeta property that returns a BlobInfo object
-        ident = info.name if isinstance(info, BlobInfo) else info.id
         self._s3_bucket(create=True).put_object(
-            Key=self.get_path(ident, bucket),
+            Key=self.get_path(info.name, bucket),
             Body=content,
             ContentMD5=content_md5,
         )

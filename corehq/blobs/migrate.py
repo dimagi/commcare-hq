@@ -178,7 +178,7 @@ def migrate_blob_db_backend(filename, type_map, total):
                     not_found += 1
                 else:
                     with content:
-                        db.copy_blob(content, meta, bucket)
+                        db.copy_blob(content, meta.info, bucket)
     if not_found:
         print("{} documents were not found in the old blob database. It is "
               "possible that some blobs were deleted as part of normal "
