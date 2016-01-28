@@ -339,6 +339,14 @@ as is and follow this accordingly:
    release. Experiment with newer releases at will.
 3. Verify that `/opt/lessc/bin/lessc --version` is around 1.7.3
 
+###### Install UglifyJS
+
+If you have npm installed, that should be as simple as
+
+```
+npm install -g uglifyjs@2.6.1
+```
+
 ###### Compressor and Caching
 
 If you're doing a lot of front end work (CSS AND/OR Javascript in Bootstrap 3)
