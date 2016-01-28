@@ -254,6 +254,9 @@ class ExportDataSchema(Document):
     form xmlns or case type. It contains a list of ExportGroupSchema.
     """
     group_schemas = SchemaListProperty(ExportGroupSchema)
+
+    # A map of app_id to app_version. Represents the last time it saw an app and at what version
+    last_updated = DictProperty()
     datatype_mapping = defaultdict(lambda: ScalarItem, {
         'MSelect': MultipleChoiceItem,
     })
@@ -306,6 +309,12 @@ class ExportDataSchema(Document):
 
         return schema
 
+    def record_update(self, app_id, app_version):
+        self.last_updated[app_id] = max(
+            self.last_updated.get(app_id, 0),
+            app_version,
+        )
+
 
 class FormExportDataSchema(ExportDataSchema):
 
@@ -334,6 +343,7 @@ class FormExportDataSchema(ExportDataSchema):
                 app.version,
             )
             all_xform_schema = FormExportDataSchema._merge_schemas(all_xform_schema, xform_schema)
+            all_xform_schema.record_update(app.copy_of, app.version)
 
         return all_xform_schema
 
@@ -399,6 +409,8 @@ class CaseExportDataSchema(ExportDataSchema):
                 case_schema,
                 case_history_schema
             )
+
+            all_case_schema.record_update(app.copy_of, app.version)
 
         return all_case_schema
 
