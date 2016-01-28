@@ -102,10 +102,12 @@ class FormAccessorSQL(AbstractFormAccessor):
         assert limit is not None
         # apply limit in python as well since we may get more results than we expect
         # if we're in a sharded environment
-        return list(XFormInstanceSQL.objects.raw(
+        forms = list(XFormInstanceSQL.objects.raw(
             'SELECT * from get_forms_by_state(%s, %s, %s, %s)',
             [domain, state, limit, recent_first]
-        ))[:limit]
+        ))
+        forms = sorted(forms, key=lambda f: f.received_on, reverse=recent_first)
+        return forms[:limit]
 
     @staticmethod
     def form_with_id_exists(form_id, domain=None):
