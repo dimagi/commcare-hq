@@ -1562,10 +1562,7 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
             return True
 
         if len(result) == 1:
-            if result[0] == backend_id:
-                return True
-            else:
-                return False
+            return result[0] == backend_id
 
         return False
 
