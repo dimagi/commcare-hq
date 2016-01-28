@@ -163,11 +163,11 @@ def aliased_language_name(lang_code):
 
 
 @register.simple_tag(takes_context=True)
-def prelogin_url(context, urlname, lang_code):
+def prelogin_url(context, urlname):
     """
     A prefix aware url tag replacement for prelogin URLs
     """
     if context.get('url_uses_prefix', False):
-        return reverse(urlname, args=[lang_code])
+        return reverse(urlname, args=[context['LANGUAGE_CODE']])
     else:
         return reverse(urlname)
