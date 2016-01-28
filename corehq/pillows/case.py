@@ -52,8 +52,12 @@ class CasePillow(HQPillow):
         })
 
     def change_transform(self, doc_dict):
-        doc_ret = copy.deepcopy(doc_dict)
-        if not doc_ret.get("owner_id"):
-            if doc_ret.get("user_id"):
-                doc_ret["owner_id"] = doc_ret["user_id"]
-        return doc_ret
+        return transform_case_for_elasticsearch(doc_dict)
+
+
+def transform_case_for_elasticsearch(doc_dict):
+    doc_ret = copy.deepcopy(doc_dict)
+    if not doc_ret.get("owner_id"):
+        if doc_ret.get("user_id"):
+            doc_ret["owner_id"] = doc_ret["user_id"]
+    return doc_ret
