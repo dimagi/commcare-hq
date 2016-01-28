@@ -7,8 +7,6 @@ before_install:
   - "sudo docker-compose -f docker/docker-compose-test.yml build"
   - "sudo docker-compose -f docker/docker-compose-test.yml up -d"
   - "sudo docker-compose -f docker/docker-compose-test.yml ps"
-install:
-  - 'sudo docker-compose -f docker/docker-compose-test.yml run web_test pip install -r requirements/requirements.txt -r requirements/dev-requirements.txt -r requirements/test-requirements.txt'
 script: 'sudo docker-compose -f docker/docker-compose-test.yml run -e CUSTOMSETTINGS="docker.localsettings_docker_sharded" web_test python manage.py test form_processor'
 services:
   - docker

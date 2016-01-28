@@ -1,0 +1,17 @@
+FROM dimagi/commcarehq_base:latest
+
+COPY requirements/requirements.txt requirements.txt
+COPY requirements/dev-requirements.txt dev-requirements.txt
+COPY requirements/test-requirements.txt test-requirements.txt
+
+RUN pip install \
+    -r requirements.txt \
+    -r dev-requirements.txt \
+    -r test-requirements.txt \
+    --user \
+    && rm -rf /root/.cache/pip
+
+WORKDIR /mnt
+
+ENTRYPOINT ["/mnt/docker/entrypoint.sh"]
+CMD ["help"]
