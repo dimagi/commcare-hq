@@ -748,6 +748,7 @@ class FormBase(DocumentSchema):
     no_vellum = BooleanProperty(default=False)
     form_links = SchemaListProperty(FormLink)
     schedule_form_id = StringProperty()
+    case_references = ListProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -1499,6 +1500,15 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                                 questions,
                                 question_path
                             )
+
+        for reference in self.case_references:
+            self.add_property_load(
+                app_case_meta,
+                reference['caseType'],
+                reference['caseProperty'],
+                questions,
+                reference['question']
+            )
 
 
 class UserRegistrationForm(FormBase):
