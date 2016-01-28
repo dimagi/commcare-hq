@@ -10,6 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('accounting', '0001_initial'),
+        ('sms', '0010_update_sqlmobilebackend_couch_id'),
     ]
 
     operations = [

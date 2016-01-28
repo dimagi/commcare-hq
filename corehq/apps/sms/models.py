@@ -1467,7 +1467,10 @@ class SQLMobileBackend(models.Model):
     objects = models.Manager()
     active_objects = ActiveMobileBackendManager()
 
-    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+    # We can't really get rid of this until all the messaging models are in
+    # postgres. Once that happens we can migrate references to the couch_id
+    # as a foreign key to postgres id and get rid of this field.
+    couch_id = models.CharField(max_length=126, db_index=True, unique=True)
     backend_type = models.CharField(max_length=3, choices=TYPE_CHOICES, default=SMS)
 
     # This is an api key that the gateway uses when making inbound requests to hq.
@@ -1523,6 +1526,11 @@ class SQLMobileBackend(models.Model):
 
     class Meta:
         db_table = 'messaging_mobilebackend'
+
+    def __init__(self, *args, **kwargs):
+        super(SQLMobileBackend, self).__init__(*args, **kwargs)
+        if not self.couch_id:
+            self.couch_id = uuid.uuid4().hex
 
     @quickcache(['self.pk', 'domain'], timeout=5 * 60)
     def domain_is_shared(self, domain):
