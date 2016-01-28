@@ -1904,7 +1904,10 @@ class SQLMobileBackend(models.Model):
             self.deleted = True
             self.__clear_shared_domain_cache([])
             self.mobilebackendinvitation_set.all().delete()
-            self.sqlmobilebackendmapping_set.all().delete()
+            for mapping in self.sqlmobilebackendmapping_set.all():
+                # Delete one at a time so the backend map cache gets cleared
+                # for the respective domain(s)
+                mapping.delete()
             self.save()
 
     def __clear_caches(self):

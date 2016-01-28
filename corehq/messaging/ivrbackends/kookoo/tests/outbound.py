@@ -35,9 +35,9 @@ class KooKooTestCase(TouchformsTestCase):
             backend_type=SQLKooKooBackend.IVR,
             name="MOBILE_BACKEND_KOOKOO",
             is_global=True,
-            api_key="xyz",
             hq_api_id=SQLKooKooBackend.get_api_id()
         )
+        self.ivr_backend.set_extra_fields(api_key="xyz")
         self.ivr_backend.save()
 
         self.user1 = self.create_mobile_worker("user1", "123", "91001", save_vn=False)
