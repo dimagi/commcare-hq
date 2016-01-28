@@ -6,6 +6,7 @@ import itertools
 
 import json_field
 from couchdbkit import ResourceNotFound
+from django.db.models import F
 from django.db.models.manager import Manager
 
 from corehq.util.quickcache import quickcache
@@ -1086,7 +1087,11 @@ class Subscription(models.Model):
         try:
             return Subscription.objects.filter(
                 subscriber=self.subscriber, date_start__gt=self.date_start
-            ).exclude(pk=self.pk).order_by('date_start')[0]
+            ).exclude(
+                pk=self.pk
+            ).exclude(
+                date_start=F('date_end')
+            ).order_by('date_start')[0]
         except (Subscription.DoesNotExist, IndexError):
             return None
 
