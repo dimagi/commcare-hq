@@ -47,7 +47,7 @@ def _build_indicators(indicator_config_id, relevant_ids):
             # save is a noop if the filter doesn't match
             adapter.save(doc)
             redis_client.srem(redis_key, doc.get('_id'))
-        except DataError as e:
+        except Exception as e:
             logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
 
     if not _is_static(indicator_config_id):
