@@ -36,11 +36,12 @@ jQuery(document).ready(function($) {
                 dataType: 'json',
             }).done(function (data) {
                 var tempProjects = {};
-                // data.aaData seems to hold the information. not sure though if this is the best way of getting the data. hmm.
+                // data.aaData seems to hold the information. not sure though if this is the best way of getting the data.
+                // todo: confirm best way of getting the data.
                 data.aaData.forEach(function (project) {
                     var countryNamesIndex = 5;
                     if (project[countryNamesIndex].length < 1) {
-                        //todo: deal with no listed deployment country. just ignore??
+                        //todo: find a way to display projects with no listed deployment country. ignoring for now.
                     } else {
                         // this will use only the first listed country
                         var countryName = project[countryNamesIndex][0].toLowerCase();
@@ -203,7 +204,7 @@ jQuery(document).ready(function($) {
     var countriesGeo;
     // A lot of the styling work here is modeled after http://leafletjs.com/examples/choropleth.html
     var map = L.map('map').setView([0, 0], 3)
-    var mapId = 'mapbox.dark';
+    var mapId = 'mapbox.light';
     // todo: move to config somewhere, maybe localSettings.py?
     var accessToken = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA';
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
