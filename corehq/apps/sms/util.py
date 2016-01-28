@@ -214,6 +214,7 @@ def get_backend_name(backend_id):
     if not backend_id:
         return None
 
+    from corehq.apps.sms.models import SQLMobileBackend
     try:
         return SQLMobileBackend.load(backend_id, is_couch_id=True).name
     except:

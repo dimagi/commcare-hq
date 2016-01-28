@@ -65,10 +65,10 @@ def ivr_in(request):
 
         # Save the call entry
         msg = CallLog(
-            phone_number = cleaned_number,
-            direction = INCOMING,
-            date = datetime.utcnow(),
-            backend_api = SQLTropoBackend.get_api_id(),
+            phone_number=cleaned_number,
+            direction=INCOMING,
+            date=datetime.utcnow(),
+            backend_api=SQLTropoBackend.get_api_id(),
         )
         if v is not None:
             msg.domain = v.domain
