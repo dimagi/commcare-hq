@@ -344,7 +344,7 @@ as is and follow this accordingly:
 If you have npm installed, that should be as simple as
 
 ```
-npm install -g uglifyjs@2.6.1
+npm install -g uglify-js@2.6.1
 ```
 
 ###### Compressor and Caching
