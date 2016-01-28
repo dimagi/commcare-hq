@@ -26,7 +26,7 @@ create_topics() {
     topics=$3
 
     for topic in $topics; do
-        travis_runner  --rm kafka $topics_script --create --partitions 1 --replication-factor 1 --zookeeper $zookeeper_ip:2181 --topic $topic
+        travis_runner kafka $topics_script --create --partitions 1 --replication-factor 1 --zookeeper $zookeeper_ip:2181 --topic $topic
     done
 }
 
