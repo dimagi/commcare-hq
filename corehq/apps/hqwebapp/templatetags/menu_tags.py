@@ -1,5 +1,6 @@
 from django import template
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.templatetags.i18n import language_name
 from django.utils.html import format_html
@@ -159,3 +160,14 @@ def aliased_language_name(lang_code):
             if code == lang_code:
                 return name
         raise KeyError('Unknown language code %s' % lang_code)
+
+
+@register.simple_tag(takes_context=True)
+def prelogin_url(context, urlname, lang_code):
+    """
+    A prefix aware url tag replacement for prelogin URLs
+    """
+    if context.get('url_uses_prefix', False):
+        return reverse(urlname, args=[lang_code])
+    else:
+        return reverse(urlname)
