@@ -127,20 +127,14 @@ def get_available_backends(index_by_api_id=False, backend_type='SMS'):
     return result
 
 
-@memoized
-def get_backend_classes():
+def _get_backend_classes(backend_list):
     """
-    Returns a dictionary of {api id: class} for all installed SMS and IVR
-    backends.
+    Returns a dictionary of {api id: class} for all installed SMS backends.
     """
     from corehq.apps.sms.mixin import BadSMSConfigException
     result = {}
-    backend_classes = (
-        settings.SMS_LOADED_SQL_BACKENDS +
-        settings.IVR_LOADED_SQL_BACKENDS
-    )
 
-    for backend_class in backend_classes:
+    for backend_class in backend_list:
         cls = to_function(backend_class)
         api_id = cls.get_api_id()
         if api_id in result:
@@ -148,6 +142,24 @@ def get_backend_classes():
                                         "api id. Duplicate found for: %s" % api_id)
         result[api_id] = cls
     return result
+
+
+@memoized
+def get_sms_backend_classes():
+    return _get_backend_classes(settings.SMS_LOADED_SQL_BACKENDS)
+
+
+@memoized
+def get_ivr_backend_classes():
+    return _get_backend_classes(settings.IVR_LOADED_SQL_BACKENDS)
+
+
+@memoized
+def get_backend_classes():
+    return _get_backend_classes(
+        settings.SMS_LOADED_SQL_BACKENDS +
+        settings.IVR_LOADED_SQL_BACKENDS
+    )
 
 
 CLEAN_TEXT_REPLACEMENTS = (
@@ -236,3 +248,21 @@ def get_backend_name(backend_id):
         return None
 
     return doc.get('name', None)
+
+
+def set_domain_default_backend_to_test_backend(domain):
+    """
+    Pass in the name of the domain to set the domain's default
+    sms backend to be the test backend.
+    """
+    from corehq.apps.sms.models import SQLMobileBackend, SQLMobileBackendMapping
+    test_backend = SQLMobileBackend.get_global_backend_by_name(
+        SQLMobileBackend.SMS,
+        'MOBILE_BACKEND_TEST'
+    )
+    if not test_backend:
+        raise Exception("Expected MOBILE_BACKEND_TEST to be created")
+    SQLMobileBackendMapping.set_default_domain_backend(
+        domain,
+        test_backend
+    )

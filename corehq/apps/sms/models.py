@@ -1542,6 +1542,101 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
                 self.domain_is_shared(domain))
 
     @classmethod
+    def name_is_unique(cls, name, domain=None, backend_id=None):
+        if domain:
+            result = cls.objects.filter(
+                is_global=False,
+                domain=domain,
+                name=name,
+                deleted=False
+            )
+        else:
+            result = cls.objects.filter(
+                is_global=True,
+                name=name,
+                deleted=False
+            )
+
+        result = result.values_list('id', flat=True)
+        if len(result) == 0:
+            return True
+
+        if len(result) == 1:
+            return result[0] == backend_id
+
+        return False
+
+    def get_authorized_domain_list(self):
+        return (self.mobilebackendinvitation_set.filter(accepted=True)
+                .order_by('domain').values_list('domain', flat=True))
+
+    @classmethod
+    def get_domain_backends(cls, backend_type, domain, count_only=False, offset=None, limit=None):
+        domain_owned_backends = models.Q(is_global=False, domain=domain)
+        domain_shared_backends = models.Q(
+            is_global=False,
+            mobilebackendinvitation__domain=domain,
+            mobilebackendinvitation__accepted=True
+        )
+        global_backends = models.Q(is_global=True)
+
+        # The left join to MobileBackendInvitation may cause there to be
+        # duplicates here, so we need to call .distinct()
+        result = SQLMobileBackend.objects.filter(
+            (domain_owned_backends | domain_shared_backends | global_backends),
+            deleted=False,
+            backend_type=backend_type
+        ).distinct()
+
+        if count_only:
+            return result.count()
+
+        result = result.order_by('name').values_list('id', flat=True)
+        if offset is not None and limit is not None:
+            result = result[offset:offset + limit]
+
+        return [cls.load(pk) for pk in result]
+
+    @classmethod
+    def get_global_backends(cls, backend_type, count_only=False, offset=None, limit=None):
+        result = SQLMobileBackend.objects.filter(
+            is_global=True,
+            deleted=False,
+            backend_type=backend_type
+        )
+
+        if count_only:
+            return result.count()
+
+        result = result.order_by('name').values_list('id', flat=True)
+        if offset is not None and limit is not None:
+            result = result[offset:offset + limit]
+
+        return [cls.load(pk) for pk in result]
+
+    @classmethod
+    def get_domain_default_backend(cls, backend_type, domain, id_only=False):
+        result = SQLMobileBackendMapping.objects.filter(
+            is_global=False,
+            domain=domain,
+            backend_type=backend_type,
+            prefix='*'
+        ).values_list('backend_id', flat=True)
+
+        if len(result) > 1:
+            raise cls.MultipleObjectsReturned(
+                "More than one default backend found for backend_type %s, "
+                "domain %s" % (backend_type, domain)
+            )
+        elif len(result) == 1:
+            if id_only:
+                return result[0]
+            else:
+                return cls.load(result[0])
+        else:
+            return None
+
+    @classmethod
     def load_default_backend(cls, backend_type, phone_number, domain=None):
         """
         Chooses the appropriate backend based on the phone number's
@@ -1701,15 +1796,6 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         (such as "Unicel" or "Tropo"), for use in identifying it to an end user.
         """
         raise NotImplementedError("Please implement this method")
-
-    @classmethod
-    def get_template(cls):
-        """
-        This method should return the path to the Django template which will
-        be used to capture values for this backend's specific properties.
-        This template should extend sms/add_backend.html
-        """
-        return 'sms/add_backend.html'
 
     @classmethod
     def get_form_class(cls):
@@ -2085,7 +2171,3 @@ class MigrationStatus(models.Model):
             return True
         except cls.DoesNotExist:
             return False
-
-
-# Import signal receiver so that it gets registered
-from corehq.apps.sms.signals import sync_default_backend_mapping

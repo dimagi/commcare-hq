@@ -15,15 +15,17 @@ from corehq.apps.style.crispy import FieldWithHelpBubble
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids
 from corehq.apps.app_manager.models import Application
-from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD
+from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD, SQLMobileBackend
 from django.core.exceptions import ValidationError
 from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.reminders.forms import RecordListField, validate_time
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from corehq.apps.sms.util import (get_available_backends, validate_phone_number, strip_plus)
+from corehq.apps.sms.util import (validate_phone_number, strip_plus,
+    get_sms_backend_classes)
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
+from corehq.apps.hqwebapp.crispy import ErrorsOnlyField
 from dimagi.utils.django.fields import TrimmedCharField
 from dimagi.utils.couch.database import iter_docs
 from django.conf import settings
@@ -745,20 +747,20 @@ class BackendForm(Form):
         label=ugettext_noop("Reply-To Phone Number"),
     )
 
-    def __init__(self, *args, **kwargs):
-        button_text = kwargs.pop('button_text', _("Create SMS Connection"))
-        super(BackendForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_class = 'form form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.form_method = 'POST'
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('General Settings'),
-                crispy.Field('name', css_class='input-xxlarge'),
-                crispy.Field('description', css_class='input-xxlarge', rows="3"),
-                crispy.Field('reply_to_phone_number', css_class='input-xxlarge'),
+    @property
+    def is_global_backend(self):
+        return self._cchq_domain is None
+
+    @property
+    def general_fields(self):
+        fields = [
+            crispy.Field('name', css_class='input-xxlarge'),
+            crispy.Field('description', css_class='input-xxlarge', rows="3"),
+            crispy.Field('reply_to_phone_number', css_class='input-xxlarge'),
+        ]
+
+        if not self.is_global_backend:
+            fields.extend([
                 crispy.Field(
                     twbscrispy.PrependedText(
                         'give_other_domains_access', '', data_bind="checked: share_backend"
@@ -768,6 +770,24 @@ class BackendForm(Form):
                     'authorized_domains',
                     data_bind="visible: showAuthorizedDomains",
                 ),
+            ])
+
+        return fields
+
+    def __init__(self, *args, **kwargs):
+        button_text = kwargs.pop('button_text', _("Create SMS Gateway"))
+        self._cchq_domain = kwargs.pop('domain')
+        self._cchq_backend_id = kwargs.pop('backend_id')
+        super(BackendForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_method = 'POST'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _('General Settings'),
+                *self.general_fields
             ),
             self.gateway_specific_fields,
             crispy.Fieldset(
@@ -802,22 +822,25 @@ class BackendForm(Form):
         if re.compile("\s").search(value) is not None:
             raise ValidationError(_("Name may not contain any spaces."))
 
-        backend_classes = get_available_backends()
-        if self._cchq_domain is None:
-            # Ensure name is not duplicated among other global backends
-            backend = SMSBackend.view(
-                "sms/global_backends",
-                classes=backend_classes,
-                key=[value],
-                include_docs=True,
-                reduce=False
-            ).one()
+        if self.is_global_backend:
+            # We're using the form to create a global backend, so
+            # ensure name is not duplicated among other global backends
+            is_unique = SQLMobileBackend.name_is_unique(
+                value,
+                backend_id=self._cchq_backend_id
+            )
         else:
-            # Ensure name is not duplicated among other backends owned by this domain
-            backend = SMSBackend.view("sms/backend_by_owner_domain", classes=backend_classes, key=[self._cchq_domain, value], include_docs=True).one()
-        if backend is not None and backend._id != self._cchq_backend_id:
+            # We're using the form to create a domain-level backend, so
+            # ensure name is not duplicated among other backends owned by this domain
+            is_unique = SQLMobileBackend.name_is_unique(
+                value,
+                domain=self._cchq_domain,
+                backend_id=self._cchq_backend_id
+            )
+
+        if not is_unique:
             raise ValidationError(_("Name is already in use."))
-        
+
         return value
 
     def clean_authorized_domains(self):
@@ -843,30 +866,107 @@ class BackendForm(Form):
 
 
 class BackendMapForm(Form):
-    catchall_backend_id = CharField(required=False)
-    backend_map = RecordListField(input_name="backend_map")
+    catchall_backend_id = ChoiceField(
+        label=ugettext_lazy("Catch-All Gateway"),
+        required=False
+    )
+    backend_map = CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        backends = kwargs.pop('backends')
+        super(BackendMapForm, self).__init__(*args, **kwargs)
+        self.set_catchall_choices(backends)
+        self.setup_crispy()
+
+    def set_catchall_choices(self, backends):
+        backend_choices = [('', _("(none)"))]
+        backend_choices.extend([
+            (backend.pk, backend.name) for backend in backends
+        ])
+        self.fields['catchall_backend_id'].choices = backend_choices
+
+    def setup_crispy(self):
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.label_class = 'col-sm-2 col-md-2'
+        self.helper.field_class = 'col-sm-5 col-md-5'
+        self.helper.form_method = 'POST'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Default Gateways"),
+                hqcrispy.B3MultiField(
+                    _("Default Gateway by Prefix"),
+                    ErrorsOnlyField('backend_map'),
+                    crispy.Div(
+                        data_bind="template: {"
+                                  " name: 'ko-template-backend-map', "
+                                  " data: $data"
+                                  "}"
+                    ),
+                ),
+                'catchall_backend_id',
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Save"),
+                    type="submit",
+                    css_class='btn-primary'
+                ),
+            ),
+        )
+
+    def _clean_prefix(self, prefix):
+        try:
+            prefix = int(prefix)
+            if prefix <= 0:
+                raise ValueError()
+        except (ValueError, TypeError):
+            raise ValidationError(_("Please enter a positive number for the prefix."))
+
+        return str(prefix)
+
+    def _clean_backend_id(self, backend_id):
+        try:
+            backend_id = int(backend_id)
+        except (ValueError, TypeError):
+            raise ValidationError(_("Invalid Backend Specified."))
+
+        try:
+            backend = SQLMobileBackend.load(backend_id)
+        except:
+            raise ValidationError(_("Invalid Backend Specified."))
+
+        if (
+            backend.deleted or
+            not backend.is_global or
+            backend.backend_type != SQLMobileBackend.SMS
+        ):
+            raise ValidationError(_("Invalid Backend Specified."))
+
+        return backend_id
 
     def clean_backend_map(self):
+        value = self.cleaned_data.get('backend_map')
+        try:
+            value = json.loads(value)
+        except:
+            raise ValidationError(_("An unexpected error occurred. Please reload and try again"))
+
         cleaned_value = {}
-        for record in self.cleaned_data.get("backend_map", []):
-            prefix = record["prefix"].strip()
-            try:
-                prefix = int(prefix)
-                assert prefix > 0
-            except (ValueError, AssertionError):
-                raise ValidationError(_("Please enter a positive number for the prefix."))
-            prefix = str(prefix)
+        for mapping in value:
+            prefix = self._clean_prefix(mapping.get('prefix'))
             if prefix in cleaned_value:
-                raise ValidationError(_("Prefix is specified twice:") + prefix)
-            cleaned_value[prefix] = record["backend_id"]
+                raise ValidationError(_("Prefix is specified twice: %s") % prefix)
+
+            cleaned_value[prefix] = self._clean_backend_id(mapping.get('backend_id'))
         return cleaned_value
 
     def clean_catchall_backend_id(self):
-        value = self.cleaned_data.get("catchall_backend_id", None)
-        if value == "":
+        value = self.cleaned_data.get('catchall_backend_id')
+        if not value:
             return None
-        else:
-            return value
+
+        return self._clean_backend_id(value)
 
 
 class SendRegistrationInviationsForm(Form):
@@ -943,23 +1043,22 @@ class InitiateAddSMSBackendForm(Form):
         initial='new_backend',
         widget=forms.HiddenInput(),
     )
-    backend_type = ChoiceField(
+    hq_api_id = ChoiceField(
         required=False,
-        label="Connection Type",
+        label="Gateway Type",
     )
 
     def __init__(self, is_superuser=False, *args, **kwargs):
         super(InitiateAddSMSBackendForm, self).__init__(*args, **kwargs)
-        backend_classes = get_available_backends()
+
+        from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
+        backend_classes = get_sms_backend_classes()
         backend_choices = []
-        for name, klass in backend_classes.items():
-            if is_superuser or name == "TelerivetBackend":
-                try:
-                    friendly_name = klass.get_generic_name()
-                except NotImplementedError:
-                    friendly_name = name
-                backend_choices.append((name, friendly_name))
-        self.fields['backend_type'].choices = backend_choices
+        for api_id, klass in backend_classes.items():
+            if is_superuser or api_id == SQLTelerivetBackend.get_api_id():
+                friendly_name = klass.get_generic_name()
+                backend_choices.append((api_id, friendly_name))
+        self.fields['hq_api_id'].choices = backend_choices
 
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
@@ -967,9 +1066,9 @@ class InitiateAddSMSBackendForm(Form):
         self.helper.form_class = "form form-horizontal"
         self.helper.layout = crispy.Layout(
             hqcrispy.B3MultiField(
-                _("Create Another Connection"),
+                _("Create Another Gateway"),
                 InlineField('action'),
-                Div(InlineField('backend_type'), css_class='col-sm-6 col-md-6 col-lg-4'),
+                Div(InlineField('hq_api_id'), css_class='col-sm-6 col-md-6 col-lg-4'),
                 Div(StrictButton(
                     mark_safe('<i class="fa fa-plus"></i> Add Another Gateway'),
                     css_class='btn-success',

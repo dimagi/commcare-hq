@@ -20,18 +20,11 @@
 {% block pagination_templates %}
     <script type="text/html" id="gateway-template">
         <td class="col-sm-4">
-            <a data-bind="if: editUrl, attr: {href: editUrl}"><span data-bind="text: name"></span></a>
-            <!--ko ifnot: editUrl --><span data-bind="text: name"></span><!-- /ko -->
+            <a data-bind="attr: {href: editUrl}"><span data-bind="text: name"></span></a>
         </td>
         <td class="col-sm-4" data-bind="text: description"></td>
         <td class="col-sm-4" data-bind="text: supported_countries"></td>
         <td class="col-sm-2">
-            <button type="button"
-                    class="btn btn-default refresh-list-confirm"
-                    data-loading-text="{% trans 'Setting as default...' %}">{% trans 'Set As Default' %}</button>
-        </td>
-        <td class="col-sm-2">
-            <!-- ko if: canDelete -->
             <a data-bind="attr: {href: '#' + deleteModalId }"
                class="btn btn-danger"
                data-toggle="modal"><i class="fa fa-times"></i> {% trans 'Delete' %}</a>
@@ -45,7 +38,10 @@
                             </h4>
                         </div>
                         <div class="modal-body">
-                            <p>{% blocktrans %}Are you sure you want to delete the SMS Gateway '<span data-bind="text: name"></span>'?</p>{% endblocktrans %}
+                            <h2><strong>{% trans "READ THIS IMPORTANT NOTICE CAREFULLY BEFORE CONTINUING" %}</strong></h2>
+                            <p>{% blocktrans %}Deleting a global gateway causes all gateway mapping references to it to be deleted as well,
+                            including default gateway settings for all domains that reference this gateway. Only proceed if you are confident
+                            you understand the repercussions of this irreversible action.{% endblocktrans %}</p>
                         </div>
                         <div class="modal-footer">
                             <a href="#" class="btn btn-danger delete-item-confirm">
@@ -56,9 +52,6 @@
                     </div>
                 </div>
             </div>
-            <!-- /ko -->
-            <!-- ko if: isGlobal --><span class="label label-default"><i class="fa fa-info-circle"></i> {% trans 'Global Gateway' %}</span><!-- /ko -->
-            <!-- ko if: isShared --><span class="label label-default"><i class="fa fa-info-circle"></i> {% trans 'Shared Gateway' %}</span><!-- /ko -->
         </td>
     </script>
 
@@ -66,30 +59,6 @@
         <td class="col-sm-4" data-bind="text: name"></td>
         <td class="col-sm-4" data-bind="text: description"></td>
         <td class="col-sm-4" data-bind="text: supported_countries"></td>
-        <td class="col-sm-4" colspan="2">
-            {% trans 'DELETED' %}
-        </td>
-    </script>
-
-    <script type="text/html" id="gateway-default-template">
-        <td class="col-sm-4">
-            <a data-bind="if: editUrl, attr: {href: editUrl}"><span data-bind="text: name"></span></a>
-            <!--ko ifnot: editUrl --><span data-bind="text: name"></span><!-- /ko -->
-        </td>
-        <td class="col-sm-4" data-bind="text: description"></td>
-        <td class="col-sm-4" data-bind="text: supported_countries"></td>
-        <td class="col-sm-2"><span class="label label-info">{% trans 'DEFAULT GATEWAY' %}</span></td>
-        <td class="col-sm-2">
-            <button type="button"
-                    class="btn btn-danger refresh-list-confirm"
-                    data-loading-text="{% trans 'Removing from default...' %}">{% trans 'Remove As Default' %}</button>
-        </td>
-    </script>
-
-    <script type="text/html" id="gateway-automatic-template">
-        <td class="col-sm-8" colspan="3"><em data-bind="text: name"></em></td>
-        <td class="col-sm-4" colspan="2"><span class="label label-info">{% trans 'DEFAULT GATEWAY' %}</span></td>
+        <td class="col-sm-4">{% trans 'DELETED' %}</td>
     </script>
 {% endblock %}
-
-

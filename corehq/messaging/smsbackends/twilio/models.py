@@ -21,10 +21,6 @@ class TwilioBackend(SMSBackend, SMSLoadBalancingMixin):
         return "Twilio"
 
     @classmethod
-    def get_template(cls):
-        return "twilio/backend.html"
-
-    @classmethod
     def get_form_class(cls):
         return TwilioBackendForm
 
@@ -98,10 +94,6 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
     @classmethod
     def get_generic_name(cls):
         return "Twilio"
-
-    @classmethod
-    def get_template(cls):
-        return 'twilio/backend.html'
 
     @classmethod
     def get_form_class(cls):

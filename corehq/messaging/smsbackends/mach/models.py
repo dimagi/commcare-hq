@@ -25,10 +25,6 @@ class MachBackend(SMSBackend):
         return "Syniverse"
 
     @classmethod
-    def get_template(cls):
-        return "mach/backend.html"
-
-    @classmethod
     def get_form_class(cls):
         return MachBackendForm
 
@@ -89,10 +85,6 @@ class SQLMachBackend(SQLSMSBackend):
     @classmethod
     def get_generic_name(cls):
         return "Syniverse"
-
-    @classmethod
-    def get_template(cls):
-        return 'mach/backend.html'
 
     @classmethod
     def get_form_class(cls):

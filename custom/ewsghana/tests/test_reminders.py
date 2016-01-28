@@ -7,6 +7,7 @@ from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.products.models import SQLProduct, Product
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from custom.ewsghana.models import FacilityInCharge, EWSExtension
 from custom.ewsghana.reminders import STOCK_ON_HAND_REMINDER, SECOND_STOCK_ON_HAND_REMINDER, \
     SECOND_INCOMPLETE_SOH_REMINDER, STOCKOUT_REPORT, THIRD_STOCK_ON_HAND_REMINDER, INCOMPLETE_SOH_TO_SUPER
@@ -14,7 +15,7 @@ from custom.ewsghana.reminders.second_soh_reminder import SecondSOHReminder
 
 from custom.ewsghana.tasks import first_soh_reminder, second_soh_reminder, third_soh_to_super, \
     stockout_notification_to_web_supers, reminder_to_visit_website, reminder_to_submit_rrirv
-from custom.ewsghana.utils import prepare_domain, bootstrap_user, bootstrap_web_user, create_backend, \
+from custom.ewsghana.utils import prepare_domain, bootstrap_user, bootstrap_web_user, \
     set_sms_notifications
 
 
@@ -44,8 +45,8 @@ class TestReminders(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(TEST_DOMAIN)
-        cls.sms_backend_mapping, cls.backend = create_backend()
         cls.loc1 = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=TEST_DOMAIN)
         cls.loc2 = make_loc(code="tf", name="Test Facility", type="Hospital", domain=TEST_DOMAIN)
         cls.region = make_loc(code="region", name="Test Region", type="region", domain=TEST_DOMAIN)

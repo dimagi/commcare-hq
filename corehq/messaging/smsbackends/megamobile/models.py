@@ -26,10 +26,6 @@ class MegamobileBackend(SMSBackend):
         return "Megamobile"
 
     @classmethod
-    def get_template(cls):
-        return "megamobile/backend.html"
-
-    @classmethod
     def get_form_class(cls):
         return MegamobileBackendForm
 
@@ -87,10 +83,6 @@ class SQLMegamobileBackend(SQLSMSBackend):
     @classmethod
     def get_generic_name(cls):
         return "Megamobile"
-
-    @classmethod
-    def get_template(cls):
-        return 'megamobile/backend.html'
 
     @classmethod
     def get_form_class(cls):

@@ -54,10 +54,6 @@ class GrapevineBackend(SMSBackend):
         return "Grapevine"
 
     @classmethod
-    def get_template(cls):
-        return "grapevine/backend.html"
-
-    @classmethod
     def get_form_class(cls):
         return GrapevineBackendForm
 
@@ -113,10 +109,6 @@ class SQLGrapevineBackend(SQLSMSBackend):
     @classmethod
     def get_generic_name(cls):
         return "Grapevine"
-
-    @classmethod
-    def get_template(cls):
-        return 'grapevine/backend.html'
 
     @classmethod
     def get_form_class(cls):
