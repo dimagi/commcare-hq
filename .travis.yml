@@ -8,6 +8,6 @@ before_install:
   - "sudo docker-compose -f docker/docker-compose-test.yml build"
   - "sudo docker-compose -f docker/docker-compose-test.yml up -d"
   - "sudo docker-compose -f docker/docker-compose-test.yml ps"
-script: 'sudo docker-compose -f docker/docker-compose-test.yml run web_test python manage.py test form_processor'
+script: 'sudo docker-compose -f docker/docker-compose-test.yml run -e CUSTOMSETTINGS="docker.localsettings-docker" web_test python manage.py test form_processor'
 services:
   - docker
