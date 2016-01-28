@@ -9,6 +9,6 @@ before_install:
   - "./dockerhq.sh ps"
   - "sudo docker images"
 script: './dockerhq.sh run web python manage.py test form_processor'
-script: 'sudo docker run --rm -i -t --entrypoint="/bin/bash" --net=host commcarehq_web -c "python manage.py test form_processor'
+script: 'sudo docker run --rm -i -t --entrypoint="/bin/bash" --net=host commcarehq_web -c "python manage.py test form_processor"'
 services:
   - docker
