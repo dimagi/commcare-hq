@@ -31,11 +31,11 @@ var XPATH_CONFIG = (function () {
                 if (replacements.hasOwnProperty(hashtagExpr)) {
                     return replacements[hashtagExpr];
                 } else {
-                    throw new Error("This should be overridden");
+                    throw new Error("Invalid hashtag " + hashtagExpr);
                 }
             },
             toHashtag: function (xpath_) {
-                return xpath_.toXPath();
+                throw new Error("toHashtag not implemented");
             }
         }));
         return p;

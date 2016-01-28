@@ -1,0 +1,7 @@
+FROM dimagi/commcarehq_base:latest
+
+WORKDIR /mnt
+ADD . /mnt
+
+ENTRYPOINT ["/mnt/docker/entrypoint.sh"]
+CMD ["help"]

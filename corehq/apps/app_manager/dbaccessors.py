@@ -195,6 +195,20 @@ def get_all_apps(domain):
     return all_apps
 
 
+def get_all_app_ids(domain):
+    """
+    Returns a list of all the app_ids ever built and current Applications.
+    """
+    from .models import Application
+    results = Application.get_db().view(
+        'app_manager/saved_app',
+        startkey=[domain],
+        endkey=[domain, {}],
+        include_docs=False,
+    ).all()
+    return [result['id'] for result in results]
+
+
 def get_case_types_from_apps(domain):
     """Get the case types of modules in applications in the domain."""
     q = (AppES()

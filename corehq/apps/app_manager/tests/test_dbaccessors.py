@@ -4,6 +4,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain,
     domain_has_apps,
     get_built_app_ids_for_app_id,
+    get_all_app_ids,
 )
 from corehq.apps.app_manager.models import Application, RemoteApp, Module
 from corehq.apps.domain.models import Domain
@@ -34,6 +35,9 @@ class DBAccessorsTest(TestCase, DocTestMixin):
             Application(domain=cls.domain, copy_of=cls.apps[0].get_id, version=cls.first_saved_version),
             # this one is another build
             Application(domain=cls.domain, copy_of=cls.apps[0].get_id, version=12),
+
+            # this one is another app
+            Application(domain=cls.domain, copy_of='1234', version=12),
             # this one is in the wrong domain
             Application(domain='decoy-domain', version=5)
         ]
@@ -98,3 +102,7 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         app_ids = get_built_app_ids_for_app_id(self.domain, self.apps[0].get_id, self.first_saved_version)
         self.assertEqual(len(app_ids), 1)
         self.assertEqual(self.decoy_apps[1].get_id, app_ids[0])
+
+    def test_get_all_app_ids_for_domain(self):
+        app_ids = get_all_app_ids(self.domain)
+        self.assertEqual(len(app_ids), 3)

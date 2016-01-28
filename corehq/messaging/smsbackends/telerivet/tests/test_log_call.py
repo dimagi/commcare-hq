@@ -9,10 +9,10 @@ class TelerivetLogCallTestCase(LogCallTestCase):
         super(TelerivetLogCallTestCase, self).setUp()
         self.backend = SQLTelerivetBackend(
             name='MOBILE_BACKEND_TELERIVET',
-            webhook_secret='abc',
             is_global=True,
             hq_api_id=SQLTelerivetBackend.get_api_id()
         )
+        self.backend.set_extra_fields(webhook_secret='abc')
         self.backend.save()
 
     def tearDown(self):

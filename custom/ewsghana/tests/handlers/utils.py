@@ -83,21 +83,17 @@ class EWSScriptTest(TestScript):
         region = make_loc(code='region', name='Test region', type='region', domain=domain.name, parent=national)
         loc = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=domain.name,
                        parent=national)
-        SupplyInterface.create_from_location(TEST_DOMAIN, loc)
         loc.save()
 
         rms2 = make_loc(code="wrms", name="Test RMS 2", type="Regional Medical Store", domain=domain.name,
                         parent=region)
-        SupplyInterface.create_from_location(TEST_DOMAIN, rms2)
         rms2.save()
 
         cms = make_loc(code="cms", name="Central Medical Stores", type="Central Medical Store",
                        domain=domain.name, parent=national)
-        SupplyInterface.create_from_location(TEST_DOMAIN, cms)
         cms.save()
 
         loc2 = make_loc(code="tf", name="Test Facility", type="CHPS Facility", domain=domain.name, parent=region)
-        SupplyInterface.create_from_location(TEST_DOMAIN, loc2)
         loc2.save()
 
         supply_point_id = loc.linked_supply_point().get_id

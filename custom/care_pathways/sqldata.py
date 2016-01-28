@@ -1,4 +1,6 @@
 from itertools import groupby
+
+import sqlalchemy
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import *
@@ -72,14 +74,11 @@ class CareQueryMeta(QueryMeta):
         table_card_group = []
         if 'group_name' in self.group_by:
             table_card_group.append('group_name')
-        s1 = alias(
-            select(
-                ['doc_id', 'group_id', 'MAX(prop_value) + MIN(prop_value) as maxmin'] + filter_cols +
-                external_cols, from_obj='"fluff_FarmerRecordFluff"',
-                group_by=['doc_id', 'group_id'] + filter_cols + external_cols
-            ),
-            name='x'
-        )
+        s1 = alias(select([table.c.doc_id, table.c.group_id,
+                           (sqlalchemy.func.max(table.c.prop_value) +
+                            sqlalchemy.func.min(table.c.prop_value)).label('maxmin')] + filter_cols +
+                          external_cols, from_obj=table,
+                          group_by=[table.c.doc_id, table.c.group_id] + filter_cols + external_cols), name='x')
         s2 = alias(
             select(
                 ['group_id', '(MAX(CAST(gender as int4)) + MIN(CAST(gender as int4))) as gender'] +
@@ -87,10 +86,12 @@ class CareQueryMeta(QueryMeta):
                 group_by=['group_id'] + table_card_group + having_group_by, having=group_having
             ), name='y'
         )
-        return select(['COUNT(x.doc_id) as %s' % self.key] + self.group_by,
-               group_by=['maxmin'] + filter_cols + self.group_by,
-               having=AND(having).build_expression(table.alias('x')),
-               from_obj=join(s1, s2, s1.c.group_id == s2.c.group_id)).params(filter_values)
+        return select(
+            [sqlalchemy.func.count(s1.c.doc_id).label(self.key)] + self.group_by,
+            group_by=[s1.c.maxmin] + filter_cols + self.group_by,
+            having=AND(having).build_expression(s1),
+            from_obj=join(s1, s2, s1.c.group_id == s2.c.group_id)
+        ).params(filter_values)
 
 
 class CareCustomColumn(CustomQueryColumn):

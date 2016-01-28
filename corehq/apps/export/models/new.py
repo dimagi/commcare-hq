@@ -3,8 +3,9 @@ from collections import defaultdict, OrderedDict
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty
 
 from corehq.apps.userreports.expressions.getters import NestedDictGetter
-from corehq.apps.app_manager.dbaccessors import get_built_app_ids_for_app_id
+from corehq.apps.app_manager.dbaccessors import get_built_app_ids_for_app_id, get_all_app_ids
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.util import get_case_properties
 from dimagi.utils.couch.database import iter_docs
 from dimagi.ext.couchdbkit import (
     Document,
@@ -12,6 +13,11 @@ from dimagi.ext.couchdbkit import (
     ListProperty,
     StringProperty,
     IntegerProperty,
+)
+from corehq.apps.export.const import (
+    PROPERTY_TAG_UPDATE,
+    CASE_HISTORY_PROPERTIES,
+    CASE_HISTORY_GROUP_NAME,
 )
 
 
@@ -23,14 +29,15 @@ class ExportItem(DocumentSchema):
     """
     path = ListProperty()
     label = StringProperty()
+    tag = StringProperty()
     last_occurrence = IntegerProperty()
 
     @classmethod
-    def create_from_question(cls, question, appVersion):
+    def create_from_question(cls, question, app_version):
         return cls(
             path=_string_path_to_list(question['value']),
             label=question['label'],
-            last_occurrence=appVersion,
+            last_occurrence=app_version,
         )
 
     @classmethod
@@ -43,6 +50,9 @@ class ExportItem(DocumentSchema):
 class ExportColumn(DocumentSchema):
     item = SchemaProperty(ExportItem)
     label = StringProperty()
+    # Determines whether or not to show the column in the UI Config without clicking advanced
+    show = BooleanProperty(default=False)
+    selected = BooleanProperty(default=False)
 
     def get_value(self, doc, base_path):
         """
@@ -59,10 +69,30 @@ class ExportColumn(DocumentSchema):
         path = self.item.path[len(base_path):]
         return NestedDictGetter(path)(doc)
 
+    @staticmethod
+    def create_default_from_export_item(group_schema_path, item, app_version):
+        """Creates a default ExportColumn given an item
+
+        :param group_schema_path: The path of the group_schema that the item belongs to
+        :param item: An ExportItem instance
+        :param app_version: The app version that the column export is for
+        :returns: An ExportColumn instance
+        """
+
+        is_deleted = item.last_occurrence != app_version
+        is_main_table = group_schema_path == [None]
+
+        return ExportColumn(
+            item=item,
+            label=item.label,
+            show=not is_deleted,
+            selected=not is_deleted and is_main_table,
+        )
+
 
 class TableConfiguration(DocumentSchema):
     name = StringProperty()
-    repeat_path = ListProperty()
+    path = ListProperty()
     columns = ListProperty(ExportColumn)
 
     def get_rows(self, document):
@@ -71,14 +101,14 @@ class TableConfiguration(DocumentSchema):
         :param document: dictionary representation of a form submission or case
         :return: List of ExportRows
         """
-        # Note that sub_documents will be [document] if self.repeat_path is []
-        sub_documents = self._get_sub_documents(self.repeat_path, [document])
+        # Note that sub_documents will be [document] if self.path is []
+        sub_documents = self._get_sub_documents(self.path, [document])
         rows = []
         for doc in sub_documents:
 
             row_data = []
             for col in self.columns:
-                val = col.get_value(doc, self.repeat_path)
+                val = col.get_value(doc, self.path)
                 if isinstance(val, list):
                     row_data.extend(val)
                 else:
@@ -119,6 +149,22 @@ class ExportInstance(Document):
     class Meta:
         app_label = 'export'
 
+    @staticmethod
+    def generate_instance_from_schema(schema, app_version):
+        """Given an ExportDataSchema, this will generate an ExportInstance"""
+        instance = ExportInstance()
+
+        for group_schema in schema.group_schemas:
+            table = TableConfiguration(
+                path=group_schema.path
+            )
+            table.columns = map(
+                lambda item: ExportColumn.create_default_from_export_item(table.path, item, app_version),
+                group_schema.items,
+            )
+            instance.tables.append(table)
+        return instance
+
 
 class ExportRow(object):
     def __init__(self, data):
@@ -151,12 +197,12 @@ class MultipleChoiceItem(ExportItem):
     options = SchemaListProperty(Option)
 
     @classmethod
-    def create_from_question(cls, question, appVersion):
-        item = super(MultipleChoiceItem, cls).create_from_question(question, appVersion)
+    def create_from_question(cls, question, app_version):
+        item = super(MultipleChoiceItem, cls).create_from_question(question, app_version)
 
         for option in question['options']:
             item.options.append(Option(
-                last_occurrence=appVersion,
+                last_occurrence=app_version,
                 value=option['value']
             ))
         return item
@@ -188,7 +234,7 @@ class ExportGroupSchema(DocumentSchema):
     last_occurrence = IntegerProperty()
 
 
-class ExportDataSchema(DocumentSchema):
+class ExportDataSchema(Document):
     """
     An object representing the things that can be exported for a particular
     form xmlns or case type. It contains a list of ExportGroupSchema.
@@ -198,45 +244,11 @@ class ExportDataSchema(DocumentSchema):
         'MSelect': MultipleChoiceItem,
     })
 
-    @staticmethod
-    def generate_schema_from_builds(domain, app_id, unique_form_id):
-        app_build_ids = get_built_app_ids_for_app_id(domain, app_id)
-        all_xform_conf = ExportDataSchema()
-
-        for app_doc in iter_docs(Application.get_db(), app_build_ids):
-            app = Application.wrap(app_doc)
-            xform = app.get_form(unique_form_id).wrapped_xform()
-            xform_conf = ExportDataSchema._generate_schema_from_xform(xform, app.langs, app.version)
-            all_xform_conf = ExportDataSchema._merge_schema(all_xform_conf, xform_conf)
-
-        return all_xform_conf
+    class Meta:
+        app_label = 'export'
 
     @staticmethod
-    def _generate_schema_from_xform(xform, langs, appVersion):
-        questions = xform.get_questions(langs)
-        schema = ExportDataSchema()
-
-        for group_path, group_questions in groupby(questions, lambda q: q['repeat']):
-            # If group_path is None, that means the questions are part of the form and not a repeat group
-            # inside of the form
-            group_schema = ExportGroupSchema(
-                path=_string_path_to_list(group_path),
-                last_occurrence=appVersion,
-            )
-            for question in group_questions:
-                # Create ExportItem based on the question type
-                item = ExportDataSchema.datatype_mapping[question['type']].create_from_question(
-                    question,
-                    appVersion,
-                )
-                group_schema.items.append(item)
-
-            schema.group_schemas.append(group_schema)
-
-        return schema
-
-    @staticmethod
-    def _merge_schema(schema1, schema2):
+    def _merge_schemas(*schemas):
         """Merges two ExportDataSchemas together
 
         :param schema1: The first ExportDataSchema
@@ -261,16 +273,156 @@ class ExportDataSchema(DocumentSchema):
             group_schema.items = items
             return group_schema
 
-        group_schemas = _merge_lists(
-            schema1.group_schemas,
-            schema2.group_schemas,
-            keyfn=lambda group_schema: _list_path_to_string(group_schema.path),
-            resolvefn=resolvefn,
-            copyfn=lambda group_schema: ExportGroupSchema(group_schema.to_json())
-        )
+        previous_group_schemas = schemas[0].group_schemas
+        for current_schema in schemas[1:]:
+            group_schemas = _merge_lists(
+                previous_group_schemas,
+                current_schema.group_schemas,
+                keyfn=lambda group_schema: _list_path_to_string(group_schema.path),
+                resolvefn=resolvefn,
+                copyfn=lambda group_schema: ExportGroupSchema(group_schema.to_json())
+            )
+            previous_group_schemas = group_schemas
 
         schema.group_schemas = group_schemas
 
+        return schema
+
+
+class FormExportDataSchema(ExportDataSchema):
+
+    @staticmethod
+    def generate_schema_from_builds(domain, app_id, unique_form_id):
+        """Builds a schema from Application builds for a given identifier
+
+        :param domain: The domain that the export belongs to
+        :param app_id: The app_id that the export belongs to
+        :param unique_form_id: The unique identifier of the item being exported
+        :returns: Returns a ExportDataSchema instance
+        """
+        app_build_ids = get_built_app_ids_for_app_id(domain, app_id)
+        all_xform_conf = ExportDataSchema()
+
+        for app_doc in iter_docs(Application.get_db(), app_build_ids):
+            app = Application.wrap(app_doc)
+            xform = app.get_form(unique_form_id).wrapped_xform()
+            xform_conf = FormExportDataSchema._generate_schema_from_xform(xform, app.langs, app.version)
+            all_xform_conf = FormExportDataSchema._merge_schemas(all_xform_conf, xform_conf)
+
+        return all_xform_conf
+
+    @staticmethod
+    def _generate_schema_from_xform(xform, langs, app_version):
+        questions = xform.get_questions(langs)
+        schema = FormExportDataSchema()
+
+        for group_path, group_questions in groupby(questions, lambda q: q['repeat']):
+            # If group_path is None, that means the questions are part of the form and not a repeat group
+            # inside of the form
+            group_schema = ExportGroupSchema(
+                path=_string_path_to_list(group_path),
+                last_occurrence=app_version,
+            )
+            for question in group_questions:
+                # Create ExportItem based on the question type
+                item = FormExportDataSchema.datatype_mapping[question['type']].create_from_question(
+                    question,
+                    app_version,
+                )
+                group_schema.items.append(item)
+
+            schema.group_schemas.append(group_schema)
+
+        return schema
+
+
+class CaseExportDataSchema(ExportDataSchema):
+
+    @staticmethod
+    def generate_schema_from_builds(domain, case_type):
+        """Builds a schema from Application builds for a given identifier
+
+        :param domain: The domain that the export belongs to
+        :param unique_form_id: The unique identifier of the item being exported
+        :returns: Returns a ExportDataSchema instance
+        """
+        app_build_ids = get_all_app_ids(domain)
+        all_case_schema = CaseExportDataSchema()
+
+        for app_doc in iter_docs(Application.get_db(), app_build_ids):
+            app = Application.wrap(app_doc)
+            case_property_mapping = get_case_properties(
+                app,
+                [case_type],
+                include_parent_properties=False
+            )
+            case_schema = CaseExportDataSchema._generate_schema_from_case_property_mapping(
+                case_property_mapping,
+                app.version,
+            )
+            case_history_schema = CaseExportDataSchema._generate_schema_for_case_history(
+                case_property_mapping,
+                app.version,
+            )
+
+            all_case_schema = CaseExportDataSchema._merge_schemas(
+                all_case_schema,
+                case_schema,
+                case_history_schema
+            )
+
+        return all_case_schema
+
+    @staticmethod
+    def _generate_schema_from_case_property_mapping(case_property_mapping, app_version):
+        """Generates the schema for the main Case tab on the export page"""
+        assert len(case_property_mapping.keys()) == 1
+        schema = CaseExportDataSchema()
+
+        for case_type, case_properties in case_property_mapping.iteritems():
+            group_schema = ExportGroupSchema(
+                path=[case_type],
+                last_occurrence=app_version,
+            )
+            for prop in case_properties:
+                group_schema.items.append(ScalarItem(
+                    path=[prop],
+                    label=prop,
+                    last_occurrence=app_version,
+                ))
+
+            schema.group_schemas.append(group_schema)
+
+        return schema
+
+    @staticmethod
+    def _generate_schema_for_case_history(case_property_mapping, app_version):
+        """Generates the schema for the Case History tab on the export page"""
+        assert len(case_property_mapping.keys()) == 1
+        schema = CaseExportDataSchema()
+
+        group_schema = ExportGroupSchema(
+            path=[CASE_HISTORY_GROUP_NAME],
+            last_occurrence=app_version,
+        )
+        for system_prop in CASE_HISTORY_PROPERTIES:
+            group_schema.items.append(ScalarItem(
+                path=[system_prop.name],
+                label=system_prop.name,
+                tag=system_prop.tag,
+                last_occurrence=app_version,
+            ))
+
+        for case_type, case_properties in case_property_mapping.iteritems():
+            for prop in case_properties:
+                group_schema.items.append(ScalarItem(
+                    path=[prop],
+                    label=prop,
+                    tag=PROPERTY_TAG_UPDATE,
+                    last_occurrence=app_version,
+                ))
+
+        schema.group_schemas.append(group_schema)
         return schema
 
 
