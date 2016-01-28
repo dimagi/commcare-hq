@@ -6,7 +6,8 @@
         "airsrwanda",
         "airsethiopia",
         "abtmali",
-        "airsmadagascar"
+        "airsmadagascar",
+        "airstanzania"
     ],
     "config": {
         "engine_id": "default",
@@ -432,6 +433,36 @@
                       ]
                     }
                   }
+                },
+                "Tanzania": {
+                  "default": 0,
+                  "cases": {
+                      "Geita": 82337,
+                      "Kagera": 158121,
+                      "Mara": 79401,
+                      "Mwanza": 153547,
+                      "Pemba": 3192,
+                      "Unguja": 26336
+                  },
+                  "type": "switch",
+                  "switch_on": {
+                    "value_expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "level_1_data"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                      "datatype": null,
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "case",
+                        "@case_id"
+                      ]
+                    }
+                  }
                 }
               },
               "type": "switch",
@@ -632,6 +663,44 @@
                       "datatype": null,
                       "type": "property_name",
                       "property_name": "level_2_data"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                      "datatype": null,
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "case",
+                        "@case_id"
+                      ]
+                    }
+                  }
+                },
+                "Tanzania": {
+                  "default": 0,
+                  "cases": {
+                    "Chato": 62337,
+                    "Geita TC": 20000,
+                    "Bukoba Rural": 62730,
+                    "Missenyi": 54578,
+                    "Ngara": 40813,
+                    "Butiama": 47577,
+                    "Musoma Rural": 31824,
+                    "Kwimba": 91547,
+                    "Sengerema": 62000,
+                    "Micheweni": 3192,
+                    "Central": 6148,
+                    "North B": 5736,
+                    "South": 4073,
+                    "West": 10379
+                  },
+                  "type": "switch",
+                  "switch_on": {
+                    "value_expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "level_2_name"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
@@ -887,7 +956,167 @@
                       ]
                     }
                   }
-                }
+                },
+                "Tanzania": {
+                  "default": {
+                    "constant": 0,
+                    "type": "constant"
+                  },
+                  "cases": {
+                    "Busaka": 2103,
+                    "Buseresere": 2310,
+                    "Butarama": 4953,
+                    "Butengo rumasa": 1989,
+                    "Buyoga": 1043,
+                    "Buziku": 1237,
+                    "Buzirayombo": 2869,
+                    "Bwanga": 2119,
+                    "Bwina": 1933,
+                    "Chato Mlimani": 2440,
+                    "Ichwankima": 1222,
+                    "Ihanga": 1265,
+                    "Ilemera": 2124,
+                    "Ilyamchele": 1121,
+                    "Imweru": 3010,
+                    "Iparamasa": 860,
+                    "Itanga": 2410,
+                    "Kachwamba": 2188,
+                    "Kahumo": 2066,
+                    "Kakeneno": 1025,
+                    "Kasala": 2229,
+                    "Kasenga": 2462,
+                    "Katende": 968,
+                    "Katete": 2309,
+                    "Kibumba": 2643,
+                    "Kigongo": 4691,
+                    "Kinsabe": 3183,
+                    "Mnekezi": 921,
+                    "Nyambiti": {
+                      "type": "switch",
+                      "default": 0,
+                      "cases": {
+                        "Sengerema": 6585,
+                        "Chato": 1361
+                      },
+                      "switch_on": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_name",
+                          "property_name": "level_2_name"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                          "datatype": null,
+                          "type": "property_path",
+                          "property_path": [
+                            "form",
+                            "case",
+                            "@case_id"
+                          ]
+                        }
+                      },
+                    }
+                    "Nyantimba": 1283,
+                    "Mtakuja": 2858,
+                    "Nyankumbu": 2858,
+                    "Bunegezi": 2852,
+                    "Kalangalala": 2858,
+                    "Burere": 2858,
+                    "Bungwangoko": 2858,
+                    "Kasamwa": 2858,
+                    "Bujugo": 5916,
+                    "Buturage": 6525,
+                    "Ibwera": 6538,
+                    "Kabale": 6831,
+                    "Kashozi": 6468,
+                    "Katoro": 6415,
+                    "Kishanje": 5974,
+                    "Kishogo": 6131,
+                    "Rubale": 6192,
+                    "Ruhunga": 5740,
+                    "Bukiriro": 7684,
+                    "Lukole": 4096,
+                    "Mabawe": 6526,
+                    "Murukurazi": 6492,
+                    "Murusagamba": 6056,
+                    "Ngara": 7292,
+                    "Nyakisasa": 4899,
+                    "Rulenge": 5070,
+                    "Shanga": 6463,
+                    "Buyango": 5975,
+                    "Gera": 6960,
+                    "Igayaza": 5714,
+                    "Kakindo": 7734,
+                    "Kakunyu": 3793,
+                    "Kashenye": 3309,
+                    "Kyaka": 7328,
+                    "Buhemba": 4786,
+                    "Busegwe": 5687,
+                    "Butiama": 6980,
+                    "Kamugegi": 5050,
+                    "Kiagata": 5897,
+                    "Kyawanzware": 6308,
+                    "Mirwa": 5827,
+                    "Nyakanga": 7042,
+                    "Bugoji": 6588,
+                    "Mugango": 7033,
+                    "Murangi": 4450,
+                    "Nyegina": 5976,
+                    "Rusoli": 7777,
+                    "Bupandwa": 5799,
+                    "Busisi": 2386,
+                    "Buyagu": 2193,
+                    "Kagunga": 5478,
+                    "Kakobe": 9726,
+                    "Kalebezo": 7747,
+                    "Katunguru": 8395,
+                    "Kome": 6734,
+                    "Luchili": 8192,
+                    "Maisome": 2336,
+                    "Mwangika": 3424,
+                    "Nyakalila": 4793,
+                    "Nyamatongo": 5993,
+                    "Sengerema": 12998,
+                    "Sima": 5353,
+                    "Bungulwa": 8522,
+                    "Ilula": 5901,
+                    "Inala": 3506,
+                    "Kikubiji": 6309,
+                    "Malya": 4307,
+                    "Mwamashimba": 6997,
+                    "Ngumo": 7456,
+                    "Nyamikoma": 5888,
+                    "Nyamilama": 6529,
+                    "Micheweni": 3192,
+                    "Ngejani": 5260,
+                    "Uzi": 888,
+                    "Mahonda": 5736,
+                    "Kibuteni": 4073,
+                    "Mombasa": 4457,
+                    "Selemu": 2757,
+                    "Shakani": 3165
+                  },
+                  "type": "switch",
+                  "switch_on": {
+                    "value_expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "level_3_name"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                      "datatype": null,
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "case",
+                        "@case_id"
+                      ]
+                    }
+                  }
+                },
               },
               "type": "switch",
               "switch_on": {
@@ -926,7 +1155,8 @@
                 "Zambia": 539348,
                 "Ethiopia": 670303,
                 "Mali": 135717,
-                "Madagascar": 72120
+                "Madagascar": 72120,
+                "Tanzania": 502934
               },
               "type": "switch",
               "switch_on": {
