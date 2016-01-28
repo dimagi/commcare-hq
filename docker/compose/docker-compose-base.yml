@@ -43,7 +43,6 @@ moto:
     - "5000"
 
 kafka:
-  build: .
   image: spotify/kafka
   environment:
     ADVERTISED_PORT: 9092
