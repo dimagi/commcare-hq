@@ -42,11 +42,7 @@
               "doc_id_expression": {
                 "datatype": null,
                 "type": "property_path",
-                "property_path": [
-                  "form",
-                  "case",
-                  "@case_id"
-                ]
+                "property_path": ["form", "case", "@case_id"]
               }
             }
           },
@@ -69,11 +65,7 @@
               "doc_id_expression": {
                 "datatype": "string",
                 "type": "property_path",
-                "property_path": [
-                  "form",
-                  "case",
-                  "@case_id"
-                ]
+                "property_path": ["form", "case", "@case_id"]
               }
             }
           },
@@ -96,11 +88,7 @@
               "doc_id_expression": {
                 "datatype": "string",
                 "type": "property_path",
-                "property_path": [
-                  "form",
-                  "case",
-                  "@case_id"
-                ]
+                "property_path": ["form", "case", "@case_id"]
               }
             }
           },
@@ -123,11 +111,7 @@
               "doc_id_expression": {
                 "datatype": "string",
                 "type": "property_path",
-                "property_path": [
-                  "form",
-                  "case",
-                  "@case_id"
-                ]
+                "property_path": ["form", "case", "@case_id"]
               }
             }
           },
@@ -150,11 +134,7 @@
               "doc_id_expression": {
                 "datatype": "string",
                 "type": "property_path",
-                "property_path": [
-                  "form",
-                  "case",
-                  "@case_id"
-                ]
+                "property_path": ["form", "case", "@case_id"]
               }
             }
           },
@@ -177,11 +157,7 @@
               "doc_id_expression": {
                 "datatype": "string",
                 "type": "property_path",
-                "property_path": [
-                  "form",
-                  "case",
-                  "@case_id"
-                ]
+                "property_path": ["form", "case", "@case_id"]
               }
             }
           },
@@ -344,11 +320,7 @@
                     "doc_id_expression": {
                       "datatype": null,
                       "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "case",
-                        "@case_id"
-                      ]
+                      "property_path": ["form", "case", "@case_id"]
                     }
                   }
                 },
@@ -370,11 +342,7 @@
                     "doc_id_expression": {
                       "datatype": null,
                       "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "case",
-                        "@case_id"
-                      ]
+                      "property_path": ["form", "case", "@case_id"]
                     }
                   }
                 },
@@ -399,11 +367,7 @@
                     "doc_id_expression": {
                       "datatype": null,
                       "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "case",
-                        "@case_id"
-                      ]
+                      "property_path": ["form", "case", "@case_id"]
                     }
                   }
                 },
@@ -429,11 +393,7 @@
                     "doc_id_expression": {
                       "datatype": null,
                       "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "case",
-                        "@case_id"
-                      ]
+                      "property_path": ["form", "case", "@case_id"]
                     }
                   }
                 }
@@ -450,11 +410,7 @@
                 "doc_id_expression": {
                   "datatype": null,
                   "type": "property_path",
-                  "property_path": [
-                    "form",
-                    "case",
-                    "@case_id"
-                  ]
+                  "property_path": ["form", "case", "@case_id"]
                 }
               }
             },
@@ -487,11 +443,7 @@
                     "doc_id_expression": {
                       "datatype": null,
                       "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "case",
-                        "@case_id"
-                      ]
+                      "property_path": ["form", "case", "@case_id"]
                     }
                   }
                 },
@@ -532,11 +484,7 @@
                     "doc_id_expression": {
                       "datatype": null,
                       "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "case",
-                        "@case_id"
-                      ]
+                      "property_path": ["form", "case", "@case_id"]
                     }
                   }
                 },
@@ -595,11 +543,7 @@
                     "doc_id_expression": {
                       "datatype": null,
                       "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "case",
-                        "@case_id"
-                      ]
+                      "property_path": ["form", "case", "@case_id"]
                     }
                   }
                 },
@@ -621,11 +565,7 @@
                     "doc_id_expression": {
                       "datatype": null,
                       "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "case",
-                        "@case_id"
-                      ]
+                      "property_path": ["form", "case", "@case_id"]
                     }
                   }
                 },
@@ -659,11 +599,7 @@
                     "doc_id_expression": {
                       "datatype": null,
                       "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "case",
-                        "@case_id"
-                      ]
+                      "property_path": ["form", "case", "@case_id"]
                     }
                   }
                 }
@@ -680,11 +616,7 @@
                 "doc_id_expression": {
                   "datatype": null,
                   "type": "property_path",
-                  "property_path": [
-                    "form",
-                    "case",
-                    "@case_id"
-                  ]
+                  "property_path": ["form", "case", "@case_id"]
                 }
               }
             },
@@ -722,11 +654,7 @@
                     "doc_id_expression": {
                       "datatype": null,
                       "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "case",
-                        "@case_id"
-                      ]
+                      "property_path": ["form", "case", "@case_id"]
                     }
                   }
                 },
@@ -782,11 +710,7 @@
                     "doc_id_expression": {
                       "datatype": null,
                       "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "case",
-                        "@case_id"
-                      ]
+                      "property_path": ["form", "case", "@case_id"]
                     }
                   }
                 },
@@ -871,11 +795,7 @@
                     "doc_id_expression": {
                       "datatype": null,
                       "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "case",
-                        "@case_id"
-                      ]
+                      "property_path": ["form", "case", "@case_id"]
                     }
                   }
                 },
@@ -928,11 +848,7 @@
                         "doc_id_expression": {
                           "datatype": null,
                           "type": "property_path",
-                          "property_path": [
-                            "form",
-                            "case",
-                            "@case_id"
-                          ]
+                          "property_path": ["form", "case", "@case_id"]
                         }
                       }
                     },
@@ -1028,11 +944,7 @@
                     "doc_id_expression": {
                       "datatype": null,
                       "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "case",
-                        "@case_id"
-                      ]
+                      "property_path": ["form", "case", "@case_id"]
                     }
                   }
                 }
@@ -1049,11 +961,7 @@
                 "doc_id_expression": {
                   "datatype": null,
                   "type": "property_path",
-                  "property_path": [
-                    "form",
-                    "case",
-                    "@case_id"
-                  ]
+                  "property_path": ["form", "case", "@case_id"]
                 }
               }
             },
@@ -1089,11 +997,7 @@
                 "doc_id_expression": {
                   "datatype": null,
                   "type": "property_path",
-                  "property_path": [
-                    "form",
-                    "case",
-                    "@case_id"
-                  ]
+                  "property_path": ["form", "case", "@case_id"]
                 }
               }
             },
