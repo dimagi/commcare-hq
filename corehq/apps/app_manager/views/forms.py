@@ -336,6 +336,7 @@ def new_form(request, domain, app_id, module_id):
 def patch_xform(request, domain, app_id, unique_form_id):
     patch = request.POST['patch']
     sha1_checksum = request.POST['sha1']
+    case_references = json.loads(request.POST['references'])
 
     app = get_app(domain, app_id)
     form = app.get_form(unique_form_id)
@@ -347,6 +348,10 @@ def patch_xform(request, domain, app_id, unique_form_id):
     dmp = diff_match_patch()
     xform, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
     save_xform(app, form, xform)
+
+    if case_references:
+        form.case_references = case_references
+
     response_json = {
         'status': 'ok',
         'sha1': hashlib.sha1(form.source.encode('utf-8')).hexdigest()
