@@ -2,7 +2,6 @@ web_test:
   extends:
     file: docker-compose-base.yml
     service: web
-  dockerfile: ./docker/Dockerfile_commcarehq_test
   links:
     - postgres_test:postgres
     - couch_test:couch
