@@ -1,49 +1,11 @@
 language: python
-sudo: false
-cache:
-  directories:
-    - $HOME/.cache/pip
-    - $HOME/virtualenv/python$TRAVIS_PYTHON_VERSION.9
-    - $HOME/moto-s3
-python:
-  - "2.7"
-env:
-  global:
-    - CFLAGS=-O0
-    - COUCHDB_USER=""
-    - COUCHDB_PW=""
-    - TRAVIS_INSTALL="y"
-  matrix:
-    - MATRIX_TYPE=javascript BOWER=yes
-    # need node installs for app_manager.XpathValidatorTest
-    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunnerCatchall BOWER=yes NODE=yes
-    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunner0
+sudo: required
 branches:
   only:
     - master
-addons:
-  apt:
-    packages:
-    - moreutils
-    - libblas-dev
-    - liblapack-dev
 before_install:
-  - "curl http://localhost:5984/"  # print couch info
-  - "uname -a"
-  - "lsb_release -a"
-install:
-  - ".travis/misc-setup.sh"
-  - "curl -X PUT http://localhost:5984/commcarehq_test"  # this is an auth test
-  - "scripts/uninstall-requirements.sh"
-  - "time (pip install --exists-action w -r requirements/requirements.txt --timeout 60)"
-  - "pip install coveralls"
-  - "cp .travis/localsettings.py localsettings.py"
-  - ".travis/matrix-installs.sh"
-script: ".travis/matrix-runner.sh"
-after_success:
-  - coverage report
-  - coveralls
+  - "./dockerhq.sh services start"
+  - "./dockerhq.sh ps"
+script: "./dockerhq.sh run -e CUSTOMSETTINGS="docker.localsettings-docker" web python manage.py test form_processor"
 services:
-  - postgresql
-  - couchdb
-  - redis-server
+  - docker
