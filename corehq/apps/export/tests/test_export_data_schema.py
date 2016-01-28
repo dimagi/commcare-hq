@@ -287,7 +287,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         schema = FormExportDataSchema.generate_schema_from_builds(
             app.domain,
             app._id,
-            'b68a311749a6f45bdfda015b895d607012c91613'
+            'my_sweet_xmlns'
         )
 
         self.assertEqual(len(schema.group_schemas), 1)

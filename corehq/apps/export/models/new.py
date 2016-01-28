@@ -310,7 +310,7 @@ class ExportDataSchema(Document):
 class FormExportDataSchema(ExportDataSchema):
 
     @staticmethod
-    def generate_schema_from_builds(domain, app_id, unique_form_id):
+    def generate_schema_from_builds(domain, app_id, form_xmlns):
         """Builds a schema from Application builds for a given identifier
 
         :param domain: The domain that the export belongs to
@@ -323,7 +323,10 @@ class FormExportDataSchema(ExportDataSchema):
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             app = Application.wrap(app_doc)
-            xform = app.get_form(unique_form_id).wrapped_xform()
+            xform = app.get_form_by_xmlns(form_xmlns, log_missing=False)
+            if not xform:
+                continue
+            xform = xform.wrapped_xform()
             xform_conf = FormExportDataSchema._generate_schema_from_xform(
                 xform,
                 app.langs,
