@@ -188,7 +188,7 @@ jQuery(document).ready(function($) {
     }();
 
     $(document).on('click', '.project-link', function(evt) {
-        var projectName = $(this).text()
+        var projectName = $(this).text();
         selectionModel.selectedProject(projectName);
         modalController.showProjectInfo(selectionModel.selectedCountry(), projectName);
     });
@@ -204,7 +204,7 @@ jQuery(document).ready(function($) {
     var countriesGeo;
     // A lot of the styling work here is modeled after http://leafletjs.com/examples/choropleth.html
     var map = L.map('map').setView([0, 0], 3)
-    var mapId = 'mapbox.light';
+    var mapId = 'mapbox.dark';
     // todo: move to config somewhere, maybe localSettings.py?
     var accessToken = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA';
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
