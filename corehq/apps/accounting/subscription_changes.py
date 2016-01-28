@@ -252,7 +252,6 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         privileges.CLOUDCARE,
         privileges.LOOKUP_TABLES,
         privileges.CUSTOM_BRANDING,
-        privileges.CROSS_PROJECT_REPORTS,
         privileges.OUTBOUND_SMS,
         privileges.INBOUND_SMS,
         privileges.DEIDENTIFIED_DATA,
@@ -323,13 +322,6 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             return self._fmt_alert(_("You are using custom branding. "
                                      "Selecting this plan will remove this "
                                      "feature."))
-
-    @property
-    def response_cross_project_reports(self):
-        """
-        Organization menu and corresponding reports are hidden on downgrade.
-        """
-        return None
 
     @property
     @memoized
