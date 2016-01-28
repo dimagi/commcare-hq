@@ -2,7 +2,7 @@ import math
 from datetime import datetime, timedelta
 from celery.task import task
 from time import sleep
-from corehq.apps.sms.mixin import SMSLoadBalancingMixin, VerifiedNumber
+from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING, SMS,
     PhoneLoadBalancingMixin)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,

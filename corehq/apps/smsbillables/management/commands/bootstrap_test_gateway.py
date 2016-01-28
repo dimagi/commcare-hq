@@ -6,7 +6,7 @@ from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING
-from corehq.messaging.smsbackends.test.models import TestSMSBackend
+from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
 
 
@@ -19,7 +19,7 @@ def bootstrap_test_gateway(apps):
     sms_gateway_fee_criteria_class = apps.get_model('smsbillables', 'SmsGatewayFeeCriteria') if apps else SmsGatewayFeeCriteria
 
     SmsGatewayFee.create_new(
-        TestSMSBackend.get_api_id(),
+        SQLTestSMSBackend.get_api_id(),
         INCOMING,
         Decimal('0.0'),
         currency=default_currency,
@@ -28,7 +28,7 @@ def bootstrap_test_gateway(apps):
     )
 
     SmsGatewayFee.create_new(
-        TestSMSBackend.get_api_id(),
+        SQLTestSMSBackend.get_api_id(),
         OUTGOING,
         Decimal('0.0'),
         currency=default_currency,

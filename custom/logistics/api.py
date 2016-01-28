@@ -14,8 +14,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.conf import settings
 import requests
-from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber, apply_leniency, InvalidFormatException, \
-    MobileBackend
+from corehq.apps.sms.mixin import PhoneNumberInUseException, VerifiedNumber, apply_leniency, InvalidFormatException
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 from custom.api.utils import EndpointMixin, apply_updates
 from dimagi.utils.decorators.memoized import memoized
