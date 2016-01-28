@@ -1,7 +1,10 @@
 import logging
 from decimal import Decimal
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+
+from twilio.rest import TwilioRestClient
 
 from corehq.apps.accounting import models as accounting
 from corehq.apps.accounting.models import Currency
@@ -12,6 +15,7 @@ from corehq.apps.sms.phonenumbers_helper import get_country_code_and_national_nu
 from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.smsbillables.exceptions import AmbiguousPrefixException
+from corehq.messaging.smsbackends.twilio.models import TwilioBackend
 from corehq.util.quickcache import quickcache
 
 
@@ -102,7 +106,7 @@ class SmsGatewayFee(models.Model):
     Once an SmsFee is created, it cannot be modified.
     """
     criteria = models.ForeignKey(SmsGatewayFeeCriteria, on_delete=models.PROTECT)
-    amount = models.DecimalField(default=0.0, max_digits=10, decimal_places=4)
+    amount = models.DecimalField(max_digits=10, decimal_places=4, null=True)
     currency = models.ForeignKey(accounting.Currency, on_delete=models.PROTECT)
     date_created = models.DateTimeField(auto_now_add=True)
 
@@ -255,6 +259,7 @@ class SmsBillable(models.Model):
     the monthly Invoice.
     """
     gateway_fee = models.ForeignKey(SmsGatewayFee, null=True, on_delete=models.PROTECT)
+    direct_gateway_fee = models.DecimalField(null=True, max_digits=10, decimal_places=4)
     gateway_fee_conversion_rate = models.DecimalField(default=Decimal('1.0'), null=True, max_digits=20,
                                                       decimal_places=EXCHANGE_RATE_DECIMAL_PLACES)
     usage_fee = models.ForeignKey(SmsUsageFee, null=True, on_delete=models.PROTECT)
@@ -272,15 +277,18 @@ class SmsBillable(models.Model):
 
     @property
     def gateway_charge(self):
+        amount = None
         if self.gateway_fee is not None:
             try:
-                charge = SmsGatewayFee.objects.get(id=self.gateway_fee.id)
-                if self.gateway_fee_conversion_rate is not None:
-                    return charge.amount / self.gateway_fee_conversion_rate
-                return charge.amount
+                amount = SmsGatewayFee.objects.get(id=self.gateway_fee.id).amount
             except ObjectDoesNotExist:
                 pass
-        return Decimal('0.0')
+        if amount is None:
+            amount = self.direct_gateway_fee or Decimal('0.0')
+
+        if self.gateway_fee_conversion_rate is not None:
+            return amount / self.gateway_fee_conversion_rate
+        return amount
 
     @property
     def usage_charge(self):
@@ -312,26 +320,60 @@ class SmsBillable(models.Model):
         country_code, national_number = get_country_code_and_national_number(phone_number)
 
         if backend_instance is None or _sms_backend_is_global(backend_instance):
-            billable.gateway_fee = SmsGatewayFee.get_by_criteria(
-                backend_api_id,
-                direction,
-                backend_instance=backend_instance,
-                country_code=country_code,
-                national_number=national_number,
-            )
-            if billable.gateway_fee is not None:
-                conversion_rate = billable.gateway_fee.currency.rate_to_default
+            currency = None
+            if backend_api_id == TwilioBackend.get_api_id():
+                def _get_twilio_client(twilio_backend_id):
+                    twilio_backend = SMSBackend.get(twilio_backend_id)
+                    account_sid = twilio_backend.account_sid
+                    auth_token = twilio_backend.auth_token
+                    return TwilioRestClient(account_sid, auth_token)
+
+                try:
+                    if message_log.backend_message_id:
+                        twilio_message = _get_twilio_client(
+                            backend_instance
+                        ).messages.get(message_log.backend_message_id)
+                        billable.direct_gateway_fee = Decimal(twilio_message.price) * -1
+                        currency = Currency.objects.get(code=twilio_message.price_unit)
+                        billable.gateway_fee = SmsGatewayFee.get_by_criteria(
+                            TwilioBackend.get_api_id(),
+                            message_log.direction,
+                        )
+                    else:
+                        smsbillables_logging.error(
+                            "Could not create gateway fee for Twilio message %s: no backend_message_id" % (
+                                message_log._id,
+                            )
+                        )
+                except Exception as e:
+                    smsbillables_logging.error(
+                        "Error looking up Twilio gateway fee for SMSLog %s: %s" % (
+                            message_log._id, e.message
+                        )
+                    )
+            else:
+                billable.gateway_fee = SmsGatewayFee.get_by_criteria(
+                    backend_api_id,
+                    direction,
+                    backend_instance=backend_instance,
+                    country_code=country_code,
+                    national_number=national_number,
+                )
+                if billable.gateway_fee is not None:
+                    currency = billable.gateway_fee.currency
+                else:
+                    smsbillables_logging.error(
+                        "No matching gateway fee criteria for SMSLog %s" % message_log._id
+                    )
+            if currency:
+                conversion_rate = currency.rate_to_default
                 if conversion_rate != 0:
                     billable.gateway_fee_conversion_rate = conversion_rate
                 else:
-                    smsbillables_logging.error("Gateway fee conversion rate for currency %s is 0",
-                                               billable.gateway_fee.currency.code)
-            else:
-                smsbillables_logging.error(
-                    "No matching gateway fee criteria for SMSLog %s" % message_log._id
-                )
+                    smsbillables_logging.error(
+                        "Gateway fee conversion rate for currency %s is 0" % currency.code
+                    )
 
-        # Fetch usage_fee todo
         domain = message_log.domain
         billable.usage_fee = SmsUsageFee.get_by_criteria(
             direction, domain=domain

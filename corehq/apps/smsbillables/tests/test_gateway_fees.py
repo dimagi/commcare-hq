@@ -14,7 +14,7 @@ class TestGatewayFee(TestCase):
         SmsGatewayFeeCriteria.objects.all().delete()
 
         self.currency_usd = init_default_currency()
-        self.available_backends = get_available_backends().values()
+        self.available_backends = generator.available_gateway_fee_backends()
 
         self.backend_ids = generator.arbitrary_backend_ids()
         self.message_logs = generator.arbitrary_messages_by_backend_and_direction(self.backend_ids)
