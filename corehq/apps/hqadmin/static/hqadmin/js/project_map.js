@@ -2,6 +2,19 @@ jQuery(document).ready(function($) {
     // courtesy of http://colorbrewer2.org/
     var COUNTRY_COLORS = ['#fef0d9','#fdcc8a','#fc8d59','#e34a33','#b30000'];
 
+    var selectionModel;
+
+    (function() {
+        var SelectionModel = function () {
+            var self = this;
+            self.selectedCountry = ko.observable('country name');
+            self.selectedProject = ko.observable('project name');
+        };
+
+        selectionModel = new SelectionModel();
+        $('#modal').koApplyBindings(selectionModel);
+    })();
+
     function colorAll() {
         if (countriesGeo !== undefined) {
             countriesGeo.setStyle(style);
@@ -150,19 +163,17 @@ jQuery(document).ready(function($) {
         var that = {};
 
         that.showProjectsTable = function(countryName) {
-            $('.country-name').text(countryName);
             $('.modal-body').empty().append(dataController.getProjectsTableElement(countryName));
 
             var modalContent = $('.modal-content');
             modalContent.addClass('show-table');
             modalContent.removeClass('show-project-info');
 
-            window.location.hash = $('.country-name').text();
+            window.location.hash = countryName;
         };
 
         that.showProjectInfo = function(countryName, projectIdentifier) {
             $('.modal-body').empty().append(dataController.getProjectInfoHtml(countryName, projectIdentifier));
-            $('.project-identifier').text(projectIdentifier);
 
             var modalContent = $('.modal-content');
             modalContent.removeClass('show-table');
@@ -176,13 +187,13 @@ jQuery(document).ready(function($) {
     }();
 
     $(document).on('click', '.project-link', function(evt) {
-        // todo: start storing the name of the selected country in a global variable or something, not pulling it out of the DOM when needed
-        var projectName = $(this).text();
-        modalController.showProjectInfo($('.country-name').text(), projectName);
+        var projectName = $(this).text()
+        selectionModel.selectedProject(projectName);
+        modalController.showProjectInfo(selectionModel.selectedCountry(), projectName);
     });
 
     $(document).on('click', '.back', function(evt) {
-        modalController.showProjectsTable($('.country-name').text());
+        modalController.showProjectsTable(selectionModel.selectedCountry());
     });
 
     $('#modal').on('hidden.bs.modal', function (e) {
@@ -255,7 +266,8 @@ jQuery(document).ready(function($) {
             mouseover: highlightFeature,
             mouseout: resetHighlight,
             click: function(e) {
-                modalController.showProjectsTable(feature.properties.name);
+                selectionModel.selectedCountry(feature.properties.name);
+                modalController.showProjectsTable(selectionModel.selectedCountry());
 
                 // launch the modal
                 $('#modal').modal();
@@ -339,11 +351,13 @@ jQuery(document).ready(function($) {
             var references = window.location.hash.substring(1).split('#');
             if (references.length === 2) {
                 // country, then project
-                modalController.showProjectsTable(references[0]); // or otherwise make it so that the back button knows which country to go to
+                selectionModel.selectedCountry(references[0]);
+                selectionModel.selectedProject(references[1]);
                 modalController.showProjectInfo(references[0], references[1]);
                 $('#modal').modal();
             } else if (references.length === 1 && references[0].length > 0) {
                 // just a country
+                selectionModel.selectedCountry(references[0]);
                 modalController.showProjectsTable(references[0]);
                 $('#modal').modal();
             }
