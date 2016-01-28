@@ -1,26 +1,32 @@
 postgres:
-  build: .
-  dockerfile: Dockerfile_pg
-  environment:
-    POSTGRES_USER: commcarehq
-    POSTGRES_PASSWORD: commcarehq
-  volumes:
-    - ${DOCKER_DATA_HOME}/postgresql:/var/lib/postgresql/data
+  extends:
+    file: docker-compose-base.yml
+    service: postgres
   ports:
     - "5432:5432"
-couch:
-  image: klaemo/couchdb:latest
   volumes:
-    - ${DOCKER_DATA_HOME}/couchdb:/usr/local/var/lib/couchdb
+    - ${DOCKER_DATA_HOME}/postgresql:/var/lib/postgresql/data
+
+couch:
+  extends:
+    file: docker-compose-base.yml
+    service: couch
   ports:
     - "5984:5984"
+  volumes:
+    - ${DOCKER_DATA_HOME}/couchdb:/usr/local/var/lib/couchdb
+
 redis:
-  image: redis
+  extends:
+    file: docker-compose-base.yml
+    service: redis
   ports:
     - "6379:6379"
+
 elasticsearch:
-  build: .
-  dockerfile: Dockerfile_es
+  extends:
+    file: docker-compose-base.yml
+    service: elasticsearch
   command: elasticsearch --cluster.name=${ES_CLUSTER_NAME}
   ports:
     - "9200:9200"

@@ -1,0 +1,46 @@
+web_test:
+  extends:
+    file: docker-compose-base.yml
+    service: web
+  volumes_from:
+    - data_test
+  links:
+    - postgres_test:postgres
+    - couch_test:couch
+    - redis_test:redis
+    - elasticsearch_test:elasticsearch
+
+postgres_test:
+  extends:
+    file: docker-compose-base.yml
+    service: postgres
+  volumes_from:
+    - data_test
+
+couch_test:
+  extends:
+    file: docker-compose-base.yml
+    service: couch
+  volumes_from:
+    - data_test
+
+redis_test:
+  extends:
+    file: docker-compose-base.yml
+    service: redis
+
+elasticsearch_test:
+  extends:
+    file: docker-compose-base.yml
+    service: elasticsearch
+  volumes_from:
+    - data_test
+
+data_test:
+  image: redis
+  volumes:
+    - /var/lib/postgresql
+    - /usr/share/elasticsearch/data
+    - /usr/local/var/lib/couchdb
+    - /sharedfiles
+  command: "true"

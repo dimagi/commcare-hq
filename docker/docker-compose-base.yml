@@ -1,0 +1,36 @@
+postgres:
+  build: .
+  dockerfile: Dockerfile_pg
+  environment:
+    POSTGRES_USER: commcarehq
+    POSTGRES_PASSWORD: commcarehq
+  expose:
+    - "5432"
+
+couch:
+  image: klaemo/couchdb:latest
+  expose:
+    - "5984"
+
+redis:
+  image: redis
+  expose:
+    - "6379"
+
+elasticsearch:
+  build: .
+  dockerfile: Dockerfile_es
+  expose:
+    - "9200"
+
+web:
+  build: ../
+  dockerfile: ./docker/Dockerfile_commcarehq
+  working_dir: /mnt
+  command: python manage.py runserver 0.0.0.0:8000
+  volumes:
+    - ../:/mnt
+  expose:
+    - "8000"
+  environment:
+    PYTHONUSERBASE: /vendor

@@ -19,6 +19,7 @@ for service in $SERVICES; do
     done
 
     echo "$service ok"
+    host=
 done
 
 echo "ALL SERVICES READY"
