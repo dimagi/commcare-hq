@@ -16,7 +16,7 @@ before_install:
   - "./dockerhq.sh travis up -d"
   - "./dockerhq.sh travis ps"
 install:
-  - ".travis/matix-installs.sh"
+  - ".travis/matrix-installs.sh"
 script: ".travis/matrix-runner.sh"
 after_success:
   - coverage report
