@@ -1093,12 +1093,14 @@ FIXTURES_DB = NEW_FIXTURES_DB
 NEW_DOMAINS_DB = 'domains'
 DOMAINS_DB = NEW_DOMAINS_DB
 
+NEW_APPS_DB = 'apps'
+APPS_DB = None
+
 SYNCLOGS_DB = 'synclogs'
 
 
 COUCHDB_APPS = [
     'api',
-    'app_manager',
     'appstore',
     'builds',
     'case',
@@ -1190,6 +1192,9 @@ COUCHDB_APPS = [
 
     # sync logs
     ('phone', SYNCLOGS_DB),
+
+    # applications
+    ('app_manager', APPS_DB),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -1197,7 +1202,7 @@ COUCHDB_APPS += LOCAL_COUCHDB_APPS
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
     COUCH_DATABASE,
     COUCHDB_APPS,
-    [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB],
+    [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB, NEW_APPS_DB],
 )
 COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.make_couchdb_tuples()
 EXTRA_COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.get_extra_couchdbs()
@@ -1390,16 +1395,6 @@ PILLOWTOPS = {
             'name': 'UserGroupsDbKafkaPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
-        },
-        {
-            'name': 'KafkaCaseConsumerPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_case_consumer_pillow',
-        },
-        {
-            'name': 'LoggingPythonDemoPillow',
-            'class': 'corehq.apps.change_feed.consumer.pillow.LoggingPythonPillow',
-            'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_python_pillow_consumer',
         },
         {
             'name': 'BlobDeletionPillow',

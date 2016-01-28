@@ -22,26 +22,37 @@ from other ones:
     you may need to rewrite those functions to check both dbs
 - etc.
 
-If the doctype you're migrating is read by pillowtop, you may need to reset the
-checkpoint after the merge, or in the case of elasticsearch pillows, trigger an
-index rebuild.
-We should figure out how to better deal with this issue next time it comes up.
 
-## Register the new database and migrator instance
+## Setting up the migration
 
+### Register the new database
 This step creates a new database and allows you to start populating it.
 The new database will not yet be used by any production code.
 
-To `settings.py` add variables representing
-(1) the database you're currently using for the apps you're migrating, probably set to `None` (== main db),
-and (2) the database you _will_ be using.
-Add these variables to `COUCHDB_APPS` and the list of extra databases in `COUCH_SETTINGS_HELPER` in the manner described below.
-to start with:
+Add variables to `settings.py` representing (1) the database you're currently
+using for the apps you're migrating, probably set to `None` (== main db), and
+(2) the database you _will_ be using.
+
+Add the new db to the list of extra databases in `COUCH_SETTINGS_HELPER`.
 
 ```python
+# settings.py
 
 NEW_USERS_GROUPS_DB = 'users'  # the database we will be using
 USERS_GROUPS_DB = None  # the database to use (will later be changed to NEW_USERS_GROUPS_DB)
+...
+COUCH_SETTINGS_HELPER = CouchSettingsHelper(
+    COUCH_DATABASE,
+    COUCHDB_APPS,
+    [NEW_USERS_GROUPS_DB],  # list of secondary databases to register
+)
+```
+
+### Specify which database to read/write docs to
+You'll be migrating at module-level granularity, so replace the modules'
+entries in `COUCHDB_APPS` with a `('module_name', DB_TO_USE_FOR_MODULE)` tuple.
+```python
+# settings.py
 ...
 COUCHDB_APPS = [
 ...
@@ -49,15 +60,11 @@ COUCHDB_APPS = [
     ('users', USERS_GROUPS_DB),
 ...
 ]
-...
-COUCH_SETTINGS_HELPER = CouchSettingsHelper(COUCH_DATABASE, COUCHDB_APPS, [
-    NEW_USERS_GROUPS_DB,
-])
 ```
-We have some views which are meant to work on roughly all doc types.  Take a
-look at the views referenced in `corehq/couchapps/__init__.py` and make sure to
-register the appropriate views to your new database.
+Remember, `USERS_GROUPS_DB` will point to the main db until you flip it to the
+new one in a later step.
 
+### Register the migrator instance
 In `corehq/doctypemigrations/migrator_instances.py`, add an object representing your migration
 going off the following model:
 
@@ -79,6 +86,41 @@ users_migration = Migrator(
     )
 )
 ```
+You'll want to be deliberate about assembling the list of doc types, but as a
+starting point, you can try:
+```python
+import inspect
+from corehq.apps.app_manager import model
+for name, obj in inspect.getmembers(models):
+    if inspect.isclass(obj) and issubclass(obj, models.Document):
+        print name
+```
+(do make sure that you're including only doc types defined *in* the app)
+
+### Specify which databases need which views
+The migrator instance will take care of syncing documents to the new db, but
+you also need to control which views to start indexing in the new db. Enter
+`ExtraPreindexPlugin`.  In a module's `AppConfig`, you can register that
+module's design docs to additional databases:
+
+```python
+from corehq.preindex import ExtraPreindexPlugin
+from django.apps import AppConfig
+from django.conf import settings
+
+class UsersAppConfig(AppConfig):
+    name = 'corehq.apps.users'
+
+    def ready(self):
+        ExtraPreindexPlugin.register('users', __file__, settings.NEW_USERS_GROUPS_DB)
+```
+There, now the module's views will be in both the old database (as per the line
+in `COUCHDB_APPS`), and the new database.
+
+We have some views which aren't tied to modules, some of which are meant to
+work on roughly all doc types.  Take a look at `corehq/couchapps/__init__.py`
+and make sure to register the appropriate views to your new database.  That
+module's README should have some more context.
 
 ### Deploy migrator
 This can be merged whenever, as the new database will not be used until later, when you flip to it.
@@ -172,7 +214,8 @@ If you're running this after the blocking migration has already been added to th
 
 ## Flipping the db
 
-Once you're confident the two databases are in sync and sync'ing in realtime, you'll need to make two commits.
+Once you're confident the two databases are in sync and sync'ing in realtime,
+you'll need to make some commits.
 
 ### Commit 1: Add a blocking django migration
 Add a blocking django migration to keep anyone from deploying before migrating:
@@ -202,12 +245,24 @@ And then actually do the flip; edit `settings.py`:
 + USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 ```
 
+### Commit 3 [maybe]: Use new views
+If there are views with different names in the old and new dbs, your flip PR
+should also update those names.
+
+### Commit 4 [maybe]: Flip pillowtop and/or elasticsearch
+If a doctype you're migrating is read by pillowtop, you'll need to reset the
+checkpoint after the merge.  If it's an elasticsearch pillow, you can instead
+trigger an index rebuild by updating the index name in the appropriate mapping
+file.
+
+### Do it!
 PR, and merge it. Then while `--continuous` is still running, deploy it.
 
 Once deploy is complete, kill the `--continuous` command with `^C`.
 
 ## Cleanup
 
+### Delete documents from old db
 After you're confident in the change and stability of the site,
 it's time to delete the old documents still in the source db.
 

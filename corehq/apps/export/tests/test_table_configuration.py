@@ -37,7 +37,7 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
 
     def test_repeat(self):
         table_configuration = TableConfiguration(
-            repeat_path=['form', 'repeat1'],
+            path=['form', 'repeat1'],
             columns=[
                 ExportColumn(
                     item=ScalarItem(
@@ -61,7 +61,7 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
 
     def test_double_repeat(self):
         table_configuration = TableConfiguration(
-            repeat_path=['form', 'repeat1', 'group1', 'repeat2'],
+            path=['form', 'repeat1', 'group1', 'repeat2'],
             columns=[
                 ExportColumn(
                     item=ScalarItem(
@@ -101,7 +101,7 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
         # TODO: It probably makes more sense to test columns independently...
         # I'm assuming they will have some sort of get_value(document) property
         table_configuration = TableConfiguration(
-            repeat_path=['form'],
+            path=['form'],
             columns=[
                 SplitExportColumn(
                     item=MultipleChoiceItem(

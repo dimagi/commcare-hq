@@ -4,13 +4,20 @@ from corehq.apps.userreports.exceptions import BadSpecError
 
 EQUAL = lambda input, reference: input == reference
 NOT_EQUAL = lambda input, reference: input != reference
-IN = lambda input, reference_list: input in reference_list
 IN_MULTISELECT = lambda input, reference: reference in (input or '').split(' ')
 ANY_IN_MULTISELECT = lambda input, reference: any([subval in (input or '').split(' ') for subval in reference])
 LESS_THAN = lambda input, reference: input < reference
 LESS_THAN_EQUAL = lambda input, reference: input <= reference
 GREATER_THAN = lambda input, reference: input > reference
 GREATER_THAN_EQUAL = lambda input, reference: input >= reference
+
+
+def IN(input, reference_list):
+    try:
+        return input in reference_list
+    except TypeError:
+        return False
+
 
 OPERATORS = {
     'eq': EQUAL,

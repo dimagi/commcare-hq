@@ -185,7 +185,7 @@ class LocationTypesView(BaseLocationView):
         for loc_type in hierarchy:
             mk_loctype(**loc_type)
 
-        return self.get(request, *args, **kwargs)
+        return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
 
     def remove_old_location_types(self, pks):
         existing_pks = (LocationType.objects.filter(domain=self.domain)
