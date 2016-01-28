@@ -14,7 +14,6 @@
         "base_item_expression": {},
         "configured_filter": {
             "expression": {
-                "datatype": null,
                 "property_name": "xmlns",
                 "type": "property_name"
             },
@@ -33,14 +32,12 @@
             "column_id": "country",
             "expression": {
               "value_expression": {
-                "datatype": null,
                 "type": "property_name",
                 "property_name": "country"
               },
               "type": "related_doc",
               "related_doc_type": "CommCareCase",
               "doc_id_expression": {
-                "datatype": null,
                 "type": "property_path",
                 "property_path": ["form", "case", "@case_id"]
               }
@@ -56,7 +53,6 @@
             "column_id": "level_1",
             "expression": {
               "value_expression": {
-                "datatype": null,
                 "type": "property_name",
                 "property_name": "level_1_name"
               },
@@ -79,7 +75,6 @@
             "column_id": "level_2",
             "expression": {
               "value_expression": {
-                "datatype": null,
                 "type": "property_name",
                 "property_name": "level_2_name"
               },
@@ -102,7 +97,6 @@
             "column_id": "level_3",
             "expression": {
               "value_expression": {
-                "datatype": null,
                 "type": "property_name",
                 "property_name": "level_3_name"
               },
@@ -125,7 +119,6 @@
             "column_id": "level_4",
             "expression": {
               "value_expression": {
-                "datatype": null,
                 "type": "property_name",
                 "property_name": "level_4_name"
               },
@@ -148,7 +141,6 @@
             "column_id": "worker_code",
             "expression": {
               "value_expression": {
-                "datatype": null,
                 "type": "property_name",
                 "property_name": "external_id"
               },
@@ -311,14 +303,12 @@
                   "type": "switch",
                   "switch_on": {
                     "value_expression": {
-                      "datatype": null,
                       "type": "property_name",
                       "property_name": "level_1_name"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
                     "doc_id_expression": {
-                      "datatype": null,
                       "type": "property_path",
                       "property_path": ["form", "case", "@case_id"]
                     }
@@ -333,14 +323,12 @@
                   "type": "switch",
                   "switch_on": {
                     "value_expression": {
-                      "datatype": null,
                       "type": "property_name",
                       "property_name": "level_1_name"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
                     "doc_id_expression": {
-                      "datatype": null,
                       "type": "property_path",
                       "property_path": ["form", "case", "@case_id"]
                     }
@@ -358,14 +346,12 @@
                   "type": "switch",
                   "switch_on": {
                     "value_expression": {
-                      "datatype": null,
                       "type": "property_name",
                       "property_name": "level_1_data"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
                     "doc_id_expression": {
-                      "datatype": null,
                       "type": "property_path",
                       "property_path": ["form", "case", "@case_id"]
                     }
@@ -384,14 +370,12 @@
                   "type": "switch",
                   "switch_on": {
                     "value_expression": {
-                      "datatype": null,
                       "type": "property_name",
                       "property_name": "level_1_data"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
                     "doc_id_expression": {
-                      "datatype": null,
                       "type": "property_path",
                       "property_path": ["form", "case", "@case_id"]
                     }
@@ -401,14 +385,12 @@
               "type": "switch",
               "switch_on": {
                 "value_expression": {
-                  "datatype": null,
                   "type": "property_name",
                   "property_name": "country"
                 },
                 "type": "related_doc",
                 "related_doc_type": "CommCareCase",
                 "doc_id_expression": {
-                  "datatype": null,
                   "type": "property_path",
                   "property_path": ["form", "case", "@case_id"]
                 }
@@ -434,14 +416,12 @@
                   "type": "switch",
                   "switch_on": {
                     "value_expression": {
-                      "datatype": null,
                       "type": "property_name",
                       "property_name": "level_2_name"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
                     "doc_id_expression": {
-                      "datatype": null,
                       "type": "property_path",
                       "property_path": ["form", "case", "@case_id"]
                     }
@@ -475,14 +455,12 @@
                   "type": "switch",
                   "switch_on": {
                     "value_expression": {
-                      "datatype": null,
                       "type": "property_name",
                       "property_name": "level_2_name"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
                     "doc_id_expression": {
-                      "datatype": null,
                       "type": "property_path",
                       "property_path": ["form", "case", "@case_id"]
                     }
@@ -534,14 +512,12 @@
                   "type": "switch",
                   "switch_on": {
                     "value_expression": {
-                      "datatype": null,
                       "type": "property_name",
                       "property_name": "level_2_data"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
                     "doc_id_expression": {
-                      "datatype": null,
                       "type": "property_path",
                       "property_path": ["form", "case", "@case_id"]
                     }
@@ -556,14 +532,12 @@
                   "type": "switch",
                   "switch_on": {
                     "value_expression": {
-                      "datatype": null,
                       "type": "property_name",
                       "property_name": "level_2_data"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
                     "doc_id_expression": {
-                      "datatype": null,
                       "type": "property_path",
                       "property_path": ["form", "case", "@case_id"]
                     }
@@ -590,14 +564,12 @@
                   "type": "switch",
                   "switch_on": {
                     "value_expression": {
-                      "datatype": null,
                       "type": "property_name",
                       "property_name": "level_2_name"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
                     "doc_id_expression": {
-                      "datatype": null,
                       "type": "property_path",
                       "property_path": ["form", "case", "@case_id"]
                     }
@@ -607,14 +579,12 @@
               "type": "switch",
               "switch_on": {
                 "value_expression": {
-                  "datatype": null,
                   "type": "property_name",
                   "property_name": "country"
                 },
                 "type": "related_doc",
                 "related_doc_type": "CommCareCase",
                 "doc_id_expression": {
-                  "datatype": null,
                   "type": "property_path",
                   "property_path": ["form", "case", "@case_id"]
                 }
@@ -645,14 +615,12 @@
                   "type": "switch",
                   "switch_on": {
                     "value_expression": {
-                      "datatype": null,
                       "type": "property_name",
                       "property_name": "level_3_name"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
                     "doc_id_expression": {
-                      "datatype": null,
                       "type": "property_path",
                       "property_path": ["form", "case", "@case_id"]
                     }
@@ -701,14 +669,12 @@
                   "type": "switch",
                   "switch_on": {
                     "value_expression": {
-                      "datatype": null,
                       "type": "property_name",
                       "property_name": "level_3_name"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
                     "doc_id_expression": {
-                      "datatype": null,
                       "type": "property_path",
                       "property_path": ["form", "case", "@case_id"]
                     }
@@ -786,14 +752,12 @@
                   "type": "switch",
                   "switch_on": {
                     "value_expression": {
-                      "datatype": null,
                       "type": "property_name",
                       "property_name": "level_3_name"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
                     "doc_id_expression": {
-                      "datatype": null,
                       "type": "property_path",
                       "property_path": ["form", "case", "@case_id"]
                     }
@@ -839,14 +803,12 @@
                       },
                       "switch_on": {
                         "value_expression": {
-                          "datatype": null,
                           "type": "property_name",
                           "property_name": "level_2_name"
                         },
                         "type": "related_doc",
                         "related_doc_type": "CommCareCase",
                         "doc_id_expression": {
-                          "datatype": null,
                           "type": "property_path",
                           "property_path": ["form", "case", "@case_id"]
                         }
@@ -935,14 +897,12 @@
                   "type": "switch",
                   "switch_on": {
                     "value_expression": {
-                      "datatype": null,
                       "type": "property_name",
                       "property_name": "level_3_name"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
                     "doc_id_expression": {
-                      "datatype": null,
                       "type": "property_path",
                       "property_path": ["form", "case", "@case_id"]
                     }
@@ -952,14 +912,12 @@
               "type": "switch",
               "switch_on": {
                 "value_expression": {
-                  "datatype": null,
                   "type": "property_name",
                   "property_name": "country"
                 },
                 "type": "related_doc",
                 "related_doc_type": "CommCareCase",
                 "doc_id_expression": {
-                  "datatype": null,
                   "type": "property_path",
                   "property_path": ["form", "case", "@case_id"]
                 }
@@ -988,14 +946,12 @@
               "type": "switch",
               "switch_on": {
                 "value_expression": {
-                  "datatype": null,
                   "type": "property_name",
                   "property_name": "country"
                 },
                 "type": "related_doc",
                 "related_doc_type": "CommCareCase",
                 "doc_id_expression": {
-                  "datatype": null,
                   "type": "property_path",
                   "property_path": ["form", "case", "@case_id"]
                 }
