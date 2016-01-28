@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ev
 
-keytool -genkey \
+/usr/lib/jvm/jdk1.7.0/bin/keytool -genkey \
   -keyalg RSA \
   -keysize 2048 \
   -validity 10000 \
