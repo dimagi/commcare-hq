@@ -11,6 +11,7 @@ from corehq.apps.export.models import (
 class TestExportInstanceGeneration(SimpleTestCase):
 
     def setUp(self):
+        self.app_id = '1234'
         self.schema = ExportDataSchema(
             group_schemas=[
                 ExportGroupSchema(
@@ -19,10 +20,10 @@ class TestExportInstanceGeneration(SimpleTestCase):
                         ExportItem(
                             path=['data', 'question1'],
                             label='Question 1',
-                            last_occurrence=3,
+                            last_occurrence={self.app_id: 3},
                         )
                     ],
-                    last_occurrence=3,
+                    last_occurrence={self.app_id: 3},
                 ),
                 ExportGroupSchema(
                     path=['data', 'repeat'],
@@ -30,10 +31,10 @@ class TestExportInstanceGeneration(SimpleTestCase):
                         ExportItem(
                             path=['data', 'repeat', 'q2'],
                             label='Question 2',
-                            last_occurrence=2,
+                            last_occurrence={self.app_id: 2},
                         )
                     ],
-                    last_occurrence=2,
+                    last_occurrence={self.app_id: 2},
                 ),
             ],
         )
