@@ -1,6 +1,6 @@
 web:
   build: ../
-  dockerfile: ./docker/Dockerfile_web
+  dockerfile: ./docker/Dockerfile_commcarehq
   working_dir: /mnt
   command: python manage.py runserver 0.0.0.0:8000
   volumes:

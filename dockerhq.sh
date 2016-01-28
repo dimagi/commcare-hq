@@ -1,14 +1,6 @@
 #!/usr/bin/env bash
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
-DOCKER_DATA_HOME=$XDG_DATA_HOME/dockerhq
-
-mkdir -p $DOCKER_DATA_HOME
-
-XDG_CACHE_HOME=${XDG_CACHE_HOME:-$HOME/.cache}
-
-PROJECT_NAME="commcarehq"
+. $(dirname "$0")/docker/_include.sh
 
 function usage() {
     case $1 in
@@ -54,10 +46,18 @@ function usage() {
     exit
 }
 
-function runner() {
-    sudo \
-        env DOCKER_DATA_HOME=$DOCKER_DATA_HOME XDG_CACHE_HOME=$XDG_CACHE_HOME\
-        docker-compose -f $DIR/docker/docker-compose-web.yml -p $PROJECT_NAME $@
+function rebuild() {
+    git_branch=$(git symbolic-ref HEAD 2>/dev/null)
+    git_branch=${git_branch#refs/heads/}
+
+    tag="$git_branch"
+    if [ "$git_branch" = "master" ]; then
+        tag="latest"
+    fi
+
+    web_runner down
+    sudo docker build -f $DOCKER_DIR/Dockerfile_commcarehq_base -t dimagi/commcarehq_base:$tag .
+    web_runner build
 }
 
 key="$1"
@@ -68,34 +68,32 @@ case $key in
         usage $@
         ;;
     services)
-        $DIR/docker/docker-services.sh $@
+        $DOCKER_DIR/docker-services.sh $@
         ;;
     migrate)
-        runner run web python manage.py migrate $@
+        web_runner run web python manage.py migrate $@
         ;;
     runserver)
-        runner up $@
+        web_runner up $@
         ;;
     shell)
-        runner run web python manage.py shell
+        web_runner run web python manage.py shell
         ;;
     bash)
-        runner run web bash
+        web_runner run web bash
         ;;
     rebuild)
-        $DIR/docker/docker-services.sh down
-        runner down
-        runner build
+        rebuild
         ;;
     bootstrap)
-        $DIR/docker/bootstrap.sh
+        $DOCKER_DIR/bootstrap.sh
         ;;
     ps)
-        runner ps
-        $DIR/docker/docker-services.sh ps
+        web_runner ps
+        $DOCKER_DIR/docker-services.sh ps
         ;;
     *)
-        runner $key $@
+        web_runner $key $@
         ;;
 esac
 exit
