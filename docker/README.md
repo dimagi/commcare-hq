@@ -35,7 +35,7 @@ Initial setup
     # DATABASES ..
     ```
     
-    See `docker/localsettings-docker.py` for an example.
+    See `docker/localsettings_docker.py` for an example.
 
     
 General usage
