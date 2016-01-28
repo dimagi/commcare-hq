@@ -39,12 +39,13 @@ jQuery(document).ready(function($) {
                 // data.aaData seems to hold the information. not sure though if this is the best way of getting the data.
                 // todo: confirm best way of getting the data.
                 data.aaData.forEach(function (project) {
-                    var countryNamesIndex = 5;
-                    if (project[countryNamesIndex].length < 1) {
+                    console.log(project);
+                    var countryNames = project[5];
+                    if (!Array.isArray(countryNames) || countryNames.length < 1) {
                         //todo: find a way to display projects with no listed deployment country. ignoring for now.
                     } else {
                         // this will use only the first listed country
-                        var countryName = project[countryNamesIndex][0].toLowerCase();
+                        var countryName = countryNames[0].toLowerCase();
                         if (!tempProjects[countryName]) {
                             tempProjects[countryName] = {};
                         }
@@ -53,6 +54,7 @@ jQuery(document).ready(function($) {
                             'Date Created': project[2].substring(0,10),
                             'Organization': project[3],
                             'Deployment Date': project[4].substring(0,10),
+                            'Deployment Countries': countryNames.join(', '),
                             '# Forms Submitted': project[13],
                             '# Active Mobile Workers': project[6],
                             'Notes': project[17],
@@ -132,7 +134,7 @@ jQuery(document).ready(function($) {
         that.getProjectInfoHtml = function (countryName, projectIdentifier) {
             countryName = countryName.toLowerCase();
             var projectInfo = (projectsByCountryThenName[countryName] || {})[projectIdentifier] || {};
-            var propertiesToShowLeft = ['Sector', 'Sub-Sector', 'Organization', 'Deployment Date',
+            var propertiesToShowLeft = ['Sector', 'Sub-Sector', 'Organization', 'Deployment Countries', 'Deployment Date',
                                     '# Active Mobile Workers', '# Forms Submitted'];
             var propertiesToShowRight = ['Notes'];
 
