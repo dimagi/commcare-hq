@@ -4,22 +4,30 @@ postgres:
   environment:
     POSTGRES_USER: commcarehq
     POSTGRES_PASSWORD: commcarehq
+  labels:
+    commcare.name: "postgres"
   expose:
     - "5432"
 
 couch:
   image: klaemo/couchdb:latest
+  labels:
+    commcare.name: "couch"
   expose:
     - "5984"
 
 redis:
   image: redis
+  labels:
+    commcare.name: "redis"
   expose:
     - "6379"
 
 elasticsearch:
   build: ../dockerfiles
   dockerfile: Dockerfile_es
+  labels:
+    commcare.name: "elastic"
   expose:
     - "9200"
 
@@ -34,6 +42,8 @@ web:
     - "8000"
   environment:
     PYTHONUSERBASE: /vendor
+  labels:
+    commcare.name: "web"
 
 moto:
   build: ../dockerfiles
@@ -41,6 +51,8 @@ moto:
   command: s3
   expose:
     - "5000"
+  labels:
+    commcare.name: "moto"
 
 kafka:
   image: spotify/kafka
@@ -49,3 +61,5 @@ kafka:
   expose:
     - "2181"
     - "9092"
+  labels:
+    commcare.name: "kafka"

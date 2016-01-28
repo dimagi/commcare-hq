@@ -61,7 +61,7 @@ function rebuild() {
 }
 
 function travis_runner() {
-    sudo docker-compose -f $DOCKER_DIR/compose/docker-compose-travis.yml $@
+    sudo docker-compose -f $DOCKER_DIR/compose/docker-compose-travis.yml -p travis $@
 }
 
 key="$1"

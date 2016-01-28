@@ -5,14 +5,21 @@ branches:
     - master
 env:
   matrix:
-    - MATRIX_TYPE=javascript BOWER=yes NODE=yes DOCKER=yes
+    - MATRIX_TYPE=javascript BOWER=yes NODE=yes
     # need node installs for app_manager.XpathValidatorTest
-    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunnerCatchall BOWER=yes NODE=yes DOCKER=yes
-    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunner0 DOCKER=yes
+    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunnerCatchall BOWER=yes NODE=yes
+    - MATRIX_TYPE=python TESTRUNNER=testrunner.GroupTestRunner0
+    - MATRIX_TYPE=python-sharded
 before_install:
+  - "cp .travis/localsettings.py localsettings.py"
   - "./dockerhq.sh travis build"
   - "./dockerhq.sh travis up -d"
   - "./dockerhq.sh travis ps"
-script: './dockerhq.sh travis run -e CUSTOMSETTINGS="docker.localsettings_docker_sharded" web_test python manage.py test form_processor'
+install:
+  - ".travis/matix-installs.sh"
+script: ".travis/matrix-runner.sh"
+after_success:
+  - coverage report
+  - coveralls
 services:
   - docker

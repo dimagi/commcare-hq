@@ -2,33 +2,17 @@ import os
 
 ####### Configuration for CommCareHQ Running on Travis-CI #####
 
-BASE_ADDRESS = '127.0.0.1:8000'
+from docker.dockersettings import *
 
-####### Database config. This assumes Postgres ####### 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'commcarehq',
-        'USER': 'postgres',
-        'PASSWORD': '',
-        'HOST': 'localhost',
-        'PORT': '5432',
-        'TEST': {
-            'SERIALIZE': False,  # https://docs.djangoproject.com/en/1.8/ref/settings/#serialize
-        },
-    }
-}
+USE_PARTITIONED_DATABASE = os.environ.get('USE_PARTITIONED_DATABASE', 'no') == 'yes'
+PARTITION_DATABASE_CONFIG = get_partitioned_database_config(USE_PARTITIONED_DATABASE)
 
-####### Couch Config ######
-COUCH_HTTPS = False
-COUCH_SERVER_ROOT = '127.0.0.1:5984'
-COUCH_USERNAME = ''
-COUCH_PASSWORD = ''
-COUCH_DATABASE_NAME = 'commcarehq'
+BASE_ADDRESS = '{}:8000'.format(os.environ.get('WEB_TEST_PORT_8000_TCP_ADDR', 'localhost'))
 
 ####### S3 mock server config ######
-# See also utils.sh setup_moto_s3_server
-S3_BLOB_DB_SETTINGS = {"url": "http://localhost:5000"}
+S3_BLOB_DB_SETTINGS = {"url": "http://moto:5000"}
+
+KAFKA_URL = 'kafka:9092'
 
 ######## Email setup ########
 # email settings: these ones are the custom hq ones
@@ -41,11 +25,10 @@ EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend'
 ####### Bitly ########
 
 BITLY_LOGIN = None
-BITLY_APIKEY = '*******'
 
 ####### Jar signing config ########
 
-_ROOT_DIR  = os.path.dirname(os.path.abspath(__file__))
+_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 JAR_SIGN = dict(
     jad_tool = os.path.join(_ROOT_DIR, "corehq", "apps", "app_manager", "JadTool.jar"),
     key_store = os.path.join(_ROOT_DIR, "InsecureTestingKeyStore"),
@@ -54,27 +37,11 @@ JAR_SIGN = dict(
     key_pass = "onetwothreefourfive",
 )
 
-# soil settings
-SOIL_DEFAULT_CACHE = "redis"
-
-redis_cache = {
-    'BACKEND': 'django_redis.cache.RedisCache',
-    'LOCATION': 'redis://127.0.0.1:6379/0',
-    'OPTIONS': {},
-}
-CACHES = {
-    'default': redis_cache,
-    'redis': redis_cache,
-}
-
 AUDIT_MODEL_SAVE = ['django.contrib.auth.models.User']
 
-ELASTICSEARCH_HOST = 'localhost' 
-ELASTICSEARCH_PORT = 9200
+AUDIT_ADMIN_VIEWS = False
 
-AUDIT_ADMIN_VIEWS=False
-
-SECRET_KEY='secrettravis'
+SECRET_KEY = 'secrettravis'
 
 # No logging
 LOGGING = {
@@ -104,10 +71,8 @@ LOGGING = {
     }
 }
 
-SOUTH_TESTS_MIGRATE = True
 PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = True
 PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
-
 
 ENABLE_PRELOGIN_SITE = True
 

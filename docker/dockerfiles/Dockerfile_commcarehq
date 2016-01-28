@@ -1,7 +1,7 @@
 FROM dimagi/commcarehq_base:latest
 
 WORKDIR /mnt
-ADD ./docker/entrypoint.sh /mnt/docker/entrypoint.sh
+COPY docker/entrypoint.sh /mnt/docker/entrypoint.sh
 
 ENTRYPOINT ["/mnt/docker/entrypoint.sh"]
 CMD ["help"]
