@@ -3,7 +3,11 @@ from collections import defaultdict, OrderedDict
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
 from corehq.apps.userreports.expressions.getters import NestedDictGetter
-from corehq.apps.app_manager.dbaccessors import get_built_app_ids_for_app_id, get_all_app_ids
+from corehq.apps.app_manager.dbaccessors import (
+    get_built_app_ids_for_app_id,
+    get_all_app_ids,
+    get_latest_built_app_ids_and_versions,
+)
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_case_properties
 from dimagi.utils.couch.database import iter_docs
@@ -70,7 +74,7 @@ class ExportColumn(DocumentSchema):
         return NestedDictGetter(path)(doc)
 
     @staticmethod
-    def create_default_from_export_item(group_schema_path, item, app_version):
+    def create_default_from_export_item(group_schema_path, item, build_ids_and_versions):
         """Creates a default ExportColumn given an item
 
         :param group_schema_path: The path of the group_schema that the item belongs to
@@ -79,7 +83,12 @@ class ExportColumn(DocumentSchema):
         :returns: An ExportColumn instance
         """
 
-        is_deleted = item.last_occurrence != app_version
+        is_deleted = True
+        for app_id, version in build_ids_and_versions.iteritems():
+            if item.last_occurrences.get(app_id) == version:
+                is_deleted = False
+                break
+
         is_main_table = group_schema_path == [None]
 
         return ExportColumn(
@@ -150,16 +159,21 @@ class ExportInstance(Document):
         app_label = 'export'
 
     @staticmethod
-    def generate_instance_from_schema(schema, app_version):
+    def generate_instance_from_schema(schema, domain, app_id=None):
         """Given an ExportDataSchema, this will generate an ExportInstance"""
         instance = ExportInstance()
 
+        build_ids_and_versions = get_latest_built_app_ids_and_versions(domain, app_id)
         for group_schema in schema.group_schemas:
             table = TableConfiguration(
                 path=group_schema.path
             )
             table.columns = map(
-                lambda item: ExportColumn.create_default_from_export_item(table.path, item, app_version),
+                lambda item: ExportColumn.create_default_from_export_item(
+                    table.path,
+                    item,
+                    build_ids_and_versions,
+                ),
                 group_schema.items,
             )
             instance.tables.append(table)
