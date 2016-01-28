@@ -115,7 +115,7 @@ class LocationsTest(CommTrackTest):
 
     def test_delete_closes_sp_cases(self):
         loc = make_loc('test_loc')
-        sp = make_supply_point(self.domain.name, loc)
+        sp = loc.linked_supply_point()
 
         self.assertFalse(sp.closed)
         loc.full_delete()
