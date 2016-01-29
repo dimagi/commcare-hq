@@ -23,7 +23,10 @@ from corehq.apps.export.const import (
     CASE_HISTORY_PROPERTIES,
     CASE_HISTORY_GROUP_NAME,
 )
-from corehq.apps.export.dbaccessors import get_latest_export_schema_id
+from corehq.apps.export.dbaccessors import (
+    get_latest_case_export_schema_id,
+    get_latest_form_export_schema_id,
+)
 
 
 class ExportItem(DocumentSchema):
@@ -336,7 +339,7 @@ class FormExportDataSchema(ExportDataSchema):
         :param unique_form_id: The unique identifier of the item being exported
         :returns: Returns a ExportDataSchema instance
         """
-        xform_schema_id = get_latest_export_schema_id(domain, 'FormExportDataSchema', form_xmlns)
+        xform_schema_id = get_latest_form_export_schema_id(domain, app_id, form_xmlns)
         if xform_schema_id:
             current_xform_schema = FormExportDataSchema.get(xform_schema_id)
         else:
@@ -409,10 +412,15 @@ class CaseExportDataSchema(ExportDataSchema):
         """
 
         app_build_ids = get_all_app_ids(domain)
-        current_case_schema = CaseExportDataSchema(
-            domain=domain,
-            case_type=case_type,
-        )
+        case_schema_id = get_latest_case_export_schema_id(domain, case_type)
+
+        if case_schema_id:
+            current_case_schema = CaseExportDataSchema.get(case_schema_id)
+        else:
+            current_case_schema = CaseExportDataSchema(
+                domain=domain,
+                case_type=case_type,
+            )
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             app = Application.wrap(app_doc)
