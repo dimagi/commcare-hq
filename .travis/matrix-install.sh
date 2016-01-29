@@ -9,7 +9,6 @@ if [ "${MATRIX_TYPE}" = "python" ] || [ "${MATRIX_TYPE}" = "python-sharded" ]; t
 
     sleep 10  # kafka is slow to start up
     setup_kafka
-    setup_moto
     travis_runner web_test .travis/misc-setup.sh
 
 elif [ "${MATRIX_TYPE}" = "javascript" ]; then
