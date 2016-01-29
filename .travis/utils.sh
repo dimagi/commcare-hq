@@ -6,7 +6,12 @@ travis_runner() {
     service=$1
     shift
     args=$@
-    $TRAVIS_DIR/../dockerhq.sh travis run --rm $service $args
+
+    flavour='travis'
+    if [ "${MATRIX_TYPE}" = "javascript" ]; then
+        flavour='travis-js'
+    fi
+    $TRAVIS_DIR/../dockerhq.sh $flavour run --rm $service $args
 }
 
 get_container_id() {

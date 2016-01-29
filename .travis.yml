@@ -12,12 +12,10 @@ env:
     - MATRIX_TYPE=python-sharded
 before_install:
   - "cp .travis/localsettings.py localsettings.py"
-  - "./dockerhq.sh travis build"
-  - "./dockerhq.sh travis up -d"
-  - "./dockerhq.sh travis ps"
+  - ".travis/matrix-before_install.sh"
 install:
-  - ".travis/matrix-installs.sh"
-script: ".travis/matrix-runner.sh"
+  - ".travis/matrix-install.sh"
+script: ".travis/matrix-script.sh"
 after_success:
   - coverage report
   - coveralls

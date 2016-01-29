@@ -64,6 +64,11 @@ function travis_runner() {
     sudo docker-compose -f $DOCKER_DIR/compose/docker-compose-travis.yml -p travis $@
 }
 
+function travis_js_runner() {
+    sudo docker-compose -f $DOCKER_DIR/compose/docker-compose-travis-js.yml -p travis $@
+}
+
+
 key="$1"
 shift
 
@@ -76,6 +81,9 @@ case $key in
         ;;
     travis)
         travis_runner $@
+        ;;
+    travis-js)
+        travis_js_runner $@
         ;;
     migrate)
         web_runner run web python manage.py migrate $@

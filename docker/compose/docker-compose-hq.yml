@@ -4,6 +4,8 @@ web:
     service: web
   volumes:
     - ${DOCKER_DATA_HOME}/sharedfiles:/sharedfiles
+  environment:
+    DEPENDENT_SERVICES: "COUCH POSTGRES REDIS ELASTICSEARCH"
   external_links:
     - hqservice_postgres_1:postgres
     - hqservice_couch_1:couch

@@ -20,7 +20,6 @@ RUN pip install \
 
 WORKDIR /mnt
 
-ENV PATH=/vendor/bin:$PATH
 ADD docker/entrypoint.sh /mnt/docker/entrypoint.sh
 
 ENTRYPOINT ["/mnt/docker/entrypoint.sh"]

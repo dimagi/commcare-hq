@@ -4,14 +4,11 @@ web_test:
     service: web
   dockerfile: ./docker/dockerfiles/Dockerfile_commcarehq_test
   environment:
-    DEPENDENT_SERVICES: "COUCH POSTGRES REDIS KAFKA ELASTICSEARCH MOTO"
+    DEPENDENT_SERVICES: "COUCH POSTGRES REDIS"
   links:
     - postgres_test:postgres
     - couch_test:couch
     - redis_test:redis
-    - elasticsearch_test:elasticsearch
-    - moto:moto
-    - kafka:kafka
 
 postgres_test:
   extends:
@@ -31,23 +28,6 @@ redis_test:
   extends:
     file: docker-compose-base.yml
     service: redis
-
-elasticsearch_test:
-  extends:
-    file: docker-compose-base.yml
-    service: elasticsearch
-  volumes_from:
-    - data_test
-
-moto:
-  extends:
-    file: docker-compose-base.yml
-    service: moto
-
-kafka:
-  extends:
-    file: docker-compose-base.yml
-    service: kafka
 
 data_test:
   image: redis

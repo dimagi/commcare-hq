@@ -6,9 +6,11 @@ source .travis/utils.sh
 echo "Matrix params: MATRIX_TYPE=${MATRIX_TYPE:?Empty value for MATRIX_TYPE}, BOWER=${BOWER:-no}"
 
 if [ "${MATRIX_TYPE}" = "python" ] || [ "${MATRIX_TYPE}" = "python-sharded" ]; then
+
     sleep 10  # kafka is slow to start up
     setup_kafka
     travis_runner web_test .travis/misc-setup.sh
+
 elif [ "${MATRIX_TYPE}" = "javascript" ]; then
     echo 'Done'
 else
