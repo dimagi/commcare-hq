@@ -338,9 +338,9 @@ class FormExportDataSchema(ExportDataSchema):
         """
         xform_schema_id = get_latest_export_schema_id(domain, 'FormExportDataSchema', form_xmlns)
         if xform_schema_id:
-            all_xform_schema = FormExportDataSchema.get(xform_schema_id)
+            current_xform_schema = FormExportDataSchema.get(xform_schema_id)
         else:
-            all_xform_schema = FormExportDataSchema(
+            current_xform_schema = FormExportDataSchema(
                 domain=domain,
                 app_id=app_id,
                 xmlns=form_xmlns,
@@ -349,7 +349,7 @@ class FormExportDataSchema(ExportDataSchema):
         app_build_ids = get_built_app_ids_for_app_id(
             domain,
             app_id,
-            all_xform_schema.last_updated.get(app_id)
+            current_xform_schema.last_updated.get(app_id)
         )
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
@@ -364,10 +364,10 @@ class FormExportDataSchema(ExportDataSchema):
                 app.copy_of,
                 app.version,
             )
-            all_xform_schema = FormExportDataSchema._merge_schemas(all_xform_schema, xform_schema)
-            all_xform_schema.record_update(app.copy_of, app.version)
+            current_xform_schema = FormExportDataSchema._merge_schemas(current_xform_schema, xform_schema)
+            current_xform_schema.record_update(app.copy_of, app.version)
 
-        return all_xform_schema
+        return current_xform_schema
 
     @staticmethod
     def _generate_schema_from_xform(xform, langs, app_id, app_version):
@@ -409,7 +409,7 @@ class CaseExportDataSchema(ExportDataSchema):
         """
 
         app_build_ids = get_all_app_ids(domain)
-        all_case_schema = CaseExportDataSchema(
+        current_case_schema = CaseExportDataSchema(
             domain=domain,
             case_type=case_type,
         )
@@ -432,15 +432,15 @@ class CaseExportDataSchema(ExportDataSchema):
                 app.version,
             )
 
-            all_case_schema = CaseExportDataSchema._merge_schemas(
-                all_case_schema,
+            current_case_schema = CaseExportDataSchema._merge_schemas(
+                current_case_schema,
                 case_schema,
                 case_history_schema
             )
 
-            all_case_schema.record_update(app.copy_of, app.version)
+            current_case_schema.record_update(app.copy_of, app.version)
 
-        return all_case_schema
+        return current_case_schema
 
     @staticmethod
     def _generate_schema_from_case_property_mapping(case_property_mapping, app_id, app_version):
