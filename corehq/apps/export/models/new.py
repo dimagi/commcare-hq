@@ -6,7 +6,7 @@ from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, Dict
 from corehq.apps.userreports.expressions.getters import NestedDictGetter
 from corehq.apps.app_manager.dbaccessors import (
     get_built_app_ids_for_app_id,
-    get_all_app_ids,
+    get_all_built_app_ids_and_versions,
     get_latest_built_app_ids_and_versions,
 )
 from corehq.apps.app_manager.models import Application
@@ -407,6 +407,18 @@ class CaseExportDataSchema(ExportDataSchema):
     case_type = StringProperty()
 
     @staticmethod
+    def _get_app_build_ids_to_process(domain, schema):
+        app_build_verions = get_all_built_app_ids_and_versions(domain)
+        # Filter by current app id
+        app_build_verions = filter(
+            lambda app_build_version:
+                schema.last_app_versions.get(app_build_version.app_id, 0) <= app_build_version.version,
+            app_build_verions
+        )
+        # Map to all build ids
+        return map(lambda app_build_version: app_build_version.build_id, app_build_verions)
+
+    @staticmethod
     def generate_schema_from_builds(domain, case_type):
         """Builds a schema from Application builds for a given identifier
 
@@ -415,13 +427,14 @@ class CaseExportDataSchema(ExportDataSchema):
         :returns: Returns a CaseExportDataSchema instance
         """
 
-        app_build_ids = get_all_app_ids(domain)
         case_schema_id = get_latest_case_export_schema_id(domain, case_type)
 
         if case_schema_id:
             current_case_schema = CaseExportDataSchema.get(case_schema_id)
         else:
             current_case_schema = CaseExportDataSchema()
+
+        app_build_ids = CaseExportDataSchema._get_app_build_ids_to_process(domain, current_case_schema)
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             app = Application.wrap(app_doc)
