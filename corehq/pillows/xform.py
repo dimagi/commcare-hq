@@ -14,7 +14,7 @@ from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoin
     PillowCheckpointEventHandler
 from pillowtop.listener import send_to_elasticsearch
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processor import PillowProcessor
+from pillowtop.processors import PillowProcessor
 
 
 UNKNOWN_VERSION = 'XXX'

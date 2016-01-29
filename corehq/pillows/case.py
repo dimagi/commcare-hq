@@ -13,7 +13,7 @@ from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoin
 from pillowtop.es_utils import doc_exists
 from pillowtop.listener import lock_manager, send_to_elasticsearch
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processor import PillowProcessor
+from pillowtop.processors import PillowProcessor
 
 
 UNKNOWN_DOMAIN = "__nodomain__"
