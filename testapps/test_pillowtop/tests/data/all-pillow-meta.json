@@ -579,6 +579,19 @@
         "include_docs": false,
         "name": "UnknownUsersPillow"
     },
+    "UserCacheInvalidatePillow": {
+        "advertised_name": "corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq",
+        "change_feed_type": "CouchChangeFeed",
+        "checkpoint_id": "pillowtop_corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq",
+        "couch_filter": "hqadmin/not_case_form",
+        "couchdb_type": "Database",
+        "couchdb_uri": "http://127.0.0.1:5984/test_commcarehq__users",
+        "document_class": null,
+        "extra_args": {},
+        "full_class_name": "corehq.pillows.cacheinvalidate.CacheInvalidatePillow",
+        "include_docs": true,
+        "name": "UserCacheInvalidatePillow"
+    },
     "UserGroupsDbKafkaPillow": {
         "advertised_name": "UserGroupsDbKafkaPillow",
         "change_feed_type": "CouchChangeFeed",
