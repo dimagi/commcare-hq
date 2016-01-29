@@ -195,8 +195,7 @@ class Option(DocumentSchema):
     """
     This object represents a multiple choice question option.
 
-    last_occurrences is an app build number representing the last version of the app in
-    which this option was present.
+    last_occurrences is a dictionary of app_ids mapped to the last version that the options was present.
     """
     last_occurrences = DictProperty()
     value = StringProperty()
