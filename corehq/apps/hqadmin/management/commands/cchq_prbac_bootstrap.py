@@ -129,7 +129,6 @@ class Command(BaseCommand):
         Role(slug=privileges.CLOUDCARE, name='Web-based Applications (CloudCare)', description=''),
         Role(slug=privileges.CUSTOM_BRANDING, name='Custom Branding', description=''),
         Role(slug=privileges.ACTIVE_DATA_MANAGEMENT, name='Active Data Management', description=''),
-        Role(slug=privileges.CROSS_PROJECT_REPORTS, name='Cross-Project Reports', description=''),
         Role(slug=privileges.CUSTOM_REPORTS, name='Custom Reports', description=''),
         Role(slug=privileges.ROLE_BASED_ACCESS, name='Role-based Access', description=''),
         Role(slug=privileges.OUTBOUND_SMS, name='Outbound SMS',
@@ -173,7 +172,6 @@ class Command(BaseCommand):
     standard_plan_features = community_plan_features + [
         privileges.API_ACCESS,
         privileges.LOOKUP_TABLES,
-        privileges.CROSS_PROJECT_REPORTS,
         privileges.OUTBOUND_SMS,
         privileges.REMINDERS_FRAMEWORK,
         privileges.CUSTOM_SMS_GATEWAY,
