@@ -248,7 +248,7 @@ def get_all_app_ids(domain):
 def get_all_built_app_ids_and_versions(domain):
     """
     Returns a list of all the app_ids ever built and their version.
-    [[app_id, build_id, version], ...]
+    [[AppBuildVersion(app_id, build_id, version)], ...]
     """
     from .models import Application
     results = Application.get_db().view(
