@@ -19,7 +19,7 @@ from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING,
 from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
     MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG,
     MSG_REGISTRATION_WELCOME_CASE, MSG_REGISTRATION_WELCOME_MOBILE_WORKER)
-from corehq.apps.sms.mixin import (MobileBackend, VerifiedNumber, SMSBackend,
+from corehq.apps.sms.mixin import (VerifiedNumber,
     BadSMSConfigException)
 from corehq.apps.domain.models import Domain
 from datetime import datetime
@@ -212,8 +212,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
     """send sms using a specific backend
 
     msg - outbound message object
-    backend - MobileBackend object to use for sending; if None, use
-      msg.outbound_backend
+    backend - backend to use for sending; if None, msg.outbound_backend is used
     orig_phone_number - the originating phone number to use when sending; this
       is sent in if the backend supports load balancing
     """

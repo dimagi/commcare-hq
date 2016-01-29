@@ -64,6 +64,7 @@ branches:
   - b3-reports-messaging  # Biyeun 1/21
   - finish-two-factor # Cal 1/21
   - lazy-jar # Nick P 1/25
+  - kill-cross_project_reports-privilege # Nick P
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

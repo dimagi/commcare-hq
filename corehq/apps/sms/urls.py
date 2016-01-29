@@ -7,7 +7,11 @@ from corehq.apps.sms.views import (
     SMSSettingsView,
     ManageRegistrationInvitationsView,
     InvitationAppInfoView,
-    ComposeMessageView)
+    ComposeMessageView,
+    GlobalSmsGatewayListView,
+    AddGlobalGatewayView,
+    EditGlobalGatewayView,
+    GlobalBackendMap)
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 
 urlpatterns = patterns('corehq.apps.sms.views',
@@ -22,10 +26,10 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^add_forwarding_rule/$', 'add_forwarding_rule', name='add_forwarding_rule'),
     url(r'^edit_forwarding_rule/(?P<forwarding_rule_id>[\w-]+)/$', 'add_forwarding_rule', name='edit_forwarding_rule'),
     url(r'^delete_forwarding_rule/(?P<forwarding_rule_id>[\w-]+)/$', 'delete_forwarding_rule', name='delete_forwarding_rule'),
-    url(r'^add_gateway/(?P<backend_class_name>[\w-]+)/$',
+    url(r'^add_gateway/(?P<hq_api_id>[\w-]+)/$',
         AddDomainGatewayView.as_view(), name=AddDomainGatewayView.urlname
     ),
-    url(r'^edit_gateway/(?P<backend_class_name>[\w-]+)/(?P<backend_id>[\w-]+)/$',
+    url(r'^edit_gateway/(?P<hq_api_id>[\w-]+)/(?P<backend_id>[\w-]+)/$',
         EditDomainGatewayView.as_view(), name=EditDomainGatewayView.urlname
     ),
     url(r'^gateways/$', DomainSmsGatewayListView.as_view(), name=DomainSmsGatewayListView.urlname),
@@ -48,12 +52,13 @@ urlpatterns = patterns('corehq.apps.sms.views',
 )
 
 sms_admin_interface_urls = patterns('corehq.apps.sms.views',
-    url(r'^$', 'default_sms_admin_interface', name="default_sms_admin_interface"),
-    url(r'^backends/$', 'list_backends', name="list_backends"),
-    url(r'^add_backend/(?P<backend_class_name>[\w-]+)/$', 'add_backend', name="add_backend"),
-    url(r'^edit_backend/(?P<backend_class_name>[\w-]+)/(?P<backend_id>[\w-]+)/$', 'add_backend', name='edit_backend'),
-    url(r'^delete_backend/(?P<backend_id>[\w-]+)/$', 'delete_backend', name='delete_backend'),
-    url(r'^global_backend_map/$', 'global_backend_map', name='global_backend_map'),
+    url(r'^$', GlobalSmsGatewayListView.as_view(), name='default_sms_admin_interface'),
+    url(r'^global_gateways/$', GlobalSmsGatewayListView.as_view(), name=GlobalSmsGatewayListView.urlname),
+    url(r'^add_global_gateway/(?P<hq_api_id>[\w-]+)/$', AddGlobalGatewayView.as_view(),
+        name=AddGlobalGatewayView.urlname),
+    url(r'^edit_global_gateway/(?P<hq_api_id>[\w-]+)/(?P<backend_id>[\w-]+)/$',
+        EditGlobalGatewayView.as_view(), name=EditGlobalGatewayView.urlname),
+    url(r'^global_backend_map/$', GlobalBackendMap.as_view(), name=GlobalBackendMap.urlname),
     url(SMSAdminInterfaceDispatcher.pattern(), SMSAdminInterfaceDispatcher.as_view(),
         name=SMSAdminInterfaceDispatcher.name()),
 )

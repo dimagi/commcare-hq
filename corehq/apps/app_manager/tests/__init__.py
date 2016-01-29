@@ -29,6 +29,7 @@ try:
     from corehq.apps.app_manager.tests.test_models import *
     from corehq.apps.app_manager.tests.test_profile import *
     from corehq.apps.app_manager.tests.test_report_config import *
+    from corehq.apps.app_manager.tests.test_report_fixtures_provider import *
     from corehq.apps.app_manager.tests.test_schedule import *
     from corehq.apps.app_manager.tests.test_suite import *
     from corehq.apps.app_manager.tests.test_suite_form_filter_errors import *
