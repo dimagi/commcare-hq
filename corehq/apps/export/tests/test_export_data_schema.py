@@ -1,5 +1,5 @@
 import os
-from mock import Mock, patch
+from mock import patch
 
 from django.test import SimpleTestCase, TestCase
 from dimagi.utils.couch.database import safe_delete
