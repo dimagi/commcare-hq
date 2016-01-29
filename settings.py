@@ -1094,7 +1094,7 @@ NEW_DOMAINS_DB = 'domains'
 DOMAINS_DB = NEW_DOMAINS_DB
 
 NEW_APPS_DB = 'apps'
-APPS_DB = None
+APPS_DB = NEW_APPS_DB
 
 SYNCLOGS_DB = 'synclogs'
 
