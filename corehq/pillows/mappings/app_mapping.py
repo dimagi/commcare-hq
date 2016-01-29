@@ -1,6 +1,6 @@
 from corehq.util.elastic import es_index
 
-APP_INDEX = es_index("hqapps_2016-01-05_1821")
+APP_INDEX = es_index("hqapps_2016-01-29_0013")
 APP_MAPPING={'_meta': {'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
