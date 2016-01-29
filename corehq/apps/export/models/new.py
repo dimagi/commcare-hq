@@ -265,7 +265,7 @@ class ExportDataSchema(Document):
     group_schemas = SchemaListProperty(ExportGroupSchema)
 
     # A map of app_id to app_version. Represents the last time it saw an app and at what version
-    last_updated = DictProperty()
+    last_app_versions = DictProperty()
     datatype_mapping = defaultdict(lambda: ScalarItem, {
         'MSelect': MultipleChoiceItem,
     })
@@ -319,8 +319,8 @@ class ExportDataSchema(Document):
         return schema
 
     def record_update(self, app_id, app_version):
-        self.last_updated[app_id] = max(
-            self.last_updated.get(app_id, 0),
+        self.last_app_versions[app_id] = max(
+            self.last_app_versions.get(app_id, 0),
             app_version,
         )
 
@@ -352,7 +352,7 @@ class FormExportDataSchema(ExportDataSchema):
         app_build_ids = get_built_app_ids_for_app_id(
             domain,
             app_id,
-            current_xform_schema.last_updated.get(app_id)
+            current_xform_schema.last_app_versions.get(app_id)
         )
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
