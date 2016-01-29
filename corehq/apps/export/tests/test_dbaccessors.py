@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from django.test import TestCase
 
 from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema
@@ -21,10 +22,16 @@ class TestExportDBAccessors(TestCase):
             app_id=cls.app_id,
             xmlns=cls.xmlns,
         )
-        cls.form_schema_decoy = FormExportDataSchema(
-            domain='decoy',
+        cls.form_schema_other = FormExportDataSchema(
+            domain='other',
             app_id=cls.app_id,
             xmlns=cls.xmlns,
+        )
+        cls.form_schema_before = FormExportDataSchema(
+            domain=cls.domain,
+            app_id=cls.app_id,
+            xmlns=cls.xmlns,
+            created_on=datetime.utcnow() - timedelta(1)
         )
 
         cls.case_schema = CaseExportDataSchema(
@@ -32,16 +39,23 @@ class TestExportDBAccessors(TestCase):
             case_type=cls.case_type,
         )
 
-        cls.case_schema_decoy = CaseExportDataSchema(
+        cls.case_schema_other = CaseExportDataSchema(
             domain=cls.domain,
-            case_type='decoy',
+            case_type='other',
+        )
+        cls.case_schema_before = FormExportDataSchema(
+            domain=cls.domain,
+            case_type=cls.case_type,
+            created_on=datetime.utcnow() - timedelta(1)
         )
 
         cls.schemas = [
             cls.form_schema,
-            cls.form_schema_decoy,
+            cls.form_schema_before,
+            cls.form_schema_other,
+            cls.case_schema_before,
             cls.case_schema,
-            cls.case_schema_decoy,
+            cls.case_schema_other,
         ]
         for schema in cls.schemas:
             schema.save()
