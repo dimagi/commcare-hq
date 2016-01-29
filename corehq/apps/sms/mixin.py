@@ -127,7 +127,7 @@ class VerifiedNumber(Document):
     @classmethod
     def by_phone(cls, phone_number, include_pending=False):
         return cls.phone_lookup(
-            "sms/verified_number_by_number",
+            "phone_numbers/verified_number_by_number",
             phone_number,
             include_pending
         )
@@ -139,7 +139,7 @@ class VerifiedNumber(Document):
         """
         try:
             result = cls.phone_lookup(
-                "sms/verified_number_by_suffix",
+                "phone_numbers/verified_number_by_suffix",
                 phone_number,
                 include_pending
             )
@@ -161,7 +161,7 @@ class VerifiedNumber(Document):
 
     @classmethod
     def by_domain(cls, domain, ids_only=False):
-        result = cls.view("sms/verified_number_by_domain",
+        result = cls.view("phone_numbers/verified_number_by_domain",
                           startkey=[domain],
                           endkey=[domain, {}],
                           include_docs=(not ids_only),
@@ -173,7 +173,7 @@ class VerifiedNumber(Document):
 
     @classmethod
     def count_by_domain(cls, domain):
-        result = cls.view("sms/verified_number_by_domain",
+        result = cls.view("phone_numbers/verified_number_by_domain",
             startkey=[domain],
             endkey=[domain, {}],
             include_docs=False,
@@ -235,7 +235,7 @@ class CommCareMobileContactMixin(object):
         raise NotImplementedError('Please implement this method')
 
     def get_verified_numbers(self, include_pending=False):
-        v = VerifiedNumber.view("sms/verified_number_by_owner_id",
+        v = VerifiedNumber.view("phone_numbers/verified_number_by_owner_id",
             key=self._id,
             include_docs=True
         )
@@ -279,7 +279,7 @@ class CommCareMobileContactMixin(object):
         raises  PhoneNumberInUseException if the phone number is already in use by another contact
         """
         self.validate_number_format(phone_number)
-        v = VerifiedNumber.view("sms/verified_number_by_number",
+        v = VerifiedNumber.view("phone_numbers/verified_number_by_number",
             key=phone_number,
             include_docs=True
         ).one()
