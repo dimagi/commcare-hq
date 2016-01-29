@@ -4,18 +4,16 @@ from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
+from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
 from .base import HQPillow
 from couchforms.const import RESERVED_WORDS
 from couchforms.models import XFormInstance
 from dateutil import parser
-from dimagi.utils.decorators.memoized import memoized
 from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoint_store, \
     PillowCheckpointEventHandler
 from pillowtop.es_utils import ElasticsearchIndexMeta
-from pillowtop.listener import send_to_elasticsearch
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors import PillowProcessor
 from pillowtop.processors.elastic import ElasticProcessor
 
 
@@ -111,8 +109,13 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
 
 def prepare_sql_form_json_for_elasticsearch(sql_form_json):
     prepped_form = transform_xform_for_elasticsearch(sql_form_json)
-    prepped_form['doc_type'] = 'XFormInstance'
+    prepped_form['doc_type'] = _get_doc_type_from_state(sql_form_json['state'])
+
     return prepped_form
+
+
+def _get_doc_type_from_state(state):
+    return {v: k for k, v in doc_type_to_state.items()}.get(state, 'XFormInstance')
 
 
 def get_sql_xform_to_elasticsearch_pillow():
