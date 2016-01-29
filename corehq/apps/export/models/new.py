@@ -1,3 +1,4 @@
+from datetime import datetime
 from itertools import groupby
 from collections import defaultdict, OrderedDict
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
@@ -17,6 +18,7 @@ from dimagi.ext.couchdbkit import (
     ListProperty,
     StringProperty,
     IntegerProperty,
+    DateTimeProperty,
 )
 from corehq.apps.export.const import (
     PROPERTY_TAG_UPDATE,
@@ -262,6 +264,7 @@ class ExportDataSchema(Document):
     form xmlns or case type. It contains a list of ExportGroupSchema.
     """
     domain = StringProperty()
+    created_on = DateTimeProperty(default=datetime.utcnow())
     group_schemas = SchemaListProperty(ExportGroupSchema)
 
     # A map of app_id to app_version. Represents the last time it saw an app and at what version
