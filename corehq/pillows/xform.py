@@ -12,9 +12,11 @@ from dateutil import parser
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoint_store, \
     PillowCheckpointEventHandler
+from pillowtop.es_utils import ElasticsearchIndexMeta
 from pillowtop.listener import send_to_elasticsearch
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
+from pillowtop.processors.elastic import ElasticProcessor
 
 
 UNKNOWN_VERSION = 'XXX'
@@ -107,31 +109,10 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
         return doc_ret
 
 
-class XFormToElasticProcessor(PillowProcessor):
-
-    @property
-    @memoized
-    def elasticsearch(self):
-        return get_es_new()
-
-    def process_change(self, pillow_instance, change, do_set_checkpoint):
-        # if you don't worry about the various configuration options for reindexing,
-        # bootstrapping / dealing with the elasticsearch index, and bulk operations,
-        # this is all the current code does too
-        # todo: if deletion - delete
-        form_ready_to_go = transform_xform_for_elasticsearch(change.get_document())
-        # todo: this is required for our queries, figure out how best to deal with it
-        form_ready_to_go['doc_type'] = 'XFormInstance'
-        doc_exists = self.elasticsearch.exists(XFORM_INDEX, change.id, XFORM_ES_TYPE)
-        send_to_elasticsearch(
-            index=XFORM_INDEX,
-            doc_type=XFORM_ES_TYPE,
-            doc_id=change.id,
-            es_getter=get_es_new,
-            name=pillow_instance.get_name(),
-            data=form_ready_to_go,
-            update=doc_exists,
-        )
+def prepare_sql_form_json_for_elasticsearch(sql_form_json):
+    prepped_form = transform_xform_for_elasticsearch(sql_form_json)
+    prepped_form['doc_type'] = 'XFormInstance'
+    return prepped_form
 
 
 def get_sql_xform_to_elasticsearch_pillow():
@@ -139,12 +120,17 @@ def get_sql_xform_to_elasticsearch_pillow():
         get_django_checkpoint_store(),
         'sql-xforms-to-elasticsearch',
     )
+    form_processor = ElasticProcessor(
+        elasticseach=get_es_new(),
+        index_meta=ElasticsearchIndexMeta(index=XFORM_INDEX, type=XFORM_ES_TYPE),
+        doc_prep_fn=prepare_sql_form_json_for_elasticsearch
+    )
     return ConstructedPillow(
         name='SqlXFormToElasticsearchPillow',
         document_store=None,
         checkpoint=checkpoint,
         change_feed=KafkaChangeFeed(topic=topics.FORM_SQL, group_id='sql-forms-to-es'),
-        processor=XFormToElasticProcessor(),
+        processor=form_processor,
         change_processed_event_handler=PillowCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100,
         ),
