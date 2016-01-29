@@ -843,20 +843,12 @@ class AdminDomainMapReport(AdminDomainStatsReport):
 
         def format_date(dstr, default):
             # use [:19] so that only only the 'YYYY-MM-DDTHH:MM:SS' part of the string is parsed
-            return datetime.strptime(dstr[:19], '%Y-%m-%dT%H:%M:%S').strftime('%Y/%m/%d %H:%M:%S') if dstr else default
-
-        def format_bool(val):
-            if isinstance(val, bool):
-                return u"{}".format(val)
-            return _('No info')
+            return datetime.strptime(dstr[:19], '%Y-%m-%dT%H:%M:%S').strftime('%Y/%m/%d %H:%M:%S') \
+                   if dstr else default
 
         for dom in domains:
             # for some reason when using the statistical facet, ES adds an empty dict to hits
             if 'name' in dom:
-                first_form_default_message = _("No Forms")
-                if dom.get("cp_last_form", None):
-                    first_form_default_message = _("Unable to parse date")
-
                 yield [
                     dom.get("hr_name") or dom.get("name"),
                     self.get_name_or_link(dom, internal_settings=True),
