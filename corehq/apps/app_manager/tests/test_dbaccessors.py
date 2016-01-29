@@ -5,6 +5,7 @@ from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_built_app_ids_for_app_id,
     get_all_app_ids,
+    get_latest_built_app_ids_and_versions,
 )
 from corehq.apps.app_manager.models import Application, RemoteApp, Module
 from corehq.apps.domain.models import Domain
@@ -106,3 +107,16 @@ class DBAccessorsTest(TestCase, DocTestMixin):
     def test_get_all_app_ids_for_domain(self):
         app_ids = get_all_app_ids(self.domain)
         self.assertEqual(len(app_ids), 3)
+
+    def test_get_latest_built_app_ids_and_versions(self):
+        build_ids_and_versions = get_latest_built_app_ids_and_versions(self.domain)
+        self.assertEqual(build_ids_and_versions, {
+            self.apps[0].get_id: 12,
+            '1234': 12,
+        })
+
+    def test_get_latest_built_app_ids_and_versions_with_app_id(self):
+        build_ids_and_versions = get_latest_built_app_ids_and_versions(self.domain, self.apps[0].get_id)
+        self.assertEqual(build_ids_and_versions, {
+            self.apps[0].get_id: 12,
+        })
