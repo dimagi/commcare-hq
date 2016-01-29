@@ -17,6 +17,8 @@ RUN npm -g install \
 
 RUN echo '{ "allow_root": true }' > /root/.bowerrc
 
+RUN git config --global url."https://".insteadOf git://
+
 RUN wget -O jdk.tar.gz --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/7u67-b01/jdk-7u67-linux-x64.tar.gz \
  && tar -xzf jdk.tar.gz \
  && mkdir -p /usr/lib/jvm \
@@ -42,3 +44,5 @@ RUN pip install \
     ipython \
     --user --upgrade \
     && rm -rf /root/.cache/pip
+
+EXPOSE 8000
