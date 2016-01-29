@@ -552,4 +552,4 @@ def _domain_uses_locations(domain):
 
 
 def _domain_has_apps_using_templated_intents(domain):
-    return any(any(form.wrapped_xform().odk_intents for form in app.get_forms()) for app in get_all_apps(domain))
+    return any(any(form.wrapped_xform().odk_intents for form in app.get_forms()) for app in get_all_apps(domain.name))
