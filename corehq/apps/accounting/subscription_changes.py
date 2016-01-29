@@ -534,6 +534,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             # LATER_SUBSCRIPTION_NOTIFICATION, # TODO - add back
             privileges.CUSTOM_REPORTS: _domain_has_custom_report,
             privileges.LOCATIONS: _domain_uses_locations,
+            privileges.TEMPLATED_INTENTS: _domain_has_apps_using_templated_intents,
         }
 
     @property
@@ -548,3 +549,7 @@ def _domain_has_custom_report(domain):
 
 def _domain_uses_locations(domain):
     return domain.uses_locations
+
+
+def _domain_has_apps_using_templated_intents(domain):
+    return any(any(form.wrapped_xform().odk_intents for form in app.get_forms()) for app in get_all_apps(domain))
