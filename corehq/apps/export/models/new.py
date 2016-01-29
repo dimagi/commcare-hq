@@ -29,8 +29,13 @@ from corehq.apps.export.dbaccessors import get_latest_export_schema_id
 class ExportItem(DocumentSchema):
     """
     An item for export.
-    path is a question path like ["my_group", "q1"] or a case property name
-    like ["date_of_birth"].
+
+    path: A question path like ["my_group", "q1"] or a case property name
+        like ["date_of_birth"].
+
+    label: The label of the corresponding form question, or the case property name
+    tag: Denotes whether the property is a system, meta, etc
+    last_occurrences: A dictionary that maps an app_id to the last version the export item was present
     """
     path = ListProperty()
     label = StringProperty()
