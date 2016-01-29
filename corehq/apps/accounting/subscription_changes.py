@@ -243,6 +243,15 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
             return False
 
 
+def _fmt_downgrade_status_alert(message, details=None):
+    if details is not None and not isinstance(details, list):
+        raise ValueError("details should be a list.")
+    return {
+        'message': message,
+        'details': details,
+    }
+
+
 class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
     """
     This returns a list of alerts for the user if their current domain is using features that
@@ -262,14 +271,6 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
     ]
     action_type = "notification"
 
-    def _fmt_alert(self, message, details=None):
-        if details is not None and not isinstance(details, list):
-            raise ValueError("details should be a list.")
-        return {
-            'message': message,
-            'details': details,
-        }
-
     @property
     def response_cloudcare(self):
         """
@@ -280,7 +281,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             return None
 
         num_apps = len(cloudcare_enabled_apps)
-        return self._fmt_alert(
+        return _fmt_downgrade_status_alert(
             ungettext(
                 "You have %(num_apps)d application that will lose CloudCare "
                 "access if you select this plan.",
@@ -290,10 +291,13 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             ) % {
                 'num_apps': num_apps,
             },
-            [mark_safe('<a href="%(url)s">%(title)s</a>') % {
-                'title': app['name'],
-                'url': reverse('view_app', args=[self.domain.name, app['_id']])
-            } for app in cloudcare_enabled_apps],
+            [
+                mark_safe('<a href="%(url)s">%(title)s</a>') % {
+                    'title': app['name'],
+                    'url': reverse('view_app', args=[self.domain.name, app['_id']])
+                }
+                for app in cloudcare_enabled_apps
+            ]
         )
 
     @property
@@ -303,7 +307,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         num_fixtures = FixtureDataType.total_by_domain(self.domain.name)
         if num_fixtures > 0:
-            return self._fmt_alert(
+            return _fmt_downgrade_status_alert(
                 ungettext(
                     "You have %(num_fix)s Lookup Table set up. Selecting this "
                     "plan will delete this Lookup Table.",
@@ -319,9 +323,9 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         Custom logos will be removed on downgrade.
         """
         if self.domain.has_custom_logo:
-            return self._fmt_alert(_("You are using custom branding. "
-                                     "Selecting this plan will remove this "
-                                     "feature."))
+            return _fmt_downgrade_status_alert(
+                _("You are using custom branding. Selecting this plan will remove this feature.")
+            )
 
     @property
     @memoized
@@ -336,7 +340,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         num_active = len(self._active_reminder_methods)
         if num_active > 0:
-            return self._fmt_alert(
+            return _fmt_downgrade_status_alert(
                 ungettext(
                     "You have %(num_active)d active Reminder Rule. Selecting "
                     "this plan will deactivate this rule.",
@@ -356,7 +360,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         surveys = filter(lambda x: x in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY], self._active_reminder_methods)
         num_survey = len(surveys)
         if num_survey > 0:
-            return self._fmt_alert(
+            return _fmt_downgrade_status_alert(
                 ungettext(
                     "You have %(num_active)d active Reminder Rule for a Survey. "
                     "Selecting this plan will deactivate this rule.",
@@ -383,7 +387,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         )
         num_deid_reports = len(filter(lambda r: r.is_safe, reports))
         if num_deid_reports > 0:
-            return self._fmt_alert(
+            return _fmt_downgrade_status_alert(
                 ungettext(
                     "You have %(num)d De-Identified Export. Selecting this "
                     "plan will remove it.",
@@ -410,7 +414,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             num_allowed = user_rate.monthly_limit
             num_extra = num_users - num_allowed
             if num_extra > 0:
-                return self._fmt_alert(
+                return _fmt_downgrade_status_alert(
                     ungettext(
                         "You have %(num_users)d Mobile Worker over the monthly "
                         "limit of %(monthly_limit)d for this new plan. There "
@@ -446,7 +450,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         custom_roles = [r.name for r in UserRole.get_custom_roles_by_domain(self.domain.name)]
         num_roles = len(custom_roles)
         if num_roles > 0:
-            return self._fmt_alert(
+            return _fmt_downgrade_status_alert(
                 ungettext(
                     "You have %(num_roles)d Custom Role configured for your "
                     "project. If you select this plan, all users with that "
@@ -457,7 +461,9 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                     num_roles
                 ) % {
                     'num_roles': num_roles,
-                }, custom_roles)
+                },
+                custom_roles
+            )
 
     @property
     def response_later_subscription(self):
@@ -473,14 +479,16 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         if later_subs.exists():
             next_subscription = later_subs[0]
             plan_desc = next_subscription.plan_version.user_facing_description
-            return self._fmt_alert(_(
-                "You have a subscription SCHEDULED TO START on %(date_start)s. "
-                "Changing this plan will CANCEL that %(plan_name)s "
-                "subscription."
-            ) % {
-                'date_start': next_subscription.date_start.strftime(USER_DATE_FORMAT),
-                'plan_name': plan_desc['name'],
-            })
+            return _fmt_downgrade_status_alert(
+                _(
+                    "You have a subscription SCHEDULED TO START on %(date_start)s. "
+                    "Changing this plan will CANCEL that %(plan_name)s "
+                    "subscription."
+                ) % {
+                    'date_start': next_subscription.date_start.strftime(USER_DATE_FORMAT),
+                    'plan_name': plan_desc['name'],
+                }
+            )
 
     @property
     def response_data_cleanup(self):
@@ -493,7 +501,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             active=True,
         ).count()
         if rule_count > 0:
-            return self._fmt_alert(
+            return _fmt_downgrade_status_alert(
                 ungettext(
                     "You have %(rule_count)d automatic case update rule "
                     "configured in your project. If you select this plan, "
