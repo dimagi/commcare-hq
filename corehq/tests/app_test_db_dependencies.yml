@@ -220,6 +220,7 @@ couchforms:
   - casexml.apps.phone
   - casexml.apps.stock
   - corehq.apps.hqcase
+  - corehq.apps.hqadmin
   - corehq.apps.products
   - corehq.apps.reminders
   - corehq.apps.sms

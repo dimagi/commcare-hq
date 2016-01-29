@@ -66,6 +66,12 @@ class FormAccessors(object):
     def update_form_problem_and_state(self, form):
         self.db_accessor.update_form_problem_and_state(form)
 
+    def get_deleted_forms_for_user(self, domain, user_id, ids_only=False):
+        return self.db_accessor.get_deleted_forms_for_user(domain, user_id, ids_only=False)
+
+    def get_forms_for_user(self, domain, user_id, ids_only=False):
+        return self.db_accessor.get_forms_for_user(domain, user_id, ids_only)
+
 
 class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
     """
