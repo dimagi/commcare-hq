@@ -26,13 +26,13 @@ jQuery(document).ready(function($) {
             }).done(function (data) {
                 var tempProjects = {};
                 // data.aaData seems to hold the information. not sure though if this is the best way of getting the data.
-                // todo: confirm best way of getting the data.
                 data.aaData.forEach(function (project) {
                     var countryNames = project[5];
                     if (!Array.isArray(countryNames) || countryNames.length < 1) {
-                        //todo: find a way to display projects with no listed deployment country. ignoring for now.
+                        // todo: find a way to display projects with no listed deployment country. ignoring for now.
                     } else {
                         // this will use only the first listed country
+                        // todo: figure out desired handling of multiple deployment countries
                         var countryName = countryNames[0].toLowerCase();
                         if (!tempProjects[countryName]) {
                             tempProjects[countryName] = {};
@@ -44,11 +44,11 @@ jQuery(document).ready(function($) {
                             'Organization': project[3],
                             'Deployment Date': project[4].substring(0,10),
                             'Deployment Countries': countryNames.join(', '),
-                            '# Forms Submitted': project[13],
+                            '# Forms Submitted': project[7],
                             '# Active Mobile Workers': project[6],
-                            'Notes': project[17],
-                            'Sector': project[23],
-                            'Sub-Sector': project[24]
+                            'Notes': project[8],
+                            'Sector': project[9],
+                            'Sub-Sector': project[10]
                         };
                     }
                 });
@@ -146,6 +146,7 @@ jQuery(document).ready(function($) {
     // A lot of the styling work here is modeled after http://leafletjs.com/examples/choropleth.html
     var map = L.map('map').setView([0, 0], 3)
     var mapId = 'mapbox.dark';
+    // copied from dimagisphere
     // todo: move to config somewhere, maybe localSettings.py?
     var accessToken = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA';
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
@@ -285,6 +286,7 @@ jQuery(document).ready(function($) {
 
     legend.addTo(map);
 
+    // copied from dimagisphere
     // todo: should probably be getting this from somewhere else and possibly not on every page load.
     $.getJSON('https://raw.githubusercontent.com/dimagi/world.geo.json/master/countries.geo.json', function (data) {
         countriesGeo = L.geoJson(data, {style: style, onEachFeature: onEachFeature}).addTo(map);

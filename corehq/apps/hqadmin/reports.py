@@ -835,7 +835,7 @@ class AdminDomainMapReport(AdminDomainStatsReport):
     def set_bootstrap3_status(self, request, *args, **kwargs):
         super(AdminDomainStatsReport, self).set_bootstrap3_status(request, *args, **kwargs)
 
-    # an only slightly modified (so far) version AdminDomainStatsReport.rows
+    # a modified version of AdminDomainStatsReport.rows
     @property
     def rows(self):
         domains = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
@@ -855,7 +855,6 @@ class AdminDomainMapReport(AdminDomainStatsReport):
                 if dom.get("cp_last_form", None):
                     first_form_default_message = _("Unable to parse date")
 
-                # todo: can probably remove lots of these
                 yield [
                     dom.get("hr_name") or dom.get("name"),
                     self.get_name_or_link(dom, internal_settings=True),
@@ -864,36 +863,10 @@ class AdminDomainMapReport(AdminDomainStatsReport):
                     format_date((dom.get('deployment') or {}).get('date'), _('No date')),
                     (dom.get("deployment") or {}).get('countries') or _('No countries'),
                     dom.get("cp_n_active_cc_users", _("Not yet calculated")),
-                    dom.get("cp_n_cc_users", _("Not yet calculated")),
-                    dom.get("cp_n_users_submitted_form", _("Not yet calculated")),
-                    dom.get("cp_n_60_day_cases", _("Not yet calculated")),
-                    dom.get("cp_n_active_cases", _("Not yet calculated")),
-                    dom.get("cp_n_inactive_cases", _("Not yet calculated")),
-                    dom.get("cp_n_cases", _("Not yet calculated")),
                     dom.get("cp_n_forms", _("Not yet calculated")),
-                    format_date(dom.get("cp_first_form"), first_form_default_message),
-                    format_date(dom.get("cp_last_form"), _("No forms")),
-                    dom.get("cp_n_web_users", _("Not yet calculated")),
                     dom.get('internal', {}).get('notes') or _('No notes'),
-                    dom.get('internal', {}).get('services') or _('No info'),
-                    dom.get('internal', {}).get('project_state') or _('No info'),
-                    format_bool(dom.get('internal', {}).get('using_adm')),
-                    format_bool(dom.get('internal', {}).get('using_call_center')),
-                    format_date(dom.get("cp_last_updated"), _("No Info")),
                     dom.get('internal', {}).get('area') or _('No info'),
-                    dom.get('internal', {}).get('sub_area') or _('No info'),
-                    dom.get('internal', {}).get('business_unit') or _('No info'),
-                    format_bool(dom.get('internal', {}).get('self_started')),
-                    dom.get('is_test') or _('No info'),
-                    format_bool(dom.get('cp_is_active') or _('No info')),
-                    format_bool(dom.get('internal', {}).get('commtrack_domain')),
-                    dom.get('cp_n_out_sms', _("Not yet calculated")),
-                    dom.get('cp_n_in_sms', _("Not yet calculated")),
-                    dom.get('cp_n_sms_ever', _("Not yet calculated")),
-                    dom.get('cp_n_sms_in_30_d', _("Not yet calculated")),
-                    dom.get('cp_n_sms_out_30_d', _("Not yet calculated")),
-                    format_bool(dom.get('internal', {}).get('custom_eula')),
-                    dom.get('hipaa_compliant', _('false'))
+                    dom.get('internal', {}).get('sub_area') or _('No info')
                 ]
 
 
