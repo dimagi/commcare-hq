@@ -25,7 +25,8 @@ def get_latest_released_app_doc(domain, app_id, min_version=None):
         startkey=key + [{}],
         endkey=(key + [min_version]) if min_version is not None else key,
         descending=True,
-        include_docs=True
+        include_docs=True,
+        limit=1,
     ).first()
     return app['doc'] if app else None
 
