@@ -38,6 +38,7 @@ def _get_latest_build_view(domain, app_id, include_docs):
         endkey=[domain, app_id],
         descending=True,
         include_docs=include_docs,
+        limit=1,
     ).first()
 
 
