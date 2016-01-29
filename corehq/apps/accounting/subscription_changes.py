@@ -322,7 +322,6 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 _("You are using custom branding. Selecting this plan will remove this feature.")
             )
 
-    @memoized
     @staticmethod
     def _active_reminder_methods(domain):
         reminder_rules = get_active_reminders_by_domain_name(domain.name)
