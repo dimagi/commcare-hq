@@ -258,6 +258,7 @@ class ExportDataSchema(Document):
     An object representing the things that can be exported for a particular
     form xmlns or case type. It contains a list of ExportGroupSchema.
     """
+    domain = StringProperty()
     group_schemas = SchemaListProperty(ExportGroupSchema)
 
     # A map of app_id to app_version. Represents the last time it saw an app and at what version
@@ -323,6 +324,9 @@ class ExportDataSchema(Document):
 
 class FormExportDataSchema(ExportDataSchema):
 
+    app_id = StringProperty()
+    xmlns = StringProperty()
+
     @staticmethod
     def generate_schema_from_builds(domain, app_id, form_xmlns):
         """Builds a schema from Application builds for a given identifier
@@ -336,7 +340,11 @@ class FormExportDataSchema(ExportDataSchema):
         if xform_schema_id:
             all_xform_schema = FormExportDataSchema.get(xform_schema_id)
         else:
-            all_xform_schema = FormExportDataSchema()
+            all_xform_schema = FormExportDataSchema(
+                domain=domain,
+                app_id=app_id,
+                xmlns=form_xmlns,
+            )
 
         app_build_ids = get_built_app_ids_for_app_id(
             domain,
@@ -389,6 +397,8 @@ class FormExportDataSchema(ExportDataSchema):
 
 class CaseExportDataSchema(ExportDataSchema):
 
+    case_type = StringProperty()
+
     @staticmethod
     def generate_schema_from_builds(domain, case_type):
         """Builds a schema from Application builds for a given identifier
@@ -397,8 +407,12 @@ class CaseExportDataSchema(ExportDataSchema):
         :param unique_form_id: The unique identifier of the item being exported
         :returns: Returns a ExportDataSchema instance
         """
+
         app_build_ids = get_all_app_ids(domain)
-        all_case_schema = CaseExportDataSchema()
+        all_case_schema = CaseExportDataSchema(
+            domain=domain,
+            case_type=case_type,
+        )
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             app = Application.wrap(app_doc)
