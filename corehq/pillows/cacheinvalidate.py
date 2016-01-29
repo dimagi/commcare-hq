@@ -14,9 +14,9 @@ class CacheInvalidatePillow(BasicPillow):
     Pillow that listens to non xform/case _changes and invalidates the cache whether it's a
     a single doc being cached, to a view.
     """
-    couch_filter = "hqadmin/not_case_form"  # string for filter if needed
 
-    def __init__(self, couch_db):
+    def __init__(self, couch_db, couch_filter=None):
+        self.couch_filter = couch_filter
         super(CacheInvalidatePillow, self).__init__(couch_db=couch_db)
         self.gen_caches = set(GenerationCache.doc_type_generation_map().values())
 
@@ -74,7 +74,7 @@ class CacheInvalidatePillow(BasicPillow):
 
 
 def get_main_cache_invalidation_pillow():
-    return CacheInvalidatePillow(couch_db=XFormInstance.get_db())
+    return CacheInvalidatePillow(couch_db=XFormInstance.get_db(), couch_filter="hqadmin/not_case_form")
 
 
 def get_user_groups_cache_invalidation_pillow():
