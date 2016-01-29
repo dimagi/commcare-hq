@@ -7,15 +7,13 @@ from os.path import join
 from unittest import TestCase
 from StringIO import StringIO
 
-from botocore.exceptions import ClientError
 from django.conf import settings
 
 import corehq.blobs.mixin as mod
 from corehq.blobs import DEFAULT_BUCKET
-from corehq.blobs.s3db import ClosingContextProxy, is_not_found
-from corehq.blobs.migratingdb import MigratingBlobDB
-from corehq.blobs.tests.util import (TemporaryBlobDBMixin,
-    TemporaryFilesystemBlobDB, TemporaryS3BlobDB)
+from corehq.blobs.s3db import ClosingContextProxy, maybe_not_found
+from corehq.blobs.tests.util import (TemporaryFilesystemBlobDB,
+    TemporaryMigratingBlobDB, TemporaryS3BlobDB)
 from corehq.util.test_utils import trap_extra_setup
 from dimagi.ext.couchdbkit import Document
 
@@ -367,13 +365,10 @@ class TestBlobMixinWithS3Backend(TestBlobMixin):
             return self.db.db.Bucket(self.db.s3_bucket_name)
 
         def exists(self):
-            try:
+            with maybe_not_found():
                 self.s3_bucket.Object(self.path).load()
-            except ClientError as err:
-                if not is_not_found(err):
-                    raise
-                return False
-            return True
+                return True
+            return False
 
         def open(self):
             obj = self.s3_bucket.Object(self.path).get()
@@ -381,11 +376,8 @@ class TestBlobMixinWithS3Backend(TestBlobMixin):
 
         def listdir(self):
             summaries = self.s3_bucket.objects.filter(Prefix=self.path + "/")
-            try:
+            with maybe_not_found():
                 return [o.key for o in summaries]
-            except ClientError as err:
-                if not is_not_found(err):
-                    raise
             return []
 
 
@@ -403,20 +395,19 @@ class TestBlobMixinWithMigratingDbBeforeCopyToNew(TestBlobMixinWithS3Backend):
             self.path = db.new_db.get_path(name, bucket)
             self.fspath = db.old_db.get_path(name, bucket)
 
-        @property
-        def super(self):
-            return super(TestBlobMixinWithMigratingDbBeforeCopyToNew.TestBlob, self)
-
         def exists(self):
-            return self.super.exists() or os.path.exists(self.fspath)
+            super_ = super(TestBlobMixinWithMigratingDbBeforeCopyToNew.TestBlob, self)
+            return super_.exists() or os.path.exists(self.fspath)
 
         def open(self):
-            if self.super.exists():
-                return self.super.open()
+            super_ = super(TestBlobMixinWithMigratingDbBeforeCopyToNew.TestBlob, self)
+            if super_.exists():
+                return super_.open()
             return open(self.fspath)
 
         def listdir(self):
-            return self.super.listdir() or os.listdir(self.fspath)
+            super_ = super(TestBlobMixinWithMigratingDbBeforeCopyToNew.TestBlob, self)
+            return super_.listdir() or os.listdir(self.fspath)
 
 
 class TestBlobMixinWithMigratingDbAfterCopyToNew(TestBlobMixinWithMigratingDbBeforeCopyToNew):
@@ -428,27 +419,19 @@ class TestBlobMixinWithMigratingDbAfterCopyToNew(TestBlobMixinWithMigratingDbBef
         cls.db = PutInOldCopyToNewBlobDB(cls.db, TemporaryFilesystemBlobDB())
 
 
-class PutInOldBlobDB(TemporaryBlobDBMixin, MigratingBlobDB):
+class PutInOldBlobDB(TemporaryMigratingBlobDB):
 
     def put(self, *args, **kw):
         return self.old_db.put(*args, **kw)
 
-    def clean_db(self):
-        self.old_db.close()
-        self.new_db.close()
 
-
-class PutInOldCopyToNewBlobDB(TemporaryBlobDBMixin, MigratingBlobDB):
+class PutInOldCopyToNewBlobDB(TemporaryMigratingBlobDB):
 
     def put(self, content, basename="", bucket=DEFAULT_BUCKET):
         info = self.old_db.put(content, basename, bucket)
         content.seek(0)
         self.copy_blob(content, info, bucket)
         return info
-
-    def clean_db(self):
-        self.old_db.close()
-        self.new_db.close()
 
 
 class FakeCouchDocument(mod.BlobMixin, Document):
