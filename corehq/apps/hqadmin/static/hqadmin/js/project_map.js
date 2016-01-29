@@ -55,9 +55,9 @@ jQuery(document).ready(function($) {
 
                 projectsByCountryThenName = tempProjects;
 
-                maxNumProjects = Math.max(...Object.keys(projectsByCountryThenName).map(function(countryName) {
-                    return Object.keys(projectsByCountryThenName[countryName]).length;
-                }));
+                maxNumProjects = Object.keys(projectsByCountryThenName).reduce(function(prev, countryName) {
+                    return Math.max(prev, Object.keys(projectsByCountryThenName[countryName]).length);
+                }, 0);
 
                 colorAll();
 
@@ -144,7 +144,7 @@ jQuery(document).ready(function($) {
 
     var countriesGeo;
     // A lot of the styling work here is modeled after http://leafletjs.com/examples/choropleth.html
-    var map = L.map('map').setView([0, 0], 3)
+    var map = L.map('map').setView([0, 0], 3);
     var mapId = 'mapbox.dark';
     // copied from dimagisphere
     // todo: move to config somewhere, maybe localSettings.py?
@@ -168,7 +168,7 @@ jQuery(document).ready(function($) {
 
     function getOpacity(featureId) {
         if (dataController.getNumProjects(featureId)) {
-            return .9;
+            return 0.9;
         } else {
             return 0;
         }
@@ -273,10 +273,10 @@ jQuery(document).ready(function($) {
             div.innerHTML += '<i style="background:' + colors[i] + '"></i> ';
             if (countValues[i-1] !==  undefined) {
                 if (countValues[i-1] +1 < countValues[i]) {
-                    div.innerHTML += (countValues[i-1] + 1) + '&ndash;'
+                    div.innerHTML += (countValues[i-1] + 1) + '&ndash;';
                 }
             } else if (countValues[i] > 1) {
-                div.innerHTML += '1&ndash;'
+                div.innerHTML += '1&ndash;';
             }
             div.innerHTML += countValues[i] + '<br>';
         }

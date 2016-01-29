@@ -823,8 +823,9 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get('hipaa_compliant', _('false'))
                 ]
 
+
 class AdminDomainMapReport(AdminDomainStatsReport):
-    slug="project_map"
+    slug = "project_map"
     name = ugettext_noop('Project Map')
     facet_title = ugettext_noop("Project Facets")
     search_for = ugettext_noop("projects...")
@@ -850,7 +851,8 @@ class AdminDomainMapReport(AdminDomainStatsReport):
             return _('No info')
 
         for dom in domains:
-            if dom.has_key('name'):  # for some reason when using the statistical facet, ES adds an empty dict to hits
+            # for some reason when using the statistical facet, ES adds an empty dict to hits
+            if 'name' in dom:
                 first_form_default_message = _("No Forms")
                 if dom.get("cp_last_form", None):
                     first_form_default_message = _("Unable to parse date")
