@@ -87,6 +87,7 @@ case $key in
         ;;
     bootstrap)
         $DOCKER_DIR/bootstrap.sh
+        web_runner up
         ;;
     ps)
         web_runner ps
