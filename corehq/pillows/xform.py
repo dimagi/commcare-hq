@@ -118,6 +118,7 @@ class XFormToElasticProcessor(PillowProcessor):
         # if you don't worry about the various configuration options for reindexing,
         # bootstrapping / dealing with the elasticsearch index, and bulk operations,
         # this is all the current code does too
+        # todo: if deletion - delete
         form_ready_to_go = transform_xform_for_elasticsearch(change.get_document())
         # todo: this is required for our queries, figure out how best to deal with it
         form_ready_to_go['doc_type'] = 'XFormInstance'
