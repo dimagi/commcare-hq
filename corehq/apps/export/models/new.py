@@ -163,7 +163,7 @@ class ExportInstance(Document):
         """Given an ExportDataSchema, this will generate an ExportInstance"""
         instance = ExportInstance()
 
-        build_ids_and_versions = get_latest_built_app_ids_and_versions(domain, app_id)
+        latest_build_ids_and_versions = get_latest_built_app_ids_and_versions(domain, app_id)
         for group_schema in schema.group_schemas:
             table = TableConfiguration(
                 path=group_schema.path
@@ -172,7 +172,7 @@ class ExportInstance(Document):
                 lambda item: ExportColumn.create_default_from_export_item(
                     table.path,
                     item,
-                    build_ids_and_versions,
+                    latest_build_ids_and_versions,
                 ),
                 group_schema.items,
             )
