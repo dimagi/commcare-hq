@@ -110,6 +110,25 @@ class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         update_items = filter(lambda item: item.tag == PROPERTY_TAG_UPDATE, group_schema.items)
         self.assertEqual(len(update_items), 2)
 
+    def test_get_app_build_ids_to_process(self):
+        from corehq.apps.app_manager.dbaccessors import AppBuildVersion
+        results = [
+            AppBuildVersion(app_id='1', build_id='2', version=3),
+            AppBuildVersion(app_id='1', build_id='4', version=5),
+            AppBuildVersion(app_id='2', build_id='2', version=3),
+        ]
+        last_app_versions = {
+            '1': 3
+        }
+        with patch(
+                'corehq.apps.export.models.new.get_all_built_app_ids_and_versions',
+                return_value=results):
+            build_ids = CaseExportDataSchema._get_app_build_ids_to_process(
+                'dummy',
+                last_app_versions
+            )
+        self.assertEqual(sorted(build_ids), ['2', '4'])
+
 
 class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
     file_path = ['data']

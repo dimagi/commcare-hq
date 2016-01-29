@@ -407,12 +407,12 @@ class CaseExportDataSchema(ExportDataSchema):
     case_type = StringProperty()
 
     @staticmethod
-    def _get_app_build_ids_to_process(domain, schema):
+    def _get_app_build_ids_to_process(domain, last_app_versions):
         app_build_verions = get_all_built_app_ids_and_versions(domain)
         # Filter by current app id
         app_build_verions = filter(
             lambda app_build_version:
-                schema.last_app_versions.get(app_build_version.app_id, 0) <= app_build_version.version,
+                last_app_versions.get(app_build_version.app_id, -1) < app_build_version.version,
             app_build_verions
         )
         # Map to all build ids
@@ -434,7 +434,10 @@ class CaseExportDataSchema(ExportDataSchema):
         else:
             current_case_schema = CaseExportDataSchema()
 
-        app_build_ids = CaseExportDataSchema._get_app_build_ids_to_process(domain, current_case_schema)
+        app_build_ids = CaseExportDataSchema._get_app_build_ids_to_process(
+            domain,
+            current_case_schema.last_app_versions,
+        )
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             app = Application.wrap(app_doc)
