@@ -10,6 +10,7 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
 )
 from corehq.apps.app_manager.dbaccessors import get_all_apps
+from corehq.apps.app_manager.util import app_callout_templates
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.models import Domain
@@ -535,6 +536,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             privileges.CUSTOM_REPORTS: _domain_has_custom_report,
             privileges.LOCATIONS: _domain_uses_locations,
             privileges.TEMPLATED_INTENTS: _domain_has_apps_using_templated_intents,
+            privileges.CUSTOM_INTENTS: _domain_has_apps_using_custom_intents,
         }
 
     @property
@@ -552,9 +554,26 @@ def _domain_uses_locations(domain):
 
 
 def _domain_has_apps_using_templated_intents(domain):
+    templates = next(app_callout_templates)
+    template_ids = set([t['id'] for t in templates])
     return any(
         any(
-            form.wrapped_xform().odk_intents
+            any(
+                intent in template_ids
+                for intent in form.wrapped_xform().odk_intents
+            )
+            for form in app.get_forms()
+        )
+        for app in get_all_apps(domain.name)
+    )
+
+
+def _domain_has_apps_using_custom_intents(domain):
+    templates = next(app_callout_templates)
+    template_ids = set([t['id'] for t in templates])
+    return any(
+        any(
+            any(set(form.wrapped_xform().odk_intents) - template_ids)
             for form in app.get_forms()
         )
         for app in get_all_apps(domain.name)
