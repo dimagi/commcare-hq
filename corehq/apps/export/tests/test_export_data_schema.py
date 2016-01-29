@@ -317,6 +317,14 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
             )
 
         self.assertEqual(len(schema.group_schemas), 1)
+        self.assertEqual(schema.last_app_versions[app._id], 3)
+
+        # After the first schema has been saved let's add a second app to process
+        second_build = Application.wrap(self.get_json('basic_application'))
+        second_build._id = '456'
+        second_build.copy_of = app.get_id
+        second_build.version = 6
+        second_build.save()
 
         with patch(
                 'corehq.apps.export.models.new.FormExportDataSchema.get',
@@ -329,7 +337,9 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
             )
             wrapped_get.assert_called_with(schema._id)
 
-        self.assertEqual(len(schema.group_schemas), 1)
+        second_build.delete()
+        self.assertEqual(new_schema.last_app_versions[app._id], 6)
+        self.assertEqual(len(new_schema.group_schemas), 1)
 
 
 class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
@@ -409,5 +419,6 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
             )
             wrapped_get.assert_called_with(schema._id)
 
+        second_build.delete()
         self.assertEqual(new_schema.last_app_versions[app._id], 6)
         self.assertEqual(len(new_schema.group_schemas), 2)
