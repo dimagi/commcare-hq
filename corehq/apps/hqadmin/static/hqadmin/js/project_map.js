@@ -4,17 +4,6 @@ jQuery(document).ready(function($) {
 
     var selectionModel;
 
-    (function() {
-        var SelectionModel = function () {
-            var self = this;
-            self.selectedCountry = ko.observable('country name');
-            self.selectedProject = ko.observable('project name');
-        };
-
-        selectionModel = new SelectionModel();
-        $('#modal').koApplyBindings(selectionModel);
-    })();
-
     function colorAll() {
         if (countriesGeo !== undefined) {
             countriesGeo.setStyle(style);
@@ -39,7 +28,6 @@ jQuery(document).ready(function($) {
                 // data.aaData seems to hold the information. not sure though if this is the best way of getting the data.
                 // todo: confirm best way of getting the data.
                 data.aaData.forEach(function (project) {
-                    console.log(project);
                     var countryNames = project[5];
                     if (!Array.isArray(countryNames) || countryNames.length < 1) {
                         //todo: find a way to display projects with no listed deployment country. ignoring for now.
@@ -50,6 +38,7 @@ jQuery(document).ready(function($) {
                             tempProjects[countryName] = {};
                         }
                         tempProjects[countryName][project[0]] = {
+                            'Name': project[0],
                             'Link': project[1],
                             'Date Created': project[2].substring(0,10),
                             'Organization': project[3],
@@ -84,79 +73,30 @@ jQuery(document).ready(function($) {
         that.getMaxNumProjects = function () {
             return maxNumProjects;
         };
+        
 
-        that.getProjectsTableElement = function (countryName) {
-            if (that.getNumProjects(countryName) < 1) {
-                return $(document.createElement('p')).text('There are no projects matching the criteria.').addClass('center');
-            } else {
-                countryName = countryName.toLowerCase();
+        var SelectionModel = function () {
+            var self = this;
+            self.selectedCountry = ko.observable('country name');
+            self.selectedProject = ko.observable('project name');
 
-                var table = $(document.createElement('table')).addClass("table").addClass("table-hover").addClass("table-condensed");
-                var projectsInfo = projectsByCountryThenName[countryName] || {};
-                var propertiesToShow = [];
-                var propertiesToShow = ['Sector', 'Organization', 'Deployment Date'];
+            // for showing a country's projects table
+            self.tableProperties = ['Name', 'Sector', 'Organization', 'Deployment Date'];
+            self.selectedCountryProjects = ko.computed(function() {
+                return projectsByCountryThenName[this.selectedCountry().toLowerCase()] || {};
+            }, this);
 
-                var thead = $(document.createElement('thead'));
-                table.append(thead);
-                var row;
-                var cell;
-                row = $(document.createElement('tr'));
-                thead.append(row);
-                cell = $(document.createElement('th'));
-                row.append(cell);
-                cell.text('Name');
-                propertiesToShow.forEach(function(propertyName) {
-                    cell = $(document.createElement('th'));
-                    row.append(cell);
-                    cell.text(propertyName);
-                });
-
-                var tbody = $(document.createElement('tbody'));
-                table.append(tbody);
-
-                Object.keys(projectsInfo).forEach(function(projectName) {
-                    row = $(document.createElement('tr'));
-                    tbody.append(row);
-                    cell = $(document.createElement('td'));
-                    row.append(cell);
-                    cell.append($(document.createElement('a')).text(projectName).addClass('project-link'));
-                    propertiesToShow.forEach(function(propertyName) {
-                        cell = $(document.createElement('td'));
-                        row.append(cell);
-                        cell.text(projectsInfo[projectName][propertyName] || "");
-                    });
-                });
-
-                return table;
-            }
+            // for showing info on a single project
+            self.projectPropertiesLeft = ['Sector', 'Sub-Sector', 'Organization', 'Deployment Countries', 'Deployment Date',
+                                          '# Active Mobile Workers', '# Forms Submitted'];
+            self.projectPropertiesRight = ['Notes'];
+            self.getProjectProperty = function(propertyName) {
+                return ((projectsByCountryThenName[this.selectedCountry().toLowerCase()] || {})[this.selectedProject()] || {})[propertyName] || '';
+            };
         };
 
-        that.getProjectInfoHtml = function (countryName, projectIdentifier) {
-            countryName = countryName.toLowerCase();
-            var projectInfo = (projectsByCountryThenName[countryName] || {})[projectIdentifier] || {};
-            var propertiesToShowLeft = ['Sector', 'Sub-Sector', 'Organization', 'Deployment Countries', 'Deployment Date',
-                                    '# Active Mobile Workers', '# Forms Submitted'];
-            var propertiesToShowRight = ['Notes'];
-
-            var leftDiv = $(document.createElement('div')).addClass('col-md-6');
-            var rightDiv = $(document.createElement('div')).addClass('col-md-6');
-            var parentDiv = $(document.createElement('div')).addClass('clearfix').append(leftDiv).append(rightDiv);
-
-
-            propertiesToShowLeft.forEach(function (propertyName) {
-                leftDiv.append($(document.createElement('h5')).text(propertyName + ':'));
-                leftDiv.append($(document.createElement('span')).text(projectInfo[propertyName] || ""));
-                leftDiv.append($(document.createElement('br')));
-            });
-
-            propertiesToShowRight.forEach(function (propertyName) {
-                rightDiv.append($(document.createElement('h5')).text(propertyName + ':'));
-                rightDiv.append($(document.createElement('span')).text(projectInfo[propertyName] || ""));
-                rightDiv.append($(document.createElement('br')));
-            });
-
-            return parentDiv;
-        };
+        selectionModel = new SelectionModel();
+        $('#modal').koApplyBindings(selectionModel);
 
         Object.freeze(that);
         return that;
@@ -166,8 +106,6 @@ jQuery(document).ready(function($) {
         var that = {};
 
         that.showProjectsTable = function(countryName) {
-            $('.modal-body').empty().append(dataController.getProjectsTableElement(countryName));
-
             var modalContent = $('.modal-content');
             modalContent.addClass('show-table');
             modalContent.removeClass('show-project-info');
@@ -176,8 +114,6 @@ jQuery(document).ready(function($) {
         };
 
         that.showProjectInfo = function(countryName, projectIdentifier) {
-            $('.modal-body').empty().append(dataController.getProjectInfoHtml(countryName, projectIdentifier));
-
             var modalContent = $('.modal-content');
             modalContent.removeClass('show-table');
             modalContent.addClass('show-project-info');
@@ -189,8 +125,8 @@ jQuery(document).ready(function($) {
         return that;
     }();
 
-    $(document).on('click', '.project-link', function(evt) {
-        var projectName = $(this).text();
+    $(document).on('click', '.project-row', function(evt) {
+        var projectName = $(this).attr('data-project-name');
         selectionModel.selectedProject(projectName);
         modalController.showProjectInfo(selectionModel.selectedCountry(), projectName);
     });

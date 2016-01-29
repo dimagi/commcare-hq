@@ -2,91 +2,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CommCare HQ Project Map</title>
-    {% compress css %}
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% new_static 'style/less/bootstrap.less' %}" />
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% new_static 'style/lib/fontawesome-4.1.0/less/font-awesome.less' %}" />
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% new_static 'style/less/font-commcare.less' %}" />
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% new_static 'style/less/style.less' %}" />
-    {% endcompress %}
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CommCare HQ Project Map</title>
+  {% compress css %}
+  <link type="text/less"
+  rel="stylesheet"
+  media="all"
+  href="{% new_static 'style/less/bootstrap.less' %}" />
+  <link type="text/less"
+  rel="stylesheet"
+  media="all"
+  href="{% new_static 'style/lib/fontawesome-4.1.0/less/font-awesome.less' %}" />
+  <link type="text/less"
+  rel="stylesheet"
+  media="all"
+  href="{% new_static 'style/less/font-commcare.less' %}" />
+  <link type="text/less"
+  rel="stylesheet"
+  media="all"
+  href="{% new_static 'style/less/style.less' %}" />
+  {% endcompress %}
 
-    {% compress css %}
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% new_static 'style/less/b3-migration.less' %}" />
-    {% endcompress %}
+  {% compress css %}
+  <link type="text/less"
+  rel="stylesheet"
+  media="all"
+  href="{% new_static 'style/less/b3-migration.less' %}" />
+  {% endcompress %}
 
-    {% compress css %}
-    <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'reports/css/leaflet/leaflet.css' %}" />
-    <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'hqadmin/css/project_map.css' %}" />
-    {% endcompress %}
-    
-    {% compress js %}
-    <script src="{% new_static 'less/dist/less-1.7.3.min.js' cache=True %}"></script>
-    <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'knockout/dist/knockout.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'style/js/hq.helpers.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'reports/javascripts/leaflet.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'hqadmin/js/project_map.js' %}"></script>
-    <script src="{% new_static 'appstore/js/facet_sidebar.js' %}"></script>
-    {% endcompress %}
+  {% compress css %}
+  <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'reports/css/leaflet/leaflet.css' %}" />
+  <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'hqadmin/css/project_map.css' %}" />
+  {% endcompress %}
+
+  {% compress js %}
+  <script src="{% new_static 'less/dist/less-1.7.3.min.js' cache=True %}"></script>
+  <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
+  <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
+  <script type="text/javascript" src="{% new_static 'knockout/dist/knockout.js' %}"></script>
+  <script type="text/javascript" src="{% new_static 'style/js/hq.helpers.js' %}"></script>
+  <script type="text/javascript" src="{% new_static 'reports/javascripts/leaflet.js' %}"></script>
+  <script type="text/javascript" src="{% new_static 'hqadmin/js/project_map.js' %}"></script>
+  <script src="{% new_static 'appstore/js/facet_sidebar.js' %}"></script>
+  {% endcompress %}
 </head>
 <body>
-    <!-- Modal -->
-    <div class="modal fade" id="modal">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header row">
-            <div class="col-md-2">
-                <button class="pull-left back project-info">Back</button>
+  <!-- Modal -->
+  <div class="modal fade" id="modal">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header row">
+          <div class="col-md-2">
+            <button class="pull-left back project-info">Back</button>
+          </div>
+          <div class="col-md-8 center">
+            <h4 class="modal-title table" id="modal-title">
+              <span>Projects in <span class="country-name" data-bind="text: selectedCountry"></span></span>
+            </h4>
+            <h4 class="modal-title project-info" id="modal-title">
+              <span class="project-identifier" data-bind="text: selectedProject"></span>
+            </h4>
+          </div>
+          <div class="col-md-2">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          </div>
+        </div>
+        <div class="modal-body">
+          <div class="project-info clearfix">
+            <div class="col-md-6" data-bind="foreach: {data: projectPropertiesLeft, as: 'propertyName'}">
+              <h5 data-bind="text: propertyName + ':'"></h5>
+              <span data-bind="text: $root.getSelectedProjectProperty(propertyName)"></span>
             </div>
-            <div class="col-md-8 center">
-                <h4 class="modal-title table" id="modal-title">
-                    <span>Projects in <span class="country-name" data-bind="text: selectedCountry"><!-- country name gets filled in here --></span></span>
-                </h4>
-                <h4 class="modal-title project-info" id="modal-title">
-                    <span class="project-identifier" data-bind="text: selectedProject"><!-- project name gets filled in here --></span>
-                </h4>
-            </div>
-            <div class="col-md-2">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <div class="col-md-6"data-bind="foreach: {data: projectPropertiesRight, as: 'propertyName'}">
+              <h5 data-bind="text: propertyName + ':'"></h5>
+              <span data-bind="text: $root.getSelectedProjectProperty(propertyName)"></span>
             </div>
           </div>
-          <div class="modal-body">
-            <!-- modal content gets filled in here -->
+          <div class="table">
+            <table class="table table-hover table-condensed">
+              <thead>
+                <tr data-bind="foreach: tableProperties">
+                  <th data-bind="text: $data"></th>
+                </tr>
+              </thead>
+              <tbody data-bind="foreach: {data: Object.keys(selectedCountryProjects()), as: 'projectName'}">
+                <tr class="project-row" data-bind="foreach: {data: $parent.tableProperties, as: 'propertyName'}, attr: {'data-project-name': projectName}">
+                  <td data-bind="text: $root.selectedCountryProjects()[projectName][propertyName]"></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <!-- <div class="modal-footer"> No footer right now, but maybe in future
-          </div> -->
         </div>
       </div>
     </div>
-    <!-- Main Page Content -->
-    <div class="main-content">
-        <div id="report-content"></div>
-        <div class="map-wrapper wrapper">
-            <div id="map"></div>
-        </div>
-        <div class="filter-wrapper wrapper">
-            <h4 class="text-hq-nav-header">{{ facet_report.facet_title }}</h4>
-            {% include 'appstore/partials/bootstrap3/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
-        </div>
+  </div>
+  <!-- Main Page Content -->
+  <div class="main-content">
+    <div id="report-content"></div>
+    <div class="map-wrapper wrapper">
+      <div id="map"></div>
     </div>
+    <div class="filter-wrapper wrapper">
+      <h4 class="text-hq-nav-header">{{ facet_report.facet_title }}</h4>
+      {% include 'appstore/partials/bootstrap3/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
+    </div>
+  </div>
 </body>
 </html>
