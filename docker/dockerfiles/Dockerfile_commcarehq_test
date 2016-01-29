@@ -20,6 +20,11 @@ RUN pip install \
 
 WORKDIR /mnt
 
+RUN mkdir /moto-s3
+RUN cd /moto-s3 && virtualenv env
+RUN cd /moto-s3 && git clone https://github.com/spulec/moto.git
+RUN cd /moto-s3 && env/bin/pip install -e ./moto
+
 ADD docker/entrypoint.sh /mnt/docker/entrypoint.sh
 
 ENTRYPOINT ["/mnt/docker/entrypoint.sh"]

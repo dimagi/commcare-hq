@@ -3,17 +3,30 @@ set -ev
 
 source .travis/utils.sh
 
-if [ "${MATRIX_TYPE}" = "python" ]; then
+run_tests() {
+    TESTS=${TEST_OVERRIDE:-"$1"}
 
-    COMMAND="coverage run manage.py test --noinput --failfast --traceback --verbosity=2"
-    TESTS=${TEST_OVERRIDE:-"--testrunner=$TESTRUNNER"}
-    travis_runner web_test $COMMAND $TESTS
+    ENV_VARS=""
+    if [ $# -eq 2 ]; then
+        ENV_VARS="$2"
+    fi
+
+    if [ -z ${COMMAND_OVERRIDE} ]; then
+        travis_runner web_test ".travis/test_runner.sh $TESTS"
+    else
+        travis_runner web_test $COMMAND_OVERRIDE
+    fi
+
+}
+if [ "${MATRIX_TYPE}" = "python" ]; then
+    TESTS="--testrunner=$TESTRUNNER"
+    run_tests "$TESTS"
 
 elif [ "${MATRIX_TYPE}" = "python-sharded" ]; then
 
     SHARDED_TEST_APPS="form_processor sql_db couchforms case phone receiverwrapper"
-    COMMAND="coverage run manage.py test --noinput --failfast --traceback --verbosity=2 $SHARDED_TEST_APPS"
-    travis_runner -e USE_PARTITIONED_DATABASE=yes web_test $COMMAND
+    ENV="-e USE_PARTITIONED_DATABASE=yes"
+    run_tests "$SHARDED_TEST_APPS" "$ENV"
 
 elif [ "${MATRIX_TYPE}" = "javascript" ]; then
 

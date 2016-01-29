@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 # Script to simulate travis
 # Usage:
-#   simulate.sh [MATRIX] [TEST_OVERRIDE]
+#   simulate.sh [MATRIX] [OPTIONS]
 #
 #   MATRIX:         test matrix to run
 #                   One of javascript, python_catchall, python_group_0, python_sharded
-#   TEST_OVERRIDE:  List of Django test labels to run instead of matrix default
+#   OPTIONS:
+#       --test-override       [List of Django test labels to run instead of matrix default]
+#       --command-override    [Override test command completely]
 #
-# e.g. simulate.sh python_catchall app_manager.SuiteTest
+# e.g.
+#   simulate.sh python-catchall --test-override app_manager.SuiteTest
+#   simulate.sh python-catchall --command-override bash
 
 set -e
 
@@ -54,13 +58,30 @@ run() {
 
 trap cleanup SIGINT SIGTERM EXIT ERR
 
+OPTIONS="javascript|python-catchall|python-group-0|python-sharded"
+
 MATRIX="$1"
+shift
 
-OPTIONS="javascript|python_catchall|python_group_0|python_sharded"
+while [[ $# > 1 ]]
+    do
+    opt="$1"
 
-if [ $# -eq 2 ]; then
-    export TEST_OVERRIDE="$2"
-fi
+    case $opt in
+        --test-override)
+            export TEST_OVERRIDE="$2"
+            shift
+            ;;
+        --command-override)
+            export COMMAND_OVERRIDE="$2"
+            shift
+            ;;
+        *)
+            echo "Unknown option: $opt"
+        ;;
+    esac
+    shift
+done
 
 case $MATRIX in
     -h | --help | help)
@@ -69,13 +90,13 @@ case $MATRIX in
     javascript)
         set_env javascript "" yes yes
         ;;
-    python_catchall)
+    python-catchall)
         set_env python "testrunner.GroupTestRunnerCatchall" yes yes
         ;;
-    python_group_0)
+    python-group-0)
         set_env python "testrunner.GroupTestRunner0" yes yes
         ;;
-    python_sharded)
+    python-sharded)
         set_env python-sharded "" "" ""
         ;;
     reset)

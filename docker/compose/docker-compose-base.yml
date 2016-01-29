@@ -45,15 +45,6 @@ web:
   labels:
     commcare.name: "web"
 
-moto:
-  build: ../dockerfiles
-  dockerfile: Dockerfile_moto
-  command: s3
-  expose:
-    - "5000"
-  labels:
-    commcare.name: "moto"
-
 kafka:
   image: spotify/kafka
   environment:
