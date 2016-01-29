@@ -1451,7 +1451,8 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
         questions = {
             q['value']: FormQuestionResponse(q)
-            for q in self.get_questions(self.get_app().langs, include_translations=True)
+            for q in self.get_questions(self.get_app().langs, include_triggers=True,
+                include_groups=True, include_translations=True)
         }
         module_case_type = self.get_module().case_type
         type_meta = app_case_meta.get_type(module_case_type)
