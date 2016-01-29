@@ -269,7 +269,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         for priv in self.privileges:
             if self.verbose:
                 log_accounting_info("Applying %s %s." % (priv, self.action_type))
-            message = self.privilege_to_response[priv](self.domain)
+            message = self.privilege_to_response()[priv](self.domain)
             if message is not None:
                 response.append(message)
         return response
@@ -519,16 +519,21 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 }
             )
 
-    privilege_to_response = {
-        privileges.CLOUDCARE: response_cloudcare,
-        privileges.LOOKUP_TABLES: response_lookup_tables,
-        privileges.CUSTOM_BRANDING: response_custom_branding,
-        privileges.OUTBOUND_SMS: response_outbound_sms,
-        privileges.INBOUND_SMS: response_inbound_sms,
-        privileges.DEIDENTIFIED_DATA: response_deidentified_data,
-        # privileges.MOBILE_WORKER_CREATION, # TODO - add back
-        privileges.ROLE_BASED_ACCESS: response_role_based_access,
-        privileges.DATA_CLEANUP: response_data_cleanup,
-        # LATER_SUBSCRIPTION_NOTIFICATION, # TODO - add back
-    }
-    supported_privileges = privilege_to_response.keys()
+    @classmethod
+    def privilege_to_response(cls):
+        return {
+            privileges.CLOUDCARE: cls.response_cloudcare,
+            privileges.LOOKUP_TABLES: cls.response_lookup_tables,
+            privileges.CUSTOM_BRANDING: cls.response_custom_branding,
+            privileges.OUTBOUND_SMS: cls.response_outbound_sms,
+            privileges.INBOUND_SMS: cls.response_inbound_sms,
+            privileges.DEIDENTIFIED_DATA: cls.response_deidentified_data,
+            # privileges.MOBILE_WORKER_CREATION, # TODO - add back
+            privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
+            privileges.DATA_CLEANUP: cls.response_data_cleanup,
+            # LATER_SUBSCRIPTION_NOTIFICATION, # TODO - add back
+        }
+
+    @property
+    def supported_privileges(self):
+        return self.privilege_to_response().keys()
