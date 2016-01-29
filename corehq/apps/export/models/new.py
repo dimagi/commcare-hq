@@ -417,7 +417,6 @@ class CaseExportDataSchema(ExportDataSchema):
                     path=[prop],
                     label=prop,
                     last_occurrences={app_id: app_version},
-                    app_id=app_id,
                 ))
 
             schema.group_schemas.append(group_schema)
@@ -440,7 +439,6 @@ class CaseExportDataSchema(ExportDataSchema):
                 label=system_prop.name,
                 tag=system_prop.tag,
                 last_occurrences={app_id: app_version},
-                app_id=app_id,
             ))
 
         for case_type, case_properties in case_property_mapping.iteritems():
@@ -450,7 +448,6 @@ class CaseExportDataSchema(ExportDataSchema):
                     label=prop,
                     tag=PROPERTY_TAG_UPDATE,
                     last_occurrences={app_id: app_version},
-                    app_id=app_id,
                 ))
 
         schema.group_schemas.append(group_schema)
