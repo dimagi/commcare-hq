@@ -2,7 +2,7 @@ import json
 import datetime
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _, ungettext
+from django.utils.translation import ugettext_lazy as _, ungettext # probably only use one
 from corehq import privileges
 from corehq.apps.accounting.utils import (
     get_active_reminders_by_domain_name,
@@ -18,7 +18,7 @@ from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
 from corehq.const import USER_DATE_FORMAT
 from couchexport.models import SavedExportSchema
-from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.database import iter_docs # cleanup imports
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -257,26 +257,23 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
     This returns a list of alerts for the user if their current domain is using features that
     will be removed during the downgrade.
     """
-    supported_privileges = [
-        privileges.CLOUDCARE,
-        privileges.LOOKUP_TABLES,
-        privileges.CUSTOM_BRANDING,
-        privileges.OUTBOUND_SMS,
-        privileges.INBOUND_SMS,
-        privileges.DEIDENTIFIED_DATA,
-        privileges.MOBILE_WORKER_CREATION,
-        privileges.ROLE_BASED_ACCESS,
-        privileges.DATA_CLEANUP,
-        LATER_SUBSCRIPTION_NOTIFICATION,
-    ]
     action_type = "notification"
 
-    @property
-    def response_cloudcare(self):
+    def get_response(self):
+        response = []
+        for priv in self.privileges:
+            if self.verbose:
+                log_accounting_info("Applying %s %s." % (priv, self.action_type))
+            message = self.privilege_to_response[priv](self, self.domain)
+            if message is not None:
+                response.append(message)
+        return response
+
+    def response_cloudcare(cls, domain):
         """
         CloudCare enabled apps will have cloudcare_enabled set to false on downgrade.
         """
-        cloudcare_enabled_apps = get_cloudcare_apps(self.domain.name)
+        cloudcare_enabled_apps = get_cloudcare_apps(domain.name)
         if not cloudcare_enabled_apps:
             return None
 
@@ -294,18 +291,17 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             [
                 mark_safe('<a href="%(url)s">%(title)s</a>') % {
                     'title': app['name'],
-                    'url': reverse('view_app', args=[self.domain.name, app['_id']])
+                    'url': reverse('view_app', args=[domain.name, app['_id']])
                 }
                 for app in cloudcare_enabled_apps
             ]
         )
 
-    @property
-    def response_lookup_tables(self):
+    def response_lookup_tables(cls, domain):
         """
         Lookup tables will be deleted on downgrade.
         """
-        num_fixtures = FixtureDataType.total_by_domain(self.domain.name)
+        num_fixtures = FixtureDataType.total_by_domain(domain.name)
         if num_fixtures > 0:
             return _fmt_downgrade_status_alert(
                 ungettext(
@@ -317,28 +313,26 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 ) % {'num_fix': num_fixtures}
             )
 
-    @property
-    def response_custom_branding(self):
+    def response_custom_branding(cls, domain):
         """
         Custom logos will be removed on downgrade.
         """
-        if self.domain.has_custom_logo:
+        if domain.has_custom_logo:
             return _fmt_downgrade_status_alert(
                 _("You are using custom branding. Selecting this plan will remove this feature.")
             )
 
-    @property
     @memoized
-    def _active_reminder_methods(self):
-        reminder_rules = get_active_reminders_by_domain_name(self.domain.name)
+    @staticmethod
+    def _active_reminder_methods(domain):
+        reminder_rules = get_active_reminders_by_domain_name(domain.name)
         return [reminder.method for reminder in reminder_rules]
 
-    @property
-    def response_outbound_sms(self):
+    def response_outbound_sms(cls, domain):
         """
         Reminder rules will be deactivated.
         """
-        num_active = len(self._active_reminder_methods)
+        num_active = len(cls._active_reminder_methods(domain))
         if num_active > 0:
             return _fmt_downgrade_status_alert(
                 ungettext(
@@ -352,12 +346,14 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 }
             )
 
-    @property
-    def response_inbound_sms(self):
+    def response_inbound_sms(cls, domain):
         """
         All Reminder rules utilizing "survey" will be deactivated.
         """
-        surveys = filter(lambda x: x in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY], self._active_reminder_methods)
+        surveys = filter(
+            lambda x: x in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY],
+            cls._active_reminder_methods(domain)
+        )
         num_survey = len(surveys)
         if num_survey > 0:
             return _fmt_downgrade_status_alert(
@@ -372,12 +368,11 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 }
             )
 
-    @property
-    def response_deidentified_data(self):
+    def response_deidentified_data(cls, domain):
         """
         De-id exports will be hidden
         """
-        startkey = json.dumps([self.domain.name, ""])[:-3]
+        startkey = json.dumps([domain.name, ""])[:-3]
         endkey = "%s{" % startkey
         reports = SavedExportSchema.view(
             "couchexport/saved_export_schemas",
@@ -399,13 +394,12 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 }
             )
 
-    @property
-    def response_mobile_worker_creation(self):
+    def response_mobile_worker_creation(cls, domain):
         """
         Get the allowed number of mobile workers based on plan version.
         """
         from corehq.apps.accounting.models import FeatureType, FeatureRate, UNLIMITED_FEATURE_USAGE
-        num_users = CommCareUser.total_by_domain(self.domain.name, is_active=True)
+        num_users = CommCareUser.total_by_domain(domain.name, is_active=True)
         try:
             user_rate = self.new_plan_version.feature_rates.filter(
                 feature__feature_type=FeatureType.USER).latest('date_created')
@@ -442,12 +436,11 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 % self.new_plan_version.plan.name
             )
 
-    @property
-    def response_role_based_access(self):
+    def response_role_based_access(cls, domain):
         """
         Alert the user if there are currently custom roles set up for the domain.
         """
-        custom_roles = [r.name for r in UserRole.get_custom_roles_by_domain(self.domain.name)]
+        custom_roles = [r.name for r in UserRole.get_custom_roles_by_domain(domain.name)]
         num_roles = len(custom_roles)
         if num_roles > 0:
             return _fmt_downgrade_status_alert(
@@ -490,13 +483,12 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 }
             )
 
-    @property
-    def response_data_cleanup(self):
+    def response_data_cleanup(cls, domain):
         """
         Any active automatic case update rules should be deactivated.
         """
         rule_count = AutomaticUpdateRule.objects.filter(
-            domain=self.domain.name,
+            domain=domain.name,
             deleted=False,
             active=True,
         ).count()
@@ -514,3 +506,17 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                     'rule_count': rule_count,
                 }
             )
+
+    privilege_to_response = {
+        privileges.CLOUDCARE: response_cloudcare,
+        privileges.LOOKUP_TABLES: response_lookup_tables,
+        privileges.CUSTOM_BRANDING: response_custom_branding,
+        privileges.OUTBOUND_SMS: response_outbound_sms,
+        privileges.INBOUND_SMS: response_inbound_sms,
+        privileges.DEIDENTIFIED_DATA: response_deidentified_data,
+        # privileges.MOBILE_WORKER_CREATION, # TODO - add back
+        privileges.ROLE_BASED_ACCESS: response_role_based_access,
+        privileges.DATA_CLEANUP: response_data_cleanup,
+        # LATER_SUBSCRIPTION_NOTIFICATION, # TODO - add back
+    }
+    supported_privileges = privilege_to_response.keys()
