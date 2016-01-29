@@ -39,7 +39,7 @@ domains_migration = Migrator(
 apps_migration = Migrator(
     slug='apps',
     source_db_name=None,
-    target_db_name=settings.NEW_DOMAINS_DB,
+    target_db_name=settings.NEW_APPS_DB,
     doc_types=(
         'Application',
         'ApplicationBase',

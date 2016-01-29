@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('locations', '0001_initial'),
-        ('ilsgateway', '0003_auto_20160104_1012'),
+        ('ilsgateway', '0004_merge'),
     ]
 
     operations = [

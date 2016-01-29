@@ -139,6 +139,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     DUPLICATE = 4
     ERROR = 8
     SUBMISSION_ERROR_LOG = 16
+    DELETED = 32
     STATES = (
         (NORMAL, 'normal'),
         (ARCHIVED, 'archived'),
@@ -146,6 +147,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         (DUPLICATE, 'duplicate'),
         (ERROR, 'error'),
         (SUBMISSION_ERROR_LOG, 'submission_error'),
+        (DELETED, 'deleted'),
     )
 
     form_id = models.CharField(max_length=255, unique=True, db_index=True)
@@ -216,6 +218,10 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         return self.state == self.SUBMISSION_ERROR_LOG
 
     @property
+    def is_deleted(self):
+        return self.state == self.DELETED
+
+    @property
     @memoized
     def form_data(self):
         from .utils import convert_xform_to_json, adjust_datetimes
@@ -236,6 +242,10 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
             return XFormPhoneMetadata.wrap(clean_metadata(self.form_data[const.TAG_META]))
 
         return None
+
+    def soft_delete(self):
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        return FormAccessorSQL.update_state(self.form_id, XFormInstanceSQL.DELETED)
 
     def to_json(self):
         from .serializers import XFormInstanceSQLSerializer
