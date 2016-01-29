@@ -51,7 +51,6 @@ branches:
   - vellum-staging # J$ 11/13
   - requests #Simon 11/3
   - add-tableau-dashboard # TS 11/5
-  - location-cases  # Ethan 1/19
 #  - b3-app-manager+new-footer-nav # Jenny 1/25
   - b3-app-manager # Jenny 1/20
 #  - new-footer-nav # Biyeun 1/4
