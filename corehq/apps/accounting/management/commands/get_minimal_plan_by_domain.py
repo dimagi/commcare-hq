@@ -17,7 +17,7 @@ class Command(BaseCommand):
             }
             using_privileges = [priv for (priv, is_in_use) in is_privilege_being_used.items() if is_in_use]
             minimum_plan = DefaultProductPlan.get_lowest_edition_by_domain(domain.name, using_privileges)
-            print domain, is_privilege_being_used, minimum_plan
+            print domain.name, is_privilege_being_used, minimum_plan
 
 
 def _is_domain_using_privilege(domain, privilege):
