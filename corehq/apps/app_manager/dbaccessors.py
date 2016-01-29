@@ -178,8 +178,11 @@ def get_built_app_ids_for_app_id(domain, app_id, version=None):
 
 def get_latest_built_app_ids_and_versions(domain, app_id=None):
     """
-    Returns all the latest build app_ids and version in a dictionary:
-    {app_id: latest_version}
+    Returns all the latest app_ids and versions in a dictionary.
+    :param domain: The domain to get the app from
+    :param app_id: The app_id to get the latest version from. If not specified gets latest versions of all
+        apps in the domain
+    :returns: {app_id: latest_version}
     """
     from .models import Application
     key = [domain, app_id] if app_id else [domain]
