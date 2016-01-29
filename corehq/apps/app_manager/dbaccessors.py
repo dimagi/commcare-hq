@@ -1,8 +1,12 @@
+from collections import namedtuple
+
 from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
 from django.http import Http404
 
 from corehq.apps.es import AppES
+
+AppBuildVersion = namedtuple('AppBuildVersion', ['app_id', 'build_id', 'version'])
 
 
 def domain_has_apps(domain):
@@ -241,6 +245,25 @@ def get_all_app_ids(domain):
         include_docs=False,
     ).all()
     return [result['id'] for result in results]
+
+
+def get_all_built_app_ids_and_versions(domain):
+    """
+    Returns a list of all the app_ids ever built and their version.
+    [[app_id, build_id, version], ...]
+    """
+    from .models import Application
+    results = Application.get_db().view(
+        'app_manager/saved_app',
+        startkey=[domain],
+        endkey=[domain, {}],
+        include_docs=False,
+    ).all()
+    return map(lambda result: AppBuildVersion(
+        app_id=result['key'][1],
+        build_id=result['id'],
+        version=result['key'][2],
+    ), results)
 
 
 def get_case_types_from_apps(domain):
