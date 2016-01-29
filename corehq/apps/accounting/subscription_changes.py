@@ -533,6 +533,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             privileges.DATA_CLEANUP: cls.response_data_cleanup,
             # LATER_SUBSCRIPTION_NOTIFICATION, # TODO - add back
             privileges.CUSTOM_REPORTS: _domain_has_custom_report,
+            privileges.LOCATIONS: _domain_uses_locations,
         }
 
     @property
@@ -543,3 +544,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
 def _domain_has_custom_report(domain):
     from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
     return bool(CustomProjectReportDispatcher().get_reports(domain.name))
+
+
+def _domain_uses_locations(domain):
+    return domain.uses_locations
