@@ -42,3 +42,5 @@ RUN pip install \
     ipython \
     --user --upgrade \
     && rm -rf /root/.cache/pip
+
+ENV PATH=/vendor/bin:$PATH
