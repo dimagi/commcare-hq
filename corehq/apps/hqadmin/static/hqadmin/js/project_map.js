@@ -73,7 +73,7 @@ jQuery(document).ready(function($) {
         that.getMaxNumProjects = function () {
             return maxNumProjects;
         };
-        
+
 
         var SelectionModel = function () {
             var self = this;
@@ -82,16 +82,19 @@ jQuery(document).ready(function($) {
 
             // for showing a country's projects table
             self.tableProperties = ['Name', 'Sector', 'Organization', 'Deployment Date'];
-            self.selectedCountryProjects = ko.computed(function() {
-                return projectsByCountryThenName[this.selectedCountry().toLowerCase()] || {};
+            self.selectedCountryProjectNames = ko.computed(function() {
+                return Object.keys(projectsByCountryThenName[this.selectedCountry().toLowerCase()] || {});
             }, this);
+            self.getProjectProperty = function(projectName, propertyName) {
+                return ((projectsByCountryThenName[this.selectedCountry().toLowerCase()] || {})[projectName] || {})[propertyName] || '';
+            };
 
             // for showing info on a single project
             self.projectPropertiesLeft = ['Sector', 'Sub-Sector', 'Organization', 'Deployment Countries', 'Deployment Date',
                                           '# Active Mobile Workers', '# Forms Submitted'];
             self.projectPropertiesRight = ['Notes'];
-            self.getProjectProperty = function(propertyName) {
-                return ((projectsByCountryThenName[this.selectedCountry().toLowerCase()] || {})[this.selectedProject()] || {})[propertyName] || '';
+            self.getSelectedProjectProperty = function(propertyName) {
+                return self.getProjectProperty(self.selectedProject(), propertyName);
             };
         };
 

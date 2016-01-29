@@ -87,9 +87,9 @@
                   <th data-bind="text: $data"></th>
                 </tr>
               </thead>
-              <tbody data-bind="foreach: {data: Object.keys(selectedCountryProjects()), as: 'projectName'}">
+              <tbody data-bind="foreach: {data: selectedCountryProjectNames(), as: 'projectName'}">
                 <tr class="project-row" data-bind="foreach: {data: $parent.tableProperties, as: 'propertyName'}, attr: {'data-project-name': projectName}">
-                  <td data-bind="text: $root.selectedCountryProjects()[projectName][propertyName]"></td>
+                  <td data-bind="text: $root.getProjectProperty(projectName, propertyName)"></td>
                 </tr>
               </tbody>
             </table>
