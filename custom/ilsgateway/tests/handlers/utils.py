@@ -1,10 +1,11 @@
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.models import CommtrackActionConfig
+from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.sms.mixin import MobileBackend
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from corehq.apps.users.models import CommCareUser
 from custom.logistics.tests.test_script import TestScript
@@ -148,6 +149,15 @@ def prepare_domain(domain_name):
     subscription.save()
     ils_config = ILSGatewayConfig(enabled=True, domain=domain.name, all_stock_data=True)
     ils_config.save()
+    fields_definition = CustomDataFieldsDefinition.get_or_create(domain.name, 'LocationFields')
+    fields_definition.fields.append(CustomDataField(
+        slug='group',
+        label='Group',
+        is_required=False,
+        choices=['A', 'B', 'C'],
+        is_multiple_choice=False
+    ))
+    fields_definition.save()
     return domain
 
 

@@ -1276,23 +1276,6 @@ SMS_HANDLERS = [
     'corehq.apps.sms.handlers.fallback.fallback_handler',
 ]
 
-SMS_LOADED_BACKENDS = [
-    'corehq.messaging.smsbackends.unicel.models.UnicelBackend',
-    'corehq.messaging.smsbackends.mach.models.MachBackend',
-    'corehq.messaging.smsbackends.tropo.models.TropoBackend',
-    'corehq.messaging.smsbackends.http.models.HttpBackend',
-    'corehq.messaging.smsbackends.telerivet.models.TelerivetBackend',
-    'corehq.messaging.smsbackends.test.models.TestSMSBackend',
-    'corehq.messaging.smsbackends.grapevine.models.GrapevineBackend',
-    'corehq.messaging.smsbackends.twilio.models.TwilioBackend',
-    'corehq.messaging.smsbackends.megamobile.models.MegamobileBackend',
-    'corehq.messaging.smsbackends.smsgh.models.SMSGHBackend',
-    'corehq.messaging.smsbackends.apposit.models.AppositBackend',
-]
-
-IVR_LOADED_BACKENDS = [
-    'corehq.messaging.ivrbackends.kookoo.models.KooKooBackend',
-]
 
 SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.apposit.models.SQLAppositBackend',
@@ -1422,6 +1405,11 @@ PILLOWTOPS = {
             'name': 'SqlXFormToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.xform.get_sql_xform_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'SqlCaseToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
         },
     ]
 }

@@ -10,7 +10,6 @@ from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.sms.mixin import MobileBackend
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from corehq.apps.users.models import CommCareUser
 from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge

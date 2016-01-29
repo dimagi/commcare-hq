@@ -1,3 +1,4 @@
+from collections import namedtuple
 from copy import copy
 from datetime import datetime
 from elasticsearch import TransportError
@@ -22,6 +23,9 @@ INDEX_STANDARD_SETTINGS = {
         "number_of_replicas": "0"
     }
 }
+
+
+ElasticsearchIndexMeta = namedtuple('ElasticsearchIndexMeta', ['index', 'type'])
 
 
 def update_settings(es, index, settings_dict):

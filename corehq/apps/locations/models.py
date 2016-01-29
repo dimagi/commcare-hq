@@ -407,6 +407,14 @@ class SQLLocation(MPTTModel):
         except:
             return None
 
+    @property
+    def location_type_object(self):
+        return self.location_type
+
+    @property
+    def location_type_name(self):
+        return self.location_type.name
+
 
 def _filter_for_archived(locations, include_archive_ancestors):
     """

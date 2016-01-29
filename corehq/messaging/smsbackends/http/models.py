@@ -2,7 +2,7 @@ import re
 from urllib import urlencode
 from urllib2 import urlopen
 import sys
-from corehq.apps.sms.mixin import SMSBackend, BackendProcessingException
+from corehq.apps.sms.mixin import BackendProcessingException
 from corehq.apps.sms.forms import BackendForm
 from corehq.apps.reminders.forms import RecordListField
 from django.forms.fields import *
@@ -90,70 +90,10 @@ class HttpBackendForm(BackendForm):
         )
 
 
-class HttpBackend(SMSBackend):
-    url = StringProperty() # the url to send to
-    message_param = StringProperty() # the parameter which the gateway expects to represent the sms message
-    number_param = StringProperty() # the parameter which the gateway expects to represent the phone number to send to
-    include_plus = BooleanProperty(default=False) # True to include the plus sign in front of the number, False not to (optional, defaults to False)
-    method = StringProperty(choices=["GET","POST"], default="GET") # "GET" or "POST" (optional, defaults to "GET")
-    additional_params = DictProperty() # a dictionary of additional parameters that will be sent in the request (optional)
-
-    @classmethod
-    def get_api_id(cls):
-        return "HTTP"
-
-    @classmethod
-    def get_generic_name(cls):
-        return "HTTP"
-
-    @classmethod
-    def get_form_class(cls):
-        return HttpBackendForm
-
-    def send(self, msg, *args, **kwargs):
-        if self.additional_params is not None:
-            params = self.additional_params.copy()
-        else:
-            params = {}
-        
-        phone_number = msg.phone_number
-        if self.include_plus:
-            phone_number = clean_phone_number(phone_number)
-        else:
-            phone_number = strip_plus(phone_number)
-        
-        try:
-            text = msg.text.encode("iso-8859-1")
-        except UnicodeEncodeError:
-            text = msg.text.encode("utf-8")
-        params[self.message_param] = text
-        params[self.number_param] = phone_number
-
-        url_params = urlencode(params)
-        try:
-            if self.method == "GET":
-                response = urlopen("%s?%s" % (self.url, url_params),
-                    timeout=settings.SMS_GATEWAY_TIMEOUT).read()
-            else:
-                response = urlopen(self.url, url_params,
-                    timeout=settings.SMS_GATEWAY_TIMEOUT).read()
-        except Exception as e:
-            msg = "Error sending message from backend: '{}'\n\n{}".format(self.name, str(e))
-            raise BackendProcessingException(msg), None, sys.exc_info()[2]
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLHttpBackend
-
-
 class SQLHttpBackend(SQLSMSBackend):
     class Meta:
         app_label = 'sms'
         proxy = True
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return HttpBackend
 
     @classmethod
     def get_available_extra_fields(cls):
