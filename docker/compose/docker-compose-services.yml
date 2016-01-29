@@ -28,6 +28,8 @@ elasticsearch:
     file: docker-compose-base.yml
     service: elasticsearch
   command: elasticsearch --cluster.name=${ES_CLUSTER_NAME}
+  environment:
+    - ES_CLUSTER_NAME
   ports:
     - "9200:9200"
   volumes:

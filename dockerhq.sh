@@ -86,16 +86,16 @@ case $key in
         travis_js_runner $@
         ;;
     migrate)
-        web_runner run web python manage.py migrate $@
+        web_runner run --rm web python manage.py migrate $@
         ;;
     runserver)
         web_runner up $@
         ;;
     shell)
-        web_runner run web python manage.py shell
+        web_runner run --rm web python manage.py shell
         ;;
     bash)
-        web_runner run web bash
+        web_runner run --rm --service-ports web bash
         ;;
     rebuild)
         rebuild
