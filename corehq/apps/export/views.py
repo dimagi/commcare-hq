@@ -281,7 +281,7 @@ class BaseCreateCustomExportView(BaseExportView):
         return HttpResponseRedirect(self.export_home_url)
 
 
-class NewCreateCustomFormExportView(BaseCreateNewCustomExportView):
+class CreateNewCustomFormExportView(BaseCreateNewCustomExportView):
     urlname = 'new_custom_export_form'
     page_title = ugettext_lazy("Create Form Export")
     export_type = 'form'
@@ -300,7 +300,7 @@ class NewCreateCustomFormExportView(BaseCreateNewCustomExportView):
         return super(BaseCreateCustomExportView, self).get(request, *args, **kwargs)
 
 
-class NewCreateCustomCaseExportView(BaseCreateNewCustomExportView):
+class CreateNewCustomCaseExportView(BaseCreateNewCustomExportView):
     urlname = 'new_custom_export_case'
     page_title = ugettext_lazy("Create Case Export")
     export_type = 'case'
