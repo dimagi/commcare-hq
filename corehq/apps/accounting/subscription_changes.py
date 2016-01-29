@@ -252,6 +252,11 @@ def _fmt_downgrade_status_alert(message, details=None):
     }
 
 
+def _active_reminder_methods(domain):
+    reminder_rules = get_active_reminders_by_domain_name(domain.name)
+    return [reminder.method for reminder in reminder_rules]
+
+
 class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
     """
     This returns a list of alerts for the user if their current domain is using features that
@@ -264,12 +269,13 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         for priv in self.privileges:
             if self.verbose:
                 log_accounting_info("Applying %s %s." % (priv, self.action_type))
-            message = self.privilege_to_response[priv](self, self.domain)
+            message = self.privilege_to_response[priv](self.domain)
             if message is not None:
                 response.append(message)
         return response
 
-    def response_cloudcare(cls, domain):
+    @staticmethod
+    def response_cloudcare(domain):
         """
         CloudCare enabled apps will have cloudcare_enabled set to false on downgrade.
         """
@@ -297,7 +303,8 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             ]
         )
 
-    def response_lookup_tables(cls, domain):
+    @staticmethod
+    def response_lookup_tables(domain):
         """
         Lookup tables will be deleted on downgrade.
         """
@@ -313,7 +320,8 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 ) % {'num_fix': num_fixtures}
             )
 
-    def response_custom_branding(cls, domain):
+    @staticmethod
+    def response_custom_branding(domain):
         """
         Custom logos will be removed on downgrade.
         """
@@ -327,11 +335,12 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         reminder_rules = get_active_reminders_by_domain_name(domain.name)
         return [reminder.method for reminder in reminder_rules]
 
-    def response_outbound_sms(cls, domain):
+    @staticmethod
+    def response_outbound_sms(domain):
         """
         Reminder rules will be deactivated.
         """
-        num_active = len(cls._active_reminder_methods(domain))
+        num_active = len(_active_reminder_methods(domain))
         if num_active > 0:
             return _fmt_downgrade_status_alert(
                 ungettext(
@@ -345,13 +354,14 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 }
             )
 
-    def response_inbound_sms(cls, domain):
+    @staticmethod
+    def response_inbound_sms(domain):
         """
         All Reminder rules utilizing "survey" will be deactivated.
         """
         surveys = filter(
             lambda x: x in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY],
-            cls._active_reminder_methods(domain)
+            _active_reminder_methods(domain)
         )
         num_survey = len(surveys)
         if num_survey > 0:
@@ -367,7 +377,8 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 }
             )
 
-    def response_deidentified_data(cls, domain):
+    @staticmethod
+    def response_deidentified_data(domain):
         """
         De-id exports will be hidden
         """
@@ -435,7 +446,8 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 % self.new_plan_version.plan.name
             )
 
-    def response_role_based_access(cls, domain):
+    @staticmethod
+    def response_role_based_access(domain):
         """
         Alert the user if there are currently custom roles set up for the domain.
         """
@@ -482,7 +494,8 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 }
             )
 
-    def response_data_cleanup(cls, domain):
+    @staticmethod
+    def response_data_cleanup(domain):
         """
         Any active automatic case update rules should be deactivated.
         """
