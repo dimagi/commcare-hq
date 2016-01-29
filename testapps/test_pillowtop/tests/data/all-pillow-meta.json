@@ -157,21 +157,21 @@
         "name": "DefaultChangeFeedPillow"
     },
     "DomainPillow": {
-        "advertised_name": "corehq.pillows.domain.DomainPillow.test_hqdomains_20151204_1053.testhq",
+        "advertised_name": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160128_1552.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.domain.DomainPillow.test_hqdomains_20151204_1053.testhq",
+        "checkpoint_id": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160128_1552.testhq",
         "couch_filter": "domain/domains_inclusive",
         "couchdb_type": "Database",
         "couchdb_uri": "http://127.0.0.1:5984/test_commcarehq__domains",
         "document_class": "Domain",
         "es_alias": "hqdomains",
-        "es_index": "test_hqdomains_20151204_1053",
+        "es_index": "test_hqdomains_20160128_1552",
         "es_type": "hqdomain",
         "extra_args": {},
         "full_class_name": "corehq.pillows.domain.DomainPillow",
         "include_docs": true,
         "name": "DomainPillow",
-        "unique_id": "test_hqdomains_20151204_1053"
+        "unique_id": "test_hqdomains_20160128_1552"
     },
     "FarmerRecordFluffPillow": {
         "advertised_name": "fluff.FarmerRecordFluffPillow.testhq",

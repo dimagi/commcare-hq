@@ -225,7 +225,7 @@ def store_billable(msg):
 def delete_phone_numbers_for_owners(owner_ids):
     for ids in chunked(owner_ids, 50):
         results = VerifiedNumber.get_db().view(
-            'sms/verified_number_by_owner_id',
+            'phone_numbers/verified_number_by_owner_id',
             keys=ids,
             include_docs=True
         )
