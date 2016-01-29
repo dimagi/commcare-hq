@@ -276,8 +276,8 @@ class ExportDataSchema(Document):
     class Meta:
         app_label = 'export'
 
-    @staticmethod
-    def _merge_schemas(*schemas):
+    @classmethod
+    def _merge_schemas(cls, *schemas):
         """Merges two ExportDataSchemas together
 
         :param schema1: The first ExportDataSchema
@@ -285,7 +285,7 @@ class ExportDataSchema(Document):
         :returns: The merged ExportDataSchema
         """
 
-        schema = ExportDataSchema()
+        schema = cls()
 
         def resolvefn(group_schema1, group_schema2):
             group_schema = ExportGroupSchema(
@@ -340,17 +340,13 @@ class FormExportDataSchema(ExportDataSchema):
         :param domain: The domain that the export belongs to
         :param app_id: The app_id that the export belongs to
         :param unique_form_id: The unique identifier of the item being exported
-        :returns: Returns a ExportDataSchema instance
+        :returns: Returns a FormExportDataSchema instance
         """
         xform_schema_id = get_latest_form_export_schema_id(domain, app_id, form_xmlns)
         if xform_schema_id:
             current_xform_schema = FormExportDataSchema.get(xform_schema_id)
         else:
-            current_xform_schema = FormExportDataSchema(
-                domain=domain,
-                app_id=app_id,
-                xmlns=form_xmlns,
-            )
+            current_xform_schema = FormExportDataSchema()
 
         app_build_ids = get_built_app_ids_for_app_id(
             domain,
@@ -372,6 +368,11 @@ class FormExportDataSchema(ExportDataSchema):
             )
             current_xform_schema = FormExportDataSchema._merge_schemas(current_xform_schema, xform_schema)
             current_xform_schema.record_update(app.copy_of, app.version)
+
+        current_xform_schema.domain = domain
+        current_xform_schema.app_id = app_id
+        current_xform_schema.xmlns = form_xmlns
+        current_xform_schema.save()
 
         return current_xform_schema
 
@@ -411,7 +412,7 @@ class CaseExportDataSchema(ExportDataSchema):
 
         :param domain: The domain that the export belongs to
         :param unique_form_id: The unique identifier of the item being exported
-        :returns: Returns a ExportDataSchema instance
+        :returns: Returns a CaseExportDataSchema instance
         """
 
         app_build_ids = get_all_app_ids(domain)
@@ -420,10 +421,7 @@ class CaseExportDataSchema(ExportDataSchema):
         if case_schema_id:
             current_case_schema = CaseExportDataSchema.get(case_schema_id)
         else:
-            current_case_schema = CaseExportDataSchema(
-                domain=domain,
-                case_type=case_type,
-            )
+            current_case_schema = CaseExportDataSchema()
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             app = Application.wrap(app_doc)
@@ -450,6 +448,10 @@ class CaseExportDataSchema(ExportDataSchema):
             )
 
             current_case_schema.record_update(app.copy_of, app.version)
+
+        current_case_schema.domain = domain
+        current_case_schema.case_type = case_type
+        current_case_schema.save()
 
         return current_case_schema
 
