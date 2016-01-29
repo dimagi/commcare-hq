@@ -542,4 +542,4 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
 
 def _domain_has_custom_report(domain):
     from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
-    return bool(CustomProjectReportDispatcher().get_reports(domain))
+    return bool(CustomProjectReportDispatcher().get_reports(domain.name))
