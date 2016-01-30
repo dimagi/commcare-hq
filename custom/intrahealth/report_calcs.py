@@ -91,7 +91,7 @@ class TauxCalculator(fluff.Calculator):
         num_products = numeric_value(form.get_data('form/num_products'))
         print num_products
         if num_products > 1:
-            for product in (form.xpath('form/products') or []):
+            for product in (form.get_data('form/products') or []):
                 received_month_inner = product.get('receivedMonthInner')
                 amount_ordered = numeric_value(product.get(self.property_name))
                 product_name = product.get('productName')
