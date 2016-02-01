@@ -26,8 +26,8 @@ from corehq.apps.export.const import (
     CASE_HISTORY_GROUP_NAME,
 )
 from corehq.apps.export.dbaccessors import (
-    get_latest_case_export_schema_id,
-    get_latest_form_export_schema_id,
+    get_latest_case_export_schema,
+    get_latest_form_export_schema,
 )
 
 
@@ -342,10 +342,8 @@ class FormExportDataSchema(ExportDataSchema):
         :param unique_form_id: The unique identifier of the item being exported
         :returns: Returns a FormExportDataSchema instance
         """
-        xform_schema_id = get_latest_form_export_schema_id(domain, app_id, form_xmlns)
-        if xform_schema_id:
-            current_xform_schema = FormExportDataSchema.get(xform_schema_id)
-        else:
+        current_xform_schema = get_latest_form_export_schema(domain, app_id, form_xmlns)
+        if not current_xform_schema:
             current_xform_schema = FormExportDataSchema()
 
         app_build_ids = get_built_app_ids_for_app_id(
@@ -427,11 +425,9 @@ class CaseExportDataSchema(ExportDataSchema):
         :returns: Returns a CaseExportDataSchema instance
         """
 
-        case_schema_id = get_latest_case_export_schema_id(domain, case_type)
+        current_case_schema = get_latest_case_export_schema(domain, case_type)
 
-        if case_schema_id:
-            current_case_schema = CaseExportDataSchema.get(case_schema_id)
-        else:
+        if not current_case_schema:
             current_case_schema = CaseExportDataSchema()
 
         app_build_ids = CaseExportDataSchema._get_app_build_ids_to_process(

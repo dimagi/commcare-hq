@@ -1,32 +1,32 @@
 
 
-def get_latest_case_export_schema_id(domain, case_type):
-    from .models import ExportDataSchema
+def get_latest_case_export_schema(domain, case_type):
+    from .models import CaseExportDataSchema
 
     key = [domain, 'CaseExportDataSchema', case_type]
-    result = ExportDataSchema.get_db().view(
+    result = CaseExportDataSchema.get_db().view(
         'schemas_by_xmlns_or_case_type/view',
         startkey=key + [{}],
         endkey=key,
-        include_docs=False,
+        include_docs=True,
         limit=1,
         reduce=False,
         descending=True,
     ).first()
-    return result['id'] if result else None
+    return CaseExportDataSchema.wrap(result['doc']) if result else None
 
 
-def get_latest_form_export_schema_id(domain, app_id, xmlns):
-    from .models import ExportDataSchema
+def get_latest_form_export_schema(domain, app_id, xmlns):
+    from .models import FormExportDataSchema
 
     key = [domain, 'FormExportDataSchema', app_id, xmlns]
-    result = ExportDataSchema.get_db().view(
+    result = FormExportDataSchema.get_db().view(
         'schemas_by_xmlns_or_case_type/view',
         startkey=key + [{}],
         endkey=key,
-        include_docs=False,
+        include_docs=True,
         limit=1,
         reduce=False,
         descending=True,
     ).first()
-    return result['id'] if result else None
+    return FormExportDataSchema.wrap(result['doc']) if result else None

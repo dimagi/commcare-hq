@@ -322,18 +322,11 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
     def test_build_from_saved_schema(self):
         app = self.current_app
 
-        with patch(
-                'corehq.apps.export.models.new.FormExportDataSchema.get',
-                wraps=FormExportDataSchema.get) as wrapped_get:
-            schema = FormExportDataSchema.generate_schema_from_builds(
-                app.domain,
-                app._id,
-                'my_sweet_xmlns'
-            )
-            self.assertFalse(
-                wrapped_get.called,
-                'Schema should be created from new object'
-            )
+        schema = FormExportDataSchema.generate_schema_from_builds(
+            app.domain,
+            app._id,
+            'my_sweet_xmlns'
+        )
 
         self.assertEqual(len(schema.group_schemas), 1)
         self.assertEqual(schema.last_app_versions[app._id], 3)
@@ -344,19 +337,15 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         second_build.copy_of = app.get_id
         second_build.version = 6
         second_build.save()
-
-        with patch(
-                'corehq.apps.export.models.new.FormExportDataSchema.get',
-                wraps=FormExportDataSchema.get) as wrapped_get:
-
-            new_schema = FormExportDataSchema.generate_schema_from_builds(
-                app.domain,
-                app._id,
-                'my_sweet_xmlns'
-            )
-            wrapped_get.assert_called_with(schema._id)
-
         self.addCleanup(second_build.delete)
+
+        new_schema = FormExportDataSchema.generate_schema_from_builds(
+            app.domain,
+            app._id,
+            'my_sweet_xmlns'
+        )
+
+        self.assertNotEqual(new_schema._id, schema._id)
         self.assertEqual(new_schema.last_app_versions[app._id], 6)
         self.assertEqual(len(new_schema.group_schemas), 1)
 
@@ -406,17 +395,10 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
     def test_build_from_saved_schema(self):
         app = self.current_app
 
-        with patch(
-                'corehq.apps.export.models.new.CaseExportDataSchema.get',
-                wraps=CaseExportDataSchema.get) as wrapped_get:
-            schema = CaseExportDataSchema.generate_schema_from_builds(
-                app.domain,
-                self.case_type,
-            )
-            self.assertFalse(
-                wrapped_get.called,
-                'Schema should be created from new object'
-            )
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            app.domain,
+            self.case_type,
+        )
 
         self.assertEqual(schema.last_app_versions[app._id], 3)
         self.assertEqual(len(schema.group_schemas), 2)
@@ -427,17 +409,13 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         second_build.copy_of = app.get_id
         second_build.version = 6
         second_build.save()
-
-        with patch(
-                'corehq.apps.export.models.new.CaseExportDataSchema.get',
-                wraps=CaseExportDataSchema.get) as wrapped_get:
-
-            new_schema = CaseExportDataSchema.generate_schema_from_builds(
-                app.domain,
-                self.case_type,
-            )
-            wrapped_get.assert_called_with(schema._id)
-
         self.addCleanup(second_build.delete)
+
+        new_schema = CaseExportDataSchema.generate_schema_from_builds(
+            app.domain,
+            self.case_type,
+        )
+
+        self.assertNotEqual(new_schema._id, schema._id)
         self.assertEqual(new_schema.last_app_versions[app._id], 6)
         self.assertEqual(len(new_schema.group_schemas), 2)

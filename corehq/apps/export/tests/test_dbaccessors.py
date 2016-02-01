@@ -3,8 +3,8 @@ from django.test import TestCase
 
 from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema
 from corehq.apps.export.dbaccessors import (
-    get_latest_case_export_schema_id,
-    get_latest_form_export_schema_id,
+    get_latest_case_export_schema,
+    get_latest_form_export_schema,
 )
 
 
@@ -65,22 +65,22 @@ class TestExportDBAccessors(TestCase):
         for schema in cls.schemas:
             schema.delete()
 
-    def test_get_latest_form_export_schema_id(self):
-        schema_id = get_latest_form_export_schema_id(self.domain, self.app_id, self.xmlns)
+    def test_get_latest_form_export_schema(self):
+        schema = get_latest_form_export_schema(self.domain, self.app_id, self.xmlns)
 
-        self.assertEqual(schema_id, self.form_schema._id)
+        self.assertEqual(schema._id, self.form_schema._id)
 
-    def test_get_latest_form_export_schema_id_empty(self):
-        schema_id = get_latest_form_export_schema_id(self.domain, self.app_id, 'not-found')
+    def test_get_latest_form_export_schema_empty(self):
+        schema = get_latest_form_export_schema(self.domain, self.app_id, 'not-found')
 
-        self.assertEqual(schema_id, None)
+        self.assertEqual(schema, None)
 
-    def test_get_latest_case_export_schema_id(self):
-        schema_id = get_latest_case_export_schema_id(self.domain, self.case_type)
+    def test_get_latest_case_export_schema(self):
+        schema = get_latest_case_export_schema(self.domain, self.case_type)
 
-        self.assertEqual(schema_id, self.case_schema._id)
+        self.assertEqual(schema._id, self.case_schema._id)
 
-    def test_get_latest_case_export_schema_id_empty(self):
-        schema_id = get_latest_case_export_schema_id(self.domain, 'not-found')
+    def test_get_latest_case_export_schema_empty(self):
+        schema = get_latest_case_export_schema(self.domain, 'not-found')
 
-        self.assertEqual(schema_id, None)
+        self.assertEqual(schema, None)
