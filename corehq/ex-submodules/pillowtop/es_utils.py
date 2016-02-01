@@ -120,4 +120,4 @@ def doc_exists(pillow, doc_id_or_dict):
     else:
         assert isinstance(doc_id_or_dict, dict)
         doc_id = doc_id_or_dict['_id']
-    return pillow.get_es_new().exists(pillow.es_index, doc_id, pillow.es_type)
+    return pillow.get_es_new().exists(pillow.es_index, pillow.es_type, doc_id)
