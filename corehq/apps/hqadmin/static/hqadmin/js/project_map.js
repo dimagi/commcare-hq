@@ -21,7 +21,7 @@ jQuery(document).ready(function($) {
         
         that.refreshProjectData = function (filter, callback) {
             $.ajax({
-                url: 'http://localhost:8000/hq/admin/json/project_map/' + window.location.search,
+                url: '/hq/admin/json/project_map/' + window.location.search,
                 dataType: 'json',
             }).done(function (data) {
                 var tempProjects = {};
