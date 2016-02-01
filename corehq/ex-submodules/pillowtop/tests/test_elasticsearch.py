@@ -1,4 +1,6 @@
 import uuid
+
+import functools
 from django.test import SimpleTestCase
 
 from corehq.util.elastic import ensure_index_deleted
@@ -57,6 +59,9 @@ class ElasticPillowTest(SimpleTestCase):
         pillow = TestElasticPillow(online=False)
         self.index = pillow.es_index
         self.es = pillow.get_es_new()
+        ensure_index_deleted(self.index)
+
+    def tearDown(self):
         ensure_index_deleted(self.index)
 
     def test_create_index_on_pillow_creation(self):
@@ -167,6 +172,7 @@ class ElasticPillowTest(SimpleTestCase):
         if not self.es.indices.exists(new_index):
             self.es.indices.create(index=new_index)
         self.es.indices.put_alias(new_index, pillow.es_alias)
+        self.addCleanup(functools.partial(ensure_index_deleted, new_index))
 
         # make sure it's there in the other index
         aliases = self.es.indices.get_aliases()
@@ -231,6 +237,9 @@ class TestSendToElasticsearch(SimpleTestCase):
         ensure_index_deleted(self.index)
 
         completely_initialize_pillow_index(self.pillow)
+
+    def tearDown(self):
+        ensure_index_deleted(self.index)
 
     def test_create_doc(self):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'foo'}
