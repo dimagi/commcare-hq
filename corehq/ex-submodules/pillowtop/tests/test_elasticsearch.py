@@ -118,7 +118,7 @@ class ElasticPillowTest(SimpleTestCase):
         doc = {'_id': doc_id, 'doc_type': 'MyCoolDoc', 'property': 'foo'}
         _send_doc_to_pillow(pillow, doc_id, doc)
         self.assertEqual(1, get_doc_count(self.es, self.index))
-        es_doc = self.es.get_source(self.index, doc_id)
+        es_doc = self.es.get_source(self.index, pillow.es_type, doc_id)
         for prop in doc:
             self.assertEqual(doc[prop], es_doc[prop])
 
@@ -139,7 +139,7 @@ class ElasticPillowTest(SimpleTestCase):
         pillow.process_bulk(rows)
         self.assertEqual(len(doc_ids), get_doc_count(self.es, self.index))
         for doc in docs:
-            es_doc = self.es.get_source(self.index, doc['_id'])
+            es_doc = self.es.get_source(self.index, pillow.es_type, doc['_id'])
             for prop in doc.keys():
                 self.assertEqual(doc[prop], es_doc[prop])
 
@@ -156,7 +156,7 @@ class ElasticPillowTest(SimpleTestCase):
         _send_doc_to_pillow(pillow, doc_id, doc)
         self.assertEqual(1, get_doc_count(self.es, self.index))
         assume_alias_for_pillow(pillow)
-        es_doc = self.es.get_source(pillow.es_alias, doc_id)
+        es_doc = self.es.get_source(pillow.es_alias, pillow.es_type, doc_id)
         for prop in doc:
             self.assertEqual(doc[prop], es_doc[prop])
 
@@ -252,7 +252,7 @@ class TestSendToElasticsearch(SimpleTestCase):
 
         if not delete:
             self.assertEqual(1, get_doc_count(self.es, self.index))
-            es_doc = self.es.get_source(self.index, doc['_id'])
+            es_doc = self.es.get_source(self.index, self.pillow.es_type, doc['_id'])
             for prop in doc:
                 self.assertEqual(doc[prop], es_doc[prop])
         else:
