@@ -342,8 +342,11 @@ class FormExportDataSchema(ExportDataSchema):
         :param unique_form_id: The unique identifier of the item being exported
         :returns: Returns a FormExportDataSchema instance
         """
+        original_id, original_rev = None, None
         current_xform_schema = get_latest_form_export_schema(domain, app_id, form_xmlns)
-        if not current_xform_schema:
+        if current_xform_schema:
+            original_id, original_rev = current_xform_schema._id, current_xform_schema._rev
+        else:
             current_xform_schema = FormExportDataSchema()
 
         app_build_ids = get_built_app_ids_for_app_id(
@@ -367,6 +370,9 @@ class FormExportDataSchema(ExportDataSchema):
             current_xform_schema = FormExportDataSchema._merge_schemas(current_xform_schema, xform_schema)
             current_xform_schema.record_update(app.copy_of, app.version)
 
+        if original_id and original_rev:
+            current_xform_schema._id = original_id
+            current_xform_schema._rev = original_rev
         current_xform_schema.domain = domain
         current_xform_schema.app_id = app_id
         current_xform_schema.xmlns = form_xmlns
@@ -425,9 +431,13 @@ class CaseExportDataSchema(ExportDataSchema):
         :returns: Returns a CaseExportDataSchema instance
         """
 
+        original_id, original_rev = None, None
         current_case_schema = get_latest_case_export_schema(domain, case_type)
 
-        if not current_case_schema:
+        if current_case_schema:
+            # Save the original id an rev so we can later save the document under the same _id
+            original_id, original_rev = current_case_schema._id, current_case_schema._rev
+        else:
             current_case_schema = CaseExportDataSchema()
 
         app_build_ids = CaseExportDataSchema._get_app_build_ids_to_process(
@@ -461,6 +471,9 @@ class CaseExportDataSchema(ExportDataSchema):
 
             current_case_schema.record_update(app.copy_of, app.version)
 
+        if original_id and original_rev:
+            current_case_schema._id = original_id
+            current_case_schema._rev = original_rev
         current_case_schema.domain = domain
         current_case_schema.case_type = case_type
         current_case_schema.save()

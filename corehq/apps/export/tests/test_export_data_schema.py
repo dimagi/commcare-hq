@@ -345,7 +345,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
             'my_sweet_xmlns'
         )
 
-        self.assertNotEqual(new_schema._id, schema._id)
+        self.assertEqual(new_schema._id, schema._id)
         self.assertEqual(new_schema.last_app_versions[app._id], 6)
         self.assertEqual(len(new_schema.group_schemas), 1)
 
@@ -416,6 +416,6 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
             self.case_type,
         )
 
-        self.assertNotEqual(new_schema._id, schema._id)
+        self.assertEqual(new_schema._id, schema._id)
         self.assertEqual(new_schema.last_app_versions[app._id], 6)
         self.assertEqual(len(new_schema.group_schemas), 2)
