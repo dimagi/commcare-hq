@@ -30,19 +30,6 @@
                     {% endwith %}
                 </div>
             </li>
-            <li class="nav-divider divider"></li>
-            <li class="dropdown-header nav-header">{% trans 'Manage Account' %}</li>
-            <li>
-                <a href="{% url "my_account_settings" %}">
-                    {% trans 'My Account Settings' %}
-                </a>
-            </li>
-            <li>
-                <a href="{% url "logout" %}">
-                    <i class="icon-signout fa fa-sign-out"></i>
-                    {% trans 'Sign Out' %}
-                </a>
-            </li>
             {% if request.couch_user.is_web_user and domain and domain != 'public' and not request.project.is_snapshot %}
             <li class="nav-divider divider"></li>
             <li class="dropdown-header nav-header">{% trans 'Manage Project' %}</li>
@@ -57,6 +44,19 @@
                 </a>
             </li>
             {% endif %}
+            <li class="nav-divider divider"></li>
+            <li class="dropdown-header nav-header">{% trans 'Manage Account' %}</li>
+            <li>
+                <a href="{% url "my_account_settings" %}">
+                    {% trans 'My Account Settings' %}
+                </a>
+            </li>
+            <li>
+                <a href="{% url "logout" %}">
+                    <i class="icon-signout fa fa-sign-out"></i>
+                    {% trans 'Sign Out' %}
+                </a>
+            </li>
         </ul>
     </li>
     <li id="settingsmenu-help" class="dropdown">
