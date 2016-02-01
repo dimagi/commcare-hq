@@ -19,7 +19,7 @@ class AutoCloseExtensionsTest(SyncBaseTest):
         self.project = Domain(name=self.domain)
         self.user = User(user_id='user', username='name', password="changeme",
                          date_joined=datetime(2011, 6, 9))
-        self.factory = CaseFactory()
+        self.factory = CaseFactory(domain=self.domain)
         self.extension_ids = ['1', '2', '3']
         self.host = CaseStructure(case_id='host')
         self.extension = CaseStructure(
@@ -46,7 +46,7 @@ class AutoCloseExtensionsTest(SyncBaseTest):
 
     def test_get_extension_chain_simple(self):
         self.factory.create_or_update_cases([self.extension])
-        self.assertEqual(set(self.extension_ids[0]), get_extension_chain([self.host], self.domain))
+        self.assertEqual(set(self.extension_ids[0]), get_extension_chain([self.host.case_id], self.domain))
 
     def test_get_extension_chain_multiple(self):
         self.factory.create_or_update_cases([self.extension_3])
