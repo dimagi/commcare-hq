@@ -188,8 +188,8 @@ class TableConfiguration(DocumentSchema):
 
 
 class ExportInstance(Document):
-
     domain = StringProperty()
+    name = StringProperty()
     tables = ListProperty(TableConfiguration)
 
     class Meta:
