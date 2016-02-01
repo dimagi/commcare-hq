@@ -96,7 +96,7 @@ class XFormOperation(DocumentSchema):
     operation = StringProperty()  # e.g. "archived", "unarchived"
 
 
-class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
+class XFormInstance(Document, UnicodeMixIn, ComputedDocumentMixin,
                     CouchDocLockableMixIn, AbstractXFormInstance):
     """An XForms instance."""
     domain = StringProperty()
@@ -210,23 +210,7 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         # default to encode_attachments=False
         if 'encode_attachments' not in kwargs:
             kwargs['encode_attachments'] = False
-        # HACK: cloudant has a race condition when saving newly created forms
-        # which throws errors here. use a try/retry loop here to get around
-        # it until we find something more stable.
-        RETRIES = 10
-        SLEEP = 0.5 # seconds
-        tries = 0
-        while True:
-            try:
-                return super(XFormInstance, self).save(**kwargs)
-            except PreconditionFailed:
-                if tries == 0:
-                    logging.error('doc %s got a precondition failed' % self._id)
-                if tries < RETRIES:
-                    tries += 1
-                    time.sleep(SLEEP)
-                else:
-                    raise
+        return super(XFormInstance, self).save(**kwargs)
 
     def xpath(self, path):
         """
