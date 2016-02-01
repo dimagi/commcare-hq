@@ -66,11 +66,6 @@
         <ul class="dropdown-menu dropdown-menu-right" role="menu">
             <li class="dropdown-header nav-header">{% trans 'CommCare Help' %}</li>
             <li>
-                <a href="#modalReportIssue" data-toggle="modal">
-                    <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
-                </a>
-            </li>
-            <li>
                 <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" target="_blank">
                     <i class="fa fa-question-circle icon-question-sign dropdown-icon"></i> {% trans "Visit the Help Site" %}
                 </a>
@@ -78,6 +73,11 @@
             <li>
                 <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}" target="_blank">
                     <i class="fa fa-comments icon-comments dropdown-icon"></i> {% trans "User Forum" %}
+                </a>
+            </li>
+            <li>
+                <a href="#modalReportIssue" data-toggle="modal">
+                    <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
                 </a>
             </li>
         </ul>
