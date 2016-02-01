@@ -2,17 +2,17 @@
 <script type="text/html" id="value-or-none-ui-template">
     <div data-bind="visible: !hasValue()">
         <div class="btn-group" data-bind="visible: allowed()">
-            <button class="btn btn-mini" data-bind="enterInput: $data">
+            <button class="btn btn-default" data-bind="enterInput: $data">
                 <span data-bind="html: messages.add"></span>
             </button>
         </div>
         <div></div>
         <div class="btn-group" data-bind="visible: !allowed()">
-            <button class="btn btn-mini disabled" disabled="disabled">
-                <i class="icon icon-plus"></i>
+            <button class="btn btn-mini disabled btn-default" disabled="disabled">
+                <i class="fa fa-plus"></i>
                 <span data-bind="html: messages.add"></span>
             </button>
-            <button class="btn btn-mini dropdown-toggle" data-toggle="dropdown">
+            <button class="btn dropdown-toggle" data-toggle="dropdown">
                 <span class="caret"></span>
             </button>
             <ul class="dropdown-menu">
@@ -24,40 +24,42 @@
     </div>
     <div data-bind="visible: hasValue">
         <div data-bind="visible: !allowed()">
-            <div class="alert alert-error" data-bind="visible: value">
+            <div class="alert alert-danger" data-bind="visible: value">
                 <strong data-bind="html: messages.notAllowedButExists"></strong>
                 <div>
                     <code data-bind="text: value()"></code>
-                    <a href="#" class="btn btn-mini btn-danger" data-bind="exitInput: $data">
+                    <a href="#" class="btn btn-danger" data-bind="exitInput: $data">
                         {% trans "Delete" %}
                     </a>
                 </div>
                 <div data-bind="html: messages.notAllowed"></div>
             </div>
-            <div class="alert alert-info" data-bind="visible: !value()">
+            <div class="help-block" data-bind="visible: !value()">
                 <div data-bind="html: messages.notAllowed"></div>
-                <a href="#" class="btn btn-mini" data-bind="exitInput: $data">
+                <a href="#" class="btn btn-default" data-bind="exitInput: $data">
                     {% trans "OK, close this" %}
                 </a>
             </div>
         </div>
         <div data-bind="visible: allowed()">
-            <div class="pull-right">
-                <a href="#" class="btn btn-mini btn-danger" data-bind="exitInput: $data">
-                    {% trans "Delete" %}
-                </a>
-            </div>
-            <input type="text" data-bind="
-                    xpathValidator: {text: inputValue, allowCaseHashtags: true, errorHtml: messages.invalidXpath},
-                    hasfocus: hasFocus,
-                    css: inputCss,
-                    attr: inputAttr
-            "/>
-            <div>
-                <div class="help-block span7" data-bind="visible: messages.helpText">
-                    <i class="icon icon-info-sign"></i>
-                    <span data-bind="html: messages.helpText"></span>
+            <div class="row">
+                <div class="pull-right">
+                    <a href="#" class="btn btn-mini btn-danger" data-bind="exitInput: $data">
+                        {% trans "Delete" %}
+                    </a>
                 </div>
+                <div class="col-sm-9">
+                    <input type="text" class="form-control" data-bind="
+                        xpathValidator: {text: inputValue, allowCaseHashtags: true, errorHtml: messages.invalidXpath},
+                        hasfocus: hasFocus,
+                        css: inputCss,
+                        attr: inputAttr
+                    "/>
+                </div>
+            </div>
+            <div class="help-block" data-bind="visible: messages.helpText">
+                <i class="fa fa-info-circle"></i>
+                <span data-bind="html: messages.helpText"></span>
             </div>
         </div>
     </div>
