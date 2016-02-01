@@ -149,7 +149,7 @@ class TestTransferDomainViews(BaseDomainTest):
         # No one logged in
         resp = self.client.post(reverse('activate_transfer_domain',
                                         args=[self.transfer.transfer_guid]), follow=True)
-        self.assertEqual(resp.template_name, 'login_and_password/login.html',
+        self.assertEqual(resp.template_name, ['two_factor/core/login.html'],
                          'Should redirect to login page')
 
         # Initiator logged in
@@ -168,7 +168,7 @@ class TestTransferDomainViews(BaseDomainTest):
         # No one logged in
         resp = self.client.post(reverse('deactivate_transfer_domain',
                                         args=[self.transfer.transfer_guid]), follow=True)
-        self.assertEqual(resp.template_name, 'login_and_password/login.html',
+        self.assertEqual(resp.template_name, ['two_factor/core/login.html'],
                          'Should redirect to login page')
 
         # Random user who belongs to the domain
