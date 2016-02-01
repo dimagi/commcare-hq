@@ -356,7 +356,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
             )
             wrapped_get.assert_called_with(schema._id)
 
-        second_build.delete()
+        self.addCleanup(second_build.delete)
         self.assertEqual(new_schema.last_app_versions[app._id], 6)
         self.assertEqual(len(new_schema.group_schemas), 1)
 
@@ -438,6 +438,6 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
             )
             wrapped_get.assert_called_with(schema._id)
 
-        second_build.delete()
+        self.addCleanup(second_build.delete)
         self.assertEqual(new_schema.last_app_versions[app._id], 6)
         self.assertEqual(len(new_schema.group_schemas), 2)
