@@ -1,12 +1,10 @@
 from base64 import b64decode
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from datetime import datetime, date, time
 import logging
 import re
 import bz2
 from lxml import etree
-import os
-from corehq.apps.app_manager.util import all_apps_by_domain
 from corehq.util.quickcache import quickcache
 from couchforms.models import XFormDeprecated
 
@@ -49,80 +47,39 @@ def quote_nan(value):
 @quickcache(['domain'])
 def get_question_items(domain):
     """
-    Return a map of CommCare form questions to OpenClinica form items
+    Return a dictionary of {(event, question): (study_event_oid, form_oid, item_group_oid, item_oid)}
     """
-
-    def get_item_prefix(form_oid, ig_oid):
-        """
-        OpenClinica item OIDs are prefixed with "I_<prefix>_" where <prefix> is derived from the item's form OID
-
-        (Dropping "I_<prefix>_" will give us the CommCare question name in upper case)
-        """
-        form_name = form_oid[2:]  # Drop "F_"
-        ig_name = ig_oid[3:]  # Drop "IG_"
-        prefix = os.path.commonprefix((form_name, ig_name))
-        if prefix.endswith('_'):
-            prefix = prefix[:-1]
-        return prefix
-
-    def read_question_item_map(odm):
-        """
-        Return a dictionary of {question: (study_event_oid, form_oid, item_group_oid, item_oid)}
-        """
-        question_item_map = {}  # A dictionary of question: (study_event_oid, form_oid, item_group_oid, item_oid)
-        meta_e = odm.xpath('./odm:Study/odm:MetaDataVersion', namespaces=odm_nsmap)[0]
-        for se_ref in meta_e.xpath('./odm:Protocol/odm:StudyEventRef', namespaces=odm_nsmap):
-            se_oid = se_ref.get('StudyEventOID')
-            for form_ref in meta_e.xpath('./odm:StudyEventDef[@OID="{}"]/odm:FormRef'.format(se_oid),
-                                         namespaces=odm_nsmap):
-                form_oid = form_ref.get('FormOID')
-                for ig_ref in meta_e.xpath('./odm:FormDef[@OID="{}"]/odm:ItemGroupRef'.format(form_oid),
-                                           namespaces=odm_nsmap):
-                    ig_oid = ig_ref.get('ItemGroupOID')
-                    prefix = get_item_prefix(form_oid, ig_oid)
-                    prefix_len = len(prefix) + 3  # len of "I_<prefix>_"
-                    for item_ref in meta_e.xpath('./odm:ItemGroupDef[@OID="{}"]/odm:ItemRef'.format(ig_oid),
-                                                 namespaces=odm_nsmap):
-                        item_oid = item_ref.get('ItemOID')
-                        question = item_oid[prefix_len:].lower()
-                        question_item_map[question] = Item(se_oid, form_oid, ig_oid, item_oid)
-        return question_item_map
-
-    def read_forms(domain_, question_item_map):
-        """
-        Return a dictionary that allows us to look up an OpenClinica item given a form XMLNS and question name
-        """
-        data = defaultdict(dict)
-        app = next(all_apps_by_domain(domain_))  # TODO: Identify app from domain's OpenClinica settings
-        for ccmodule in app.get_modules():
-            for ccform in ccmodule.get_forms():
-                form = data[ccform.xmlns]
-                form['app'] = app.name
-                form['module'] = ccmodule.name['en']
-                form['name'] = ccform.name['en']
-                form['questions'] = {}
-                for question in ccform.get_questions(['en']):
-                    name = question['value'].split('/')[-1]
-                    form['questions'][name] = question_item_map.get(name)
-        return data
-
     metadata_xml = get_study_metadata(domain)
-    map_ = read_question_item_map(metadata_xml)
-    question_items = read_forms(domain, map_)
+    question_items = {}
+    meta_e = metadata_xml.xpath('./odm:Study/odm:MetaDataVersion', namespaces=odm_nsmap)[0]
+    for se_ref in meta_e.xpath('./odm:Protocol/odm:StudyEventRef', namespaces=odm_nsmap):
+        se_oid = se_ref.get('StudyEventOID')
+        for form_ref in meta_e.xpath('./odm:StudyEventDef[@OID="{}"]/odm:FormRef'.format(se_oid),
+                                     namespaces=odm_nsmap):
+            form_oid = form_ref.get('FormOID')
+            for ig_ref in meta_e.xpath('./odm:FormDef[@OID="{}"]/odm:ItemGroupRef'.format(form_oid),
+                                       namespaces=odm_nsmap):
+                ig_oid = ig_ref.get('ItemGroupOID')
+                for item_ref in meta_e.xpath('./odm:ItemGroupDef[@OID="{}"]/odm:ItemRef'.format(ig_oid),
+                                             namespaces=odm_nsmap):
+                    item_oid = item_ref.get('ItemOID')
+                    event = se_oid.lower()
+                    question = item_oid.lower()
+                    question_items[(event, question)] = Item(se_oid, form_oid, ig_oid, item_oid)
     return question_items
 
 
-def get_question_item(domain, form_xmlns, question):
+def get_question_item(domain, event_id, question):
     """
     Returns an Item namedtuple given a CommCare form and question name
     """
     question_items = get_question_items(domain)
     try:
-        se_oid, form_oid, ig_oid, item_oid = question_items[form_xmlns]['questions'][question]
+        se_oid, form_oid, ig_oid, item_oid = question_items[(event_id, question)]
         return Item(se_oid, form_oid, ig_oid, item_oid)
     except KeyError:
         # Did an old form set the value of a question that no longer exists? Best to check that out.
-        logging.error('Unknown CommCare question "{}" found in form "{}"'.format(question, form_xmlns))
+        logging.error('Unknown CommCare question "{}" for event "{}"'.format(question, event_id))
         return None
     except TypeError:
         # CommCare question does not match an OpenClinica item. This is a CommCare-only question.
