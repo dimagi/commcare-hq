@@ -1,13 +1,5 @@
-from abc import ABCMeta, abstractmethod
 from pillowtop.logger import pillow_logging
-
-
-class PillowProcessor(object):
-    __metaclass__ = ABCMeta
-
-    @abstractmethod
-    def process_change(self, pillow_instance, change, do_set_checkpoint):
-        pass
+from pillowtop.processors.interface import PillowProcessor
 
 
 class NoopProcessor(PillowProcessor):

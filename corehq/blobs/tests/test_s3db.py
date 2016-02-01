@@ -51,6 +51,9 @@ Finally, add the following to `localsettings.py`:
             "url": "http://{host}:{port}".format(**_riak_params),
             "access_key": "admin key value",
             "secret_key": "admin secret value",
+
+            # reduce timeouts to make tests fail faster
+            "config": {"connect_timeout": 1, "read_timeout": 1}
         }
 
 ## Alternate/easier/faster testing setup using moto (probably not as robust)

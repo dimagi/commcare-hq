@@ -31,6 +31,11 @@ from corehq.apps.export.forms import (
     FilterFormExportDownloadForm,
     FilterCaseExportDownloadForm,
 )
+from corehq.apps.export.models import (
+    FormExportDataSchema,
+    CaseExportDataSchema,
+    ExportInstance,
+)
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.dbaccessors import touch_exports
 from corehq.apps.reports.display import xmlns_to_name
@@ -185,6 +190,22 @@ class BaseExportView(BaseProjectDataView):
             return HttpResponseRedirect(self.export_home_url)
 
 
+class BaseCreateNewCustomExportView(BaseExportView):
+
+    @property
+    def page_context(self):
+        return {
+            'export_instance': self.export_instance
+        }
+
+    def get_export_instance(self, schema, app_id=None):
+        return ExportInstance.generate_instance_from_schema(
+            schema,
+            self.domain,
+            app_id,
+        )
+
+
 class BaseCreateCustomExportView(BaseExportView):
     """
     todo: Refactor in v2 of redesign
@@ -258,6 +279,42 @@ class BaseCreateCustomExportView(BaseExportView):
             ) % xmlns_to_name(
                 self.domain, export_tag[1], app_id=None), extra_tags="html")
         return HttpResponseRedirect(self.export_home_url)
+
+
+class NewCreateCustomFormExportView(BaseCreateNewCustomExportView):
+    urlname = 'new_custom_export_form'
+    page_title = ugettext_lazy("Create Form Export")
+    export_type = 'form'
+
+    def get(self, request, *args, **kwargs):
+        app_id = request.GET.get('app_id')
+        xmlns = request.GET.get('export_tag').strip('"')
+
+        schema = FormExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            app_id,
+            xmlns,
+        )
+        self.export_instance = self.get_export_instance(schema, app_id)
+
+        return super(BaseCreateCustomExportView, self).get(request, *args, **kwargs)
+
+
+class NewCreateCustomCaseExportView(BaseCreateNewCustomExportView):
+    urlname = 'new_custom_export_case'
+    page_title = ugettext_lazy("Create Case Export")
+    export_type = 'case'
+
+    def get(self, request, *args, **kwargs):
+        case_type = request.GET.get('export_tag').strip('"')
+
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            case_type,
+        )
+        self.export_instance = self.get_export_instance(schema)
+
+        return super(BaseCreateCustomExportView, self).get(request, *args, **kwargs)
 
 
 class CreateCustomFormExportView(BaseCreateCustomExportView):

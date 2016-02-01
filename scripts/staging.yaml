@@ -46,12 +46,9 @@ trunk: master
 name: autostaging
 branches:
   - b3-app-manager+xpath-error-message  # Danny 1/27
-  - xpath-error-message  # Danny 1/27
   - kill-x_over_time  # Danny 12/11
   - vellum-staging # J$ 11/13
   - requests #Simon 11/3
-  - add-tableau-dashboard # TS 11/5
-  - location-cases  # Ethan 1/19
 #  - b3-app-manager+new-footer-nav # Jenny 1/25
   - b3-app-manager # Jenny 1/20
 #  - new-footer-nav # Biyeun 1/4
@@ -64,7 +61,7 @@ branches:
   - b3-reports-messaging  # Biyeun 1/21
   - finish-two-factor # Cal 1/21
   - lazy-jar # Nick P 1/25
-  - kill-cross_project_reports-privilege # Nick P
+  - show-form-case-refs-in-summary # j$ 1/29
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

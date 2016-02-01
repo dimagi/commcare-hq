@@ -17,11 +17,13 @@ INTRAHEALTH_DOMAINS = ('ipm-senegal', 'testing-ipm-senegal', 'ct-apr')
 
 OPERATEUR_XMLNSES = (
     'http://openrosa.org/formdesigner/7330597b92db84b1a33c7596bb7b1813502879be',
+    'http://openrosa.org/formdesigner/EF8B5DB8-4FB2-4CFB-B0A2-CDD26ADDAE3D'
 )
 
 COMMANDE_XMLNSES = (
     'http://openrosa.org/formdesigner/9ED66735-752D-4C69-B9C8-77CEDAAA0348',
     'http://openrosa.org/formdesigner/12b412390011cb9b13406030ab10447ffd99bdf8',
+    'http://openrosa.org/formdesigner/865DDF78-90D7-4B7C-B3A5-9D7F530B471D'
 )
 
 RAPTURE_XMLNSES = (

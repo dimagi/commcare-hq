@@ -25,7 +25,8 @@ def get_latest_released_app_doc(domain, app_id, min_version=None):
         startkey=key + [{}],
         endkey=(key + [min_version]) if min_version is not None else key,
         descending=True,
-        include_docs=True
+        include_docs=True,
+        limit=1,
     ).first()
     return app['doc'] if app else None
 
@@ -38,6 +39,7 @@ def _get_latest_build_view(domain, app_id, include_docs):
         endkey=[domain, app_id],
         descending=True,
         include_docs=include_docs,
+        limit=1,
     ).first()
 
 
@@ -174,6 +176,38 @@ def get_built_app_ids_for_app_id(domain, app_id, version=None):
         skip=skip
     ).all()
     return [result['id'] for result in results]
+
+
+def get_latest_built_app_ids_and_versions(domain, app_id=None):
+    """
+    Returns all the latest app_ids and versions in a dictionary.
+    :param domain: The domain to get the app from
+    :param app_id: The app_id to get the latest version from. If not specified gets latest versions of all
+        apps in the domain
+    :returns: {app_id: latest_version}
+    """
+    from .models import Application
+    key = [domain, app_id] if app_id else [domain]
+
+    results = Application.get_db().view(
+        'app_manager/saved_app',
+        startkey=key + [{}],
+        endkey=key,
+        descending=True,
+        reduce=False,
+        include_docs=False,
+    ).all()
+
+    latest_ids_and_versions = {}
+    for result in results:
+        app_id = result['key'][1]
+        version = result['key'][2]
+
+        # Since we have sorted, we know the first instance is the latest version
+        if app_id not in latest_ids_and_versions:
+            latest_ids_and_versions[app_id] = version
+
+    return latest_ids_and_versions
 
 
 def get_all_apps(domain):

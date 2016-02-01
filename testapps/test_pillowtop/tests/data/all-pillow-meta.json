@@ -157,21 +157,21 @@
         "name": "DefaultChangeFeedPillow"
     },
     "DomainPillow": {
-        "advertised_name": "corehq.pillows.domain.DomainPillow.test_hqdomains_20151204_1053.testhq",
+        "advertised_name": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160128_1552.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.domain.DomainPillow.test_hqdomains_20151204_1053.testhq",
+        "checkpoint_id": "corehq.pillows.domain.DomainPillow.test_hqdomains_20160128_1552.testhq",
         "couch_filter": "domain/domains_inclusive",
         "couchdb_type": "Database",
         "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__domains",
         "document_class": "Domain",
         "es_alias": "hqdomains",
-        "es_index": "test_hqdomains_20151204_1053",
+        "es_index": "test_hqdomains_20160128_1552",
         "es_type": "hqdomain",
         "extra_args": {},
         "full_class_name": "corehq.pillows.domain.DomainPillow",
         "include_docs": true,
         "name": "DomainPillow",
-        "unique_id": "test_hqdomains_20151204_1053"
+        "unique_id": "test_hqdomains_20160128_1552"
     },
     "FarmerRecordFluffPillow": {
         "advertised_name": "fluff.FarmerRecordFluffPillow.testhq",
@@ -490,6 +490,13 @@
         "include_docs": true,
         "name": "SMSPillow",
         "unique_id": "708c77f8e5fe00286fa5791e9fa7d45f"
+    },
+    "SqlCaseToElasticsearchPillow": {
+        "advertised_name": "SqlCaseToElasticsearchPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "sql-cases-to-elasticsearch",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "SqlCaseToElasticsearchPillow"
     },
     "SqlXFormToElasticsearchPillow": {
         "advertised_name": "SqlXFormToElasticsearchPillow",
