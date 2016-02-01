@@ -5,27 +5,23 @@ source .travis/utils.sh
 
 echo "Matrix params: MATRIX_TYPE=${MATRIX_TYPE:?Empty value for MATRIX_TYPE}, BOWER=${BOWER:-no}"
 
-if [ "${MATRIX_TYPE}" = "python" ]; then
-    pip install --exists-action w --timeout 60 --requirement=requirements/test-requirements.txt
+if [ "${MATRIX_TYPE}" = "python" ] || [ "${MATRIX_TYPE}" = "python-sharded" ]; then
 
-    setup_elasticsearch
+    sleep 10  # kafka is slow to start up
     setup_kafka
-    setup_moto_s3_server
+    travis_runner web_test .travis/misc-setup.sh
+
 elif [ "${MATRIX_TYPE}" = "javascript" ]; then
-    npm install -g grunt
-    npm install -g grunt-cli
-    npm install
+    echo 'Done'
 else
     echo "Unknown value MATRIX_TYPE=$MATRIX_TYPE. Allowed values are 'python', 'javascript'"
     exit 1
 fi
 
 if [ "${BOWER:-no}" = "yes" ]; then
-    npm install -g uglify-js
-    npm install -g bower
-    bower install
+    travis_runner web_test bower install
 fi
 
 if [ "${NODE:-no}" = "yes" ]; then
-    npm install
+    travis_runner web_test npm install
 fi
