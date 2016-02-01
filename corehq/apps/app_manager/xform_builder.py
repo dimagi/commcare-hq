@@ -116,22 +116,23 @@ class XFormBuilder(object):
 
         :param name: Question name
         :param label: Question label
-        :param data_type: The type of the question
+        :param data_type: The type of the question, or None for hidden values
         :param group: The name of the question's group, or an iterable of names if nesting is deeper than one
         :param choices: A dictionary of {name: label} pairs
         :param label_safe: Does the label contain (safe) XML?
-        :param params: Supported question parameters: repeat_count
+        :param params: Supported question parameters: repeat_count, calculate
         :return: A Question instance, or QuestionGroup instance if `data_type` is a group type.
         """
-        if data_type not in ODK_TYPES + GROUP_TYPES:
+        if data_type is not None and data_type not in ODK_TYPES + GROUP_TYPES:
             raise TypeError('Unknown question data type "{}"'.format(data_type))
         if group is not None and not isinstance(group, basestring) and not hasattr(group, '__iter__'):
             raise TypeError('group parameter needs to be a string or iterable')
         groups = [group] if isinstance(group, basestring) else group
         self._append_to_data(name, groups)
-        self._append_to_translation(name, label, groups, choices, label_safe)
-        self._append_to_model(name, data_type, groups)
-        self._append_to_body(name, data_type, groups, choices, **params)
+        self._append_to_model(name, data_type, groups, **params)
+        if data_type is not None:
+            self._append_to_translation(name, label, groups, choices, label_safe)
+            self._append_to_body(name, data_type, groups, choices, **params)
         if data_type in GROUP_TYPES:
             return QuestionGroup(name, self, groups)
         return Question(name, self, groups)
@@ -219,9 +220,14 @@ class XFormBuilder(object):
             for choice_name, choice_label in choices.items():
                 self._translation1.append(get_text_node(name, choice_label, group, choice_name, label_safe))
 
-    def _append_to_model(self, name, data_type, group=None):
-        if data_type in XSD_TYPES:
-            self._model.append(E.bind({'nodeset': self.get_data_ref(name, group), 'type': 'xsd:' + data_type}))
+    def _append_to_model(self, name, data_type, group=None, **params):
+        if data_type is None or data_type in XSD_TYPES:
+            attrs = {'nodeset': self.get_data_ref(name, group)}
+            if data_type in XSD_TYPES:
+                attrs['type'] = 'xsd:' + data_type
+            if 'calculate' in params:
+                attrs['calculate'] = params['calculate']
+            self._model.append(E.bind(attrs))
 
     def _append_to_body(self, name, data_type, groups=None, choices=None, **params):
 

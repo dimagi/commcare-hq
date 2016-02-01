@@ -12,6 +12,7 @@
           <weight/>
           <time/>
           <now/>
+          <mothers_name/>
         </data>
       </instance>
       <itext>
@@ -46,6 +47,7 @@
       <bind nodeset="/data/weight" type="xsd:decimal"/>
       <bind nodeset="/data/time" type="xsd:time"/>
       <bind nodeset="/data/now" type="xsd:dateTime"/>
+      <bind nodeset="/data/mothers_name" calculate="concat('Jane', ' ', 'Smith')"/>
     </model>
   </h:head>
   <h:body>
