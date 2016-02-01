@@ -7,7 +7,7 @@
     <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
-    <script src="{% static 'export/js/customize_export.js' %}"></script>
+    <script src="{% static 'export/js/models.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -21,21 +21,7 @@
                 history_to_parents: "{% trans 'Case History > Parent Cases'|escapejs %}",
                 parent_cases: "{% trans 'Parent Cases'|escapejs %}",
             };
-            var customExportView = CustomExportView.wrap({
-                export_type: {{ custom_export.type|JSON }},
-                custom_export: {{ custom_export|JSON }},
-                table_configuration: {{ table_configuration|JSON }},
-                presave: {{ presave|JSON }},
-                export_stock: {{ export_stock|JSON }},
-                deid_options: {{ deid_options|JSON }},
-                column_type_options: {{ column_type_options|JSON }},
-                urls: {
-                    save: {{ request.get_full_path|safe|JSON }}
-                },
-                allow_repeats: {{ helper.allow_repeats|JSON }},
-                default_order: {{ default_order|JSON }},
-                minimal: {{ minimal|JSON }}
-            }, translations);
+            var customExportView = new Exports.ViewModels.ExportInstance({{ export_instance|JSON }});
 
             $('#customize-export').koApplyBindings(customExportView);
         });
@@ -43,9 +29,10 @@
 {% endblock %}
 
 {% block main_column %}
+WHAT IS UP
 <div id="customize-export" style="display: none;" data-bind="visible: true">
     {# content for multi-select help popover #}
-    {% if custom_export.type == 'case' %}
+    {% if export_instance.type == 'case' %}
     <div id="popover_content_wrapper" style="display: none">
         {% blocktrans %}
             These options allow you to configure how CommCare exports data from multi-select questions.
@@ -68,13 +55,13 @@
             <div class="control-group">
                 <label for="export-name" class="control-label">{% trans "Export Name" %}</label>
                 <div class="controls">
-                    <input type="text" id="export-name" data-bind="value: custom_export.name" />
+                    <input type="text" id="export-name" data-bind="value: name" />
                 </div>
             </div>
             <div class="control-group">
                 <label for="format-select" class="control-label">{% trans "Default file type" %}</label>
                 <div class="controls">
-                    <select id="format-select" data-bind="value: custom_export.default_format">
+                    <select id="format-select" data-bind="value: export_format">
                         <option value="csv">{% trans "CSV (Zip file)" %}</option>
                         <option value="xlsx">{% trans "Excel 2007" %}</option>
                         <option value="xls">{% trans "Excel (older versions)" %}</option>
@@ -91,51 +78,51 @@
                         </label>
                     {% endif %}
                     <label class="checkbox">
-                        <input type="checkbox" id="transform-dates-checkbox" data-bind="checked: custom_export.transform_dates" />
+                        <input type="checkbox" id="transform-dates-checkbox" data-bind="checked: transform_dates" />
                         {% trans "Automatically convert dates for Excel" %}
                     </label>
                     <label class="checkbox">
-                        <input type="checkbox" id="presave-checkbox" data-bind="checked: presave" />
+                        <!--<input type="checkbox" id="presave-checkbox" data-bind="checked: presave" />-->
                         {% trans "Create a Daily Saved Export" %}
                     </label>
-                {% if custom_export.type == 'form' %}
+                {% if export_instance.type == 'form' %}
                     <label class="checkbox">
-                        <input type="checkbox" id="include-errors-checkbox" data-bind="checked: custom_export.include_errors" />
+                        <input type="checkbox" id="include-errors-checkbox" data-bind="checked: include_errors" />
                         {% trans "Include duplicates and other unprocessed forms" %}
                     </label>
                     <label class="checkbox">
-                        <input type="checkbox" id="split-multiselects-checkbox" data-bind="checked: custom_export.split_multiselects" />
+                        <input type="checkbox" id="split-multiselects-checkbox" data-bind="checked: split_multiselects" />
                         {% trans "Expand Multiple Answer Questions" %}
                     </label>
                 {% endif %}
                 </div>
             </div>
         </fieldset>
-        <fieldset data-bind="foreach: table_configuration">
+        <fieldset data-bind="foreach: { data: tables, as: 'table' }">
             <div>
-                <legend data-bind="visible: $root.utils.actuallyShowTable($data)">
-                    <span data-bind="visible: $root.repeatsEnabled()">
-                        <input type="checkbox" data-bind="checked: selected" />
+                <legend data-bind="visible: table.isVisible()">
+                    <span>
+                        <input type="checkbox" data-bind="checked: table.selected" />
                     </span>
                     <span>
-                        <span data-bind="text: $root.utils.tableHeader(index())">
+                        <span data-bind="text: table.displayName">
                     </span>
                 </legend>
-                <div data-bind="visibleFade: selected">
+                <div data-bind="visibleFade: table.selected">
                     <div class="control-group pull-right">
                         <div class="controls">
                             <button type="button" class="btn" data-bind="
-                                click: function() {show_deleted(!show_deleted());},
-                                css: {active: show_deleted}">
-                                <span data-bind="visible: !show_deleted()">
-                                {% if custom_export.type == 'form' %}
+                                click: table.toggleShowDeleted,
+                                css: {active: table.showDeleted}">
+                                <span data-bind="visible: !table.showDeleted()">
+                                {% if export_instance.type == 'form' %}
                                     {% trans "Show Deleted Questions and Advanced Properties" %}
                                 {% else %}
                                     {% trans "Show Deleted Properties and Advanced Properties" %}
                                 {% endif %}
                                 </span>
-                                <span data-bind="visible: show_deleted">
-                                {% if custom_export.type == 'form' %}
+                                <span data-bind="visible: table.showDeleted">
+                                {% if export_instance.type == 'form' %}
                                     {% trans "Hide Deleted Questions and Advanced Properties" %}
                                 {% else %}
                                     {% trans "Hide Deleted Properties and Advanced Properties" %}
@@ -144,10 +131,10 @@
                             </button>
                         </div>
                     </div>
-                    <div class="control-group" data-bind="visible: $root.repeatsEnabled()">
+                    <div class="control-group">
                         <label class="control-label">{% trans "Sheet Name" %}</label>
                         <div class="controls">
-                            <input type="text" data-bind="value: display" />
+                            <input type="text" data-bind="value: table.name" />
                         </div>
                     </div>
 
@@ -162,57 +149,54 @@
                                 <tr class="nodrag nodrop">
                                     <th></th>
                                     <th>{% trans "Include this Field?" %}<br>
-                                        <a href="#" class="btn btn-mini" data-bind="click: $root.selectAll">{% trans "Select All" %}</a>
-                                        <a href="#" class="btn btn-mini btn-inverse" data-bind="click: $root.selectNone">{% trans "Select None" %}</a></th>
+                                        <a href="#" class="btn btn-mini" data-bind="click: table.selectAll">{% trans "Select All" %}</a>
+                                        <a href="#" class="btn btn-mini btn-inverse" data-bind="click: table.selectNone">{% trans "Select None" %}</a></th>
                                     <th>
-                                    {% if custom_export.type == 'form' %}
+                                    {% if export_instance.type == 'form' %}
                                         {% trans "Question" %}
                                     {% else %}
                                         {% trans "Property" %}
                                     {% endif %}
                                     </th>
                                     <th>{% trans "Display" %}</th>
-                                    {% if custom_export.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
+                                    {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
                                     <th>{% trans "Type" %}</th>
                                     {% endif %}
                                     {% if helper.allow_deid %}
-                                    <th class="deid-column" data-bind="visible: $root.showDeidColumn()">{% trans "Sensitivity" %}</th>
+                                    <!--<th class="deid-column" data-bind="visible: $root.showDeidColumn()">{% trans "Sensitivity" %}</th>-->
                                     {% endif %}
                                 </tr>
                                 </thead>
-                                {% if minimal %}
-                                <tbody data-bind="foreach: column_configuration">
-                                {% else %}
-                                <tbody data-bind="sortable: column_configuration">
-                                {% endif %}
+                                <tbody data-bind="foreach: { data: table.columns, as: 'column' }">
+                                <!--<tbody data-bind="sortable: column_configuration">-->
                                     <tr data-bind="
-                                        visible:  $parent.show_deleted() || ($data.show || selected)
-                                        {% if not minimal %}, attr: {'data-order': _sortableOrder}{% endif %}
+                                        visible:  $parent.showDeleted() || (column.show || column.selected)
+                                        {% if False %}, attr: {'data-order': _sortableOrder}{% endif %}
                                         ">
                                         <td class="sortable-handle">
                                             <i class="icon-resize-vertical"></i>
                                         </td>
                                         <td>
-                                            <!--ko if: ($root.custom_export.is_safe() && isCaseName()) -->
-                                            <input type="checkbox"
-                                                   class="field-include"
-                                                   disabled="disabled" />
+                                            <!--ko if: ($root.is_deidentified() && column.item.isCaseName()) -->
+                                            <!--<input type="checkbox"-->
+                                                   <!--class="field-include"-->
+                                                   <!--disabled="disabled" />-->
                                             <!--/ko-->
-                                            <!--ko ifnot: ($root.custom_export.is_safe() && isCaseName()) -->
-                                            <input type="checkbox"
-                                                   class="field-include"
-                                                   data-bind="checked: selected" />
+                                            <!--ko ifnot: ($root.is_deidentified() && column.item.isCaseName()) -->
+                                            <!--<input type="checkbox"-->
+                                                   <!--class="field-include"-->
+                                                   <!--data-bind="checked: column.selected" />-->
                                             <!--/ko-->
                                         </td>
                                         <td>
-                                            <span data-bind="foreach: _niceField.tags">
+                                            <!--<span data-bind="foreach: _niceField.tags">
                                                 <span data-bind="text: $data, visible: $data, attr: { 'class': $root.row_label_classes($data)}"></span>
-                                            </span>
-                                            <code data-bind="text: _niceField.field"></code>
+                                            </span>-->
+                                            <!--<code data-bind="text: _niceField.field"></code>-->
 
                                         </td>
-                                        <td><input class="input-xlarge" type="text" data-bind="value: display" /></td>
-                                        {% if custom_export.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
+                                        <td><input class="input-xlarge" type="text" data-bind="value: column.name" /></td>
+                                        {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
                                         <td class="input">
                                             <div data-bind="if: !allOptions()">
                                                 <select disabled>
@@ -251,7 +235,7 @@
                                             </select>
 
                                             <span class="label label-info"
-                                                  data-bind="visible: $root.custom_export.is_safe() && isCaseName()">
+                                                  data-bind="visible: $root.export_instance.is_safe() && isCaseName()">
                                                 {% trans "Cannot be published in De-Identified Export." %}
                                             </span>
                                         </td>
@@ -271,7 +255,7 @@
                 <label for="is_safe" class="control-label"></label>
                 <div class="controls deid-column" data-bind="visible: $root.showDeidColumn()">
                     <label class="checkbox">
-                        <input type="checkbox" id="is_safe" data-bind="checked: custom_export.is_safe" />
+                        <input type="checkbox" id="is_safe" data-bind="checked: export_instance.is_safe" />
                         {% trans "Publish in" %} {{ DeidExportReport_name }}
                     </label>
                     <span class="help-inline">{% trans "Check only if this export has been fully and safely de-identified." %}</span>
@@ -286,13 +270,14 @@
         </fieldset>
         {% endif %}
         <div class="form-actions">
-            <button type="submit" class="btn btn-large btn-primary" data-bind="
-                click: save_no_preview,
-                disable: (save.state() === 'saving') || (save.state() === 'saving-preview')
-            ">
+            <button type="submit" class="btn btn-large btn-primary">
+            <!--<button type="submit" class="btn btn-large btn-primary" data-bind="-->
+                <!--click: save_no_preview,-->
+                <!--disable: (save.state() === 'saving') || (save.state() === 'saving-preview')-->
+            <!--">
                 <span data-bind="visible: (save.state() === 'save') || (save.state() === 'saving-preview')">
-                    <span data-bind="visible: custom_export._id && custom_export._id()">{% trans "Save" %}</span>
-                    <span data-bind="visible: !custom_export._id || !custom_export._id()">{% trans "Create" %}</span>
+                    <span data-bind="visible: export_instance._id && export_instance._id()">{% trans "Save" %}</span>
+                    <span data-bind="visible: !export_instance._id || !export_instance._id()">{% trans "Create" %}</span>
                 </span>
                 <span data-bind="visible: save.state() === 'saving'">
                     <i class="icon-refresh icon-spin"></i>
@@ -300,11 +285,11 @@
                 </span>
                 <span data-bind="visible: save.state() === 'error'">
                     {% trans "Try Again" %}
-                </span>
+                </span>-->
             </button>
             <a class="btn btn-large" href="{{ export_home_url }}">{% trans "Cancel" %}</a>
-            {% if custom_export.get_id %}
-            <a class="btn btn-large btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ custom_export.get_id }}">
+            {% if export_instance.get_id %}
+            <a class="btn btn-large btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ export_instance.get_id }}">
                 <i class="icon-remove icon-white"></i>
                 {% trans "Delete this Export" %}
             </a>
@@ -315,8 +300,8 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    {% if custom_export.get_id %}
-        {% with custom_export as export %}
+    {% if export_instance.get_id %}
+        {% with export_instance as export %}
             {% include "export/dialogs/delete_custom_export_dialog.html" %}
         {% endwith %}
     {% endif %}
