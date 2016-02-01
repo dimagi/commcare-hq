@@ -43,6 +43,7 @@
       <bind nodeset="/data/name" type="xsd:string"/>
       <bind nodeset="/data/dob" type="xsd:date"/>
       <bind nodeset="/data/with_mother" type="xsd:boolean"/>
+      <setvalue event="xforms-ready" ref="/data/with_mother" value="true" />
       <bind nodeset="/data/height" type="xsd:int"/>
       <bind nodeset="/data/weight" type="xsd:decimal"/>
       <bind nodeset="/data/time" type="xsd:time"/>
