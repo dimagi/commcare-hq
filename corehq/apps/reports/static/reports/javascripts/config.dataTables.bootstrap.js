@@ -198,20 +198,24 @@ function HQReportDataTables(options) {
             if (!self.datatable)
                 self.datatable = datatable;
 
-            if (self.fixColumns && self.useBootstrap3) {
-                new $.fn.dataTable.FixedColumns(datatable, {
-                    iLeftColumns: self.fixColsNumLeft,
-                    iLeftWidth: self.fixColsWidth
-                });
-            } else if (self.fixColumns) {
-                new FixedColumns(datatable, {
-                    iLeftColumns: self.fixColsNumLeft,
-                    iLeftWidth: self.fixColsWidth
-                });
+            if (self.fixColumns) {
+                if (self.useBootstrap3) {
+                    new $.fn.dataTable.FixedColumns(datatable, {
+                        iLeftColumns: self.fixColsNumLeft,
+                        iLeftWidth: self.fixColsWidth
+                    });
+                } else {
+                    new FixedColumns(datatable, {
+                        iLeftColumns: self.fixColsNumLeft,
+                        iLeftWidth: self.fixColsWidth
+                    });
+                }
             }
+
             $(window).on('resize', function () {
                 datatable.fnAdjustColumnSizing();
             });
+
             if (self.useBootstrap3) {
                 $('.dataTables_paginate a').on('click', function () {
                     datatable.fnAdjustColumnSizing();
@@ -231,11 +235,19 @@ function HQReportDataTables(options) {
 
                 $dataTablesFilter.append($inputField);
                 $inputField.attr("id", "dataTables-filter-box");
-                $inputField.addClass("search-query").addClass((self.useBootstrap3) ? 'form-control' : 'input-medium');
                 $inputField.attr("placeholder", "Search...");
+                $inputField.addClass("search-query");
+
+                if (self.useBootstrap3) {
+                    $dataTablesFilter.addClass("col-sm-2 pull-right");
+                    $inputLabel.wrap("<div class='col-sm-2'></div>");
+                    $inputField.addClass("form-control").wrap("<div class='col-sm-10'></div>");
+                } else {
+                    $inputField.addClass("input-medium");
+                }
 
                 $inputLabel.attr("for", "dataTables-filter-box");
-                $inputLabel.html($('<i />').addClass("icon-search"));
+                $inputLabel.html($('<i />').addClass(self.useBootstrap3 ? "fa fa-search" : "icon-search"));
             }
 
             var $dataTablesLength = $(".dataTables_length"),
@@ -249,11 +261,18 @@ function HQReportDataTables(options) {
                 $selectField.children().append(" per page");
                 if (self.showAllRowsOption)
                     $selectField.append($('<option value="-1" />').text("All Rows"));
-                $selectField.addClass((self.useBootstrap3) ? 'form-control' : 'input-medium');
                 $selectField.on("change", function(){
                     var selected_value = $selectField.find('option:selected').val();
                     window.analytics.usage("Reports", "Changed number of items shown", selected_value);
                 });
+
+                if (self.useBootstrap3) {
+                    $dataTablesLength.addClass('col-sm-4');
+                    $dataTablesInfo.addClass('col-sm-4');
+                    $selectField.addClass('form-control');
+                } else {
+                    $selectField.addClass('input-medium');
+                }
             }
             $(".dataTables_length select").change(function () {
                 $(self.dataTableElem).trigger('hqreport.tabular.lengthChange', $(this).val());

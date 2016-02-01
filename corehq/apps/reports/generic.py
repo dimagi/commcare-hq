@@ -121,8 +121,9 @@ class GenericReportView(object):
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
-            raise NotImplementedError("Missing a required parameter: (name: %(name)s, section_name: %(section_name)s,"
-            " slug: %(slug)s, dispatcher: %(dispatcher)s" % dict(
+            raise NotImplementedError(
+                "Missing a required parameter: (name: %(name)s, section_name: %(section_name)s,"
+                " slug: %(slug)s, dispatcher: %(dispatcher)s" % dict(
                 name=self.name,
                 section_name=self.section_name,
                 slug=self.slug,
