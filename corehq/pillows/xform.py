@@ -1,15 +1,26 @@
 import collections
 import copy
 from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.elastic import get_es_new
+from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
 from .base import HQPillow
 from couchforms.const import RESERVED_WORDS
 from couchforms.models import XFormInstance
 from dateutil import parser
+from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoint_store, \
+    PillowCheckpointEventHandler
+from pillowtop.es_utils import ElasticsearchIndexMeta
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors.elastic import ElasticProcessor
 
 
 UNKNOWN_VERSION = 'XXX'
 UNKNOWN_UIVERSION = 'XXX'
+XFORM_ES_TYPE = 'xform'
+
 
 def is_valid_date(txt):
     try:
@@ -38,7 +49,7 @@ class XFormPillow(HQPillow):
     document_class = XFormInstance
     couch_filter = "couchforms/xforms"
     es_alias = "xforms"
-    es_type = "xform"
+    es_type = XFORM_ES_TYPE
     es_index = XFORM_INDEX
     include_docs = False
 
@@ -51,45 +62,79 @@ class XFormPillow(HQPillow):
         return XFORM_INDEX
 
     def change_transform(self, doc_dict, include_props=True):
-        if self.get_domain(doc_dict) is None:
-            #If the domain is still None (especially when doing updates via the _changes feed)
-            #skip and do nothing
-            #the reason being is that changes on the xform instance do not necessarily add
-            #domain to it, so we need to wait until the domain is at least populated before
-            #going through with indexing this xform
-            return None
-        else:
-            doc_ret = copy.deepcopy(doc_dict)
-
-            if 'meta' in doc_ret['form']:
-                if not is_valid_date(doc_ret['form']['meta'].get('timeEnd', None)):
-                    doc_ret['form']['meta']['timeEnd'] = None
-                if not is_valid_date(doc_ret['form']['meta'].get('timeStart', None)):
-                    doc_ret['form']['meta']['timeStart'] = None
-
-                # Some docs have their @xmlns and #text here
-                if isinstance(doc_ret['form']['meta'].get('appVersion'), dict):
-                    doc_ret['form']['meta']['appVersion'] = doc_ret['form']['meta']['appVersion'].get('#text')
-
-            case_blocks = extract_case_blocks(doc_ret)
-            for case_dict in case_blocks:
-                for date_modified_key in ['date_modified', '@date_modified']:
-                    if not is_valid_date(case_dict.get(date_modified_key, None)):
-                        if case_dict.get(date_modified_key) == '':
-                            case_dict[date_modified_key] = None
-                        else:
-                            case_dict.pop(date_modified_key, None)
-
-                # convert all mapped dict properties to nulls if they are empty strings
-                for object_key in ['index', 'attachment', 'create', 'update']:
-                    if object_key in case_dict and not isinstance(case_dict[object_key], dict):
-                        case_dict[object_key] = None
-
-            doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
-            if include_props:
-                form_props = ["%s:%s" % (k, v) for k, v in flatten(doc_ret['form']).iteritems()]
-                doc_ret["__props_for_querying"] = form_props
-            return doc_ret
+        return transform_xform_for_elasticsearch(doc_dict, include_props)
 
 
+def transform_xform_for_elasticsearch(doc_dict, include_props=True):
+    """
+    Given an XFormInstance, return a copy that is ready to be sent to elasticsearch,
+    or None, if the form should not be saved to elasticsearch
+    """
+    if doc_dict.get('domain', None) is None:
+        # if there is no domain don't bother processing it
+        return None
+    else:
+        doc_ret = copy.deepcopy(doc_dict)
 
+        if 'meta' in doc_ret['form']:
+            if not is_valid_date(doc_ret['form']['meta'].get('timeEnd', None)):
+                doc_ret['form']['meta']['timeEnd'] = None
+            if not is_valid_date(doc_ret['form']['meta'].get('timeStart', None)):
+                doc_ret['form']['meta']['timeStart'] = None
+
+            # Some docs have their @xmlns and #text here
+            if isinstance(doc_ret['form']['meta'].get('appVersion'), dict):
+                doc_ret['form']['meta']['appVersion'] = doc_ret['form']['meta']['appVersion'].get('#text')
+
+        case_blocks = extract_case_blocks(doc_ret)
+        for case_dict in case_blocks:
+            for date_modified_key in ['date_modified', '@date_modified']:
+                if not is_valid_date(case_dict.get(date_modified_key, None)):
+                    if case_dict.get(date_modified_key) == '':
+                        case_dict[date_modified_key] = None
+                    else:
+                        case_dict.pop(date_modified_key, None)
+
+            # convert all mapped dict properties to nulls if they are empty strings
+            for object_key in ['index', 'attachment', 'create', 'update']:
+                if object_key in case_dict and not isinstance(case_dict[object_key], dict):
+                    case_dict[object_key] = None
+
+        doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
+        if include_props:
+            form_props = ["%s:%s" % (k, v) for k, v in flatten(doc_ret['form']).iteritems()]
+            doc_ret["__props_for_querying"] = form_props
+        return doc_ret
+
+
+def prepare_sql_form_json_for_elasticsearch(sql_form_json):
+    prepped_form = transform_xform_for_elasticsearch(sql_form_json)
+    prepped_form['doc_type'] = _get_doc_type_from_state(sql_form_json['state'])
+
+    return prepped_form
+
+
+def _get_doc_type_from_state(state):
+    return {v: k for k, v in doc_type_to_state.items()}.get(state, 'XFormInstance')
+
+
+def get_sql_xform_to_elasticsearch_pillow():
+    checkpoint = PillowCheckpoint(
+        get_django_checkpoint_store(),
+        'sql-xforms-to-elasticsearch',
+    )
+    form_processor = ElasticProcessor(
+        elasticseach=get_es_new(),
+        index_meta=ElasticsearchIndexMeta(index=XFORM_INDEX, type=XFORM_ES_TYPE),
+        doc_prep_fn=prepare_sql_form_json_for_elasticsearch
+    )
+    return ConstructedPillow(
+        name='SqlXFormToElasticsearchPillow',
+        document_store=None,
+        checkpoint=checkpoint,
+        change_feed=KafkaChangeFeed(topic=topics.FORM_SQL, group_id='sql-forms-to-es'),
+        processor=form_processor,
+        change_processed_event_handler=PillowCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100,
+        ),
+    )

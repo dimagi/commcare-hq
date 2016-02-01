@@ -309,7 +309,7 @@ class PtopReindexer(NoArgsCommand):
         bulk_start = datetime.utcnow()
         while retries < MAX_TRIES:
             try:
-                self.log('Sending chunk to ES')
+                self.log('Sending chunk to ES: %s:%s' % (start, end))
                 assert isinstance(self.pillow, AliasedElasticPillow)
                 self.pillow.process_bulk(filtered_slice)
                 break

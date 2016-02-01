@@ -5,6 +5,7 @@ from corehq.apps.locations.models import Location
 from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program
 from corehq.apps.sms.mixin import VerifiedNumber
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from corehq.apps.users.models import WebUser
 from custom.ewsghana.alerts.alert import Notification
 from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
@@ -12,7 +13,7 @@ from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts
 from custom.ewsghana.alerts.urgent_alerts import UrgentStockoutAlert, UrgentNonReporting
 from custom.ewsghana.tests.test_reminders import create_stock_report
 from custom.ewsghana.utils import prepare_domain, make_loc, assign_products_to_location, \
-    bootstrap_web_user, create_backend, set_sms_notifications
+    bootstrap_web_user, set_sms_notifications
 
 
 class MissingReportNotificationTestCase(TestCase):
@@ -20,8 +21,8 @@ class MissingReportNotificationTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
-        cls.sms_backend_mapping, cls.backend = create_backend()
 
         cls.program = Program(domain=cls.TEST_DOMAIN, name='Test Program')
         cls.program.save()
@@ -167,8 +168,8 @@ class StockoutReportNotificationTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
-        cls.sms_backend_mapping, cls.backend = create_backend()
         cls.program = Program(domain=cls.TEST_DOMAIN, name='Test Program')
         cls.program.save()
 
@@ -287,8 +288,8 @@ class UrgentStockoutNotificationTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
-        cls.sms_backend_mapping, cls.backend = create_backend()
         cls.program = Program(domain=cls.TEST_DOMAIN, name='Test Program')
         cls.program.save()
 
@@ -457,8 +458,8 @@ class UrgentNonReportingNotificationTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
-        cls.sms_backend_mapping, cls.backend = create_backend()
         cls.program = Program(domain=cls.TEST_DOMAIN, name='Test Program')
         cls.program.save()
 
@@ -599,8 +600,8 @@ class SMSNotificationTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
-        cls.sms_backend_mapping, cls.backend = create_backend()
 
     @classmethod
     def tearDownClass(cls):

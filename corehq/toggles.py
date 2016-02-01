@@ -596,6 +596,13 @@ LINK_SUPPLY_POINT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+ICDS_REPORTS = StaticToggle(
+    'icds_reports',
+    'Enable access to the Tableau dashboard for ICDS',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     'multiple_choice_custom_field',
     'Allow project to use multiple choice field in custom fields',

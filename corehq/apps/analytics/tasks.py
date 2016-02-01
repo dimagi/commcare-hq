@@ -331,7 +331,7 @@ def track_periodic_data():
             end_time,
             sys.getsizeof(submit_json)
         )
-    _soft_assert(processing_time.seconds < 10, msg)
+    _soft_assert(processing_time.seconds < 100, msg)
 
     submit_data_to_hub_and_kiss(submit_json)
 

@@ -131,6 +131,6 @@ class UnknownUsersPillow(PythonPillow):
 
 def add_demo_user_to_user_index():
     send_to_elasticsearch(
-        USER_INDEX,
+        'users',
         {"_id": "demo_user", "username": "demo_user", "doc_type": "DemoUser"}
     )

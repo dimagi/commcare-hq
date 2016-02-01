@@ -1,3 +1,4 @@
+from collections import namedtuple
 from copy import copy
 from datetime import datetime
 from elasticsearch import TransportError
@@ -22,6 +23,9 @@ INDEX_STANDARD_SETTINGS = {
         "number_of_replicas": "0"
     }
 }
+
+
+ElasticsearchIndexMeta = namedtuple('ElasticsearchIndexMeta', ['index', 'type'])
 
 
 def update_settings(es, index, settings_dict):
@@ -105,3 +109,15 @@ def assume_alias_for_pillow(pillow):
             es_new.indices.delete_alias(aliased_index, pillow.es_alias)
 
     es_new.indices.put_alias(pillow.es_index, pillow.es_alias)
+
+
+def doc_exists(pillow, doc_id_or_dict):
+    """
+    Check if a document exists, by ID or the whole document.
+    """
+    if isinstance(doc_id_or_dict, basestring):
+        doc_id = doc_id_or_dict
+    else:
+        assert isinstance(doc_id_or_dict, dict)
+        doc_id = doc_id_or_dict['_id']
+    return pillow.get_es_new().exists(pillow.es_index, doc_id, pillow.es_type)

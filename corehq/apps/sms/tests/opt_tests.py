@@ -3,10 +3,9 @@ from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
-from corehq.apps.sms.mixin import BackendMapping
 from corehq.apps.sms.api import incoming, send_sms
 from corehq.apps.sms.models import PhoneNumber
-from corehq.messaging.smsbackends.test.models import TestSMSBackend
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from corehq.apps.domain.models import Domain
 
 
@@ -20,15 +19,7 @@ class OptTestCase(BaseAccountingTest, DomainSubscriptionMixin):
 
         self.setup_subscription(self.domain_obj.name, SoftwarePlanEdition.ADVANCED)
 
-        self.backend = TestSMSBackend(name='MOBILE_BACKEND_TEST', is_global=True)
-        self.backend.save()
-
-        self.backend_mapping = BackendMapping(
-            is_global=True,
-            prefix="*",
-            backend_id=self.backend._id,
-        )
-        self.backend_mapping.save()
+        self.backend, self.backend_mapping = setup_default_sms_test_backend()
 
     def test_opt_out_and_opt_in(self):
         self.assertEqual(PhoneNumber.objects.count(), 0)

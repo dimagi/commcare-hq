@@ -2,6 +2,7 @@ from copy import copy
 from datetime import datetime, timedelta, date
 import itertools
 import json
+from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
 import langcodes
@@ -200,8 +201,7 @@ def old_saved_reports(request, domain):
 @login_and_domain_required
 def saved_reports(request, domain, template="reports/reports_home.html"):
     user = request.couch_user
-    if not (request.couch_user.can_view_reports()
-            or request.couch_user.get_viewable_reports()):
+    if not user_can_view_reports(request.project, user):
         raise Http404
 
     lang = request.couch_user.language or ucr_default_language()
@@ -235,13 +235,12 @@ def saved_reports(request, domain, template="reports/reports_home.html"):
         scheduled_reports=scheduled_reports,
         report=dict(
             title=_("My Saved Reports"),
-            show=user.can_view_reports() or user.get_viewable_reports(),
+            show=True,
             slug=None,
             is_async=True,
             section_name=ProjectReport.section_name,
         ),
     )
-
     return render(request, template, context)
 
 
@@ -782,7 +781,7 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
         'form': None,
         'domain': domain,
         'report': {
-            'show': request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
+            'show': user_can_view_reports(request.project, request.couch_user),
             'slug': None,
             'default_url': reverse('reports_home', args=(domain,)),
             'is_async': False,

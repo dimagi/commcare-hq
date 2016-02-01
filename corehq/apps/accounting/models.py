@@ -47,6 +47,7 @@ from corehq.apps.accounting.utils import (
     is_active_subscription,
     log_accounting_error,
     log_accounting_info,
+    quantize_accounting_decimal,
 )
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
@@ -2199,7 +2200,174 @@ class BillingRecord(BillingRecordBase):
                 'last_4': last_4,
             })
 
+        context.update({
+            'credits': self.credits,
+        })
+
         return context
+
+    def credits(self):
+        credits = {
+            'account': {},
+            'subscription': {},
+        }
+        self._add_product_credits(credits)
+        self._add_user_credits(credits)
+        self._add_sms_credits(credits)
+        self._add_general_credits(credits)
+        return credits
+
+    def _add_product_credits(self, credits):
+        product_type = self.invoice.subscription.plan_version.core_product
+        credit_adjustments = CreditAdjustment.objects.filter(
+            invoice=self.invoice,
+            line_item__product_rate__product__product_type=product_type,
+        )
+
+        subscription_credits = BillingRecord._get_total_balance(
+            CreditLine.get_credits_by_subscription_and_features(
+                self.invoice.subscription,
+                product_type=product_type,
+            )
+        )
+        if subscription_credits or credit_adjustments.filter(
+            credit_line__subscription=self.invoice.subscription,
+        ):
+            credits['subscription'].update({
+                'product': {
+                    'amount': quantize_accounting_decimal(subscription_credits),
+                }
+            })
+
+        account_credits = BillingRecord._get_total_balance(
+            CreditLine.get_credits_for_account(
+                self.invoice.subscription.account,
+                product_type=product_type,
+            )
+        )
+        if account_credits or credit_adjustments.filter(
+            credit_line__subscription=None,
+        ):
+            credits['account'].update({
+                'product': {
+                    'amount': quantize_accounting_decimal(account_credits),
+                }
+            })
+
+        return credits
+
+    def _add_user_credits(self, credits):
+        credit_adjustments = CreditAdjustment.objects.filter(
+            invoice=self.invoice,
+            line_item__feature_rate__feature__feature_type=FeatureType.USER,
+        )
+
+        subscription_credits = BillingRecord._get_total_balance(
+            CreditLine.get_credits_by_subscription_and_features(
+                self.invoice.subscription,
+                feature_type=FeatureType.USER,
+            )
+        )
+        if subscription_credits or credit_adjustments.filter(
+            credit_line__subscription=self.invoice.subscription,
+        ):
+            credits['subscription'].update({
+                'user': {
+                    'amount': quantize_accounting_decimal(subscription_credits),
+                }
+            })
+
+        account_credits = BillingRecord._get_total_balance(
+            CreditLine.get_credits_for_account(
+                self.invoice.subscription.account,
+                feature_type=FeatureType.USER,
+            )
+        )
+        if account_credits or credit_adjustments.filter(
+            credit_line__subscription=None,
+        ):
+            credits['account'].update({
+                'user': {
+                    'amount': quantize_accounting_decimal(account_credits),
+                }
+            })
+
+        return credits
+
+    def _add_sms_credits(self, credits):
+        credit_adjustments = CreditAdjustment.objects.filter(
+            invoice=self.invoice,
+            line_item__feature_rate__feature__feature_type=FeatureType.SMS,
+        )
+
+        subscription_credits = BillingRecord._get_total_balance(
+            CreditLine.get_credits_by_subscription_and_features(
+                self.invoice.subscription,
+                feature_type=FeatureType.SMS,
+            )
+        )
+        if subscription_credits or credit_adjustments.filter(
+            credit_line__subscription=self.invoice.subscription,
+        ):
+            credits['subscription'].update({
+                'sms': {
+                    'amount': quantize_accounting_decimal(subscription_credits),
+                }
+            })
+
+        account_credits = BillingRecord._get_total_balance(
+            CreditLine.get_credits_for_account(
+                self.invoice.subscription.account,
+                feature_type=FeatureType.SMS,
+            )
+        )
+        if account_credits or credit_adjustments.filter(
+            credit_line__subscription=None,
+        ):
+            credits['account'].update({
+                'sms': {
+                    'amount': quantize_accounting_decimal(account_credits),
+                }
+            })
+
+        return credits
+
+    def _add_general_credits(self, credits):
+        credit_adjustments = CreditAdjustment.objects.filter(
+            invoice=self.invoice,
+            line_item__feature_rate=None,
+            line_item__product_rate=None,
+        )
+
+        subscription_credits = BillingRecord._get_total_balance(
+            CreditLine.get_credits_by_subscription_and_features(
+                self.invoice.subscription,
+            )
+        )
+        if subscription_credits or credit_adjustments.filter(
+            credit_line__subscription=self.invoice.subscription,
+        ):
+            credits['subscription'].update({
+                'general': {
+                    'amount': quantize_accounting_decimal(subscription_credits),
+                }
+            })
+
+        account_credits = BillingRecord._get_total_balance(
+            CreditLine.get_credits_for_account(
+                self.invoice.subscription.account,
+            )
+        )
+        if account_credits or credit_adjustments.filter(
+            credit_line__subscription=None,
+        ):
+            credits['account'].update({
+                'general': {
+                    'amount': quantize_accounting_decimal(account_credits),
+                }
+            })
+
+        return credits
 
     def email_subject(self):
         month_name = self.invoice.date_start.strftime("%B")
@@ -2211,6 +2379,13 @@ class BillingRecord(BillingRecordBase):
 
     def email_from(self):
         return get_dimagi_from_email_by_product(self.invoice.subscription.plan_version.core_product)
+
+    @staticmethod
+    def _get_total_balance(credit_lines):
+        return (
+            sum(map(lambda credit_line: credit_line.balance, credit_lines))
+            if credit_lines else Decimal('0.0')
+        )
 
 
 class InvoicePdf(SafeSaveDocument):

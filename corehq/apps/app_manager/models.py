@@ -26,6 +26,7 @@ from django.utils.translation import override, ugettext as _, ugettext
 from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
+from corehq.apps.app_manager.xpath_validator import validate_xpath
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -870,6 +871,17 @@ class FormBase(DocumentSchema):
                     self.get_app().get_form(form_link.form_id)
                 except FormNotFoundException:
                     errors.append(dict(type='bad form link', **meta))
+
+        # this isn't great but two of FormBase's subclasses have form_filter
+        if hasattr(self, 'form_filter') and self.form_filter:
+            is_valid, message = validate_xpath(self.form_filter, allow_case_hashtags=True)
+            if not is_valid:
+                error = {
+                    'type': 'form filter has xpath error',
+                    'xpath_error': message,
+                }
+                error.update(meta)
+                errors.append(error)
 
         errors.extend(self.extended_build_validation(meta, xml_valid, validate_module))
 
@@ -1941,6 +1953,14 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
                         'module': self.get_module_info(),
                         'form': form,
                     })
+        if self.module_filter:
+            is_valid, message = validate_xpath(self.module_filter)
+            if not is_valid:
+                errors.append({
+                    'type': 'module filter has xpath error',
+                    'xpath_error': message,
+                    'module': self.get_module_info(),
+                })
 
         return errors
 
@@ -3298,7 +3318,7 @@ def _filter_by_location_id(user, ui_filter):
 
 def _filter_by_username(user, ui_filter):
     from corehq.apps.reports_core.filters import Choice
-    return Choice(value=user.username, display=None)
+    return Choice(value=user.raw_username, display=None)
 
 
 def _filter_by_user_id(user, ui_filter):
@@ -3531,9 +3551,7 @@ class ReportModule(ModuleBase):
         )
 
     def validate_for_build(self):
-        # Overrides super without calling it, intentionally,
-        # because I don't think anything in super is relevant to ReportModules
-        errors = []
+        errors = super(ReportModule, self).validate_for_build()
         if not self.check_report_validity().is_valid:
             errors.append({
                 'type': 'report config ref invalid',
@@ -5319,7 +5337,7 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         if re.match(ATTACHMENT_REGEX, name):
             app.put_attachment(attachment, name)
 
-    if any(module.uses_usercase() for module in app.get_modules()):
+    if not app.is_remote_app() and any(module.uses_usercase() for module in app.get_modules()):
         from corehq.apps.app_manager.util import enable_usercase
         enable_usercase(domain)
 

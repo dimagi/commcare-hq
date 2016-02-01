@@ -4,7 +4,7 @@ from corehq.apps.commtrack.models import Product
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from corehq.apps.locations.models import Location
 from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.messaging.smsbackends.test.models import TestSMSBackend
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from corehq.apps.users.models import WebUser, CommCareUser
 from custom.ilsgateway.api import ILSGatewayAPI
 from custom.ilsgateway.models import ILSGatewayConfig, ILSMigrationStats, ILSMigrationProblem
@@ -20,10 +20,8 @@ class MigrationTaskTest(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.datapath = os.path.join(os.path.dirname(__file__), 'data')
+        cls.sms_backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         initial_bootstrap(TEST_DOMAIN)
-        cls.sms_backend = TestSMSBackend(name="MOBILE_BACKEND_TEST", is_global=True)
-        cls.sms_backend._id = cls.sms_backend.name
-        cls.sms_backend.save()
 
         config = ILSGatewayConfig()
         config.domain = TEST_DOMAIN
@@ -81,6 +79,7 @@ class MigrationTaskTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.sms_backend_mapping.delete()
         cls.sms_backend.delete()
         for user in WebUser.by_domain(TEST_DOMAIN):
             user.delete()
