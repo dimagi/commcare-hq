@@ -164,6 +164,7 @@ class TableConfiguration(DocumentSchema):
 
 
 class ExportInstance(Document):
+    name = StringProperty()
     tables = ListProperty(TableConfiguration)
 
     class Meta:
