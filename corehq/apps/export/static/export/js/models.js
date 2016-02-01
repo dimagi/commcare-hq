@@ -55,10 +55,13 @@ Exports.ViewModels.ExportColumn.mapping = {
 };
 
 Exports.ViewModels.ExportItem = function(itemJSON) {
+    // ExportItem is not modifyable through the UI so we should not make it observable
     var self = this;
-    ko.mapping.fromJS(itemJSON, Exports.ViewModels.ExportItem.mapping, self);
+    self.path = itemJSON.path;
+    self.label = itemJSON.label;
+    self.tag = itemJSON.tag;
 };
 
-Exports.ViewModels.ExportItem.mapping = {
-    include: ['path', 'label', 'tag', 'last_occurences']
+Exports.ViewModels.ExportItem.prototype.isCaseName = function() {
+    return self.path[self.path.length - 1] === 'case_name';
 };
