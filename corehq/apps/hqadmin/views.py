@@ -110,25 +110,6 @@ def get_hqadmin_base_context(request):
     }
 
 
-@require_POST
-@csrf_exempt
-def contact_email(request):
-    message = render_to_string('hqadmin/email/contact_template.txt', request.POST)
-    EmailMessage(
-        subject="Incoming Contact CommCare Request",
-        body=message,
-        from_email="",
-        to=[settings.CONTACT_EMAIL],
-        headers={'Reply-To': request.POST['email']},
-    ).send()
-    response = HttpResponse('success')
-    response["Access-Control-Allow-Origin"] = "http://www.commcarehq.org"
-    response["Access-Control-Allow-Methods"] = "POST"
-    response["Access-Control-Max-Age"] = "1000"
-    response["Access-Control-Allow-Headers"] = "*"
-    return response
-
-
 class BaseAdminSectionView(BaseB3SectionPageView):
     section_name = ugettext_lazy("Admin Reports")
 
