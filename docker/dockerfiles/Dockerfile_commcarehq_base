@@ -27,6 +27,9 @@ RUN wget -O jdk.tar.gz --no-check-certificate --no-cookies --header "Cookie: ora
  && update-alternatives --auto java \
  && rm -f jdk.tar.gz
 
+# prefer https for git checkouts made by pip
+RUN git config --global url."https://".insteadOf git://
+
 RUN pip install --upgrade pip
 
 RUN mkdir /vendor

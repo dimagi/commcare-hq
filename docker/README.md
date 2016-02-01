@@ -35,7 +35,7 @@ Initial setup
     # DATABASES ..
     ```
     
-    See `docker/localsettings-docker.py` for an example.
+    See `docker/localsettings_docker.py` for an example.
 
     
 General usage
@@ -74,4 +74,25 @@ Caveats
 * CloudCare is not currently part of this set up. It should probably be another docker image, different from CommCareHQ.
 * Celery, rabbitmq and other components not strictly necessary for a laptop install are not part of this setup.
 
+
+Travis
+------
+Travis also uses Docker to run the HQ test suite. To simulate the travis build you can use the `.travis/simulate.sh`
+script:
+
+```
+  $ .travis/simulate.sh -h
+  simulate.sh [javascript|python-catchall|python-group-0|python-sharded]
+  
+  $ .travis/simulate.sh javascript
+  runs the javascript build matrix
+  
+  $ .travis/simulate.sh python-catchall --test-override app_manager.SuiteTest
+  runs only the app_manager.SuiteTest using the python-catchall matrix setup
+  
+  $ .travis/simulate.sh python-catchall --command-override bash
+  drops you into a bash shell in the python-catchall matrix setup from where you can
+  run any other commands
+  
+```
 
