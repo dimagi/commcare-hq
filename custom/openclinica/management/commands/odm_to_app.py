@@ -184,6 +184,13 @@ class StudyForm(StudyObject):
         form = module.new_form(self.name, None)
         form.unique_id = self.unique_id
         form.source = self.build_xform()
+        # Must require case for case list to work
+        form.requires = 'case'
+        form.actions.case_preload = PreloadAction(preload={
+            '/data/start_date': 'start_date',
+            '/data/start_time': 'start_time',
+        })
+        form.actions.case_preload.condition.type = 'always'
 
     def build_xform(self):
         xform = XFormBuilder(self.name)
