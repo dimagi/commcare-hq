@@ -7,8 +7,7 @@ import itertools
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqadmin.dbaccessors import iter_all_forms_most_recent_first, \
-    iter_all_cases_most_recent_first
+from corehq.apps.hqadmin.history import get_recent_changes
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
@@ -56,15 +55,6 @@ def check_index_by_doc(es_index, db, doc_id, interval=10):
     return _check_es_rev(es_index, doc_id, target_revs)
 
 
-def is_real_submission(xform_view_row):
-    """
-    helper filter function for filtering hqadmin/forms_over_time
-    just filters out devicereports
-    """
-    return xform_view_row['doc']['xmlns'] != 'http://code.javarosa.org/devicereport'
-
-
-
 def check_reportxform_es_index(doc_id=None, interval=10):
     do_check = False
     for domain in settings.ES_XFORM_FULL_INDEX_DOMAINS:
@@ -84,22 +74,13 @@ def check_reportxform_es_index(doc_id=None, interval=10):
 
 
 def check_xform_es_index(interval=10):
-    db = XFormInstance.get_db()
-    forms = iter_all_forms_most_recent_first()
-    check_doc_id = _get_first_id_or_none(forms, skipfunc=is_real_submission)
-    return check_index_by_doc(XFORM_INDEX, db, check_doc_id, interval=interval)
+    try:
+        doc_id, doc_rev = get_last_change_for_doc_class(XFormInstance)
+    except StopIteration:
+        return None
+    time.sleep(interval)
+    return _check_es_rev(XFORM_INDEX, doc_id, [doc_rev])
 
-
-def is_case_recent(case_view_row):
-    """
-    helper filter function for filtering hqadmin/cases_over_time
-    the view emits a key [YYYY, MM] this just sanity checks to make sure that it's a recent case,
-    not some wrongly future emitted case
-    """
-    if case_view_row['key'] > [datetime.utcnow().year, datetime.utcnow().month]:
-        return False
-    else:
-        return True
 
 def check_reportcase_es_index(doc_id=None, interval=10):
     do_check = False
@@ -119,10 +100,26 @@ def check_reportcase_es_index(doc_id=None, interval=10):
 
 
 def check_case_es_index(interval=10):
-    db = CommCareCase.get_db()
-    cases = iter_all_cases_most_recent_first()
-    check_doc_id = _get_first_id_or_none(cases, skipfunc=is_case_recent)
-    return check_index_by_doc(CASE_INDEX, db, check_doc_id, interval=interval)
+    try:
+        doc_id, doc_rev = get_last_change_for_doc_class(CommCareCase)
+    except StopIteration:
+        return None
+    time.sleep(interval)
+    return _check_es_rev(CASE_INDEX, doc_id, [doc_rev])
+
+
+def get_last_change_for_doc_class(doc_class):
+    """
+    return _id and _rev of the last doc of `doc_type` in changes feed
+
+    raise StopIteration if not found in last 100 changes
+    """
+    db = doc_class.get_db()
+    doc_type = doc_class._doc_type
+    return (
+        (change['id'], change['rev']) for change in get_recent_changes(db, 100)
+        if change['doc_type'] == doc_type
+    ).next()
 
 
 def _get_latest_doc_from_index(es_index, sort_field):
@@ -152,16 +149,6 @@ def _get_latest_doc_from_index(es_index, sort_field):
     except Exception, ex:
         logging.error("Error querying get_latest_doc_from_index[%s]: %s" % (es_index, ex))
         return None
-
-
-def _get_first_id_or_none(docs, skipfunc=None):
-
-    # don't check more than 5000 docs, not worth it
-    for doc in itertools.islice(docs, 0, 5000):
-        if skipfunc(doc):
-            return doc['id']
-
-    return None
 
 
 def _check_es_rev(index, doc_id, couch_revs):
