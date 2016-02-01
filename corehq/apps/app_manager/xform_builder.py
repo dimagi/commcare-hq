@@ -228,6 +228,12 @@ class XFormBuilder(object):
             if 'calculate' in params:
                 attrs['calculate'] = params['calculate']
             self._model.append(E.bind(attrs))
+            if 'value' in params:
+                self._model.append(E.setvalue({
+                    'event': 'xforms-ready',
+                    'ref': self.get_data_ref(name, group),
+                    'value': params['value']
+                }))
 
     def _append_to_body(self, name, data_type, groups=None, choices=None, **params):
 
