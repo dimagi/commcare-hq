@@ -133,7 +133,7 @@ class Study(StudyObject):
 
     def get_new_app(self, domain_name, app_name, version=APP_V2):
         app = Application.new_app(domain_name, app_name, application_version=version)
-        app.name = self.name
+        app.comment = self.name  # Study names can be long. cf. https://clinicaltrials.gov/
         subject_module = self.new_subject_module(app)
         for event in self.iter_events():
             module = event.new_module_for_app(app, subject_module)
