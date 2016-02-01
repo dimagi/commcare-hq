@@ -1,3 +1,12 @@
+nav.app-manager-content {
+    margin: 20px 0;
+
+    // Indent lists of forms within modules
+    > .nav-hq-sidebar {
+        padding-left: 0;
+    }
+}
+
 .delete-me {
   float: right;
   top: 1.5em;
@@ -24,8 +33,10 @@
 }
 
 /* full-screen-width modal for editing form source */
-.xml-source {
+.xml-source .modal-dialog {
     position: absolute;
+    top: 20px;
+    bottom: 20px;
     left: 20px;
     right: 20px;
     margin: 0;

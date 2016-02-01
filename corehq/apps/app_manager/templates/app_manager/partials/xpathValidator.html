@@ -6,15 +6,14 @@
 <script src="{% static 'xpath/parser.js' %}"></script>
 <script src="{% static 'app_manager/js/xpathConfig.js' %}"></script>
 <script type="text/html" id="XPathValidator.template">
-    <div class="js-xpath-input-target control-group" data-bind="css: {error: xpathValidator.error}">
-        <input type="text"
-            data-bind="attr: {name: input.getAttribute('name'), placeholder: input.getAttribute('placeholder')},
-                       value: xpathValidator.xpathText"/>
-        <!--ko if: xpathValidator.error()-->
-        <div class="alert alert-error" data-bind="html: errorHtml">
-        </div>
-        <!--/ko-->
+    <input type="text" class="form-control"
+        data-bind="attr: {name: input.getAttribute('name'), placeholder: input.getAttribute('placeholder')},
+                   css: {'has-error': xpathValidator.error},
+                   value: xpathValidator.xpathText"/>
+    <!--ko if: xpathValidator.error()-->
+    <div class="alert alert-danger" data-bind="html: errorHtml">
     </div>
+    <!--/ko-->
 </script>
 <script>
 ko.bindingHandlers.xpathValidator = (function () {

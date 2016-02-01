@@ -9,25 +9,25 @@
         </legend>
 
         <form>
-            <div class="control-group">
-                <div class="controls">
-                    <label class="checkbox">
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox" name="has_schedule" data-bind="checked: hasSchedule" />
                         {% trans "Enable visit scheduler" %}
                         <span class="hq-help-template"
                               data-title="{% trans 'Visit Schedule' %}"
                               data-content="{% trans 'Be able to configure a visit schedule' %}"></span>
-                        <input type="checkbox" name="has_schedule" data-bind="checked: hasSchedule" />
-                        {% if not module.all_forms_require_a_case %}
-                            <div class="alert alert-error">
-                                <strong>
-                                    {% blocktrans %}
-                                        Visit schedule will be ignored as not all
-                                        forms in the module update or close a case.
-                                    {% endblocktrans %}
-                                </strong>
-                            </div>
-                        {% endif %}
                     </label>
+                    {% if not module.all_forms_require_a_case %}
+                        <div class="alert alert-danger">
+                            <strong>
+                                {% blocktrans %}
+                                    Visit schedule will be ignored as not all
+                                    forms in the module update or close a case.
+                                {% endblocktrans %}
+                            </strong>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </form>
@@ -44,8 +44,8 @@
                 <tbody data-bind="template: { name: 'phase-template', foreach: phases},
                                   sortableList: phases"></tbody>
             </table>
-            <button class="btn" data-bind="click: addPhase">
-                <i class="icon-plus"></i>
+            <button class="btn btn-default" data-bind="click: addPhase">
+                <i class="fa fa-plus"></i>
                 {% trans "Add Phase" %}
             </button>
         </fieldset>
@@ -72,7 +72,7 @@
                               visible: forms().length == 0
                               "></i>
                 <i style="cursor: pointer;"
-                   class="icon-question-sign icon-blue"
+                   class="fa fa-question-circle icon-blue"
                    title="{% trans 'You can only delete phases that have no forms' %}"
                    data-bind="visible: forms().length != 0"></i>
             </td>
