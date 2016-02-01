@@ -18,6 +18,7 @@ class BrokenBuildTest(TestCase):
         cls.app.domain = domain
         cls.app.save()
         cls.build = cls.app.make_build()
+        cls.build.create_jadjar(save=True)
         cls.build.save(increment_version=False)
 
     @classmethod
