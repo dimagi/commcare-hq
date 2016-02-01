@@ -86,6 +86,7 @@ done
 case $MATRIX in
     -h | --help | help)
         echo "simulate.sh [$OPTIONS]"
+        exit
         ;;
     javascript)
         set_env javascript "" yes yes
