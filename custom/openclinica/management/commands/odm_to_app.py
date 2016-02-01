@@ -99,7 +99,7 @@ class Study(StudyObject):
         Return a registration form that mimics OpenClinica subject registration
         """
         xform = XFormBuilder(name)
-        xform.new_question(CC_SUBJECT_KEY, 'Person ID')  # Subject's unique ID. aka "Screening Number", "Subject Key"
+        xform.new_question(CC_SUBJECT_KEY, 'Person ID')  # Unique ID. aka "Screening Number", "Subject Key"
         xform.new_question(CC_STUDY_SUBJECT_ID, 'Subject Study ID')  # Subject number for this study
         xform.new_question(CC_DOB, 'Date of Birth', data_type='date')
         xform.new_question(CC_SEX, 'Sex', data_type='select1', choices={1: 'Male', 2: 'Female'})
@@ -258,7 +258,7 @@ class StudyEvent(StudyObject):
 
         form_name = 'Schedule ' + self.name
         form = subject_module.new_form(form_name, None)
-        form.unique_id = self.unique_id + '_form'
+        form.unique_id = make_uuid()
         form.source = get_form_source(form_name)
         form.requires = 'case'
         form.actions.case_preload = get_preload_action()

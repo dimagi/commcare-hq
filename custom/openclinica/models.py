@@ -252,10 +252,10 @@ class Subject(object):
         item_group = ItemGroup(self._domain, item.item_group_oid)
         oc_form[item.item_group_oid].append(item_group)
 
-    def add_data(self, data, form, audit_log_id_ref):
+    def add_data(self, data, form, event_id, audit_log_id_ref):
         def get_next_item(question_list):
             for question_ in question_list:
-                item_ = get_question_item(self._domain, form.xmlns, question_)
+                item_ = get_question_item(self._domain, event_id, question_)
                 if item_:
                     return item_
             return None
@@ -281,13 +281,13 @@ class Subject(object):
                         raise OpenClinicaIntegrationError(
                             'CommCare question value is an unexpected data type. Form XMLNS: "{}"'.format(
                                 form.xmlns))
-                    self.add_data(v, form, audit_log_id_ref)
+                    self.add_data(v, form, event_id, audit_log_id_ref)
             elif isinstance(value, dict):
                 # Group
-                self.add_data(value, form, audit_log_id_ref)
+                self.add_data(value, form, event_id, audit_log_id_ref)
             else:
                 # key is a question and value is its answer
-                item = get_question_item(self._domain, form.xmlns, key)
+                item = get_question_item(self._domain, event_id, key)
                 if item is None:
                     # This is a CommCare-only question or form
                     continue
