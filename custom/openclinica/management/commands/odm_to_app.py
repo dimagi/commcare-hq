@@ -4,7 +4,15 @@ Create a template app from ODM-formatted OpenClinica study metadata
 from lxml import etree
 from django.core.management.base import BaseCommand
 from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import Application, Module, OpenCaseAction, UpdateCaseAction, PreloadAction
+from corehq.apps.app_manager.models import (
+    Application,
+    Module,
+    OpenCaseAction,
+    UpdateCaseAction,
+    PreloadAction,
+    OpenSubCaseAction,
+    FormActionCondition,
+)
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from custom.openclinica.utils import odm_nsmap
 from dimagi.utils import make_uuid
@@ -131,6 +139,9 @@ class Study(StudyObject):
             module = event.new_module_for_app(app, subject_module)
             for study_form in event.iter_forms():
                 study_form.add_new_form_to_module(module)
+            # Add all the event's forms as a single form in the subject module
+            # We do this to create the new event as a subcase of the subject
+            event.add_form_to_subject_module(subject_module)
         return app
 
 
@@ -162,6 +173,35 @@ class StudyEvent(StudyObject):
         module.parent_select.module_id = subject_module.unique_id
         return module
 
+    def add_form_to_subject_module(self, subject_module):
+        form_name = 'Schedule ' + self.name
+        xform = XFormBuilder(form_name)
+        xform.new_question('start_date', 'Start Date', data_type='date')
+        xform.new_question('start_time', 'Start Time', data_type='time')
+        xform.new_question('subject_name', None, data_type=None)  # Hidden value
+        xform.new_question('name', None, data_type=None,
+                           calculate="concat('{} ', /data/start_date, ' ', /data/start_time, "
+                                     "' (', /data/subject_name, ')')".format(self.name))
+        for study_form in self.iter_forms():
+            study_form.add_item_groups_to_xform(xform)
+        form = subject_module.new_form(form_name, None)
+        form.unique_id = self.unique_id + '_form'
+        form.source = xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
+        form.requires = 'case'
+        form.actions.case_preload = PreloadAction(preload={
+            '/data/subject_name': 'name'
+        })
+        form.actions.case_preload.condition.type = 'always'
+        form.actions.subcases.append(OpenSubCaseAction(
+            case_type='event',
+            case_name='/data/name',
+            case_properties={
+                'start_date': '/data/start_date',
+                'start_time': '/data/start_time',
+            },
+            condition=FormActionCondition(type='always')
+        ))
+
 
 class StudyForm(StudyObject):
 
@@ -192,14 +232,19 @@ class StudyForm(StudyObject):
         })
         form.actions.case_preload.condition.type = 'always'
 
-    def build_xform(self):
-        xform = XFormBuilder(self.name)
+    def add_item_groups_to_xform(self, xform):
         for ig in self.iter_item_groups():
             data_type = 'repeatGroup' if self.is_repeating else 'group'
             group = xform.new_group(ig.question_name, ig.question_label, data_type)
             for item in ig.iter_items():
                 group.new_question(item.question_name, item.question_label, ODK_DATA_TYPES[item.data_type],
                                    choices=item.choices)
+
+    def build_xform(self):
+        xform = XFormBuilder(self.name)
+        xform.new_question('start_date', 'Start Date', data_type='date')
+        xform.new_question('start_time', 'Start Time', data_type='time')
+        self.add_item_groups_to_xform(xform)
         return xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
 
 
