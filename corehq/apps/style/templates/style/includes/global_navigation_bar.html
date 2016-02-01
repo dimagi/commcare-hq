@@ -35,12 +35,12 @@
             <li class="dropdown-header nav-header">{% trans 'Manage Project' %}</li>
             <li>
                 <a href="{% url "domain_settings_default" domain %}">
-                    {% trans "Update Project Settings" %}
+                    <i class="fa fa-cogs icon-cogs dropdown-icon"></i> {% trans "Update Project Settings" %}
                 </a>
             </li>
             <li>
                 <a href="{% url "domain_subscription_view" domain %}">
-                    {% trans "Current Subscription" %}
+                    <i class="fa fa-dashboard icon-dashboard dropdown-icon"></i> {% trans "Current Subscription" %}
                 </a>
             </li>
             {% endif %}
@@ -48,7 +48,7 @@
             <li class="dropdown-header nav-header">{% trans 'Manage Account' %}</li>
             <li>
                 <a href="{% url "my_account_settings" %}">
-                    {% trans 'My Account Settings' %}
+                    <i class="fa fa-user icon-user dropdown-icon"></i> {% trans 'My Account Settings' %}
                 </a>
             </li>
             <li>
