@@ -78,7 +78,7 @@ class Study(StudyObject):
         xform.new_question('name', 'Person ID')  # Subject's unique ID. aka "Screening Number", "Subject Key"
         xform.new_question('subject_study_id', 'Subject Study ID')  # Subject number for this study
         xform.new_question('dob', 'Date of Birth', data_type='date')
-        xform.new_question('sex', 'Sex', data_type='int', choices={1: 'Male', 2: 'Female'})
+        xform.new_question('sex', 'Sex', data_type='select1', choices={1: 'Male', 2: 'Female'})
         xform.new_question('enrollment_date', 'Enrollment Date', data_type='date')
         return xform.tostring(pretty_print=True)
 
