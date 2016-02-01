@@ -38,7 +38,8 @@ while [[ $# > 0 ]]; do
             exit
             ;;
         stop | down)
-            runner $key
+            shift
+            runner $key $@
             exit
             ;;
         logs)
