@@ -51,6 +51,10 @@ class OdmExportReportView(GenericReportView):
             'protocol_name': get_study_constant(domain, 'protocol_name'),
             'study_oid': get_study_constant(domain, 'study_oid'),
             'audit_logs': AUDIT_LOGS,
+            # The template accepts XML strings in params "study_xml" and
+            # "admin_data_xml" which come from the study metadata.
+            'study_xml': get_study_constant(domain, 'study_xml'),
+            'admin_data_xml': get_study_constant(domain, 'admin_data_xml'),
         }
 
     @property
