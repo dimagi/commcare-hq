@@ -163,7 +163,7 @@ class PPSConsumption(fluff.Calculator):
         if not real_date:
             return
 
-        for item in form.get_data('form/products/item', []):
+        for item in (form.get_data('form/products/item') or []):
             yield {
                 'date': real_date,
                 'value': numeric_value(get_value_from_path(item, 'is-relevant/{}'.format(self.field))),
