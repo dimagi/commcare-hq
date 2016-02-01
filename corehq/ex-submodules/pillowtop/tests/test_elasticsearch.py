@@ -168,7 +168,7 @@ class ElasticPillowTest(SimpleTestCase):
     def test_assume_alias_deletes_old_aliases(self):
         # create a different index and set the alias for it
         pillow = TestElasticPillow()
-        new_index = 'test-index-with-duplicate-alias'
+        new_index = 'test_index-with-duplicate-alias'
         if not self.es.indices.exists(new_index):
             self.es.indices.create(index=new_index)
         self.es.indices.put_alias(new_index, pillow.es_alias)
