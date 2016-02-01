@@ -3,15 +3,14 @@
 TRAVIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 travis_runner() {
-    service=$1
-    shift
     args=$@
 
     flavour='travis'
     if [ "${MATRIX_TYPE}" = "javascript" ]; then
         flavour='travis-js'
     fi
-    $TRAVIS_DIR/../dockerhq.sh $flavour run --rm $service $args
+
+    $TRAVIS_DIR/../dockerhq.sh $flavour run --rm $args
 }
 
 get_container_id() {

@@ -4,7 +4,7 @@
 #   simulate.sh [MATRIX] [OPTIONS]
 #
 #   MATRIX:         test matrix to run
-#                   One of javascript, python_catchall, python_group_0, python_sharded
+#                   One of javascript, python-catchall, python-group-0, python-sharded
 #   OPTIONS:
 #       --test-override       [List of Django test labels to run instead of matrix default]
 #       --command-override    [Override test command completely]

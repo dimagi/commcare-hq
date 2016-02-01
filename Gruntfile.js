@@ -1,4 +1,5 @@
 module.exports = function(grunt) {
+    // use localhost unless we're running on travis
     var BASE_ADDRESS = process.env.WEB_TEST_PORT_8000_TCP_ADDR || 'localhost',
         BASE_URL = 'http://' + BASE_ADDRESS + ':8000/mocha/';
 
