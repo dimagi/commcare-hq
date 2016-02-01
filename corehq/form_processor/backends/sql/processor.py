@@ -70,7 +70,8 @@ class FormProcessorSQL(object):
                     CaseAccessorSQL.save_case(case)
             for stock_update in stock_updates or []:
                 stock_update.commit()
-            cls._publish_changes(processed_forms, cases)
+
+        cls._publish_changes(processed_forms, cases)
 
     @staticmethod
     def _publish_changes(processed_forms, cases):
