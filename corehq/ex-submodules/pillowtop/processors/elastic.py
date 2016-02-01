@@ -24,5 +24,5 @@ class ElasticProcessor(PillowProcessor):
             es_getter=self.es_getter,
             name=pillow_instance.get_name(),
             data=doc_ready_to_save,
-            update=self.elasticsearch.exists(self.index_meta.index, change.id, self.index_meta.type),
+            update=self.elasticsearch.exists(self.index_meta.index, self.index_meta.type, change.id),
         )
