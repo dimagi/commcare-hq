@@ -264,7 +264,7 @@ class ExportDataSchema(Document):
     form xmlns or case type. It contains a list of ExportGroupSchema.
     """
     domain = StringProperty()
-    created_on = DateTimeProperty(default=datetime.utcnow())
+    created_on = DateTimeProperty(default=datetime.utcnow)
     group_schemas = SchemaListProperty(ExportGroupSchema)
 
     # A map of app_id to app_version. Represents the last time it saw an app and at what version
