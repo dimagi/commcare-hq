@@ -2,8 +2,8 @@ from datetime import datetime
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xform import get_extension_chain, \
-    get_extensions_to_close
+from casexml.apps.case.dbaccessors import get_extension_chain
+from casexml.apps.case.xform import get_extensions_to_close
 from casexml.apps.phone.models import User
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
 from corehq.apps.domain.models import Domain
