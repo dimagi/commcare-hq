@@ -15,6 +15,11 @@
         {% endif %}
     {% endif %}
     <li class="divider"></li>
-    <li><a href="{% url 'registration_domain' %}">{% trans 'New Project' %}</a></li>
-    <li><a href="{% url 'appstore'%}">{% trans 'CommCare Exchange' %}</a></li>
+    <li>
+        <a href="{% url 'registration_domain' %}">
+        <i class="fa fa-plus icon-plus dropdown-icon"></i> {% trans 'Add Project' %}</a></li>
+    <li>
+        <i class="fa fa-exchange icon-exchange dropdown-icon"></i>
+        <a href="{% url 'appstore'%}">{% trans 'CommCare Exchange' %}</a>
+    </li>
 </ul>

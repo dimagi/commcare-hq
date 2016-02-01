@@ -3,85 +3,118 @@
 {% load hq_shared_tags %}
 {% load tzmigration %}
 
-{% if request.couch_user and request.couch_user.is_web_user %}
-<div id="nav-projects-menu" class="btn-group">
-    {% if domain %}
-
-        {% ifequal domain 'public' %}
-            <a class="btn btn-project"
-                id="project-button-no-admin"
-                data-title="{% trans 'Settings Not Available' %}"
-                data-placement="bottom"
-                data-html="true"
-                data-content="{% blocktrans %}You can't edit the CommCare HQ Demo Project's settings.{% endblocktrans %}">
-                {% trans 'CommCare HQ Demo Project' %}
-            </a>
-            <script>
-                $(function () {
-                   $('#project-button-no-admin').popover();
-                });
-            </script>
-        {% else %}
-            <a class="btn btn-project{% if is_project_settings %} btn-project-active{% endif %}"
-               href="{% url "domain_settings_default" domain %}">
-                {% if request|tzmigration_status == 'complete' %}
-                <i class="icon-globe fa fa-globe" title="New timezone behavior enabled"></i>
-                {% elif request|tzmigration_status == 'in_progress' %}
-                <i class="icon-globe fa fa-globe" title="Timezone migration started but not complete"></i>
-                {% else %}
-                <i class="icon-cog fa fa-cog"></i>
-                {% endif %}
-                {% if request.project.is_snapshot %}
-                    {% blocktrans with request.project.copied_from.display_name as snap_name %}
-                        Snapshot of {{ snap_name }}
-                    {% endblocktrans %}
-                {% else %}
-                    {{ request.project.display_name }}
-                {% endif %}
-            </a>
-        {% endifequal %}
-    {% endif %}
-    <a class="btn btn-project dropdown-toggle" href="#" data-toggle="dropdown">
-        <i class="icon-hq-flower fcc fcc-flower"></i> {% if not domain %}{% trans 'Select Project' %}{% endif %}
-        <span class="caret"></span>
-    </a>
-    {% if domain %}
-        {% domains_for_user request domain %}
-    {% else %}
-        {% domains_for_user request %}
-    {% endif %}
-</div>
-{% endif %}
-
-<div id="nav-user-menu" class="btn-group">
-    <a class="btn btn-primary dropdown-toggle{% if is_my_account_settings %} btn-account-active{% endif %}" data-toggle="dropdown" href="#">
-        {% if user.first_name %}
-            {{ user.first_name }}
-        {% else %}
-            {{ user.username }}
-        {% endif %}
-        <span class="caret"></span>
-    </a>
-    <ul class="dropdown-menu dropdown-menu-right nav-list dropdown-blue right-align">
-        <li class="nav-header dropdown-header">
-            {% if user.first_name %}
-                {{ user.first_name }} {{ user.last_name }}
-            {% else %}
-                {{ user.username }}
+{% if request.couch_user %}
+<ul class="nav navbar-nav" role="menu">
+    <li id="settingsmenu-projectSettings" class="dropdown">
+        <a href="#" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown">
+            <i class="icon-cog fa fa-cog nav-main-icon"></i>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+            <li class="dropdown-header nav-header">{% trans 'Logged in As' %}</li>
+            <li class="nav-login-header">
+                <div class="login-container">
+                    <p>
+                        {% if user.first_name %}
+                            {{ user.first_name }} {{ user.last_name }}
+                            <br />{{ user.username }}
+                        {% else %}
+                            {{ user.username }}
+                        {% endif %}
+                    </p>
+                    {% with request.couch_user.role_label.strip as role %}
+                        {% if role %}
+                        <div class="label label-default">
+                            {{ role }}
+                        </div>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+            </li>
+            <li class="nav-divider divider"></li>
+            <li class="dropdown-header nav-header">{% trans 'Manage Account' %}</li>
+            <li>
+                <a href="{% url "my_account_settings" %}">
+                    {% trans 'My Account Settings' %}
+                </a>
+            </li>
+            <li>
+                <a href="{% url "logout" %}">
+                    <i class="icon-signout fa fa-sign-out"></i>
+                    {% trans 'Sign Out' %}
+                </a>
+            </li>
+            {% if request.couch_user.is_web_user and domain and domain != 'public' and not request.project.is_snapshot %}
+            <li class="nav-divider divider"></li>
+            <li class="dropdown-header nav-header">{% trans 'Manage Project' %}</li>
+            <li>
+                <a href="{% url "domain_settings_default" domain %}">
+                    {% trans "Update Project Settings" %}
+                </a>
+            </li>
+            <li>
+                <a href="{% url "domain_subscription_view" domain %}">
+                    {% trans "Current Subscription" %}
+                </a>
+            </li>
             {% endif %}
-        </li>
-        <li class="dropdown-header nav-header nav-header-role">
-            {% with request.couch_user.role_label.strip as role %}
-                {% if role %}
-                    {{ role }}
-                {% endif %}
-            {% endwith %}
-        </li>
-        <li><a href="{% url "my_account_settings" %}"><i class="icon-user fa fa-user"></i> {% trans 'My Account Settings' %}</a></li>
+        </ul>
+    </li>
+    <li id="settingsmenu-help" class="dropdown">
+        <a href="#" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown">
+            <i class="fa fa-question-circle icon-question-sign nav-main-icon"></i>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+            <li class="dropdown-header nav-header">{% trans 'CommCare Help' %}</li>
+            <li>
+                <a href="#modalReportIssue" data-toggle="modal">
+                    <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
+                </a>
+            </li>
+            <li>
+                <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" target="_blank">
+                    <i class="fa fa-question-circle icon-question-sign dropdown-icon"></i> {% trans "Visit the Help Site" %}
+                </a>
+            </li>
+            <li>
+                <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}" target="_blank">
+                    <i class="fa fa-comments icon-comments dropdown-icon"></i> {% trans "User Forum" %}
+                </a>
+            </li>
+        </ul>
+    </li>
+    {% if request.couch_user and request.couch_user.is_web_user %}
+    <li id="settingsmenu-project" class="dropdown">
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+            {% if domain %}
+                {% ifequal domain 'public' %}
+                    {% trans 'CommCare HQ Demo Project' %}
+                {% else %}
+                    {% if request.project.is_snapshot %}
+                        {% blocktrans with request.project.copied_from.display_name as snap_name %}
+                            Snapshot of {{ snap_name }}
+                        {% endblocktrans %}
+                    {% else %}
+                        {{ request.project.display_name }}
+                    {% endif %}
+                {% endifequal %}
+            {% else %}
+                {%  trans 'Select Project...' %}
+            {% endif %}
+            <b class="caret"></b>
+        </a>
         {% if domain %}
-            <li><a href="{% url "domain_settings_default" domain %}"><i class="icon-cog fa fa-cog"></i> {% trans 'Project Settings' %}</a></li>
+            {% domains_for_user request domain %}
+        {% else %}
+            {% domains_for_user request %}
         {% endif %}
-        <li class="divider"></li>
-        <li><a href="{% url "logout" %}"><i class="icon-signout fa fa-sign-out"></i> {% trans 'Sign Out' %}</a></li>
-    </ul>
-</div>
+    </li>
+    {% endif %}
+    {% if request.couch_user and request.couch_user.is_commcare_user %}
+    <li id="settingsmenu-project-commcareonly">
+        <a href="{% url "homepage" %}">
+            {{ request.couch_user.project.display_name }}
+        </a>
+    </li>
+    {% endif %}
+</ul>
+{% endif %}
