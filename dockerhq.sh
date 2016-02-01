@@ -89,7 +89,7 @@ case $key in
         web_runner run --rm web python manage.py migrate $@
         ;;
     runserver)
-        web_runner up $@
+        web_runner run --service-ports web $@
         ;;
     shell)
         web_runner run --rm web python manage.py shell
