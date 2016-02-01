@@ -18,3 +18,6 @@ CASE_HISTORY_PROPERTIES = [
     SystemProperty(PROPERTY_TAG_SERVER, 'state'),
 ]
 CASE_HISTORY_GROUP_NAME = 'history'
+
+FORM_EXPORT = 'form'
+CASE_EXPORT = 'case'

@@ -1,6 +1,7 @@
 SampleExportInstances = {
     basic: {
         "name": null,
+        "type": "form",
         "tables": [{
             "path": null,
             "name": null,
