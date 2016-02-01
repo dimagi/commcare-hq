@@ -1,0 +1,56 @@
+postgres:
+  build: ../dockerfiles
+  dockerfile: Dockerfile_pg
+  environment:
+    POSTGRES_USER: commcarehq
+    POSTGRES_PASSWORD: commcarehq
+  labels:
+    commcare.name: "postgres"
+  expose:
+    - "5432"
+
+couch:
+  image: klaemo/couchdb:latest
+  labels:
+    commcare.name: "couch"
+  expose:
+    - "5984"
+
+redis:
+  image: redis
+  labels:
+    commcare.name: "redis"
+  expose:
+    - "6379"
+
+elasticsearch:
+  build: ../dockerfiles
+  dockerfile: Dockerfile_es
+  labels:
+    commcare.name: "elastic"
+  expose:
+    - "9200"
+
+web:
+  build: ../../
+  dockerfile: ./docker/dockerfiles/Dockerfile_commcarehq
+  working_dir: /mnt
+  command: python manage.py runserver 0.0.0.0:8000
+  volumes:
+    - ../../:/mnt
+  expose:
+    - "8000"
+  environment:
+    PYTHONUSERBASE: /vendor
+  labels:
+    commcare.name: "web"
+
+kafka:
+  image: spotify/kafka
+  environment:
+    ADVERTISED_PORT: 9092
+  expose:
+    - "2181"
+    - "9092"
+  labels:
+    commcare.name: "kafka"

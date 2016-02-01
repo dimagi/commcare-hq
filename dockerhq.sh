@@ -60,6 +60,15 @@ function rebuild() {
     web_runner build
 }
 
+function travis_runner() {
+    sudo docker-compose -f $DOCKER_DIR/compose/docker-compose-travis.yml -p travis $@
+}
+
+function travis_js_runner() {
+    sudo docker-compose -f $DOCKER_DIR/compose/docker-compose-travis-js.yml -p travis $@
+}
+
+
 key="$1"
 shift
 
@@ -70,17 +79,23 @@ case $key in
     services)
         $DOCKER_DIR/docker-services.sh $@
         ;;
+    travis)
+        travis_runner $@
+        ;;
+    travis-js)
+        travis_js_runner $@
+        ;;
     migrate)
-        web_runner run web python manage.py migrate $@
+        web_runner run --rm web python manage.py migrate $@
         ;;
     runserver)
         web_runner up $@
         ;;
     shell)
-        web_runner run web python manage.py shell
+        web_runner run --rm web python manage.py shell
         ;;
     bash)
-        web_runner run web bash
+        web_runner run --rm --service-ports web bash
         ;;
     rebuild)
         rebuild
