@@ -9,7 +9,7 @@ Exports.ViewModels.ExportInstance = function(instanceJSON) {
 };
 
 Exports.ViewModels.ExportInstance.mapping = {
-    include: ['name', 'tables'],
+    include: ['name', 'tables', 'type'],
     tables: {
         create: function(options) {
             return new Exports.ViewModels.TableConfiguration(options.data);
