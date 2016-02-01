@@ -9,7 +9,16 @@ Exports.ViewModels.ExportInstance = function(instanceJSON) {
 };
 
 Exports.ViewModels.ExportInstance.mapping = {
-    include: ['name', 'tables', 'type'],
+    include: [
+        'name',
+        'tables',
+        'type',
+        'export_format',
+        'split_multiselects',
+        'transform_dates',
+        'include_errors',
+        'is_deidentified',
+    ],
     tables: {
         create: function(options) {
             return new Exports.ViewModels.TableConfiguration(options.data);
@@ -23,7 +32,7 @@ Exports.ViewModels.TableConfiguration = function(tableJSON) {
 };
 
 Exports.ViewModels.TableConfiguration.mapping = {
-    include: ['name', 'path', 'columns'],
+    include: ['name', 'path', 'columns', 'selected'],
     tables: {
         create: function(options) {
             return new Exports.ViewModels.ExportColumn(options.data);
