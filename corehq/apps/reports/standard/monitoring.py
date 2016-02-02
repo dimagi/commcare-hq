@@ -173,7 +173,6 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             return self.report.get_number_cases(
                 user_id=self.user.user_id,
                 modified_after=startdate,
-                modified_before=self.report.utc_now,
                 closed=False,
             )
 
@@ -182,7 +181,6 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             return self.report.get_number_cases(
                 user_id=self.user.user_id,
                 modified_after=startdate,
-                modified_before=self.report.utc_now,
                 closed=False,
             )
 
@@ -190,14 +188,12 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             return self.report.get_number_cases(
                 user_id=self.user.user_id,
                 modified_after=startdate,
-                modified_before=self.report.utc_now,
             )
 
         def closed_count(self, startdate=None):
             return self.report.get_number_cases(
                 user_id=self.user.user_id,
                 modified_after=startdate,
-                modified_before=self.report.utc_now,
                 closed=True
             )
 
@@ -336,14 +332,14 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         self.total_row = format_row(total_row)
         return map(format_row, rows)
 
-    def get_number_cases(self, user_id, modified_after=None, modified_before=None, closed=None):
-        kwargs = {}
+    def get_number_cases(self, user_id, modified_after=None, closed=None):
+        kwargs = {
+            'modified_on__lt': ServerTime(self.utc_now).phone_time(self.timezone).done()
+        }
         if closed is not None:
             kwargs['closed'] = bool(closed)
         if modified_after:
             kwargs['modified_on__gte'] = ServerTime(modified_after).phone_time(self.timezone).done()
-        if modified_before:
-            kwargs['modified_on__lt'] = ServerTime(modified_before).phone_time(self.timezone).done()
         if self.case_type:
             kwargs['type'] = self.case_type
 
