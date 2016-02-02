@@ -694,13 +694,12 @@ VIEW_BUILD_SOURCE = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-# Removed until ready for production
-# USE_SQL_BACKEND = StaticToggle(
-#     'sql_backend',
-#     'Uses a sql backend instead of a couch backend for form processing',
-#     TAG_PRODUCT_CORE,
-#     [NAMESPACE_DOMAIN]
-# )
+USE_SQL_BACKEND = StaticToggle(
+    'sql_backend',
+    'Uses a sql backend instead of a couch backend for form processing (testing only)',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
 
 EWS_WEB_USER_EXTENSION = StaticToggle(
     'ews_web_user_extension',

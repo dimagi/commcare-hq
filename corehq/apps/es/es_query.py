@@ -122,6 +122,7 @@ class ESQuery(object):
     _start = None
     _size = None
     _facets = None
+    _source = None
     default_filters = {
         "match_all": filters.match_all()
     }
@@ -134,6 +135,7 @@ class ESQuery(object):
             raise IndexError(msg)
         self._default_filters = deepcopy(self.default_filters)
         self._facets = []
+        self._source = []
         self.es_query = {"query": {
             "filtered": {
                 "filter": {"and": []},
@@ -244,11 +246,33 @@ class ESQuery(object):
                 facet.name: {facet.type: facet.params}
                 for facet in self._facets
             }
+        if self._source:
+            self.es_query['_source'] = self._source
 
     def fields(self, fields):
-        """Restrict the fields returned from elasticsearch"""
+        """
+            Restrict the fields returned from elasticsearch
+
+            Usage Note: As of ES 1.x, fields will only work on leaf nodes! It will no longer return an object,
+            e.g. field.*, to return an object refer to '.source'
+            """
         query = deepcopy(self)
         query._fields = fields
+        return query
+
+    def source(self, source):
+        """
+            Restrict the output of _source in the queryset. This can be used to return an object in a queryset
+
+            TODO: How does this interact with .fields
+            TODO: This can be expanded if needed to support other usages of the _source filter, e.g:
+            "_source": {
+                "include": [ "obj1.*", "obj2.*" ],
+                "exclude": [ "*.description" ]
+            },
+        """
+        query = deepcopy(self)
+        query._source.append(source)
         return query
 
     def start(self, start):

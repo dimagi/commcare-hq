@@ -1,8 +1,0 @@
-We got an inbound inquiry from the website! Details below:
-
-Name: {{ first_name }} {{ last_name }}
-Company: {{ company }}
-Email: {{ email }}
-Phone: {{ phone }}
-Country: {{ country }}
-Inquiry: {{ description }}

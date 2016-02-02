@@ -255,6 +255,7 @@ corehq.apps.receiverwrapper:
   - django_prbac
   - phonelog
   - tastypie
+  - corehq.apps.userhack
   # required by user.delete()
   - touchforms.formplayer
   - corehq.apps.tour
