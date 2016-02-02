@@ -84,7 +84,8 @@
                     fixtures: fixtures,
                     parentSelect: detail.parent_select,
                     fixtureSelect: detail.fixture_select,
-                    contextVariables: COMMCAREHQ.app_manager.module_view
+                    contextVariables: COMMCAREHQ.app_manager.module_view,
+                    multimedia: {{multimedia.object_map|JSON}}
                 });
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
                 $list_home.koApplyBindings(detailScreenConfig);

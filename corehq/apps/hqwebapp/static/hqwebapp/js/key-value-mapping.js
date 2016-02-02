@@ -5,24 +5,54 @@
  * The "value" in each item is itself be an object, mapping language codes to strings.
  */
 
+var MapItem = function(item, mapping){
+    this.key = ko.observable(item.key);
+
+    this.value = _.object(_(item.value).map(function (value, lang) {
+        return [lang, ko.observable(value)];
+    }));
+    this.domId = ko.computed(function() {
+        return makeSafeForCSS(this.key())
+    }, this);
+    this.mediaValue = new AppMenuMediaManager({
+            ref: {
+                "path": this.value[mapping.lang](),
+                "icon_type": "icon-picture",
+                "media_type": "Image",
+                "media_class": "CommCareImage",
+                "icon_class": "icon-picture"
+            },
+            objectMap: mapping.multimedia,
+            uploadController: iconUploader,
+            defaultPath: 'jr://file/commcare/image/sd.png',
+            inputElement: $("#" + makeSafeForCSS(this.key()))
+        });
+
+};
+
 function MapList(o) {
     var self = this;
     self.lang = o.lang;
     self.langs = [o.lang].concat(o.langs);
     self.items = ko.observableArray();
     self.duplicatedItems = ko.observableArray();
+    self.values_are_icons = o.values_are_icons || false;
+    self.multimedia = o.multimedia;
 
     self.setItems = function (items) {
         self.items(_(items).map(function (item) {
-            return {
-                key: ko.observable(item.key),
-                value: _.object(_(item.value).map(function (value, lang) {
-                    return [lang, ko.observable(value)];
-                }))
-            };
+            return new MapItem(item, self);
         }));
     };
     self.setItems(o.items);
+
+    self.initIconUploaders = function() {
+        _.each(self.items(), function(item){
+            ko.cleanNode("#"+item.domId());
+            $("#"+item.domId()).koApplyBindings(item.mediaValue());
+        });
+    }
+
     self.backup = function (value) {
         var backup;
         for (var i = 0; i < self.langs.length; i += 1) {
@@ -104,6 +134,8 @@ uiElement.key_value_mapping = function (o) {
             lang: o.lang,
             langs: o.langs,
             items: m.getItems(),
+            values_are_icons: m.values_are_icons,
+            multimedia: m.multimedia
         });
         $modalDiv.koApplyBindings({
             modalTitle: o.modalTitle,
@@ -120,6 +152,9 @@ uiElement.key_value_mapping = function (o) {
         var $modal = $modalDiv.find('.modal');
         $modal.appendTo('body');
         $modal.modal('show');
+        $modal.on('shown', function(){
+            // copy.initIconUploaders(); 
+        });
         $modal.on('hidden', function () {
             $modal.remove();
         });
@@ -138,3 +173,21 @@ uiElement.key_value_mapping = function (o) {
 };
 
 }());
+
+function makeSafeForCSS(name) {
+    return name.replace(/[^a-z0-9]/g, function(s) {
+        var c = s.charCodeAt(0);
+        if (c == 32) return '-';
+        if (c >= 65 && c <= 90) return '_' + s.toLowerCase();
+        return '__' + ('000' + c.toString(16)).slice(-4);
+    });
+}
+
+// To overlay icon-upload modal http://stackoverflow.com/questions/19305821/multiple-modals-overlay
+$(document).on('show.bs.modal', '.modal', function () {
+    var zIndex = 1040 + (10 * $('.modal:visible').length);
+    $(this).css('z-index', zIndex);
+    setTimeout(function() {
+        $('.modal-backdrop').not('.modal-stack').css('z-index', zIndex - 1).addClass('modal-stack');
+    }, 0);
+});

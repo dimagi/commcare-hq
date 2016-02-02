@@ -1,3 +1,5 @@
+{% load i18n %}
+{% load hq_shared_tags %}
 <div id="key_value_mapping_editable_template" class="hide">
     <form class="form-horizontal hq-enum-editor" action="">
         <fieldset data-bind="sortable: items">
@@ -24,6 +26,8 @@
                 </a>
                 <span class="help-inline"
                       data-bind='visible: $parent.isItemDuplicated(ko.utils.unwrapObservable(key))'>Key is duplicated.</span>
+                <div class="modal-body" style="max-height:372px; overflow-y: scroll;"
+                     data-bind="template: {name: 'value_icon_uploader', data: mediaValue()}"></div>
             </div>
         </fieldset>
 
@@ -31,9 +35,10 @@
             <a href="#" class="btn btn-success"
                data-bind="click: addItem">
                 <i class="icon icon-white icon-plus"></i>
-                Add Key &rarr; Value Mapping
+                Add kKey &rarr; Value Mappinggg
             </a>
         </div>
+        <div data-bind="if: values_are_icons">no pare is a message. Astonishing.</div>
     </form>
 </div>
 
@@ -73,5 +78,21 @@
     <button class="btn" data-bind="click: openModal, visible: $data.edit">
         <i class="icon-pencil"></i>
         <span data-bind="text: $data.buttonText"></span>
+    </button>
+</div>
+
+<div id="value_icon_uploader" class="hide">
+    <a data-bind="if: isMediaMatched, attr: {href: url}" target="_blank">
+        <img data-bind="attr: {src: thumbnailUrl}" />
+    </a>
+    <button type="button" class="btn" data-toggle="modal"  data-target="#hqimage"
+            data-bind="attr: { 'data-hqmediapath': currentPath },
+                       event: {
+                            mediaUploadComplete: uploadComplete,
+                            click: passToUploadController
+                       }">
+        <i class="icon icon-cloud-upload"></i>
+        <span data-bind="visible: isMediaMatched">{% trans 'Replace' %}</span>
+        <span data-bind="visible: isMediaUnmatched">{% trans 'Upload' %}</span>
     </button>
 </div>
