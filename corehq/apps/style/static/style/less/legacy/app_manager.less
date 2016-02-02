@@ -1,9 +1,24 @@
 nav.app-manager-content {
     margin: 20px 0;
 
-    // Indent lists of forms within modules
+    // Menu indentation
+    // First level: whole menu ("Deploy", etc.)
     > .nav-hq-sidebar {
-        padding-left: 0;
+        padding-left: 0px;
+
+        // Second level: modules
+        .nav-hq-sidebar {
+            padding-left: 0px;
+
+            li a {
+                padding-left: 20px;
+            }
+
+            // Third level: forms
+            .nav-hq-sidebar {
+                padding-left: 20px;
+            }
+        }
     }
 }
 

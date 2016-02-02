@@ -191,7 +191,7 @@
         <li class="divider"></li>
     {% if app.get_doc_type == "Application" %}
         <li>
-        <ul class="nav nav-hq-sidebar sortable" style="padding-left: 0">
+        <ul class="nav nav-hq-sidebar sortable">
             <li class="sort-action">
                 <form method="post"
                       action="{% url "corehq.apps.app_manager.views.rearrange" domain app.id 'modules' %}">
