@@ -24,12 +24,28 @@ from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import safe_strftime
+from corehq.apps.style.decorators import (
+    use_jquery_ui,
+    use_bootstrap3,
+    use_datatables,
+    use_select2,
+    use_daterangepicker,
+)
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     """
     Base class for all deployments reports
     """
+    is_bootstrap3 = True
+
+    @use_jquery_ui
+    @use_bootstrap3
+    @use_datatables
+    @use_select2
+    @use_daterangepicker
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        pass
    
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -41,7 +57,8 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
 
 def _build_html(version_info):
     version = version_info.build_version or _("Unknown")
-    def fmt(title, extra_class=u'', extra_text=u''):
+
+    def fmt(title, extra_class=u'label-default', extra_text=u''):
         return format_html(
             u'<span class="label{extra_class}" title="{title}">'
             u'{extra_text}{version}</span>',
@@ -50,6 +67,7 @@ def _build_html(version_info):
             extra_class=extra_class,
             extra_text=extra_text,
         )
+
     if version_info.source == BuildVersionSource.BUILD_ID:
         return fmt(title=_("This was taken from build id"),
                    extra_class=u' label-success')
@@ -215,7 +233,7 @@ class SyncHistoryReport(DeploymentsReport):
                     )
                 else:
                     return format_datatables_data(
-                        '<span class="label">{text}</span>'.format(
+                        '<span class="label label-default">{text}</span>'.format(
                             text=_("Unknown"),
                         ),
                         -1,
@@ -232,7 +250,7 @@ class SyncHistoryReport(DeploymentsReport):
                 if not sync_log.had_state_error:
                     return u'<span class="label label-success">&#10003;</span>'
                 else:
-                    return (u'<span class="label label-important">X</span>'
+                    return (u'<span class="label label-danger">X</span>'
                             u'State error {}<br>Expected hash: {:.10}...').format(
                         _naturaltime_with_hover(sync_log.error_date),
                         sync_log.error_hash,
@@ -283,7 +301,7 @@ def _fmt_date(date):
         return _bootstrap_class(delta, timedelta(days=7), timedelta(days=3))
 
     if not date:
-        return format_datatables_data(u'<span class="label">{0}</span>'.format(_("Never")), -1)
+        return format_datatables_data(u'<span class="label label-default">{0}</span>'.format(_("Never")), -1)
     else:
         return format_datatables_data(
             u'<span class="{cls}">{text}</span>'.format(
@@ -304,7 +322,7 @@ def _bootstrap_class(obj, severe, warn):
     assumes bigger is worse and default is good.
     """
     if obj > severe:
-        return "label label-important"
+        return "label label-danger"
     elif obj > warn:
         return "label label-warning"
     else:
