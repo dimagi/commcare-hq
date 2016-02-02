@@ -15,14 +15,16 @@ describe('ExportInstance model', function() {
 
         _.each(table.columns(), function(column) {
             assert.ok(column.item);
+            assert.isTrue(column instanceof Exports.ViewModels.ExportColumn);
             assert.isDefined(column.show());
             assert.isDefined(column.selected());
             assert.isDefined(column.label());
 
             var item = column.item;
-            assert.isDefined(item.label());
-            assert.isDefined(item.path());
-            assert.isDefined(item.tag());
+            assert.isTrue(item instanceof Exports.ViewModels.ExportItem);
+            assert.isDefined(item.label);
+            assert.isDefined(item.path);
+            assert.isDefined(item.tag);
         });
     });
 });

@@ -57,7 +57,7 @@ Exports.ViewModels.TableConfiguration.prototype.selectNone = function(table) {
 
 Exports.ViewModels.TableConfiguration.mapping = {
     include: ['name', 'path', 'columns', 'selected'],
-    tables: {
+    columns: {
         create: function(options) {
             return new Exports.ViewModels.ExportColumn(options.data);
         }
