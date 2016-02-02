@@ -5,7 +5,8 @@ from unittest import TestCase
 
 from django.test.testcases import SimpleTestCase
 
-from corehq.apps.es.aggregations import TermsAggregation, FilterAggregation, FiltersAggregation
+from corehq.apps.es.aggregations import TermsAggregation, FilterAggregation, FiltersAggregation, RangeAggregation, \
+    AggregationRange
 from corehq.elastic import ESError, SIZE_LIMIT
 from .es_query import HQESQuery, ESQuerySet
 from . import filters
@@ -457,6 +458,12 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
             ).aggregation(
                 FilterAggregation('open', filters.term('closed', False))
             )
+        ).aggregation(
+            RangeAggregation('by_date', 'name', [
+                AggregationRange(end='c'),
+                AggregationRange(start='f'),
+                AggregationRange(start='k', end='p')
+            ])
         )
 
         raw_result = {
@@ -476,6 +483,23 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     ],
                     "doc_count_error_upper_bound": 0,
                     "sum_other_doc_count": 0
+                },
+                "by_date": {
+                    "buckets": {
+                        "*-c": {
+                            "to": "c",
+                            "doc_count": 3
+                        },
+                        "f-*": {
+                            "from": "f",
+                            "doc_count": 8
+                        },
+                        "k-p": {
+                            "from": "k",
+                            "to": "p",
+                            "doc_count": 6
+                        }
+                    }
                 }
             },
         }
@@ -488,3 +512,45 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         self.assertEqual(queryset.aggregations.users.counts_by_bucket, {
             'user1': 2
         })
+        self.assertEqual(queryset.aggregations.by_date.counts_by_bucket, {
+            '*-c': 3,
+            'f-*': 8,
+            'k-p': 6,
+        })
+
+    def test_range_aggregation(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "aggs": {
+                "by_date": {
+                    "range": {
+                        "field": "name",
+                        "keyed": True,
+                        "ranges": [
+                            {"to": "c"},
+                            {"from": "f"},
+                            {"from": "k", "to": "p", "key": "k-p"},
+                        ]
+                    }
+                },
+            },
+            "size": SIZE_LIMIT
+        }
+        query = HQESQuery('cases').aggregation(
+            RangeAggregation('by_date', 'name', [
+                AggregationRange(end='c'),
+                AggregationRange(start='f'),
+                AggregationRange(start='k', end='p', key='k-p')
+            ])
+        )
+
+        self.checkQuery(query, json_output)

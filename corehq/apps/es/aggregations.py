@@ -81,20 +81,25 @@ class Aggregation(object):
 class BucketResult(AggregationResult):
     @property
     def buckets(self):
-        buckets = namedtuple('buckets', [b['key'] for b in self.raw_buckets])
-        return buckets(**{b['key']: Bucket(b, self._aggregations) for b in self.raw_buckets})
+        n_buckets = self.normalized_buckets
+        buckets = namedtuple('buckets', [b['key'] for b in n_buckets])
+        return buckets(**{b['key']: Bucket(b, self._aggregations) for b in n_buckets})
 
     @property
     def buckets_dict(self):
-        return {b['key']: Bucket(b, self._aggregations) for b in self.raw_buckets}
+        return {b['key']: Bucket(b, self._aggregations) for b in self.normalized_buckets}
 
     @property
     def raw_buckets(self):
         return self.result['buckets']
 
     @property
+    def normalized_buckets(self):
+        return self.raw_buckets
+
+    @property
     def counts_by_bucket(self):
-        return {b['key']: b['doc_count'] for b in self.raw_buckets}
+        return {b['key']: b['doc_count'] for b in self.normalized_buckets}
 
 
 class Bucket(object):
@@ -166,9 +171,9 @@ class FiltersAggregation(Aggregation):
     type = "filters"
     result_class = BucketResult
 
-    def __init__(self, name):
+    def __init__(self, name, filters=None):
         self.name = name
-        self.body = {"filters": {}}
+        self.body = {"filters": (filters or {})}
 
     def add_filter(self, name, filter):
         """
@@ -176,4 +181,63 @@ class FiltersAggregation(Aggregation):
         :param filter: filter body
         """
         self.body["filters"][name] = filter
+        return self
+
+
+class AggregationRange(namedtuple('AggregationRange', 'start end key')):
+    def __new__(cls, start=None, end=None, key=None):
+        assert start or end, "At least one of 'from' or 'to' are required"
+        return super(AggregationRange, cls).__new__(cls, start, end, key)
+
+    def assemble(self):
+        range_ = {}
+        for key, attr in {'from': 'start', 'to': 'end', 'key': 'key'}.items():
+            if getattr(self, attr):
+                range_[key] = getattr(self, attr)
+        return range_
+
+
+class RangeResult(BucketResult):
+    @property
+    def normalized_buckets(self):
+        buckets = self.raw_buckets
+        if self.aggregation.keyed:
+            def _add_key(key, bucket):
+                bucket['key'] = key
+                return bucket
+            return [_add_key(k, b) for k, b in buckets.items()]
+        else:
+            def _add_key(bucket):
+                key ='{}-{}'.format(bucket.get('from', '*'), bucket.get('to', '*'))
+                bucket['key'] = key
+                return bucket
+
+            return [_add_key(b) for b in buckets]
+
+
+
+class RangeAggregation(Aggregation):
+    type = "range"
+    result_class = RangeResult
+
+    def __init__(self, name, field, ranges=None, keyed=True):
+        self.keyed = keyed
+        self.name = name
+        self.body = {
+            'field': field,
+            'keyed': keyed,
+            'ranges': []
+        }
+        if ranges:
+            for range_ in ranges:
+                self.add_range(range_)
+
+    def add_range(self, range_):
+        if isinstance(range_, AggregationRange):
+            range_ = range_.assemble()
+
+        if range_.get('key'):
+            self.body['keyed'] = True
+
+        self.body["ranges"].append(range_)
         return self
