@@ -1,7 +1,11 @@
 import json
+from copy import deepcopy
 from datetime import date
 from unittest import TestCase
 
+from django.test.testcases import SimpleTestCase
+
+from corehq.apps.es.aggregations import TermsAggregation, FilterAggregation, FiltersAggregation
 from corehq.elastic import ESError, SIZE_LIMIT
 from .es_query import HQESQuery, ESQuerySet
 from . import filters
@@ -379,3 +383,108 @@ class TestSourceFiltering(ElasticTestMixin, TestCase):
         q = HQESQuery('forms').source('source_obj')
         self.checkQuery(q, json_output)
 
+
+class TestAggregations(ElasticTestMixin, SimpleTestCase):
+    def test_nested_aggregation(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "aggs": {
+                "users": {
+                    "terms": {"field": "user_id"},
+                    "aggs": {
+                        "closed": {
+                            "filter": {
+                                "term": {"closed": True}
+                            }
+                        }
+                    }
+                },
+                "total_by_status": {
+                    "filters": {
+                        "filters": {
+                            "closed": {"term": {"closed": True}},
+                            "open": {"term": {"closed": False}}
+                        }
+                    }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
+
+        query = HQESQuery('cases').aggregations([
+            TermsAggregation("users", 'user_id').aggregation(
+                FilterAggregation('closed', filters.term('closed', True))
+            ),
+            FiltersAggregation('total_by_status')\
+                .add_filter('closed', filters.term('closed', True))\
+                .add_filter('open', filters.term('closed', False))
+        ])
+        self.checkQuery(query, json_output)
+
+    def test_result_parsing_basic(self):
+        query = HQESQuery('cases').aggregations([
+            FilterAggregation('closed', filters.term('closed', True)),
+            FilterAggregation('open', filters.term('closed', False))
+        ])
+
+        raw_result = {
+            "aggregations": {
+                "closed": {
+                    "doc_count": 1
+                },
+                "open": {
+                    "doc_count": 2
+                }
+            }
+        }
+        queryset = ESQuerySet(raw_result, deepcopy(query))
+        self.assertEqual(queryset.aggregations.closed.doc_count, 1)
+        self.assertEqual(queryset.aggregations.open.doc_count, 2)
+
+    def test_result_parsing_complex(self):
+        query = HQESQuery('cases').aggregation(
+            TermsAggregation("users", 'user_id').aggregation(
+                FilterAggregation('closed', filters.term('closed', True))
+            ).aggregation(
+                FilterAggregation('open', filters.term('closed', False))
+            )
+        )
+
+        raw_result = {
+            "aggregations": {
+                "users": {
+                    "buckets": [
+                        {
+                            "closed": {
+                                "doc_count": 0
+                            },
+                            "doc_count": 2,
+                            "key": "user1",
+                            "open": {
+                                "doc_count": 2
+                            }
+                        }
+                    ],
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 0
+                }
+            },
+        }
+        queryset = ESQuerySet(raw_result, deepcopy(query))
+        self.assertEqual(queryset.aggregations.users.buckets.user1.key, 'user1')
+        self.assertEqual(queryset.aggregations.users.buckets.user1.doc_count, 2)
+        self.assertEqual(queryset.aggregations.users.buckets.user1.closed.doc_count, 0)
+        self.assertEqual(queryset.aggregations.users.buckets.user1.open.doc_count, 2)
+        self.assertEqual(queryset.aggregations.users.buckets_dict['user1'].open.doc_count, 2)
+        self.assertEqual(queryset.aggregations.users.counts_by_bucket, {
+            'user1': 2
+        })
