@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 BULK_CASE_AND_USER_MANAGEMENT = 'bulk_case_and_user_management'
+CROSS_PROJECT_REPORTS = 'cross_project_reports'
 
 
 def cchq_prbac_bootstrap(apps, schema_editor):
@@ -205,6 +206,7 @@ class Command(BaseCommand):
 
     OLD_PRIVILEGES = [
         BULK_CASE_AND_USER_MANAGEMENT,
+        CROSS_PROJECT_REPORTS,
     ]
 
     BOOTSTRAP_GRANTS = {
