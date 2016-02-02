@@ -69,7 +69,7 @@ Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
 };
 
 Exports.ViewModels.ExportColumn.mapping = {
-    include: ['item', 'label', 'show', 'selected'],
+    include: ['item', 'label', 'show', 'selected', 'tags'],
     item: {
         create: function(options) {
             return new Exports.ViewModels.ExportItem(options.data);

@@ -8,7 +8,9 @@
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
     <script src="{% static 'export/js/exports.js' %}"></script>
+    <script src="{% static 'export/js/const.js' %}"></script>
     <script src="{% static 'export/js/models.js' %}"></script>
+    <script src="{% static 'export/js/utils.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -190,7 +192,11 @@ WHAT IS UP
                                             <!--/ko-->
                                         </td>
                                         <td>
-                                            <span data-bind="text: column.tag, visible: column.tag"></span>
+                                            <span data-bind="foreach: { data: column.tags, as: 'tag' }">
+                                                <span data-bind="
+                                                    text: tag,
+                                                    attr: { class: Exports.Utils.getTagCSSClass(tag) }"></span>
+                                            </span>
                                             <code data-bind="text: column.formatProperty()"></code>
 
                                         </td>
