@@ -1,7 +1,24 @@
 FROM dimagi/commcarehq_base:latest
 
+RUN mkdir requirements
+COPY scripts/uninstall-requirements.sh requirements/uninstall-requirements.sh
+COPY requirements/uninstall-requirements.txt requirements/uninstall-requirements.txt
+
+RUN requirements/uninstall-requirements.sh
+
+COPY requirements/requirements.txt /vendor/requirements.txt
+COPY requirements/dev-requirements.txt /vendor/dev-requirements.txt
+COPY requirements/test-requirements.txt /vendor/test-requirements.txt
+
+RUN pip install \
+    -r /vendor/requirements.txt \
+    -r /vendor/dev-requirements.txt \
+    --user --upgrade \
+    && rm -rf /root/.cache/pip
+
 WORKDIR /mnt
-COPY docker/entrypoint.sh /mnt/docker/entrypoint.sh
+
+ADD docker/entrypoint.sh /mnt/docker/entrypoint.sh
 
 ENTRYPOINT ["/mnt/docker/entrypoint.sh"]
 CMD ["help"]
