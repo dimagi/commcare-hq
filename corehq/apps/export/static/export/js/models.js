@@ -1,8 +1,3 @@
-var Exports = {
-    ViewModels: {},
-    Constants: {}
-};
-
 Exports.ViewModels.ExportInstance = function(instanceJSON) {
     var self = this;
     ko.mapping.fromJS(instanceJSON, Exports.ViewModels.ExportInstance.mapping, self);
