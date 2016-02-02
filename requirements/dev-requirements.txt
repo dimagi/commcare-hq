@@ -16,6 +16,7 @@ fixture
 sniffer
 psutil  # for memory profiling
 django-extensions
+ipdb
 
 # these will eventually move to test-requirements.txt
 nose==1.3.7

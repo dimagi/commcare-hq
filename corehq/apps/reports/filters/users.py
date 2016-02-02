@@ -19,7 +19,6 @@ from .base import (
     BaseMultipleOptionFilter,
     BaseReportFilter,
     BaseSingleOptionFilter,
-    BaseSingleOptionTypeaheadFilter,
 )
 
 
@@ -42,7 +41,7 @@ class UserTypeFilter(BaseReportFilter):
         return get_user_toggle(request)
 
 
-class SelectMobileWorkerFilter(BaseSingleOptionTypeaheadFilter):
+class SelectMobileWorkerFilter(BaseSingleOptionFilter):
     slug = 'individual'
     label = ugettext_noop("Select Mobile Worker")
     default_text = ugettext_noop("All Mobile Workers")

@@ -1,3 +1,4 @@
+from datetime import datetime
 from itertools import groupby
 from collections import defaultdict, OrderedDict
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
@@ -5,7 +6,7 @@ from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, Dict
 from corehq.apps.userreports.expressions.getters import NestedDictGetter
 from corehq.apps.app_manager.dbaccessors import (
     get_built_app_ids_for_app_id,
-    get_all_app_ids,
+    get_all_built_app_ids_and_versions,
     get_latest_built_app_ids_and_versions,
 )
 from corehq.apps.app_manager.models import Application
@@ -17,11 +18,16 @@ from dimagi.ext.couchdbkit import (
     ListProperty,
     StringProperty,
     IntegerProperty,
+    DateTimeProperty,
 )
 from corehq.apps.export.const import (
     PROPERTY_TAG_UPDATE,
     CASE_HISTORY_PROPERTIES,
     CASE_HISTORY_GROUP_NAME,
+)
+from corehq.apps.export.dbaccessors import (
+    get_latest_case_export_schema,
+    get_latest_form_export_schema,
 )
 
 
@@ -257,7 +263,12 @@ class ExportDataSchema(Document):
     An object representing the things that can be exported for a particular
     form xmlns or case type. It contains a list of ExportGroupSchema.
     """
+    domain = StringProperty()
+    created_on = DateTimeProperty(default=datetime.utcnow)
     group_schemas = SchemaListProperty(ExportGroupSchema)
+
+    # A map of app_id to app_version. Represents the last time it saw an app and at what version
+    last_app_versions = DictProperty()
     datatype_mapping = defaultdict(lambda: ScalarItem, {
         'MSelect': MultipleChoiceItem,
     })
@@ -265,8 +276,8 @@ class ExportDataSchema(Document):
     class Meta:
         app_label = 'export'
 
-    @staticmethod
-    def _merge_schemas(*schemas):
+    @classmethod
+    def _merge_schemas(cls, *schemas):
         """Merges two ExportDataSchemas together
 
         :param schema1: The first ExportDataSchema
@@ -274,7 +285,7 @@ class ExportDataSchema(Document):
         :returns: The merged ExportDataSchema
         """
 
-        schema = ExportDataSchema()
+        schema = cls()
 
         def resolvefn(group_schema1, group_schema2):
             group_schema = ExportGroupSchema(
@@ -310,8 +321,17 @@ class ExportDataSchema(Document):
 
         return schema
 
+    def record_update(self, app_id, app_version):
+        self.last_app_versions[app_id] = max(
+            self.last_app_versions.get(app_id, 0),
+            app_version,
+        )
+
 
 class FormExportDataSchema(ExportDataSchema):
+
+    app_id = StringProperty()
+    xmlns = StringProperty()
 
     @staticmethod
     def generate_schema_from_builds(domain, app_id, form_xmlns):
@@ -320,10 +340,20 @@ class FormExportDataSchema(ExportDataSchema):
         :param domain: The domain that the export belongs to
         :param app_id: The app_id that the export belongs to
         :param unique_form_id: The unique identifier of the item being exported
-        :returns: Returns a ExportDataSchema instance
+        :returns: Returns a FormExportDataSchema instance
         """
-        app_build_ids = get_built_app_ids_for_app_id(domain, app_id)
-        all_xform_conf = ExportDataSchema()
+        original_id, original_rev = None, None
+        current_xform_schema = get_latest_form_export_schema(domain, app_id, form_xmlns)
+        if current_xform_schema:
+            original_id, original_rev = current_xform_schema._id, current_xform_schema._rev
+        else:
+            current_xform_schema = FormExportDataSchema()
+
+        app_build_ids = get_built_app_ids_for_app_id(
+            domain,
+            app_id,
+            current_xform_schema.last_app_versions.get(app_id)
+        )
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             app = Application.wrap(app_doc)
@@ -331,15 +361,24 @@ class FormExportDataSchema(ExportDataSchema):
             if not xform:
                 continue
             xform = xform.wrapped_xform()
-            xform_conf = FormExportDataSchema._generate_schema_from_xform(
+            xform_schema = FormExportDataSchema._generate_schema_from_xform(
                 xform,
                 app.langs,
                 app.copy_of,
                 app.version,
             )
-            all_xform_conf = FormExportDataSchema._merge_schemas(all_xform_conf, xform_conf)
+            current_xform_schema = FormExportDataSchema._merge_schemas(current_xform_schema, xform_schema)
+            current_xform_schema.record_update(app.copy_of, app.version)
 
-        return all_xform_conf
+        if original_id and original_rev:
+            current_xform_schema._id = original_id
+            current_xform_schema._rev = original_rev
+        current_xform_schema.domain = domain
+        current_xform_schema.app_id = app_id
+        current_xform_schema.xmlns = form_xmlns
+        current_xform_schema.save()
+
+        return current_xform_schema
 
     @staticmethod
     def _generate_schema_from_xform(xform, langs, app_id, app_version):
@@ -369,16 +408,42 @@ class FormExportDataSchema(ExportDataSchema):
 
 class CaseExportDataSchema(ExportDataSchema):
 
+    case_type = StringProperty()
+
+    @staticmethod
+    def _get_app_build_ids_to_process(domain, last_app_versions):
+        app_build_verions = get_all_built_app_ids_and_versions(domain)
+        # Filter by current app id
+        app_build_verions = filter(
+            lambda app_build_version:
+                last_app_versions.get(app_build_version.app_id, -1) < app_build_version.version,
+            app_build_verions
+        )
+        # Map to all build ids
+        return map(lambda app_build_version: app_build_version.build_id, app_build_verions)
+
     @staticmethod
     def generate_schema_from_builds(domain, case_type):
         """Builds a schema from Application builds for a given identifier
 
         :param domain: The domain that the export belongs to
         :param unique_form_id: The unique identifier of the item being exported
-        :returns: Returns a ExportDataSchema instance
+        :returns: Returns a CaseExportDataSchema instance
         """
-        app_build_ids = get_all_app_ids(domain)
-        all_case_schema = CaseExportDataSchema()
+
+        original_id, original_rev = None, None
+        current_case_schema = get_latest_case_export_schema(domain, case_type)
+
+        if current_case_schema:
+            # Save the original id an rev so we can later save the document under the same _id
+            original_id, original_rev = current_case_schema._id, current_case_schema._rev
+        else:
+            current_case_schema = CaseExportDataSchema()
+
+        app_build_ids = CaseExportDataSchema._get_app_build_ids_to_process(
+            domain,
+            current_case_schema.last_app_versions,
+        )
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             app = Application.wrap(app_doc)
@@ -398,13 +463,22 @@ class CaseExportDataSchema(ExportDataSchema):
                 app.version,
             )
 
-            all_case_schema = CaseExportDataSchema._merge_schemas(
-                all_case_schema,
+            current_case_schema = CaseExportDataSchema._merge_schemas(
+                current_case_schema,
                 case_schema,
                 case_history_schema
             )
 
-        return all_case_schema
+            current_case_schema.record_update(app.copy_of, app.version)
+
+        if original_id and original_rev:
+            current_case_schema._id = original_id
+            current_case_schema._rev = original_rev
+        current_case_schema.domain = domain
+        current_case_schema.case_type = case_type
+        current_case_schema.save()
+
+        return current_case_schema
 
     @staticmethod
     def _generate_schema_from_case_property_mapping(case_property_mapping, app_id, app_version):
