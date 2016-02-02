@@ -62,8 +62,7 @@ class Command(BaseCommand):
                 self.ensure_grant(plan_role_slug, priv_role_slug, dry_run=dry_run)
 
         for old_priv in self.OLD_PRIVILEGES:
-            for plan_role_slug in self.BOOTSTRAP_GRANTS.keys():
-                self.remove_grant(plan_role_slug, old_priv)
+            self.remove_grant(old_priv)
 
     def flush_roles(self):
         logger.info('Flushing ALL Roles...')
@@ -113,16 +112,15 @@ class Command(BaseCommand):
                     to_role=priv,
                 )
 
-    def remove_grant(self, grantee_slug, priv_slug, dry_run=False):
-        grants = Grant.objects.filter(from_role__slug=grantee_slug,
-                                      to_role__slug=priv_slug)
+    def remove_grant(self, priv_slug, dry_run=False):
+        grants = Grant.objects.filter(to_role__slug=priv_slug)
         if dry_run:
             if grants:
-                logger.info("[DRY RUN] Removing privilege %s => %s", grantee_slug, priv_slug)
+                logger.info("[DRY RUN] Removing privilege %s", priv_slug)
         else:
             if grants:
                 grants.delete()
-                logger.info("Removing privilege %s => %s", grantee_slug, priv_slug)
+                logger.info("Removing privilege %s", priv_slug)
 
     BOOTSTRAP_PRIVILEGES = [
         Role(slug=privileges.API_ACCESS, name='API Access', description=''),
