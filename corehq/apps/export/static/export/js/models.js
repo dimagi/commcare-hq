@@ -23,6 +23,7 @@ Exports.ViewModels.ExportInstance.mapping = {
 
 Exports.ViewModels.TableConfiguration = function(tableJSON) {
     var self = this;
+    self.showAdvanced = ko.observable(false);
     ko.mapping.fromJS(tableJSON, Exports.ViewModels.TableConfiguration.mapping, self);
 };
 
@@ -31,9 +32,8 @@ Exports.ViewModels.TableConfiguration.prototype.isVisible = function() {
     return true;
 };
 
-Exports.ViewModels.TableConfiguration.prototype.showDeleted = function() {
-    // Not implemented
-    return true;
+Exports.ViewModels.TableConfiguration.prototype.toggleShowAdvanced = function(table) {
+    table.showAdvanced(!table.showAdvanced());
 };
 
 Exports.ViewModels.TableConfiguration.prototype._select = function(select) {

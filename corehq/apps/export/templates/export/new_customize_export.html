@@ -114,16 +114,16 @@ WHAT IS UP
                     <div class="control-group pull-right">
                         <div class="controls">
                             <button type="button" class="btn" data-bind="
-                                click: table.toggleShowDeleted,
-                                css: {active: table.showDeleted}">
-                                <span data-bind="visible: !table.showDeleted()">
+                                click: table.toggleShowAdvanced,
+                                css: {active: table.showAdvanced}">
+                                <span data-bind="visible: !table.showAdvanced()">
                                 {% if export_instance.type == 'form' %}
                                     {% trans "Show Deleted Questions and Advanced Properties" %}
                                 {% else %}
                                     {% trans "Show Deleted Properties and Advanced Properties" %}
                                 {% endif %}
                                 </span>
-                                <span data-bind="visible: table.showDeleted">
+                                <span data-bind="visible: table.showAdvanced">
                                 {% if export_instance.type == 'form' %}
                                     {% trans "Hide Deleted Questions and Advanced Properties" %}
                                 {% else %}
@@ -172,7 +172,7 @@ WHAT IS UP
                                 <tbody data-bind="foreach: { data: table.columns, as: 'column' }">
                                 <!--<tbody data-bind="sortable: column_configuration">-->
                                     <tr data-bind="
-                                        visible:  $parent.showDeleted() || (column.show || column.selected)
+                                        visible:  $parent.showAdvanced() || (column.show || column.selected)
                                         {% if False %}, attr: {'data-order': _sortableOrder}{% endif %}
                                         ">
                                         <td class="sortable-handle">
