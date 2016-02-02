@@ -8,9 +8,14 @@ footer {
     background-color: @footerBackground;
     color: @white;
     font-size: @fontSizeSmall;
-    line-height: @fontSizeSmall+2px;
+    line-height: @footerHeight;
+    text-align: center;
+    img {
+      height: 20px;
+    }
 
     .clearfix();
+
 }
 
 footer a,
@@ -21,26 +26,6 @@ footer a:visited {
 
 footer a:hover {
     color: @footerLinkColorHover;
-}
-
-footer a.btn{
-  color: @white;
-}
-
-footer a.btn:hover {
-  .btn-primary();
-}
-
-footer .btn-toolbar {
-  margin: 5px 0;
-}
-
-footer > .row-fluid {
-  margin-top: 3px;
-}
-
-footer .powered-by {
-  line-height: 39px;
 }
 
 footer.fixed-footer {
