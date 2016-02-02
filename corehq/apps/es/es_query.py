@@ -265,6 +265,11 @@ class ESQuery(object):
             Restrict the output of _source in the queryset. This can be used to return an object in a queryset
 
             TODO: How does this interact with .fields
+            TODO: This can be expanded if needed to support other usages of the _source filter, e.g:
+            "_source": {
+                "include": [ "obj1.*", "obj2.*" ],
+                "exclude": [ "*.description" ]
+            },
         """
         query = deepcopy(self)
         query._source.append(source)
