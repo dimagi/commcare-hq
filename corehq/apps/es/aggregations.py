@@ -37,6 +37,8 @@ add support for other facet types and more results processing
 import re
 from collections import namedtuple
 
+import datetime
+
 from corehq.apps.es import filters
 
 
@@ -88,6 +90,10 @@ class BucketResult(AggregationResult):
     @property
     def buckets_dict(self):
         return {b['key']: Bucket(b, self._aggregations) for b in self.normalized_buckets}
+
+    @property
+    def bucket_list(self):
+        return {Bucket(b, self._aggregations) for b in self.normalized_buckets}
 
     @property
     def raw_buckets(self):
@@ -192,8 +198,13 @@ class AggregationRange(namedtuple('AggregationRange', 'start end key')):
     def assemble(self):
         range_ = {}
         for key, attr in {'from': 'start', 'to': 'end', 'key': 'key'}.items():
-            if getattr(self, attr):
-                range_[key] = getattr(self, attr)
+            value = getattr(self, attr)
+            if value:
+                if isinstance(value, datetime.date):
+                    value = value.isoformat()
+                elif not isinstance(value, basestring):
+                    value = unicode(value)
+                range_[key] = value
         return range_
 
 
