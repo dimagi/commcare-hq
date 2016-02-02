@@ -26,6 +26,9 @@ Initial setup
     the login details above.
 
 * Configure your localsettings
+    
+    **NOTE** this is only necessary if you want to run CommCare HQ inside the docker container. If you just want
+    to use the services skip this step.
 
     Make your `localsettings.py` extend `dockersettings.py` and comment out / delete your current
     settings for PostgreSQL, Redis, CouchDB, Elasticsearch
@@ -40,20 +43,30 @@ Initial setup
     
 General usage
 -------------
-The following commands assumes that you have updated your localsettings as described above.
-
-**Print the help**
 
 ```
   $ ./dockerhq.sh --help
 ```
 
-**Start/stop the services (couch, postgres, elastic, redis)**
+**The services (couch, postgres, elastic, redis, zookeeper, kafka)**
 ```
   $ ./dockerhq.sh services start
+  $ ./dockerhq.sh services stop
+  $ ./dockerhq.sh services logs postgres
 ```
+The following services are included. Their ports are mapped to the local host so you can connect to them
+directly.
+
+* Easticsearch (9200 & 9300)
+* PostgreSQL (5432)
+* CouchDB (5984)
+* Redis (6397)
+* Zookeeper (2181)
+* Kafka (9092)
 
 **Run the django server**
+
+Assumes that you have updated your localsettings as described above.
 
 ```
   $ ./dockerhq.sh runserver
