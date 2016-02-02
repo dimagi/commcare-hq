@@ -1,13 +1,12 @@
 from collections import defaultdict
 import hashlib
+import re
 from lxml import etree
 from corehq.apps.users.models import CouchUser
 from corehq.util.quickcache import quickcache
 from custom.openclinica.const import AUDIT_LOGS
 from custom.openclinica.utils import (
     OpenClinicaIntegrationError,
-    is_item_group_repeating,
-    is_study_event_repeating,
     get_item_measurement_unit,
     get_question_item,
     get_oc_user,
@@ -23,6 +22,7 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.couch.cache import cache_core
 from suds.client import Client
+from suds.plugin import MessagePlugin
 from suds.wsse import Security, UsernameToken
 
 
@@ -118,13 +118,27 @@ class OpenClinicaAPI(object):
                 self.get_client(endpoint)
 
     def get_client(self, endpoint):
+
+        class FixMimeMultipart(MessagePlugin):
+            """
+            StudySubject.listAllByStudy replies with what looks like part of a multipart MIME message(!?) Fix this.
+            """
+            def received(self, context):
+                reply = context.reply
+                if reply.startswith('------='):
+                    matches = re.search(r'(<SOAP-ENV:Envelope.*</SOAP-ENV:Envelope>)', reply)
+                    context.reply = matches.group(1)
+
         if endpoint not in self._clients:
             raise ValueError('Unknown OpenClinica API endpoint')
         if self._clients[endpoint] is None:
-            client = Client('{url}OpenClinica-ws/ws/{endpoint}/v1/{endpoint}Wsdl.wsdl'.format(
-                url=self._base_url,
-                endpoint=endpoint
-            ))
+            client = Client(
+                '{url}OpenClinica-ws/ws/{endpoint}/v1/{endpoint}Wsdl.wsdl'.format(
+                    url=self._base_url,
+                    endpoint=endpoint
+                ),
+                plugins=[FixMimeMultipart()]
+            )
             security = Security()
             password = hashlib.sha1(self._password).hexdigest()  # SHA1, not AES as documentation says
             token = UsernameToken(self._username, password)
