@@ -358,3 +358,24 @@ class TestFilters(ElasticTestMixin, TestCase):
                          filters.date_range("actions.date", gte=start, lt=end)))
 
         self.checkQuery(query, json_output)
+
+
+class TestSourceFiltering(ElasticTestMixin, TestCase):
+    def test_source_include(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "size": SIZE_LIMIT,
+            "_source": ["source_obj"]
+        }
+        q = HQESQuery('forms').source('source_obj')
+        self.checkQuery(q, json_output)
+

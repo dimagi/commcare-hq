@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+. $(dirname "$0")/_include.sh
 
-$DIR/docker-services.sh start
+$DOCKER_DIR/docker-services.sh start
 
-sudo docker-compose -f $DIR/docker-compose-web.yml run web /mnt/docker/bootstrap_internal.sh
+web_runner run --rm web /mnt/docker/bootstrap_internal.sh
 
-sudo docker-compose \
-    -f $DIR/docker-compose-web.yml \
-    run -e CUSTOMSETTINGS="docker.localsettings-docker" \
+web_runner run --rm --service-ports -e CUSTOMSETTINGS="docker.localsettings_docker" \
     web python manage.py runserver 0.0.0.0:8000
-

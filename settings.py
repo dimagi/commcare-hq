@@ -743,7 +743,7 @@ LOGSTASH_HOST = 'localhost'
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_VERSION = 0.9
+ELASTICSEARCH_VERSION = 1.7
 
 ####### Couch Config #######
 # for production this ought to be set to true on your configured couch instance
@@ -1093,12 +1093,14 @@ FIXTURES_DB = NEW_FIXTURES_DB
 NEW_DOMAINS_DB = 'domains'
 DOMAINS_DB = NEW_DOMAINS_DB
 
+NEW_APPS_DB = 'apps'
+APPS_DB = None
+
 SYNCLOGS_DB = 'synclogs'
 
 
 COUCHDB_APPS = [
     'api',
-    'app_manager',
     'appstore',
     'builds',
     'case',
@@ -1190,6 +1192,9 @@ COUCHDB_APPS = [
 
     # sync logs
     ('phone', SYNCLOGS_DB),
+
+    # applications
+    ('app_manager', APPS_DB),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
@@ -1197,7 +1202,7 @@ COUCHDB_APPS += LOCAL_COUCHDB_APPS
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
     COUCH_DATABASE,
     COUCHDB_APPS,
-    [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB],
+    [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB, NEW_APPS_DB],
 )
 COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.make_couchdb_tuples()
 EXTRA_COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.get_extra_couchdbs()
@@ -1271,23 +1276,6 @@ SMS_HANDLERS = [
     'corehq.apps.sms.handlers.fallback.fallback_handler',
 ]
 
-SMS_LOADED_BACKENDS = [
-    'corehq.messaging.smsbackends.unicel.models.UnicelBackend',
-    'corehq.messaging.smsbackends.mach.models.MachBackend',
-    'corehq.messaging.smsbackends.tropo.models.TropoBackend',
-    'corehq.messaging.smsbackends.http.models.HttpBackend',
-    'corehq.messaging.smsbackends.telerivet.models.TelerivetBackend',
-    'corehq.messaging.smsbackends.test.models.TestSMSBackend',
-    'corehq.messaging.smsbackends.grapevine.models.GrapevineBackend',
-    'corehq.messaging.smsbackends.twilio.models.TwilioBackend',
-    'corehq.messaging.smsbackends.megamobile.models.MegamobileBackend',
-    'corehq.messaging.smsbackends.smsgh.models.SMSGHBackend',
-    'corehq.messaging.smsbackends.apposit.models.AppositBackend',
-]
-
-IVR_LOADED_BACKENDS = [
-    'corehq.messaging.ivrbackends.kookoo.models.KooKooBackend',
-]
 
 SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.apposit.models.SQLAppositBackend',
@@ -1417,6 +1405,11 @@ PILLOWTOPS = {
             'name': 'SqlXFormToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.xform.get_sql_xform_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'SqlCaseToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
         },
     ]
 }
@@ -1619,3 +1612,7 @@ except ImportError:
     pass
 else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
+
+REST_FRAMEWORK = {
+    'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'
+}

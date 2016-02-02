@@ -2,8 +2,8 @@ from datetime import datetime
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xform import get_extension_chain, \
-    get_extensions_to_close
+from casexml.apps.case.dbaccessors import get_extension_chain
+from casexml.apps.case.xform import get_extensions_to_close
 from casexml.apps.phone.models import User
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
 from corehq.apps.domain.models import Domain
@@ -19,7 +19,7 @@ class AutoCloseExtensionsTest(SyncBaseTest):
         self.project = Domain(name=self.domain)
         self.user = User(user_id='user', username='name', password="changeme",
                          date_joined=datetime(2011, 6, 9))
-        self.factory = CaseFactory()
+        self.factory = CaseFactory(domain=self.domain)
         self.extension_ids = ['1', '2', '3']
         self.host = CaseStructure(case_id='host')
         self.extension = CaseStructure(
@@ -46,7 +46,7 @@ class AutoCloseExtensionsTest(SyncBaseTest):
 
     def test_get_extension_chain_simple(self):
         self.factory.create_or_update_cases([self.extension])
-        self.assertEqual(set(self.extension_ids[0]), get_extension_chain([self.host], self.domain))
+        self.assertEqual(set(self.extension_ids[0]), get_extension_chain([self.host.case_id], self.domain))
 
     def test_get_extension_chain_multiple(self):
         self.factory.create_or_update_cases([self.extension_3])

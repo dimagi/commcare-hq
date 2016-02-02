@@ -3318,7 +3318,7 @@ def _filter_by_location_id(user, ui_filter):
 
 def _filter_by_username(user, ui_filter):
     from corehq.apps.reports_core.filters import Choice
-    return Choice(value=user.username, display=None)
+    return Choice(value=user.raw_username, display=None)
 
 
 def _filter_by_user_id(user, ui_filter):
@@ -5337,7 +5337,7 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         if re.match(ATTACHMENT_REGEX, name):
             app.put_attachment(attachment, name)
 
-    if any(module.uses_usercase() for module in app.get_modules()):
+    if not app.is_remote_app() and any(module.uses_usercase() for module in app.get_modules()):
         from corehq.apps.app_manager.util import enable_usercase
         enable_usercase(domain)
 

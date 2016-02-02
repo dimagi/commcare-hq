@@ -987,7 +987,11 @@ def restart_services():
                            '{env.environment}?'.format(env=env), default=False):
         utils.abort('Task aborted.')
 
-    execute(services_restart)
+    @roles(env.supervisor_roles)
+    def _inner():
+        services_restart()
+
+    execute(_inner)
 
 
 @roles(ROLES_ALL_SERVICES)

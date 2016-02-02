@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+. $(dirname "$0")/_include.sh
+
 ES_CLUSTER_NAME=$(hostname)
 PROJECT_NAME=hqservice
-
-XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
-DOCKER_DATA_HOME=$XDG_DATA_HOME/dockerhq
-mkdir -p $DOCKER_DATA_HOME
 
 function usage() {
     echo "Helper script to start and stop services for CommCare HQ"
@@ -21,7 +18,7 @@ function usage() {
 function runner() {
     sudo \
         env ES_CLUSTER_NAME=$ES_CLUSTER_NAME DOCKER_DATA_HOME=$DOCKER_DATA_HOME \
-        docker-compose -f $DIR/docker-compose-services.yml -p $PROJECT_NAME $@
+        docker-compose -f $DOCKER_DIR/compose/docker-compose-services.yml -p $PROJECT_NAME $@
 }
 
 while [[ $# > 0 ]]; do
@@ -41,7 +38,8 @@ while [[ $# > 0 ]]; do
             exit
             ;;
         stop | down)
-            runner $key
+            shift
+            runner $key $@
             exit
             ;;
         logs)

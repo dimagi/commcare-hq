@@ -31,7 +31,7 @@ def get_es_new():
 
 def doc_exists_in_es(index, doc_id):
     es_meta = ES_META[index]
-    return get_es_new().exists(es_meta.index, doc_id, doc_type=es_meta.type)
+    return get_es_new().exists(es_meta.index, es_meta.type, doc_id)
 
 
 def send_to_elasticsearch(index, doc, delete=False):

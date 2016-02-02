@@ -1,4 +1,4 @@
-from corehq.apps.app_manager.models import Application
+from couchforms.models import XFormInstance
 from corehq.util.quickcache import quickcache
 
 
@@ -26,7 +26,7 @@ def get_attachment_size_by_domain_app_id_xmlns(domain, app_id=None, xmlns=None):
     if xmlns:
         startkey += [xmlns]
 
-    view = Application.get_db().view(
+    view = XFormInstance.get_db().view(
         'attachments/attachments',
         startkey=startkey,
         endkey=startkey + [{}],

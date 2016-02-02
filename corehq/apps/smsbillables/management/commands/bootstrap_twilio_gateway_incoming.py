@@ -3,7 +3,7 @@ import logging
 from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
-from corehq.messaging.smsbackends.twilio.models import TwilioBackend
+from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.apps.sms.models import INCOMING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
 
@@ -17,7 +17,7 @@ def bootstrap_twilio_gateway_incoming(apps):
 
     # https://www.twilio.com/sms/pricing/us
     SmsGatewayFee.create_new(
-        TwilioBackend.get_api_id(),
+        SQLTwilioBackend.get_api_id(),
         INCOMING,
         0.0075,
         country_code=None,

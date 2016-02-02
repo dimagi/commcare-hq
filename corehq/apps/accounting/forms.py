@@ -1423,17 +1423,17 @@ class SoftwarePlanVersionForm(forms.Form):
             plan=self.plan,
             role=role
         )
+
+        product_rate = self.new_product_rates[0]  # always contains one item
+        product_rate.save()
+        new_version.product_rate = product_rate
         new_version.save()
 
         for feature_rate in self.new_feature_rates:
             feature_rate.save()
             new_version.feature_rates.add(feature_rate)
-
-        product_rate = self.new_product_rates[0]  # always contains one item
-        product_rate.save()
-        new_version.product_rate = product_rate
-
         new_version.save()
+
         messages.success(request, 'The version for %s Software Plan was successfully updated.' % new_version.plan.name)
 
 

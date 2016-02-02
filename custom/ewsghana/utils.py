@@ -11,13 +11,13 @@ from datetime import timedelta, datetime
 from dateutil import rrule
 from dateutil.rrule import MO
 from django.utils import html
-from corehq.apps.sms.mixin import VerifiedNumber, BackendMapping
+from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import add_msg_tags, send_sms_to_verified_number, send_sms as core_send_sms
 from corehq.apps.sms.models import SMSLog, OUTGOING
+from corehq.apps.sms.util import set_domain_default_backend_to_test_backend
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole
 from custom.ewsghana.models import EWSGhanaConfig, EWSExtension
 from custom.ewsghana.reminders.const import DAYS_UNTIL_LATE
@@ -111,10 +111,6 @@ def make_loc(code, name, domain, type, parent=None):
     loc = Location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
     loc.save()
 
-    if not sql_type.administrative:
-        SupplyInterface.create_from_location(domain, loc)
-        loc.save()
-
     sql_location = loc.sql_location
     sql_location.products = []
     sql_location.save()
@@ -127,26 +123,11 @@ def assign_products_to_location(location, products):
     sql_location.save()
 
 
-def create_backend():
-    backend = TestSMSBackend(
-        domain=None,
-        name=TEST_BACKEND,
-        authorized_domains=[],
-        is_global=True,
-    )
-    backend._id = backend.name
-    backend.save()
-    sms_backend_mapping = BackendMapping(is_global=True, prefix="*", backend_id=backend.get_id)
-    sms_backend_mapping.save()
-    return sms_backend_mapping, backend
-
-
 def prepare_domain(domain_name):
     domain = create_domain(domain_name)
     domain.convert_to_commtrack()
-
-    domain.default_sms_backend_id = TEST_BACKEND
     domain.save()
+    set_domain_default_backend_to_test_backend(domain.name)
 
     def _make_loc_type(name, administrative=False, parent_type=None):
         return LocationType.objects.get_or_create(

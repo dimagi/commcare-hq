@@ -7,7 +7,6 @@ from couchdbkit.resource import ResourceNotFound
 from corehq.apps.users.models import CouchUser, CommCareUser
 from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_block_from_template
-from corehq.apps.sms.mixin import MobileBackend
 from corehq.util.quickcache import quickcache
 from django.core.exceptions import ValidationError
 from dimagi.utils.decorators.memoized import memoized
@@ -108,39 +107,14 @@ def update_contact(domain, case_id, user_id, contact_phone_number=None, contact_
     submit_case_block_from_template(domain, "sms/xml/update_contact.xml", context, user_id=user_id)
 
 
-def get_available_backends(index_by_api_id=False, backend_type='SMS'):
-    result = {}
-    if backend_type == 'SMS':
-        backend_classes = settings.SMS_LOADED_BACKENDS
-    elif backend_type == 'IVR':
-        backend_classes = settings.IVR_LOADED_BACKENDS
-    else:
-        raise Exception("Unknown backend_type %s requested" % backend_type)
-
-    for backend_class in backend_classes:
-        klass = to_function(backend_class)
-        if index_by_api_id:
-            api_id = klass.get_api_id()
-            result[api_id] = klass
-        else:
-            result[klass.__name__] = klass
-    return result
-
-
-@memoized
-def get_backend_classes():
+def _get_backend_classes(backend_list):
     """
-    Returns a dictionary of {api id: class} for all installed SMS and IVR
-    backends.
+    Returns a dictionary of {api id: class} for all installed SMS backends.
     """
     from corehq.apps.sms.mixin import BadSMSConfigException
     result = {}
-    backend_classes = (
-        settings.SMS_LOADED_SQL_BACKENDS +
-        settings.IVR_LOADED_SQL_BACKENDS
-    )
 
-    for backend_class in backend_classes:
+    for backend_class in backend_list:
         cls = to_function(backend_class)
         api_id = cls.get_api_id()
         if api_id in result:
@@ -148,6 +122,24 @@ def get_backend_classes():
                                         "api id. Duplicate found for: %s" % api_id)
         result[api_id] = cls
     return result
+
+
+@memoized
+def get_sms_backend_classes():
+    return _get_backend_classes(settings.SMS_LOADED_SQL_BACKENDS)
+
+
+@memoized
+def get_ivr_backend_classes():
+    return _get_backend_classes(settings.IVR_LOADED_SQL_BACKENDS)
+
+
+@memoized
+def get_backend_classes():
+    return _get_backend_classes(
+        settings.SMS_LOADED_SQL_BACKENDS +
+        settings.IVR_LOADED_SQL_BACKENDS
+    )
 
 
 CLEAN_TEXT_REPLACEMENTS = (
@@ -200,14 +192,6 @@ def get_contact(contact_id):
     return contact
 
 
-def get_backend_by_class_name(class_name):
-    backends = dict([(d.split('.')[-1], d) for d in settings.SMS_LOADED_BACKENDS])
-    backend_path = backends.get(class_name)
-    if backend_path is not None:
-        return to_function(backend_path)
-    return None
-
-
 def touchforms_error_is_config_error(touchforms_error):
     """
     Returns True if the given TouchformsError is the result of a
@@ -230,9 +214,26 @@ def get_backend_name(backend_id):
     if not backend_id:
         return None
 
+    from corehq.apps.sms.models import SQLMobileBackend
     try:
-        doc = MobileBackend.get_db().get(backend_id)
-    except ResourceNotFound:
+        return SQLMobileBackend.load(backend_id, is_couch_id=True).name
+    except:
         return None
 
-    return doc.get('name', None)
+
+def set_domain_default_backend_to_test_backend(domain):
+    """
+    Pass in the name of the domain to set the domain's default
+    sms backend to be the test backend.
+    """
+    from corehq.apps.sms.models import SQLMobileBackend, SQLMobileBackendMapping
+    test_backend = SQLMobileBackend.get_global_backend_by_name(
+        SQLMobileBackend.SMS,
+        'MOBILE_BACKEND_TEST'
+    )
+    if not test_backend:
+        raise Exception("Expected MOBILE_BACKEND_TEST to be created")
+    SQLMobileBackendMapping.set_default_domain_backend(
+        domain,
+        test_backend
+    )

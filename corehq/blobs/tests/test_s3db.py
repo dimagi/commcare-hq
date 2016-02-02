@@ -51,6 +51,9 @@ Finally, add the following to `localsettings.py`:
             "url": "http://{host}:{port}".format(**_riak_params),
             "access_key": "admin key value",
             "secret_key": "admin secret value",
+
+            # reduce timeouts to make tests fail faster
+            "config": {"connect_timeout": 1, "read_timeout": 1}
         }
 
 ## Alternate/easier/faster testing setup using moto (probably not as robust)
@@ -139,6 +142,33 @@ class TestS3BlobDB(TestCase):
         self.assertTrue(info.name)
         with self.assertRaises(mod.NotFound):
             self.db.get(info.name, bucket=bucket)
+
+    def test_bucket_path(self):
+        bucket = join("doctype", "8cd98f0")
+        self.db.put(StringIO(b"content"), bucket=bucket)
+        self.assertEqual(self.db.get_path(bucket=bucket), bucket)
+
+    def test_safe_attachment_path(self):
+        name = "test.1"
+        bucket = join("doctype", "8cd98f0")
+        info = self.db.put(StringIO(b"content"), name, bucket)
+        self.assertTrue(info.name.startswith(name + "."), info.name)
+
+    def test_unsafe_attachment_path(self):
+        name = "\u4500.1"
+        bucket = join("doctype", "8cd98f0")
+        info = self.db.put(StringIO(b"content"), name, bucket)
+        self.assertTrue(info.name.startswith("unsafe."), info.name)
+
+    def test_unsafe_attachment_name(self):
+        name = "test/1"  # name with directory separator
+        bucket = join("doctype", "8cd98f0")
+        info = self.db.put(StringIO(b"content"), name, bucket)
+        self.assertTrue(info.name.startswith("unsafe."), info.name)
+
+    def test_empty_attachment_name(self):
+        info = self.db.put(StringIO(b"content"))
+        self.assertNotIn(".", info.name)
 
 
 @generate_cases([

@@ -62,8 +62,7 @@ class TestDocTypeMigrations(TestCase):
     def test_bulk_migrate(self):
         bulk_migrate(
             self.migration.source_db, self.migration.target_db,
-            self.migration.doc_types,
-            self.migration.data_dump_filename)
+            self.migration.doc_types)
         self.assert_in_sync()
 
     def test_phase_1_bulk_migrate(self):
