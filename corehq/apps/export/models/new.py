@@ -26,6 +26,7 @@ from corehq.apps.export.const import (
     CASE_HISTORY_GROUP_NAME,
     FORM_EXPORT,
     CASE_EXPORT,
+    MAIN_TABLE,
 )
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
@@ -165,6 +166,17 @@ class TableConfiguration(DocumentSchema):
                 new_docs.append(next_doc)
         return self._get_sub_documents(path[1:], new_docs)
 
+    @staticmethod
+    def get_default_name(export_type, path):
+        if path == MAIN_TABLE and export_type == FORM_EXPORT:
+            return 'Forms'
+        elif path == MAIN_TABLE and export_type == CASE_EXPORT:
+            return 'Cases'
+        elif export_type == FORM_EXPORT:
+            return 'Repeat: {}'.format(_list_path_to_string(path))
+        else:
+            return 'Unknown'
+
 
 class ExportInstance(Document):
     name = StringProperty()
@@ -197,7 +209,8 @@ class ExportInstance(Document):
         latest_build_ids_and_versions = get_latest_built_app_ids_and_versions(domain, app_id)
         for group_schema in schema.group_schemas:
             table = TableConfiguration(
-                path=group_schema.path
+                path=group_schema.path,
+                name=TableConfiguration.get_default_name(schema.type, group_schema.path),
             )
             table.columns = map(
                 lambda item: ExportColumn.create_default_from_export_item(

@@ -21,3 +21,5 @@ CASE_HISTORY_GROUP_NAME = 'history'
 
 FORM_EXPORT = 'form'
 CASE_EXPORT = 'case'
+
+MAIN_TABLE = None
