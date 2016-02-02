@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-02-02 20:06+0000\n"
-"PO-Revision-Date: 2016-01-26 21:18+0000\n"
+"POT-Creation-Date: 2016-02-02 21:11+0000\n"
+"PO-Revision-Date: 2016-02-02 20:10+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Portuguese (http://www.transifex.com/dimagi/commcare-hq/"
 "language/pt/)\n"
@@ -3964,10 +3964,8 @@ msgid "Please save before adding another language"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/b3/supported-languages.html:61
-#, fuzzy
-#| msgid "Languages"
 msgid "Deleting Languages"
-msgstr "Idiomas"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/b3/supported-languages.html:66
 msgid "Don't Delete"
@@ -12183,10 +12181,8 @@ msgid "false"
 msgstr ""
 
 #: corehq/apps/hqadmin/reports.py:829
-#, fuzzy
-#| msgid "Project Space"
 msgid "Project Map"
-msgstr "Espacio do Projeto"
+msgstr ""
 
 #: corehq/apps/hqadmin/reports.py:869 corehq/apps/hqwebapp/models.py:1533
 msgid "User List"
@@ -13069,10 +13065,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqwebapp/forms.py:32
-#, fuzzy
-#| msgid "Enter a valid value."
 msgid "Please enter a valid email address."
-msgstr "Digite um valor válido."
+msgstr ""
 
 #: corehq/apps/hqwebapp/middleware.py:16
 msgid ""
@@ -13228,16 +13222,12 @@ msgid "SMS Connectivity"
 msgstr ""
 
 #: corehq/apps/hqwebapp/models.py:1059 corehq/apps/hqwebapp/models.py:1624
-#, fuzzy
-#| msgid "Add New Task"
 msgid "Add Gateway"
-msgstr "Adicionar nova tarefa"
+msgstr ""
 
 #: corehq/apps/hqwebapp/models.py:1063 corehq/apps/hqwebapp/models.py:1626
-#, fuzzy
-#| msgid "Edit Data"
 msgid "Edit Gateway"
-msgstr "Editar Dados"
+msgstr ""
 
 #: corehq/apps/hqwebapp/models.py:1071 corehq/apps/sms/forms.py:305
 #: corehq/apps/sms/forms.py:788
@@ -22094,10 +22084,8 @@ msgid "Phone Prefix"
 msgstr ""
 
 #: corehq/apps/sms/templates/sms/backend_map.html:77
-#, fuzzy
-#| msgid "Key Prefix"
 msgid "Prefix"
-msgstr "Prefixo chave"
+msgstr ""
 
 #: corehq/apps/sms/templates/sms/backend_map.html:96
 msgid "Add Mapping"
@@ -22380,26 +22368,22 @@ msgid "Add %s Gateway"
 msgstr ""
 
 #: corehq/apps/sms/views.py:1108
-#, fuzzy, python-format
-#| msgid "Create & Preview"
+#, python-format
 msgid "Create %s Gateway"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/sms/views.py:1162 corehq/apps/sms/views.py:1397
 msgid "Add SMS Gateway"
 msgstr ""
 
 #: corehq/apps/sms/views.py:1215 corehq/apps/sms/views.py:1448
-#, fuzzy
-#| msgid "Edit Data"
 msgid "Edit SMS Gateway"
-msgstr "Editar Dados"
+msgstr ""
 
 #: corehq/apps/sms/views.py:1273 corehq/apps/sms/views.py:1502
-#, fuzzy, python-format
-#| msgid "Edit Data"
+#, python-format
 msgid "Edit %s Gateway"
-msgstr "Editar Dados"
+msgstr ""
 
 #: corehq/apps/sms/views.py:1277 corehq/apps/sms/views.py:1506
 #, python-format
@@ -32078,6 +32062,9 @@ msgstr ""
 
 #~ msgid "Filter Name"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#~ msgid "Create & Preview"
+#~ msgstr "Manejo de Casos"
 
 #~ msgid "Select Form..."
 #~ msgstr "Manejo de Casos"

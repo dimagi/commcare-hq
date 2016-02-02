@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-02-02 20:06+0000\n"
-"PO-Revision-Date: 2016-01-26 21:18+0000\n"
+"POT-Creation-Date: 2016-02-02 21:11+0000\n"
+"PO-Revision-Date: 2016-02-02 20:10+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Hindi (http://www.transifex.com/dimagi/commcare-hq/language/"
 "hi/)\n"
@@ -13161,10 +13161,8 @@ msgid "Add Gateway"
 msgstr ""
 
 #: corehq/apps/hqwebapp/models.py:1063 corehq/apps/hqwebapp/models.py:1626
-#, fuzzy
-#| msgid "Edit Survey"
 msgid "Edit Gateway"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/hqwebapp/models.py:1071 corehq/apps/sms/forms.py:305
 #: corehq/apps/sms/forms.py:788
@@ -22304,10 +22302,9 @@ msgid "Add %s Gateway"
 msgstr ""
 
 #: corehq/apps/sms/views.py:1108
-#, fuzzy, python-format
-#| msgid "Create & Preview"
+#, python-format
 msgid "Create %s Gateway"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/sms/views.py:1162 corehq/apps/sms/views.py:1397
 msgid "Add SMS Gateway"
@@ -31971,6 +31968,9 @@ msgstr ""
 #~ msgid "Filter Name"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
+#~ msgid "Create & Preview"
+#~ msgstr "Manejo de Casos"
+
 #~ msgid "Select Form..."
 #~ msgstr "Manejo de Casos"
 
@@ -31978,6 +31978,9 @@ msgstr ""
 #~ msgstr "Criança com problemas de malnutrição"
 
 #~ msgid "Fixture Type"
+#~ msgstr "Manejo de Casos"
+
+#~ msgid "Edit Survey"
 #~ msgstr "Manejo de Casos"
 
 #~ msgid "Deactivated Users"

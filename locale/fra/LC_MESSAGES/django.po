@@ -30,8 +30,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-02-02 20:06+0000\n"
-"PO-Revision-Date: 2016-01-26 21:18+0000\n"
+"POT-Creation-Date: 2016-02-02 21:11+0000\n"
+"PO-Revision-Date: 2016-02-02 20:10+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
@@ -1576,17 +1576,13 @@ msgid "Payment Due Date"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:76
-#, fuzzy
-#| msgid "Subscriptions"
 msgid "Subscription Credits Remaining"
-msgstr "Inscriptions"
+msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:83
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:131
-#, fuzzy
-#| msgid "Plan Credit"
 msgid "Plan Credits"
-msgstr "Crédit du Plan"
+msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:93
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:141
@@ -1602,10 +1598,8 @@ msgstr "Crédits SMS"
 
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:113
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:161
-#, fuzzy
-#| msgid "User Credits"
 msgid "General Credits"
-msgstr "Crédits d'utilisateur "
+msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:124
 msgid "Account Credits Remaining"
@@ -4232,16 +4226,12 @@ msgid "Please save before adding another language"
 msgstr "S'il vous plaît enregistrez avant d'ajouter une autre langue"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/b3/supported-languages.html:61
-#, fuzzy
-#| msgid "Languages"
 msgid "Deleting Languages"
-msgstr "Langues"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/b3/supported-languages.html:66
-#, fuzzy
-#| msgid "Delete"
 msgid "Don't Delete"
-msgstr "Supprimer"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html:6
 msgid "Errors making a new version:"
@@ -11716,24 +11706,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/export/templates/export/partial/export_list_create_export_modal.html:115
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            Remove <strong data-bind=\"text: username\"></"
-#| "strong>\n"
-#| "                            from admins?\n"
-#| "                        "
 msgid ""
 "\n"
 "                            Please note that this may take several minutes.\n"
 "                            Thank you for your patience!\n"
 "                        "
 msgstr ""
-"\n"
-"                            Supprimer <strong data-bind=\"text: username\"></"
-"strong>\n"
-"                            des Administrateurs?\n"
-"                        "
 
 #: corehq/apps/export/templates/export/partial/export_list_create_export_modal.html:126
 msgid "There is an issue communicating with the server at this time."
@@ -12950,10 +12928,8 @@ msgid "false"
 msgstr ""
 
 #: corehq/apps/hqadmin/reports.py:829
-#, fuzzy
-#| msgid "Project Name"
 msgid "Project Map"
-msgstr "Nom de projet"
+msgstr ""
 
 #: corehq/apps/hqadmin/reports.py:869 corehq/apps/hqwebapp/models.py:1533
 msgid "User List"
@@ -13894,10 +13870,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqwebapp/forms.py:32
-#, fuzzy
-#| msgid "Please enter a valid email."
 msgid "Please enter a valid email address."
-msgstr "Veuillez entre une adresse e-mail valide."
+msgstr ""
 
 #: corehq/apps/hqwebapp/middleware.py:16
 msgid ""
@@ -14053,16 +14027,12 @@ msgid "SMS Connectivity"
 msgstr "Connectivité SMS"
 
 #: corehq/apps/hqwebapp/models.py:1059 corehq/apps/hqwebapp/models.py:1624
-#, fuzzy
-#| msgid "Custom Android Gateway"
 msgid "Add Gateway"
-msgstr "Porte Android Customisée"
+msgstr ""
 
 #: corehq/apps/hqwebapp/models.py:1063 corehq/apps/hqwebapp/models.py:1626
-#, fuzzy
-#| msgid "Edit Data"
 msgid "Edit Gateway"
-msgstr "Modifier des données"
+msgstr ""
 
 #: corehq/apps/hqwebapp/models.py:1071 corehq/apps/sms/forms.py:305
 #: corehq/apps/sms/forms.py:788
@@ -14217,10 +14187,8 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/models.py:1629 corehq/apps/sms/forms.py:895
 #: corehq/apps/sms/views.py:553
-#, fuzzy
-#| msgid "Default Date Range"
 msgid "Default Gateways"
-msgstr "Plage de dates par défaut"
+msgstr ""
 
 #: corehq/apps/hqwebapp/models.py:1649
 msgid "Admin"
@@ -15165,16 +15133,6 @@ msgid "Parent Type"
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html:80
-#, fuzzy
-#| msgid ""
-#| "I have read and agree to the\n"
-#| "                                               <a data-toggle='modal'\n"
-#| "                                                  data-"
-#| "target='#eulaModal'\n"
-#| "                                                  href='#eulaModal'>\n"
-#| "                                                  CommCare HQ End User "
-#| "License Agreement\n"
-#| "                                               </a>."
 msgid ""
 "\n"
 "                                              This controls which parent "
@@ -15185,13 +15143,6 @@ msgid ""
 "types of children.\n"
 "                                          "
 msgstr ""
-"J'ai lu et j'accepte le\n"
-"                                               <a data-toggle='modal'\n"
-"                                                  data-target='#eulaModal'\n"
-"                                                  href='#eulaModal'>\n"
-"                                                  Contrat de licence "
-"d'utilisateur final de CommCare HQ\n"
-"                                               </a>."
 
 #: corehq/apps/locations/templates/locations/location_types.html:89
 msgid "Type Code"
@@ -15203,16 +15154,6 @@ msgid "Tracks Stock"
 msgstr "Suit des Stocks"
 
 #: corehq/apps/locations/templates/locations/location_types.html:97
-#, fuzzy
-#| msgid ""
-#| "I have read and agree to the\n"
-#| "                                               <a data-toggle='modal'\n"
-#| "                                                  data-"
-#| "target='#eulaModal'\n"
-#| "                                                  href='#eulaModal'>\n"
-#| "                                                  CommCare HQ End User "
-#| "License Agreement\n"
-#| "                                               </a>."
 msgid ""
 "\n"
 "                                              Does this location keep "
@@ -15223,13 +15164,6 @@ msgid ""
 "accordingly.\n"
 "                                          "
 msgstr ""
-"J'ai lu et j'accepte le\n"
-"                                               <a data-toggle='modal'\n"
-"                                                  data-target='#eulaModal'\n"
-"                                                  href='#eulaModal'>\n"
-"                                                  Contrat de licence "
-"d'utilisateur final de CommCare HQ\n"
-"                                               </a>."
 
 #: corehq/apps/locations/templates/locations/location_types.html:106
 #: corehq/apps/locations/templates/locations/location_types.html:108
@@ -15237,16 +15171,6 @@ msgid "Owns Cases"
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html:109
-#, fuzzy
-#| msgid ""
-#| "I have read and agree to the\n"
-#| "                                               <a data-toggle='modal'\n"
-#| "                                                  data-"
-#| "target='#eulaModal'\n"
-#| "                                                  href='#eulaModal'>\n"
-#| "                                                  CommCare HQ End User "
-#| "License Agreement\n"
-#| "                                               </a>."
 msgid ""
 "\n"
 "                                              This allows locations at this "
@@ -15256,13 +15180,6 @@ msgid ""
 "                                              created for each location.\n"
 "                                          "
 msgstr ""
-"J'ai lu et j'accepte le\n"
-"                                               <a data-toggle='modal'\n"
-"                                                  data-target='#eulaModal'\n"
-"                                                  href='#eulaModal'>\n"
-"                                                  Contrat de licence "
-"d'utilisateur final de CommCare HQ\n"
-"                                               </a>."
 
 #: corehq/apps/locations/templates/locations/location_types.html:117
 #: corehq/apps/locations/templates/locations/location_types.html:119
@@ -15270,15 +15187,6 @@ msgid "View Child Data"
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html:120
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                See data in online or scheduled email "
-#| "reports,\n"
-#| "                                including worker activity and cross-"
-#| "project\n"
-#| "                                reports.\n"
-#| "                            "
 msgid ""
 "\n"
 "                                              Mobile workers assigned to "
@@ -15288,9 +15196,6 @@ msgid ""
 "                                              their child locations.\n"
 "                                          "
 msgstr ""
-"\n"
-"Regardez les données en ligne ou les rapports email programmes,\n"
-"incluant les activités utilisateur et les rapports inter-projets"
 
 #: corehq/apps/locations/templates/locations/location_types.html:176
 msgid "Save Organization Levels"
@@ -23410,10 +23315,8 @@ msgid "Reply-To Phone Number"
 msgstr "Répondre au numéro de téléphone"
 
 #: corehq/apps/sms/forms.py:777
-#, fuzzy
-#| msgid "Android-based SMS Gateway"
 msgid "Create SMS Gateway"
-msgstr "Passerelle SMS Pour Android"
+msgstr ""
 
 #: corehq/apps/sms/forms.py:793
 #: corehq/apps/users/templates/users/edit_web_user.html:22
@@ -23430,16 +23333,12 @@ msgid "Name is already in use."
 msgstr "Le nom est déjà en cours d'utilisation."
 
 #: corehq/apps/sms/forms.py:869
-#, fuzzy
-#| msgid "Catch-all"
 msgid "Catch-All Gateway"
-msgstr "Passe-partout"
+msgstr ""
 
 #: corehq/apps/sms/forms.py:897
-#, fuzzy
-#| msgid "Default Case Type"
 msgid "Default Gateway by Prefix"
-msgstr "Type de Dossier par Défaut"
+msgstr ""
 
 #: corehq/apps/sms/forms.py:923
 msgid "Please enter a positive number for the prefix."
@@ -23451,18 +23350,13 @@ msgid "Invalid Backend Specified."
 msgstr ""
 
 #: corehq/apps/sms/forms.py:952
-#, fuzzy
-#| msgid "An error occurred emailing you report. Please try again."
 msgid "An unexpected error occurred. Please reload and try again"
 msgstr ""
-"Une erreur est survenue lors de l'envoi du rapport par courrier "
-"électronique. Veuillez essayer à nouveau."
 
 #: corehq/apps/sms/forms.py:958
-#, fuzzy, python-format
-#| msgid "Prefix is specified twice:"
+#, python-format
 msgid "Prefix is specified twice: %s"
-msgstr "Le préfixe est spécifié deux fois :"
+msgstr ""
 
 #: corehq/apps/sms/forms.py:973
 msgid "Phone Number(s)"
@@ -23481,10 +23375,8 @@ msgid "Send Invitation"
 msgstr ""
 
 #: corehq/apps/sms/forms.py:1068
-#, fuzzy
-#| msgid "Create Another Connection"
 msgid "Create Another Gateway"
-msgstr "Créer une autre connexion"
+msgstr ""
 
 #: corehq/apps/sms/forms.py:1083
 msgid "Receive stockout facilities SMS alert"
@@ -23937,10 +23829,8 @@ msgid "Phone Prefix"
 msgstr "Préfixe de téléphone"
 
 #: corehq/apps/sms/templates/sms/backend_map.html:77
-#, fuzzy
-#| msgid "Key Prefix"
 msgid "Prefix"
-msgstr "Préfixe de clé"
+msgstr ""
 
 #: corehq/apps/sms/templates/sms/backend_map.html:96
 msgid "Add Mapping"
@@ -24018,19 +23908,10 @@ msgid "Delete the SMS Gateway '<span data-bind=\"text: name\"></span>'"
 msgstr ""
 
 #: corehq/apps/sms/templates/sms/gateway_list.html:48
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                 Are you sure you want to revert to version <span data-"
-#| "bind=\"text: version\"></span>?</p>\n"
-#| "                "
 msgid ""
 "Are you sure you want to delete the SMS Gateway '<span data-bind=\"text: name"
 "\"></span>'?</p>"
 msgstr ""
-"\n"
-"                 Êtes-vous certain de vouloir restaurer la version <span "
-"data-bind=\"text: version\"></span>?</p>"
 
 #: corehq/apps/sms/templates/sms/gateway_list.html:60
 msgid "Global Gateway"
@@ -24042,10 +23923,8 @@ msgstr ""
 
 #: corehq/apps/sms/templates/sms/gateway_list.html:81
 #: corehq/apps/sms/templates/sms/gateway_list.html:91
-#, fuzzy
-#| msgid "DEFAULT"
 msgid "DEFAULT GATEWAY"
-msgstr "DÉFAUT"
+msgstr ""
 
 #: corehq/apps/sms/templates/sms/gateway_list.html:85
 msgid "Removing from default..."
@@ -24234,40 +24113,32 @@ msgid "Multiple%s"
 msgstr ""
 
 #: corehq/apps/sms/views.py:1104
-#, fuzzy, python-format
-#| msgid "Android-based SMS Gateway"
+#, python-format
 msgid "Add %s Gateway"
-msgstr "Passerelle SMS Pour Android"
+msgstr ""
 
 #: corehq/apps/sms/views.py:1108
-#, fuzzy, python-format
-#| msgid "Created Date"
+#, python-format
 msgid "Create %s Gateway"
-msgstr "Date de création"
+msgstr ""
 
 #: corehq/apps/sms/views.py:1162 corehq/apps/sms/views.py:1397
-#, fuzzy
-#| msgid "Android-based SMS Gateway"
 msgid "Add SMS Gateway"
-msgstr "Passerelle SMS Pour Android"
+msgstr ""
 
 #: corehq/apps/sms/views.py:1215 corehq/apps/sms/views.py:1448
-#, fuzzy
-#| msgid "Edit SMS Backend"
 msgid "Edit SMS Gateway"
-msgstr "Modifier le SMS principal"
+msgstr ""
 
 #: corehq/apps/sms/views.py:1273 corehq/apps/sms/views.py:1502
-#, fuzzy, python-format
-#| msgid "Edit Data"
+#, python-format
 msgid "Edit %s Gateway"
-msgstr "Modifier des données"
+msgstr ""
 
 #: corehq/apps/sms/views.py:1277 corehq/apps/sms/views.py:1506
-#, fuzzy, python-format
-#| msgid "Update Data"
+#, python-format
 msgid "Update %s Gateway"
-msgstr "Mise à jour de Données"
+msgstr ""
 
 #: corehq/apps/sms/views.py:1516
 msgid "Subscribe SMS"
@@ -34101,75 +33972,6 @@ msgstr ""
 "Une erreur est survenue en se connectent à CloudCare. Veuillez re-essayer. "
 "Si vous avez des problèmes pour remplir le formulaire, veuillez signaler ce "
 "problème."
-
-#~ msgid "Cross-Project Reports"
-#~ msgstr "Rapport Cross-Project "
-
-#~ msgid "Add Connection"
-#~ msgstr "Ajouter une connexion"
-
-#~ msgid "Edit Connection"
-#~ msgstr "Modifier la connexion"
-
-#~ msgid "Mass Email Users"
-#~ msgstr "Utilisateurs d'envoi massif par courrier électronique"
-
-#~ msgid "SMS Connections"
-#~ msgstr "Connexions SMS"
-
-#~ msgid "SMS Country-Connection Map"
-#~ msgstr "Carte de connexion-pays SMS"
-
-#~ msgid "Add SMS Backend"
-#~ msgstr "Ajouter le SMS principal"
-
-#~ msgid "Edit SMS Connection"
-#~ msgstr "Modifier la connexion SMS"
-
-#~ msgid "Add SMS Connection"
-#~ msgstr "Ajouter connexion SMS"
-
-#~ msgid "Reply To Phone Number"
-#~ msgstr "Répondre au numéro de téléphone"
-
-#~ msgid "Give other domains access"
-#~ msgstr "Donner accès à d'autres domaines"
-
-#~ msgid "List domains here:"
-#~ msgstr "Listez les domaines ici :"
-
-#~ msgid "SMS Connection"
-#~ msgstr "Connexion SMS"
-
-#~ msgid "Additional HTTP Parameters"
-#~ msgstr "Paramètres HTTP supplémentaires"
-
-#~ msgid "You"
-#~ msgstr "Vous"
-
-#~ msgid "NO"
-#~ msgstr "NON"
-
-#~ msgid "Delete SMS Connection?"
-#~ msgstr "Supprimer la connexion SMS ?"
-
-#~ msgid "Are you sure you want to delete SMS Connection"
-#~ msgstr "Êtes-vous certain de vouloir supprimer la connexion SMS ?"
-
-#~ msgid "Create SMS Connection using:"
-#~ msgstr "Créer une connexion SMS à l'aide de :"
-
-#~ msgid ""
-#~ "WARNING: You have not specified a default SMS connection. By default, the "
-#~ "system will automatically select one of the SMS connections owned by the "
-#~ "system when sending sms."
-#~ msgstr ""
-#~ "AVERTISSEMENT : Vous n'avez pas spécifié une connexion SMS par défaut. "
-#~ "Par défaut, le système sélectionnera automatiquement une des connexions "
-#~ "SMS appartenant au système lors de l'envoi d'un sms."
-
-#~ msgid "Account Sid"
-#~ msgstr "Compte Sid"
 
 #~ msgid "Calculation"
 #~ msgstr "Casos IRA Tratados"
