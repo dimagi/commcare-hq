@@ -78,6 +78,15 @@ class Study(StudyObject):
         super(Study, self).__init__(defn, meta)
         self.oid = defn.get('OID')
         self.name = defn.xpath('./odm:GlobalVariables/odm:StudyName', namespaces=odm_nsmap)[0].text
+        # e.g.
+        #     <StudyName>An open-label, non-randomized study on Captopril</StudyName>
+        #     <StudyDescription>
+        #         Researcher KEMRI/ CREATES Director
+        #     </StudyDescription>
+        #     <ProtocolName>BE 01/2014</ProtocolName>
+        self.description = defn.xpath('./odm:GlobalVariables/odm:StudyDescription', namespaces=odm_nsmap)[0].text
+        # identifier is "Unique Protocol ID" in UI, "ProtocolName" in ODM, and "identifier" in OpenClinica API
+        self.identifier = defn.xpath('./odm:GlobalVariables/odm:ProtocolName', namespaces=odm_nsmap)[0].text
 
     def iter_events(self):
         for se_ref in self.meta.xpath('./odm:Protocol/odm:StudyEventRef', namespaces=odm_nsmap):
