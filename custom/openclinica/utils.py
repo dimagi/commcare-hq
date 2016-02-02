@@ -78,10 +78,6 @@ def get_question_item(domain, event_id, question):
         se_oid, form_oid, ig_oid, item_oid = question_items[(event_id, question)]
         return Item(se_oid, form_oid, ig_oid, item_oid)
     except KeyError:
-        # Did an old form set the value of a question that no longer exists? Best to check that out.
-        logging.error('Unknown CommCare question "{}" for event "{}"'.format(question, event_id))
-        return None
-    except TypeError:
         # CommCare question does not match an OpenClinica item. This is a CommCare-only question.
         return None
 
