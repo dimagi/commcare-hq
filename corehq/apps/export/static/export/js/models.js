@@ -41,6 +41,20 @@ Exports.ViewModels.TableConfiguration.prototype.showDeleted = function() {
     return true;
 };
 
+Exports.ViewModels.TableConfiguration.prototype._select = function(select) {
+    _.each(this.columns(), function(column) {
+        column.selected(select);
+    });
+};
+
+Exports.ViewModels.TableConfiguration.prototype.selectAll = function(table) {
+    table._select(true);
+};
+
+Exports.ViewModels.TableConfiguration.prototype.selectNone = function(table) {
+    table._select(false);
+};
+
 Exports.ViewModels.TableConfiguration.mapping = {
     include: ['name', 'path', 'columns', 'selected'],
     tables: {
