@@ -291,7 +291,7 @@ class ProjectReportsTab(UITab):
         tools = [(_("Tools"), [
             {'title': _('My Saved Reports'),
              'url': reverse('saved_reports', args=[self.domain]),
-             'icon': 'icon-tasks',
+             'icon': 'icon-tasks fa fa-tasks',
              'show_in_dropdown': True}
         ])]
 
