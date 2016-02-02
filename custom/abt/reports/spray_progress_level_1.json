@@ -7,7 +7,7 @@
         "airsrwanda",
         "airszambia",
         "airszimbabwe",
-        "airstanzania",
+        "airstanzania"
     ],
     "data_source_table":"static-sms-indicators-001",
     "report_id":"spray-progress-report-level-1",
