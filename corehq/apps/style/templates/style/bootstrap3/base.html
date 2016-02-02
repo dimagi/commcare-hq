@@ -135,10 +135,6 @@
         {% include "style/includes/bootstrap3/core_libraries.html" %}
         {% endcompress %} 
 
-        {% if formdesigner %}
-        <script src="{% new_static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
-        {% endif %}
-
         {% if request.use_jquery_ui %}
         {% compress js %}
         <script type="text/javascript" src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
