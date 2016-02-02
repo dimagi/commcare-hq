@@ -6,49 +6,30 @@
 
 {% block title %}{{ module.name|clean_trans:langs }}{% endblock %}
 
-
-{% block head %}{{ block.super }}
-{% if formdesigner %}
-<link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.11.2.css' %}"/>
-{% else %}
-<link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
-{% endif %}
-{% include "imports/hq-oldstyle-js.html" %}
+{% block stylesheets %}{{ block.super }}
 <style>
     .edit-form-pencil {
         position: absolute;
-        right: -5px;
-        top: 2px;
+        right: 0;
+        top: 3px;
         opacity: 0.5;
     }
     .edit-form-li {
         position: relative;
-        width: 110%;
-    }
-    /* Push tooltips away from icons that trigger them */
-    .tooltip {
-        margin-right: 12px;
     }
 </style>
 {% endblock %}
 
 {% block js %}
     {{ block.super }}
-    <script src="{% static 'app_manager/js/app_manager.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/app_manager.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}
     {{ block.super }}
     <script>
-        $(function () {
-            $('.hq-help-template').each(function () {
-                COMMCAREHQ.makeHqHelp($(this).data(), false).insertAfter(this);
-                $(this).remove();
-            });
-            $('.hq-help').hqHelp();
-        });
         $(function () {
             COMMCAREHQ.app_manager.init({
                 appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
@@ -85,7 +66,7 @@
         $(function () {
             $('.edit-form-pencil').hide().tooltip({
                 title: "{% trans "Edit in form builder" %}",
-                placement: 'left'
+                placement: 'auto',
             });
             $('.edit-form-li').each(function () {
                 if ($(this).is('.active') && {{ formdesigner|JSON }}) {
@@ -145,7 +126,6 @@
 {% block breadcrumbs %}
     {% if app %}
     <li>
-        <span class="divider">&gt;</span>
         <a href="{% url "view_app" domain app.id %}">
             <span class="app-manager-title variable-app_name">{{ app.name|html_name }}</span>
         </a>
@@ -153,13 +133,13 @@
     {% endif %}
 {% endblock %}
 
-{% block sidebar %}
+{% block page_navigation %}
 {% if app %}
 <nav class="app-manager-content hide">
-    <ul class="nav nav-list">
+    <ul class="nav nav-hq-sidebar">
         <li {% if release_manager %}class="active"{% endif %}>
             <a href="{% url "release_manager" domain app.id %}" id="tour-deploy-link">
-                <i class="icon-download-alt"></i>
+                <i class="fa fa-download"></i>
                 {% trans "Deploy" %}
             </a>
         </li>
@@ -168,23 +148,28 @@
                 {% if not copy_app_form or not copy_app_form.is_bound %}active{% endif %}"
             {% endif %}>
             <a href="{% url "view_app" domain app.id %}#app-settings" data-toggle="tab">
-                <i class="icon-cog"></i>
+                <i class="fa fa-cog"></i>
                 {% trans "Settings" %}
             </a>
         </li>
         {% if app.get_doc_type == 'Application' %}
         <li>
             <a id="multimedia-shower" href="{% url "view_app" domain app.id %}multimedia/#multimedia" data-toggle="tab">
-                <i class="icon-picture"></i>
+                <i class="fa fa-photo"></i>
                 {% trans "Multimedia" %}
             </a>
         </li>
         {% endif %}
         <li>
+            <a href="{% url "view_app" domain app.id %}languages/#languages-and-translations" data-toggle="tab"
+               style="vertical-align: middle;">
+                <i class="fa fa-globe"></i>
+                {% trans "Languages" %}
+            </a>
             {% if app.get_doc_type == 'Application' %}
-                <span id="langs" class="pull-right">
+                <span id="langs" style="position: absolute; right: 5px; top: 2px;">
                     {% if not app.is_remote_app and app.langs|length > 1%}
-                        <select name="lang" class="input-mini" style="height: 20px; margin-bottom: 0px; margin-top: 2px; padding: 0;">
+                        <select name="lang" class="form-control" style="height: 20px;">
                             {% for lang in app.langs %}
                                 <option value="{{ lang }}"
                                         {% if lang == langs.0 %}selected=""{% endif %}>
@@ -196,22 +181,17 @@
                     {% endif %}
                 </span>
             {% endif %}
-            <a href="{% url "view_app" domain app.id %}languages/#languages-and-translations" data-toggle="tab"
-               style="vertical-align: middle;">
-                <i class="icon-globe"></i>
-                {% trans "Languages" %}
-            </a>
         </li>
         <li>
             <a href="{% url "app_summary" domain app.id %}" style="vertical-align: middle;">
-                <i class="icon-list"></i>
+                <i class="fa fa-list"></i>
                 {% trans "App Summary" %}
             </a>
         </li>
         <li class="divider"></li>
     {% if app.get_doc_type == "Application" %}
         <li>
-        <ul class="nav nav-list sortable" style="padding-left: 0">
+        <ul class="nav nav-hq-sidebar sortable">
             <li class="sort-action">
                 <form method="post"
                       action="{% url "corehq.apps.app_manager.views.rearrange" domain app.id 'modules' %}">
@@ -220,12 +200,12 @@
             </li>
             <li class="sort-disabled edit-form-li {% if is_user_registration %} active{% endif %}" id="user-registration-nav-link">
                 <a href="{% url "view_user_registration" domain app.id %}">
-                    <i class="icon-file-alt"></i>
+                    <i class="fa fa-file-o"></i>
                     {% trans "User Registration" %}
                 </a>
                 <div class="edit-form-pencil">
                     <a href="{% url "user_registration_source" domain app.id %}">
-                        <span class="icon icon-pencil"></span>
+                        <i class="fa fa-pencil"></i>
                     </a>
                 </div>
             </li>
@@ -236,12 +216,12 @@
                         data-index="{{ module.id }}">
                         <a href="{% url "view_module" domain app.id module.id %}">
                             <i class="drag_handle"></i>
-                            <i class="icon-folder-open"></i>
+                            <i class="fa fa-folder-open"></i>
                             <span {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
                                 {{ module.name|html_trans:langs }}
                             </span>
                         </a>
-                        <ul class="nav nav-list {% ifequal module.id selected_module.id %}selected{% endifequal %} sortable-forms sortable">
+                        <ul class="nav nav-hq-sidebar {% ifequal module.id selected_module.id %}selected{% endifequal %} sortable-forms sortable">
                             <li class="sort-action">
                                 <form method="post"
                                       action="{% url "corehq.apps.app_manager.views.rearrange" domain app.id 'forms' %}">
@@ -259,9 +239,9 @@
                                             </span>
                                         </a>
                                         {% if not form.no_vellum %}
-                                            <div class="edit-form-pencil pull-right">
+                                            <div class="edit-form-pencil">
                                                 <a id="edit_pen_{{ module.id }}_{{ form.id }}" href="{% url "form_source" domain app.id module.id form.id %}">
-                                                    <i class="icon-pencil" {% ifequal form selected_form %}style="color: white"{% endifequal %}"></i>
+                                                    <i class="fa fa-pencil" {% ifequal form selected_form %}style="color: white"{% endifequal %}"></i>
                                                 </a>
                                             </div>
                                         {% endif %}
@@ -274,8 +254,8 @@
                                 </form>
                                 {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
                                 <a class="submit_on_click" href="#">
-                                    <i class="icon-plus icon-blue"></i>
-                                    <span class="muted">{% trans "Form" %}</span>
+                                    <i class="fa fa-plus icon-blue"></i>
+                                    <span class="text-muted">{% trans "Form" %}</span>
                                 </a>
                                 {% endif %}
                             </li>
@@ -291,8 +271,8 @@
                 {% if show_care_plan or show_advanced or show_shadow_modules %}
                     <li class="sort-disabled dropdown">
                         <a href="#" data-toggle="dropdown">
-                            <i class="new-module-icon icon-plus icon-blue"></i>
-                            <span class="muted">{% trans "Module" %}</span><span class="caret"></span>
+                            <i class="new-module-icon fa fa-plus icon-blue"></i>
+                            <span class="text-muted">{% trans "Module" %}</span><span class="caret"></span>
                         </a>
                         <ul class="dropdown-menu" role="menu">
                             <li><a href="#" class="new-module" data-type="case">{% trans "New Case Module" %}</a></li>
@@ -326,8 +306,8 @@
                 {% else %}
                 <li class="sort-disabled">
                     <a href="#" class="new-module" data-type="case">
-                        <i class="new-module-icon icon-plus icon-blue"></i>
-                        <span class="muted">{% trans "Module" %}</span>
+                        <i class="new-module-icon fa fa-plus icon-blue"></i>
+                        <span class="text-muted">{% trans "Module" %}</span>
                     </a>
                 </li>
                 {% endif %}
@@ -335,22 +315,28 @@
         </ul>
         </li>
     {% endif %}
-    <li class="nav-header">Actions</li>
+    <li class="text-hq-nav-header">Actions</li>
     <li class="app-name-div{% if copy_app_form and copy_app_form.is_bound %} active{% endif %}">
         <a href="{% url "view_app" domain app.id %}copy/#copy" data-toggle="tab">
-            <i class="icon-copy"></i>
+            <i class="fa fa-copy"></i>
             {% trans "Copy Application" %}
         </a>
     </li>
     <li>
         <a href="{% url "view_app" domain app.id %}delete/#delete" data-toggle="tab">
-            <i class="icon-trash"></i>
+            <i class="fa fa-trash"></i>
             {% trans "Delete Application" %}
         </a>
     </li>
     </ul>
 </nav>
 {% endif %}
+{% endblock %}
+
+{% block pre_page_content %}
+    {% if not formdesigner %}
+        <div class="spacer"></div>
+    {% endif %}
 {% endblock %}
 
 {% block app-content %}
