@@ -177,6 +177,10 @@ class TableConfiguration(DocumentSchema):
         else:
             return 'Unknown'
 
+    @staticmethod
+    def get_default_selected(path):
+        return path == MAIN_TABLE
+
 
 class ExportInstance(Document):
     name = StringProperty()
@@ -211,6 +215,7 @@ class ExportInstance(Document):
             table = TableConfiguration(
                 path=group_schema.path,
                 name=TableConfiguration.get_default_name(schema.type, group_schema.path),
+                selected=TableConfiguration.get_default_selected(group_schema.path),
             )
             table.columns = map(
                 lambda item: ExportColumn.create_default_from_export_item(
