@@ -38,8 +38,8 @@ Exports.ViewModels.TableConfiguration.prototype.toggleShowAdvanced = function(ta
 
 Exports.ViewModels.TableConfiguration.prototype._select = function(select) {
     _.each(this.columns(), function(column) {
-        column.selected(select);
-    });
+        column.selected(select && column.isVisible(this));
+    }.bind(this));
 };
 
 Exports.ViewModels.TableConfiguration.prototype.selectAll = function(table) {
@@ -68,8 +68,12 @@ Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
     return this.item.path.join('.');
 };
 
+Exports.ViewModels.ExportColumn.prototype.isVisible = function(table) {
+    return table.showAdvanced() || (!this.is_advanced() || this.selected());
+};
+
 Exports.ViewModels.ExportColumn.mapping = {
-    include: ['item', 'label', 'show', 'selected', 'tags'],
+    include: ['item', 'label', 'is_advanced', 'selected', 'tags'],
     item: {
         create: function(options) {
             return new Exports.ViewModels.ExportItem(options.data);

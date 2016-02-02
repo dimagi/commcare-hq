@@ -172,7 +172,7 @@ WHAT IS UP
                                 <tbody data-bind="foreach: { data: table.columns, as: 'column' }">
                                 <!--<tbody data-bind="sortable: column_configuration">-->
                                     <tr data-bind="
-                                        visible:  $parent.showAdvanced() || (column.show || column.selected)
+                                        visible: column.isVisible($parent)
                                         {% if False %}, attr: {'data-order': _sortableOrder}{% endif %}
                                         ">
                                         <td class="sortable-handle">

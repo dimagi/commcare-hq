@@ -26,6 +26,7 @@ from corehq.apps.export.const import (
     PROPERTY_TAG_DELETED,
     CASE_HISTORY_PROPERTIES,
     CASE_HISTORY_GROUP_NAME,
+    MAIN_TABLE_PROPERTIES,
     FORM_EXPORT,
     CASE_EXPORT,
     MAIN_TABLE,
@@ -71,7 +72,7 @@ class ExportColumn(DocumentSchema):
     item = SchemaProperty(ExportItem)
     label = StringProperty()
     # Determines whether or not to show the column in the UI Config without clicking advanced
-    show = BooleanProperty(default=False)
+    is_advanced = BooleanProperty(default=False)
     selected = BooleanProperty(default=False)
     tags = ListProperty()
 
@@ -118,7 +119,7 @@ class ExportColumn(DocumentSchema):
         return ExportColumn(
             item=item,
             label=item.label,
-            show=not is_deleted,
+            is_advanced=is_deleted,
             selected=not is_deleted and is_main_table,
             tags=tags,
         )
@@ -480,6 +481,14 @@ class FormExportDataSchema(ExportDataSchema):
                 path=_string_path_to_list(group_path),
                 last_occurrences={app_id: app_version},
             )
+            for system_prop in MAIN_TABLE_PROPERTIES:
+                group_schema.items.append(ScalarItem(
+                    path=[system_prop.name],
+                    label=system_prop.name,
+                    tag=system_prop.tag,
+                    last_occurrences={app_id: app_version},
+                ))
+
             for question in group_questions:
                 # Create ExportItem based on the question type
                 item = FormExportDataSchema.datatype_mapping[question['type']].create_from_question(
