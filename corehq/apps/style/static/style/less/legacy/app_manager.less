@@ -1,3 +1,27 @@
+nav.app-manager-content {
+    margin: 20px 0;
+
+    // Menu indentation
+    // First level: whole menu ("Deploy", etc.)
+    > .nav-hq-sidebar {
+        padding-left: 0px;
+
+        // Second level: modules
+        .nav-hq-sidebar {
+            padding-left: 0px;
+
+            li a {
+                padding-left: 20px;
+            }
+
+            // Third level: forms
+            .nav-hq-sidebar {
+                padding-left: 20px;
+            }
+        }
+    }
+}
+
 .delete-me {
   float: right;
   top: 1.5em;
@@ -24,8 +48,10 @@
 }
 
 /* full-screen-width modal for editing form source */
-.xml-source {
+.xml-source .modal-dialog {
     position: absolute;
+    top: 20px;
+    bottom: 20px;
     left: 20px;
     right: 20px;
     margin: 0;
