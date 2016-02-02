@@ -263,7 +263,40 @@ class SMSLog(SyncCouchToSQLMixin, MessageLog):
         return True
 
 
-class SMS(SyncSQLToCouchMixin, models.Model):
+class Log(models.Model):
+    class Meta:
+        abstract = True
+
+    domain = models.CharField(max_length=126, null=True, db_index=True)
+    date = models.DateTimeField(null=True, db_index=True)
+    couch_recipient_doc_type = models.CharField(max_length=126, null=True, db_index=True)
+    couch_recipient = models.CharField(max_length=126, null=True, db_index=True)
+    phone_number = models.CharField(max_length=126, null=True, db_index=True)
+    direction = models.CharField(max_length=1, null=True)
+    error = models.NullBooleanField(default=False)
+    system_error_message = models.TextField(null=True)
+    system_phone_number = models.CharField(max_length=126, null=True)
+    backend_api = models.CharField(max_length=126, null=True)
+    backend_id = models.CharField(max_length=126, null=True)
+    billed = models.NullBooleanField(default=False)
+
+    # Describes what kind of workflow this log was a part of
+    workflow = models.CharField(max_length=126, null=True)
+
+    # If this log is related to a survey, this points to the couch_id
+    # of an instance of SQLXFormsSession that this log is tied to
+    xforms_session_couch_id = models.CharField(max_length=126, null=True, db_index=True)
+
+    # If this log is related to a reminder, this points to the _id of a
+    # CaseReminder instance that it is tied to
+    reminder_id = models.CharField(max_length=126, null=True)
+    location_id = models.CharField(max_length=126, null=True)
+
+    # The MessagingSubEvent that this log is tied to
+    messaging_subevent = models.ForeignKey('MessagingSubEvent', null=True, on_delete=models.PROTECT)
+
+
+class SMS(SyncSQLToCouchMixin, Log):
     ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS = 'TOO_MANY_UNSUCCESSFUL_ATTEMPTS'
     ERROR_MESSAGE_IS_STALE = 'MESSAGE_IS_STALE'
     ERROR_INVALID_DIRECTION = 'INVALID_DIRECTION'
@@ -287,27 +320,16 @@ class SMS(SyncSQLToCouchMixin, models.Model):
     }
 
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
-    domain = models.CharField(max_length=126, null=True, db_index=True)
-    date = models.DateTimeField(null=True, db_index=True)
-    couch_recipient_doc_type = models.CharField(max_length=126, null=True, db_index=True)
-    couch_recipient = models.CharField(max_length=126, null=True, db_index=True)
-    phone_number = models.CharField(max_length=126, null=True, db_index=True)
-    direction = models.CharField(max_length=1, null=True)
     text = models.TextField(null=True)
 
     # In cases where decoding must occur, this is the raw text received
     # from the gateway
     raw_text = models.TextField(null=True)
-
-    """Properties related to processing and billing"""
     datetime_to_process = models.DateTimeField(null=True, db_index=True)
     processed = models.NullBooleanField(default=True, db_index=True)
     num_processing_attempts = models.IntegerField(default=0, null=True)
     queued_timestamp = models.DateTimeField(null=True)
     processed_timestamp = models.DateTimeField(null=True)
-    error = models.NullBooleanField(default=False)
-    system_error_message = models.TextField(null=True)
-    billed = models.NullBooleanField(default=False)
 
     # If the message was simulated from a domain, this is the domain
     domain_scope = models.CharField(max_length=126, null=True)
@@ -317,38 +339,17 @@ class SMS(SyncSQLToCouchMixin, models.Model):
     # replies or other info-related queries while opted-out.
     ignore_opt_out = models.NullBooleanField(default=False)
 
-    """Metadata properties"""
-    backend_api = models.CharField(max_length=126, null=True)
-    backend_id = models.CharField(max_length=126, null=True)
-    system_phone_number = models.CharField(max_length=126, null=True)
-
     # This is the unique message id that the gateway uses to track this
     # message, if applicable.
     backend_message_id = models.CharField(max_length=126, null=True)
-
-    # Describes what kind of workflow this sms was a part of
-    workflow = models.CharField(max_length=126, null=True)
 
     # For outgoing sms only: if this sms was sent from a chat window,
     # the _id of the CouchUser who sent this sms; otherwise None
     chat_user_id = models.CharField(max_length=126, null=True)
 
-    # If this sms is related to a survey, this points to the couch_id
-    # of an instance of SQLXFormsSession that this sms is tied to
-    xforms_session_couch_id = models.CharField(max_length=126, null=True, db_index=True)
-
     # True if this was an inbound message that was an
     # invalid response to a survey question
     invalid_survey_response = models.NullBooleanField(default=False)
-
-    # If this sms is related to a reminder, this points to the _id of a
-    # CaseReminder instance that it is tied to
-    reminder_id = models.CharField(max_length=126, null=True)
-    location_id = models.CharField(max_length=126, null=True)
-
-    # The MessagingSubEvent that this SMS is tied to. Only applies to
-    # SMS that are not part of a survey (i.e., xforms_session_couch_id is None)
-    messaging_subevent = models.ForeignKey('MessagingSubEvent', null=True, on_delete=models.PROTECT)
 
     """ Custom properties. For the initial migration, it makes it easier
     to put these here. Eventually they should be moved to a separate table. """
@@ -447,7 +448,7 @@ class LastReadMessage(Document, CouchDocLockableMixIn):
             include_docs=True
         ).first()
 
-class CallLog(MessageLog):
+class CallLog(SyncCouchToSQLMixin, MessageLog):
     form_unique_id = StringProperty()
     answered = BooleanProperty(default=False)
     duration = IntegerProperty() # Length of the call in seconds
@@ -506,6 +507,16 @@ class CallLog(MessageLog):
             descending=True,
             include_docs=True,
             limit=1).one()
+
+    @classmethod
+    def _migration_get_fields(cls):
+        from corehq.apps.ivr.models import Call
+        return Call._migration_get_fields()
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        from corehq.apps.ivr.models import Call
+        return Call
 
 
 class EventLog(SafeSaveDocument):
