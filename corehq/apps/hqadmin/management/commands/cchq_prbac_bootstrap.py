@@ -63,6 +63,7 @@ class Command(BaseCommand):
 
         for old_priv in self.OLD_PRIVILEGES:
             self.remove_grant(old_priv)
+            Role.objects.filter(slug=old_priv).delete()
 
     def flush_roles(self):
         logger.info('Flushing ALL Roles...')
