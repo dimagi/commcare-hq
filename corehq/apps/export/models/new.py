@@ -23,6 +23,7 @@ from dimagi.ext.couchdbkit import (
 )
 from corehq.apps.export.const import (
     PROPERTY_TAG_UPDATE,
+    PROPERTY_TAG_DELETED,
     CASE_HISTORY_PROPERTIES,
     CASE_HISTORY_GROUP_NAME,
     FORM_EXPORT,
@@ -72,6 +73,7 @@ class ExportColumn(DocumentSchema):
     # Determines whether or not to show the column in the UI Config without clicking advanced
     show = BooleanProperty(default=False)
     selected = BooleanProperty(default=False)
+    tags = ListProperty()
 
     def get_value(self, doc, base_path):
         """
@@ -106,11 +108,19 @@ class ExportColumn(DocumentSchema):
 
         is_main_table = group_schema_path == [None]
 
+        tags = []
+        if is_deleted:
+            tags.append(PROPERTY_TAG_DELETED)
+
+        if item.tag:
+            tags.append(item.tag)
+
         return ExportColumn(
             item=item,
             label=item.label,
             show=not is_deleted,
             selected=not is_deleted and is_main_table,
+            tags=tags,
         )
 
 

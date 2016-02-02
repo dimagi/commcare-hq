@@ -6,6 +6,7 @@ PROPERTY_TAG_NONE = None
 PROPERTY_TAG_INFO = 'info'
 PROPERTY_TAG_UPDATE = 'update'
 PROPERTY_TAG_SERVER = 'server'
+PROPERTY_TAG_DELETED = 'deleted'
 
 CASE_HISTORY_PROPERTIES = [
     SystemProperty(PROPERTY_TAG_NONE, 'action_type'),
