@@ -82,6 +82,16 @@
             </li>
         </ul>
     </li>
+    {% if request|toggle_enabled:"NOTIFICATIONS" %}
+    <li id="settingsmenu-notifications" class="dropdown" id="js-notificatios-container">
+        <a href="#" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown">
+            <i class="icon-bell fa fa-bell nav-main-icon notifications-active-icon"></i>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+            <li class="dropdown-header nav-header">{% trans 'Notifications' %}</li>
+        </ul>
+    </li>
+    {% endif %}
     {% if request.couch_user and request.couch_user.is_web_user %}
     <li id="settingsmenu-project" class="dropdown">
         <a href="#" class="dropdown-toggle" data-toggle="dropdown">
