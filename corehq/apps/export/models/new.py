@@ -127,7 +127,7 @@ class TableConfiguration(DocumentSchema):
         Return a hashable identifier for this table.
         Useful for storing TableConfigurations in dictionaries.
         """
-        return tuple(self.repeat_path)
+        return tuple(self.path)
 
     def get_headers(self):
         """
