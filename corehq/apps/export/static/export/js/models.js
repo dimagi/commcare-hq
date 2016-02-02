@@ -69,6 +69,10 @@ Exports.ViewModels.ExportColumn = function(columnJSON) {
     ko.mapping.fromJS(columnJSON, Exports.ViewModels.ExportColumn.mapping, self);
 };
 
+Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
+    return this.item.path.join('.');
+};
+
 Exports.ViewModels.ExportColumn.mapping = {
     include: ['item', 'label', 'show', 'selected'],
     item: {

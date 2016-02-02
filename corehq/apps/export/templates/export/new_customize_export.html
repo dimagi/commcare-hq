@@ -190,7 +190,7 @@ WHAT IS UP
                                         </td>
                                         <td>
                                             <span data-bind="text: column.tag, visible: column.tag"></span>
-                                            <code data-bind="text: column.item.path"></code>
+                                            <code data-bind="text: column.formatProperty()"></code>
 
                                         </td>
                                         <td><input class="input-xlarge" type="text" data-bind="value: column.label" /></td>
