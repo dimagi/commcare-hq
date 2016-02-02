@@ -33,6 +33,9 @@ class _Writer(object):
 
 
 def get_export_file(export_instance, filters):
+    """
+    Return an export file for the given ExportInstance and list of filters
+    """
     docs = _get_export_documents(export_instance, filters)
     return _write_export_file(export_instance, docs)
 
