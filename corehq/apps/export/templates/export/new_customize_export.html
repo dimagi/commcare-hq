@@ -193,7 +193,7 @@ WHAT IS UP
                                             <code data-bind="text: column.item.path"></code>
 
                                         </td>
-                                        <td><input class="input-xlarge" type="text" data-bind="value: column.name" /></td>
+                                        <td><input class="input-xlarge" type="text" data-bind="value: column.label" /></td>
                                         {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
                                         <td class="input">
                                             <div data-bind="if: !allOptions()">
