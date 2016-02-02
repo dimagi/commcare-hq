@@ -178,21 +178,19 @@ WHAT IS UP
                                         </td>
                                         <td>
                                             <!--ko if: ($root.is_deidentified() && column.item.isCaseName()) -->
-                                            <!--<input type="checkbox"-->
-                                                   <!--class="field-include"-->
-                                                   <!--disabled="disabled" />-->
+                                            <input type="checkbox"
+                                                   class="field-include"
+                                                   disabled="disabled" />
                                             <!--/ko-->
                                             <!--ko ifnot: ($root.is_deidentified() && column.item.isCaseName()) -->
-                                            <!--<input type="checkbox"-->
-                                                   <!--class="field-include"-->
-                                                   <!--data-bind="checked: column.selected" />-->
+                                            <input type="checkbox"
+                                                   class="field-include"
+                                                   data-bind="checked: column.selected" />
                                             <!--/ko-->
                                         </td>
                                         <td>
-                                            <!--<span data-bind="foreach: _niceField.tags">
-                                                <span data-bind="text: $data, visible: $data, attr: { 'class': $root.row_label_classes($data)}"></span>
-                                            </span>-->
-                                            <!--<code data-bind="text: _niceField.field"></code>-->
+                                            <span data-bind="text: column.tag, visible: column.tag"></span>
+                                            <code data-bind="text: column.item.path"></code>
 
                                         </td>
                                         <td><input class="input-xlarge" type="text" data-bind="value: column.name" /></td>
