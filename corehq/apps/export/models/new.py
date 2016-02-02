@@ -111,8 +111,9 @@ class ExportColumn(DocumentSchema):
             selected=not is_deleted and is_main_table,
         )
 
-    def get_header(self):
-        return self.label
+    def get_headers(self):
+        return [self.label]
+
 
 class TableConfiguration(DocumentSchema):
     name = StringProperty()
@@ -134,12 +135,7 @@ class TableConfiguration(DocumentSchema):
         """
         headers = []
         for column in self.columns:
-            col_headers = column.get_header()
-            if isinstance(col_headers, list):
-                col_headers.extend(col_headers)
-            else:
-                headers.append(col_headers)
-        # TODO: Always return a list to avoid having to do this dance
+            headers.extend(column.get_headers())
         return headers
 
     def get_rows(self, document):
@@ -709,6 +705,6 @@ class SplitExportColumn(ExportColumn):
             row.append(" ".join(selected.keys()))
         return row
 
-    def get_header(self):
+    def get_headers(self):
         # TODO: Don't return the same header for every sub-column!
         return [self.label] * len(self.options)
