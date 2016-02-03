@@ -156,6 +156,8 @@ class Command(BaseCommand):
              description='Provides a dropdown for Android App Callouts'),
         Role(slug=privileges.CUSTOM_INTENTS, name='Custom Intents',
              description='Allows for specifying custom intents'),
+        Role(slug=privileges.ADVANCED_DOMAIN_SECURITY, name='Advanced Domain Security',
+             description='Allows domains to set security policies for all web users')
     ]
 
     BOOTSTRAP_PLANS = [
@@ -199,6 +201,7 @@ class Command(BaseCommand):
         privileges.ACTIVE_DATA_MANAGEMENT,
         privileges.COMMCARE_LOGO_UPLOADER,
         privileges.CUSTOM_INTENTS,
+        privileges.ADVANCED_DOMAIN_SECURITY
     ]
 
     enterprise_plan_features = advanced_plan_features + []
