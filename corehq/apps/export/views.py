@@ -14,6 +14,7 @@ from django.utils.safestring import mark_safe
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import pytz
 from corehq import privileges
+from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
@@ -30,6 +31,11 @@ from corehq.apps.export.forms import (
     CreateCaseExportTagForm,
     FilterFormExportDownloadForm,
     FilterCaseExportDownloadForm,
+)
+from corehq.apps.export.models import (
+    FormExportDataSchema,
+    CaseExportDataSchema,
+    ExportInstance,
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.dbaccessors import touch_exports
@@ -185,6 +191,23 @@ class BaseExportView(BaseProjectDataView):
             return HttpResponseRedirect(self.export_home_url)
 
 
+class BaseCreateNewCustomExportView(BaseExportView):
+    template_name = 'export/new_customize_export.html'
+
+    @property
+    def page_context(self):
+        return {
+            'export_instance': self.export_instance
+        }
+
+    def get_export_instance(self, schema, app_id=None):
+        return ExportInstance.generate_instance_from_schema(
+            schema,
+            self.domain,
+            app_id,
+        )
+
+
 class BaseCreateCustomExportView(BaseExportView):
     """
     todo: Refactor in v2 of redesign
@@ -258,6 +281,42 @@ class BaseCreateCustomExportView(BaseExportView):
             ) % xmlns_to_name(
                 self.domain, export_tag[1], app_id=None), extra_tags="html")
         return HttpResponseRedirect(self.export_home_url)
+
+
+class CreateNewCustomFormExportView(BaseCreateNewCustomExportView):
+    urlname = 'new_custom_export_form'
+    page_title = ugettext_lazy("Create Form Export")
+    export_type = 'form'
+
+    def get(self, request, *args, **kwargs):
+        app_id = request.GET.get('app_id')
+        xmlns = request.GET.get('export_tag').strip('"')
+
+        schema = FormExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            app_id,
+            xmlns,
+        )
+        self.export_instance = self.get_export_instance(schema, app_id)
+
+        return super(CreateNewCustomFormExportView, self).get(request, *args, **kwargs)
+
+
+class CreateNewCustomCaseExportView(BaseCreateNewCustomExportView):
+    urlname = 'new_custom_export_case'
+    page_title = ugettext_lazy("Create Case Export")
+    export_type = 'case'
+
+    def get(self, request, *args, **kwargs):
+        case_type = request.GET.get('export_tag').strip('"')
+
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            case_type,
+        )
+        self.export_instance = self.get_export_instance(schema)
+
+        return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)
 
 
 class CreateCustomFormExportView(BaseCreateCustomExportView):
@@ -1111,8 +1170,12 @@ class FormExportListView(BaseExportListView):
 
         app_id = create_form.cleaned_data['application']
         form_xmlns = create_form.cleaned_data['form']
+        if toggles.NEW_EXPORTS.enabled(self.domain):
+            cls = CreateNewCustomFormExportView
+        else:
+            cls = CreateCustomFormExportView
         return reverse(
-            CreateCustomFormExportView.urlname,
+            cls.urlname,
             args=[self.domain],
         ) + ('?export_tag="{export_tag}"{app_id}'.format(
             app_id=('&app_id={}'.format(app_id)
@@ -1196,8 +1259,12 @@ class CaseExportListView(BaseExportListView):
         if not create_form.is_valid():
             raise ExportFormValidationException()
         case_type = create_form.cleaned_data['case_type']
+        if toggles.NEW_EXPORTS.enabled(self.domain):
+            cls = CreateNewCustomCaseExportView
+        else:
+            cls = CreateCustomCaseExportView
         return reverse(
-            CreateCustomCaseExportView.urlname,
+            cls.urlname,
             args=[self.domain],
         ) + ('?export_tag="{export_tag}"'.format(
             export_tag=case_type,

@@ -1,4 +1,6 @@
 import uuid
+
+import functools
 from django.test import SimpleTestCase
 
 from corehq.util.elastic import ensure_index_deleted
@@ -13,8 +15,8 @@ from .utils import get_doc_count, get_index_mapping
 
 
 class TestElasticPillow(AliasedElasticPillow):
-    es_host = 'localhost'
-    es_port = 9200
+    es_host = settings.ELASTICSEARCH_HOST
+    es_port = settings.ELASTICSEARCH_PORT
     es_alias = 'pillowtop_tests'
     es_type = 'test_doc'
     es_index = 'test_pillowtop_index'
@@ -57,6 +59,9 @@ class ElasticPillowTest(SimpleTestCase):
         pillow = TestElasticPillow(online=False)
         self.index = pillow.es_index
         self.es = pillow.get_es_new()
+        ensure_index_deleted(self.index)
+
+    def tearDown(self):
         ensure_index_deleted(self.index)
 
     def test_create_index_on_pillow_creation(self):
@@ -118,7 +123,7 @@ class ElasticPillowTest(SimpleTestCase):
         doc = {'_id': doc_id, 'doc_type': 'MyCoolDoc', 'property': 'foo'}
         _send_doc_to_pillow(pillow, doc_id, doc)
         self.assertEqual(1, get_doc_count(self.es, self.index))
-        es_doc = self.es.get_source(self.index, doc_id)
+        es_doc = self.es.get_source(self.index, pillow.es_type, doc_id)
         for prop in doc:
             self.assertEqual(doc[prop], es_doc[prop])
 
@@ -139,7 +144,7 @@ class ElasticPillowTest(SimpleTestCase):
         pillow.process_bulk(rows)
         self.assertEqual(len(doc_ids), get_doc_count(self.es, self.index))
         for doc in docs:
-            es_doc = self.es.get_source(self.index, doc['_id'])
+            es_doc = self.es.get_source(self.index, pillow.es_type, doc['_id'])
             for prop in doc.keys():
                 self.assertEqual(doc[prop], es_doc[prop])
 
@@ -156,17 +161,18 @@ class ElasticPillowTest(SimpleTestCase):
         _send_doc_to_pillow(pillow, doc_id, doc)
         self.assertEqual(1, get_doc_count(self.es, self.index))
         assume_alias_for_pillow(pillow)
-        es_doc = self.es.get_source(pillow.es_alias, doc_id)
+        es_doc = self.es.get_source(pillow.es_alias, pillow.es_type, doc_id)
         for prop in doc:
             self.assertEqual(doc[prop], es_doc[prop])
 
     def test_assume_alias_deletes_old_aliases(self):
         # create a different index and set the alias for it
         pillow = TestElasticPillow()
-        new_index = 'test-index-with-duplicate-alias'
+        new_index = 'test_index-with-duplicate-alias'
         if not self.es.indices.exists(new_index):
             self.es.indices.create(index=new_index)
         self.es.indices.put_alias(new_index, pillow.es_alias)
+        self.addCleanup(functools.partial(ensure_index_deleted, new_index))
 
         # make sure it's there in the other index
         aliases = self.es.indices.get_aliases()
@@ -232,6 +238,9 @@ class TestSendToElasticsearch(SimpleTestCase):
 
         completely_initialize_pillow_index(self.pillow)
 
+    def tearDown(self):
+        ensure_index_deleted(self.index)
+
     def test_create_doc(self):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'foo'}
         self._send_to_es_and_check(doc)
@@ -252,7 +261,7 @@ class TestSendToElasticsearch(SimpleTestCase):
 
         if not delete:
             self.assertEqual(1, get_doc_count(self.es, self.index))
-            es_doc = self.es.get_source(self.index, doc['_id'])
+            es_doc = self.es.get_source(self.index, self.pillow.es_type, doc['_id'])
             for prop in doc:
                 self.assertEqual(doc[prop], es_doc[prop])
         else:

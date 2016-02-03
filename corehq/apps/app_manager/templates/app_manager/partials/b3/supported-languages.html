@@ -1,0 +1,70 @@
+{% load i18n %}
+<div data-bind="saveButton: saveButton"></div>
+<table class="table">
+    <thead>
+        <tr class="row form-group" data-bind="css: {error: validateGeneral()}">
+            <th></th>
+            <th></th>
+            <th>{% if not hide_deploy_column %}{% trans "Deploy" %}{% endif %}</th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <td>
+                <p class="help-inline" data-bind="text: validateGeneral()"></p>
+                <p class="help-inline" style="visibility: hidden; float:right;">.</p>
+            </td>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody data-bind="sortable: languages">
+        <tr class="row form-group"
+            data-bind="
+                css: {error: show_error, light: !deploy()},
+                attr: {'data-order': _sortableOrder}
+                ">
+            <td data-bind="css: {'sortable-handle': $root.canSortLanguages}">
+                <i class="fa fa-arrows-v" data-bind="visible: $root.canSortLanguages"></i>
+            </td>
+            <td>
+                <span data-bind="text: $root.languages.indexOf($data) + 1 + '.', visible: !isDefaultLang()"></span>
+                <span class="label label-info" data-bind="visible: isDefaultLang()">1. default</span>
+            </td>
+            <td>
+                {% if hide_deploy_column %}
+                <input type="checkbox" checked="checked" data-bind="value: deploy, visible: false" />
+                {% else %}
+                <span data-bind="editableBool: deploy"></span>
+                {% endif %}
+            </td>
+            <td>
+                <span data-bind="langcode: langcode, valueUpdate: 'textchange', inputHandlers: {hasfocus: $root.seen}"></span>
+            </td>
+            <td>
+                <span data-bind="visible: originalLangcode() && originalLangcode() !== langcode()"><i class="fa fa-arrow-left"></i></span>
+            </td>
+            <td>
+                <span class="code" data-bind="text: originalLangcode, visible: originalLangcode() !== langcode()"></span>
+            </td>
+            <td><p class="help-inline" data-bind="text: message"></p></td>
+            <td>
+                <a href="#" data-bind="click: $root.removeLanguage">{% trans 'Delete' %}</a>
+            </td>
+        </tr>
+    </tbody>
+</table>
+<button class="btn btn-default" data-bind="click: addLanguage, disable: addLanguageDisabled">
+    <i class="fa fa-plus"></i>
+    {% trans "Add Language" %}
+</button>
+<span class='label label-warning' data-bind="visible: addLanguageDisabled">{% trans 'Please save before adding another language' %}</span>
+<div data-bind="if: removedLanguages().length">
+    <h6>{% trans 'Deleting Languages' %}:</h6>
+    <table class="table">
+        <tbody data-bind="foreach: removedLanguages">
+            <tr>
+                <td data-bind="text: langcode"></td>
+                <td><a href="#" data-bind="click: $root.unremoveLanguage">{%  trans "Don't Delete" %}</a></td>
+            </tr>
+        </tbody>
+    </table>
+</div>

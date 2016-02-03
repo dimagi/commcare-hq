@@ -43,13 +43,23 @@ def get_product_id(product_name, domain):
     except SQLProduct.DoesNotExist:
         k = PRODUCT_NAMES.get(product_name.lower())
         if k:
-            return SQLProduct.objects.get(name__iexact=k,
-                                          domain=domain).product_id
+            try:
+                return SQLProduct.objects.get(name__iexact=k,
+                                              domain=domain).product_id
+            except SQLProduct.DoesNotExist:
+                return
 
 
 def _locations_per_type(domain, loc_type, location):
     return (location.sql_location.get_descendants(include_self=True)
             .filter(domain=domain, location_type__name=loc_type, is_archived=False).count())
+
+
+def get_product_name(product_id):
+    try:
+        return SQLProduct.objects.get(product_id=product_id).name
+    except Exception:
+        return None
 
 
 class PPSRegistered(fluff.Calculator):
@@ -89,9 +99,8 @@ class TauxCalculator(fluff.Calculator):
 
     def _process_v1_form(self, form):
         num_products = numeric_value(form.get_data('form/num_products'))
-        print num_products
         if num_products > 1:
-            for product in (form.xpath('form/products') or []):
+            for product in (form.get_data('form/products') or []):
                 received_month_inner = product.get('receivedMonthInner')
                 amount_ordered = numeric_value(product.get(self.property_name))
                 product_name = product.get('productName')
@@ -141,7 +150,10 @@ class PPSConsumption(fluff.Calculator):
         self.field = field
 
     def _process_v1_form(self, form):
-        if 'num_products' in form.form and form.form['num_products'] > 1:
+        if 'products' not in form.form:
+            return
+
+        if 'num_products' in form.form and numeric_value(form.form['num_products']) > 1:
             for product in form.form['products']:
                 if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
                     yield {
@@ -163,11 +175,11 @@ class PPSConsumption(fluff.Calculator):
         if not real_date:
             return
 
-        for item in form.get_data('form/products/item', []):
+        for item in (form.get_data('form/products/item') or []):
             yield {
                 'date': real_date,
                 'value': numeric_value(get_value_from_path(item, 'is-relevant/{}'.format(self.field))),
-                'group_by': [item['product_name'], get_product_id(item['product_name'], get_domain(form))]
+                'group_by': [get_product_name(item['@id']), item['@id']]
             }
 
     @fluff.date_emitter
@@ -209,34 +221,37 @@ class RecapPassage(fluff.Calculator):
     def _process_field(self, form, getter):
         if form.xmlns == OPERATEUR_XMLNSES[1]:
             for item in form.get_data('form/products/item'):
-                if 'is-relevant' is not item:
+                if 'is-relevant' not in item:
                     continue
                 item = item['is-relevant']
-                val = numeric_value(item)
+                val = numeric_value(getter(item))
                 yield {
                     'date': real_date(form),
                     "value": val,
                     "group_by": [item['product_name'],
                                  get_product_id(item['product_name'], get_domain(form))]
                 }
+        else:
+            if 'products' not in form.form:
+                return
 
-        if 'num_products' in form.form and int(form.form['num_products']) > 1:
-            for product in form.form['products']:
-                if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
-                    val = numeric_value(getter(product))
-                    yield {
-                        'date': real_date(form),
-                        "value": val,
-                        "group_by": [product['product_name'],
-                                     get_product_id(product['product_name'], get_domain(form))]
-                    }
-        elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
-            yield {
-                'date': real_date(form),
-                'value': getter(form.form['products']),
-                'group_by': [form.form['products']['product_name'],
-                             get_product_id(form.form['products']['product_name'], get_domain(form))]
-            }
+            if 'num_products' in form.form and int(form.form['num_products']) > 1:
+                for product in form.form['products']:
+                    if 'real_date' in form.form and form.form['real_date'] and 'product_name' in product:
+                        val = numeric_value(getter(product))
+                        yield {
+                            'date': real_date(form),
+                            "value": val,
+                            "group_by": [product['product_name'],
+                                         get_product_id(product['product_name'], get_domain(form))]
+                        }
+            elif 'real_date' in form.form and form.form['real_date'] and 'product_name' in form.form['products']:
+                yield {
+                    'date': real_date(form),
+                    'value': getter(form.form['products']),
+                    'group_by': [form.form['products']['product_name'],
+                                 get_product_id(form.form['products']['product_name'], get_domain(form))]
+                }
 
     @fluff.date_emitter
     def old_stock_total(self, form):
@@ -244,12 +259,16 @@ class RecapPassage(fluff.Calculator):
 
     @fluff.date_emitter
     def total_stock(self, form):
-        return self._process_field(form, lambda x: x['total_stock'])
+        return self._process_field(form, lambda x: get_value_from_path(x, 'question1/total_stock', 0))
 
     @fluff.date_emitter
     def livraison(self, form):
         if form.xmlns == OPERATEUR_XMLNSES[1]:
-            return self._process_field(form, lambda x: x['display_stock_total'] - x['total_stock'])
+            return self._process_field(
+                form,
+                lambda x: (numeric_value(x['display_total_stock']) -
+                           numeric_value(get_value_from_path(x, 'question1/total_stock', 0)))
+            )
         else:
             return self._process_field(form, lambda x: x['top_up']['transfer']['entry']['value']['@quantity'])
 
@@ -263,7 +282,7 @@ class RecapPassage(fluff.Calculator):
 
     @fluff.date_emitter
     def outside_receipts_amount(self, form):
-        return self._process_field(form, lambda x: x['outside_receipts_amt'])
+        return self._process_field(form, lambda x: get_value_from_path(x, 'question1/outside_receipts_amt', 0))
 
     @fluff.date_emitter
     def actual_consumption(self, form):
@@ -279,7 +298,7 @@ class RecapPassage(fluff.Calculator):
 
     @fluff.date_emitter
     def loss_amt(self, form):
-        return self._process_field(form, lambda x: x['loss_amt'])
+        return self._process_field(form, lambda x: get_value_from_path(x, 'question1/loss_amt', 0))
 
 
 class DureeMoyenneLivraison(fluff.Calculator):

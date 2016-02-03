@@ -743,7 +743,7 @@ LOGSTASH_HOST = 'localhost'
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_VERSION = 0.9
+ELASTICSEARCH_VERSION = 1.7
 
 ####### Couch Config #######
 # for production this ought to be set to true on your configured couch instance
@@ -1621,3 +1621,7 @@ except ImportError:
     pass
 else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
+
+REST_FRAMEWORK = {
+    'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'
+}

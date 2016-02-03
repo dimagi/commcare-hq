@@ -77,6 +77,7 @@ def prepare_sql_case_json_for_elasticsearch(sql_case_json):
     # todo: these are required for consistency with couch representation, figure out how best to deal with it
     prepped_case['doc_type'] = 'CommCareCase'
     prepped_case['_id'] = prepped_case['case_id']
+    prepped_case['user_id'] = prepped_case['modified_by']
     return prepped_case
 
 

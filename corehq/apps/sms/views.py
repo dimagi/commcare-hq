@@ -34,8 +34,8 @@ from corehq.apps.sms.api import (
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
-from corehq.apps.style.decorators import use_bootstrap3, use_timepicker, use_typeahead, \
-    use_select2
+from corehq.apps.style.decorators import use_bootstrap3, use_timepicker, use_typeahead, use_select2, use_jquery_ui, \
+    upgrade_knockout_js
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
@@ -193,6 +193,7 @@ def post(request, domain):
     msg.save()
     return HttpResponse('OK')
 
+
 @require_api_user_permission(PERMISSION_POST_SMS)
 def sms_in(request):
     """
@@ -212,6 +213,7 @@ def sms_in(request):
         incoming(phone_number, message, backend_api)
         return HttpResponse("OK")
 
+
 def get_sms_autocomplete_context(request, domain):
     """A helper view for sms autocomplete"""
     phone_users = CouchUser.view("users/phone_users_by_domain",
@@ -228,6 +230,7 @@ def get_sms_autocomplete_context(request, domain):
         contacts.append(user.username)
         user_id = user._id
     return {"sms_contacts": contacts}
+
 
 @login_and_domain_required
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
@@ -361,6 +364,7 @@ def send_to_recipients(request, domain):
         reverse(ComposeMessageView.urlname, args=[domain])
     )
 
+
 @domain_admin_required
 @requires_privilege_with_fallback(privileges.INBOUND_SMS)
 def message_test(request, domain, phone_number):
@@ -395,6 +399,7 @@ def message_test(request, domain, phone_number):
     context['layout_flush_content'] = True
     context['phone_number'] = phone_number
     return render(request, "sms/message_tester.html", context)
+
 
 @csrf_exempt
 @login_or_digest_ex(allow_cc_users=True)
@@ -1554,32 +1559,40 @@ class SubscribeSMSView(BaseMessagingSectionView):
         return self.get(request, *args, **kwargs)
 
 
-@domain_admin_required
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def sms_languages(request, domain):
-    with StandaloneTranslationDoc.get_locked_obj(domain, "sms",
-        create=True) as tdoc:
-        if len(tdoc.langs) == 0:
-            tdoc.langs = ["en"]
-            tdoc.translations["en"] = {}
-            tdoc.save()
-    context = {
-        "domain": domain,
-        "sms_langs": tdoc.langs,
-        "bulk_upload": {
-            "action": reverse("upload_sms_translations",
-                              args=(domain,)),
-            "download_url": reverse("download_sms_translations",
-                                    args=(domain,)),
-            "adjective": _("messaging translation"),
-            "plural_noun": _("messaging translations"),
-        },
-    }
-    context.update({
-        "bulk_upload_form": get_bulk_upload_form(context),
-    })
+class SMSLanguagesView(BaseMessagingSectionView):
+    urlname = 'sms_languages'
+    template_name = "sms/languages.html"
+    page_title = ugettext_noop("Languages")
 
-    return render(request, "sms/languages.html", context)
+    @use_bootstrap3
+    @use_jquery_ui
+    @upgrade_knockout_js
+    @method_decorator(domain_admin_required)
+    def dispatch(self, *args, **kwargs):
+        return super(SMSLanguagesView, self).dispatch(*args, **kwargs)
+
+    @property
+    def page_context(self):
+        with StandaloneTranslationDoc.get_locked_obj(self.domain, "sms", create=True) as tdoc:
+            if len(tdoc.langs) == 0:
+                tdoc.langs = ["en"]
+                tdoc.translations["en"] = {}
+                tdoc.save()
+        context = {
+            "domain": self.domain,
+            "sms_langs": tdoc.langs,
+            "bulk_upload": {
+                "action": reverse("upload_sms_translations", args=(self.domain,)),
+                "download_url": reverse("download_sms_translations", args=(self.domain,)),
+                "adjective": _("messaging translation"),
+                "plural_noun": _("messaging translations"),
+            },
+        }
+        context.update({
+            "bulk_upload_form": get_bulk_upload_form(context),
+        })
+
+        return context
 
 
 @domain_admin_required
