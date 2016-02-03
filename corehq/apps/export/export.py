@@ -42,7 +42,8 @@ def get_export_file(export_instance, filters):
 
 def _get_export_documents(export_instance, filters):
     query = _get_base_query(export_instance)
-    # TODO: Add the other filters
+    for filter in filters:
+        query = query.filter(filter.to_es_filter())
     result = query.run()
     return result.hits
 
