@@ -108,43 +108,57 @@ class Study(StudyObject):
         return xform.tostring(pretty_print=True)
 
     def new_subject_module(self, app):
+
+        def add_reg_form_to_module(module_):
+            reg_form = module_.new_form('Register Subject', None)
+            reg_form.unique_id = make_uuid()
+            reg_form.source = self.get_subject_form_source('Register Subject')
+            reg_form.actions.open_case = OpenCaseAction(
+                name_path='/data/name',
+                external_id=None,
+                condition=FormActionCondition(type='always')
+            )
+            reg_form.actions.update_case = UpdateCaseAction(
+                update={
+                    'subject_study_id': '/data/subject_study_id',
+                    'dob': '/data/dob',
+                    'sex': '/data/sex',
+                    'enrollment_date': '/data/enrollment_date',
+                },
+                condition=FormActionCondition(type='always')
+            )
+
+        def add_edit_form_to_module(module_):
+            edit_form = module_.new_form('Edit Subject', None)
+            edit_form.unique_id = make_uuid()
+            edit_form.source = self.get_subject_form_source('Edit Subject')
+            edit_form.requires = 'case'
+            edit_form.actions.case_preload = PreloadAction(
+                preload={
+                    '/data/name': 'name',
+                    '/data/subject_study_id': 'subject_study_id',
+                    '/data/dob': 'dob',
+                    '/data/sex': 'sex',
+                    '/data/enrollment_date': 'enrollment_date',
+                },
+                condition=FormActionCondition(type='always')
+            )
+            edit_form.actions.update_case = UpdateCaseAction(
+                update={
+                    'name': '/data/name',
+                    'subject_study_id': '/data/subject_study_id',
+                    'dob': '/data/dob',
+                    'sex': '/data/sex',
+                    'enrollment_date': '/data/enrollment_date',
+                },
+                condition=FormActionCondition(type='always')
+            )
+
         module = app.add_module(Module.new_module('Study Subjects', None))
         module.unique_id = 'study_subjects'
         module.case_type = 'subject'
-
-        reg_form = module.new_form('Register Subject', None)
-        reg_form.unique_id = make_uuid()
-        reg_form.source = self.get_subject_form_source('Register Subject')
-        reg_form.actions.open_case = OpenCaseAction(name_path='/data/name', external_id=None)
-        reg_form.actions.open_case.condition.type = 'always'
-        reg_form.actions.update_case = UpdateCaseAction(update={
-            'subject_study_id': '/data/subject_study_id',
-            'dob': '/data/dob',
-            'sex': '/data/sex',
-            'enrollment_date': '/data/enrollment_date',
-        })
-        reg_form.actions.update_case.condition.type = 'always'
-
-        edit_form = module.new_form('Edit Subject', None)
-        edit_form.unique_id = make_uuid()
-        edit_form.source = self.get_subject_form_source('Edit Subject')
-        edit_form.requires = 'case'
-        edit_form.actions.case_preload = PreloadAction(preload={
-            '/data/name': 'name',
-            '/data/subject_study_id': 'subject_study_id',
-            '/data/dob': 'dob',
-            '/data/sex': 'sex',
-            '/data/enrollment_date': 'enrollment_date',
-        })
-        edit_form.actions.case_preload.condition.type = 'always'
-        edit_form.actions.update_case = UpdateCaseAction(update={
-            'name': '/data/name',
-            'subject_study_id': '/data/subject_study_id',
-            'dob': '/data/dob',
-            'sex': '/data/sex',
-            'enrollment_date': '/data/enrollment_date',
-        })
-        edit_form.actions.update_case.condition.type = 'always'
+        add_reg_form_to_module(module)
+        add_edit_form_to_module(module)
         return module
 
     def get_new_app(self, domain_name, app_name, version=APP_V2):
@@ -154,7 +168,7 @@ class Study(StudyObject):
         for event in self.iter_events():
             module = event.new_module_for_app(app, subject_module)
             for study_form in event.iter_forms():
-                study_form.add_new_form_to_module(module)
+                study_form.add_form_to_module(module)
             # Add all the event's forms as a single form in the subject module
             # We do this to create the new event as a subcase of the subject
             event.add_form_to_subject_module(subject_module)
@@ -190,33 +204,66 @@ class StudyEvent(StudyObject):
         return module
 
     def add_form_to_subject_module(self, subject_module):
-        form_name = 'Schedule ' + self.name
-        xform = XFormBuilder(form_name)
-        xform.new_question('start_date', 'Start Date', data_type='date')
-        xform.new_question('start_time', 'Start Time', data_type='time')
-        xform.new_question('subject_name', None, data_type=None)  # Hidden value
-        xform.new_question('name', None, data_type=None,
-                           calculate="concat('{} ', /data/start_date, ' ', /data/start_time, "
-                                     "' (', /data/subject_name, ')')".format(self.name))
-        for study_form in self.iter_forms():
-            study_form.add_item_groups_to_xform(xform)
-        form = subject_module.new_form(form_name, None)
-        form.unique_id = self.unique_id + '_form'
-        form.source = xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
-        form.requires = 'case'
-        form.actions.case_preload = PreloadAction(preload={
-            '/data/subject_name': 'name'
-        })
-        form.actions.case_preload.condition.type = 'always'
-        form.actions.subcases.append(OpenSubCaseAction(
-            case_type='event',
-            case_name='/data/name',
-            case_properties={
+
+        def get_form_source(form_name_):
+            xform = XFormBuilder(form_name_)
+            # We want to know the time according to the user, but event start and end timestamps are actually
+            # determined from form submission times.
+            xform.new_question('start_date', 'Start Date', data_type='date')
+            xform.new_question('start_time', 'Start Time', data_type='time')
+            xform.new_question('subject_name', None, data_type=None)  # data_type=None makes this a hidden value
+            xform.new_question('event_type', None, data_type=None,
+                               value="'{}'".format(self.unique_id))  # Quote string default values
+            xform.new_question('event_repeats', None, data_type=None,
+                               value="'{}'".format(self.is_repeating).lower())
+            xform.new_question('name', None, data_type=None,
+                               calculate="concat('{} ', /data/start_date, ' ', /data/start_time, "
+                                         "' (', /data/subject_name, ')')".format(self.name))
+            for study_form in self.iter_forms():
+                study_form.add_item_groups_to_xform(xform)
+            xform.new_question('end_date', 'End Date', data_type='date')
+            xform.new_question('end_time', 'End Time', data_type='time')
+            return xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
+
+        def get_preload_action():
+            return PreloadAction(
+                preload={'/data/subject_name': 'name'},
+                condition=FormActionCondition(type='always')
+            )
+
+        def get_open_subcase_action():
+            props = {
                 'start_date': '/data/start_date',
                 'start_time': '/data/start_time',
-            },
-            condition=FormActionCondition(type='always')
-        ))
+                'end_date': '/data/end_date',
+                'end_time': '/data/end_time',
+                'event_type': '/data/event_type',
+                'event_repeats': '/data/event_repeats',
+            }
+            # Save all properties to the case. We will use them to pre-populate the event's update forms (see
+            # StudyForm.add_form_to_module) ... but we won't use them for the export. We will use all the form
+            # submissions instead, so we can get an audit trail of all value changes for the ODM.
+            for study_form in self.iter_forms():
+                for item_group in study_form.iter_item_groups():
+                    for item in item_group.iter_items():
+                        props[item.question_name] = '/data/{}/{}'.format(
+                            item_group.question_name,
+                            item.question_name
+                        )
+            return OpenSubCaseAction(
+                case_type='event',
+                case_name='/data/name',
+                case_properties=props,
+                condition=FormActionCondition(type='always')
+            )
+
+        form_name = 'Schedule ' + self.name
+        form = subject_module.new_form(form_name, None)
+        form.unique_id = self.unique_id + '_form'
+        form.source = get_form_source(form_name)
+        form.requires = 'case'
+        form.actions.case_preload = get_preload_action()
+        form.actions.subcases.append(get_open_subcase_action())
 
 
 class StudyForm(StudyObject):
@@ -233,20 +280,53 @@ class StudyForm(StudyObject):
             ig_def = self.meta.xpath('./odm:ItemGroupDef[@OID="{}"]'.format(ig_oid), namespaces=odm_nsmap)[0]
             yield ItemGroup(ig_def, self.meta)
 
-    def add_new_form_to_module(self, module):
+    def add_form_to_module(self, module):
         """
-        Add a CommCare form based in this form's item groups and items to a given CommCare module
+        Add a CommCare form of this form's item groups and items to a given CommCare module
         """
+        def get_preload_action():
+            preload = {
+                '/data/start_date': 'start_date',
+                '/data/start_time': 'start_time',
+                '/data/end_date': 'end_date',
+                '/data/end_time': 'end_time',
+            }
+            for item_group in self.iter_item_groups():
+                for item in item_group.iter_items():
+                    preload['/data/{}/{}'.format(
+                        item_group.question_name,
+                        item.question_name
+                    )] = item.question_name
+            return PreloadAction(
+                preload=preload,
+                condition=FormActionCondition(type='always')
+            )
+
+        def get_update_case_action():
+            update = {
+                'start_date': '/data/start_date',
+                'start_time': '/data/start_time',
+                'end_date': '/data/end_date',
+                'end_time': '/data/end_time',
+            }
+            for item_group in self.iter_item_groups():
+                for item in item_group.iter_items():
+                    update[item.question_name] = '/data/{}/{}'.format(
+                        item_group.question_name,
+                        item.question_name
+                    )
+            return UpdateCaseAction(
+                update=update,
+                condition=FormActionCondition(type='always')
+            )
+
         form = module.new_form(self.name, None)
         form.unique_id = make_uuid()
         form.source = self.build_xform()
         # Must require case for case list to work
         form.requires = 'case'
-        form.actions.case_preload = PreloadAction(preload={
-            '/data/start_date': 'start_date',
-            '/data/start_time': 'start_time',
-        })
-        form.actions.case_preload.condition.type = 'always'
+        form.actions.case_preload = get_preload_action()
+        form.actions.update_case = get_update_case_action()
 
     def add_item_groups_to_xform(self, xform):
         for ig in self.iter_item_groups():
@@ -261,6 +341,8 @@ class StudyForm(StudyObject):
         xform.new_question('start_date', 'Start Date', data_type='date')
         xform.new_question('start_time', 'Start Time', data_type='time')
         self.add_item_groups_to_xform(xform)
+        xform.new_question('end_date', 'End Date', data_type='date')
+        xform.new_question('end_time', 'End Time', data_type='time')
         return xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
 
 
