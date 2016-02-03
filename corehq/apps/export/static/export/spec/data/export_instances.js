@@ -49,7 +49,6 @@ SampleExportInstances = {
             }],
             "doc_type": "TableConfiguration"
         }],
-        "name": null,
         "doc_type": "ExportInstance"
     }
 };

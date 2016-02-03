@@ -1,10 +1,63 @@
-Exports.ViewModels.ExportInstance = function(instanceJSON) {
+Exports.ViewModels.ExportInstance = function(instanceJSON, options) {
+    options = options || {};
     var self = this;
     ko.mapping.fromJS(instanceJSON, Exports.ViewModels.ExportInstance.mapping, self);
+    self.saveState = ko.observable(Exports.Constants.SAVE_STATES.READY);
+    self.saveUrl = options.saveUrl;
+};
+
+Exports.ViewModels.ExportInstance.prototype.isNew = function() {
+    return !!self._id;
+};
+
+Exports.ViewModels.ExportInstance.prototype.save = function() {
+    var self = this,
+        serialized;
+
+    self.saveState(Exports.Constants.SAVE_STATES.SAVING);
+    serialized = self.toJSON();
+    $.post(self.saveUrl, serialized)
+        .success(function(data) {
+            var eventCategory,
+                redirect = function() { window.location.href = data.redirect; };
+
+            self.saveState(Exports.Constants.SAVE_STATES.SUCCESS);
+            self.recordSaveAnalytics();
+
+            if (self.isNew()) {
+                eventCategory = Exports.Utils.getEventCategory(self.type());
+                ga_track_event(eventCategory, 'Custom export creation', '', {
+                    hitCallback: redirect
+                });
+            } else {
+                redirect();
+            }
+        })
+        .fail(function(response) {
+            self.saveState(Exports.Constants.SAVE_STATES.ERROR);
+        });
+};
+
+Exports.ViewModels.ExportInstance.prototype.recordSaveAnalytics = function() {
+    var analyticsAction = self.is_daily_saved_export() ? 'Saved' : 'Regular',
+        analyticsExportType = _.capitalize(self.type());
+
+    analytics.usage("Create Export", analyticsExportType, analyticsAction);
+    if (self.export_format === Exports.Constants.EXPORT_FORMATS.HTML) {
+        analytics.usage("Create Export", analyticsExportType, 'Excel Dashboard');
+    }
+    if (self.isNew()) {
+        analytics.workflow("Clicked 'Create' in export edit page");
+    }
+};
+
+Exports.ViewModels.ExportInstance.prototype.toJS = function() {
+    return ko.mapping.toJS(this, Exports.ViewModels.ExportInstance.mapping);
 };
 
 Exports.ViewModels.ExportInstance.mapping = {
     include: [
+        '_id',
         'name',
         'tables',
         'type',
