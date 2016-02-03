@@ -20,6 +20,21 @@ nav.app-manager-content {
             }
         }
     }
+
+    // Container for language dropdown
+    #langs {
+        position: absolute;
+        right: 5px;
+        top: 2px;
+
+        select {
+            height: 20px;
+
+            // Chrome on Windows respects padding inherited from .form-control, which
+            // isn't desirable, as it doesn't play well with the explicit (short) height
+            padding: 0;
+        }
+    }
 }
 
 .delete-me {

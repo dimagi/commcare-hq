@@ -167,9 +167,9 @@
                 {% trans "Languages" %}
             </a>
             {% if app.get_doc_type == 'Application' %}
-                <span id="langs" style="position: absolute; right: 5px; top: 2px;">
+                <span id="langs">
                     {% if not app.is_remote_app and app.langs|length > 1%}
-                        <select name="lang" class="form-control" style="height: 20px;">
+                        <select name="lang" class="form-control">
                             {% for lang in app.langs %}
                                 <option value="{{ lang }}"
                                         {% if lang == langs.0 %}selected=""{% endif %}>
