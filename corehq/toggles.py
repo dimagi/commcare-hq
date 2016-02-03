@@ -596,6 +596,13 @@ LINK_SUPPLY_POINT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+ICDS_REPORTS = StaticToggle(
+    'icds_reports',
+    'Enable access to the Tableau dashboard for ICDS',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     'multiple_choice_custom_field',
     'Allow project to use multiple choice field in custom fields',
@@ -687,13 +694,12 @@ VIEW_BUILD_SOURCE = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-# Removed until ready for production
-# USE_SQL_BACKEND = StaticToggle(
-#     'sql_backend',
-#     'Uses a sql backend instead of a couch backend for form processing',
-#     TAG_PRODUCT_CORE,
-#     [NAMESPACE_DOMAIN]
-# )
+USE_SQL_BACKEND = StaticToggle(
+    'sql_backend',
+    'Uses a sql backend instead of a couch backend for form processing (testing only)',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
 
 
 EWS_WEB_USER_EXTENSION = StaticToggle(
@@ -714,6 +720,13 @@ GRID_MENUS = StaticToggle(
     'grid_menus',
     'Allow using grid menus on Android',
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+NEW_EXPORTS = StaticToggle(
+    'new_exports',
+    'Use new backend export infrastructure',
+    TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
 )
 
@@ -741,6 +754,14 @@ CUSTOM_APP_BASE_URL = StaticToggle(
 TF_USES_SQLITE_BACKEND = StaticToggle(
     'tf_sql_backend',
     'Use a SQLite backend for Touchforms',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
+CASE_LIST_DISTANCE_SORT = StaticToggle(
+    'case_list_distance_sort',
+    'Allow sorting by distance from current location in the case list',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )

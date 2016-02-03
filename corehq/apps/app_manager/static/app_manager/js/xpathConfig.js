@@ -1,0 +1,1 @@
+../../../xpath_validator/nodejs/xpathConfig.js

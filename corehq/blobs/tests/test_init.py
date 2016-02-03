@@ -29,6 +29,6 @@ def test_get_blobdb(self, msg, root=True, blob_dir=None):
             temp_dir=None,
             blob_dir=blob_dir,
         )
-        with override_settings(SHARED_DRIVE_CONF=conf):
+        with override_settings(SHARED_DRIVE_CONF=conf, S3_BLOB_DB_SETTINGS=None):
             with assert_raises(mod.Error, msg=re.compile(msg)):
                 mod.get_blob_db()

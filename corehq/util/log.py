@@ -10,6 +10,7 @@ from pygments.formatters import HtmlFormatter
 
 from celery.utils.mail import ErrorMail
 from django.core import mail
+from django.http import HttpRequest
 from django.utils.log import AdminEmailHandler
 from django.views.debug import SafeExceptionReporterFilter, get_exception_reporter_filter
 from django.template.loader import render_to_string
@@ -40,6 +41,18 @@ def clean_exception(exception):
     return exception
 
 
+def get_sanitized_request_repr(request):
+    """
+    Santizes sensitive data inside request object, if request has been marked sensitive
+    via Django decorator, django.views.decorators.debug.sensitive_post_parameters
+    """
+    if isinstance(request, HttpRequest):
+        filter = get_exception_reporter_filter(request)
+        return filter.get_request_repr(request)
+
+    return request
+
+
 class HqAdminEmailHandler(AdminEmailHandler):
     """
     Custom AdminEmailHandler to include additional details which can be supplied as follows:
@@ -51,13 +64,12 @@ class HqAdminEmailHandler(AdminEmailHandler):
     )
     """
     def get_context(self, record):
-        request = None
         try:
             request = record.request
-            filter = get_exception_reporter_filter(request)
-            request_repr = filter.get_request_repr(request)
         except Exception:
-            request_repr = "Request repr() unavailable."
+            request = None
+
+        request_repr = get_sanitized_request_repr(request)
 
         tb_list = []
         code = None

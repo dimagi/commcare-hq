@@ -99,24 +99,28 @@ function HQReportDataTables(options) {
                 params.bProcessing = true;
                 params.sAjaxSource = self.ajaxSource;
                 params.bFilter = $(this).data('filter') || false;
-                params.fnServerParams = function ( aoData ) {
+                self.fmtParams = function (defParams) {
                     var ajaxParams = $.isFunction(self.ajaxParams) ? self.ajaxParams() : self.ajaxParams;
                     for (var p in ajaxParams) {
                         if (ajaxParams.hasOwnProperty(p)) {
                             var currentParam = ajaxParams[p];
                             if(_.isObject(currentParam.value)) {
                                 for (var j=0; j < currentParam.value.length; j++) {
-                                    aoData.push({
+                                    defParams.push({
                                         name: currentParam.name,
                                         value: currentParam.value[j]
                                     });
                                 }
                             } else {
-                                aoData.push(currentParam);
+                                defParams.push(currentParam);
                             }
                         }
                     }
+                    return defParams;
                 };
+                if (!self.useBootstrap3) {
+                    params.fnServerParams = self.fmtParams;
+                }
                 params.fnServerData = function ( sSource, aoData, fnCallback, oSettings ) {
                     var custom_callback = function(data) {
                         var result = fnCallback(data); // this must be called first because datatables clears the tfoot of the table
@@ -143,7 +147,7 @@ function HQReportDataTables(options) {
 
                     oSettings.jqXHR = $.ajax( {
                         "url": sSource,
-                        "data": aoData,
+                        "data": (self.useBootstrap3) ? self.fmtParams(aoData) : aoData,
                         "success": custom_callback,
                         "error": function(data) {
                             $(".dataTables_processing").hide();
@@ -190,8 +194,12 @@ function HQReportDataTables(options) {
             }
             $(window).on('resize', function () {
                 datatable.fnAdjustColumnSizing();
-            } );
-
+            });
+            if (self.useBootstrap3) {
+                $('.dataTables_paginate a').on('click', function () {
+                    datatable.fnAdjustColumnSizing();
+                });
+            }
 
             var $dataTablesFilter = $(".dataTables_filter");
             if($dataTablesFilter && $("#extra-filter-info")) {

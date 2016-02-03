@@ -1,7 +1,7 @@
 from collections import defaultdict
 from datetime import datetime
 import logging
-from xml.etree import ElementTree
+from lxml.builder import E
 from django.conf import settings
 
 from corehq import toggles
@@ -41,13 +41,8 @@ class ReportFixturesProvider(object):
         if not report_configs:
             return []
 
-        root = ElementTree.Element('fixture', attrib={'id': self.id})
-        reports_elem = ElementTree.Element(
-            'reports',
-            attrib={
-                'last_sync': datetime.utcnow().isoformat(),
-            },
-        )
+        root = E.fixture(id=self.id)
+        reports_elem = E.reports(last_sync=datetime.utcnow().isoformat())
         for report_config in report_configs:
             try:
                 reports_elem.append(self._report_config_to_fixture(report_config, user))
@@ -61,8 +56,9 @@ class ReportFixturesProvider(object):
         root.append(reports_elem)
         return [root]
 
-    def _report_config_to_fixture(self, report_config, user):
-        report_elem = ElementTree.Element('report', attrib={'id': report_config.uuid})
+    @staticmethod
+    def _report_config_to_fixture(report_config, user):
+        report_elem = E.report(id=report_config.uuid)
         report = ReportConfiguration.get(report_config.report_id)
         data_source = ReportFactory.from_spec(report)
 
@@ -82,22 +78,16 @@ class ReportFixturesProvider(object):
         data_source.set_filter_values(filter_values)
         data_source.defer_filters(defer_filters)
 
-        rows_elem = ElementTree.Element('rows')
+        rows_elem = E.rows()
 
         deferred_fields = {ui_filter.field for ui_filter in defer_filters.values()}
         filter_options_by_field = defaultdict(set)
 
         def _row_to_row_elem(row, index, is_total_row=False):
-            row_elem = ElementTree.Element(
-                'row',
-                attrib={
-                    'index': str(index),
-                    'is_total_row': str(is_total_row),
-                }
-            )
+            row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             for k in sorted(row.keys()):
                 value = serialize(row[k])
-                row_elem.append(self._element('column', value, attrib={'id': k}))
+                row_elem.append(E.column(value, id=k))
                 if not is_total_row and k in deferred_fields:
                     filter_options_by_field[k].add(value)
             return row_elem
@@ -123,29 +113,21 @@ class ReportFixturesProvider(object):
                 is_total_row=True,
             ))
 
-        filters_elem = self._element('filters')
+        filters_elem = E.filters()
         for filter_slug, ui_filter in defer_filters.items():
             # @field is maybe a bad name for this attribute,
             # since it's actually the filter slug
-            filter_elem = self._element('filter', attrib={'field': filter_slug})
+            filter_elem = E.filter(field=filter_slug)
             option_values = filter_options_by_field[ui_filter.field]
             choices = ui_filter.choice_provider.get_sorted_choices_for_values(option_values)
             for choice in choices:
                 # add the correct text from ui_filter.choice_provider
-                option_elem = self._element(
-                    'option', text=choice.display, attrib={'value': choice.value})
+                option_elem = E.option(choice.display, value=choice.value)
                 filter_elem.append(option_elem)
             filters_elem.append(filter_elem)
 
         report_elem.append(filters_elem)
         report_elem.append(rows_elem)
         return report_elem
-
-    @staticmethod
-    def _element(name, text=None, attrib=None):
-        attrib = attrib or {}
-        element = ElementTree.Element(name, attrib=attrib)
-        element.text = text
-        return element
 
 report_fixture_generator = ReportFixturesProvider()

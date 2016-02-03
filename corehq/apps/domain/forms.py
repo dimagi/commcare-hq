@@ -1340,8 +1340,8 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                     return False
 
                 for later_subscription in Subscription.objects.filter(
-                    subscriber__domain=self.domain.name,
-                    date_start__gt=self.date_start
+                    subscriber__domain=self.domain,
+                    date_start__gt=self.current_subscription.date_start
                 ).order_by('date_start').all():
                     later_subscription.date_start = datetime.date.today()
                     later_subscription.date_end = datetime.date.today()

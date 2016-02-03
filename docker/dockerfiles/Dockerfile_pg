@@ -1,0 +1,22 @@
+FROM postgres:9.4
+
+ENV PGVERSION 9.4
+
+RUN apt-get update && apt-get -y install \
+    gcc \
+    make \
+    postgresql-$PGVERSION-plproxy \
+    postgresql-contrib-$PGVERSION \
+    postgresql-server-dev-$PGVERSION \
+    python-docutils \
+    unzip \
+    wget \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN wget --quiet https://github.com/markokr/pghashlib/archive/master.zip -O pghashlib.zip \
+  && unzip pghashlib.zip \
+  && cd pghashlib-master \
+  && PG_CONFIG=/usr/lib/postgresql/$PGVERSION/bin/pg_config make \
+  && PG_CONFIG=/usr/lib/postgresql/$PGVERSION/bin/pg_config make install \
+  && ldconfig

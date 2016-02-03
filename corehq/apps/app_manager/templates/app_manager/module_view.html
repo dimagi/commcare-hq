@@ -7,6 +7,7 @@
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
+    {% include "app_manager/partials/xpathValidator.html" %}
     <script>
     if (window.toggles === undefined) {
         window.toggles = {};
@@ -17,6 +18,7 @@
     window.feature_previews.ENUM_IMAGE = {{ request|feature_preview_enabled:"ENUM_IMAGE"|BOOL }};
     window.feature_previews.CALC_XPATHS = {{ request|feature_preview_enabled:"CALC_XPATHS"|BOOL }};
     window.toggles.MM_CASE_PROPERTIES = {{ request|toggle_enabled:"MM_CASE_PROPERTIES"|BOOL }};
+    window.toggles.CASE_LIST_DISTANCE_SORT = {{ request|toggle_enabled:"CASE_LIST_DISTANCE_SORT"|BOOL }};
     window.toggles.GRAPH_CREATION = {{ request|toggle_enabled:"GRAPH_CREATION"|BOOL }};
     window.toggles.CASE_LIST_CUSTOM_XML = {{ request|toggle_enabled:"CASE_LIST_CUSTOM_XML"|BOOL }};
     window.toggles.CASE_LIST_TILE = {{ request|toggle_enabled:"CASE_LIST_TILE"|BOOL }};
@@ -29,7 +31,6 @@
     <link rel="stylesheet" href="{% static 'app_manager/css/graph-configuration.css' %}"/>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
-    {% include "style/bootstrap2/ko/value-or-none-ui.html" %}
     {% include "app_manager/partials/nav_menu_media_js_common.html" %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_menu_item qualifier='case_list-menu_item_' %}
@@ -254,11 +255,7 @@
                         </select>
                     </div>
                 </div>
-                {% if module.module_filter %}
-                    {% include "app_manager/partials/module_filter.html" with value=module.module_filter %}
-                {% else %}
-                    {% include "app_manager/partials/module_filter.html" with value="" %}
-                {% endif %}
+                {% include "app_manager/partials/module_filter.html" with value=module.module_filter %}
                 {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
                 {% if child_module_enabled %}
                 <div class="control-group">

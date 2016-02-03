@@ -4,9 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.accounting.utils import fmt_dollar_amount, log_accounting_error
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
 from corehq.apps.hqwebapp.encoders import LazyEncoder
-from corehq.apps.sms.mixin import SMSBackend
-from corehq.apps.sms.models import INCOMING, OUTGOING
-from corehq.apps.sms.util import get_backend_by_class_name
+from corehq.apps.sms.models import INCOMING, OUTGOING, SQLMobileBackend
 from corehq.apps.smsbillables.exceptions import SMSRateCalculatorError
 from corehq.apps.smsbillables.models import SmsGatewayFeeCriteria, SmsGatewayFee, SmsUsageFee
 from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty
@@ -26,8 +24,7 @@ class SMSRatesAsyncHandler(BaseAsyncHandler):
     def get_rate_response(self):
         gateway = self.data.get('gateway')
         try:
-            backend = SMSBackend.get(gateway)
-            backend_api_id = get_backend_by_class_name(backend.doc_type).get_api_id()
+            backend_api_id = SQLMobileBackend.get_backend_api_id(gateway, is_couch_id=True)
         except Exception as e:
             log_accounting_error(
                 "Failed to get backend for calculating an sms rate due to: %s"
@@ -62,8 +59,7 @@ class SMSRatesSelect2AsyncHandler(BaseAsyncHandler):
     def country_code_response(self):
         gateway = self.data.get('gateway')
         try:
-            backend = SMSBackend.get(gateway)
-            backend_api_id = get_backend_by_class_name(backend.doc_type).get_api_id()
+            backend_api_id = SQLMobileBackend.get_backend_api_id(gateway, is_couch_id=True)
         except Exception:
             return []
         direction = self.data.get('direction')
@@ -114,11 +110,7 @@ class PublicSMSRatesAsyncHandler(BaseAsyncHandler):
 
     @quickcache(['country_code'], timeout=24 * 60 * 60)
     def get_rate_table(self, country_code):
-        backends = SMSBackend.view(
-            'sms/global_backends',
-            reduce=False,
-            include_docs=True,
-        ).all()
+        backends = SQLMobileBackend.get_global_backends(SQLMobileBackend.SMS)
 
         def _directed_fee(direction, backend_api_id, backend_instance_id):
             gateway_fee = SmsGatewayFee.get_by_criteria(
@@ -135,12 +127,11 @@ class PublicSMSRatesAsyncHandler(BaseAsyncHandler):
 
         rate_table = []
 
-        from corehq.messaging.smsbackends.test.models import TestSMSBackend
+        from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 
         for backend_instance in backends:
-            backend_instance = backend_instance.wrap_correctly()
             # Skip Testing backends
-            if isinstance(backend_instance, TestSMSBackend):
+            if isinstance(backend_instance, SQLTestSMSBackend):
                 continue
 
             # skip if country is not in supported countries
@@ -151,10 +142,14 @@ class PublicSMSRatesAsyncHandler(BaseAsyncHandler):
 
             gateway_fee_incoming = _directed_fee(
                 INCOMING,
-                backend_instance.incoming_api_id or backend_instance.get_api_id(),
-                backend_instance._id
+                backend_instance.hq_api_id,
+                backend_instance.couch_id
             )
-            gateway_fee_outgoing = _directed_fee(OUTGOING, backend_instance.get_api_id(), backend_instance._id)
+            gateway_fee_outgoing = _directed_fee(
+                OUTGOING,
+                backend_instance.hq_api_id,
+                backend_instance.couch_id
+            )
 
             if gateway_fee_outgoing or gateway_fee_incoming:
                 rate_table.append({

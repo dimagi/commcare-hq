@@ -1,19 +1,22 @@
 {% extends 'reports/filters/bootstrap3/base.html' %}
-{% load staticfiles %}
+{% load hq_shared_tags %}
 {% load i18n %}
 {% block filter_content %}
-    <input type="text" id="filter_date_selector" name="date" value="{{ date|date:'Y-m-d' }}" />
+    <input type="text"
+           id="filter_date_selector"
+           name="date"
+           value="{{ date|date:'Y-m-d' }}"
+           class="form-control" />
 {% endblock %}
 {% block filter_js %}
 {% ifequal slug 'date'  %}
-    <link rel="stylesheet" type="text/css" href="{% new_static "reports/css/daterangepicker-bs2.css" %}">
-    <script type="text/javascript" src="{% new_static 'reports/javascripts/bootstrap-daterangepicker/moment.min.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'reports/javascripts/bootstrap-daterangepicker/daterangepicker.min.js' %}"></script>
     <script type="text/javascript">
         $(function () {
             $('#filter_date_selector').daterangepicker(
                 {
-                    format: 'YYYY-MM-DD',
+                    locale: {
+                        format: 'YYYY-MM-DD'
+                    },
                     singleDatePicker: true
                 }
             );

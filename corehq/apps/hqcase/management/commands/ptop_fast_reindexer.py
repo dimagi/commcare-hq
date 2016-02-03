@@ -35,11 +35,7 @@ class PaginateViewLogHandler(object):
             total_emitted + kwargs['limit'] - 1)
         )
         startkey = kwargs.get('startkey')
-        if isinstance(startkey, basestring):
-            startkey = startkey.encode('utf8')
-        elif isinstance(startkey, list):
-            startkey = [i.encode('utf8') for i in startkey if isinstance(i, basestring)]
-        self.log('  startkey={}, startkey_docid={!r}'.format(startkey, kwargs.get('startkey_docid')))
+        self.log(u'  startkey={!r}, startkey_docid={!r}'.format(startkey, kwargs.get('startkey_docid')))
 
     def view_ending(self, db, view_name, kwargs, total_emitted, time):
         self.log('View call took {}'.format(time))
@@ -313,7 +309,7 @@ class PtopReindexer(NoArgsCommand):
         bulk_start = datetime.utcnow()
         while retries < MAX_TRIES:
             try:
-                self.log('Sending chunk to ES')
+                self.log('Sending chunk to ES: %s:%s' % (start, end))
                 assert isinstance(self.pillow, AliasedElasticPillow)
                 self.pillow.process_bulk(filtered_slice)
                 break

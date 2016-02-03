@@ -1,5 +1,4 @@
 import requests
-from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import SMS, SQLSMSBackend
 from corehq.apps.sms.util import strip_plus
 from corehq.messaging.smsbackends.smsgh.forms import SMSGHBackendForm
@@ -14,10 +13,18 @@ class SMSGHException(Exception):
     pass
 
 
-class SMSGHBackend(SMSBackend):
-    from_number = StringProperty()
-    client_id = StringProperty()
-    client_secret = StringProperty()
+class SQLSMSGHBackend(SQLSMSBackend):
+    class Meta:
+        app_label = 'sms'
+        proxy = True
+
+    @classmethod
+    def get_available_extra_fields(cls):
+        return [
+            'from_number',
+            'client_id',
+            'client_secret',
+        ]
 
     @classmethod
     def get_url(cls):
@@ -29,7 +36,7 @@ class SMSGHBackend(SMSBackend):
 
     @classmethod
     def get_generic_name(cls):
-        return 'SMSGH'
+        return "SMSGH"
 
     @classmethod
     def get_form_class(cls):
@@ -78,12 +85,13 @@ class SMSGHBackend(SMSBackend):
     def send(self, msg, *args, **kwargs):
         text = msg.text.encode('utf-8')
 
+        config = self.config
         params = {
-            'From': self.from_number,
+            'From': config.from_number,
             'To': msg.phone_number,
             'Content': text,
-            'ClientId': self.client_id,
-            'ClientSecret': self.client_secret,
+            'ClientId': config.client_id,
+            'ClientSecret': config.client_secret,
         }
         response = requests.get(self.get_url(), params=params)
 
@@ -91,25 +99,3 @@ class SMSGHBackend(SMSBackend):
             self.handle_error(response, msg)
         else:
             self.handle_success(response, msg)
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLSMSGHBackend
-
-
-class SQLSMSGHBackend(SQLSMSBackend):
-    class Meta:
-        app_label = 'sms'
-        proxy = True
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return SMSGHBackend
-
-    @classmethod
-    def get_available_extra_fields(cls):
-        return [
-            'from_number',
-            'client_id',
-            'client_secret',
-        ]

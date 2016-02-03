@@ -458,7 +458,7 @@ class ApplicationDataRMIHelper(object):
         for app_type, apps in apps_by_type.items():
             if not app_type == self.APP_TYPE_NONE:
                 for app_choice in apps:
-                    app = Application.get(app_choice.id)
+                    app = get_app(self.domain, app_choice.id)
                     case_types = []
                     if hasattr(app, 'modules'):
                         case_types = set([

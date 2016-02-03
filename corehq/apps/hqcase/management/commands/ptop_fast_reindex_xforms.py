@@ -21,7 +21,7 @@ class Command(ElasticReindexer):
         super(Command, self).handle(*args, **options)
 
     def custom_filter(self, view_row):
-        if 'xmlns' in view_row:
+        if view_row and 'xmlns' in view_row:
             return view_row['xmlns'] != DEVICE_LOG_XMLNS
         else:
             logging.warning('Unexpected input to custom_filter: {}'.format(view_row))

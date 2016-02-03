@@ -54,14 +54,12 @@ from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.hqwebapp.doc_info import get_doc_info
-from corehq.util.cache_utils import ExponentialBackoff
-from corehq.util.context_processors import get_domain_type
 from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.logging import notify_exception, notify_js_exception
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from corehq.apps.hqadmin.management.commands.celery_deploy_in_progress import CELERY_DEPLOY_IN_PROGRESS_FLAG
@@ -80,14 +78,7 @@ def pg_check():
 
 
 def couch_check():
-    """check couch"""
-
-    #in reality when things go wrong with couch and postgres (as of this
-    # writing) - it's far from graceful, so this will # likely never be
-    # reached because another exception will fire first - but for
-    # completeness  sake, this check is done  here to verify our calls will
-    # work, and if other error handling allows the request to get this far.
-
+    """Confirm CouchDB is up and running, by hitting an arbitrary view."""
     try:
         results = Application.view('app_manager/builds_by_date', limit=1).all()
     except Exception:
@@ -222,7 +213,7 @@ def redirect_to_default(req, domain=None):
         else:
             domains = Domain.active_for_user(req.user)
         if 0 == len(domains) and not req.user.is_superuser:
-            return redirect('registration_domain', domain_type=get_domain_type(None, req))
+            return redirect('registration_domain')
         elif 1 == len(domains):
             if domains[0]:
                 domain = domains[0].name

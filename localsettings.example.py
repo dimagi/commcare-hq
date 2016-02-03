@@ -28,7 +28,8 @@ if USE_PARTITIONED_DATABASE:
             'main': ['default'],
             'proxy': ['proxy'],
             'form_processing': ['p1', 'p2'],
-        }
+        },
+        'host_map': {}  # allows mapping HOST in DATABASE settings to a different value for plproxy
     }
 
     DATABASES.update({

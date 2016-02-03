@@ -12,6 +12,7 @@ try:
     from corehq.apps.app_manager.tests.test_build_errors import *
     from corehq.apps.app_manager.tests.test_bulk_app_translation import *
     from corehq.apps.app_manager.tests.test_bulk_ui_translation import *
+    from corehq.apps.app_manager.tests.test_case_detail_distance import *
     from corehq.apps.app_manager.tests.test_case_list_form import *
     from corehq.apps.app_manager.tests.test_case_list_lookup import *
     from corehq.apps.app_manager.tests.test_case_meta import *
@@ -28,6 +29,7 @@ try:
     from corehq.apps.app_manager.tests.test_models import *
     from corehq.apps.app_manager.tests.test_profile import *
     from corehq.apps.app_manager.tests.test_report_config import *
+    from corehq.apps.app_manager.tests.test_report_fixtures_provider import *
     from corehq.apps.app_manager.tests.test_schedule import *
     from corehq.apps.app_manager.tests.test_suite import *
     from corehq.apps.app_manager.tests.test_suite_form_filter_errors import *
@@ -40,6 +42,7 @@ try:
     from corehq.apps.app_manager.tests.test_xform_parsing import *
     from corehq.apps.app_manager.tests.test_xml_parsing import *
     from corehq.apps.app_manager.tests.test_xpath import *
+    from corehq.apps.app_manager.xpath_validator.tests import *
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
     # otherwise debugging is a pain

@@ -2,8 +2,7 @@ import sys
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.ivr.api import incoming, IVR_EVENT_NEW_CALL, IVR_EVENT_INPUT, IVR_EVENT_DISCONNECT
-from corehq.messaging.ivrbackends.kookoo.models import KooKooBackend
-from corehq.apps.sms.models import CallLog
+from corehq.apps.sms.models import CallLog, SQLMobileBackend
 from dimagi.utils.couch import CriticalSection
 
 
@@ -40,9 +39,10 @@ def ivr(request):
     else:
         ivr_event = IVR_EVENT_DISCONNECT
 
-    # Once this moves to postgres we'll have a better way to look this up.
-    # For now, I don't want to add or change any couch views.
-    backend = KooKooBackend.get('MOBILE_BACKEND_KOOKOO')
+    backend = SQLMobileBackend.get_global_backend_by_name(
+        SQLMobileBackend.IVR,
+        'MOBILE_BACKEND_KOOKOO'
+    )
     with CriticalSection([gateway_session_id], timeout=300):
         result = incoming(phone_number, gateway_session_id, ivr_event,
             backend=backend, input_data=data, duration=total_call_duration)

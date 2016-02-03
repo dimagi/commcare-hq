@@ -133,6 +133,7 @@ ko.bindingHandlers.langcode = {
     },
     update: ko.bindingHandlers.editableString.update
 };
+
 ko.bindingHandlers.sortable = {
     updateSortableList: function (itemList) {
         _(itemList()).each(function (item, index) {
@@ -492,25 +493,6 @@ function _makeClickHelper(fnName, icon) {
 ko.bindingHandlers.exitInput = _makeClickHelper('exitInput', 'icon icon-remove fa fa-remove');
 ko.bindingHandlers.enterInput = _makeClickHelper('enterInput', 'icon icon-plus fa fa-plus');
 
-ko.bindingHandlers.valueOrNoneUI = {
-    init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        var opts = valueAccessor(),
-            helper;
-        opts.messages = opts.messages || {};
-        $('span', element).each(function () {
-            opts.messages[$(this).data('slug')] = $(this).html();
-            $(this).hide();
-        });
-        helper = new ValueOrNoneUI(opts);
-        var subElement = $('<div></div>').attr(
-            'data-bind',
-            "template: 'value-or-none-ui-template'"
-        ).appendTo(element);
-        subElement.koApplyBindings(helper);
-        return {controlsDescendantBindings: true};
-    }
-};
-
 ko.bindingHandlers.makeHqHelp = {
     update: function (element, valueAccessor) {
         var opts = valueAccessor(),
@@ -798,3 +780,10 @@ ko.bindingHandlers.stopBinding = {
     }
 };
 ko.virtualElements.allowedBindings.stopBinding = true;
+
+ko.bindingHandlers.popover = {
+    update: function(element, valueAccessor) {
+        var options = ko.utils.unwrapObservable(valueAccessor());
+        $(element).popover(options);
+    }
+};

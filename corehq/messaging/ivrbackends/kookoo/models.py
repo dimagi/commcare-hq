@@ -1,5 +1,5 @@
 from corehq.apps.ivr.api import log_error, GatewayConnectionError
-from corehq.apps.ivr.models import IVRBackend, SQLIVRBackend
+from corehq.apps.ivr.models import SQLIVRBackend
 from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.sms.util import strip_plus
 from dimagi.ext.couchdbkit import StringProperty
@@ -13,8 +13,16 @@ from xml.etree.ElementTree import XML
 from xml.sax.saxutils import escape
 
 
-class KooKooBackend(IVRBackend):
-    api_key = StringProperty()
+class SQLKooKooBackend(SQLIVRBackend):
+    class Meta:
+        app_label = 'sms'
+        proxy = True
+
+    @classmethod
+    def get_available_extra_fields(cls):
+        return [
+            'api_key',
+        ]
 
     @classmethod
     def get_api_id(cls):
@@ -113,7 +121,7 @@ class KooKooBackend(IVRBackend):
         url_base = get_url_base()
         params = urlencode({
             'phone_no': phone_number,
-            'api_key': self.api_key,
+            'api_key': self.config.api_key,
             'outbound_version': '2',
             'url': url_base + reverse('corehq.messaging.ivrbackends.kookoo.views.ivr'),
             'callback_url': url_base + reverse('corehq.messaging.ivrbackends.kookoo.views.ivr_finished'),
@@ -125,23 +133,3 @@ class KooKooBackend(IVRBackend):
         except Exception:
             notify_exception(None, message='[IVR] Error connecting to KooKoo')
             raise GatewayConnectionError('Error connecting to KooKoo')
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLKooKooBackend
-
-
-class SQLKooKooBackend(SQLIVRBackend):
-    class Meta:
-        app_label = 'sms'
-        proxy = True
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return KooKooBackend
-
-    @classmethod
-    def get_available_extra_fields(cls):
-        return [
-            'api_key',
-        ]

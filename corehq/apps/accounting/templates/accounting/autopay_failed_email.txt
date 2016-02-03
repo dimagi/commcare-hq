@@ -1,0 +1,21 @@
+Hello,
+
+This is a notice to inform you that your credit card payment for your CommCare
+subscription for project space {{ domain }} was declined. Please check to see
+if your billing information correctly matches your credit card.
+
+Here are the details of your declined payment:
+Billed To: {{ autopay_card.brand }} card with last four digits {{ autopay_card.last4 }} expiring {{ autopay_card.exp_month }}/{{ autopay_card.exp_year }}
+Subscription plan: {{ subscription_plan }}
+Billing date: {{ billing_date }}
+Invoice #: {{ invoice_number }}
+
+Please update your billing information at {{ billing_info_url }}
+to prevent disruption to your CommCare subscription. You'll need to pay the
+prior invoice whose payment method was declined, but future invoices will be
+paid via the updated billing information.
+
+If you have any questions, please contact {{ support_email }}.
+
+Thanks,
+-Dimagi

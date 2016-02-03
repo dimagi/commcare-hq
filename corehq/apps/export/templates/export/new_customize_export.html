@@ -1,0 +1,309 @@
+{% extends "settings/bootstrap2/base_template.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %}
+    {{ block.super }}
+    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
+    <script src="{% static 'export/js/models.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script>
+        $(function () {
+            var translations = {
+                forms: "{% trans 'Forms'|escapejs %}",
+                repeat: "{% trans 'Repeat: '|escapejs %}",
+                cases: "{% trans 'Cases'|escapejs %}",
+                case_history: "{% trans 'Case History'|escapejs %}",
+                history_to_parents: "{% trans 'Case History > Parent Cases'|escapejs %}",
+                parent_cases: "{% trans 'Parent Cases'|escapejs %}",
+            };
+            var customExportView = new Exports.ViewModels.ExportInstance({{ export_instance|JSON }});
+
+            $('#customize-export').koApplyBindings(customExportView);
+        });
+    </script>
+{% endblock %}
+
+{% block main_column %}
+WHAT IS UP
+<div id="customize-export" style="display: none;" data-bind="visible: true">
+    {# content for multi-select help popover #}
+    {% if export_instance.type == 'case' %}
+    <div id="popover_content_wrapper" style="display: none">
+        {% blocktrans %}
+            These options allow you to configure how CommCare exports data from multi-select questions.
+            If you do not want to split the options into multiple columns select the 'plain' option.
+        {% endblocktrans %}
+        <br/>
+        {% blocktrans %}
+            Each item that is selected in the select list will appear as a column in the exported data.
+            Any options not selected will be in an "extra" column.
+        {% endblocktrans %}
+        <a href='https://help.commcarehq.org/display/commcarepublic/Splitting+multi-select+data+in+exports' target="_blank">
+            {% trans "More info" %}
+        </a>
+    </div>
+    {% endif %}
+    {% include "export/partial/customize_export_header.html" %}
+    <form class="form-horizontal" method="post">
+        {% csrf_token %}
+        <fieldset>
+            <div class="control-group">
+                <label for="export-name" class="control-label">{% trans "Export Name" %}</label>
+                <div class="controls">
+                    <input type="text" id="export-name" data-bind="value: name" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label for="format-select" class="control-label">{% trans "Default file type" %}</label>
+                <div class="controls">
+                    <select id="format-select" data-bind="value: export_format">
+                        <option value="csv">{% trans "CSV (Zip file)" %}</option>
+                        <option value="xlsx">{% trans "Excel 2007" %}</option>
+                        <option value="xls">{% trans "Excel (older versions)" %}</option>
+                        <option value="html">{% trans "Web Page (Excel Dashboards)" %}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="control-group">
+                <div class="controls">
+                    {% if commtrack_domain %}
+                        <label class="checkbox">
+                            <input type="checkbox" id="presave-checkbox" data-bind="checked: export_stock" />
+                            {% trans "Export stock data columns" %}
+                        </label>
+                    {% endif %}
+                    <label class="checkbox">
+                        <input type="checkbox" id="transform-dates-checkbox" data-bind="checked: transform_dates" />
+                        {% trans "Automatically convert dates for Excel" %}
+                    </label>
+                    <label class="checkbox">
+                        <!--<input type="checkbox" id="presave-checkbox" data-bind="checked: presave" />-->
+                        {% trans "Create a Daily Saved Export" %}
+                    </label>
+                {% if export_instance.type == 'form' %}
+                    <label class="checkbox">
+                        <input type="checkbox" id="include-errors-checkbox" data-bind="checked: include_errors" />
+                        {% trans "Include duplicates and other unprocessed forms" %}
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" id="split-multiselects-checkbox" data-bind="checked: split_multiselects" />
+                        {% trans "Expand Multiple Answer Questions" %}
+                    </label>
+                {% endif %}
+                </div>
+            </div>
+        </fieldset>
+        <fieldset data-bind="foreach: { data: tables, as: 'table' }">
+            <div>
+                <legend data-bind="visible: table.isVisible()">
+                    <span>
+                        <input type="checkbox" data-bind="checked: table.selected" />
+                    </span>
+                    <span>
+                        <span data-bind="text: table.displayName">
+                    </span>
+                </legend>
+                <div data-bind="visibleFade: table.selected">
+                    <div class="control-group pull-right">
+                        <div class="controls">
+                            <button type="button" class="btn" data-bind="
+                                click: table.toggleShowDeleted,
+                                css: {active: table.showDeleted}">
+                                <span data-bind="visible: !table.showDeleted()">
+                                {% if export_instance.type == 'form' %}
+                                    {% trans "Show Deleted Questions and Advanced Properties" %}
+                                {% else %}
+                                    {% trans "Show Deleted Properties and Advanced Properties" %}
+                                {% endif %}
+                                </span>
+                                <span data-bind="visible: table.showDeleted">
+                                {% if export_instance.type == 'form' %}
+                                    {% trans "Hide Deleted Questions and Advanced Properties" %}
+                                {% else %}
+                                    {% trans "Hide Deleted Properties and Advanced Properties" %}
+                                {% endif %}
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">{% trans "Sheet Name" %}</label>
+                        <div class="controls">
+                            <input type="text" data-bind="value: table.name" />
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">
+                            <strong>{% trans "Choose the fields you want to export." %}</strong><br />
+                            {% trans "You can drag and drop fields to reorder them.  You can also rename fields, which will update the headers in the export file." %}
+                        </label>
+                        <div class="controls">
+                            <table class="table table-striped table-bordered table-condensed" id="field-select">
+                                <thead>
+                                <tr class="nodrag nodrop">
+                                    <th></th>
+                                    <th>{% trans "Include this Field?" %}<br>
+                                        <a href="#" class="btn btn-mini" data-bind="click: table.selectAll">{% trans "Select All" %}</a>
+                                        <a href="#" class="btn btn-mini btn-inverse" data-bind="click: table.selectNone">{% trans "Select None" %}</a></th>
+                                    <th>
+                                    {% if export_instance.type == 'form' %}
+                                        {% trans "Question" %}
+                                    {% else %}
+                                        {% trans "Property" %}
+                                    {% endif %}
+                                    </th>
+                                    <th>{% trans "Display" %}</th>
+                                    {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
+                                    <th>{% trans "Type" %}</th>
+                                    {% endif %}
+                                    {% if helper.allow_deid %}
+                                    <!--<th class="deid-column" data-bind="visible: $root.showDeidColumn()">{% trans "Sensitivity" %}</th>-->
+                                    {% endif %}
+                                </tr>
+                                </thead>
+                                <tbody data-bind="foreach: { data: table.columns, as: 'column' }">
+                                <!--<tbody data-bind="sortable: column_configuration">-->
+                                    <tr data-bind="
+                                        visible:  $parent.showDeleted() || (column.show || column.selected)
+                                        {% if False %}, attr: {'data-order': _sortableOrder}{% endif %}
+                                        ">
+                                        <td class="sortable-handle">
+                                            <i class="icon-resize-vertical"></i>
+                                        </td>
+                                        <td>
+                                            <!--ko if: ($root.is_deidentified() && column.item.isCaseName()) -->
+                                            <!--<input type="checkbox"-->
+                                                   <!--class="field-include"-->
+                                                   <!--disabled="disabled" />-->
+                                            <!--/ko-->
+                                            <!--ko ifnot: ($root.is_deidentified() && column.item.isCaseName()) -->
+                                            <!--<input type="checkbox"-->
+                                                   <!--class="field-include"-->
+                                                   <!--data-bind="checked: column.selected" />-->
+                                            <!--/ko-->
+                                        </td>
+                                        <td>
+                                            <!--<span data-bind="foreach: _niceField.tags">
+                                                <span data-bind="text: $data, visible: $data, attr: { 'class': $root.row_label_classes($data)}"></span>
+                                            </span>-->
+                                            <!--<code data-bind="text: _niceField.field"></code>-->
+
+                                        </td>
+                                        <td><input class="input-xlarge" type="text" data-bind="value: column.name" /></td>
+                                        {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
+                                        <td class="input">
+                                            <div data-bind="if: !allOptions()">
+                                                <select disabled>
+                                                    <option>{% trans "plain" %}</option>
+                                                </select>
+                                            </div>
+                                            <div data-bind="if: allOptions">
+                                                <select data-bind="
+                                                    value: doc_type,
+                                                    foreach: $root.column_type_options
+                                                "/>
+                                                    <option data-bind="value: value, text: label"></option>
+                                                </select>
+                                                <span data-bind="makeHqHelp: {name: '{% trans "Split multi-select data" %}', placement: 'left'}"></span>
+                                                <div data-bind="if: doc_type() === 'SplitColumn'">
+                                                    <a href="#" data-bind="visible: !showOptions(), click: function() {showOptions(true);}">{% trans "Show Options" %}</a>
+                                                    <div data-bind="visible: showOptions">
+                                                        <select class="select2" data-bind="options: allOptions, selectedOptions: options" multiple="true">
+                                                        </select>
+                                                        <br/>
+                                                        <input class="input input-small" type="text" data-bind="value: newOption"/>
+                                                        <button class="btn" data-bind="click: addOption">{% trans "Add" %}</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        {% endif %}
+                                        {% if helper.allow_deid %}
+                                        <td class="deid-column" data-bind="visible: $root.showDeidColumn()">
+                                            <select data-bind="
+                                                value: transform || '',
+                                                foreach: $root.deid_options,
+                                                visible: (index() !== 'id' || transform()) && !isCaseName()
+                                            ">
+                                                <option data-bind="value: value, text: label"></option>
+                                            </select>
+
+                                            <span class="label label-info"
+                                                  data-bind="visible: $root.export_instance.is_safe() && isCaseName()">
+                                                {% trans "Cannot be published in De-Identified Export." %}
+                                            </span>
+                                        </td>
+                                        {% endif %}
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+        {% if helper.allow_deid %}
+        <fieldset>
+            <legend>{% trans "Privacy Settings" %}</legend>
+            <div class="control-group">
+                <label for="is_safe" class="control-label"></label>
+                <div class="controls deid-column" data-bind="visible: $root.showDeidColumn()">
+                    <label class="checkbox">
+                        <input type="checkbox" id="is_safe" data-bind="checked: export_instance.is_safe" />
+                        {% trans "Publish in" %} {{ DeidExportReport_name }}
+                    </label>
+                    <span class="help-inline">{% trans "Check only if this export has been fully and safely de-identified." %}</span>
+                </div>
+                <button class="btn" data-bind="
+                    visible: !showDeidColumn(),
+                    click: animateShowDeidColumn
+                ">
+                    {% trans "Allow me to mark sensitive data" %}
+                </button>
+            </div>
+        </fieldset>
+        {% endif %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-large btn-primary">
+            <!--<button type="submit" class="btn btn-large btn-primary" data-bind="-->
+                <!--click: save_no_preview,-->
+                <!--disable: (save.state() === 'saving') || (save.state() === 'saving-preview')-->
+            <!--">
+                <span data-bind="visible: (save.state() === 'save') || (save.state() === 'saving-preview')">
+                    <span data-bind="visible: export_instance._id && export_instance._id()">{% trans "Save" %}</span>
+                    <span data-bind="visible: !export_instance._id || !export_instance._id()">{% trans "Create" %}</span>
+                </span>
+                <span data-bind="visible: save.state() === 'saving'">
+                    <i class="icon-refresh icon-spin"></i>
+                    {% trans "Saving" %}
+                </span>
+                <span data-bind="visible: save.state() === 'error'">
+                    {% trans "Try Again" %}
+                </span>-->
+            </button>
+            <a class="btn btn-large" href="{{ export_home_url }}">{% trans "Cancel" %}</a>
+            {% if export_instance.get_id %}
+            <a class="btn btn-large btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ export_instance.get_id }}">
+                <i class="icon-remove icon-white"></i>
+                {% trans "Delete this Export" %}
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    {% if export_instance.get_id %}
+        {% with export_instance as export %}
+            {% include "export/dialogs/delete_custom_export_dialog.html" %}
+        {% endwith %}
+    {% endif %}
+{% endblock %}
+

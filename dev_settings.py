@@ -55,6 +55,8 @@ DATABASES = {
 
 CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}}
 
+# Use faster compressor that doesn't do source maps
+COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor'
 
 PILLOWTOP_MACHINE_ID = 'testhq'  # for tests
 

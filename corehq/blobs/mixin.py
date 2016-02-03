@@ -6,7 +6,7 @@ from os.path import join
 from collections import defaultdict
 from contextlib import contextmanager
 
-from corehq.blobs import get_blob_db
+from corehq.blobs import BlobInfo, get_blob_db
 from corehq.blobs.exceptions import NotFound
 from couchdbkit.exceptions import InvalidAttachment, ResourceNotFound
 from dimagi.ext.couchdbkit import (
@@ -24,6 +24,10 @@ class BlobMeta(DocumentSchema):
     content_type = StringProperty()
     content_length = IntegerProperty()
     digest = StringProperty()
+
+    @property
+    def info(self):
+        return BlobInfo(self.id, self.content_length, self.digest)
 
 
 class BlobMixin(Document):
@@ -164,7 +168,6 @@ class BlobMixin(Document):
         def atomic_blobs_context():
             if self._id is None:
                 self._id = self.get_db().server.next_uuid()
-            non_atomic_blobs = dict(self.blobs)
             old_external_blobs = dict(self.external_blobs)
             if self.migrating_blobs_from_couch:
                 if self._attachments:

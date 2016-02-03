@@ -534,6 +534,8 @@ FACET_MAPPING = [
 
 class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
+    is_bootstrap3 = True
+
     base_template = "hqadmin/bootstrap3/faceted_report.html"
     report_template_path = "reports/async/bootstrap3/tabular.html"
 
@@ -541,7 +543,7 @@ class AdminReport(GenericTabularReport):
     @use_bootstrap3
     @use_datatables
     def set_bootstrap3_status(self, request, *args, **kwargs):
-        self.is_bootstrap3 = True
+        pass
 
 
 class AdminFacetedReport(AdminReport, ElasticTabularReport):
@@ -819,6 +821,46 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get('cp_n_sms_out_30_d', _("Not yet calculated")),
                     format_bool(dom.get('internal', {}).get('custom_eula')),
                     dom.get('hipaa_compliant', _('false'))
+                ]
+
+
+class AdminDomainMapReport(AdminDomainStatsReport):
+    slug = "project_map"
+    name = ugettext_noop('Project Map')
+    facet_title = ugettext_noop("Project Facets")
+    search_for = ugettext_noop("projects...")
+    base_template = "hqadmin/project_map.html"
+
+    exportable = False
+
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        super(AdminDomainStatsReport, self).set_bootstrap3_status(request, *args, **kwargs)
+
+    # a modified version of AdminDomainStatsReport.rows
+    @property
+    def rows(self):
+        domains = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
+
+        def format_date(dstr, default):
+            # use [:19] so that only only the 'YYYY-MM-DDTHH:MM:SS' part of the string is parsed
+            return datetime.strptime(dstr[:19], '%Y-%m-%dT%H:%M:%S').strftime('%Y/%m/%d %H:%M:%S') \
+                   if dstr else default
+
+        for dom in domains:
+            # for some reason when using the statistical facet, ES adds an empty dict to hits
+            if 'name' in dom:
+                yield [
+                    dom.get("hr_name") or dom.get("name"),
+                    self.get_name_or_link(dom, internal_settings=True),
+                    format_date((dom.get("date_created")), _('No date')),
+                    dom.get("internal", {}).get('organization_name') or _('No org'),
+                    format_date((dom.get('deployment') or {}).get('date'), _('No date')),
+                    (dom.get("deployment") or {}).get('countries') or _('No countries'),
+                    dom.get("cp_n_active_cc_users", _("Not yet calculated")),
+                    dom.get("cp_n_forms", _("Not yet calculated")),
+                    dom.get('internal', {}).get('notes') or _('No notes'),
+                    dom.get('internal', {}).get('area') or _('No info'),
+                    dom.get('internal', {}).get('sub_area') or _('No info')
                 ]
 
 

@@ -1,14 +1,15 @@
-from corehq.apps.sms.mixin import MobileBackend, UnrecognizedBackendException
+from corehq.apps.sms.mixin import UnrecognizedBackendException
 from corehq.apps.sms.models import SQLMobileBackend
-from corehq.apps.sms.util import get_available_backends
 
 
 class UnrecognizedIVRBackendException(UnrecognizedBackendException):
     pass
 
 
-class IVRBackend(MobileBackend):
-    backend_type = 'IVR'
+class SQLIVRBackend(SQLMobileBackend):
+    class Meta:
+        app_label = 'sms'
+        proxy = True
 
     def initiate_outbound_call(self, call, logged_subevent, ivr_data=None):
         """
@@ -39,17 +40,3 @@ class IVRBackend(MobileBackend):
             hang_up=False,
             input_length=ivr_data.input_length
         )
-
-    def wrap_correctly(self):
-        backend_classes = get_available_backends(backend_type='IVR')
-        if self.doc_type in backend_classes:
-            return backend_classes[self.doc_type].wrap(self.to_json())
-        else:
-            raise UnrecognizedIVRBackendException("Backend %s has an "
-                "unrecognized doc type." % self._id)
-
-
-class SQLIVRBackend(SQLMobileBackend):
-    class Meta:
-        app_label = 'sms'
-        proxy = True

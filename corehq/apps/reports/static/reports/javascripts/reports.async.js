@@ -187,7 +187,7 @@ var HQAsyncReport = function (o) {
         self.updateReport(true, window.location.search.substr(1));
     });
 
-    self.loadingIssueModal.on('hide', function () {
+    self.loadingIssueModal.on('hide hide.bs.modal', function () {
         if (self.issueAttempts > 0) {
             self.hqLoading = $('.hq-loading');
             self.hqLoading.find('.js-loading-spinner').addClass('hide');

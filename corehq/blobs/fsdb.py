@@ -7,15 +7,14 @@ import os
 import re
 import shutil
 import sys
-from collections import namedtuple
 from hashlib import md5
 from os.path import commonprefix, exists, isabs, isdir, dirname, join, realpath, sep
 from uuid import uuid4
 
+from corehq.blobs import BlobInfo, DEFAULT_BUCKET
 from corehq.blobs.exceptions import BadName, NotFound
 
 CHUNK_SIZE = 4096
-DEFAULT_BUCKET = "_default"
 SAFENAME = re.compile("^[a-z0-9_./-]+$", re.IGNORECASE)
 
 
@@ -94,6 +93,15 @@ class FilesystemBlobDB(object):
         remove(path)
         return True
 
+    def copy_blob(self, content, info, bucket):
+        """Copy blob from other blob database
+
+        :param content: File-like blob content object.
+        :param info: `BlobInfo` object.
+        :param bucket: Bucket name.
+        """
+        raise NotImplementedError
+
     @staticmethod
     def get_unique_name(basename):
         if not basename:
@@ -109,9 +117,6 @@ class FilesystemBlobDB(object):
         if name is None:
             return bucket_path
         return safejoin(bucket_path, name)
-
-
-BlobInfo = namedtuple("BlobInfo", ["name", "length", "digest"])
 
 
 def safejoin(root, subpath):

@@ -12,9 +12,11 @@ testapps.test_elasticsearch: []
 testapps.test_pillowtop:
   - auditcare
   - django_digest
+  - casexml.apps.case
   - corehq.apps.domain
   - corehq.apps.hqadmin
   - corehq.apps.users
+  - corehq.apps.tzmigration
   - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
@@ -218,6 +220,7 @@ couchforms:
   - casexml.apps.phone
   - casexml.apps.stock
   - corehq.apps.hqcase
+  - corehq.apps.hqadmin
   - corehq.apps.products
   - corehq.apps.reminders
   - corehq.apps.sms
@@ -252,6 +255,7 @@ corehq.apps.receiverwrapper:
   - django_prbac
   - phonelog
   - tastypie
+  - corehq.apps.userhack
   # required by user.delete()
   - touchforms.formplayer
   - corehq.apps.tour
@@ -315,3 +319,7 @@ corehq.apps.accounting:
   - corehq.apps.app_manager
   - corehq.apps.reminders
   - corehq.apps.data_interfaces
+corehq.apps.export:
+  - corehq.apps.export
+  - corehq.couchapps
+  - corehq.apps.app_manager
