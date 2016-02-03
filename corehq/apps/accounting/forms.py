@@ -385,7 +385,7 @@ class SubscriptionForm(forms.Form):
         # account_id is not referenced if subscription is not None
         super(SubscriptionForm, self).__init__(*args, **kwargs)
         self.subscription = subscription
-        self.is_existing = subscription is not None
+        is_existing = subscription is not None
         self.web_user = web_user
         today = datetime.date.today()
 
@@ -394,7 +394,7 @@ class SubscriptionForm(forms.Form):
         delay_invoice_until_field = crispy.Field('delay_invoice_until',
                                                  css_class="date-picker")
 
-        if self.is_existing:
+        if is_existing:
             # circular import
             from corehq.apps.accounting.views import (
                 ViewSoftwarePlanVersionView, ManageBillingAccountView
@@ -512,7 +512,7 @@ class SubscriptionForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_text_inline = True
         transfer_fields = []
-        if self.is_existing:
+        if is_existing:
             transfer_fields.extend([
                 crispy.Field(
                     'active_accounts',
@@ -522,8 +522,7 @@ class SubscriptionForm(forms.Form):
             ])
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                '%s Subscription' % ('Edit' if self.is_existing
-                                     else 'New'),
+                '%s Subscription' % ('Edit' if is_existing else 'New'),
                 account_field,
                 crispy.Div(*transfer_fields),
                 start_date_field,
@@ -550,7 +549,7 @@ class SubscriptionForm(forms.Form):
                 crispy.ButtonHolder(
                     crispy.Submit(
                         'set_subscription',
-                        '%s Subscription' % ('Update' if self.is_existing else 'Create'),
+                        '%s Subscription' % ('Update' if is_existing else 'Create'),
                         css_class='disable-on-submit',
                     )
                 )
