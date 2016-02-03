@@ -481,13 +481,14 @@ class FormExportDataSchema(ExportDataSchema):
                 path=_string_path_to_list(group_path),
                 last_occurrences={app_id: app_version},
             )
-            for system_prop in MAIN_TABLE_PROPERTIES:
-                group_schema.items.append(ScalarItem(
-                    path=[system_prop.name],
-                    label=system_prop.name,
-                    tag=system_prop.tag,
-                    last_occurrences={app_id: app_version},
-                ))
+            if group_path == MAIN_TABLE:
+                for system_prop in MAIN_TABLE_PROPERTIES:
+                    group_schema.items.append(ScalarItem(
+                        path=[system_prop.name],
+                        label=system_prop.name,
+                        tag=system_prop.tag,
+                        last_occurrences={app_id: app_version},
+                    ))
 
             for question in group_questions:
                 # Create ExportItem based on the question type
