@@ -166,6 +166,228 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                        "There might be inconsistencies in case totals if the user is part of a case sharing group. "
                        "We are working to correct this shortly.")
 
+    class Row(object):
+        def __init__(self, report, user):
+            self.report = report
+            self.user = user
+
+        def active_count(self, startdate=None):
+            """Open clients seen in the last 120 days"""
+            return self.report.get_number_cases(
+                user_id=self.user.user_id,
+                modified_after=startdate,
+                modified_before=self.report.utc_now,
+                closed=False,
+            )
+
+        def inactive_count(self, startdate=None):
+            """Open clients not seen in the last 120 days"""
+            return self.report.get_number_cases(
+                user_id=self.user.user_id,
+                modified_after=startdate,
+                modified_before=self.report.utc_now,
+                closed=False,
+            )
+
+        def modified_count(self, startdate=None):
+            return self.report.get_number_cases(
+                user_id=self.user.user_id,
+                modified_after=startdate,
+                modified_before=self.report.utc_now,
+            )
+
+        def closed_count(self, startdate=None):
+            return self.report.get_number_cases(
+                user_id=self.user.user_id,
+                modified_after=startdate,
+                modified_before=self.report.utc_now,
+                closed=True
+            )
+
+        def header(self):
+            return self.report.get_user_link(self.user)
+
+    class TotalRow(object):
+        def __init__(self, rows, header):
+            self.rows = rows
+            self._header = header
+
+        def active_count(self, startdate=None):
+            return sum([row.active_count(startdate) for row in self.rows])
+
+        def inactive_count(self, startdate=None):
+            return sum([row.inactive_count(startdate) for row in self.rows])
+
+        def modified_count(self, startdate=None):
+            return sum([row.modified_count(startdate) for row in self.rows])
+
+        def closed_count(self, startdate=None):
+            return sum([row.closed_count(startdate) for row in self.rows])
+
+        def header(self):
+            return self._header
+
+    _default_landmarks = [30, 60, 90]
+    @property
+    @memoized
+    def landmarks(self):
+        landmarks_param = self.request_params.get('landmarks')
+        landmarks_param = landmarks_param if isinstance(landmarks_param, list) else []
+        landmarks_param = [param for param in landmarks_param if isinstance(param, int)]
+        landmarks = landmarks_param if landmarks_param else self._default_landmarks
+        return [datetime.timedelta(days=l) for l in landmarks]
+
+    _default_milestone = 120
+    @property
+    @memoized
+    def milestone(self):
+        milestone_param = self.request_params.get('milestone')
+        milestone_param = milestone_param if isinstance(milestone_param, int) else None
+        milestone = milestone_param if milestone_param else self._default_milestone
+        return datetime.timedelta(days=milestone)
+
+    @property
+    @memoized
+    def utc_now(self):
+        # Fun story:
+        # this function was wrong since 2012. Through a convoluted series
+        # of refactors where no one was really thinking hard about this
+        # it at some point morphed into translating by self.timezone
+        # in the opposite direction.
+        # Additionally, when I (Danny) re-wrote this report in 2012
+        # I had no conception that the dates were suffering from this
+        # timezone stripping problem, and so I hadn't factored that in.
+        # As a result, this was two timezones off from correct
+        # and no one noticed all these years...
+        return datetime.datetime.utcnow()
+
+    @property
+    def headers(self):
+        columns = [DataTablesColumn(_("Users"))]
+        for landmark in self.landmarks:
+            num_cases = DataTablesColumn(_("# Modified or Closed"), sort_type=DTSortType.NUMERIC,
+                help_text=_("The number of cases that have been modified between %d days ago and today.") % landmark.days
+            )
+            num_active = DataTablesColumn(_("# Active"), sort_type=DTSortType.NUMERIC,
+                help_text=_("The number of cases created or modified in the last %d days.") % landmark.days
+            )
+            num_closed = DataTablesColumn(_("# Closed"), sort_type=DTSortType.NUMERIC,
+                help_text=_("The number of cases that have been closed between %d days ago and today.") % landmark.days
+            )
+            proportion = DataTablesColumn(_("Proportion"), sort_type=DTSortType.NUMERIC,
+                help_text=_("The percentage of all recently active cases that were modified or closed in the last %d days.") % landmark.days
+            )
+            columns.append(DataTablesColumnGroup(_("Cases in Last %s Days") % landmark.days if landmark else _("Ever"),
+                num_cases,
+                num_active,
+                num_closed,
+                proportion
+            ))
+        columns.append(DataTablesColumn(_("# Active Cases"),
+            sort_type=DTSortType.NUMERIC,
+            help_text=_('Number of cases modified in the last %s days that are still open') % self.milestone.days))
+        columns.append(DataTablesColumn(_("# Inactive Cases"),
+            sort_type=DTSortType.NUMERIC,
+            help_text=_("Number of cases that are open but haven't been touched in the last %s days") % self.milestone.days))
+        return DataTablesHeader(*columns)
+
+    @property
+    def rows(self):
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        users_data = EMWF.pull_users_and_groups(
+            self.domain,
+            mobile_user_and_group_slugs,
+        )
+        rows = [self.Row(self, user) for user in users_data.combined_users]
+
+        total_row = self.TotalRow(rows, _("All Users"))
+
+        def format_row(row):
+            cells = [row.header()]
+
+            def add_numeric_cell(text, value=None):
+                if value is None:
+                    try:
+                        value = int(text)
+                    except ValueError:
+                        value = text
+                cells.append(util.format_datatables_data(text=text, sort_key=value))
+
+            for landmark in self.landmarks:
+                startdate = self.utc_now - landmark
+                value = row.modified_count(startdate)
+                active = row.active_count(startdate)
+                closed = row.closed_count(startdate)
+                total = active + closed
+
+                try:
+                    p_val = float(value) * 100. / float(total)
+                    proportion = '%.f%%' % p_val
+                except ZeroDivisionError:
+                    p_val = None
+                    proportion = '--'
+                add_numeric_cell(value, value)
+                add_numeric_cell(active, active)
+                add_numeric_cell(closed, closed)
+                add_numeric_cell(proportion, p_val)
+
+            startdate = self.utc_now - self.milestone
+            add_numeric_cell(row.active_count(startdate))
+            add_numeric_cell(row.inactive_count(startdate))
+            return cells
+
+        self.total_row = format_row(total_row)
+        return map(format_row, rows)
+
+    def get_number_cases(self, user_id, modified_after=None, modified_before=None, closed=None):
+        kwargs = {}
+        if closed is not None:
+            kwargs['closed'] = bool(closed)
+        if modified_after:
+            kwargs['modified_on__gte'] = ServerTime(modified_after).phone_time(self.timezone).done()
+        if modified_before:
+            kwargs['modified_on__lt'] = ServerTime(modified_before).phone_time(self.timezone).done()
+        if self.case_type:
+            kwargs['type'] = self.case_type
+
+        qs = CaseData.objects.filter(
+            domain=self.domain,
+            user_id=user_id,
+            **kwargs
+        )
+        return qs.count()
+
+
+class CaseActivityReportNew(WorkerMonitoringCaseReportTableBase):
+    """
+    User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
+    danny   5 (25%)         10 (50%)        20 (100%)       17                          6
+    (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
+    """
+    name = ugettext_noop('Case Activity New')
+    slug = 'case_activity_new'
+    fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+              'corehq.apps.reports.filters.select.CaseTypeFilter']
+    all_users = None
+    display_data = ['percent']
+    emailable = True
+    description = ugettext_noop("Followup rates on active cases.")
+    is_cacheable = True
+
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        if project and project.commtrack_enabled:
+            return False
+        else:
+            return True
+
+    @property
+    def special_notice(self):
+        if self.domain_object.case_sharing_included():
+            return _("This report currently does not support case sharing. "
+                       "There might be inconsistencies in case totals if the user is part of a case sharing group. "
+                       "We are working to correct this shortly.")
+
     _default_landmarks = [30, 60, 90]
     @property
     @memoized
