@@ -234,7 +234,9 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     @property
     def history(self):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_form_operations(self.form_id)
+        operations = FormAccessorSQL.get_form_operations(self.form_id) if self.is_saved() else []
+        operations += self.get_tracked_models_to_create(XFormOperationSQL)
+        return operations
 
     @property
     def metadata(self):
