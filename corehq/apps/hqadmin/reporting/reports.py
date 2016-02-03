@@ -319,7 +319,10 @@ def get_active_dimagi_owned_gateway_projects(domains, datespan, interval,
     Returns list of timestamps and how many domains used a Dimagi owned gateway
     in the past thrity days before each timestamp
     """
-    dimagi_owned_backend_ids = SQLMobileBackend.get_global_backend_ids(couch_id=True)
+    dimagi_owned_backend_ids = SQLMobileBackend.get_global_backend_ids(
+        SQLMobileBackend.SMS,
+        couch_id=True
+    )
     backend_filter = {'terms': {'backend_id': dimagi_owned_backend_ids}}
 
     histo_data = []

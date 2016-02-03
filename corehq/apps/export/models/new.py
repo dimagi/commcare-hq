@@ -24,6 +24,8 @@ from corehq.apps.export.const import (
     PROPERTY_TAG_UPDATE,
     CASE_HISTORY_PROPERTIES,
     CASE_HISTORY_GROUP_NAME,
+    FORM_EXPORT,
+    CASE_EXPORT,
 )
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
@@ -114,6 +116,7 @@ class TableConfiguration(DocumentSchema):
     name = StringProperty()
     path = ListProperty()
     columns = ListProperty(ExportColumn)
+    selected = BooleanProperty(default=False)
 
     def get_rows(self, document):
         """
@@ -164,7 +167,22 @@ class TableConfiguration(DocumentSchema):
 
 
 class ExportInstance(Document):
+    name = StringProperty()
+    type = StringProperty()
     tables = ListProperty(TableConfiguration)
+    export_format = StringProperty(default='csv')
+
+    # Whether to split multiselects into multiple columns
+    split_multiselects = BooleanProperty(default=False)
+
+    # Whether to automatically convert dates to excel dates
+    transform_dates = BooleanProperty(default=False)
+
+    # Whether to include duplicates and other error'd forms in export
+    include_errors = BooleanProperty(default=False)
+
+    # Wether the export is de-identified
+    is_deidentified = BooleanProperty(default=False)
 
     class Meta:
         app_label = 'export'
@@ -172,7 +190,9 @@ class ExportInstance(Document):
     @staticmethod
     def generate_instance_from_schema(schema, domain, app_id=None):
         """Given an ExportDataSchema, this will generate an ExportInstance"""
-        instance = ExportInstance()
+        instance = ExportInstance(
+            type=schema.type
+        )
 
         latest_build_ids_and_versions = get_latest_built_app_ids_and_versions(domain, app_id)
         for group_schema in schema.group_schemas:
@@ -333,6 +353,10 @@ class FormExportDataSchema(ExportDataSchema):
     app_id = StringProperty()
     xmlns = StringProperty()
 
+    @property
+    def type(self):
+        return FORM_EXPORT
+
     @staticmethod
     def generate_schema_from_builds(domain, app_id, form_xmlns):
         """Builds a schema from Application builds for a given identifier
@@ -409,6 +433,10 @@ class FormExportDataSchema(ExportDataSchema):
 class CaseExportDataSchema(ExportDataSchema):
 
     case_type = StringProperty()
+
+    @property
+    def type(self):
+        return CASE_EXPORT
 
     @staticmethod
     def _get_app_build_ids_to_process(domain, last_app_versions):

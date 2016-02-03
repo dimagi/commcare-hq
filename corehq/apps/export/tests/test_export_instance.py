@@ -3,7 +3,7 @@ from django.test import SimpleTestCase
 
 from corehq.apps.export.models import (
     ExportItem,
-    ExportDataSchema,
+    FormExportDataSchema,
     ExportGroupSchema,
     ExportInstance,
 )
@@ -14,7 +14,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
         cls.app_id = '1234'
-        cls.schema = ExportDataSchema(
+        cls.schema = FormExportDataSchema(
             group_schemas=[
                 ExportGroupSchema(
                     path=[None],
@@ -100,7 +100,7 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
     def setUpClass(cls):
         cls.app_id = '1234'
         cls.second_app_id = '5678'
-        cls.schema = ExportDataSchema(
+        cls.schema = FormExportDataSchema(
             group_schemas=[
                 ExportGroupSchema(
                     path=[None],

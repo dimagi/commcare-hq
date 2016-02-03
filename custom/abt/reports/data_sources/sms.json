@@ -371,7 +371,7 @@
                   "switch_on": {
                     "value_expression": {
                       "type": "property_name",
-                      "property_name": "level_1_data"
+                      "property_name": "level_1_name"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",

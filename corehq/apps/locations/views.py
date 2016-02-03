@@ -10,6 +10,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST, require_http_methods
 
 from couchdbkit import ResourceNotFound
+from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui
 from corehq.util.files import file_extention_from_filename
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
@@ -51,6 +52,7 @@ def default(request, domain):
 
 
 class BaseLocationView(BaseDomainView):
+
     @method_decorator(locations_access_required)
     def dispatch(self, request, *args, **kwargs):
         return super(BaseLocationView, self).dispatch(request, *args, **kwargs)
@@ -114,6 +116,8 @@ class LocationTypesView(BaseLocationView):
     template_name = 'locations/location_types.html'
 
     @method_decorator(can_edit_location_types)
+    @use_bootstrap3
+    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(LocationTypesView, self).dispatch(request, *args, **kwargs)
 

@@ -45,11 +45,9 @@
 trunk: master
 name: autostaging
 branches:
-  - b3-app-manager+xpath-error-message  # Danny 1/27
   - kill-x_over_time  # Danny 12/11
   - vellum-staging # J$ 11/13
   - requests #Simon 11/3
-#  - b3-app-manager+new-footer-nav # Jenny 1/25
   - b3-app-manager # Jenny 1/20
   - new-footer-nav # Biyeun 1/4
   - formplayer-toggle # Ben/Will 1/21/16
