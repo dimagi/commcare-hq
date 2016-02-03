@@ -67,6 +67,7 @@ def REPORTS(project):
             monitoring.SubmissionsByFormReport,
             monitoring.FormCompletionTimeReport,
             monitoring.CaseActivityReport,
+            monitoring.CaseActivityReportNew,
             monitoring.FormCompletionVsSubmissionTrendsReport,
             monitoring.WorkerActivityTimes,
         )),
