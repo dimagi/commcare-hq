@@ -3,6 +3,7 @@ from django.core.validators import validate_email
 from django.db import transaction
 from corehq.apps.hqcase.dbaccessors import \
     get_supply_point_case_in_domain_by_id
+from corehq.apps.locations.util import get_lineage_from_location_id
 from corehq.apps.sms.mixin import PhoneNumberInUseException, InvalidFormatException, apply_leniency, VerifiedNumber
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from dimagi.ext.jsonobject import JsonObject, StringProperty, BooleanProperty, DecimalProperty, ListProperty, IntegerProperty,\
@@ -13,7 +14,7 @@ from corehq.apps.programs.models import Program
 from corehq.apps.users.models import UserRole, WebUser
 from custom.api.utils import apply_updates
 from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroupReport, HistoricalLocationGroup, \
-    ILSGatewayWebUser, ILSGatewayConfig
+    ILSGatewayWebUser, ILSGatewayConfig, location_edited_receiver
 from custom.logistics.api import LogisticsEndpoint, APISynchronization, ApiSyncObject
 from corehq.apps.locations.models import Location as Loc
 
@@ -523,8 +524,8 @@ class ILSGatewayAPI(APISynchronization):
                     )
                     loc_parent = sql_loc_parent.couch_location
                 except SQLLocation.DoesNotExist:
-                    parent = self.endpoint.get_location(ilsgateway_location.parent_id)
-                    loc_parent = self.location_sync(Location(parent))
+                    new_parent = self.endpoint.get_location(ilsgateway_location.parent_id)
+                    loc_parent = self.location_sync(Location(new_parent))
                     if not loc_parent:
                         return
 
@@ -571,6 +572,15 @@ class ILSGatewayAPI(APISynchronization):
                     case.update_from_location(location)
                 else:
                     SupplyInterface.create_from_location(self.domain, location)
+            location_parent = location.parent
+            if ilsgateway_location.type == 'FACILITY' and ilsgateway_location.parent_id and location_parent \
+                    and location_parent.external_id != str(ilsgateway_location.parent_id):
+                new_parent = self.endpoint.get_location(ilsgateway_location.parent_id)
+                new_parent = self.location_sync(Location(new_parent))
+                location.lineage = get_lineage_from_location_id(new_parent.get_id)
+                location.save()
+                location.previous_parents = [location_parent.get_id]
+                location_edited_receiver(None, location, moved=True)
         return location
 
     def location_groups_sync(self, location_groups):
