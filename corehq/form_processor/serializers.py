@@ -28,17 +28,21 @@ class CommCareCaseIndexSQLSerializer(serializers.ModelSerializer):
         model = CommCareCaseIndexSQL
 
 
-class CaseTransactionSerializer(serializers.ModelSerializer):
-    details = serializers.DictField()
+class CaseTransactionActionSerializer(serializers.ModelSerializer):
+    xform_id = serializers.CharField(source='form_id')
+    date = serializers.CharField(source='server_date')
 
     class Meta:
         model = CaseTransaction
-        exclude = ('id', 'case')
+        fields = ('xform_id', 'server_date', 'date', 'sync_log_id')
 
 
 class CommCareCaseSQLSerializer(serializers.ModelSerializer):
+    _id = serializers.CharField(source='case_id')
+    doc_type = serializers.CharField()
+    user_id = serializers.CharField(source='modified_by')
     indices = CommCareCaseIndexSQLSerializer(many=True, read_only=True)
-    transactions = CaseTransactionSerializer(many=True, read_only=True)
+    actions = CaseTransactionActionSerializer(many=True, read_only=True, source='non_revoked_transactions')
 
     class Meta:
         model = CommCareCaseSQL

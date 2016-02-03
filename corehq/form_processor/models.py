@@ -21,6 +21,7 @@ from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.routers import db_for_read_write
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.ext import jsonobject
 from couchforms.signals import xform_archived, xform_unarchived
@@ -449,6 +450,13 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     case_json = JSONField(lazy=True, default=dict)
 
     @property
+    def doc_type(self):
+        dt = 'CommCareCase'
+        if self.is_deleted:
+            dt += DELETED_SUFFIX
+        return dt
+
+    @property
     def xform_ids(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_case_xform_ids(self.case_id)
@@ -536,6 +544,10 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         transactions = CaseAccessorSQL.get_transactions(self.case_id) if self.is_saved() else []
         transactions += self.get_tracked_models_to_create(CaseTransaction)
         return transactions
+
+    @property
+    def non_revoked_transactions(self):
+        return [t for t in self.transactions if not t.revoked]
 
     @property
     @memoized
