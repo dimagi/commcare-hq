@@ -25,7 +25,7 @@ class _Writer(object):
         Note that this function returns a context manager!
         """
 
-        # Create a nd open a temp file
+        # Create and open a temp file
         fd, path = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as file:
 

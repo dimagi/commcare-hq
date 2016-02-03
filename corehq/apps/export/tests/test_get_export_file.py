@@ -49,7 +49,28 @@ def new_case(domain=DOMAIN, user_id=DEFAULT_USER, owner_id=DEFAULT_USER,
 
 class WriterTest(SimpleTestCase):
 
-    def test_simple(self):
+    docs = [
+        {
+            "form": {
+                "q1": "foo",
+                "q2": {
+                    "q4": "bar",
+                },
+                "q3": "baz"
+            }
+        },
+        {
+            "form": {
+                "q1": "bip",
+                "q2": {
+                    "q4": "boop",
+                },
+                "q3": "bop"
+            }
+        },
+        ]
+
+    def test_simple_table(self):
         """
         Confirm that some simple documents and a simple ExportInstance
         are writtern with _write_export_file() correctly
@@ -77,33 +98,66 @@ class WriterTest(SimpleTestCase):
                 )
             ]
         )
-        docs = [
-            {
-                "form": {
-                    "q1": "foo",
-                    "q2": "bar",
-                    "q3": "baz"
-                }
-            },
-            {
-                "form": {
-                    "q1": "bip",
-                    "q2": "boop",
-                    "q3": "bop"
-                }
-            },
-        ]
+
         self.assertEqual(
-            _write_export_file(export_instance, docs),
+            _write_export_file(export_instance, self.docs),
             [
                 {
+                    u'table_name': u'My table',
                     u'headers': [u'Q3', u'Q1'],
                     u'rows': [[u'baz', u'foo'], [u'bop', u'bip']],
-                    u'table_name': u'My table'
+
                 }
             ]
         )
 
+    def test_multi_table(self):
+        export_instance = ExportInstance(
+            format=Format.PYTHON_DICT,
+            tables=[
+                TableConfiguration(
+                    name="My table",
+                    path=[],
+                    columns=[
+                        ExportColumn(
+                            label="Q3",
+                            item=ScalarItem(
+                                path=['form', 'q3'],
+                            )
+                        ),
+                    ]
+                ),
+                TableConfiguration(
+                    name="My other table",
+                    path=['form', 'q2'],
+                    columns=[
+                        ExportColumn(
+                            label="Q4",
+                            item=ScalarItem(
+                                path=['form', 'q2', 'q4'],
+                            )
+                        ),
+                    ]
+                )
+            ]
+        )
+
+        self.assertEqual(
+            sorted(_write_export_file(export_instance, self.docs)),
+            sorted([
+                {
+                    u'table_name': u'My table',
+                    u'headers': [u'Q3'],
+                    u'rows': [[u'baz'], [u'bop']],
+
+                },
+                {
+                    u'table_name': u'My other table',
+                    u'headers': [u'Q4'],
+                    u'rows': [[u'bar'], [u'boop']],
+                }
+            ])
+        )
 
 class ExportTest(SimpleTestCase):
 
@@ -179,15 +233,10 @@ class ExportTest(SimpleTestCase):
         # TODO: Test other filters
         owner_filter = OwnerFilter(DEFAULT_USER)
         closed_filter = IsClosedFilter(False)
-        self.assertEqual(
-            1,
-            len(
-                _get_export_documents(
-                    CaseExportInstance(domain=DOMAIN, case_type=DEFAULT_CASE_TYPE),
-                    [owner_filter, closed_filter]
-                )
-            )
-        )
+        self.assertEqual(1, len(_get_export_documents(
+            CaseExportInstance(domain=DOMAIN, case_type=DEFAULT_CASE_TYPE),
+            [owner_filter, closed_filter]
+        )))
 
     def test_get_case_export_base_query(self):
         q = _get_case_export_base_query(CaseExportInstance(domain=DOMAIN, case_type=DEFAULT_CASE_TYPE))

@@ -235,8 +235,10 @@ class ExportInstance(Document):
 class CaseExportInstance(ExportInstance):
     case_type = StringProperty()
 
+
 class FormExportInstance(ExportInstance):
     xmlns = StringProperty()
+
 
 class ExportRow(object):
     def __init__(self, data):
