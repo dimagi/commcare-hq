@@ -6,8 +6,11 @@ from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import operator
 from pygooglechart import ScatterChart
 import pytz
+
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
+from corehq.apps.es.aggregations import TermsAggregation, RangeAggregation, AggregationRange, \
+    FilterAggregation
 from corehq.apps.reports import util
 from corehq.apps.reports.analytics.esaccessors import (
     get_last_submission_time_for_user,
@@ -163,67 +166,6 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                        "There might be inconsistencies in case totals if the user is part of a case sharing group. "
                        "We are working to correct this shortly.")
 
-    class Row(object):
-        def __init__(self, report, user):
-            self.report = report
-            self.user = user
-
-        def active_count(self, startdate=None):
-            """Open clients seen in the last 120 days"""
-            return self.report.get_number_cases(
-                user_id=self.user.user_id,
-                modified_after=startdate,
-                modified_before=self.report.utc_now,
-                closed=False,
-            )
-
-        def inactive_count(self, startdate=None):
-            """Open clients not seen in the last 120 days"""
-            return self.report.get_number_cases(
-                user_id=self.user.user_id,
-                modified_after=startdate,
-                modified_before=self.report.utc_now,
-                closed=False,
-            )
-
-        def modified_count(self, startdate=None):
-            return self.report.get_number_cases(
-                user_id=self.user.user_id,
-                modified_after=startdate,
-                modified_before=self.report.utc_now,
-            )
-
-        def closed_count(self, startdate=None):
-            return self.report.get_number_cases(
-                user_id=self.user.user_id,
-                modified_after=startdate,
-                modified_before=self.report.utc_now,
-                closed=True
-            )
-
-        def header(self):
-            return self.report.get_user_link(self.user)
-
-    class TotalRow(object):
-        def __init__(self, rows, header):
-            self.rows = rows
-            self._header = header
-
-        def active_count(self, startdate=None):
-            return sum([row.active_count(startdate) for row in self.rows])
-
-        def inactive_count(self, startdate=None):
-            return sum([row.inactive_count(startdate) for row in self.rows])
-
-        def modified_count(self, startdate=None):
-            return sum([row.modified_count(startdate) for row in self.rows])
-
-        def closed_count(self, startdate=None):
-            return sum([row.closed_count(startdate) for row in self.rows])
-
-        def header(self):
-            return self._header
-
     _default_landmarks = [30, 60, 90]
     @property
     @memoized
@@ -295,9 +237,14 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             self.domain,
             mobile_user_and_group_slugs,
         )
-        rows = [self.Row(self, user) for user in users_data.combined_users]
+        users_by_id = {user.user_id: user for user in users_data.combined_users}
 
-        total_row = self.TotalRow(rows, _("All Users"))
+        es_results = self.es_queryset(users_by_id)
+        buckets = {user_id: bucket for user_id, bucket in es_results.aggregations.users.buckets_dict.items()}
+        rows = []
+        for user_id, user in users_by_id.items():
+            bucket = buckets.get(user_id, None)
+            rows.append(self.Row(self, user, bucket))
 
         def format_row(row):
             cells = [row.header()]
@@ -311,10 +258,11 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 cells.append(util.format_datatables_data(text=text, sort_key=value))
 
             for landmark in self.landmarks:
-                startdate = self.utc_now - landmark
-                value = row.modified_count(startdate)
-                active = row.active_count(startdate)
-                closed = row.closed_count(startdate)
+                landmark_key = unicode(landmark.days)
+
+                value = row.modified_count(landmark_key)
+                active = row.active_count(landmark_key)
+                closed = row.closed_count(landmark_key)
                 total = active + closed
 
                 try:
@@ -323,36 +271,105 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 except ZeroDivisionError:
                     p_val = None
                     proportion = '--'
+
                 add_numeric_cell(value, value)
                 add_numeric_cell(active, active)
                 add_numeric_cell(closed, closed)
                 add_numeric_cell(proportion, p_val)
 
-            startdate = self.utc_now - self.milestone
-            add_numeric_cell(row.active_count(startdate))
-            add_numeric_cell(row.inactive_count(startdate))
+            add_numeric_cell(row.total_active_count())
+            add_numeric_cell(row.total_inactive_count())
             return cells
 
-        self.total_row = format_row(total_row)
+        self.total_row = format_row(self.TotalRow(rows, _("All Users")))
         return map(format_row, rows)
 
-    def get_number_cases(self, user_id, modified_after=None, modified_before=None, closed=None):
-        kwargs = {}
-        if closed is not None:
-            kwargs['closed'] = bool(closed)
-        if modified_after:
-            kwargs['modified_on__gte'] = ServerTime(modified_after).phone_time(self.timezone).done()
-        if modified_before:
-            kwargs['modified_on__lt'] = ServerTime(modified_before).phone_time(self.timezone).done()
-        if self.case_type:
-            kwargs['type'] = self.case_type
+    def es_queryset(self, users_by_id):
+        end_date = ServerTime(self.utc_now).phone_time(self.timezone).done()
+        milestone_start = ServerTime(self.utc_now - self.milestone).phone_time(self.timezone).done()
 
-        qs = CaseData.objects.filter(
-            domain=self.domain,
-            user_id=user_id,
-            **kwargs
+        active_total_aggregation = FilterAggregation(
+            'active_total',
+            filters.AND(
+                filters.date_range('modified_on', gte=milestone_start, lt=end_date),
+                filters.term('closed', False))
         )
-        return qs.count()
+
+        inactive_total_aggregation = FilterAggregation(
+            'inactive_total',
+            filters.AND(
+                filters.date_range('modified_on', lt=milestone_start),
+                filters.term('closed', False))
+        )
+
+        landmarks_aggregation = self._landmarks_aggregation(end_date)
+
+        top_level_aggregation = TermsAggregation('users', 'user_id')\
+            .aggregation(landmarks_aggregation)\
+            .aggregation(active_total_aggregation)\
+            .aggregation(inactive_total_aggregation)
+
+        query = case_es.CaseES().domain(self.domain).user(users_by_id.keys())
+        query = query.aggregation(top_level_aggregation)
+        return query.run()
+
+    def _landmarks_aggregation(self, end_date):
+        landmarks_aggregation = RangeAggregation('landmarks', 'modified_on')
+        for landmark in self.landmarks:
+            start_date = ServerTime(self.utc_now - landmark).phone_time(self.timezone).done()
+            landmarks_aggregation.add_range(AggregationRange(start_date, end_date, key=landmark.days))
+        landmarks_aggregation.aggregation(FilterAggregation('active', filters.term('closed', False)))
+        landmarks_aggregation.aggregation(FilterAggregation('closed', filters.term('closed', True)))
+        return landmarks_aggregation
+
+    class Row(object):
+        def __init__(self, report, user, bucket):
+            self.report = report
+            self.user = user
+            self.bucket = bucket
+            if bucket:
+                self.landmarks = bucket.landmarks.buckets_dict
+
+        def active_count(self, landmark_key):
+            return 0 if not self.bucket else self.landmarks[landmark_key].active.doc_count
+
+        def modified_count(self, landmark_key):
+            return 0 if not self.bucket else self.landmarks[landmark_key].doc_count
+
+        def closed_count(self, landmark_key):
+            return 0 if not self.bucket else self.landmarks[landmark_key].closed.doc_count
+
+        def total_inactive_count(self):
+            return 0 if not self.bucket else self.bucket.inactive_total.doc_count
+
+        def total_active_count(self):
+            return 0 if not self.bucket else self.bucket.active_total.doc_count
+
+        def header(self):
+            return self.report.get_user_link(self.user)
+
+    class TotalRow(object):
+        def __init__(self, rows, header):
+            self.rows = rows
+            self._header = header
+
+        def active_count(self, landmark_key):
+            return sum([row.active_count(landmark_key) for row in self.rows])
+
+        def total_inactive_count(self):
+            return sum([row.total_inactive_count() for row in self.rows])
+
+        def total_active_count(self):
+            return sum([row.total_active_count() for row in self.rows])
+
+        def modified_count(self, landmark_key):
+            return sum([row.modified_count(landmark_key) for row in self.rows])
+
+        def closed_count(self, landmark_key):
+            return sum([row.closed_count(landmark_key) for row in self.rows])
+
+        def header(self):
+            return self._header
 
 
 class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
