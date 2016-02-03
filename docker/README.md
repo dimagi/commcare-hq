@@ -100,10 +100,10 @@ script:
   $ .travis/simulate.sh javascript
   runs the javascript build matrix
   
-  $ .travis/simulate.sh python-catchall --test-override app_manager.SuiteTest
+  $ .travis/simulate.sh python-catchall --override-test app_manager.SuiteTest
   runs only the app_manager.SuiteTest using the python-catchall matrix setup
   
-  $ .travis/simulate.sh python-catchall --command-override bash
+  $ .travis/simulate.sh python-catchall --override-command bash
   drops you into a bash shell in the python-catchall matrix setup from where you can
   run any other commands
   
