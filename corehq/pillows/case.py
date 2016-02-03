@@ -72,12 +72,25 @@ def transform_case_for_elasticsearch(doc_dict):
     return doc_ret
 
 
+def transform_case_transactions_to_actions(transactions):
+    def _action(trans):
+        return {
+            'server_date': trans['server_date'],
+            'date': trans['server_date'],
+            'xform_id': trans['form_id'],
+            'sync_log_id': trans['sync_log_id'],
+        }
+    return [_action(trans) for trans in transactions if not trans['revoked']]
+
+
 def prepare_sql_case_json_for_elasticsearch(sql_case_json):
     prepped_case = transform_case_for_elasticsearch(sql_case_json)
     # todo: these are required for consistency with couch representation, figure out how best to deal with it
     prepped_case['doc_type'] = 'CommCareCase'
     prepped_case['_id'] = prepped_case['case_id']
     prepped_case['user_id'] = prepped_case['modified_by']
+    transactions = prepped_case.pop('transactions')
+    prepped_case['actions'] = transform_case_transactions_to_actions(transactions)
     return prepped_case
 
 
