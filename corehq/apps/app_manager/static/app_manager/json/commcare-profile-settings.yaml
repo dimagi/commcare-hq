@@ -250,7 +250,7 @@
   id: "cc-show-saved"
   values: ["yes", "no"]
   value_names: ["Enable", "Disable"]
-  default: "yes"
+  default: "no"
   contingent_default: [{"condition": "{features.sense}='true'", "value": "no"}]
   values_txt: "This will show or hide the 'Saved' button on the CommCare ODK home screen. Turning this off will prevent users from saving forms locally."
   since: "2.11"
