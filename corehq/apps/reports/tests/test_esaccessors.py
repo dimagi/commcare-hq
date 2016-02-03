@@ -3,16 +3,23 @@ import uuid
 
 from datetime import datetime
 from django.test import SimpleTestCase
+from django.test.utils import override_settings
+
+from corehq.elastic import get_es_new
+from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.pillows.mappings.group_mapping import GROUP_INDEX
+from corehq.pillows.mappings.user_mapping import USER_INDEX
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.dates import DateSpan
 from elasticsearch.exceptions import ConnectionError
 
-from corehq.util.elastic import delete_es_index
+from corehq.util.elastic import ensure_index_deleted
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.form_processor.utils import TestFormMetadata
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.const import CASE_ACTION_CREATE
-from corehq.pillows.xform import XFormPillow
+from corehq.pillows.xform import XFormPillow, get_sql_xform_to_elasticsearch_pillow
 from corehq.pillows.user import UserPillow
 from corehq.pillows.group import GroupPillow
 from corehq.pillows.case import CasePillow
@@ -28,22 +35,29 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_group_stubs,
 )
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
+from pillowtop.feed.interface import Change
 
 
 class BaseESAccessorsTest(SimpleTestCase):
+    pillow_class = None
+    es_index = None
 
     def setUp(self):
         self.domain = 'esdomain'
         with trap_extra_setup(ConnectionError):
-            self.pillow = self.pillow_class()
+            self.pillow = self.get_pillow()
+
+    def get_pillow(self):
+        return self.pillow_class()
 
     def tearDown(self):
-        delete_es_index(self.pillow.es_index)
+        ensure_index_deleted(self.es_index)
 
 
 class TestFormESAccessors(BaseESAccessorsTest):
 
     pillow_class = XFormPillow
+    es_index = XFORM_INDEX
 
     def _send_form_to_es(self, domain=None, completion_time=None, received_on=None):
         metadata = TestFormMetadata(
@@ -53,7 +67,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         form_pair = make_es_ready_form(metadata)
         self.pillow.change_transport(form_pair.json_form)
-        self.pillow.get_es_new().indices.refresh(self.pillow.es_index)
+        self.pillow.get_es_new().indices.refresh(XFORM_INDEX)
         return form_pair
 
     def test_basic_completed_by_user(self):
@@ -153,9 +167,34 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEquals(results['2013-07-14'], 1)
 
 
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestFormESAccessorsSQL(TestFormESAccessors):
+    def get_pillow(self):
+        XFormPillow()  # initialize index
+        return get_sql_xform_to_elasticsearch_pillow()
+
+    def _send_form_to_es(self, domain=None, completion_time=None, received_on=None):
+        metadata = TestFormMetadata(
+            domain=domain or self.domain,
+            time_end=completion_time or datetime.utcnow(),
+            received_on=received_on or datetime.utcnow(),
+        )
+        form_pair = make_es_ready_form(metadata, is_db_test=True)
+        change = Change(
+            id=form_pair.json_form['form_id'],
+            sequence_id='123',
+            document=form_pair.json_form,
+        )
+        self.pillow.processor(change, do_set_checkpoint=False)
+        es = get_es_new()
+        es.indices.refresh(XFORM_INDEX)
+        return form_pair
+
+
 class TestUserESAccessors(BaseESAccessorsTest):
 
     pillow_class = UserPillow
+    es_index = USER_INDEX
 
     def setUp(self):
         super(TestUserESAccessors, self).setUp()
@@ -209,6 +248,7 @@ class TestUserESAccessors(BaseESAccessorsTest):
 class TestGroupESAccessors(BaseESAccessorsTest):
 
     pillow_class = GroupPillow
+    es_index = GROUP_INDEX
 
     def setUp(self):
         super(TestGroupESAccessors, self).setUp()
@@ -244,6 +284,7 @@ class TestGroupESAccessors(BaseESAccessorsTest):
 class TestCaseESAccessors(BaseESAccessorsTest):
 
     pillow_class = CasePillow
+    es_index = CASE_INDEX
 
     def setUp(self):
         super(TestCaseESAccessors, self).setUp()
