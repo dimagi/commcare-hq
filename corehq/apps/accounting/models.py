@@ -1173,25 +1173,7 @@ class Subscription(models.Model):
                             service_type=None, pro_bono_status=None, funding_source=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
-        if not date_start:
-            raise SubscriptionAdjustmentError('Start date must be provided')
-        if date_end is not None and date_start > date_end:
-            raise SubscriptionAdjustmentError(
-                "Can't have a subscription start after the end date."
-            )
-        self.raise_conflicting_dates(date_start, date_end)
-        self.date_start = date_start
-        self.date_end = date_end
-
-        is_active_dates = is_active_subscription(self.date_start, self.date_end)
-        if self.is_active != is_active_dates:
-            if is_active_dates:
-                self.is_active = True
-                self.subscriber.activate_subscription(get_privileges(self.plan_version), self)
-            else:
-                raise SubscriptionAdjustmentError(
-                    'Cannot deactivate a subscription here. Cancel subscription instead.'
-                )
+        self._update_dates(date_start, date_end)
 
         if self.date_delay_invoicing is None or self.date_delay_invoicing > datetime.date.today():
             self.date_delay_invoicing = date_delay_invoicing
@@ -1213,6 +1195,27 @@ class Subscription(models.Model):
             self, method=adjustment_method, note=note, web_user=web_user,
             reason=SubscriptionAdjustmentReason.MODIFY
         )
+
+    def _update_dates(self, date_start, date_end):
+        if not date_start:
+            raise SubscriptionAdjustmentError('Start date must be provided')
+        if date_end is not None and date_start > date_end:
+            raise SubscriptionAdjustmentError(
+                "Can't have a subscription start after the end date."
+            )
+        self.raise_conflicting_dates(date_start, date_end)
+        self.date_start = date_start
+        self.date_end = date_end
+
+        is_active_dates = is_active_subscription(self.date_start, self.date_end)
+        if self.is_active != is_active_dates:
+            if is_active_dates:
+                self.is_active = True
+                self.subscriber.activate_subscription(get_privileges(self.plan_version), self)
+            else:
+                raise SubscriptionAdjustmentError(
+                    'Cannot deactivate a subscription here. Cancel subscription instead.'
+                )
 
     @transaction.atomic
     def change_plan(self, new_plan_version, date_end=None,
