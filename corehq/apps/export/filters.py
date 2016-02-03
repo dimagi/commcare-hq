@@ -24,6 +24,7 @@ class ExportFilter(object):
 
 
 class RangeExportFilter(ExportFilter):
+
     def __init__(self, gt=None, gte=None, lt=None, lte=None):
         self.gt = gt
         self.gte = gte
@@ -54,6 +55,7 @@ class IsClosedFilter(ExportFilter):
 
 
 class NameFilter(ExportFilter):
+
     def __init__(self, case_name):
         self.case_name = case_name
 
@@ -68,14 +70,17 @@ class OpenedOnRangeFilter(RangeExportFilter):
 
 
 class OpenedByFilter(ExportFilter):
+
     def __init__(self, opened_by):
         self.opened_by = opened_by
+
     def to_es_filter(self):
         # TODO: Add this to default case filters?
         return esfilters.term('opened_by', self.opened_by)
 
 
 class ModifiedOnRangeFilter(RangeExportFilter):
+
     def to_es_filter(self):
         return modified_range(self.gt, self.gte, self.lt, self.lte)
 
@@ -90,11 +95,13 @@ class LastModifiedByFilter(ExportFilter):
 
 
 class ClosedOnRangeFilter(RangeExportFilter):
+
     def to_es_filter(self):
         return closed_range(self.gt, self.gte, self.lt, self.lte)
 
 
 class ClosedByFilter(ExportFilter):
+
     def __init__(self, closed_by):
         self.closed_by = closed_by
 

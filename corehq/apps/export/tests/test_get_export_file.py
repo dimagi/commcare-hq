@@ -1,6 +1,6 @@
 import uuid
 
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.export.export import (
@@ -68,7 +68,7 @@ class WriterTest(SimpleTestCase):
                 "q3": "bop"
             }
         },
-        ]
+    ]
 
     def test_simple_table(self):
         """
@@ -158,6 +158,7 @@ class WriterTest(SimpleTestCase):
                 }
             ])
         )
+
 
 class ExportTest(SimpleTestCase):
 
