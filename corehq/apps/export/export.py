@@ -22,6 +22,7 @@ class _Writer(object):
     def open(self, tables):
         """
         Open the _Writer for writing. This must be called before using _Writer.write()
+        Note that this function returns a context manager!
         """
 
         # Create a nd open a temp file
