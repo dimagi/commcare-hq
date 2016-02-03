@@ -281,10 +281,9 @@ function CommcareSettings(options) {
         return blob;
     });
 
-    self.state = ko.observable('saved');
     setTimeout(function () {
         self.serialize.subscribe(function () {
-            self.state('save');
+            self.saveButton.fire('change');
         });
     }, 0);
     self.saveOptions = ko.computed(function () {
@@ -298,6 +297,14 @@ function CommcareSettings(options) {
             }
         };
     });
+
+    self.saveButton = COMMCAREHQ.SaveButton.init({
+        unsavedMessage: "You have unsaved settings.",
+        save: function () {
+            self.saveButton.ajax(self.saveOptions());
+        }
+    });
+    self.saveButton.ui.appendTo($("#settings-save-btn"));
 
     self.onAddCustomProperty = function() {
         self.customProperties.push({ key: ko.observable(), value: ko.observable() });

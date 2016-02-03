@@ -229,10 +229,6 @@ ko.bindingHandlers.saveButton2 = {
             saveButton = COMMCAREHQ.SaveButton.init({
                 save: function () {
                     saveButton.ajax(saveOptions());
-
-                    $(element).closest("form").find('*').change(function() {
-                        saveButton.fire('change');
-                    });
                 }
             });
             $(element).css('vertical-align', 'top').css('display', 'inline-block');
