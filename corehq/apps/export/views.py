@@ -197,7 +197,8 @@ class BaseCreateNewCustomExportView(BaseExportView):
     @property
     def page_context(self):
         return {
-            'export_instance': self.export_instance
+            'export_instance': self.export_instance,
+            'export_home_url': reverse(self.urlname, args=(self.domain,)),
         }
 
     def get_export_instance(self, schema, app_id=None):
