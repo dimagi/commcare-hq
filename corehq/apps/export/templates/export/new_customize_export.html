@@ -105,21 +105,21 @@
         <fieldset data-bind="
             template: { foreach: tables, as: 'table', name: 'ko-table-configuration-template' }"
         ></fieldset>
-        {% if helper.allow_deid %}
+        {% if allow_deid %}
         <fieldset>
             <legend>{% trans "Privacy Settings" %}</legend>
             <div class="control-group">
                 <label for="is_safe" class="control-label"></label>
-                <div class="controls deid-column" data-bind="visible: $root.showDeidColumn()">
+                <div class="controls deid-column" data-bind="visible: isDeidColumnVisible()">
                     <label class="checkbox">
-                        <input type="checkbox" id="is_safe" data-bind="checked: export_instance.is_safe" />
-                        {% trans "Publish in" %} {{ DeidExportReport_name }}
+                        <input type="checkbox" id="is_deidentified" data-bind="checked: is_deidentified" />
+                        {% trans "Publish as De-Identified" %}
                     </label>
                     <span class="help-inline">{% trans "Check only if this export has been fully and safely de-identified." %}</span>
                 </div>
                 <button class="btn" data-bind="
-                    visible: !showDeidColumn(),
-                    click: animateShowDeidColumn
+                    visible: !isDeidColumnVisible(),
+                    click: showDeidColumn
                 ">
                     {% trans "Allow me to mark sensitive data" %}
                 </button>

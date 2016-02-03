@@ -9,3 +9,9 @@ Exports.Utils.getTagCSSClass = function(tag) {
 Exports.Utils.redirect = function(url) {
     window.location.href = url;
 };
+
+Exports.Utils.animateToEl = function(toElementSelector, callback) {
+    $('html, body').animate({
+        scrollTop: $(toElementSelector).offset().top + 'px'
+    }, 'slow', undefined, callback);
+};

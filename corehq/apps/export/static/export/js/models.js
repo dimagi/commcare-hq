@@ -4,6 +4,7 @@ Exports.ViewModels.ExportInstance = function(instanceJSON, options) {
     ko.mapping.fromJS(instanceJSON, Exports.ViewModels.ExportInstance.mapping, self);
     self.saveState = ko.observable(Exports.Constants.SAVE_STATES.READY);
     self.saveUrl = options.saveUrl;
+    self.isDeidColumnVisible = ko.observable(false);
 };
 
 Exports.ViewModels.ExportInstance.prototype.getFormatOptionValues = function() {
@@ -68,6 +69,12 @@ Exports.ViewModels.ExportInstance.prototype.recordSaveAnalytics = function() {
     if (self.isNew()) {
         analytics.workflow("Clicked 'Create' in export edit page");
     }
+};
+
+Exports.ViewModels.ExportInstance.prototype.showDeidColumn = function() {
+    Exports.Utils.animateToEl('#field-select', function() {
+        this.isDeidColumnVisible(true);
+    }.bind(this));
 };
 
 Exports.ViewModels.ExportInstance.prototype.toJS = function() {
@@ -141,12 +148,34 @@ Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
     return this.item.path().join('.');
 };
 
+Exports.ViewModels.ExportColumn.prototype.isDeidSelectVisible = function() {
+    return (this.item.path()[this.item.path().length - 1] !== '_id' || this.transform()) && !this.isCaseName();
+};
+
+Exports.ViewModels.ExportColumn.prototype.getDeidOptions = function() {
+    return _.map(Exports.Constants.DEID_OPTIONS, function(value, key) { return value; });
+};
+
+Exports.ViewModels.ExportColumn.prototype.getDeidOptionText = function(deidOption) {
+    if (deidOption === Exports.Constants.DEID_OPTIONS.ID) {
+        return gettext('Sensitive ID');
+    } else if (deidOption === Exports.Constants.DEID_OPTIONS.DATE) {
+        return gettext('Sensitive Date');
+    } else if (deidOption === Exports.Constants.DEID_OPTIONS.NONE) {
+        return gettext('None');
+    }
+};
+
 Exports.ViewModels.ExportColumn.prototype.isVisible = function(table) {
     return table.showAdvanced() || (!this.is_advanced() || this.selected());
 };
 
+Exports.ViewModels.ExportColumn.prototype.isCaseName = function() {
+    return this.item.isCaseName();
+};
+
 Exports.ViewModels.ExportColumn.mapping = {
-    include: ['item', 'label', 'is_advanced', 'selected', 'tags'],
+    include: ['item', 'label', 'is_advanced', 'selected', 'tags', 'transform'],
     item: {
         create: function(options) {
             return new Exports.ViewModels.ExportItem(options.data);
@@ -160,7 +189,7 @@ Exports.ViewModels.ExportItem = function(itemJSON) {
 };
 
 Exports.ViewModels.ExportItem.prototype.isCaseName = function() {
-    return self.path[self.path.length - 1] === 'case_name';
+    return this.path()[this.path().length - 1] === 'name';
 };
 
 Exports.ViewModels.ExportItem.mapping = {
