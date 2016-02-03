@@ -37,6 +37,8 @@ DATA_CLEANUP = 'data_cleanup'  # bulk archive cases, edit submissions, auto upda
 TEMPLATED_INTENTS = 'templated_intents'
 CUSTOM_INTENTS = 'custom_intents'
 
+ADVANCED_DOMAIN_SECURITY = 'advanced_domain_security'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -97,4 +99,5 @@ class Titles(object):
             TEMPLATED_INTENTS: _('Built-in Integration'),
             CUSTOM_INTENTS: _('External Integration Framework'),
             DATA_CLEANUP: _('Data Management'),
+            ADVANCED_DOMAIN_SECURITY: _('Domain Level Security Features')
         }.get(privilege, privilege)
