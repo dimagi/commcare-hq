@@ -1,13 +1,13 @@
-# TODO: This file has a dumb name
 import contextlib
 import os
 import tempfile
 
 from corehq.apps.es import FormES, CaseES
-from corehq.apps.export.models.new import CaseExportInstance, \
-    FormExportInstance
-from couchexport.export import FormattedRow
-from couchexport.writers import PythonDictWriter
+from corehq.apps.export.models.new import (
+    CaseExportInstance,
+    FormExportInstance,
+)
+from couchexport.export import FormattedRow, get_writer
 
 
 class _Writer(object):
@@ -61,7 +61,8 @@ def _get_export_documents(export_instance, filters):
 
 def _write_export_file(export_instance, documents):
 
-    writer = _Writer(PythonDictWriter())
+    legacy_writer = get_writer(export_instance.format)
+    writer = _Writer(legacy_writer)
 
     with writer.open(export_instance.tables):
         for doc in documents:
