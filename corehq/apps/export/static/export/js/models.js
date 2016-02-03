@@ -23,7 +23,11 @@ Exports.ViewModels.ExportInstance.prototype.getFormatOptionText = function(forma
 };
 
 Exports.ViewModels.ExportInstance.prototype.isNew = function() {
-    return !!self._id;
+    return !!ko.utils.unwrapObservable(self._id);
+};
+
+Exports.ViewModels.ExportInstance.prototype.getSaveText = function() {
+    return this.isNew() ? gettext('Create') : gettext('Save');
 };
 
 Exports.ViewModels.ExportInstance.prototype.save = function() {

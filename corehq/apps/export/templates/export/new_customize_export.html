@@ -127,22 +127,21 @@
         </fieldset>
         {% endif %}
         <div class="form-actions">
-            <button type="submit" class="btn btn-large btn-primary">
-            <!--<button type="submit" class="btn btn-large btn-primary" data-bind="-->
-                <!--click: save_no_preview,-->
-                <!--disable: (save.state() === 'saving') || (save.state() === 'saving-preview')-->
-            <!--">
-                <span data-bind="visible: (save.state() === 'save') || (save.state() === 'saving-preview')">
-                    <span data-bind="visible: export_instance._id && export_instance._id()">{% trans "Save" %}</span>
-                    <span data-bind="visible: !export_instance._id || !export_instance._id()">{% trans "Create" %}</span>
+            <button type="submit" class="btn btn-large btn-primary" data-bind="
+                click: save,
+                disable: saveState() === Exports.Constants.SAVE_STATES.SAVING
+            ">
+                <span data-bind="
+                    visible: saveState() === Exports.Constants.SAVE_STATES.READY,
+                    text: getSaveText()">
                 </span>
-                <span data-bind="visible: save.state() === 'saving'">
+                <span data-bind="visible: saveState() === Exports.Constants.SAVE_STATES.SAVING">
                     <i class="icon-refresh icon-spin"></i>
                     {% trans "Saving" %}
                 </span>
-                <span data-bind="visible: save.state() === 'error'">
+                <span data-bind="visible: saveState() === Exports.Constants.SAVE_STATES.ERROR">
                     {% trans "Try Again" %}
-                </span>-->
+                </span>
             </button>
             <a class="btn btn-large" href="{{ export_home_url }}">{% trans "Cancel" %}</a>
             {% if export_instance.get_id %}
