@@ -8,7 +8,7 @@ from corehq.sql_db.operations import HqRunPython
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0020_nonnullable_product_rate'),
+        ('accounting', '0021_remove_old_roles'),
     ]
 
     operations = [
