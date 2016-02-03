@@ -6,6 +6,7 @@ from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
 from corehq.elastic import get_es_new
+from corehq.form_processor.models import CommCareCaseSQL, CaseTransaction
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
@@ -22,7 +23,7 @@ from casexml.apps.case.const import CASE_ACTION_CREATE
 from corehq.pillows.xform import XFormPillow, get_sql_xform_to_elasticsearch_pillow
 from corehq.pillows.user import UserPillow
 from corehq.pillows.group import GroupPillow
-from corehq.pillows.case import CasePillow
+from corehq.pillows.case import CasePillow, get_sql_case_to_elasticsearch_pillow
 from corehq.apps.reports.analytics.esaccessors import (
     get_submission_counts_by_user,
     get_completed_counts_by_user,
@@ -430,3 +431,47 @@ class TestCaseESAccessors(BaseESAccessorsTest):
 
         results = get_case_counts_opened_by_user(self.domain, datespan, case_types=['not-here'])
         self.assertEqual(results, {})
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestCaseESAccessorsSQL(TestCaseESAccessors):
+    def get_pillow(self):
+        CasePillow()  # initialize index
+        return get_sql_case_to_elasticsearch_pillow()
+
+    def _send_case_to_es(self,
+            domain=None,
+            owner_id=None,
+            user_id=None,
+            case_type=None,
+            opened_on=None,
+            closed_on=None):
+
+        case = CommCareCaseSQL(
+            case_id=uuid.uuid4().hex,
+            domain=domain or self.domain,
+            owner_id=owner_id or self.owner_id,
+            modified_by=user_id or self.user_id,
+            type=case_type or self.case_type,
+            opened_on=opened_on or datetime.now(),
+            opened_by=user_id or self.user_id,
+            closed_on=closed_on,
+            closed_by=user_id or self.user_id,
+            server_modified_on=datetime.utcnow(),
+            closed=bool(closed_on)
+        )
+
+        case.track_create(CaseTransaction(
+            case=case,
+            server_date=opened_on,
+        ))
+
+        change = Change(
+            id=case.case_id,
+            sequence_id='123',
+            document=case.to_json(),
+        )
+        self.pillow.processor(change, do_set_checkpoint=False)
+        es = get_es_new()
+        es.indices.refresh(CASE_INDEX)
+        return case
