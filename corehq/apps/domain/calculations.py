@@ -119,6 +119,23 @@ def forms(domain, *args):
     return get_number_of_forms_in_domain(domain)
 
 
+def forms_in_last(domain, days):
+    """
+    Returns the number of forms submitted in the last given number of days
+    """
+    now = datetime.utcnow()
+    then = json_format_datetime(now - timedelta(days=int(days)))
+    now = json_format_datetime(now)
+    q = {
+        'query': {
+            'range': {
+                'received_on': {'from': then, 'to': now}},
+            'filter': {
+                'and': ADD_TO_ES_FILTER['forms'][:]}}}
+    data = es_query(params={'domain.exact': domain}, q=q, es_index='forms', size=1)
+    return data['hits']['total'] if data.get('hits') else 0
+
+
 def _sms_helper(domain, direction=None, days=None):
     query = SMSES().domain(domain).size(0)
 
@@ -238,6 +255,7 @@ CALC_FNS = {
     'num_web_users': num_web_users,
     "num_mobile_users": num_mobile_users,
     "forms": forms,
+    "forms_in_last": forms_in_last,
     "sms": sms,
     "sms_in_last": sms_in_last,
     "sms_in_last_bool": sms_in_last_bool,
@@ -289,7 +307,7 @@ def _all_domain_stats():
             "cases": case_counts}
 
 ES_CALCED_PROPS = ["cp_n_web_users", "cp_n_active_cc_users", "cp_n_cc_users",
-                   "cp_n_active_cases", "cp_n_cases", "cp_n_forms",
+                   "cp_n_active_cases", "cp_n_cases", "cp_n_forms", "cp_n_forms_30_d",
                    "cp_first_form", "cp_last_form", "cp_is_active",
                    'cp_has_app', "cp_n_in_sms", "cp_n_out_sms", "cp_n_sms_ever",
                    "cp_n_sms_30_d", "cp_sms_ever", "cp_sms_30_d", "cp_n_sms_in_30_d",
