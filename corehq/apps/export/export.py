@@ -53,6 +53,7 @@ def get_export_file(export_instance, filters):
 
 
 def _get_export_documents(export_instance, filters):
+    # TODO: This function will be different for couch
     query = _get_base_query(export_instance)
     for filter in filters:
         query = query.filter(filter.to_es_filter())
@@ -80,8 +81,6 @@ def _get_base_query(export_instance):
     """
     Return an ESQuery object for the given export instance.
     Includes filters for domain, doc_type, and xmlns/case_type.
-    :param export_instance:
-    :return:
     """
     if isinstance(export_instance, FormExportInstance):
         return _get_form_export_base_query(export_instance)
