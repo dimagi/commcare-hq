@@ -68,85 +68,93 @@
                             {% endif %}
                         </tr>
                         </thead>
-                        <tbody data-bind="foreach: { data: table.columns, as: 'column' }">
-                        <!--<tbody data-bind="sortable: column_configuration">-->
-                            <tr data-bind="
-                                visible: column.isVisible($parent)
-                                {% if False %}, attr: {'data-order': _sortableOrder}{% endif %}
-                                ">
-                                <td class="sortable-handle">
-                                    <i class="icon-resize-vertical"></i>
-                                </td>
-                                <td>
-                                    <!--ko if: ($root.is_deidentified() && column.item.isCaseName()) -->
-                                    <input type="checkbox"
-                                           class="field-include"
-                                           disabled="disabled" />
-                                    <!--/ko-->
-                                    <!--ko ifnot: ($root.is_deidentified() && column.item.isCaseName()) -->
-                                    <input type="checkbox"
-                                           class="field-include"
-                                           data-bind="checked: column.selected" />
-                                    <!--/ko-->
-                                </td>
-                                <td>
-                                    <span data-bind="foreach: { data: column.tags, as: 'tag' }">
-                                        <span data-bind="
-                                            text: tag,
-                                            attr: { class: Exports.Utils.getTagCSSClass(tag) }"></span>
-                                    </span>
-                                    <code data-bind="text: column.formatProperty()"></code>
-                                                                                                                                                                   
-                                </td>
-                                <td><input class="input-xlarge" type="text" data-bind="value: column.label" /></td>
-                                {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
-                                <td class="input">
-                                    <div data-bind="if: !allOptions()">
-                                        <select disabled>
-                                            <option>{% trans "plain" %}</option>
-                                        </select>
-                                    </div>
-                                    <div data-bind="if: allOptions">
-                                        <select data-bind="
-                                            value: doc_type,
-                                            foreach: $root.column_type_options
-                                        "/>
-                                            <option data-bind="value: value, text: label"></option>
-                                        </select>
-                                        <span data-bind="makeHqHelp: {name: '{% trans "Split multi-select data" %}', placement: 'left'}"></span>
-                                        <div data-bind="if: doc_type() === 'SplitColumn'">
-                                            <a href="#" data-bind="visible: !showOptions(), click: function() {showOptions(true);}">{% trans "Show Options" %}</a>
-                                            <div data-bind="visible: showOptions">
-                                                <select class="select2" data-bind="options: allOptions, selectedOptions: options" multiple="true">
-                                                </select>
-                                                <br/>
-                                                <input class="input input-small" type="text" data-bind="value: newOption"/>
-                                                <button class="btn" data-bind="click: addOption">{% trans "Add" %}</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
-                                {% endif %}
-                                {% if helper.allow_deid %}
-                                <td class="deid-column" data-bind="visible: $root.showDeidColumn()">
-                                    <select data-bind="
-                                        value: transform || '',
-                                        foreach: $root.deid_options,
-                                        visible: (index() !== 'id' || transform()) && !isCaseName()
-                                    ">
-                                        <option data-bind="value: value, text: label"></option>
-                                    </select>
-                                    <span class="label label-info"
-                                          data-bind="visible: $root.export_instance.is_safe() && isCaseName()">
-                                        {% trans "Cannot be published in De-Identified Export." %}
-                                    </span>
-                                </td>
-                                {% endif %}
-                            </tr>
+                        <tbody data-bind="
+                            template: {
+                                foreach: table.columns,
+                                as: 'column',
+                                name: 'ko-export-column-template'
+                            }
+                        ">
+                        <!--<tbody data-bind="sortable: column_configuration">--> 
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
+</script>
+
+<script type="text/html" id="ko-export-column-template">
+    <tr data-bind="
+        visible: column.isVisible($parent)
+        {% if False %}, attr: {'data-order': _sortableOrder}{% endif %}
+        ">
+        <td class="sortable-handle">
+            <i class="icon-resize-vertical"></i>
+        </td>
+        <td>
+            <!--ko if: ($root.is_deidentified() && column.item.isCaseName()) -->
+            <input type="checkbox"
+                   class="field-include"
+                   disabled="disabled" />
+            <!--/ko-->
+            <!--ko ifnot: ($root.is_deidentified() && column.item.isCaseName()) -->
+            <input type="checkbox"
+                   class="field-include"
+                   data-bind="checked: column.selected" />
+            <!--/ko-->
+        </td>
+        <td>
+            <span data-bind="foreach: { data: column.tags, as: 'tag' }">
+                <span data-bind="
+                    text: tag,
+                    attr: { class: Exports.Utils.getTagCSSClass(tag) }"></span>
+            </span>
+            <code data-bind="text: column.formatProperty()"></code>
+        </td>
+        <td><input class="input-xlarge" type="text" data-bind="value: column.label" /></td>
+        {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
+        <td class="input">
+            <div data-bind="if: !allOptions()">
+                <select disabled>
+                    <option>{% trans "plain" %}</option>
+                </select>
+            </div>
+            <div data-bind="if: allOptions">
+                <select data-bind="
+                    value: doc_type,
+                    foreach: $root.column_type_options
+                "/>
+                    <option data-bind="value: value, text: label"></option>
+                </select>
+                <span data-bind="makeHqHelp: {name: '{% trans "Split multi-select data" %}', placement: 'left'}"></span>
+                <div data-bind="if: doc_type() === 'SplitColumn'">
+                    <a href="#" data-bind="visible: !showOptions(), click: function() {showOptions(true);}">{% trans "Show Options" %}</a>
+                    <div data-bind="visible: showOptions">
+                        <select class="select2" data-bind="options: allOptions, selectedOptions: options" multiple="true">
+                        </select>
+                        <br/>
+                        <input class="input input-small" type="text" data-bind="value: newOption"/>
+                        <button class="btn" data-bind="click: addOption">{% trans "Add" %}</button>
+                    </div>
+                </div>
+            </div>
+        </td>
+        {% endif %}
+        {% if helper.allow_deid %}
+        <td class="deid-column" data-bind="visible: $root.showDeidColumn()">
+            <select data-bind="
+                value: transform || '',
+                foreach: $root.deid_options,
+                visible: (index() !== 'id' || transform()) && !isCaseName()
+            ">
+                <option data-bind="value: value, text: label"></option>
+            </select>
+            <span class="label label-info"
+                  data-bind="visible: $root.export_instance.is_safe() && isCaseName()">
+                {% trans "Cannot be published in De-Identified Export." %}
+            </span>
+        </td>
+        {% endif %}
+    </tr>
 </script>
