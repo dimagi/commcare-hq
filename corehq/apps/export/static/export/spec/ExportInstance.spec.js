@@ -2,7 +2,7 @@ describe('ExportInstance model', function() {
 
     var basicFormExport;
     beforeEach(function() {
-        basicFormExport = _.clone(SampleExportInstances.basic);
+        basicFormExport = _.clone(SampleExportInstances.basic, { saveUrl: 'http://saveurl/' });
     });
 
     it('Should create an instance from JSON', function() {
@@ -49,6 +49,72 @@ describe('ExportInstance model', function() {
             assert.isDefined(item.path);
             assert.isDefined(item.tag);
         });
+    });
 
+    describe('#save', function() {
+        var server,
+            redirectSpy,
+            recordSaveAnalyticsSpy,
+            instance;
+
+        beforeEach(function() {
+            instance = new Exports.ViewModels.ExportInstance(basicFormExport);
+            redirectSpy = sinon.spy();
+            recordSaveAnalyticsSpy = sinon.spy();
+            server = sinon.fakeServer.create();
+
+            sinon.stub(instance, 'recordSaveAnalytics', recordSaveAnalyticsSpy);
+            sinon.stub(Exports.Utils, 'redirect', redirectSpy);
+            window.ga_track_event = sinon.spy();
+        });
+
+        afterEach(function() {
+            server.restore();
+            instance.recordSaveAnalytics.restore();
+            Exports.Utils.redirect.restore();
+            window.ga_track_event = undefined;
+        });
+
+        it('Should save a model', function() {
+            server.respondWith(
+                "POST",
+                instance.saveUrl,
+                [
+                    200,
+                    { "Content-Type": "application/json" },
+                    '{ "redirect": "http://dummy/"}'
+                ]
+            );
+
+            assert.equal(instance.saveState(), Exports.Constants.SAVE_STATES.READY);
+            instance.save();
+
+            assert.equal(instance.saveState(), Exports.Constants.SAVE_STATES.SAVING);
+            server.respond();
+
+            assert.equal(instance.saveState(), Exports.Constants.SAVE_STATES.SUCCESS);
+            assert.isTrue(redirectSpy.called);
+            assert.isTrue(recordSaveAnalyticsSpy.called);
+        });
+
+        it('Should crash on saving export', function() {
+            server.respondWith(
+                "POST",
+                instance.saveUrl,
+                [
+                    500,
+                    { "Content-Type": "application/json" },
+                    '{ "status": "fail" }'
+                ]
+            );
+            instance.save();
+
+            assert.equal(instance.saveState(), Exports.Constants.SAVE_STATES.SAVING);
+            server.respond();
+
+            assert.equal(instance.saveState(), Exports.Constants.SAVE_STATES.ERROR);
+            assert.isFalse(redirectSpy.called);
+            assert.isFalse(recordSaveAnalyticsSpy.called);
+        });
     });
 });

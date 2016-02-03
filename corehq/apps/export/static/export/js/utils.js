@@ -5,3 +5,7 @@ Exports.Utils.getTagCSSClass = function(tag) {
     }
     return cls;
 };
+
+Exports.Utils.redirect = function(url) {
+    window.location.href = url;
+};

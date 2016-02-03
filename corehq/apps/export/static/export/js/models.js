@@ -35,11 +35,10 @@ Exports.ViewModels.ExportInstance.prototype.save = function() {
         serialized;
 
     self.saveState(Exports.Constants.SAVE_STATES.SAVING);
-    serialized = self.toJSON();
+    serialized = self.toJS();
     $.post(self.saveUrl, serialized)
         .success(function(data) {
-            var eventCategory,
-                redirect = function() { window.location.href = data.redirect; };
+            var eventCategory;
 
             self.saveState(Exports.Constants.SAVE_STATES.SUCCESS);
             self.recordSaveAnalytics();
@@ -47,10 +46,10 @@ Exports.ViewModels.ExportInstance.prototype.save = function() {
             if (self.isNew()) {
                 eventCategory = Exports.Utils.getEventCategory(self.type());
                 ga_track_event(eventCategory, 'Custom export creation', '', {
-                    hitCallback: redirect
+                    hitCallback: Exports.Utils.redirect.bind(null, data.redirect)
                 });
             } else {
-                redirect();
+                Exports.Utils.redirect(data.redirect);
             }
         })
         .fail(function(response) {
@@ -139,7 +138,7 @@ Exports.ViewModels.ExportColumn = function(columnJSON) {
 };
 
 Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
-    return this.item.path.join('.');
+    return this.item.path().join('.');
 };
 
 Exports.ViewModels.ExportColumn.prototype.isVisible = function(table) {
@@ -156,13 +155,14 @@ Exports.ViewModels.ExportColumn.mapping = {
 };
 
 Exports.ViewModels.ExportItem = function(itemJSON) {
-    // ExportItem is not modifyable through the UI so we should not make it observable
     var self = this;
-    self.path = itemJSON.path;
-    self.label = itemJSON.label;
-    self.tag = itemJSON.tag;
+    ko.mapping.fromJS(itemJSON, Exports.ViewModels.ExportColumn.mapping, self);
 };
 
 Exports.ViewModels.ExportItem.prototype.isCaseName = function() {
     return self.path[self.path.length - 1] === 'case_name';
+};
+
+Exports.ViewModels.ExportItem.mapping = {
+    include: ['path', 'label', 'tag'],
 };
