@@ -63,7 +63,7 @@ def _get_export_documents(export_instance, filters):
 
 def _write_export_file(export_instance, documents):
 
-    legacy_writer = get_writer(export_instance.format)
+    legacy_writer = get_writer(export_instance.export_format)
     writer = _Writer(legacy_writer)
 
     with writer.open(export_instance.tables):

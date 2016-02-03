@@ -77,7 +77,7 @@ class WriterTest(SimpleTestCase):
         """
 
         export_instance = ExportInstance(
-            format=Format.PYTHON_DICT,
+            export_format=Format.PYTHON_DICT,
             tables=[
                 TableConfiguration(
                     name="My table",
@@ -113,7 +113,7 @@ class WriterTest(SimpleTestCase):
 
     def test_multi_table(self):
         export_instance = ExportInstance(
-            format=Format.PYTHON_DICT,
+            export_format=Format.PYTHON_DICT,
             tables=[
                 TableConfiguration(
                     name="My table",
@@ -187,7 +187,7 @@ class ExportTest(SimpleTestCase):
     def test_get_export_file(self):
         export = get_export_file(
             CaseExportInstance(
-                format=Format.PYTHON_DICT,
+                export_format=Format.PYTHON_DICT,
                 domain=DOMAIN,
                 case_type=DEFAULT_CASE_TYPE,
                 tables=[TableConfiguration(
