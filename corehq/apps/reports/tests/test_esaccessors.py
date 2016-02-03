@@ -180,7 +180,7 @@ class TestFormESAccessorsSQL(TestFormESAccessors):
             time_end=completion_time or datetime.utcnow(),
             received_on=received_on or datetime.utcnow(),
         )
-        form_pair = make_es_ready_form(metadata, is_db_test=True)
+        form_pair = make_es_ready_form(metadata)
         change = Change(
             id=form_pair.json_form['form_id'],
             sequence_id='123',
