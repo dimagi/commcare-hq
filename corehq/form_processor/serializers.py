@@ -1,7 +1,8 @@
 from rest_framework import serializers
-from corehq.form_processor.models import CommCareCaseIndexSQL, CommCareCaseSQL
-
-from .models import XFormInstanceSQL, XFormOperationSQL
+from corehq.form_processor.models import (
+    CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
+    XFormInstanceSQL, XFormOperationSQL
+)
 
 
 class XFormOperationSQLSerializer(serializers.ModelSerializer):
@@ -27,8 +28,17 @@ class CommCareCaseIndexSQLSerializer(serializers.ModelSerializer):
         model = CommCareCaseIndexSQL
 
 
+class CaseTransactionSerializer(serializers.ModelSerializer):
+    details = serializers.DictField()
+
+    class Meta:
+        model = CaseTransaction
+        exclude = ('id', 'case')
+
+
 class CommCareCaseSQLSerializer(serializers.ModelSerializer):
     indices = CommCareCaseIndexSQLSerializer(many=True, read_only=True)
+    transactions = CaseTransactionSerializer(many=True, read_only=True)
 
     class Meta:
         model = CommCareCaseSQL

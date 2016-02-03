@@ -533,7 +533,9 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     @memoized
     def transactions(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_transactions(self.case_id)
+        transactions = CaseAccessorSQL.get_transactions(self.case_id) if self.is_saved() else []
+        transactions += self.get_tracked_models_to_create(CaseTransaction)
+        return transactions
 
     @property
     @memoized
