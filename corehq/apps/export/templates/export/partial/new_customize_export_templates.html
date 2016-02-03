@@ -146,7 +146,7 @@
         {% if allow_deid %}
         <td class="deid-column" data-bind="visible: $root.isDeidColumnVisible()">
             <select data-bind="
-                value: transform,
+                value: deidTransform,
                 options: getDeidOptions(),
                 optionsText: getDeidOptionText,
                 visible: isDeidSelectVisible()

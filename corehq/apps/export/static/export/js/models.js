@@ -142,6 +142,13 @@ Exports.ViewModels.TableConfiguration.mapping = {
 Exports.ViewModels.ExportColumn = function(columnJSON) {
     var self = this;
     ko.mapping.fromJS(columnJSON, Exports.ViewModels.ExportColumn.mapping, self);
+    self.deidTransform = ko.observable(Exports.Constants.DEID_OPTIONS.NONE);
+    self.deidTransform.subscribe(function(newTransform) {
+        self.transforms(Exports.Utils.removeDeidTransforms(self.transforms()));
+        if (newTransform) {
+            self.transforms.push(newTransform);
+        }
+    });
 };
 
 Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
@@ -149,7 +156,7 @@ Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
 };
 
 Exports.ViewModels.ExportColumn.prototype.isDeidSelectVisible = function() {
-    return (this.item.path()[this.item.path().length - 1] !== '_id' || this.transform()) && !this.isCaseName();
+    return (this.item.path()[this.item.path().length - 1] !== '_id' || this.transforms()) && !this.isCaseName();
 };
 
 Exports.ViewModels.ExportColumn.prototype.getDeidOptions = function() {
@@ -175,7 +182,8 @@ Exports.ViewModels.ExportColumn.prototype.isCaseName = function() {
 };
 
 Exports.ViewModels.ExportColumn.mapping = {
-    include: ['item', 'label', 'is_advanced', 'selected', 'tags', 'transform'],
+    include: ['item', 'label', 'is_advanced', 'selected', 'tags', 'transforms'],
+    exclude: ['deidTransform'],
     item: {
         create: function(options) {
             return new Exports.ViewModels.ExportItem(options.data);

@@ -33,7 +33,7 @@ from corehq.apps.export.const import (
     FORM_EXPORT,
     CASE_EXPORT,
     MAIN_TABLE,
-    DEID_TRANSFORM_FUNCTIONS,
+    TRANSFORM_FUNCTIONS,
 )
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,

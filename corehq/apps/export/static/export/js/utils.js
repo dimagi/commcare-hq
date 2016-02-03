@@ -15,3 +15,9 @@ Exports.Utils.animateToEl = function(toElementSelector, callback) {
         scrollTop: $(toElementSelector).offset().top + 'px'
     }, 'slow', undefined, callback);
 };
+
+Exports.Utils.removeDeidTransforms = function(transforms) {
+    return _.filter(transforms, function(transform) {
+        return _.values(Exports.Constants.DEID_OPTIONS).indexOf(transform) === -1;
+    });
+};
