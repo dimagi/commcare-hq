@@ -52,17 +52,20 @@ class IsClosedFilter(ExportFilter):
     def to_es_filter(self):
         return is_closed(self.is_closed)
 
+
 class NameFilter(ExportFilter):
     def __init__(self, case_name):
         self.case_name = case_name
 
     def to_es_filter(self):
-        raise NotImplementedError
+        return esfilters.term('name', self.case_name)
+
 
 class OpenedOnRangeFilter(RangeExportFilter):
 
     def to_es_filter(self):
         return opened_range(self.gt, self.gte, self.lt, self.lte)
+
 
 class OpenedByFilter(ExportFilter):
     def __init__(self, opened_by):
