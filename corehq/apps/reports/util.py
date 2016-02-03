@@ -66,7 +66,6 @@ def make_form_couch_key(domain, by_submission_time=True,
 
 
 def user_list(domain):
-    #todo cleanup
     #referenced in filters.users.SelectMobileWorkerFilter
     users = list(CommCareUser.by_domain(domain))
     users.extend(CommCareUser.by_domain(domain, is_active=False))

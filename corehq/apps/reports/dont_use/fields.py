@@ -125,21 +125,6 @@ class BooleanField(ReportField):
         self.context['checked'] = self.request.GET.get(self.slug, False)
 
 
-class UserOrGroupField(ReportSelectField):
-    """
-        To Use: Subclass and specify what the field options should be
-    """
-    slug = "view_by"
-    name = ugettext_noop("View by Users or Groups")
-    cssId = "view_by_select"
-    cssClasses = "span2"
-    default_option = "Users"
-
-    def update_params(self):
-        self.selected = self.request.GET.get(self.slug, '')
-        self.options = [{'val': 'groups', 'text': 'Groups'}]
-
-
 class SelectProgramField(ReportSelectField):
     slug = "program"
     name = ugettext_noop("Program")
