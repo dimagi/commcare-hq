@@ -60,7 +60,6 @@ branches:
   - finish-two-factor # Cal 1/21
   - lazy-jar # Nick P 1/25
   - show-form-case-refs-in-summary # j$ 1/29
-  - aggregations # SK 2/2
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
