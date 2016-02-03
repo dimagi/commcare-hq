@@ -69,8 +69,8 @@ def _write_export_file(export_instance, documents):
             for table in export_instance.tables:
                 rows = table.get_rows(doc)
                 for row in rows:
-                    # TODO: Maybe it is bad to write one row at a time when you can do more
-                    # (from a performance perspective)
+                    # It might be bad to write one row at a time when you can do more (from a performance perspective)
+                    # Regardless, we should handle the batching of rows in the _Writer class, not here.
                     writer.write(table, row)
     return writer.get_preview()
 
