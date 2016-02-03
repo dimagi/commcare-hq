@@ -13,6 +13,7 @@ Exports.ViewModels.ExportInstance.mapping = {
         'transform_dates',
         'include_errors',
         'is_deidentified',
+        'is_daily_saved_export',
     ],
     tables: {
         create: function(options) {

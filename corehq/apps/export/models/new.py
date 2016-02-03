@@ -194,8 +194,9 @@ class ExportInstance(Document):
     # Whether to include duplicates and other error'd forms in export
     include_errors = BooleanProperty(default=False)
 
-    # Wether the export is de-identified
+    # Whether the export is de-identified
     is_deidentified = BooleanProperty(default=False)
+    is_daily_saved_export = BooleanProperty(default=False)
 
     class Meta:
         app_label = 'export'

@@ -83,7 +83,10 @@
                         {% trans "Automatically convert dates for Excel" %}
                     </label>
                     <label class="checkbox">
-                        <!--<input type="checkbox" id="presave-checkbox" data-bind="checked: presave" />-->
+                        <input
+                            type="checkbox"
+                            id="daily-saved-export-checkbox"
+                            data-bind="checked: is_daily_saved_export" />
                         {% trans "Create a Daily Saved Export" %}
                     </label>
                 {% if export_instance.type == 'form' %}
