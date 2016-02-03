@@ -5,3 +5,9 @@ Exports.Constants.SAVE_STATES = {
     READY: 'ready',
     SUCCESS: 'done'
 };
+Exports.Constants.EXPORT_FORMATS = {
+    HTML: 'html',
+    CSV: 'csv',
+    XLS: 'xls',
+    XLSX: 'xlsx'
+};

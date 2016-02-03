@@ -62,11 +62,11 @@
             <div class="control-group">
                 <label for="format-select" class="control-label">{% trans "Default file type" %}</label>
                 <div class="controls">
-                    <select id="format-select" data-bind="value: export_format">
-                        <option value="csv">{% trans "CSV (Zip file)" %}</option>
-                        <option value="xlsx">{% trans "Excel 2007" %}</option>
-                        <option value="xls">{% trans "Excel (older versions)" %}</option>
-                        <option value="html">{% trans "Web Page (Excel Dashboards)" %}</option>
+                    <select id="format-select" data-bind="
+                            options: getFormatOptionValues(),
+                            optionsText: getFormatOptionText,
+                            value: export_format
+                        ">
                     </select>
                 </div>
             </div>

@@ -6,6 +6,22 @@ Exports.ViewModels.ExportInstance = function(instanceJSON, options) {
     self.saveUrl = options.saveUrl;
 };
 
+Exports.ViewModels.ExportInstance.prototype.getFormatOptionValues = function() {
+    return _.map(Exports.Constants.EXPORT_FORMATS, function(value, key) { return value; });
+};
+
+Exports.ViewModels.ExportInstance.prototype.getFormatOptionText = function(format) {
+    if (format === Exports.Constants.EXPORT_FORMATS.HTML) {
+        return gettext('Web Page (Excel Dashboards)');
+    } else if (format === Exports.Constants.EXPORT_FORMATS.CSV) {
+        return gettext('CSV (Zip file)');
+    } else if (format === Exports.Constants.EXPORT_FORMATS.XLS) {
+        return gettext('Excel 2007');
+    } else if (format === Exports.Constants.EXPORT_FORMATS.XLSX) {
+        return gettext('Web Page (Excel Dashboards)');
+    }
+};
+
 Exports.ViewModels.ExportInstance.prototype.isNew = function() {
     return !!self._id;
 };
