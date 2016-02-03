@@ -39,8 +39,6 @@ from collections import namedtuple
 
 import datetime
 
-from corehq.apps.es import filters
-
 
 class AggregationResult(object):
     def __init__(self, raw, aggregation):
@@ -219,12 +217,11 @@ class RangeResult(BucketResult):
             return [_add_key(k, b) for k, b in buckets.items()]
         else:
             def _add_key(bucket):
-                key ='{}-{}'.format(bucket.get('from', '*'), bucket.get('to', '*'))
+                key = '{}-{}'.format(bucket.get('from', '*'), bucket.get('to', '*'))
                 bucket['key'] = key
                 return bucket
 
             return [_add_key(b) for b in buckets]
-
 
 
 class RangeAggregation(Aggregation):

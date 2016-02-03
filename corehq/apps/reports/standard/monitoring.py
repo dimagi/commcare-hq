@@ -9,7 +9,7 @@ import pytz
 
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
-from corehq.apps.es.aggregations import FiltersAggregation, TermsAggregation, RangeAggregation, AggregationRange, \
+from corehq.apps.es.aggregations import TermsAggregation, RangeAggregation, AggregationRange, \
     FilterAggregation
 from corehq.apps.reports import util
 from corehq.apps.reports.analytics.esaccessors import (
