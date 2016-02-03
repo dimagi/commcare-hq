@@ -1,4 +1,5 @@
 # TODO: This file has a dumb name
+import contextlib
 import os
 import tempfile
 
@@ -17,16 +18,26 @@ class _Writer(object):
         # An instance of a couchexport.ExportWriter
         self.writer = writer
 
-    def open(self, file, tables):
-        headers = [(t.identifier, (t.get_headers(),)) for t in tables]
-        table_titles = {t.identifier: t.name for t in tables}
-        return self.writer.open(headers, file, table_titles=table_titles)
+    @contextlib.contextmanager
+    def open(self, tables):
+        """
+        Open the _Writer for writing. This must be called before using _Writer.write()
+        """
+
+        # Create a nd open a temp file
+        fd, path = tempfile.mkstemp()
+        with os.fdopen(fd, 'wb') as file:
+
+            # open the ExportWriter
+            headers = [(t.identifier, (t.get_headers(),)) for t in tables]
+            table_titles = {t.identifier: t.name for t in tables}
+            self.writer.open(headers, file, table_titles=table_titles)
+            yield
+
+        self.writer.close()
 
     def write(self, table, row):
         return self.writer.write([(table.identifier, [FormattedRow(data=row.data)])])
-
-    def close(self):
-        return self.writer.close()
 
     def get_preview(self):
         return self.writer.get_preview()
@@ -52,10 +63,7 @@ def _write_export_file(export_instance, documents):
 
     writer = _Writer(PythonDictWriter())
 
-    fd, path = tempfile.mkstemp()
-    with os.fdopen(fd, 'wb') as tmp:
-        writer.open(tmp, export_instance.tables)
-
+    with writer.open(export_instance.tables):
         for doc in documents:
             for table in export_instance.tables:
                 rows = table.get_rows(doc)
@@ -63,7 +71,6 @@ def _write_export_file(export_instance, documents):
                     # TODO: Maybe it is bad to write one row at a time when you can do more
                     # (from a performance perspective)
                     writer.write(table, row)
-    writer.close()
     return writer.get_preview()
 
 
