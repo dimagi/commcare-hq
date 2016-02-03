@@ -249,6 +249,10 @@ def download_file(request, domain, app_id, path):
         if request.app.copy_of:
             if request.META.get('HTTP_USER_AGENT') == 'bitlybot':
                 raise Http404()
+            elif path in ('CommCare.jad', 'CommCare.jar'):
+                request.app.create_jadjar(save=True)
+                request.app.save(increment_version=False)
+                return download_file(request, domain, app_id, path)
             elif path == 'profile.ccpr':
                 # legacy: should patch build to add odk profile
                 # which wasn't made on build for a long time
