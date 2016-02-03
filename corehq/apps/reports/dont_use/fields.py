@@ -101,19 +101,6 @@ class ReportSelectField(ReportField):
         )
 
 
-class SelectMobileWorkerMixin(object):
-    slug = "select_mw"
-    name = ugettext_noop("Select Mobile Worker")
-
-    @classmethod
-    def get_default_text(cls, user_filter, default_option=None):
-        default = default_option or cls.default_option
-        if user_filter[HQUserType.ADMIN].show or \
-           user_filter[HQUserType.DEMO_USER].show or user_filter[HQUserType.UNKNOWN].show:
-            default = _('%s & Others') % _(default)
-        return default
-
-
 class BooleanField(ReportField):
     slug = "checkbox"
     label = "hello"
@@ -123,15 +110,3 @@ class BooleanField(ReportField):
         self.context['label'] = self.label
         self.context[self.slug] = self.request.GET.get(self.slug, False)
         self.context['checked'] = self.request.GET.get(self.slug, False)
-
-
-class ReportMultiSelectField(ReportSelectField):
-    template = "reports/dont_use_fields/bootstrap2/multiselect_generic.html"
-    selected = []
-    # auto_select
-    default_option = []
-
-    # enfore as_combo = False ?
-
-    def update_params(self):
-        self.selected = self.request.GET.getlist(self.slug) or self.default_option
