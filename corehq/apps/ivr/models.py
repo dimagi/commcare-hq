@@ -57,7 +57,7 @@ class Call(SyncSQLToCouchMixin, Log):
 
     # The session id returned from the backend, with the backend's hq api id
     # and a hyphen prepended. For example: TWILIO-xxxxxxxxxx
-    gateway_session_id = models.CharField(max_length=126, null=True)
+    gateway_session_id = models.CharField(max_length=126, null=True, db_index=True)
 
     """ Advanced IVR Options """
 
