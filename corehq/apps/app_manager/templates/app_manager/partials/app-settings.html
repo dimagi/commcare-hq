@@ -169,12 +169,12 @@ todo fix
 
 <div class="tab-pane" id="commcare-settings">
     <div id="app_short_comment" class="app-comment">{{ app.short_comment }}</div>
-    <div class="clearfix">
-        <div class="pull-right">
-            <div id="settings-save-btn" data-bind="saveButton2: state, saveOptions: saveOptions"></div>
-        </div>
-    </div>
     <form class="form-horizontal">
+        <div class="clearfix">
+            <div class="pull-right">
+                <div id="settings-save-btn" data-bind="saveButton2: state, saveOptions: saveOptions"></div>
+            </div>
+        </div>
         <div data-bind="foreach: sections">
             <fieldset data-bind="visible: notEmpty">
                 <legend>
