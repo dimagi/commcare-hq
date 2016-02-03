@@ -98,7 +98,7 @@ class ProjectReportParametersMixin(object):
     @property
     @memoized
     def group(self):
-        if self.group_id and self.group_id != '_all':
+        if self.group_id:
             return Group.get(self.group_id)
         else:
             return self.groups[0] if len(self.groups) else None
@@ -111,7 +111,7 @@ class ProjectReportParametersMixin(object):
     @memoized
     def groups(self):
         from corehq.apps.groups.models import Group
-        if '_all' in self.group_ids or self.request.GET.get('all_groups', 'off') == 'on':
+        if not self.group_ids or self.request.GET.get('all_groups', 'off') == 'on':
             return Group.get_reporting_groups(self.domain)
         return [Group.get(g) for g in self.group_ids]
 
