@@ -129,7 +129,7 @@ ko.bindingHandlers.langcode = {
             b.valueUpdate.push('autocompleteclose');
             return b;
         });
-        $('input', element).addClass('short code').langcodes();
+        $('input', element).addClass('short code form-control').langcodes();
     },
     update: ko.bindingHandlers.editableString.update
 };
@@ -327,7 +327,7 @@ ko.bindingHandlers.openModal = {
 
 ko.bindingHandlers.openRemoteModal = {
     init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        var modal = $('<div></div>').addClass('modal fade').css("width", "860px").css("margin-left", "-430px").appendTo('body'),
+        var modal = $('<div></div>').addClass('modal fade').appendTo('body'),
             newValueAccessor = function () {
                 var clickAction = function () {
                     modal.load($(element).data('ajaxSource'));
@@ -363,8 +363,8 @@ ko.bindingHandlers.starred = {
         value = value + '';
         $element.addClass('icon pointer');
 
-        var unselected = 'icon-star-empty';
-        var selected = 'icon-star icon-large released';
+        var unselected = 'icon-star-empty fa-star-o';
+        var selected = 'icon-star icon-large fa-star released';
         var pending = 'icon-refresh icon-spin fa-spin fa-spinner';
         var error = 'icon-ban-circle';
 
