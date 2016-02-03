@@ -425,8 +425,8 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
             TermsAggregation("users", 'user_id').aggregation(
                 FilterAggregation('closed', filters.term('closed', True))
             ),
-            FiltersAggregation('total_by_status')\
-                .add_filter('closed', filters.term('closed', True))\
+            FiltersAggregation('total_by_status')
+                .add_filter('closed', filters.term('closed', True))
                 .add_filter('open', filters.term('closed', False))
         ])
         self.checkQuery(query, json_output)
