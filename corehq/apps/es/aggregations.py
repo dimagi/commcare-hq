@@ -32,7 +32,7 @@ method that returns a ``{bucket: count}`` dictionary, which is normally what you
 want.
 
 As of this writing, there's not much else developed, but it's pretty easy to
-add support for other facet types and more results processing
+add support for other aggregation types and more results processing
 """
 import re
 from collections import namedtuple
@@ -286,7 +286,7 @@ class DateHistogram(Aggregation):
 
     This class can be instantiated by the ``ESQuery.date_histogram`` method.
 
-    :param name: what do you want to call this facet?
+    :param name: what do you want to call this aggregation
     :param datefield: the document's date field to look at
     :param interval: the date interval to use: "year", "quarter", "month",
         "week", "day", "hour", "minute", "second"

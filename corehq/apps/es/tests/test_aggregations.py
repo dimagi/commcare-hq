@@ -11,6 +11,12 @@ from corehq.elastic import SIZE_LIMIT
 
 
 class TestAggregations(ElasticTestMixin, SimpleTestCase):
+
+    def test_bad_aggregation_name(self):
+        with self.assertRaises(AssertionError):
+            HQESQuery('forms')\
+                .terms_aggregation('form.meta.userID', 'form.meta.userID')
+
     def test_nested_aggregation(self):
         json_output = {
             "query": {

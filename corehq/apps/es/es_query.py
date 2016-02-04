@@ -96,7 +96,6 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.elastic import ES_META, ESError, run_query, SIZE_LIMIT
 
-from . import facets
 from . import filters
 from . import queries
 
@@ -125,7 +124,6 @@ class ESQuery(object):
     _start = None
     _size = None
     _aggregations = None
-    _facets = None
     _source = None
     default_filters = {
         "match_all": filters.match_all()
@@ -224,12 +222,6 @@ class ESQuery(object):
         query._aggregations.extend(aggregations)
         return query
 
-    def facet(self, _facet):
-        """Add a facet to the query."""
-        query = deepcopy(self)
-        query._facets.append(_facet)
-        return query
-
     def terms_aggregation(self, term, name):
         return self.aggregation(aggregations.TermsAggregation(name, term))
 
@@ -261,11 +253,6 @@ class ESQuery(object):
         if self._start is not None:
             self.es_query['from'] = self._start
         self.es_query['size'] = self._size if self._size is not None else SIZE_LIMIT
-        if self._facets:
-            self.es_query['facets'] = {
-                facet.name: {facet.type: facet.params}
-                for facet in self._facets
-            }
         if self._source:
             self.es_query['_source'] = self._source
         if self._aggregations:
@@ -406,27 +393,8 @@ class ESQuerySet(object):
         """Return the total number of docs matching the query."""
         return self.raw['hits']['total']
 
-    @property
-    def raw_facets(self):
-        return self.raw['facets']
-
-    def facet(self, name, _type):
-        return self.raw['facets'][name][_type]
-
     def aggregation(self, name):
         return self.raw['aggregations'][name]
-
-    @property
-    @memoized
-    def facets(self):
-        """
-        Namedtuple of the facets defined in the query.
-        See the facet docs for more specifics.
-        """
-        facets = self.query._facets
-        raw = self.raw.get('facets', {})
-        results = namedtuple('facet_results', [f.name for f in facets])
-        return results(**{f.name: f.parse_result(raw) for f in facets})
 
     @property
     @memoized
