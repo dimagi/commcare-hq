@@ -404,7 +404,7 @@ class SMS(SyncSQLToCouchMixin, Log):
         return SMSLog
 
 
-class LastReadMessage(Document, CouchDocLockableMixIn):
+class LastReadMessage(SyncCouchToSQLMixin, Document, CouchDocLockableMixIn):
     domain = StringProperty()
     # _id of CouchUser who read it
     read_by = StringProperty()
@@ -447,6 +447,54 @@ class LastReadMessage(Document, CouchDocLockableMixIn):
             descending=True,
             include_docs=True
         ).first()
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return SQLLastReadMessage._migration_get_fields()
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLLastReadMessage
+
+
+class SQLLastReadMessage(SyncSQLToCouchMixin, models.Model):
+    class Meta:
+        db_table = 'sms_lastreadmessage'
+        index_together = [
+            ['domain', 'read_by', 'contact_id'],
+            ['domain', 'contact_id'],
+        ]
+
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+    domain = models.CharField(max_length=126, null=True)
+
+    # _id of CouchUser who read it
+    read_by = models.CharField(max_length=126, null=True)
+
+    # _id of the CouchUser or CommCareCase who the message was sent to
+    # or from
+    contact_id = models.CharField(max_length=126, null=True)
+
+    # couch_id of the SMS
+    message_id = models.CharField(max_length=126, null=True)
+
+    # date of the SMS entry, stored here redundantly to prevent a lookup
+    message_timestamp = models.DateTimeField(null=True)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            'domain',
+            'read_by',
+            'contact_id',
+            'message_id',
+            'message_timestamp',
+        ]
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return LastReadMessage
+
 
 class CallLog(SyncCouchToSQLMixin, MessageLog):
     form_unique_id = StringProperty()
