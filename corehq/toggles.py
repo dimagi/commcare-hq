@@ -764,3 +764,11 @@ CASE_LIST_DISTANCE_SORT = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
+
+
+NOTIFICATIONS = StaticToggle(
+    'hq_notifications',
+    'Shows notification icon when announcements need to be made',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_USER]
+)
