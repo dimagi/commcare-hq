@@ -26,6 +26,7 @@
         var self = this;
         self.notifications = ko.observableArray();
         self.hasUnread = ko.observable(false);
+        self.hasError = ko.observable(false);
 
         self.init = function () {
             rmi("get_notifications", {'did_it_work': true})
@@ -37,6 +38,7 @@
                 })
                 .fail(function (jqXHR, textStatus, errorThrown) {
                     console.log(errorThrown);
+                    self.hasError(true);
                 });
         };
     };
