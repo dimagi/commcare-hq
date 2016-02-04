@@ -722,6 +722,13 @@ GRID_MENUS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+NEW_EXPORTS = StaticToggle(
+    'new_exports',
+    'Use new backend export infrastructure',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN]
+)
+
 TF_USES_SQLITE_BACKEND = StaticToggle(
     'tf_sql_backend',
     'Use a SQLite backend for Touchforms',

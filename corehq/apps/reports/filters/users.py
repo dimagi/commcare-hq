@@ -22,6 +22,13 @@ from .base import (
 )
 
 
+class UserOrGroupFilter(BaseSingleOptionFilter):
+    slug = "view_by"
+    label = ugettext_noop("View by Users or Groups")
+    default_text = ugettext_noop("Users")
+    options = [('groups', 'Groups')]
+
+
 class UserTypeFilter(BaseReportFilter):
     # note, don't use this as a guideline for anything.
     slug = "ufilter"
