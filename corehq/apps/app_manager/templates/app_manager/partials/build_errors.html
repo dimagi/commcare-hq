@@ -7,10 +7,10 @@
         {% else %}
             <p>{% trans "Build Failed!" %}</p>
         {% endif %}
-        <ul class="unstyled" id="build-errors">
+        <ul class="list-unstyled" id="build-errors">
             {% for error in build_errors %}
                 <li>
-                    <i class="icon icon-exclamation-sign"></i>
+                    <i class="fa fa-exclamation-circle"></i>
                     <span>
                         {% case error.type "blank form" %}
                             {% if not error.message %}
@@ -268,8 +268,7 @@
                 </li>
             {% endfor %}
         </ul>
-        <p class="help-inline">
-            <small>
+        <p class="help-block">
             {% if not_actual_build %}
                 {% trans "Build errors prevent you from building your application in the Release Manager." %}
             {% endif %}
@@ -277,7 +276,6 @@
             <a href="https://confluence.dimagi.com/display/commcarepublic/Errors+Building+an+Application" target="_blank">
                 {% trans "Errors Building an Application" %}
             </a>
-            </small>
         </p>
     </div>
 {% endif %}

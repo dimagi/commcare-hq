@@ -402,7 +402,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'djtables',
     'gunicorn',
     'langcodes',
-    'luna',
     'raven.contrib.django.raven_compat',
     'rosetta',
     'two_factor',
@@ -1030,18 +1029,7 @@ fix_logger_obfuscation_ = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
 helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
 
 if DEBUG:
-    try:
-        import luna
-        del luna
-    except ImportError:
-        pass
-    else:
-        INSTALLED_APPS = INSTALLED_APPS + (
-            'luna',
-        )
-
     INSTALLED_APPS = INSTALLED_APPS + ('corehq.apps.mocha',)
-
     import warnings
     warnings.simplefilter('default')
     os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
