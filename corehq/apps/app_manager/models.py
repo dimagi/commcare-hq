@@ -1686,6 +1686,18 @@ class DetailColumn(IndexedSchema):
 
         return super(DetailColumn, cls).wrap(data)
 
+    @classmethod
+    def from_json(cls, data):
+        from corehq.apps.app_manager.views.media_utils import interpolate_media_path
+
+        to_ret = cls.wrap(data)
+        if to_ret.format == 'enum-image':
+            # interpolate icons-paths
+            for item in to_ret.enum:
+                for lang, path in item.value.iteritems():
+                    item.value[lang] = interpolate_media_path(path)
+        return to_ret
+
 
 class SortElement(IndexedSchema):
     field = StringProperty()
