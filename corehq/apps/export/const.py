@@ -29,3 +29,8 @@ FORM_EXPORT = 'form'
 CASE_EXPORT = 'case'
 
 MAIN_TABLE = None
+
+TRANSFORM_FUNCTIONS = {
+    'deid_id': lambda x: x,  # TODO: map these to actual deid functions
+    'deid_date': lambda x: x
+}
