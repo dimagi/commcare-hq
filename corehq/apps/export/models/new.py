@@ -131,12 +131,27 @@ class ExportColumn(DocumentSchema):
             tags=tags,
         )
 
+    def get_headers(self):
+        return [self.label]
+
 
 class TableConfiguration(DocumentSchema):
     name = StringProperty()
     path = ListProperty()
     columns = ListProperty(ExportColumn)
     selected = BooleanProperty(default=False)
+
+    def __hash__(self):
+        return hash(tuple(self.path))
+
+    def get_headers(self):
+        """
+        Return a list of column headers
+        """
+        headers = []
+        for column in self.columns:
+            headers.extend(column.get_headers())
+        return headers
 
     def get_rows(self, document):
         """
@@ -189,6 +204,7 @@ class TableConfiguration(DocumentSchema):
 class ExportInstance(Document):
     name = StringProperty()
     type = StringProperty()
+    domain = StringProperty()
     tables = ListProperty(TableConfiguration)
     export_format = StringProperty(default='csv')
 
@@ -237,6 +253,14 @@ class ExportInstance(Document):
             )
             instance.tables.append(table)
         return instance
+
+
+class CaseExportInstance(ExportInstance):
+    case_type = StringProperty()
+
+
+class FormExportInstance(ExportInstance):
+    xmlns = StringProperty()
 
 
 class ExportInstanceDefaults(object):
@@ -759,3 +783,7 @@ class SplitExportColumn(ExportColumn):
         if not self.ignore_extras:
             row.append(" ".join(selected.keys()))
         return row
+
+    def get_headers(self):
+        # TODO: Don't return the same header for every sub-column!
+        return [self.label] * len(self.options)
