@@ -22,8 +22,6 @@ from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
 from corehq.const import USER_DATE_FORMAT
 
-LATER_SUBSCRIPTION_NOTIFICATION = 'later_subscription'
-
 
 class BaseModifySubscriptionHandler(object):
     supported_privileges = []
@@ -37,10 +35,6 @@ class BaseModifySubscriptionHandler(object):
         if not isinstance(domain, Domain):
             domain = Domain.get_by_name(domain)
         self.domain = domain
-
-        # check to make sure that no subscriptions are scheduled to
-        # start in the future
-        changed_privs.append(LATER_SUBSCRIPTION_NOTIFICATION)
 
         self.privileges = filter(lambda x: x in self.supported_privileges, changed_privs)
         self.new_plan_version = new_plan_version
@@ -232,7 +226,6 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         privileges.DEIDENTIFIED_DATA,
         privileges.ROLE_BASED_ACCESS,
         privileges.DATA_CLEANUP,
-        LATER_SUBSCRIPTION_NOTIFICATION,
     ]
     action_type = "notification"
 
@@ -241,6 +234,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         response.extend(filter(
             lambda response: response is not None,
             [
+                self.response_later_subscription,
                 self.response_mobile_worker_creation,
             ]
         ))
