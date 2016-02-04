@@ -874,5 +874,20 @@ class SplitExportColumn(ExportColumn):
         return row
 
     def get_headers(self):
-        # TODO: Don't return the same header for every sub-column!
-        return [self.label] * len(self.options)
+        header_template = self.label if '{option}' in self.label else u"{name} | {option}"
+        headers = []
+        for option in self.item.options:
+            headers.append(
+                header_template.format(
+                    name=self.label,
+                    option=option.value
+                )
+            )
+        if not self.ignore_extras:
+            headers.append(
+                header_template.format(
+                    name=self.label,
+                    option='extra'
+                )
+            )
+        return headers
