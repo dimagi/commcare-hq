@@ -288,13 +288,6 @@ def _all_domain_stats():
             "forms": form_counts,
             "cases": case_counts}
 
-ES_CALCED_PROPS = ["cp_n_web_users", "cp_n_active_cc_users", "cp_n_cc_users",
-                   "cp_n_active_cases", "cp_n_cases", "cp_n_forms",
-                   "cp_first_form", "cp_last_form", "cp_is_active",
-                   'cp_has_app', "cp_n_in_sms", "cp_n_out_sms", "cp_n_sms_ever",
-                   "cp_n_sms_30_d", "cp_sms_ever", "cp_sms_30_d", "cp_n_sms_in_30_d",
-                   "cp_n_sms_out_30_d"]
-
 
 def total_distinct_users(domains=None):
     """
