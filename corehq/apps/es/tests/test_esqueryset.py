@@ -98,3 +98,11 @@ class TestESQuerySet(TestCase):
             HQESQuery('forms').fields(fields)
         )
         self.assertEquals(response.hits, hits)
+
+    def test_exclude_source(self):
+        hits = [u'8063dff5-460b-46f2-b4d0-5871abfd97d4', u'dc1376cd-0869-4c13-a267-365dfc2fa754']
+        response = ESQuerySet(
+            self.example_response,
+            HQESQuery('forms').exclude_source()
+        )
+        self.assertEquals(response.hits, hits)

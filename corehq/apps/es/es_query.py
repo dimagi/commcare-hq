@@ -190,6 +190,7 @@ class ESQuery(object):
 
     def exclude_source(self):
         self._exclude_source = True
+        return self
 
     def filter(self, filter):
         """
