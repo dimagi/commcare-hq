@@ -1,12 +1,14 @@
 import re
 from django.views.decorators.debug import sensitive_post_parameters
 from corehq.apps.hqwebapp.models import MySettingsTab
-from corehq.apps.settings.forms import HQPasswordChangeForm
+from corehq.apps.settings.forms import (
+    HQPasswordChangeForm, HQPhoneNumberMethodForm, HQDeviceValidationForm,
+    HQTOTPDeviceForm, HQPhoneNumberForm, HQTwoFactorMethodForm, HQEmptyForm
+)
 from corehq.apps.style.decorators import use_bootstrap3, use_select2
 from corehq.apps.users.forms import AddPhoneNumberForm
 from dimagi.utils.couch.resource_conflict import retry_resource
 from django.contrib import messages
-from django.contrib.auth.forms import PasswordChangeForm
 from django.views.decorators.http import require_POST
 import langcodes
 
@@ -22,9 +24,12 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 from dimagi.utils.couch import CriticalSection
 
-import corehq.apps.style.utils as style_utils
-
 from tastypie.models import ApiKey
+from two_factor.utils import default_device
+from two_factor.views import (
+    ProfileView, SetupView, SetupCompleteView,
+    BackupTokensView, DisableView, PhoneSetupView
+)
 
 
 @login_and_domain_required
@@ -281,6 +286,117 @@ class ChangeMyPasswordView(BaseMyAccountView):
             self.password_change_form.save()
             messages.success(request, _("Your password was successfully changed!"))
         return self.get(request, *args, **kwargs)
+
+
+class TwoFactorProfileView(BaseMyAccountView, ProfileView):
+    urlname = 'two_factor_settings'
+    template_name = 'two_factor/profile/profile.html'
+    page_title = ugettext_lazy("Two Factor Authentication")
+
+    @method_decorator(login_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        # this is only here to add the login_required decorator
+        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_verified():
+            return HttpResponseRedirect(reverse(TwoFactorSetupView.urlname))
+        else:
+            return super(TwoFactorProfileView, self).get(request, *args, **kwargs)
+
+
+class TwoFactorSetupView(BaseMyAccountView, SetupView):
+    urlname = 'two_factor_setup'
+    template_name = 'two_factor/core/setup.html'
+    page_title = ugettext_lazy("Two Factor Authentication Setup")
+
+    form_list = (
+        ('welcome', HQEmptyForm),
+        ('method', HQTwoFactorMethodForm),
+        ('generator', HQTOTPDeviceForm),
+        ('sms', HQPhoneNumberForm),
+        ('call', HQPhoneNumberForm),
+        ('validation', HQDeviceValidationForm),
+    )
+
+    @method_decorator(login_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        # this is only here to add the login_required decorator
+        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+
+
+class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
+    urlname = 'two_factor_setup_complete'
+    template_name = 'two_factor/core/setup_complete.html'
+    page_title = ugettext_lazy("Two Factor Authentication Setup Complete")
+
+    @method_decorator(login_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        # this is only here to add the login_required decorator
+        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+
+
+class TwoFactorBackupTokensView(BaseMyAccountView, BackupTokensView):
+    urlname = 'two_factor_backup_tokens'
+    template_name = 'two_factor/core/backup_tokens.html'
+    page_title = ugettext_lazy("Two Factor Authentication Backup Tokens")
+
+    @method_decorator(login_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        # this is only here to add the login_required decorator
+        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+
+
+class TwoFactorDisableView(BaseMyAccountView, DisableView):
+    urlname = 'two_factor_disable'
+    template_name = 'two_factor/profile/disable.html'
+    page_title = ugettext_lazy("Disable Two Factor Authentication")
+
+    @method_decorator(login_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        # this is only here to add the login_required decorator
+        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        return DisableView.get(self, request, *args, **kwargs)
+
+
+class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
+    urlname = 'two_factor_phone_setup'
+    template_name = 'two_factor/core/phone_register.html'
+    page_title = ugettext_lazy("Two Factor Authentication Phone Setup")
+
+    form_list = (
+        ('setup', HQPhoneNumberMethodForm),
+        ('validation', HQDeviceValidationForm),
+    )
+
+    @method_decorator(login_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        # this is only here to add the login_required decorator
+        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+
+
+class NewPhoneView(TwoFactorSetupView):
+    urlname = 'new_phone'
+
+    form_list = (
+        ('method', HQTwoFactorMethodForm),
+        ('generator', HQTOTPDeviceForm),
+        ('sms', HQPhoneNumberForm),
+        ('call', HQPhoneNumberForm),
+        ('validation', HQDeviceValidationForm),
+    )
+
+    def get(self, request, *args, **kwargs):
+        default_device(request.user).delete()
+        return super(TwoFactorSetupView, self).get(request, *args, **kwargs)
 
 
 class BaseProjectDataView(BaseDomainView):
