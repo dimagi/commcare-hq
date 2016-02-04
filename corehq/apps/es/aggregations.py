@@ -80,6 +80,10 @@ class Aggregation(object):
 
 class BucketResult(AggregationResult):
     @property
+    def keys(self):
+        return [b['key'] for b in self.normalized_buckets]
+
+    @property
     def buckets(self):
         n_buckets = self.normalized_buckets
         buckets = namedtuple('buckets', [b['key'] for b in n_buckets])

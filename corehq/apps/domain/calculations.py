@@ -13,7 +13,6 @@ from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.forms import FormES
 from corehq.apps.hqadmin.reporting.reports import (
-    USER_COUNT_UPPER_BOUND,
     get_mobile_users,
 )
 from couchforms.analytics import get_number_of_forms_per_domain, \
@@ -49,28 +48,28 @@ def active_mobile_users(domain, *args):
 
     user_ids = get_mobile_users(domain)
 
-    form_users = {q['term'] for q in (
+    form_users = {
         FormES()
         .domain(domain)
-        .user_facet(size=USER_COUNT_UPPER_BOUND)
+        .user_aggregation()
         .submitted(gte=then)
         .user_id(user_ids)
         .size(0)
         .run()
-        .facets.user.result
-    )}
+        .aggregations.user.keys
+    }
 
-    sms_users = {q['term'] for q in (
+    sms_users = {
         SMSES()
         .incoming_messages()
-        .user_facet(size=USER_COUNT_UPPER_BOUND)
+        .user_aggregation()
         .to_commcare_user()
         .domain(domain)
         .received(gte=then)
         .size(0)
         .run()
-        .facets.user.result
-    )}
+        .aggregations.user.keys
+    }
 
     num_users = len(form_users | sms_users)
     return num_users if 'inactive' not in args else len(user_ids) - num_users

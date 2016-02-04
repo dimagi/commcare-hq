@@ -157,11 +157,11 @@ def get_mobile_users(domains):
         .run().doc_ids
     )
 
-def get_sms_query(begin, end, facet_name, facet_terms, domains, size):
+def get_sms_query(begin, end, facet_name, facet_terms, domains):
     return (SMSES()
             .domain(domains)
             .received(gte=begin, lte=end)
-            .terms_facet(facet_terms, facet_name, size)
+            .terms_aggregation(facet_terms, facet_name)
             .size(0))
 
 
@@ -177,17 +177,16 @@ def get_active_countries_stats_data(domains, datespan, interval,
         f = timestamp - relativedelta(days=30)
         form_query = (FormES()
             .domain(domains)
-            .terms_facet('domain', 'domains', size=DOMAIN_COUNT_UPPER_BOUND)
+            .terms_aggregation('domain', 'domains')
             .submitted(gte=f, lte=t)
             .size(0))
 
-        domains = form_query.run().facet('domains', "terms")
-        domains = [x['term'] for x in domains]
+        domains = form_query.run().aggregations.domains.keys
         countries = (DomainES()
                 .in_domains(domains)
-                .terms_facet('countries', 'countries', size=COUNTRY_COUNT_UPPER_BOUND))
+                .terms_aggregation('countries', 'countries'))
 
-        c = len(countries.run().facet('countries', 'terms'))
+        c = len(countries.run().aggregations.countries.keys)
         if c > 0:
             histo_data.append(get_data_point(c, timestamp))
 
@@ -253,23 +252,19 @@ def get_active_domain_stats_data(domains, datespan, interval,
         if add_form_domains:
             form_query = (FormES()
                 .domain(domains_in_interval)
-                .terms_facet('domain', 'domains',
-                             size=DOMAIN_COUNT_UPPER_BOUND)
+                .terms_aggregation('domain', 'domains')
                 .submitted(gte=f, lte=t)
                 .size(0))
             if restrict_to_mobile_submissions:
                 form_query = form_query.user_id(get_user_ids(True))
             active_domains |= {
-                term_and_count['term'] for term_and_count in
-                form_query.run().facet('domains', "terms")
+                form_query.run().aggregations.domains.keys
             }
         if add_sms_domains:
-            sms_query = (get_sms_query(f, t, 'domains', 'domain', domains,
-                                       DOMAIN_COUNT_UPPER_BOUND)
+            sms_query = (get_sms_query(f, t, 'domains', 'domain', domains)
                 .incoming_messages())
             active_domains |= {
-                term_and_count['term'] for term_and_count in
-                sms_query.run().facet('domains', "terms")
+                sms_query.run().aggregations.domain.keys
             }
         c = len(active_domains)
         if c > 0:
@@ -290,21 +285,20 @@ def get_active_users_data(domains, datespan, interval, datefield='date',
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
         t = timestamp
         f = timestamp - relativedelta(days=30)
-        sms_query = get_sms_query(f, t, 'users', 'couch_recipient',
-                domains, USER_COUNT_UPPER_BOUND)
+        sms_query = get_sms_query(f, t, 'users', 'couch_recipient', domains)
         if additional_params_es:
             sms_query = add_params_to_query(sms_query, additional_params_es)
-        users = {u['term'] for u in sms_query.incoming_messages().run().facet('users', "terms")}
+        users = {sms_query.incoming_messages().run().aggregation.users.keys}
         if include_forms:
             users |= {
-                u['term'] for u in FormES()
+                FormES()
                 .domain(domains)
-                .user_facet(size=USER_COUNT_UPPER_BOUND)
+                .user_aggregation()
                 .submitted(gte=f, lte=t)
                 .user_id(mobile_users)
                 .size(0)
                 .run()
-                .facets.user.result
+                .aggregations.user.keys
             }
         c = len(users)
         if c > 0:
@@ -329,10 +323,9 @@ def get_active_dimagi_owned_gateway_projects(domains, datespan, interval,
     for timestamp in daterange(interval, datespan.startdate, datespan.enddate):
         t = timestamp
         f = timestamp - relativedelta(days=30)
-        sms_query = get_sms_query(f, t, 'domains', 'domain', domains,
-                                  DOMAIN_COUNT_UPPER_BOUND)
+        sms_query = get_sms_query(f, t, 'domains', 'domain', domains)
         d = sms_query.filter(backend_filter).run()
-        c = len(d.facet('domains', 'terms'))
+        c = len(d.aggregations.domains.keys)
         if c > 0:
             histo_data.append(get_data_point(c, timestamp))
 
@@ -350,11 +343,10 @@ def get_countries_stats_data(domains, datespan, interval,
         countries = (DomainES()
                 .in_domains(domains)
                 .created(lte=timestamp)
-                .terms_facet('countries', 'countries',
-                             size=COUNTRY_COUNT_UPPER_BOUND)
+                .terms_aggregation('countries', 'countries')
                 .size(0))
 
-        c = len(countries.run().facet('countries', 'terms'))
+        c = len(countries.run().aggregations.countries.keys)
         if c > 0:
             histo_data.append(get_data_point(c, timestamp))
 
@@ -369,11 +361,10 @@ def get_total_clients_data(domains, datespan, interval, datefield='opened_on'):
     sms_cases = (SMSES()
             .to_commcare_case()
             .domain(domains)
-            .terms_facet('couch_recipient', 'cases',
-                         size=CASE_COUNT_UPPER_BOUND)
+            .terms_aggregation('couch_recipient', 'cases')
             .size(0))
 
-    cases = [u['term'] for u in sms_cases.run().facet('cases', 'terms')]
+    cases = sms_cases.run().aggregations.cases.keys
 
     cases_after_date = (CaseES()
             .domain(domains)
@@ -402,10 +393,10 @@ def get_mobile_workers_data(domains, datespan, interval,
     sms_users = (SMSES()
             .to_commcare_user()
             .domain(domains)
-            .terms_facet('couch_recipient', 'users', USER_COUNT_UPPER_BOUND)
+            .terms_aggregation('couch_recipient', 'users')
             .size(0))
 
-    users = [u['term'] for u in sms_users.run().facet('users', 'terms')]
+    users = sms_users.run().aggregations.users.keys
 
     users_after_date = (UserES()
             .domain(domains)
@@ -478,15 +469,15 @@ def get_sms_only_domain_stats_data(domains, datespan, interval,
 
     sms = (SMSES()
             .domain(domains)
-            .terms_facet('domain', 'domains', size=DOMAIN_COUNT_UPPER_BOUND)
+            .terms_aggregation('domain', 'domains')
             .size(0))
     forms = (FormES()
              .domain(domains)
-             .terms_facet('domain', 'domains', size=DOMAIN_COUNT_UPPER_BOUND)
+             .terms_aggregation('domain', 'domains')
              .size(0))
 
-    sms_domains = {x['term'] for x in sms.run().facet('domains', 'terms')}
-    form_domains = {x['term'] for x in forms.run().facet('domains', 'terms')}
+    sms_domains = {sms.run().aggregations.domains.keys}
+    form_domains = {forms.run().aggregations.domains.keys}
 
     sms_only_domains = sms_domains - form_domains
 
@@ -515,13 +506,13 @@ def get_commconnect_domain_stats_data(domains, datespan, interval,
     """
     sms = (SMSES()
            .domain(domains)
-           .terms_facet('domain', 'domains', size=DOMAIN_COUNT_UPPER_BOUND)
+           .terms_aggregation('domain', 'domains')
            .size(0))
 
     if additional_params_es:
         sms = add_params_to_query(sms, additional_params_es)
 
-    sms_domains = {x['term'] for x in sms.run().facet('domains', 'terms')}
+    sms_domains = {sms.run().aggregations.domains.keys}
 
     domains_after_date = (DomainES()
             .in_domains(sms_domains)
@@ -776,26 +767,20 @@ def get_user_ids(user_type_mobile):
 
 def get_submitted_users():
     real_form_users = {
-        user_count['term'] for user_count in (
-            FormES()
-            .user_facet(size=USER_COUNT_UPPER_BOUND)
-            .size(0)
-            .run()
-            .facets.user.result
-        )
+        FormES()
+        .user_aggregation()
+        .size(0)
+        .run()
+        .aggregations.user.keys
     }
 
     real_sms_users = {
-        user_count['term'] for user_count in (
-            SMSES()
-            .terms_facet(
-                'couch_recipient', 'user', USER_COUNT_UPPER_BOUND
-            )
-            .incoming_messages()
-            .size(0)
-            .run()
-            .facets.user.result
-        )
+        SMSES()
+        .terms_aggregation('couch_recipient', 'user')
+        .incoming_messages()
+        .size(0)
+        .run()
+        .aggregations.user.keys
     }
 
     return real_form_users | real_sms_users

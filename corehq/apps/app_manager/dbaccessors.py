@@ -271,5 +271,5 @@ def get_case_types_from_apps(domain):
     q = (AppES()
          .domain(domain)
          .size(0)
-         .terms_facet('modules.case_type.exact', 'case_types'))
-    return q.run().facets.case_types.terms
+         .terms_aggregation('modules.case_type.exact', 'case_types'))
+    return q.run().aggregations.case_types.keys
