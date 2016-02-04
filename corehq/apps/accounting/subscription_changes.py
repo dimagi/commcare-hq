@@ -1,8 +1,13 @@
-import json
 import datetime
+import json
+
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ungettext
+
+from couchexport.models import SavedExportSchema
+from dimagi.utils.decorators.memoized import memoized
+
 from corehq import privileges
 from corehq.apps.accounting.utils import (
     get_active_reminders_by_domain_name,
@@ -17,10 +22,6 @@ from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
 from corehq.const import USER_DATE_FORMAT
-from couchexport.models import SavedExportSchema
-from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
-
 
 LATER_SUBSCRIPTION_NOTIFICATION = 'later_subscription'
 
