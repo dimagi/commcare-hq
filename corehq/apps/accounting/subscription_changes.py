@@ -25,7 +25,6 @@ from corehq.const import USER_DATE_FORMAT
 
 class BaseModifySubscriptionHandler(object):
     supported_privileges = []
-    action_type = "base"
 
     def __init__(self, domain, new_plan_version, changed_privs, date_start=None):
         self.domain = domain if isinstance(domain, Domain) else Domain.get_by_name(domain)
@@ -41,6 +40,10 @@ class BaseModifySubscriptionHandler(object):
             if message is not None:
                 response.append(message)
         return response
+
+    @property
+    def action_type(self):
+        raise NotImplementedError
 
 
 class BaseModifySubscriptionActionHandler(BaseModifySubscriptionHandler):
