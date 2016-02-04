@@ -32,8 +32,17 @@ from dimagi.utils.couch import CouchDocLockableMixIn
 from dimagi.utils.load_balance import load_balance
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
+
 INCOMING = "I"
 OUTGOING = "O"
+
+CALLBACK_PENDING = "PENDING"
+CALLBACK_RECEIVED = "RECEIVED"
+CALLBACK_MISSED = "MISSED"
+
+FORWARD_ALL = "ALL"
+FORWARD_BY_KEYWORD = "KEYWORD"
+FORWARDING_CHOICES = [FORWARD_ALL, FORWARD_BY_KEYWORD]
 
 WORKFLOW_CALLBACK = "CALLBACK"
 WORKFLOW_REMINDER = "REMINDER"
@@ -574,11 +583,8 @@ class EventLog(SafeSaveDocument):
     couch_recipient_doc_type    = StringProperty()
     couch_recipient             = StringProperty()
 
-CALLBACK_PENDING = "PENDING"
-CALLBACK_RECEIVED = "RECEIVED"
-CALLBACK_MISSED = "MISSED"
 
-class ExpectedCallbackEventLog(EventLog):
+class ExpectedCallbackEventLog(SyncCouchToSQLMixin, EventLog):
     status = StringProperty(choices=[CALLBACK_PENDING,CALLBACK_RECEIVED,CALLBACK_MISSED])
     
     @classmethod
@@ -591,9 +597,48 @@ class ExpectedCallbackEventLog(EventLog):
                         endkey=[domain, end_date],
                         include_docs=True).all()
 
-FORWARD_ALL = "ALL"
-FORWARD_BY_KEYWORD = "KEYWORD"
-FORWARDING_CHOICES = [FORWARD_ALL, FORWARD_BY_KEYWORD]
+    @classmethod
+    def _migration_get_fields(cls):
+        return ExpectedCallback._migration_get_fields()
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return ExpectedCallback
+
+
+class ExpectedCallback(SyncSQLToCouchMixin, models.Model):
+    class Meta:
+        index_together = [
+            ['domain', 'date'],
+        ]
+
+    STATUS_CHOICES = (
+        (CALLBACK_PENDING, ugettext_lazy("Pending")),
+        (CALLBACK_RECEIVED, ugettext_lazy("Received")),
+        (CALLBACK_MISSED, ugettext_lazy("Missed")),
+    )
+
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+    domain = models.CharField(max_length=126, null=True)
+    date = models.DateTimeField(null=True)
+    couch_recipient_doc_type = models.CharField(max_length=126, null=True)
+    couch_recipient = models.CharField(max_length=126, null=True)
+    status = models.CharField(max_length=126, null=True)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            'domain',
+            'date',
+            'couch_recipient_doc_type',
+            'couch_recipient',
+            'status',
+        ]
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return ExpectedCallbackEventLog
+
 
 class ForwardingRule(Document):
     domain = StringProperty()
