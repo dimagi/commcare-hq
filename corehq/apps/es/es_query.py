@@ -392,7 +392,7 @@ class ESQuerySet(object):
     def hits(self):
         """Return the docs from the response."""
         if self.query._exclude_source:
-            return self.ids
+            return self.doc_ids
         if self.query._legacy_fields:
             return [flatten_field_dict(r) for r in self.raw_hits]
         else:
@@ -402,10 +402,6 @@ class ESQuerySet(object):
     def total(self):
         """Return the total number of docs matching the query."""
         return self.raw['hits']['total']
-
-    @property
-    def ids(self):
-        return [r['_id'] for r in self.raw_hits]
 
     @property
     def raw_facets(self):

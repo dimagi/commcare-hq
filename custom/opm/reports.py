@@ -406,7 +406,7 @@ class CaseReportMixin(object):
 
         return [
             CommCareCase.wrap(doc)
-            for doc in iter_docs(CommCareCase.get_db(), result.ids)
+            for doc in iter_docs(CommCareCase.get_db(), result.doc_ids)
         ]
 
     @property
