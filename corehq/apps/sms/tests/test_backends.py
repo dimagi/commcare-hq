@@ -167,13 +167,15 @@ class AllBackendTest(BaseSMSTest):
         self.assertEqual(sms.backend_api, backend.hq_api_id)
         self.assertEqual(sms.backend_id, backend.couch_id)
 
-    def _verify_inbound_request(self, backend_api_id, msg_text):
+    def _verify_inbound_request(self, backend_api_id, msg_text, backend_couch_id=None):
         sms = SMS.objects.get(
             domain=self.domain_obj.name,
             direction='I',
             text=msg_text
         )
         self.assertEqual(sms.backend_api, backend_api_id)
+        if backend_couch_id:
+            self.assertEqual(sms.backend_id, backend_couch_id)
 
     def _simulate_inbound_request_with_payload(self, url,
             content_type, payload):
@@ -181,7 +183,8 @@ class AllBackendTest(BaseSMSTest):
         self.assertEqual(response.status_code, 200)
 
     def _simulate_inbound_request(self, url, phone_param,
-            msg_param, msg_text, post=False, additional_params=None):
+            msg_param, msg_text, post=False, additional_params=None,
+            expected_response_code=200):
         fcn = Client().post if post else Client().get
 
         payload = {
@@ -193,7 +196,7 @@ class AllBackendTest(BaseSMSTest):
             payload.update(additional_params)
 
         response = fcn(url, payload)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, expected_response_code)
 
     @patch('corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend.send')
     @patch('corehq.messaging.smsbackends.mach.models.SQLMachBackend.send')
@@ -279,10 +282,23 @@ class AllBackendTest(BaseSMSTest):
         self._verify_inbound_request(self.grapevine_backend.get_api_id(), 'grapevine test')
 
     def test_twilio_inbound_sms(self):
-        self._simulate_inbound_request('/twilio/sms/', phone_param='From',
+        url = '/twilio/sms/%s' % self.twilio_backend.inbound_api_key
+        self._simulate_inbound_request(url, phone_param='From',
             msg_param='Body', msg_text='twilio test', post=True)
 
-        self._verify_inbound_request(self.twilio_backend.get_api_id(), 'twilio test')
+        self._verify_inbound_request(self.twilio_backend.get_api_id(), 'twilio test',
+            backend_couch_id=self.twilio_backend.couch_id)
+
+    def test_twilio_401_response(self):
+        start_count = SMS.objects.count()
+
+        self._simulate_inbound_request('/twilio/sms/xxxxx', phone_param='From',
+            msg_param='Body', msg_text='twilio test', post=True,
+            expected_response_code=401)
+
+        end_count = SMS.objects.count()
+
+        self.assertEqual(start_count, end_count)
 
     def test_megamobile_inbound_sms(self):
         self._simulate_inbound_request('/megamobile/sms/', phone_param='cel',

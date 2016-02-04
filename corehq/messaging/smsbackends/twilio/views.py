@@ -53,10 +53,10 @@ class TwilioIncomingSMSView(NewIncomingBackendView):
     def backend_class(self):
         return SQLTwilioBackend
 
-    def get(self, api_key, *args, **kwargs):
+    def get(self, request, api_key, *args, **kwargs):
         return HttpResponseBadRequest("POST Expected")
 
-    def post(self, api_key, *args, **kwargs):
+    def post(self, request, api_key, *args, **kwargs):
         message_sid = request.POST.get('MessageSid')
         account_sid = request.POST.get('AccountSid')
         from_ = request.POST.get('From')
@@ -67,7 +67,7 @@ class TwilioIncomingSMSView(NewIncomingBackendView):
             body,
             SQLTwilioBackend.get_api_id(),
             backend_message_id=message_sid,
-            backend_id=self.backend_id
+            backend_id=self.backend_couch_id
         )
         return HttpResponse(EMPTY_RESPONSE)
 
@@ -79,10 +79,10 @@ class TwilioIncomingIVRView(NewIncomingBackendView):
     def backend_class(self):
         return SQLTwilioBackend
 
-    def get(self, api_key, *args, **kwargs):
+    def get(self, request, api_key, *args, **kwargs):
         return HttpResponseBadRequest("POST Expected")
 
-    def post(self, api_key, *args, **kwargs):
+    def post(self, request, api_key, *args, **kwargs):
         from_number = request.POST.get('From')
         call_sid = request.POST.get('CallSid')
         log_call(from_number, '%s-%s' % (SQLTwilioBackend.get_api_id(), call_sid))
