@@ -10,6 +10,7 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
 
     def test_simple(self):
         table_configuration = TableConfiguration(
+            path=[],
             columns=[
                 ExportColumn(
                     item=ScalarItem(

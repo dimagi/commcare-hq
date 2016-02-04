@@ -13,13 +13,13 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.reports.display import xmlns_to_name
+from couchexport.transforms import couch_to_excel_datetime
 from dimagi.utils.couch.database import iter_docs
 from dimagi.ext.couchdbkit import (
     Document,
     DocumentSchema,
     ListProperty,
     StringProperty,
-    IntegerProperty,
     DateTimeProperty,
 )
 from corehq.apps.export.utils import (
@@ -84,7 +84,7 @@ class ExportColumn(DocumentSchema):
     # A list of constants that map to functions to transform the column value
     transforms = ListProperty(validators=is_valid_transform)
 
-    def get_value(self, doc, base_path):
+    def get_value(self, doc, base_path, transform_dates=False):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
@@ -97,7 +97,20 @@ class ExportColumn(DocumentSchema):
         assert base_path == self.item.path[:len(base_path)]
         # Get the path from the doc root to the desired ExportItem
         path = self.item.path[len(base_path):]
-        return NestedDictGetter(path)(doc)
+        return self._transform(NestedDictGetter(path)(doc), transform_dates)
+
+    def _transform(self, value, transform_dates):
+        """
+        Transform the given value with the transforms specified in self.transforms.
+        Also transform dates if the transform_dates flag is true.
+        """
+        # TODO: The functions in self.transforms might expect docs, not values, in which case this needs to move.
+
+        if transform_dates:
+            value = couch_to_excel_datetime(value, None)
+        for transform in self.transforms:
+            value = TRANSFORM_FUNCTIONS[transform](value)
+        return value
 
     @staticmethod
     def create_default_from_export_item(group_schema_path, item, app_ids_and_versions):
