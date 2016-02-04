@@ -254,7 +254,9 @@ function ReleasesMain(o) {
                 data: {ajax: true, is_released: !is_released},
                 beforeSend: function (jqXHR, settings) {
                     savedApp.is_released('pending');
-                    $.ajaxSettings.beforeSend(jqXHR, settings);
+                    if ($.ajaxSettings.beforeSend) {
+                        $.ajaxSettings.beforeSend(jqXHR, settings);
+                    }
                 },
                 success: function (data) {
                     savedApp.is_released(data.is_released);
