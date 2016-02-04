@@ -1,5 +1,6 @@
 {% load hq_shared_tags %}
 {% load i18n %}
+<!-- Template for a Table (i.e. sheet) in the Export page -->
 <script type="text/html" id="ko-table-configuration-template">
     <div>
         <legend data-bind="visible: table.isVisible()">
@@ -63,8 +64,8 @@
                             {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
                             <th>{% trans "Type" %}</th>
                             {% endif %}
-                            {% if helper.allow_deid %}
-                            <!--<th class="deid-column" data-bind="visible: $root.showDeidColumn()">{% trans "Sensitivity" %}</th>-->
+                            {% if allow_deid %}
+                            <th class="deid-column" data-bind="visible: $root.isDeidColumnVisible()">{% trans "Sensitivity" %}</th>
                             {% endif %}
                         </tr>
                         </thead>
@@ -84,6 +85,7 @@
     </div>
 </script>
 
+<!-- Template for an ExportColumn in the Export page -->
 <script type="text/html" id="ko-export-column-template">
     <tr data-bind="
         visible: column.isVisible($parent)
@@ -141,17 +143,17 @@
             </div>
         </td>
         {% endif %}
-        {% if helper.allow_deid %}
-        <td class="deid-column" data-bind="visible: $root.showDeidColumn()">
+        {% if allow_deid %}
+        <td class="deid-column" data-bind="visible: $root.isDeidColumnVisible()">
             <select data-bind="
-                value: transform || '',
-                foreach: $root.deid_options,
-                visible: (index() !== 'id' || transform()) && !isCaseName()
+                value: deidTransform,
+                options: getDeidOptions(),
+                optionsText: getDeidOptionText,
+                visible: isDeidSelectVisible()
             ">
-                <option data-bind="value: value, text: label"></option>
             </select>
             <span class="label label-info"
-                  data-bind="visible: $root.export_instance.is_safe() && isCaseName()">
+                  data-bind="visible: !isDeidSelectVisible()">
                 {% trans "Cannot be published in De-Identified Export." %}
             </span>
         </td>

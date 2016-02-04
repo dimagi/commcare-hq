@@ -21,6 +21,9 @@ from dimagi.ext.couchdbkit import (
     IntegerProperty,
     DateTimeProperty,
 )
+from corehq.apps.export.utils import (
+    is_valid_transform
+)
 from corehq.apps.export.const import (
     PROPERTY_TAG_UPDATE,
     PROPERTY_TAG_DELETED,
@@ -30,6 +33,7 @@ from corehq.apps.export.const import (
     FORM_EXPORT,
     CASE_EXPORT,
     MAIN_TABLE,
+    TRANSFORM_FUNCTIONS,
 )
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
@@ -75,6 +79,9 @@ class ExportColumn(DocumentSchema):
     is_advanced = BooleanProperty(default=False)
     selected = BooleanProperty(default=False)
     tags = ListProperty()
+
+    # A list of constants that map to functions to transform the column value
+    transforms = ListProperty(validators=is_valid_transform)
 
     def get_value(self, doc, base_path):
         """

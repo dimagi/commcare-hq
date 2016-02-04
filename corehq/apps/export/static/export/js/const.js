@@ -11,3 +11,8 @@ Exports.Constants.EXPORT_FORMATS = {
     XLS: 'xls',
     XLSX: 'xlsx'
 };
+Exports.Constants.DEID_OPTIONS = {
+    NONE: null,
+    ID: 'deid_id',
+    DATE: 'deid_date'
+};
