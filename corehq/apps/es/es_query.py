@@ -88,7 +88,7 @@ Language
 from collections import namedtuple
 from copy import deepcopy
 import json
-from corehq.apps.es.utils import values_list
+from corehq.apps.es.utils import values_list, flatten_field_dict
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -119,7 +119,7 @@ class ESQuery(object):
     """
     index = None
     _exclude_source = None
-    _fields = None
+    _legacy_fields = False
     _start = None
     _size = None
     _aggregations = None
@@ -255,8 +255,6 @@ class ESQuery(object):
     def _assemble(self):
         """Build out the es_query dict"""
         self._filters.extend(self._default_filters.values())
-        if self._fields is not None:
-            self.es_query['fields'] = self._fields
         if self._start is not None:
             self.es_query['from'] = self._start
         self.es_query['size'] = self._size if self._size is not None else SIZE_LIMIT
@@ -279,6 +277,7 @@ class ESQuery(object):
 
             Deprecated. Use `source` instead.
             """
+        self._legacy_fields = True
         return self.source(fields)
 
     def source(self, include, exclude=None):
@@ -394,6 +393,8 @@ class ESQuerySet(object):
         """Return the docs from the response."""
         if self.query._exclude_source:
             return self.ids
+        if self.query._legacy_fields:
+            return [flatten_field_dict(r) for r in self.raw_hits]
         else:
             return [r['_source'] for r in self.raw_hits]
 

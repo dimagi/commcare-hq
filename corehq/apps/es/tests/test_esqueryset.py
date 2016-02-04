@@ -67,3 +67,34 @@ class TestESQuerySet(TestCase):
     def test_error(self):
         with self.assertRaises(ESError):
             ESQuerySet(self.example_error, HQESQuery('forms'))
+
+    def test_flatten_field_dicts(self):
+        example_response = {
+            u'hits': {u'hits': [{
+                u'_source': {
+                    u'domains': [u'joesproject'],
+                    }
+                },
+                {
+                    u'_source': {
+                        u'domains': [u'mikesproject']
+                        }
+                    }
+                ],
+            },
+        }
+
+        hits = [
+            {
+                u'domains': u'joesproject',
+            },
+            {
+                u'domains': u'mikesproject',
+            }
+        ]
+        fields = [u'domain']
+        response = ESQuerySet(
+            example_response,
+            HQESQuery('forms').fields(fields)
+        )
+        self.assertEquals(response.hits, hits)

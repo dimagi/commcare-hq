@@ -25,7 +25,7 @@ def flatten_field_dict(results):
 
     https://www.elastic.co/guide/en/elasticsearch/reference/1.3/_return_values.html
     """
-    field_dict = results.get('fields', {})
+    field_dict = results.get('_source', {})
     for key, val in field_dict.iteritems():
         new_val = val
         if type(val) == list and len(val) == 1:
