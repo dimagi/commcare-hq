@@ -232,10 +232,10 @@ class ExportInstance(Document):
     def defaults(self):
         return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
 
-    @staticmethod
-    def generate_instance_from_schema(schema, domain, app_id=None):
+    @classmethod
+    def generate_instance_from_schema(cls, schema, domain, app_id=None):
         """Given an ExportDataSchema, this will generate an ExportInstance"""
-        instance = ExportInstance(
+        instance = cls(
             type=schema.type
         )
         instance.name = instance.defaults.get_default_instance_name(schema)

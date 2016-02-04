@@ -36,7 +36,8 @@ from corehq.apps.export.forms import (
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
-    ExportInstance,
+    FormExportInstance,
+    CaseExportInstance,
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.dbaccessors import touch_exports
@@ -217,11 +218,7 @@ class BaseCreateNewCustomExportView(BaseExportView):
         }
 
     def get_export_instance(self, schema, app_id=None):
-        return ExportInstance.generate_instance_from_schema(
-            schema,
-            self.domain,
-            app_id,
-        )
+        raise NotImplementedError()
 
 
 class BaseCreateCustomExportView(BaseExportView):
@@ -317,6 +314,13 @@ class CreateNewCustomFormExportView(BaseCreateNewCustomExportView):
 
         return super(CreateNewCustomFormExportView, self).get(request, *args, **kwargs)
 
+    def get_export_instance(self, schema, app_id=None):
+        return FormExportInstance.generate_instance_from_schema(
+            schema,
+            self.domain,
+            app_id,
+        )
+
 
 class CreateNewCustomCaseExportView(BaseCreateNewCustomExportView):
     urlname = 'new_custom_export_case'
@@ -333,6 +337,13 @@ class CreateNewCustomCaseExportView(BaseCreateNewCustomExportView):
         self.export_instance = self.get_export_instance(schema)
 
         return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)
+
+    def get_export_instance(self, schema, app_id=None):
+        return CaseExportInstance.generate_instance_from_schema(
+            schema,
+            self.domain,
+            app_id,
+        )
 
 
 class CreateCustomFormExportView(BaseCreateCustomExportView):
