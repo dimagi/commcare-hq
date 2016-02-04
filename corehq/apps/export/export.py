@@ -86,9 +86,13 @@ def _get_base_query(export_instance):
     Includes filters for domain, doc_type, and xmlns/case_type.
     """
     if isinstance(export_instance, FormExportInstance):
-        return get_form_export_base_query(export_instance.domain, export_instance.xmlns)
+        return get_form_export_base_query(
+            export_instance.domain, export_instance.app_id, export_instance.xmlns
+        )
     if isinstance(export_instance, CaseExportInstance):
-        return get_case_export_base_query(export_instance.domain, export_instance.case_type)
+        return get_case_export_base_query(
+            export_instance.domain, export_instance.case_type
+        )
     else:
         raise Exception(
             "Unknown base query for export instance type {}".format(type(export_instance))
