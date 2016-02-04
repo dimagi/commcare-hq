@@ -39,7 +39,7 @@ var MapItem = function(item, mapingContext){
             }
             // return new ko.observable for other languages
             else{
-                new_value.push([lang, ko.observable(item.value[lang])])
+                new_value.push([lang, ko.observable(item.value[lang])]);
             }
         });
         return _.object(new_value);
