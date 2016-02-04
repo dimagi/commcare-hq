@@ -119,6 +119,14 @@ def forms(domain, *args):
     return get_number_of_forms_in_domain(domain)
 
 
+def forms_in_last(domain, days):
+    """
+    Returns the number of forms submitted in the last given number of days
+    """
+    then = datetime.utcnow() - timedelta(days=int(days))
+    return FormES().domain(domain).submitted(gte=then).size(0).run().total
+
+
 def _sms_helper(domain, direction=None, days=None):
     query = SMSES().domain(domain).size(0)
 
@@ -238,6 +246,7 @@ CALC_FNS = {
     'num_web_users': num_web_users,
     "num_mobile_users": num_mobile_users,
     "forms": forms,
+    "forms_in_last": forms_in_last,
     "sms": sms,
     "sms_in_last": sms_in_last,
     "sms_in_last_bool": sms_in_last_bool,
@@ -287,7 +296,6 @@ def _all_domain_stats():
             "commcare_users": commcare_counts,
             "forms": form_counts,
             "cases": case_counts}
-
 
 def total_distinct_users(domains=None):
     """
