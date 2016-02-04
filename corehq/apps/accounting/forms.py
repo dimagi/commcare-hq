@@ -468,17 +468,27 @@ class SubscriptionForm(forms.Form):
 
             if (subscription.date_start is not None
                 and subscription.date_start <= today):
-                start_date_field = TextField(
-                    'start_date',
-                    "%(start_date)s (already started)" % {
-                    'start_date': self.fields['start_date'].initial,
-                })
+                start_date_field = crispy.Div(
+                    start_date_field,
+                    crispy.Div(
+                        crispy.Div(
+                            crispy.HTML('(already started)'),
+                            css_class='controls'
+                        ),
+                        css_class='control-group'
+                    )
+                )
             if has_subscription_already_ended(subscription):
-                end_date_field = TextField(
-                    'end_date',
-                    "%(end_date)s (already ended)" % {
-                    'end_date': self.fields['end_date'].initial,
-                })
+                end_date_field = crispy.Div(
+                    end_date_field,
+                    crispy.Div(
+                        crispy.Div(
+                            crispy.HTML('(already ended)'),
+                            css_class='controls'
+                        ),
+                        css_class='control-group'
+                    )
+                )
             if (subscription.date_delay_invoicing is not None
                 and subscription.date_delay_invoicing <= today):
                 delay_invoice_until_field = TextField(
