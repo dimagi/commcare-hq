@@ -1,4 +1,7 @@
 import json
+
+from couchdbkit import ResourceNotFound
+
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
 from corehq.apps.app_manager.util import add_odk_profile_after_build
@@ -27,6 +30,14 @@ class AppManagerTest(TestCase):
 
         with codecs.open(os.path.join(os.path.dirname(__file__), "data", "itext_form.xml"), encoding='utf-8') as f:
             cls.xform_str = f.read()
+
+        cls.min_acceptable_paths = (
+            'CommCare.jar',
+            'CommCare.jad',
+            'files/profile.ccpr',
+            'files/profile.xml',
+            'files/modules-0/forms-0.xml',
+        )
 
     def setUp(self):
         self.app = Application.new_app(self.domain, "TestApp", application_version=APP_V1)
@@ -118,16 +129,13 @@ class AppManagerTest(TestCase):
         with open(os.path.join(os.path.dirname(__file__), 'data', 'yesno.json')) as f:
             return json.load(f)
 
-    def _check_has_build_files(self, build):
+    def _check_no_build_files(self, build):
+        for path in self.min_acceptable_paths:
+            with self.assertRaises(ResourceNotFound):
+                build.fetch_attachment(path)
 
-        min_acceptable_paths = (
-            'CommCare.jar',
-            'CommCare.jad',
-            'files/profile.ccpr',
-            'files/profile.xml',
-            'files/modules-0/forms-0.xml',
-        )
-        for path in min_acceptable_paths:
+    def _check_has_build_files(self, build):
+        for path in self.min_acceptable_paths:
             self.assertTrue(build.fetch_attachment(path))
 
     def _check_legacy_odk_files(self, build):
@@ -152,6 +160,9 @@ class AppManagerTest(TestCase):
         app._id = Application.get_db().server.next_uuid()
         copy = app.make_build()
         copy.save()
+        self._check_no_build_files(copy)
+        copy.create_jadjar(save=True)
+        copy.save()
         self._check_has_build_files(copy)
         self._check_legacy_odk_files(copy)
 
@@ -159,6 +170,9 @@ class AppManagerTest(TestCase):
     def testBuildImportedApp(self):
         app = import_app(self._yesno_source, self.domain)
         copy = app.make_build()
+        copy.save()
+        self._check_no_build_files(copy)
+        copy.create_jadjar(save=True)
         copy.save()
         self._check_has_build_files(copy)
         self._check_legacy_odk_files(copy)
