@@ -4,8 +4,9 @@
     <form class="form-horizontal hq-enum-editor" action="">
         <fieldset data-bind="sortable: items">
             <div class="control-group hq-input-map"
-                 data-bind="css: {'error': $parent.isItemDuplicated(ko.utils.unwrapObservable(key))}">
-                <i class="sortable-handle icon-resize-vertical"></i>
+                 data-bind="css: {'error': $parent.isItemDuplicated(ko.utils.unwrapObservable(key))},
+                            attr: {'data-order': _sortableOrder}">
+                <i class="sortable-handle icon-resize-vertical" style="cursor: move;"></i>
                 <input type="text"
                        class="input-small enum-key"
                        placeholder="key"
