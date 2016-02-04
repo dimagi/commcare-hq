@@ -123,17 +123,8 @@ def forms_in_last(domain, days):
     """
     Returns the number of forms submitted in the last given number of days
     """
-    now = datetime.utcnow()
-    then = json_format_datetime(now - timedelta(days=int(days)))
-    now = json_format_datetime(now)
-    q = {
-        'query': {
-            'range': {
-                'received_on': {'from': then, 'to': now}},
-            'filter': {
-                'and': ADD_TO_ES_FILTER['forms'][:]}}}
-    data = es_query(params={'domain.exact': domain}, q=q, es_index='forms', size=1)
-    return data['hits']['total'] if data.get('hits') else 0
+    then = datetime.utcnow() - timedelta(days=int(days))
+    return FormES().domain(domain).submitted(gte=then).size(0).run().total
 
 
 def _sms_helper(domain, direction=None, days=None):
