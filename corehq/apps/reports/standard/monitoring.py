@@ -152,13 +152,6 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     description = ugettext_noop("Followup rates on active cases.")
     is_cacheable = True
 
-    @classmethod
-    def display_in_dropdown(cls, domain=None, project=None, user=None):
-        if project and project.commtrack_enabled:
-            return False
-        else:
-            return True
-
     @property
     def special_notice(self):
         if self.domain_object.case_sharing_included():
@@ -1091,7 +1084,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
-        return bool(project and project.commtrack_enabled)
+        return True
 
     @property
     def case_types(self):
