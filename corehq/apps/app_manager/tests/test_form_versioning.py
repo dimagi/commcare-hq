@@ -51,6 +51,7 @@ class FormVersioningTest(TestCase):
 
         # make a build
         build1 = app.make_build(previous_version=None)
+        build1.create_jadjar(save=True)
         build1.save()
 
         # modify first form
@@ -59,6 +60,7 @@ class FormVersioningTest(TestCase):
 
         # make second build
         build2 = app.make_build(previous_version=build1)
+        build2.create_jadjar(save=True)
         build2.save()
 
         # modify first form
@@ -69,6 +71,7 @@ class FormVersioningTest(TestCase):
 
         # make third build
         build3 = app.make_build(previous_version=build2)
+        build3.create_jadjar(save=True)
         build3.save()
 
         self.assertEqual(self.get_form_versions(build1), [1, 1])
@@ -81,6 +84,7 @@ class FormVersioningTest(TestCase):
 
         # make reverted build
         build4 = app.make_build(previous_version=build3)
+        build4.create_jadjar(save=True)
         build4.save()
 
         self.assertEqual(self.get_form_versions(build4), [6, 1])
@@ -90,6 +94,7 @@ class FormVersioningTest(TestCase):
 
         # make build of copy
         xxx_build1 = xxx_app.make_build(previous_version=None)
+        xxx_build1.create_jadjar(save=True)
         xxx_build1.save()
 
         # modify first form of copy app
@@ -98,6 +103,7 @@ class FormVersioningTest(TestCase):
 
         # make second build of copy
         xxx_build2 = xxx_app.make_build(previous_version=xxx_build1)
+        xxx_build2.create_jadjar(save=True)
         xxx_build2.save()
 
         self.assertEqual(self.get_form_versions(xxx_build1), [1, 1])
