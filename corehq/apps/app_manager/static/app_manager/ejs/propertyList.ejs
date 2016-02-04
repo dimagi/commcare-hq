@@ -1,7 +1,7 @@
 <table>
     <tr>
-        <th class="span4">Question</th>
-        <th class="span4">Case Property</th>
+        <th class="col-sm-4">Question</th>
+        <th class="col-sm-4">Case Property</th>
         <th></th>
     </tr>
 
@@ -27,9 +27,9 @@
                 [% } else if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(propertyName)) { %]
                     <span class="invalid">Must start with letter and contain only letters, numbers, '-', and '_': "[%= propertyName %]"</span>
                 [% } else if (reservedWords.indexOf(propertyName) !== -1) { %]
-                    <span class="text-error"><strong>[%= propertyName %]</strong> is a reserved word</span>
+                    <span class="text-danger"><strong>[%= propertyName %]</strong> is a reserved word</span>
                 [% } else if (propertyName === 'name') { %]
-                    <span class="label">The Case's Name</span>
+                    <span class="label label-default">The Case's Name</span>
                 [% } else if (propertyName !== value && showSuggestion) { %]
                     <span class="">[%= value %]?</span>
                 [% } %]

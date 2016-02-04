@@ -5,7 +5,7 @@
 <script type="text/html" id="CommcareSettings.widgets.select">
     <span>
         <span data-bind="if: valueIsLegal()">
-            <select class="span3" data-bind="
+            <select class="col-sm-3 form-control" data-bind="
                 options: options,
                 value: selectedOption,
                 optionsText: 'label',
@@ -13,7 +13,7 @@
             "></select>
         </span>
         <span data-bind="if: !valueIsLegal()" >
-            <select class="span3 error" data-bind="
+            <select class="col-sm-3 form-control error" data-bind="
                 options: options,
                 value: writeSelectedOption,
                 optionsText: 'label',
@@ -25,22 +25,29 @@
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.bool">
-    <span class="span3">
-        <input type="checkbox" data-bind="checked: boolValue, attr: {disabled: !enabled(), id: inputId}"/>
+    <span class="col-sm-3">
+        <input type="checkbox"
+               data-bind="checked: boolValue, attr: {disabled: !enabled(), id: inputId}"/>
     </span>
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.customProperty">
-    <input placeholder="Key" type="text" data-bind="value: key" />
-    &nbsp;
-    <i class="icon-arrow-right"></i>
-    &nbsp;
-    <input placeholder="Value" type="text" data-bind="value: value" />
-    <a class="btn btn-danger" data-bind="
-        click: $parent.onDestroyCustomProperty
-        ">
-        <i class="icon-trash"></i>
-    </a>
+    <div class="row">
+            <div class="col-sm-5">
+                <input placeholder="Key" type="text" data-bind="value: key" class="form-control"/>
+            </div>
+            <div class="col-sm-1 text-center">
+                <i class="fa fa-arrow-right"></i>
+            </div>
+            <div class="col-sm-5">
+                <input placeholder="Value" type="text" data-bind="value: value" class="form-control" />
+            </div>
+            <div class="col-sm-1">
+                <button class="btn btn-danger" data-bind="click: $parent.onDestroyCustomProperty">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </div>
+    </div>
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.image_uploader">
@@ -52,7 +59,7 @@
         "/>
     </a>
     <a data-toggle="modal"
-       class="btn btn-primary"
+       class="btn btn-default"
        data-bind="
         attr: {
             'data-hqmediapath': path,
@@ -63,7 +70,7 @@
             mediaUploadComplete: uploadComplete
         }
     ">
-        <i class="icon icon-cloud-upload"></i>
+        <i class="fa fa-cloud-upload"></i>
         <span data-bind="visible: url()">
             {% trans "Replace Logo" %}
         </span>
@@ -76,7 +83,7 @@
            visible: url(),
            click: removeLogo
     ">
-        <i class="icon icon-remove"></i>
+        <i class="fa fa-remove"></i>
     </a>
 </script>
 
@@ -84,7 +91,7 @@
 
 <script type="text/html" id="CommcareSettings.widgets.text">
     <span>
-        <input type="text" class="span6" data-bind="
+        <input type="text" class="col-sm-6 form-control" data-bind="
             value: visibleValue,
             valueUpdate: 'textchange',
             attr: {disabled: !enabled(), id: inputId}
@@ -94,7 +101,7 @@
 
 <script type="text/html" id="CommcareSettings.widgets.number">
     <span>
-        <input type="number" class="span3" data-bind="
+        <input type="number" class="col-sm-3 form-control" data-bind="
             value: visibleValue,
             valueUpdate: 'textchange',
             attr: {disabled: !enabled(), id: inputId}
@@ -104,13 +111,13 @@
 
 <script type="text/html" id="CommcareSettings.widgets.textarea">
     <span>
-        <textarea type="text" data-bind="value: value, attr: {id: inputId}" />
+        <textarea type="text" data-bind="value: value, attr: {id: inputId}" class="form-control" />
     </span>
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.password">
     <span>
-        <input type="password" data-bind="passwordSetter: visibleValue"/>
+        <input type="password" data-bind="passwordSetter: visibleValue" class="form-control" />
     </span>
 </script>
 
@@ -123,13 +130,13 @@
 <script type="text/html" id="CommcareSettings.widgets.text_input">
     <span data-bind="template: 'CommcareSettings.widgets.select'"></span>
     <aside id="custom-keys-help" data-bind="visible: visibleValue() === 'custom-keys'">
-        <i class="icon-arrow-right"></i>
+        <i class="fa fa-arrow-right"></i>
         <span>Customize through
             <a href="#" data-bind="click: function () {$('#custom-keys-example').slideToggle()}">{% trans "User Interface Translations" %}</a>.
         </span>
         <div id="custom-keys-example" style="display: none;">
             <h6>Example:</h6>
-            <ul class="unstyled">
+            <ul class="list-unstyled">
                 <li><span>polish.TextField.charactersKey1</span><span>.,</span><li>
                 <li><span>polish.TextField.charactersKey2</span><span>abc2</span><li>
                 <li><span>polish.TextField.charactersKey3</span><span>def3</span><li>
@@ -162,31 +169,31 @@ todo fix
 
 <div class="tab-pane" id="commcare-settings">
     <div id="app_short_comment" class="app-comment">{{ app.short_comment }}</div>
-    <div class="clearfix" id="settings-save-btn" data-bind="saveButton2: state, saveOptions: saveOptions"></div>
     <form class="form-horizontal">
+        <div class="clearfix">
+            <div class="pull-right">
+                <div id="settings-save-btn"></div>
+            </div>
+        </div>
         <div data-bind="foreach: sections">
             <fieldset data-bind="visible: notEmpty">
                 <legend>
-                    <a class="accordion-toggle" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}">
-                        <i class="icon-double-angle-down"></i>
+                    <a data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}">
+                        <i class="fa fa-angle-double-down"></i>
                         <span data-bind="text: title"></span>
                     </a>
                 </legend>
                 <div class="collapse" data-bind="foreach: settings, attr: {id: id}, css: {'in': !reallyCollapse()}">
-                    <div class="control-group" data-bind="
+                    <div class="form-group" data-bind="
                         visible: visible,
                         css: {error: hasError()}
                     ">
-                        <div class="control-label">
-                            <label data-bind="text: name, attr: {for: inputId}" class="inner-control-label"></label>
+                        <div class="col-sm-2 control-label">
+                            <label data-bind="html: name, attr: {for: inputId}" class="inner-control-label"></label>
                             <span data-bind="makeHqHelp: { name: name, description: $data.description, format: $data.description_format}, visible: $data.description"></span>
                         </div>
-                        <div class="controls">
+                        <div class="col-sm-4">
                             <span data-bind="template: $data.widget_template || 'CommcareSettings.widgets.' + widget"></span>
-                            <span data-bind="visible: disabledMessage(), css: {'text-warning': !optionOK(), 'text-success': optionOK}">
-                                <i data-bind="css: {'icon-arrow-left': !optionOK(), 'icon-ok': optionOK}"></i>
-                                <span data-bind="text: disabledMessage()"></span>
-                            </span>
                             <p class="help-block" data-bind="visible: disabledButHasValue">
                                 <span data-bind="text: $data.disabled_txt"></span>
                                 <span data-bind="visible: !$data.disabled_txt">
@@ -199,11 +206,19 @@ todo fix
                                 {% endblocktrans %}
                                 </span>
                             </p>
-                            <span class="label label-info" data-bind="visible: $data.preview">{% trans "Preview" %}</span>
-                            <span class="help-inline" data-bind="
-                                text: $data.warning || $parents[1].warning,
-                                visible: !$data.valueIsLegal()">
-                            </span>
+                        </div>
+                        <div class="col-sm-2 control-label">
+                            <div class="pull-left">
+                                <span class="label label-danger" data-bind="
+                                    text: $data.warning || $parents[1].warning,
+                                    visible: !$data.valueIsLegal()">
+                                </span>
+                                <span class="label label-info" data-bind="visible: $data.preview">{% trans "Preview" %}</span>
+                                <span data-bind="visible: disabledMessage(), css: {'text-warning': !optionOK(), 'text-success': optionOK}">
+                                    <i class="fa" data-bind="css: {'fa-arrow-left': !optionOK(), 'fa-check': optionOK}"></i>
+                                    <span data-bind="text: disabledMessage()"></span>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -213,27 +228,21 @@ todo fix
         <fieldset>
             <legend>
                 <a
-                    class="accordion-toggle"
                     data-toggle="collapse"
                     data-bind="
                         attr: { href: '#' + customPropertyType },
                         css: { collapsed: true }
                         ">
-                    <i class="icon-double-angle-down"></i>
+                    <i class="fa fa-angle-double-down"></i>
                     <span>{% trans "Custom Properties" %}</span>
                 </a>
             </legend>
-            <div
-                class="collapse"
-                data-bind="
-                    attr: { id: customPropertyType }
-                ">
-
+            <div class="collapse col-sm-6" data-bind="attr: { id: customPropertyType }">
                 <div class="custom-property-list" data-bind="
                     foreach: customProperties,
                     as: 'customProperty'
                     ">
-                    <div class="control-group" data-bind="
+                    <div class="form-group container-fluid" data-bind="
                         template: {
                             name: 'CommcareSettings.widgets.customProperty'
                         }
@@ -241,13 +250,10 @@ todo fix
                     </div>
 
                 </div>
-                <div class="control-group">
-                    <button class="btn btn-primary" data-bind="
-                        click: onAddCustomProperty
-                        ">
-                        {% trans "Add Custom Property" %}
-                    </button>
-                </div>
+                <button class="btn btn-default" data-bind="click: onAddCustomProperty">
+                    <i class="fa fa-plus"></i>
+                    {% trans "Add Custom Property" %}
+                </button>
             </div>
         </fieldset>
         {% endif %}
