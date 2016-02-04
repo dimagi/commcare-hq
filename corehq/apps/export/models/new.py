@@ -178,6 +178,12 @@ class TableConfiguration(DocumentSchema):
             rows.append(ExportRow(data=row_data))
         return rows
 
+    def get_column(self, item_path):
+        for column in self.columns:
+            if column.item.path == item_path:
+                return column
+        return None
+
     def _get_sub_documents(self, path, docs):
         """
         Return each instance of a repeat group at the path from the given docs.
@@ -240,6 +246,12 @@ class ExportInstance(Document):
     @property
     def defaults(self):
         return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
+
+    def get_table(self, path):
+        for table in self.tables:
+            if table.path == path:
+                return table
+        return None
 
     @classmethod
     def _new_from_schema(cls, schema):

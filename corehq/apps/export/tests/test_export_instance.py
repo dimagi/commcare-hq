@@ -5,7 +5,8 @@ from corehq.apps.export.models import (
     ExportItem,
     FormExportDataSchema,
     ExportGroupSchema,
-    ExportInstance,
+    FormExportInstance,
+    TableConfiguration,
 )
 from corehq.apps.export.const import MAIN_TABLE
 
@@ -53,7 +54,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
                 'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
                 return_value=build_ids_and_versions):
 
-            instance = ExportInstance.generate_instance_from_schema(
+            instance = FormExportInstance.generate_instance_from_schema(
                 self.schema,
                 'dummy',
                 self.app_id
@@ -78,7 +79,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
         with mock.patch(
                 'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
                 return_value=build_ids_and_versions):
-            instance = ExportInstance.generate_instance_from_schema(
+            instance = FormExportInstance.generate_instance_from_schema(
                 self.schema,
                 'dummy',
                 self.app_id
@@ -158,7 +159,7 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
         with mock.patch(
                 'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
                 return_value=build_ids_and_versions):
-            instance = ExportInstance.generate_instance_from_schema(self.schema, 'dummy-domain')
+            instance = FormExportInstance.generate_instance_from_schema(self.schema, 'dummy-domain')
 
         selected = filter(
             lambda column: column.selected,
@@ -180,7 +181,7 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
         with mock.patch(
                 'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
                 return_value=build_ids_and_versions):
-            instance = ExportInstance.generate_instance_from_schema(self.schema, 'dummy-domain')
+            instance = FormExportInstance.generate_instance_from_schema(self.schema, 'dummy-domain')
 
         selected = filter(
             lambda column: column.selected,
@@ -192,3 +193,29 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
         )
         self.assertEqual(len(selected), 0)
         self.assertEqual(len(shown), 0)
+
+
+class TestExportInstance(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.schema = FormExportInstance(
+            tables=[
+                TableConfiguration(
+                    path=MAIN_TABLE
+                ),
+                TableConfiguration(
+                    path=['data', 'repeat'],
+                )
+            ]
+        )
+
+    def test_get_table(self):
+        table = self.schema.get_table(MAIN_TABLE)
+        self.assertEqual(table.path, MAIN_TABLE)
+
+        table = self.schema.get_table(['data', 'repeat'])
+        self.assertEqual(table.path, ['data', 'repeat'])
+
+        table = self.schema.get_table(['data', 'DoesNotExist'])
+        self.assertIsNone(table)

@@ -124,3 +124,26 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
             [row.data for row in table_configuration.get_rows(submission)],
             [[1, None, 1, None, "b d"]]
         )
+
+    def test_get_column(self):
+        table_configuration = TableConfiguration(
+            path=['form', 'repeat1'],
+            columns=[
+                ExportColumn(
+                    item=ScalarItem(
+                        path=['form', 'repeat1', 'q1'],
+                    )
+                ),
+                ExportColumn(
+                    item=ScalarItem(
+                        path=['form', 'repeat1', 'q2'],
+                    )
+                ),
+            ]
+        )
+
+        column = table_configuration.get_column(['form', 'repeat1', 'q1'])
+        self.assertEqual(column.item.path, ['form', 'repeat1', 'q1'])
+
+        column = table_configuration.get_column(['form', 'repeat1', 'DoesNotExist'])
+        self.assertIsNone(column)
