@@ -33,15 +33,15 @@ class _Writer(object):
         with os.fdopen(fd, 'wb') as file:
 
             # open the ExportWriter
-            headers = [(t.identifier, (t.get_headers(),)) for t in tables]
-            table_titles = {t.identifier: t.name for t in tables}
+            headers = [(t, (t.get_headers(),)) for t in tables]
+            table_titles = {t: t.name for t in tables}
             self.writer.open(headers, file, table_titles=table_titles)
             yield
 
         self.writer.close()
 
     def write(self, table, row):
-        return self.writer.write([(table.identifier, [FormattedRow(data=row.data)])])
+        return self.writer.write([(table, [FormattedRow(data=row.data)])])
 
     def get_preview(self):
         return self.writer.get_preview()

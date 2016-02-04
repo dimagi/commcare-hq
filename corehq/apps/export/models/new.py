@@ -121,13 +121,8 @@ class TableConfiguration(DocumentSchema):
     columns = ListProperty(ExportColumn)
     selected = BooleanProperty(default=False)
 
-    @property
-    def identifier(self):
-        """
-        Return a hashable identifier for this table.
-        Useful for storing TableConfigurations in dictionaries.
-        """
-        return tuple(self.path)
+    def __hash__(self):
+        return hash(tuple(self.path))
 
     def get_headers(self):
         """
