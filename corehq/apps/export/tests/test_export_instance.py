@@ -1,5 +1,5 @@
 import mock
-from django.test import SimpleTestCase
+from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.export.models import (
     ExportItem,
@@ -219,3 +219,106 @@ class TestExportInstance(SimpleTestCase):
 
         table = self.schema.get_table(['data', 'DoesNotExist'])
         self.assertIsNone(table)
+
+
+class TestExportInstanceFromSavedInstance(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.app_id = '1234'
+        cls.schema = FormExportDataSchema(
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        ExportItem(
+                            path=['data', 'question1'],
+                            label='Question 1',
+                            last_occurrences={
+                                cls.app_id: 3,
+                            },
+                        )
+                    ],
+                    last_occurrences={
+                        cls.app_id: 3,
+                    },
+                ),
+            ],
+        )
+        cls.new_schema = FormExportDataSchema(
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        ExportItem(
+                            path=['data', 'question1'],
+                            label='Question 1',
+                            last_occurrences={
+                                cls.app_id: 3,
+                            },
+                        ),
+                        ExportItem(
+                            path=['data', 'question3'],
+                            label='Question 3',
+                            last_occurrences={
+                                cls.app_id: 3,
+                            },
+                        )
+                    ],
+                    last_occurrences={
+                        cls.app_id: 3,
+                    },
+                ),
+                ExportGroupSchema(
+                    path=['data', 'repeat'],
+                    items=[
+                        ExportItem(
+                            path=['data', 'repeat', 'q2'],
+                            label='Question 2',
+                            last_occurrences={
+                                cls.app_id: 3,
+                            },
+                        )
+                    ],
+                    last_occurrences={
+                        cls.app_id: 3,
+                    },
+                ),
+            ],
+        )
+
+    def test_export_instance_from_saved(self):
+        build_ids_and_versions = {
+            self.app_id: 3,
+        }
+        with mock.patch(
+                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                return_value=build_ids_and_versions):
+            instance = FormExportInstance.generate_instance_from_schema(self.schema, 'my-domain', self.app_id)
+
+        instance.save()
+        self.assertEqual(len(instance.tables), 1)
+        self.assertEqual(len(instance.tables[0].columns), 1)
+        self.assertTrue(instance.tables[0].columns[0].selected)
+
+        # Simulate a selection
+        instance.tables[0].columns[0].selected = False
+
+        instance.save()
+        self.assertFalse(instance.tables[0].columns[0].selected)
+
+        with mock.patch(
+                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                return_value=build_ids_and_versions):
+
+            instance = FormExportInstance.generate_instance_from_schema(
+                self.new_schema,
+                'my-domain',
+                self.app_id,
+                export_id=instance._id
+            )
+
+        self.assertEqual(len(instance.tables), 2)
+        self.assertEqual(len(instance.tables[0].columns), 2)
+        # Selection from previous instance should hold the same and not revert to defaults
+        self.assertFalse(instance.tables[0].columns[0].selected)

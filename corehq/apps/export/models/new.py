@@ -258,28 +258,33 @@ class ExportInstance(Document):
         raise NotImplementedError()
 
     @classmethod
-    def generate_instance_from_schema(cls, schema, domain, app_id=None):
+    def generate_instance_from_schema(cls, schema, domain, app_id=None, export_id=None):
         """Given an ExportDataSchema, this will generate an ExportInstance"""
-        instance = cls._new_from_schema(schema)
-        instance.name = instance.defaults.get_default_instance_name(schema)
+        if export_id:
+            instance = cls.get(export_id)
+        else:
+            instance = cls._new_from_schema(schema)
+
+        instance.name = instance.name or instance.defaults.get_default_instance_name(schema)
 
         latest_build_ids_and_versions = get_latest_built_app_ids_and_versions(domain, app_id)
         for group_schema in schema.group_schemas:
-            table = TableConfiguration(
+            table = instance.get_table(group_schema.path) or TableConfiguration(
                 path=group_schema.path,
                 name=instance.defaults.get_default_table_name(group_schema.path),
                 display_name=instance.defaults.get_default_table_name(group_schema.path),
                 selected=instance.defaults.default_is_table_selected(group_schema.path),
             )
             table.columns = map(
-                lambda item: ExportColumn.create_default_from_export_item(
+                lambda item: table.get_column(item.path) or ExportColumn.create_default_from_export_item(
                     table.path,
                     item,
                     latest_build_ids_and_versions,
                 ),
                 group_schema.items,
             )
-            instance.tables.append(table)
+            if not instance.get_table(group_schema.path):
+                instance.tables.append(table)
         return instance
 
 
