@@ -21,7 +21,7 @@ from corehq.apps.export.models.new import (
     CaseExportInstance,
 )
 from corehq.pillows.case import CasePillow
-from corehq.util.elastic import delete_es_index
+from corehq.util.elastic import ensure_index_deleted
 from couchexport.models import Format
 from pillowtop.es_utils import completely_initialize_pillow_index
 
@@ -183,7 +183,7 @@ class ExportTest(SimpleTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        delete_es_index(cls.pillow.es_index)
+        ensure_index_deleted(cls.pillow.es_index)
 
     def test_get_export_file(self):
         export = get_export_file(
