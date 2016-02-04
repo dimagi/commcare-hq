@@ -141,7 +141,23 @@
 
         {% if request.use_jquery_ui %}
         {% compress js %}
-        <script type="text/javascript" src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
+            <!-- UI libraries needed for all other widgets and interactions -->
+            <script src="{% new_static 'jquery-ui/ui/core.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/widget.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/mouse.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/position.js' %}"></script>
+
+            <!-- Individual widgets and interactions -->
+            <script src="{% new_static 'jquery-ui/ui/accordion.js' %}"></script><!-- TODO: kill & replace with bootstrap -->
+            <script src="{% new_static 'jquery-ui/ui/menu.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/autocomplete.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/button.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/datepicker.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/draggable.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/resizable.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/dialog.js' %}"></script><!-- TODO: kill & replace with bootstrap -->
+            <script src="{% new_static 'jquery-ui/ui/droppable.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/sortable.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
