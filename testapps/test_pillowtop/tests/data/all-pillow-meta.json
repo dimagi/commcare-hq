@@ -585,7 +585,7 @@
         "checkpoint_id": "pillowtop_corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq",
         "couch_filter": null,
         "couchdb_type": "Database",
-        "couchdb_uri": "http://127.0.0.1:5984/test_commcarehq__users",
+        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__users",
         "document_class": null,
         "extra_args": {},
         "full_class_name": "corehq.pillows.cacheinvalidate.CacheInvalidatePillow",
