@@ -1,8 +1,3 @@
-var Exports = {
-    ViewModels: {},
-    Constants: {}
-};
-
 Exports.ViewModels.ExportInstance = function(instanceJSON) {
     var self = this;
     ko.mapping.fromJS(instanceJSON, Exports.ViewModels.ExportInstance.mapping, self);
@@ -28,6 +23,7 @@ Exports.ViewModels.ExportInstance.mapping = {
 
 Exports.ViewModels.TableConfiguration = function(tableJSON) {
     var self = this;
+    self.showAdvanced = ko.observable(false);
     ko.mapping.fromJS(tableJSON, Exports.ViewModels.TableConfiguration.mapping, self);
 };
 
@@ -36,14 +32,27 @@ Exports.ViewModels.TableConfiguration.prototype.isVisible = function() {
     return true;
 };
 
-Exports.ViewModels.TableConfiguration.prototype.showDeleted = function() {
-    // Not implemented
-    return true;
+Exports.ViewModels.TableConfiguration.prototype.toggleShowAdvanced = function(table) {
+    table.showAdvanced(!table.showAdvanced());
+};
+
+Exports.ViewModels.TableConfiguration.prototype._select = function(select) {
+    _.each(this.columns(), function(column) {
+        column.selected(select && column.isVisible(this));
+    }.bind(this));
+};
+
+Exports.ViewModels.TableConfiguration.prototype.selectAll = function(table) {
+    table._select(true);
+};
+
+Exports.ViewModels.TableConfiguration.prototype.selectNone = function(table) {
+    table._select(false);
 };
 
 Exports.ViewModels.TableConfiguration.mapping = {
     include: ['name', 'path', 'columns', 'selected'],
-    tables: {
+    columns: {
         create: function(options) {
             return new Exports.ViewModels.ExportColumn(options.data);
         }
@@ -55,8 +64,16 @@ Exports.ViewModels.ExportColumn = function(columnJSON) {
     ko.mapping.fromJS(columnJSON, Exports.ViewModels.ExportColumn.mapping, self);
 };
 
+Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
+    return this.item.path.join('.');
+};
+
+Exports.ViewModels.ExportColumn.prototype.isVisible = function(table) {
+    return table.showAdvanced() || (!this.is_advanced() || this.selected());
+};
+
 Exports.ViewModels.ExportColumn.mapping = {
-    include: ['item', 'label', 'show', 'selected'],
+    include: ['item', 'label', 'is_advanced', 'selected', 'tags'],
     item: {
         create: function(options) {
             return new Exports.ViewModels.ExportItem(options.data);

@@ -6,8 +6,10 @@
     {{ block.super }}
     <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
     <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
+    <script src="{% static 'export/js/exports.js' %}"></script>
+    <script src="{% static 'export/js/const.js' %}"></script>
     <script src="{% static 'export/js/models.js' %}"></script>
+    <script src="{% static 'export/js/utils.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -29,7 +31,6 @@
 {% endblock %}
 
 {% block main_column %}
-WHAT IS UP
 <div id="customize-export" style="display: none;" data-bind="visible: true">
     {# content for multi-select help popover #}
     {% if export_instance.type == 'case' %}
@@ -105,23 +106,23 @@ WHAT IS UP
                         <input type="checkbox" data-bind="checked: table.selected" />
                     </span>
                     <span>
-                        <span data-bind="text: table.displayName">
+                        <span data-bind="text: table.name">
                     </span>
                 </legend>
                 <div data-bind="visibleFade: table.selected">
                     <div class="control-group pull-right">
                         <div class="controls">
                             <button type="button" class="btn" data-bind="
-                                click: table.toggleShowDeleted,
-                                css: {active: table.showDeleted}">
-                                <span data-bind="visible: !table.showDeleted()">
+                                click: table.toggleShowAdvanced,
+                                css: {active: table.showAdvanced}">
+                                <span data-bind="visible: !table.showAdvanced()">
                                 {% if export_instance.type == 'form' %}
                                     {% trans "Show Deleted Questions and Advanced Properties" %}
                                 {% else %}
                                     {% trans "Show Deleted Properties and Advanced Properties" %}
                                 {% endif %}
                                 </span>
-                                <span data-bind="visible: table.showDeleted">
+                                <span data-bind="visible: table.showAdvanced">
                                 {% if export_instance.type == 'form' %}
                                     {% trans "Hide Deleted Questions and Advanced Properties" %}
                                 {% else %}
@@ -149,8 +150,8 @@ WHAT IS UP
                                 <tr class="nodrag nodrop">
                                     <th></th>
                                     <th>{% trans "Include this Field?" %}<br>
-                                        <a href="#" class="btn btn-mini" data-bind="click: table.selectAll">{% trans "Select All" %}</a>
-                                        <a href="#" class="btn btn-mini btn-inverse" data-bind="click: table.selectNone">{% trans "Select None" %}</a></th>
+                                        <a  class="btn btn-mini" data-bind="click: table.selectAll">{% trans "Select All" %}</a>
+                                        <a class="btn btn-mini btn-inverse" data-bind="click: table.selectNone">{% trans "Select None" %}</a></th>
                                     <th>
                                     {% if export_instance.type == 'form' %}
                                         {% trans "Question" %}
@@ -170,7 +171,7 @@ WHAT IS UP
                                 <tbody data-bind="foreach: { data: table.columns, as: 'column' }">
                                 <!--<tbody data-bind="sortable: column_configuration">-->
                                     <tr data-bind="
-                                        visible:  $parent.showDeleted() || (column.show || column.selected)
+                                        visible: column.isVisible($parent)
                                         {% if False %}, attr: {'data-order': _sortableOrder}{% endif %}
                                         ">
                                         <td class="sortable-handle">
@@ -178,24 +179,26 @@ WHAT IS UP
                                         </td>
                                         <td>
                                             <!--ko if: ($root.is_deidentified() && column.item.isCaseName()) -->
-                                            <!--<input type="checkbox"-->
-                                                   <!--class="field-include"-->
-                                                   <!--disabled="disabled" />-->
+                                            <input type="checkbox"
+                                                   class="field-include"
+                                                   disabled="disabled" />
                                             <!--/ko-->
                                             <!--ko ifnot: ($root.is_deidentified() && column.item.isCaseName()) -->
-                                            <!--<input type="checkbox"-->
-                                                   <!--class="field-include"-->
-                                                   <!--data-bind="checked: column.selected" />-->
+                                            <input type="checkbox"
+                                                   class="field-include"
+                                                   data-bind="checked: column.selected" />
                                             <!--/ko-->
                                         </td>
                                         <td>
-                                            <!--<span data-bind="foreach: _niceField.tags">
-                                                <span data-bind="text: $data, visible: $data, attr: { 'class': $root.row_label_classes($data)}"></span>
-                                            </span>-->
-                                            <!--<code data-bind="text: _niceField.field"></code>-->
+                                            <span data-bind="foreach: { data: column.tags, as: 'tag' }">
+                                                <span data-bind="
+                                                    text: tag,
+                                                    attr: { class: Exports.Utils.getTagCSSClass(tag) }"></span>
+                                            </span>
+                                            <code data-bind="text: column.formatProperty()"></code>
 
                                         </td>
-                                        <td><input class="input-xlarge" type="text" data-bind="value: column.name" /></td>
+                                        <td><input class="input-xlarge" type="text" data-bind="value: column.label" /></td>
                                         {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
                                         <td class="input">
                                             <div data-bind="if: !allOptions()">
