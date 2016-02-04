@@ -1248,6 +1248,8 @@ class CaseExportListView(BaseExportListView):
     @memoized
     def get_saved_exports(self):
         exports = CaseExportSchema.get_stale_exports(self.domain)
+        new_exports = get_case_export_instances(self.domain)
+        exports += new_exports
         if not self.has_deid_view_permissions:
             exports = filter(lambda x: not x.is_safe, exports)
         return sorted(exports, key=lambda x: x.name)
