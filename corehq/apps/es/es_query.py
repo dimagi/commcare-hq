@@ -88,6 +88,8 @@ Language
 from collections import namedtuple
 from copy import deepcopy
 import json
+
+from corehq.apps.es import aggregations
 from corehq.apps.es.utils import values_list, flatten_field_dict
 
 from dimagi.utils.decorators.memoized import memoized
@@ -232,7 +234,7 @@ class ESQuery(object):
         return self.facet(facets.TermsFacet(term, name, size))
 
     def date_histogram(self, name, datefield, interval, timezone=None):
-        return self.facet(facets.DateHistogram(name, datefield, interval, timezone=None))
+        return self.aggregation(aggregations.DateHistogram(name, datefield, interval, timezone=timezone))
 
     @property
     def _query(self):

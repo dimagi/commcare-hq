@@ -179,3 +179,53 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         )
 
         self.checkQuery(query, json_output)
+
+    def test_date_histogram(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "aggs": {
+                "by_day": {
+                    "date_histogram": {
+                        "field": "date",
+                        "interval": "day",
+                        "time_zone": "-01:00"
+                    }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
+        query = HQESQuery('forms').date_histogram('by_day', 'date', 'day', '-01:00')
+        self.checkQuery(query, json_output)
+
+    def test_histogram_aggregation(self):
+        example_response = {
+            "hits": {},
+            "shards": {},
+            "aggregations": {
+                "forms_by_date": {
+                    "buckets": [{
+                        "key": 1454284800000,
+                        "doc_count": 8
+                    },
+                    {
+                        "key": 1464284800000,
+                        "doc_count": 3
+                    }]
+                }
+            }
+        }
+        expected_output = example_response['aggregations']['forms_by_date']['buckets']
+        query = HQESQuery('forms').date_histogram('forms_by_date', '', '')
+        res = ESQuerySet(example_response, query)
+        output = res.aggregations.forms_by_date.raw_buckets
+        self.assertEqual(output, expected_output)
+

@@ -382,7 +382,7 @@ def get_total_clients_data(domains, datespan, interval, datefield='opened_on'):
             .date_histogram('date', datefield, interval)
             .size(0))
 
-    histo_data = cases_after_date.run().facet('date', 'entries')
+    histo_data = cases_after_date.run().aggregations.date.as_facet_result()
 
     cases_before_date = (CaseES()
             .domain(domains)
@@ -416,7 +416,7 @@ def get_mobile_workers_data(domains, datespan, interval,
             .date_histogram('date', datefield, interval)
             .size(0))
 
-    histo_data = users_after_date.run().facet('date', 'entries')
+    histo_data = users_after_date.run().aggregations.date.as_facet_result()
 
     users_before_date = (UserES()
             .domain(domains)
@@ -448,7 +448,7 @@ def get_real_sms_messages_data(domains, datespan, interval,
     if is_commtrack:
         sms_after_date = sms_after_date.to_commcare_user_or_case()
 
-    histo_data = sms_after_date.run().facet('date', 'entries')
+    histo_data = sms_after_date.run().aggregations.date.as_facet_result()
 
     sms_before_date = (SMSES()
             .domain(domains)
@@ -496,7 +496,7 @@ def get_sms_only_domain_stats_data(domains, datespan, interval,
             .date_histogram('date', datefield, interval)
             .size(0))
 
-    histo_data = domains_after_date.run().facet('date', 'entries')
+    histo_data = domains_after_date.run().aggregations.date.as_facet_result()
 
     domains_before_date = (DomainES()
             .in_domains(sms_only_domains)
@@ -529,7 +529,7 @@ def get_commconnect_domain_stats_data(domains, datespan, interval,
             .date_histogram('date', datefield, interval)
             .size(0))
 
-    histo_data = domains_after_date.run().facet('date', 'entries')
+    histo_data = domains_after_date.run().aggregations.date.as_facet_result()
 
     domains_before_date = (DomainES()
             .in_domains(sms_domains)
@@ -572,7 +572,7 @@ def get_domain_stats_data(domains, datespan, interval,
             .created(gte=datespan.startdate, lte=datespan.enddate)
             .date_histogram('date', datefield, interval)
             .size(0))
-    histo_data = domains_after_date.run().facet('date', 'entries')
+    histo_data = domains_after_date.run().aggregations.date.as_facet_result()
 
     domains_before_date = (DomainES()
             .in_domains(domains)
@@ -594,7 +594,7 @@ def commtrack_form_submissions(domains, datespan, interval,
             .user_id(mobile_workers)
             .size(0))
 
-    histo_data = forms_after_date.run().facet('date', 'entries')
+    histo_data = forms_after_date.run().aggregations.date.as_facet_result()
 
     forms_before_date = (FormES()
             .domain(domains)
@@ -677,7 +677,7 @@ def get_users_all_stats(domains, datespan, interval,
         query
         .created(gte=datespan.startdate, lte=datespan.enddate)
         .date_histogram('date', 'created_on', interval)
-        .run().facet('date', 'entries')
+        .run().aggregations.date.as_facet_result()
     )
 
     users_before_date = len(

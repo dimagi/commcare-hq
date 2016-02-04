@@ -1,4 +1,5 @@
 from unittest import TestCase
+from unittest.case import skip
 
 from corehq.apps.es.es_query import HQESQuery, ESQuerySet
 from corehq.apps.es.tests import ElasticTestMixin
@@ -80,3 +81,85 @@ class TestESFacet(ElasticTestMixin, TestCase):
         with self.assertRaises(AssertionError):
             HQESQuery('forms')\
                 .terms_facet('form.meta.userID', 'form.meta.userID', size=10)
+
+    @skip('deprecated')
+    def test_date_histogram_facet(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "facets": {
+                "forms_by_date": {
+                    "date_histogram": {
+                        "field": "received_on",
+                        "interval": "month",
+                        "time_zone": None
+                    }
+                }
+            },
+            "size": SIZE_LIMIT,
+        }
+        query = HQESQuery('forms')\
+                .date_histogram('forms_by_date', 'received_on', 'month')
+        self.checkQuery(query, json_output)
+
+    def test_histogram_facet_response(self):
+        example_response = {
+            "hits": {},
+            "shards": {},
+            "facets": {
+                "forms_by_date": {
+                    "_type": "date_histogram",
+                    "entries": [{
+                        "time": 1454284800000,
+                        "count": 8
+                    },
+                    {
+                        "time": 1464284800000,
+                        "count": 3
+                    }]
+                }
+            }
+        }
+        expected_output = example_response['facets']['forms_by_date']['entries']
+        query = HQESQuery('forms')
+        res = ESQuerySet(example_response, query)
+        output = res.facet('forms_by_date', 'entries')
+        self.assertEqual(output, expected_output)
+
+    def test_histogram_aggregation_as_facet_response(self):
+        example_response = {
+            "hits": {},
+            "shards": {},
+            "aggregations": {
+                "forms_by_date": {
+                    "buckets": [{
+                        "key": 1454284800000,
+                        "doc_count": 8
+                    },
+                    {
+                        "key": 1464284800000,
+                        "doc_count": 3
+                    }]
+                }
+            }
+        }
+        expected_output = [{
+                "time": 1454284800000,
+                "count": 8
+            },
+            {
+                "time": 1464284800000,
+                "count": 3
+        }]
+        query = HQESQuery('forms').date_histogram('forms_by_date', '', '')
+        res = ESQuerySet(example_response, query)
+        output = res.aggregations.forms_by_date.as_facet_result()
+        self.assertEqual(output, expected_output)

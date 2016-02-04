@@ -265,3 +265,38 @@ class RangeAggregation(Aggregation):
 
         self.body["ranges"].append(range_)
         return self
+
+
+class HistogramResult(BucketResult):
+    def as_facet_result(self):
+        return [
+            {'time': b.key, 'count': b.doc_count}
+            for b in self.buckets_list
+        ]
+
+
+class DateHistogram(Aggregation):
+    """
+    Aggregate by date range.  This can answer questions like "how many forms
+    were created each day?".
+
+    This class can be instantiated by the ``ESQuery.date_histogram`` method.
+
+    :param name: what do you want to call this facet?
+    :param datefield: the document's date field to look at
+    :param interval: the date interval to use: "year", "quarter", "month",
+        "week", "day", "hour", "minute", "second"
+    :param timezone: do bucketing using this time zone instead of UTC
+    """
+    type = "date_histogram"
+    result_class = HistogramResult
+
+    def __init__(self, name, datefield, interval, timezone=None):
+        self.name = name
+        self.body = {
+            'field': datefield,
+            'interval': interval,
+        }
+
+        if timezone:
+            self.body['time_zone'] = timezone
