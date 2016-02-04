@@ -13,7 +13,7 @@ class BaseMigrationTestCase(TestCase):
     def setUp(self):
         self.domain = 'test-sms-sql-migration'
 
-    def tearDown(self):
+    def deleteAllLogs(self):
         for smslog in SMSLog.view(
             'sms/by_domain',
             startkey=[self.domain, 'SMSLog'],
@@ -37,14 +37,17 @@ class BaseMigrationTestCase(TestCase):
         MessagingSubEvent.objects.filter(parent__domain=self.domain).delete()
         MessagingEvent.objects.filter(domain=self.domain).delete()
 
+    def tearDown(self):
+        self.deleteAllLogs()
+
     def randomDirection(self):
-        [INCOMING, OUTGOING][random.randint(0, 1)]
+        return [INCOMING, OUTGOING][random.randint(0, 1)]
 
     def randomBoolean(self):
-        [True, False][random.randint(0, 1)]
+        return [True, False][random.randint(0, 1)]
 
     def randomString(self, length=10):
-        ''.join([random.choice(string.lowercase) for i in range(length)])
+        return ''.join([random.choice(string.lowercase) for i in range(length)])
 
     def randomInteger(self, beginning=0, end=1000):
         return random.randint(beginning, end)
@@ -266,3 +269,144 @@ class SMSMigrationTestCase(BaseMigrationTestCase):
         smslog = FRISMSLog.get(sms.couch_id)
         self.checkFieldValues(smslog, sms, SMS._migration_get_fields())
         self.assertTrue(FRISMSLog.get_db().get_rev(smslog._id).startswith('3-'))
+
+
+class CallMigrationTestCase(BaseMigrationTestCase):
+    def getCallLogCount(self):
+        result = CallLog.view(
+            'sms/by_domain',
+            startkey=[self.domain, 'CallLog'],
+            endkey=[self.domain, 'CallLog', {}],
+            include_docs=False,
+            reduce=True,
+        ).all()
+        if result:
+            return result[0]['value']
+        return 0
+
+    def getCallCount(self):
+        return Call.objects.filter(domain=self.domain).count()
+
+    def setRandomCallLogValues(self, calllog):
+        calllog.form_unique_id = self.randomString()
+        calllog.answered = self.randomBoolean()
+        calllog.duration = self.randomInteger()
+        calllog.gateway_session_id = self.randomString()
+        calllog.xforms_session_id = self.randomString()
+        calllog.error_message = self.randomString()
+        calllog.submit_partial_form = self.randomBoolean()
+        calllog.include_case_side_effects = self.randomBoolean()
+        calllog.max_question_retries = self.randomInteger()
+        calllog.current_question_retry_count = self.randomInteger()
+        calllog.use_precached_first_response = self.randomBoolean()
+        calllog.first_response = self.randomString()
+        calllog.case_id = self.randomString()
+        calllog.case_for_case_submission = self.randomBoolean()
+        calllog.messaging_subevent_id = self.randomMessagingSubEventId()
+        calllog.couch_recipient_doc_type = self.randomString()
+        calllog.couch_recipient = self.randomString()
+        calllog.phone_number = self.randomString()
+        calllog.direction = self.randomDirection()
+        calllog.date = self.randomDateTime()
+        calllog.domain = self.domain
+        calllog.backend_api = self.randomString()
+        calllog.backend_id = self.randomString()
+        calllog.billed = self.randomBoolean()
+        calllog.workflow = self.randomString()
+        calllog.xforms_session_couch_id = self.randomString()
+        calllog.reminder_id = self.randomString()
+        calllog.error = self.randomBoolean()
+        calllog.system_error_message = self.randomString()
+        calllog.system_phone_number = self.randomString()
+        calllog.location_id = self.randomString()
+
+    def setRandomCallValues(self, call):
+        call.domain = self.domain
+        call.date = self.randomDateTime()
+        call.couch_recipient_doc_type = self.randomString()
+        call.couch_recipient = self.randomString()
+        call.phone_number = self.randomString()
+        call.direction = self.randomDirection()
+        call.error = self.randomBoolean()
+        call.system_error_message = self.randomString()
+        call.system_phone_number = self.randomString()
+        call.backend_api = self.randomString()
+        call.backend_id = self.randomString()
+        call.billed = self.randomBoolean()
+        call.workflow = self.randomString()
+        call.xforms_session_couch_id = self.randomString()
+        call.reminder_id = self.randomString()
+        call.location_id = self.randomString()
+        call.messaging_subevent_id = self.randomMessagingSubEventId()
+        call.answered = self.randomBoolean()
+        call.duration = self.randomInteger()
+        call.gateway_session_id = self.randomString()
+        call.submit_partial_form = self.randomBoolean()
+        call.include_case_side_effects = self.randomBoolean()
+        call.max_question_retries = self.randomInteger()
+        call.current_question_retry_count = self.randomInteger()
+        call.xforms_session_id = self.randomString()
+        call.error_message = self.randomString()
+        call.use_precached_first_response
+        call.first_response = self.randomString()
+        call.case_id = self.randomString()
+        call.case_for_case_submission = self.randomBoolean()
+        call.form_unique_id = self.randomString()
+
+    def testCallLogSync(self):
+        self.deleteAllLogs()
+        self.assertEqual(self.getCallLogCount(), 0)
+        self.assertEqual(self.getCallCount(), 0)
+
+        # Test Create
+        calllog = CallLog()
+        self.setRandomCallLogValues(calllog)
+        calllog.save()
+
+        sleep(1)
+        self.assertEqual(self.getCallLogCount(), 1)
+        self.assertEqual(self.getCallCount(), 1)
+
+        call = Call.objects.get(couch_id=calllog._id)
+        self.checkFieldValues(calllog, call, call._migration_get_fields(), assert_not_none=True)
+        self.assertTrue(CallLog.get_db().get_rev(calllog._id).startswith('1-'))
+
+        # Test Update
+        self.setRandomCallLogValues(calllog)
+        calllog.save()
+
+        sleep(1)
+        self.assertEqual(self.getCallLogCount(), 1)
+        self.assertEqual(self.getCallCount(), 1)
+        call = Call.objects.get(couch_id=calllog._id)
+        self.checkFieldValues(calllog, call, Call._migration_get_fields(), assert_not_none=True)
+        self.assertTrue(CallLog.get_db().get_rev(calllog._id).startswith('2-'))
+
+    def testCallSync(self):
+        self.deleteAllLogs()
+        self.assertEqual(self.getCallLogCount(), 0)
+        self.assertEqual(self.getCallCount(), 0)
+
+        # Test Create
+        call = Call()
+        self.setRandomCallValues(call)
+        call.save()
+
+        sleep(1)
+        self.assertEqual(self.getCallLogCount(), 1)
+        self.assertEqual(self.getCallCount(), 1)
+
+        calllog = CallLog.get(call.couch_id)
+        self.checkFieldValues(calllog, call, Call._migration_get_fields(), assert_not_none=True)
+        self.assertTrue(CallLog.get_db().get_rev(calllog._id).startswith('2-'))
+
+        # Test Update
+        self.setRandomCallValues(call)
+        call.save()
+
+        sleep(1)
+        self.assertEqual(self.getCallLogCount(), 1)
+        self.assertEqual(self.getCallCount(), 1)
+        callog = CallLog.get(call.couch_id)
+        self.checkFieldValues(callog, call, Call._migration_get_fields(), assert_not_none=True)
+        self.assertTrue(CallLog.get_db().get_rev(callog._id).startswith('3-'))
