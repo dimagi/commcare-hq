@@ -6,13 +6,10 @@
 ├── MediaUploader#06e78218ed
 ├── XMLWriter#ab8760d6e0
 ├── almond#0.2.9 extraneous (latest is 0.3.1)
-├── bootstrap-better-typeahead#26036ce250 extraneous
-├── chai#3.5.0
+├── chai#3.4.2 (3.5.0 available)
 ├── equivalent-xml-js#7de21be295
 ├── fuse.js#1.2.2 (latest is 1.3.1)
 ├── jquery#1.11.3 (latest is 3.0.0-beta1)
-├─┬ jquery-ui#1.11.4 extraneous
-│ └── jquery#1.11.3 (3.0.0-beta1 available)
 ├── jsdiff#1.4.0 (latest is 2.2.1)
 ├─┬ jstree#3.1.1 (latest is 3.2.1)
 │ └── jquery#1.11.3 (3.0.0-beta1 available)
