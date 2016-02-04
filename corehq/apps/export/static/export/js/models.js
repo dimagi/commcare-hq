@@ -66,7 +66,7 @@ Exports.ViewModels.ExportInstance.prototype.recordSaveAnalytics = function(callb
         analytics.usage.apply(null, args);
     }
     if (this.isNew()) {
-        eventCategory = Exports.Utils.getEventCategory(this.type());
+        eventCategory = Exports.Constants.ANALYTICS_EVENT_CATEGORIES[this.type()];
         analytics.usage(eventCategory, 'Custom export creation', '');
         analytics.workflow("Clicked 'Create' in export edit page", callback);
     }
