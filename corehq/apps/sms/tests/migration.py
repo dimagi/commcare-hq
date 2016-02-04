@@ -1,5 +1,6 @@
+from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import (SMSLog, SMS, INCOMING, OUTGOING,
-    MessagingEvent, MessagingSubEvent)
+    MessagingEvent, MessagingSubEvent, CallLog)
 from custom.fri.models import FRISMSLog, PROFILES
 from datetime import datetime, timedelta
 from django.test import TestCase
@@ -8,7 +9,7 @@ import string
 from time import sleep
 
 
-class SQLMigrationTestCase(TestCase):
+class BaseMigrationTestCase(TestCase):
     def setUp(self):
         self.domain = 'test-sms-sql-migration'
 
@@ -22,7 +23,19 @@ class SQLMigrationTestCase(TestCase):
         ).all():
             smslog.delete()
 
+        for callog in CallLog.view(
+            'sms/by_domain',
+            startkey=[self.domain, 'CallLog'],
+            endkey=[self.domain, 'CallLog', {}],
+            include_docs=True,
+            reduce=False,
+        ).all():
+            callog.delete()
+
         SMS.objects.filter(domain=self.domain).delete()
+        Call.objects.filter(domain=self.domain).delete()
+        MessagingSubEvent.objects.filter(parent__domain=self.domain).delete()
+        MessagingEvent.objects.filter(domain=self.domain).delete()
 
     def randomDirection(self):
         [INCOMING, OUTGOING][random.randint(0, 1)]
@@ -66,6 +79,17 @@ class SQLMigrationTestCase(TestCase):
         subevent.save()
         return subevent.pk
 
+    def checkFieldValues(self, object1, object2, fields, assert_not_none=False):
+        for field_name in fields:
+            value1 = getattr(object1, field_name)
+            value2 = getattr(object2, field_name)
+            if assert_not_none:
+                self.assertIsNotNone(value1)
+                self.assertIsNotNone(value2)
+            self.assertEqual(value1, value2)
+
+
+class SMSMigrationTestCase(BaseMigrationTestCase):
     def getSMSLogCount(self):
         result = SMSLog.view(
             'sms/by_domain',
@@ -152,10 +176,6 @@ class SQLMigrationTestCase(TestCase):
         sms.fri_id = self.randomString()
         sms.fri_risk_profile = self.randomRiskProfile()
         sms.messaging_subevent_id = self.randomMessagingSubEventId()
-
-    def checkFieldValues(self, object1, object2, fields):
-        for field_name in fields:
-            self.assertEqual(getattr(object1, field_name), getattr(object2, field_name))
 
     def testSMSLogSync(self):
         prev_couch_count = self.getSMSLogCount()
