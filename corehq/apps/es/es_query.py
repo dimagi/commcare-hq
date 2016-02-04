@@ -138,7 +138,7 @@ class ESQuery(object):
         self._default_filters = deepcopy(self.default_filters)
         self._facets = []
         self._aggregations = []
-        self._source = []
+        self._source = None
         self.es_query = {"query": {
             "filtered": {
                 "filter": {"and": []},
@@ -283,7 +283,7 @@ class ESQuery(object):
                 'exclude': exclude
             }
         query = deepcopy(self)
-        query._source.append(source)
+        query._source = source
         return query
 
     def start(self, start):
