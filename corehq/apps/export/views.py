@@ -195,6 +195,19 @@ class BaseExportView(BaseProjectDataView):
 class BaseCreateNewCustomExportView(BaseExportView):
     template_name = 'export/new_customize_export.html'
 
+    def commit(self, request):
+        export = ExportInstance.wrap(json.loads(request.body))
+        export.save()
+        messages.success(
+            request,
+            mark_safe(
+                _(u"Export <strong>{}</strong> created.").format(
+                    export.name
+                )
+            )
+        )
+        return export._id
+
     @property
     def page_context(self):
         return {
