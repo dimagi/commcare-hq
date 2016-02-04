@@ -70,25 +70,21 @@ describe('ExportInstance model', function() {
 
     describe('#save', function() {
         var server,
-            redirectSpy,
             recordSaveAnalyticsSpy,
             instance;
 
         beforeEach(function() {
             instance = new Exports.ViewModels.ExportInstance(basicFormExport);
-            redirectSpy = sinon.spy();
             recordSaveAnalyticsSpy = sinon.spy();
             server = sinon.fakeServer.create();
 
             sinon.stub(instance, 'recordSaveAnalytics', recordSaveAnalyticsSpy);
-            sinon.stub(Exports.Utils, 'redirect', redirectSpy);
             window.ga_track_event = sinon.spy();
         });
 
         afterEach(function() {
             server.restore();
             instance.recordSaveAnalytics.restore();
-            Exports.Utils.redirect.restore();
             window.ga_track_event = undefined;
         });
 
@@ -110,7 +106,6 @@ describe('ExportInstance model', function() {
             server.respond();
 
             assert.equal(instance.saveState(), Exports.Constants.SAVE_STATES.SUCCESS);
-            assert.isTrue(redirectSpy.called);
             assert.isTrue(recordSaveAnalyticsSpy.called);
         });
 
@@ -130,8 +125,8 @@ describe('ExportInstance model', function() {
             server.respond();
 
             assert.equal(instance.saveState(), Exports.Constants.SAVE_STATES.ERROR);
-            assert.isFalse(redirectSpy.called);
             assert.isFalse(recordSaveAnalyticsSpy.called);
         });
+
     });
 });

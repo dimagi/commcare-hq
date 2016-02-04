@@ -42,16 +42,8 @@ Exports.ViewModels.ExportInstance.prototype.save = function() {
             var eventCategory;
 
             self.saveState(Exports.Constants.SAVE_STATES.SUCCESS);
-            self.recordSaveAnalytics();
 
-            if (self.isNew()) {
-                eventCategory = Exports.Utils.getEventCategory(self.type());
-                ga_track_event(eventCategory, 'Custom export creation', '', {
-                    hitCallback: Exports.Utils.redirect.bind(null, data.redirect)
-                });
-            } else {
-                Exports.Utils.redirect(data.redirect);
-            }
+            self.recordSaveAnalytics(Exports.Utils.redirect.bind(null, data.redirect));
         })
         .fail(function(response) {
             self.saveState(Exports.Constants.SAVE_STATES.ERROR);
