@@ -12,7 +12,6 @@ from corehq import privileges
 from corehq.apps.accounting.utils import (
     get_active_reminders_by_domain_name,
     log_accounting_error,
-    log_accounting_info,
 )
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
@@ -30,10 +29,9 @@ class BaseModifySubscriptionHandler(object):
     supported_privileges = []
     action_type = "base"
 
-    def __init__(self, domain, new_plan_version, changed_privs, verbose=False,
+    def __init__(self, domain, new_plan_version, changed_privs,
                  date_start=None, web_user=None):
         self.web_user = web_user
-        self.verbose = verbose
         self.date_start = date_start or datetime.date.today()
         if isinstance(changed_privs, set):
             changed_privs = list(changed_privs)
@@ -54,8 +52,6 @@ class BaseModifySubscriptionHandler(object):
     def get_response(self):
         response = []
         for priv in self.privileges:
-            if self.verbose:
-                log_accounting_info("Applying %s %s." % (priv, self.action_type))
             message = getattr(self, 'response_%s' % priv)
             if message is not None:
                 response.append(message)
@@ -97,11 +93,6 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             for reminder in self._active_reminders:
                 reminder.active = False
                 reminder.save()
-                if self.verbose:
-                    log_accounting_info(
-                        "Deactivated Reminder %s [%s]"
-                        % (reminder.nickname, reminder._id)
-                    )
         except Exception:
             log_accounting_error(
                 "Failed to downgrade outbound sms for domain %s."
@@ -120,11 +111,6 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             for survey in surveys:
                 survey.active = False
                 survey.save()
-                if self.verbose:
-                    log_accounting_info(
-                        "Deactivated Survey %s [%s]"
-                        % (survey.nickname, survey._id)
-                    )
         except Exception:
             log_accounting_error(
                 "Failed to downgrade outbound sms for domain %s."
@@ -144,9 +130,6 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         custom_roles = [r.get_id for r in UserRole.get_custom_roles_by_domain(self.domain.name)]
         if not custom_roles:
             return True
-        if self.verbose:
-            for role in custom_roles:
-                log_accounting_info("Archiving Custom Role %s" % role)
         # temporarily disable this part of the downgrade until we
         # have a better user experience for notifying the downgraded user
         # read_only_role = UserRole.get_read_only_role_by_domain(self.domain.name)
@@ -218,11 +201,6 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         Perform Role Based Access Upgrade
         - Un-archive custom roles.
         """
-        if self.verbose:
-            num_archived_roles = len(UserRole.by_domain(self.domain.name,
-                                                        is_archived=True))
-            if num_archived_roles:
-                log_accounting_info("Re-Activating %d archived roles." % num_archived_roles)
         UserRole.unarchive_roles_for_domain(self.domain.name)
         return True
 
