@@ -1,47 +1,39 @@
 import datetime
-import json
 from decimal import Decimal
-from django.conf import settings
+import json
 
+from django import forms
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.core.validators import MinLengthValidator, validate_slug
-from django import forms
 from django.core.urlresolvers import reverse
+from django.core.validators import MinLengthValidator, validate_slug
 from django.db import transaction
-from django.db.models import ProtectedError
 from django.forms.util import ErrorList
 from django.template.loader import render_to_string
 from django.utils.dates import MONTHS
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 
+from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import FormActions, StrictButton, InlineField
 from crispy_forms.helper import FormHelper
-from crispy_forms import layout as crispy
 from django_countries.data import COUNTRIES
-from corehq import privileges, toggles
-from corehq.apps.accounting.exceptions import CreateAccountingAdminError, \
-    InvoiceError
-from corehq.apps.accounting.invoicing import DomainInvoiceFactory
-from corehq.apps.accounting.tasks import send_subscription_reminder_emails
-from corehq.apps.users.models import WebUser
 
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.models import Role, Grant, UserRole
 
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq import privileges
 from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler,
     SoftwareProductRateAsyncHandler,
 )
-from corehq.apps.accounting.utils import (
-    is_active_subscription, has_subscription_already_ended, get_money_str,
-    get_first_last_days, make_anchor_tag
+from corehq.apps.accounting.exceptions import (
+    CreateAccountingAdminError,
+    InvoiceError,
 )
-from corehq.apps.hqwebapp.crispy import BootstrapMultiField, TextField
-from corehq.apps.domain.models import Domain
+from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingContactInfo,
@@ -70,6 +62,17 @@ from corehq.apps.accounting.models import (
     SubscriptionType,
     WireBillingRecord,
 )
+from corehq.apps.accounting.tasks import send_subscription_reminder_emails
+from corehq.apps.accounting.utils import (
+    get_first_last_days,
+    get_money_str,
+    has_subscription_already_ended,
+    make_anchor_tag,
+)
+from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.crispy import BootstrapMultiField, TextField
+from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.users.models import WebUser
 
 
 class BillingAccountBasicForm(forms.Form):
