@@ -1,6 +1,7 @@
 from datetime import datetime
 from itertools import groupby
 from collections import defaultdict, OrderedDict
+from django.utils.translation import ugettext as _
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
 from corehq.apps.userreports.expressions.getters import NestedDictGetter
@@ -28,7 +29,7 @@ from corehq.apps.export.const import (
     PROPERTY_TAG_UPDATE,
     PROPERTY_TAG_DELETED,
     CASE_HISTORY_PROPERTIES,
-    CASE_HISTORY_GROUP_NAME,
+    CASE_HISTORY_TABLE,
     MAIN_TABLE_PROPERTIES,
     FORM_EXPORT,
     CASE_EXPORT,
@@ -283,6 +284,8 @@ class CaseExportInstanceDefaults(ExportInstanceDefaults):
     def get_default_table_name(table_path):
         if table_path == MAIN_TABLE:
             return 'Cases'
+        elif table_path == CASE_HISTORY_TABLE:
+            return 'Case History'
         else:
             return 'Unknown'
 
@@ -626,7 +629,7 @@ class CaseExportDataSchema(ExportDataSchema):
         schema = CaseExportDataSchema()
 
         group_schema = ExportGroupSchema(
-            path=[CASE_HISTORY_GROUP_NAME],
+            path=CASE_HISTORY_TABLE,
             last_occurrences={app_id: app_version},
         )
         for system_prop in CASE_HISTORY_PROPERTIES:
