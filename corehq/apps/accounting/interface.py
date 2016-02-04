@@ -1205,8 +1205,13 @@ class CreditAdjustmentInterface(GenericTabularReport):
         domain = DomainFilter.get_value(self.request, self.domain)
         if domain is not None:
             query = query.filter(
-                Q(credit_line__subscription__subscriber__domain=domain)
-                | Q(invoice__subscription__subscriber__domain=domain)
+                Q(credit_line__subscription__subscriber__domain=domain) |
+                Q(invoice__subscription__subscriber__domain=domain) |
+                Q(
+                    credit_line__subscription__isnull=True,
+                    invoice__isnull=True,
+                    credit_line__account__created_by_domain=domain,
+                )
             )
 
         if DateFilter.use_filter(self.request):
