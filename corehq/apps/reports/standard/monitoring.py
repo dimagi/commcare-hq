@@ -186,8 +186,8 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     def special_notice(self):
         if self.domain_object.case_sharing_included():
             return _("This report currently does not support case sharing. "
-                       "There might be inconsistencies in case totals if the user is part of a case sharing group. "
-                       "We are working to correct this shortly.")
+                     "There might be inconsistencies in case totals if the "
+                     "user is part of a case sharing group.")
 
     _default_landmarks = [30, 60, 90]
     @property
