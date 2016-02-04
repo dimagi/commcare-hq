@@ -347,6 +347,15 @@
         </script>
         {# JavaScript Display Logic Libaries #}
 
+        {% if request.couch_user and request|toggle_enabled:"NOTIFICATIONS" %}
+        <script type="text/javascript" src="{% new_static '/notifications/js/NotificationsService.ko.js' %}"></script>
+        <script type="text/javascript">
+            $(function () {
+                $('#js-settingsmenu-notifications').startNotificationsService('{% url 'notifications_service' %}');
+            });
+        </script>
+        {% endif %}
+
         {% compress js %}
         {% include "style/includes/bootstrap3/ko.html" %}
         {% endcompress %}
