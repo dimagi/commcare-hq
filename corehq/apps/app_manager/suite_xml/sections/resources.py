@@ -9,34 +9,21 @@ class FormResourceContributor(SectionContributor):
     section_name = 'xform_resources'
 
     def get_section_elements(self):
-        first = []
-        last = []
         for form_stuff in self.app.get_forms(bare=False):
             form = form_stuff["form"]
-            if form_stuff['type'] == 'module_form':
-                path = './modules-{module.id}/forms-{form.id}.xml'.format(**form_stuff)
-                this_list = first
-            else:
-                path = './user_registration.xml'
-                this_list = last
+            path = './modules-{module.id}/forms-{form.id}.xml'.format(**form_stuff)
             resource = XFormResource(
                 id=id_strings.xform_resource(form),
                 version=form.get_version(),
                 local=path,
                 remote=path,
             )
-            if form_stuff['type'] == 'module_form' and self.app.build_version >= '2.9':
+            if self.app.build_version >= '2.9':
                 resource.descriptor = u"Form: (Module {module_name}) - {form_name}".format(
                     module_name=trans(form_stuff["module"]["name"], langs=[self.app.default_language]),
                     form_name=trans(form["name"], langs=[self.app.default_language])
                 )
-            elif path == './user_registration.xml':
-                resource.descriptor = u"User Registration Form"
-            this_list.append(resource)
-        for x in first:
-            yield x
-        for x in last:
-            yield x
+            yield resource
 
 
 class LocaleResourceContributor(SectionContributor):
