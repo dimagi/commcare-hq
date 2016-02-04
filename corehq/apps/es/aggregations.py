@@ -189,6 +189,14 @@ class FiltersAggregation(Aggregation):
 
 
 class AggregationRange(namedtuple('AggregationRange', 'start end key')):
+    """
+    Note that a range includes the "start" value and excludes the "end" value.
+    i.e. start <= X < end
+
+    :param start: range start
+    :param end: range end
+    :param key: optional key name for the range
+    """
     def __new__(cls, start=None, end=None, key=None):
         assert start or end, "At least one of 'from' or 'to' are required"
         return super(AggregationRange, cls).__new__(cls, start, end, key)
@@ -225,6 +233,14 @@ class RangeResult(BucketResult):
 
 
 class RangeAggregation(Aggregation):
+    """
+    Bucket aggregation that creates one bucket for each range
+    :param name: the aggregation name
+    :param field: the field to perform the range aggregations on
+    :param ranges: list of AggregationRange objects
+    :param keyed: set to True to have the results returned by key instead of as a list
+                  (see RangeResult.normalized_buckets)
+    """
     type = "range"
     result_class = RangeResult
 
