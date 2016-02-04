@@ -1,7 +1,10 @@
 # Once-off migration created 2016-02-04
+import json
 import sys
 
 from collections import namedtuple
+from datetime import date
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from django.core.management.base import BaseCommand
 
@@ -120,6 +123,11 @@ class Command(BaseCommand):
             self.clinic, self.chw
         )
 
+    def backup_couch_locations(self):
+        all_couch_locs = list(iter_docs(Location.get_db(), self.get_couch_ids()))
+        with open("spf_locations-{}.txt".format(date.today()), 'w') as f:
+            f.write(json.dumps(all_couch_locs))
+
     def delete_bad_couch_locs(self):
         bad_ids = [loc for loc in self.get_couch_ids() if loc not in real_ids]
         confirm("Delete {} unrecognized Couch ids?".format(len(bad_ids)))
@@ -154,6 +162,8 @@ class Command(BaseCommand):
                     site_code, worker.username, worker._id)
 
     def handle(self, *args, **options):
+        self.backup_couch_locations()
+
         mobile_workers = self.get_mobile_worker_assignments()
         print "Mobile worker assignments:"
         for worker, site_code in mobile_workers:
@@ -163,8 +173,8 @@ class Command(BaseCommand):
         self.show_info()
         confirm("Look okay?")
 
-        self.delete_bad_couch_locs()
         self.delete_bad_sql_locs()
+        self.delete_bad_couch_locs()
 
         self.show_info()
         confirm("Look okay?")
