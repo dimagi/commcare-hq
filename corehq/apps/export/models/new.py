@@ -273,9 +273,9 @@ class FormExportInstanceDefaults(ExportInstanceDefaults):
     @staticmethod
     def get_default_table_name(table_path):
         if table_path == MAIN_TABLE:
-            return 'Forms'
+            return _('Forms')
         else:
-            return 'Repeat: {}'.format(_list_path_to_string(table_path))
+            return _('Repeat: {}').format(_list_path_to_string(table_path))
 
 
 class CaseExportInstanceDefaults(ExportInstanceDefaults):
@@ -283,15 +283,15 @@ class CaseExportInstanceDefaults(ExportInstanceDefaults):
     @staticmethod
     def get_default_table_name(table_path):
         if table_path == MAIN_TABLE:
-            return 'Cases'
+            return _('Cases')
         elif table_path == CASE_HISTORY_TABLE:
-            return 'Case History'
+            return _('Case History')
         else:
-            return 'Unknown'
+            return _('Unknown')
 
     @staticmethod
     def get_default_instance_name(schema):
-        return '{}: {}'.format(schema.case_type, datetime.now().strftime('%Y-%M-%d'))
+        return u'{}: {}'.format(schema.case_type, datetime.now().strftime('%Y-%M-%d'))
 
 
 class ExportRow(object):
