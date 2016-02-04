@@ -14,4 +14,4 @@ def get_case_export_base_query(domain, case_type):
     return (CaseES()
             .domain(domain)
             .case_type(case_type)
-            .sort("modified_on"))
+            .sort("opened_on"))
