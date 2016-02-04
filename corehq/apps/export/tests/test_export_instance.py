@@ -7,6 +7,7 @@ from corehq.apps.export.models import (
     ExportGroupSchema,
     ExportInstance,
 )
+from corehq.apps.export.const import MAIN_TABLE
 
 
 @mock.patch(
@@ -21,7 +22,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
         cls.schema = FormExportDataSchema(
             group_schemas=[
                 ExportGroupSchema(
-                    path=[None],
+                    path=MAIN_TABLE,
                     items=[
                         ExportItem(
                             path=['data', 'question1'],
