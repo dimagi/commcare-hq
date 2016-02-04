@@ -2,12 +2,15 @@ import contextlib
 import os
 import tempfile
 
-from corehq.apps.es import FormES, CaseES
+from couchexport.export import FormattedRow, get_writer
+from corehq.apps.export.esaccessors import (
+    get_form_export_base_query,
+    get_case_export_base_query,
+)
 from corehq.apps.export.models.new import (
     CaseExportInstance,
     FormExportInstance,
 )
-from couchexport.export import FormattedRow, get_writer
 
 
 class _Writer(object):
@@ -83,23 +86,10 @@ def _get_base_query(export_instance):
     Includes filters for domain, doc_type, and xmlns/case_type.
     """
     if isinstance(export_instance, FormExportInstance):
-        return _get_form_export_base_query(export_instance)
+        return get_form_export_base_query(export_instance.domain, export_instance.xmlns)
     if isinstance(export_instance, CaseExportInstance):
-        return _get_case_export_base_query(export_instance)
+        return get_case_export_base_query(export_instance.domain, export_instance.case_type)
     else:
-        raise Exception("Unknown export instance type")
-
-
-def _get_form_export_base_query(export_instance):
-    return (FormES().
-            domain(export_instance.domain)
-            .xmlns(export_instance.xmlns)
-            .sort("received_on"))
-    # TODO: This probably needs app_id too
-
-
-def _get_case_export_base_query(export_instance):
-    return (CaseES()
-            .domain(export_instance.domain)
-            .case_type(export_instance.case_type)
-            .sort("modified_on"))
+        raise Exception(
+            "Unknown base query for export instance type {}".format(type(export_instance))
+        )

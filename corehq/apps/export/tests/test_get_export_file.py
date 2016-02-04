@@ -3,9 +3,9 @@ import uuid
 from django.test import SimpleTestCase
 
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.export.esaccessors import get_case_export_base_query
 from corehq.apps.export.export import (
     _write_export_file,
-    _get_case_export_base_query,
     get_export_file,
     _get_export_documents,
 )
@@ -240,6 +240,6 @@ class ExportTest(SimpleTestCase):
         )))
 
     def test_get_case_export_base_query(self):
-        q = _get_case_export_base_query(CaseExportInstance(domain=DOMAIN, case_type=DEFAULT_CASE_TYPE))
+        q = get_case_export_base_query(DOMAIN, DEFAULT_CASE_TYPE)
         result = q.run()
         self.assertEqual(3, len(result.hits))
