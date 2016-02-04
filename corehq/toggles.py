@@ -770,5 +770,5 @@ NOTIFICATIONS = StaticToggle(
     'hq_notifications',
     'Shows notification icon when announcements need to be made',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_USER]
 )
