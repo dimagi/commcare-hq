@@ -38,9 +38,6 @@ class BaseModifySubscriptionHandler(object):
             domain = Domain.get_by_name(domain)
         self.domain = domain
 
-        # plan dependent privilege
-        changed_privs.append(privileges.MOBILE_WORKER_CREATION)
-
         # check to make sure that no subscriptions are scheduled to
         # start in the future
         changed_privs.append(LATER_SUBSCRIPTION_NOTIFICATION)
@@ -233,12 +230,21 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         privileges.OUTBOUND_SMS,
         privileges.INBOUND_SMS,
         privileges.DEIDENTIFIED_DATA,
-        privileges.MOBILE_WORKER_CREATION,
         privileges.ROLE_BASED_ACCESS,
         privileges.DATA_CLEANUP,
         LATER_SUBSCRIPTION_NOTIFICATION,
     ]
     action_type = "notification"
+
+    def get_response(self):
+        response = super(DomainDowngradeStatusHandler, self).get_response()
+        response.extend(filter(
+            lambda response: response is not None,
+            [
+                self.response_mobile_worker_creation,
+            ]
+        ))
+        return response
 
     def _fmt_alert(self, message, details=None):
         if details is not None and not isinstance(details, list):
