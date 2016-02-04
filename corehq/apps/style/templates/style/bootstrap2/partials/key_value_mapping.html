@@ -26,8 +26,10 @@
                     value: value()[$parent.lang],
                     visible: !$parent.values_are_icons
                 "/>
-                <span data-bind="template: {name: 'value_icon_uploader', data: mediaValue},
-                                visible: $parent.values_are_icons"></span>
+                <!-- ko if: $parent.values_are_icons -->
+                <span data-bind="template: {name: 'value_icon_uploader', data: iconManager}">
+                </span>
+                <!-- /ko -->
                 <a href="#" data-bind="click: $parent.removeItem" class="btn btn-danger pull-right">
                     <i class="icon icon-white icon-remove"></i>
                 </a>

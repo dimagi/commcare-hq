@@ -1,29 +1,44 @@
 (function () {
 
-var MapItem = function(item, mapping){
+/**
+* MapItem is a ko representation for `item` objects.
+*
+* @param item: a raw object which contains keys called `key` and `value`.
+*              the `value` in a item itself is an object, a mapping
+*              of language codes to strings
+* @param mapingContext: an object which has context of current UI language and whether
+*                 `value` of MapItem is a file-path to an icon or a simple string
+*/
+var MapItem = function(item, mapingContext){
     var self = this;
     this.key = ko.observable(item.key);
 
-    this.mediaValue = new AppMenuMediaManager({
-        ref: {
-            "path": item.value[mapping.lang],
-            "icon_type": "icon-picture",
-            "media_type": "Image",
-            "media_class": "CommCareImage",
-            "icon_class": "icon-picture"
-        },
-        objectMap: mapping.multimedia,
-        uploadController: iconUploader,
-        defaultPath: 'jr://file/commcare/image/default.png',
-        inputElement: $("#" + makeSafeForCSS(this.key()))
-    });
+    // attach a media-manager if item.value is a file-path to icon
+    if (mapingContext.values_are_icons) {
+        this.iconManger = new AppMenuMediaManager({
+            ref: {
+                "path": item.value[mapingContext.lang],
+                "icon_type": "icon-picture",
+                "media_type": "Image",
+                "media_class": "CommCareImage",
+                "icon_class": "icon-picture"
+            },
+            objectMap: mapingContext.multimedia,
+            uploadController: iconUploader,
+            defaultPath: 'jr://file/commcare/image/default.png',
+            inputElement: $("#" + makeSafeForCSS(this.key()))
+        });
+    }
 
     this.value = ko.computed(function() {
+        // ko.observable for item.value
         var new_value = [];
-        _.each(mapping.langs, function(lang){
-            if (lang == mapping.lang){
-                new_value.push([lang, self.mediaValue.customPath]);
+        _.each(mapingContext.langs, function(lang){
+            // return ko reference to path in `iconManager` for current UI language value
+            if (mapingContext.values_are_icons && lang == mapingContext.lang){
+                new_value.push([lang, self.iconManger.customPath]);
             }
+            // return new ko.observable for other languages
             else{
                 new_value.push([lang, ko.observable(item.value[lang])])
             }
@@ -32,25 +47,23 @@ var MapItem = function(item, mapping){
     }, this);
 
     this.key.subscribe(function(newValue) {
-        if(mapping.duplicatedItems.indexOf(newValue) === -1 && mapping._isItemDuplicated(newValue)) {
-            mapping.duplicatedItems.push(newValue);
+        if(mapingContext.duplicatedItems.indexOf(newValue) === -1 && mapingContext._isItemDuplicated(newValue)) {
+            mapingContext.duplicatedItems.push(newValue);
         }
 
     });
 
     this.key.subscribe(function(oldValue) {
-        var index = mapping.duplicatedItems.indexOf(oldValue);
-        if(index !== -1 && !mapping._isItemDuplicated(oldValue, 2)) {
-            mapping.duplicatedItems.remove(oldValue);
+        var index = mapingContext.duplicatedItems.indexOf(oldValue);
+        if(index !== -1 && !mapingContext._isItemDuplicated(oldValue, 2)) {
+            mapingContext.duplicatedItems.remove(oldValue);
         }
     }, null, "beforeChange");
 };
 
 /**
- * A MapList is an ordered list of objects, where each object has the keys "key" and "value".
- * The "value" in each item is itself be an object, mapping language codes to strings.
+ * A MapList is an ordered list MapItem objects
  */
-
 function MapList(o) {
     var self = this;
     self.lang = o.lang;
@@ -86,6 +99,7 @@ function MapList(o) {
     self.addItem = function () {
         var raw_item = {key: '', value: {}};
         raw_item.value[self.lang] = '';
+
         var item = new MapItem(raw_item, self);
         self.items.push(item);
         if(self.duplicatedItems.indexOf('') === -1 && self._isItemDuplicated('')) {
