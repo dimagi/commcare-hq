@@ -30,8 +30,7 @@ class BaseModifySubscriptionHandler(object):
     action_type = "base"
 
     def __init__(self, domain, new_plan_version, changed_privs,
-                 date_start=None, web_user=None):
-        self.web_user = web_user
+                 date_start=None):
         self.date_start = date_start or datetime.date.today()
         if isinstance(changed_privs, set):
             changed_privs = list(changed_privs)

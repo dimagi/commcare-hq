@@ -971,7 +971,6 @@ class Subscriber(models.Model):
     def _process_downgrade(domain, downgraded_privileges, new_plan_version, web_user):
         downgrade_handler = DomainDowngradeActionHandler(
             domain, new_plan_version, downgraded_privileges,
-            web_user=web_user,
         )
         if not downgrade_handler.get_response():
             raise SubscriptionChangeError("The downgrade was not successful.")
@@ -980,7 +979,6 @@ class Subscriber(models.Model):
     def _process_upgrade(domain, upgraded_privileges, new_plan_version, web_user):
         upgrade_handler = DomainUpgradeActionHandler(
             domain, new_plan_version, upgraded_privileges,
-            web_user=web_user,
         )
         if not upgrade_handler.get_response():
             raise SubscriptionChangeError("The upgrade was not successful.")
