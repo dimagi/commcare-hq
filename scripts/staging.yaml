@@ -45,14 +45,11 @@
 trunk: master
 name: autostaging
 branches:
-  - b3-app-manager+jquery-migrate  # Danny 2/3
   - turn-off-incomplete-and-saved-forms  # Danny 2/3
   - jquery-migrate  # Danny 2/3
   - kill-x_over_time  # Danny 12/11
   - vellum-staging # J$ 11/13
   - requests #Simon 11/3
-  - app_code+b3-app-manager # Norman 2/4
-  - b3-app-manager # Jenny 1/20
   - new-footer-nav # Biyeun 1/4
   - formplayer-toggle # Ben/Will 1/21/16
   - java-tf-deploy # Ben/Will 1/21/16
