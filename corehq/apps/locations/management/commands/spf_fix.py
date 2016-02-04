@@ -6,6 +6,7 @@ from dimagi.utils.decorators.memoized import memoized
 from django.core.management.base import BaseCommand
 
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
+from corehq.apps.locations.dbaccessors import get_users_assigned_to_locations
 from corehq.apps.locations.models import Location, SQLLocation, LocationType
 
 
@@ -80,6 +81,10 @@ def confirm(msg):
 class Command(BaseCommand):
     help = ''
 
+    def __init__(self, *args, **kwargs):
+        self.completed_locations = {}
+        super(Command, self).__init__(*args, **kwargs)
+
     def get_couch_ids(self):
         return get_doc_ids_in_domain_by_type(domain, "Location")
 
@@ -132,8 +137,29 @@ class Command(BaseCommand):
             couch_loc = Location.get(loc_id)
             couch_loc.location_type = location_type
             couch_loc.save()
+            self.completed_locations[couch_loc.site_code] = couch_loc
+
+    def get_mobile_worker_assignments(self):
+        return [
+            (user, user.location.site_code)
+            for user in get_users_assigned_to_locations(domain)
+        ]
+
+    def reassign_mobile_workers(self, mobile_workers):
+        for worker, site_code in mobile_workers:
+            if site_code in self.completed_locations:
+                worker.set_location(self.completed_locations[site_code])
+            else:
+                print "Couldn't find location {} for user {} {}".format(
+                    site_code, worker.username, worker._id)
 
     def handle(self, *args, **options):
+        mobile_workers = self.get_mobile_worker_assignments()
+        print "Mobile worker assignments:"
+        for worker, site_code in mobile_workers:
+            print worker.username, site_code
+        print ""
+
         self.show_info()
         confirm("Look okay?")
 
@@ -147,4 +173,6 @@ class Command(BaseCommand):
         self.resave_good_couch_locs(chw_ids, self.chw)
 
         self.show_info()
-        print "I hope that worked"
+        print "I hope that worked, reassigning users."
+        self.reassign_mobile_workers(mobile_workers)
+        print "Done!"
