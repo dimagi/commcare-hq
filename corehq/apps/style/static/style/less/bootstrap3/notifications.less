@@ -20,17 +20,26 @@ ul.notifications-dropdown {
   text-align: center;
   .border-top-radius(2px);
   .border-bottom-radius(2px);
+  position: relative;
 
-  > i {
+  > .notifications-type {
     line-height: @notifications-icon-size;
     font-size: @notifications-icon-size - 20;
+  }
+
+  > .notifications-unread {
+    position: absolute;
+    top: 0;
+    left: -8px;
+    font-size: 16px;
+    color: @cc-att-neg-mid;
   }
 }
 
 .notifications-info {
   .notifications-icon {
     background-color: @cc-brand-hi;
-    > i {
+    > .notifications-type {
       padding-left: 1px;
       padding-top: 1px;
       color: @cc-brand-mid;
@@ -41,7 +50,7 @@ ul.notifications-dropdown {
 .notifications-alert {
   .notifications-icon {
     background-color: @cc-dark-warm-accent-hi;
-    > i {
+    > .notifications-type {
       color: @cc-dark-warm-accent-mid;
     }
   }
@@ -50,8 +59,9 @@ ul.notifications-dropdown {
 .notifications-error {
   .notifications-icon {
     background-color: @cc-att-neg-hi;
-    > i {
+    > .notifications-type {
       color: @cc-att-neg-mid;
+      font-size: 14px;
     }
   }
 }
@@ -69,3 +79,4 @@ ul.notifications-dropdown {
 .notifications-dropdown > li > a:hover > .notifications-date {
   color: #ffffff;
 }
+

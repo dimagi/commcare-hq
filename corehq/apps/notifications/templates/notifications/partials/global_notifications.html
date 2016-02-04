@@ -11,13 +11,13 @@
         </li>
         <!-- ko foreach: notifications -->
         <li data-bind="css: {
-                'notifications-unread': !isRead(),
                 'notifications-alert': isAlert(),
                 'notifications-info': isInfo()
             }">
             <a data-bind="attr: {href: url}" class="clearfix" target="_blank">
                 <span class="notifications-icon">
-                    <i class="fa"
+                    <i class="notifications-unread fa fa-bell icon-bell-alt" data-bind="visible: !isRead()"></i>
+                    <i class="notifications-type fa"
                        data-bind="css: {
                             'fa-exclamation-triangle icon-warning-sign': isAlert(),
                             'fa-info-circle icon-info-sign': isInfo()
