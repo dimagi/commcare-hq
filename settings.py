@@ -1343,7 +1343,16 @@ PILLOWTOPS = {
         'corehq.apps.userreports.pillow.StaticDataSourcePillow',
     ],
     'cache': [
-        'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+        {
+            'name': 'CacheInvalidatePillow',
+            'class': 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+            'instance': 'corehq.pillows.cacheinvalidate.get_main_cache_invalidation_pillow',
+        },
+        {
+            'name': 'UserCacheInvalidatePillow',
+            'class': 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+            'instance': 'corehq.pillows.cacheinvalidate.get_user_groups_cache_invalidation_pillow',
+        },
     ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
