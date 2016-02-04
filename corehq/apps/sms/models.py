@@ -1709,6 +1709,29 @@ class SQLMobileBackend(models.Model):
         return backend
 
     @classmethod
+    @quickcache(['hq_api_id', 'inbound_api_key'], timeout=60 * 60)
+    def get_backend_info_by_api_key(cls, hq_api_id, inbound_api_key):
+        """
+        Looks up a backend by inbound_api_key and returns a tuple of
+        (domain, couch_id). Including hq_api_id in the filter is an
+        implicit way of making sure that the returned backend info belongs
+        to a backend of that type.
+
+        (The entire backend is not returned to reduce the amount of data
+        needed to be returned by the cache)
+
+        Raises cls.DoesNotExist if not found.
+        """
+        result = (cls.active_objects
+                  .filter(hq_api_id=hq_api_id, inbound_api_key=inbound_api_key)
+                  .values_list('domain', 'couch_id'))
+
+        if len(result) == 0:
+            raise cls.DoesNotExist
+
+        return result[0]
+
+    @classmethod
     @quickcache(['backend_id', 'is_couch_id'], timeout=60 * 60)
     def get_backend_api_id(cls, backend_id, is_couch_id=False):
         filter_args = {'couch_id': backend_id} if is_couch_id else {'pk': backend_id}
