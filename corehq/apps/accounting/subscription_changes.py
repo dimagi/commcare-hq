@@ -27,17 +27,12 @@ class BaseModifySubscriptionHandler(object):
     supported_privileges = []
     action_type = "base"
 
-    def __init__(self, domain, new_plan_version, changed_privs,
-                 date_start=None):
+    def __init__(self, domain, new_plan_version, changed_privs, date_start=None):
+        self.domain = domain if isinstance(domain, Domain) else Domain.get_by_name(domain)
         self.date_start = date_start or datetime.date.today()
-        if isinstance(changed_privs, set):
-            changed_privs = list(changed_privs)
-        if not isinstance(domain, Domain):
-            domain = Domain.get_by_name(domain)
-        self.domain = domain
+        self.new_plan_version = new_plan_version
 
         self.privileges = filter(lambda x: x in self.supported_privileges, changed_privs)
-        self.new_plan_version = new_plan_version
 
     def get_response(self):
         response = []
