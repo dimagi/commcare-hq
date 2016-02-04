@@ -16,14 +16,6 @@
 {% block js-inline %}{{ block.super }}
     <script>
         $(function () {
-            var translations = {
-                forms: "{% trans 'Forms'|escapejs %}",
-                repeat: "{% trans 'Repeat: '|escapejs %}",
-                cases: "{% trans 'Cases'|escapejs %}",
-                case_history: "{% trans 'Case History'|escapejs %}",
-                history_to_parents: "{% trans 'Case History > Parent Cases'|escapejs %}",
-                parent_cases: "{% trans 'Parent Cases'|escapejs %}",
-            };
             var customExportView = new Exports.ViewModels.ExportInstance({{ export_instance|JSON }});
 
             $('#customize-export').koApplyBindings(customExportView);
