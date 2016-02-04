@@ -126,7 +126,7 @@ class TestESQuery(ElasticTestMixin, TestCase):
                 u'_index': u'xforms_1cce1f049a1b4d864c9c25dc42648a45',
                 u'_score': 1.0,
                 u'_type': u'xform',
-                u'fields': {
+                u'_source': {
                     u'app_id': u'fe8481a39c3738749e6a4766fca99efd',
                     u'doc_type': u'xforminstance',
                     u'domain': u'mikesproject',
@@ -138,7 +138,7 @@ class TestESQuery(ElasticTestMixin, TestCase):
                     u'_index': u'xforms_1cce1f049a1b4d864c9c25dc42648a45',
                     u'_score': 1.0,
                     u'_type': u'xform',
-                    u'fields': {
+                    u'_source': {
                         u'app_id': u'3d622620ca00d7709625220751a7b1f9',
                         u'doc_type': u'xforminstance',
                         u'domain': u'jacksproject',

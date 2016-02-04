@@ -88,7 +88,7 @@ Language
 from collections import namedtuple
 from copy import deepcopy
 import json
-from corehq.apps.es.utils import values_list, flatten_field_dict
+from corehq.apps.es.utils import values_list
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -118,6 +118,7 @@ class ESQuery(object):
         }
     """
     index = None
+    _exclude_source = None
     _fields = None
     _start = None
     _size = None
@@ -186,6 +187,9 @@ class ESQuery(object):
     @property
     def _filters(self):
         return self.es_query['query']['filtered']['filter']['and']
+
+    def exclude_source(self):
+        self._exclude_source = True
 
     def filter(self, filter):
         """
@@ -273,24 +277,22 @@ class ESQuery(object):
         """
             Restrict the fields returned from elasticsearch
 
-            Usage Note: As of ES 1.x, fields will only work on leaf nodes! It will no longer return an object,
-            e.g. field.*, to return an object refer to '.source'
+            Deprecated. Use `source` instead.
             """
-        query = deepcopy(self)
-        query._fields = fields
-        return query
+        return self.source(fields)
 
-    def source(self, source):
+    def source(self, include, exclude=None):
         """
             Restrict the output of _source in the queryset. This can be used to return an object in a queryset
-
-            TODO: How does this interact with .fields
-            TODO: This can be expanded if needed to support other usages of the _source filter, e.g:
-            "_source": {
-                "include": [ "obj1.*", "obj2.*" ],
-                "exclude": [ "*.description" ]
-            },
         """
+        self._exclude_source = False
+
+        source = include
+        if exclude:
+            source = {
+                'include': include,
+                'exclude': exclude
+            }
         query = deepcopy(self)
         query._source.append(source)
         return query
@@ -390,10 +392,8 @@ class ESQuerySet(object):
     @property
     def hits(self):
         """Return the docs from the response."""
-        if self.query._fields == []:
+        if self.query._exclude_source:
             return self.ids
-        elif self.query._fields is not None:
-            return [flatten_field_dict(r) for r in self.raw_hits]
         else:
             return [r['_source'] for r in self.raw_hits]
 
