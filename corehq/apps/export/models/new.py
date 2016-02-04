@@ -114,7 +114,7 @@ class ExportColumn(DocumentSchema):
                 is_deleted = False
                 break
 
-        is_main_table = group_schema_path == [None]
+        is_main_table = group_schema_path == MAIN_TABLE
 
         tags = []
         if is_deleted:
@@ -605,7 +605,7 @@ class CaseExportDataSchema(ExportDataSchema):
 
         for case_type, case_properties in case_property_mapping.iteritems():
             group_schema = ExportGroupSchema(
-                path=[case_type],
+                path=MAIN_TABLE,
                 last_occurrences={app_id: app_version},
             )
             for prop in case_properties:
