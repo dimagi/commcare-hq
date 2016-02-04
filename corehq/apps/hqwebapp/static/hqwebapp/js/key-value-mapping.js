@@ -1,34 +1,55 @@
 (function () {
 
+var MapItem = function(item, mapping){
+    var self = this;
+    this.key = ko.observable(item.key);
+
+    this.mediaValue = new AppMenuMediaManager({
+        ref: {
+            "path": item.value[mapping.lang],
+            "icon_type": "icon-picture",
+            "media_type": "Image",
+            "media_class": "CommCareImage",
+            "icon_class": "icon-picture"
+        },
+        objectMap: mapping.multimedia,
+        uploadController: iconUploader,
+        defaultPath: 'jr://file/commcare/image/default.png',
+        inputElement: $("#" + makeSafeForCSS(this.key()))
+    });
+
+    this.value = ko.computed(function() {
+        var new_value = [];
+        _.each(mapping.langs, function(lang){
+            if (lang == mapping.lang){
+                new_value.push([lang, self.mediaValue.customPath]);
+            }
+            else{
+                new_value.push([lang, ko.observable(item.value[lang])])
+            }
+        });
+        return _.object(new_value);
+    }, this);
+
+    this.key.subscribe(function(newValue) {
+        if(mapping.duplicatedItems.indexOf(newValue) === -1 && mapping._isItemDuplicated(newValue)) {
+            mapping.duplicatedItems.push(newValue);
+        }
+
+    });
+
+    this.key.subscribe(function(oldValue) {
+        var index = mapping.duplicatedItems.indexOf(oldValue);
+        if(index !== -1 && !mapping._isItemDuplicated(oldValue, 2)) {
+            mapping.duplicatedItems.remove(oldValue);
+        }
+    }, null, "beforeChange");
+};
+
 /**
  * A MapList is an ordered list of objects, where each object has the keys "key" and "value".
  * The "value" in each item is itself be an object, mapping language codes to strings.
  */
-
-var MapItem = function(item, mapping){
-    this.key = ko.observable(item.key);
-
-    this.value = _.object(_(item.value).map(function (value, lang) {
-        return [lang, ko.observable(value)];
-    }));
-    this.domId = ko.computed(function() {
-        return makeSafeForCSS(this.key())
-    }, this);
-    this.mediaValue = new AppMenuMediaManager({
-            ref: {
-                "path": this.value[mapping.lang](),
-                "icon_type": "icon-picture",
-                "media_type": "Image",
-                "media_class": "CommCareImage",
-                "icon_class": "icon-picture"
-            },
-            objectMap: mapping.multimedia,
-            uploadController: iconUploader,
-            defaultPath: 'jr://file/commcare/image/sd.png',
-            inputElement: $("#" + makeSafeForCSS(this.key()))
-        });
-
-};
 
 function MapList(o) {
     var self = this;
@@ -45,13 +66,6 @@ function MapList(o) {
         }));
     };
     self.setItems(o.items);
-
-    self.initIconUploaders = function() {
-        _.each(self.items(), function(item){
-            ko.cleanNode("#"+item.domId());
-            $("#"+item.domId()).koApplyBindings(item.mediaValue());
-        });
-    }
 
     self.backup = function (value) {
         var backup;
@@ -70,21 +84,9 @@ function MapList(o) {
             self.duplicatedItems.remove(ko.utils.unwrapObservable(item.key));
     };
     self.addItem = function () {
-        var item = {key: ko.observable(''), value: {}};
-        item.key.subscribe(function(newValue) {
-            if(self.duplicatedItems.indexOf(newValue) === -1 && self._isItemDuplicated(newValue)) {
-                self.duplicatedItems.push(newValue);
-            }
-
-        });
-
-        item.key.subscribe(function(oldValue) {
-            var index = self.duplicatedItems.indexOf(oldValue);
-            if(index !== -1 && !self._isItemDuplicated(oldValue, 2)) {
-                self.duplicatedItems.remove(oldValue);
-            }
-        }, null, "beforeChange");
-        item.value[self.lang] = ko.observable('');
+        var raw_item = {key: '', value: {}};
+        raw_item.value[self.lang] = '';
+        var item = new MapItem(raw_item, self);
         self.items.push(item);
         if(self.duplicatedItems.indexOf('') === -1 && self._isItemDuplicated('')) {
             self.duplicatedItems.push('');
@@ -113,7 +115,7 @@ function MapList(o) {
         return _(self.items()).map(function (item) {
             return {
                 key: ko.utils.unwrapObservable(item.key),
-                value: _.object(_(item.value).map(function (value, lang) {
+                value: _.object(_(item.value()).map(function (value, lang) {
                     return [lang, ko.utils.unwrapObservable(value)];
                 }))
             };
@@ -152,9 +154,6 @@ uiElement.key_value_mapping = function (o) {
         var $modal = $modalDiv.find('.modal');
         $modal.appendTo('body');
         $modal.modal('show');
-        $modal.on('shown', function(){
-            // copy.initIconUploaders(); 
-        });
         $modal.on('hidden', function () {
             $modal.remove();
         });
@@ -175,6 +174,9 @@ uiElement.key_value_mapping = function (o) {
 }());
 
 function makeSafeForCSS(name) {
+    if (!name) {
+        return "";
+    }
     return name.replace(/[^a-z0-9]/g, function(s) {
         var c = s.charCodeAt(0);
         if (c == 32) return '-';

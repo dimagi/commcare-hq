@@ -12,14 +12,15 @@
                        data-bind="value: key"/>
                 &rarr;
                 <input type="text" class="input-large enum-value" data-bind="
-                    attr: {placeholder: $parent.backup(value).value},
-                    value: value[$parent.lang]
+                    attr: {placeholder: $parent.backup(value()).value},
+                    value: value()[$parent.lang],
+                    visible: !$parent.values_are_icons
                 "/>
                 <a href="#" class="btn btn-inverse btn-mini lang-text"
                    style="color:#ffffff; text-decoration: none;"
                    data-bind="
-                    text: $parent.backup(value).lang,
-                    visible: !_([$parent.lang, null]).contains($parent.backup(value).lang)
+                    text: $parent.backup(value()).lang,
+                    visible: !_([$parent.lang, null]).contains($parent.backup(value()).lang)
                 "></a>
                 <a href="#" data-bind="click: $parent.removeItem" class="btn btn-danger">
                     <i class="icon icon-white icon-remove"></i> Delete
@@ -27,7 +28,8 @@
                 <span class="help-inline"
                       data-bind='visible: $parent.isItemDuplicated(ko.utils.unwrapObservable(key))'>Key is duplicated.</span>
                 <div class="modal-body" style="max-height:372px; overflow-y: scroll;"
-                     data-bind="template: {name: 'value_icon_uploader', data: mediaValue()}"></div>
+                     data-bind="template: {name: 'value_icon_uploader', data: mediaValue},
+                                visible: $parent.values_are_icons"></div>
             </div>
         </fieldset>
 
@@ -65,8 +67,8 @@
         <div>
             <strong data-bind="text: key"></strong>
             &rarr;
-            <span data-bind="visible: value[$parent.lang], text: value[$parent.lang]"></span>
-            <span data-bind="visible: !ko.utils.unwrapObservable(value[$parent.lang])">
+            <span data-bind="visible: value()[$parent.lang], text: value()[$parent.lang]"></span>
+            <span data-bind="visible: !ko.utils.unwrapObservable(value()[$parent.lang])">
                 <i class="icon-remove-sign"></i>
             </span>
         </div>
@@ -81,7 +83,7 @@
     </button>
 </div>
 
-<div id="value_icon_uploader" class="hide">
+<div id="value_icon_uploader" class="hide" style="display: inline">
     <a data-bind="if: isMediaMatched, attr: {href: url}" target="_blank">
         <img data-bind="attr: {src: thumbnailUrl}" />
     </a>
@@ -94,5 +96,25 @@
         <i class="icon icon-cloud-upload"></i>
         <span data-bind="visible: isMediaMatched">{% trans 'Replace' %}</span>
         <span data-bind="visible: isMediaUnmatched">{% trans 'Upload' %}</span>
+    </button>
+    <button type="button" class="btn btn-default pull-right"
+            data-bind="
+                visible: showDefaultPath,
+                click: setCustomPath">
+        <i class="icon icon-cog"></i>
+        {% trans 'Set Path' %}
+    </button>
+    <label class="control-label">{% trans "Path" %}</label>
+    <input type="text" class="span3"
+           data-bind="value: customPath,
+                      valueUpdate: 'textchange',
+                      visible: showCustomPath" />
+    <button type="button" class="btn inline"
+            data-bind="
+                visible: showCustomPath,
+                event: { click: setDefaultPath }
+            ">
+        <i class="icon icon-remove"></i>
+        {% trans 'Use Default Path' %}
     </button>
 </div>
