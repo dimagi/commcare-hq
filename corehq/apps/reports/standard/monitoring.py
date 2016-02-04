@@ -172,7 +172,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
              _("Number of open cases modified in the last {} days")),
             (_("# Inactive Cases"),
              _("Number of cases that are open but haven't been touched in the "
-               "last %s days")),
+               "last {} days")),
         ]
 
     @classmethod
