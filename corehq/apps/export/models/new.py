@@ -225,7 +225,7 @@ class ExportInstance(Document):
             table = TableConfiguration(
                 path=group_schema.path,
                 name=instance.defaults.get_default_table_name(group_schema.path),
-                selected=instance.defaults.get_default_table_selected(group_schema.path),
+                selected=instance.defaults.default_is_table_selected(group_schema.path),
             )
             table.columns = map(
                 lambda item: ExportColumn.create_default_from_export_item(
@@ -252,7 +252,10 @@ class ExportInstanceDefaults(object):
         raise NotImplementedError()
 
     @staticmethod
-    def get_default_table_selected(path):
+    def default_is_table_selected(path):
+        """
+        Based on the path, determines whether the table should be selected by default
+        """
         return path == MAIN_TABLE
 
 
