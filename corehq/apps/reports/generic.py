@@ -675,8 +675,11 @@ class GenericReportView(object):
         url_args = [domain] if domain is not None else []
         if render_as is not None:
             url_args.append(render_as+'/')
-        return absolute_reverse(cls.dispatcher.name(),
-                                args=url_args + [cls.slug])
+        #import pdb; pdb.set_trace();
+        #return absolute_reverse(cls.dispatcher.name(),
+        #                        args=url_args + [cls.slug])
+        from django.core.urlresolvers import reverse
+        return reverse(cls.dispatcher.name(), args=url_args+[cls.slug])
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
