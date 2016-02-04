@@ -1,3 +1,62 @@
+@notifications-icon-size: 36px;
+
 .notifications-active-icon {
   color: @cc-att-neg-mid;
+}
+
+ul.notifications-dropdown {
+  width: 400px;
+
+  > li a {
+    white-space: normal;
+  }
+}
+
+.notifications-icon {
+  float: left;
+  width: @notifications-icon-size;
+  display: block;
+  height: @notifications-icon-size;
+  text-align: center;
+  .border-top-radius(2px);
+  .border-bottom-radius(2px);
+
+  > i {
+    line-height: @notifications-icon-size;
+    font-size: @notifications-icon-size - 20;
+  }
+}
+
+.notifications-info {
+  .notifications-icon {
+    background-color: @cc-brand-hi;
+    > i {
+      padding-left: 1px;
+      padding-top: 1px;
+      color: @cc-brand-mid;
+    }
+  }
+}
+
+.notifications-alert {
+  .notifications-icon {
+    background-color: @cc-dark-warm-accent-hi;
+    > i {
+      color: @cc-dark-warm-accent-mid;
+    }
+  }
+}
+
+.notifications-text,
+.notifications-date {
+  margin-left: @notifications-icon-size + 10;
+  display: block;
+}
+
+.notifications-date {
+  color: lighten(@cc-text, 50%);
+}
+
+.notifications-dropdown > li > a:hover > .notifications-date {
+  color: #ffffff;
 }
