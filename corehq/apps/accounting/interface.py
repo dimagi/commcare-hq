@@ -1144,6 +1144,12 @@ class CreditAdjustmentInterface(GenericTabularReport):
             DataTablesColumn("Note"),
             DataTablesColumn("Amount"),
             DataTablesColumn("By User"),
+            DataTablesColumnGroup(
+                "Related Credit Line",
+                DataTablesColumn("Account"),
+                DataTablesColumn("Subscription"),
+                DataTablesColumn("Product/Feature Type")
+            ),
         )
 
     @property
@@ -1196,7 +1202,10 @@ class CreditAdjustmentInterface(GenericTabularReport):
                 credit_adj.note,
                 quantize_accounting_decimal(credit_adj.amount),
                 credit_adj.web_user,
-            ])
+            ] + (
+                _get_credit_line_columns_from_credit_line(credit_adj.related_credit)
+                if credit_adj.related_credit else ['', '', '']
+            ))
             for credit_adj in self.filtered_credit_adjustments
         ]
 
