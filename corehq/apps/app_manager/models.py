@@ -806,8 +806,10 @@ class FormBase(DocumentSchema):
     def validate_form(self):
         vc = self.validation_cache
         if vc is None:
+            form = self.wrapped_xform()
+            form.strip_vellum_ns_attributes()
             try:
-                validate_xform(self.source,
+                validate_xform(etree.tostring(form.xml),
                                version=self.get_app().application_version)
             except XFormValidationError as e:
                 validation_dict = {
