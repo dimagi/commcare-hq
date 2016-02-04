@@ -137,11 +137,7 @@ class CompletionOrSubmissionTimeMixin(object):
 
 
 class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
-    """
-    User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
-    danny   5 (25%)         10 (50%)        20 (100%)       17                          6
-    (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
-    """
+    """See column headers for details"""
     name = ugettext_noop('Case Activity')
     slug = 'case_activity'
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
@@ -151,6 +147,33 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     emailable = True
     description = ugettext_noop("Followup rates on active cases.")
     is_cacheable = True
+
+    @property
+    def landmark_columns(self):
+        return [
+            (_("# Updated or Closed"),
+             _("The number of cases that have been created, updated, or closed "
+               "between {} days ago and today.")),
+            (_("# Active"),
+             _("The number of open cases created or updated in the last {} days.")),
+            (_("# Closed"),
+             _("The number of cases that have been closed between {} days ago and "
+               "today.")),
+            (_("Proportion"),
+             _("The percentage of all recently active cases that were created, "
+               "updated or closed in the last {} days.")),
+            # "recently active" means "touched in the last 120 days"
+        ]
+
+    @property
+    def totals_columns(self):
+        return [
+            (_("# Active Cases"),
+             _("Number of open cases modified in the last {} days")),
+            (_("# Inactive Cases"),
+             _("Number of cases that are open but haven't been touched in the "
+               "last %s days")),
+        ]
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
@@ -202,32 +225,23 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def headers(self):
+
+        def make_column(title, help_text, num_days):
+            return DataTablesColumn(title, sort_type=DTSortType.NUMERIC,
+                                    help_text=help_text.format(num_days))
+
         columns = [DataTablesColumn(_("Users"))]
+
         for landmark in self.landmarks:
-            num_cases = DataTablesColumn(_("# Modified or Closed"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of cases that have been modified between %d days ago and today.") % landmark.days
-            )
-            num_active = DataTablesColumn(_("# Active"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of cases created or modified in the last %d days.") % landmark.days
-            )
-            num_closed = DataTablesColumn(_("# Closed"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of cases that have been closed between %d days ago and today.") % landmark.days
-            )
-            proportion = DataTablesColumn(_("Proportion"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The percentage of all recently active cases that were modified or closed in the last %d days.") % landmark.days
-            )
-            columns.append(DataTablesColumnGroup(_("Cases in Last %s Days") % landmark.days if landmark else _("Ever"),
-                num_cases,
-                num_active,
-                num_closed,
-                proportion
+            columns.append(DataTablesColumnGroup(
+                _("Cases in Last {} Days").format(landmark.days) if landmark else _("Ever"),
+                *[make_column(title, help_text, landmark.days)
+                  for title, help_text in self.landmark_columns]
             ))
-        columns.append(DataTablesColumn(_("# Active Cases"),
-            sort_type=DTSortType.NUMERIC,
-            help_text=_('Number of cases modified in the last %s days that are still open') % self.milestone.days))
-        columns.append(DataTablesColumn(_("# Inactive Cases"),
-            sort_type=DTSortType.NUMERIC,
-            help_text=_("Number of cases that are open but haven't been touched in the last %s days") % self.milestone.days))
+
+        for title, help_text in self.totals_columns:
+            columns.append(make_column(title, help_text, self.milestone.days))
+
         return DataTablesHeader(*columns)
 
     @property
