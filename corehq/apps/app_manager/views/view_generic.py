@@ -143,13 +143,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             }
         }
 
-        specific_media['another'] = {
-                'menu_refs': app.get_menu_media(
-                    module, module_id, form=form, form_index=form_id, to_language=lang
-                ),
-                'default_file_name': '{name}_{lang}'.format(name=default_file_name, lang=lang),
-            }
-
         if module and module.uses_media():
             def _make_name(suffix):
                 return "{default_name}_{suffix}_{lang}".format(

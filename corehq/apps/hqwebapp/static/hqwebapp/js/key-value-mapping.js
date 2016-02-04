@@ -15,7 +15,7 @@ var MapItem = function(item, mapingContext){
 
     // attach a media-manager if item.value is a file-path to icon
     if (mapingContext.values_are_icons) {
-        this.iconManger = new AppMenuMediaManager({
+        this.iconManager = new AppMenuMediaManager({
             ref: {
                 "path": item.value[mapingContext.lang],
                 "icon_type": "icon-picture",
@@ -26,7 +26,6 @@ var MapItem = function(item, mapingContext){
             objectMap: mapingContext.multimedia,
             uploadController: iconUploader,
             defaultPath: 'jr://file/commcare/image/default.png',
-            inputElement: $("#" + makeSafeForCSS(this.key()))
         });
     }
 
@@ -36,7 +35,7 @@ var MapItem = function(item, mapingContext){
         _.each(mapingContext.langs, function(lang){
             // return ko reference to path in `iconManager` for current UI language value
             if (mapingContext.values_are_icons && lang == mapingContext.lang){
-                new_value.push([lang, self.iconManger.customPath]);
+                new_value.push([lang, self.iconManager.customPath]);
             }
             // return new ko.observable for other languages
             else{
@@ -187,20 +186,10 @@ uiElement.key_value_mapping = function (o) {
 
 }());
 
-function makeSafeForCSS(name) {
-    if (!name) {
-        return "";
-    }
-    return name.replace(/[^a-z0-9]/g, function(s) {
-        var c = s.charCodeAt(0);
-        if (c == 32) return '-';
-        if (c >= 65 && c <= 90) return '_' + s.toLowerCase();
-        return '__' + ('000' + c.toString(16)).slice(-4);
-    });
-}
-
-// To overlay icon-upload modal http://stackoverflow.com/questions/19305821/multiple-modals-overlay
+// To stack icon-upload modal over key-value modal
+// copied from http://stackoverflow.com/questions/19305821/multiple-modals-overlay
 $(document).on('show.bs.modal', '.modal', function () {
+    // 1040 is default boostrap modal z-index
     var zIndex = 1040 + (10 * $('.modal:visible').length);
     $(this).css('z-index', zIndex);
     setTimeout(function() {

@@ -118,7 +118,6 @@ var AppMenuMediaManager = function (o) {
     };
 
     self.uploadComplete = function (trigger, event, data) {
-        debugger;
         if (data.ref) {
             var ref = data.ref;
             var obj_map = self.objectMap();
