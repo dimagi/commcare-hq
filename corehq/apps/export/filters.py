@@ -6,7 +6,7 @@ from corehq.apps.es.cases import (
     modified_range,
     user,
     closed_range,
-)
+    opened_by)
 
 
 class ExportFilter(object):
@@ -75,8 +75,7 @@ class OpenedByFilter(ExportFilter):
         self.opened_by = opened_by
 
     def to_es_filter(self):
-        # TODO: Add this to default case filters?
-        return esfilters.term('opened_by', self.opened_by)
+        return opened_by(self.opened_by)
 
 
 class ModifiedOnRangeFilter(RangeExportFilter):
