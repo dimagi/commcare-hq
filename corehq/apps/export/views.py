@@ -39,6 +39,10 @@ from corehq.apps.export.models import (
     FormExportInstance,
     CaseExportInstance,
 )
+from corehq.apps.export.dbaccessors import (
+    get_form_export_instances,
+    get_case_export_instances,
+)
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.dbaccessors import touch_exports
 from corehq.apps.reports.display import xmlns_to_name
@@ -197,7 +201,7 @@ class BaseCreateNewCustomExportView(BaseExportView):
     template_name = 'export/new_customize_export.html'
 
     def commit(self, request):
-        export = ExportInstance.wrap(json.loads(request.body))
+        export = self.export_instance_cls.wrap(json.loads(request.body))
         export.save()
         messages.success(
             request,
@@ -300,6 +304,7 @@ class CreateNewCustomFormExportView(BaseCreateNewCustomExportView):
     urlname = 'new_custom_export_form'
     page_title = ugettext_lazy("Create Form Export")
     export_type = 'form'
+    export_instance_cls = FormExportInstance
 
     def get(self, request, *args, **kwargs):
         app_id = request.GET.get('app_id')
@@ -326,6 +331,7 @@ class CreateNewCustomCaseExportView(BaseCreateNewCustomExportView):
     urlname = 'new_custom_export_case'
     page_title = ugettext_lazy("Create Case Export")
     export_type = 'case'
+    export_instance_cls = CaseExportInstance
 
     def get(self, request, *args, **kwargs):
         case_type = request.GET.get('export_tag').strip('"')
@@ -1138,6 +1144,8 @@ class FormExportListView(BaseExportListView):
     @memoized
     def get_saved_exports(self):
         exports = FormExportSchema.get_stale_exports(self.domain)
+        new_exports = get_form_export_instances(self.domain)
+        exports += new_exports
         if not self.has_deid_view_permissions:
             exports = filter(lambda x: not x.is_safe, exports)
         return sorted(exports, key=lambda x: x.name)

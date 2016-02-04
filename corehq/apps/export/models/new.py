@@ -229,15 +229,26 @@ class ExportInstance(Document):
         app_label = 'export'
 
     @property
+    def is_safe(self):
+        """For compatability with old exports"""
+        return self.is_deidentified
+
+    @property
+    def formname(self):
+        raise NotImplementedError()
+
+    @property
     def defaults(self):
         return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
 
     @classmethod
+    def _new_from_schema(cls, schema):
+        raise NotImplementedError()
+
+    @classmethod
     def generate_instance_from_schema(cls, schema, domain, app_id=None):
         """Given an ExportDataSchema, this will generate an ExportInstance"""
-        instance = cls(
-            type=schema.type
-        )
+        instance = cls._new_from_schema(schema)
         instance.name = instance.defaults.get_default_instance_name(schema)
 
         latest_build_ids_and_versions = get_latest_built_app_ids_and_versions(domain, app_id)
@@ -263,9 +274,30 @@ class ExportInstance(Document):
 class CaseExportInstance(ExportInstance):
     case_type = StringProperty()
 
+    @classmethod
+    def _new_from_schema(cls, schema):
+        return cls(
+            type=schema.type,
+            domain=schema.domain,
+        )
+
 
 class FormExportInstance(ExportInstance):
     xmlns = StringProperty()
+    app_id = StringProperty()
+
+    @property
+    def formname(self):
+        return xmlns_to_name(self.domain, self.xmlns, self.app_id)
+
+    @classmethod
+    def _new_from_schema(cls, schema):
+        return cls(
+            type=schema.type,
+            domain=schema.domain,
+            xmlns=schema.xmlns,
+            app_id=schema.app_id,
+        )
 
 
 class ExportInstanceDefaults(object):
@@ -292,7 +324,10 @@ class FormExportInstanceDefaults(ExportInstanceDefaults):
 
     @staticmethod
     def get_default_instance_name(schema):
-        return xmlns_to_name(schema.domain, schema.xmlns, schema.app_id)
+        return u'{}: {}'.format(
+            xmlns_to_name(schema.domain, schema.xmlns, schema.app_id),
+            datetime.now().strftime('%Y-%m-%d')
+        )
 
     @staticmethod
     def get_default_table_name(table_path):
@@ -315,7 +350,7 @@ class CaseExportInstanceDefaults(ExportInstanceDefaults):
 
     @staticmethod
     def get_default_instance_name(schema):
-        return u'{}: {}'.format(schema.case_type, datetime.now().strftime('%Y-%M-%d'))
+        return u'{}: {}'.format(schema.case_type, datetime.now().strftime('%Y-%m-%d'))
 
 
 class ExportRow(object):
