@@ -160,12 +160,17 @@ class TableConfiguration(DocumentSchema):
     def __hash__(self):
         return hash(tuple(self.path))
 
+    @property
+    def selected_columns(self):
+        """The columns that should be included in the export"""
+        return [c for c in self.columns if c.selected]
+
     def get_headers(self):
         """
         Return a list of column headers
         """
         headers = []
-        for column in self.columns:
+        for column in self.selected_columns:
             headers.extend(column.get_headers())
         return headers
 
@@ -181,7 +186,7 @@ class TableConfiguration(DocumentSchema):
         for doc in sub_documents:
 
             row_data = []
-            for col in self.columns:
+            for col in self.selected_columns:
                 val = col.get_value(doc, self.path)
                 if isinstance(val, list):
                     row_data.extend(val)

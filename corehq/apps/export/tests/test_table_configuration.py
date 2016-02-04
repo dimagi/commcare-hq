@@ -14,12 +14,20 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
                 ExportColumn(
                     item=ScalarItem(
                         path=['form', 'q3'],
-                    )
+                    ),
+                    selected=True,
                 ),
                 ExportColumn(
                     item=ScalarItem(
                         path=['form', 'q1'],
-                    )
+                    ),
+                    selected=True,
+                ),
+                ExportColumn(
+                    item=ScalarItem(
+                        path=['form', 'q2'],
+                    ),
+                    selected=False,
                 ),
             ]
         )
@@ -42,7 +50,8 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
                 ExportColumn(
                     item=ScalarItem(
                         path=['form', 'repeat1', 'q1'],
-                    )
+                    ),
+                    selected=True,
                 ),
             ]
         )
@@ -66,7 +75,8 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
                 ExportColumn(
                     item=ScalarItem(
                         path=['form', 'repeat1', 'group1', 'repeat2', 'q1'],
-                    )
+                    ),
+                    selected=True,
                 ),
             ]
         )

@@ -86,13 +86,15 @@ class WriterTest(SimpleTestCase):
                             label="Q3",
                             item=ScalarItem(
                                 path=['form', 'q3'],
-                            )
+                            ),
+                            selected=True
                         ),
                         ExportColumn(
                             label="Q1",
                             item=ScalarItem(
                                 path=['form', 'q1'],
-                            )
+                            ),
+                            selected=True
                         ),
                     ]
                 )
@@ -123,7 +125,8 @@ class WriterTest(SimpleTestCase):
                             label="Q3",
                             item=ScalarItem(
                                 path=['form', 'q3'],
-                            )
+                            ),
+                            selected=True,
                         ),
                     ]
                 ),
@@ -135,7 +138,8 @@ class WriterTest(SimpleTestCase):
                             label="Q4",
                             item=ScalarItem(
                                 path=['form', 'q2', 'q4'],
-                            )
+                            ),
+                            selected=True,
                         ),
                     ]
                 )
@@ -199,13 +203,15 @@ class ExportTest(SimpleTestCase):
                             label="Foo column",
                             item=ExportItem(
                                 path=["foo"]
-                            )
+                            ),
+                            selected=True,
                         ),
                         ExportColumn(
                             label="Bar column",
                             item=ExportItem(
                                 path=["bar"]
-                            )
+                            ),
+                            selected=True,
                         )
                     ]
                 )]
