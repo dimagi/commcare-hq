@@ -1932,20 +1932,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         from corehq.apps.locations.util import parent_child
         hierarchy = None
         for column in columns:
-            if column.format in ('enum', 'enum-image'):
-                for item in column.enum:
-                    key = item.key
-                    # key cannot contain certain characters because it is used
-                    # to generate an xpath variable name within suite.xml
-                    # (names with spaces will be hashed to form the xpath
-                    # variable name)
-                    if not re.match('^([\w_ -]*)$', key):
-                        yield {
-                            'type': 'invalid id key',
-                            'key': key,
-                            'module': self.get_module_info(),
-                        }
-            elif column.field_type == FIELD_TYPE_LOCATION:
+            if column.field_type == FIELD_TYPE_LOCATION:
                 hierarchy = hierarchy or parent_child(self.get_app().domain)
                 try:
                     LocationXpath('').validate(column.field_property, hierarchy)
