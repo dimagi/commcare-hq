@@ -6,7 +6,7 @@ from dimagi.utils.couch.database import safe_delete
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import XForm, Application
 from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema, ExportDataSchema
-from corehq.apps.export.const import CASE_HISTORY_PROPERTIES, PROPERTY_TAG_UPDATE
+from corehq.apps.export.const import CASE_HISTORY_PROPERTIES, PROPERTY_TAG_UPDATE, MAIN_TABLE_PROPERTIES
 
 
 class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
@@ -28,9 +28,11 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
 
         group_schema = schema.group_schemas[0]
 
-        self.assertEqual(len(group_schema.items), 2)
-        self.assertEqual(group_schema.items[0].path, ['data', 'question1'])
-        self.assertEqual(group_schema.items[1].path, ['data', 'question2'])
+        self.assertEqual(len(group_schema.items), 2 + len(MAIN_TABLE_PROPERTIES))
+
+        form_items = filter(lambda item: item.tag is None, group_schema.items)
+        self.assertEqual(form_items[0].path, ['data', 'question1'])
+        self.assertEqual(form_items[1].path, ['data', 'question2'])
 
     def test_xform_parsing_with_repeat_group(self):
         form_xml = self.get_xml('repeat_group_form')
@@ -45,9 +47,11 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(schema.group_schemas), 2)
 
         group_schema = schema.group_schemas[0]
-        self.assertEqual(len(group_schema.items), 1)
+        self.assertEqual(len(group_schema.items), 1 + len(MAIN_TABLE_PROPERTIES))
         self.assertEqual(group_schema.path, None)
-        self.assertEqual(group_schema.items[0].path, ['data', 'question1'])
+
+        form_items = filter(lambda item: item.tag is None, group_schema.items)
+        self.assertEqual(form_items[0].path, ['data', 'question1'])
 
         group_schema = schema.group_schemas[1]
         self.assertEqual(len(group_schema.items), 1)
@@ -66,12 +70,13 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(schema.group_schemas), 1)
         group_schema = schema.group_schemas[0]
 
-        self.assertEqual(len(group_schema.items), 2)
-        self.assertEqual(group_schema.items[0].path, ['data', 'question1'])
+        self.assertEqual(len(group_schema.items), 2 + len(MAIN_TABLE_PROPERTIES))
+        form_items = filter(lambda item: item.tag is None, group_schema.items)
+        self.assertEqual(form_items[0].path, ['data', 'question1'])
 
-        self.assertEqual(group_schema.items[1].path, ['data', 'question2'])
-        self.assertEqual(group_schema.items[1].options[0].value, 'choice1')
-        self.assertEqual(group_schema.items[1].options[1].value, 'choice2')
+        self.assertEqual(form_items[1].path, ['data', 'question2'])
+        self.assertEqual(form_items[1].options[0].value, 'choice1')
+        self.assertEqual(form_items[1].options[1].value, 'choice2')
 
 
 class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
@@ -160,7 +165,7 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(merged.group_schemas), 1)
 
         group_schema = merged.group_schemas[0]
-        self.assertEqual(len(group_schema.items), 3)
+        self.assertEqual(len(group_schema.items), 3 + len(MAIN_TABLE_PROPERTIES))
         self.assertTrue(all(map(
             lambda item: item.last_occurrences[self.app_id] == 2,
             group_schema.items,
@@ -173,14 +178,14 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(merged.group_schemas), 1)
 
         group_schema = merged.group_schemas[0]
-        self.assertEqual(len(group_schema.items), 2)
+        self.assertEqual(len(group_schema.items), 2 + len(MAIN_TABLE_PROPERTIES))
 
         v1items = filter(lambda item: item.last_occurrences[self.app_id] == 1, group_schema.items)
         v2items = filter(lambda item: item.last_occurrences[self.app_id] == 2, group_schema.items)
 
         self.assertEqual(
             len(v2items),
-            1,
+            1 + len(MAIN_TABLE_PROPERTIES),
             'There should be 1 item that was found in the second version. There was {}'.format(len(v2items))
         )
         self.assertEqual(
@@ -196,12 +201,12 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(merged.group_schemas), 1)
 
         group_schema = merged.group_schemas[0]
-        self.assertEqual(len(group_schema.items), 2)
+        self.assertEqual(len(group_schema.items), 2 + len(MAIN_TABLE_PROPERTIES))
 
         v2items = filter(lambda item: item.last_occurrences[self.app_id] == 2, group_schema.items)
         self.assertEqual(
             len(v2items),
-            2,
+            2 + len(MAIN_TABLE_PROPERTIES),
         )
 
         multichoice = filter(lambda item: item.path == ['data', 'question2'], group_schema.items)[0]
@@ -225,7 +230,7 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         group_schema2 = merged.group_schemas[1]
 
         self.assertEqual(group_schema1.last_occurrences[self.app_id], 2)
-        self.assertEqual(len(group_schema1.items), 2)
+        self.assertEqual(len(group_schema1.items), 2 + len(MAIN_TABLE_PROPERTIES))
 
         self.assertEqual(group_schema2.last_occurrences[self.app_id], 1)
         self.assertEqual(len(group_schema2.items), 1)

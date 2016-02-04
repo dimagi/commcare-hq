@@ -6,6 +6,12 @@ PROPERTY_TAG_NONE = None
 PROPERTY_TAG_INFO = 'info'
 PROPERTY_TAG_UPDATE = 'update'
 PROPERTY_TAG_SERVER = 'server'
+PROPERTY_TAG_DELETED = 'deleted'
+PROPERTY_TAG_ROW = 'row'
+
+MAIN_TABLE_PROPERTIES = [
+    SystemProperty(PROPERTY_TAG_ROW, 'row')
+]
 
 CASE_HISTORY_PROPERTIES = [
     SystemProperty(PROPERTY_TAG_NONE, 'action_type'),
@@ -21,3 +27,5 @@ CASE_HISTORY_GROUP_NAME = 'history'
 
 FORM_EXPORT = 'form'
 CASE_EXPORT = 'case'
+
+MAIN_TABLE = None

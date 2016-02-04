@@ -19,20 +19,20 @@ class TestExportItemGeneration(SimpleTestCase):
     def test_create_default_from_export_item(self):
         column = ExportColumn.create_default_from_export_item([None], self.item, {self.app_id: 3})
 
-        self.assertEqual(column.show, True)
+        self.assertEqual(column.is_advanced, False)
         self.assertEqual(column.label, 'Question One')
         self.assertEqual(column.selected, True)
 
     def test_create_default_from_export_item_deleted(self):
         column = ExportColumn.create_default_from_export_item([None], self.item, {self.app_id: 4})
 
-        self.assertEqual(column.show, False)
+        self.assertEqual(column.is_advanced, True)
         self.assertEqual(column.label, 'Question One')
         self.assertEqual(column.selected, False)
 
     def test_create_default_from_export_item_not_main_table(self):
         column = ExportColumn.create_default_from_export_item(['other_table'], self.item, {self.app_id: 3})
 
-        self.assertEqual(column.show, True)
+        self.assertEqual(column.is_advanced, False)
         self.assertEqual(column.label, 'Question One')
         self.assertEqual(column.selected, False)
