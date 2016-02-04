@@ -82,13 +82,12 @@ class BaseMigrationTestCase(TestCase):
         subevent.save()
         return subevent.pk
 
-    def checkFieldValues(self, object1, object2, fields, assert_not_none=False):
+    def checkFieldValues(self, object1, object2, fields):
         for field_name in fields:
             value1 = getattr(object1, field_name)
             value2 = getattr(object2, field_name)
-            if assert_not_none:
-                self.assertIsNotNone(value1)
-                self.assertIsNotNone(value2)
+            self.assertIsNotNone(value1)
+            self.assertIsNotNone(value2)
             self.assertEqual(value1, value2)
 
 
@@ -181,8 +180,9 @@ class SMSMigrationTestCase(BaseMigrationTestCase):
         sms.messaging_subevent_id = self.randomMessagingSubEventId()
 
     def testSMSLogSync(self):
-        prev_couch_count = self.getSMSLogCount()
-        prev_sql_count = self.getSMSCount()
+        self.deleteAllLogs()
+        self.assertEqual(self.getSMSLogCount(), 0)
+        self.assertEqual(self.getSMSCount(), 0)
 
         # Test Create
         smslog = SMSLog()
@@ -190,8 +190,8 @@ class SMSMigrationTestCase(BaseMigrationTestCase):
         smslog.save()
 
         sleep(1)
-        self.assertEqual(self.getSMSLogCount(), prev_couch_count + 1)
-        self.assertEqual(self.getSMSCount(), prev_sql_count + 1)
+        self.assertEqual(self.getSMSLogCount(), 1)
+        self.assertEqual(self.getSMSCount(), 1)
 
         sms = SMS.objects.get(couch_id=smslog._id)
         self.checkFieldValues(smslog, sms, SMSLog._migration_get_fields())
@@ -202,15 +202,16 @@ class SMSMigrationTestCase(BaseMigrationTestCase):
         smslog.save()
 
         sleep(1)
-        self.assertEqual(self.getSMSLogCount(), prev_couch_count + 1)
-        self.assertEqual(self.getSMSCount(), prev_sql_count + 1)
+        self.assertEqual(self.getSMSLogCount(), 1)
+        self.assertEqual(self.getSMSCount(), 1)
         sms = SMS.objects.get(couch_id=smslog._id)
         self.checkFieldValues(smslog, sms, SMSLog._migration_get_fields())
         self.assertTrue(SMSLog.get_db().get_rev(smslog._id).startswith('2-'))
 
     def testFRISMSLogSync(self):
-        prev_couch_count = self.getSMSLogCount()
-        prev_sql_count = self.getSMSCount()
+        self.deleteAllLogs()
+        self.assertEqual(self.getSMSLogCount(), 0)
+        self.assertEqual(self.getSMSCount(), 0)
 
         # Test Create
         smslog = SMSLog()
@@ -223,8 +224,8 @@ class SMSMigrationTestCase(BaseMigrationTestCase):
         smslog.save()
 
         sleep(1)
-        self.assertEqual(self.getSMSLogCount(), prev_couch_count + 1)
-        self.assertEqual(self.getSMSCount(), prev_sql_count + 1)
+        self.assertEqual(self.getSMSLogCount(), 1)
+        self.assertEqual(self.getSMSCount(), 1)
 
         sms = SMS.objects.get(couch_id=smslog._id)
         self.checkFieldValues(smslog, sms, FRISMSLog._migration_get_fields())
@@ -236,15 +237,16 @@ class SMSMigrationTestCase(BaseMigrationTestCase):
         smslog.save()
 
         sleep(1)
-        self.assertEqual(self.getSMSLogCount(), prev_couch_count + 1)
-        self.assertEqual(self.getSMSCount(), prev_sql_count + 1)
+        self.assertEqual(self.getSMSLogCount(), 1)
+        self.assertEqual(self.getSMSCount(), 1)
         sms = SMS.objects.get(couch_id=smslog._id)
         self.checkFieldValues(smslog, sms, FRISMSLog._migration_get_fields())
         self.assertTrue(SMSLog.get_db().get_rev(smslog._id).startswith('3-'))
 
     def testSMSSync(self):
-        prev_couch_count = self.getSMSLogCount()
-        prev_sql_count = self.getSMSCount()
+        self.deleteAllLogs()
+        self.assertEqual(self.getSMSLogCount(), 0)
+        self.assertEqual(self.getSMSCount(), 0)
 
         # Test Create
         sms = SMS()
@@ -252,8 +254,8 @@ class SMSMigrationTestCase(BaseMigrationTestCase):
         sms.save()
 
         sleep(1)
-        self.assertEqual(self.getSMSLogCount(), prev_couch_count + 1)
-        self.assertEqual(self.getSMSCount(), prev_sql_count + 1)
+        self.assertEqual(self.getSMSLogCount(), 1)
+        self.assertEqual(self.getSMSCount(), 1)
 
         smslog = FRISMSLog.get(sms.couch_id)
         self.checkFieldValues(smslog, sms, SMS._migration_get_fields())
@@ -264,8 +266,8 @@ class SMSMigrationTestCase(BaseMigrationTestCase):
         sms.save()
 
         sleep(1)
-        self.assertEqual(self.getSMSLogCount(), prev_couch_count + 1)
-        self.assertEqual(self.getSMSCount(), prev_sql_count + 1)
+        self.assertEqual(self.getSMSLogCount(), 1)
+        self.assertEqual(self.getSMSCount(), 1)
         smslog = FRISMSLog.get(sms.couch_id)
         self.checkFieldValues(smslog, sms, SMS._migration_get_fields())
         self.assertTrue(FRISMSLog.get_db().get_rev(smslog._id).startswith('3-'))
@@ -368,7 +370,7 @@ class CallMigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(self.getCallCount(), 1)
 
         call = Call.objects.get(couch_id=calllog._id)
-        self.checkFieldValues(calllog, call, call._migration_get_fields(), assert_not_none=True)
+        self.checkFieldValues(calllog, call, call._migration_get_fields())
         self.assertTrue(CallLog.get_db().get_rev(calllog._id).startswith('1-'))
 
         # Test Update
@@ -379,7 +381,7 @@ class CallMigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(self.getCallLogCount(), 1)
         self.assertEqual(self.getCallCount(), 1)
         call = Call.objects.get(couch_id=calllog._id)
-        self.checkFieldValues(calllog, call, Call._migration_get_fields(), assert_not_none=True)
+        self.checkFieldValues(calllog, call, Call._migration_get_fields())
         self.assertTrue(CallLog.get_db().get_rev(calllog._id).startswith('2-'))
 
     def testCallSync(self):
@@ -397,7 +399,7 @@ class CallMigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(self.getCallCount(), 1)
 
         calllog = CallLog.get(call.couch_id)
-        self.checkFieldValues(calllog, call, Call._migration_get_fields(), assert_not_none=True)
+        self.checkFieldValues(calllog, call, Call._migration_get_fields())
         self.assertTrue(CallLog.get_db().get_rev(calllog._id).startswith('2-'))
 
         # Test Update
@@ -408,5 +410,5 @@ class CallMigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(self.getCallLogCount(), 1)
         self.assertEqual(self.getCallCount(), 1)
         callog = CallLog.get(call.couch_id)
-        self.checkFieldValues(callog, call, Call._migration_get_fields(), assert_not_none=True)
+        self.checkFieldValues(callog, call, Call._migration_get_fields())
         self.assertTrue(CallLog.get_db().get_rev(callog._id).startswith('3-'))
