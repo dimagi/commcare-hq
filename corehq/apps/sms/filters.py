@@ -71,6 +71,5 @@ class EventStatusFilter(BaseSingleOptionFilter):
 
 
 class PhoneNumberFilter(SearchFilter):
-    template = 'reports/messaging/filters/phone_number.html'
     label = ugettext_lazy("Phone Number")
     search_help_inline = ugettext_lazy("Enter a full or partial phone number to filter results")
