@@ -1476,7 +1476,7 @@ class SQLMobileBackend(models.Model):
     # This is an api key that the gateway uses when making inbound requests to hq.
     # This enforces gateway security and also allows us to tie every inbound request
     # to a specific backend.
-    inbound_api_key = uuidfield.UUIDField(auto=True, unique=True)
+    inbound_api_key = models.CharField(max_length=126, unique=True, db_index=True)
 
     # This tells us which type of backend this is
     hq_api_id = models.CharField(max_length=126, null=True)
@@ -1531,6 +1531,9 @@ class SQLMobileBackend(models.Model):
         super(SQLMobileBackend, self).__init__(*args, **kwargs)
         if not self.couch_id:
             self.couch_id = uuid.uuid4().hex
+
+        if not self.inbound_api_key:
+            self.inbound_api_key = uuid.uuid4().hex
 
     @quickcache(['self.pk', 'domain'], timeout=5 * 60)
     def domain_is_shared(self, domain):
