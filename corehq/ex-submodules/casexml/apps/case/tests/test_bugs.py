@@ -3,6 +3,8 @@ from couchdbkit.exceptions import BulkSaveError
 from django.test import TestCase, SimpleTestCase
 import os
 from django.test.utils import override_settings
+
+from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
@@ -172,6 +174,31 @@ class TestCaseHierarchy(TestCase):
         ))
 
         hierarchy = get_case_hierarchy(cp, {})
+        self.assertEqual(2, len(hierarchy['case_list']))
+        self.assertEqual(1, len(hierarchy['child_cases']))
+
+    def test_extension_index(self):
+        factory = CaseFactory()
+        [case] = factory.create_or_update_case(
+            CaseStructure(case_id="standard_case", attrs={'case_type': "standard_type"})
+        )
+
+        factory.create_or_update_case(
+            CaseStructure(
+                case_id="extension_case",
+                attrs={'case_type': "extension_type"},
+                indices=[
+                    CaseIndex(
+                        CaseStructure(case_id="standard_case"),
+                        related_type='standard_type',
+                        relationship=CASE_INDEX_EXTENSION
+                    )
+                ],
+                walk_related=False
+            )
+        )
+
+        hierarchy = get_case_hierarchy(case, {})
         self.assertEqual(2, len(hierarchy['case_list']))
         self.assertEqual(1, len(hierarchy['child_cases']))
 

@@ -45,13 +45,11 @@
 trunk: master
 name: autostaging
 branches:
-  - b3-app-manager+jquery-migrate  # Danny 2/3
   - turn-off-incomplete-and-saved-forms  # Danny 2/3
   - jquery-migrate  # Danny 2/3
   - kill-x_over_time  # Danny 12/11
   - vellum-staging # J$ 11/13
   - requests #Simon 11/3
-  - b3-app-manager # Jenny 1/20
   - new-footer-nav # Biyeun 1/4
   - formplayer-toggle # Ben/Will 1/21/16
   - java-tf-deploy # Ben/Will 1/21/16
@@ -64,6 +62,8 @@ branches:
   - lazy-jar # Nick P 1/25
   - show-form-case-refs-in-summary # j$ 1/29
   - app_code # Norman 2/4
+  - fb/215956/forms_30_d # Norman 2/4
+  - staging-test # Jenny 2/4
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
