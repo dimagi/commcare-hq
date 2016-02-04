@@ -133,7 +133,10 @@ class ExportColumn(DocumentSchema):
 
 
 class TableConfiguration(DocumentSchema):
+    # name is not modified by the user, and denotes the name of the table
     name = StringProperty()
+    # diplay_name saves the user's decision for the table name
+    display_name = StringProperty()
     path = ListProperty()
     columns = ListProperty(ExportColumn)
     selected = BooleanProperty(default=False)
@@ -225,6 +228,7 @@ class ExportInstance(Document):
             table = TableConfiguration(
                 path=group_schema.path,
                 name=instance.defaults.get_default_table_name(group_schema.path),
+                display_name=instance.defaults.get_default_table_name(group_schema.path),
                 selected=instance.defaults.default_is_table_selected(group_schema.path),
             )
             table.columns = map(
