@@ -52,6 +52,7 @@
         var viewModel = new NotificationsServiceModel(rmi);
         viewModel.init();
         $(this).koApplyBindings(viewModel);
+        return viewModel;
     };
 
 })($, _, RMI);
