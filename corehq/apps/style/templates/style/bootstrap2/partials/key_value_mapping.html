@@ -98,9 +98,6 @@
            data-bind="value: customPath,
                       valueUpdate: 'textchange',
                       attr: {placeholder: defaultPath}" />
-    <a data-bind="if: isMediaMatched, attr: {href: url}" target="_blank">
-        <img data-bind="attr: {src: thumbnailUrl}" />
-    </a>
     <button type="button" class="btn" data-toggle="modal"  data-target="#hqimage"
             data-bind="attr: { 'data-hqmediapath': currentPath },
                        event: {
@@ -111,4 +108,7 @@
         <span data-bind="visible: isMediaMatched">{% trans 'Replace' %}</span>
         <span data-bind="visible: isMediaUnmatched">{% trans 'Upload' %}</span>
     </button>
+    <a data-bind="if: isMediaMatched, attr: {href: url}" target="_blank">
+        <img data-bind="attr: {src: thumbnailUrl}" />
+    </a>
 </script>
