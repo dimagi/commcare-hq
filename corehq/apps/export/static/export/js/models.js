@@ -24,7 +24,7 @@ Exports.ViewModels.ExportInstance.prototype.getFormatOptionText = function(forma
 };
 
 Exports.ViewModels.ExportInstance.prototype.isNew = function() {
-    return !!ko.utils.unwrapObservable(self._id);
+    return !ko.utils.unwrapObservable(this._id);
 };
 
 Exports.ViewModels.ExportInstance.prototype.getSaveText = function() {
@@ -58,16 +58,25 @@ Exports.ViewModels.ExportInstance.prototype.save = function() {
         });
 };
 
-Exports.ViewModels.ExportInstance.prototype.recordSaveAnalytics = function() {
-    var analyticsAction = self.is_daily_saved_export() ? 'Saved' : 'Regular',
-        analyticsExportType = _.capitalize(self.type());
+Exports.ViewModels.ExportInstance.prototype.recordSaveAnalytics = function(callback) {
+    var analyticsAction = this.is_daily_saved_export() ? 'Saved' : 'Regular',
+        analyticsExportType = _.capitalize(this.type()),
+        args,
+        eventCategory;
 
     analytics.usage("Create Export", analyticsExportType, analyticsAction);
-    if (self.export_format === Exports.Constants.EXPORT_FORMATS.HTML) {
-        analytics.usage("Create Export", analyticsExportType, 'Excel Dashboard');
+    if (this.export_format === Exports.Constants.EXPORT_FORMATS.HTML) {
+        args = ["Create Export", analyticsExportType, 'Excel Dashboard'];
+        // If it's not new then we have to add the callback in to redirect
+        if (!this.isNew()) {
+            args.push(callback);
+        }
+        analytics.usage.apply(null, args);
     }
-    if (self.isNew()) {
-        analytics.workflow("Clicked 'Create' in export edit page");
+    if (this.isNew()) {
+        eventCategory = Exports.Utils.getEventCategory(this.type());
+        analytics.usage(eventCategory, 'Custom export creation', '');
+        analytics.workflow("Clicked 'Create' in export edit page", callback);
     }
 };
 

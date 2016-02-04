@@ -3,6 +3,7 @@ describe('ExportInstance model', function() {
     var basicFormExport;
     beforeEach(function() {
         basicFormExport = _.clone(SampleExportInstances.basic, { saveUrl: 'http://saveurl/' });
+        savedFormExport = _.clone(SampleExportInstances.saved, { saveUrl: 'http://saveurl/' });
     });
 
     it('Should create an instance from JSON', function() {
@@ -49,6 +50,22 @@ describe('ExportInstance model', function() {
             assert.isDefined(item.path);
             assert.isDefined(item.tag);
         });
+    });
+    describe('#isNew', function() {
+        var instance;
+        beforeEach(function() {
+            instance = new Exports.ViewModels.ExportInstance(basicFormExport);
+            instanceSaved = new Exports.ViewModels.ExportInstance(savedFormExport);
+        });
+
+        it('should correctly determine if instance is new', function() {
+            assert.isTrue(instance.isNew());
+        });
+
+        it('should correctly determine if instance is new', function() {
+            assert.isFalse(instanceSaved.isNew());
+        });
+
     });
 
     describe('#save', function() {
