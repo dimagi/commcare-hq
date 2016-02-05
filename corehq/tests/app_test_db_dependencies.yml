@@ -319,3 +319,7 @@ corehq.apps.accounting:
   - corehq.apps.app_manager
   - corehq.apps.reminders
   - corehq.apps.data_interfaces
+corehq.apps.export:
+  - corehq.apps.export
+  - corehq.couchapps
+  - corehq.apps.app_manager

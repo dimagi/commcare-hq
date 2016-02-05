@@ -30,6 +30,7 @@ from corehq.apps.app_manager.util import (
     get_commcare_versions,
     get_usercase_properties,
 )
+from corehq.apps.style.decorators import use_bootstrap3
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
@@ -39,6 +40,7 @@ from corehq.apps.app_manager.models import (
 from django_prbac.utils import has_privilege
 
 
+@use_bootstrap3
 @retry_resource(3)
 def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                  is_user_registration=False, copy_app_form=None):
@@ -119,10 +121,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         context.update(get_app_view_context(request, app))
     else:
         from corehq.apps.dashboard.views import NewUserDashboardView
-        from corehq.apps.style.utils import set_bootstrap_version3
-        from crispy_forms.utils import set_template_pack
-        set_bootstrap_version3()
-        set_template_pack('bootstrap3')
         template = NewUserDashboardView.template_name
         context.update({'templates': NewUserDashboardView.templates(domain)})
 

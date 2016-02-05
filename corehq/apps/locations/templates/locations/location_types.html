@@ -1,43 +1,47 @@
-{% extends "settings/bootstrap2/base_template.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-<script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
-<script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-<script src="{% static 'locations/ko/location_types.js' %}"></script>
+    <script src="{% new_static 'locations/ko/location_types.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
-<script type="text/javascript">
+    <script type="text/javascript">
+        $(function() {
+            var loc_types = {{ location_types|JSON }};
+            var commtrack_enabled = {{ commtrack_enabled|JSON }};
 
-    $(function() {
-        var loc_types = {{ location_types|JSON }};
-        var commtrack_enabled = {{ commtrack_enabled|JSON }};
+            var model = new LocationSettingsViewModel(loc_types, commtrack_enabled);
+            var $settings = $('#settings');
 
-        var model = new LocationSettingsViewModel(loc_types, commtrack_enabled);
-        $('#settings').submit(function() {
-            return model.presubmit();
+            var warnBeforeUnload = function() {
+                return "{% trans "You have unsaved changes." %}";
+            };
+
+            $settings.submit(function() {
+                return model.presubmit();
+            });
+
+            $settings.koApplyBindings(model);
+
+            $("form#settings").on("change input", function() {
+                $(this).find(":submit").addClass("btn-success").enable();
+                window.onbeforeunload = warnBeforeUnload;
+            });
+
+            $("form#settings button").on("click", function() {
+                $("form#settings").find(":submit").addClass("btn-success").enable();
+                window.onbeforeunload = warnBeforeUnload;
+            });
         });
-
-        $('#settings').koApplyBindings(model);
-
-        $("form#settings").on("change input", function() {
-            $(this).find(":submit").enable();
-        });
-
-        $("form#settings button").on("click", function() {
-            $("form#settings").find(":submit").enable();
-        });
-    });
-
-</script>
+    </script>
 {% endblock %}
 
-{% block main_column %}
-    <div class="row-fluid">
-        <div class="span8">
+{% block page_content %}
+    <div class="row">
+        <div class="col-sm-8">
             <h2>{% trans "Organization Levels" %}</h2>
             <p>
                 {% blocktrans %}
@@ -55,125 +59,127 @@
     <form id="settings" class="form form-horizontal" method="post">
         {% csrf_token %}
         <fieldset>
-            <div class="control-group">
-                <button type="button" class="btn btn-success" data-bind="click: new_loctype">
-                    <i class="icon-plus"></i> {% trans "New Organization Level" %}
-                </button>
-                <hr />
-                <div class="pull-right">
-                    <label>
-                        <input type="checkbox" data-bind="checked:advanced_mode"/>
-                        {% trans "Advanced mode" %}
-                    </label>
-                </div>
-                <div class="alert alert-error" style="display: none"
-                     data-bind="visible: loc_types_error">
-                    {% trans "Organization Levels cannot be their own ancestors." %}
-                </div>
-                <table class="table table-striped table-bordered">
-                    <thead>
-                        <tr>
-                            <th>{% trans "Organization Level" %}</th>
-                            <th>
-                                {% trans "Parent Level" %}
-                                <span class="hq-help-template"
-                                      data-title="{% trans "Parent Type" %}"
-                                      data-content="{% blocktrans %}
-                                          This controls which parent this organization level
-                                          must have. You can use this to setup a organization 
-                                          level that can have different types of children.
-                                      {% endblocktrans %}">
-                                </span>
-                            </th>
-                            <!-- ko if:advanced_mode -->
-                            <th>
-                                {% trans "Type Code"%}
-                            </th>
+            <div class="col-sm-12">
+                <div class="form-group">
+                    <button type="submit" class="btn btn-default pull-right" disabled>
+                        {% trans "Save Organization Levels" %}
+                    </button>
+                    <button type="button" class="btn btn-default" data-bind="click: new_loctype">
+                        <i class="fa fa-plus"></i> {% trans "New Organization Level" %}
+                    </button>
+                    <hr />
+                    <div class="pull-right">
+                        <label>
+                            <input type="checkbox" data-bind="checked:advanced_mode"/>
+                            {% trans "Advanced mode" %}
+                        </label>
+                    </div>
+                    <div class="alert alert-danger" style="display: none"
+                         data-bind="visible: loc_types_error">
+                        {% trans "Organization Levels cannot be their own ancestors." %}
+                    </div>
+                    <table class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Organization Level" %}</th>
+                                <th>
+                                    {% trans "Parent Level" %}
+                                    <span class="hq-help-template"
+                                          data-title="{% trans "Parent Type" %}"
+                                          data-content="{% blocktrans %}
+                                              This controls which parent this organization level
+                                              must have. You can use this to setup a organization
+                                              level that can have different types of children.
+                                          {% endblocktrans %}">
+                                    </span>
+                                </th>
+                                <!-- ko if:advanced_mode -->
+                                <th>
+                                    {% trans "Type Code"%}
+                                </th>
+                                <!-- /ko -->
+                                {% if commtrack_enabled %}
+                                <th>
+                                    {% trans "Tracks Stock" %}
+                                    <span class="hq-help-template"
+                                          data-title="{% trans "Tracks Stock" %}"
+                                          data-content="{% blocktrans %}
+                                              Does this location keep inventory and track stock?
+                                              Note that changing this property will update all
+                                              locations of this level accordingly.
+                                          {% endblocktrans %}">
+                                    </span>
+                                </th>
+                                {% endif %}
+                                <th>
+                                    {% trans "Owns Cases" %}
+                                    <span class="hq-help-template"
+                                          data-title="{% trans "Owns Cases" %}"
+                                          data-content="{% blocktrans %}
+                                              This allows locations at this level to own and
+                                              manage cases. A case sharing group will be
+                                              created for each location.
+                                          {% endblocktrans %}">
+                                    </span>
+                                </th>
+                                <th>
+                                    {% trans "View Child Data" %}
+                                    <span class="hq-help-template"
+                                          data-title="{% trans "View Child Data" %}"
+                                          data-content="{% blocktrans %}
+                                              Mobile workers assigned to locations at this
+                                              level will be able to view any cases owned by
+                                              their child locations.
+                                          {% endblocktrans %}">
+                                    </span>
+                                </th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody data-bind="foreach: loc_types">
+                        <tr data-bind="bind_element: Object()">
+                            <td class="form-group" data-bind="css: { 'error': name_error }">
+                                <input class="loctype_name form-control" data-bind="value: name" type="text" />
+                                <div class="help-inline" data-bind="visible: name_error">
+                                    {% trans "Required" %}
+                                </div>
+                            </td>
+                            <td class="form-group">
+                                <select class="form-control"
+                                        data-bind="options: $root.loc_type_options($data),
+                                                   optionsText: 'name',
+                                                   optionsValue: 'pk',
+                                                   value: parent_type,
+                                                   optionsCaption: '\u2013top level\u2013'">
+                                </select>
+                            </td>
+                            <!-- ko if:$parent.advanced_mode() -->
+                            <td class="form-group">
+                                <input class="form-control typecode" data-bind="value: code" type="text" />
+                            </td>
                             <!-- /ko -->
                             {% if commtrack_enabled %}
-                            <th>
-                                {% trans "Tracks Stock" %}
-                                <span class="hq-help-template"
-                                      data-title="{% trans "Tracks Stock" %}"
-                                      data-content="{% blocktrans %}
-                                          Does this location keep inventory and track stock?
-                                          Note that changing this property will update all
-                                          locations of this level accordingly.
-                                      {% endblocktrans %}">
-                                </span>
-                            </th>
+                            <td>
+                                <input data-bind="checked: tracks_stock" type="checkbox" />
+                            </td>
                             {% endif %}
-                            <th>
-                                {% trans "Owns Cases" %}
-                                <span class="hq-help-template"
-                                      data-title="{% trans "Owns Cases" %}"
-                                      data-content="{% blocktrans %}
-                                          This allows locations at this level to own and
-                                          manage cases. A case sharing group will be
-                                          created for each location.
-                                      {% endblocktrans %}">
-                                </span>
-                            </th>
-                            <th>
-                                {% trans "View Child Data" %}
-                                <span class="hq-help-template"
-                                      data-title="{% trans "View Child Data" %}"
-                                      data-content="{% blocktrans %}
-                                          Mobile workers assigned to locations at this
-                                          level will be able to view any cases owned by
-                                          their child locations.
-                                      {% endblocktrans %}">
-                                </span>
-                            </th>
-                            <th></th>
+                            <td>
+                                <input data-bind="checked: shares_cases" type="checkbox" />
+                            </td>
+                            <td>
+                                <input data-bind="checked: view_descendants" type="checkbox" />
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype">
+                                    <i class="fa fa-trash"></i> {% trans "Remove" %}
+                                </button>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody data-bind="foreach: loc_types">
-                    <tr data-bind="bind_element: Object()">
-                        <td class="control-group" data-bind="css: { 'error': name_error }">
-                            <input class="loctype_name" data-bind="value: name" type="text" />
-                            <div class="help-inline" data-bind="visible: name_error">
-                                {% trans "Required" %}
-                            </div>
-                        </td>
-                        <td class="control-group">
-                            <select data-bind="options: $root.loc_type_options($data),
-                                               optionsText: 'name',
-                                               optionsValue: 'pk',
-                                               value: parent_type,
-                                               optionsCaption: '\u2013top level\u2013'">
-                            </select>
-                        </td>
-                        <!-- ko if:$parent.advanced_mode() -->
-                        <td class="control-group">
-                            <input class="typecode" data-bind="value: code" type="text" />
-                        </td>
-                        <!-- /ko -->
-                        {% if commtrack_enabled %}
-                        <td>
-                            <input data-bind="checked: tracks_stock" type="checkbox" />
-                        </td>
-                        {% endif %}
-                        <td>
-                            <input data-bind="checked: shares_cases" type="checkbox" />
-                        </td>
-                        <td>
-                            <input data-bind="checked: view_descendants" type="checkbox" />
-                        </td>
-                        <td>
-                            <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype">
-                                <i class="icon-trash icon-white"></i> {% trans "Remove" %}
-                            </button>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </fieldset>
-
-        <button type="submit" class="btn btn-primary" disabled>
-            {% trans "Save Organization Levels" %}
-        </button>
         <input name="json" type="hidden" data-bind="value: json_payload" />
     </form>
 

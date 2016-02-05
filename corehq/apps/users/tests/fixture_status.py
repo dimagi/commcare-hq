@@ -31,7 +31,7 @@ class TestFixtureStatus(TestCase):
 
     def test_get_statuses(self):
         no_status = {UserFixtureType.CHOICES[0][0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED}
-        self.assertEqual(self.couch_user.get_fixture_statuses(), no_status)
+        self.assertEqual(self.couch_user._get_fixture_statuses(), no_status)
 
         now = datetime.utcnow()
         UserFixtureStatus(
@@ -40,7 +40,7 @@ class TestFixtureStatus(TestCase):
             last_modified=now,
         ).save()
         expected_status = {UserFixtureType.CHOICES[0][0]: now}
-        self.assertEqual(self.couch_user.get_fixture_statuses(), expected_status)
+        self.assertEqual(self.couch_user._get_fixture_statuses(), expected_status)
 
     def test_get_status(self):
         now = datetime.utcnow()

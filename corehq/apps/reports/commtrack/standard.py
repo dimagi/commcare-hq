@@ -76,7 +76,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     slug = 'current_stock_status'
     fields = [
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-        'corehq.apps.reports.dont_use.fields.SelectProgramField',
+        'corehq.apps.reports.filters.commtrack.ProgramFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
     exportable = True
@@ -215,7 +215,7 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
     emailable = True
     fields = [
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-        'corehq.apps.reports.dont_use.fields.SelectProgramField',
+        'corehq.apps.reports.filters.commtrack.ProgramFilter',
         'corehq.apps.reports.filters.dates.SingleDateFilter',
     ]
 
@@ -261,7 +261,7 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
     slug = StockStatusDataSource.slug
     fields = [
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-        'corehq.apps.reports.dont_use.fields.SelectProgramField',
+        'corehq.apps.reports.filters.commtrack.ProgramFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'corehq.apps.reports.filters.commtrack.AdvancedColumns',
     ]

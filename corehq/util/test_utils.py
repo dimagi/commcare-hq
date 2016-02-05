@@ -9,7 +9,6 @@ from unittest import TestCase, SkipTest
 from collections import namedtuple
 from contextlib import contextmanager
 
-from fakecouch import FakeCouchDb
 from functools import wraps
 from django.conf import settings
 import sys
@@ -137,6 +136,7 @@ def mock_out_couch(views=None, docs=None):
     You can optionally pass default return values for specific views and doc
     gets.  See the FakeCouchDb docstring for more specifics.
     """
+    from fakecouch import FakeCouchDb
     db = FakeCouchDb(views=views, docs=docs)
     def _get_db(*args):
         return db
@@ -287,6 +287,7 @@ def get_form_ready_to_save(metadata, is_db_test=False):
     from corehq.form_processor.parsers.form import process_xform_xml
     from corehq.form_processor.utils import get_simple_form_xml, convert_xform_to_json
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
+    from corehq.form_processor.models import Attachment
 
     assert metadata is not None
     metadata.domain = metadata.domain or uuid.uuid4().hex
@@ -296,9 +297,13 @@ def get_form_ready_to_save(metadata, is_db_test=False):
     if is_db_test:
         wrapped_form = process_xform_xml(metadata.domain, form_xml).submitted_form
     else:
+        interface = FormProcessorInterface(domain=metadata.domain)
         form_json = convert_xform_to_json(form_xml)
-        wrapped_form = FormProcessorInterface(domain=metadata.domain).new_xform(form_json)
+        wrapped_form = interface.new_xform(form_json)
         wrapped_form.domain = metadata.domain
+        interface.store_attachments(wrapped_form, [
+            Attachment(name='form.xml', raw_content=form_xml, content_type='text/xml')
+        ])
     wrapped_form.received_on = metadata.received_on
     return wrapped_form
 
