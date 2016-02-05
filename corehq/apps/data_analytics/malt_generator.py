@@ -39,12 +39,13 @@ class MALTTableGenerator(object):
                 except Exception as ex:
                     logger.error("Failed to get rows for domain {name}. Exception is {ex}".format
                                  (name=domain.name, ex=str(ex)), exc_info=True)
+            print malt_rows_to_save
             self._save_to_db(malt_rows_to_save, domain._id)
 
     def _get_malt_row_dicts(self, domain_name, monthspan, all_users_by_id):
         malt_row_dicts = []
         forms_query = self._get_forms_queryset(domain_name, monthspan)
-        apps_submitted_for = forms_query.values('app_id', 'user_id', 'username').annotate(
+        apps_submitted_for = forms_query.values('app_id', 'device_id', 'user_id', 'username').annotate(
             num_of_forms=Count('instance_id')
         )
 
@@ -73,6 +74,7 @@ class MALTTableGenerator(object):
                 'domain_name': domain_name,
                 'num_of_forms': num_of_forms,
                 'app_id': app_id,
+                'device_id': app_row_dict['device_id'],
                 'wam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(wam, MALTRow.NOT_SET),
                 'pam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(pam, MALTRow.NOT_SET),
                 'threshold': threshold,

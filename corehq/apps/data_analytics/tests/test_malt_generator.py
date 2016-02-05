@@ -118,22 +118,39 @@ class MaltGeneratorTest(TestCase):
         generator = MALTTableGenerator([cls.malt_month])
         generator.build_table()
 
-    def _check_malt_rows(self, app_id, num_forms=None, wam_value=None, malt_row_count=1):
-        app_rows = MALTRow.objects.filter(
-            username=self.USERNAME,
-            app_id=app_id,
-        )
-        self.assertEqual(app_rows.count(), malt_row_count)  # 1 row per app
-        row = app_rows.all()[0]
-        self.assertEqual(int(row.num_of_forms), num_forms)
-        self.assertEqual(row.wam, wam_value)
+    def _assert_malt_row_exists(self, query_filters):
+        rows = MALTRow.objects.filter(username=self.USERNAME, **query_filters)
+        self.assertEqual(rows.count(), 1)
 
     def test_wam_yes_malt_counts(self):
-        self._check_malt_rows(self.wam_app_id, 2, MALTRow.YES)
+        # 2 forms for WAM.YES app
+        self._assert_malt_row_exists({
+            'app_id': self.wam_app_id,
+            'num_of_forms': 2,
+            'wam': MALTRow.YES,
+        })
 
     def test_wam_not_set_malt_counts(self):
-        # 3 non_wam_app forms and 1 sms_form
-        self._check_malt_rows(self.non_wam_app_id, 4, MALTRow.NOT_SET)
+        # 3 forms from self.DEVICE_ID for WAM not-set app
+        self._assert_malt_row_exists({
+            'app_id': self.non_wam_app_id,
+            'num_of_forms': 3,
+            'wam': MALTRow.NOT_SET,
+            'device_id': self.DEVICE_ID,
+        })
+
+        # 1 form from COMMONCONNECT_DEVICE_ID for WAM not-set app
+        self._assert_malt_row_exists({
+            'app_id': self.non_wam_app_id,
+            'num_of_forms': 1,
+            'wam': MALTRow.NOT_SET,
+            'device_id': COMMCONNECT_DEVICE_ID,
+        })
 
     def test_missing_app_id_is_included(self):
-        self._check_malt_rows(MISSING_APP_ID, 1, MALTRow.NOT_SET)
+        # apps with MISSING_APP_ID should be included in MALT
+        self._assert_malt_row_exists({
+            'app_id': MISSING_APP_ID,
+            'num_of_forms': 1,
+            'wam': MALTRow.NOT_SET,
+        })
