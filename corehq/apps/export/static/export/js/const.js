@@ -16,3 +16,7 @@ Exports.Constants.DEID_OPTIONS = {
     ID: 'deid_id',
     DATE: 'deid_date'
 };
+Exports.Constants.ANALYTICS_EVENT_CATEGORIES = {
+    'form': 'Form Exports',
+    'case': 'Case Exports'
+};
