@@ -28,7 +28,7 @@ class BaseModifySubscriptionHandler(object):
         self.date_start = date_start or datetime.date.today()
         self.new_plan_version = new_plan_version
 
-        self.privileges = filter(lambda x: x in self.supported_privileges, changed_privs)
+        self.privileges = filter(lambda x: x in self.supported_privileges(), changed_privs)
 
     def get_response(self):
         return filter(
@@ -47,7 +47,7 @@ class BaseModifySubscriptionHandler(object):
     def privilege_to_response_function(cls):
         raise NotImplementedError
 
-    @property
+    @classmethod
     def supported_privileges(self):
         return self.privilege_to_response_function().keys()
 
