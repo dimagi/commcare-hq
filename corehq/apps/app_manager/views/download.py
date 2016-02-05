@@ -121,10 +121,7 @@ def download_jad(request, domain, app_id):
     if not app.copy_of:
         app.set_form_versions(None)
         app.set_media_versions(None)
-    try:
-        jad, _ = app.create_jadjar_from_build_files()
-    except ResourceConflict:
-        return download_jad(request, domain, app_id)
+    jad, _ = app.create_jadjar_from_build_files()
     try:
         response = HttpResponse(jad)
     except Exception:
