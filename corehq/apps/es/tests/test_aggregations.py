@@ -31,7 +31,10 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
             },
             "aggs": {
                 "users": {
-                    "terms": {"field": "user_id"},
+                    "terms": {
+                        "field": "user_id",
+                        "size": SIZE_LIMIT
+                    },
                     "aggs": {
                         "closed": {
                             "filter": {

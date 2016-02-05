@@ -150,7 +150,7 @@ class TermsAggregation(Aggregation):
         self.name = name
         self.body = {
             "field": field,
-             "size": size if size is not None else SIZE_LIMIT,
+            "size": size if size is not None else SIZE_LIMIT,
         }
 
 
