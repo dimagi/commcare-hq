@@ -252,10 +252,6 @@ class ExportInstance(Document):
         return self.is_deidentified
 
     @property
-    def formname(self):
-        raise NotImplementedError()
-
-    @property
     def defaults(self):
         return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
 
