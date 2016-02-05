@@ -5,8 +5,8 @@ import tasks
 
 
 def iter_cases_to_modify():
-    for domain in ('foo', 'bar', 'baz'):
-        for case_id in ('ham', 'spam', 'eggs'):
+    for domain in ('domain1', 'domain2', 'domain3'):
+        for case_id in ('case1', 'case2', 'case3'):
             yield {
                 'case_id': case_id,
                 'update': {},
@@ -29,7 +29,7 @@ class NewUpdateCasePropertiesTest(SimpleTestCase):
         mock_submit_case_blocks = Mock()
         tasks.iter_cases_to_modify = mock_iter_cases_to_modify
         tasks.submit_case_blocks = mock_submit_case_blocks
-        tasks.CASEBLOCK_CHUNKSIZE = 2
+        tasks.CASEBLOCK_CHUNKSIZE = 1
 
         tasks.new_update_case_properties()
 
@@ -39,14 +39,18 @@ class NewUpdateCasePropertiesTest(SimpleTestCase):
             domain = call_args[0][1]
             case_ids = [get_case_id(case_block) for case_block in case_blocks]
             call_args_list.append((case_ids, domain))
+
         expected = [
-            (['ham', 'spam'], 'foo'),
-            (['eggs'], 'foo'),
+            (['case1'], 'domain1'),
+            (['case2'], 'domain1'),
+            (['case3'], 'domain1'),
 
-            (['ham', 'spam'], 'bar'),
-            (['eggs'], 'bar'),
+            (['case1'], 'domain2'),
+            (['case2'], 'domain2'),
+            (['case3'], 'domain2'),
 
-            (['ham', 'spam'], 'baz'),
-            (['eggs'], 'baz'),
+            (['case1'], 'domain3'),
+            (['case2'], 'domain3'),
+            (['case3'], 'domain3'),
         ]
         self.assertEqual(call_args_list, expected)
