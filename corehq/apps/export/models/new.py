@@ -1,6 +1,7 @@
 from datetime import datetime
 from itertools import groupby
 from collections import defaultdict, OrderedDict
+from django.utils.translation import ugettext as _
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
 from corehq.apps.userreports.expressions.getters import NestedDictGetter
@@ -28,7 +29,7 @@ from corehq.apps.export.const import (
     PROPERTY_TAG_UPDATE,
     PROPERTY_TAG_DELETED,
     CASE_HISTORY_PROPERTIES,
-    CASE_HISTORY_GROUP_NAME,
+    CASE_HISTORY_TABLE,
     MAIN_TABLE_PROPERTIES,
     FORM_EXPORT,
     CASE_EXPORT,
@@ -114,7 +115,7 @@ class ExportColumn(DocumentSchema):
                 is_deleted = False
                 break
 
-        is_main_table = group_schema_path == [None]
+        is_main_table = group_schema_path == MAIN_TABLE
 
         tags = []
         if is_deleted:
@@ -136,7 +137,10 @@ class ExportColumn(DocumentSchema):
 
 
 class TableConfiguration(DocumentSchema):
+    # name is not modified by the user, and denotes the name of the table
     name = StringProperty()
+    # diplay_name saves the user's decision for the table name
+    display_name = StringProperty()
     path = ListProperty()
     columns = ListProperty(ExportColumn)
     selected = BooleanProperty(default=False)
@@ -241,7 +245,8 @@ class ExportInstance(Document):
             table = TableConfiguration(
                 path=group_schema.path,
                 name=instance.defaults.get_default_table_name(group_schema.path),
-                selected=instance.defaults.get_default_table_selected(group_schema.path),
+                display_name=instance.defaults.get_default_table_name(group_schema.path),
+                selected=instance.defaults.default_is_table_selected(group_schema.path),
             )
             table.columns = map(
                 lambda item: ExportColumn.create_default_from_export_item(
@@ -276,7 +281,10 @@ class ExportInstanceDefaults(object):
         raise NotImplementedError()
 
     @staticmethod
-    def get_default_table_selected(path):
+    def default_is_table_selected(path):
+        """
+        Based on the path, determines whether the table should be selected by default
+        """
         return path == MAIN_TABLE
 
 
@@ -289,9 +297,9 @@ class FormExportInstanceDefaults(ExportInstanceDefaults):
     @staticmethod
     def get_default_table_name(table_path):
         if table_path == MAIN_TABLE:
-            return 'Forms'
+            return _('Forms')
         else:
-            return 'Repeat: {}'.format(_list_path_to_string(table_path))
+            return _('Repeat: {}').format(_list_path_to_string(table_path))
 
 
 class CaseExportInstanceDefaults(ExportInstanceDefaults):
@@ -299,13 +307,15 @@ class CaseExportInstanceDefaults(ExportInstanceDefaults):
     @staticmethod
     def get_default_table_name(table_path):
         if table_path == MAIN_TABLE:
-            return 'Cases'
+            return _('Cases')
+        elif table_path == CASE_HISTORY_TABLE:
+            return _('Case History')
         else:
-            return 'Unknown'
+            return _('Unknown')
 
     @staticmethod
     def get_default_instance_name(schema):
-        return '{}: {}'.format(schema.case_type, datetime.now().strftime('%Y-%M-%d'))
+        return u'{}: {}'.format(schema.case_type, datetime.now().strftime('%Y-%M-%d'))
 
 
 class ExportRow(object):
@@ -622,7 +632,7 @@ class CaseExportDataSchema(ExportDataSchema):
 
         for case_type, case_properties in case_property_mapping.iteritems():
             group_schema = ExportGroupSchema(
-                path=[case_type],
+                path=MAIN_TABLE,
                 last_occurrences={app_id: app_version},
             )
             for prop in case_properties:
@@ -643,7 +653,7 @@ class CaseExportDataSchema(ExportDataSchema):
         schema = CaseExportDataSchema()
 
         group_schema = ExportGroupSchema(
-            path=[CASE_HISTORY_GROUP_NAME],
+            path=CASE_HISTORY_TABLE,
             last_occurrences={app_id: app_version},
         )
         for system_prop in CASE_HISTORY_PROPERTIES:

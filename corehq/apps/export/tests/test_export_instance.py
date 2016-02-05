@@ -7,6 +7,7 @@ from corehq.apps.export.models import (
     ExportGroupSchema,
     ExportInstance,
 )
+from corehq.apps.export.const import MAIN_TABLE
 
 
 @mock.patch(
@@ -21,7 +22,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
         cls.schema = FormExportDataSchema(
             group_schemas=[
                 ExportGroupSchema(
-                    path=[None],
+                    path=MAIN_TABLE,
                     items=[
                         ExportItem(
                             path=['data', 'question1'],
@@ -111,7 +112,7 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
         cls.schema = FormExportDataSchema(
             group_schemas=[
                 ExportGroupSchema(
-                    path=[None],
+                    path=MAIN_TABLE,
                     items=[
                         ExportItem(
                             path=['data', 'question1'],
@@ -163,12 +164,12 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
             lambda column: column.selected,
             instance.tables[0].columns + instance.tables[1].columns
         )
-        shown = filter(
-            lambda column: column.selected,
+        is_advanced = filter(
+            lambda column: column.is_advanced,
             instance.tables[0].columns + instance.tables[1].columns
         )
         self.assertEqual(len(selected), 1)
-        self.assertEqual(len(shown), 1)
+        self.assertEqual(len(is_advanced), 0)
 
     def test_ensure_that_column_is_deleted(self, _):
         """If both apps are out of date then, the question is indeed deleted"""

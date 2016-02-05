@@ -37,7 +37,7 @@
             <div class="control-group">
                 <label class="control-label">{% trans "Sheet Name" %}</label>
                 <div class="controls">
-                    <input type="text" data-bind="value: table.name" />
+                    <input type="text" data-bind="value: table.display_name" />
                 </div>
             </div>
             <div class="control-group">
@@ -51,7 +51,7 @@
                         <tr class="nodrag nodrop">
                             <th></th>
                             <th>{% trans "Include this Field?" %}<br>
-                                <a  class="btn btn-mini" data-bind="click: table.selectAll">{% trans "Select All" %}</a>
+                                <a class="btn btn-mini" data-bind="click: table.selectAll">{% trans "Select All" %}</a>
                                 <a class="btn btn-mini btn-inverse" data-bind="click: table.selectNone">{% trans "Select None" %}</a></th>
                             <th>
                             {% if export_instance.type == 'form' %}
