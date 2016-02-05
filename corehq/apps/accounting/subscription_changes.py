@@ -31,12 +31,13 @@ class BaseModifySubscriptionHandler(object):
         self.privileges = filter(lambda x: x in self.supported_privileges, changed_privs)
 
     def get_response(self):
-        response = []
-        for priv in self.privileges:
-            message = self.privilege_to_response_function()[priv](self.domain)
-            if message is not None:
-                response.append(message)
-        return response
+        return filter(
+            lambda message: message is not None,
+            map(
+                lambda privilege: self.privilege_to_response_function()[privilege](self.domain),
+                self.privileges
+            )
+        )
 
     @property
     def action_type(self):
