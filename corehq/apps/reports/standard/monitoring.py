@@ -6,8 +6,11 @@ from django.db.models.aggregates import Max, Min, Avg, StdDev, Count
 import operator
 from pygooglechart import ScatterChart
 import pytz
+
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
+from corehq.apps.es.aggregations import TermsAggregation, RangeAggregation, AggregationRange, \
+    FilterAggregation
 from corehq.apps.reports import util
 from corehq.apps.reports.analytics.esaccessors import (
     get_last_submission_time_for_user,
@@ -134,11 +137,7 @@ class CompletionOrSubmissionTimeMixin(object):
 
 
 class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
-    """
-    User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
-    danny   5 (25%)         10 (50%)        20 (100%)       17                          6
-    (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
-    """
+    """See column headers for details"""
     name = ugettext_noop('Case Activity')
     slug = 'case_activity'
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
@@ -149,80 +148,39 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     description = ugettext_noop("Followup rates on active cases.")
     is_cacheable = True
 
-    @classmethod
-    def display_in_dropdown(cls, domain=None, project=None, user=None):
-        if project and project.commtrack_enabled:
-            return False
-        else:
-            return True
+    @property
+    def landmark_columns(self):
+        return [
+            (_("# Updated or Closed"),
+             _("The number of cases that have been created, updated, or closed "
+               "between {} days ago and today.")),
+            (_("# Active"),
+             _("The number of open cases created or updated in the last {} days.")),
+            (_("# Closed"),
+             _("The number of cases that have been closed between {} days ago and "
+               "today.")),
+            (_("Proportion"),
+             _("The percentage of all recently active cases that were created, "
+               "updated or closed in the last {} days.")),
+            # "recently active" means "touched in the last 120 days"
+        ]
+
+    @property
+    def totals_columns(self):
+        return [
+            (_("# Active Cases"),
+             _("Number of open cases modified in the last {} days")),
+            (_("# Inactive Cases"),
+             _("Number of cases that are open but haven't been touched in the "
+               "last {} days")),
+        ]
 
     @property
     def special_notice(self):
         if self.domain_object.case_sharing_included():
             return _("This report currently does not support case sharing. "
-                       "There might be inconsistencies in case totals if the user is part of a case sharing group. "
-                       "We are working to correct this shortly.")
-
-    class Row(object):
-        def __init__(self, report, user):
-            self.report = report
-            self.user = user
-
-        def active_count(self, startdate=None):
-            """Open clients seen in the last 120 days"""
-            return self.report.get_number_cases(
-                user_id=self.user.user_id,
-                modified_after=startdate,
-                modified_before=self.report.utc_now,
-                closed=False,
-            )
-
-        def inactive_count(self, startdate=None):
-            """Open clients not seen in the last 120 days"""
-            return self.report.get_number_cases(
-                user_id=self.user.user_id,
-                modified_after=startdate,
-                modified_before=self.report.utc_now,
-                closed=False,
-            )
-
-        def modified_count(self, startdate=None):
-            return self.report.get_number_cases(
-                user_id=self.user.user_id,
-                modified_after=startdate,
-                modified_before=self.report.utc_now,
-            )
-
-        def closed_count(self, startdate=None):
-            return self.report.get_number_cases(
-                user_id=self.user.user_id,
-                modified_after=startdate,
-                modified_before=self.report.utc_now,
-                closed=True
-            )
-
-        def header(self):
-            return self.report.get_user_link(self.user)
-
-    class TotalRow(object):
-        def __init__(self, rows, header):
-            self.rows = rows
-            self._header = header
-
-        def active_count(self, startdate=None):
-            return sum([row.active_count(startdate) for row in self.rows])
-
-        def inactive_count(self, startdate=None):
-            return sum([row.inactive_count(startdate) for row in self.rows])
-
-        def modified_count(self, startdate=None):
-            return sum([row.modified_count(startdate) for row in self.rows])
-
-        def closed_count(self, startdate=None):
-            return sum([row.closed_count(startdate) for row in self.rows])
-
-        def header(self):
-            return self._header
+                     "There might be inconsistencies in case totals if the "
+                     "user is part of a case sharing group.")
 
     _default_landmarks = [30, 60, 90]
     @property
@@ -260,32 +218,23 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def headers(self):
+
+        def make_column(title, help_text, num_days):
+            return DataTablesColumn(title, sort_type=DTSortType.NUMERIC,
+                                    help_text=help_text.format(num_days))
+
         columns = [DataTablesColumn(_("Users"))]
+
         for landmark in self.landmarks:
-            num_cases = DataTablesColumn(_("# Modified or Closed"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of cases that have been modified between %d days ago and today.") % landmark.days
-            )
-            num_active = DataTablesColumn(_("# Active"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of cases created or modified in the last %d days.") % landmark.days
-            )
-            num_closed = DataTablesColumn(_("# Closed"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of cases that have been closed between %d days ago and today.") % landmark.days
-            )
-            proportion = DataTablesColumn(_("Proportion"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The percentage of all recently active cases that were modified or closed in the last %d days.") % landmark.days
-            )
-            columns.append(DataTablesColumnGroup(_("Cases in Last %s Days") % landmark.days if landmark else _("Ever"),
-                num_cases,
-                num_active,
-                num_closed,
-                proportion
+            columns.append(DataTablesColumnGroup(
+                _("Cases in Last {} Days").format(landmark.days) if landmark else _("Ever"),
+                *[make_column(title, help_text, landmark.days)
+                  for title, help_text in self.landmark_columns]
             ))
-        columns.append(DataTablesColumn(_("# Active Cases"),
-            sort_type=DTSortType.NUMERIC,
-            help_text=_('Number of cases modified in the last %s days that are still open') % self.milestone.days))
-        columns.append(DataTablesColumn(_("# Inactive Cases"),
-            sort_type=DTSortType.NUMERIC,
-            help_text=_("Number of cases that are open but haven't been touched in the last %s days") % self.milestone.days))
+
+        for title, help_text in self.totals_columns:
+            columns.append(make_column(title, help_text, self.milestone.days))
+
         return DataTablesHeader(*columns)
 
     @property
@@ -295,12 +244,18 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             self.domain,
             mobile_user_and_group_slugs,
         )
-        rows = [self.Row(self, user) for user in users_data.combined_users]
+        users_by_id = {user.user_id: user for user in users_data.combined_users}
 
-        total_row = self.TotalRow(rows, _("All Users"))
+        es_results = self.es_queryset(users_by_id)
+        buckets = {user_id: bucket for user_id, bucket in es_results.aggregations.users.buckets_dict.items()}
+        rows = []
+        for user_id, user in users_by_id.items():
+            bucket = buckets.get(user_id, None)
+            rows.append(self.Row(self, user, bucket))
 
         def format_row(row):
             cells = [row.header()]
+            total_touched = row.total_touched_count()
 
             def add_numeric_cell(text, value=None):
                 if value is None:
@@ -311,48 +266,131 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 cells.append(util.format_datatables_data(text=text, sort_key=value))
 
             for landmark in self.landmarks:
-                startdate = self.utc_now - landmark
-                value = row.modified_count(startdate)
-                active = row.active_count(startdate)
-                closed = row.closed_count(startdate)
-                total = active + closed
+                landmark_key = unicode(landmark.days)
+
+                modified = row.modified_count(landmark_key)
+                active = row.active_count(landmark_key)
+                closed = row.closed_count(landmark_key)
 
                 try:
-                    p_val = float(value) * 100. / float(total)
+                    p_val = float(modified) * 100. / float(total_touched)
                     proportion = '%.f%%' % p_val
                 except ZeroDivisionError:
                     p_val = None
                     proportion = '--'
-                add_numeric_cell(value, value)
+
+                add_numeric_cell(modified, modified)
                 add_numeric_cell(active, active)
                 add_numeric_cell(closed, closed)
                 add_numeric_cell(proportion, p_val)
 
-            startdate = self.utc_now - self.milestone
-            add_numeric_cell(row.active_count(startdate))
-            add_numeric_cell(row.inactive_count(startdate))
+            add_numeric_cell(row.total_active_count())
+            add_numeric_cell(row.total_inactive_count())
             return cells
 
-        self.total_row = format_row(total_row)
+        self.total_row = format_row(self.TotalRow(rows, _("All Users")))
         return map(format_row, rows)
 
-    def get_number_cases(self, user_id, modified_after=None, modified_before=None, closed=None):
-        kwargs = {}
-        if closed is not None:
-            kwargs['closed'] = bool(closed)
-        if modified_after:
-            kwargs['modified_on__gte'] = ServerTime(modified_after).phone_time(self.timezone).done()
-        if modified_before:
-            kwargs['modified_on__lt'] = ServerTime(modified_before).phone_time(self.timezone).done()
-        if self.case_type:
-            kwargs['type'] = self.case_type
+    def es_queryset(self, users_by_id):
+        end_date = ServerTime(self.utc_now).phone_time(self.timezone).done()
+        milestone_start = ServerTime(self.utc_now - self.milestone).phone_time(self.timezone).done()
 
-        qs = CaseData.objects.filter(
-            domain=self.domain,
-            user_id=user_id,
-            **kwargs
+        touched_total_aggregation = FilterAggregation(
+            'touched_total',
+            filters.AND(
+                filters.date_range('modified_on', gte=milestone_start, lt=end_date),
+            )
         )
-        return qs.count()
+
+        active_total_aggregation = FilterAggregation(
+            'active_total',
+            filters.AND(
+                filters.date_range('modified_on', gte=milestone_start, lt=end_date),
+                filters.term('closed', False))
+        )
+
+        inactive_total_aggregation = FilterAggregation(
+            'inactive_total',
+            filters.AND(
+                filters.date_range('modified_on', lt=milestone_start),
+                filters.term('closed', False))
+        )
+
+        landmarks_aggregation = self._landmarks_aggregation(end_date)
+
+        top_level_aggregation = TermsAggregation('users', 'user_id')\
+            .aggregation(landmarks_aggregation)\
+            .aggregation(touched_total_aggregation)\
+            .aggregation(active_total_aggregation)\
+            .aggregation(inactive_total_aggregation)
+
+        query = case_es.CaseES().domain(self.domain).user(users_by_id.keys())
+        query = query.aggregation(top_level_aggregation)
+        return query.run()
+
+    def _landmarks_aggregation(self, end_date):
+        landmarks_aggregation = RangeAggregation('landmarks', 'modified_on')
+        for landmark in self.landmarks:
+            start_date = ServerTime(self.utc_now - landmark).phone_time(self.timezone).done()
+            landmarks_aggregation.add_range(AggregationRange(start_date, end_date, key=landmark.days))
+        landmarks_aggregation.aggregation(FilterAggregation('active', filters.term('closed', False)))
+        landmarks_aggregation.aggregation(FilterAggregation('closed', filters.term('closed', True)))
+        return landmarks_aggregation
+
+    class Row(object):
+        def __init__(self, report, user, bucket):
+            self.report = report
+            self.user = user
+            self.bucket = bucket
+            if bucket:
+                self.landmarks = bucket.landmarks.buckets_dict
+
+        def active_count(self, landmark_key):
+            return 0 if not self.bucket else self.landmarks[landmark_key].active.doc_count
+
+        def modified_count(self, landmark_key):
+            return 0 if not self.bucket else self.landmarks[landmark_key].doc_count
+
+        def closed_count(self, landmark_key):
+            return 0 if not self.bucket else self.landmarks[landmark_key].closed.doc_count
+
+        def total_touched_count(self):
+            return 0 if not self.bucket else self.bucket.touched_total.doc_count
+
+        def total_inactive_count(self):
+            return 0 if not self.bucket else self.bucket.inactive_total.doc_count
+
+        def total_active_count(self):
+            return 0 if not self.bucket else self.bucket.active_total.doc_count
+
+        def header(self):
+            return self.report.get_user_link(self.user)
+
+    class TotalRow(object):
+        def __init__(self, rows, header):
+            self.rows = rows
+            self._header = header
+
+        def active_count(self, landmark_key):
+            return sum([row.active_count(landmark_key) for row in self.rows])
+
+        def total_touched_count(self):
+            return sum([row.total_touched_count() for row in self.rows])
+
+        def total_inactive_count(self):
+            return sum([row.total_inactive_count() for row in self.rows])
+
+        def total_active_count(self):
+            return sum([row.total_active_count() for row in self.rows])
+
+        def modified_count(self, landmark_key):
+            return sum([row.modified_count(landmark_key) for row in self.rows])
+
+        def closed_count(self, landmark_key):
+            return sum([row.closed_count(landmark_key) for row in self.rows])
+
+        def header(self):
+            return self._header
 
 
 class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
@@ -691,9 +729,12 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
     @property
     @memoized
     def selected_form_data(self):
-        data = FormsByApplicationFilter.get_value(self.request, self.domain)
-        if len(data) == 1 and data.values()[0]['xmlns']:
-            return data.values()[0]
+        forms = FormsByApplicationFilter.get_value(self.request, self.domain).values()
+        if len(forms) == 1 and forms[0]['xmlns']:
+            return forms[0]
+        non_fuzzy_forms = [form for form in forms if not form['is_fuzzy']]
+        if len(non_fuzzy_forms) == 1:
+            return non_fuzzy_forms[0]
 
     @property
     def headers(self):
@@ -1062,8 +1103,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     is_cacheable = True
 
     fields = [
-        'corehq.apps.reports.dont_use.fields.MultiSelectGroupField',
-        'corehq.apps.reports.dont_use.fields.UserOrGroupField',
+        'corehq.apps.reports.filters.select.MultiGroupFilter',
+        'corehq.apps.reports.filters.users.UserOrGroupFilter',
         'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
@@ -1074,7 +1115,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
-        return bool(project and project.commtrack_enabled)
+        return True
 
     @property
     def case_types(self):
@@ -1117,7 +1158,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def users_to_iterate(self):
-        if '_all' in self.group_ids:
+        if not self.group_ids:
             ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
             return ret
         else:

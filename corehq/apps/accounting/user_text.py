@@ -121,7 +121,6 @@ class PricingTableCategories(object):
             cls.ANALYTICS: (
                 f.DATA_EXPORT,
                 f.STANDARD_REPORTS,
-                f.CROSS_PROJECT_REPORTS,
                 f.CUSTOM_REPORTS,
                 f.ADM,
             ),
@@ -168,7 +167,6 @@ class PricingTableFeatures(object):
 
     DATA_EXPORT = 'data_export'
     STANDARD_REPORTS = 'standard_reports'
-    CROSS_PROJECT_REPORTS = 'cross_project_reports'
     CUSTOM_REPORTS = 'custom_reports'
     ADM = 'adm'
 
@@ -222,7 +220,6 @@ class PricingTableFeatures(object):
             cls.CUSTOM_BRANDING: _("Custom Branding"),
             cls.DATA_EXPORT: _("Data Export"),
             cls.STANDARD_REPORTS: _("Standard Reports"),
-            cls.CROSS_PROJECT_REPORTS: _("Cross-Project Reports"),
             cls.CUSTOM_REPORTS: _("Custom Reports Access"),
             cls.ADM: _('Active Data Management (<a href="http://www.commcarehq.org/tour/adm/">read more</a>)'),
             cls.OUTBOUND_SMS: _("Outbound Messaging"),
@@ -266,7 +263,6 @@ class PricingTableFeatures(object):
             cls.CUSTOM_BRANDING: (False, False, False, True, True),
             cls.DATA_EXPORT: (True, True, True, True, True),
             cls.STANDARD_REPORTS: (True, True, True, True, True),
-            cls.CROSS_PROJECT_REPORTS: (False, True, True, True, True),
             cls.CUSTOM_REPORTS: (False, False, True, True, True),
             cls.ADM: (False, False, False, True, True),
             cls.OUTBOUND_SMS: (False, True, True, True, True),

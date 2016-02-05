@@ -1,31 +1,31 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 <div id="{{ qualifier|default_if_none:"" }}media_{{ type }}">
-    <div class="control-group">
-        <label class="control-label" for="menu_{{ type }}_path">{% trans label %}</label>
-        <div class="controls commcare-feature"
+    <div class="form-group container-fluid">
+        <label class="control-label col-sm-2" for="menu_{{ type }}_path">{% trans label %}</label>
+        <div class="col-sm-10 commcare-feature"
              data-since-version="1.3">
             {% if type == "image" %}
                 {# must use "if" here instead of "visible" #}
                 {# otherwise src will be "#" which makes an unneccessary request for the current page #}
                 <a data-bind="if: isMediaMatched, attr: {href: url}" target="_blank">
-                    <img data-bind="attr: {src: thumbnailUrl}" />
-                </a>
+                    <img data-bind="attr: {src: thumbnailUrl}"
+                /></a>
             {% elif type == "audio" %}
                 <a data-bind="visible: isMediaMatched, attr: {href: url}"
-                   class="btn bt-default"
+                   class="btn btn-default"
                    target="_blank">
-                    <i class="icon icon-volume-up"></i>
+                    <i class="fa fa-volume-up"></i>
                     {% trans "Preview" %}
                 </a>
             {% endif %}
-            <button type="button" class="btn" data-toggle="modal" data-target="#{{ slug }}"
+            <button type="button" class="btn btn-default" data-toggle="modal" data-target="#{{ slug }}"
                     data-bind="attr: { 'data-hqmediapath': currentPath },
                                event: {
                                     mediaUploadComplete: uploadComplete,
                                     click: passToUploadController
                                }">
-                <i class="icon icon-cloud-upload"></i>
+                <i class="fa fa-cloud-upload"></i>
                 <span data-bind="visible: isMediaMatched">{% trans 'Replace' %}</span>
                 <span data-bind="visible: isMediaUnmatched">{% trans 'Upload' %}</span>
             </button>
@@ -36,7 +36,7 @@
                             click: removeMedia
                         }
                     ">
-                <i class="icon icon-remove"></i>
+                <i class="fa fa-remove"></i>
             </button>
             <button type="button" class="btn btn-default pull-right"
                     data-bind="
@@ -45,13 +45,13 @@
                             setCustomPath();
                             analytics.usage('App Builder', 'Click Show Path for a Form or Module', '{{ type }}');
                         }">
-                <i class="icon icon-cog"></i>
+                <i class="fa fa-cog"></i>
                 {% trans 'Set Path' %}
             </button>
             {% if type == "audio" %}
             <p data-bind="visible: isMediaMatched"
                class="help-block">
-                <i class="icon icon-info-sign"></i>
+                <i class="fa fa-info-circle"></i>
                 {% blocktrans %}
                     To hear audio on Java Phones, you must be in CommCare Sense
                     mode or Numeric Selection Mode. (On Android it will always work.)
@@ -60,22 +60,24 @@
             {% endif %}
         </div>
     </div>
-    <div class="control-group"
+    <div class="form-group"
          data-bind="visible: showCustomPath">
-        <label class="control-label">{% trans "Path" %}</label>
-        <div class="controls">
-            <input type="text" class="span6"
+        <label class="control-label col-sm-2">{% trans "Path" %}</label>
+        <div class="col-sm-4">
+            <input type="text" class="form-control"
                    data-bind="value: customPath,
                               valueUpdate: 'textchange'" />
             <input type="hidden" class="jr-resource-field"
                    name="{{ qualifier|default_if_none:"" }}media_{{ type }}"
                    data-bind="value: savedPath" />
-            <button type="button" class="btn"
+        </div>
+        <div class="col-sm-1">
+            <button type="button" class="btn btn-default"
                     data-bind="
                         visible: showCustomPath,
                         event: { click: setDefaultPath }
                     ">
-                <i class="icon icon-remove"></i>
+                <i class="fa fa-remove"></i>
                 {% trans 'Use Default Path' %}
             </button>
         </div>

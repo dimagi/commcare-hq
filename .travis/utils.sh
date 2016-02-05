@@ -1,21 +1,41 @@
-setup_elasticsearch() {
-    es_version=0.90.13
+#!/usr/bin/env bash
 
-    echo "Installing elasticsearch version ${es_version}"
+TRAVIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-    wget "https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-${es_version}.tar.gz" -O elasticsearch.tar.gz
+travis_runner() {
+    args=$@
 
-    tar xvzf elasticsearch.tar.gz
-    nohup bash -c "cd elasticsearch-${es_version} && bin/elasticsearch &"
-    sleep 10
+    flavour='travis'
+    if [ "${MATRIX_TYPE}" = "javascript" ]; then
+        flavour='travis-js'
+    fi
+
+    $TRAVIS_DIR/../dockerhq.sh $flavour run --rm $args
+}
+
+get_container_id() {
+    label_name=$1
+    value=$2
+    sudo docker ps -qf label=$label_name=$value -f name=travis_kafka_1 -f status=running
+}
+
+get_container_ip() {
+    CID=$(get_container_id $@)
+    sudo docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${CID} | tr -d '\n' | tr -d '\r'
+}
+
+create_topics() {
+    topics_script=$1
+    zookeeper_ip=$2
+    topics=$3
+
+    for topic in $topics; do
+        travis_runner kafka $topics_script --create --partitions 1 --replication-factor 1 --zookeeper $zookeeper_ip:2181 --topic $topic
+    done
 }
 
 setup_kafka() {
-    # kafka install, copied from https://github.com/wvanbergen/kafka/blob/master/.travis.yml
-    wget http://www.us.apache.org/dist/kafka/0.8.2.1/kafka_2.10-0.8.2.1.tgz -O kafka.tgz
-    mkdir -p kafka && tar xzf kafka.tgz -C kafka --strip-components 1
-    nohup bash -c "cd kafka && bin/zookeeper-server-start.sh config/zookeeper.properties &"
-    nohup bash -c "cd kafka && bin/kafka-server-start.sh config/server.properties &"
-    sleep 10
-    kafka/bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic case --zookeeper localhost:2181
+    kafka_topics=$(travis_runner kafka find /opt -name kafka-topics.sh | tr -d '\n' | tr -d '\r')
+    zookeeper_ip=$(get_container_ip "commcare.name" "kafka")
+    create_topics $kafka_topics $zookeeper_ip "case form meta case-sql form-sql"
 }

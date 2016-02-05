@@ -121,7 +121,9 @@ class ESQuery(object):
     _fields = None
     _start = None
     _size = None
+    _aggregations = None
     _facets = None
+    _source = None
     default_filters = {
         "match_all": filters.match_all()
     }
@@ -134,6 +136,8 @@ class ESQuery(object):
             raise IndexError(msg)
         self._default_filters = deepcopy(self.default_filters)
         self._facets = []
+        self._aggregations = []
+        self._source = []
         self.es_query = {"query": {
             "filtered": {
                 "filter": {"and": []},
@@ -200,6 +204,19 @@ class ESQuery(object):
         """
         return self._default_filters.values() + self._filters
 
+    def aggregation(self, aggregation):
+        """
+        Add the passed-in aggregation to the query
+        """
+        query = deepcopy(self)
+        query._aggregations.append(aggregation)
+        return query
+
+    def aggregations(self, aggregations):
+        query = deepcopy(self)
+        query._aggregations.extend(aggregations)
+        return query
+
     def facet(self, _facet):
         """Add a facet to the query."""
         query = deepcopy(self)
@@ -244,11 +261,38 @@ class ESQuery(object):
                 facet.name: {facet.type: facet.params}
                 for facet in self._facets
             }
+        if self._source:
+            self.es_query['_source'] = self._source
+        if self._aggregations:
+            self.es_query['aggs'] = {
+                agg.name: agg.assemble()
+                for agg in self._aggregations
+            }
 
     def fields(self, fields):
-        """Restrict the fields returned from elasticsearch"""
+        """
+            Restrict the fields returned from elasticsearch
+
+            Usage Note: As of ES 1.x, fields will only work on leaf nodes! It will no longer return an object,
+            e.g. field.*, to return an object refer to '.source'
+            """
         query = deepcopy(self)
         query._fields = fields
+        return query
+
+    def source(self, source):
+        """
+            Restrict the output of _source in the queryset. This can be used to return an object in a queryset
+
+            TODO: How does this interact with .fields
+            TODO: This can be expanded if needed to support other usages of the _source filter, e.g:
+            "_source": {
+                "include": [ "obj1.*", "obj2.*" ],
+                "exclude": [ "*.description" ]
+            },
+        """
+        query = deepcopy(self)
+        query._source.append(source)
         return query
 
     def start(self, start):
@@ -369,6 +413,9 @@ class ESQuerySet(object):
     def facet(self, name, _type):
         return self.raw['facets'][name][_type]
 
+    def aggregation(self, name):
+        return self.raw['aggregations'][name]
+
     @property
     @memoized
     def facets(self):
@@ -380,6 +427,14 @@ class ESQuerySet(object):
         raw = self.raw.get('facets', {})
         results = namedtuple('facet_results', [f.name for f in facets])
         return results(**{f.name: f.parse_result(raw) for f in facets})
+
+    @property
+    @memoized
+    def aggregations(self):
+        aggregations = self.query._aggregations
+        raw = self.raw.get('aggregations', {})
+        results = namedtuple('aggregation_results', [a.name for a in aggregations])
+        return results(**{a.name: a.parse_result(raw) for a in aggregations})
 
     def __repr__(self):
         return '{}({!r}, {!r})'.format(self.__class__.__name__, self.raw, self.query)

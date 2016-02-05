@@ -33,5 +33,5 @@ class AnalyticsTest(TestCase):
                 'form': {'name': {'en': 'My Form'}, 'id': 0},
                 'module': {'name': {'en': 'My Module'}, 'id': 0}},
             'id': self.app_id,
-            'key': ['^Application', 'app-manager-analytics-test', 'myxmlns']
+            'key': ['app-manager-analytics-test', {}, 'myxmlns']
         }])

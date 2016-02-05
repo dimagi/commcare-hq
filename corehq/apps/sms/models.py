@@ -8,6 +8,7 @@ from dimagi.ext.couchdbkit import *
 
 from datetime import datetime, timedelta
 from django.db import models, transaction
+from collections import namedtuple
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form
 from corehq.apps.users.models import CouchUser
@@ -17,20 +18,31 @@ from dimagi.utils.couch.migration import (SyncCouchToSQLMixin,
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.signals import case_post_save
-from corehq.apps.sms.mixin import (CommCareMobileContactMixin, MobileBackend,
+from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
     PhoneNumberInUseException, InvalidFormatException, VerifiedNumber,
-    apply_leniency, BackendMapping)
+    apply_leniency, BadSMSConfigException)
 from corehq.apps.sms import util as smsutil
 from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
     MSG_MOBILE_WORKER_ANDROID_INVITATION, MSG_MOBILE_WORKER_JAVA_INVITATION,
     get_message)
+from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch import CouchDocLockableMixIn
+from dimagi.utils.load_balance import load_balance
 from django.utils.translation import ugettext_noop, ugettext_lazy
+
 
 INCOMING = "I"
 OUTGOING = "O"
+
+CALLBACK_PENDING = "PENDING"
+CALLBACK_RECEIVED = "RECEIVED"
+CALLBACK_MISSED = "MISSED"
+
+FORWARD_ALL = "ALL"
+FORWARD_BY_KEYWORD = "KEYWORD"
+FORWARDING_CHOICES = [FORWARD_ALL, FORWARD_BY_KEYWORD]
 
 WORKFLOW_CALLBACK = "CALLBACK"
 WORKFLOW_REMINDER = "REMINDER"
@@ -231,11 +243,12 @@ class SMSLog(SyncCouchToSQLMixin, MessageLog):
     def outbound_backend(self):
         """appropriate outbound sms backend"""
         if self.backend_id:
-            return MobileBackend.load(self.backend_id)
+            return SQLMobileBackend.load(self.backend_id, is_couch_id=True)
         else:
-            return MobileBackend.auto_load(
+            return SQLMobileBackend.load_default_by_phone_and_domain(
+                SQLMobileBackend.SMS,
                 smsutil.clean_phone_number(self.phone_number),
-                self.domain
+                domain=self.domain
             )
 
     def __unicode__(self):
@@ -259,12 +272,46 @@ class SMSLog(SyncCouchToSQLMixin, MessageLog):
         return True
 
 
-class SMS(SyncSQLToCouchMixin, models.Model):
+class Log(models.Model):
+    class Meta:
+        abstract = True
+
+    domain = models.CharField(max_length=126, null=True, db_index=True)
+    date = models.DateTimeField(null=True, db_index=True)
+    couch_recipient_doc_type = models.CharField(max_length=126, null=True, db_index=True)
+    couch_recipient = models.CharField(max_length=126, null=True, db_index=True)
+    phone_number = models.CharField(max_length=126, null=True, db_index=True)
+    direction = models.CharField(max_length=1, null=True)
+    error = models.NullBooleanField(default=False)
+    system_error_message = models.TextField(null=True)
+    system_phone_number = models.CharField(max_length=126, null=True)
+    backend_api = models.CharField(max_length=126, null=True)
+    backend_id = models.CharField(max_length=126, null=True)
+    billed = models.NullBooleanField(default=False)
+
+    # Describes what kind of workflow this log was a part of
+    workflow = models.CharField(max_length=126, null=True)
+
+    # If this log is related to a survey, this points to the couch_id
+    # of an instance of SQLXFormsSession that this log is tied to
+    xforms_session_couch_id = models.CharField(max_length=126, null=True, db_index=True)
+
+    # If this log is related to a reminder, this points to the _id of a
+    # CaseReminder instance that it is tied to
+    reminder_id = models.CharField(max_length=126, null=True)
+    location_id = models.CharField(max_length=126, null=True)
+
+    # The MessagingSubEvent that this log is tied to
+    messaging_subevent = models.ForeignKey('MessagingSubEvent', null=True, on_delete=models.PROTECT)
+
+
+class SMS(SyncSQLToCouchMixin, Log):
     ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS = 'TOO_MANY_UNSUCCESSFUL_ATTEMPTS'
     ERROR_MESSAGE_IS_STALE = 'MESSAGE_IS_STALE'
     ERROR_INVALID_DIRECTION = 'INVALID_DIRECTION'
     ERROR_PHONE_NUMBER_OPTED_OUT = 'PHONE_NUMBER_OPTED_OUT'
     ERROR_INVALID_DESTINATION_NUMBER = 'INVALID_DESTINATION_NUMBER'
+    ERROR_MESSAGE_TOO_LONG = 'MESSAGE_TOO_LONG'
 
     ERROR_MESSAGES = {
         ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:
@@ -277,30 +324,21 @@ class SMS(SyncSQLToCouchMixin, models.Model):
             ugettext_noop('Phone number has opted out of receiving SMS.'),
         ERROR_INVALID_DESTINATION_NUMBER:
             ugettext_noop("The gateway can't reach the destination number."),
+        ERROR_MESSAGE_TOO_LONG:
+            ugettext_noop("The gateway could not process the message because it was too long."),
     }
 
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
-    domain = models.CharField(max_length=126, null=True, db_index=True)
-    date = models.DateTimeField(null=True, db_index=True)
-    couch_recipient_doc_type = models.CharField(max_length=126, null=True, db_index=True)
-    couch_recipient = models.CharField(max_length=126, null=True, db_index=True)
-    phone_number = models.CharField(max_length=126, null=True, db_index=True)
-    direction = models.CharField(max_length=1, null=True)
     text = models.TextField(null=True)
 
     # In cases where decoding must occur, this is the raw text received
     # from the gateway
     raw_text = models.TextField(null=True)
-
-    """Properties related to processing and billing"""
     datetime_to_process = models.DateTimeField(null=True, db_index=True)
     processed = models.NullBooleanField(default=True, db_index=True)
     num_processing_attempts = models.IntegerField(default=0, null=True)
     queued_timestamp = models.DateTimeField(null=True)
     processed_timestamp = models.DateTimeField(null=True)
-    error = models.NullBooleanField(default=False)
-    system_error_message = models.TextField(null=True)
-    billed = models.NullBooleanField(default=False)
 
     # If the message was simulated from a domain, this is the domain
     domain_scope = models.CharField(max_length=126, null=True)
@@ -310,38 +348,17 @@ class SMS(SyncSQLToCouchMixin, models.Model):
     # replies or other info-related queries while opted-out.
     ignore_opt_out = models.NullBooleanField(default=False)
 
-    """Metadata properties"""
-    backend_api = models.CharField(max_length=126, null=True)
-    backend_id = models.CharField(max_length=126, null=True)
-    system_phone_number = models.CharField(max_length=126, null=True)
-
     # This is the unique message id that the gateway uses to track this
     # message, if applicable.
     backend_message_id = models.CharField(max_length=126, null=True)
-
-    # Describes what kind of workflow this sms was a part of
-    workflow = models.CharField(max_length=126, null=True)
 
     # For outgoing sms only: if this sms was sent from a chat window,
     # the _id of the CouchUser who sent this sms; otherwise None
     chat_user_id = models.CharField(max_length=126, null=True)
 
-    # If this sms is related to a survey, this points to the couch_id
-    # of an instance of SQLXFormsSession that this sms is tied to
-    xforms_session_couch_id = models.CharField(max_length=126, null=True, db_index=True)
-
     # True if this was an inbound message that was an
     # invalid response to a survey question
     invalid_survey_response = models.NullBooleanField(default=False)
-
-    # If this sms is related to a reminder, this points to the _id of a
-    # CaseReminder instance that it is tied to
-    reminder_id = models.CharField(max_length=126, null=True)
-    location_id = models.CharField(max_length=126, null=True)
-
-    # The MessagingSubEvent that this SMS is tied to. Only applies to
-    # SMS that are not part of a survey (i.e., xforms_session_couch_id is None)
-    messaging_subevent = models.ForeignKey('MessagingSubEvent', null=True, on_delete=models.PROTECT)
 
     """ Custom properties. For the initial migration, it makes it easier
     to put these here. Eventually they should be moved to a separate table. """
@@ -396,7 +413,7 @@ class SMS(SyncSQLToCouchMixin, models.Model):
         return SMSLog
 
 
-class LastReadMessage(Document, CouchDocLockableMixIn):
+class LastReadMessage(SyncCouchToSQLMixin, Document, CouchDocLockableMixIn):
     domain = StringProperty()
     # _id of CouchUser who read it
     read_by = StringProperty()
@@ -440,7 +457,55 @@ class LastReadMessage(Document, CouchDocLockableMixIn):
             include_docs=True
         ).first()
 
-class CallLog(MessageLog):
+    @classmethod
+    def _migration_get_fields(cls):
+        return SQLLastReadMessage._migration_get_fields()
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLLastReadMessage
+
+
+class SQLLastReadMessage(SyncSQLToCouchMixin, models.Model):
+    class Meta:
+        db_table = 'sms_lastreadmessage'
+        index_together = [
+            ['domain', 'read_by', 'contact_id'],
+            ['domain', 'contact_id'],
+        ]
+
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+    domain = models.CharField(max_length=126, null=True)
+
+    # _id of CouchUser who read it
+    read_by = models.CharField(max_length=126, null=True)
+
+    # _id of the CouchUser or CommCareCase who the message was sent to
+    # or from
+    contact_id = models.CharField(max_length=126, null=True)
+
+    # couch_id of the SMS
+    message_id = models.CharField(max_length=126, null=True)
+
+    # date of the SMS entry, stored here redundantly to prevent a lookup
+    message_timestamp = models.DateTimeField(null=True)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            'domain',
+            'read_by',
+            'contact_id',
+            'message_id',
+            'message_timestamp',
+        ]
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return LastReadMessage
+
+
+class CallLog(SyncCouchToSQLMixin, MessageLog):
     form_unique_id = StringProperty()
     answered = BooleanProperty(default=False)
     duration = IntegerProperty() # Length of the call in seconds
@@ -500,6 +565,16 @@ class CallLog(MessageLog):
             include_docs=True,
             limit=1).one()
 
+    @classmethod
+    def _migration_get_fields(cls):
+        from corehq.apps.ivr.models import Call
+        return Call._migration_get_fields()
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        from corehq.apps.ivr.models import Call
+        return Call
+
 
 class EventLog(SafeSaveDocument):
     base_doc                    = "EventLog"
@@ -508,11 +583,8 @@ class EventLog(SafeSaveDocument):
     couch_recipient_doc_type    = StringProperty()
     couch_recipient             = StringProperty()
 
-CALLBACK_PENDING = "PENDING"
-CALLBACK_RECEIVED = "RECEIVED"
-CALLBACK_MISSED = "MISSED"
 
-class ExpectedCallbackEventLog(EventLog):
+class ExpectedCallbackEventLog(SyncCouchToSQLMixin, EventLog):
     status = StringProperty(choices=[CALLBACK_PENDING,CALLBACK_RECEIVED,CALLBACK_MISSED])
     
     @classmethod
@@ -525,9 +597,48 @@ class ExpectedCallbackEventLog(EventLog):
                         endkey=[domain, end_date],
                         include_docs=True).all()
 
-FORWARD_ALL = "ALL"
-FORWARD_BY_KEYWORD = "KEYWORD"
-FORWARDING_CHOICES = [FORWARD_ALL, FORWARD_BY_KEYWORD]
+    @classmethod
+    def _migration_get_fields(cls):
+        return ExpectedCallback._migration_get_fields()
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return ExpectedCallback
+
+
+class ExpectedCallback(SyncSQLToCouchMixin, models.Model):
+    class Meta:
+        index_together = [
+            ['domain', 'date'],
+        ]
+
+    STATUS_CHOICES = (
+        (CALLBACK_PENDING, ugettext_lazy("Pending")),
+        (CALLBACK_RECEIVED, ugettext_lazy("Received")),
+        (CALLBACK_MISSED, ugettext_lazy("Missed")),
+    )
+
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+    domain = models.CharField(max_length=126, null=True, db_index=True)
+    date = models.DateTimeField(null=True)
+    couch_recipient_doc_type = models.CharField(max_length=126, null=True)
+    couch_recipient = models.CharField(max_length=126, null=True, db_index=True)
+    status = models.CharField(max_length=126, null=True)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            'domain',
+            'date',
+            'couch_recipient_doc_type',
+            'couch_recipient',
+            'status',
+        ]
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return ExpectedCallbackEventLog
+
 
 class ForwardingRule(Document):
     domain = StringProperty()
@@ -1443,7 +1554,12 @@ class SelfRegistrationInvitation(models.Model):
         return (success_numbers, invalid_format_numbers, numbers_in_use)
 
 
-class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
+class ActiveMobileBackendManager(models.Manager):
+    def get_queryset(self):
+        return super(ActiveMobileBackendManager, self).get_queryset().filter(deleted=False)
+
+
+class SQLMobileBackend(models.Model):
     SMS = 'SMS'
     IVR = 'IVR'
 
@@ -1452,13 +1568,19 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         (IVR, ugettext_lazy('IVR')),
     )
 
-    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+    objects = models.Manager()
+    active_objects = ActiveMobileBackendManager()
+
+    # We can't really get rid of this until all the messaging models are in
+    # postgres. Once that happens we can migrate references to the couch_id
+    # as a foreign key to postgres id and get rid of this field.
+    couch_id = models.CharField(max_length=126, db_index=True, unique=True)
     backend_type = models.CharField(max_length=3, choices=TYPE_CHOICES, default=SMS)
 
     # This is an api key that the gateway uses when making inbound requests to hq.
     # This enforces gateway security and also allows us to tie every inbound request
     # to a specific backend.
-    inbound_api_key = uuidfield.UUIDField(auto=True, unique=True)
+    inbound_api_key = models.CharField(max_length=126, unique=True, db_index=True)
 
     # This tells us which type of backend this is
     hq_api_id = models.CharField(max_length=126, null=True)
@@ -1509,6 +1631,344 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
     class Meta:
         db_table = 'messaging_mobilebackend'
 
+    def __init__(self, *args, **kwargs):
+        super(SQLMobileBackend, self).__init__(*args, **kwargs)
+        if not self.couch_id:
+            self.couch_id = uuid.uuid4().hex
+
+        if not self.inbound_api_key:
+            self.inbound_api_key = uuid.uuid4().hex
+
+    @quickcache(['self.pk', 'domain'], timeout=5 * 60)
+    def domain_is_shared(self, domain):
+        """
+        Returns True if this backend has been shared with domain and domain
+        has accepted the invitation.
+        """
+        count = self.mobilebackendinvitation_set.filter(domain=domain, accepted=True).count()
+        return count > 0
+
+    def domain_is_authorized(self, domain):
+        """
+        Returns True if the given domain is authorized to use this backend.
+        """
+        return (self.is_global or
+                domain == self.domain or
+                self.domain_is_shared(domain))
+
+    @classmethod
+    def name_is_unique(cls, name, domain=None, backend_id=None):
+        if domain:
+            result = cls.objects.filter(
+                is_global=False,
+                domain=domain,
+                name=name,
+                deleted=False
+            )
+        else:
+            result = cls.objects.filter(
+                is_global=True,
+                name=name,
+                deleted=False
+            )
+
+        result = result.values_list('id', flat=True)
+        if len(result) == 0:
+            return True
+
+        if len(result) == 1:
+            return result[0] == backend_id
+
+        return False
+
+    def get_authorized_domain_list(self):
+        return (self.mobilebackendinvitation_set.filter(accepted=True)
+                .order_by('domain').values_list('domain', flat=True))
+
+    @classmethod
+    def get_domain_backends(cls, backend_type, domain, count_only=False, offset=None, limit=None):
+        """
+        Returns all the backends that the given domain has access to (that is,
+        owned backends, shared backends, and global backends).
+        """
+        domain_owned_backends = models.Q(is_global=False, domain=domain)
+        domain_shared_backends = models.Q(
+            is_global=False,
+            mobilebackendinvitation__domain=domain,
+            mobilebackendinvitation__accepted=True
+        )
+        global_backends = models.Q(is_global=True)
+
+        # The left join to MobileBackendInvitation may cause there to be
+        # duplicates here, so we need to call .distinct()
+        result = SQLMobileBackend.objects.filter(
+            (domain_owned_backends | domain_shared_backends | global_backends),
+            deleted=False,
+            backend_type=backend_type
+        ).distinct()
+
+        if count_only:
+            return result.count()
+
+        result = result.order_by('name').values_list('id', flat=True)
+        if offset is not None and limit is not None:
+            result = result[offset:offset + limit]
+
+        return [cls.load(pk) for pk in result]
+
+    @classmethod
+    def get_global_backends_for_this_class(cls, backend_type):
+        return cls.objects.filter(
+            is_global=True,
+            deleted=False,
+            backend_type=backend_type,
+            hq_api_id=cls.get_api_id()
+        ).all()
+
+    @classmethod
+    def get_global_backend_ids(cls, backend_type, couch_id=False):
+        id_field = 'couch_id' if couch_id else 'id'
+        return SQLMobileBackend.active_objects.filter(
+            backend_type=backend_type,
+            is_global=True
+        ).values_list(id_field, flat=True)
+
+    @classmethod
+    def get_global_backends(cls, backend_type, count_only=False, offset=None, limit=None):
+        result = SQLMobileBackend.objects.filter(
+            is_global=True,
+            deleted=False,
+            backend_type=backend_type
+        )
+
+        if count_only:
+            return result.count()
+
+        result = result.order_by('name').values_list('id', flat=True)
+        if offset is not None and limit is not None:
+            result = result[offset:offset + limit]
+
+        return [cls.load(pk) for pk in result]
+
+    @classmethod
+    def get_domain_default_backend(cls, backend_type, domain, id_only=False):
+        result = SQLMobileBackendMapping.objects.filter(
+            is_global=False,
+            domain=domain,
+            backend_type=backend_type,
+            prefix='*'
+        ).values_list('backend_id', flat=True)
+
+        if len(result) > 1:
+            raise cls.MultipleObjectsReturned(
+                "More than one default backend found for backend_type %s, "
+                "domain %s" % (backend_type, domain)
+            )
+        elif len(result) == 1:
+            if id_only:
+                return result[0]
+            else:
+                return cls.load(result[0])
+        else:
+            return None
+
+    @classmethod
+    def load_default_backend(cls, backend_type, phone_number, domain=None):
+        """
+        Chooses the appropriate backend based on the phone number's
+        prefix, or returns None if no catch-all backend is configured.
+
+        backend_type - SQLMobileBackend.SMS or SQLMobileBackend.IVR
+        phone_number - the phone number
+        domain - pass in a domain to choose the default backend from the domain's
+                 configured backends, otherwise leave None to choose from the
+                 system's configured backends
+        """
+        backend_map = SQLMobileBackendMapping.get_prefix_to_backend_map(
+            backend_type, domain=domain)
+        backend_id = backend_map.get_backend_id_by_prefix(phone_number)
+        if backend_id:
+            return cls.load(backend_id)
+        return None
+
+    @classmethod
+    def load_default_by_phone_and_domain(cls, backend_type, phone_number, domain=None):
+        """
+        Get the appropriate outbound backend to communicate with phone_number.
+
+        backend_type - SQLMobileBackend.SMS or SQLMobileBackend.IVR
+        phone_number - the phone number
+        domain - the domain
+        """
+        backend = None
+
+        if domain:
+            backend = cls.load_default_backend(backend_type, phone_number, domain=domain)
+
+        if not backend:
+            backend = cls.load_default_backend(backend_type, phone_number)
+
+        if not backend:
+            raise BadSMSConfigException("No suitable backend found for phone "
+                                        "number and domain %s, %s" %
+                                        (phone_number, domain))
+
+        return backend
+
+    @classmethod
+    @quickcache(['hq_api_id', 'inbound_api_key'], timeout=60 * 60)
+    def get_backend_info_by_api_key(cls, hq_api_id, inbound_api_key):
+        """
+        Looks up a backend by inbound_api_key and returns a tuple of
+        (domain, couch_id). Including hq_api_id in the filter is an
+        implicit way of making sure that the returned backend info belongs
+        to a backend of that type.
+
+        (The entire backend is not returned to reduce the amount of data
+        needed to be returned by the cache)
+
+        Raises cls.DoesNotExist if not found.
+        """
+        result = (cls.active_objects
+                  .filter(hq_api_id=hq_api_id, inbound_api_key=inbound_api_key)
+                  .values_list('domain', 'couch_id'))
+
+        if len(result) == 0:
+            raise cls.DoesNotExist
+
+        return result[0]
+
+    @classmethod
+    @quickcache(['backend_id', 'is_couch_id'], timeout=60 * 60)
+    def get_backend_api_id(cls, backend_id, is_couch_id=False):
+        filter_args = {'couch_id': backend_id} if is_couch_id else {'pk': backend_id}
+        result = (cls.active_objects
+                  .filter(**filter_args)
+                  .values_list('hq_api_id', flat=True))
+
+        if len(result) == 0:
+            raise cls.DoesNotExist
+
+        return result[0]
+
+    @classmethod
+    @quickcache(['backend_id', 'is_couch_id', 'include_deleted'], timeout=5 * 60)
+    def load(cls, backend_id, api_id=None, is_couch_id=False, include_deleted=False):
+        """
+        backend_id - the pk of the SQLMobileBackend to load
+        api_id - if you know the hq_api_id of the SQLMobileBackend, pass it
+                 here for a faster lookup; otherwise, it will be looked up
+                 automatically
+        couch_id - if True, then backend_id should be the couch_id to use
+                   during lookup instead of the postgres model's pk;
+                   we have to support both for a little while until all
+                   foreign keys are migrated over
+        """
+        backend_classes = smsutil.get_backend_classes()
+        api_id = api_id or cls.get_backend_api_id(backend_id, is_couch_id=is_couch_id)
+
+        if api_id not in backend_classes:
+            raise BadSMSConfigException("Unexpected backend api id found '%s' for "
+                                        "backend '%s'" % (api_id, backend_id))
+
+        klass = backend_classes[api_id]
+
+        if include_deleted:
+            result = klass.objects
+        else:
+            result = klass.active_objects
+
+        if is_couch_id:
+            return result.get(couch_id=backend_id)
+        else:
+            return result.get(pk=backend_id)
+
+    @classmethod
+    def get_backend_from_id_and_api_id_result(cls, result):
+        if len(result) > 0:
+            return cls.load(result[0]['id'], api_id=result[0]['hq_api_id'])
+
+        return None
+
+    @classmethod
+    def get_owned_backend_by_name(cls, backend_type, domain, name):
+        name = name.strip().upper()
+        result = cls.active_objects.filter(
+            is_global=False,
+            backend_type=backend_type,
+            domain=domain,
+            name=name
+        ).values('id', 'hq_api_id')
+        return cls.get_backend_from_id_and_api_id_result(result)
+
+    @classmethod
+    def get_shared_backend_by_name(cls, backend_type, domain, name):
+        name = name.strip().upper()
+        result = cls.active_objects.filter(
+            is_global=False,
+            backend_type=backend_type,
+            mobilebackendinvitation__domain=domain,
+            mobilebackendinvitation__accepted=True,
+            name=name
+        ).values('id', 'hq_api_id').order_by('domain')
+        return cls.get_backend_from_id_and_api_id_result(result)
+
+    @classmethod
+    def get_global_backend_by_name(cls, backend_type, name):
+        name = name.strip().upper()
+        result = cls.active_objects.filter(
+            is_global=True,
+            backend_type=backend_type,
+            name=name
+        ).values('id', 'hq_api_id')
+        return cls.get_backend_from_id_and_api_id_result(result)
+
+    @classmethod
+    def load_by_name(cls, backend_type, domain, name):
+        """
+        Attempts to load the backend with the given name.
+        If no matching backend is found, a BadSMSConfigException is raised.
+
+        backend_type - SQLMobileBackend.SMS or SQLMobileBackend.IVR
+        domain - the domain
+        name - the name of the backend (corresponding to SQLMobileBackend.name)
+        """
+        backend = cls.get_owned_backend_by_name(backend_type, domain, name)
+
+        if not backend:
+            backend = cls.get_shared_backend_by_name(backend_type, domain, name)
+
+        if not backend:
+            backend = cls.get_global_backend_by_name(backend_type, name)
+
+        if not backend:
+            raise BadSMSConfigException("Could not find %s backend '%s' from "
+                                        "domain '%s'" % (backend_type, name, domain))
+
+        return backend
+
+    @classmethod
+    def get_api_id(cls):
+        """
+        This method should return the backend's api id.
+        """
+        raise NotImplementedError("Please implement this method")
+
+    @classmethod
+    def get_generic_name(cls):
+        """
+        This method should return a descriptive name for this backend
+        (such as "Unicel" or "Tropo"), for use in identifying it to an end user.
+        """
+        raise NotImplementedError("Please implement this method")
+
+    @classmethod
+    def get_form_class(cls):
+        """
+        This method should return a subclass of corehq.apps.sms.forms.BackendForm
+        """
+        raise NotImplementedError("Please implement this method")
+
     @classmethod
     def get_available_extra_fields(cls):
         """
@@ -1516,6 +1976,16 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
         the extra_fields dict.
         """
         raise NotImplementedError("Please implement this method")
+
+    @property
+    def config(self):
+        """
+        Returns self.get_extra_fields() converted into a namedtuple so that
+        you can reference self.config.gateway_user_id, for example,
+        instead of self.get_extra_fields()['gateway_user_id']
+        """
+        BackendConfig = namedtuple('BackendConfig', self.get_available_extra_fields())
+        return BackendConfig(**self.get_extra_fields())
 
     def get_extra_fields(self):
         result = {field: None for field in self.get_available_extra_fields()}
@@ -1536,11 +2006,18 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
 
         self.extra_fields = result
 
+    def __clear_shared_domain_cache(self, new_domains):
+        current_domains = self.mobilebackendinvitation_set.values_list('domain', flat=True)
+        # Clear the cache for domains in new_domains or current_domains, but not both
+        for domain in set(current_domains) ^ set(new_domains):
+            self.domain_is_shared.clear(self, domain)
+
     def set_shared_domains(self, domains):
         if self.id is None:
             raise Exception("Please call .save() on the backend before "
                 "calling set_shared_domains()")
         with transaction.atomic():
+            self.__clear_shared_domain_cache(domains)
             self.mobilebackendinvitation_set.all().delete()
             self.mobilebackendinvitation_set = [
                 MobileBackendInvitation(
@@ -1548,52 +2025,134 @@ class SQLMobileBackend(SyncSQLToCouchMixin, models.Model):
                     accepted=True,
                 ) for domain in domains
             ]
-        # TODO: Remove the below line once the two-way sync with
-        # couch is no longer necessary.
-        self.save()
 
     def soft_delete(self):
         with transaction.atomic():
             self.deleted = True
+            self.__clear_shared_domain_cache([])
             self.mobilebackendinvitation_set.all().delete()
             for mapping in self.sqlmobilebackendmapping_set.all():
-                # TODO: Can do a bulk delete once the two-way sync
-                # with couch is no longer necessary
+                # Delete one at a time so the backend map cache gets cleared
+                # for the respective domain(s)
                 mapping.delete()
             self.save()
 
-    def _migration_sync_to_couch(self, couch_obj):
-        couch_obj.domain = self.domain
-        couch_obj.name = self.name
-        couch_obj.display_name = self.display_name
-        couch_obj.authorized_domains = [
-            i.domain for i in self.mobilebackendinvitation_set.all()
-        ]
-        couch_obj.is_global = self.is_global
-        couch_obj.description = self.description
-        couch_obj.supported_countries = self.supported_countries
-        couch_obj.reply_to_phone_number = self.reply_to_phone_number
-        couch_obj.backend_type = self.backend_type
-        couch_obj.reply_to_phone_number = self.reply_to_phone_number
-        for k, v in self.get_extra_fields().iteritems():
-            setattr(couch_obj, k, v)
+    def __clear_caches(self):
+        if self.pk:
+            self.load.clear(SQLMobileBackend, self.pk, is_couch_id=False)
+            self.get_backend_api_id.clear(SQLMobileBackend, self.pk, is_couch_id=False)
 
-        if self.load_balancing_numbers:
-            couch_obj.x_phone_numbers = self.load_balancing_numbers
+        if self.couch_id:
+            self.load.clear(SQLMobileBackend, self.couch_id, is_couch_id=True)
+            self.get_backend_api_id.clear(SQLMobileBackend, self.couch_id, is_couch_id=True)
 
-        if self.deleted:
-            if not couch_obj.base_doc.endswith('-Deleted'):
-                couch_obj.base_doc += '-Deleted'
+    def save(self, *args, **kwargs):
+        self.__clear_caches()
+        return super(SQLMobileBackend, self).save(*args, **kwargs)
 
-        couch_obj.save(sync_to_sql=False)
+    def delete(self, *args, **kwargs):
+        self.__clear_caches()
+        return super(SQLMobileBackend, self).delete(*args, **kwargs)
 
 
 class SQLSMSBackend(SQLMobileBackend):
     class Meta:
         proxy = True
 
+    def get_sms_rate_limit(self):
+        """
+        Override to use rate limiting. Return None to not use rate limiting,
+        otherwise return the maximum number of SMS that should be sent by
+        this backend instance in a one minute period.
+        """
+        return None
 
-class SQLMobileBackendMapping(SyncSQLToCouchMixin, models.Model):
+    def send(self, msg, *args, **kwargs):
+        raise NotImplementedError("Please implement this method.")
+
+    @classmethod
+    def get_opt_in_keywords(cls):
+        """
+        Override to specify a set of opt-in keywords to use for this
+        backend type.
+        """
+        return []
+
+    @classmethod
+    def get_opt_out_keywords(cls):
+        """
+        Override to specify a set of opt-out keywords to use for this
+        backend type.
+        """
+        return []
+
+
+class PhoneLoadBalancingMixin(object):
+    """
+    If you need a backend to balance the outbound SMS load over a set of
+    phone numbers, use this mixin. To use it:
+
+    1) Include this mixin in your backend class.
+    2) Have the send() method expect an orig_phone_number kwarg, which will
+       be the phone number to send from. This parameter is always sent in for
+       instances of PhoneLoadBalancingMixin, even if there's just one phone
+       number in self.load_balancing_numbers.
+    3) Have the backend's form class use the LoadBalancingBackendFormMixin to
+       automatically set the load balancing phone numbers in the UI.
+
+    If the backend also uses rate limiting, then each phone number is rate
+    limited separately as you would expect.
+
+    (We could also just define these methods on the backend class itself, but
+    it's useful in other parts of the framework to check if a backend
+    is an instance of this mixin for performing various operations.)
+    """
+
+    def get_load_balance_redis_key(self):
+        return 'load-balance-phones-for-backend-%s' % self.pk
+
+    def get_next_phone_number(self):
+        if (
+            not isinstance(self.load_balancing_numbers, list) or
+            len(self.load_balancing_numbers) == 0
+        ):
+            raise Exception("Expected load_balancing_numbers to not be "
+                            "empty for backend %s" % self.pk)
+
+        if len(self.load_balancing_numbers) == 1:
+            # If there's just one number, no need to go through the
+            # process to figure out which one is next.
+            return self.load_balancing_numbers[0]
+
+        redis_key = self.get_load_balance_redis_key()
+        return load_balance(redis_key, self.load_balancing_numbers)
+
+
+class BackendMap(object):
+    def __init__(self, catchall_backend_id, backend_map):
+        """
+        catchall_backend_id - the pk of the backend that is the default if
+                              no prefixes match (can be None if there is no
+                              catch all)
+        backend_map - a dictionary of {prefix: backend pk} which
+                      maps a phone prefix to the backend which should be
+                      used for that phone prefix
+        """
+        self.catchall_backend_id = catchall_backend_id
+        self.backend_map_dict = backend_map
+        self.backend_map_tuples = backend_map.items()
+        # Sort by length of prefix descending
+        self.backend_map_tuples.sort(key=lambda x: len(x[0]), reverse=True)
+
+    def get_backend_id_by_prefix(self, phone_number):
+        phone_number = smsutil.strip_plus(phone_number)
+        for prefix, backend_id in self.backend_map_tuples:
+            if phone_number.startswith(prefix):
+                return backend_id
+        return self.catchall_backend_id
+
+
+class SQLMobileBackendMapping(models.Model):
     """
     A SQLMobileBackendMapping instance is used to map SMS or IVR traffic
     to a given backend based on phone prefix.
@@ -1621,16 +2180,75 @@ class SQLMobileBackendMapping(SyncSQLToCouchMixin, models.Model):
     backend = models.ForeignKey('SQLMobileBackend')
 
     @classmethod
-    def _migration_get_couch_model_class(cls):
-        return BackendMapping
+    def __set_default_domain_backend(cls, domain, backend_type, backend=None):
+        fields = dict(
+            is_global=False,
+            domain=domain,
+            backend_type=backend_type,
+            prefix='*'
+        )
 
-    def _migration_sync_to_couch(self, couch_obj):
-        couch_obj.domain = self.domain
-        couch_obj.is_global = self.is_global
-        couch_obj.prefix = self.prefix
-        couch_obj.backend_type = self.backend_type
-        couch_obj.backend_id = self.backend.couch_id
-        couch_obj.save(sync_to_sql=False)
+        obj = None
+        try:
+            # We can't use get_or_create because backend is a
+            # required field
+            obj = cls.objects.get(**fields)
+        except cls.DoesNotExist:
+            pass
+
+        if not backend:
+            if obj:
+                obj.delete()
+            return
+
+        if not obj:
+            obj = cls(**fields)
+
+        obj.backend = backend
+        obj.save()
+
+    @classmethod
+    def set_default_domain_backend(cls, domain, backend, backend_type=SQLMobileBackend.SMS):
+        cls.__set_default_domain_backend(domain, backend_type, backend=backend)
+
+    @classmethod
+    def unset_default_domain_backend(cls, domain, backend_type=SQLMobileBackend.SMS):
+        cls.__set_default_domain_backend(domain, backend_type)
+
+    @classmethod
+    @quickcache(['backend_type', 'domain'], timeout=5 * 60)
+    def get_prefix_to_backend_map(cls, backend_type, domain=None):
+        """
+        backend_type - SQLMobileBackend.SMS or SQLMobileBackend.IVR
+        domain - the domain for which to retrieve the backend map, otherwise if left None
+                 the global backend map will be returned.
+        Returns a BackendMap
+        """
+        if domain:
+            filter_args = {'backend_type': backend_type, 'is_global': False, 'domain': domain}
+        else:
+            filter_args = {'backend_type': backend_type, 'is_global': True}
+
+        catchall_backend_id = None
+        backend_map = {}
+        for instance in cls.objects.filter(**filter_args):
+            if instance.prefix == '*':
+                catchall_backend_id = instance.backend_id
+            else:
+                backend_map[instance.prefix] = instance.backend_id
+
+        return BackendMap(catchall_backend_id, backend_map)
+
+    def __clear_prefix_to_backend_map_cache(self):
+        self.get_prefix_to_backend_map.clear(self.__class__, self.backend_type, domain=self.domain)
+
+    def save(self, *args, **kwargs):
+        self.__clear_prefix_to_backend_map_cache()
+        return super(SQLMobileBackendMapping, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.__clear_prefix_to_backend_map_cache()
+        return super(SQLMobileBackendMapping, self).delete(*args, **kwargs)
 
 
 class MobileBackendInvitation(models.Model):
@@ -1678,7 +2296,3 @@ class MigrationStatus(models.Model):
             return True
         except cls.DoesNotExist:
             return False
-
-
-# Import signal receiver so that it gets registered
-from corehq.apps.sms.signals import sync_default_backend_mapping

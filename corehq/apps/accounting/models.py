@@ -47,6 +47,7 @@ from corehq.apps.accounting.utils import (
     is_active_subscription,
     log_accounting_error,
     log_accounting_info,
+    quantize_accounting_decimal,
 )
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler, DomainUpgradeActionHandler,
@@ -881,27 +882,25 @@ class Subscriber(models.Model):
     def __unicode__(self):
         return u"DOMAIN %s" % self.domain
 
-    def create_subscription(self, new_plan_version, web_user, new_subscription, is_internal_change):
+    def create_subscription(self, new_plan_version, new_subscription, is_internal_change):
         assert new_plan_version
         assert new_subscription
         return self._apply_upgrades_and_downgrades(
             new_plan_version=new_plan_version,
-            web_user=web_user,
             new_subscription=new_subscription,
             internal_change=is_internal_change,
         )
 
-    def cancel_subscription(self, web_user, old_subscription):
+    def cancel_subscription(self, old_subscription):
         assert old_subscription
-        return self._apply_upgrades_and_downgrades(web_user=web_user, old_subscription=old_subscription)
+        return self._apply_upgrades_and_downgrades(old_subscription=old_subscription)
 
     def change_subscription(self, downgraded_privileges, upgraded_privileges, new_plan_version,
-                            web_user, old_subscription, new_subscription, internal_change):
+                            old_subscription, new_subscription, internal_change):
         return self._apply_upgrades_and_downgrades(
             downgraded_privileges=downgraded_privileges,
             upgraded_privileges=upgraded_privileges,
             new_plan_version=new_plan_version,
-            web_user=web_user,
             old_subscription=old_subscription,
             new_subscription=new_subscription,
             internal_change=internal_change,
@@ -922,10 +921,9 @@ class Subscriber(models.Model):
             new_subscription=new_subscription,
         )
 
-    def reactivate_subscription(self, new_plan_version, web_user, subscription):
+    def reactivate_subscription(self, new_plan_version, subscription):
         return self._apply_upgrades_and_downgrades(
             new_plan_version=new_plan_version,
-            web_user=web_user,
             old_subscription=subscription,
             new_subscription=subscription,
         )
@@ -933,7 +931,6 @@ class Subscriber(models.Model):
     def _apply_upgrades_and_downgrades(self, new_plan_version=None,
                                        downgraded_privileges=None,
                                        upgraded_privileges=None,
-                                       web_user=None,
                                        old_subscription=None,
                                        new_subscription=None,
                                        internal_change=False):
@@ -950,10 +947,10 @@ class Subscriber(models.Model):
             upgraded_privileges = upgraded_privileges or change_status_result.upgraded_privs
 
         if downgraded_privileges:
-            Subscriber._process_downgrade(self.domain, downgraded_privileges, new_plan_version, web_user)
+            Subscriber._process_downgrade(self.domain, downgraded_privileges, new_plan_version)
 
         if upgraded_privileges:
-            Subscriber._process_upgrade(self.domain, upgraded_privileges, new_plan_version, web_user)
+            Subscriber._process_upgrade(self.domain, upgraded_privileges, new_plan_version)
 
         if Subscriber.should_send_subscription_notification(old_subscription, new_subscription):
             send_subscription_change_alert(self.domain, new_subscription, old_subscription, internal_change)
@@ -967,19 +964,17 @@ class Subscriber(models.Model):
         return not is_new_trial and not expired_trial
 
     @staticmethod
-    def _process_downgrade(domain, downgraded_privileges, new_plan_version, web_user):
+    def _process_downgrade(domain, downgraded_privileges, new_plan_version):
         downgrade_handler = DomainDowngradeActionHandler(
             domain, new_plan_version, downgraded_privileges,
-            web_user=web_user,
         )
         if not downgrade_handler.get_response():
             raise SubscriptionChangeError("The downgrade was not successful.")
 
     @staticmethod
-    def _process_upgrade(domain, upgraded_privileges, new_plan_version, web_user):
+    def _process_upgrade(domain, upgraded_privileges, new_plan_version):
         upgrade_handler = DomainUpgradeActionHandler(
             domain, new_plan_version, upgraded_privileges,
-            web_user=web_user,
         )
         if not upgrade_handler.get_response():
             raise SubscriptionChangeError("The upgrade was not successful.")
@@ -1108,7 +1103,7 @@ class Subscription(models.Model):
         self.is_active = False
         self.save()
 
-        self.subscriber.cancel_subscription(web_user=web_user, old_subscription=self)
+        self.subscriber.cancel_subscription(old_subscription=self)
 
         # transfer existing credit lines to the account
         self.transfer_credits()
@@ -1172,6 +1167,30 @@ class Subscription(models.Model):
                             service_type=None, pro_bono_status=None, funding_source=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
+        self._update_dates(date_start, date_end)
+
+        if self.date_delay_invoicing is None or self.date_delay_invoicing > datetime.date.today():
+            self.date_delay_invoicing = date_delay_invoicing
+
+        self._update_properties(
+            do_not_invoice=do_not_invoice,
+            no_invoice_reason=no_invoice_reason,
+            do_not_email=do_not_email,
+            auto_generate_credits=auto_generate_credits,
+            salesforce_contract_id=salesforce_contract_id,
+            service_type=service_type,
+            pro_bono_status=pro_bono_status,
+            funding_source=funding_source,
+        )
+
+        self.save()
+
+        SubscriptionAdjustment.record_adjustment(
+            self, method=adjustment_method, note=note, web_user=web_user,
+            reason=SubscriptionAdjustmentReason.MODIFY
+        )
+
+    def _update_dates(self, date_start, date_end):
         if not date_start:
             raise SubscriptionAdjustmentError('Start date must be provided')
         if date_end is not None and date_start > date_end:
@@ -1192,26 +1211,23 @@ class Subscription(models.Model):
                     'Cannot deactivate a subscription here. Cancel subscription instead.'
                 )
 
-        if self.date_delay_invoicing is None or self.date_delay_invoicing > datetime.date.today():
-            self.date_delay_invoicing = date_delay_invoicing
+    def _update_properties(self, **kwargs):
+        property_names = {
+            'do_not_invoice',
+            'no_invoice_reason',
+            'do_not_email',
+            'auto_generate_credits',
+            'salesforce_contract_id',
+            'service_type',
+            'pro_bono_status',
+            'funding_source',
+        }
 
-        self.do_not_invoice = do_not_invoice
-        self.no_invoice_reason = no_invoice_reason
-        self.do_not_email = do_not_email
-        self.auto_generate_credits = auto_generate_credits
-        self.salesforce_contract_id = salesforce_contract_id
-        if service_type is not None:
-            self.service_type = service_type
-        if pro_bono_status is not None:
-            self.pro_bono_status = pro_bono_status
-        if funding_source is not None:
-            self.funding_source = funding_source
-        self.save()
+        assert property_names >= set(kwargs.keys())
 
-        SubscriptionAdjustment.record_adjustment(
-            self, method=adjustment_method, note=note, web_user=web_user,
-            reason=SubscriptionAdjustmentReason.MODIFY
-        )
+        for property_name, property_value in kwargs.items():
+            if property_value is not None:
+                setattr(self, property_name, property_value)
 
     @transaction.atomic
     def change_plan(self, new_plan_version, date_end=None,
@@ -1265,7 +1281,6 @@ class Subscription(models.Model):
             downgraded_privileges=change_status_result.downgraded_privs,
             upgraded_privileges=change_status_result.upgraded_privs,
             new_plan_version=new_plan_version,
-            web_user=web_user,
             old_subscription=self,
             new_subscription=new_subscription,
             internal_change=internal_change,
@@ -1299,7 +1314,6 @@ class Subscription(models.Model):
         self.save()
         self.subscriber.reactivate_subscription(
             new_plan_version=self.plan_version,
-            web_user=web_user,
             subscription=self,
         )
         SubscriptionAdjustment.record_adjustment(
@@ -1629,7 +1643,6 @@ class Subscription(models.Model):
         if subscription.is_active:
             subscriber.create_subscription(
                 new_plan_version=plan_version,
-                web_user=web_user,
                 new_subscription=subscription,
                 is_internal_change=internal_change,
             )
@@ -2199,7 +2212,174 @@ class BillingRecord(BillingRecordBase):
                 'last_4': last_4,
             })
 
+        context.update({
+            'credits': self.credits,
+        })
+
         return context
+
+    def credits(self):
+        credits = {
+            'account': {},
+            'subscription': {},
+        }
+        self._add_product_credits(credits)
+        self._add_user_credits(credits)
+        self._add_sms_credits(credits)
+        self._add_general_credits(credits)
+        return credits
+
+    def _add_product_credits(self, credits):
+        product_type = self.invoice.subscription.plan_version.core_product
+        credit_adjustments = CreditAdjustment.objects.filter(
+            invoice=self.invoice,
+            line_item__product_rate__product__product_type=product_type,
+        )
+
+        subscription_credits = BillingRecord._get_total_balance(
+            CreditLine.get_credits_by_subscription_and_features(
+                self.invoice.subscription,
+                product_type=product_type,
+            )
+        )
+        if subscription_credits or credit_adjustments.filter(
+            credit_line__subscription=self.invoice.subscription,
+        ):
+            credits['subscription'].update({
+                'product': {
+                    'amount': quantize_accounting_decimal(subscription_credits),
+                }
+            })
+
+        account_credits = BillingRecord._get_total_balance(
+            CreditLine.get_credits_for_account(
+                self.invoice.subscription.account,
+                product_type=product_type,
+            )
+        )
+        if account_credits or credit_adjustments.filter(
+            credit_line__subscription=None,
+        ):
+            credits['account'].update({
+                'product': {
+                    'amount': quantize_accounting_decimal(account_credits),
+                }
+            })
+
+        return credits
+
+    def _add_user_credits(self, credits):
+        credit_adjustments = CreditAdjustment.objects.filter(
+            invoice=self.invoice,
+            line_item__feature_rate__feature__feature_type=FeatureType.USER,
+        )
+
+        subscription_credits = BillingRecord._get_total_balance(
+            CreditLine.get_credits_by_subscription_and_features(
+                self.invoice.subscription,
+                feature_type=FeatureType.USER,
+            )
+        )
+        if subscription_credits or credit_adjustments.filter(
+            credit_line__subscription=self.invoice.subscription,
+        ):
+            credits['subscription'].update({
+                'user': {
+                    'amount': quantize_accounting_decimal(subscription_credits),
+                }
+            })
+
+        account_credits = BillingRecord._get_total_balance(
+            CreditLine.get_credits_for_account(
+                self.invoice.subscription.account,
+                feature_type=FeatureType.USER,
+            )
+        )
+        if account_credits or credit_adjustments.filter(
+            credit_line__subscription=None,
+        ):
+            credits['account'].update({
+                'user': {
+                    'amount': quantize_accounting_decimal(account_credits),
+                }
+            })
+
+        return credits
+
+    def _add_sms_credits(self, credits):
+        credit_adjustments = CreditAdjustment.objects.filter(
+            invoice=self.invoice,
+            line_item__feature_rate__feature__feature_type=FeatureType.SMS,
+        )
+
+        subscription_credits = BillingRecord._get_total_balance(
+            CreditLine.get_credits_by_subscription_and_features(
+                self.invoice.subscription,
+                feature_type=FeatureType.SMS,
+            )
+        )
+        if subscription_credits or credit_adjustments.filter(
+            credit_line__subscription=self.invoice.subscription,
+        ):
+            credits['subscription'].update({
+                'sms': {
+                    'amount': quantize_accounting_decimal(subscription_credits),
+                }
+            })
+
+        account_credits = BillingRecord._get_total_balance(
+            CreditLine.get_credits_for_account(
+                self.invoice.subscription.account,
+                feature_type=FeatureType.SMS,
+            )
+        )
+        if account_credits or credit_adjustments.filter(
+            credit_line__subscription=None,
+        ):
+            credits['account'].update({
+                'sms': {
+                    'amount': quantize_accounting_decimal(account_credits),
+                }
+            })
+
+        return credits
+
+    def _add_general_credits(self, credits):
+        credit_adjustments = CreditAdjustment.objects.filter(
+            invoice=self.invoice,
+            line_item__feature_rate=None,
+            line_item__product_rate=None,
+        )
+
+        subscription_credits = BillingRecord._get_total_balance(
+            CreditLine.get_credits_by_subscription_and_features(
+                self.invoice.subscription,
+            )
+        )
+        if subscription_credits or credit_adjustments.filter(
+            credit_line__subscription=self.invoice.subscription,
+        ):
+            credits['subscription'].update({
+                'general': {
+                    'amount': quantize_accounting_decimal(subscription_credits),
+                }
+            })
+
+        account_credits = BillingRecord._get_total_balance(
+            CreditLine.get_credits_for_account(
+                self.invoice.subscription.account,
+            )
+        )
+        if account_credits or credit_adjustments.filter(
+            credit_line__subscription=None,
+        ):
+            credits['account'].update({
+                'general': {
+                    'amount': quantize_accounting_decimal(account_credits),
+                }
+            })
+
+        return credits
 
     def email_subject(self):
         month_name = self.invoice.date_start.strftime("%B")
@@ -2211,6 +2391,13 @@ class BillingRecord(BillingRecordBase):
 
     def email_from(self):
         return get_dimagi_from_email_by_product(self.invoice.subscription.plan_version.core_product)
+
+    @staticmethod
+    def _get_total_balance(credit_lines):
+        return (
+            sum(map(lambda credit_line: credit_line.balance, credit_lines))
+            if credit_lines else Decimal('0.0')
+        )
 
 
 class InvoicePdf(SafeSaveDocument):

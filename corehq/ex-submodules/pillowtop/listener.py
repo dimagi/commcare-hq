@@ -23,7 +23,7 @@ from pillowtop.couchdb import CachedCouchDB
 
 from django import db
 from pillowtop.dao.couch import CouchDocumentStore
-from pillowtop.es_utils import completely_initialize_pillow_index
+from pillowtop.es_utils import completely_initialize_pillow_index, doc_exists
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import PillowBase
@@ -423,8 +423,6 @@ class AliasedElasticPillow(BasicPillow):
     pillow will create a new Index with a new md5sum as its suffix. Once it's finished indexing,
     you will need to flip the alias over to it.
     """
-    es_host = ""
-    es_port = ""
     es_index = ""
     es_type = ""
     es_alias = ''
@@ -453,19 +451,14 @@ class AliasedElasticPillow(BasicPillow):
 
     @memoized
     def get_es_new(self):
-        return Elasticsearch(
-            [{
-                'host': self.es_host,
-                'port': self.es_port,
-            }],
-            timeout=self.es_timeout,
-        )
+        from corehq.elastic import get_es_new
+        return get_es_new(timeout=self.es_timeout)
 
     def change_trigger(self, changes_dict):
         id = changes_dict['id']
         if changes_dict.get('deleted', False):
             try:
-                if self.doc_exists(id):
+                if doc_exists(self, id):
                     self.get_es_new().delete(self.es_index, self.es_type, id)
             except Exception, ex:
                 pillow_logging.error(
@@ -492,20 +485,19 @@ class AliasedElasticPillow(BasicPillow):
 
     def change_transport(self, doc_dict):
         """
-        Override the elastic transport to go to the index + the type being a string between the
-        domain and case type
+        Save the document to ElasticSearch
         """
         try:
             if not self.bulk:
-                doc_exists = self.doc_exists(doc_dict)
+                doc_exists_val = doc_exists(self, doc_dict)
 
                 if self.allow_updates:
                     can_put = True
                 else:
-                    can_put = not doc_exists
+                    can_put = not doc_exists_val
 
                 if can_put and not self.bulk:
-                    self.send_robust(doc_dict, update=doc_exists)
+                    self.send_robust(doc_dict, update=doc_exists_val)
         except Exception, ex:
             tb = traceback.format_exc()
             pillow_logging.error(
@@ -587,17 +579,6 @@ class AliasedElasticPillow(BasicPillow):
                 pillow_logging.error(
                     "Error on change: %s, %s" % (change['id'], ex)
                 )
-
-    def doc_exists(self, doc_id_or_dict):
-        """
-        Check if a document exists, by ID or the whole document.
-        """
-        if isinstance(doc_id_or_dict, basestring):
-            doc_id = doc_id_or_dict
-        else:
-            assert isinstance(doc_id_or_dict, dict)
-            doc_id = doc_id_or_dict['_id']
-        return self.get_es_new().exists(self.es_index, doc_id, self.es_type)
 
     @memoized
     def get_name(self):

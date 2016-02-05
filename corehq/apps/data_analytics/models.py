@@ -20,6 +20,7 @@ class MALTRow(models.Model):
     domain_name = models.TextField(db_index=True)
     num_of_forms = models.PositiveIntegerField()
     app_id = models.TextField()
+    device_id = models.TextField(blank=True, null=True)
     is_app_deleted = models.BooleanField(default=False)
 
     YES = True  # equivalent to app_manager.const.AMPLIFIES_YES
@@ -35,7 +36,7 @@ class MALTRow(models.Model):
     threshold = models.PositiveSmallIntegerField(default=15)
 
     class Meta:
-        unique_together = ('month', 'domain_name', 'user_id', 'app_id')
+        unique_together = ('month', 'domain_name', 'user_id', 'app_id', 'device_id')
 
     @classmethod
     def get_unique_fields(cls):

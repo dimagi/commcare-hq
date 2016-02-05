@@ -44,7 +44,6 @@ def load_domain(req, domain):
     domain_name = normalize_domain_name(domain)
     domain = Domain.get_by_name(domain_name)
     req.project = domain
-    req.can_see_organization = has_privilege(req, privileges.CROSS_PROJECT_REPORTS)
     return domain_name, domain
 
 ########################################################################################################

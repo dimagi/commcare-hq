@@ -47,12 +47,13 @@ class DbShard(object):
             db_config['NAME'] = TEST_DATABASE_PREFIX + db_config['NAME']
         return db_config
 
-    def to_shard_meta(self):
+    def to_shard_meta(self, host_map):
         config = self.get_db_config()
+        host = host_map.get(config['HOST'], config['HOST'])
         return ShardMeta(
             id=self.shard_id,
             dbname=config['NAME'],
-            host=config['HOST'],
+            host=host,
             port=int(config['PORT']),
         )
 
@@ -117,11 +118,12 @@ class PartitionConfig(object):
     def get_shards(self):
         """Returns a list of ShardMeta objects sorted by shard ID"""
         shard_config = self.partition_config['shards']
+        host_map = self.partition_config.get('host_map', {})
         db_shards = []
         for db, shard_range in shard_config.items():
             db_shards.extend([DbShard(shard_num, db) for shard_num in range(shard_range[0], shard_range[1] + 1)])
         db_shards = sorted(db_shards, key=lambda shard: shard.shard_id)
-        return [shard.to_shard_meta() for shard in db_shards]
+        return [shard.to_shard_meta(host_map) for shard in db_shards]
 
 
 def _is_power_of_2(num):

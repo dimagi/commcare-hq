@@ -1,6 +1,5 @@
 from corehq.apps.domain.models import Domain
 from corehq.util.couch import get_db_by_doc_type
-from corehq.util.test_utils import unit_testing_only
 
 
 def get_doc_count_in_domain_by_class(domain, doc_class):

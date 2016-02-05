@@ -1,6 +1,6 @@
-from collections import defaultdict
 from datetime import datetime
 
+import json_field
 from django.core.urlresolvers import reverse
 from django.dispatch.dispatcher import receiver
 from corehq.apps.domain.signals import commcare_domain_pre_delete
@@ -458,7 +458,7 @@ class ReportRun(models.Model):
     complete = models.BooleanField(default=False)
     has_error = models.BooleanField(default=False)
     domain = models.CharField(max_length=60)
-    location = models.ForeignKey(SQLLocation, null=True)
+    location = models.ForeignKey(SQLLocation, null=True, on_delete=models.PROTECT)
 
     class Meta:
         app_label = 'ilsgateway'
@@ -478,7 +478,7 @@ class ReportRun(models.Model):
 
 
 class HistoricalLocationGroup(models.Model):
-    location_id = models.ForeignKey(SQLLocation)
+    location_id = models.ForeignKey(SQLLocation, on_delete=models.PROTECT)
     date = models.DateField()
     group = models.CharField(max_length=1)
 
@@ -507,7 +507,7 @@ class SupervisionDocument(models.Model):
 
 
 class ILSNotes(models.Model):
-    location = models.ForeignKey(SQLLocation)
+    location = models.ForeignKey(SQLLocation, on_delete=models.PROTECT)
     domain = models.CharField(max_length=100, null=False)
     user_name = models.CharField(max_length=128, null=False)
     user_role = models.CharField(max_length=100, null=True)
@@ -559,6 +559,13 @@ class ILSGatewayWebUser(models.Model):
     # To remove after switchover
     external_id = models.IntegerField(db_index=True)
     email = models.CharField(max_length=128)
+
+
+class PendingReportingDataRecalculation(models.Model):
+    domain = models.CharField(max_length=128)
+    sql_location = models.ForeignKey(SQLLocation)
+    type = models.CharField(max_length=128)
+    data = json_field.JSONField()
 
 
 @receiver(commcare_domain_pre_delete)
@@ -614,28 +621,28 @@ def domain_pre_delete_receiver(domain, **kwargs):
 
 @receiver(location_edited)
 def location_edited_receiver(sender, loc, moved, **kwargs):
-    from custom.ilsgateway.tanzania.warehouse.updater import default_start_date, \
-        process_non_facility_warehouse_data
-
+    from custom.ilsgateway.utils import last_location_group
     config = ILSGatewayConfig.for_domain(loc.domain)
-    if not config or not config.enabled or not moved or not loc.previous_parents:
+    if not config or not config.enabled:
         return
 
     last_run = ReportRun.last_success(loc.domain)
     if not last_run:
         return
 
-    previous_parent = SQLLocation.objects.get(location_id=loc.previous_parents[-1])
-    type_location_map = defaultdict(set)
+    if moved:
+        PendingReportingDataRecalculation.objects.create(
+            domain=loc.domain,
+            type='parent_change',
+            sql_location=loc.sql_location,
+            data={'previous_parent': loc.previous_parents[-1], 'current_parent': loc.parent_id}
+        )
 
-    previous_ancestors = list(previous_parent.get_ancestors(include_self=True))
-    actual_ancestors = list(loc.sql_location.get_ancestors())
-
-    for sql_location in previous_ancestors + actual_ancestors:
-        type_location_map[sql_location.location_type.name].add(sql_location)
-
-    for location_type in ["DISTRICT", "REGION", "MSDZONE"]:
-        for sql_location in type_location_map[location_type]:
-            process_non_facility_warehouse_data.delay(
-                sql_location.couch_location, default_start_date(), last_run.end, last_run, strict=False
-            )
+    group = last_location_group(loc)
+    if group != loc.metadata['group']:
+        PendingReportingDataRecalculation.objects.create(
+            domain=loc.domain,
+            type='group_change',
+            sql_location=loc.sql_location,
+            data={'previous_group': group, 'current_group': loc.metadata['group']}
+        )

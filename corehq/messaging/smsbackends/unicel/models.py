@@ -1,6 +1,5 @@
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.api import incoming
-from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import SQLSMSBackend
 from urllib2 import urlopen
 from urllib import urlencode
@@ -43,67 +42,10 @@ UNICODE_PARAMS = [("udhi", 0),
                   ("dcs", 8)]
 
 
-class UnicelBackend(SMSBackend):
-    username = StringProperty()
-    password = StringProperty()
-    sender = StringProperty()
-
-    @classmethod
-    def get_api_id(cls):
-        return "UNICEL"
-
-    @classmethod
-    def get_generic_name(cls):
-        return "Unicel"
-
-    @classmethod
-    def get_template(cls):
-        return "unicel/backend.html"
-
-    @classmethod
-    def get_form_class(cls):
-        return UnicelBackendForm
-
-    def send(self, message, delay=True, *args, **kwargs):
-        """
-        Send an outbound message using the Unicel API
-        """
-
-        phone_number = clean_phone_number(message.phone_number).replace("+", "")
-        params = [(OutboundParams.DESTINATION, phone_number),
-                  (OutboundParams.USERNAME, self.username),
-                  (OutboundParams.PASSWORD, self.password),
-                  (OutboundParams.SENDER, self.sender)]
-        try:
-            text = str(message.text)
-            # it's ascii
-            params.append((OutboundParams.MESSAGE, text))
-        except UnicodeEncodeError:
-            params.extend(UNICODE_PARAMS)
-            encoded = message.text.encode("utf_16_be").encode("hex").upper()
-            params.append((OutboundParams.MESSAGE, encoded))
-
-        try:
-            data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params)),
-                timeout=settings.SMS_GATEWAY_TIMEOUT).read()
-        except Exception:
-            data = None
-
-        return data
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLUnicelBackend
-
-
 class SQLUnicelBackend(SQLSMSBackend):
     class Meta:
         app_label = 'sms'
         proxy = True
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return UnicelBackend
 
     @classmethod
     def get_available_extra_fields(cls):
@@ -112,6 +54,39 @@ class SQLUnicelBackend(SQLSMSBackend):
             'password',
             'sender',
         ]
+
+    @classmethod
+    def get_api_id(cls):
+        return 'UNICEL'
+
+    @classmethod
+    def get_generic_name(cls):
+        return "Unicel"
+
+    @classmethod
+    def get_form_class(cls):
+        return UnicelBackendForm
+
+    def send(self, message, *args, **kwargs):
+        config = self.config
+        phone_number = clean_phone_number(message.phone_number).replace('+', '')
+        params = [(OutboundParams.DESTINATION, phone_number),
+                  (OutboundParams.USERNAME, config.username),
+                  (OutboundParams.PASSWORD, config.password),
+                  (OutboundParams.SENDER, config.sender)]
+        try:
+            text = str(message.text)
+            # it's ascii
+            params.append((OutboundParams.MESSAGE, text))
+        except UnicodeEncodeError:
+            params.extend(UNICODE_PARAMS)
+            encoded = message.text.encode('utf_16_be').encode('hex').upper()
+            params.append((OutboundParams.MESSAGE, encoded))
+
+        data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params)),
+            timeout=settings.SMS_GATEWAY_TIMEOUT).read()
+
+        return data
 
 
 def create_from_request(request):
@@ -132,6 +107,6 @@ def create_from_request(request):
 
     backend_message_id = request.REQUEST.get(InboundParams.MID, None)
 
-    log = incoming(sender, message, UnicelBackend.get_api_id(), backend_message_id=backend_message_id)
+    log = incoming(sender, message, SQLUnicelBackend.get_api_id(), backend_message_id=backend_message_id)
 
     return log

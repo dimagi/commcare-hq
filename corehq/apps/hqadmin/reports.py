@@ -695,6 +695,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                 help_text=_("The number of open cases not created or updated in the last 120 days")),
             DataTablesColumn(_("# Cases"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_cases"),
             DataTablesColumn(_("# Form Submissions"), sort_type=DTSortType.NUMERIC, prop_name="cp_n_forms"),
+            DataTablesColumn(_("# Form Submissions in last 30 days"), sort_type=DTSortType.NUMERIC,
+                             prop_name="cp_n_forms_30_d"),
             DataTablesColumn(_("First Form Submission"), prop_name="cp_first_form"),
             DataTablesColumn(_("Last Form Submission"), prop_name="cp_last_form"),
             DataTablesColumn(_("# Web Users"), sort_type=DTSortType.NUMERIC,
@@ -745,12 +747,13 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             10: "cp_n_inactive_cases",
             11: "cp_n_cases",
             12: "cp_n_forms",
-            15: "cp_n_web_users",
-            28: "cp_n_out_sms",
-            29: "cp_n_in_sms",
-            30: "cp_n_sms_ever",
-            31: "cp_n_sms_in_30_d",
-            32: "cp_n_sms_out_30_d",
+            13: "cp_n_forms_30_d",
+            16: "cp_n_web_users",
+            29: "cp_n_out_sms",
+            30: "cp_n_in_sms",
+            31: "cp_n_sms_ever",
+            32: "cp_n_sms_in_30_d",
+            33: "cp_n_sms_out_30_d",
         }
 
         def stat_row(name, what_to_get, type='float'):
@@ -798,6 +801,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get("cp_n_inactive_cases", _("Not yet calculated")),
                     dom.get("cp_n_cases", _("Not yet calculated")),
                     dom.get("cp_n_forms", _("Not yet calculated")),
+                    dom.get("cp_n_forms_30_d", _("Not yet calculated")),
                     format_date(dom.get("cp_first_form"), first_form_default_message),
                     format_date(dom.get("cp_last_form"), _("No forms")),
                     dom.get("cp_n_web_users", _("Not yet calculated")),
@@ -821,6 +825,47 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get('cp_n_sms_out_30_d', _("Not yet calculated")),
                     format_bool(dom.get('internal', {}).get('custom_eula')),
                     dom.get('hipaa_compliant', _('false'))
+                ]
+
+
+class AdminDomainMapReport(AdminDomainStatsReport):
+    slug = "project_map"
+    name = ugettext_noop('Project Map')
+    facet_title = ugettext_noop("Project Facets")
+    search_for = ugettext_noop("projects...")
+    base_template = "hqadmin/project_map.html"
+
+    exportable = False
+
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        super(AdminDomainStatsReport, self).set_bootstrap3_status(request, *args, **kwargs)
+
+    # a modified version of AdminDomainStatsReport.rows
+    @property
+    def rows(self):
+        domains = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
+
+        def format_date(dstr, default):
+            # use [:19] so that only only the 'YYYY-MM-DDTHH:MM:SS' part of the string is parsed
+            return datetime.strptime(dstr[:19], '%Y-%m-%dT%H:%M:%S').strftime('%Y/%m/%d %H:%M:%S') \
+                   if dstr else default
+
+        for dom in domains:
+            # for some reason when using the statistical facet, ES adds an empty dict to hits
+            if 'name' in dom:
+                yield [
+                    dom.get("hr_name") or dom.get("name"),
+                    self.get_name_or_link(dom, internal_settings=True),
+                    format_date((dom.get("date_created")), _('No date')),
+                    dom.get("internal", {}).get('organization_name') or _('No org'),
+                    format_date((dom.get('deployment') or {}).get('date'), _('No date')),
+                    (dom.get("deployment") or {}).get('countries') or _('No countries'),
+                    dom.get("cp_n_active_cc_users", _("Not yet calculated")),
+                    dom.get("cp_n_forms", _("Not yet calculated")),
+                    dom.get("cp_n_forms_30_d", _("Not yet calculated")),
+                    dom.get('internal', {}).get('notes') or _('No notes'),
+                    dom.get('internal', {}).get('area') or _('No info'),
+                    dom.get('internal', {}).get('sub_area') or _('No info')
                 ]
 
 

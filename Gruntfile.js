@@ -1,5 +1,7 @@
 module.exports = function(grunt) {
-    var BASE_URL = 'http://localhost:8000/mocha/';
+    // use localhost unless we're running on travis
+    var BASE_ADDRESS = process.env.WEB_TEST_PORT_8000_TCP_ADDR || 'localhost',
+        BASE_URL = 'http://' + BASE_ADDRESS + ':8000/mocha/';
 
     /*
      * To add a new app to test, add the app name to this test and create
@@ -14,6 +16,7 @@ module.exports = function(grunt) {
         'app_manager#b3',
         'app_manager#fields',
         'export',
+        'export#ko',
         'reports_core#choiceListUtils'
     ];
 
