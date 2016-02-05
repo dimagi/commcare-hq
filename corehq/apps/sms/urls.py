@@ -7,12 +7,13 @@ from corehq.apps.sms.views import (
     SMSSettingsView,
     ManageRegistrationInvitationsView,
     InvitationAppInfoView,
+    ChatContactsView,
     GlobalSmsGatewayListView,
     AddGlobalGatewayView,
     EditGlobalGatewayView,
     GlobalBackendMap,
-    ComposeMessageView,
-    SMSLanguagesView)
+    SMSLanguagesView,
+    ComposeMessageView)
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 
 urlpatterns = patterns('corehq.apps.sms.views',
@@ -34,7 +35,7 @@ urlpatterns = patterns('corehq.apps.sms.views',
         EditDomainGatewayView.as_view(), name=EditDomainGatewayView.urlname
     ),
     url(r'^gateways/$', DomainSmsGatewayListView.as_view(), name=DomainSmsGatewayListView.urlname),
-    url(r'^chat_contacts/$', 'chat_contacts', name='chat_contacts'),
+    url(r'^chat_contacts/$', ChatContactsView.as_view(), name=ChatContactsView.urlname),
     url(r'^chat_contact_list/$', 'chat_contact_list', name='chat_contact_list'),
     url(r'^chat/(?P<contact_id>[\w-]+)/(?P<vn_id>[\w-]+)/$', 'chat', name='sms_chat'),
     url(r'^chat/(?P<contact_id>[\w-]+)/?$', 'chat', name='sms_chat'),
