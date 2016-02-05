@@ -8,6 +8,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.decorators.memoized import memoized
 
+from casexml.apps.case.cleanup import close_case
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption)
 from casexml.apps.stock.models import StockReport, DocDomainMapping
@@ -20,13 +21,11 @@ from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.models import Location, SQLLocation
-from corehq.apps.locations.signals import location_created, location_edited
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.quickcache import quickcache
 from . import const
 from .const import StockActions, RequisitionActions, DAYS_IN_MONTH
-from .dbaccessors import get_supply_point_case_by_location
 
 
 STOCK_ACTION_ORDER = [
@@ -252,7 +251,7 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
             if self.consumption_config.use_supply_point_type_default_consumption:
                 try:
                     supply_point = SupplyInterface(self.domain).get_supply_point(case_id)
-                    facility_type = supply_point.location.location_type
+                    facility_type = supply_point.sql_location.location_type_name
                 except ResourceNotFound:
                     pass
             return get_default_monthly_consumption(self.domain, product_id, facility_type, case_id)
@@ -353,14 +352,15 @@ class SupplyPointCase(CommCareCase):
             'location_site_code': None,
             'location_parent_name': None,
         })
-        if self.location:
-            data['location_type'] = self.location.location_type
-            data['location_site_code'] = self.location.site_code
-            if self.location.parent:
-                data['location_parent_name'] = self.location.parent.name
-
-        # todo
-        #data['last_reported'] = None
+        try:
+            location = self.sql_location
+        except SQLLocation.DoesNotExist:
+            pass
+        else:
+            data['location_type'] = location.location_type_name
+            data['location_site_code'] = location.site_code
+            if location.parent:
+                data['location_parent_name'] = location.parent.name
 
         return data
 
@@ -410,7 +410,7 @@ DEFAULT_CONSUMPTION = 10.  # per month
 
 class ActiveManager(models.Manager):
     """
-    Filter any object that is associated to an archived product.
+    Filter any object that is associated to an archived product
     """
 
     def get_queryset(self):
@@ -551,38 +551,39 @@ class StockExportColumn(ComplexExportColumn):
         return values
 
 
-def sync_location_supply_point(loc):
-    """
-    This method syncs the location/supply point connection
-    and is triggered whenever a location is edited or created.
-    """
-    # circular import
-    from corehq.apps.domain.models import Domain
+def _make_location_admininstrative(location):
+    supply_point_id = location.supply_point_id
+    if supply_point_id:
+        close_case(supply_point_id, location.domain, const.COMMTRACK_USERNAME)
+    location.supply_point_id = None  # this will be saved soon anyways
 
-    domain = Domain.get_by_name(loc.domain)
+
+def _reopen_or_create_supply_point(location):
+    from .dbaccessors import get_supply_point_by_location_id
+    supply_point = get_supply_point_by_location_id(location.domain, location.location_id)
+    if supply_point:
+        if supply_point and supply_point.closed:
+            for action in supply_point.actions:
+                if action.action_type == 'close':
+                    action.xform.archive(user_id=const.COMMTRACK_USERNAME)
+        supply_point.update_from_location(location)
+        return supply_point
+    else:
+        return SupplyInterface.create_from_location(location.domain, location)
+
+
+def sync_supply_point(location):
+    # Called on location.save()
+    domain = Domain.get_by_name(location.domain)
     if not domain.commtrack_enabled:
-        return
+        return None
 
-    def _needs_supply_point(loc, domain):
-        """Exclude administrative-only locs"""
-        return loc.location_type in [loc_type.name for loc_type in domain.location_types if not loc_type.administrative]
-
-    if _needs_supply_point(loc, domain):
-        supply_point = get_supply_point_case_by_location(loc)
-        if supply_point:
-            supply_point.update_from_location(loc)
-            updated_supply_point = supply_point
-        else:
-            updated_supply_point = SupplyInterface.create_from_location(loc.domain, loc)
-
-        # need to sync this sp change to the sql location
-        # but saving the doc will trigger a loop
-        try:
-            sql_loc = SQLLocation.objects.get(location_id=loc.location_id)
-            sql_loc.supply_point_id = updated_supply_point._id
-            sql_loc.save()
-        except SQLLocation.DoesNotExist:
-            pass
+    if location.location_type.administrative:
+        _make_location_admininstrative(location)
+        return None
+    else:
+        updated_supply_point = _reopen_or_create_supply_point(location)
+        return updated_supply_point._id
 
 
 @receiver(post_save, sender=StockState)
@@ -601,16 +602,6 @@ def update_domain_mapping(sender, instance, *args, **kwargs):
             domain_name=domain_name,
         )
         mapping.save()
-
-
-@receiver(location_edited)
-def post_loc_edited(sender, loc=None, **kwargs):
-    sync_location_supply_point(loc)
-
-
-@receiver(location_created)
-def post_loc_created(sender, loc=None, **kwargs):
-    sync_location_supply_point(loc)
 
 
 @receiver(xform_archived)

@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
+import importlib
 from collections import defaultdict
 
-import sys
 import os
 from urllib import urlencode
 from django.contrib import messages
+import settingshelper as helper
 
 # odd celery fix
 import djcelery
@@ -33,10 +34,7 @@ BASE_DIR = os.path.dirname(__file__)
 
 # gets set to False for unit tests that run without the database
 DB_ENABLED = True
-try:
-    UNIT_TESTING = 'test' == sys.argv[1]
-except IndexError:
-    UNIT_TESTING = False
+UNIT_TESTING = helper.is_testing()
 
 ADMINS = ()
 MANAGERS = ADMINS
@@ -128,7 +126,8 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.eggs.Loader',
 )
 
-CSRF_ALWAYS_OFF = True
+# Add this to localsettings and set it to False, so that CSRF protection is enabled on localhost
+CSRF_SOFT_MODE = True
 
 MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
@@ -334,12 +333,12 @@ HQ_APPS = (
     'custom.bihar',
     'custom.penn_state',
     'custom.apps.gsid',
+    'custom.icds',
     'hsph',
     'mvp',
     'mvp_docs',
     'mvp_indicators',
     'custom.opm',
-    'pathindia',
     'pact',
 
     'custom.apps.care_benin',
@@ -366,7 +365,6 @@ HQ_APPS = (
 
     'custom.dhis2',
     'custom.openclinica',
-    'custom.guinea_backup',
 
 )
 
@@ -393,7 +391,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'djtables',
     'gunicorn',
     'langcodes',
-    'luna',
     'custom.apps.crs_reports',
     'custom.m4change',
 
@@ -533,9 +530,7 @@ GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 # celery
 BROKER_URL = 'django://'  # default django db based
 
-from settingshelper import celery_failure_handler
-
-CELERY_ANNOTATIONS = {'*': {'on_failure': celery_failure_handler}}
+CELERY_ANNOTATIONS = {'*': {'on_failure': helper.celery_failure_handler}}
 
 CELERY_MAIN_QUEUE = 'celery'
 
@@ -555,11 +550,10 @@ CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
 
 
 # websockets config
-from settingshelper import get_allowed_websocket_channels
 WEBSOCKET_URL = '/ws/'
 WS4REDIS_PREFIX = 'ws'
 WSGI_APPLICATION = 'ws4redis.django_runserver.application'
-WS4REDIS_ALLOWED_CHANNELS = get_allowed_websocket_channels
+WS4REDIS_ALLOWED_CHANNELS = helper.get_allowed_websocket_channels
 
 
 TEST_RUNNER = 'testrunner.TwoStageTestRunner'
@@ -575,10 +569,6 @@ COUCHLOG_BLUEPRINT_HOME = "%s%s" % (
     STATIC_URL, "hqwebapp/stylesheets/blueprint/")
 COUCHLOG_DATATABLES_LOC = "%s%s" % (
     STATIC_URL, "hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js")
-
-COUCHLOG_JQMODAL_LOC = "%s%s" % (STATIC_URL, "hqwebapp/js/lib/jqModal.js")
-COUCHLOG_JQMODAL_CSS_LOC = "%s%s" % (
-    STATIC_URL, "hqwebapp/stylesheets/jqModal.css")
 
 # These allow HQ to override what shows up in couchlog (add a domain column)
 COUCHLOG_TABLE_CONFIG = {"id_column": 0,
@@ -752,7 +742,7 @@ LOGSTASH_HOST = 'localhost'
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_VERSION = 0.9
+ELASTICSEARCH_VERSION = 1.7
 
 ####### Couch Config #######
 # for production this ought to be set to true on your configured couch instance
@@ -931,6 +921,8 @@ COMPRESS_PRECOMPILERS = (
     ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
 )
 COMPRESS_ENABLED = True
+COMPRESS_JS_COMPRESSOR = 'corehq.apps.style.uglify.JsUglifySourcemapCompressor'
+# use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
 
 LESS_B3_PATHS = {
     'variables': '../../../style/less/bootstrap3/includes/variables',
@@ -998,48 +990,32 @@ HQ_PRIVATE_KEY = None
 
 KAFKA_URL = 'localhost:9092'
 
+
 try:
     # try to see if there's an environmental variable set for local_settings
-    if os.environ.get('CUSTOMSETTINGS', None) == "demo":
-        # this sucks, but is a workaround for supporting different settings
-        # in the same environment
-        from settings_demo import *
+    custom_settings = os.environ.get('CUSTOMSETTINGS', None)
+    if custom_settings:
+        if custom_settings == 'demo':
+            from settings_demo import *
+        else:
+            custom_settings_module = importlib.import_module(custom_settings)
+            try:
+                attrlist = custom_settings_module.__all__
+            except AttributeError:
+                attrlist = dir(custom_settings_module)
+            for attr in attrlist:
+                globals()[attr] = getattr(custom_settings_module, attr)
     else:
         from localsettings import *
-        _fix_logger_obfuscation = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
-        if _fix_logger_obfuscation:
-            # this is here because the logging config cannot import
-            # corehq.util.log.HqAdminEmailHandler, for example, if there
-            # is a syntax error in any module imported by corehq/__init__.py
-            # Setting FIX_LOGGER_ERROR_OBFUSCATION = True in
-            # localsettings.py will reveal the real error.
-            # Note that changing this means you will not be able to use/test anything
-            # related to email logging.
-            for handler in LOGGING["handlers"].values():
-                if handler["class"].startswith("corehq."):
-                    if _fix_logger_obfuscation != 'quiet':
-                        print "{} logger is being changed to {}".format(
-                            handler['class'],
-                            'logging.StreamHandler'
-                        )
-                    handler["class"] = "logging.StreamHandler"
 except ImportError:
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
 
+fix_logger_obfuscation_ = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
+helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
+
 if DEBUG:
-    try:
-        import luna
-        del luna
-    except ImportError:
-        pass
-    else:
-        INSTALLED_APPS = INSTALLED_APPS + (
-            'luna',
-        )
-
     INSTALLED_APPS = INSTALLED_APPS + ('corehq.apps.mocha',)
-
     import warnings
     warnings.simplefilter('default')
     os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
@@ -1054,15 +1030,13 @@ db_settings = DATABASES["default"].copy()
 db_settings['PORT'] = db_settings.get('PORT', '5432')
 options = db_settings.get('OPTIONS')
 db_settings['OPTIONS'] = '?{}'.format(urlencode(options)) if options else ''
-
-if UNIT_TESTING and sys.argv[1] == "test":
-    # Use test database name, but only if running the test command.
-    # Django uses different database names than the ones in DATABASES
-    # when setting up for tests. However, UNIT_TESTING may be true in
-    # some cases where django is not running tests (js tests on travis),
-    # and therefore does not change the database name.
-    from django.db.backends.creation import TEST_DATABASE_PREFIX
-    db_settings['NAME'] = TEST_DATABASE_PREFIX + db_settings['NAME']
+# Use test database name, but only if running the test command.
+# Django uses different database names than the ones in DATABASES
+# when setting up for tests. However, UNIT_TESTING may be true in
+# some cases where django is not running tests (js tests on travis),
+# and therefore does not change the database name.
+db_settings['NAME'] = helper.get_db_name(db_settings['NAME'],
+                                         UNIT_TESTING and helper.is_testing())
 
 if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
     SQL_REPORTING_DATABASE_URL = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
@@ -1086,13 +1060,8 @@ INDICATOR_CONFIG = {
 }
 
 ####### Couch Forms & Couch DB Kit Settings #######
-from settingshelper import (
-    get_dynamic_db_settings,
-    CouchSettingsHelper,
-    SharedDriveConfiguration
-)
-
-_dynamic_db_settings = get_dynamic_db_settings(
+COUCH_DATABASE_NAME = helper.get_db_name(COUCH_DATABASE_NAME, UNIT_TESTING)
+_dynamic_db_settings = helper.get_dynamic_db_settings(
     COUCH_SERVER_ROOT,
     COUCH_USERNAME,
     COUCH_PASSWORD,
@@ -1112,12 +1081,14 @@ FIXTURES_DB = NEW_FIXTURES_DB
 NEW_DOMAINS_DB = 'domains'
 DOMAINS_DB = NEW_DOMAINS_DB
 
+NEW_APPS_DB = 'apps'
+APPS_DB = None
+
 SYNCLOGS_DB = 'synclogs'
 
 
 COUCHDB_APPS = [
     'api',
-    'app_manager',
     'appstore',
     'builds',
     'case',
@@ -1175,7 +1146,6 @@ COUCHDB_APPS = [
     'hsph',
     'mvp',
     ('mvp_docs', MVP_INDICATOR_DB),
-    'pathindia',
     'pact',
     'accounting',
     'succeed',
@@ -1210,17 +1180,26 @@ COUCHDB_APPS = [
 
     # sync logs
     ('phone', SYNCLOGS_DB),
+
+    # applications
+    ('app_manager', APPS_DB),
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
-COUCH_SETTINGS_HELPER = CouchSettingsHelper(COUCH_DATABASE, COUCHDB_APPS, [
-    NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB,
-], is_test=False)
+COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
+    COUCH_DATABASE,
+    COUCHDB_APPS,
+    [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB, NEW_APPS_DB],
+)
 COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.make_couchdb_tuples()
 EXTRA_COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.get_extra_couchdbs()
 
-INSTALLED_APPS += LOCAL_APPS
+# note: the only reason LOCAL_APPS come before INSTALLED_APPS is because of
+# a weird travis issue with kafka. if for any reason this order causes problems
+# it can be reverted whenever that's figured out.
+# https://github.com/dimagi/commcare-hq/pull/10034#issuecomment-174868270
+INSTALLED_APPS = LOCAL_APPS + INSTALLED_APPS
 
 if ENABLE_PRELOGIN_SITE:
     INSTALLED_APPS += PRELOGIN_APPS
@@ -1231,7 +1210,7 @@ INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
 
 ### Shared drive settings ###
-SHARED_DRIVE_CONF = SharedDriveConfiguration(
+SHARED_DRIVE_CONF = helper.SharedDriveConfiguration(
     SHARED_DRIVE_ROOT,
     RESTORE_PAYLOAD_DIR_NAME,
     TRANSFER_FILE_DIR_NAME,
@@ -1285,22 +1264,25 @@ SMS_HANDLERS = [
     'corehq.apps.sms.handlers.fallback.fallback_handler',
 ]
 
-SMS_LOADED_BACKENDS = [
-    'corehq.messaging.smsbackends.unicel.models.UnicelBackend',
-    'corehq.messaging.smsbackends.mach.models.MachBackend',
-    'corehq.messaging.smsbackends.tropo.models.TropoBackend',
-    'corehq.messaging.smsbackends.http.models.HttpBackend',
-    'corehq.messaging.smsbackends.telerivet.models.TelerivetBackend',
-    'corehq.messaging.smsbackends.test.models.TestSMSBackend',
-    'corehq.messaging.smsbackends.grapevine.models.GrapevineBackend',
-    'corehq.messaging.smsbackends.twilio.models.TwilioBackend',
-    'corehq.messaging.smsbackends.megamobile.models.MegamobileBackend',
-    'corehq.messaging.smsbackends.smsgh.models.SMSGHBackend',
-    'corehq.messaging.smsbackends.apposit.models.AppositBackend',
+
+SMS_LOADED_SQL_BACKENDS = [
+    'corehq.messaging.smsbackends.apposit.models.SQLAppositBackend',
+    'corehq.messaging.smsbackends.grapevine.models.SQLGrapevineBackend',
+    'corehq.messaging.smsbackends.http.models.SQLHttpBackend',
+    'corehq.messaging.smsbackends.mach.models.SQLMachBackend',
+    'corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend',
+    'corehq.messaging.smsbackends.sislog.models.SQLSislogBackend',
+    'corehq.messaging.smsbackends.smsgh.models.SQLSMSGHBackend',
+    'corehq.messaging.smsbackends.telerivet.models.SQLTelerivetBackend',
+    'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend',
+    'corehq.messaging.smsbackends.tropo.models.SQLTropoBackend',
+    'corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend',
+    'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
+    'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
 ]
 
-IVR_LOADED_BACKENDS = [
-    'corehq.messaging.ivrbackends.kookoo.models.KooKooBackend',
+IVR_LOADED_SQL_BACKENDS = [
+    'corehq.messaging.ivrbackends.kookoo.models.SQLKooKooBackend',
 ]
 
 IVR_BACKEND_MAP = {
@@ -1361,16 +1343,20 @@ PILLOWTOPS = {
         'corehq.apps.userreports.pillow.StaticDataSourcePillow',
     ],
     'cache': [
-        'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+        {
+            'name': 'CacheInvalidatePillow',
+            'class': 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+            'instance': 'corehq.pillows.cacheinvalidate.get_main_cache_invalidation_pillow',
+        },
+        {
+            'name': 'UserCacheInvalidatePillow',
+            'class': 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+            'instance': 'corehq.pillows.cacheinvalidate.get_user_groups_cache_invalidation_pillow',
+        },
     ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',
-        {
-            'name': 'OpmUserFluffPillow',
-            'class': 'custom.opm.models.OpmUserFluffPillow',
-            'instance': 'custom.opm.models.get_pillow',
-        },
-
+        'custom.opm.models.OpmUserFluffPillow',
         'custom.m4change.models.AncHmisCaseFluffPillow',
         'custom.m4change.models.LdHmisCaseFluffPillow',
         'custom.m4change.models.ImmunizationHmisCaseFluffPillow',
@@ -1386,27 +1372,11 @@ PILLOWTOPS = {
         'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
         'custom.care_pathways.models.FarmerRecordFluffPillow',
-        {
-            'name': 'WorldVisionMotherFluffPillow',
-            'class': 'custom.world_vision.models.WorldVisionMotherFluffPillow',
-            'instance': 'custom.world_vision.models.get_mother_pillow',
-        },
-        {
-            'name': 'WorldVisionChildFluffPillow',
-            'class': 'custom.world_vision.models.WorldVisionChildFluffPillow',
-            'instance': 'custom.world_vision.models.get_child_pillow',
-        },
+        'custom.world_vision.models.WorldVisionMotherFluffPillow',
+        'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
-        {
-            'name': 'UCLAPatientFluffPillow',
-            'class': 'custom.succeed.models.UCLAPatientFluffPillow',
-            'instance': 'custom.succeed.models.get_pillow',
-        },
-        {
-            'name': 'MalariaConsortiumFluffPillow',
-            'class': 'custom.reports.mc.models.MalariaConsortiumFluffPillow',
-            'instance': 'custom.reports.mc.models.get_pillow',
-        }
+        'custom.succeed.models.UCLAPatientFluffPillow',
+        'custom.reports.mc.models.MalariaConsortiumFluffPillow',
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
@@ -1424,19 +1394,19 @@ PILLOWTOPS = {
             'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
         },
         {
-            'name': 'KafkaCaseConsumerPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_case_consumer_pillow',
-        },
-        {
-            'name': 'LoggingPythonDemoPillow',
-            'class': 'corehq.apps.change_feed.consumer.pillow.LoggingPythonPillow',
-            'instance': 'corehq.apps.change_feed.consumer.pillow.get_demo_python_pillow_consumer',
-        },
-        {
             'name': 'BlobDeletionPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.blobs.pillow.get_blob_deletion_pillow',
+        },
+        {
+            'name': 'SqlXFormToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_sql_xform_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'SqlCaseToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
         },
     ]
 }
@@ -1627,6 +1597,7 @@ COMPRESS_OFFLINE_CONTEXT = {
 COMPRESS_CSS_HASHING_METHOD = 'content'
 
 
+
 if 'locmem' not in CACHES:
     CACHES['locmem'] = {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}
 if 'dummy' not in CACHES:
@@ -1638,3 +1609,7 @@ except ImportError:
     pass
 else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
+
+REST_FRAMEWORK = {
+    'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'
+}

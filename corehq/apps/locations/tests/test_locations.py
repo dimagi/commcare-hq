@@ -1,7 +1,7 @@
 from corehq.apps.groups.tests.test_groups import WrapGroupTestMixin
 from corehq.apps.locations.models import Location, LocationType, SQLLocation
 from corehq.apps.locations.tests.util import make_loc
-from corehq.apps.commtrack.helpers import make_supply_point, make_product
+from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase, SimpleTestCase
@@ -71,42 +71,13 @@ class LocationProducts(TestCase):
 
 
 class LocationTestBase(TestCase):
-    dependent_apps = [
-        'auditcare',
-        'casexml.apps.case',
-        'casexml.apps.phone',
-        'casexml.apps.stock',
-        'corehq.apps.accounting',
-        'corehq.apps.commtrack',
-        'corehq.apps.domain',
-        'corehq.apps.dropbox',
-        'corehq.apps.fixtures',
-        'corehq.apps.hqcase',
-        'corehq.apps.products',
-        'corehq.apps.reminders',
-        'corehq.apps.sms',
-        'corehq.apps.smsforms',
-        'corehq.apps.tzmigration',
-        'corehq.apps.users',
-        'corehq.couchapps',
-        'couchforms',
-        'custom.logistics',
-        'custom.ilsgateway',
-        'custom.ewsghana',
-        'django.contrib.admin',
-        'django_digest',
-        'django_prbac',
-        'tastypie',
-        'touchforms.formplayer',
-    ]
-
     def setUp(self):
         self.domain = create_domain('locations-test')
         self.domain.convert_to_commtrack()
         bootstrap_location_types(self.domain.name)
 
         self.loc = make_loc('loc', type='outlet', domain=self.domain.name)
-        self.sp = make_supply_point(self.domain.name, self.loc)
+        self.sp = self.loc.linked_supply_point()
 
         self.user = CommCareUser.create(
             self.domain.name,
@@ -221,8 +192,9 @@ class LocationsTest(LocationTestBase):
         )
 
         # Location.get_in_domain
-        test_village2.domain = 'rejected'
+        create_domain('rejected')
         bootstrap_location_types('rejected')
+        test_village2.domain = 'rejected'
         test_village2.save()
         self.assertEqual(
             Location.get_in_domain(self.domain.name, test_village1._id)._id,

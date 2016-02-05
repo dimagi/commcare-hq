@@ -1,7 +1,14 @@
 from collections import namedtuple
 import os
+import sys
 import tempfile
 import uuid
+
+from django.db.backends.creation import TEST_DATABASE_PREFIX
+
+
+def is_testing():
+    return len(sys.argv) > 1 and sys.argv[1] == "test"
 
 
 class SharedDriveConfiguration(object):
@@ -89,9 +96,16 @@ def get_dynamic_db_settings(server_root, username, password, dbname,
     }
 
 
+def get_db_name(dbname, is_test):
+    """Get databse name (possibly with test prefix)
+
+    :param is_test: Add test prefix if true.
+    """
+    return (TEST_DATABASE_PREFIX + dbname) if is_test else dbname
+
+
 class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
-                          ['couch_database_url', 'couchdb_apps', 'extra_db_names',
-                           'is_test'])):
+                          ['couch_database_url', 'couchdb_apps', 'extra_db_names'])):
     def make_couchdb_tuples(self):
         """
         Helper function to generate couchdb tuples
@@ -101,10 +115,7 @@ class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
         return [self._make_couchdb_tuple(row) for row in self.couchdb_apps]
 
     def _format_db_uri(self, db_uri):
-        if self.is_test:
-            return '{}_test'.format(db_uri)
-        else:
-            return db_uri
+        return db_uri
 
     def _make_couchdb_tuple(self, row):
         if isinstance(row, basestring):
@@ -151,3 +162,22 @@ def get_allowed_websocket_channels(request, channels):
         raise PermissionDenied(
             'Not allowed to subscribe or to publish to websockets without superuser permissions!'
         )
+
+
+def fix_logger_obfuscation(fix_logger_obfuscation_, logging_config):
+    if fix_logger_obfuscation_:
+        # this is here because the logging config cannot import
+        # corehq.util.log.HqAdminEmailHandler, for example, if there
+        # is a syntax error in any module imported by corehq/__init__.py
+        # Setting FIX_LOGGER_ERROR_OBFUSCATION = True in
+        # localsettings.py will reveal the real error.
+        # Note that changing this means you will not be able to use/test anything
+        # related to email logging.
+        for handler in logging_config["handlers"].values():
+            if handler["class"].startswith("corehq."):
+                if fix_logger_obfuscation_ != 'quiet':
+                    print "{} logger is being changed to {}".format(
+                        handler['class'],
+                        'logging.StreamHandler'
+                    )
+                handler["class"] = "logging.StreamHandler"

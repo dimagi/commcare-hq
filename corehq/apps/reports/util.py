@@ -8,6 +8,7 @@ import warnings
 from django.conf import settings
 from django.http import Http404
 from django.utils import html, safestring
+from corehq.apps.users.permissions import get_extra_permissions
 
 from couchexport.util import SerializableFunction
 from couchforms.analytics import (
@@ -27,6 +28,12 @@ from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 
 from .models import HQUserType, TempCommCareUser
+
+DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER = 'col-xs-4 col-md-3 col-lg-2 control-label'
+DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER = 'col-xs-8 col-md-8 col-lg-9'
+DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER = (
+    'col-xs-8 col-md-8 col-lg-9 col-xs-offset-4 col-md-offset-3 col-lg-offset-2'
+)
 
 
 def make_form_couch_key(domain, by_submission_time=True,
@@ -59,7 +66,6 @@ def make_form_couch_key(domain, by_submission_time=True,
 
 
 def user_list(domain):
-    #todo cleanup
     #referenced in filters.users.SelectMobileWorkerFilter
     users = list(CommCareUser.by_domain(domain))
     users.extend(CommCareUser.by_domain(domain, is_active=False))
@@ -346,6 +352,10 @@ def get_possible_reports(domain_name):
                     'path': model.__module__ + '.' + model.__name__,
                     'name': model.name
                 })
+
+    for slug, name, is_visible in get_extra_permissions():
+        if is_visible(domain):
+            reports.append({'path': slug, 'name': name})
     return reports
 
 

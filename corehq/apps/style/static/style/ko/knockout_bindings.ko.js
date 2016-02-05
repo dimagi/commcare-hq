@@ -129,10 +129,11 @@ ko.bindingHandlers.langcode = {
             b.valueUpdate.push('autocompleteclose');
             return b;
         });
-        $('input', element).addClass('short code').langcodes();
+        $('input', element).addClass('short code form-control').langcodes();
     },
     update: ko.bindingHandlers.editableString.update
 };
+
 ko.bindingHandlers.sortable = {
     updateSortableList: function (itemList) {
         _(itemList()).each(function (item, index) {
@@ -324,18 +325,17 @@ ko.bindingHandlers.openModal = {
     }
 };
 
-ko.bindingHandlers.openJqm = {
+ko.bindingHandlers.openRemoteModal = {
     init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        var modal = $('<div></div>').addClass('jqmWindow').appendTo('body'),
+        var modal = $('<div></div>').addClass('modal fade').appendTo('body'),
             newValueAccessor = function () {
                 var clickAction = function () {
-                    modal.jqm({ajax: $(element).data('ajaxSource')}).jqmShow();
+                    modal.load($(element).data('ajaxSource'));
+                    modal.modal('show');
                 };
                 return clickAction;
             };
         ko.bindingHandlers.click.init(element, newValueAccessor, allBindingsAccessor, viewModel, bindingContext);
-//            $('#odk-install-placeholder').jqm({ajax: '@href', trigger: 'a.odk_install',
-//            ajaxText: "Please wait while we load that for you..." });
     },
     update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         $(element).data('ajaxSource', ko.utils.unwrapObservable(valueAccessor()));
@@ -363,8 +363,8 @@ ko.bindingHandlers.starred = {
         value = value + '';
         $element.addClass('icon pointer');
 
-        var unselected = 'icon-star-empty';
-        var selected = 'icon-star icon-large released';
+        var unselected = 'icon-star-empty fa-star-o';
+        var selected = 'icon-star icon-large fa-star released';
         var pending = 'icon-refresh icon-spin fa-spin fa-spinner';
         var error = 'icon-ban-circle';
 
@@ -492,25 +492,6 @@ function _makeClickHelper(fnName, icon) {
 
 ko.bindingHandlers.exitInput = _makeClickHelper('exitInput', 'icon icon-remove fa fa-remove');
 ko.bindingHandlers.enterInput = _makeClickHelper('enterInput', 'icon icon-plus fa fa-plus');
-
-ko.bindingHandlers.valueOrNoneUI = {
-    init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        var opts = valueAccessor(),
-            helper;
-        opts.messages = opts.messages || {};
-        $('span', element).each(function () {
-            opts.messages[$(this).data('slug')] = $(this).html();
-            $(this).hide();
-        });
-        helper = new ValueOrNoneUI(opts);
-        var subElement = $('<div></div>').attr(
-            'data-bind',
-            "template: 'value-or-none-ui-template'"
-        ).appendTo(element);
-        subElement.koApplyBindings(helper);
-        return {controlsDescendantBindings: true};
-    }
-};
 
 ko.bindingHandlers.makeHqHelp = {
     update: function (element, valueAccessor) {
@@ -799,3 +780,10 @@ ko.bindingHandlers.stopBinding = {
     }
 };
 ko.virtualElements.allowedBindings.stopBinding = true;
+
+ko.bindingHandlers.popover = {
+    update: function(element, valueAccessor) {
+        var options = ko.utils.unwrapObservable(valueAccessor());
+        $(element).popover(options);
+    }
+};

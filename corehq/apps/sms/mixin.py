@@ -7,7 +7,6 @@ from decimal import Decimal
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import MultipleResultsFound
 from dimagi.utils.couch import release_lock
-from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
@@ -64,16 +63,21 @@ class VerifiedNumber(Document):
 
     @property
     def backend(self):
+        from corehq.apps.sms.models import SQLMobileBackend
         from corehq.apps.sms.util import clean_phone_number
-        if self.backend_id is not None and isinstance(self.backend_id, basestring) and self.backend_id.strip() != "":
-            return MobileBackend.load_by_name(self.domain, self.backend_id)
+        if isinstance(self.backend_id, basestring) and self.backend_id.strip() != '':
+            return SQLMobileBackend.load_by_name(
+                SQLMobileBackend.SMS,
+                self.domain,
+                self.backend_id
+            )
         else:
-            return MobileBackend.auto_load(clean_phone_number(self.phone_number), self.domain)
+            return SQLMobileBackend.load_default_by_phone_and_domain(
+                SQLMobileBackend.SMS,
+                clean_phone_number(self.phone_number),
+                domain=self.domain
+            )
 
-    @property
-    def ivr_backend(self):
-        return MobileBackend.get(self.ivr_backend_id)
-    
     @property
     def owner(self):
         if self.owner_doc_type == "CommCareCase":
@@ -91,11 +95,10 @@ class VerifiedNumber(Document):
         else:
             return None
 
-    def retire(self, deletion_id=None):
+    def retire(self, deletion_id=None, deletion_date=None):
         self.doc_type += DELETED_SUFFIX
-        if deletion_id:
-            self['-deletion_id'] = deletion_id
-
+        self['-deletion_id'] = deletion_id
+        self['-deletion_date'] = deletion_date
         self.save()
 
     @classmethod
@@ -124,7 +127,7 @@ class VerifiedNumber(Document):
     @classmethod
     def by_phone(cls, phone_number, include_pending=False):
         return cls.phone_lookup(
-            "sms/verified_number_by_number",
+            "phone_numbers/verified_number_by_number",
             phone_number,
             include_pending
         )
@@ -136,7 +139,7 @@ class VerifiedNumber(Document):
         """
         try:
             result = cls.phone_lookup(
-                "sms/verified_number_by_suffix",
+                "phone_numbers/verified_number_by_suffix",
                 phone_number,
                 include_pending
             )
@@ -158,7 +161,7 @@ class VerifiedNumber(Document):
 
     @classmethod
     def by_domain(cls, domain, ids_only=False):
-        result = cls.view("sms/verified_number_by_domain",
+        result = cls.view("phone_numbers/verified_number_by_domain",
                           startkey=[domain],
                           endkey=[domain, {}],
                           include_docs=(not ids_only),
@@ -170,7 +173,7 @@ class VerifiedNumber(Document):
 
     @classmethod
     def count_by_domain(cls, domain):
-        result = cls.view("sms/verified_number_by_domain",
+        result = cls.view("phone_numbers/verified_number_by_domain",
             startkey=[domain],
             endkey=[domain, {}],
             include_docs=False,
@@ -182,399 +185,6 @@ class VerifiedNumber(Document):
 
 def add_plus(phone_number):
     return ('+' + phone_number) if not phone_number.startswith('+') else phone_number
-
-def get_global_prefix_backend_mapping():
-    result = {}
-    for entry in BackendMapping.view("sms/backend_map", startkey=["*"], endkey=["*", {}], include_docs=True).all():
-        if entry.prefix == "*":
-            result[""] = entry.backend_id
-        else:
-            result[entry.prefix] = entry.backend_id
-    return result
-
-
-class MobileBackend(SyncCouchToSQLMixin, SafeSaveDocument):
-    """
-    Defines an instance of a backend api to be used for either sending sms, or sending outbound calls.
-    """
-    class Meta:
-        app_label = "sms"
-
-    base_doc = "MobileBackend"
-    domain = StringProperty()               # This is the domain that the backend belongs to, or None for global backends
-    name = StringProperty()                 # The name to use when setting this backend for a contact
-    display_name = StringProperty()         # Simple name to display to users - e.g. Twilio
-    incoming_api_id = StringProperty()      # Some Gateways have different API ids for IN/OUT
-    authorized_domains = ListProperty(StringProperty)  # A list of additional domains that are allowed to use this backend
-    is_global = BooleanProperty(default=True)  # If True, this backend can be used for any domain
-    description = StringProperty()          # (optional) A description of this backend
-    # A list of countries that this backend supports.
-    # This information is displayed in the gateway list UI.
-    # If this this backend represents an international gateway,
-    # set this to: ['*']
-    supported_countries = ListProperty(StringProperty)
-    reply_to_phone_number = StringProperty() # The phone number which you can text to / call to reply to this backend
-
-    def domain_is_authorized(self, domain):
-        return self.is_global or domain == self.domain or domain in self.authorized_domains
-
-    @classmethod
-    def auto_load(cls, phone_number, domain=None):
-        """
-        Get the appropriate outbound SMS backend to send to a
-        particular phone_number
-        """
-        phone_number = add_plus(phone_number)
-
-        # Use the domain-wide default backend if possible
-        if domain is not None:
-            domain_obj = Domain.get_by_name(domain, strict=True)
-            if domain_obj.default_sms_backend_id is not None and domain_obj.default_sms_backend_id != "":
-                return cls.load(domain_obj.default_sms_backend_id)
-        
-        # Use the appropriate system-wide default backend
-        global_backends = get_global_prefix_backend_mapping()
-        backend_mapping = sorted(global_backends.iteritems(),
-                                 key=lambda (prefix, backend): len(prefix),
-                                 reverse=True)
-        for prefix, backend_id in backend_mapping:
-            if phone_number.startswith('+' + prefix):
-                return cls.load(backend_id)
-        raise BadSMSConfigException('no suitable backend found for phone number %s' % phone_number)
-
-    @classmethod
-    def load(cls, backend_id):
-        """load a mobile backend
-            backend_id  - the Couch document _id of the backend to load
-        """
-        # Circular import
-        from corehq.apps.sms.util import get_available_backends
-        backend_classes = get_available_backends()
-        backend = cls.get(backend_id)
-        if backend.doc_type not in backend_classes:
-            raise Exception("Unexpected backend doc_type found '%s' for backend '%s'" % (backend.doc_type, backend._id))
-        else:
-            return backend_classes[backend.doc_type].wrap(backend.to_json())
-
-    @classmethod
-    def load_by_name(cls, domain, name):
-        """
-        Attempts to load the backend with the given name.
-        If no matching backend is found, a RuntimeError is raised.
-        """
-        # First look for backends with that name that are owned by domain
-        name = name.strip().upper()
-        backend = cls.view("sms/backend_by_owner_domain", key=[domain, name], include_docs=True).one()
-        if backend is None:
-            # Look for a backend with that name that this domain was granted access to
-            backend = cls.view("sms/backend_by_domain", key=[domain, name], include_docs=True, reduce=False).first()
-            if backend is None:
-                # Look for a global backend with that name
-                backend = cls.view(
-                    "sms/global_backends",
-                    key=[name],
-                    include_docs=True,
-                    reduce=False
-                ).one()
-        if backend is not None:
-            return cls.load(backend._id)
-        else:
-            raise BadSMSConfigException("Could not find backend '%s' from domain '%s'" % (name, domain))
-
-    @classmethod
-    def get_api_id(cls):
-        """
-        This method should return the backend's api id.
-        TODO: We can probably remove this method if everything is switched to check what subclass of MobileBackend is being used.
-        """
-        raise NotImplementedError("Please define get_api_id()")
-
-    @classmethod
-    def get_generic_name(cls):
-        """
-        This method should return a descriptive name for this backend (such as "Unicel" or "Tropo"), for use in identifying it to an end user.
-        """
-        raise NotImplementedError("Please define get_generic_name()")
-
-    @classmethod
-    def get_template(cls):
-        """
-        This method should return the path to the Django template which will be used to capture values for this backend's specific properties.
-        This template should extend sms/add_backend.html
-        """
-        return "sms/add_backend.html"
-
-    @classmethod
-    def get_form_class(cls):
-        """
-        This method should return a subclass of corehq.apps.sms.forms.BackendForm
-        """
-        raise NotImplementedError("Please define get_form_class()")
-
-    def retire(self):
-        self.base_doc += "-Deleted"
-        self.save()
-
-    def _migration_sync_to_sql(self, sql_object):
-        from corehq.apps.sms.models import MobileBackendInvitation
-        sql_object.backend_type = self.backend_type
-        sql_object.hq_api_id = getattr(self, 'incoming_api_id', None) or self.get_api_id()
-        sql_object.is_global = self.is_global
-        sql_object.domain = self.domain
-        sql_object.name = self.name
-        sql_object.display_name = self.display_name
-        sql_object.description = self.description
-        sql_object.supported_countries = self.supported_countries
-        sql_object.reply_to_phone_number = self.reply_to_phone_number
-
-        extra_fields = {}
-        for field in sql_object.get_available_extra_fields():
-            extra_fields[field] = getattr(self, field)
-
-        sql_object.set_extra_fields(**extra_fields)
-        sql_object.deleted = self.base_doc.endswith('-Deleted')
-
-        if isinstance(self, SMSLoadBalancingMixin):
-            sql_object.load_balancing_numbers = self.phone_numbers
-
-        with transaction.atomic():
-            sql_object.save(sync_to_couch=False)
-            sql_object.mobilebackendinvitation_set.all().delete()
-            if not self.base_doc.endswith('-Deleted'):
-                sql_object.mobilebackendinvitation_set = [
-                    MobileBackendInvitation(
-                        domain=domain,
-                        accepted=True,
-                    ) for domain in self.authorized_domains
-                ]
-
-    def wrap_correctly(self):
-        from corehq.apps.ivr.models import IVRBackend
-        return {
-            'SMS': SMSBackend,
-            'IVR': IVRBackend,
-        }.get(self.backend_type).wrap(self.to_json()).wrap_correctly()
-
-
-class SMSLoadBalancingInfo(object):
-    def __init__(self, phone_number, stats_key=None, stats=None,
-        redis_client=None, lock=None):
-        self.phone_number = phone_number
-        self.stats_key = stats_key
-        self.stats = stats
-        self.redis_client = redis_client
-        self.lock = lock
-
-    def finish(self, save_stats=True, raise_exc=False):
-        try:
-            if (save_stats and self.stats_key and self.stats and
-                self.redis_client):
-                dumpable = {}
-                for k, v in self.stats.items():
-                    dumpable[k] = [json_format_datetime(t) for t in v]
-                self.redis_client.set(self.stats_key, json.dumps(dumpable))
-            if self.lock:
-                release_lock(self.lock, True)
-        except:
-            if raise_exc:
-                raise
-
-class SMSLoadBalancingMixin(Document):
-    """
-    A mixin to be used with an instance of SMSBackend. When using this you will
-    need to:
-    1) implement get_load_balancing_interval()
-    2) optionally, override the phone_numbers property if necessary
-    3) have the send() method expect an orig_phone_number kwarg, which will
-       be the phone number to send from. This parameter is always sent in for
-       instances of SMSLoadBalancingMixin, even if there's just one phone number
-       in self.phone_numbers.
-    4) have the backend's form class use the LoadBalancingBackendFormMixin to
-       automatically set the load balancing phone numbers.
-    """
-    # Do not access this property directly as subclasses may override the
-    # method below.
-    x_phone_numbers = ListProperty(StringProperty)
-
-    @property
-    def phone_numbers(self):
-        """
-        Defined as a property here so that subclasses can override if
-        necessary.
-        """
-        return self.x_phone_numbers
-
-    def get_load_balancing_interval(self):
-        """
-        Defines the interval, in seconds, over which to load balance. For
-        example, if this returns 60, it means that it will consider sms sent
-        in the last 60 seconds from all phone numbers in order to choose the
-        next phone number to use.
-        """
-        raise NotImplementedError("Please implement this method.")
-
-    def _get_next_phone_number(self, redis_client):
-        """
-        Gets the least-used phone number from self.phone_numbers in the last
-        n seconds, where n = self.get_load_balancing_interval().
-
-        Returns an SMSLoadBalancingInfo object, which has the phone number to
-        use. Since that phone number may end up not being used due to other
-        conditions (such as rate limiting), you must call the .finish() method
-        on this info object when you're done, sending save_stats=True if you
-        ended up using the phone number, or False if not.
-        """
-        lock_key = "sms-load-balancing-lock-%s" % self._id
-        lock = redis_client.lock(lock_key, timeout=30)
-        lock.acquire()
-
-        try:
-            start_timestamp = (datetime.utcnow() -
-                timedelta(seconds=self.get_load_balancing_interval()))
-
-            stats_key = "sms-load-balancing-stats-%s" % self._id
-            stats = redis_client.get(stats_key)
-
-            # The stats entry looks like {phone_number: [list of timestamps]}
-            # for each phone number, showing the list of timestamps that an
-            # sms was sent using that phone number. Below, we validate the stats
-            # entry and also clean it up to only include timestamps pertinent
-            # to load balancing right now.
-            try:
-                assert stats is not None
-                stats = json.loads(stats)
-                assert isinstance(stats, dict)
-
-                stats = {k: v for k, v in stats.items() if k in self.phone_numbers}
-                new_stats = {}
-                for k in stats:
-                    v = stats[k]
-                    assert isinstance(v, list)
-                    new_v = []
-                    for t in v:
-                        try:
-                            new_t = parse(t).replace(tzinfo=None)
-                        except:
-                            new_t = None
-                        if isinstance(new_t, datetime) and new_t > start_timestamp:
-                            new_v.append(new_t)
-                    new_stats[k] = new_v
-                stats = new_stats
-
-                for k in self.phone_numbers:
-                    if k not in stats:
-                        stats[k] = []
-            except:
-                stats = {k: [] for k in self.phone_numbers}
-
-            # Now that the stats entry is good, we choose the phone number that
-            # has been used the least amount.
-            phone_number = self.phone_numbers[0]
-            num_sms_sent = len(stats[phone_number])
-            for k in self.phone_numbers:
-                if len(stats[k]) < num_sms_sent:
-                    num_sms_sent = len(stats[k])
-                    phone_number = k
-
-            # Add the current timestamp for the chosen number
-            stats[phone_number].append(datetime.utcnow())
-
-            return SMSLoadBalancingInfo(phone_number, stats_key, stats,
-                redis_client, lock)
-
-        except:
-            # If an exception occurs, we need to make sure the lock is released.
-            # However, if no exception occurs, we don't release the lock since
-            # it must be released by calling the .finish() method on the return
-            # value.
-            release_lock(lock, True)
-            raise
-
-    def get_next_phone_number(self, redis_client, raise_exc=False):
-        try:
-            info = self._get_next_phone_number(redis_client)
-        except:
-            if raise_exc:
-                raise
-            info = SMSLoadBalancingInfo(self.phone_numbers[0])
-        return info
-
-class SMSBackend(MobileBackend):
-    backend_type = "SMS"
-
-    def get_sms_interval(self):
-        """
-        Override to use rate limiting. Return None to not use rate limiting,
-        otherwise return the number of seconds by which outbound sms requests
-        should be separated when using this backend.
-        Note that this should not be over 30 due to choice of redis lock 
-        timeout. See corehq.apps.sms.tasks.handle_outgoing.
-
-        Also, this can be a fractional amount of seconds. For example, to
-        separate requests by a minimum of a quarter second, return 0.25.
-        """
-        return None
-
-    def send(self, msg, *args, **kwargs):
-        raise NotImplementedError("send() method not implemented")
-
-    @classmethod
-    def get_opt_in_keywords(cls):
-        """
-        Override to specify a set of opt-in keywords to use for this
-        backend type.
-        """
-        return []
-
-    @classmethod
-    def get_opt_out_keywords(cls):
-        """
-        Override to specify a set of opt-out keywords to use for this
-        backend type.
-        """
-        return []
-
-    @classmethod
-    def get_wrapped(cls, backend_id):
-        try:
-            backend = SMSBackend.get(backend_id)
-        except ResourceNotFound:
-            raise UnrecognizedBackendException("Backend %s not found" %
-                backend_id)
-        return backend.wrap_correctly()
-
-    def wrap_correctly(self):
-        from corehq.apps.sms.util import get_available_backends
-        backend_classes = get_available_backends()
-        doc_type = self.doc_type
-        if doc_type in backend_classes:
-            return backend_classes[doc_type].wrap(self.to_json())
-        else:
-            raise UnrecognizedBackendException("Backend %s has an "
-                "unrecognized doc type." % self._id)
-
-
-class BackendMapping(SyncCouchToSQLMixin, Document):
-    domain = StringProperty()
-    is_global = BooleanProperty()
-    prefix = StringProperty()
-    backend_type = StringProperty(choices=['SMS', 'IVR'], default='SMS')
-    backend_id = StringProperty() # Couch Document id of a MobileBackend
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        from corehq.apps.sms.models import SQLMobileBackendMapping
-        return SQLMobileBackendMapping
-
-    def _migration_sync_to_sql(self, sql_object):
-        from corehq.apps.sms.models import SQLMobileBackend
-        sql_object.couch_id = self._id
-        sql_object.is_global = self.is_global
-        sql_object.domain = self.domain
-        sql_object.backend_type = self.backend_type
-        sql_object.prefix = self.prefix
-        sql_object.backend = SQLMobileBackend.objects.get(couch_id=self.backend_id)
-        sql_object.save(sync_to_couch=False)
 
 
 def apply_leniency(contact_phone_number):
@@ -625,7 +235,7 @@ class CommCareMobileContactMixin(object):
         raise NotImplementedError('Please implement this method')
 
     def get_verified_numbers(self, include_pending=False):
-        v = VerifiedNumber.view("sms/verified_number_by_owner_id",
+        v = VerifiedNumber.view("phone_numbers/verified_number_by_owner_id",
             key=self._id,
             include_docs=True
         )
@@ -669,7 +279,7 @@ class CommCareMobileContactMixin(object):
         raises  PhoneNumberInUseException if the phone number is already in use by another contact
         """
         self.validate_number_format(phone_number)
-        v = VerifiedNumber.view("sms/verified_number_by_number",
+        v = VerifiedNumber.view("phone_numbers/verified_number_by_number",
             key=phone_number,
             include_docs=True
         ).one()

@@ -2,7 +2,6 @@ from datetime import datetime
 import json
 import os
 from django.test import TestCase
-from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.locations.models import Location, LocationType
 from custom.openlmis.api import get_facilities, Facility, get_facility_programs, FacilityProgramLink, get_programs_and_products, Program, RequisitionDetails, RequisitionStatus, get_requisition_statuses, Requisition
@@ -158,7 +157,7 @@ class PostApiTest(TestCase):
         loc = Location(site_code='1234', name='beavis', domain=self.domain,
                        location_type='chw')
         loc.save()
-        sp = make_supply_point(self.domain, loc)
+        sp = loc.linked_supply_point()
         self.assertTrue(sync_supply_point_to_openlmis(sp, self.api))
         self.assertTrue(sync_supply_point_to_openlmis(sp, self.api, False))
 

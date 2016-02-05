@@ -1,3 +1,5 @@
+import logging
+
 from django.core.management import CommandError
 from corehq.apps.hqcase.management.commands.ptop_fast_reindexer import ElasticReindexer
 from corehq.pillows.xform import XFormPillow
@@ -19,8 +21,8 @@ class Command(ElasticReindexer):
         super(Command, self).handle(*args, **options)
 
     def custom_filter(self, view_row):
-        if 'xmlns' in view_row:
+        if view_row and 'xmlns' in view_row:
             return view_row['xmlns'] != DEVICE_LOG_XMLNS
         else:
-            raise CommandError('Unexpected input to custom_filter: {}'
-                               .format(view_row))
+            logging.warning('Unexpected input to custom_filter: {}'.format(view_row))
+            return False

@@ -52,7 +52,9 @@ from corehq.apps.accounting.models import (
     ProBonoStatus,
     SoftwarePlanEdition,
     Subscription,
+    SubscriptionAdjustment,
     SubscriptionAdjustmentMethod,
+    SubscriptionAdjustmentReason,
     SubscriptionType,
     EntryPoint,
     FundingSource
@@ -1190,7 +1192,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('emails', css_class='input-xxlarge'),
+                crispy.Field('email_list', css_class='input-xxlarge'),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1291,7 +1293,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('emails', css_class='input-xxlarge'),
+                crispy.Field('email_list', css_class='input-xxlarge'),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1327,6 +1329,21 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 account_save_success = super(ConfirmSubscriptionRenewalForm, self).save()
                 if not account_save_success:
                     return False
+
+                for later_subscription in Subscription.objects.filter(
+                    subscriber__domain=self.domain,
+                    date_start__gt=self.current_subscription.date_start
+                ).order_by('date_start').all():
+                    later_subscription.date_start = datetime.date.today()
+                    later_subscription.date_end = datetime.date.today()
+                    later_subscription.save()
+                    SubscriptionAdjustment.record_adjustment(
+                        later_subscription,
+                        reason=SubscriptionAdjustmentReason.CANCEL,
+                        web_user=self.web_user,
+                        note="Cancelled due to changing subscription",
+                    )
+
                 self.current_subscription.renew_subscription(
                     web_user=self.creating_user,
                     adjustment_method=SubscriptionAdjustmentMethod.USER,
@@ -1788,8 +1805,20 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             self.domain, edition=self.cleaned_data['software_plan_edition'],
         )
 
-        if not self.current_subscription or self.cleaned_data['start_date'] > datetime.date.today():
-            new_subscription = Subscription.new_domain_subscription(
+        if (
+            self.current_subscription
+            and self.current_subscription.service_type == SubscriptionType.CONTRACTED
+            and self.current_subscription.plan_version == new_plan_version
+            and self.current_subscription.date_start == self.cleaned_data['start_date']
+        ):
+            contracted_subscription = self.current_subscription
+            contracted_subscription.account = self.next_account
+            contracted_subscription.update_subscription(
+                contracted_subscription.date_start,
+                **{k: v for k, v in self.subscription_default_fields.items() if k != 'internal_change'}
+            )
+        elif not self.current_subscription or self.cleaned_data['start_date'] > datetime.date.today():
+            contracted_subscription = Subscription.new_domain_subscription(
                 self.next_account,
                 self.domain,
                 new_plan_version,
@@ -1797,7 +1826,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                 **self.subscription_default_fields
             )
         else:
-            new_subscription = self.current_subscription.change_plan(
+            contracted_subscription = self.current_subscription.change_plan(
                 new_plan_version,
                 transfer_credits=self.current_subscription.account == self.next_account,
                 account=self.next_account,
@@ -1807,14 +1836,14 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
         CreditLine.add_credit(
             self.cleaned_data['sms_credits'],
             feature_type=FeatureType.SMS,
-            subscription=new_subscription,
+            subscription=contracted_subscription,
             web_user=self.web_user,
             reason=CreditAdjustmentReason.MANUAL,
         )
         CreditLine.add_credit(
             self.cleaned_data['user_credits'],
             feature_type=FeatureType.USER,
-            subscription=new_subscription,
+            subscription=contracted_subscription,
             web_user=self.web_user,
             reason=CreditAdjustmentReason.MANUAL,
         )

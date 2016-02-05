@@ -27,7 +27,7 @@ class ReportXFormPillow(XFormPillow):
         doc_ret = super(ReportXFormPillow, self).change_transform(doc_dict, include_props=False)
 
         if doc_ret:
-            domain = self.get_domain(doc_dict)
+            domain = doc_dict.get('domain', None)
 
             if domain not in getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', []):
                 # full indexing is only enabled for select domains on an opt-in basis

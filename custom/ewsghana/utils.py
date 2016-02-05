@@ -1,3 +1,4 @@
+from collections import namedtuple
 from decimal import Decimal
 from dateutil.relativedelta import relativedelta
 from django.db.models.query_utils import Q
@@ -10,19 +11,20 @@ from datetime import timedelta, datetime
 from dateutil import rrule
 from dateutil.rrule import MO
 from django.utils import html
-from corehq.apps.sms.mixin import VerifiedNumber, BackendMapping
+from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import add_msg_tags, send_sms_to_verified_number, send_sms as core_send_sms
 from corehq.apps.sms.models import SMSLog, OUTGOING
+from corehq.apps.sms.util import set_domain_default_backend_to_test_backend
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole
 from custom.ewsghana.models import EWSGhanaConfig, EWSExtension
 from custom.ewsghana.reminders.const import DAYS_UNTIL_LATE
 
 TEST_DOMAIN = 'ewsghana-receipts-test'
 TEST_BACKEND = 'MOBILE_BACKEND_TEST'
+Msg = namedtuple('Msg', ['text'])
 
 
 def get_descendants(location_id):
@@ -51,19 +53,14 @@ def make_url(report_class, domain, string_params, args):
         return None
 
 
-# Calculate last full period (Friday - Thursday)
-def calculate_last_period(enddate):
-    # checking if Thursday was already in this week
-    enddate = enddate.replace(hour=0, minute=0, second=0, microsecond=0)
-    i = enddate.weekday() - 3
-    if i < 0:
-        # today is Monday, Tuesday or Wednesday -> calculate Thursday from previous week
-        last_th = enddate + timedelta(days=-i, weeks=-1)
-    else:
-        # today is Thursday, Friday, Saturday or Sunday -> calculate Thursday from this week
-        last_th = enddate - timedelta(days=i)
-    fr_before = last_th - timedelta(days=6)
-    return fr_before, last_th + timedelta(days=1)
+# Calculate last full period (Friday - thursday)
+def calculate_last_period(enddate=None):
+    if not enddate:
+        enddate = datetime.utcnow()
+    last_friday = enddate - timedelta(days=(enddate.weekday() - 4) % 7)
+    last_friday = last_friday.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_of_next_thursday = (last_friday + timedelta(days=7)) - timedelta(microseconds=1)
+    return last_friday, end_of_next_thursday
 
 
 def send_test_message(verified_number, text, metadata=None):
@@ -114,10 +111,6 @@ def make_loc(code, name, domain, type, parent=None):
     loc = Location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
     loc.save()
 
-    if not sql_type.administrative:
-        SupplyInterface.create_from_location(domain, loc)
-        loc.save()
-
     sql_location = loc.sql_location
     sql_location.products = []
     sql_location.save()
@@ -130,26 +123,11 @@ def assign_products_to_location(location, products):
     sql_location.save()
 
 
-def create_backend():
-    backend = TestSMSBackend(
-        domain=None,
-        name=TEST_BACKEND,
-        authorized_domains=[],
-        is_global=True,
-    )
-    backend._id = backend.name
-    backend.save()
-    sms_backend_mapping = BackendMapping(is_global=True, prefix="*", backend_id=backend.get_id)
-    sms_backend_mapping.save()
-    return sms_backend_mapping, backend
-
-
 def prepare_domain(domain_name):
     domain = create_domain(domain_name)
     domain.convert_to_commtrack()
-
-    domain.default_sms_backend_id = TEST_BACKEND
     domain.save()
+    set_domain_default_backend_to_test_backend(domain.name)
 
     def _make_loc_type(name, administrative=False, parent_type=None):
         return LocationType.objects.get_or_create(
@@ -509,3 +487,20 @@ def set_sms_notifications(domain, web_user, sms_notifications):
         extension.save()
     except EWSExtension.DoesNotExist:
         EWSExtension.objects.create(domain=domain, user_id=web_user.get_id, sms_notifications=sms_notifications)
+
+
+def get_user_location_id(user, domain):
+    dm = user.get_domain_membership(domain)
+    if not dm:
+        return
+
+    if dm.location_id:
+        return dm.location_id
+
+    try:
+        ews_extension = EWSExtension.objects.get(user_id=user.get_id, domain=domain)
+    except EWSExtension.DoesNotExist:
+        return
+
+    if ews_extension.location_id:
+        return ews_extension.location_id

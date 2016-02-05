@@ -200,19 +200,24 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         return generator.get_payload(repeat_record, self.payload_doc(repeat_record))
 
     def register(self, payload, next_check=None):
-        try:
-            payload_id = payload.get_id
-        except Exception:
-            payload_id = payload
+        if not self.allowed_to_forward(payload):
+            return
+
         repeat_record = RepeatRecord(
             repeater_id=self.get_id,
             repeater_type=self.doc_type,
             domain=self.domain,
             next_check=next_check or datetime.utcnow(),
-            payload_id=payload_id
+            payload_id=payload.get_id
         )
         repeat_record.save()
         return repeat_record
+
+    def allowed_to_forward(self, payload):
+        """
+        Return True/False depending on whether the payload meets forawrding criteria or not
+        """
+        return True
 
     def clear_caches(self):
         if self.__class__ == Repeater:
@@ -299,7 +304,6 @@ class FormRepeater(Repeater):
 
     """
 
-    exclude_device_reports = BooleanProperty(default=False)
     include_app_id_param = BooleanProperty(default=True)
 
     @memoized
@@ -337,6 +341,18 @@ class CaseRepeater(Repeater):
     """
 
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
+    white_listed_case_types = StringListProperty(default=[])  # empty value means all case-types are accepted
+    black_listed_users = StringListProperty(default=[])  # users who caseblock submissions should be ignored
+
+    def allowed_to_forward(self, payload):
+        allowed_case_type = not self.white_listed_case_types or payload.type in self.white_listed_case_types
+        allowed_user = self.payload_user(payload) not in self.black_listed_users
+        return allowed_case_type and allowed_user
+
+    @classmethod
+    def payload_user(cls, payload):
+        # get the user_id who submitted the payload, note, it's not the owner_id
+        return payload.actions[-1].user_id
 
     @memoized
     def payload_doc(self, repeat_record):

@@ -12,9 +12,11 @@ testapps.test_elasticsearch: []
 testapps.test_pillowtop:
   - auditcare
   - django_digest
+  - casexml.apps.case
   - corehq.apps.domain
   - corehq.apps.hqadmin
   - corehq.apps.users
+  - corehq.apps.tzmigration
   - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
@@ -125,6 +127,7 @@ corehq.apps.app_manager:
   - custom.ilsgateway
   - custom.ewsghana
   - corehq.apps.smsforms
+  - corehq.apps.commtrack
 corehq.apps.commtrack:
   - auditcare
   - couchforms
@@ -143,6 +146,41 @@ corehq.apps.commtrack:
   - corehq.apps.fixtures
   - corehq.apps.groups
   - corehq.apps.locations
+  - corehq.apps.products
+  - corehq.apps.reminders
+  - corehq.apps.sms
+  - corehq.apps.smsforms
+  - corehq.apps.tzmigration
+  - corehq.apps.users
+  - custom.logistics
+  - custom.ilsgateway
+  - custom.ewsghana
+  - django_prbac
+  - django.contrib.admin
+  - tastypie
+  - corehq.apps.accounting
+  - corehq.apps.dropbox
+  - touchforms.formplayer
+  - corehq.apps.tour
+corehq.apps.locations:
+  - auditcare
+  - couchforms
+  - phonelog
+  - django_digest
+  - casexml.apps.case
+  - casexml.apps.phone
+  - casexml.apps.stock
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
+  - corehq.apps.commtrack
+  - corehq.apps.consumption
+  - corehq.apps.custom_data_fields
+  - corehq.apps.domain
+  - corehq.apps.hqcase
+  - corehq.apps.fixtures
+  - corehq.apps.groups
   - corehq.apps.products
   - corehq.apps.reminders
   - corehq.apps.sms
@@ -182,6 +220,7 @@ couchforms:
   - casexml.apps.phone
   - casexml.apps.stock
   - corehq.apps.hqcase
+  - corehq.apps.hqadmin
   - corehq.apps.products
   - corehq.apps.reminders
   - corehq.apps.sms
@@ -216,6 +255,7 @@ corehq.apps.receiverwrapper:
   - django_prbac
   - phonelog
   - tastypie
+  - corehq.apps.userhack
   # required by user.delete()
   - touchforms.formplayer
   - corehq.apps.tour
@@ -259,3 +299,27 @@ corehq.apps.repeaters:
   - corehq.apps.accounting
   - corehq.apps.smsforms
 corehq.sql_db: []
+corehq.apps.accounting:
+  - corehq.apps.accounting
+  - django_prbac
+  - corehq.apps.tzmigration
+  - corehq.apps.domain
+  - corehq.apps.users
+  - corehq.couchapps
+  - corehq.apps.sms
+  - corehq.apps.smsforms
+  - auditcare
+  - django_digest
+  - django.contrib.admin
+  - tastypie
+  - corehq.apps.dropbox
+  - corehq.apps.tour
+  - touchforms.formplayer
+  - corehq.apps.smsbillables
+  - corehq.apps.app_manager
+  - corehq.apps.reminders
+  - corehq.apps.data_interfaces
+corehq.apps.export:
+  - corehq.apps.export
+  - corehq.couchapps
+  - corehq.apps.app_manager

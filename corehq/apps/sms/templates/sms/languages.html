@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap2/two_column.html' %}
+{% extends 'settings/bootstrap3/base_template.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -6,32 +6,21 @@
     {% trans "SMS Languages" %}
 {% endblock %}
 
-{% block page-title %}
-    <ul class="breadcrumb">
-        <li>
-            <a href="{% url "sms_default" domain %}"><strong>{% trans "Messaging" %}</strong></a> <span class="divider">&gt;</span>
-        </li>
-        <li class="active">
-            <a href="{% url "sms_languages" domain %}"><strong>{% trans "Languages" %}</strong></a>
-        </li>
-    </ul>
-{% endblock %}
-
 {% block js %}{{ block.super }}
-    <script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
-    <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
-    <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
-    <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/main.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
+    <script src="{% new_static 'langcodes/js/langcodes.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/supported-languages.js' %}"></script>
 {% endblock %}
 
-{% block head %}{{ block.super }}
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
+{% block stylesheets %}{{ block.super }}
+    <link rel="stylesheet" href="{% new_static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
     <style>
         .sortable-handle {
             cursor: move;
+        }
+        #supported-languages {
+            padding: 10px 0;
         }
     </style>
 {% endblock %}
@@ -56,7 +45,7 @@
 </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     <div class="tab-pane">
         <div class="tabbable">
             <ul class="nav nav-tabs">
@@ -66,12 +55,12 @@
         </div>
         <div class="tab-content">
             <div id="supported-languages" class="tab-pane active">
-                {% include "app_manager/partials/supported-languages.html" with hide_deploy_column=True %}
+                    {% include "app_manager/partials/b3/supported-languages.html" with hide_deploy_column=True %}
             </div>
             <div id="translations-tab" class="tab-pane">
                 <div>
                     <section>
-                        {% include "style/bootstrap2/partials/bulk_upload.html" %}
+                        {% include "style/bootstrap3/partials/bulk_upload.html" %}
                     </section>
                 </div>
             </div>

@@ -7,10 +7,10 @@
         {% else %}
             <p>{% trans "Build Failed!" %}</p>
         {% endif %}
-        <ul class="unstyled" id="build-errors">
+        <ul class="list-unstyled" id="build-errors">
             {% for error in build_errors %}
                 <li>
-                    <i class="icon icon-exclamation-sign"></i>
+                    <i class="fa fa-exclamation-circle"></i>
                     <span>
                         {% case error.type "blank form" %}
                             {% if not error.message %}
@@ -91,7 +91,21 @@
                             {% blocktrans with module_name=error.module.name|trans:langs %}
                             There are references to reports that are deleted in the
                             <a href="{{ module_url }}">{{ module_name }}</a> module.
-                            You may re-save the module to deleted them.
+                            You may re-save the module to delete them.
+                            {% endblocktrans %}
+                        {% case "module filter has xpath error" %}
+                            {% url "view_module" domain app.id error.module.id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs %}
+                            Module Filter has syntax errors in the
+                            <a href="{{ module_url }}">{{ module_name }}</a> module.
+                            {% endblocktrans %}
+                        {% case "form filter has xpath error" %}
+                            {% url "view_module" domain app.id error.module.id as module_url %}
+                            {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs form_name=error.form.name|trans:langs %}
+                            Display Condition has syntax errors
+                            in the <a href="{{ form_url }}">{{ form_name }}</a> form
+                            in the <a href="{{ module_url }}">{{ module_name }}</a> module.
                             {% endblocktrans %}
                         {% case "all forms in case list module must load the same cases" %}
                             {% url "view_module" domain app.id error.module.id as module_url %}
@@ -254,8 +268,7 @@
                 </li>
             {% endfor %}
         </ul>
-        <p class="help-inline">
-            <small>
+        <p class="help-block">
             {% if not_actual_build %}
                 {% trans "Build errors prevent you from building your application in the Release Manager." %}
             {% endif %}
@@ -263,7 +276,6 @@
             <a href="https://confluence.dimagi.com/display/commcarepublic/Errors+Building+an+Application" target="_blank">
                 {% trans "Errors Building an Application" %}
             </a>
-            </small>
         </p>
     </div>
 {% endif %}

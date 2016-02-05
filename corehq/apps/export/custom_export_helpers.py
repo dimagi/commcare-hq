@@ -47,7 +47,6 @@ class ColumnTypesOptions(object):
 class CustomExportHelper(object):
 
     ExportSchemaClass = AbstractProperty()
-    ExportReport = AbstractProperty()
     export_title = AbstractProperty()
 
     allow_deid = False
@@ -176,9 +175,6 @@ class CustomExportHelper(object):
             'commtrack_domain': Domain.get_by_name(self.domain).commtrack_enabled,
             'minimal': self.minimal,
             'helper': {
-                'back_url': self.ExportReport.get_url(domain=self.domain),
-                'export_title': self.export_title,
-                'slug': self.ExportReport.slug,
                 'allow_deid': self.allow_deid,
                 'allow_repeats': self.allow_repeats
             }
@@ -188,7 +184,6 @@ class CustomExportHelper(object):
 class FormCustomExportHelper(CustomExportHelper):
 
     ExportSchemaClass = FormExportSchema
-    ExportReport = export.ExcelExportReport
 
     allow_repeats = True
 
@@ -292,9 +287,7 @@ class FormCustomExportHelper(CustomExportHelper):
         case_cols = filter(lambda col: col["index"] == FORM_CASE_ID_PATH, column_conf)
         if not requires_case:
             for col in case_cols:
-                if col['index'] == FORM_CASE_ID_PATH:
-                    col['tag'], col['show'], col['selected'] = 'deleted', False, False
-                    col['allOptions'] = []
+                col['tag'], col['show'] = 'deleted', col['selected']
         elif not case_cols:
             column_conf.append({
                 'index': FORM_CASE_ID_PATH,
@@ -406,7 +399,6 @@ class CustomColumn(object):
 class CaseCustomExportHelper(CustomExportHelper):
 
     ExportSchemaClass = CaseExportSchema
-    ExportReport = export.CaseExportReport
 
     export_type = 'case'
 
@@ -417,7 +409,7 @@ class CaseCustomExportHelper(CustomExportHelper):
     meta_properties = ["_id", "closed", "closed_by", "closed_on", "domain", "computed_modified_on_",
                        "server_modified_on", "modified_on", "opened_by", "opened_on", "owner_id",
                        "user_id", "type", "version", "external_id"]
-    server_properties = ["_rev", "doc_type", "-deletion_id", "initial_processing_complete"]
+    server_properties = ["_rev", "doc_type", "-deletion_id", "-deletion_date" "initial_processing_complete"]
     row_properties = ["id"]
 
     @property

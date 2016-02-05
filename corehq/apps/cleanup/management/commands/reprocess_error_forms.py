@@ -1,9 +1,66 @@
+import datetime
+import warnings
+
+from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.signals import case_post_save
+from casexml.apps.case.xform import get_and_check_xform_domain, process_cases_with_casedb
 from collections import defaultdict
-from django.core.management.base import BaseCommand, CommandError, LabelCommand
-from corehq.apps.cleanup.management.commands.reprocess_error_form import reprocess_form_cases
-from corehq.apps.cleanup.xforms import iter_problem_forms
-from optparse import make_option
+from couchforms.models import XFormInstance
 from dimagi.utils.parsing import string_to_datetime
+from django.conf import settings
+from django.core.management.base import BaseCommand, CommandError, LabelCommand
+from optparse import make_option
+
+from corehq.apps.cleanup.xforms import iter_problem_forms
+from corehq.form_processor.backends.couch.casedb import CaseDbCacheCouch
+
+
+def _process_cases(xform, config=None):
+    """
+    Creates or updates case objects which live outside of the form.
+
+    If reconcile is true it will perform an additional step of
+    reconciling the case update history after the case is processed.
+    """
+    warnings.warn(
+        'This function is deprecated. You should be using SubmissionPost.',
+        DeprecationWarning,
+    )
+
+    assert getattr(settings, 'UNIT_TESTING', False)
+    domain = get_and_check_xform_domain(xform)
+
+    with CaseDbCacheCouch(domain=domain, lock=True, deleted_ok=True) as case_db:
+        case_result = process_cases_with_casedb([xform], case_db, config=config)
+
+    cases = case_result.cases
+    docs = [xform] + cases
+    now = datetime.datetime.utcnow()
+    for case in cases:
+        case.server_modified_on = now
+    XFormInstance.get_db().bulk_save(docs)
+
+    for case in cases:
+        case_post_save.send(CommCareCase, case=case)
+
+    case_result.commit_dirtiness_flags()
+    return cases
+
+
+def reprocess_form_cases(form):
+    """
+    For a given form, reprocess all case elements inside it. This operation
+    should be a no-op if the form was sucessfully processed, but should
+    correctly inject the update into the case history if the form was NOT
+    successfully processed.
+    """
+    _process_cases(form)
+    # mark cleaned up now that we've reprocessed it
+    if form.doc_type != 'XFormInstance':
+        form = XFormInstance.get(form._id)
+        form.doc_type = 'XFormInstance'
+        form.save()
+
 
 class Command(BaseCommand):
     args = '<domain> <since>'

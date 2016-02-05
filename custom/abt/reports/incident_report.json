@@ -1,12 +1,13 @@
 {  
    "domains":[
-        "abtmali",
-        "airs",
-        "airsethiopia",
-        "airsmadagascar",
-        "airsrwanda",
-        "airszambia",
-        "airszimbabwe"
+      "abtmali",
+      "airs",
+      "airsethiopia",
+      "airsmadagascar",
+      "airsrwanda",
+      "airszambia",
+      "airszimbabwe",
+      "airstanzania"
     ],
    "data_source_table":"supervisory-003",
    "report_id":"incident-report",

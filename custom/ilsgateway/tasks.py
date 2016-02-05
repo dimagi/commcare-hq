@@ -1,10 +1,10 @@
+from collections import defaultdict
 from datetime import datetime, timedelta
 from functools import partial
 import logging
 from celery.schedules import crontab
 
 from celery.task import task, periodic_task
-from django.conf import settings
 from django.db import transaction
 from psycopg2._psycopg import DatabaseError
 
@@ -13,16 +13,19 @@ from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product
 from custom.ilsgateway.api import ILSGatewayEndpoint, ILSGatewayAPI
+from custom.ilsgateway.balance import BalanceMigration
 from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
 from custom.ilsgateway.tanzania.reminders.randr import RandrReminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
 from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
+from custom.ilsgateway.tanzania.warehouse.updater import populate_report_data, default_start_date, \
+    process_facility_warehouse_data, process_non_facility_warehouse_data
 from custom.ilsgateway.temporary import fix_stock_data
 from custom.ilsgateway.utils import send_for_day, send_for_all_domains
 from custom.logistics.commtrack import bootstrap_domain as ils_bootstrap_domain, save_stock_data_checkpoint
 from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun, \
-    GroupSummary, OrganizationSummary, ProductAvailabilityData, Alert, SupplyPointWarehouseRecord
-from custom.ilsgateway.tanzania.warehouse.updater import populate_report_data
+    GroupSummary, OrganizationSummary, ProductAvailabilityData, Alert, SupplyPointWarehouseRecord, \
+    PendingReportingDataRecalculation
 from custom.logistics.models import StockDataCheckpoint
 from custom.logistics.tasks import stock_data_task
 from dimagi.utils.dates import get_business_day_of_month
@@ -44,6 +47,11 @@ def migration_task():
 def ils_bootstrap_domain_task(domain):
     ils_config = ILSGatewayConfig.for_domain(domain)
     return ils_bootstrap_domain(ILSGatewayAPI(domain, ILSGatewayEndpoint.from_config(ils_config)))
+
+
+@task(queue='logistics_background_queue', ignore_result=True, acks_late=True)
+def balance_migration_task(domain, endpoint):
+    BalanceMigration(domain, endpoint).balance_migration()
 
 
 # Region KILIMANJARO
@@ -191,6 +199,8 @@ def fix_stock_data_task(domain):
 @task(queue='logistics_background_queue', ignore_result=True)
 def report_run(domain, locations=None, strict=True):
     last_successful_run = ReportRun.last_success(domain)
+    recalculation_on_location_change(domain, last_successful_run)
+
     last_run = ReportRun.last_run(domain)
     start_date = (datetime.min if not last_successful_run else last_successful_run.end)
 
@@ -358,3 +368,67 @@ def third_soh_task():
     last_month_last_day, fifth_business_day = get_last_and_nth_business_day(now, 5)
     if now.day == fifth_business_day.day:
         send_for_all_domains(last_month_last_day, SOHReminder)
+
+
+def recalculate_on_group_change(location, last_run):
+    OrganizationSummary.objects.filter(location_id=location.get_id).delete()
+    process_facility_warehouse_data(location, default_start_date(), last_run.end)
+
+    for parent in location.sql_location.get_ancestors(ascending=True):
+        process_non_facility_warehouse_data(parent.couch_location,
+                                            default_start_date(), last_run.end, strict=False)
+
+
+def recalculate_on_parent_change(location, previous_parent_id, last_run):
+    previous_parent = SQLLocation.objects.get(location_id=previous_parent_id)
+    type_location_map = defaultdict(set)
+
+    previous_ancestors = list(previous_parent.get_ancestors(include_self=True, ascending=True))
+    actual_ancestors = list(location.sql_location.get_ancestors(ascending=True))
+
+    locations_to_recalculate = set()
+
+    i = 0
+    while previous_ancestors[i] != actual_ancestors[i] and i < len(previous_ancestors):
+        locations_to_recalculate.add(previous_ancestors[i])
+        locations_to_recalculate.add(actual_ancestors[i])
+        i += 1
+
+    for sql_location in locations_to_recalculate:
+        type_location_map[sql_location.location_type.name].add(sql_location)
+
+    for location_type in ["DISTRICT", "REGION", "MSDZONE"]:
+        for sql_location in type_location_map[location_type]:
+            process_non_facility_warehouse_data(
+                sql_location.couch_location, default_start_date(), last_run.end, strict=False
+            )
+
+
+def recalculation_on_location_change(domain, last_run):
+    if not last_run:
+        PendingReportingDataRecalculation.objects.filter(domain=domain).delete()
+        return
+
+    pending_recalculations = PendingReportingDataRecalculation.objects.filter(domain=domain).order_by('pk')
+    recalcs_dict = defaultdict(list)
+
+    for pending_recalculation in pending_recalculations:
+        key = (pending_recalculation.sql_location, pending_recalculation.type)
+        recalcs_dict[key].append(pending_recalculation.data)
+
+    for (sql_location, recalculation_type), data_list in recalcs_dict.iteritems():
+        # If there are more changes, consider earliest and latest change.
+        # Thanks to this we avoid recalculations when in fact group/parent wasn't changed.
+        # E.g Group is changed from A -> B and later from B -> A.
+        # In this situation there is no need to recalculate data.
+        if recalculation_type == 'group_change'\
+                and data_list[0]['previous_group'] != data_list[-1]['current_group']:
+            recalculate_on_group_change(sql_location.couch_location, last_run)
+        elif recalculation_type == 'parent_change' \
+                and data_list[0]['previous_parent'] != data_list[-1]['current_parent']:
+            recalculate_on_parent_change(
+                sql_location.couch_location, data_list[0]['previous_parent'], last_run
+            )
+        PendingReportingDataRecalculation.objects.filter(
+            sql_location=sql_location, type=recalculation_type, domain=domain
+        ).delete()

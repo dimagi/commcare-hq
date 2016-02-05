@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap2/two_column.html' %}
+{% extends 'style/bootstrap3/base_section.html' %}
 {% load xforms_extras %}
 {% load url_extras %}
 {% load hq_shared_tags %}
@@ -8,30 +8,47 @@
 
 {% block title %}{% trans "Applications" %}{% endblock %}
 
-{% block page-title %}
-    <ul class="breadcrumb">
-        <li>
-            <strong>{% trans "Applications" %}</strong>
-        </li>
-        {% block breadcrumbs %}
-        {% endblock %}
-    </ul>
-{% endblock %}
-
 {% block stylesheets %}{{ block.super }}
     {% compress css %}
-    <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/legacy/app_manager.less' %}"/>
+    {# Explicitly include these because app manager doesn't really do class-based views, can't use the decorators #}
+    <link type="text/css" rel="stylesheet" media="screen" href="{% new_static 'jquery-ui/themes/redmond/jquery-ui.min.css' %}"/>
+    <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'style/lib/select2/select2.css' %}" />
+    <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'style/lib/select2/select2-bootstrap.css' %}" />
+    <link type="text/less" rel="stylesheet" media="all" href="{% new_static 'style/less/legacy/app_manager.less' %}"/>
     {% endcompress %}
 {% endblock %}
 
-{% block head %}{{ block.super }}
-    {% include "imports/jqmodal.html" %}
-{% endblock %}
-
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
-    <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+    {# Explicitly include these because app manager doesn't really do class-based views, can't use the decorators #}
+    <script src="{% new_static 'knockout-2.3.0-legacy/knockout.js' %}"></script>
+    <script src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+    <script src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
+    <script src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
+
+    <!--
+        jQuery UI needs to be included before Bootstrap's JavaScript, otherwise the two
+        tooltip widgets conflict. The B3 base template takes care of that when you use the
+        @use_jquery_ui decorator, but app manager doesn't, so instead include only the pieces
+        actually used in app manager (no tooltip).
+    -->
+    <script src="{% new_static 'jquery-ui/ui/minified/core.min.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/ui/minified/widget.min.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/ui/minified/mouse.min.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/ui/minified/position.min.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/ui/minified/accordion.min.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/ui/minified/autocomplete.min.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/ui/minified/draggable.min.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/ui/minified/droppable.min.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/ui/minified/menu.min.js' %}"></script>
+    <script src="{% new_static 'jquery-ui/ui/minified/sortable.min.js' %}"></script>
+
+    <script src="{% new_static 'style/lib/select2/select2.js' %}"></script>
+    <script src="{% new_static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
+    <script src="{% new_static 'style/js/bootstrap-multi-typeahead.js' %}"></script>
+
+    <script src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
+    <script src="{% new_static 'langcodes/js/langcodes.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -41,7 +58,7 @@
             backdrop: 'static',
             keyboard: false,
             show: true
-        }).on('hide', function () {
+        }).on('hide.bs.modal', function () {
             window.location = "{% url "corehq.apps.app_manager.views.view_app" domain %}";
         });
     });
@@ -66,7 +83,7 @@
         });
 
         function gen_sidebar_elements() {
-            return $('.sidebar .nav-list a:not(a:has(.icon-pencil))');
+            return $('.sidebar .nav-hq-sidebar a:not(a:has(.fa-pencil))');
         }
         var sidebar_navigator = new KeyboardNavigator();
         sidebar_navigator.init({
@@ -79,7 +96,7 @@
         });
 
         function gen_tab_elements() {
-            return $("[data-toggle='tab']:not(.sidebar .nav-list a)");
+            return $("[data-toggle='tab']:not(.sidebar .nav-hq-sidebar a)");
         }
         var tab_navigator = new KeyboardNavigator();
         tab_navigator.init({
@@ -92,10 +109,14 @@
     </script>
 {% endblock %}
 
-{% block sidebar %}
+{% block page_breadcrumbs %}
+    <ul class="breadcrumb breadcrumb-hq-section">
+        <li>{% trans 'Applications' %}</li>
+        {% block breadcrumbs %}{% endblock %}
+    </ul>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
 <div class="app-manager-content hide">
     {% if app %}
         {% if error %}
@@ -129,18 +150,25 @@
 {% block modals %}
     {{ block.super }}
     {% if app.is_deleted %}
-    <div id="deleted-app-modal" class="modal hide fade">
-        <div class="modal-header"><h3>{% trans 'Oops! This application was deleted.' %}</h3></div>
-        <div class="modal-body">
-            <p>{% trans 'If you want your application back, click Restore.' %}</p>
-        </div>
-        <div class="modal-footer">
-            <a href="{% url "undo_delete_app" domain app.id %}" class="post-link btn btn-primary">
-                {% trans "Restore" %}
-            </a>
-            <a href="#" class="btn" data-dismiss="modal">
-                {% trans "No thanks, get me out of here" %}
-            </a>
+    <!-- This will appear on page load, so don't use any animation (normally controlled by .fade) -->
+    <div id="deleted-app-modal" class="modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">{% trans 'Oops! This application was deleted.' %}</h4>
+                </div>
+                <div class="modal-body">
+                    <p>{% trans 'If you want your application back, click Restore.' %}</p>
+                </div>
+                <div class="modal-footer">
+                    <a href="{% url "undo_delete_app" domain app.id %}" class="post-link btn btn-primary">
+                        {% trans "Restore" %}
+                    </a>
+                    <a href="#" class="btn btn-default" data-dismiss="modal">
+                        {% trans "No thanks, get me out of here" %}
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
     {% endif %}

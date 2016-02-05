@@ -7,6 +7,7 @@ from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotF
 from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for_module
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.util import get_cloudcare_session_data
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import skippable_quickcache
 from corehq.util.xml_utils import indent_xml
@@ -27,10 +28,11 @@ from dimagi.utils.web import json_response, get_url_base, json_handler
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc
+from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, \
+    get_brief_apps_in_domain
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
-from corehq.apps.cloudcare.api import look_up_app_json, get_cloudcare_apps, get_filtered_cases, get_filters_from_request,\
+from corehq.apps.cloudcare.api import look_up_app_json, get_filtered_cases, get_filters_from_request,\
     api_closed_to_status, CaseAPIResult, CASE_STATUS_OPEN, get_app_json, get_open_form_sessions
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.logging import notify_exception
@@ -49,7 +51,6 @@ from touchforms.formplayer.models import EntrySession
 from xml2json.lib import xml2json
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.style.decorators import (
-    use_knockout_js,
     use_datatables,
     use_bootstrap3,
     use_jquery_ui,
@@ -71,7 +72,6 @@ def insufficient_privilege(request, domain, *args, **kwargs):
 
 class CloudcareMain(View):
 
-    @use_knockout_js
     @use_bootstrap3
     @use_datatables
     @use_jquery_ui
@@ -106,7 +106,7 @@ class CloudcareMain(View):
                 apps = [get_app_json(ApplicationBase.wrap(app)) for app in apps if app]
 
         else:
-            apps = ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}])
+            apps = get_brief_apps_in_domain(domain)
             apps = [get_app_json(app) for app in apps if app and app.application_version == V2]
 
         # trim out empty apps
@@ -543,7 +543,6 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, request, *args, **kwargs):
         return super(EditCloudcareUserPermissionsView, self).dispatch(request, *args, **kwargs)
 

@@ -1,10 +1,12 @@
 from __future__ import absolute_import
 import sys
 from cStringIO import StringIO
+from itertools import chain
 from os.path import join
+from collections import defaultdict
 from contextlib import contextmanager
 
-from corehq.blobs import get_blob_db
+from corehq.blobs import BlobInfo, get_blob_db
 from corehq.blobs.exceptions import NotFound
 from couchdbkit.exceptions import InvalidAttachment, ResourceNotFound
 from dimagi.ext.couchdbkit import (
@@ -22,6 +24,10 @@ class BlobMeta(DocumentSchema):
     content_type = StringProperty()
     content_length = IntegerProperty()
     digest = StringProperty()
+
+    @property
+    def info(self):
+        return BlobInfo(self.id, self.content_length, self.digest)
 
 
 class BlobMixin(Document):
@@ -92,13 +98,12 @@ class BlobMixin(Document):
         )
         if self.migrating_blobs_from_couch and self._attachments:
             self._attachments.pop(name, None)
-        if old_meta and old_meta.id and (self._atomic_blobs is None
-                                         or name in self._atomic_blobs):
-            db.delete(old_meta.id, bucket)
         if self._atomic_blobs is None:
             self.save()
-        else:
-            self._atomic_blobs.add(name)
+            if old_meta and old_meta.id:
+                db.delete(old_meta.id, bucket)
+        elif old_meta and old_meta.id:
+            self._atomic_blobs[name].append(old_meta)
         return True
 
     def fetch_attachment(self, name, stream=False):
@@ -136,10 +141,14 @@ class BlobMixin(Document):
         else:
             deleted = False
         meta = self.external_blobs.pop(name, None)
-        should_save = meta is not None or deleted
         if meta is not None:
-            deleted = get_blob_db().delete(meta.id, self._blobdb_bucket()) or deleted
-        if should_save and self._atomic_blobs is None:
+            if self._atomic_blobs is None:
+                bucket = self._blobdb_bucket()
+                deleted = get_blob_db().delete(meta.id, bucket) or deleted
+            else:
+                self._atomic_blobs[name].append(meta)
+                deleted = True
+        if self._atomic_blobs is None:
             self.save()
         return deleted
 
@@ -159,7 +168,6 @@ class BlobMixin(Document):
         def atomic_blobs_context():
             if self._id is None:
                 self._id = self.get_db().server.next_uuid()
-            non_atomic_blobs = dict(self.blobs)
             old_external_blobs = dict(self.external_blobs)
             if self.migrating_blobs_from_couch:
                 if self._attachments:
@@ -167,7 +175,9 @@ class BlobMixin(Document):
                 else:
                     old_attachments = None
             atomicity = self._atomic_blobs
-            self._atomic_blobs = set()
+            self._atomic_blobs = new_deleted = defaultdict(list)
+            db = get_blob_db()
+            bucket = self._blobdb_bucket()
             success = False
             try:
                 yield
@@ -175,10 +185,10 @@ class BlobMixin(Document):
                 success = True
             except:
                 typ, exc, tb = sys.exc_info()
-                # list blobs items to avoid dict-changed-during-iteration error
-                for name, meta in list(self.blobs.iteritems()):
-                    if meta is not non_atomic_blobs.get(name):
-                        self.delete_attachment(name)
+                # delete new blobs that were not saved
+                for name, meta in self.external_blobs.iteritems():
+                    if meta is not old_external_blobs.get(name):
+                        db.delete(meta.id, bucket)
                 self.external_blobs = old_external_blobs
                 if self.migrating_blobs_from_couch:
                     self._attachments = old_attachments
@@ -187,10 +197,14 @@ class BlobMixin(Document):
                 self._atomic_blobs = atomicity
             if success:
                 # delete replaced blobs
-                db = get_blob_db()
-                bucket = self._blobdb_bucket()
+                deleted = set()
                 for name, meta in list(old_external_blobs.iteritems()):
                     if meta is not self.blobs.get(name):
+                        db.delete(meta.id, bucket)
+                        deleted.add(meta.id)
+                # delete newly created blobs that were overwritten or deleted
+                for meta in chain.from_iterable(new_deleted.itervalues()):
+                    if meta.id not in deleted:
                         db.delete(meta.id, bucket)
         return atomic_blobs_context()
 

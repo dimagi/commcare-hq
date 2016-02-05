@@ -2,7 +2,6 @@ import copy
 import datetime
 from decimal import Decimal
 import logging
-import uuid
 import json
 import cStringIO
 
@@ -23,22 +22,17 @@ from django.contrib import messages
 from django.contrib.auth.views import password_reset_confirm
 from django.views.decorators.http import require_POST
 from PIL import Image
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.models import User
 
 from corehq.const import USER_DATE_FORMAT
 from custom.dhis2.forms import Dhis2SettingsForm
 from custom.dhis2.models import Dhis2Settings
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.xml import V2
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
-from corehq.apps.accounting.decorators import (
-    requires_privilege_with_fallback,
-)
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui, \
-    use_jquery_ui_multiselect, use_knockout_js, use_select2
+    use_jquery_ui_multiselect, use_select2
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -61,7 +55,6 @@ from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import Invitation, CouchUser
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
-from corehq.util.context_processors import get_domain_type
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq import privileges, feature_previews
 from django_prbac.utils import has_privilege
@@ -70,7 +63,7 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    PaymentMethod, EntryPoint, WireInvoice, SoftwarePlanVisibility, FeatureType,
+    EntryPoint, WireInvoice, SoftwarePlanVisibility, FeatureType,
     StripePaymentMethod, LastPayment,
     UNLIMITED_FEATURE_USAGE,
 )
@@ -124,7 +117,7 @@ PAYMENT_ERROR_MESSAGES = {
 def select(request, domain_select_template='domain/select.html', do_not_redirect=False):
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
-        return redirect('registration_domain', domain_type=get_domain_type(None, request))
+        return redirect('registration_domain')
 
     email = request.couch_user.get_email()
     open_invitations = [e for e in Invitation.by_email(email) if not e.is_expired]
@@ -448,7 +441,6 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
 
     @method_decorator(login_and_domain_required)
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
@@ -696,7 +688,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
         return sum([c.balance for c in credit_lines]) if credit_lines else Decimal('0.00')
 
     def get_product_summary(self, plan_version, account, subscription):
-        product_rate = plan_version.get_product_rate()
+        product_rate = plan_version.product_rate
         product_type = product_rate.product.product_type
         return {
             'name': product_type,
@@ -1642,6 +1634,10 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
         Select2BillingInfoHandler,
     ]
 
+    @method_decorator(require_POST)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ConfirmSubscriptionRenewalView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def next_plan_version(self):
@@ -1943,7 +1939,6 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             elif request.POST.get('old_image', False):
                 new_domain.image_path = old.image_path
                 new_domain.image_type = old.image_type
-            new_domain.save()
 
             documentation_file = self.snapshot_settings_form.cleaned_data['documentation_file']
             if documentation_file:
@@ -1952,9 +1947,9 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
             elif request.POST.get('old_documentation_file', False):
                 new_domain.documentation_file_path = old.documentation_file_path
                 new_domain.documentation_file_type = old.documentation_file_type
-            new_domain.save()
 
             if publish_on_submit:
+                new_domain.save()
                 _publish_snapshot(request, self.domain_object, published_snapshot=new_domain)
             else:
                 new_domain.published = False
@@ -1976,7 +1971,11 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                                           name=new_domain.documentation_file_path)
 
             for application in new_domain.full_applications():
-                original_id = application.copied_from._id
+                # Note that application is a build. If the original app has a build then application.copied_from
+                # will be a build and application.copied_from.copy_of will be the original app ID, otherwise
+                # application.copied_from will be the original app. (FB 190587) See also self.published_apps()
+                original_id = application.copied_from.copy_of if application.copied_from.copy_of \
+                    else application.copied_from._id
                 name_field = "%s-name" % original_id
                 if name_field not in request.POST:
                     continue
@@ -2004,13 +2003,10 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 fixture.description = request.POST["%s-description" % old_id]
                 fixture.save()
 
-            if new_domain is None:
-                messages.error(request, _("Version creation failed; please try again"))
-            else:
-                messages.success(request, (_("Created a new version of your app. This version will be posted to "
-                                             "CommCare Exchange pending approval by admins.") if publish_on_submit
-                                           else _("Created a new version of your app.")))
-                return redirect(ExchangeSnapshotsView.urlname, self.domain)
+            messages.success(request, (_("Created a new version of your app. This version will be posted to "
+                                         "CommCare Exchange pending approval by admins.") if publish_on_submit
+                                       else _("Created a new version of your app.")))
+            return redirect(ExchangeSnapshotsView.urlname, self.domain)
         return self.get(request, *args, **kwargs)
 
 
@@ -2021,7 +2017,6 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
 
     @method_decorator(domain_admin_required)
     @use_bootstrap3
-    @use_knockout_js
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -2190,7 +2185,6 @@ class AddFormRepeaterView(AddRepeaterView):
 
     def make_repeater(self):
         repeater = super(AddFormRepeaterView, self).make_repeater()
-        repeater.exclude_device_reports = self.add_repeater_form.cleaned_data['exclude_device_reports']
         repeater.include_app_id_param = self.add_repeater_form.cleaned_data['include_app_id_param']
         return repeater
 

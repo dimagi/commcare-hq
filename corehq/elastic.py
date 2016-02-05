@@ -3,8 +3,9 @@ from collections import namedtuple
 from urllib import unquote
 from elasticsearch import Elasticsearch
 from django.conf import settings
-from elasticsearch.exceptions import ElasticsearchException
+from elasticsearch.exceptions import ElasticsearchException, RequestError
 
+from corehq.apps.es.utils import flatten_field_dict
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from pillowtop.listener import send_to_elasticsearch as send_to_es
 from corehq.pillows.mappings.app_mapping import APP_INDEX
@@ -30,7 +31,7 @@ def get_es_new():
 
 def doc_exists_in_es(index, doc_id):
     es_meta = ES_META[index]
-    return get_es_new().exists(es_meta.index, doc_id, doc_type=es_meta.type)
+    return get_es_new().exists(es_meta.index, es_meta.type, doc_id)
 
 
 def send_to_elasticsearch(index, doc, delete=False):
@@ -118,7 +119,10 @@ class ESError(Exception):
 
 def run_query(index_name, q):
     es_meta = ES_META[index_name]
-    return get_es_new().search(es_meta.index, es_meta.type, body=q)
+    try:
+        return get_es_new().search(es_meta.index, es_meta.type, body=q)
+    except RequestError as e:
+        raise ESError(e)
 
 
 def es_histogram(histo_type, domains=None, startdate=None, enddate=None,
@@ -224,6 +228,10 @@ def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_
         result = es.search(meta.index, meta.type, body=q)
     except ElasticsearchException as e:
         raise ESError(e)
+
+    if fields is not None:
+        for res in result['hits']['hits']:
+            flatten_field_dict(res)
 
     return result
 

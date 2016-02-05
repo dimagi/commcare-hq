@@ -3,6 +3,19 @@ from .util import LocationHierarchyTestCase
 
 
 class TestLocationQuerysetMethods(LocationHierarchyTestCase):
+    dependent_apps = [
+        'corehq.couchapps',
+        'corehq.apps.commtrack',
+        'corehq.apps.domain',
+        'corehq.apps.products',
+        'corehq.apps.tzmigration',
+        'corehq.apps.users',
+        'custom.logistics',
+        'custom.ilsgateway',
+        'custom.ewsghana',
+
+    ]
+
     location_type_names = ['state', 'county', 'city']
     location_structure = [
         ('Massachusetts', [

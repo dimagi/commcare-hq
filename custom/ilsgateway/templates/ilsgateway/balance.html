@@ -1,0 +1,56 @@
+{% extends 'style/bootstrap2/two_column.html' %}
+{% load static %}
+{% block main_column %}
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>
+                    Date
+                </th>
+                <th>
+                    Products
+                </th>
+                <th>
+                    Locations
+                </th>
+                <th>
+                    Web Users
+                </th>
+                <th>
+                    SMS Users
+                </th>
+            </tr>
+        </thead>
+        <tr>
+            <td>{{ stats.last_modified }}</td>
+            <td>{{ products_count }} / {{ stats.products_count }}</td>
+            <td>{{ locations_count }} / {{ stats.locations_count }}</td>
+            <td>{{ web_users_count }} / {{ stats.web_users_count }}</td>
+            <td>{{ sms_users_count }} / {{ stats.sms_users_count }}</td>
+        </tr>
+    </table>
+    <table id="problems-table" class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Object type</th>
+                <th>Object url</th>
+                <th>Object description</th>
+                <th>Object external id</th>
+                <th>Last modified</th>
+            </tr>
+        </thead>
+        {% for problem in problems %}
+            <tr>
+                <td>{{ problem.object_type }}</td>
+                <td><a href="{{ problem.object_url }}">{{ problem.object_id }}</a></td>
+                <td>{{ problem.description }}</td>
+                <td>{{ problem.external_id }}</td>
+                <td>{{ problem.last_modified }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    {% include 'imports/datatables.html' %}
+    <script>
+        $('#problems-table').dataTable();
+    </script>
+{% endblock %}

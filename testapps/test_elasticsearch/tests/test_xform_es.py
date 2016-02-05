@@ -2,11 +2,13 @@ from collections import namedtuple
 import uuid
 import datetime
 from django.test import SimpleTestCase
+from elasticsearch.exceptions import ConnectionError
+
 from corehq.apps.es import FormES
-from corehq.form_processor.tests.utils import TestFormMetadata
+from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.xform import XFormPillow
-from corehq.util.test_utils import make_es_ready_form
-from pillowtop.tests import require_explicit_elasticsearch_testing
+from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
+from pillowtop.es_utils import doc_exists
 
 
 WrappedJsonFormPair = namedtuple('WrappedJsonFormPair', ['wrapped_form', 'json_form'])
@@ -15,11 +17,11 @@ WrappedJsonFormPair = namedtuple('WrappedJsonFormPair', ['wrapped_form', 'json_f
 class XFormESTestCase(SimpleTestCase):
 
     @classmethod
-    @require_explicit_elasticsearch_testing
     def setUpClass(cls):
         cls.now = datetime.datetime.utcnow()
         cls.forms = []
-        cls.pillow = XFormPillow()
+        with trap_extra_setup(ConnectionError):
+            cls.pillow = XFormPillow()
 
     def setUp(self):
         self.test_id = uuid.uuid4().hex
@@ -42,10 +44,12 @@ class XFormESTestCase(SimpleTestCase):
         cls.forms = []
 
     def test_forms_are_in_index(self):
+        for form in self.forms:
+            self.assertFalse(doc_exists(self.pillow, form.wrapped_form.form_id))
         self._ship_forms_to_es([None, None])
         self.assertEqual(2, len(self.forms))
         for form in self.forms:
-            self.assertTrue(self.pillow.doc_exists(form.wrapped_form.form_id))
+            self.assertTrue(doc_exists(self.pillow, form.wrapped_form.form_id))
 
     def test_query_by_domain(self):
         domain1 = 'test1-{}'.format(self.test_id)

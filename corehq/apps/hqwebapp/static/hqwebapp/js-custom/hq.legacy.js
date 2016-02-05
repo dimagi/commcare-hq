@@ -15,7 +15,7 @@ var COMMCAREHQ = (function () {
             var el = $(
                 '<div class="hq-help">' +
                     '<a href="#">' +
-                        '<i class="icon-question-sign" data-trigger="focus"></i></a></div>'
+                        '<i class="icon-question-sign fa fa-question-circle" data-trigger="focus"></i></a></div>'
                 ),
                 attrs = ['content', 'title', 'placement'];
 
@@ -85,8 +85,8 @@ function makeSaveButton(messageStrings, cssClass) {
                 $retry: $('<span/>').text(SaveButton.message.RETRY).click(function () {
                     button.fire('save');
                 }).addClass(cssClass),
-                $saving: $('<span/>').text(SaveButton.message.SAVING).addClass('btn disabled'),
-                $saved: $('<span/>').text(SaveButton.message.SAVED).addClass('btn disabled'),
+                $saving: $('<span/>').text(SaveButton.message.SAVING).addClass('btn btn-default disabled'),
+                $saved: $('<span/>').text(SaveButton.message.SAVED).addClass('btn btn-default disabled'),
                 ui: $('<div/>').css({float: 'right'}),
                 setStateWhenReady: function (state) {
                     if (this.state === 'saving') {
@@ -119,9 +119,10 @@ function makeSaveButton(messageStrings, cssClass) {
                         success = options.success || function () {},
                         error = options.error || function () {},
                         that = this;
-                    options.beforeSend = function () {
+                    options.beforeSend = function (jqXHR, settings) {
                         that.setState('saving');
                         that.nextState = 'saved';
+                        $.ajaxSettings.beforeSend(jqXHR, settings);
                         beforeSend.apply(this, arguments);
                     };
                     options.success = function (data) {

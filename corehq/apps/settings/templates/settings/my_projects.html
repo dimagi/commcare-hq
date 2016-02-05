@@ -73,6 +73,6 @@
         </table>
     </div>
     <p>
-        <a class="btn btn-success" href="{% url "registration_domain" DOMAIN_TYPE %}?referer={{ request.path }}"><i class="fa fa-plus"></i> {% trans 'Create a New Project' %}</a>
+        <a class="btn btn-success" href="{% url "registration_domain" %}?referer={{ request.path }}"><i class="fa fa-plus"></i> {% trans 'Create a New Project' %}</a>
     </p>
 {% endblock %}

@@ -41,7 +41,7 @@ from custom.ilsgateway.api import ILSGatewayAPI
 from custom.logistics.tasks import stock_data_task
 from custom.ilsgateway.api import ILSGatewayEndpoint
 from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, SupervisionDocument, ILSNotes, \
-    ProductAvailabilityData
+    ProductAvailabilityData, ILSMigrationStats, ILSMigrationProblem
 from custom.ilsgateway.tasks import report_run, ils_clear_stock_data_task, \
     ils_bootstrap_domain_task
 from custom.logistics.views import BaseConfigView
@@ -371,3 +371,21 @@ class ProductAvailabilityDeleteView(DeleteView, DomainViewMixin):
         if not self.request.couch_user.is_domain_admin():
             raise Http404()
         return super(ProductAvailabilityDeleteView, self).dispatch(request, *args, **kwargs)
+
+
+class BalanceMigrationView(BaseDomainView):
+
+    template_name = 'ilsgateway/balance.html'
+    section_name = 'Balance'
+    section_url = ''
+
+    @property
+    def page_context(self):
+        return {
+            'stats': get_object_or_404(ILSMigrationStats, domain=self.domain),
+            'products_count': SQLProduct.objects.filter(domain=self.domain).count(),
+            'locations_count': SQLLocation.objects.filter(domain=self.domain).exclude(is_archived=True).count(),
+            'web_users_count': WebUser.by_domain(self.domain, reduce=True)[0]['value'],
+            'sms_users_count': CommCareUser.by_domain(self.domain, reduce=True)[0]['value'],
+            'problems': ILSMigrationProblem.objects.filter(domain=self.domain)
+        }

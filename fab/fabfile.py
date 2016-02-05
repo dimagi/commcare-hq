@@ -595,6 +595,7 @@ def _deploy_without_asking():
         # handle static files
         _execute_with_timing(version_static)
         _execute_with_timing(_bower_install)
+        _execute_with_timing(_npm_install)
         _execute_with_timing(_do_collectstatic)
         _execute_with_timing(_do_compress)
 
@@ -701,10 +702,20 @@ def copy_components():
         sudo('mkdir {}/bower_components'.format(env.code_root))
 
 
+@parallel
+@roles(ROLES_ALL_SRC)
+def copy_node_modules():
+    if files.exists('{}/node_modules'.format(env.code_current)):
+        sudo('cp -r {}/node_modules {}/node_modules'.format(env.code_current, env.code_root))
+    else:
+        sudo('mkdir {}/node_modules'.format(env.code_root))
+
+
 def copy_release_files():
     execute(copy_localsettings)
     execute(copy_tf_localsettings)
     execute(copy_components)
+    execute(copy_node_modules)
 
 
 @task
@@ -976,7 +987,11 @@ def restart_services():
                            '{env.environment}?'.format(env=env), default=False):
         utils.abort('Task aborted.')
 
-    execute(services_restart)
+    @roles(env.supervisor_roles)
+    def _inner():
+        services_restart()
+
+    execute(_inner)
 
 
 @roles(ROLES_ALL_SERVICES)
@@ -1055,6 +1070,15 @@ def _bower_install(use_current_release=False):
     with cd(env.code_root if not use_current_release else env.code_current):
         sudo('bower prune --production --config.interactive=false')
         sudo('bower update --production --config.interactive=false')
+
+
+@parallel
+@roles(ROLES_DJANGO)
+def _npm_install():
+    with cd(env.code_root):
+        sudo('npm prune --production')
+        sudo('npm install --production')
+        sudo('npm update --production')
 
 
 @roles(ROLES_DJANGO)

@@ -79,7 +79,7 @@ class TestInvoice(BaseInvoiceTestCase):
         invoice = self.subscription.invoice_set.latest('date_created')
 
         num_product_line_items = invoice.lineitem_set.get_products().count()
-        self.assertEqual(num_product_line_items, self.subscription.plan_version.product_rates.count())
+        self.assertEqual(num_product_line_items, 1)
 
         num_feature_line_items = invoice.lineitem_set.get_features().count()
         self.assertEqual(num_feature_line_items, self.subscription.plan_version.feature_rates.count())
@@ -258,7 +258,7 @@ class TestProductLineItem(BaseInvoiceTestCase):
 
     def setUp(self):
         super(TestProductLineItem, self).setUp()
-        self.product_rate = self.subscription.plan_version.product_rates.get()
+        self.product_rate = self.subscription.plan_version.product_rate
         self.prorate = Decimal("%.2f" % round(self.product_rate.monthly_fee / 30, 2))
 
     def test_standard(self):

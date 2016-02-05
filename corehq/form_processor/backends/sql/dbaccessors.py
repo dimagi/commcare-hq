@@ -102,10 +102,12 @@ class FormAccessorSQL(AbstractFormAccessor):
         assert limit is not None
         # apply limit in python as well since we may get more results than we expect
         # if we're in a sharded environment
-        return list(XFormInstanceSQL.objects.raw(
+        forms = list(XFormInstanceSQL.objects.raw(
             'SELECT * from get_forms_by_state(%s, %s, %s, %s)',
             [domain, state, limit, recent_first]
-        ))[:limit]
+        ))
+        forms = sorted(forms, key=lambda f: f.received_on, reverse=recent_first)
+        return forms[:limit]
 
     @staticmethod
     def form_with_id_exists(form_id, domain=None):
@@ -130,6 +132,14 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def unarchive_form(form, user_id=None):
         FormAccessorSQL._archive_unarchive_form(form, user_id, False)
+
+    @staticmethod
+    def update_state(form_id, state):
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute(
+                'SELECT update_form_state(%s, %s)',
+                [form_id, state]
+            )
 
     @staticmethod
     @transaction.atomic
@@ -209,6 +219,34 @@ class FormAccessorSQL(AbstractFormAccessor):
     def delete_all_forms(domain=None, user_id=None):
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT delete_all_forms(%s, %s)', [domain, user_id])
+
+    @staticmethod
+    def get_deleted_forms_for_user(domain, user_id, ids_only=False):
+        return FormAccessorSQL._get_forms_for_user(
+            domain,
+            user_id,
+            XFormInstanceSQL.DELETED,
+            ids_only
+        )
+
+    @staticmethod
+    def get_forms_for_user(domain, user_id, ids_only=False):
+        return FormAccessorSQL._get_forms_for_user(
+            domain,
+            user_id,
+            XFormInstanceSQL.NORMAL,
+            ids_only
+        )
+
+    @staticmethod
+    def _get_forms_for_user(domain, user_id, state, ids_only=False):
+        forms = list(XFormInstanceSQL.objects.raw(
+            'SELECT * from get_forms_by_user_id(%s, %s, %s)',
+            [domain, user_id, state],
+        ))
+        if ids_only:
+            return [form.form_id for form in forms]
+        return forms
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
@@ -476,4 +514,3 @@ def _attach_prefetch_models(objects_by_id, prefetched_models, link_field_name, c
     for obj_id, group in prefetched_groups:
         obj = objects_by_id[obj_id]
         setattr(obj, cached_attrib_name, list(group))
-

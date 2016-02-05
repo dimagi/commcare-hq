@@ -14,6 +14,10 @@ from dimagi.utils.dates import DateSpan
 
 
 class MaltGeneratorTest(TestCase):
+    dependent_apps = [
+        'corehq.apps.tzmigration', 'django_digest', 'auditcare', 'corehq.apps.users',
+        'corehq.couchapps', 'corehq.apps.sofabed', 'corehq.apps.domain',
+    ]
 
     DOMAIN_NAME = "test"
     USERNAME = "malt-user"

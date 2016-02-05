@@ -6,10 +6,12 @@ from dimagi.utils.couch.database import get_db
 from pillowtop.checkpoints.manager import PillowCheckpoint, \
     PillowCheckpointEventHandler, get_django_checkpoint_store
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processor import PillowProcessor
+from pillowtop.processors import PillowProcessor
+
 
 # this number intentionally left high to avoid many redundant saves while this
 # pillow is still in experimental stage
+
 KAFKA_CHECKPOINT_FREQUENCY = 1000
 
 

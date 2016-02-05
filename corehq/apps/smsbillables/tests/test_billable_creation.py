@@ -3,17 +3,18 @@ from django.test import TestCase
 from corehq.apps.sms.api import create_billable_for_sms
 from corehq.apps.sms.models import SMSLog, OUTGOING
 from corehq.apps.smsbillables.models import SmsBillable
-from corehq.messaging.smsbackends.tropo.models import TropoBackend
+from corehq.messaging.smsbackends.tropo.models import SQLTropoBackend
 
 
 class TestBillableCreation(TestCase):
 
     def setUp(self):
         self.domain = 'sms_test_domain'
-        self.mobile_backend = TropoBackend(
+        self.mobile_backend = SQLTropoBackend(
             name="TEST",
+            is_global=False,
             domain=self.domain,
-            messaging_token="12345679",
+            hq_api_id=SQLTropoBackend.get_api_id()
         )
         self.mobile_backend.save()
         self.text_short = "This is a test text message under 160 characters."
@@ -29,7 +30,7 @@ class TestBillableCreation(TestCase):
             phone_number='+16175555454',
             direction=OUTGOING,
             date=datetime.utcnow(),
-            backend_id=self.mobile_backend.get_id,
+            backend_id=self.mobile_backend.couch_id,
             text=text
         )
         msg.save()

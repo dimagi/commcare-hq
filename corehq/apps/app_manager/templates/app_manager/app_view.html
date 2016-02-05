@@ -4,18 +4,16 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
-    {% if app.get_doc_type == "Application" %}
-        <script src="{% static 'translations/js/translations.js' %}"></script>
-    {% endif %}
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
-    <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
-    <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/commcaresettings.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/supported-languages.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
+    {% if app.get_doc_type == "Application" %}
+        <script src="{% new_static 'translations/js/translations.js' %}"></script>
+    {% endif %}
     {% if app %}
     <script>
         COMMCAREHQ.appView = {
@@ -61,7 +59,7 @@
                 return self;
             }());
             $("#multimedia").koApplyBindings(multimedia_tab);
-            $('#multimedia-shower').on('show', function () {
+            $('#multimedia-shower').on('show.bs.tab', function () {
                 if (multimedia_tab.load_state() === null) {
                     multimedia_tab.load_if_necessary();
                 }
@@ -128,85 +126,43 @@
     </script>
     {% endif %}
     <script>
-        $.fn.password_setter = function (options) {
+        $.fn.password_setter = function () {
             var that = this,
-                options = options || {},
-                title = options.title || "Set Password",
                 randID = Math.floor(Math.random() * 1000),
                 password1ID = 'password-' + randID + '-1',
                 password2ID = 'password-' + randID + '-2',
-                message = {
-                    RESET: "Reset",
-                    LABEL1: "Password",
-                    LABEL2: "Repeat Password",
-                    OK: "OK",
-                    CANCEL: "Cancel",
-                    PASSWORD_EMPTY: "You must enter a password.",
-                    PASSWORD_MISMATCH: "Try again. The passwords don't match"
-                },
-                label1 = $('<label/>').attr({'for': password1ID}).text(message.LABEL1),
-                label2 = $('<label/>').attr({'for': password2ID}).text(message.LABEL2),
-                password1 = $('<input/>').attr({type: 'password', id: password1ID}),
-                password2 = $('<input/>').attr({type: 'password', id: password2ID}),
-                popupLink = $('<a/>').attr({href: '#'}).text(message.RESET),
-                popup = $('<section/>').addClass('password-setter-popup'),
-                popupOK = $('<input/>').attr({type: 'submit'}).val(message.OK).button(),
-                popupCancel = $('<a/>').attr({href: '#'}).text(message.CANCEL).button(),
-                passwordMismatch = $('<p/>').text(message.PASSWORD_MISMATCH),
-                passwordEmpty = $('<p/>').text(message.PASSWORD_EMPTY),
-                form = $('<form/>').attr({action: ''}),
-                undefined = undefined;
-            this.hide();
-            this.after(popupLink);
-            popup.append(
-                $('<h1/>').text(title),
-                form.append(
-                    passwordMismatch,
-                    $('<table/>').append(
-                        $('<tr/>').append(
-                            $('<td/>').append(label1),
-                            $('<td/>').append(passwordEmpty, password1)
-                        ),
-                        $('<tr/>').append(
-                            $('<td/>').append(label2),
-                            $('<td/>').append(password2)
-                        )
-                    ),
-                    popupOK,
-                    popupCancel
-                )
-            );
-            passwordEmpty.hide();
-            passwordMismatch.hide();
-            popupLink.click(function (e) {
-                var position = popupLink.offset();
-                e.preventDefault();
-                popup.css({
-                    display: 'block',
-                    position: 'absolute',
-                    top: position.top,
-                    left: position.left,
-                }).addClass('ui-corner-tr ui-corner-br ui-corner-bl shadow');
-                $('body').append(popup);
-                password1.focus();
+                $popupLink = $('<a/>').attr({href: '#'}).text("{% trans "Reset" %}"),
+                $modal = $("#password-setter"),
+                $passwordRow = $modal.find(".password"),
+                $passwordInput = $passwordRow.find("input"),
+                $repeatRow = $modal.find(".repeat-password"),
+                $repeatInput = $repeatRow.find("input"),
+                $errorMismatch = $modal.find(".password-mismatch"),
+                $errorEmpty = $modal.find(".password-empty");
+
+            that.hide();
+            that.after($popupLink);
+            $popupLink.click(function() {
+                $modal.modal('show');
+                $passwordRow.find("input").focus();
             });
 
-            popupCancel.click(function (e) {
-                e.preventDefault();
-                popup.detach();
-            });
-
-            form.submit(function (e) {
-                e.preventDefault();
-                passwordEmpty.hide();
-                passwordMismatch.hide();
-                if (password1.val() && password1.val() === password2.val()) {
-                    popup.detach();
-                    that.val(password1.val()).trigger('textchange');
-                } else if (!password1.val()) {
-                    passwordEmpty.show();
-                } else {
-                    passwordMismatch.show();
+            $passwordRow.find("label").attr("for", password1ID);
+            $passwordInput.attr("id", password1ID);
+            $repeatRow.find("label").attr("for", password2ID);
+            $repeatInput.find("input").attr("id", password2ID);
+            
+            $modal.find("button.save").click(function (e) {
+                $errorMismatch.addClass("hide");
+                $errorEmpty.addClass("hide");
+                if ($passwordInput.val() !== $repeatInput.val()) {
+                    $errorMismatch.removeClass("hide");
+                } else if (!$passwordInput.val()) {
+                    $errorEmpty.removeClass("hide");
+                }
+                else {
+                    $modal.modal('hide');
+                    that.val($passwordInput.val()).trigger('textchange');
                 }
             });
         };
@@ -253,7 +209,7 @@
     {% endif %}
 {% endblock %}
 
-{% block head %}{{ block.super }}
+{% block stylesheets %}{{ block.super }}
     <style>
         .sortable-handle {
             cursor: move;
@@ -278,12 +234,6 @@
             padding: 2px;
             margin: 1px;
         }
-        #supported-languages .light {
-            color: #BBB;
-        }
-        #supported-languages td {
-            vertical-align: baseline;
-        }
         #default-language-help {
             position: absolute;
             /*width: 100%;*/
@@ -293,25 +243,6 @@
             left: 35px;
             background-color: #FFF;
             border-radius: 40px;
-        }
-        .password-setter-popup {
-            background-color: white;
-            border: 1px solid #CCC;
-            padding: 1em;
-        }
-        .password-setter-popup h1 {
-            text-align: center;
-            font-size: 1.2em;
-        }
-        .password-setter-popup table {
-            margin: 0;
-        }
-        .password-setter-popup .ui-button {
-            float: right;
-            margin: 5px;
-        }
-        .password-setter-popup input[type='password'] {
-            width: 40px;
         }
     </style>
 {% endblock %}
@@ -325,11 +256,12 @@
         {% if app.get_doc_type == "Application" %}
             <div class="tab-pane multimedia" id="multimedia">
                 <div data-bind="if: load_state() === 'loading'">
-                    <i class="icon-large icon-refresh icon-spin" style="margin: 70px 0 0 200px;"></i>
+                    <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                    {% trans "Loading ..." %}
                 </div>
                 <div data-bind="html: multimedia_page_html"></div>
                 <div data-bind="if: load_state() === 'error'">
-                    <button class="btn" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
+                    <button class="btn btn-default" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
                 </div>
             </div>
 
@@ -346,7 +278,7 @@
             <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger disable-on-submit">
-                    <i class="icon-trash"></i>
+                    <i class="fa fa-trash"></i>
                     {% trans "Delete this application" %}
                 </button>
             </form>
@@ -356,6 +288,42 @@
 
 {% block modals %}{{ block.super }}
 {% for uploader in uploaders %}
-{% include 'hqmedia/partials/multimedia_uploader.html' %}
+{% include 'hqmedia/bootstrap3/partials/multimedia_uploader.html' %}
 {% endfor %}
+<div class="modal fade" id="password-setter">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">{% trans "Set Password" %}</h4>
+            </div>
+            <div class="modal-body form-horizontal">
+                <div class="alert alert-danger password-mismatch hide">
+                    {% trans "The passwords don't match. Please try again." %}
+                </div>
+                <div class="alert alert-danger password-empty hide">
+                    {% trans "Please enter a password or cancel." %}
+                </div>
+                <div class="form-group password">
+                    <label class="col-sm-4 control-label">{% trans "Password" %}</label>
+                    <div class="col-sm-8">
+                        <input type="password" class="form-control" />
+                    </div>
+                </div>
+                <div class="form-group repeat-password">
+                    <label class="col-sm-4 control-label">{% trans "Repeat Password" %}</label>
+                    <div class="col-sm-8">
+                        <input type="password" class="form-control" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button class="btn btn-primary save">{% trans "Save" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

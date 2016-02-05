@@ -26,6 +26,7 @@ from django.utils.translation import override, ugettext as _, ugettext
 from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
+from corehq.apps.app_manager.xpath_validator import validate_xpath
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -717,19 +718,9 @@ class CommentMixin(DocumentSchema):
     @property
     def short_comment(self):
         """
-        Trim comment to 72 chars
-
-        >>> form = CommentMixin(
-        ...     comment=u"Twas bryllyg, and þe slythy toves "
-        ...             u"Did gyre and gymble in þe wabe: "
-        ...             u"All mimsy were þe borogoves; "
-        ...             u"And þe mome raths outgrabe."
-        ... )
-        >>> form.short_comment
-        u'Twas bryllyg, and \\xc3\\xbee slythy toves Did gyre and gymble in \\xc3\\xbee wabe: A...'
-
+        Trim comment to 500 chars (about 100 words)
         """
-        return self.comment if len(self.comment) <= 72 else self.comment[:69] + '...'
+        return self.comment if len(self.comment) <= 500 else self.comment[:497] + '...'
 
 
 class FormBase(DocumentSchema):
@@ -880,6 +871,17 @@ class FormBase(DocumentSchema):
                     self.get_app().get_form(form_link.form_id)
                 except FormNotFoundException:
                     errors.append(dict(type='bad form link', **meta))
+
+        # this isn't great but two of FormBase's subclasses have form_filter
+        if hasattr(self, 'form_filter') and self.form_filter:
+            is_valid, message = validate_xpath(self.form_filter, allow_case_hashtags=True)
+            if not is_valid:
+                error = {
+                    'type': 'form filter has xpath error',
+                    'xpath_error': message,
+                }
+                error.update(meta)
+                errors.append(error)
 
         errors.extend(self.extended_build_validation(meta, xml_valid, validate_module))
 
@@ -1951,6 +1953,14 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
                         'module': self.get_module_info(),
                         'form': form,
                     })
+        if self.module_filter:
+            is_valid, message = validate_xpath(self.module_filter)
+            if not is_valid:
+                errors.append({
+                    'type': 'module filter has xpath error',
+                    'xpath_error': message,
+                    'module': self.get_module_info(),
+                })
 
         return errors
 
@@ -3290,11 +3300,11 @@ class ReportAppFilter(DocumentSchema):
         else:
             return super(ReportAppFilter, cls).wrap(data)
 
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         raise NotImplementedError
 
 
-def _filter_by_case_sharing_group_id(user):
+def _filter_by_case_sharing_group_id(user, ui_filter):
     from corehq.apps.reports_core.filters import Choice
     return [
         Choice(value=group._id, display=None)
@@ -3302,17 +3312,16 @@ def _filter_by_case_sharing_group_id(user):
     ]
 
 
-def _filter_by_location_id(user):
+def _filter_by_location_id(user, ui_filter):
+    return ui_filter.value(**{ui_filter.name: user.location_id})
+
+
+def _filter_by_username(user, ui_filter):
     from corehq.apps.reports_core.filters import Choice
-    return Choice(value=user.location_id, display=None)
+    return Choice(value=user.raw_username, display=None)
 
 
-def _filter_by_username(user):
-    from corehq.apps.reports_core.filters import Choice
-    return Choice(value=user.username, display=None)
-
-
-def _filter_by_user_id(user):
+def _filter_by_user_id(user, ui_filter):
     from corehq.apps.reports_core.filters import Choice
     return Choice(value=user._id, display=None)
 
@@ -3328,14 +3337,14 @@ _filter_type_to_func = {
 class AutoFilter(ReportAppFilter):
     filter_type = StringProperty(choices=_filter_type_to_func.keys())
 
-    def get_filter_value(self, user):
-        return _filter_type_to_func[self.filter_type](user)
+    def get_filter_value(self, user, ui_filter):
+        return _filter_type_to_func[self.filter_type](user, ui_filter)
 
 
 class CustomDataAutoFilter(ReportAppFilter):
     custom_data_property = StringProperty()
 
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         from corehq.apps.reports_core.filters import Choice
         return Choice(value=user.user_data[self.custom_data_property], display=None)
 
@@ -3343,7 +3352,7 @@ class CustomDataAutoFilter(ReportAppFilter):
 class StaticChoiceFilter(ReportAppFilter):
     select_value = StringProperty()
 
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         from corehq.apps.reports_core.filters import Choice
         return [Choice(value=self.select_value, display=None)]
 
@@ -3351,7 +3360,7 @@ class StaticChoiceFilter(ReportAppFilter):
 class StaticChoiceListFilter(ReportAppFilter):
     value = StringListProperty()
 
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         from corehq.apps.reports_core.filters import Choice
         return [Choice(value=string_value, display=None) for string_value in self.value]
 
@@ -3367,7 +3376,7 @@ class StaticDatespanFilter(ReportAppFilter):
         required=True,
     )
 
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         start_date, end_date = get_daterange_start_end_dates(self.date_range)
         return DateSpan(startdate=start_date, enddate=end_date)
 
@@ -3387,7 +3396,7 @@ class CustomDatespanFilter(ReportAppFilter):
     date_number = StringProperty(required=True)
     date_number2 = StringProperty()
 
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         today = datetime.date.today()
         start_date = end_date = None
         days = int(self.date_number)
@@ -3420,7 +3429,7 @@ class CustomDatespanFilter(ReportAppFilter):
 
 
 class MobileSelectFilter(ReportAppFilter):
-    def get_filter_value(self, user):
+    def get_filter_value(self, user, ui_filter):
         return None
 
 
@@ -3542,9 +3551,7 @@ class ReportModule(ModuleBase):
         )
 
     def validate_for_build(self):
-        # Overrides super without calling it, intentionally,
-        # because I don't think anything in super is relevant to ReportModules
-        errors = []
+        errors = super(ReportModule, self).validate_for_build()
         if not self.check_report_validity().is_valid:
             errors.append({
                 'type': 'report config ref invalid',
@@ -4244,16 +4251,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             return self.lazy_fetch_attachment("qrcode.png")
         except ResourceNotFound:
-            try:
-                from pygooglechart import QRChart
-            except ImportError:
-                raise Exception(
-                    "Aw shucks, someone forgot to install "
-                    "the google chart library on this machine "
-                    "and this feature needs it. "
-                    "To get it, run easy_install pygooglechart. "
-                    "Until you do that this won't work."
-                )
+            from pygooglechart import QRChart
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
             code.add_data(self.odk_profile_url if not with_media else self.odk_media_profile_url)
@@ -5339,7 +5337,7 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         if re.match(ATTACHMENT_REGEX, name):
             app.put_attachment(attachment, name)
 
-    if any(module.uses_usercase() for module in app.get_modules()):
+    if not app.is_remote_app() and any(module.uses_usercase() for module in app.get_modules()):
         from corehq.apps.app_manager.util import enable_usercase
         enable_usercase(domain)
 

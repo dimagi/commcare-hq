@@ -6,11 +6,13 @@ from casexml.apps.case.signals import case_post_save
 from corehq.apps.es import UserES, CaseES, FormES, ESQuery
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests.utils import TestFormMetadata, FormProcessorTestUtils
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.utils import TestFormMetadata
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
-from corehq.util.test_utils import make_es_ready_form
+from corehq.util.test_utils import get_form_ready_to_save
 
 
 class PillowtopReindexerTest(TestCase):
@@ -46,8 +48,8 @@ class PillowtopReindexerTest(TestCase):
     def test_xform_reindexers(self):
         FormProcessorTestUtils.delete_all_xforms()
         metadata = TestFormMetadata(domain=self.domain)
-        form = make_es_ready_form(metadata).wrapped_form
-        form.save()
+        form = get_form_ready_to_save(metadata)
+        FormProcessorInterface(domain=self.domain).save_processed_models([form])
         call_command('ptop_fast_reindex_xforms', noinput=True, bulk=True)
         results = FormES().run()
         self.assertEqual(1, results.total)
@@ -61,8 +63,8 @@ class PillowtopReindexerTest(TestCase):
         FormProcessorTestUtils.delete_all_xforms()
         user_id = 'test-unknown-user'
         metadata = TestFormMetadata(domain=self.domain, user_id='test-unknown-user')
-        form = make_es_ready_form(metadata).wrapped_form
-        form.save()
+        form = get_form_ready_to_save(metadata)
+        FormProcessorInterface(domain=self.domain).save_processed_models([form])
         ensure_index_deleted(USER_INDEX)
         call_command('ptop_fast_reindex_unknownusers', noinput=True, bulk=True)
         # the default query doesn't include unknown users so should have no results

@@ -1,0 +1,49 @@
+postgres:
+  extends:
+    file: docker-compose-base.yml
+    service: postgres
+  ports:
+    - "5432:5432"
+  volumes:
+    - ${DOCKER_DATA_HOME}/postgresql:/var/lib/postgresql/data
+
+couch:
+  extends:
+    file: docker-compose-base.yml
+    service: couch
+  ports:
+    - "5984:5984"
+  volumes:
+    - ${DOCKER_DATA_HOME}/couchdb:/usr/local/var/lib/couchdb
+
+redis:
+  extends:
+    file: docker-compose-base.yml
+    service: redis
+  ports:
+    - "6379:6379"
+
+elasticsearch:
+  extends:
+    file: docker-compose-base.yml
+    service: elasticsearch
+  command: elasticsearch --cluster.name=${ES_CLUSTER_NAME}
+  environment:
+    - ES_CLUSTER_NAME
+  ports:
+    - "9200:9200"
+  volumes:
+    - ${DOCKER_DATA_HOME}/elasticsearch:/usr/share/elasticsearch/data
+
+kafka:
+  extends:
+    file: docker-compose-base.yml
+    service: kafka
+  ports:
+    - "2181:2181"
+    - "9092:9092"
+  environment:
+    ADVERTISED_HOST: localhost
+  volumes:
+    - ${DOCKER_DATA_HOME}/kafka:/tmp/kafka-logs
+    - ${DOCKER_DATA_HOME}/zookeeper:/var/lib/zookeeper

@@ -239,9 +239,10 @@ function CommcareSettings(options) {
             });
         });
         section.reallyCollapse = ko.computed(function () {
-            return section.collapse && !_(section.settings).some(function (setting) {
-                return setting.hasError();
-            });
+            var el = document.getElementById(section.id);
+            return section.collapse &&
+                (!el || !el.classList.contains("in")) &&
+                !_(section.settings).some(function (setting) { return setting.hasError(); });
         });
     });
 
@@ -280,10 +281,9 @@ function CommcareSettings(options) {
         return blob;
     });
 
-    self.state = ko.observable('saved');
     setTimeout(function () {
         self.serialize.subscribe(function () {
-            self.state('save');
+            self.saveButton.fire('change');
         });
     }, 0);
     self.saveOptions = ko.computed(function () {
@@ -297,6 +297,14 @@ function CommcareSettings(options) {
             }
         };
     });
+
+    self.saveButton = COMMCAREHQ.SaveButton.init({
+        unsavedMessage: "You have unsaved settings.",
+        save: function () {
+            self.saveButton.ajax(self.saveOptions());
+        }
+    });
+    self.saveButton.ui.appendTo($("#settings-save-btn"));
 
     self.onAddCustomProperty = function() {
         self.customProperties.push({ key: ko.observable(), value: ko.observable() });
@@ -428,7 +436,7 @@ $(function () {
     ko.bindingHandlers.passwordSetter = {
         init: function (element, valueAccessor) {
             var observableValue = valueAccessor();
-            $(element).password_setter({title: ''});
+            $(element).password_setter();
             $(element).on('textchange change', function () {
                 observableValue($(element).val());
             });

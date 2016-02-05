@@ -1,5 +1,6 @@
 import json
 from couchdbkit.exceptions import ResourceNotFound
+from datetime import timedelta
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.util.couch import get_db_by_doc_type
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
@@ -8,7 +9,7 @@ from corehq.apps.userreports.expressions.getters import (
     DictGetter,
     NestedDictGetter,
     TransformedGetter,
-    transform_from_datatype)
+    transform_from_datatype, transform_date, transform_int)
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.util.quickcache import quickcache
@@ -122,9 +123,9 @@ class ArrayIndexExpressionSpec(JsonObject):
 
 class SwitchExpressionSpec(JsonObject):
     type = TypeProperty('switch')
-    switch_on = DictProperty(required=True)
-    cases = DictProperty(required=True)
-    default = DictProperty(required=True)
+    switch_on = DefaultProperty(required=True)
+    cases = DefaultProperty(required=True)
+    default = DefaultProperty(required=True)
 
     def configure(self, switch_on_expression, case_expressions, default_expression):
         self._switch_on_expression = switch_on_expression
@@ -238,3 +239,20 @@ class DictExpressionSpec(JsonObject):
         for property_name, expression in self._compiled_properties.items():
             ret[property_name] = expression(item, context)
         return ret
+
+
+class AddDaysExpressionSpec(JsonObject):
+    type = TypeProperty('add_days')
+    date_expression = DefaultProperty(required=True)
+    count_expression = DefaultProperty(required=True)
+
+    def configure(self, date_expression, count_expression):
+        self._date_expression = date_expression
+        self._count_expression = count_expression
+
+    def __call__(self, item, context=None):
+        date_val = transform_date(self._date_expression(item, context))
+        int_val = transform_int(self._count_expression(item, context))
+        if date_val is not None and int_val is not None:
+            return date_val + timedelta(days=int_val)
+        return None

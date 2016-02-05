@@ -1,11 +1,11 @@
 var COMMCAREHQ = {};
 
 COMMCAREHQ.icons = {
-    GRIP:   'icon-resize-vertical icon-blue',
-    ADD:    'icon-plus icon-blue',
-    COPY:   'icon-copy icon-blue',
-    DELETE: 'icon-remove icon-blue',
-    PAPERCLIP: 'icon-paper-clip'
+    GRIP:   'icon-resize-vertical icon-blue fa fa-arrows-v',
+    ADD:    'icon-plus icon-blue fa fa-plus',
+    COPY:   'icon-copy icon-blue fa fa-copy',
+    DELETE: 'icon-remove icon-blue fa fa-remove',
+    PAPERCLIP: 'icon-paper-clip fa fa-paperclip'
 };
 
 var eventize = function (that) {
@@ -36,11 +36,11 @@ COMMCAREHQ.makeHqHelp = function (opts, wrap) {
     var el = $(
         '<div class="hq-help">' + 
             '<a href="#">' +
-                '<i class="icon-question-sign"></i></a></div>'
+                '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
     );
-    for (var attr in ['content', 'title', 'html']) {
+    _.each(['content', 'title', 'html'], function(attr) {
         $('a', el).data(attr, opts[attr]);
-    }
+    });
     if (wrap) {
         el.hqHelp();
     }
@@ -170,8 +170,8 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                 $retry: $('<div/>').text(SaveButton.message.RETRY).click(function () {
                     button.fire('save');
                 }).addClass(cssClass),
-                $saving: $('<div/>').text(SaveButton.message.SAVING).addClass('btn disabled'),
-                $saved: $('<div/>').text(SaveButton.message.SAVED).addClass('btn disabled'),
+                $saving: $('<div/>').text(SaveButton.message.SAVING).addClass('btn btn-default disabled'),
+                $saved: $('<div/>').text(SaveButton.message.SAVED).addClass('btn btn-default disabled'),
                 ui: $('<div/>').addClass('pull-right'),
                 setStateWhenReady: function (state) {
                     if (this.state === 'saving') {
@@ -204,9 +204,10 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                         success = options.success || function () {},
                         error = options.error || function () {},
                         that = this;
-                    options.beforeSend = function () {
+                    options.beforeSend = function (jqXHR, settings) {
                         that.setState('saving');
                         that.nextState = 'saved';
+                        $.ajaxSettings.beforeSend(jqXHR, settings);
                         beforeSend.apply(this, arguments);
                     };
                     options.success = function (data) {

@@ -51,6 +51,7 @@ var CustomExportView = {
                     _rev: 0,
                     doc_type: 0,
                     '-deletion_id': 0,
+                    '-deletion_date': 0,
                     initial_processing_complete: 0
                 };
                 if (field in server) {
