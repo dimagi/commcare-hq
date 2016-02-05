@@ -5,11 +5,12 @@
 
 {% block js %}{{ block.super }}
     <script src="{% new_static 'hqwebapp/ko/crud_paginated_list.js' %}"></script>
+    <script src="{% new_static 'hqwebapp/ko/b3_crud_paginated_list.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script>
-        var paginatedListModel = new CRUDPaginatedListModel(
+        var paginatedListModel = new B3CRUDPaginatedListModel(
             {{ pagination.total }},
             {{ pagination.limit }},
             {{ pagination.page }},
@@ -49,7 +50,7 @@
                         hide: !isAlertVisible()
                     }
                 ">
-                <div class="span12">
+                <div class="col-md-12">
                     <div class="alert"
                          data-bind="html: alertHtml"></div>
                 </div>
