@@ -189,6 +189,9 @@ class ESQuery(object):
         return self.es_query['query']['filtered']['filter']['and']
 
     def exclude_source(self):
+        """
+        Turn off _source retrieval. Mostly useful if you just want the doc_ids
+        """
         self._exclude_source = True
         return self
 
