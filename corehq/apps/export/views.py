@@ -39,6 +39,10 @@ from corehq.apps.export.models import (
     FormExportInstance,
     CaseExportInstance,
 )
+from corehq.apps.export.const import (
+    FORM_EXPORT,
+    CASE_EXPORT,
+)
 from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
@@ -158,7 +162,7 @@ class BaseExportView(BaseProjectDataView):
             }
             return base_views[self.export_type]
         except KeyError:
-            raise SuspiciousOperation
+            raise SuspiciousOperation('Attempted to access list view {}'.format(self.export_type))
 
     @property
     def page_context(self):
@@ -197,8 +201,23 @@ class BaseExportView(BaseProjectDataView):
             return HttpResponseRedirect(self.export_home_url)
 
 
-class BaseCreateNewCustomExportView(BaseExportView):
+class BaseNewExportView(BaseExportView):
     template_name = 'export/new_customize_export.html'
+
+    @property
+    def export_instance_cls(self):
+        return {
+            FORM_EXPORT: FormExportInstance,
+            CASE_EXPORT: CaseExportInstance,
+        }[self.export_type]
+
+    @property
+    def page_context(self):
+        return {
+            'export_instance': self.export_instance,
+            'export_home_url': self.export_home_url,
+            'allow_deid': has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
+        }
 
     def commit(self, request):
         export = self.export_instance_cls.wrap(json.loads(request.body))
@@ -213,13 +232,8 @@ class BaseCreateNewCustomExportView(BaseExportView):
         )
         return export._id
 
-    @property
-    def page_context(self):
-        return {
-            'export_instance': self.export_instance,
-            'export_home_url': reverse(self.urlname, args=(self.domain,)),
-            'allow_deid': has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
-        }
+
+class BaseCreateNewCustomExportView(BaseNewExportView):
 
     def get_export_instance(self, schema, app_id=None):
         raise NotImplementedError()
@@ -303,8 +317,7 @@ class BaseCreateCustomExportView(BaseExportView):
 class CreateNewCustomFormExportView(BaseCreateNewCustomExportView):
     urlname = 'new_custom_export_form'
     page_title = ugettext_lazy("Create Form Export")
-    export_type = 'form'
-    export_instance_cls = FormExportInstance
+    export_type = FORM_EXPORT
 
     def get(self, request, *args, **kwargs):
         app_id = request.GET.get('app_id')
@@ -330,8 +343,7 @@ class CreateNewCustomFormExportView(BaseCreateNewCustomExportView):
 class CreateNewCustomCaseExportView(BaseCreateNewCustomExportView):
     urlname = 'new_custom_export_case'
     page_title = ugettext_lazy("Create Case Export")
-    export_type = 'case'
-    export_instance_cls = CaseExportInstance
+    export_type = CASE_EXPORT
 
     def get(self, request, *args, **kwargs):
         case_type = request.GET.get('export_tag').strip('"')
@@ -349,6 +361,59 @@ class CreateNewCustomCaseExportView(BaseCreateNewCustomExportView):
             schema,
             self.domain,
             app_id,
+        )
+
+
+class BaseEditNewCustomExportView(BaseNewExportView):
+
+    @method_decorator(require_can_edit_data)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseEditNewCustomExportView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def export_id(self):
+        return self.kwargs.get('export_id')
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.export_id])
+
+    def get_export_schema(self, export_instance):
+        raise NotImplementedError()
+
+    def get(self, request, *args, **kwargs):
+        try:
+            export_instance = FormExportInstance.get(self.export_id)
+        except ResourceNotFound:
+            raise Http404()
+
+        schema = self.get_export_schema(export_instance)
+        self.export_instance = self.export_instance_cls.update_export_from_schema(schema, export_instance)
+        return super(BaseEditNewCustomExportView, self).get(request, *args, **kwargs)
+
+
+class EditNewCustomFormExportView(BaseEditNewCustomExportView):
+    urlname = 'edit_new_custom_export_form'
+    page_title = ugettext_lazy("Edit Form Export")
+    export_type = FORM_EXPORT
+
+    def get_export_schema(self, export_instance):
+        return FormExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            export_instance.app_id,
+            export_instance.xmlns,
+        )
+
+
+class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
+    urlname = 'edit_new_custom_export_case'
+    page_title = ugettext_lazy("Edit Case Export")
+    export_type = CASE_EXPORT
+
+    def get_export_schema(self, export_instance):
+        return CaseExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            export_instance.case_type,
         )
 
 
@@ -1169,6 +1234,10 @@ class FormExportListView(BaseExportListView):
 
     def fmt_export_data(self, export):
         emailed_exports = self.get_formatted_emailed_exports(export)
+        if toggles.NEW_EXPORTS.enabled(self.domain):
+            edit_view = EditNewCustomFormExportView
+        else:
+            edit_view = EditCustomFormExportView
         return {
             'id': export.get_id,
             'isDeid': export.is_safe,
@@ -1177,7 +1246,7 @@ class FormExportListView(BaseExportListView):
             'addedToBulk': False,
             'exportType': export.type,
             'emailedExports': emailed_exports,
-            'editUrl': reverse(EditCustomFormExportView.urlname,
+            'editUrl': reverse(edit_view.urlname,
                                args=(self.domain, export.get_id)),
             'downloadUrl': reverse(DownloadFormExportView.urlname,
                                    args=(self.domain, export.get_id)),
@@ -1265,6 +1334,10 @@ class CaseExportListView(BaseExportListView):
 
     def fmt_export_data(self, export):
         emailed_exports = self.get_formatted_emailed_exports(export)
+        if toggles.NEW_EXPORTS.enabled(self.domain):
+            edit_view = EditNewCustomCaseExportView
+        else:
+            edit_view = EditCustomCaseExportView
         return {
             'id': export.get_id,
             'isDeid': export.is_safe,
@@ -1272,7 +1345,7 @@ class CaseExportListView(BaseExportListView):
             'addedToBulk': False,
             'exportType': export.type,
             'emailedExports': emailed_exports,
-            'editUrl': reverse(EditCustomCaseExportView.urlname,
+            'editUrl': reverse(edit_view.urlname,
                                args=(self.domain, export.get_id)),
             'downloadUrl': reverse(DownloadCaseExportView.urlname,
                                    args=(self.domain, export.get_id)),

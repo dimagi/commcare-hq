@@ -317,7 +317,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
                 self.new_schema,
                 'my-domain',
                 self.app_id,
-                export_id=instance._id
+                saved_export=instance
             )
 
         self.assertEqual(len(instance.tables), 2)
@@ -354,7 +354,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
                 self.new_schema,
                 'my-domain',
                 self.app_id,
-                export_id=instance._id
+                saved_export=instance
             )
 
         self.assertEqual(len(instance.tables), 2)

@@ -270,10 +270,19 @@ class ExportInstance(Document):
         raise NotImplementedError()
 
     @classmethod
-    def generate_instance_from_schema(cls, schema, domain, app_id=None, export_id=None):
+    def update_export_from_schema(cls, schema, saved_export):
+        return cls.generate_instance_from_schema(
+            schema,
+            saved_export.domain,
+            app_id=saved_export.app_id,
+            saved_export=saved_export,
+        )
+
+    @classmethod
+    def generate_instance_from_schema(cls, schema, domain, app_id=None, saved_export=None):
         """Given an ExportDataSchema, this will generate an ExportInstance"""
-        if export_id:
-            instance = cls.get(export_id)
+        if saved_export:
+            instance = saved_export
         else:
             instance = cls._new_from_schema(schema)
 
@@ -317,6 +326,7 @@ class CaseExportInstance(ExportInstance):
         return cls(
             type=schema.type,
             domain=schema.domain,
+            case_type=schema.case_type,
         )
 
 
