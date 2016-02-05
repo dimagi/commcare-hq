@@ -748,6 +748,7 @@ class FormBase(DocumentSchema):
     no_vellum = BooleanProperty(default=False)
     form_links = SchemaListProperty(FormLink)
     schedule_form_id = StringProperty()
+    case_references = ListProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -805,8 +806,10 @@ class FormBase(DocumentSchema):
     def validate_form(self):
         vc = self.validation_cache
         if vc is None:
+            form = self.wrapped_xform()
+            form.strip_vellum_ns_attributes()
             try:
-                validate_xform(self.source,
+                validate_xform(etree.tostring(form.xml),
                                version=self.get_app().application_version)
             except XFormValidationError as e:
                 validation_dict = {
@@ -1450,7 +1453,8 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
         questions = {
             q['value']: FormQuestionResponse(q)
-            for q in self.get_questions(self.get_app().langs, include_translations=True)
+            for q in self.get_questions(self.get_app().langs, include_triggers=True,
+                include_groups=True, include_translations=True)
         }
         module_case_type = self.get_module().case_type
         type_meta = app_case_meta.get_type(module_case_type)
@@ -1499,6 +1503,15 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                                 questions,
                                 question_path
                             )
+
+        for reference in self.case_references:
+            self.add_property_load(
+                app_case_meta,
+                reference['caseType'],
+                reference['caseProperty'],
+                questions,
+                reference['question']
+            )
 
 
 class MappingItem(DocumentSchema):
