@@ -98,10 +98,7 @@ class ProjectReportParametersMixin(object):
     @property
     @memoized
     def group(self):
-        if self.group_id:
-            return Group.get(self.group_id)
-        else:
-            return self.groups[0] if len(self.groups) else None
+        return Group.get(self.group_id) if self.group_id else None
 
     @property
     def group_ids(self):
