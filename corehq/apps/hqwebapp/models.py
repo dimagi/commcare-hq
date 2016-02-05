@@ -1486,7 +1486,7 @@ class MySettingsTab(UITab):
     @property
     def sidebar_items(self):
         from corehq.apps.settings.views import MyAccountSettingsView, \
-            MyProjectsList, ChangeMyPasswordView
+            MyProjectsList, ChangeMyPasswordView, TwoFactorProfileView
         items = [
             (_("Manage My Settings"), (
                 {
@@ -1501,6 +1501,10 @@ class MySettingsTab(UITab):
                     'title': _(ChangeMyPasswordView.page_title),
                     'url': reverse(ChangeMyPasswordView.urlname),
                 },
+                {
+                    'title': _(TwoFactorProfileView.page_title),
+                    'url': reverse(TwoFactorProfileView.urlname),
+                }
             ))
         ]
         return items
