@@ -47,16 +47,7 @@ function usage() {
 }
 
 function rebuild() {
-    git_branch=$(git symbolic-ref HEAD 2>/dev/null)
-    git_branch=${git_branch#refs/heads/}
-
-    tag="$git_branch"
-    if [ "$git_branch" = "master" ]; then
-        tag="latest"
-    fi
-
     web_runner down
-    sudo docker build -f $DOCKER_DIR/Dockerfile_commcarehq_base -t dimagi/commcarehq_base:$tag .
     web_runner build
 }
 

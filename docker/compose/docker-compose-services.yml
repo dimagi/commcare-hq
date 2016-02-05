@@ -42,3 +42,8 @@ kafka:
   ports:
     - "2181:2181"
     - "9092:9092"
+  environment:
+    ADVERTISED_HOST: localhost
+  volumes:
+    - ${DOCKER_DATA_HOME}/kafka:/tmp/kafka-logs
+    - ${DOCKER_DATA_HOME}/zookeeper:/var/lib/zookeeper

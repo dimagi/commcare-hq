@@ -1,0 +1,166 @@
+{% extends "settings/bootstrap2/base_template.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %}
+    {{ block.super }}
+    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% static 'export/js/exports.js' %}"></script>
+    <script src="{% static 'export/js/const.js' %}"></script>
+    <script src="{% static 'export/js/models.js' %}"></script>
+    <script src="{% static 'export/js/utils.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script>
+        $(function () {
+            var translations = {
+                forms: "{% trans 'Forms'|escapejs %}",
+                repeat: "{% trans 'Repeat: '|escapejs %}",
+                cases: "{% trans 'Cases'|escapejs %}",
+                case_history: "{% trans 'Case History'|escapejs %}",
+                history_to_parents: "{% trans 'Case History > Parent Cases'|escapejs %}",
+                parent_cases: "{% trans 'Parent Cases'|escapejs %}",
+            };
+            var customExportView = new Exports.ViewModels.ExportInstance({{ export_instance|JSON }});
+
+            $('#customize-export').koApplyBindings(customExportView);
+        });
+    </script>
+{% endblock %}
+
+{% block main_column %}
+<div id="customize-export" style="display: none;" data-bind="visible: true">
+    {# content for multi-select help popover #}
+    {% if export_instance.type == 'case' %}
+    <div id="popover_content_wrapper" style="display: none">
+        {% blocktrans %}
+            These options allow you to configure how CommCare exports data from multi-select questions.
+            If you do not want to split the options into multiple columns select the 'plain' option.
+        {% endblocktrans %}
+        <br/>
+        {% blocktrans %}
+            Each item that is selected in the select list will appear as a column in the exported data.
+            Any options not selected will be in an "extra" column.
+        {% endblocktrans %}
+        <a href='https://help.commcarehq.org/display/commcarepublic/Splitting+multi-select+data+in+exports' target="_blank">
+            {% trans "More info" %}
+        </a>
+    </div>
+    {% endif %}
+    {% include "export/partial/customize_export_header.html" %}
+    <form class="form-horizontal" method="post">
+        {% csrf_token %}
+        <fieldset>
+            <div class="control-group">
+                <label for="export-name" class="control-label">{% trans "Export Name" %}</label>
+                <div class="controls">
+                    <input type="text" id="export-name" data-bind="value: name" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label for="format-select" class="control-label">{% trans "Default file type" %}</label>
+                <div class="controls">
+                    <select id="format-select" data-bind="
+                            options: getFormatOptionValues(),
+                            optionsText: getFormatOptionText,
+                            value: export_format
+                        ">
+                    </select>
+                </div>
+            </div>
+            <div class="control-group">
+                <div class="controls">
+                    {% if commtrack_domain %}
+                        <label class="checkbox">
+                            <input type="checkbox" id="stock-data-checkbox" data-bind="checked: export_stock" />
+                            {% trans "Export stock data columns" %}
+                        </label>
+                    {% endif %}
+                    <label class="checkbox">
+                        <input type="checkbox" id="transform-dates-checkbox" data-bind="checked: transform_dates" />
+                        {% trans "Automatically convert dates for Excel" %}
+                    </label>
+                    <label class="checkbox">
+                        <input
+                            type="checkbox"
+                            id="daily-saved-export-checkbox"
+                            data-bind="checked: is_daily_saved_export" />
+                        {% trans "Create a Daily Saved Export" %}
+                    </label>
+                {% if export_instance.type == 'form' %}
+                    <label class="checkbox">
+                        <input type="checkbox" id="include-errors-checkbox" data-bind="checked: include_errors" />
+                        {% trans "Include duplicates and other unprocessed forms" %}
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" id="split-multiselects-checkbox" data-bind="checked: split_multiselects" />
+                        {% trans "Expand Multiple Answer Questions" %}
+                    </label>
+                {% endif %}
+                </div>
+            </div>
+        </fieldset>
+        <fieldset data-bind="
+            template: { foreach: tables, as: 'table', name: 'ko-table-configuration-template' }"
+        ></fieldset>
+        {% if allow_deid %}
+        <fieldset>
+            <legend>{% trans "Privacy Settings" %}</legend>
+            <div class="control-group">
+                <label for="is_safe" class="control-label"></label>
+                <div class="controls deid-column" data-bind="visible: isDeidColumnVisible()">
+                    <label class="checkbox">
+                        <input type="checkbox" id="is_deidentified" data-bind="checked: is_deidentified" />
+                        {% trans "Publish as De-Identified" %}
+                    </label>
+                    <span class="help-inline">{% trans "Check only if this export has been fully and safely de-identified." %}</span>
+                </div>
+                <button class="btn" data-bind="
+                    visible: !isDeidColumnVisible(),
+                    click: showDeidColumn
+                ">
+                    {% trans "Allow me to mark sensitive data" %}
+                </button>
+            </div>
+        </fieldset>
+        {% endif %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-large btn-primary" data-bind="
+                click: save,
+                disable: saveState() === Exports.Constants.SAVE_STATES.SAVING
+            ">
+                <span data-bind="
+                    visible: saveState() === Exports.Constants.SAVE_STATES.READY,
+                    text: getSaveText()">
+                </span>
+                <span data-bind="visible: saveState() === Exports.Constants.SAVE_STATES.SAVING">
+                    <i class="icon-refresh icon-spin"></i>
+                    {% trans "Saving" %}
+                </span>
+                <span data-bind="visible: saveState() === Exports.Constants.SAVE_STATES.ERROR">
+                    {% trans "Try Again" %}
+                </span>
+            </button>
+            <a class="btn btn-large" href="{{ export_home_url }}">{% trans "Cancel" %}</a>
+            {% if export_instance.get_id %}
+            <a class="btn btn-large btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ export_instance.get_id }}">
+                <i class="icon-remove icon-white"></i>
+                {% trans "Delete this Export" %}
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+{% include "export/partial/new_customize_export_templates.html" %}
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    {% if export_instance.get_id %}
+        {% with export_instance as export %}
+            {% include "export/dialogs/delete_custom_export_dialog.html" %}
+        {% endwith %}
+    {% endif %}
+{% endblock %}
+

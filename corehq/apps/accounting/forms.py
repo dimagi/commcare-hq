@@ -617,7 +617,7 @@ class SubscriptionForm(forms.Form):
         if not self.cleaned_data.get('active_accounts') and not self.cleaned_data.get('account'):
             raise ValidationError(_("Account must be specified"))
 
-        account_id = self.cleaned_data['active_accounts'] or self.cleaned_data['account']
+        account_id = self.cleaned_data.get('active_accounts') or self.cleaned_data.get('account')
         if account_id:
             account = BillingAccount.objects.get(id=account_id)
             if (

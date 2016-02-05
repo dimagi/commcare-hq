@@ -72,14 +72,6 @@ def transform_case_for_elasticsearch(doc_dict):
     return doc_ret
 
 
-def prepare_sql_case_json_for_elasticsearch(sql_case_json):
-    prepped_case = transform_case_for_elasticsearch(sql_case_json)
-    # todo: these are required for consistency with couch representation, figure out how best to deal with it
-    prepped_case['doc_type'] = 'CommCareCase'
-    prepped_case['_id'] = prepped_case['case_id']
-    return prepped_case
-
-
 def get_sql_case_to_elasticsearch_pillow():
     checkpoint = PillowCheckpoint(
         get_django_checkpoint_store(),
@@ -88,7 +80,7 @@ def get_sql_case_to_elasticsearch_pillow():
     case_processor = ElasticProcessor(
         elasticseach=get_es_new(),
         index_meta=ElasticsearchIndexMeta(index=CASE_INDEX, type=CASE_ES_TYPE),
-        doc_prep_fn=prepare_sql_case_json_for_elasticsearch
+        doc_prep_fn=transform_case_for_elasticsearch
     )
     return ConstructedPillow(
         name='SqlCaseToElasticsearchPillow',

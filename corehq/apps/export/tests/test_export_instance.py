@@ -3,21 +3,26 @@ from django.test import SimpleTestCase
 
 from corehq.apps.export.models import (
     ExportItem,
-    ExportDataSchema,
+    FormExportDataSchema,
     ExportGroupSchema,
     ExportInstance,
 )
+from corehq.apps.export.const import MAIN_TABLE
 
 
+@mock.patch(
+    'corehq.apps.export.models.new.FormExportInstanceDefaults.get_default_instance_name',
+    return_value='dummy-name'
+)
 class TestExportInstanceGeneration(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
         cls.app_id = '1234'
-        cls.schema = ExportDataSchema(
+        cls.schema = FormExportDataSchema(
             group_schemas=[
                 ExportGroupSchema(
-                    path=[None],
+                    path=MAIN_TABLE,
                     items=[
                         ExportItem(
                             path=['data', 'question1'],
@@ -41,7 +46,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
             ],
         )
 
-    def test_generate_instance_from_schema(self):
+    def test_generate_instance_from_schema(self, _):
         """Only questions that are in the main table and of the same version should be shown"""
         build_ids_and_versions = {self.app_id: 3}
         with mock.patch(
@@ -67,7 +72,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
         self.assertEqual(len(selected), 1)
         self.assertEqual(len(shown), 1)
 
-    def test_generate_instance_from_schema_deleted(self):
+    def test_generate_instance_from_schema_deleted(self, _):
         """Given a higher app_version, all the old questions should not be shown or selected"""
         build_ids_and_versions = {self.app_id: 4}
         with mock.patch(
@@ -93,6 +98,10 @@ class TestExportInstanceGeneration(SimpleTestCase):
         self.assertEqual(len(shown), 0)
 
 
+@mock.patch(
+    'corehq.apps.export.models.new.FormExportInstanceDefaults.get_default_instance_name',
+    return_value='dummy-name'
+)
 class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
     """Test Instance generation when the schema is made from multiple apps"""
 
@@ -100,10 +109,10 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
     def setUpClass(cls):
         cls.app_id = '1234'
         cls.second_app_id = '5678'
-        cls.schema = ExportDataSchema(
+        cls.schema = FormExportDataSchema(
             group_schemas=[
                 ExportGroupSchema(
-                    path=[None],
+                    path=MAIN_TABLE,
                     items=[
                         ExportItem(
                             path=['data', 'question1'],
@@ -137,7 +146,7 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
             ],
         )
 
-    def test_ensure_that_column_is_not_deleted(self):
+    def test_ensure_that_column_is_not_deleted(self, _):
         """This test ensures that as long as ONE app in last_occurrences is the most recent version then the
         column is still marked as is_deleted=False
         """
@@ -155,14 +164,14 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
             lambda column: column.selected,
             instance.tables[0].columns + instance.tables[1].columns
         )
-        shown = filter(
-            lambda column: column.selected,
+        is_advanced = filter(
+            lambda column: column.is_advanced,
             instance.tables[0].columns + instance.tables[1].columns
         )
         self.assertEqual(len(selected), 1)
-        self.assertEqual(len(shown), 1)
+        self.assertEqual(len(is_advanced), 0)
 
-    def test_ensure_that_column_is_deleted(self):
+    def test_ensure_that_column_is_deleted(self, _):
         """If both apps are out of date then, the question is indeed deleted"""
         build_ids_and_versions = {
             self.app_id: 3,

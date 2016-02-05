@@ -7,6 +7,7 @@ from django.core.exceptions import SuspiciousOperation
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.template.defaultfilters import filesizeformat
+from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
 import json
 from django.utils.safestring import mark_safe
@@ -14,6 +15,7 @@ from django.utils.safestring import mark_safe
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import pytz
 from corehq import privileges
+from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
@@ -191,11 +193,14 @@ class BaseExportView(BaseProjectDataView):
 
 
 class BaseCreateNewCustomExportView(BaseExportView):
+    template_name = 'export/new_customize_export.html'
 
     @property
     def page_context(self):
         return {
-            'export_instance': self.export_instance
+            'export_instance': self.export_instance,
+            'export_home_url': reverse(self.urlname, args=(self.domain,)),
+            'allow_deid': has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
         }
 
     def get_export_instance(self, schema, app_id=None):
@@ -281,7 +286,7 @@ class BaseCreateCustomExportView(BaseExportView):
         return HttpResponseRedirect(self.export_home_url)
 
 
-class NewCreateCustomFormExportView(BaseCreateNewCustomExportView):
+class CreateNewCustomFormExportView(BaseCreateNewCustomExportView):
     urlname = 'new_custom_export_form'
     page_title = ugettext_lazy("Create Form Export")
     export_type = 'form'
@@ -297,10 +302,10 @@ class NewCreateCustomFormExportView(BaseCreateNewCustomExportView):
         )
         self.export_instance = self.get_export_instance(schema, app_id)
 
-        return super(BaseCreateCustomExportView, self).get(request, *args, **kwargs)
+        return super(CreateNewCustomFormExportView, self).get(request, *args, **kwargs)
 
 
-class NewCreateCustomCaseExportView(BaseCreateNewCustomExportView):
+class CreateNewCustomCaseExportView(BaseCreateNewCustomExportView):
     urlname = 'new_custom_export_case'
     page_title = ugettext_lazy("Create Case Export")
     export_type = 'case'
@@ -314,7 +319,7 @@ class NewCreateCustomCaseExportView(BaseCreateNewCustomExportView):
         )
         self.export_instance = self.get_export_instance(schema)
 
-        return super(BaseCreateCustomExportView, self).get(request, *args, **kwargs)
+        return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)
 
 
 class CreateCustomFormExportView(BaseCreateCustomExportView):
@@ -1168,8 +1173,12 @@ class FormExportListView(BaseExportListView):
 
         app_id = create_form.cleaned_data['application']
         form_xmlns = create_form.cleaned_data['form']
+        if toggles.NEW_EXPORTS.enabled(self.domain):
+            cls = CreateNewCustomFormExportView
+        else:
+            cls = CreateCustomFormExportView
         return reverse(
-            CreateCustomFormExportView.urlname,
+            cls.urlname,
             args=[self.domain],
         ) + ('?export_tag="{export_tag}"{app_id}'.format(
             app_id=('&app_id={}'.format(app_id)
@@ -1253,8 +1262,12 @@ class CaseExportListView(BaseExportListView):
         if not create_form.is_valid():
             raise ExportFormValidationException()
         case_type = create_form.cleaned_data['case_type']
+        if toggles.NEW_EXPORTS.enabled(self.domain):
+            cls = CreateNewCustomCaseExportView
+        else:
+            cls = CreateCustomCaseExportView
         return reverse(
-            CreateCustomCaseExportView.urlname,
+            cls.urlname,
             args=[self.domain],
         ) + ('?export_tag="{export_tag}"'.format(
             export_tag=case_type,

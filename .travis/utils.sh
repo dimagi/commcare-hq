@@ -16,7 +16,7 @@ travis_runner() {
 get_container_id() {
     label_name=$1
     value=$2
-    sudo docker ps -fq label=$label_name=$value -f status=running
+    sudo docker ps -qf label=$label_name=$value -f name=travis_kafka_1 -f status=running
 }
 
 get_container_ip() {

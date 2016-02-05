@@ -1,1 +1,1 @@
-docker/Dockerfile_commcarehq_base
+docker/dockerfiles/Dockerfile_commcarehq_base

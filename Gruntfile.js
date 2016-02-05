@@ -16,6 +16,7 @@ module.exports = function(grunt) {
         'app_manager#b3',
         'app_manager#fields',
         'export',
+        'export#ko',
         'reports_core#choiceListUtils'
     ];
 

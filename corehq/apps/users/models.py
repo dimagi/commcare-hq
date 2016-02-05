@@ -1955,12 +1955,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             return None
 
     @property
-    @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
     def fixture_statuses(self):
         """Returns all of the last modified times for each fixture type"""
-        return self.get_fixture_statuses()
+        return self._get_fixture_statuses()
 
-    def get_fixture_statuses(self):
+    @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
+    def _get_fixture_statuses(self):
         from corehq.apps.fixtures.models import UserFixtureType, UserFixtureStatus
         last_modifieds = {choice[0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED
                           for choice in UserFixtureType.CHOICES}
@@ -1986,6 +1986,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not new:
             user_fixture_sync.last_modified = now
             user_fixture_sync.save()
+        self._get_fixture_statuses.clear(self)
 
     def __repr__(self):
         return ("{class_name}(username={self.username!r})".format(

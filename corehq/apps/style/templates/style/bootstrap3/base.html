@@ -135,13 +135,25 @@
         {% include "style/includes/bootstrap3/core_libraries.html" %}
         {% endcompress %} 
 
-        {% if formdesigner %}
-        <script src="{% new_static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
-        {% endif %}
-
         {% if request.use_jquery_ui %}
         {% compress js %}
-        <script type="text/javascript" src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
+            <!-- UI libraries needed for all other widgets and interactions -->
+            <script src="{% new_static 'jquery-ui/ui/core.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/widget.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/mouse.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/position.js' %}"></script>
+
+            <!-- Individual widgets and interactions -->
+            <script src="{% new_static 'jquery-ui/ui/accordion.js' %}"></script><!-- TODO: kill & replace with bootstrap -->
+            <script src="{% new_static 'jquery-ui/ui/menu.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/autocomplete.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/button.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/datepicker.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/draggable.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/resizable.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/dialog.js' %}"></script><!-- TODO: kill & replace with bootstrap -->
+            <script src="{% new_static 'jquery-ui/ui/droppable.js' %}"></script>
+            <script src="{% new_static 'jquery-ui/ui/sortable.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
@@ -242,17 +254,15 @@
                                     </div>
                                 {% endfor %}
                             {% endif %}
+                            <div id="message-alerts" data-bind="foreach: alerts">
+                                <div data-bind="attr: {'class': alert_class}">
+                                    <a class="close" data-dismiss="alert" href="#">&times;</a>
+                                    <span data-bind="text: message"></span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-
                 </div>
-                {# todo: handle with angular #}
-    {#            <div id="message-alerts" data-bind="foreach: alerts">#}
-    {#                <div data-bind="attr: {'class': alert_class}">#}
-    {#                    <a class="close" data-dismiss="alert" href="#">&times;</a>#}
-    {#                    <span data-bind="text: message"></span>#}
-    {#                </div>#}
-    {#            </div>#}
             {% endif %}
             {% block content %}{% endblock content %}
         </div>
@@ -356,11 +366,42 @@
         {# JavaScript Display Logic Libaries #}
 
         {% compress js %}
-        <script type="text/javascript" src="{% new_static 'knockout/dist/knockout.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
+        {% include "style/includes/bootstrap3/ko.html" %}
         {% endcompress %}
+
+        <script type="text/javascript">
+            /*
+                This is the knockout-based, javascript analog of messages in Django.
+
+                Use the function `alert_user` to make a message appear on the page.
+                This accepts two args, message, and emphasis.  Emphasis corresponds to bootstrap
+                styling, and can be "success", "danger", "info", or "warning"
+
+                alert_user("Awesome job!", "success");
+            */
+            function message_alert (message, tags) {
+                var alert_obj = {
+                    "message": message,
+                    "alert_class": "alert fade in alert-block alert-full page-level-alert"
+                }
+                if (tags) {
+                    alert_obj.alert_class += " " + tags;
+                };
+                return alert_obj;
+            }
+            var message_alerts = ko.observableArray();
+
+            function alert_user (message, emphasis) {
+                message_alerts.push(message_alert(message, "alert-" + emphasis));
+            }
+
+            var message_element = $("#message-alerts").get(0);
+            ko.cleanNode(message_element);
+            $(message_element).koApplyBindings({
+                alerts: message_alerts,
+            });
+
+        </script>
 
         {% if request.use_angular_js %}
         {% compress js %}
