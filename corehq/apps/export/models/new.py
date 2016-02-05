@@ -105,32 +105,44 @@ class ExportColumn(DocumentSchema):
 
         :param group_schema_path: The path of the group_schema that the item belongs to
         :param item: An ExportItem instance
-        :param app_version: The app version that the column export is for
+        :param build_ids_and_versions: A dictionary of build ids that map to versions of that represents the
         :returns: An ExportColumn instance
         """
 
+        is_main_table = group_schema_path == MAIN_TABLE
+
+        column = ExportColumn(
+            item=item,
+            label=item.label,
+        )
+        column.update_properties_from_build_ids(build_ids_and_versions)
+        column.selected = not column._is_deleted(build_ids_and_versions) and is_main_table
+        return column
+
+    def _is_deleted(self, build_ids_and_versions):
         is_deleted = True
         for app_id, version in build_ids_and_versions.iteritems():
-            if item.last_occurrences.get(app_id) == version:
+            if self.item.last_occurrences.get(app_id) == version:
                 is_deleted = False
                 break
+        return is_deleted
 
-        is_main_table = group_schema_path == MAIN_TABLE
+    def update_properties_from_build_ids(self, build_ids_and_versions):
+        """
+        This regenerates properties based on new build ids/versions
+        :param build_ids_and_versions: A dictionary of build ids that map to versions of that represents the
+        most recent state of the app(s) in the domain
+        """
+        is_deleted = self._is_deleted(build_ids_and_versions)
 
         tags = []
         if is_deleted:
             tags.append(PROPERTY_TAG_DELETED)
 
-        if item.tag:
-            tags.append(item.tag)
-
-        return ExportColumn(
-            item=item,
-            label=item.label,
-            is_advanced=is_deleted,
-            selected=not is_deleted and is_main_table,
-            tags=tags,
-        )
+        if self.item.tag:
+            tags.append(self.item.tag)
+        self.is_advanced = is_deleted
+        self.tags = tags
 
     def get_headers(self):
         return [self.label]
@@ -275,16 +287,25 @@ class ExportInstance(Document):
                 display_name=instance.defaults.get_default_table_name(group_schema.path),
                 selected=instance.defaults.default_is_table_selected(group_schema.path),
             )
-            table.columns = map(
-                lambda item: table.get_column(item.path) or ExportColumn.create_default_from_export_item(
+            columns = []
+            for item in group_schema.items:
+                column = table.get_column(item.path) or ExportColumn.create_default_from_export_item(
                     table.path,
                     item,
                     latest_build_ids_and_versions,
-                ),
-                group_schema.items,
-            )
+                )
+
+                # Ensure that the item is up to date
+                column.item = item
+
+                # Need to rebuild tags and other flags based on new build ids
+                column.update_properties_from_build_ids(latest_build_ids_and_versions)
+                columns.append(column)
+            table.columns = columns
+
             if not instance.get_table(group_schema.path):
                 instance.tables.append(table)
+
         return instance
 
 

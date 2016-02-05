@@ -288,6 +288,8 @@ class TestExportInstanceFromSavedInstance(TestCase):
         )
 
     def test_export_instance_from_saved(self):
+        """This test ensures that when we build from a saved export instance that the selection that a user
+        makes is still there"""
         build_ids_and_versions = {
             self.app_id: 3,
         }
@@ -322,3 +324,39 @@ class TestExportInstanceFromSavedInstance(TestCase):
         self.assertEqual(len(instance.tables[0].columns), 2)
         # Selection from previous instance should hold the same and not revert to defaults
         self.assertFalse(instance.tables[0].columns[0].selected)
+
+    def test_export_instance_deleted_columns_updated(self):
+        """This test ensures that when building from a saved export that the new instance correctly labels the
+        old columns as advanced
+        """
+        build_ids_and_versions = {
+            self.app_id: 3,
+        }
+        with mock.patch(
+                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                return_value=build_ids_and_versions):
+            instance = FormExportInstance.generate_instance_from_schema(self.schema, 'my-domain', self.app_id)
+
+        instance.save()
+        self.assertEqual(len(instance.tables), 1)
+        self.assertEqual(len(instance.tables[0].columns), 1)
+        self.assertTrue(instance.tables[0].columns[0].selected)
+
+        # Every column should now be marked as advanced
+        build_ids_and_versions = {
+            self.app_id: 4,
+        }
+        with mock.patch(
+                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                return_value=build_ids_and_versions):
+
+            instance = FormExportInstance.generate_instance_from_schema(
+                self.new_schema,
+                'my-domain',
+                self.app_id,
+                export_id=instance._id
+            )
+
+        self.assertEqual(len(instance.tables), 2)
+        self.assertEqual(len(instance.tables[0].columns), 2)
+        self.assertEqual(len(filter(lambda c: c.is_advanced, instance.tables[0].columns)), 2)
