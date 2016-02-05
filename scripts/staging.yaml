@@ -45,14 +45,15 @@
 trunk: master
 name: autostaging
 branches:
-  - b3-app-manager+jquery-migrate  # Danny 2/3
+  - jquery-form-2.94-legacy-bower  # Danny 2/3
+  - kill-user-registration-j2me-option   # Danny 2/3
   - turn-off-incomplete-and-saved-forms  # Danny 2/3
   - jquery-migrate  # Danny 2/3
   - kill-x_over_time  # Danny 12/11
   - vellum-staging # J$ 11/13
   - requests #Simon 11/3
-  - b3-app-manager # Jenny 1/20
   - new-footer-nav # Biyeun 1/4
+  - hq-notify # Biyeun 2/4
   - formplayer-toggle # Ben/Will 1/21/16
   - java-tf-deploy # Ben/Will 1/21/16
   # B3 Report Migration branches
@@ -61,7 +62,7 @@ branches:
   - b3-reports-manage-deployments  # Biyeun 1/21
   - b3-reports-messaging  # Biyeun 1/21
   - finish-two-factor # Cal 1/21
-  - lazy-jar # Nick P 1/25
+#  - lazy-jar # Nick P 1/25
   - show-form-case-refs-in-summary # j$ 1/29
 submodules:
   submodules/touchforms-src:

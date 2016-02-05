@@ -175,13 +175,6 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                "last {} days")),
         ]
 
-    @classmethod
-    def display_in_dropdown(cls, domain=None, project=None, user=None):
-        if project and project.commtrack_enabled:
-            return False
-        else:
-            return True
-
     @property
     def special_notice(self):
         if self.domain_object.case_sharing_included():
@@ -736,9 +729,12 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
     @property
     @memoized
     def selected_form_data(self):
-        data = FormsByApplicationFilter.get_value(self.request, self.domain)
-        if len(data) == 1 and data.values()[0]['xmlns']:
-            return data.values()[0]
+        forms = FormsByApplicationFilter.get_value(self.request, self.domain).values()
+        if len(forms) == 1 and forms[0]['xmlns']:
+            return forms[0]
+        non_fuzzy_forms = [form for form in forms if not form['is_fuzzy']]
+        if len(non_fuzzy_forms) == 1:
+            return non_fuzzy_forms[0]
 
     @property
     def headers(self):
@@ -1119,7 +1115,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
-        return bool(project and project.commtrack_enabled)
+        return True
 
     @property
     def case_types(self):

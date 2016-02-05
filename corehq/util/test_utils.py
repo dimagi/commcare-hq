@@ -9,7 +9,6 @@ from unittest import TestCase, SkipTest
 from collections import namedtuple
 from contextlib import contextmanager
 
-from fakecouch import FakeCouchDb
 from functools import wraps
 from django.conf import settings
 import sys
@@ -137,6 +136,7 @@ def mock_out_couch(views=None, docs=None):
     You can optionally pass default return values for specific views and doc
     gets.  See the FakeCouchDb docstring for more specifics.
     """
+    from fakecouch import FakeCouchDb
     db = FakeCouchDb(views=views, docs=docs)
     def _get_db(*args):
         return db

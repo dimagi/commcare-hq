@@ -3,13 +3,13 @@ from dateutil.parser import parser
 from django.core.cache import cache
 import json
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.es import ReportXFormES, get_report_script_field
+from corehq.apps.api.es import ReportXFormES
 from corehq.util.dates import iso_string_to_datetime, iso_string_to_date
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.parsing import json_format_date
 from pact.enums import PACT_DOMAIN
 from pact.lib.quicksect import IntervalNode
-from pact.utils import get_patient_display_cache
+from pact.utils import get_patient_display_cache, get_report_script_field
 import logging
 
 cached_schedules = {}
