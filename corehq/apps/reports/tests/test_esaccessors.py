@@ -44,6 +44,7 @@ class BaseESAccessorsTest(SimpleTestCase):
     es_index = None
 
     def setUp(self):
+        ensure_index_deleted(self.es_index)
         self.domain = 'esdomain'
         with trap_extra_setup(ConnectionError):
             self.pillow = self.get_pillow()
@@ -188,26 +189,26 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
         counts = get_form_counts_by_user_xmlns(self.domain, start, end)
         self.assertEqual(counts, {
-            (user1, xmlns1, app1): 2,
-            (user1, xmlns2, app2): 1,
-            (user2, xmlns2, app2): 1,
+            (user1, app1, xmlns1): 2,
+            (user1, app2, xmlns2): 1,
+            (user2, app2, xmlns2): 1,
         })
 
         counts_user1 = get_form_counts_by_user_xmlns(self.domain, start, end, user_ids=[user1])
         self.assertEqual(counts_user1, {
-            (user1, xmlns1, app1): 2,
-            (user1, xmlns2, app2): 1,
+            (user1, app1, xmlns1): 2,
+            (user1, app2, xmlns2): 1,
         })
 
         counts_xmlns2 = get_form_counts_by_user_xmlns(self.domain, start, end, xmlnss=[xmlns2])
         self.assertEqual(counts_xmlns2, {
-            (user1, xmlns2, app2): 1,
-            (user2, xmlns2, app2): 1,
+            (user1, app2, xmlns2): 1,
+            (user2, app2, xmlns2): 1,
         })
 
         by_completion = get_form_counts_by_user_xmlns(self.domain, start, end, by_submission_time=False)
         self.assertEqual(by_completion, {
-            (user1, xmlns1, app1): 1
+            (user1, app1, xmlns1): 1
         })
 
 

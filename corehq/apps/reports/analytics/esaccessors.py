@@ -189,7 +189,7 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
         for app_bucket in app_buckets:
             xmlns_buckets = app_bucket.xmlns.buckets_list
             for xmlns_bucket in xmlns_buckets:
-                key = (user_bucket.key, xmlns_bucket.key, app_bucket.key)
+                key = (user_bucket.key, app_bucket.key, xmlns_bucket.key)
                 counts[key] = xmlns_bucket.doc_count
 
     return counts
