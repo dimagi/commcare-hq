@@ -882,27 +882,25 @@ class Subscriber(models.Model):
     def __unicode__(self):
         return u"DOMAIN %s" % self.domain
 
-    def create_subscription(self, new_plan_version, web_user, new_subscription, is_internal_change):
+    def create_subscription(self, new_plan_version, new_subscription, is_internal_change):
         assert new_plan_version
         assert new_subscription
         return self._apply_upgrades_and_downgrades(
             new_plan_version=new_plan_version,
-            web_user=web_user,
             new_subscription=new_subscription,
             internal_change=is_internal_change,
         )
 
-    def cancel_subscription(self, web_user, old_subscription):
+    def cancel_subscription(self, old_subscription):
         assert old_subscription
-        return self._apply_upgrades_and_downgrades(web_user=web_user, old_subscription=old_subscription)
+        return self._apply_upgrades_and_downgrades(old_subscription=old_subscription)
 
     def change_subscription(self, downgraded_privileges, upgraded_privileges, new_plan_version,
-                            web_user, old_subscription, new_subscription, internal_change):
+                            old_subscription, new_subscription, internal_change):
         return self._apply_upgrades_and_downgrades(
             downgraded_privileges=downgraded_privileges,
             upgraded_privileges=upgraded_privileges,
             new_plan_version=new_plan_version,
-            web_user=web_user,
             old_subscription=old_subscription,
             new_subscription=new_subscription,
             internal_change=internal_change,
@@ -923,10 +921,9 @@ class Subscriber(models.Model):
             new_subscription=new_subscription,
         )
 
-    def reactivate_subscription(self, new_plan_version, web_user, subscription):
+    def reactivate_subscription(self, new_plan_version, subscription):
         return self._apply_upgrades_and_downgrades(
             new_plan_version=new_plan_version,
-            web_user=web_user,
             old_subscription=subscription,
             new_subscription=subscription,
         )
@@ -934,7 +931,6 @@ class Subscriber(models.Model):
     def _apply_upgrades_and_downgrades(self, new_plan_version=None,
                                        downgraded_privileges=None,
                                        upgraded_privileges=None,
-                                       web_user=None,
                                        old_subscription=None,
                                        new_subscription=None,
                                        internal_change=False):
@@ -951,10 +947,10 @@ class Subscriber(models.Model):
             upgraded_privileges = upgraded_privileges or change_status_result.upgraded_privs
 
         if downgraded_privileges:
-            Subscriber._process_downgrade(self.domain, downgraded_privileges, new_plan_version, web_user)
+            Subscriber._process_downgrade(self.domain, downgraded_privileges, new_plan_version)
 
         if upgraded_privileges:
-            Subscriber._process_upgrade(self.domain, upgraded_privileges, new_plan_version, web_user)
+            Subscriber._process_upgrade(self.domain, upgraded_privileges, new_plan_version)
 
         if Subscriber.should_send_subscription_notification(old_subscription, new_subscription):
             send_subscription_change_alert(self.domain, new_subscription, old_subscription, internal_change)
@@ -968,7 +964,7 @@ class Subscriber(models.Model):
         return not is_new_trial and not expired_trial
 
     @staticmethod
-    def _process_downgrade(domain, downgraded_privileges, new_plan_version, web_user):
+    def _process_downgrade(domain, downgraded_privileges, new_plan_version):
         downgrade_handler = DomainDowngradeActionHandler(
             domain, new_plan_version, downgraded_privileges,
         )
@@ -976,7 +972,7 @@ class Subscriber(models.Model):
             raise SubscriptionChangeError("The downgrade was not successful.")
 
     @staticmethod
-    def _process_upgrade(domain, upgraded_privileges, new_plan_version, web_user):
+    def _process_upgrade(domain, upgraded_privileges, new_plan_version):
         upgrade_handler = DomainUpgradeActionHandler(
             domain, new_plan_version, upgraded_privileges,
         )
@@ -1107,7 +1103,7 @@ class Subscription(models.Model):
         self.is_active = False
         self.save()
 
-        self.subscriber.cancel_subscription(web_user=web_user, old_subscription=self)
+        self.subscriber.cancel_subscription(old_subscription=self)
 
         # transfer existing credit lines to the account
         self.transfer_credits()
@@ -1264,7 +1260,6 @@ class Subscription(models.Model):
             downgraded_privileges=change_status_result.downgraded_privs,
             upgraded_privileges=change_status_result.upgraded_privs,
             new_plan_version=new_plan_version,
-            web_user=web_user,
             old_subscription=self,
             new_subscription=new_subscription,
             internal_change=internal_change,
@@ -1298,7 +1293,6 @@ class Subscription(models.Model):
         self.save()
         self.subscriber.reactivate_subscription(
             new_plan_version=self.plan_version,
-            web_user=web_user,
             subscription=self,
         )
         SubscriptionAdjustment.record_adjustment(
@@ -1628,7 +1622,6 @@ class Subscription(models.Model):
         if subscription.is_active:
             subscriber.create_subscription(
                 new_plan_version=plan_version,
-                web_user=web_user,
                 new_subscription=subscription,
                 is_internal_change=internal_change,
             )
