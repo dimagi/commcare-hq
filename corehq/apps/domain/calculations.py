@@ -48,7 +48,7 @@ def active_mobile_users(domain, *args):
 
     user_ids = get_mobile_users(domain)
 
-    form_users = {
+    form_users = set(
         FormES()
         .domain(domain)
         .user_aggregation()
@@ -57,9 +57,9 @@ def active_mobile_users(domain, *args):
         .size(0)
         .run()
         .aggregations.user.keys
-    }
+    )
 
-    sms_users = {
+    sms_users = set(
         SMSES()
         .incoming_messages()
         .user_aggregation()
@@ -69,7 +69,7 @@ def active_mobile_users(domain, *args):
         .size(0)
         .run()
         .aggregations.user.keys
-    }
+    )
 
     num_users = len(form_users | sms_users)
     return num_users if 'inactive' not in args else len(user_ids) - num_users

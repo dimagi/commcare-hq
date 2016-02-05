@@ -258,15 +258,15 @@ def get_active_domain_stats_data(domains, datespan, interval,
                 .size(0))
             if restrict_to_mobile_submissions:
                 form_query = form_query.user_id(get_user_ids(True))
-            active_domains |= {
+            active_domains |= set(
                 form_query.run().aggregations.domains.keys
-            }
+            )
         if add_sms_domains:
             sms_query = (get_sms_query(f, t, 'domains', 'domain', domains)
                 .incoming_messages())
-            active_domains |= {
+            active_domains |= set(
                 sms_query.run().aggregations.domain.keys
-            }
+            )
         c = len(active_domains)
         if c > 0:
             histo_data.append(get_data_point(c, timestamp))
@@ -289,9 +289,9 @@ def get_active_users_data(domains, datespan, interval, datefield='date',
         sms_query = get_sms_query(f, t, 'users', 'couch_recipient', domains)
         if additional_params_es:
             sms_query = add_params_to_query(sms_query, additional_params_es)
-        users = {sms_query.incoming_messages().run().aggregation.users.keys}
+        users = set(sms_query.incoming_messages().run().aggregations.users.keys)
         if include_forms:
-            users |= {
+            users |= set(
                 FormES()
                 .domain(domains)
                 .user_aggregation()
@@ -300,7 +300,7 @@ def get_active_users_data(domains, datespan, interval, datefield='date',
                 .size(0)
                 .run()
                 .aggregations.user.keys
-            }
+            )
         c = len(users)
         if c > 0:
             histo_data.append(get_data_point(c, timestamp))
@@ -477,8 +477,8 @@ def get_sms_only_domain_stats_data(domains, datespan, interval,
              .terms_aggregation('domain', 'domains')
              .size(0))
 
-    sms_domains = {sms.run().aggregations.domains.keys}
-    form_domains = {forms.run().aggregations.domains.keys}
+    sms_domains = set(sms.run().aggregations.domains.keys)
+    form_domains = set(forms.run().aggregations.domains.keys)
 
     sms_only_domains = sms_domains - form_domains
 
@@ -513,7 +513,7 @@ def get_commconnect_domain_stats_data(domains, datespan, interval,
     if additional_params_es:
         sms = add_params_to_query(sms, additional_params_es)
 
-    sms_domains = {sms.run().aggregations.domains.keys}
+    sms_domains = set(sms.run().aggregations.domains.keys)
 
     domains_after_date = (DomainES()
             .in_domains(sms_domains)
@@ -767,22 +767,22 @@ def get_user_ids(user_type_mobile):
 
 
 def get_submitted_users():
-    real_form_users = {
+    real_form_users = set(
         FormES()
         .user_aggregation()
         .size(0)
         .run()
         .aggregations.user.keys
-    }
+    )
 
-    real_sms_users = {
+    real_sms_users = set(
         SMSES()
         .terms_aggregation('couch_recipient', 'user')
         .incoming_messages()
         .size(0)
         .run()
         .aggregations.user.keys
-    }
+    )
 
     return real_form_users | real_sms_users
 
