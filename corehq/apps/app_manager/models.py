@@ -4174,7 +4174,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             settings['Build-Number'] = self.version
         return settings
 
-    def create_jadjar(self, save=False):
+    def create_build_files(self, save=False):
         try:
             return (
                 self.lazy_fetch_attachment('CommCare.jad'),
@@ -4310,7 +4310,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         copy.set_form_versions(previous_version)
         copy.set_media_versions(previous_version)
-        copy.create_jadjar(save=True)
+        copy.create_build_files(save=True)
 
         try:
             # since this hard to put in a test
