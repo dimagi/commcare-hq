@@ -34,7 +34,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_case_counts_opened_by_user,
     get_user_stubs,
     get_group_stubs,
-)
+    get_form_counts_by_user_xmlns)
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 from pillowtop.feed.interface import Change
 
@@ -60,12 +60,15 @@ class TestFormESAccessors(BaseESAccessorsTest):
     pillow_class = XFormPillow
     es_index = XFORM_INDEX
 
-    def _send_form_to_es(self, domain=None, completion_time=None, received_on=None):
+    def _send_form_to_es(self, domain=None, completion_time=None, received_on=None, **metadata_kwargs):
         metadata = TestFormMetadata(
             domain=domain or self.domain,
             time_end=completion_time or datetime.utcnow(),
             received_on=received_on or datetime.utcnow(),
         )
+        for attr, value in metadata_kwargs.items():
+            setattr(metadata, attr, value)
+
         form_pair = make_es_ready_form(metadata)
         self.pillow.change_transport(form_pair.json_form)
         self.pillow.get_es_new().indices.refresh(XFORM_INDEX)
@@ -166,6 +169,46 @@ class TestFormESAccessors(BaseESAccessorsTest):
             timezone
         )
         self.assertEquals(results['2013-07-14'], 1)
+
+    def test_get_form_counts_by_user_xmlns(self):
+        user1, user2 = 'u1', 'u2'
+        app1, app2 = '123', '567'
+        xmlns1, xmlns2 = 'abc', 'efg'
+
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+
+        received_on = datetime(2013, 7, 15, 0, 0, 0)
+        received_on_out = datetime(2013, 6, 15, 0, 0, 0)
+        self._send_form_to_es(received_on=received_on_out, completion_time=received_on, user_id=user1, app_id=app1, xmlns=xmlns1)
+        self._send_form_to_es(received_on=received_on, user_id=user1, app_id=app1, xmlns=xmlns1)
+        self._send_form_to_es(received_on=received_on, user_id=user1, app_id=app1, xmlns=xmlns1)
+        self._send_form_to_es(received_on=received_on, user_id=user1, app_id=app2, xmlns=xmlns2)
+        self._send_form_to_es(received_on=received_on, user_id=user2, app_id=app2, xmlns=xmlns2)
+
+        counts = get_form_counts_by_user_xmlns(self.domain, start, end)
+        self.assertEqual(counts, {
+            (user1, xmlns1, app1): 2,
+            (user1, xmlns2, app2): 1,
+            (user2, xmlns2, app2): 1,
+        })
+
+        counts_user1 = get_form_counts_by_user_xmlns(self.domain, start, end, user_ids=[user1])
+        self.assertEqual(counts_user1, {
+            (user1, xmlns1, app1): 2,
+            (user1, xmlns2, app2): 1,
+        })
+
+        counts_xmlns2 = get_form_counts_by_user_xmlns(self.domain, start, end, xmlnss=[xmlns2])
+        self.assertEqual(counts_xmlns2, {
+            (user1, xmlns2, app2): 1,
+            (user2, xmlns2, app2): 1,
+        })
+
+        by_completion = get_form_counts_by_user_xmlns(self.domain, start, end, by_submission_time=False)
+        self.assertEqual(by_completion, {
+            (user1, xmlns1, app1): 1
+        })
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)

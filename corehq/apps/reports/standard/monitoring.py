@@ -464,7 +464,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
                     row.append(self._form_counts[
-                        (user.user_id, form['xmlns'], form['app_id'])
+                        (user.user_id, form['xmlns'].lower(), form['app_id'])
                     ])
                 row_sum = sum(row)
                 row = (
