@@ -13,8 +13,6 @@ class SMSPillow(AliasedElasticPillow):
     document_class = SMSLog   # while this index includes all users,
                                     # I assume we don't care about querying on properties specfic to WebUsers
     couch_filter = "sms/all_logs"
-    es_host = settings.ELASTICSEARCH_HOST
-    es_port = settings.ELASTICSEARCH_PORT
     es_timeout = 60
     es_alias = "smslogs"
     es_type = "sms"

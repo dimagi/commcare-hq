@@ -423,8 +423,6 @@ class AliasedElasticPillow(BasicPillow):
     pillow will create a new Index with a new md5sum as its suffix. Once it's finished indexing,
     you will need to flip the alias over to it.
     """
-    es_host = ""
-    es_port = ""
     es_index = ""
     es_type = ""
     es_alias = ''
@@ -453,13 +451,8 @@ class AliasedElasticPillow(BasicPillow):
 
     @memoized
     def get_es_new(self):
-        return Elasticsearch(
-            [{
-                'host': self.es_host,
-                'port': self.es_port,
-            }],
-            timeout=self.es_timeout,
-        )
+        from corehq.elastic import get_es_new
+        return get_es_new(timeout=self.es_timeout)
 
     def change_trigger(self, changes_dict):
         id = changes_dict['id']
