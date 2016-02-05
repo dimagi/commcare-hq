@@ -278,7 +278,7 @@ class Log(models.Model):
 
     domain = models.CharField(max_length=126, null=True, db_index=True)
     date = models.DateTimeField(null=True, db_index=True)
-    couch_recipient_doc_type = models.CharField(max_length=126, null=True)
+    couch_recipient_doc_type = models.CharField(max_length=126, null=True, db_index=True)
     couch_recipient = models.CharField(max_length=126, null=True, db_index=True)
     phone_number = models.CharField(max_length=126, null=True, db_index=True)
     direction = models.CharField(max_length=1, null=True)
@@ -334,8 +334,8 @@ class SMS(SyncSQLToCouchMixin, Log):
     # In cases where decoding must occur, this is the raw text received
     # from the gateway
     raw_text = models.TextField(null=True)
-    datetime_to_process = models.DateTimeField(null=True)
-    processed = models.NullBooleanField(default=True)
+    datetime_to_process = models.DateTimeField(null=True, db_index=True)
+    processed = models.NullBooleanField(default=True, db_index=True)
     num_processing_attempts = models.IntegerField(default=0, null=True)
     queued_timestamp = models.DateTimeField(null=True)
     processed_timestamp = models.DateTimeField(null=True)
