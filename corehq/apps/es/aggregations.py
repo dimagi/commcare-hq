@@ -39,6 +39,8 @@ from collections import namedtuple
 
 import datetime
 
+from corehq.elastic import SIZE_LIMIT
+
 
 class AggregationResult(object):
     def __init__(self, raw, aggregation):
@@ -137,16 +139,18 @@ class TermsAggregation(Aggregation):
 
     :param name: aggregation name
     :param field: name of the field to bucket on
+    :param size:
     """
     type = "terms"
     result_class = BucketResult
 
-    def __init__(self, name, field):
+    def __init__(self, name, field, size=None):
         assert re.match(r'\w+$', name), \
             "Names must be valid python variable names, was {}".format(name)
         self.name = name
         self.body = {
             "field": field,
+             "size": size if size is not None else SIZE_LIMIT,
         }
 
 
