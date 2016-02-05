@@ -71,9 +71,13 @@ class TestFormESAccessors(BaseESAccessorsTest):
             setattr(metadata, attr, value)
 
         form_pair = make_es_ready_form(metadata)
-        self.pillow.change_transport(form_pair.json_form)
-        self.pillow.get_es_new().indices.refresh(XFORM_INDEX)
+        self._pillow_process_form(form_pair)
+        es = get_es_new()
+        es.indices.refresh(XFORM_INDEX)
         return form_pair
+
+    def _pillow_process_form(self, form_pair):
+        self.pillow.change_transport(form_pair.json_form)
 
     def test_basic_completed_by_user(self):
         start = datetime(2013, 7, 1)
@@ -218,22 +222,13 @@ class TestFormESAccessorsSQL(TestFormESAccessors):
         XFormPillow()  # initialize index
         return get_sql_xform_to_elasticsearch_pillow()
 
-    def _send_form_to_es(self, domain=None, completion_time=None, received_on=None):
-        metadata = TestFormMetadata(
-            domain=domain or self.domain,
-            time_end=completion_time or datetime.utcnow(),
-            received_on=received_on or datetime.utcnow(),
-        )
-        form_pair = make_es_ready_form(metadata)
+    def _pillow_process_form(self, form_pair):
         change = Change(
             id=form_pair.json_form['form_id'],
             sequence_id='123',
             document=form_pair.json_form,
         )
         self.pillow.processor(change, do_set_checkpoint=False)
-        es = get_es_new()
-        es.indices.refresh(XFORM_INDEX)
-        return form_pair
 
 
 class TestUserESAccessors(BaseESAccessorsTest):
