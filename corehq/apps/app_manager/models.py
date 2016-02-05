@@ -1501,18 +1501,6 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                             )
 
 
-class UserRegistrationForm(FormBase):
-    form_type = 'user_registration'
-
-    username_path = StringProperty(default='username')
-    password_path = StringProperty(default='password')
-    data_paths = DictProperty()
-
-    def add_stuff_to_xform(self, xform):
-        super(UserRegistrationForm, self).add_stuff_to_xform(xform)
-        xform.add_user_registration(self.username_path, self.password_path, self.data_paths)
-
-
 class MappingItem(DocumentSchema):
     key = StringProperty()
     # lang => localized string
@@ -4414,8 +4402,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     An Application that can be created entirely through the online interface
 
     """
-    user_registration = SchemaProperty(UserRegistrationForm)
-    show_user_registration = BooleanProperty(default=False, required=True)
     modules = SchemaListProperty(ModuleBase)
     name = StringProperty()
     # profile's schema is {'features': {}, 'properties': {}, 'custom_properties': {}}
@@ -4691,10 +4677,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def get_form_filename(cls, type=None, form=None, module=None):
-        if type == 'user_registration':
-            return 'user_registration.xml'
-        else:
-            return 'modules-%s/forms-%s.xml' % (module.id, form.id)
+        return 'modules-%s/forms-%s.xml' % (module.id, form.id)
 
     def create_all_files(self):
         files = {
@@ -4726,13 +4709,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         except IndexError:
             raise ModuleNotFoundException()
 
-    def get_user_registration(self):
-        form = self.user_registration
-        form._app = self
-        if not (self._id and self._attachments and form.source):
-            form.source = load_form_template('register_user.xhtml')
-        return form
-
     def get_module_by_unique_id(self, unique_id):
         def matches(module):
             return module.get_or_create_unique_id() == unique_id
@@ -4744,11 +4720,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
              % (self.id, unique_id)))
 
     def get_forms(self, bare=True):
-        if self.show_user_registration:
-            yield self.get_user_registration() if bare else {
-                'type': 'user_registration',
-                'form': self.get_user_registration(),
-            }
         for module in self.get_modules():
             for form in module.get_forms():
                 yield form if bare else {

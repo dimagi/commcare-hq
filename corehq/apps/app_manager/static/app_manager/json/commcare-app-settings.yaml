@@ -115,16 +115,6 @@
   widget: password
   hide_if_not_enabled: true
 
-- id: show_user_registration
-  name: "Customize User Registration Form"
-  description: >
-    Customize the form used on the phone to register new users.
-    You can find this form by logging in as admin and going to Settings.
-  widget: bool
-  default: false
-  requires: "{$parent.doc_type}='Application'"
-  hide_if_not_enabled: true
-
 - id: secure_submissions
   name: "Use Secure Submissions"
   widget: bool
