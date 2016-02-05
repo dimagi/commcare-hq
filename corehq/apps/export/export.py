@@ -37,8 +37,7 @@ class _Writer(object):
             table_titles = {t: t.name for t in tables}
             self.writer.open(headers, file, table_titles=table_titles)
             yield
-
-        self.writer.close()
+            self.writer.close()
 
     def write(self, table, row):
         return self.writer.write([(table, [FormattedRow(data=row.data)])])
