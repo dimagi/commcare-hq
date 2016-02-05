@@ -55,6 +55,7 @@ def _domain_uses_locations(domain):
     return domain.uses_locations
 
 
+# This will take long time
 def _domain_has_apps_using_templated_intents(domain):
     templates = next(app_callout_templates)
     template_ids = set([t['id'] for t in templates])
@@ -70,6 +71,7 @@ def _domain_has_apps_using_templated_intents(domain):
     )
 
 
+# This will take a long time
 def _domain_has_apps_using_custom_intents(domain):
     templates = next(app_callout_templates)
     template_ids = set([t['id'] for t in templates])
