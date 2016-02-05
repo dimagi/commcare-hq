@@ -223,6 +223,7 @@ def update_calculated_properties():
                 "cp_n_60_day_cases": int(CALC_FNS["cases_in_last"](dom, 60)),
                 "cp_n_cases": int(all_stats["cases"].get(dom, 0)),
                 "cp_n_forms": int(all_stats["forms"].get(dom, 0)),
+                "cp_n_forms_30_d": int(CALC_FNS["forms_in_last"](dom, 30)),
                 "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
                 "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
                 "cp_is_active": CALC_FNS["active"](dom),
