@@ -105,7 +105,6 @@ class BucketResult(AggregationResult):
     def normalized_buckets(self):
         return self.raw_buckets
 
-    @property
     def counts_by_bucket(self):
         return {b['key']: b['doc_count'] for b in self.normalized_buckets}
 

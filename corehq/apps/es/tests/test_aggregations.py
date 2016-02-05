@@ -140,10 +140,10 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         self.assertEqual(queryset.aggregations.users.buckets.user1.closed.doc_count, 0)
         self.assertEqual(queryset.aggregations.users.buckets.user1.open.doc_count, 2)
         self.assertEqual(queryset.aggregations.users.buckets_dict['user1'].open.doc_count, 2)
-        self.assertEqual(queryset.aggregations.users.counts_by_bucket, {
+        self.assertEqual(queryset.aggregations.users.counts_by_bucket(), {
             'user1': 2
         })
-        self.assertEqual(queryset.aggregations.by_date.counts_by_bucket, {
+        self.assertEqual(queryset.aggregations.by_date.counts_by_bucket(), {
             '*-c': 3,
             'f-*': 8,
             'k-p': 6,
