@@ -8,7 +8,7 @@ import dimagi.utils.couch.migration
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sms', '0010_update_sqlmobilebackend_couch_id'),
+        ('sms', '0011_alter_inbound_api_key'),
     ]
 
     operations = [
