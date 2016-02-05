@@ -100,37 +100,49 @@ class ExportColumn(DocumentSchema):
         return NestedDictGetter(path)(doc)
 
     @staticmethod
-    def create_default_from_export_item(group_schema_path, item, build_ids_and_versions):
+    def create_default_from_export_item(group_schema_path, item, app_ids_and_versions):
         """Creates a default ExportColumn given an item
 
         :param group_schema_path: The path of the group_schema that the item belongs to
         :param item: An ExportItem instance
-        :param app_version: The app version that the column export is for
+        :param app_ids_and_versions: A dictionary of app ids that map to latest build version
         :returns: An ExportColumn instance
         """
 
+        is_main_table = group_schema_path == MAIN_TABLE
+
+        column = ExportColumn(
+            item=item,
+            label=item.label,
+        )
+        column.update_properties_from_app_ids_and_versions(app_ids_and_versions)
+        column.selected = not column._is_deleted(app_ids_and_versions) and is_main_table
+        return column
+
+    def _is_deleted(self, app_ids_and_versions):
         is_deleted = True
-        for app_id, version in build_ids_and_versions.iteritems():
-            if item.last_occurrences.get(app_id) == version:
+        for app_id, version in app_ids_and_versions.iteritems():
+            if self.item.last_occurrences.get(app_id) == version:
                 is_deleted = False
                 break
+        return is_deleted
 
-        is_main_table = group_schema_path == MAIN_TABLE
+    def update_properties_from_app_ids_and_versions(self, app_ids_and_versions):
+        """
+        This regenerates properties based on new build ids/versions
+        :param app_ids_and_versions: A dictionary of app ids that map to latest build version
+        most recent state of the app(s) in the domain
+        """
+        is_deleted = self._is_deleted(app_ids_and_versions)
 
         tags = []
         if is_deleted:
             tags.append(PROPERTY_TAG_DELETED)
 
-        if item.tag:
-            tags.append(item.tag)
-
-        return ExportColumn(
-            item=item,
-            label=item.label,
-            is_advanced=is_deleted,
-            selected=not is_deleted and is_main_table,
-            tags=tags,
-        )
+        if self.item.tag:
+            tags.append(self.item.tag)
+        self.is_advanced = is_deleted
+        self.tags = tags
 
     def get_headers(self):
         return [self.label]
@@ -177,6 +189,12 @@ class TableConfiguration(DocumentSchema):
                     row_data.append(val)
             rows.append(ExportRow(data=row_data))
         return rows
+
+    def get_column(self, item_path):
+        for column in self.columns:
+            if column.item.path == item_path:
+                return column
+        return None
 
     def _get_sub_documents(self, path, docs):
         """
@@ -229,43 +247,101 @@ class ExportInstance(Document):
         app_label = 'export'
 
     @property
+    def is_safe(self):
+        """For compatability with old exports"""
+        return self.is_deidentified
+
+    @property
     def defaults(self):
         return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
 
-    @staticmethod
-    def generate_instance_from_schema(schema, domain, app_id=None):
-        """Given an ExportDataSchema, this will generate an ExportInstance"""
-        instance = ExportInstance(
-            type=schema.type
-        )
-        instance.name = instance.defaults.get_default_instance_name(schema)
+    def get_table(self, path):
+        for table in self.tables:
+            if table.path == path:
+                return table
+        return None
 
-        latest_build_ids_and_versions = get_latest_built_app_ids_and_versions(domain, app_id)
+    @classmethod
+    def _new_from_schema(cls, schema):
+        raise NotImplementedError()
+
+    @classmethod
+    def update_export_from_schema(cls, schema, saved_export):
+        return cls.generate_instance_from_schema(
+            schema,
+            saved_export.domain,
+            app_id=saved_export.app_id,
+            saved_export=saved_export,
+        )
+
+    @classmethod
+    def generate_instance_from_schema(cls, schema, domain, app_id=None, saved_export=None):
+        """Given an ExportDataSchema, this will generate an ExportInstance"""
+        if saved_export:
+            instance = saved_export
+        else:
+            instance = cls._new_from_schema(schema)
+
+        instance.name = instance.name or instance.defaults.get_default_instance_name(schema)
+
+        latest_app_ids_and_versions = get_latest_built_app_ids_and_versions(domain, app_id)
         for group_schema in schema.group_schemas:
-            table = TableConfiguration(
+            table = instance.get_table(group_schema.path) or TableConfiguration(
                 path=group_schema.path,
                 name=instance.defaults.get_default_table_name(group_schema.path),
                 display_name=instance.defaults.get_default_table_name(group_schema.path),
                 selected=instance.defaults.default_is_table_selected(group_schema.path),
             )
-            table.columns = map(
-                lambda item: ExportColumn.create_default_from_export_item(
+            columns = []
+            for item in group_schema.items:
+                column = table.get_column(item.path) or ExportColumn.create_default_from_export_item(
                     table.path,
                     item,
-                    latest_build_ids_and_versions,
-                ),
-                group_schema.items,
-            )
-            instance.tables.append(table)
+                    latest_app_ids_and_versions,
+                )
+
+                # Ensure that the item is up to date
+                column.item = item
+
+                # Need to rebuild tags and other flags based on new build ids
+                column.update_properties_from_app_ids_and_versions(latest_app_ids_and_versions)
+                columns.append(column)
+            table.columns = columns
+
+            if not instance.get_table(group_schema.path):
+                instance.tables.append(table)
+
         return instance
 
 
 class CaseExportInstance(ExportInstance):
     case_type = StringProperty()
 
+    @classmethod
+    def _new_from_schema(cls, schema):
+        return cls(
+            type=schema.type,
+            domain=schema.domain,
+            case_type=schema.case_type,
+        )
+
 
 class FormExportInstance(ExportInstance):
     xmlns = StringProperty()
+    app_id = StringProperty()
+
+    @property
+    def formname(self):
+        return xmlns_to_name(self.domain, self.xmlns, self.app_id)
+
+    @classmethod
+    def _new_from_schema(cls, schema):
+        return cls(
+            type=schema.type,
+            domain=schema.domain,
+            xmlns=schema.xmlns,
+            app_id=schema.app_id,
+        )
 
 
 class ExportInstanceDefaults(object):
@@ -292,7 +368,10 @@ class FormExportInstanceDefaults(ExportInstanceDefaults):
 
     @staticmethod
     def get_default_instance_name(schema):
-        return xmlns_to_name(schema.domain, schema.xmlns, schema.app_id)
+        return u'{}: {}'.format(
+            xmlns_to_name(schema.domain, schema.xmlns, schema.app_id),
+            datetime.now().strftime('%Y-%m-%d')
+        )
 
     @staticmethod
     def get_default_table_name(table_path):
@@ -315,7 +394,7 @@ class CaseExportInstanceDefaults(ExportInstanceDefaults):
 
     @staticmethod
     def get_default_instance_name(schema):
-        return u'{}: {}'.format(schema.case_type, datetime.now().strftime('%Y-%M-%d'))
+        return u'{}: {}'.format(schema.case_type, datetime.now().strftime('%Y-%m-%d'))
 
 
 class ExportRow(object):

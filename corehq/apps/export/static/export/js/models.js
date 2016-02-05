@@ -37,13 +37,12 @@ Exports.ViewModels.ExportInstance.prototype.save = function() {
 
     self.saveState(Exports.Constants.SAVE_STATES.SAVING);
     serialized = self.toJS();
-    $.post(self.saveUrl, serialized)
+    $.post(self.saveUrl, JSON.stringify(serialized))
         .success(function(data) {
-            var eventCategory;
-
-            self.saveState(Exports.Constants.SAVE_STATES.SUCCESS);
-
-            self.recordSaveAnalytics(Exports.Utils.redirect.bind(null, data.redirect));
+            self.recordSaveAnalytics(function() {
+                self.saveState(Exports.Constants.SAVE_STATES.SUCCESS);
+                Exports.Utils.redirect(data.redirect);
+            });
         })
         .fail(function(response) {
             self.saveState(Exports.Constants.SAVE_STATES.ERROR);
@@ -66,9 +65,11 @@ Exports.ViewModels.ExportInstance.prototype.recordSaveAnalytics = function(callb
         analytics.usage.apply(null, args);
     }
     if (this.isNew()) {
-        eventCategory = Exports.Utils.getEventCategory(this.type());
+        eventCategory = Exports.Constants.ANALYTICS_EVENT_CATEGORIES[this.type()];
         analytics.usage(eventCategory, 'Custom export creation', '');
         analytics.workflow("Clicked 'Create' in export edit page", callback);
+    } else if (this.export_format !== Exports.Constants.EXPORT_FORMATS.HTML) {
+        callback();
     }
 };
 
