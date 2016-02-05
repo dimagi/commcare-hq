@@ -11,6 +11,20 @@ from corehq.apps.export.models.new import (
     CaseExportInstance,
     FormExportInstance,
 )
+from couchexport.files import Temp
+from couchexport.models import Format
+
+
+class ExportFile(object):
+
+    def __init__(self, path):
+        self.file = Temp(path)
+
+    def __enter__(self):
+        return self.file.payload
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.file.delete()
 
 
 class _Writer(object):
@@ -20,6 +34,7 @@ class _Writer(object):
     def __init__(self, writer):
         # An instance of a couchexport.ExportWriter
         self.writer = writer
+        self._path = None
 
     @contextlib.contextmanager
     def open(self, tables):
@@ -29,7 +44,8 @@ class _Writer(object):
         """
 
         # Create and open a temp file
-        fd, path = tempfile.mkstemp()
+        fd, self._path = tempfile.mkstemp()
+        print self._path
         with os.fdopen(fd, 'wb') as file:
 
             # open the ExportWriter
@@ -45,17 +61,21 @@ class _Writer(object):
     def get_preview(self):
         return self.writer.get_preview()
 
+    @property
+    def path(self):
+        return self._path
+
 
 def get_export_file(export_instance, filters):
     """
     Return an export file for the given ExportInstance and list of filters
+    # TODO: Add a note about cleaning up the file?
     """
     docs = _get_export_documents(export_instance, filters)
     return _write_export_file(export_instance, docs)
 
 
 def _get_export_documents(export_instance, filters):
-    # TODO: This function will be different for couch
     query = _get_base_query(export_instance)
     for filter in filters:
         query = query.filter(filter.to_es_filter())
@@ -75,7 +95,8 @@ def _write_export_file(export_instance, documents):
                     # It might be bad to write one row at a time when you can do more (from a performance perspective)
                     # Regardless, we should handle the batching of rows in the _Writer class, not here.
                     writer.write(table, row)
-    return writer.get_preview()
+
+    return ExportFile(writer.path)
 
 
 def _get_base_query(export_instance):

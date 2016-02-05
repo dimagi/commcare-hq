@@ -231,7 +231,7 @@ class ExportTest(SimpleTestCase):
                         [u'apple', u'banana'],
                         [u'apple', u'banana'],
                     ],
-                    
+
                 }
             ]
         )
