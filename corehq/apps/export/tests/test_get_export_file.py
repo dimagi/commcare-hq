@@ -1,3 +1,4 @@
+import json
 import uuid
 
 from django.test import SimpleTestCase
@@ -77,7 +78,7 @@ class WriterTest(SimpleTestCase):
         """
 
         export_instance = ExportInstance(
-            export_format=Format.PYTHON_DICT,
+            export_format=Format.JSON,
             tables=[
                 TableConfiguration(
                     name="My table",
@@ -101,21 +102,21 @@ class WriterTest(SimpleTestCase):
             ]
         )
 
-        self.assertEqual(
-            _write_export_file(export_instance, self.docs),
-            [
+        with _write_export_file(export_instance, self.docs) as export:
+            self.assertEqual(
+                json.loads(export),
                 {
-                    u'table_name': u'My table',
-                    u'headers': [u'Q3', u'Q1'],
-                    u'rows': [[u'baz', u'foo'], [u'bop', u'bip']],
+                    u'My table': {
+                        u'headers': [u'Q3', u'Q1'],
+                        u'rows': [[u'baz', u'foo'], [u'bop', u'bip']],
 
+                    }
                 }
-            ]
-        )
+            )
 
     def test_multi_table(self):
         export_instance = ExportInstance(
-            export_format=Format.PYTHON_DICT,
+            export_format=Format.JSON,
             tables=[
                 TableConfiguration(
                     name="My table",
@@ -146,22 +147,21 @@ class WriterTest(SimpleTestCase):
             ]
         )
 
-        self.assertEqual(
-            sorted(_write_export_file(export_instance, self.docs)),
-            sorted([
+        with _write_export_file(export_instance, self.docs) as export:
+            self.assertEqual(
+                json.loads(export),
                 {
-                    u'table_name': u'My table',
-                    u'headers': [u'Q3'],
-                    u'rows': [[u'baz'], [u'bop']],
+                    u'My table': {
+                        u'headers': [u'Q3'],
+                        u'rows': [[u'baz'], [u'bop']],
 
-                },
-                {
-                    u'table_name': u'My other table',
-                    u'headers': [u'Q4'],
-                    u'rows': [[u'bar'], [u'boop']],
+                    },
+                    u'My other table': {
+                        u'headers': [u'Q4'],
+                        u'rows': [[u'bar'], [u'boop']],
+                    }
                 }
-            ])
-        )
+            )
 
 
 class ExportTest(SimpleTestCase):
@@ -190,9 +190,9 @@ class ExportTest(SimpleTestCase):
         ensure_index_deleted(cls.pillow.es_index)
 
     def test_get_export_file(self):
-        export = get_export_file(
+        export_file = get_export_file(
             CaseExportInstance(
-                export_format=Format.PYTHON_DICT,
+                export_format=Format.JSON,
                 domain=DOMAIN,
                 case_type=DEFAULT_CASE_TYPE,
                 tables=[TableConfiguration(
@@ -218,23 +218,22 @@ class ExportTest(SimpleTestCase):
             ),
             []  # No filters
         )
-        self.assertEqual(
-            export,
-            [
+        with export_file as export:
+            self.assertEqual(
+                json.loads(export),
                 {
-                    u'table_name': u'My table',
-                    u'headers': [
-                        u'Foo column',
-                        u'Bar column'],
-                    u'rows': [
-                        [u'apple', u'banana'],
-                        [u'apple', u'banana'],
-                        [u'apple', u'banana'],
-                    ],
-
+                    u'My table': {
+                        u'headers': [
+                            u'Foo column',
+                            u'Bar column'],
+                        u'rows': [
+                            [u'apple', u'banana'],
+                            [u'apple', u'banana'],
+                            [u'apple', u'banana'],
+                        ],
+                    }
                 }
-            ]
-        )
+            )
 
     def test_filters(self):
         # TODO: Test other filters
