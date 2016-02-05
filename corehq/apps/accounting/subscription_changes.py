@@ -104,7 +104,10 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         All Reminder rules utilizing "survey" will be deactivated.
         """
         try:
-            surveys = filter(lambda x: x.method in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY], _active_reminders(domain))
+            surveys = filter(
+                lambda x: x.method in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY],
+                _active_reminders(domain)
+            )
             for survey in surveys:
                 survey.active = False
                 survey.save()
