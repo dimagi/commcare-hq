@@ -240,10 +240,11 @@ class ExportTest(SimpleTestCase):
         # TODO: Test other filters
         owner_filter = OwnerFilter(DEFAULT_USER)
         closed_filter = IsClosedFilter(False)
-        self.assertEqual(1, len(_get_export_documents(
+        doc_generator = _get_export_documents(
             CaseExportInstance(domain=DOMAIN, case_type=DEFAULT_CASE_TYPE),
             [owner_filter, closed_filter]
-        )))
+        )
+        self.assertEqual(1, len([x for x in doc_generator]))
 
     def test_get_case_export_base_query(self):
         q = get_case_export_base_query(DOMAIN, DEFAULT_CASE_TYPE)
