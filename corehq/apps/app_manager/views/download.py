@@ -114,7 +114,7 @@ def download_user_registration(request, domain, app_id):
 @safe_download
 def download_jad(request, domain, app_id):
     """
-    See ApplicationBase.create_build_files
+    See ApplicationBase.create_jadjar_from_build_files
 
     """
     app = request.app
@@ -122,7 +122,7 @@ def download_jad(request, domain, app_id):
         app.set_form_versions(None)
         app.set_media_versions(None)
     try:
-        jad, _ = app.create_build_files()
+        jad, _ = app.create_jadjar_from_build_files()
     except ResourceConflict:
         return download_jad(request, domain, app_id)
     try:
@@ -139,7 +139,7 @@ def download_jad(request, domain, app_id):
 @safe_download
 def download_jar(request, domain, app_id):
     """
-    See ApplicationBase.create_build_files
+    See ApplicationBase.create_jadjar_from_build_files
 
     This is the only view that will actually be called
     in the process of downloading a complete CommCare.jar
@@ -151,7 +151,7 @@ def download_jar(request, domain, app_id):
     if not app.copy_of:
         app.set_form_versions(None)
         app.set_media_versions(None)
-    _, jar = app.create_build_files()
+    _, jar = app.create_jadjar_from_build_files()
     set_file_download(response, 'CommCare.jar')
     response['Content-Length'] = len(jar)
     try:

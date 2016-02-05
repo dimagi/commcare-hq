@@ -4175,34 +4175,41 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return settings
 
     def create_build_files(self, save=False):
+        built_on = datetime.datetime.utcnow()
+        all_files = self.create_all_files()
+        if save:
+            self.built_on = built_on
+            self.built_with = BuildRecord(
+                version=self.build_spec.version,
+                build_number=self.version,
+                datetime=built_on,
+            )
+
+            for filepath in all_files:
+                self.lazy_put_attachment(all_files[filepath],
+                                         'files/%s' % filepath)
+
+    def create_jadjar_from_build_files(self, save=False):
         try:
             return (
                 self.lazy_fetch_attachment('CommCare.jad'),
                 self.lazy_fetch_attachment('CommCare.jar'),
             )
         except (ResourceError, KeyError):
-            built_on = datetime.datetime.utcnow()
-            all_files = self.create_all_files()
+            all_files = {
+                filename[len('files/'):]: self.lazy_fetch_attachment(filename)
+                for filename in self._attachments if filename.startswith('files/')
+            }
             jad_settings = {
-                'Released-on': built_on.strftime("%Y-%b-%d %H:%M"),
+                'Released-on': self.built_with.datetime.strftime("%Y-%b-%d %H:%M"),
             }
             jad_settings.update(self.jad_settings)
             jadjar = self.get_jadjar().pack(all_files, jad_settings)
-            if save:
-                self.built_on = built_on
-                self.built_with = BuildRecord(
-                    version=jadjar.version,
-                    build_number=jadjar.build_number,
-                    signed=jadjar.signed,
-                    datetime=built_on,
-                )
 
+            if save:
                 self.lazy_put_attachment(jadjar.jad, 'CommCare.jad')
                 self.lazy_put_attachment(jadjar.jar, 'CommCare.jar')
-
-                for filepath in all_files:
-                    self.lazy_put_attachment(all_files[filepath],
-                                             'files/%s' % filepath)
+                self.built_with.signed = jadjar.signed
 
             return jadjar.jad, jadjar.jar
 
