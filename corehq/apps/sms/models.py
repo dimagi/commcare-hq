@@ -1476,7 +1476,7 @@ class SQLMobileBackend(models.Model):
     # This is an api key that the gateway uses when making inbound requests to hq.
     # This enforces gateway security and also allows us to tie every inbound request
     # to a specific backend.
-    inbound_api_key = uuidfield.UUIDField(auto=True, unique=True)
+    inbound_api_key = models.CharField(max_length=126, unique=True, db_index=True)
 
     # This tells us which type of backend this is
     hq_api_id = models.CharField(max_length=126, null=True)
@@ -1531,6 +1531,9 @@ class SQLMobileBackend(models.Model):
         super(SQLMobileBackend, self).__init__(*args, **kwargs)
         if not self.couch_id:
             self.couch_id = uuid.uuid4().hex
+
+        if not self.inbound_api_key:
+            self.inbound_api_key = uuid.uuid4().hex
 
     @quickcache(['self.pk', 'domain'], timeout=5 * 60)
     def domain_is_shared(self, domain):
@@ -1707,6 +1710,29 @@ class SQLMobileBackend(models.Model):
                                         (phone_number, domain))
 
         return backend
+
+    @classmethod
+    @quickcache(['hq_api_id', 'inbound_api_key'], timeout=60 * 60)
+    def get_backend_info_by_api_key(cls, hq_api_id, inbound_api_key):
+        """
+        Looks up a backend by inbound_api_key and returns a tuple of
+        (domain, couch_id). Including hq_api_id in the filter is an
+        implicit way of making sure that the returned backend info belongs
+        to a backend of that type.
+
+        (The entire backend is not returned to reduce the amount of data
+        needed to be returned by the cache)
+
+        Raises cls.DoesNotExist if not found.
+        """
+        result = (cls.active_objects
+                  .filter(hq_api_id=hq_api_id, inbound_api_key=inbound_api_key)
+                  .values_list('domain', 'couch_id'))
+
+        if len(result) == 0:
+            raise cls.DoesNotExist
+
+        return result[0]
 
     @classmethod
     @quickcache(['backend_id', 'is_couch_id'], timeout=60 * 60)

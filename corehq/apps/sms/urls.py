@@ -7,11 +7,12 @@ from corehq.apps.sms.views import (
     SMSSettingsView,
     ManageRegistrationInvitationsView,
     InvitationAppInfoView,
-    ComposeMessageView,
     GlobalSmsGatewayListView,
     AddGlobalGatewayView,
     EditGlobalGatewayView,
-    GlobalBackendMap)
+    GlobalBackendMap,
+    ComposeMessageView,
+    SMSLanguagesView)
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 
 urlpatterns = patterns('corehq.apps.sms.views',
@@ -41,7 +42,7 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^api/last_read_message/$', 'api_last_read_message', name='api_last_read_message'),
     url(r'^settings/$', SMSSettingsView.as_view(), name=SMSSettingsView.urlname),
     url(r'^subscribe_sms/$', SubscribeSMSView.as_view(), name=SubscribeSMSView.urlname),
-    url(r'^languages/$', 'sms_languages', name='sms_languages'),
+    url(r'^languages/$', SMSLanguagesView.as_view(), name=SMSLanguagesView.urlname),
     url(r'^languages/edit/$', 'edit_sms_languages', name='edit_sms_languages'),
     url(r'^translations/download/$', 'download_sms_translations', name='download_sms_translations'),
     url(r'^translations/upload/$', 'upload_sms_translations', name='upload_sms_translations'),

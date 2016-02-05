@@ -86,7 +86,7 @@ class LedgersByLocationReport(GenericTabularReport, CommtrackReportMixin):
     # TODO actually filter by these
     fields = [
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-        'corehq.apps.reports.dont_use.fields.SelectProgramField',
+        'corehq.apps.reports.filters.commtrack.ProgramFilter',
     ]
 
     @property

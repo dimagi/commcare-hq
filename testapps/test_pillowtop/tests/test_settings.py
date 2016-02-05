@@ -26,11 +26,18 @@ class PillowtopSettingsTest(TestCase, TestFileMixin):
 
     def test_instantiate_all(self):
         all_pillow_configs = list(get_all_pillow_configs())
-        expected_meta = self.get_json('all-pillow-meta')
+        expected_meta = self.get_expected_meta()
 
         self.assertEqual(len(all_pillow_configs), len(expected_meta))
         for pillow_config in all_pillow_configs:
             self.assertEqual(expected_meta[pillow_config.name], _pillow_meta_from_config(pillow_config))
+
+    def get_expected_meta(self):
+        expected_meta = self.get_json('all-pillow-meta')
+        for pillow, meta in expected_meta.items():
+            if 'couchdb_uri' in meta:
+                meta['couchdb_uri'] = meta['couchdb_uri'].format(COUCH_SERVER_ROOT=settings.COUCH_SERVER_ROOT)
+        return expected_meta
 
     def _rewrite_file(self, pillow_configs):
         # utility that should only be called manually
