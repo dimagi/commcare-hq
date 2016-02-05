@@ -56,7 +56,7 @@ class TestSourceFiltering(ElasticTestMixin, TestCase):
                 }
             },
             "size": SIZE_LIMIT,
-            "_source": ["source_obj"]
+            "_source": "source_obj"
         }
         q = HQESQuery('forms').source('source_obj')
         self.checkQuery(q, json_output)
