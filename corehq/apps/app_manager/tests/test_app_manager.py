@@ -61,7 +61,8 @@ class AppManagerTest(TestCase):
     def testCreateJadJar(self):
         # make sure this doesn't raise an error
         self.app.build_spec = BuildSpec(**self.build1)
-        self.app.create_jadjar()
+        self.app.create_build_files()
+        self.app.create_jadjar_from_build_files(save=True)
 
     def testDeleteForm(self):
         self.app.delete_form(self.app.modules[0].unique_id,
