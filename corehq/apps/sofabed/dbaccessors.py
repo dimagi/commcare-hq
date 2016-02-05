@@ -1,11 +1,29 @@
 from collections import defaultdict
 from django.db.models import Count
+
+from corehq.apps.es.aggregations import TermsAggregation
 from .models import FormData
+from corehq.apps.es import forms
 
 
 def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
                                   xmlnss=None, by_submission_time=True):
+    date_filter_fn = forms.submitted if by_submission_time forms.completed
     date_field = 'received_on' if by_submission_time else 'time_end'
+    query = (
+        forms.FormES()
+        .domain(domain)
+        .filter(date_filter_fn(gte=startdate, lt=enddate))
+        .exclude_source()
+        .aggregation(
+            TermsAggregation('user_id', 'user_id').aggregation(
+                TermsAggregation('app_id', 'app_id').aggregation(
+                    TermsAggregation('xmlns', 'xmlns')
+                )
+            )
+        )
+        .size(0)
+    )
     query = (FormData.objects
              .filter(domain=domain,
                      **{'{}__gte'.format(date_field): startdate,
