@@ -6,24 +6,24 @@
 * @param item: a raw object which contains keys called `key` and `value`.
 *              the `value` in a item itself is an object, a mapping
 *              of language codes to strings
-* @param mapingContext: an object which has context of current UI language and whether
+* @param mappingContext: an object which has context of current UI language and whether
 *                 `value` of MapItem is a file-path to an icon or a simple string
 */
-var MapItem = function(item, mapingContext){
+var MapItem = function(item, mappingContext){
     var self = this;
     this.key = ko.observable(item.key);
 
     // attach a media-manager if item.value is a file-path to icon
-    if (mapingContext.values_are_icons) {
+    if (mappingContext.values_are_icons) {
         this.iconManager = new AppMenuMediaManager({
             ref: {
-                "path": item.value[mapingContext.lang],
+                "path": item.value[mappingContext.lang],
                 "icon_type": "icon-picture",
                 "media_type": "Image",
                 "media_class": "CommCareImage",
                 "icon_class": "icon-picture"
             },
-            objectMap: mapingContext.multimedia,
+            objectMap: mappingContext.multimedia,
             uploadController: iconUploader,
             defaultPath: 'jr://file/commcare/image/default.png',
         });
@@ -32,9 +32,9 @@ var MapItem = function(item, mapingContext){
     this.value = ko.computed(function() {
         // ko.observable for item.value
         var new_value = [];
-        _.each(mapingContext.langs, function(lang){
+        _.each(mappingContext.langs, function(lang){
             // return ko reference to path in `iconManager` for current UI language value
-            if (mapingContext.values_are_icons && lang == mapingContext.lang){
+            if (mappingContext.values_are_icons && lang == mappingContext.lang){
                 new_value.push([lang, self.iconManager.customPath]);
             }
             // return new ko.observable for other languages
@@ -46,16 +46,16 @@ var MapItem = function(item, mapingContext){
     }, this);
 
     this.key.subscribe(function(newValue) {
-        if(mapingContext.duplicatedItems.indexOf(newValue) === -1 && mapingContext._isItemDuplicated(newValue)) {
-            mapingContext.duplicatedItems.push(newValue);
+        if(mappingContext.duplicatedItems.indexOf(newValue) === -1 && mappingContext._isItemDuplicated(newValue)) {
+            mappingContext.duplicatedItems.push(newValue);
         }
 
     });
 
     this.key.subscribe(function(oldValue) {
-        var index = mapingContext.duplicatedItems.indexOf(oldValue);
-        if(index !== -1 && !mapingContext._isItemDuplicated(oldValue, 2)) {
-            mapingContext.duplicatedItems.remove(oldValue);
+        var index = mappingContext.duplicatedItems.indexOf(oldValue);
+        if(index !== -1 && !mappingContext._isItemDuplicated(oldValue, 2)) {
+            mappingContext.duplicatedItems.remove(oldValue);
         }
     }, null, "beforeChange");
 };

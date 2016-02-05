@@ -1548,17 +1548,17 @@ class MappingItem(DocumentSchema):
     def key_as_condition(self, property):
         if self.treat_as_expression:
             condition = dot_interpolate(self.key, property)
-            return u"{condition}".format(condition=condition)
+            return condition
         else:
             return u"{property} = '{key}'".format(
                 property=property,
                 key=self.key
             )
 
-    def key_as_xpath_variable(self, index, type):
-        if type == "sort":
-            key_as_var = "{i}, ".format(i=index)
-        elif type == "display":
+    def ref_to_key_variable(self, index, sort_or_display):
+        if sort_or_display == "sort":
+            key_as_var = index
+        elif sort_or_display == "display":
             key_as_var = "${var_name}, ".format(var_name=self.key_as_variable)
 
         return key_as_var

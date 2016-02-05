@@ -369,7 +369,7 @@ class EnumImage(Enum):
 
             xpath_fragment_template = u"if({key_as_condition}, {key_as_var_name}".format(
                 key_as_condition=item.key_as_condition(self.xpath),
-                key_as_var_name=item.key_as_xpath_variable(i, type)
+                key_as_var_name=item.ref_to_key_variable(i, type)
             )
 
             parts.append(xpath_fragment_template)
