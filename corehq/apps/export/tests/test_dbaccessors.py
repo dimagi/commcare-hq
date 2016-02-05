@@ -1,10 +1,17 @@
 from datetime import datetime, timedelta
 from django.test import TestCase
 
-from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema
+from corehq.apps.export.models import (
+    FormExportDataSchema,
+    CaseExportDataSchema,
+    FormExportInstance,
+    CaseExportInstance,
+)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
+    get_form_export_instances,
+    get_case_export_instances,
 )
 
 
@@ -84,3 +91,56 @@ class TestExportDBAccessors(TestCase):
         schema = get_latest_case_export_schema(self.domain, 'not-found')
 
         self.assertEqual(schema, None)
+
+
+class TestExportInstanceDBAccessors(TestCase):
+    dependent_apps = ['corehq.apps.export', 'corehq.couchapps']
+
+    domain = 'my-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        cls.form_instance_deid = FormExportInstance(
+            domain=cls.domain,
+            name='Forms',
+            is_deidentified=True
+        )
+        cls.form_instance_wrong = FormExportInstance(
+            domain='wrong-domain',
+            name='Forms',
+        )
+        cls.case_instance_deid = CaseExportInstance(
+            domain=cls.domain,
+            name='Cases',
+            is_deidentified=True
+        )
+        cls.case_instance = CaseExportInstance(
+            domain=cls.domain,
+            name='Cases',
+            is_deidentified=False
+        )
+        cls.instances = [
+            cls.form_instance_deid,
+            cls.form_instance_wrong,
+            cls.case_instance,
+            cls.case_instance_deid,
+        ]
+        for instance in cls.instances:
+            instance.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        for instance in cls.instances:
+            instance.delete()
+
+    def test_get_form_export_instances(self):
+        instances = get_form_export_instances(self.domain)
+        self.assertEqual(len(instances), 1)
+
+    def test_get_case_export_instances(self):
+        instances = get_case_export_instances(self.domain)
+        self.assertEqual(len(instances), 2)
+
+    def test_get_case_export_instances_wrong_domain(self):
+        instances = get_case_export_instances('wrong')
+        self.assertEqual(len(instances), 0)

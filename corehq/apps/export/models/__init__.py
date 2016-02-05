@@ -4,6 +4,8 @@ from .new import (
     ExportColumn,
     ExportRow,
     ExportInstance,
+    FormExportInstance,
+    CaseExportInstance,
     ExportDataSchema,
     FormExportDataSchema,
     CaseExportDataSchema,

@@ -68,6 +68,8 @@ Exports.ViewModels.ExportInstance.prototype.recordSaveAnalytics = function(callb
         eventCategory = Exports.Constants.ANALYTICS_EVENT_CATEGORIES[this.type()];
         analytics.usage(eventCategory, 'Custom export creation', '');
         analytics.workflow("Clicked 'Create' in export edit page", callback);
+    } else if (this.export_format !== Exports.Constants.EXPORT_FORMATS.HTML) {
+        callback();
     }
 };
 
