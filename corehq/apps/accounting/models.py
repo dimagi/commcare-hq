@@ -1173,6 +1173,30 @@ class Subscription(models.Model):
                             service_type=None, pro_bono_status=None, funding_source=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
+        self._update_dates(date_start, date_end)
+
+        if self.date_delay_invoicing is None or self.date_delay_invoicing > datetime.date.today():
+            self.date_delay_invoicing = date_delay_invoicing
+
+        self._update_properties(
+            do_not_invoice=do_not_invoice,
+            no_invoice_reason=no_invoice_reason,
+            do_not_email=do_not_email,
+            auto_generate_credits=auto_generate_credits,
+            salesforce_contract_id=salesforce_contract_id,
+            service_type=service_type,
+            pro_bono_status=pro_bono_status,
+            funding_source=funding_source,
+        )
+
+        self.save()
+
+        SubscriptionAdjustment.record_adjustment(
+            self, method=adjustment_method, note=note, web_user=web_user,
+            reason=SubscriptionAdjustmentReason.MODIFY
+        )
+
+    def _update_dates(self, date_start, date_end):
         if not date_start:
             raise SubscriptionAdjustmentError('Start date must be provided')
         if date_end is not None and date_start > date_end:
@@ -1193,26 +1217,23 @@ class Subscription(models.Model):
                     'Cannot deactivate a subscription here. Cancel subscription instead.'
                 )
 
-        if self.date_delay_invoicing is None or self.date_delay_invoicing > datetime.date.today():
-            self.date_delay_invoicing = date_delay_invoicing
+    def _update_properties(self, **kwargs):
+        property_names = {
+            'do_not_invoice',
+            'no_invoice_reason',
+            'do_not_email',
+            'auto_generate_credits',
+            'salesforce_contract_id',
+            'service_type',
+            'pro_bono_status',
+            'funding_source',
+        }
 
-        self.do_not_invoice = do_not_invoice
-        self.no_invoice_reason = no_invoice_reason
-        self.do_not_email = do_not_email
-        self.auto_generate_credits = auto_generate_credits
-        self.salesforce_contract_id = salesforce_contract_id
-        if service_type is not None:
-            self.service_type = service_type
-        if pro_bono_status is not None:
-            self.pro_bono_status = pro_bono_status
-        if funding_source is not None:
-            self.funding_source = funding_source
-        self.save()
+        assert property_names >= set(kwargs.keys())
 
-        SubscriptionAdjustment.record_adjustment(
-            self, method=adjustment_method, note=note, web_user=web_user,
-            reason=SubscriptionAdjustmentReason.MODIFY
-        )
+        for property_name, property_value in kwargs.items():
+            if property_value is not None:
+                setattr(self, property_name, property_value)
 
     @transaction.atomic
     def change_plan(self, new_plan_version, date_end=None,
