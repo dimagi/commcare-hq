@@ -262,16 +262,3 @@
 {% endblock %}
 
 {% block column_style %}hq-flush-content{% endblock %}
-
-{% block breadcrumbs %}
-    {{ block.super }}
-    {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
-    {% if form.id != None %}
-    <li>
-        <a href="{% url "view_form" domain app.id module.id form.id %}">
-            {{ form.name|trans:app.langs }}
-        </a>
-    </li>
-    {% endif %}
-    <li><i class="fa fa-pencil"></i> Edit</li>
-{% endblock %}
