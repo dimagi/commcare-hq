@@ -137,11 +137,7 @@ class CompletionOrSubmissionTimeMixin(object):
 
 
 class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
-    """
-    User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
-    danny   5 (25%)         10 (50%)        20 (100%)       17                          6
-    (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
-    """
+    """See column headers for details"""
     name = ugettext_noop('Case Activity')
     slug = 'case_activity'
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
@@ -153,11 +149,38 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     is_cacheable = True
 
     @property
+    def landmark_columns(self):
+        return [
+            (_("# Updated or Closed"),
+             _("The number of cases that have been created, updated, or closed "
+               "between {} days ago and today.")),
+            (_("# Active"),
+             _("The number of open cases created or updated in the last {} days.")),
+            (_("# Closed"),
+             _("The number of cases that have been closed between {} days ago and "
+               "today.")),
+            (_("Proportion"),
+             _("The percentage of all recently active cases that were created, "
+               "updated or closed in the last {} days.")),
+            # "recently active" means "touched in the last 120 days"
+        ]
+
+    @property
+    def totals_columns(self):
+        return [
+            (_("# Active Cases"),
+             _("Number of open cases modified in the last {} days")),
+            (_("# Inactive Cases"),
+             _("Number of cases that are open but haven't been touched in the "
+               "last {} days")),
+        ]
+
+    @property
     def special_notice(self):
         if self.domain_object.case_sharing_included():
             return _("This report currently does not support case sharing. "
-                       "There might be inconsistencies in case totals if the user is part of a case sharing group. "
-                       "We are working to correct this shortly.")
+                     "There might be inconsistencies in case totals if the "
+                     "user is part of a case sharing group.")
 
     _default_landmarks = [30, 60, 90]
     @property
@@ -195,32 +218,23 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def headers(self):
+
+        def make_column(title, help_text, num_days):
+            return DataTablesColumn(title, sort_type=DTSortType.NUMERIC,
+                                    help_text=help_text.format(num_days))
+
         columns = [DataTablesColumn(_("Users"))]
+
         for landmark in self.landmarks:
-            num_cases = DataTablesColumn(_("# Modified or Closed"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of cases that have been modified between %d days ago and today.") % landmark.days
-            )
-            num_active = DataTablesColumn(_("# Active"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of cases created or modified in the last %d days.") % landmark.days
-            )
-            num_closed = DataTablesColumn(_("# Closed"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of cases that have been closed between %d days ago and today.") % landmark.days
-            )
-            proportion = DataTablesColumn(_("Proportion"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The percentage of all recently active cases that were modified or closed in the last %d days.") % landmark.days
-            )
-            columns.append(DataTablesColumnGroup(_("Cases in Last %s Days") % landmark.days if landmark else _("Ever"),
-                num_cases,
-                num_active,
-                num_closed,
-                proportion
+            columns.append(DataTablesColumnGroup(
+                _("Cases in Last {} Days").format(landmark.days) if landmark else _("Ever"),
+                *[make_column(title, help_text, landmark.days)
+                  for title, help_text in self.landmark_columns]
             ))
-        columns.append(DataTablesColumn(_("# Active Cases"),
-            sort_type=DTSortType.NUMERIC,
-            help_text=_('Number of cases modified in the last %s days that are still open') % self.milestone.days))
-        columns.append(DataTablesColumn(_("# Inactive Cases"),
-            sort_type=DTSortType.NUMERIC,
-            help_text=_("Number of cases that are open but haven't been touched in the last %s days") % self.milestone.days))
+
+        for title, help_text in self.totals_columns:
+            columns.append(make_column(title, help_text, self.milestone.days))
+
         return DataTablesHeader(*columns)
 
     @property
@@ -241,6 +255,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         def format_row(row):
             cells = [row.header()]
+            total_touched = row.total_touched_count()
 
             def add_numeric_cell(text, value=None):
                 if value is None:
@@ -253,19 +268,18 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             for landmark in self.landmarks:
                 landmark_key = unicode(landmark.days)
 
-                value = row.modified_count(landmark_key)
+                modified = row.modified_count(landmark_key)
                 active = row.active_count(landmark_key)
                 closed = row.closed_count(landmark_key)
-                total = active + closed
 
                 try:
-                    p_val = float(value) * 100. / float(total)
+                    p_val = float(modified) * 100. / float(total_touched)
                     proportion = '%.f%%' % p_val
                 except ZeroDivisionError:
                     p_val = None
                     proportion = '--'
 
-                add_numeric_cell(value, value)
+                add_numeric_cell(modified, modified)
                 add_numeric_cell(active, active)
                 add_numeric_cell(closed, closed)
                 add_numeric_cell(proportion, p_val)
@@ -280,6 +294,13 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     def es_queryset(self, users_by_id):
         end_date = ServerTime(self.utc_now).phone_time(self.timezone).done()
         milestone_start = ServerTime(self.utc_now - self.milestone).phone_time(self.timezone).done()
+
+        touched_total_aggregation = FilterAggregation(
+            'touched_total',
+            filters.AND(
+                filters.date_range('modified_on', gte=milestone_start, lt=end_date),
+            )
+        )
 
         active_total_aggregation = FilterAggregation(
             'active_total',
@@ -299,6 +320,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         top_level_aggregation = TermsAggregation('users', 'user_id')\
             .aggregation(landmarks_aggregation)\
+            .aggregation(touched_total_aggregation)\
             .aggregation(active_total_aggregation)\
             .aggregation(inactive_total_aggregation)
 
@@ -332,6 +354,9 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         def closed_count(self, landmark_key):
             return 0 if not self.bucket else self.landmarks[landmark_key].closed.doc_count
 
+        def total_touched_count(self):
+            return 0 if not self.bucket else self.bucket.touched_total.doc_count
+
         def total_inactive_count(self):
             return 0 if not self.bucket else self.bucket.inactive_total.doc_count
 
@@ -348,6 +373,9 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         def active_count(self, landmark_key):
             return sum([row.active_count(landmark_key) for row in self.rows])
+
+        def total_touched_count(self):
+            return sum([row.total_touched_count() for row in self.rows])
 
         def total_inactive_count(self):
             return sum([row.total_inactive_count() for row in self.rows])
