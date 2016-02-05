@@ -272,7 +272,8 @@ def track_periodic_data():
                                .run().hits
     # users_to_domains is a list of dicts
     time_users_to_domains_query = datetime.now()
-    domains_to_forms = FormES().terms_aggregation('domain', 'domain').size(0).run().aggregations.domain.counts_by_bucket()
+    domains_to_forms = FormES().terms_aggregation('domain', 'domain').size(0).run()\
+        .aggregations.domain.counts_by_bucket()
     time_domains_to_forms_query = datetime.now()
     domains_to_mobile_users = UserES().mobile_users().terms_aggregation('domain', 'domain').size(0).run()\
                                       .aggregations.domain.counts_by_bucket()

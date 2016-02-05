@@ -157,6 +157,7 @@ def get_mobile_users(domains):
         .run().doc_ids
     )
 
+
 def get_sms_query(begin, end, facet_name, facet_terms, domains):
     return (SMSES()
             .domain(domains)

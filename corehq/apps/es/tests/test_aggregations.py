@@ -234,4 +234,3 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         res = ESQuerySet(example_response, query)
         output = res.aggregations.forms_by_date.raw_buckets
         self.assertEqual(output, expected_output)
-
