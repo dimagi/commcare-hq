@@ -1,7 +1,8 @@
 from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import (SMSLog, SMS, INCOMING, OUTGOING,
     MessagingEvent, MessagingSubEvent, CallLog, LastReadMessage,
-    SQLLastReadMessage)
+    SQLLastReadMessage, ExpectedCallbackEventLog, ExpectedCallback,
+    CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED)
 from custom.fri.models import FRISMSLog, PROFILES
 from datetime import datetime, timedelta
 from django.test import TestCase
@@ -41,11 +42,20 @@ class BaseMigrationTestCase(TestCase):
         ).all():
             obj.delete()
 
+        for obj in ExpectedCallbackEventLog.view(
+            'sms/expected_callback_event',
+            startkey=[self.domain],
+            endkey=[self.domain, {}],
+            include_docs=True,
+        ).all():
+            obj.delete()
+
         SMS.objects.filter(domain=self.domain).delete()
         Call.objects.filter(domain=self.domain).delete()
         MessagingSubEvent.objects.filter(parent__domain=self.domain).delete()
         MessagingEvent.objects.filter(domain=self.domain).delete()
         SQLLastReadMessage.objects.filter(domain=self.domain).delete()
+        ExpectedCallback.objects.filter(domain=self.domain).delete()
 
     def tearDown(self):
         self.deleteAllLogs()
@@ -70,6 +80,9 @@ class BaseMigrationTestCase(TestCase):
 
     def randomRiskProfile(self):
         return random.choice(PROFILES)
+
+    def randomCallbackStatus(self):
+        return random.choice([CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED])
 
     def randomMessagingSubEventId(self):
         # Just create a dummy event and subevent to generate
@@ -508,3 +521,89 @@ class LastReadMessageMigrationTestCase(BaseMigrationTestCase):
         couch_obj = LastReadMessage.get(sql_obj.couch_id)
         self.checkFieldValues(couch_obj, sql_obj, SQLLastReadMessage._migration_get_fields())
         self.assertTrue(LastReadMessage.get_db().get_rev(couch_obj._id).startswith('3-'))
+
+
+class ExpectedCallbackMigrationTestCase(BaseMigrationTestCase):
+    def getCouchCount(self):
+        result = ExpectedCallbackEventLog.view(
+            'sms/expected_callback_event',
+            startkey=[self.domain],
+            endkey=[self.domain, {}],
+            include_docs=False,
+        ).all()
+        return len(result)
+
+    def getSQLCount(self):
+        return ExpectedCallback.objects.filter(domain=self.domain).count()
+
+    def setRandomCouchObjectValues(self, obj):
+        obj.domain = self.domain
+        obj.date = self.randomDateTime()
+        obj.couch_recipient_doc_type = self.randomString()
+        obj.couch_recipient = self.randomString()
+        obj.status = self.randomCallbackStatus()
+
+    def setRandomSQLObjectValues(self, obj):
+        obj.domain = self.domain
+        obj.date = self.randomDateTime()
+        obj.couch_recipient_doc_type = self.randomString()
+        obj.couch_recipient = self.randomString()
+        obj.status = self.randomCallbackStatus()
+
+    def testCouchSyncToSQL(self):
+        self.deleteAllLogs()
+        self.assertEqual(self.getCouchCount(), 0)
+        self.assertEqual(self.getSQLCount(), 0)
+
+        # Test Create
+        couch_obj = ExpectedCallbackEventLog()
+        self.setRandomCouchObjectValues(couch_obj)
+        couch_obj.save()
+
+        sleep(1)
+        self.assertEqual(self.getCouchCount(), 1)
+        self.assertEqual(self.getSQLCount(), 1)
+
+        sql_obj = ExpectedCallback.objects.get(couch_id=couch_obj._id)
+        self.checkFieldValues(couch_obj, sql_obj, ExpectedCallback._migration_get_fields())
+        self.assertTrue(ExpectedCallbackEventLog.get_db().get_rev(couch_obj._id).startswith('1-'))
+
+        # Test Update
+        self.setRandomCouchObjectValues(couch_obj)
+        couch_obj.save()
+
+        sleep(1)
+        self.assertEqual(self.getCouchCount(), 1)
+        self.assertEqual(self.getSQLCount(), 1)
+        sql_obj = ExpectedCallback.objects.get(couch_id=couch_obj._id)
+        self.checkFieldValues(couch_obj, sql_obj, ExpectedCallback._migration_get_fields())
+        self.assertTrue(ExpectedCallbackEventLog.get_db().get_rev(couch_obj._id).startswith('2-'))
+
+    def testSQLSyncToCouch(self):
+        self.deleteAllLogs()
+        self.assertEqual(self.getCouchCount(), 0)
+        self.assertEqual(self.getSQLCount(), 0)
+
+        # Test Create
+        sql_obj = ExpectedCallback()
+        self.setRandomSQLObjectValues(sql_obj)
+        sql_obj.save()
+
+        sleep(1)
+        self.assertEqual(self.getCouchCount(), 1)
+        self.assertEqual(self.getSQLCount(), 1)
+
+        couch_obj = ExpectedCallbackEventLog.get(sql_obj.couch_id)
+        self.checkFieldValues(couch_obj, sql_obj, ExpectedCallback._migration_get_fields())
+        self.assertTrue(ExpectedCallbackEventLog.get_db().get_rev(couch_obj._id).startswith('2-'))
+
+        # Test Update
+        self.setRandomSQLObjectValues(sql_obj)
+        sql_obj.save()
+
+        sleep(1)
+        self.assertEqual(self.getCouchCount(), 1)
+        self.assertEqual(self.getSQLCount(), 1)
+        couch_obj = ExpectedCallbackEventLog.get(sql_obj.couch_id)
+        self.checkFieldValues(couch_obj, sql_obj, ExpectedCallback._migration_get_fields())
+        self.assertTrue(ExpectedCallbackEventLog.get_db().get_rev(couch_obj._id).startswith('3-'))

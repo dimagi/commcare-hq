@@ -619,10 +619,10 @@ class ExpectedCallback(SyncSQLToCouchMixin, models.Model):
     )
 
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
-    domain = models.CharField(max_length=126, null=True)
+    domain = models.CharField(max_length=126, null=True, db_index=True)
     date = models.DateTimeField(null=True)
     couch_recipient_doc_type = models.CharField(max_length=126, null=True)
-    couch_recipient = models.CharField(max_length=126, null=True)
+    couch_recipient = models.CharField(max_length=126, null=True, db_index=True)
     status = models.CharField(max_length=126, null=True)
 
     @classmethod
