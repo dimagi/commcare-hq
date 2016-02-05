@@ -100,12 +100,12 @@ class ExportColumn(DocumentSchema):
         return NestedDictGetter(path)(doc)
 
     @staticmethod
-    def create_default_from_export_item(group_schema_path, item, build_ids_and_versions):
+    def create_default_from_export_item(group_schema_path, item, app_ids_and_versions):
         """Creates a default ExportColumn given an item
 
         :param group_schema_path: The path of the group_schema that the item belongs to
         :param item: An ExportItem instance
-        :param build_ids_and_versions: A dictionary of build ids that map to versions of that represents the
+        :param app_ids_and_versions: A dictionary of app ids that map to latest build version
         :returns: An ExportColumn instance
         """
 
@@ -115,25 +115,25 @@ class ExportColumn(DocumentSchema):
             item=item,
             label=item.label,
         )
-        column.update_properties_from_build_ids(build_ids_and_versions)
-        column.selected = not column._is_deleted(build_ids_and_versions) and is_main_table
+        column.update_properties_from_app_ids_and_versions(app_ids_and_versions)
+        column.selected = not column._is_deleted(app_ids_and_versions) and is_main_table
         return column
 
-    def _is_deleted(self, build_ids_and_versions):
+    def _is_deleted(self, app_ids_and_versions):
         is_deleted = True
-        for app_id, version in build_ids_and_versions.iteritems():
+        for app_id, version in app_ids_and_versions.iteritems():
             if self.item.last_occurrences.get(app_id) == version:
                 is_deleted = False
                 break
         return is_deleted
 
-    def update_properties_from_build_ids(self, build_ids_and_versions):
+    def update_properties_from_app_ids_and_versions(self, app_ids_and_versions):
         """
         This regenerates properties based on new build ids/versions
-        :param build_ids_and_versions: A dictionary of build ids that map to versions of that represents the
+        :param app_ids_and_versions: A dictionary of app ids that map to latest build version
         most recent state of the app(s) in the domain
         """
-        is_deleted = self._is_deleted(build_ids_and_versions)
+        is_deleted = self._is_deleted(app_ids_and_versions)
 
         tags = []
         if is_deleted:
@@ -284,7 +284,7 @@ class ExportInstance(Document):
 
         instance.name = instance.name or instance.defaults.get_default_instance_name(schema)
 
-        latest_build_ids_and_versions = get_latest_built_app_ids_and_versions(domain, app_id)
+        latest_app_ids_and_versions = get_latest_built_app_ids_and_versions(domain, app_id)
         for group_schema in schema.group_schemas:
             table = instance.get_table(group_schema.path) or TableConfiguration(
                 path=group_schema.path,
@@ -297,14 +297,14 @@ class ExportInstance(Document):
                 column = table.get_column(item.path) or ExportColumn.create_default_from_export_item(
                     table.path,
                     item,
-                    latest_build_ids_and_versions,
+                    latest_app_ids_and_versions,
                 )
 
                 # Ensure that the item is up to date
                 column.item = item
 
                 # Need to rebuild tags and other flags based on new build ids
-                column.update_properties_from_build_ids(latest_build_ids_and_versions)
+                column.update_properties_from_app_ids_and_versions(latest_app_ids_and_versions)
                 columns.append(column)
             table.columns = columns
 
