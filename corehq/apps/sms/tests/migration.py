@@ -1,6 +1,7 @@
 from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import (SMSLog, SMS, INCOMING, OUTGOING,
-    MessagingEvent, MessagingSubEvent, CallLog)
+    MessagingEvent, MessagingSubEvent, CallLog, LastReadMessage,
+    SQLLastReadMessage)
 from custom.fri.models import FRISMSLog, PROFILES
 from datetime import datetime, timedelta
 from django.test import TestCase
@@ -32,10 +33,19 @@ class BaseMigrationTestCase(TestCase):
         ).all():
             callog.delete()
 
+        for obj in LastReadMessage.view(
+            'sms/last_read_message',
+            startkey=['by_anyone', self.domain],
+            endkey=['by_anyone', self.domain, {}],
+            include_docs=True,
+        ).all():
+            obj.delete()
+
         SMS.objects.filter(domain=self.domain).delete()
         Call.objects.filter(domain=self.domain).delete()
         MessagingSubEvent.objects.filter(parent__domain=self.domain).delete()
         MessagingEvent.objects.filter(domain=self.domain).delete()
+        SQLLastReadMessage.objects.filter(domain=self.domain).delete()
 
     def tearDown(self):
         self.deleteAllLogs()
@@ -370,7 +380,7 @@ class CallMigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(self.getCallCount(), 1)
 
         call = Call.objects.get(couch_id=calllog._id)
-        self.checkFieldValues(calllog, call, call._migration_get_fields())
+        self.checkFieldValues(calllog, call, Call._migration_get_fields())
         self.assertTrue(CallLog.get_db().get_rev(calllog._id).startswith('1-'))
 
         # Test Update
@@ -412,3 +422,89 @@ class CallMigrationTestCase(BaseMigrationTestCase):
         callog = CallLog.get(call.couch_id)
         self.checkFieldValues(callog, call, Call._migration_get_fields())
         self.assertTrue(CallLog.get_db().get_rev(callog._id).startswith('3-'))
+
+
+class LastReadMessageMigrationTestCase(BaseMigrationTestCase):
+    def getCouchCount(self):
+        result = LastReadMessage.view(
+            'sms/last_read_message',
+            startkey=['by_anyone', self.domain],
+            endkey=['by_anyone', self.domain, {}],
+            include_docs=False,
+        ).all()
+        return len(result)
+
+    def getSQLCount(self):
+        return SQLLastReadMessage.objects.filter(domain=self.domain).count()
+
+    def setRandomCouchObjectValues(self, obj):
+        obj.domain = self.domain
+        obj.read_by = self.randomString()
+        obj.contact_id = self.randomString()
+        obj.message_id = self.randomString()
+        obj.message_timestamp = self.randomDateTime()
+
+    def setRandomSQLObjectValues(self, obj):
+        obj.domain = self.domain
+        obj.read_by = self.randomString()
+        obj.contact_id = self.randomString()
+        obj.message_id = self.randomString()
+        obj.message_timestamp = self.randomDateTime()
+
+    def testCouchSyncToSQL(self):
+        self.deleteAllLogs()
+        self.assertEqual(self.getCouchCount(), 0)
+        self.assertEqual(self.getSQLCount(), 0)
+
+        # Test Create
+        couch_obj = LastReadMessage()
+        self.setRandomCouchObjectValues(couch_obj)
+        couch_obj.save()
+
+        sleep(1)
+        self.assertEqual(self.getCouchCount(), 1)
+        self.assertEqual(self.getSQLCount(), 1)
+
+        sql_obj = SQLLastReadMessage.objects.get(couch_id=couch_obj._id)
+        self.checkFieldValues(couch_obj, sql_obj, SQLLastReadMessage._migration_get_fields())
+        self.assertTrue(LastReadMessage.get_db().get_rev(couch_obj._id).startswith('1-'))
+
+        # Test Update
+        self.setRandomCouchObjectValues(couch_obj)
+        couch_obj.save()
+
+        sleep(1)
+        self.assertEqual(self.getCouchCount(), 1)
+        self.assertEqual(self.getSQLCount(), 1)
+        sql_obj = SQLLastReadMessage.objects.get(couch_id=couch_obj._id)
+        self.checkFieldValues(couch_obj, sql_obj, SQLLastReadMessage._migration_get_fields())
+        self.assertTrue(LastReadMessage.get_db().get_rev(couch_obj._id).startswith('2-'))
+
+    def testSQLSyncToCouch(self):
+        self.deleteAllLogs()
+        self.assertEqual(self.getCouchCount(), 0)
+        self.assertEqual(self.getSQLCount(), 0)
+
+        # Test Create
+        sql_obj = SQLLastReadMessage()
+        self.setRandomSQLObjectValues(sql_obj)
+        sql_obj.save()
+
+        sleep(1)
+        self.assertEqual(self.getCouchCount(), 1)
+        self.assertEqual(self.getSQLCount(), 1)
+
+        couch_obj = LastReadMessage.get(sql_obj.couch_id)
+        self.checkFieldValues(couch_obj, sql_obj, SQLLastReadMessage._migration_get_fields())
+        self.assertTrue(LastReadMessage.get_db().get_rev(couch_obj._id).startswith('2-'))
+
+        # Test Update
+        self.setRandomSQLObjectValues(sql_obj)
+        sql_obj.save()
+
+        sleep(1)
+        self.assertEqual(self.getCouchCount(), 1)
+        self.assertEqual(self.getSQLCount(), 1)
+        couch_obj = LastReadMessage.get(sql_obj.couch_id)
+        self.checkFieldValues(couch_obj, sql_obj, SQLLastReadMessage._migration_get_fields())
+        self.assertTrue(LastReadMessage.get_db().get_rev(couch_obj._id).startswith('3-'))
