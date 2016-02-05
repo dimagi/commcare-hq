@@ -701,9 +701,12 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
     @property
     @memoized
     def selected_form_data(self):
-        data = FormsByApplicationFilter.get_value(self.request, self.domain)
-        if len(data) == 1 and data.values()[0]['xmlns']:
-            return data.values()[0]
+        forms = FormsByApplicationFilter.get_value(self.request, self.domain).values()
+        if len(forms) == 1 and forms[0]['xmlns']:
+            return forms[0]
+        non_fuzzy_forms = [form for form in forms if not form['is_fuzzy']]
+        if len(non_fuzzy_forms) == 1:
+            return non_fuzzy_forms[0]
 
     @property
     def headers(self):
