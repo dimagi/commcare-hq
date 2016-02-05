@@ -1,7 +1,18 @@
 {% extends "soil/file_download.html" %}
 {% load hq_shared_tags %}
+{% load i18n %}
+
 {% block extrahead %}
+    <link rel="stylesheet" href="{% new_static 'bootstrap/dist/css/bootstrap.min.css' %}" />
     <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
     <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
+    <script src="{% new_static 'bootstrap/dist/js/bootstrap.js' %}"></script>
     {{ block.super }}
+{% endblock %}
+
+{% block content %}
+    <div class="col-sm-12">
+        {{ block.super }}
+        <a href="{% url 'my_project_settings' domain %}" class="btn btn-primary">{% trans 'Return to Project Settings' %}</a>
+    </div>
 {% endblock %}

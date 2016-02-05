@@ -311,6 +311,7 @@ def server_up(req):
     else:
         return HttpResponse("success")
 
+
 def no_permissions(request, redirect_to=None, template_name="403.html"):
     """
     403 error handler.
@@ -396,6 +397,7 @@ def is_mobile_url(url):
     # Minor hack
     return ('reports/custom/mobile' in url)
 
+
 def logout(req):
     referer = req.META.get('HTTP_REFERER')
     domain = get_domain_from_url(urlparse(referer).path) if referer else None
@@ -413,9 +415,10 @@ def logout(req):
     else:
         return HttpResponseRedirect(reverse('login'))
 
+
 @login_and_domain_required
 def retrieve_download(req, domain, download_id, template="style/includes/file_download.html"):
-    return soil_views.retrieve_download(req, download_id, template)
+    return soil_views.retrieve_download(req, download_id, template, extra_context={'domain': domain})
 
 
 def dropbox_next_url(request, download_id):
@@ -613,11 +616,14 @@ def render_static(request, template):
 def eula(request):
     return render_static(request, "eula.html")
 
+
 def cda(request):
     return render_static(request, "cda.html")
 
+
 def apache_license(request):
     return render_static(request, "apache_license.html")
+
 
 def bsd_license(request):
     return render_static(request, "bsd_license.html")
@@ -982,6 +988,7 @@ class CRUDPaginatedViewMixin(object):
         """
         raise NotImplementedError("You must implement get_deleted_item_data")
 
+
 @login_required
 def quick_find(request):
     query = request.GET.get('q')
@@ -1018,6 +1025,7 @@ def osdd(request, template='osdd.xml'):
     response = render(request, template, {'url_base': get_url_base()})
     response['Content-Type'] = 'application/xml'
     return response
+
 
 @require_superuser
 def maintenance_alerts(request, template='style/bootstrap2/maintenance_alerts.html'):
