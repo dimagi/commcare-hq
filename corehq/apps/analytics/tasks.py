@@ -272,10 +272,11 @@ def track_periodic_data():
                                .run().hits
     # users_to_domains is a list of dicts
     time_users_to_domains_query = datetime.now()
-    domains_to_forms = FormES().terms_facet('domain', 'domain').size(0).run().facets.domain.counts_by_term()
+    domains_to_forms = FormES().terms_aggregation('domain', 'domain').size(0).run()\
+        .aggregations.domain.counts_by_bucket()
     time_domains_to_forms_query = datetime.now()
-    domains_to_mobile_users = UserES().mobile_users().terms_facet('domain', 'domain').size(0).run()\
-                                      .facets.domain.counts_by_term()
+    domains_to_mobile_users = UserES().mobile_users().terms_aggregation('domain', 'domain').size(0).run()\
+                                      .aggregations.domain.counts_by_bucket()
     time_domains_to_mobile_users_query = datetime.now()
 
     # For each web user, iterate through their domains and select the max number of form submissions and

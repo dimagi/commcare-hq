@@ -33,7 +33,7 @@ def _get_case_case_counts_by_owner(domain, datespan, case_types, is_total=False)
          .domain(domain)
          .opened_range(lte=datespan.enddate)
          .NOT(closed_range(lt=datespan.startdate))
-         .terms_facet('owner_id', 'owner_id')
+         .terms_aggregation('owner_id', 'owner_id')
          .size(0))
 
     if case_types:
@@ -45,7 +45,7 @@ def _get_case_case_counts_by_owner(domain, datespan, case_types, is_total=False)
             lte=datespan.enddate
         )
 
-    return case_query.run().facets.owner_id.counts_by_term()
+    return case_query.run().aggregations.owner_id.counts_by_bucket()
 
 
 def get_case_counts_closed_by_user(domain, datespan, case_types=None):
@@ -69,13 +69,13 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True):
                 lte=datespan.enddate.date(),
             )
         )
-        .terms_facet(user_field, 'by_user', size=100000)
+        .terms_aggregation(user_field, 'by_user')
         .size(1))
 
     if case_types:
         case_query = case_query.filter({"terms": {"type.exact": case_types}})
 
-    return case_query.run().facets.by_user.counts_by_term()
+    return case_query.run().aggregations.by_user.counts_by_bucket()
 
 
 def get_submission_counts_by_user(domain, datespan):
@@ -98,9 +98,9 @@ def _get_form_counts_by_user(domain, datespan, is_submission_time):
             .completed(gte=datespan.startdate.date(),
                        lte=datespan.enddate.date()))
     form_query = (form_query
-        .user_facet()
+        .user_aggregation()
         .size(1))
-    return form_query.run().facets.user.counts_by_term()
+    return form_query.run().aggregations.user.counts_by_bucket()
 
 
 def get_submission_counts_by_date(domain, user_ids, datespan, timezone):
@@ -130,12 +130,13 @@ def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission
 
     form_query = form_query.size(1)
 
-    results = form_query.run().facet('date_histogram', 'entries')
+    results = form_query.run().aggregations.date_histogram.buckets_list
+
     # Convert timestamp into timezone aware dateime. Must divide timestamp by 1000 since python's
     # fromtimestamp takes a timestamp in seconds, whereas elasticsearch's timestamp is in milliseconds
     results = map(
         lambda result:
-            (datetime.fromtimestamp(result['time'] / 1000, timezone).date().isoformat(), result['count']),
+            (datetime.fromtimestamp(result.key / 1000).date().isoformat(), result.doc_count),
         results,
     )
     return dict(results)

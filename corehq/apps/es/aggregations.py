@@ -32,12 +32,14 @@ method that returns a ``{bucket: count}`` dictionary, which is normally what you
 want.
 
 As of this writing, there's not much else developed, but it's pretty easy to
-add support for other facet types and more results processing
+add support for other aggregation types and more results processing
 """
 import re
 from collections import namedtuple
 
 import datetime
+
+from corehq.elastic import SIZE_LIMIT
 
 
 class AggregationResult(object):
@@ -80,6 +82,10 @@ class Aggregation(object):
 
 class BucketResult(AggregationResult):
     @property
+    def keys(self):
+        return [b['key'] for b in self.normalized_buckets]
+
+    @property
     def buckets(self):
         n_buckets = self.normalized_buckets
         buckets = namedtuple('buckets', [b['key'] for b in n_buckets])
@@ -101,7 +107,6 @@ class BucketResult(AggregationResult):
     def normalized_buckets(self):
         return self.raw_buckets
 
-    @property
     def counts_by_bucket(self):
         return {b['key']: b['doc_count'] for b in self.normalized_buckets}
 
@@ -124,6 +129,9 @@ class Bucket(object):
         if sub_aggregation:
             return sub_aggregation.parse_result(self.result)
 
+    def __repr__(self):
+        return "Bucket(key='{}', doc_count='{})".format(self.key, self.doc_count)
+
 
 class TermsAggregation(Aggregation):
     """
@@ -131,16 +139,18 @@ class TermsAggregation(Aggregation):
 
     :param name: aggregation name
     :param field: name of the field to bucket on
+    :param size:
     """
     type = "terms"
     result_class = BucketResult
 
-    def __init__(self, name, field):
+    def __init__(self, name, field, size=None):
         assert re.match(r'\w+$', name), \
             "Names must be valid python variable names, was {}".format(name)
         self.name = name
         self.body = {
             "field": field,
+            "size": size if size is not None else SIZE_LIMIT,
         }
 
 
@@ -265,3 +275,38 @@ class RangeAggregation(Aggregation):
 
         self.body["ranges"].append(range_)
         return self
+
+
+class HistogramResult(BucketResult):
+    def as_facet_result(self):
+        return [
+            {'time': b.key, 'count': b.doc_count}
+            for b in self.buckets_list
+        ]
+
+
+class DateHistogram(Aggregation):
+    """
+    Aggregate by date range.  This can answer questions like "how many forms
+    were created each day?".
+
+    This class can be instantiated by the ``ESQuery.date_histogram`` method.
+
+    :param name: what do you want to call this aggregation
+    :param datefield: the document's date field to look at
+    :param interval: the date interval to use: "year", "quarter", "month",
+        "week", "day", "hour", "minute", "second"
+    :param timezone: do bucketing using this time zone instead of UTC
+    """
+    type = "date_histogram"
+    result_class = HistogramResult
+
+    def __init__(self, name, datefield, interval, timezone=None):
+        self.name = name
+        self.body = {
+            'field': datefield,
+            'interval': interval,
+        }
+
+        if timezone:
+            self.body['time_zone'] = timezone
