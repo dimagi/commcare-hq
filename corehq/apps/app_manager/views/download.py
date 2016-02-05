@@ -254,7 +254,12 @@ def download_file(request, domain, app_id, path):
                 return download_file(request, domain, app_id, path)
             elif path in ('CommCare.jad', 'CommCare.jar'):
                 request.app.create_jadjar_from_build_files(save=True)
-                request.app.save(increment_version=False)
+                try:
+                    request.app.save(increment_version=False)
+                except ResourceConflict:
+                    # Likely that somebody tried to download the jad and jar
+                    # files for the first time simultaneously.
+                    pass
                 return download_file(request, domain, app_id, path)
             else:
                 try:
