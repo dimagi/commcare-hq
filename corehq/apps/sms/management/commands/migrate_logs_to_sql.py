@@ -105,6 +105,14 @@ class Command(BaseCommand):
         self.migrate_model(self.get_callback_couch_ids, ExpectedCallbackEventLog, errors)
         self.migrate_model(self.get_lastreadmessage_couch_ids, LastReadMessage, errors)
 
+        for error in errors:
+            print error
+
+        if len(errors) > 0:
+            print "ERROR: %s error(s) occurred during migration. Please investigate before continuing." % len(errors)
+        else:
+            print "No errors occurred during migration."
+
     def balance_model(self, get_couch_ids_method, sql_model):
         sql_count = sql_model.objects.count()
         # Unfortunately, there's not a better way to do this. Two of the couch models
