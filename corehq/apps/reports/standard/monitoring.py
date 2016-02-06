@@ -30,9 +30,10 @@ from corehq.apps.reports.standard import ProjectReportParametersMixin, \
 from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
 from corehq.apps.sofabed.dbaccessors import get_form_counts_by_user_xmlns
-from corehq.apps.sofabed.models import FormData, CaseData
+from corehq.apps.sofabed.models import FormData
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.dates import iso_string_to_datetime
@@ -1099,7 +1100,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     name = ugettext_noop("Worker Activity")
     description = ugettext_noop("Summary of form and case activity by user or group.")
     section_name = ugettext_noop("Project Reports")
-    num_avg_intervals = 3 # how many duration intervals we go back to calculate averages
+    num_avg_intervals = 3  # how many duration intervals we go back to calculate averages
     is_cacheable = True
 
     fields = [
@@ -1157,12 +1158,55 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return DataTablesHeader(*columns)
 
     @property
+    def group_ids(self):
+        return filter(None, self.request.GET.getlist('group'))
+
+    @property
+    @memoized
+    def users_by_group(self):
+        from corehq.apps.groups.models import Group
+
+        if not self.group_ids or self.request.GET.get('all_groups', 'off') == 'on':
+            groups = Group.get_reporting_groups(self.domain)
+        else:
+            groups = [Group.get(g) for g in self.group_ids]
+
+        user_dict = {}
+        for group in groups:
+            user_dict["%s|%s" % (group.name, group._id)] = self.get_all_users_by_domain(
+                group=group,
+                user_filter=tuple(self.default_user_filter),
+                simplified=True
+            )
+
+        return user_dict
+
+    def get_users_by_mobile_workers(self):
+        from corehq.apps.reports.util import _report_user_dict
+        user_dict = {}
+        for mw in self.mobile_worker_ids:
+            user_dict[mw] = _report_user_dict(CommCareUser.get_by_user_id(mw))
+
+        return user_dict
+
+    def get_admins_and_demo_users(self):
+        ufilters = [uf for uf in ['1', '2', '3'] if uf in self.request.GET.getlist('ufilter')]
+        return self.get_all_users_by_domain(
+            group=None,
+            user_filter=tuple(HQUserType.use_filter(ufilters)),
+            simplified=True
+        ) if ufilters else []
+
+    @property
     def users_to_iterate(self):
         if not self.group_ids:
             ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
             return ret
         else:
-            return self.combined_users
+            all_users = [user for sublist in self.users_by_group.values() for user in sublist]
+            all_users.extend([user for user in self.get_users_by_mobile_workers().values()])
+            all_users.extend([user for user in self.get_admins_and_demo_users()])
+            return dict([(user['user_id'], user) for user in all_users]).values()
 
     def es_last_submissions(self):
         """
