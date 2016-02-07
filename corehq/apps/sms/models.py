@@ -17,7 +17,6 @@ from dimagi.utils.couch.migration import (SyncCouchToSQLMixin,
     SyncSQLToCouchMixin)
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
-from casexml.apps.case.signals import case_post_save
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
     PhoneNumberInUseException, InvalidFormatException, VerifiedNumber,
     apply_leniency, BadSMSConfigException)
@@ -653,31 +652,36 @@ class ForwardingRule(Document):
 
 class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
 
-    def case_changed(self):
-        """
-        Syncs verified numbers with this case.
-        """
-        contact_phone_number = self.get_case_property("contact_phone_number")
-        contact_phone_number_is_verified = self.get_case_property("contact_phone_number_is_verified")
-        contact_backend_id = self.get_case_property("contact_backend_id")
-        contact_ivr_backend_id = self.get_case_property("contact_ivr_backend_id")
-        if ((contact_phone_number is None) or (contact_phone_number == "") or
-            (str(contact_phone_number) == "0") or self.closed or
-            self.doc_type.endswith(DELETED_SUFFIX)):
-            try:
-                self.delete_verified_number()
-            except Exception:
-                logging.exception("Could not delete verified number for owner %s" % self._id)
-        elif contact_phone_number_is_verified:
-            try:
-                self.save_verified_number(self.domain, contact_phone_number, True, contact_backend_id, ivr_backend_id=contact_ivr_backend_id, only_one_number_allowed=True)
-            except (PhoneNumberInUseException, InvalidFormatException):
-                try:
-                    self.delete_verified_number()
-                except:
-                    logging.exception("Could not delete verified number for owner %s" % self._id)
-            except Exception:
-                logging.exception("Could not save verified number for owner %s" % self._id)
+    def get_phone_info(self):
+        PhoneInfo = namedtuple(
+            'PhoneInfo',
+            [
+                'requires_entry',
+                'phone_number',
+                'sms_backend_id',
+                'ivr_backend_id',
+            ]
+        )
+        contact_phone_number = self.get_case_property('contact_phone_number')
+        contact_phone_number = apply_leniency(contact_phone_number)
+        contact_phone_number_is_verified = self.get_case_property('contact_phone_number_is_verified')
+        contact_backend_id = self.get_case_property('contact_backend_id')
+        contact_ivr_backend_id = self.get_case_property('contact_ivr_backend_id')
+
+        requires_entry = (
+            contact_phone_number and
+            contact_phone_number != '0' and
+            not self.closed and
+            not self.doc_type.endswith(DELETED_SUFFIX) and
+            # For legacy reasons, any truthy value here suffices
+            contact_phone_number_is_verified
+        )
+        return PhoneInfo(
+            requires_entry,
+            contact_phone_number,
+            contact_backend_id,
+            contact_ivr_backend_id
+        )
 
     def get_time_zone(self):
         return self.get_case_property("time_zone")
@@ -702,17 +706,6 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
     class Meta:
         # This is necessary otherwise couchdbkit will confuse the sms app with casexml
         app_label = "sms"
-
-
-def case_changed_receiver(sender, case, **kwargs):
-    # the primary purpose of this function is to add/remove verified
-    # phone numbers from the case. if the case doesn't have any verified
-    # numbers associated with it this is basically a no-op
-    contact = CommConnectCase.wrap_as_commconnect_case(case)
-    contact.case_changed()
-
-
-case_post_save.connect(case_changed_receiver, CommCareCase)
 
 
 class PhoneNumber(models.Model):
@@ -2296,3 +2289,6 @@ class MigrationStatus(models.Model):
             return True
         except cls.DoesNotExist:
             return False
+
+
+from corehq.apps.sms.signals import *

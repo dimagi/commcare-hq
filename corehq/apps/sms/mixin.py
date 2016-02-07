@@ -55,6 +55,7 @@ class VerifiedNumber(Document):
     backend_id      = StringProperty() # the name of a MobileBackend (can be domain-level or system-level)
     ivr_backend_id  = StringProperty() # points to a MobileBackend
     verified        = BooleanProperty()
+    contact_last_modified = DateTimeProperty()
 
     def __init__(self, *args, **kwargs):
         super(VerifiedNumber, self).__init__(*args, **kwargs)
@@ -225,9 +226,13 @@ class VerifiedNumber(Document):
 
     def save(self, *args, **kwargs):
         self._clear_caches()
-        del self._old_phone_number
-        del self._old_owner_id
+        self._old_phone_number = self.phone_number
+        self._old_owner_id = self.owner_id
         return super(VerifiedNumber, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self._clear_caches()
+        return super(VerifiedNumber, self).delete(*args, **kwargs)
 
 
 def add_plus(phone_number):
@@ -323,10 +328,7 @@ class CommCareMobileContactMixin(object):
         raises  PhoneNumberInUseException if the phone number is already in use by another contact
         """
         self.validate_number_format(phone_number)
-        v = VerifiedNumber.view("phone_numbers/verified_number_by_number",
-            key=phone_number,
-            include_docs=True
-        ).one()
+        v = VerifiedNumber.by_phone(phone_number, include_pending=True)
         if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self._id):
             raise PhoneNumberInUseException("Phone number is already in use.")
 

@@ -2,7 +2,8 @@ import math
 from datetime import datetime, timedelta
 from celery.task import task
 from time import sleep
-from corehq.apps.sms.mixin import VerifiedNumber
+from corehq.apps.sms.mixin import (VerifiedNumber, InvalidFormatException,
+    PhoneNumberInUseException)
 from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING, SMS,
     PhoneLoadBalancingMixin)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
@@ -14,7 +15,7 @@ from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import soft_delete_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.couch import release_lock
+from dimagi.utils.couch import release_lock, CriticalSection
 from dimagi.utils.rate_limit import rate_limit
 from threading import Thread
 
@@ -230,3 +231,65 @@ def delete_phone_numbers_for_owners(owner_ids):
             include_docs=True
         )
         soft_delete_docs([row['doc'] for row in results], VerifiedNumber)
+
+
+@task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
+      default_retry_delay=5 * 60, max_retries=10, bind=True)
+def sync_case_phone_number(self, contact_case):
+    try:
+        _sync_case_phone_number(contact_case)
+    except Exception as e:
+        self.retry(exc=e)
+
+
+def _phone_number_is_same(phone_number, phone_info):
+    return (
+        phone_number.phone_number == phone_info.phone_number and
+        phone_number.backend_id == phone_info.sms_backend_id and
+        phone_number.ivr_backend_id == phone_info.ivr_backend_id and
+        phone_number.verified
+    )
+
+
+def _sync_case_phone_number(contact_case):
+    phone_info = contact_case.get_phone_info()
+
+    lock_keys = ['sync-case-phone-number-for-%s' % contact_case._id]
+    if phone_info.phone_number:
+        lock_keys.append('verifying-phone-number-%s' % phone_info.phone_number)
+
+    with CriticalSection(lock_keys):
+        phone_number = contact_case.get_verified_number()
+        if (
+            phone_number and
+            phone_number.contact_last_modified and
+            phone_number.contact_last_modified >= contact_case.server_modified_on
+        ):
+            return
+
+        if phone_info.requires_entry:
+            try:
+                contact_case.verify_unique_number(phone_info.phone_number)
+            except (InvalidFormatException, PhoneNumberInUseException):
+                if phone_number:
+                    phone_number.delete()
+                return
+
+            if not phone_number:
+                phone_number = VerifiedNumber(
+                    domain=contact_case.domain,
+                    owner_doc_type=contact_case.doc_type,
+                    owner_id=contact_case._id,
+                )
+            elif _phone_number_is_same(phone_number, phone_info):
+                return
+
+            phone_number.phone_number = phone_info.phone_number
+            phone_number.backend_id = phone_info.sms_backend_id
+            phone_number.ivr_backend_id = phone_info.ivr_backend_id
+            phone_number.verified = True
+            phone_number.contact_last_modified = contact_case.server_modified_on
+            phone_number.save()
+        else:
+            if phone_number:
+                phone_number.delete()
