@@ -18,6 +18,7 @@ from corehq.apps.reminders.util import enqueue_reminder_directly, get_verified_n
 from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.smsforms.app import submit_unfinished_form
+from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from dimagi.utils.couch import LockableMixIn, CriticalSection
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -1291,8 +1292,13 @@ class CaseReminderHandler(Document):
         return list(SQLLocation.objects.filter(location_id__in=self.location_ids,
             is_archived=False))
 
+    def clear_caches(self):
+        self.get_handler_ids.clear(CaseReminderHandler, self.domain, reminder_type_filter=None)
+        self.get_handler_ids.clear(CaseReminderHandler, self.domain, reminder_type_filter=self.reminder_type)
+
     def save(self, **params):
         from corehq.apps.reminders.tasks import process_reminder_rule
+        self.clear_caches()
         self.check_state()
         schedule_changed = params.pop("schedule_changed", False)
         prev_definition = params.pop("prev_definition", None)
@@ -1373,6 +1379,7 @@ class CaseReminderHandler(Document):
         return [row['id'] for row in result]
 
     @classmethod
+    @quickcache(['domain', 'reminder_type_filter'], timeout=60 * 60)
     def get_handler_ids(cls, domain, reminder_type_filter=None):
         result = cls.view('reminders/handlers_by_reminder_type',
             startkey=[domain],
