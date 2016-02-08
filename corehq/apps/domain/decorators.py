@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden, HttpResponse
+from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden, HttpResponse, JsonResponse
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
 from django.utils.http import urlquote
@@ -206,13 +206,10 @@ def two_factor_check(api_key):
         def _inner(request, domain, *args, **kwargs):
             if not api_key and Domain.get_by_name(domain).two_factor_auth:
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
-                print token
                 if token and match_token(request.user, token):
                     return fn(request, *args, **kwargs)
                 else:
-                    return HttpResponse(json.dumps({"error": "must send X-CommcareHQ-OTP header"}),
-                                        content_type='application/json',
-                                        status=401)
+                    return JsonResponse({"error": "must send X-CommcareHQ-OTP header"}, status=401)
             return fn(request, domain, *args, **kwargs)
         return _inner
     return _outer
