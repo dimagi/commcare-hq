@@ -11,7 +11,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.importer.tasks import CASEBLOCK_CHUNKSIZE
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -40,7 +39,7 @@ def indexed_facilities():
             cati_user = case_sharing_group.metadata.get('cati_user', None)
             fida_user = case_sharing_group.metadata.get('fida_user', None)
             current_domain_index[facility.facility_id] = {
-                "cati": cati_user, 
+                "cati": cati_user,
                 "fida": fida_user
             }
         facility_index[domain] = current_domain_index
@@ -88,19 +87,10 @@ get_none_or_value = lambda _obj, _attr: getattr(_obj, _attr) if (hasattr(_obj, _
 )
 def new_update_case_properties():
     """
-    Submits case blocks in chunks of up to importer CASEBLOCK_CHUNKSIZE
+    Submit one case-block per case update deliberately instead of bulk update so that
+    any single case update can be undone
     """
-    case_blocks = []
-    last_domain = None
     for case, domain in iter_cases_to_modify():
-        if not last_domain:
-            last_domain = domain
-
-        if len(case_blocks) == CASEBLOCK_CHUNKSIZE or domain != last_domain:
-            submit_case_blocks(case_blocks, last_domain)
-            last_domain = domain
-            case_blocks = []
-
         kwargs = {
             'create': False,
             'case_id': case['case_id'],
@@ -109,10 +99,7 @@ def new_update_case_properties():
         }
         if case.get('owner_id', None):
             kwargs['owner_id'] = case['owner_id']
-        case_blocks.append(ElementTree.tostring(CaseBlock(**kwargs).as_xml()))
-
-    if case_blocks:
-        submit_case_blocks(case_blocks, last_domain)
+        submit_case_blocks([ElementTree.tostring(CaseBlock(**kwargs).as_xml())], domain)
 
 
 def iter_cases_to_modify():
