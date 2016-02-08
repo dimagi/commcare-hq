@@ -6,8 +6,6 @@ import logging
 from datetime import datetime, timedelta, time
 import re
 import json
-from couchdbkit import ResourceNotFound
-import pytz
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.db import transaction
@@ -19,7 +17,6 @@ from corehq import privileges
 from corehq.apps.hqadmin.views import BaseAdminSectionView
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
-from corehq.apps.reminders.util import can_use_survey_reminders
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege_plaintext_response
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS, ApiUser
 from corehq.apps.commtrack.models import AlertConfig
@@ -34,8 +31,8 @@ from corehq.apps.sms.api import (
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
-from corehq.apps.style.decorators import use_bootstrap3, use_timepicker, use_typeahead, use_select2, use_jquery_ui, \
-    upgrade_knockout_js
+from corehq.apps.style.decorators import use_bootstrap3, use_timepicker, use_typeahead, use_select2, use_datatables, \
+    upgrade_knockout_js, use_jquery_ui
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
@@ -338,8 +335,7 @@ def send_to_recipients(request, domain):
         logged_event.completed()
 
         def comma_reminder():
-            messages.error(request, _("Please remember to separate recipients"
-                " with a comma."))
+            messages.error(request, _("Please remember to separate recipients with a comma."))
 
         if empty_groups or failed_numbers or unknown_usernames or no_numbers:
             if empty_groups:
@@ -499,9 +495,10 @@ def list_forwarding_rules(request, domain):
 
     context = {
         "domain" : domain,
-        "forwarding_rules" : forwarding_rules,
+        "forwarding_rules": forwarding_rules,
     }
     return render(request, "sms/list_forwarding_rules.html", context)
+
 
 @login_and_domain_required
 @require_superuser
@@ -531,11 +528,12 @@ def add_forwarding_rule(request, domain, forwarding_rule_id=None):
         form = ForwardingRuleForm(initial=initial)
 
     context = {
-        "domain" : domain,
-        "form" : form,
-        "forwarding_rule_id" : forwarding_rule_id,
+        "domain": domain,
+        "form": form,
+        "forwarding_rule_id": forwarding_rule_id,
     }
     return render(request, "sms/add_forwarding_rule.html", context)
+
 
 @login_and_domain_required
 @require_superuser
@@ -625,13 +623,17 @@ class GlobalBackendMap(BaseAdminSectionView):
         return self.get(request, *args, **kwargs)
 
 
-@require_permission(Permissions.edit_data)
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def chat_contacts(request, domain):
-    context = {
-        "domain" : domain,
-    }
-    return render(request, "sms/chat_contacts.html", context)
+class ChatContactsView(BaseMessagingSectionView):
+    urlname = 'chat_contacts'
+    template_name = 'sms/chat_contacts.html'
+    page_title = _('Chat over SMS')
+
+    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_bootstrap3
+    @use_datatables
+    def dispatch(self, *args, **kwargs):
+        return super(ChatContactsView, self).dispatch(*args, **kwargs)
 
 
 def get_case_contact_info(domain_obj, case_ids):
@@ -747,7 +749,7 @@ def chat_contact_list(request, domain):
         'iTotalDisplayRecords': filtered_records,
     }
 
-    return HttpResponse(json.dumps(result))
+    return HttpResponse(json.dumps(result), content_type="application/json")
 
 
 @require_permission(Permissions.edit_data)

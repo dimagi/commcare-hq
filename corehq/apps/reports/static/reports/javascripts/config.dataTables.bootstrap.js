@@ -9,6 +9,7 @@ function HQReportDataTables(options) {
     self.startAtRowNum = options.startAtRowNum || 0;
     self.showAllRowsOption = options.showAllRowsOption || false;
     self.aoColumns = options.aoColumns;
+    self.aoColumnDefs = options.aoColumnDefs;
     self.autoWidth = (options.autoWidth != undefined) ? options.autoWidth : true;
     self.defaultSort = (options.defaultSort != undefined) ? options.defaultSort : true;
     self.customSort = options.customSort || null;
@@ -84,12 +85,16 @@ function HQReportDataTables(options) {
             var params = {
                 sDom: dataTablesDom,
                 bPaginate: self.show_pagination,
-                sPaginationType: self.paginationType,
                 iDisplayLength: self.defaultRows,
                 bAutoWidth: self.autoWidth,
                 sScrollX: "100%",
                 bSort: self.defaultSort
             };
+
+            if(!self.useBootstrap3) {
+                params.sPaginationType = self.paginationType;
+            }
+
             if (self.aaSorting !== null || self.customSort !== null) {
                 params.aaSorting = self.aaSorting || self.customSort;
             }
@@ -176,25 +181,31 @@ function HQReportDataTables(options) {
 
             if(self.aoColumns)
                 params.aoColumns = self.aoColumns;
+            if(self.aoColumnDefs)
+                params.aoColumnDefs = self.aoColumnDefs;
 
             var datatable = $(this).dataTable(params);
             if (!self.datatable)
                 self.datatable = datatable;
 
-            if (self.fixColumns && self.useBootstrap3) {
-                new $.fn.dataTable.FixedColumns(datatable, {
-                    iLeftColumns: self.fixColsNumLeft,
-                    iLeftWidth: self.fixColsWidth
-                });
-            } else if (self.fixColumns) {
-                new FixedColumns(datatable, {
-                    iLeftColumns: self.fixColsNumLeft,
-                    iLeftWidth: self.fixColsWidth
-                });
+            if (self.fixColumns) {
+                if (self.useBootstrap3) {
+                    new $.fn.dataTable.FixedColumns(datatable, {
+                        iLeftColumns: self.fixColsNumLeft,
+                        iLeftWidth: self.fixColsWidth
+                    });
+                } else {
+                    new FixedColumns(datatable, {
+                        iLeftColumns: self.fixColsNumLeft,
+                        iLeftWidth: self.fixColsWidth
+                    });
+                }
             }
+
             $(window).on('resize', function () {
                 datatable.fnAdjustColumnSizing();
             });
+
             if (self.useBootstrap3) {
                 $('.dataTables_paginate a').on('click', function () {
                     datatable.fnAdjustColumnSizing();
@@ -214,11 +225,19 @@ function HQReportDataTables(options) {
 
                 $dataTablesFilter.append($inputField);
                 $inputField.attr("id", "dataTables-filter-box");
-                $inputField.addClass("search-query").addClass((self.useBootstrap3) ? 'form-control' : 'input-medium');
                 $inputField.attr("placeholder", "Search...");
+                $inputField.addClass("search-query");
+
+                if (self.useBootstrap3) {
+                    $dataTablesFilter.addClass("col-sm-2 pull-right");
+                    $inputLabel.wrap("<div class='col-sm-2'></div>");
+                    $inputField.addClass("form-control").wrap("<div class='col-sm-10'></div>");
+                } else {
+                    $inputField.addClass("input-medium");
+                }
 
                 $inputLabel.attr("for", "dataTables-filter-box");
-                $inputLabel.html($('<i />').addClass("icon-search"));
+                $inputLabel.html($('<i />').addClass(self.useBootstrap3 ? "fa fa-search" : "icon-search"));
             }
 
             var $dataTablesLength = $(".dataTables_length"),
@@ -230,13 +249,21 @@ function HQReportDataTables(options) {
                 $dataTablesLength.append($selectField);
                 $selectLabel.remove();
                 $selectField.children().append(" per page");
+
                 if (self.showAllRowsOption)
                     $selectField.append($('<option value="-1" />').text("All Rows"));
-                $selectField.addClass((self.useBootstrap3) ? 'form-control' : 'input-medium');
                 $selectField.on("change", function(){
                     var selected_value = $selectField.find('option:selected').val();
                     window.analytics.usage("Reports", "Changed number of items shown", selected_value);
                 });
+
+                if (self.useBootstrap3) {
+                    $dataTablesLength.addClass('col-sm-4');
+                    $dataTablesInfo.addClass('col-sm-4');
+                    $selectField.addClass('form-control');
+                } else {
+                    $selectField.addClass('input-medium');
+                }
             }
             $(".dataTables_length select").change(function () {
                 $(self.dataTableElem).trigger('hqreport.tabular.lengthChange', $(this).val());

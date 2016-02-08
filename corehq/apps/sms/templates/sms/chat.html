@@ -22,8 +22,8 @@
         {% compress css %}
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
         {% endcompress %}
-        <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-        <script src="{% static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
+        <script src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
+        <script src="{% new_static 'hqstyle/js/jquery/jquery-migrate-1.2.1.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'knockout-2.3.0-legacy/knockout.js' %}"></script>
         <style>
             html, body {
@@ -123,7 +123,7 @@
                 </tbody>
             </table>
             <div id="message_history_choices">
-                <span>Message History</span>
+                <span>{% trans 'Message History' %}</span>
                 <span data-bind="foreach: history_choices">
                     &#8901; <span data-bind="text: description, css: {message_history_choice_selected: selected(), message_history_choice: !selected()}, click: function(data, event) {$parent.update_history_choice($index(), true);}"></span>
                 </span>
@@ -178,7 +178,7 @@
                         } else {
                             self.seen_text(String.fromCharCode(9830));
                         }
-                    }
+                    };
                     self.set_seen_text(seen);
                 }
                 function ChatWindowViewModel() {
@@ -232,7 +232,7 @@
                                 entry.selected(false);
                             }
                         }
-                    }
+                    };
                     self.update_history_choice(0, false);
                     
                     self.update_messages = function(set_next_timeout) {
@@ -301,7 +301,7 @@
                                     self.update_messages_timeout_handle = setTimeout(self.update_messages_timeout, time_to_wait);
                                 }
                                 self.update_in_progress = false;
-                            },
+                            }
                         });
                     };
                     self.send_message = function() {
@@ -415,7 +415,7 @@
                             type : "GET",
                             async : false,
                             data : {
-                                contact_id : "{{ contact_id }}",
+                                contact_id : "{{ contact_id }}"
                             },
                             dataType : "json",
                             success : function(data, textStatus, jqXHR) {
@@ -430,7 +430,7 @@
                                     //we'll just treat everything as not having been read yet
                                     self.last_read_message_utc_timestamp = null;
                                 }
-                            },
+                            }
                         });
                     };
                     setTimeout(function() {

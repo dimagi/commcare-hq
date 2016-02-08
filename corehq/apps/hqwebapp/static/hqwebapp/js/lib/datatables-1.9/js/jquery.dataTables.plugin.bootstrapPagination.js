@@ -11,7 +11,7 @@ $.fn.dataTableExt.oApi.fnPagingInfo = function ( oSettings )
         "iPage":          Math.ceil( oSettings._iDisplayStart / oSettings._iDisplayLength ),
         "iTotalPages":    Math.ceil( oSettings.fnRecordsDisplay() / oSettings._iDisplayLength )
     };
-}
+};
 
 /* Bootstrap style pagination control */
 $.extend( $.fn.dataTableExt.oPagination, {
