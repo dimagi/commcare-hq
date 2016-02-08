@@ -34,6 +34,8 @@ HUBSPOT_APP_TEMPLATE_FORM_ID = "91f9b1d2-934d-4e7a-997e-e21e93d36662"
 HUBSPOT_CLICKED_DEPLOY_FORM_ID = "c363c637-d0b1-44f3-9d73-f34c85559f03"
 HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID = "619daf02-e043-4617-8947-a23e4589935a"
 HUBSPOT_INVITATION_SENT_FORM = "5aa8f696-4aab-4533-b026-bd64c7e06942"
+HUBSPOT_NEW_USER_INVITE_FORM = "3e275361-72be-4e1d-9c68-893c259ed8ff"
+HUBSPOT_EXISTING_USER_INVITE_FORM = "7533717e-3095-4072-85ff-96b139bcb147"
 HUBSPOT_COOKIE = 'hubspotutk'
 
 
@@ -221,6 +223,16 @@ def track_created_new_project_space_on_hubspot(webuser, cookies, meta):
 @task(queue="background_queue", acks_late=True, ignore_result=True)
 def track_sent_invite_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_INVITATION_SENT_FORM, webuser, cookies, meta)
+
+
+@task(queue="background_queue", acks_late=True, ignore_result=True)
+def track_existing_user_accepted_invite_on_hubspot(webuser, cookies, meta):
+    _send_form_to_hubspot(HUBSPOT_INVITATION_SENT_FORM, webuser, cookies, meta)
+
+
+@task(queue="background_queue", acks_late=True, ignore_result=True)
+def track_new_user_accepted_invite_on_hubspot(webuser, cookies, meta):
+    _send_form_to_hubspot(HUBSPOT_NEW_USER_INVITE_FORM, webuser, cookies, meta)
 
 
 def track_workflow(email, event, properties=None):
