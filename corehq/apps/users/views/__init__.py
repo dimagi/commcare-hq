@@ -680,7 +680,7 @@ class UserInvitationView(object):
                                    "New User Accepted a project invitation",
                                    {"New User Accepted a project invitation": "yes"})
                     meta = get_meta(request)
-                    track_new_user_accepted_invite_on_hubspot(reqeust.couch_user, request.COOKIES, meta)
+                    track_new_user_accepted_invite_on_hubspot(request.couch_user, request.COOKIES, meta)
                     return HttpResponseRedirect(reverse("domain_homepage", args=[invitation.domain]))
             else:
                 if CouchUser.get_by_username(invitation.email):
