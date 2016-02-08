@@ -15,10 +15,15 @@ Exports.Constants.EXPORT_FORMATS = {
     XLS: 'xls',
     XLSX: 'xlsx'
 };
+Exports.Constants.TRANSFORMS = {
+    DEID_ID: 'deid_id',
+    DEID_DATE: 'deid_date',
+    DATE: 'transform_date'
+};
 Exports.Constants.DEID_OPTIONS = {
     NONE: null,
-    ID: 'deid_id',
-    DATE: 'deid_date'
+    ID: Exports.Constants.TRANSFORMS.DEID_ID,
+    DATE: Exports.Constants.TRANSFORMS.DEID_DATE
 };
 Exports.Constants.ANALYTICS_EVENT_CATEGORIES = {
     'form': 'Form Exports',
