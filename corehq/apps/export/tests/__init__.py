@@ -5,3 +5,5 @@ from corehq.apps.export.tests.test_export_instance import *
 from corehq.apps.export.tests.test_export_item import *
 from corehq.apps.export.tests.test_export_column import *
 from corehq.apps.export.tests.test_dbaccessors import *
+from corehq.apps.export.tests.test_get_export_file import *
+from corehq.apps.export.tests.test_export_filters import *

@@ -13,8 +13,6 @@ class AppPillow(AliasedElasticPillow):
 
     document_class = ApplicationBase
     couch_filter = "app_manager/all_apps"
-    es_host = settings.ELASTICSEARCH_HOST
-    es_port = settings.ELASTICSEARCH_PORT
     es_timeout = 60
     es_alias = "hqapps"
     es_type = "app"

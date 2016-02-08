@@ -9,7 +9,6 @@ from unittest import TestCase, SkipTest
 from collections import namedtuple
 from contextlib import contextmanager
 
-from fakecouch import FakeCouchDb
 from functools import wraps
 from django.conf import settings
 import sys
@@ -137,6 +136,7 @@ def mock_out_couch(views=None, docs=None):
     You can optionally pass default return values for specific views and doc
     gets.  See the FakeCouchDb docstring for more specifics.
     """
+    from fakecouch import FakeCouchDb
     db = FakeCouchDb(views=views, docs=docs)
     def _get_db(*args):
         return db
@@ -305,6 +305,7 @@ def get_form_ready_to_save(metadata, is_db_test=False):
             Attachment(name='form.xml', raw_content=form_xml, content_type='text/xml')
         ])
     wrapped_form.received_on = metadata.received_on
+    wrapped_form.app_id = metadata.app_id
     return wrapped_form
 
 

@@ -25,3 +25,28 @@ def _get_latest_export_schema(cls, key):
         descending=True,
     ).first()
     return cls.wrap(result['doc']) if result else None
+
+
+def get_form_export_instances(domain):
+    from .models import FormExportInstance
+
+    key = [domain, 'FormExportInstance']
+    return _get_export_instance(FormExportInstance, key)
+
+
+def get_case_export_instances(domain):
+    from .models import CaseExportInstance
+
+    key = [domain, 'CaseExportInstance']
+    return _get_export_instance(CaseExportInstance, key)
+
+
+def _get_export_instance(cls, key):
+    results = cls.get_db().view(
+        'export_instances_by_domain/view',
+        startkey=key,
+        endkey=key + [{}],
+        include_docs=True,
+        reduce=False,
+    ).all()
+    return [cls.wrap(result['doc']) for result in results]

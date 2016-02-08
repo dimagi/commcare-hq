@@ -6,7 +6,6 @@ from django.test import TestCase
 from corehq.apps.hqadmin.dbaccessors import get_all_forms_in_all_domains
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from couchforms.models import XFormInstance
-from corehq.apps.sofabed.dbaccessors import get_form_counts_by_user_xmlns
 from corehq.apps.sofabed.models import FormData
 
 
@@ -75,63 +74,3 @@ class FormDataTestCase(TestCase):
 
 def utc_date(y, m, d):
     return datetime(y, m, d, tzinfo=pytz.UTC)
-
-
-class FormDataQueryTest(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.form_data = []
-        for received_on, time_end, xmlns, user_id in [
-            (utc_date(2015, 2, 5), utc_date(2015, 1, 24), 'form1', 'user1'),
-            (utc_date(2015, 2, 8), utc_date(2015, 2, 7), 'form1', 'user1'),
-            (utc_date(2015, 2, 8), utc_date(2015, 2, 7), 'form2', 'user1'),
-            (utc_date(2015, 2, 8), utc_date(2015, 2, 7), 'form1', 'user2'),
-            (utc_date(2015, 2, 28), utc_date(2015, 2, 1), 'form1', 'user2'),
-        ]:
-            cls.form_data.append(FormData.objects.create(
-                domain='test-domain',
-                received_on=received_on,
-                time_end=time_end,
-                xmlns=xmlns,
-                user_id=user_id,
-                app_id='app_id',
-                time_start=time_end,
-                instance_id=uuid.uuid4().hex,
-                duration=3,
-            ))
-
-    @classmethod
-    def tearDownClass(cls):
-        for form_datum in cls.form_data:
-            form_datum.delete()
-
-    def test_form_counts_by_submission_time(self):
-        start, end = utc_date(2015, 2, 1), utc_date(2015, 3, 1)
-        counts = get_form_counts_by_user_xmlns('test-domain', start, end)
-        self.assertEqual(counts[('user1', 'form1', 'app_id')], 2)
-        self.assertEqual(counts[('user1', 'form2', 'app_id')], 1)
-        self.assertEqual(counts[('user2', 'form1', 'app_id')], 2)
-        self.assertEqual(counts[('user2', 'form2', 'app_id')], 0)
-
-    def test_form_counts_by_completion_time(self):
-        start, end = utc_date(2015, 2, 1), utc_date(2015, 3, 1)
-        counts = get_form_counts_by_user_xmlns('test-domain', start, end,
-                                               by_submission_time=False)
-        self.assertEqual(counts[('user1', 'form1', 'app_id')], 1)
-        self.assertEqual(counts[('user1', 'form2', 'app_id')], 1)
-        self.assertEqual(counts[('user2', 'form1', 'app_id')], 2)
-        self.assertEqual(counts[('user2', 'form2', 'app_id')], 0)
-
-    def test_specific_users(self):
-        start, end = utc_date(2015, 2, 1), utc_date(2015, 3, 1)
-        counts = get_form_counts_by_user_xmlns('test-domain', start, end,
-                                               user_ids=['user1'])
-        self.assertEqual(counts[('user1', 'form1', 'app_id')], 2)
-        self.assertEqual(counts[('user2', 'form1', 'app_id')], 0)
-
-    def test_specific_xmlnss(self):
-        start, end = utc_date(2015, 2, 1), utc_date(2015, 3, 1)
-        counts = get_form_counts_by_user_xmlns('test-domain', start, end,
-                                               xmlnss=['form1'])
-        self.assertEqual(counts[('user1', 'form1', 'app_id')], 2)
-        self.assertEqual(counts[('user1', 'form2', 'app_id')], 0)

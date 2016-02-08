@@ -24,7 +24,7 @@ Exports.ViewModels.ExportInstance.prototype.getFormatOptionText = function(forma
 };
 
 Exports.ViewModels.ExportInstance.prototype.isNew = function() {
-    return !!ko.utils.unwrapObservable(self._id);
+    return !ko.utils.unwrapObservable(this._id);
 };
 
 Exports.ViewModels.ExportInstance.prototype.getSaveText = function() {
@@ -37,37 +37,39 @@ Exports.ViewModels.ExportInstance.prototype.save = function() {
 
     self.saveState(Exports.Constants.SAVE_STATES.SAVING);
     serialized = self.toJS();
-    $.post(self.saveUrl, serialized)
+    $.post(self.saveUrl, JSON.stringify(serialized))
         .success(function(data) {
-            var eventCategory;
-
-            self.saveState(Exports.Constants.SAVE_STATES.SUCCESS);
-            self.recordSaveAnalytics();
-
-            if (self.isNew()) {
-                eventCategory = Exports.Utils.getEventCategory(self.type());
-                ga_track_event(eventCategory, 'Custom export creation', '', {
-                    hitCallback: Exports.Utils.redirect.bind(null, data.redirect)
-                });
-            } else {
+            self.recordSaveAnalytics(function() {
+                self.saveState(Exports.Constants.SAVE_STATES.SUCCESS);
                 Exports.Utils.redirect(data.redirect);
-            }
+            });
         })
         .fail(function(response) {
             self.saveState(Exports.Constants.SAVE_STATES.ERROR);
         });
 };
 
-Exports.ViewModels.ExportInstance.prototype.recordSaveAnalytics = function() {
-    var analyticsAction = self.is_daily_saved_export() ? 'Saved' : 'Regular',
-        analyticsExportType = _.capitalize(self.type());
+Exports.ViewModels.ExportInstance.prototype.recordSaveAnalytics = function(callback) {
+    var analyticsAction = this.is_daily_saved_export() ? 'Saved' : 'Regular',
+        analyticsExportType = _.capitalize(this.type()),
+        args,
+        eventCategory;
 
     analytics.usage("Create Export", analyticsExportType, analyticsAction);
-    if (self.export_format === Exports.Constants.EXPORT_FORMATS.HTML) {
-        analytics.usage("Create Export", analyticsExportType, 'Excel Dashboard');
+    if (this.export_format === Exports.Constants.EXPORT_FORMATS.HTML) {
+        args = ["Create Export", analyticsExportType, 'Excel Dashboard'];
+        // If it's not new then we have to add the callback in to redirect
+        if (!this.isNew()) {
+            args.push(callback);
+        }
+        analytics.usage.apply(null, args);
     }
-    if (self.isNew()) {
-        analytics.workflow("Clicked 'Create' in export edit page");
+    if (this.isNew()) {
+        eventCategory = Exports.Constants.ANALYTICS_EVENT_CATEGORIES[this.type()];
+        analytics.usage(eventCategory, 'Custom export creation', '');
+        analytics.workflow("Clicked 'Create' in export edit page", callback);
+    } else if (this.export_format !== Exports.Constants.EXPORT_FORMATS.HTML) {
+        callback();
     }
 };
 
@@ -131,7 +133,7 @@ Exports.ViewModels.TableConfiguration.prototype.selectNone = function(table) {
 };
 
 Exports.ViewModels.TableConfiguration.mapping = {
-    include: ['name', 'path', 'columns', 'selected'],
+    include: ['name', 'path', 'columns', 'selected', 'display_name'],
     columns: {
         create: function(options) {
             return new Exports.ViewModels.ExportColumn(options.data);

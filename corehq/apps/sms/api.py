@@ -418,7 +418,7 @@ def process_sms_registration(msg):
 
 def incoming(phone_number, text, backend_api, timestamp=None,
              domain_scope=None, backend_message_id=None, delay=True,
-             backend_attributes=None, raw_text=None):
+             backend_attributes=None, raw_text=None, backend_id=None):
     """
     entry point for incoming sms
 
@@ -441,6 +441,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
         text=text,
         domain_scope=domain_scope,
         backend_api=backend_api,
+        backend_id=backend_id,
         backend_message_id=backend_message_id,
         raw_text=raw_text,
     )

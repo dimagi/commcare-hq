@@ -1,13 +1,16 @@
-import json
 import datetime
+import json
+
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ungettext
+
+from couchexport.models import SavedExportSchema
+
 from corehq import privileges
 from corehq.apps.accounting.utils import (
     get_active_reminders_by_domain_name,
     log_accounting_error,
-    log_accounting_info,
 )
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
@@ -17,48 +20,36 @@ from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
 from corehq.const import USER_DATE_FORMAT
-from couchexport.models import SavedExportSchema
-from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
-
-
-LATER_SUBSCRIPTION_NOTIFICATION = 'later_subscription'
 
 
 class BaseModifySubscriptionHandler(object):
-    supported_privileges = []
-    action_type = "base"
-
-    def __init__(self, domain, new_plan_version, changed_privs, verbose=False,
-                 date_start=None, web_user=None):
-        self.web_user = web_user
-        self.verbose = verbose
+    def __init__(self, domain, new_plan_version, changed_privs, date_start=None):
+        self.domain = domain if isinstance(domain, Domain) else Domain.get_by_name(domain)
         self.date_start = date_start or datetime.date.today()
-        if isinstance(changed_privs, set):
-            changed_privs = list(changed_privs)
-        if not isinstance(domain, Domain):
-            domain = Domain.get_by_name(domain)
-        self.domain = domain
-
-        # plan dependent privilege
-        changed_privs.append(privileges.MOBILE_WORKER_CREATION)
-
-        # check to make sure that no subscriptions are scheduled to
-        # start in the future
-        changed_privs.append(LATER_SUBSCRIPTION_NOTIFICATION)
-
-        self.privileges = filter(lambda x: x in self.supported_privileges, changed_privs)
         self.new_plan_version = new_plan_version
 
+        self.privileges = filter(lambda x: x in self.supported_privileges(), changed_privs)
+
     def get_response(self):
-        response = []
-        for priv in self.privileges:
-            if self.verbose:
-                log_accounting_info("Applying %s %s." % (priv, self.action_type))
-            message = getattr(self, 'response_%s' % priv)
-            if message is not None:
-                response.append(message)
-        return response
+        return filter(
+            lambda message: message is not None,
+            map(
+                lambda privilege: self.privilege_to_response_function()[privilege](self.domain),
+                self.privileges
+            )
+        )
+
+    @property
+    def action_type(self):
+        raise NotImplementedError
+
+    @classmethod
+    def privilege_to_response_function(cls):
+        raise NotImplementedError
+
+    @classmethod
+    def supported_privileges(cls):
+        return cls.privilege_to_response_function().keys()
 
 
 class BaseModifySubscriptionActionHandler(BaseModifySubscriptionHandler):
@@ -67,85 +58,78 @@ class BaseModifySubscriptionActionHandler(BaseModifySubscriptionHandler):
         return len(filter(lambda x: not x, response)) == 0
 
 
+# TODO - cache
+def _active_reminders(domain):
+    return get_active_reminders_by_domain_name(domain.name)
+
+
 class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
     """
     This carries out the downgrade action based on each privilege.
 
     Each response should return a boolean.
     """
-    supported_privileges = [
-        privileges.OUTBOUND_SMS,
-        privileges.INBOUND_SMS,
-        privileges.ROLE_BASED_ACCESS,
-        privileges.DATA_CLEANUP,
-        privileges.COMMCARE_LOGO_UPLOADER,
-    ]
     action_type = "downgrade"
 
-    @property
-    @memoized
-    def _active_reminders(self):
-        return get_active_reminders_by_domain_name(self.domain.name)
+    @classmethod
+    def privilege_to_response_function(cls):
+        return {
+            privileges.OUTBOUND_SMS: cls.response_outbound_sms,
+            privileges.INBOUND_SMS: cls.response_inbound_sms,
+            privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
+            privileges.DATA_CLEANUP: cls.response_data_cleanup,
+            privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
+        }
 
-    @property
-    def response_outbound_sms(self):
+    @staticmethod
+    def response_outbound_sms(domain):
         """
         Reminder rules will be deactivated.
         """
         try:
-            for reminder in self._active_reminders:
+            for reminder in _active_reminders(domain):
                 reminder.active = False
                 reminder.save()
-                if self.verbose:
-                    log_accounting_info(
-                        "Deactivated Reminder %s [%s]"
-                        % (reminder.nickname, reminder._id)
-                    )
         except Exception:
             log_accounting_error(
                 "Failed to downgrade outbound sms for domain %s."
-                % self.domain.name
+                % domain.name
             )
             return False
         return True
 
-    @property
-    def response_inbound_sms(self):
+    @staticmethod
+    def response_inbound_sms(domain):
         """
         All Reminder rules utilizing "survey" will be deactivated.
         """
         try:
-            surveys = filter(lambda x: x.method in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY], self._active_reminders)
+            surveys = filter(
+                lambda x: x.method in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY],
+                _active_reminders(domain)
+            )
             for survey in surveys:
                 survey.active = False
                 survey.save()
-                if self.verbose:
-                    log_accounting_info(
-                        "Deactivated Survey %s [%s]"
-                        % (survey.nickname, survey._id)
-                    )
         except Exception:
             log_accounting_error(
                 "Failed to downgrade outbound sms for domain %s."
-                % self.domain.name
+                % domain.name
             )
             return False
         return True
 
-    @property
-    def response_role_based_access(self):
+    @staticmethod
+    def response_role_based_access(domain):
         """
         Perform Role Based Access Downgrade
         - Archive custom roles.
         - Set user roles using custom roles to Read Only.
         - Reset initial roles to standard permissions.
         """
-        custom_roles = [r.get_id for r in UserRole.get_custom_roles_by_domain(self.domain.name)]
+        custom_roles = [r.get_id for r in UserRole.get_custom_roles_by_domain(domain.name)]
         if not custom_roles:
             return True
-        if self.verbose:
-            for role in custom_roles:
-                log_accounting_info("Archiving Custom Role %s" % role)
         # temporarily disable this part of the downgrade until we
         # have a better user experience for notifying the downgraded user
         # read_only_role = UserRole.get_read_only_role_by_domain(self.domain.name)
@@ -158,18 +142,18 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         #     if cc_user.get_domain_membership(self.domain.name).role_id in custom_roles:
         #         cc_user.set_role(self.domain.name, 'none')
         #         cc_user.save()
-        UserRole.archive_custom_roles_for_domain(self.domain.name)
-        UserRole.reset_initial_roles_for_domain(self.domain.name)
+        UserRole.archive_custom_roles_for_domain(domain.name)
+        UserRole.reset_initial_roles_for_domain(domain.name)
         return True
 
-    @property
-    def response_data_cleanup(self):
+    @staticmethod
+    def response_data_cleanup(domain):
         """
         Any active automatic case update rules should be deactivated.
         """
         try:
             AutomaticUpdateRule.objects.filter(
-                domain=self.domain.name,
+                domain=domain.name,
                 deleted=False,
                 active=True,
             ).update(active=False)
@@ -177,16 +161,16 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         except Exception:
             log_accounting_error(
                 "Failed to deactivate automatic update rules "
-                "for domain %s." % self.domain.name
+                "for domain %s." % domain.name
             )
             return False
 
-    @property
-    def response_commcare_logo_uploader(self):
+    @staticmethod
+    def response_commcare_logo_uploader(domain):
         """Make sure no existing applications are using a logo.
         """
         try:
-            for app in get_all_apps(self.domain.name):
+            for app in get_all_apps(domain.name):
                 has_archived = app.archive_logos()
                 if has_archived:
                     app.save()
@@ -194,7 +178,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         except Exception:
             log_accounting_error(
                 "Failed to remove all commcare logos for domain %s."
-                % self.domain.name
+                % domain.name
             )
             return False
 
@@ -205,32 +189,30 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
 
     Each response should return a boolean.
     """
-    supported_privileges = [
-        privileges.ROLE_BASED_ACCESS,
-        privileges.COMMCARE_LOGO_UPLOADER,
-    ]
     action_type = "upgrade"
 
-    @property
-    def response_role_based_access(self):
+    @classmethod
+    def privilege_to_response_function(cls):
+        return {
+            privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
+            privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
+        }
+
+    @staticmethod
+    def response_role_based_access(domain):
         """
         Perform Role Based Access Upgrade
         - Un-archive custom roles.
         """
-        if self.verbose:
-            num_archived_roles = len(UserRole.by_domain(self.domain.name,
-                                                        is_archived=True))
-            if num_archived_roles:
-                log_accounting_info("Re-Activating %d archived roles." % num_archived_roles)
-        UserRole.unarchive_roles_for_domain(self.domain.name)
+        UserRole.unarchive_roles_for_domain(domain.name)
         return True
 
-    @property
-    def response_commcare_logo_uploader(self):
+    @staticmethod
+    def response_commcare_logo_uploader(domain):
         """Make sure no existing applications are using a logo.
         """
         try:
-            for app in get_all_apps(self.domain.name):
+            for app in get_all_apps(domain.name):
                 has_restored = app.restore_logos()
                 if has_restored:
                     app.save()
@@ -238,9 +220,24 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         except Exception:
             log_accounting_error(
                 "Failed to restore all commcare logos for domain %s."
-                % self.domain.name
+                % domain.name
             )
             return False
+
+
+# TODO - cache
+def _active_reminder_methods(domain):
+    reminder_rules = get_active_reminders_by_domain_name(domain.name)
+    return [reminder.method for reminder in reminder_rules]
+
+
+def _fmt_alert(message, details=None):
+    if details is not None and not isinstance(details, list):
+        raise ValueError("details should be a list.")
+    return {
+        'message': message,
+        'details': details,
+    }
 
 
 class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
@@ -248,39 +245,43 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
     This returns a list of alerts for the user if their current domain is using features that
     will be removed during the downgrade.
     """
-    supported_privileges = [
-        privileges.CLOUDCARE,
-        privileges.LOOKUP_TABLES,
-        privileges.CUSTOM_BRANDING,
-        privileges.OUTBOUND_SMS,
-        privileges.INBOUND_SMS,
-        privileges.DEIDENTIFIED_DATA,
-        privileges.MOBILE_WORKER_CREATION,
-        privileges.ROLE_BASED_ACCESS,
-        privileges.DATA_CLEANUP,
-        LATER_SUBSCRIPTION_NOTIFICATION,
-    ]
     action_type = "notification"
 
-    def _fmt_alert(self, message, details=None):
-        if details is not None and not isinstance(details, list):
-            raise ValueError("details should be a list.")
+    @classmethod
+    def privilege_to_response_function(cls):
         return {
-            'message': message,
-            'details': details,
+            privileges.CLOUDCARE: cls.response_cloudcare,
+            privileges.LOOKUP_TABLES: cls.response_lookup_tables,
+            privileges.CUSTOM_BRANDING: cls.response_custom_branding,
+            privileges.OUTBOUND_SMS: cls.response_outbound_sms,
+            privileges.INBOUND_SMS: cls.response_inbound_sms,
+            privileges.DEIDENTIFIED_DATA: cls.response_deidentified_data,
+            privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
+            privileges.DATA_CLEANUP: cls.response_data_cleanup,
         }
 
-    @property
-    def response_cloudcare(self):
+    def get_response(self):
+        response = super(DomainDowngradeStatusHandler, self).get_response()
+        response.extend(filter(
+            lambda response: response is not None,
+            [
+                self.response_later_subscription,
+                self.response_mobile_worker_creation,
+            ]
+        ))
+        return response
+
+    @staticmethod
+    def response_cloudcare(domain):
         """
         CloudCare enabled apps will have cloudcare_enabled set to false on downgrade.
         """
-        cloudcare_enabled_apps = get_cloudcare_apps(self.domain.name)
+        cloudcare_enabled_apps = get_cloudcare_apps(domain.name)
         if not cloudcare_enabled_apps:
             return None
 
         num_apps = len(cloudcare_enabled_apps)
-        return self._fmt_alert(
+        return _fmt_alert(
             ungettext(
                 "You have %(num_apps)d application that will lose CloudCare "
                 "access if you select this plan.",
@@ -292,18 +293,18 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             },
             [mark_safe('<a href="%(url)s">%(title)s</a>') % {
                 'title': app['name'],
-                'url': reverse('view_app', args=[self.domain.name, app['_id']])
+                'url': reverse('view_app', args=[domain.name, app['_id']])
             } for app in cloudcare_enabled_apps],
         )
 
-    @property
-    def response_lookup_tables(self):
+    @staticmethod
+    def response_lookup_tables(domain):
         """
         Lookup tables will be deleted on downgrade.
         """
-        num_fixtures = FixtureDataType.total_by_domain(self.domain.name)
+        num_fixtures = FixtureDataType.total_by_domain(domain.name)
         if num_fixtures > 0:
-            return self._fmt_alert(
+            return _fmt_alert(
                 ungettext(
                     "You have %(num_fix)s Lookup Table set up. Selecting this "
                     "plan will delete this Lookup Table.",
@@ -313,30 +314,24 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 ) % {'num_fix': num_fixtures}
             )
 
-    @property
-    def response_custom_branding(self):
+    @staticmethod
+    def response_custom_branding(domain):
         """
         Custom logos will be removed on downgrade.
         """
-        if self.domain.has_custom_logo:
-            return self._fmt_alert(_("You are using custom branding. "
+        if domain.has_custom_logo:
+            return _fmt_alert(_("You are using custom branding. "
                                      "Selecting this plan will remove this "
                                      "feature."))
 
-    @property
-    @memoized
-    def _active_reminder_methods(self):
-        reminder_rules = get_active_reminders_by_domain_name(self.domain.name)
-        return [reminder.method for reminder in reminder_rules]
-
-    @property
-    def response_outbound_sms(self):
+    @staticmethod
+    def response_outbound_sms(domain):
         """
         Reminder rules will be deactivated.
         """
-        num_active = len(self._active_reminder_methods)
+        num_active = len(_active_reminder_methods(domain))
         if num_active > 0:
-            return self._fmt_alert(
+            return _fmt_alert(
                 ungettext(
                     "You have %(num_active)d active Reminder Rule. Selecting "
                     "this plan will deactivate this rule.",
@@ -348,15 +343,15 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 }
             )
 
-    @property
-    def response_inbound_sms(self):
+    @staticmethod
+    def response_inbound_sms(domain):
         """
         All Reminder rules utilizing "survey" will be deactivated.
         """
-        surveys = filter(lambda x: x in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY], self._active_reminder_methods)
+        surveys = filter(lambda x: x in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY], _active_reminder_methods(domain))
         num_survey = len(surveys)
         if num_survey > 0:
-            return self._fmt_alert(
+            return _fmt_alert(
                 ungettext(
                     "You have %(num_active)d active Reminder Rule for a Survey. "
                     "Selecting this plan will deactivate this rule.",
@@ -368,12 +363,12 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 }
             )
 
-    @property
-    def response_deidentified_data(self):
+    @staticmethod
+    def response_deidentified_data(domain):
         """
         De-id exports will be hidden
         """
-        startkey = json.dumps([self.domain.name, ""])[:-3]
+        startkey = json.dumps([domain.name, ""])[:-3]
         endkey = "%s{" % startkey
         reports = SavedExportSchema.view(
             "couchexport/saved_export_schemas",
@@ -383,7 +378,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         )
         num_deid_reports = len(filter(lambda r: r.is_safe, reports))
         if num_deid_reports > 0:
-            return self._fmt_alert(
+            return _fmt_alert(
                 ungettext(
                     "You have %(num)d De-Identified Export. Selecting this "
                     "plan will remove it.",
@@ -410,7 +405,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             num_allowed = user_rate.monthly_limit
             num_extra = num_users - num_allowed
             if num_extra > 0:
-                return self._fmt_alert(
+                return _fmt_alert(
                     ungettext(
                         "You have %(num_users)d Mobile Worker over the monthly "
                         "limit of %(monthly_limit)d for this new plan. There "
@@ -438,15 +433,15 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 % self.new_plan_version.plan.name
             )
 
-    @property
-    def response_role_based_access(self):
+    @staticmethod
+    def response_role_based_access(domain):
         """
         Alert the user if there are currently custom roles set up for the domain.
         """
-        custom_roles = [r.name for r in UserRole.get_custom_roles_by_domain(self.domain.name)]
+        custom_roles = [r.name for r in UserRole.get_custom_roles_by_domain(domain.name)]
         num_roles = len(custom_roles)
         if num_roles > 0:
-            return self._fmt_alert(
+            return _fmt_alert(
                 ungettext(
                     "You have %(num_roles)d Custom Role configured for your "
                     "project. If you select this plan, all users with that "
@@ -473,7 +468,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         if later_subs.exists():
             next_subscription = later_subs[0]
             plan_desc = next_subscription.plan_version.user_facing_description
-            return self._fmt_alert(_(
+            return _fmt_alert(_(
                 "You have a subscription SCHEDULED TO START on %(date_start)s. "
                 "Changing this plan will CANCEL that %(plan_name)s "
                 "subscription."
@@ -482,18 +477,18 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 'plan_name': plan_desc['name'],
             })
 
-    @property
-    def response_data_cleanup(self):
+    @staticmethod
+    def response_data_cleanup(domain):
         """
         Any active automatic case update rules should be deactivated.
         """
         rule_count = AutomaticUpdateRule.objects.filter(
-            domain=self.domain.name,
+            domain=domain.name,
             deleted=False,
             active=True,
         ).count()
         if rule_count > 0:
-            return self._fmt_alert(
+            return _fmt_alert(
                 ungettext(
                     "You have %(rule_count)d automatic case update rule "
                     "configured in your project. If you select this plan, "

@@ -30,9 +30,10 @@ from corehq.apps.reports.standard import ProjectReportParametersMixin, \
 from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
-from corehq.apps.sofabed.dbaccessors import get_form_counts_by_user_xmlns
-from corehq.apps.sofabed.models import FormData, CaseData
+from corehq.apps.reports.analytics.esaccessors import get_form_counts_by_user_xmlns
+from corehq.apps.sofabed.models import FormData
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.dates import iso_string_to_datetime
@@ -137,11 +138,7 @@ class CompletionOrSubmissionTimeMixin(object):
 
 
 class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
-    """
-    User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
-    danny   5 (25%)         10 (50%)        20 (100%)       17                          6
-    (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
-    """
+    """See column headers for details"""
     name = ugettext_noop('Case Activity')
     slug = 'case_activity'
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
@@ -152,19 +149,39 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     description = ugettext_noop("Followup rates on active cases.")
     is_cacheable = True
 
-    @classmethod
-    def display_in_dropdown(cls, domain=None, project=None, user=None):
-        if project and project.commtrack_enabled:
-            return False
-        else:
-            return True
+    @property
+    def landmark_columns(self):
+        return [
+            (_("# Updated or Closed"),
+             _("The number of cases that have been created, updated, or closed "
+               "between {} days ago and today.")),
+            (_("# Active"),
+             _("The number of open cases created or updated in the last {} days.")),
+            (_("# Closed"),
+             _("The number of cases that have been closed between {} days ago and "
+               "today.")),
+            (_("Proportion"),
+             _("The percentage of all recently active cases that were created, "
+               "updated or closed in the last {} days.")),
+            # "recently active" means "touched in the last 120 days"
+        ]
+
+    @property
+    def totals_columns(self):
+        return [
+            (_("# Active Cases"),
+             _("Number of open cases modified in the last {} days")),
+            (_("# Inactive Cases"),
+             _("Number of cases that are open but haven't been touched in the "
+               "last {} days")),
+        ]
 
     @property
     def special_notice(self):
         if self.domain_object.case_sharing_included():
             return _("This report currently does not support case sharing. "
-                       "There might be inconsistencies in case totals if the user is part of a case sharing group. "
-                       "We are working to correct this shortly.")
+                     "There might be inconsistencies in case totals if the "
+                     "user is part of a case sharing group.")
 
     _default_landmarks = [30, 60, 90]
     @property
@@ -202,32 +219,23 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def headers(self):
+
+        def make_column(title, help_text, num_days):
+            return DataTablesColumn(title, sort_type=DTSortType.NUMERIC,
+                                    help_text=help_text.format(num_days))
+
         columns = [DataTablesColumn(_("Users"))]
+
         for landmark in self.landmarks:
-            num_cases = DataTablesColumn(_("# Modified or Closed"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of cases that have been modified between %d days ago and today.") % landmark.days
-            )
-            num_active = DataTablesColumn(_("# Active"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of cases created or modified in the last %d days.") % landmark.days
-            )
-            num_closed = DataTablesColumn(_("# Closed"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The number of cases that have been closed between %d days ago and today.") % landmark.days
-            )
-            proportion = DataTablesColumn(_("Proportion"), sort_type=DTSortType.NUMERIC,
-                help_text=_("The percentage of all recently active cases that were modified or closed in the last %d days.") % landmark.days
-            )
-            columns.append(DataTablesColumnGroup(_("Cases in Last %s Days") % landmark.days if landmark else _("Ever"),
-                num_cases,
-                num_active,
-                num_closed,
-                proportion
+            columns.append(DataTablesColumnGroup(
+                _("Cases in Last {} Days").format(landmark.days) if landmark else _("Ever"),
+                *[make_column(title, help_text, landmark.days)
+                  for title, help_text in self.landmark_columns]
             ))
-        columns.append(DataTablesColumn(_("# Active Cases"),
-            sort_type=DTSortType.NUMERIC,
-            help_text=_('Number of cases modified in the last %s days that are still open') % self.milestone.days))
-        columns.append(DataTablesColumn(_("# Inactive Cases"),
-            sort_type=DTSortType.NUMERIC,
-            help_text=_("Number of cases that are open but haven't been touched in the last %s days") % self.milestone.days))
+
+        for title, help_text in self.totals_columns:
+            columns.append(make_column(title, help_text, self.milestone.days))
+
         return DataTablesHeader(*columns)
 
     @property
@@ -248,6 +256,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         def format_row(row):
             cells = [row.header()]
+            total_touched = row.total_touched_count()
 
             def add_numeric_cell(text, value=None):
                 if value is None:
@@ -260,19 +269,18 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             for landmark in self.landmarks:
                 landmark_key = unicode(landmark.days)
 
-                value = row.modified_count(landmark_key)
+                modified = row.modified_count(landmark_key)
                 active = row.active_count(landmark_key)
                 closed = row.closed_count(landmark_key)
-                total = active + closed
 
                 try:
-                    p_val = float(value) * 100. / float(total)
+                    p_val = float(modified) * 100. / float(total_touched)
                     proportion = '%.f%%' % p_val
                 except ZeroDivisionError:
                     p_val = None
                     proportion = '--'
 
-                add_numeric_cell(value, value)
+                add_numeric_cell(modified, modified)
                 add_numeric_cell(active, active)
                 add_numeric_cell(closed, closed)
                 add_numeric_cell(proportion, p_val)
@@ -287,6 +295,13 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     def es_queryset(self, users_by_id):
         end_date = ServerTime(self.utc_now).phone_time(self.timezone).done()
         milestone_start = ServerTime(self.utc_now - self.milestone).phone_time(self.timezone).done()
+
+        touched_total_aggregation = FilterAggregation(
+            'touched_total',
+            filters.AND(
+                filters.date_range('modified_on', gte=milestone_start, lt=end_date),
+            )
+        )
 
         active_total_aggregation = FilterAggregation(
             'active_total',
@@ -306,6 +321,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         top_level_aggregation = TermsAggregation('users', 'user_id')\
             .aggregation(landmarks_aggregation)\
+            .aggregation(touched_total_aggregation)\
             .aggregation(active_total_aggregation)\
             .aggregation(inactive_total_aggregation)
 
@@ -339,6 +355,9 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         def closed_count(self, landmark_key):
             return 0 if not self.bucket else self.landmarks[landmark_key].closed.doc_count
 
+        def total_touched_count(self):
+            return 0 if not self.bucket else self.bucket.touched_total.doc_count
+
         def total_inactive_count(self):
             return 0 if not self.bucket else self.bucket.inactive_total.doc_count
 
@@ -355,6 +374,9 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         def active_count(self, landmark_key):
             return sum([row.active_count(landmark_key) for row in self.rows])
+
+        def total_touched_count(self):
+            return sum([row.total_touched_count() for row in self.rows])
 
         def total_inactive_count(self):
             return sum([row.total_inactive_count() for row in self.rows])
@@ -442,7 +464,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
                     row.append(self._form_counts[
-                        (user.user_id, form['xmlns'], form['app_id'])
+                        (user.user_id, form['app_id'], form['xmlns'].lower())
                     ])
                 row_sum = sum(row)
                 row = (
@@ -708,9 +730,12 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
     @property
     @memoized
     def selected_form_data(self):
-        data = FormsByApplicationFilter.get_value(self.request, self.domain)
-        if len(data) == 1 and data.values()[0]['xmlns']:
-            return data.values()[0]
+        forms = FormsByApplicationFilter.get_value(self.request, self.domain).values()
+        if len(forms) == 1 and forms[0]['xmlns']:
+            return forms[0]
+        non_fuzzy_forms = [form for form in forms if not form['is_fuzzy']]
+        if len(non_fuzzy_forms) == 1:
+            return non_fuzzy_forms[0]
 
     @property
     def headers(self):
@@ -1075,7 +1100,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     name = ugettext_noop("Worker Activity")
     description = ugettext_noop("Summary of form and case activity by user or group.")
     section_name = ugettext_noop("Project Reports")
-    num_avg_intervals = 3 # how many duration intervals we go back to calculate averages
+    num_avg_intervals = 3  # how many duration intervals we go back to calculate averages
     is_cacheable = True
 
     fields = [
@@ -1091,7 +1116,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
-        return bool(project and project.commtrack_enabled)
+        return True
 
     @property
     def case_types(self):
@@ -1133,12 +1158,55 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return DataTablesHeader(*columns)
 
     @property
+    def group_ids(self):
+        return filter(None, self.request.GET.getlist('group'))
+
+    @property
+    @memoized
+    def users_by_group(self):
+        from corehq.apps.groups.models import Group
+
+        if not self.group_ids or self.request.GET.get('all_groups', 'off') == 'on':
+            groups = Group.get_reporting_groups(self.domain)
+        else:
+            groups = [Group.get(g) for g in self.group_ids]
+
+        user_dict = {}
+        for group in groups:
+            user_dict["%s|%s" % (group.name, group._id)] = self.get_all_users_by_domain(
+                group=group,
+                user_filter=tuple(self.default_user_filter),
+                simplified=True
+            )
+
+        return user_dict
+
+    def get_users_by_mobile_workers(self):
+        from corehq.apps.reports.util import _report_user_dict
+        user_dict = {}
+        for mw in self.mobile_worker_ids:
+            user_dict[mw] = _report_user_dict(CommCareUser.get_by_user_id(mw))
+
+        return user_dict
+
+    def get_admins_and_demo_users(self):
+        ufilters = [uf for uf in ['1', '2', '3'] if uf in self.request.GET.getlist('ufilter')]
+        return self.get_all_users_by_domain(
+            group=None,
+            user_filter=tuple(HQUserType.use_filter(ufilters)),
+            simplified=True
+        ) if ufilters else []
+
+    @property
     def users_to_iterate(self):
         if not self.group_ids:
             ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
             return ret
         else:
-            return self.combined_users
+            all_users = [user for sublist in self.users_by_group.values() for user in sublist]
+            all_users.extend([user for user in self.get_users_by_mobile_workers().values()])
+            all_users.extend([user for user in self.get_admins_and_demo_users()])
+            return dict([(user['user_id'], user) for user in all_users]).values()
 
     def es_last_submissions(self):
         """

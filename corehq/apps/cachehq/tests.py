@@ -1,4 +1,5 @@
 from copy import deepcopy
+from django.conf import settings
 from mock import patch
 from django.test import SimpleTestCase
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
@@ -17,6 +18,10 @@ class Super(JsonObject):
 class BlogPost(CachedCouchDocumentMixin, Super):
     title = StringProperty()
     body = StringProperty()
+
+    # CachedCouchDocumentMixin is only used on subclasses of document which will all implement get_db()
+    def get_db(self):
+        return settings.COUCH_DATABASE
 
 
 class TestCachedCouchDocumentMixin(SimpleTestCase):

@@ -6,6 +6,7 @@
     "underscore": "1.6.0",
     "underscore-legacy": "underscore#1.4.4",
     "jquery-form": "3.45.0",
+    "jquery-form-2.94-legacy": "malsup/form#db3910b",
     "jquery.cookie": "1.4.1",
     "jquery-timeago": "1.2.0",
     "jquery-ui": "1.11.4",

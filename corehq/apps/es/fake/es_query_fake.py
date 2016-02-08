@@ -17,7 +17,8 @@ class ESQueryFake(object):
     _sort_field = None
     _sort_desc = False
     # just to make ESQuerySet happy
-    _fields = None
+    _exclude_source = None
+    _legacy_fields = None
 
     def __init__(self, result_docs=None):
         if result_docs is None:
@@ -33,9 +34,9 @@ class ESQueryFake(object):
         clone._start = self._start
         clone._size = self._size
         clone._sort_field = self._sort_field
-        clone._sort_field = self._sort_field
         clone._sort_desc = self._sort_desc
-        clone._fields = self._fields
+        clone._exclude_source = self._exclude_source
+        clone._legacy_fields = self._legacy_fields
         return clone
 
     def _filtered(self, filter_function):
