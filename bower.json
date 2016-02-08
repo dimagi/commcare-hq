@@ -23,6 +23,7 @@
     "knockout-2.3.0-legacy": "knockout.js#2.3",
     "knockout": "3.1.0",
     "select2-3.4.5-legacy": "select2#3.4.5",
+    "select2-3.5.2-legacy": "select2#3.5.2",
     "less": "1.7.3",
     "xpath": "dimagi/js-xpath#f4f0c78",
     "backbone": "0.9.1",

@@ -58,9 +58,6 @@
 [submodule "corehq/apps/style/static/style/lib/ui-select"]
 	path = corehq/apps/style/static/style/lib/ui-select
 	url = https://github.com/angular-ui/ui-select.git
-[submodule "corehq/apps/style/static/style/lib/select2"]
-	path = corehq/apps/style/static/style/lib/select2
-	url = https://github.com/dimagi/select2.git
 [submodule "corehq/apps/prelogin"]
 	path = corehq/apps/prelogin
 	url = https://github.com/dimagi/commcarehq-prelogin.git
