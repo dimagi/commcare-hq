@@ -16,6 +16,10 @@
             var model = new LocationSettingsViewModel(loc_types, commtrack_enabled);
             var $settings = $('#settings');
 
+            var warnBeforeUnload = function() {
+                return "{% trans "You have unsaved changes." %}";
+            };
+
             $settings.submit(function() {
                 return model.presubmit();
             });
@@ -23,11 +27,13 @@
             $settings.koApplyBindings(model);
 
             $("form#settings").on("change input", function() {
-                $(this).find(":submit").enable();
+                $(this).find(":submit").addClass("btn-success").enable();
+                window.onbeforeunload = warnBeforeUnload;
             });
 
             $("form#settings button").on("click", function() {
-                $("form#settings").find(":submit").enable();
+                $("form#settings").find(":submit").addClass("btn-success").enable();
+                window.onbeforeunload = warnBeforeUnload;
             });
         });
     </script>
@@ -55,7 +61,10 @@
         <fieldset>
             <div class="col-sm-12">
                 <div class="form-group">
-                    <button type="button" class="btn btn-success" data-bind="click: new_loctype">
+                    <button type="submit" class="btn btn-default pull-right" disabled>
+                        {% trans "Save Organization Levels" %}
+                    </button>
+                    <button type="button" class="btn btn-default" data-bind="click: new_loctype">
                         <i class="fa fa-plus"></i> {% trans "New Organization Level" %}
                     </button>
                     <hr />
@@ -171,10 +180,6 @@
                 </div>
             </div>
         </fieldset>
-
-        <button type="submit" class="btn btn-primary" disabled>
-            {% trans "Save Organization Levels" %}
-        </button>
         <input name="json" type="hidden" data-bind="value: json_payload" />
     </form>
 

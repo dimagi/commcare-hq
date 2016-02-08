@@ -164,7 +164,7 @@
             {% endcompress %}
         {% endif %}
 
-        <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
 
         {# Up here because if daterangepicker is called from within a form widget, #}
         {# the javascript requiring the config file is run before js-inline #}
@@ -215,7 +215,7 @@
                         {% block tabs %}
                             {% format_main_menu %}
                         {% endblock %}
-                        <div class="btn-toolbar pull-right">
+                        <div class="nav-settings-bar pull-right">
                         {% if request.user.is_authenticated %}
                             {% include 'style/includes/global_navigation_bar.html' %}
                         {% else %}
@@ -271,52 +271,34 @@
                  role="navigation"
                  class="navbar navbar-inverse navbar-hq-footer">
                 <div class="container-fluid">
-                    <div class="navbar-header">
-                        <a href="http://www.commcarehq.org/">
-                            <img src="{% new_static 'hqwebapp/img/commcare-flower-footer.png' %}" alt="CommCare" />
-                        </a>
-                        <a href="http://www.dimagi.com/">
-                            <img src="{% static 'hqwebapp/img/dimagi-footer.png' %}"
-                                 alt="Powered by Dimagi, Inc." />
-                        </a>
-                    </div>
-                    <p class="text-align-center pull-left text-hq-copyright">
-                        {% blocktrans %}
-                            <a href="http://www.commcarehq.org/">CommCare HQ</a>
-                            is copyright &copy;
-                        {% endblocktrans %}{% now "Y" %}
-                        <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
-                        {% if user.is_authenticated %}
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <a href="http://www.commcarehq.org/" class="footer-link-img">
+                                <img src="{% new_static 'hqwebapp/img/commcare-flower-footer.png' %}"
+                                     alt="CommCare"
+                                     height="30"  />
+                            </a>
+                            <a href="http://www.dimagi.com/" class="footer-link-img">
+                                <img src="{% static 'hqwebapp/img/dimagi-footer.png' %}"
+                                     alt="Powered by Dimagi, Inc."
+                                     height="20"/>
+                            </a>
+                        &nbsp;
+                            {% blocktrans %}
+                                <a href="http://www.commcarehq.org/">CommCare HQ</a>
+                                is copyright &copy;
+                            {% endblocktrans %}{% now "Y" %}
+                            <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
+                            {% if user.is_authenticated %}
+                                &nbsp;|&nbsp;
+                                <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>.
+                            {% endif %}
+                            <a href="{% url "eula" %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
                             &nbsp;|&nbsp;
-                            <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>.
-                        {% endif %}
-                        <br />
-                        <a href="{% url "eula" %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
-                        &nbsp;|&nbsp;
-                        <a href="{% trans 'http://www.dimagi.com/policy' %}">{% trans 'Privacy' %}</a>
-                        &nbsp;|&nbsp;
-                        <a href="{% url 'product_agreement' %}">{% trans 'Product Subscription Agreement' %}</a>
-                    </p>
-                    <div class="btn-toolbar pull-right">
-                        <button type="button"
-                                class="btn btn-footer-highlight"
-                                data-toggle="modal"
-                                data-target="#modalReportIssue">
-                            <i class="fa fa-comment"></i>&nbsp;
-                            {% trans 'Report an Issue' %}
-                        </button>
-                        <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}"
-                           target="_blank"
-                           class="btn btn-footer">
-                            <i class="fa fa-info-circle"></i>&nbsp;
-                            {% trans 'CommCare Help Site' %}
-                        </a>
-                        <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}"
-                           target="_blank"
-                           class="btn btn-footer">
-                            <i class="fa fa-envelope"></i>&nbsp;
-                            {% trans 'Mailing List' %}
-                        </a>
+                            <a href="{% trans 'http://www.dimagi.com/policy' %}">{% trans 'Privacy' %}</a>
+                            &nbsp;|&nbsp;
+                            <a href="{% url 'product_agreement' %}">{% trans 'Product Subscription Agreement' %}</a>
+                        </div>
                     </div>
                 </div>
             </nav>

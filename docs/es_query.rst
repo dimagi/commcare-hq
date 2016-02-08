@@ -13,6 +13,9 @@ ESQuery
 .. automodule:: corehq.apps.es.facets
    :members:
 
+.. automodule:: corehq.apps.es.aggregations
+   :members:
+
 .. automodule:: corehq.apps.es.apps
    :members:
    :undoc-members:

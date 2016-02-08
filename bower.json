@@ -6,6 +6,7 @@
     "underscore": "1.6.0",
     "underscore-legacy": "underscore#1.4.4",
     "jquery-form": "3.45.0",
+    "jquery-form-2.94-legacy": "malsup/form#db3910b",
     "jquery.cookie": "1.4.1",
     "jquery-timeago": "1.2.0",
     "jquery-ui": "1.11.4",
@@ -39,7 +40,9 @@
     "zxcvbn": "4.2.0",
     "bootstrap-tour": "0.10.2",
     "jquery.caret": "~1.5.2",
-    "jquery-migrate": "1.2.1"
+    "jquery-migrate": "1.2.1",
+    "syntaxhighlighter": "alexgorbatchev/syntaxhighlighter#3.0.83",
+    "bootstrap": "3.3.6"
   },
   "devDependencies": {
     "chai": "3.3.0",
@@ -49,6 +52,7 @@
   },
   "private": true,
   "resolutions": {
-    "jquery": "1.11.1"
+    "jquery": "1.11.1",
+    "bootstrap": "3.3.6"
   }
 }

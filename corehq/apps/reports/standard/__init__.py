@@ -105,7 +105,8 @@ class ProjectReportParametersMixin(object):
 
     @property
     def group_ids(self):
-        return filter(None, self.request.GET.getlist('group'))
+        return [group_id for group_id in self.request.GET.getlist('group')
+                if group_id and group_id != '_all']
 
     @property
     @memoized

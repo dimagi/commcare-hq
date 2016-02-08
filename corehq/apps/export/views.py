@@ -7,6 +7,7 @@ from django.core.exceptions import SuspiciousOperation
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.template.defaultfilters import filesizeformat
+from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
 import json
 from django.utils.safestring import mark_safe
@@ -197,7 +198,9 @@ class BaseCreateNewCustomExportView(BaseExportView):
     @property
     def page_context(self):
         return {
-            'export_instance': self.export_instance
+            'export_instance': self.export_instance,
+            'export_home_url': reverse(self.urlname, args=(self.domain,)),
+            'allow_deid': has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
         }
 
     def get_export_instance(self, schema, app_id=None):

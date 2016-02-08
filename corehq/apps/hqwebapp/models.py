@@ -646,12 +646,21 @@ class ProjectDataTab(UITab):
                 CaseExportListView,
                 CreateCustomFormExportView,
                 CreateCustomCaseExportView,
+                CreateNewCustomFormExportView,
+                CreateNewCustomCaseExportView,
                 DownloadFormExportView,
                 DownloadCaseExportView,
                 BulkDownloadFormExportView,
                 EditCustomFormExportView,
                 EditCustomCaseExportView,
             )
+            if toggles.NEW_EXPORTS.enabled(self.domain):
+                create_case_cls = CreateNewCustomCaseExportView
+                create_form_cls = CreateNewCustomFormExportView
+            else:
+                create_case_cls = CreateCustomCaseExportView
+                create_form_cls = CreateCustomFormExportView
+
             export_data_views.extend([
                 {
                     'title': FormExportListView.page_title,
@@ -661,8 +670,8 @@ class ProjectDataTab(UITab):
                     'icon': 'icon icon-list-alt fa fa-list-alt',
                     'subpages': filter(None, [
                         {
-                            'title': CreateCustomFormExportView.page_title,
-                            'urlname': CreateCustomFormExportView.urlname,
+                            'title': create_form_cls.page_title,
+                            'urlname': create_form_cls.urlname,
                         } if self.can_edit_commcare_data else None,
                         {
                             'title': BulkDownloadFormExportView.page_title,
@@ -686,8 +695,8 @@ class ProjectDataTab(UITab):
                     'icon': 'icon icon-share fa fa-share-square-o',
                     'subpages': filter(None, [
                         {
-                            'title': CreateCustomCaseExportView.page_title,
-                            'urlname': CreateCustomCaseExportView.urlname,
+                            'title': create_case_cls.page_title,
+                            'urlname': create_case_cls.urlname,
                         } if self.can_edit_commcare_data else None,
                         {
                             'title': DownloadCaseExportView.page_title,
@@ -1702,30 +1711,6 @@ class AdminTab(UITab):
         return (self.couch_user and
                 (self.couch_user.is_superuser or
                  toggles.IS_DEVELOPER.enabled(self.couch_user.username)))
-
-
-class ExchangeTab(UITab):
-    title = ugettext_noop("Exchange")
-    view = "corehq.apps.appstore.views.appstore"
-
-    @property
-    def dropdown_items(self):
-        submenu_context = None
-        if self.domain and self.couch_user.is_domain_admin(self.domain):
-            submenu_context = [
-                dropdown_dict(_("CommCare Exchange"), url=reverse("appstore")),
-                dropdown_dict(
-                    _("Publish this project"),
-                    url=reverse("domain_snapshot_settings",
-                                args=[self.domain]))
-            ]
-        return submenu_context
-
-    @property
-    def is_viewable(self):
-        couch_user = self.couch_user
-        return (self.domain and couch_user and couch_user.can_edit_apps() and
-                (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
 
 
 class MaintenanceAlert(models.Model):
