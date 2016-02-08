@@ -549,9 +549,14 @@ class ILSGatewayAPI(APISynchronization):
             location.save()
 
             interface = SupplyInterface(self.domain)
-            if ilsgateway_location.type == 'FACILITY' and not interface.get_by_location(location):
-                interface.create_from_location(self.domain, location)
-                location.save()
+            if ilsgateway_location.type == 'FACILITY':
+                if not interface.get_by_location(location):
+                    interface.create_from_location(self.domain, location)
+                    location.save()
+                else:
+                    sql_location = location.sql_location
+                    if not sql_location.supply_point_id:
+                        location.save()
         else:
             location_dict = {
                 'name': ilsgateway_location.name,
