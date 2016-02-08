@@ -71,7 +71,6 @@ from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
 from django_prbac.utils import has_privilege
 from corehq.apps.analytics.tasks import track_app_from_template_on_hubspot, update_kissmetrics_properties
 from corehq.apps.analytics.utils import get_meta
-from corehq.apps.tour import tours
 
 
 @no_conflict_require_POST
