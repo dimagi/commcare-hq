@@ -1,0 +1,17 @@
+.no-padding {
+    padding: 0;
+}
+
+.dataTables_filter {
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+}
+
+.dataTables_length {
+    margin-top: 20px;
+}
+
+.dataTables_length select {
+    width: auto !important;
+}

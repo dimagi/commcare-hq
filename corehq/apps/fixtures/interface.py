@@ -18,12 +18,28 @@ class FixtureInterface(FixtureViewMixIn, GenericReportView):
     exportable = False
     needs_filters = False
 
+    def update_template_context(self):
+        # Workaround for breadcrumbs in Bootstrap 3 template
+        super(FixtureInterface, self).update_template_context()
+        context = self.context['report']
+
+        self.context.update({
+            'section': {
+                'url': context['url_root'],
+                'page_name': context['section_name']},
+            'current_page': {
+                'page_name': context['title']
+            }
+        })
+
 
 class FixtureSelectFilter(BaseSingleOptionFilter):
     slug = "table_id"
     label = ""
     placeholder = "place"
+    css_class = 'col-sm-4 no-padding'
     default_text = "Select a Table"
+    template = "reports/filters/bootstrap3/single_option.html"
 
     @property
     def selected(self):
@@ -45,7 +61,6 @@ class FixtureSelectFilter(BaseSingleOptionFilter):
 class FixtureViewInterface(GenericTabularReport, FixtureInterface):
     name = ugettext_noop("View Tables")
     slug = "view_lookup_tables"
-
     report_template_path = 'fixtures/view_table.html'
 
     fields = ['corehq.apps.fixtures.interface.FixtureSelectFilter']
@@ -104,7 +119,6 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
 class FixtureEditInterface(FixtureInterface):
     name = ugettext_noop("Manage Tables")
     slug = "edit_lookup_tables"
-
     report_template_path = 'fixtures/manage_tables.html'
 
     @property

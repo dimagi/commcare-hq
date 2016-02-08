@@ -11,7 +11,7 @@ $.fn.dataTableExt.oApi.fnPagingInfo = function ( oSettings )
         "iPage":          Math.ceil( oSettings._iDisplayStart / oSettings._iDisplayLength ),
         "iTotalPages":    Math.ceil( oSettings.fnRecordsDisplay() / oSettings._iDisplayLength )
     };
-}
+};
 
 /* Bootstrap style pagination control */
 $.extend( $.fn.dataTableExt.oPagination, {
@@ -25,8 +25,9 @@ $.extend( $.fn.dataTableExt.oPagination, {
                 }
             };
 
+            var pagination_class = (self.reportTables && self.reportTables.useBootstrap3) ? 'class="pagination"' : '';
             $(nPaging).addClass('pagination').append(
-                '<ul>'+
+                    '<ul ' + pagination_class + '>' +
                     '<li class="prev disabled"><a href="#">&larr; '+oLang.sPrevious+'</a></li>'+
                     '<li class="next disabled"><a href="#">'+oLang.sNext+' &rarr; </a></li>'+
                     '</ul>'

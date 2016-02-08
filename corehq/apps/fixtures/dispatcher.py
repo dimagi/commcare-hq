@@ -2,6 +2,7 @@ from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher
 from django.utils.decorators import method_decorator
+from corehq.apps.style.decorators import use_bootstrap3, use_datatables
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 
@@ -17,6 +18,8 @@ class FixtureInterfaceDispatcher(ProjectReportDispatcher):
     prefix = 'fixture_interface'
     map_name = 'FIXTURE_INTERFACES'
 
+    @use_bootstrap3
+    @use_datatables
     @method_decorator(require_can_edit_fixtures)
     def dispatch(self, request, *args, **kwargs):
         return super(FixtureInterfaceDispatcher, self).dispatch(request, *args, **kwargs)
