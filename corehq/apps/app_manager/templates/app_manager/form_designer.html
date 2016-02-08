@@ -100,8 +100,8 @@
         };
 
         define("jquery", [], function () { return window.jQuery; });
-        define("jquery-ui", ["jquery"], function () {});
         define("jquery.bootstrap", ["jquery"], function () {});
+        define("underscore", [], function () { return window._; });
 
         require.config({
             {% comment %} 
