@@ -156,4 +156,5 @@ class ConfigurableReportDataSource(SqlData):
         return any(column_config.calculate_total for column_config in self.column_configs)
 
     def get_total_records(self):
+        # TODO - actually use sqlagg to get a count of rows
         return len(self.get_data())
