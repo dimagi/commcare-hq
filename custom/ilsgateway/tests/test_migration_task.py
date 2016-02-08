@@ -52,7 +52,7 @@ class MigrationTaskTest(TestCase):
     def test_migration(self):
         bootstrap_domain(ILSGatewayAPI(TEST_DOMAIN, MockEndpoint('http://test-api.com/', 'dummy', 'dummy')))
         self.assertEqual(6, len(list(Product.by_domain(TEST_DOMAIN))))
-        self.assertEqual(5, len(list(Location.by_domain(TEST_DOMAIN))))
+        self.assertEqual(6, len(list(Location.by_domain(TEST_DOMAIN))))
         self.assertEqual(6, len(list(CommCareUser.by_domain(TEST_DOMAIN))))
         self.assertEqual(5, len(list(WebUser.by_domain(TEST_DOMAIN))))
         self.assertEqual(ILSMigrationStats.objects.filter(domain=TEST_DOMAIN).count(), 1)

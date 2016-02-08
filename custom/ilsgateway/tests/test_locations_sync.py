@@ -6,6 +6,7 @@ from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.commtrack.tests.util import bootstrap_domain as initial_bootstrap
 from corehq.apps.locations.models import Location, SQLLocation
 from custom.ilsgateway.api import Location as Loc, ILSGatewayAPI
+from custom.ilsgateway.models import PendingReportingDataRecalculation
 from custom.ilsgateway.tests.mock_endpoint import MockEndpoint
 from custom.logistics.api import ApiSyncObject
 from custom.logistics.commtrack import synchronization
@@ -52,6 +53,15 @@ class LocationSyncTest(TestCase):
         self.assertIsNone(ilsgateway_location.linked_supply_point())
         self.assertIsNone(ilsgateway_location.sql_location.supply_point_id)
 
+    def test_parent_change(self):
+        with open(os.path.join(self.datapath, 'sample_locations.json')) as f:
+            location = Loc(**json.loads(f.read())[0])
+
+        self.api_object.location_sync(location)
+        location.parent_id = 2626
+        ilsgateway_location = self.api_object.location_sync(location)
+        self.assertEqual(ilsgateway_location.parent.external_id, '2626')
+
     def test_locations_migration(self):
         checkpoint = MigrationCheckpoint(
             domain=TEST_DOMAIN,
@@ -71,8 +81,8 @@ class LocationSyncTest(TestCase):
         self.assertEqual('location_facility', checkpoint.api)
         self.assertEqual(100, checkpoint.limit)
         self.assertEqual(0, checkpoint.offset)
-        self.assertEqual(5, len(list(Location.by_domain(TEST_DOMAIN))))
-        self.assertEqual(5, SQLLocation.objects.filter(domain=TEST_DOMAIN).count())
+        self.assertEqual(6, len(list(Location.by_domain(TEST_DOMAIN))))
+        self.assertEqual(6, SQLLocation.objects.filter(domain=TEST_DOMAIN).count())
         sql_location = SQLLocation.objects.get(domain=TEST_DOMAIN, site_code='DM520053')
         self.assertEqual('FACILITY', sql_location.location_type.name)
         self.assertIsNotNone(sql_location.supply_point_id)
