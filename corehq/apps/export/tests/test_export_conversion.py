@@ -7,7 +7,6 @@ from couchexport.models import SavedExportSchema
 
 from corehq.util.test_utils import TestFileMixin, generate_cases
 from corehq.apps.export.models import (
-    FormExportInstance,
     FormExportDataSchema,
     ExportGroupSchema,
     ExportItem,

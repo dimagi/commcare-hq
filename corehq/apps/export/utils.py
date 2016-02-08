@@ -1,5 +1,3 @@
-import json
-
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from .const import TRANSFORM_FUNCTIONS, MAIN_TABLE
