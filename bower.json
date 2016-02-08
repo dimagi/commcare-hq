@@ -44,7 +44,8 @@
     "jquery.caret": "~1.5.2",
     "syntaxhighlighter": "alexgorbatchev/syntaxhighlighter#3.0.83",
     "bootstrap": "3.3.6",
-    "font-awesome": "fontawesome#4.5.0"
+    "font-awesome": "fontawesome#4.5.0",
+    "ui-select": "angular-ui/ui-select#v0.13.2"
   },
   "devDependencies": {
     "chai": "3.3.0",

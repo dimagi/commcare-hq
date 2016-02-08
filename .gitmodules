@@ -55,9 +55,6 @@
 [submodule "submodules/bootstrap3_crispy"]
 	path = submodules/bootstrap3_crispy
 	url = https://github.com/dimagi/django-crispy-forms.git
-[submodule "corehq/apps/style/static/style/lib/ui-select"]
-	path = corehq/apps/style/static/style/lib/ui-select
-	url = https://github.com/angular-ui/ui-select.git
 [submodule "corehq/apps/prelogin"]
 	path = corehq/apps/prelogin
 	url = https://github.com/dimagi/commcarehq-prelogin.git
