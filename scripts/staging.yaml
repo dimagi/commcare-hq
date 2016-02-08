@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - jquery-migrate+rm-js  # Danny 2/8
   - rm-js  # Danny 2/8
   - kill-user-registration-j2me-option   # Danny 2/3
   - turn-off-incomplete-and-saved-forms  # Danny 2/3
