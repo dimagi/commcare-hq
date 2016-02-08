@@ -305,6 +305,7 @@ def get_form_ready_to_save(metadata, is_db_test=False):
             Attachment(name='form.xml', raw_content=form_xml, content_type='text/xml')
         ])
     wrapped_form.received_on = metadata.received_on
+    wrapped_form.app_id = metadata.app_id
     return wrapped_form
 
 

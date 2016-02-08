@@ -32,7 +32,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import make_form_couch_key, friendly_timedelta, format_datatables_data
-from corehq.apps.sofabed.dbaccessors import get_form_counts_by_user_xmlns
+from corehq.apps.reports.analytics.esaccessors import get_form_counts_by_user_xmlns
 from corehq.apps.sofabed.models import FormData
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
@@ -464,7 +464,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             if self.all_relevant_forms:
                 for form in self.all_relevant_forms.values():
                     row.append(self._form_counts[
-                        (user.user_id, form['xmlns'], form['app_id'])
+                        (user.user_id, form['app_id'], form['xmlns'].lower())
                     ])
                 row_sum = sum(row)
                 row = (

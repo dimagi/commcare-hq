@@ -32,11 +32,12 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
 class TestFormMetadata(jsonobject.JsonObject):
     domain = jsonobject.StringProperty(required=False)
     xmlns = jsonobject.StringProperty(default='http://openrosa.org/formdesigner/form-processor')
+    app_id = jsonobject.StringProperty(default='123')
     form_name = jsonobject.StringProperty(default='New Form')
     user_id = jsonobject.StringProperty(default='cruella_deville')
     time_end = jsonobject.DateTimeProperty(default=datetime(2013, 4, 19, 16, 53, 2))
     # Set this property to fake the submission time
-    received_on = jsonobject.DateTimeProperty(default=datetime.utcnow())
+    received_on = jsonobject.DateTimeProperty(default=datetime.utcnow)
 
 
 def get_simple_form_xml(form_id, case_id=None, metadata=None):
