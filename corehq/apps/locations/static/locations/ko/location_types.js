@@ -93,6 +93,7 @@ function LocationSettingsViewModel(loc_types, commtrack_enabled) {
 
         payload = this.to_json();
         this.json_payload(JSON.stringify(payload));
+        return true;
     };
 
     this.to_json = function() {
