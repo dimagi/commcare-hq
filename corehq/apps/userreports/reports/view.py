@@ -295,9 +295,10 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             "iTotalDisplayRecords": total_records,
         }
         if data_source.has_total_row:
+            # TODO - use sqlagg to get total_row
             json_response.update({
                 "total_row": get_total_row(
-                    data, data_source.aggregation_columns, data_source.column_configs,
+                    data_source.get_data(), data_source.aggregation_columns, data_source.column_configs,
                     get_expanded_columns(data_source.column_configs, data_source.config)
                 ),
             })
