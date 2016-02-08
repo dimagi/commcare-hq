@@ -39,25 +39,21 @@ logger = logging.getLogger(__name__)
 
 
 @require_can_edit_apps
-def form_designer(request, domain, app_id, module_id=None, form_id=None,
-                  is_user_registration=False):
+def form_designer(request, domain, app_id, module_id=None, form_id=None):
     meta = get_meta(request)
     track_entered_form_builder_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
 
     app = get_app(domain, app_id)
     module = None
 
-    if is_user_registration:
-        form = app.get_user_registration()
-    else:
-        try:
-            module = app.get_module(module_id)
-        except ModuleNotFoundException:
-            return bail(request, domain, app_id, not_found="module")
-        try:
-            form = module.get_form(form_id)
-        except IndexError:
-            return bail(request, domain, app_id, not_found="form")
+    try:
+        module = app.get_module(module_id)
+    except ModuleNotFoundException:
+        return bail(request, domain, app_id, not_found="module")
+    try:
+        form = module.get_form(form_id)
+    except IndexError:
+        return bail(request, domain, app_id, not_found="form")
 
     if form.no_vellum:
         messages.warning(request, _(
@@ -112,7 +108,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None,
     context.update(locals())
     context.update({
         'vellum_debug': settings.VELLUM_DEBUG,
-        'nav_form': form if not is_user_registration else '',
+        'nav_form': form,
         'formdesigner': True,
         'multimedia_object_map': app.get_object_map(),
         'sessionid': request.COOKIES.get('sessionid'),
@@ -198,8 +194,3 @@ def get_data_schema(request, domain, app_id=None, form_unique_id=None):
     if "pretty" in request.GET:
         kw["indent"] = 2
     return HttpResponse(json.dumps(data, **kw))
-
-
-@require_can_edit_apps
-def user_registration_source(request, domain, app_id):
-    return form_designer(request, domain, app_id, is_user_registration=True)
