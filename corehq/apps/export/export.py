@@ -45,7 +45,6 @@ class _Writer(object):
 
         # Create and open a temp file
         fd, self._path = tempfile.mkstemp()
-        print self._path
         with os.fdopen(fd, 'wb') as file:
 
             # open the ExportWriter
