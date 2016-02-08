@@ -18,8 +18,8 @@ Server layout:
         (i.e. ~/www/staging/log and ~/www/production/log).
 
     ~/www/<environment>/releases/<YYYY-MM-DD-HH.SS>
-        This folder contains a release of commcarehq. Each release has its own virtual environment that can be
-        found in `python_env`.
+        This folder contains a release of commcarehq. Each release has its own
+        virtual environment that can be found in `python_env`.
 
     ~/www/<environment>/current
         This path is a symlink to the release that is being run
@@ -30,18 +30,16 @@ import json
 import os
 import posixpath
 import sh
-import sys
 import time
 import yaml
-from collections import defaultdict
 from distutils.util import strtobool
 
 from fabric import utils
 from fabric.api import run, roles, execute, task, sudo, env, parallel
 from fabric.colors import blue, red
-from fabric.context_managers import settings, cd, shell_env
+from fabric.context_managers import settings, cd
 from fabric.contrib import files, console
-from fabric.operations import require, local, prompt
+from fabric.operations import require
 
 
 ROLES_ALL_SRC = ['pg', 'django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
@@ -165,7 +163,8 @@ def _setup_path():
     env.log_dir = posixpath.join(env.home, 'www', env.environment, 'log')
     env.releases = posixpath.join(env.root, 'releases')
     env.code_current = posixpath.join(env.root, 'current')
-    env.code_root = posixpath.join(env.releases, time.strftime('%Y-%m-%d_%H.%M', time.gmtime(time.time())))
+    timestamp = time.strftime('%Y-%m-%d_%H.%M', time.gmtime(time.time()))
+    env.code_root = posixpath.join(env.releases, timestamp)
     env.project_root = posixpath.join(env.code_root, env.project)
     env.project_media = posixpath.join(env.code_root, 'media')
     env.virtualenv_current = posixpath.join(env.code_current, 'python_env')
@@ -220,6 +219,7 @@ def swiss():
 @task
 def india():
     softlayer()
+
 
 @task
 def softlayer():
@@ -277,7 +277,8 @@ def staging():
     """staging.commcarehq.org"""
     if env.code_branch == 'master':
         env.code_branch = 'autostaging'
-        print ("using default branch of autostaging. you can override this with --set code_branch=<branch>")
+        print ("using default branch of autostaging. you can override this "
+               "with --set code_branch=<branch>")
 
     env.inventory = os.path.join('fab', 'inventory', 'staging')
     load_env('staging')
@@ -408,7 +409,8 @@ def _remove_submodule_source_main(path, use_current_release=False):
 @roles(ROLES_DB_ONLY)
 def preindex_views():
     """
-    Creates a new release that runs preindex_everything. Clones code from `current` release and updates it.
+    Creates a new release that runs preindex_everything. Clones code from
+    `current` release and updates it.
     """
     setup_release()
     _preindex_views()
@@ -428,7 +430,6 @@ def _preindex_views():
             '+%%m%%d%%H%%M.%%S`'
         ) % env)
         version_static()
-
 
 
 @roles(ROLES_ALL_SRC)
@@ -611,7 +612,7 @@ def _deploy_without_asking():
                 _execute_with_timing(stop_celery_tasks)
             _execute_with_timing(_migrate)
         else:
-            print(blue("No migration required, skipping."))
+            print blue("No migration required, skipping.")
         _execute_with_timing(do_update_translations)
         if do_migrate:
             _execute_with_timing(flip_es_aliases)
@@ -721,8 +722,8 @@ def copy_release_files():
 @task
 def rollback():
     """
-    Rolls back the servers to the previous release if it exists and is same across servers. Note this will not
-    rollback the supervisor services.
+    Rolls back the servers to the previous release if it exists and is same
+    across servers. Note this will not rollback the supervisor services.
     """
     number_of_releases = execute(get_number_of_releases)
     if not all(map(lambda n: n > 1, number_of_releases)):
@@ -740,7 +741,7 @@ def rollback():
 
     if not unique_release:
         print red('Aborting because release path is empty. '
-            'This probably means there are no releases to rollback to.')
+                  'This probably means there are no releases to rollback to.')
         exit()
 
     if not console.confirm('Do you wish to rollback to release: {}'.format(unique_release), default=False):
