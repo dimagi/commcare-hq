@@ -32,9 +32,9 @@
         "name": "AncHmisCaseFluffPillow"
     },
     "AppPillow": {
-        "advertised_name": "corehq.pillows.application.AppPillow.test_hqapps_2016-01-05_1821.testhq",
+        "advertised_name": "corehq.pillows.application.AppPillow.test_hqapps_2016-02-04_1842.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.application.AppPillow.test_hqapps_2016-01-05_1821.testhq",
+        "checkpoint_id": "corehq.pillows.application.AppPillow.test_hqapps_2016-02-04_1842.testhq",
         "couch_filter": "app_manager/all_apps",
         "couchdb_type": "Database",
         "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
