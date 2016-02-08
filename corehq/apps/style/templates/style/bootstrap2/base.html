@@ -392,6 +392,15 @@
         {% endif %}
         {% endblock %}
 
+        {% if request.couch_user and request|toggle_enabled:"NOTIFICATIONS" %}
+        <script type="text/javascript" src="{% new_static '/notifications/js/NotificationsService.ko.js' %}"></script>
+        <script type="text/javascript">
+            $(function () {
+                $('#js-settingsmenu-notifications').startNotificationsService('{% url 'notifications_service' %}');
+            });
+        </script>
+        {% endif %}
+
         {% block js-inline %}
         <script>
             $(function () {
