@@ -104,7 +104,10 @@ def _get_base_query(export_instance):
     """
     if isinstance(export_instance, FormExportInstance):
         return get_form_export_base_query(
-            export_instance.domain, export_instance.app_id, export_instance.xmlns
+            export_instance.domain,
+            export_instance.app_id,
+            export_instance.xmlns,
+            export_instance.include_errors
         )
     if isinstance(export_instance, CaseExportInstance):
         return get_case_export_base_query(
