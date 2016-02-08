@@ -1,10 +1,15 @@
+{% load hq_shared_tags %}
 {% load i18n %}
 <div id="delete-export-modal-{{ export.get_id }}" class="modal hide fade">
     <div class="modal-header">
         <a class="close" data-dismiss="modal">×</a>
         <h3>{% trans "Delete Export for" %} "{{ export.name }}"?</h3>
     </div>
+    {% if request|toggle_enabled:"NEW_EXPORTS" %}
+    <form name="drop_report" action="{% url "delete_new_custom_export" domain export.type export.get_id %}" method="post">
+    {% else %}
     <form name="drop_report" action="{% url "delete_custom_export" domain export.get_id %}" method="post">
+    {% endif %}
         {% csrf_token %}
         <div class="modal-body">
             <p>{% trans "Are you sure you want to delete this export?" %}</p>
