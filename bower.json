@@ -40,7 +40,8 @@
     "zxcvbn": "4.2.0",
     "bootstrap-tour": "0.10.2",
     "jquery.caret": "~1.5.2",
-    "syntaxhighlighter": "alexgorbatchev/syntaxhighlighter#3.0.83"
+    "syntaxhighlighter": "alexgorbatchev/syntaxhighlighter#3.0.83",
+    "bootstrap": "3.3.6"
   },
   "devDependencies": {
     "chai": "3.3.0",
@@ -50,6 +51,7 @@
   },
   "private": true,
   "resolutions": {
-    "jquery": "1.11.1"
+    "jquery": "1.11.1",
+    "bootstrap": "3.3.6"
   }
 }
