@@ -46,6 +46,14 @@ from dimagi.utils.parsing import json_format_date
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_datatables,
+    use_jquery_ui,
+    use_select2,
+    use_daterangepicker,
+)
+
 
 TOO_MUCH_DATA = ugettext_noop(
     'The filters you selected include too much data. Please change your filters and try again'
@@ -63,6 +71,15 @@ WorkerActivityReportData = namedtuple('WorkerActivityReportData', [
 
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     exportable = True
+    is_bootstrap3 = True
+
+    @use_jquery_ui
+    @use_bootstrap3
+    @use_datatables
+    @use_select2
+    @use_daterangepicker
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        pass
 
     def get_user_link(self, user):
         user_link = self.get_raw_user_link(user)
@@ -873,7 +890,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
         try:
             return self._get_rows()
         except TooMuchDataError as e:
-            return [['<span class="label label-important">{}</span>'.format(e)] + ['--'] * 5]
+            return [['<span class="label label-danger">{}</span>'.format(e)] + ['--'] * 5]
 
     def _get_rows(self):
         rows = []
@@ -943,7 +960,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
     def _format_td_status(self, td, use_label=True):
         status = list()
         template = '<span class="label %(klass)s">%(status)s</span>'
-        klass = ""
+        klass = "label-default"
         if isinstance(td, int):
             td = datetime.timedelta(seconds=td)
         if isinstance(td, datetime.timedelta):
@@ -954,17 +971,17 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
             status = ["%s %s%s" % (val, names[i], "s" if val != 1 else "") for (i, val) in enumerate(vals) if val > 0]
 
             if td.days > 1:
-                klass = "label-important"
+                klass = "label-danger"
             elif td.days == 1:
                 klass = "label-warning"
             elif hours > 5:
-                klass = "label-info"
+                klass = "label-primary"
             if not status:
                 status.append("same")
             elif td.days < 0:
                 if abs(td).seconds > 15*60:
                     status = [_("submitted before completed [strange]")]
-                    klass = "label-inverse"
+                    klass = "label-info"
                 else:
                     status = [_("same")]
 
@@ -981,6 +998,15 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
     flush_layout = True
     report_template_path = "reports/async/basic.html"
+    is_bootstrap3 = True
+
+    @use_jquery_ui
+    @use_bootstrap3
+    @use_datatables
+    @use_select2
+    @use_daterangepicker
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        pass
 
 
 class WorkerActivityTimes(WorkerMonitoringChartBase,
