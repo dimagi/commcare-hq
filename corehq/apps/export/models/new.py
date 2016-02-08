@@ -84,7 +84,7 @@ class ExportColumn(DocumentSchema):
     # A list of constants that map to functions to transform the column value
     transforms = ListProperty(validators=is_valid_transform)
 
-    def get_value(self, doc, base_path, transform_dates=False):
+    def get_value(self, doc, base_path):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
@@ -97,17 +97,13 @@ class ExportColumn(DocumentSchema):
         assert base_path == self.item.path[:len(base_path)]
         # Get the path from the doc root to the desired ExportItem
         path = self.item.path[len(base_path):]
-        return self._transform(NestedDictGetter(path)(doc), transform_dates)
+        return self._transform(NestedDictGetter(path)(doc))
 
-    def _transform(self, value, transform_dates):
+    def _transform(self, value):
         """
         Transform the given value with the transforms specified in self.transforms.
-        Also transform dates if the transform_dates flag is true.
         """
         # TODO: The functions in self.transforms might expect docs, not values, in which case this needs to move.
-
-        if transform_dates:
-            value = couch_to_excel_datetime(value, None)
         for transform in self.transforms:
             value = TRANSFORM_FUNCTIONS[transform](value)
         return value
