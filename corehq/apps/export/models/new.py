@@ -242,9 +242,6 @@ class ExportInstance(Document):
     tables = ListProperty(TableConfiguration)
     export_format = StringProperty(default='csv')
 
-    # Whether to split multiselects into multiple columns
-    split_multiselects = BooleanProperty(default=False)
-
     # Whether to include duplicates and other error'd forms in export
     # TODO: Move this to FormExportInstance
     include_errors = BooleanProperty(default=False)
