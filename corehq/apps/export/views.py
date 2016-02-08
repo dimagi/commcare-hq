@@ -20,6 +20,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.export.utils import convert_saved_export_to_export_instance
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import (
     ExportNotFound,
@@ -385,7 +386,18 @@ class BaseEditNewCustomExportView(BaseNewExportView):
         try:
             export_instance = FormExportInstance.get(self.export_id)
         except ResourceNotFound:
-            raise Http404()
+            # If it's not found, try and see if it's on the legacy system before throwing a 404
+            try:
+                export_helper = make_custom_export_helper(
+                    self.request,
+                    self.export_type,
+                    self.domain,
+                    self.export_id
+                )
+
+                export_instance = convert_saved_export_to_export_instance(export_helper.custom_export)
+            except ResourceNotFound:
+                raise Http404()
 
         schema = self.get_export_schema(export_instance)
         self.export_instance = self.export_instance_cls.update_export_from_schema(schema, export_instance)
