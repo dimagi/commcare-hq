@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - rm-js  # Danny 2/8
   - kill-user-registration-j2me-option   # Danny 2/3
   - turn-off-incomplete-and-saved-forms  # Danny 2/3
   - jquery-migrate  # Danny 2/3
@@ -80,3 +81,6 @@ submodules:
     branches: []
   submodules/django-prbac-src:
     branches: []
+  corehq/apps/prelogin:
+    branches:
+      - rm-js  # Danny 2/8
