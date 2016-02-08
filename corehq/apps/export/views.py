@@ -418,6 +418,30 @@ class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
         )
 
 
+class DeleteNewCustomExportView(BaseNewExportView):
+    urlname = 'delete_new_custom_export'
+    http_method_names = ['post']
+    is_async = False
+
+    @property
+    def export_id(self):
+        return self.kwargs.get('export_id')
+
+    def commit(self, request):
+        self.export_type = self.kwargs.get('export_type')
+        export = self.export_instance_cls.get(self.export_id)
+        export.delete()
+        messages.success(
+            request,
+            mark_safe(
+                _(u"Export <strong>{}</strong> was deleted.").format(
+                    export.name
+                )
+            )
+        )
+        return export._id
+
+
 class CreateCustomFormExportView(BaseCreateCustomExportView):
     urlname = 'custom_export_form'
     page_title = ugettext_lazy("Create Form Export")
