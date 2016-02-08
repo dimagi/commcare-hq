@@ -299,12 +299,6 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
         # this is only here to add the login_required decorator
         return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
 
-    def get(self, request, *args, **kwargs):
-        if not request.user.is_verified():
-            return HttpResponseRedirect(reverse(TwoFactorSetupView.urlname))
-        else:
-            return super(TwoFactorProfileView, self).get(request, *args, **kwargs)
-
 
 class TwoFactorSetupView(BaseMyAccountView, SetupView):
     urlname = 'two_factor_setup'
