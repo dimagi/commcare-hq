@@ -21,7 +21,12 @@
             };
 
             $settings.submit(function() {
-                return model.presubmit();
+                var valid = model.presubmit();
+                if (valid) {
+                    // Don't warn if they're leaving the page due to form submission
+                    window.onbeforeunload = undefined;
+                }
+                return valid;
             });
 
             $settings.koApplyBindings(model);
@@ -138,9 +143,9 @@
                         </thead>
                         <tbody data-bind="foreach: loc_types">
                         <tr data-bind="bind_element: Object()">
-                            <td class="form-group" data-bind="css: { 'error': name_error }">
+                            <td class="form-group" data-bind="css: { 'has-error': name_error }">
                                 <input class="loctype_name form-control" data-bind="value: name" type="text" />
-                                <div class="help-inline" data-bind="visible: name_error">
+                                <div class="help-block" data-bind="visible: name_error">
                                     {% trans "Required" %}
                                 </div>
                             </td>
