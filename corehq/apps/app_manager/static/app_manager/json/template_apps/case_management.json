@@ -1041,5 +1041,5 @@
   "attribution_notes": null,
   "admin_password_charset": "n",
   "translation_strategy": "select-known",
-  "case_sharing": false,
+  "case_sharing": false
 }
