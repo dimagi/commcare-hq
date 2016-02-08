@@ -12,7 +12,6 @@ from corehq.apps.export.models.new import (
     FormExportInstance,
 )
 from couchexport.files import Temp
-from couchexport.models import Format
 
 
 class ExportFile(object):
