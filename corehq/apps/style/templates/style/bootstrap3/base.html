@@ -26,7 +26,7 @@
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'style/lib/fontawesome-4.1.0/less/font-awesome.less' %}" />
+                  href="{% new_static 'font-awesome/less/font-awesome.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
@@ -51,11 +51,11 @@
             <link type="text/css"
                    rel="stylesheet"
                    media="all"
-                   href="{% new_static 'style/lib/select2/select2.css' %}" />
+                   href="{% new_static 'select2-3.5.2-legacy/select2.css' %}" />
             <link type="text/css"
                    rel="stylesheet"
                    media="all"
-                   href="{% new_static 'style/lib/select2/select2-bootstrap.css' %}" />
+                   href="{% new_static 'select2-3.5.2-legacy/select2-bootstrap.css' %}" />
         {% endcompress %}
         {% endif %}
 
@@ -64,7 +64,7 @@
             <link type="text/css"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'style/lib/select2-4.0/dist/css/select2.min.css' %}" />
+                  href="{% new_static 'select2/dist/css/select2.min.css' %}" />
         {% endcompress %}
         {% endif %}
 
@@ -393,13 +393,13 @@
 
         {% if request.use_select2 %}
         {% compress js %}
-        <script type="text/javascript" src="{% new_static 'style/lib/select2/select2.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'select2-3.5.2-legacy/select2.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
         {% if request.use_select2_v4 %}
         {% compress js %}
-        <script type="text/javascript" src="{% new_static 'style/lib/select2-4.0/dist/js/select2.full.min.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'select2/dist/js/select2.full.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
