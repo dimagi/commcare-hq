@@ -206,10 +206,19 @@ class VerifiedNumber(Document):
     @classmethod
     @quickcache(['owner_id'], timeout=60 * 60)
     def by_owner_id(cls, owner_id):
+        """
+        Returns a list of VerifiedNumbers belonging to the given contact.
+        """
         return cls.view('phone_numbers/verified_number_by_owner_id',
             key=owner_id,
             include_docs=True
-        )
+        ).all()
+
+    def _clear_suffix_lookup_cache(self, phone_number):
+        if isinstance(phone_number, basestring):
+            self._by_suffix.clear(VerifiedNumber, phone_number[1:])
+            self._by_suffix.clear(VerifiedNumber, phone_number[2:])
+            self._by_suffix.clear(VerifiedNumber, phone_number[3:])
 
     def _clear_caches(self):
         self.by_owner_id.clear(VerifiedNumber, self.owner_id)
@@ -218,11 +227,11 @@ class VerifiedNumber(Document):
             self.by_owner_id.clear(VerifiedNumber, self._old_owner_id)
 
         self._by_phone.clear(VerifiedNumber, self.phone_number)
-        self._by_suffix.clear(VerifiedNumber, self.phone_number)
+        self._clear_suffix_lookup_cache(self.phone_number)
 
         if self._old_phone_number and self._old_phone_number != self.phone_number:
             self._by_phone.clear(VerifiedNumber, self._old_phone_number)
-            self._by_suffix.clear(VerifiedNumber, self._old_phone_number)
+            self._clear_suffix_lookup_cache(self._old_phone_number)
 
     def save(self, *args, **kwargs):
         self._clear_caches()
