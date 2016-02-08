@@ -654,7 +654,7 @@ class UserInvitationView(object):
                                "Current user accepted a project invitation",
                                {"Current user accepted a project invitation": "yes"})
                 meta = get_meta(request)
-                track_existing_user_accepted_invite_on_hubspot(request.couch_user, request.COOKIES, meta)
+                track_existing_user_accepted_invite_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
                 return HttpResponseRedirect(self.redirect_to_on_success)
             else:
                 mobile_user = CouchUser.from_django_user(request.user).is_commcare_user()
@@ -680,7 +680,7 @@ class UserInvitationView(object):
                                    "New User Accepted a project invitation",
                                    {"New User Accepted a project invitation": "yes"})
                     meta = get_meta(request)
-                    track_new_user_accepted_invite_on_hubspot(request.couch_user, request.COOKIES, meta)
+                    track_new_user_accepted_invite_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
                     return HttpResponseRedirect(reverse("domain_homepage", args=[invitation.domain]))
             else:
                 if CouchUser.get_by_username(invitation.email):
