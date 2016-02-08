@@ -4,13 +4,13 @@
     <head>
         <title>Doc {{ doc_id }}</title>
 
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'style/lib/bootstrap-3.2.0/dist/css/bootstrap.min.css' %}"/>
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
         <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
         <link rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
 
         {% compress js %}
             <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
-            <script type="text/javascript" src="{% new_static 'style/lib/bootstrap-3.2.0/dist/js/bootstrap.min.js' %}"></script>
+            <script type="text/javascript" src="{% new_static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
         {% endcompress %}
 
         {# CodeMirror uses granular resources as a means of config #}
