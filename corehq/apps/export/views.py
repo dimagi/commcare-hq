@@ -314,7 +314,7 @@ class BaseCreateCustomExportView(BaseExportView):
         return HttpResponseRedirect(self.export_home_url)
 
 
-class CreateNewCustomFormExportView(BaseCreateNewCustomExportView):
+class CreateNewCustomFormExportView(BaseNewExportView):
     urlname = 'new_custom_export_form'
     page_title = ugettext_lazy("Create Form Export")
     export_type = FORM_EXPORT
@@ -328,19 +328,12 @@ class CreateNewCustomFormExportView(BaseCreateNewCustomExportView):
             app_id,
             xmlns,
         )
-        self.export_instance = self.get_export_instance(schema, app_id)
+        self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 
         return super(CreateNewCustomFormExportView, self).get(request, *args, **kwargs)
 
-    def get_export_instance(self, schema, app_id=None):
-        return FormExportInstance.generate_instance_from_schema(
-            schema,
-            self.domain,
-            app_id,
-        )
 
-
-class CreateNewCustomCaseExportView(BaseCreateNewCustomExportView):
+class CreateNewCustomCaseExportView(BaseNewExportView):
     urlname = 'new_custom_export_case'
     page_title = ugettext_lazy("Create Case Export")
     export_type = CASE_EXPORT
@@ -352,16 +345,9 @@ class CreateNewCustomCaseExportView(BaseCreateNewCustomExportView):
             self.domain,
             case_type,
         )
-        self.export_instance = self.get_export_instance(schema)
+        self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 
         return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)
-
-    def get_export_instance(self, schema, app_id=None):
-        return CaseExportInstance.generate_instance_from_schema(
-            schema,
-            self.domain,
-            app_id,
-        )
 
 
 class BaseEditNewCustomExportView(BaseNewExportView):
@@ -388,7 +374,10 @@ class BaseEditNewCustomExportView(BaseNewExportView):
             raise Http404()
 
         schema = self.get_export_schema(export_instance)
-        self.export_instance = self.export_instance_cls.update_export_from_schema(schema, export_instance)
+        self.export_instance = self.export_instance_cls.generate_instance_from_schema(
+            schema,
+            saved_export=export_instance,
+        )
         return super(BaseEditNewCustomExportView, self).get(request, *args, **kwargs)
 
 
