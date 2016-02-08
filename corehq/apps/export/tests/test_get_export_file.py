@@ -1,15 +1,11 @@
-import uuid
+import json
 
 from django.test import SimpleTestCase
 
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.export.esaccessors import get_case_export_base_query
 from corehq.apps.export.export import (
     _write_export_file,
     get_export_file,
-    _get_export_documents,
 )
-from corehq.apps.export.filters import OwnerFilter, IsClosedFilter
 from corehq.apps.export.models import (
     TableConfiguration,
     ExportColumn,
@@ -20,31 +16,11 @@ from corehq.apps.export.models.new import (
     ExportItem,
     CaseExportInstance,
 )
+from corehq.apps.export.tests.util import new_case, DOMAIN, DEFAULT_CASE_TYPE
 from corehq.pillows.case import CasePillow
 from corehq.util.elastic import ensure_index_deleted
 from couchexport.models import Format
 from pillowtop.es_utils import completely_initialize_pillow_index
-
-
-DOMAIN = "export-file-domain"
-DEFAULT_USER = "user1"
-DEFAULT_CASE_TYPE = "test-case-type"
-DEFAULT_CASE_NAME = "a case"
-
-
-def new_case(domain=DOMAIN, user_id=DEFAULT_USER, owner_id=DEFAULT_USER,
-             type=DEFAULT_CASE_TYPE, name=DEFAULT_CASE_NAME,
-             closed=False, **kwargs):
-    kwargs["_id"] = kwargs.get("_id", uuid.uuid4().hex)
-    return CommCareCase(
-        domain=domain,
-        user_id=user_id,
-        owner_id=owner_id,
-        type=type,
-        name=name,
-        closed=closed,
-        **kwargs
-    )
 
 
 class WriterTest(SimpleTestCase):
@@ -77,7 +53,7 @@ class WriterTest(SimpleTestCase):
         """
 
         export_instance = ExportInstance(
-            export_format=Format.PYTHON_DICT,
+            export_format=Format.JSON,
             tables=[
                 TableConfiguration(
                     name="My table",
@@ -86,34 +62,36 @@ class WriterTest(SimpleTestCase):
                             label="Q3",
                             item=ScalarItem(
                                 path=['form', 'q3'],
-                            )
+                            ),
+                            selected=True
                         ),
                         ExportColumn(
                             label="Q1",
                             item=ScalarItem(
                                 path=['form', 'q1'],
-                            )
+                            ),
+                            selected=True
                         ),
                     ]
                 )
             ]
         )
 
-        self.assertEqual(
-            _write_export_file(export_instance, self.docs),
-            [
+        with _write_export_file(export_instance, self.docs) as export:
+            self.assertEqual(
+                json.loads(export),
                 {
-                    u'table_name': u'My table',
-                    u'headers': [u'Q3', u'Q1'],
-                    u'rows': [[u'baz', u'foo'], [u'bop', u'bip']],
+                    u'My table': {
+                        u'headers': [u'Q3', u'Q1'],
+                        u'rows': [[u'baz', u'foo'], [u'bop', u'bip']],
 
+                    }
                 }
-            ]
-        )
+            )
 
     def test_multi_table(self):
         export_instance = ExportInstance(
-            export_format=Format.PYTHON_DICT,
+            export_format=Format.JSON,
             tables=[
                 TableConfiguration(
                     name="My table",
@@ -123,7 +101,8 @@ class WriterTest(SimpleTestCase):
                             label="Q3",
                             item=ScalarItem(
                                 path=['form', 'q3'],
-                            )
+                            ),
+                            selected=True,
                         ),
                     ]
                 ),
@@ -135,60 +114,60 @@ class WriterTest(SimpleTestCase):
                             label="Q4",
                             item=ScalarItem(
                                 path=['form', 'q2', 'q4'],
-                            )
+                            ),
+                            selected=True,
                         ),
                     ]
                 )
             ]
         )
 
-        self.assertEqual(
-            sorted(_write_export_file(export_instance, self.docs)),
-            sorted([
+        with _write_export_file(export_instance, self.docs) as export:
+            self.assertEqual(
+                json.loads(export),
                 {
-                    u'table_name': u'My table',
-                    u'headers': [u'Q3'],
-                    u'rows': [[u'baz'], [u'bop']],
+                    u'My table': {
+                        u'headers': [u'Q3'],
+                        u'rows': [[u'baz'], [u'bop']],
 
-                },
-                {
-                    u'table_name': u'My other table',
-                    u'headers': [u'Q4'],
-                    u'rows': [[u'bar'], [u'boop']],
+                    },
+                    u'My other table': {
+                        u'headers': [u'Q4'],
+                        u'rows': [[u'bar'], [u'boop']],
+                    }
                 }
-            ])
-        )
+            )
 
 
 class ExportTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.pillow = CasePillow(online=False)
-        completely_initialize_pillow_index(cls.pillow)
+        cls.case_pillow = CasePillow(online=False)
+        completely_initialize_pillow_index(cls.case_pillow)
 
         case = new_case(foo="apple", bar="banana")
-        cls.pillow.send_robust(case.to_json())
+        cls.case_pillow.send_robust(case.to_json())
 
         case = new_case(owner_id="some_other_owner", foo="apple", bar="banana")
-        cls.pillow.send_robust(case.to_json())
+        cls.case_pillow.send_robust(case.to_json())
 
         case = new_case(type="some_other_type", foo="apple", bar="banana")
-        cls.pillow.send_robust(case.to_json())
+        cls.case_pillow.send_robust(case.to_json())
 
         case = new_case(closed=True, foo="apple", bar="banana")
-        cls.pillow.send_robust(case.to_json())
+        cls.case_pillow.send_robust(case.to_json())
 
-        cls.pillow.get_es_new().indices.refresh(cls.pillow.es_index)
+        cls.case_pillow.get_es_new().indices.refresh(cls.case_pillow.es_index)
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(cls.pillow.es_index)
+        ensure_index_deleted(cls.case_pillow.es_index)
 
     def test_get_export_file(self):
-        export = get_export_file(
+        export_file = get_export_file(
             CaseExportInstance(
-                export_format=Format.PYTHON_DICT,
+                export_format=Format.JSON,
                 domain=DOMAIN,
                 case_type=DEFAULT_CASE_TYPE,
                 tables=[TableConfiguration(
@@ -199,47 +178,34 @@ class ExportTest(SimpleTestCase):
                             label="Foo column",
                             item=ExportItem(
                                 path=["foo"]
-                            )
+                            ),
+                            selected=True,
                         ),
                         ExportColumn(
                             label="Bar column",
                             item=ExportItem(
                                 path=["bar"]
-                            )
+                            ),
+                            selected=True,
                         )
                     ]
                 )]
             ),
             []  # No filters
         )
-        self.assertEqual(
-            export,
-            [
+        with export_file as export:
+            self.assertEqual(
+                json.loads(export),
                 {
-                    u'table_name': u'My table',
-                    u'headers': [
-                        u'Foo column',
-                        u'Bar column'],
-                    u'rows': [
-                        [u'apple', u'banana'],
-                        [u'apple', u'banana'],
-                        [u'apple', u'banana'],
-                    ],
-                    
+                    u'My table': {
+                        u'headers': [
+                            u'Foo column',
+                            u'Bar column'],
+                        u'rows': [
+                            [u'apple', u'banana'],
+                            [u'apple', u'banana'],
+                            [u'apple', u'banana'],
+                        ],
+                    }
                 }
-            ]
-        )
-
-    def test_filters(self):
-        # TODO: Test other filters
-        owner_filter = OwnerFilter(DEFAULT_USER)
-        closed_filter = IsClosedFilter(False)
-        self.assertEqual(1, len(_get_export_documents(
-            CaseExportInstance(domain=DOMAIN, case_type=DEFAULT_CASE_TYPE),
-            [owner_filter, closed_filter]
-        )))
-
-    def test_get_case_export_base_query(self):
-        q = get_case_export_base_query(DOMAIN, DEFAULT_CASE_TYPE)
-        result = q.run()
-        self.assertEqual(3, len(result.hits))
+            )

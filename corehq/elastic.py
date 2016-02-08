@@ -4,6 +4,7 @@ from urllib import unquote
 from elasticsearch import Elasticsearch
 from django.conf import settings
 from elasticsearch.exceptions import ElasticsearchException, RequestError
+from elasticsearch.helpers import scan
 
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
@@ -129,6 +130,20 @@ def run_query(index_name, q):
     es_meta = ES_META[index_name]
     try:
         return get_es_new().search(es_meta.index, es_meta.type, body=q)
+    except RequestError as e:
+        raise ESError(e)
+
+
+def scroll_query(index_name, q):
+    es_meta = ES_META[index_name]
+    try:
+        return scan(
+            get_es_new(),
+            index=es_meta.index,
+            doc_type=es_meta.type,
+            query=q,
+            preserve_order=True  # This makes it a scroll query, not a scan
+        )
     except RequestError as e:
         raise ESError(e)
 
