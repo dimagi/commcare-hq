@@ -6,7 +6,9 @@ from corehq.apps.es.cases import (
     modified_range,
     user,
     closed_range,
-    opened_by)
+    opened_by
+)
+from corehq.apps.export.esaccessors import get_group_user_ids
 
 
 class ExportFilter(object):
@@ -108,6 +110,28 @@ class ClosedByFilter(ExportFilter):
         return esfilters.term("closed_by", self.closed_by)
 
 
-# TODO: owner/modifier/closer in location/group filters
+class GroupFilter(ExportFilter):  # Abstract base class
+    base_filter = None
 
+    def __init__(self, group_id):
+        self.group_id = group_id
+
+    def to_es_filter(self):
+        user_ids = get_group_user_ids(self.group_id)
+        return self.base_filter(user_ids).to_es_filter()
+
+
+class GroupOwnerFilter(GroupFilter):
+    base_filter = OwnerFilter
+
+
+class GroupLastModifiedByFilter(GroupFilter):
+    base_filter = LastModifiedByFilter
+
+
+class GroupClosedByFilter(GroupFilter):
+    base_filter = ClosedByFilter
+
+
+# TODO: owner/modifier/closer in location filters
 # TODO: Add form filters

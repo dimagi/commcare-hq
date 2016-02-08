@@ -4,13 +4,10 @@ import uuid
 from django.test import SimpleTestCase
 
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.export.esaccessors import get_case_export_base_query
 from corehq.apps.export.export import (
     _write_export_file,
     get_export_file,
-    _get_export_documents,
 )
-from corehq.apps.export.filters import OwnerFilter, IsClosedFilter
 from corehq.apps.export.models import (
     TableConfiguration,
     ExportColumn,
@@ -168,26 +165,26 @@ class ExportTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.pillow = CasePillow(online=False)
-        completely_initialize_pillow_index(cls.pillow)
+        cls.case_pillow = CasePillow(online=False)
+        completely_initialize_pillow_index(cls.case_pillow)
 
         case = new_case(foo="apple", bar="banana")
-        cls.pillow.send_robust(case.to_json())
+        cls.case_pillow.send_robust(case.to_json())
 
         case = new_case(owner_id="some_other_owner", foo="apple", bar="banana")
-        cls.pillow.send_robust(case.to_json())
+        cls.case_pillow.send_robust(case.to_json())
 
         case = new_case(type="some_other_type", foo="apple", bar="banana")
-        cls.pillow.send_robust(case.to_json())
+        cls.case_pillow.send_robust(case.to_json())
 
         case = new_case(closed=True, foo="apple", bar="banana")
-        cls.pillow.send_robust(case.to_json())
+        cls.case_pillow.send_robust(case.to_json())
 
-        cls.pillow.get_es_new().indices.refresh(cls.pillow.es_index)
+        cls.case_pillow.get_es_new().indices.refresh(cls.case_pillow.es_index)
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(cls.pillow.es_index)
+        ensure_index_deleted(cls.case_pillow.es_index)
 
     def test_get_export_file(self):
         export_file = get_export_file(
@@ -234,18 +231,3 @@ class ExportTest(SimpleTestCase):
                     }
                 }
             )
-
-    def test_filters(self):
-        # TODO: Test other filters
-        owner_filter = OwnerFilter(DEFAULT_USER)
-        closed_filter = IsClosedFilter(False)
-        doc_generator = _get_export_documents(
-            CaseExportInstance(domain=DOMAIN, case_type=DEFAULT_CASE_TYPE),
-            [owner_filter, closed_filter]
-        )
-        self.assertEqual(1, len([x for x in doc_generator]))
-
-    def test_get_case_export_base_query(self):
-        q = get_case_export_base_query(DOMAIN, DEFAULT_CASE_TYPE)
-        result = q.run()
-        self.assertEqual(3, len(result.hits))
