@@ -14,18 +14,13 @@ from corehq.apps.export.filters import (
 from corehq.apps.export.models.new import (
     CaseExportInstance,
 )
-from corehq.apps.export.tests import new_case
+from corehq.apps.export.tests.util import new_case, DEFAULT_USER, DOMAIN, \
+    DEFAULT_CASE_TYPE
 from corehq.apps.groups.models import Group
 from corehq.pillows.case import CasePillow
 from corehq.pillows.group import GroupPillow
 from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import completely_initialize_pillow_index
-
-
-DOMAIN = "export-file-domain"
-DEFAULT_USER = "user1"
-DEFAULT_CASE_TYPE = "test-case-type"
-DEFAULT_CASE_NAME = "a case"
 
 
 class ExportFilterTest(SimpleTestCase):

@@ -1,9 +1,7 @@
 import json
-import uuid
 
 from django.test import SimpleTestCase
 
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.export.export import (
     _write_export_file,
     get_export_file,
@@ -18,31 +16,11 @@ from corehq.apps.export.models.new import (
     ExportItem,
     CaseExportInstance,
 )
+from corehq.apps.export.tests.util import new_case, DOMAIN, DEFAULT_CASE_TYPE
 from corehq.pillows.case import CasePillow
 from corehq.util.elastic import ensure_index_deleted
 from couchexport.models import Format
 from pillowtop.es_utils import completely_initialize_pillow_index
-
-
-DOMAIN = "export-file-domain"
-DEFAULT_USER = "user1"
-DEFAULT_CASE_TYPE = "test-case-type"
-DEFAULT_CASE_NAME = "a case"
-
-
-def new_case(domain=DOMAIN, user_id=DEFAULT_USER, owner_id=DEFAULT_USER,
-             type=DEFAULT_CASE_TYPE, name=DEFAULT_CASE_NAME,
-             closed=False, **kwargs):
-    kwargs["_id"] = kwargs.get("_id", uuid.uuid4().hex)
-    return CommCareCase(
-        domain=domain,
-        user_id=user_id,
-        owner_id=owner_id,
-        type=type,
-        name=name,
-        closed=closed,
-        **kwargs
-    )
 
 
 class WriterTest(SimpleTestCase):
