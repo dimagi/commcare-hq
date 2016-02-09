@@ -2552,7 +2552,10 @@ class CreditLine(models.Model):
     feature_type = models.CharField(max_length=10, null=True,
                                     choices=FeatureType.CHOICES)
     date_created = models.DateTimeField(auto_now_add=True)
-    balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
+    balance = models.DecimalField(
+        default=Decimal('0.0000'), max_digits=10, decimal_places=4,
+        validators=[MinValueValidator(0)],
+    )
     is_active = models.BooleanField(default=True)
     last_modified = models.DateTimeField(auto_now=True)
 
