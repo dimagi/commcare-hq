@@ -256,6 +256,9 @@ class ExportInstance(Document):
     is_deidentified = BooleanProperty(default=False)
     is_daily_saved_export = BooleanProperty(default=False)
 
+    # Keep reference to old schema id if we have converted it from the legacy infrastructure
+    legacy_saved_export_schema_id = StringProperty()
+
     class Meta:
         app_label = 'export'
 
