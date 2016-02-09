@@ -230,3 +230,22 @@ class CaseContactPhoneNumberTestCase(TestCase):
         case2.delete()
         self.get_case_verified_number(case1).delete()
         case1.delete()
+
+    def test_filter_pending(self):
+        v1 = VerifiedNumber(verified=True)
+        v1.save()
+
+        v2 = VerifiedNumber(verified=False)
+        v2.save()
+
+        self.assertIsNone(VerifiedNumber._filter_pending(None, include_pending=True))
+        self.assertIsNone(VerifiedNumber._filter_pending(None, include_pending=False))
+
+        self.assertEqual(v1, VerifiedNumber._filter_pending(v1, include_pending=False))
+        self.assertIsNone(VerifiedNumber._filter_pending(v2, include_pending=False))
+
+        self.assertEqual(v1, VerifiedNumber._filter_pending(v1, include_pending=True))
+        self.assertEqual(v2, VerifiedNumber._filter_pending(v2, include_pending=True))
+
+        v1.delete()
+        v2.delete()
