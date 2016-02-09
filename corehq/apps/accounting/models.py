@@ -2562,6 +2562,10 @@ class CreditLine(models.Model):
     class Meta:
         app_label = 'accounting'
 
+    def save(self, **kwargs):
+        self.full_clean(validate_unique=False)
+        super(CreditLine, self).save(**kwargs)
+
     def __str__(self):
         credit_level = ("Account-Level" if self.subscription is None
                         else "Subscription-Level")
