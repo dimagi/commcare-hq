@@ -1390,7 +1390,11 @@ class DeleteNewCustomExportView(BaseModifyNewCustomView):
 
     def commit(self, request):
         self.export_type = self.kwargs.get('export_type')
-        export = self.export_instance_cls.get(self.export_id)
+        try:
+            export = self.export_instance_cls.get(self.export_id)
+        except ResourceNotFound:
+            raise Http404()
+
         export.delete()
         messages.success(
             request,
