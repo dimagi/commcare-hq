@@ -1304,6 +1304,8 @@ class CaseReminderHandler(Document):
         else:
             self.locked = True
         super(CaseReminderHandler, self).save(**params)
+        self.expire_caches()
+
         delay = self.start_condition_type == CASE_CRITERIA
         if not unlock:
             if delay:
@@ -1312,6 +1314,11 @@ class CaseReminderHandler(Document):
             else:
                 process_reminder_rule(self, schedule_changed,
                     prev_definition, send_immediately)
+
+    def expire_caches(self):
+        redis = get_redis_client()
+        redis.expire(self.get_cache_handler_ids_key(self.domain, self.reminder_type), 0)
+        redis.expire(self.get_cache_handler_ids_key(self.domain, None), 0)
 
     def process_rule(self, schedule_changed, prev_definition, send_immediately):
         if not self.deleted():
@@ -1373,7 +1380,17 @@ class CaseReminderHandler(Document):
         return [row['id'] for row in result]
 
     @classmethod
+    def get_cache_handler_ids_key(cls, domain, reminder_type):
+        return 'reminder-definition-cached-ids-%s-%s' % (domain, reminder_type)
+
+    @classmethod
     def get_handler_ids(cls, domain, reminder_type_filter=None):
+        redis = get_redis_client()
+        cache_key = cls.get_cache_handler_ids_key(domain, reminder_type_filter)
+        cached_result = redis.get(cache_key)
+        if cached_result:
+            return cached_result
+
         result = cls.view('reminders/handlers_by_reminder_type',
             startkey=[domain],
             endkey=[domain, {}],
@@ -1387,10 +1404,13 @@ class CaseReminderHandler(Document):
             else:
                 return ((reminder_type or REMINDER_TYPE_DEFAULT) ==
                     reminder_type_filter)
-        return [
+        result = [
             row['id'] for row in result
             if filter_fcn(row['key'][1])
         ]
+
+        redis.set(cache_key, result)
+        return result
 
     @classmethod
     def get_referenced_forms(cls, domain):
