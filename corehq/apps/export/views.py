@@ -234,12 +234,6 @@ class BaseNewExportView(BaseExportView):
         return export._id
 
 
-class BaseCreateNewCustomExportView(BaseNewExportView):
-
-    def get_export_instance(self, schema, app_id=None):
-        raise NotImplementedError()
-
-
 class BaseCreateCustomExportView(BaseExportView):
     """
     todo: Refactor in v2 of redesign
