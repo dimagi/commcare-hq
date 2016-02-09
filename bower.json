@@ -23,6 +23,8 @@
     "knockout-2.3.0-legacy": "knockout.js#2.3",
     "knockout": "3.1.0",
     "select2-3.4.5-legacy": "select2#3.4.5",
+    "select2-3.5.2-legacy": "select2#3.5.2",
+    "select2": "4.0.0",
     "less": "1.7.3",
     "xpath": "dimagi/js-xpath#f4f0c78",
     "backbone": "0.9.1",
@@ -42,7 +44,9 @@
     "jquery.caret": "~1.5.2",
     "jquery-migrate": "1.2.1",
     "syntaxhighlighter": "alexgorbatchev/syntaxhighlighter#3.0.83",
-    "bootstrap": "3.3.6"
+    "bootstrap": "3.3.6",
+    "font-awesome": "fontawesome#4.5.0",
+    "ui-select": "angular-ui/ui-select#v0.13.2"
   },
   "devDependencies": {
     "chai": "3.3.0",
@@ -53,6 +57,7 @@
   "private": true,
   "resolutions": {
     "jquery": "1.11.1",
-    "bootstrap": "3.3.6"
+    "bootstrap": "3.3.6",
+    "select2": "4.0.0"
   }
 }
