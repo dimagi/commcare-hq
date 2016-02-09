@@ -5,7 +5,7 @@ from time import sleep
 from corehq.apps.sms.mixin import (VerifiedNumber, InvalidFormatException,
     PhoneNumberInUseException)
 from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING, SMS,
-    PhoneLoadBalancingMixin)
+    PhoneLoadBalancingMixin, CommConnectCase)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
     log_sms_exception)
 from django.conf import settings
@@ -235,9 +235,10 @@ def delete_phone_numbers_for_owners(owner_ids):
 
 @task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
       default_retry_delay=5 * 60, max_retries=10, bind=True)
-def sync_case_phone_number(self, contact_case):
+def sync_case_phone_number(self, case):
     try:
-        _sync_case_phone_number(contact_case)
+        contact = CommConnectCase.wrap_as_commconnect_case(case)
+        _sync_case_phone_number(contact)
     except Exception as e:
         self.retry(exc=e)
 
