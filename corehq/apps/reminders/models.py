@@ -1294,7 +1294,8 @@ class CaseReminderHandler(Document):
 
     def clear_caches(self):
         self.get_handler_ids.clear(CaseReminderHandler, self.domain, reminder_type_filter=None)
-        self.get_handler_ids.clear(CaseReminderHandler, self.domain, reminder_type_filter=self.reminder_type)
+        reminder_type = self.reminder_type or REMINDER_TYPE_DEFAULT
+        self.get_handler_ids.clear(CaseReminderHandler, self.domain, reminder_type_filter=reminder_type)
 
     def save(self, **params):
         from corehq.apps.reminders.tasks import process_reminder_rule
