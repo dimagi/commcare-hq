@@ -209,7 +209,8 @@ class VerifiedNumber(Document):
         """
         Returns a list of VerifiedNumbers belonging to the given contact.
         """
-        return cls.view('phone_numbers/verified_number_by_owner_id',
+        return cls.view(
+            'phone_numbers/verified_number_by_owner_id',
             key=owner_id,
             include_docs=True
         ).all()

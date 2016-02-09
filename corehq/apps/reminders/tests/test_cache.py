@@ -1,6 +1,5 @@
 from corehq.apps.reminders.models import (CaseReminderHandler,
     REMINDER_TYPE_DEFAULT, REMINDER_TYPE_ONE_TIME)
-from datetime import time
 from django.test import TestCase
 from mock import patch
 
