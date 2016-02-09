@@ -12,6 +12,10 @@ class XFormNotFound(ResourceNotFound, ObjectDoesNotExist):
     pass
 
 
+class InvalidAttachment(Exception):
+    pass
+
+
 class AttachmentNotFound(ResourceNotFound, ObjectDoesNotExist, UnicodeMixIn):
     def __init__(self, attachment_name):
         self.attachment_name = attachment_name

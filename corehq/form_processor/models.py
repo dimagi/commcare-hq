@@ -5,9 +5,10 @@ from collections import (
     namedtuple,
     OrderedDict
 )
-from tempfile import gettempdir
 
 from datetime import datetime
+
+from StringIO import StringIO
 from jsonobject import JsonObject
 from jsonobject import StringProperty
 from jsonobject.properties import BooleanProperty
@@ -17,6 +18,8 @@ from django.conf import settings
 from django.db import models
 from uuidfield import UUIDField
 
+from corehq.blobs import get_blob_db
+from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.routers import db_for_read_write
 from dimagi.utils.couch import RedisLockableMixIn
@@ -29,7 +32,7 @@ from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase
-from .exceptions import AttachmentNotFound, AccessRestricted
+from .exceptions import AttachmentNotFound, AccessRestricted, InvalidAttachment
 
 XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
 XFormAttachmentSQL_DB_TABLE = 'form_processor_xformattachmentsql'
@@ -51,7 +54,12 @@ class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
             data = self.raw_content.read()
         else:
             data = self.raw_content
-        return data
+
+        if isinstance(data, unicode):
+            content = StringIO(data.encode("utf-8"))
+        elif isinstance(data, bytes):
+            content = StringIO(data)
+        return content
 
     @property
     def md5(self):
@@ -320,18 +328,41 @@ class AbstractAttachment(DisabledDbMixin, models.Model):
     content_type = models.CharField(max_length=255)
     md5 = models.CharField(max_length=255)
 
-    @property
-    def filepath(self):
-        return os.path.join(gettempdir(), str(self.attachment_id))
+    def _blobdb_bucket(self):
+        if self.attachment_id is None:
+            raise AttachmentNotFound(
+                "cannot manipulate attachment on unidentified document")
+        return os.path.join(self._attachment_prefix, str(self.attachment_id))
 
     def write_content(self, content):
-        with open(self.filepath, 'w+') as f:
-            f.write(content)
+        if not self.name:
+            raise InvalidAttachment("cannot save attachment without name")
+
+        db = get_blob_db()
+        bucket = self._blobdb_bucket()
+        db.put(content, self.name, bucket)
 
     def read_content(self):
-        with open(self.filepath, 'r+') as f:
-            content = f.read()
-        return content
+        db = get_blob_db()
+        try:
+            blob = db.get(self.name, self._blobdb_bucket())
+        except (KeyError, NotFound):
+            raise AttachmentNotFound(u"{model} attachment: {name!r}".format(
+                                   model=type(self).__name__, name=self.name))
+        with blob:
+            body = blob.read()
+        try:
+            body = body.decode("utf-8", "strict")
+        except UnicodeDecodeError:
+            # Return bytes on decode failure, otherwise unicode.
+            # Ugly, but consistent with restkit.wrappers.Response.body_string
+            pass
+        return body
+
+    def delete_content(self):
+        deleted = False
+        bucket = self._blobdb_bucket()
+        return get_blob_db().delete(self.name, bucket) or deleted
 
     class Meta:
         abstract = True
@@ -339,6 +370,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model):
 
 class XFormAttachmentSQL(AbstractAttachment):
     objects = RestrictedManager()
+    _attachment_prefix = 'form'
 
     form = models.ForeignKey(
         XFormInstanceSQL, to_field='form_id',
@@ -611,6 +643,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
 
 class CaseAttachmentSQL(AbstractAttachment):
     objects = RestrictedManager()
+    _attachment_prefix = 'case'
 
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=True,
