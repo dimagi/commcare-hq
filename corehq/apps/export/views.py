@@ -1273,7 +1273,14 @@ class BaseNewExportView(BaseExportView):
         return export._id
 
 
-class CreateNewCustomFormExportView(BaseNewExportView):
+class BaseModifyNewCustomView(BaseNewExportView):
+
+    @method_decorator(require_can_edit_data)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseEditNewCustomExportView, self).dispatch(request, *args, **kwargs)
+
+
+class CreateNewCustomFormExportView(BaseModifyNewCustomView):
     urlname = 'new_custom_export_form'
     page_title = ugettext_lazy("Create Form Export")
     export_type = FORM_EXPORT
@@ -1292,7 +1299,7 @@ class CreateNewCustomFormExportView(BaseNewExportView):
         return super(CreateNewCustomFormExportView, self).get(request, *args, **kwargs)
 
 
-class CreateNewCustomCaseExportView(BaseNewExportView):
+class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
     urlname = 'new_custom_export_case'
     page_title = ugettext_lazy("Create Case Export")
     export_type = CASE_EXPORT
@@ -1309,11 +1316,7 @@ class CreateNewCustomCaseExportView(BaseNewExportView):
         return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)
 
 
-class BaseEditNewCustomExportView(BaseNewExportView):
-
-    @method_decorator(require_can_edit_data)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseEditNewCustomExportView, self).dispatch(request, *args, **kwargs)
+class BaseEditNewCustomExportView(BaseModifyNewCustomView):
 
     @property
     def export_id(self):
@@ -1376,7 +1379,7 @@ class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
         )
 
 
-class DeleteNewCustomExportView(BaseNewExportView):
+class DeleteNewCustomExportView(BaseModifyNewCustomView):
     urlname = 'delete_new_custom_export'
     http_method_names = ['post']
     is_async = False
@@ -1398,5 +1401,3 @@ class DeleteNewCustomExportView(BaseNewExportView):
             )
         )
         return export._id
-
-
