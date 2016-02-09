@@ -162,10 +162,8 @@ class ExportColumn(DocumentSchema):
 
 
 class TableConfiguration(DocumentSchema):
-    # name is not modified by the user, and denotes the name of the table
-    name = StringProperty()
-    # diplay_name saves the user's decision for the table name
-    display_name = StringProperty()
+    # label saves the user's decision for the table name
+    label = StringProperty()
     path = ListProperty()
     columns = ListProperty(ExportColumn)
     selected = BooleanProperty(default=False)
@@ -251,9 +249,6 @@ class ExportInstance(Document):
     # Whether to split multiselects into multiple columns
     split_multiselects = BooleanProperty(default=False)
 
-    # Whether to automatically convert dates to excel dates
-    transform_dates = BooleanProperty(default=False)
-
     # Whether to include duplicates and other error'd forms in export
     include_errors = BooleanProperty(default=False)
 
@@ -284,16 +279,7 @@ class ExportInstance(Document):
         raise NotImplementedError()
 
     @classmethod
-    def update_export_from_schema(cls, schema, saved_export):
-        return cls.generate_instance_from_schema(
-            schema,
-            saved_export.domain,
-            app_id=saved_export.app_id,
-            saved_export=saved_export,
-        )
-
-    @classmethod
-    def generate_instance_from_schema(cls, schema, domain, app_id=None, saved_export=None):
+    def generate_instance_from_schema(cls, schema, saved_export=None):
         """Given an ExportDataSchema, this will generate an ExportInstance"""
         if saved_export:
             instance = saved_export
@@ -302,12 +288,14 @@ class ExportInstance(Document):
 
         instance.name = instance.name or instance.defaults.get_default_instance_name(schema)
 
-        latest_app_ids_and_versions = get_latest_built_app_ids_and_versions(domain, app_id)
+        latest_app_ids_and_versions = get_latest_built_app_ids_and_versions(
+            schema.domain,
+            getattr(schema, 'app_id', None),
+        )
         for group_schema in schema.group_schemas:
             table = instance.get_table(group_schema.path) or TableConfiguration(
                 path=group_schema.path,
-                name=instance.defaults.get_default_table_name(group_schema.path),
-                display_name=instance.defaults.get_default_table_name(group_schema.path),
+                label=instance.defaults.get_default_table_name(group_schema.path),
                 selected=instance.defaults.default_is_table_selected(group_schema.path),
             )
             columns = []
