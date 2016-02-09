@@ -22,8 +22,6 @@ def convert_saved_export_to_export_instance(saved_export):
 
     instance = FormExportInstance.generate_instance_from_schema(
         schema,
-        schema.domain,
-        schema.app_id
     )
     instance.name = saved_export.name
     instance.is_deidentified = saved_export.is_safe
