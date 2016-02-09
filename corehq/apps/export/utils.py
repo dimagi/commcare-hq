@@ -20,9 +20,7 @@ def convert_saved_export_to_export_instance(saved_export):
         _extract_xmlns_from_index(saved_export.index),
     )
 
-    instance = FormExportInstance.generate_instance_from_schema(
-        schema,
-    )
+    instance = FormExportInstance.generate_instance_from_schema(schema)
     instance.name = saved_export.name
     instance.is_deidentified = saved_export.is_safe
     instance.export_format = saved_export.default_format
