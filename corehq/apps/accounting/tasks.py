@@ -137,6 +137,7 @@ def update_subscriptions():
     deactivate_subscriptions()
     activate_subscriptions()
     warn_subscriptions_still_active()
+    warn_subscriptions_not_active()
 
 
 @periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'))
