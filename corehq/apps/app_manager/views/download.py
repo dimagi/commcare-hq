@@ -104,14 +104,6 @@ def download_xform(request, domain, app_id, module_id, form_id):
 
 
 @safe_download
-def download_user_registration(request, domain, app_id):
-    """See Application.fetch_xform"""
-    return HttpResponse(
-        request.app.get_user_registration().render_xform()
-    )
-
-
-@safe_download
 def download_jad(request, domain, app_id):
     """
     See ApplicationBase.create_jadjar

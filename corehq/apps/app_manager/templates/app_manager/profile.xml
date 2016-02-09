@@ -43,9 +43,6 @@
             <{{ feature }} active="{{ value.value }}" />
         {% endif %}{% endfor %}
         <users active="{{ app_profile.features.users.value|default:'true' }}">
-            {% if app.show_user_registration %}
-            <registration>{{ app.get_user_registration.wrapped_xform.data_node.tag_xmlns }}</registration>
-            {% endif %}
         </users>
     </features>
 
