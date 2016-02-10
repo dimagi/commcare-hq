@@ -249,6 +249,35 @@ class FormAccessorSQL(AbstractFormAccessor):
             return [form.form_id for form in forms]
         return forms
 
+    @staticmethod
+    def get_all_forms_received_since(received_on_since=None, chunk_size=500):
+        start_from = received_on_since or datetime.min
+        # todo: this will greedily query the same cases multiple times in a sharded
+        # setup. We should make it smarter
+        batch = FormAccessorSQL.get_forms_received_since(start_from, limit=chunk_size)
+        while len(batch) == chunk_size:
+            for form in batch:
+                yield form
+                next_start_from = form.received_on
+
+            # make sure we are making progress
+            assert next_start_from > start_from
+            start_from = next_start_from
+            batch = FormAccessorSQL.get_forms_received_since(start_from, limit=chunk_size)
+
+        # last batch
+        for form in batch:
+            yield form
+
+    @staticmethod
+    def get_forms_received_since(received_on_since=None, limit=500):
+        received_on_since = received_on_since or datetime.min
+        results = list(XFormInstanceSQL.objects.raw('SELECT * FROM get_all_forms_received_since(%s, %s)',
+                                                    [received_on_since, limit]))
+        # sort and add additional limit in memory in case the sharded setup returns more than
+        # the requested number of cases
+        return sorted(results, key=lambda form: form.received_on)[:limit]
+
 
 class CaseAccessorSQL(AbstractCaseAccessor):
 
@@ -428,7 +457,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             yield case
 
     @staticmethod
-    def get_cases_modified_since(server_modified_on_since=None, limit=100):
+    def get_cases_modified_since(server_modified_on_since=None, limit=500):
         """
         Iterate through all cases in the entire database, optionally modified since
         a specific date
