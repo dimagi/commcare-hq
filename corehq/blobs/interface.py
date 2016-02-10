@@ -7,6 +7,7 @@ from abc import ABCMeta, abstractmethod
 from uuid import uuid4
 
 from corehq.blobs import DEFAULT_BUCKET
+from corehq.blobs.exceptions import BadName
 
 SAFENAME = re.compile("^[a-z0-9_./-]+$", re.IGNORECASE)
 
@@ -17,7 +18,7 @@ class AbstractBlobDB(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def put(self, content, basename="", bucket=DEFAULT_BUCKET):
+    def put(self, content, basename="", bucket=DEFAULT_BUCKET, unique_id=None):
         """Put a blob in persistent storage
         :param content: A file-like object in binary read mode.
         :param basename: Optional name from which the blob name will be
@@ -26,6 +27,9 @@ class AbstractBlobDB(object):
         :param bucket: Optional bucket name used to partition blob data
         in the persistent storage medium. This may be delimited with
         slashes (/). It must be a valid relative path.
+        :param unique_id: A globally unique identifier for this blob. If one is not
+        provided then one will be generated. Used in conjunction with ``basename``
+        to create the blob identifier.
         :returns: A `BlobInfo` named tuple. The returned object has a
         `identifier` member that must be used to get or delete the blob. It
         should not be confused with the optional `basename` parameter.
@@ -64,11 +68,16 @@ class AbstractBlobDB(object):
         raise NotImplementedError
 
     @staticmethod
-    def get_identifier(basename):
+    def get_identifier(basename, unique_id=None):
+        if unique_id:
+            if not SAFENAME.match(unique_id):
+                raise BadName("Unique ID supplied is unsafe: {}".format(unique_id))
+        else:
+            unique_id = uuid4().hex
         if not basename:
-            return uuid4().hex
+            return unique_id
         if SAFENAME.match(basename) and "/" not in basename:
             prefix = basename
         else:
             prefix = "unsafe"
-        return prefix + "." + uuid4().hex
+        return prefix + "." + unique_id

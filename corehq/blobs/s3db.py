@@ -33,8 +33,8 @@ class S3BlobDB(AbstractBlobDB):
         # https://github.com/boto/boto3/issues/259
         self.db.meta.client.meta.events.unregister('before-sign.s3', fix_s3_host)
 
-    def put(self, content, basename="", bucket=DEFAULT_BUCKET):
-        identifier = self.get_identifier(basename)
+    def put(self, content, basename="", bucket=DEFAULT_BUCKET, unique_id=None):
+        identifier = self.get_identifier(basename, unique_id)
         path = self.get_path(identifier, bucket)
         content_md5 = get_content_md5(content)
         obj = self._s3_bucket(create=True).put_object(
@@ -70,10 +70,7 @@ class S3BlobDB(AbstractBlobDB):
         return False
 
     def copy_blob(self, content, info, bucket):
-        if info.digest and info.digest.startswith("md5-"):
-            content_md5 = info.digest[4:]
-        else:
-            content_md5 = get_content_md5(content)
+        content_md5 = info.md5_hash or get_content_md5(content)
         self._s3_bucket(create=True).put_object(
             Key=self.get_path(info.identifier, bucket),
             Body=content,
