@@ -329,6 +329,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model):
     name = models.CharField(max_length=255, db_index=True)
     content_type = models.CharField(max_length=255)
     md5 = models.CharField(max_length=255)
+    blob_id = models.CharField(max_length=255)
 
     def _blobdb_bucket(self):
         if self.attachment_id is None:
@@ -342,12 +343,15 @@ class AbstractAttachment(DisabledDbMixin, models.Model):
 
         db = get_blob_db()
         bucket = self._blobdb_bucket()
-        db.put(content, self.name, bucket)
+        info = db.put(content, self.name, bucket)
+        # blob DB generates its own unique ID for the blob which we need
+        # in order to fetch it again
+        self.blob_id = info.name
 
     def read_content(self):
         db = get_blob_db()
         try:
-            blob = db.get(self.name, self._blobdb_bucket())
+            blob = db.get(self.blob_id, self._blobdb_bucket())
         except (KeyError, NotFound):
             raise AttachmentNotFound(u"{model} attachment: {name!r}".format(
                                    model=type(self).__name__, name=self.name))
