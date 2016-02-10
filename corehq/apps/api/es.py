@@ -9,6 +9,7 @@ from django.utils.decorators import method_decorator, classonlymethod
 from django.views.generic import View
 from elasticsearch.exceptions import ElasticsearchException
 
+from corehq.apps.es.utils import flatten_field_dict
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
@@ -151,6 +152,7 @@ class ESView(View):
             if '_source' in res:
                 res_domain = res['_source'].get('domain', None)
             elif 'fields' in res:
+                res['fields'] = flatten_field_dict(res)
                 res_domain = res['fields'].get('domain', None)
 
             # security check
