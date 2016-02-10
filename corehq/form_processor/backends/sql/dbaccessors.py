@@ -1,5 +1,6 @@
 import logging
 from itertools import groupby
+from datetime import datetime
 
 from django.db import connections, InternalError, transaction
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError
@@ -405,6 +406,16 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     def delete_all_cases(domain=None):
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute('SELECT delete_all_cases(%s)', [domain])
+
+    @staticmethod
+    def get_all_cases_modified_since(server_modified_on_since=None, limit=100):
+        """
+        Iterate through all cases in the entire database.
+        """
+        if server_modified_on_since is None:
+            server_modified_on_since = datetime.min
+        return list(CommCareCaseSQL.objects.raw('SELECT * FROM get_all_cases_modified_since(%s, %s)',
+                                                [server_modified_on_since, limit]))
 
     @staticmethod
     @transaction.atomic

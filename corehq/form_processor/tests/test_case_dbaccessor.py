@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+import time
 
 from django.test import TestCase
 
@@ -562,6 +563,29 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertFalse(
             CaseAccessorSQL.case_has_transactions_since_sync(case1.case_id, "foo", datetime.utcnow())
         )
+
+    def test_get_all_cases_modified_since(self):
+        case1 = _create_case(user_id="user1")
+        case2 = _create_case(user_id="user1")
+        middle = datetime.utcnow()
+        time.sleep(.01)
+        case3 = _create_case(user_id="user2")
+        case4 = _create_case(user_id="user3")
+        time.sleep(.01)
+        end = datetime.utcnow()
+
+        cases_back = CaseAccessorSQL.get_all_cases_modified_since()
+        self.assertEqual(4, len(cases_back))
+        self.assertEqual(set(case.case_id for case in cases_back),
+                         set([case1.case_id, case2.case_id, case3.case_id, case4.case_id]))
+
+        cases_back = CaseAccessorSQL.get_all_cases_modified_since(middle)
+        self.assertEqual(2, len(cases_back))
+        self.assertEqual(set(case.case_id for case in cases_back),
+                         set([case3.case_id, case4.case_id]))
+
+        self.assertEqual(0, len(CaseAccessorSQL.get_all_cases_modified_since(end)))
+        self.assertEqual(1, len(CaseAccessorSQL.get_all_cases_modified_since(limit=1)))
 
 
 def _create_case(domain=None, form_id=None, case_type=None, user_id=None):
