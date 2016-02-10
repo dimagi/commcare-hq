@@ -133,7 +133,7 @@ class VerifiedNumber(Document):
 
     @classmethod
     def by_phone(cls, phone_number, include_pending=False):
-        result = cls._by_phone(phone_number)
+        result = cls._by_phone(apply_leniency(phone_number))
         return cls._filter_pending(result, include_pending)
 
     @classmethod
@@ -142,7 +142,7 @@ class VerifiedNumber(Document):
         Used to lookup a VerifiedNumber, trying to exclude country code digits.
         """
         try:
-            result = cls._by_suffix(phone_number)
+            result = cls._by_suffix(apply_leniency(phone_number))
             return cls._filter_pending(result, include_pending)
         except MultipleResultsFound:
             # We can't pinpoint who the number belongs to because more than one
@@ -166,7 +166,7 @@ class VerifiedNumber(Document):
         # See CommCareMobileContactMixin.save_verified_number()
         return cls.view(
             view_name,
-            key=apply_leniency(phone_number),
+            key=phone_number,
             include_docs=True
         ).one()
 
