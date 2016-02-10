@@ -47,6 +47,17 @@ class AbstractBlobDB(object):
         """
         raise NotImplementedError
 
+    def get_by_unique_id(self, basename, unique_id, bucket=DEFAULT_BUCKET):
+        """Get a blob
+        :param basename: The basename that was used when saving the blob using ``put``.
+        :param unique_id: The unique identifier of this blob.
+        :param bucket: Optional bucket name. This must have the same
+        value that was passed to ``put``.
+        """
+        identifier = self.get_identifier(basename, unique_id)
+        return self.get(identifier, bucket=bucket)
+
+
     @abstractmethod
     def delete(self, identifier=None, bucket=DEFAULT_BUCKET):
         """Delete a blob
@@ -57,6 +68,18 @@ class AbstractBlobDB(object):
         :returns: True if the blob was deleted else false.
         """
         raise NotImplementedError
+
+    def delete_by_unique_id(self, basename, unique_id, bucket=DEFAULT_BUCKET):
+        """Delete a blob
+
+        :param basename: The basename that was used when saving the blob using ``put``.
+        :param unique_id: The unique identifier of this blob.
+        :param bucket: Optional bucket name. This must have the same
+        value that was passed to ``put``.
+        :returns: True if the blob was deleted else false.
+        """
+        identifier = self.get_identifier(basename, unique_id)
+        return self.delete(identifier, bucket=bucket)
 
     @abstractmethod
     def copy_blob(self, content, info, bucket):

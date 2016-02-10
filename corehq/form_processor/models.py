@@ -18,6 +18,7 @@ from lxml import etree
 from uuidfield import UUIDField
 
 from corehq.blobs import get_blob_db
+from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import InvalidAttachment
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.routers import db_for_read_write
@@ -335,9 +336,19 @@ class AbstractAttachment(DisabledDbMixin, models.Model):
         self.md5 = info.md5_hash
 
     def read_content(self):
-        with open(self.filepath, 'r+') as f:
-            content = f.read()
-        return content
+        db = get_blob_db()
+        try:
+            blob = db.get_by_unique_id(self.name, str(self.attachment_id), self._blobdb_bucket())
+        except (KeyError, NotFound):
+            raise AttachmentNotFound(self.name)
+        with blob:
+            body = blob.read()
+        return body
+
+    def delete_content(self):
+        db = get_blob_db()
+        bucket = self._blobdb_bucket()
+        return db.delete_by_unique_id(self.name, str(self.attachment_id), bucket)
 
     def _blobdb_bucket(self):
         if self.attachment_id is None:
