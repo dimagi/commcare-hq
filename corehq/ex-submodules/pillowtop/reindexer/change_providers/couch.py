@@ -4,6 +4,14 @@ from pillowtop.reindexer.change_providers.interface import ChangeProvider
 
 
 class CouchViewChangeProvider(ChangeProvider):
+    """
+    A ChangeProvider on top of a couch view. Lets you parameterize how you query
+    the view and will then return an iterator over all the results of that view
+    query.
+
+    This is meant to eventually replace the logic in the PtopReindexer subclasses
+    that currently deal with this.
+    """
 
     def __init__(self, document_class, view_name, chunk_size=100, view_kwargs=None):
         self.document_class = document_class
