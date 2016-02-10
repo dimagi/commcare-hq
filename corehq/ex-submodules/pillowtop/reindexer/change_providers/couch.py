@@ -1,3 +1,4 @@
+from copy import copy
 from corehq.util.couch_helpers import paginate_view
 from pillowtop.reindexer.change_providers.interface import ChangeProvider
 
@@ -13,6 +14,7 @@ class CouchViewChangeProvider(ChangeProvider):
 
     def iter_changes(self, start_from=None):
         view_kwargs = copy(self._view_kwargs)
+        view_kwargs['reduce'] = False  # required to paginate a view
         if start_from is not None:
             # todo: should we abstract out how the keys work inside this class?
             view_kwargs['startkey'] = start_from

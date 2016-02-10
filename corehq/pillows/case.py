@@ -14,6 +14,8 @@ from pillowtop.es_utils import doc_exists, ElasticsearchIndexMeta
 from pillowtop.listener import lock_manager
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
+from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
+from pillowtop.reindexer.reindexer import PillowReindexer
 
 
 UNKNOWN_DOMAIN = "__nodomain__"
@@ -92,3 +94,10 @@ def get_sql_case_to_elasticsearch_pillow():
             checkpoint=checkpoint, checkpoint_frequency=100,
         ),
     )
+
+
+def get_couch_case_reindexer():
+    return PillowReindexer(CasePillow(), CouchViewChangeProvider(
+        document_class=CommCareCase,
+        view_name='cases_by_owner/view'
+    ))
