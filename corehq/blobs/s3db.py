@@ -34,7 +34,7 @@ class S3BlobDB(object):
         # https://github.com/boto/boto3/issues/259
         self.db.meta.client.meta.events.unregister('before-sign.s3', fix_s3_host)
 
-    def put(self, content, basename="", bucket=DEFAULT_BUCKET, content_md5=None):
+    def put(self, content, basename="", bucket=DEFAULT_BUCKET):
         """Put a blob in persistent storage
 
         :param content: A file-like object in binary read mode.
@@ -44,20 +44,15 @@ class S3BlobDB(object):
         :param bucket: Optional bucket name used to partition blob data
         in the persistent storage medium. This may be delimited with
         slashes (/). It must be a valid relative path.
-        :param content_md5: RFC-1864-compliant Content-MD5 header value.
-        If this parameter is omitted or its value is `None` then content
-        must be a seekable file-like object. NOTE: the value should not
-        be prefixed with `md5-` even though we store it that way.
         :returns: A `BlobInfo` named tuple. The returned object has a
         `identifier` member that must be used to get or delete the blob. It
         should not be confused with the optional `basename` parameter.
         """
         identifier = self.get_identifier(basename)
         path = self.get_path(identifier, bucket)
-        if content_md5 is None:
-            params = {"body": content, "headers": {}}
-            calculate_md5(params)
-            content_md5 = params["headers"]["Content-MD5"]
+        params = {"body": content, "headers": {}}
+        calculate_md5(params)
+        content_md5 = params["headers"]["Content-MD5"]
         obj = self._s3_bucket(create=True).put_object(
             Key=path,
             Body=content,
