@@ -36,9 +36,7 @@ class S3BlobDB(AbstractBlobDB):
     def put(self, content, basename="", bucket=DEFAULT_BUCKET):
         identifier = self.get_identifier(basename)
         path = self.get_path(identifier, bucket)
-        params = {"body": content, "headers": {}}
-        calculate_md5(params)
-        content_md5 = params["headers"]["Content-MD5"]
+        content_md5 = get_content_md5(content)
         obj = self._s3_bucket(create=True).put_object(
             Key=path,
             Body=content,
@@ -75,9 +73,7 @@ class S3BlobDB(AbstractBlobDB):
         if info.digest and info.digest.startswith("md5-"):
             content_md5 = info.digest[4:]
         else:
-            params = {"body": content, "headers": {}}
-            calculate_md5(params)
-            content_md5 = params["headers"]["Content-MD5"]
+            content_md5 = get_content_md5(content)
         self._s3_bucket(create=True).put_object(
             Key=self.get_path(info.identifier, bucket),
             Body=content,
@@ -116,6 +112,12 @@ def safejoin(root, subpath):
 def is_not_found(err, not_found_codes=["NoSuchKey", "NoSuchBucket", "404"]):
     return (err.response["Error"]["Code"] in not_found_codes or
         err.response.get("Errors", {}).get("Error", {}).get("Code") in not_found_codes)
+
+
+def get_content_md5(content):
+    params = {"body": content, "headers": {}}
+    calculate_md5(params)
+    return params["headers"]["Content-MD5"]
 
 
 @contextmanager
