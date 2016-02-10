@@ -32,7 +32,6 @@
   settings:
     - hq.platform  # J2ME Platform
     - hq.admin_password  # Admin Password
-    - hq.show_user_registration  # Allow User Registration from Phone
     - properties.cc-send-procedure  # Send Data
     - properties.server-tether  # Sync Mode
     - properties.cc-autosync-freq  # Auto-Sync Frequency

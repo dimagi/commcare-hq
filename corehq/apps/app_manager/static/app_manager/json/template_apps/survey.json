@@ -43,28 +43,6 @@
   "build_broken": false,
   "phone_model": null,
   "build_signed": true,
-  "user_registration": {
-    "doc_type": "UserRegistrationForm",
-    "xmlns": null,
-    "name": {
-      
-    },
-    "password_path": "password",
-    "auto_gps_capture": false,
-    "show_count": false,
-    "version": null,
-    "no_vellum": false,
-    "form_links": [
-      
-    ],
-    "post_form_workflow": "default",
-    "form_type": "user_registration",
-    "username_path": "username",
-    "unique_id": "d1de7735ee36531540708c5dfb87198083ea7185",
-    "data_paths": {
-      
-    }
-  },
   "copy_history": [
     
   ],
@@ -1210,5 +1188,4 @@
   },
   "admin_password_charset": "n",
   "case_sharing": false,
-  "show_user_registration": false
 }

@@ -544,7 +544,7 @@ def edit_app_attr(request, domain, app_id, attr):
     attributes = [
         'all',
         'recipients', 'name', 'use_commcare_sense',
-        'text_input', 'platform', 'build_spec', 'show_user_registration',
+        'text_input', 'platform', 'build_spec',
         'use_custom_suite', 'custom_suite',
         'admin_password',
         'comment',
@@ -616,13 +616,6 @@ def edit_app_attr(request, domain, app_id, attr):
             raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
         if not has_privilege(request, privileges.CLOUDCARE):
             app.cloudcare_enabled = False
-
-    if should_edit('show_user_registration'):
-        show_user_registration = hq_settings['show_user_registration']
-        app.show_user_registration = show_user_registration
-        if show_user_registration:
-            #  load the form source and also set its unique_id
-            app.get_user_registration()
 
     def require_remote_app():
         if app.get_doc_type() not in ("RemoteApp",):
