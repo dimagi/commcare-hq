@@ -6,7 +6,6 @@ from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser
 from custom.logistics.tests.test_script import TestScript
