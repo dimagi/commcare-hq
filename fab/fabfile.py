@@ -109,7 +109,7 @@ def _require_target():
 class CodeToDeploy(object):
     def __init__(self, env):
         self.env = env
-        self.deploy_time = datetime.datetime.utcnow()
+        self.timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M')
         self._deploy_ref = None
 
     def _tag_commit(self):
@@ -117,10 +117,10 @@ class CodeToDeploy(object):
         pattern = "*{}*".format(self.env.environment)
         self.last_tag = sh.tail(sh.git.tag("-l", pattern), "-1").strip()
 
-        tag_name = "{:%Y-%m-%d_%H.%M}-{}-deploy".format(self.deploy_time, self.env.environment)
+        tag_name = "{}-{}-deploy".format(self.timestamp, self.env.environment)
         # turn whatever `code_branch` is into a commit
         deploy_commit = sh.git("rev-parse", self.env.code_branch).strip()
-        msg = "{} deploy at {}".format(self.env.environment, self.deploy_time.isoformat())
+        msg = "{} deploy at {}".format(self.env.environment, self.timestamp)
         sh.git.tag(tag_name, "-m", msg, deploy_commit)
         sh.git.push("origin", tag_name)
         self._deploy_ref = tag_name
@@ -201,8 +201,7 @@ def _setup_path():
     env.log_dir = posixpath.join(env.home, 'www', env.environment, 'log')
     env.releases = posixpath.join(env.root, 'releases')
     env.code_current = posixpath.join(env.root, 'current')
-    timestamp = time.strftime('%Y-%m-%d_%H.%M', time.gmtime(time.time()))
-    env.code_root = posixpath.join(env.releases, timestamp)
+    env.code_root = posixpath.join(env.releases, code_to_deploy.timestamp)
     env.project_root = posixpath.join(env.code_root, env.project)
     env.project_media = posixpath.join(env.code_root, 'media')
     env.virtualenv_current = posixpath.join(env.code_current, 'python_env')
