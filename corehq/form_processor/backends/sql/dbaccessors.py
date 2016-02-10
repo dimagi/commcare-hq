@@ -416,7 +416,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             server_modified_on_since = datetime.min
         results = list(CommCareCaseSQL.objects.raw('SELECT * FROM get_all_cases_modified_since(%s, %s)',
                                                 [server_modified_on_since, limit]))
-        # add additional limit in memory in case the sharded setup returns more than 1 case
+        # sort and add additional limit in memory in case the sharded setup returns more than
+        # the requested number of cases
         return sorted(results, key=lambda case: case.server_modified_on)[:limit]
 
     @staticmethod
