@@ -53,18 +53,13 @@ class PillowtopReindexerTest(TestCase):
 
         self._assert_case_is_in_es(case)
 
-    def test_xform_reindexers(self):
+    def test_xform_reindexer(self):
         FormProcessorTestUtils.delete_all_xforms()
-        metadata = TestFormMetadata(domain=self.domain)
-        form = get_form_ready_to_save(metadata)
-        FormProcessorInterface(domain=self.domain).save_processed_models([form])
+        form = _create_and_save_a_form()
+
         call_command('ptop_fast_reindex_xforms', noinput=True, bulk=True)
-        results = FormES().run()
-        self.assertEqual(1, results.total)
-        form_doc = results.hits[0]
-        self.assertEqual(self.domain, form_doc['domain'])
-        self.assertEqual(metadata.xmlns, form_doc['xmlns'])
-        self.assertEqual('XFormInstance', form_doc['doc_type'])
+
+        self._assert_form_is_in_es(form)
         form.delete()
 
     def test_unknown_user_reindexer(self):
@@ -98,6 +93,20 @@ class PillowtopReindexerTest(TestCase):
         self.assertEqual(self.domain, case_doc['domain'])
         self.assertEqual(case.name, case_doc['name'])
         self.assertEqual('CommCareCase', case_doc['doc_type'])
+
+    def _assert_form_is_in_es(self, form):
+        results = FormES().run()
+        self.assertEqual(1, results.total)
+        form_doc = results.hits[0]
+        self.assertEqual(self.domain, form_doc['domain'])
+        self.assertEqual(form.xmlns, form_doc['xmlns'])
+        self.assertEqual('XFormInstance', form_doc['doc_type'])
+
+def _create_and_save_a_form():
+    metadata = TestFormMetadata(domain=DOMAIN)
+    form = get_form_ready_to_save(metadata)
+    FormProcessorInterface(domain=DOMAIN).save_processed_models([form])
+    return form
 
 
 def _create_and_save_a_case():
