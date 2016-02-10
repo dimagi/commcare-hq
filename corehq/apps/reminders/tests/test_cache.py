@@ -22,12 +22,14 @@ class ReminderCachingTestCase(TestCase):
             reminder_type=REMINDER_TYPE_DEFAULT,
         )
         handler1.save()
+        self.addCleanup(handler1.delete)
 
         handler2 = CaseReminderHandler(
             domain=domain,
             reminder_type=REMINDER_TYPE_ONE_TIME,
         )
         handler2.save()
+        self.addCleanup(handler2.delete)
 
         self.assertEqual(
             CaseReminderHandler.get_handler_ids(domain, reminder_type_filter=REMINDER_TYPE_DEFAULT),
@@ -50,6 +52,7 @@ class ReminderCachingTestCase(TestCase):
             reminder_type=REMINDER_TYPE_DEFAULT,
         )
         handler3.save()
+        self.addCleanup(handler3.delete)
 
         self.assertEqual(
             sorted(CaseReminderHandler.get_handler_ids(domain, reminder_type_filter=REMINDER_TYPE_DEFAULT)),
@@ -83,7 +86,3 @@ class ReminderCachingTestCase(TestCase):
             sorted(CaseReminderHandler.get_handler_ids(domain)),
             sorted([handler1._id, handler3._id])
         )
-
-        handler1.delete()
-        handler2.delete()
-        handler3.delete()
