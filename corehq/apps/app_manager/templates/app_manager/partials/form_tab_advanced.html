@@ -39,24 +39,15 @@
                 </div>
             </li>
             <li>
-                <a {% if not form.source %}class="disabled"{% endif %}{% if is_user_registration %}
-                   href="{% url "get_user_registration_source" domain app.id %}?download=true"
-                {% else %}
-                   href="{% url "get_xform_source" domain app.id module.id form.id %}?download=true"
-                {% endif %}
-                        >
+                <a {% if not form.source %}class="disabled"{% endif %}
+                   href="{% url "get_xform_source" domain app.id module.id form.id %}?download=true">
                     <i class="fa fa-arrow-down"></i>
                     {% trans "Download" %}
                 </a>
             </li>
             <li>
                 <a id="xform-source-opener" class="{% if not form.source %}disabled{% endif %}"
-                        {% if is_user_registration %}
-                   data-href="{% url "get_user_registration_source" domain app.id %}"
-                        {% else %}
-                   data-href="{% url "get_xform_source" domain app.id module.id form.id %}"
-                        {% endif %}
-                        >
+                   data-href="{% url "get_xform_source" domain app.id module.id form.id %}">
                     <i class="fa fa-search"></i>
                     {% trans "View" %}
                 </a>

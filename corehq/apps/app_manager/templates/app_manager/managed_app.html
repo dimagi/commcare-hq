@@ -61,12 +61,6 @@
     {% if app.get_doc_type == "Application" %}
     <script>
         $(function () {
-            var show_user_registration = {{ app.show_user_registration|JSON }};
-            if (!show_user_registration) {
-                $('#user-registration-nav-link').hide();
-            }
-        });
-        $(function () {
             $('.edit-form-pencil').hide().tooltip({
                 title: "{% trans "Edit in form builder" %}",
                 placement: 'auto',
@@ -199,17 +193,6 @@
                       action="{% url "corehq.apps.app_manager.views.rearrange" domain app.id 'modules' %}">
                       {% csrf_token %}
                 </form>
-            </li>
-            <li class="sort-disabled edit-form-li {% if is_user_registration %} active{% endif %}" id="user-registration-nav-link">
-                <a href="{% url "view_user_registration" domain app.id %}">
-                    <i class="fa fa-file-o"></i>
-                    {% trans "User Registration" %}
-                </a>
-                <div class="edit-form-pencil">
-                    <a href="{% url "user_registration_source" domain app.id %}">
-                        <i class="fa fa-pencil"></i>
-                    </a>
-                </div>
             </li>
             {% with module as selected_module %}
                 {% for module in app.get_modules %}

@@ -58,10 +58,8 @@
 
     {% include "app_manager/partials/form_filter/value-or-none-ui.html" %}
     {% include "app_manager/partials/xpathValidator.html" %}
-    {% if not is_user_registration %}
-        {% include "app_manager/partials/nav_menu_media_js_common.html" %}
-        {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
-    {% endif %}
+    {% include "app_manager/partials/nav_menu_media_js_common.html" %}
+    {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
     {% if allow_form_workflow %}
         <script src="{% new_static 'app_manager/js/form_workflow.js' %}"></script>
     {% endif %}
@@ -105,94 +103,92 @@
                 });
             }());
 
-        {% if not is_user_registration %}
-            {% block case_management_js %}
-                /* form_requires needs to be a knockout observable so that
-                its value can be read by another UI (form filtering) */
-                var form_requires = ko.observable({{ form.requires|JSON }});
-            {% endblock %}
+        {% block case_management_js %}
+            /* form_requires needs to be a knockout observable so that
+            its value can be read by another UI (form filtering) */
+            var form_requires = ko.observable({{ form.requires|JSON }});
+        {% endblock %}
 
-            {% if app.application_version == '2.0' %}
-                {% if allow_form_filtering %}
-                var putInRoot = {{ module.put_in_root|BOOL }};
-                var isUserCaseInUse = {{ is_usercase_in_use|BOOL }};
-                var formFilter = {{ form.form_filter|JSON }};
-                var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
-                var formFilterAllowed = ko.computed(function () {
-                    return ((allOtherFormsRequireACase &&
-                             form_requires() === 'case') ||
-                            isUserCaseInUse) && !putInRoot;
-                });
-                $('#form-filter').koApplyBindings({
-                        formFilter: ko.observable(formFilter),
-                        formFilterAllowed: formFilterAllowed,
-                });
-                {% endif %}
-
-                {% if allow_form_workflow %}
-                    var labels = {};
-                    labels[FormWorkflow.Values.DEFAULT] = "{% trans "Home Screen" %}";
-                    labels[FormWorkflow.Values.ROOT] = "{% trans "Module Menu" %}";
-                    labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module.name|trans:langs }}";
-                    {% if module.root_module_id %}
-                    labels[FormWorkflow.Values.PARENT_MODULE] = "{% trans "Parent Module:" %} {{ module.root_module.name|trans:langs }}";
-                    {% endif %}
-                    labels[FormWorkflow.Values.PREVIOUS_SCREEN] = "{% trans "Previous Screen" %}";
-
-                    var options = {
-                        labels: labels,
-                        workflow: '{{ form.post_form_workflow }}',
-                    };
-
-                    {% if request|toggle_enabled:"FORM_LINK_WORKFLOW"%}
-                    labels[FormWorkflow.Values.FORM] = "{% trans "Link to other form" %}";
-                    options.forms = {{ linkable_forms|JSON}}
-                    options.formLinks = {{ form.form_links|JSON }}
-                    options.formDatumsUrl = '{% url 'get_form_datums' domain app.id %}'
-                    {% endif %}
-
-                    $('#form-workflow').koApplyBindings(new FormWorkflow(options))
-                {% endif %}
-
-                $('#auto-gps-capture').koApplyBindings({
-                    auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }})
-                });
-                {% if request|toggle_enabled:'NO_VELLUM' %}
-                $('#no-vellum').koApplyBindings({
-                    no_vellum: ko.observable({{ form.no_vellum|JSON }})
-                });
-                {% endif %}
-
-                gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
-
+        {% if app.application_version == '2.0' %}
+            {% if allow_form_filtering %}
+            var putInRoot = {{ module.put_in_root|BOOL }};
+            var isUserCaseInUse = {{ is_usercase_in_use|BOOL }};
+            var formFilter = {{ form.form_filter|JSON }};
+            var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
+            var formFilterAllowed = ko.computed(function () {
+                return ((allOtherFormsRequireACase &&
+                         form_requires() === 'case') ||
+                        isUserCaseInUse) && !putInRoot;
+            });
+            $('#form-filter').koApplyBindings({
+                    formFilter: ko.observable(formFilter),
+                    formFilterAllowed: formFilterAllowed,
+            });
             {% endif %}
 
-            {% if allow_cloudcare %}
-                // tag the 'preview in cloudcare' button with the right url
-                // unfortunately, has to be done in javascript
-                var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-                    var url = urlRoot;
-                    if (appId !== undefined) {
-                        url = url + "view/" + appId;
-                        if (moduleId !== undefined) {
-                            url = url + "/" + moduleId;
-                            if (formId !== undefined) {
-                                url = url + "/" + formId;
-                                if (caseId !== undefined) {
-                                    url = url + "/" + caseId;
-                                }
+            {% if allow_form_workflow %}
+                var labels = {};
+                labels[FormWorkflow.Values.DEFAULT] = "{% trans "Home Screen" %}";
+                labels[FormWorkflow.Values.ROOT] = "{% trans "Module Menu" %}";
+                labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module.name|trans:langs }}";
+                {% if module.root_module_id %}
+                labels[FormWorkflow.Values.PARENT_MODULE] = "{% trans "Parent Module:" %} {{ module.root_module.name|trans:langs }}";
+                {% endif %}
+                labels[FormWorkflow.Values.PREVIOUS_SCREEN] = "{% trans "Previous Screen" %}";
+
+                var options = {
+                    labels: labels,
+                    workflow: '{{ form.post_form_workflow }}',
+                };
+
+                {% if request|toggle_enabled:"FORM_LINK_WORKFLOW"%}
+                labels[FormWorkflow.Values.FORM] = "{% trans "Link to other form" %}";
+                options.forms = {{ linkable_forms|JSON}}
+                options.formLinks = {{ form.form_links|JSON }}
+                options.formDatumsUrl = '{% url 'get_form_datums' domain app.id %}'
+                {% endif %}
+
+                $('#form-workflow').koApplyBindings(new FormWorkflow(options))
+            {% endif %}
+
+            $('#auto-gps-capture').koApplyBindings({
+                auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }})
+            });
+            {% if request|toggle_enabled:'NO_VELLUM' %}
+            $('#no-vellum').koApplyBindings({
+                no_vellum: ko.observable({{ form.no_vellum|JSON }})
+            });
+            {% endif %}
+
+            gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
+
+        {% endif %}
+
+        {% if allow_cloudcare %}
+            // tag the 'preview in cloudcare' button with the right url
+            // unfortunately, has to be done in javascript
+            var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
+                var url = urlRoot;
+                if (appId !== undefined) {
+                    url = url + "view/" + appId;
+                    if (moduleId !== undefined) {
+                        url = url + "/" + moduleId;
+                        if (formId !== undefined) {
+                            url = url + "/" + formId;
+                            if (caseId !== undefined) {
+                                url = url + "/" + caseId;
                             }
                         }
                     }
-                    return url;
-                };
-                var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
-                $("#cloudcare-preview-url").attr("href", cloudCareUrl);
-                $('#cloudcare-preview-url').click(function(e) {
-                    ga_track_event('CloudCare', 'Click "Preview Form"');
-                    analytics.workflow("Clicked Preview Form");
-                });
-            {% endif %}
+                }
+                return url;
+            };
+            var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
+            $("#cloudcare-preview-url").attr("href", cloudCareUrl);
+            $('#cloudcare-preview-url').click(function(e) {
+                ga_track_event('CloudCare', 'Click "Preview Form"');
+                analytics.workflow("Clicked Preview Form");
+            });
         {% endif %}
         });
     </script>
@@ -207,27 +203,19 @@
 {% block form-view %}
     <div id="build_errors"></div>
     <div id="form_short_comment" class="app-comment">{{ form.short_comment }}</div>
-    {% if not is_user_registration %}
-        <div class="delete-me">
-            <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
-                {% csrf_token %}
-                <button type="submit" class="disable-on-submit btn btn-danger">
-                    <i class="fa fa-trash"></i>
-                    {% trans "Delete Form" %}
-                </button>
-            </form>
-        </div>
-    {% endif %}
+    <div class="delete-me">
+        <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="disable-on-submit btn btn-danger">
+                <i class="fa fa-trash"></i>
+                {% trans "Delete Form" %}
+            </button>
+        </form>
+    </div>
 
     <div class="btn-group">
         {% if not form.no_vellum %}
-        <a id="edit_label" href="{% if is_user_registration %}
-                                    {% url "user_registration_source" domain app.id %}
-                                 {% else %}
-                                    {% url "form_source" domain app.id module.id form.id %}
-                                 {% endif %}
-                                 "
-                                 class="btn btn-primary">
+        <a id="edit_label" href="{% url "form_source" domain app.id module.id form.id %}" class="btn btn-primary">
             <i class="fa fa-pencil"></i>
             {% trans "Edit" %}
         </a>
@@ -239,7 +227,7 @@
         </button>
         {% endif %}
         {% if allow_cloudcare %}
-            {% if form.source and not is_user_registration %}
+            {% if form.source %}
             <a id="cloudcare-preview-url" href="#" target="_blank" class="btn btn-default">
                 <i class="fa fa-play"></i>
                 {% trans "Preview Form" %}
@@ -249,11 +237,6 @@
     </div>
 
     <br/><br/><br/>
-
-    {% if is_user_registration %}
-    <h4>{% trans "User Registration Properties" %}</h4>
-    <div id="user_reg_home" class="config"></div>
-    {% else %}
 
     <div class="tabbable">
         <ul class="nav nav-tabs">
@@ -370,7 +353,6 @@
             {% include "app_manager/partials/form_tab_advanced.html" %}
         </div>
     </div>
-    {% endif %}
     <div id="questions"></div>
 {% endblock %}
 
@@ -382,12 +364,8 @@
     {{ block.super }}
     {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
     <li>
-        {% if is_user_registration %}
-            <span class="app-manager-title">{% trans "User Registration" %}</span>
-        {% else %}
         <a class="view-form" href="{% url "view_form" domain app.id module.id form.id %}">
             <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
         </a>
-        {% endif %}
     </li>
 {% endblock %}

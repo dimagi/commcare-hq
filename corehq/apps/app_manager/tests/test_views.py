@@ -161,17 +161,6 @@ class TestViews(TestCase):
         kwargs['form_id'] = form.id
         self._test_status_codes(['view_form', 'form_source'], kwargs)
 
-    def test_user_registration(self):
-        self.app.show_user_registration = True
-        self.app.save()
-        self._test_status_codes([
-            'view_user_registration',
-            'user_registration_source',
-        ], {
-            'domain': self.domain.name,
-            'app_id': self.app.id,
-        })
-
     def test_advanced_module(self):
         module = self.app.add_module(AdvancedModule.new_module("Module0", "en"))
         self.app.save()

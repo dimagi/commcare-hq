@@ -38,11 +38,8 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
         if unique_form_id is not None:
             app = get_app(domain, app_id)
             obj = app.get_form(unique_form_id, bare=False)
-            if obj['type'] == 'user_registration':
-                page = 'view_user_registration'
-            else:
-                module_id = obj['module'].id
-                form_id = obj['form'].id
+            module_id = obj['module'].id
+            form_id = obj['form'].id
         if module_id is not None:
             args.append(module_id)
             if form_id is not None:
