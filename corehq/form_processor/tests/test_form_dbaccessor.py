@@ -262,6 +262,9 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(original_domain, saved_form.domain)
 
     def test_get_forms_received_since(self):
+        # since this test depends on the global form list just wipe everything
+        FormProcessorTestUtils.delete_all_sql_forms()
+
         form1 = create_form_for_test(DOMAIN)
         form2 = create_form_for_test(DOMAIN)
         middle = datetime.utcnow()
