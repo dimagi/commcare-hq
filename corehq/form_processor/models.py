@@ -56,10 +56,12 @@ class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
             data = self.raw_content
 
         if isinstance(data, unicode):
-            content = StringIO(data.encode("utf-8"))
-        elif isinstance(data, bytes):
-            content = StringIO(data)
-        return content
+            data = data.encode("utf-8")
+
+        return data
+
+    def readable_content(self):
+        return StringIO(self.content)
 
     @property
     def md5(self):
