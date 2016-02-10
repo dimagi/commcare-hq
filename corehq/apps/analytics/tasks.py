@@ -244,6 +244,14 @@ def _track_workflow_task(email, event, properties=None, timestamp=0):
         # TODO: Consider adding some error handling for bad/failed requests.
 
 
+@task(queue='background_queue', acks_late=True, ignore_result=True)
+def update_kissmetrics_properties(email, properties):
+    api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
+    if api_key:
+        km = KISSmetrics.Client(key=api_key)
+        km.set(email, properties)
+
+
 @task(queue='background_queue', ignore_result=True)
 def identify(email, properties):
     """
