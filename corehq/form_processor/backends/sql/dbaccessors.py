@@ -414,8 +414,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         """
         if server_modified_on_since is None:
             server_modified_on_since = datetime.min
-        return list(CommCareCaseSQL.objects.raw('SELECT * FROM get_all_cases_modified_since(%s, %s)',
+        results = list(CommCareCaseSQL.objects.raw('SELECT * FROM get_all_cases_modified_since(%s, %s)',
                                                 [server_modified_on_since, limit]))
+        return sorted(results, key=lambda case: case.server_modified_on)
 
     @staticmethod
     @transaction.atomic

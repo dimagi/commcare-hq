@@ -21,10 +21,10 @@ def _change_meta_from_sql_form(form):
 
 
 def publish_case_saved(case):
-    producer.send_change(topics.CASE_SQL, _change_meta_from_sql_case(case))
+    producer.send_change(topics.CASE_SQL, change_meta_from_sql_case(case))
 
 
-def _change_meta_from_sql_case(case):
+def change_meta_from_sql_case(case):
     return ChangeMeta(
         document_id=case.case_id,
         data_source_type=data_sources.CASE_SQL,

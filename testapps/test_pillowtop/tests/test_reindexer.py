@@ -1,4 +1,5 @@
 import uuid
+from django.conf import settings
 from django.core.management import call_command
 from django.test import TestCase
 from corehq.apps.es import UserES, CaseES, FormES, ESQuery
@@ -6,7 +7,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.utils import TestFormMetadata
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.pillows.case import CasePillow
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
@@ -16,6 +17,7 @@ from testapps.test_pillowtop.utils import make_a_case
 
 
 DOMAIN = 'reindex-test-domain'
+
 
 class PillowtopReindexerTest(TestCase):
     domain = DOMAIN
@@ -39,12 +41,14 @@ class PillowtopReindexerTest(TestCase):
         call_command('ptop_fast_reindex_cases', noinput=True, bulk=True)
         self._assert_case_is_in_es(case)
 
+    @run_with_all_backends
     def test_new_case_reindexer(self):
         FormProcessorTestUtils.delete_all_cases()
         case = _create_and_save_a_case()
 
         ensure_index_deleted(CASE_INDEX)  # new reindexer doesn't force delete the index so do it in the test
-        call_command('ptop_reindexer_v2', 'case')
+        index_id = 'sql-case' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'case'
+        call_command('ptop_reindexer_v2', index_id)
         CasePillow().get_es_new().indices.refresh(CASE_INDEX)  # as well as refresh the index
 
         self._assert_case_is_in_es(case)
