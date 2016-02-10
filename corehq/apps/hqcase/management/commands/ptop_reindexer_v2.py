@@ -1,5 +1,6 @@
 from django.core.management import BaseCommand, CommandError
 from corehq.pillows.case import get_couch_case_reindexer, get_sql_case_reindexer
+from corehq.pillows.xform import get_couch_form_reindexer
 
 
 class Command(BaseCommand):
@@ -9,6 +10,7 @@ class Command(BaseCommand):
     def handle(self, index, *args, **options):
         reindex_fns = {
             'case': get_couch_case_reindexer,
+            'form': get_couch_form_reindexer,
             'sql-case': get_sql_case_reindexer,
         }
         if index not in reindex_fns:

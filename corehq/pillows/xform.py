@@ -15,6 +15,8 @@ from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoin
 from pillowtop.es_utils import ElasticsearchIndexMeta
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
+from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
+from pillowtop.reindexer.reindexer import PillowReindexer
 
 
 UNKNOWN_VERSION = 'XXX'
@@ -139,3 +141,14 @@ def get_sql_xform_to_elasticsearch_pillow():
             checkpoint=checkpoint, checkpoint_frequency=100,
         ),
     )
+
+
+def get_couch_form_reindexer():
+    return PillowReindexer(XFormPillow(), CouchViewChangeProvider(
+        document_class=XFormInstance,
+        view_name='all_docs/by_doc_type',
+        view_kwargs={
+            'startkey': ['XFormInstance'],
+            'endkey': ['XFormInstance', {}],
+        }
+    ))
