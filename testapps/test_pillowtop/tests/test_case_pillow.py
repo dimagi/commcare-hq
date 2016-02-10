@@ -1,16 +1,12 @@
 import uuid
 from django.test import TestCase, override_settings
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.signals import case_post_save
-from casexml.apps.case.util import post_case_blocks
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.es import CaseES
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case import CasePillow, get_sql_case_to_elasticsearch_pillow
-from corehq.util.context_managers import drop_connected_signals
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
-from testapps.test_pillowtop.utils import get_test_kafka_consumer
+from testapps.test_pillowtop.utils import get_test_kafka_consumer, make_a_case
 
 
 class CasePillowTest(TestCase):
@@ -30,7 +26,7 @@ class CasePillowTest(TestCase):
         # make a case
         case_id = uuid.uuid4().hex
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
-        case = self._make_a_case(case_id, case_name)
+        case = make_a_case(self.domain, case_id, case_name)
 
         # send to elasticsearch
         self._sync_couch_cases_to_es()
@@ -50,7 +46,7 @@ class CasePillowTest(TestCase):
         # make a case
         case_id = uuid.uuid4().hex
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
-        case = self._make_a_case(case_id, case_name)
+        case = make_a_case(self.domain, case_id, case_name)
 
         # send to elasticsearch
         self._sync_couch_cases_to_es()
@@ -83,7 +79,7 @@ class CasePillowTest(TestCase):
         # make a case
         case_id = uuid.uuid4().hex
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
-        case = self._make_a_case(case_id, case_name)
+        case = make_a_case(self.domain, case_id, case_name)
 
         # confirm change made it to kafka
         message = consumer.next()
@@ -103,21 +99,6 @@ class CasePillowTest(TestCase):
         self.assertEqual(self.domain, case_doc['domain'])
         self.assertEqual(case_id, case_doc['_id'])
         self.assertEqual(case_name, case_doc['name'])
-
-    def _make_a_case(self, case_id, case_name):
-        # this avoids having to deal with all the reminders code bootstrap
-        with drop_connected_signals(case_post_save):
-            form, cases = post_case_blocks(
-                [
-                    CaseBlock(
-                        create=True,
-                        case_id=case_id,
-                        case_name=case_name,
-                    ).as_xml()
-                ], domain=self.domain
-            )
-        self.assertEqual(1, len(cases))
-        return cases[0]
 
     def _sync_couch_cases_to_es(self, since=0):
         self.pillow.process_changes(since=since, forever=False)

@@ -1,21 +1,18 @@
 import uuid
 from django.core.management import call_command
 from django.test import TestCase
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.signals import case_post_save
 from corehq.apps.es import UserES, CaseES, FormES, ESQuery
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case import CasePillow
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
-from corehq.util.context_managers import drop_connected_signals
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import get_form_ready_to_save
+from testapps.test_pillowtop.utils import make_a_case
 
 
 DOMAIN = 'reindex-test-domain'
@@ -101,7 +98,5 @@ class PillowtopReindexerTest(TestCase):
 
 def _create_and_save_a_case():
     case_name = 'reindexer-test-case-{}'.format(uuid.uuid4().hex)
-    case = CommCareCase(domain=DOMAIN, name=case_name)
-    with drop_connected_signals(case_post_save):
-        case.save()
-    return case
+    case_id = uuid.uuid4().hex
+    return make_a_case(DOMAIN, case_id, case_name)
