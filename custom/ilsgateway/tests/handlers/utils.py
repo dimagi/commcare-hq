@@ -7,7 +7,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.tests.util import setup_default_sms_test_backend
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser
 from custom.logistics.tests.test_script import TestScript
 from corehq.apps.commtrack.tests.util import make_loc
@@ -87,9 +87,7 @@ class ILSTestScript(TestScript):
 
     @classmethod
     def tearDownClass(cls):
-        for v in VerifiedNumber.by_domain(TEST_DOMAIN):
-            # Ensure cache is cleared for all phone lookups
-            v.delete()
+        delete_domain_phone_numbers(TEST_DOMAIN)
         cls.sms_backend_mapping.delete()
         cls.sms_backend.delete()
         CommCareUser.get_by_username('stella').delete()
