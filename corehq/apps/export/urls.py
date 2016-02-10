@@ -9,6 +9,7 @@ from corehq.apps.export.views import (
     EditNewCustomFormExportView,
     EditNewCustomCaseExportView,
     DeleteCustomExportView,
+    DeleteNewCustomExportView,
     DownloadFormExportView,
     DownloadCaseExportView,
     FormExportListView,
@@ -64,4 +65,7 @@ urlpatterns = patterns(
     url(r"^custom/delete/(?P<export_id>[\w\-]+)/$",
         DeleteCustomExportView.as_view(),
         name=DeleteCustomExportView.urlname),
+    url(r"^custom/new/(?P<export_type>[\w\-]+)/delete/(?P<export_id>[\w\-]+)/$",
+        DeleteNewCustomExportView.as_view(),
+        name=DeleteNewCustomExportView.urlname),
 )
