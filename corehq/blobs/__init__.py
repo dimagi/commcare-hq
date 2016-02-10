@@ -34,4 +34,4 @@ def _get_fs_db(settings):
     return FilesystemBlobDB(blob_dir)
 
 
-BlobInfo = namedtuple("BlobInfo", ["name", "length", "digest"])
+BlobInfo = namedtuple("BlobInfo", ["identifier", "length", "digest"])
