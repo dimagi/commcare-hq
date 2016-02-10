@@ -15,9 +15,10 @@ from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import get_form_ready_to_save
 
 
-class PillowtopReindexerTest(TestCase):
+DOMAIN = 'reindex-test-domain'
 
-    domain = 'reindex-test-domain'
+class PillowtopReindexerTest(TestCase):
+    domain = DOMAIN
 
     def test_user_reindexer(self):
         delete_all_users()
@@ -34,16 +35,9 @@ class PillowtopReindexerTest(TestCase):
 
     def test_case_reindexer(self):
         FormProcessorTestUtils.delete_all_cases()
-        case_name = 'reindexer-test-case-{}'.format(uuid.uuid4().hex)
-        with drop_connected_signals(case_post_save):
-            CommCareCase(domain=self.domain, name=case_name).save()
+        case = _create_and_save_a_case()
         call_command('ptop_fast_reindex_cases', noinput=True, bulk=True)
-        results = CaseES().run()
-        self.assertEqual(1, results.total)
-        case_doc = results.hits[0]
-        self.assertEqual(self.domain, case_doc['domain'])
-        self.assertEqual(case_name, case_doc['name'])
-        self.assertEqual('CommCareCase', case_doc['doc_type'])
+        self._assert_case_is_in_es(case)
 
     def test_xform_reindexers(self):
         FormProcessorTestUtils.delete_all_xforms()
@@ -81,3 +75,20 @@ class PillowtopReindexerTest(TestCase):
         self.assertEqual('UnknownUser', user_doc['doc_type'])
         form.delete()
         delete_es_index(USER_INDEX)
+
+    def _assert_case_is_in_es(self, case):
+        results = CaseES().run()
+        self.assertEqual(1, results.total)
+        case_doc = results.hits[0]
+        self.assertEqual(case.case_id, case_doc['_id'])
+        self.assertEqual(self.domain, case_doc['domain'])
+        self.assertEqual(case.name, case_doc['name'])
+        self.assertEqual('CommCareCase', case_doc['doc_type'])
+
+
+def _create_and_save_a_case():
+    case_name = 'reindexer-test-case-{}'.format(uuid.uuid4().hex)
+    case = CommCareCase(domain=DOMAIN, name=case_name)
+    with drop_connected_signals(case_post_save):
+        case.save()
+    return case
