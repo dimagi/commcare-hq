@@ -5,6 +5,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
+from corehq.form_processor.change_providers import SqlFormChangeProvider
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
 from .base import HQPillow
 from couchforms.const import RESERVED_WORDS
@@ -152,3 +153,7 @@ def get_couch_form_reindexer():
             'endkey': ['XFormInstance', {}],
         }
     ))
+
+
+def get_sql_form_reindexer():
+    return PillowReindexer(get_sql_xform_to_elasticsearch_pillow(), SqlFormChangeProvider())

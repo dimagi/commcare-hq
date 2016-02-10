@@ -5,10 +5,10 @@ from pillowtop.feed.interface import ChangeMeta
 
 
 def publish_form_saved(form):
-    producer.send_change(topics.FORM_SQL, _change_meta_from_sql_form(form))
+    producer.send_change(topics.FORM_SQL, change_meta_from_sql_form(form))
 
 
-def _change_meta_from_sql_form(form):
+def change_meta_from_sql_form(form):
     return ChangeMeta(
         document_id=form.form_id,
         data_source_type=data_sources.FORM_SQL,

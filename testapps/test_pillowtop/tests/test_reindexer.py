@@ -11,6 +11,8 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_a
 from corehq.pillows.case import CasePillow
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from corehq.pillows.xform import XFormPillow
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import get_form_ready_to_save
 from testapps.test_pillowtop.utils import make_a_case
@@ -62,6 +64,19 @@ class PillowtopReindexerTest(TestCase):
         self._assert_form_is_in_es(form)
         form.delete()
 
+    @run_with_all_backends
+    def test_new_xform_reindexer(self):
+        FormProcessorTestUtils.delete_all_xforms()
+        form = _create_and_save_a_form()
+
+        ensure_index_deleted(XFORM_INDEX)
+        index_id = 'sql-form' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'form'
+
+        call_command('ptop_reindexer_v2', index_id)
+        XFormPillow().get_es_new().indices.refresh(XFORM_INDEX)
+
+        self._assert_form_is_in_es(form)
+
     def test_unknown_user_reindexer(self):
         FormProcessorTestUtils.delete_all_xforms()
         user_id = 'test-unknown-user'
@@ -101,6 +116,7 @@ class PillowtopReindexerTest(TestCase):
         self.assertEqual(self.domain, form_doc['domain'])
         self.assertEqual(form.xmlns, form_doc['xmlns'])
         self.assertEqual('XFormInstance', form_doc['doc_type'])
+
 
 def _create_and_save_a_form():
     metadata = TestFormMetadata(domain=DOMAIN)
