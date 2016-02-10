@@ -408,9 +408,30 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             cursor.execute('SELECT delete_all_cases(%s)', [domain])
 
     @staticmethod
-    def get_all_cases_modified_since(server_modified_on_since=None, limit=100):
+    def get_all_cases_modified_since(server_modified_on_since=None, chunk_size=500):
+        start_from = server_modified_on_since or datetime.min
+        # todo: this will greedily query the same cases multiple times in a sharded
+        # setup. We should make it smarter
+        batch = CaseAccessorSQL.get_cases_modified_since(start_from, limit=chunk_size)
+        while len(batch) == chunk_size:
+            for case in batch:
+                yield case
+                next_start_from = case.server_modified_on
+
+            # make sure we are making progress
+            assert next_start_from > start_from
+            start_from = next_start_from
+            batch = CaseAccessorSQL.get_cases_modified_since(start_from, limit=chunk_size)
+
+        # last batch
+        for case in batch:
+            yield case
+
+    @staticmethod
+    def get_cases_modified_since(server_modified_on_since=None, limit=100):
         """
-        Iterate through all cases in the entire database.
+        Iterate through all cases in the entire database, optionally modified since
+        a specific date
         """
         if server_modified_on_since is None:
             server_modified_on_since = datetime.min
