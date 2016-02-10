@@ -106,7 +106,7 @@ def _require_target():
             provided_by=('staging', 'preview', 'production', 'old_india', 'softlayer', 'zambia'))
 
 
-class CodeToDeploy(object):
+class DeployMetadata(object):
     def __init__(self, env):
         self.env = env
         self.timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M')
@@ -141,7 +141,7 @@ class CodeToDeploy(object):
         return self._deploy_ref
 
 
-code_to_deploy = CodeToDeploy(env)
+deploy_metadata = DeployMetadata(env)
 
 
 def format_env(current_env, extra=None):
@@ -201,7 +201,7 @@ def _setup_path():
     env.log_dir = posixpath.join(env.home, 'www', env.environment, 'log')
     env.releases = posixpath.join(env.root, 'releases')
     env.code_current = posixpath.join(env.root, 'current')
-    env.code_root = posixpath.join(env.releases, code_to_deploy.timestamp)
+    env.code_root = posixpath.join(env.releases, deploy_metadata.timestamp)
     env.project_root = posixpath.join(env.code_root, env.project)
     env.project_media = posixpath.join(env.code_root, 'media')
     env.virtualenv_current = posixpath.join(env.code_current, 'python_env')
@@ -570,7 +570,7 @@ def hotfix_deploy():
     _require_target()
     run('echo ping!')  # workaround for delayed console response
     try:
-        execute(update_code, code_to_deploy.tag, True)
+        execute(update_code, deploy_metadata.tag, True)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
@@ -578,7 +578,7 @@ def hotfix_deploy():
         raise
     else:
         execute(services_restart)
-        url = code_to_deploy.diff_url
+        url = deploy_metadata.diff_url
         execute(record_successful_deploy, url)
 
 
@@ -594,7 +594,7 @@ def _confirm_translated():
 @task
 def setup_release():
     _execute_with_timing(create_code_dir)
-    _execute_with_timing(update_code, code_to_deploy.tag)
+    _execute_with_timing(update_code, deploy_metadata.tag)
     _execute_with_timing(update_virtualenv)
 
     _execute_with_timing(copy_release_files)
@@ -674,7 +674,7 @@ def _deploy_without_asking():
         _execute_with_timing(update_current)
         _execute_with_timing(services_restart)
         _execute_with_timing(record_successful_release)
-        url = code_to_deploy.diff_url
+        url = deploy_metadata.diff_url
         _execute_with_timing(record_successful_deploy, url)
 
 
