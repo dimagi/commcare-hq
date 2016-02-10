@@ -94,7 +94,7 @@ from corehq.apps.es.utils import values_list, flatten_field_dict
 
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq.elastic import ES_META, ESError, run_query, SIZE_LIMIT
+from corehq.elastic import ES_META, ESError, run_query, scroll_query, SIZE_LIMIT
 
 from . import filters
 from . import queries
@@ -183,6 +183,14 @@ class ESQuery(object):
         """Actually run the query.  Returns an ESQuerySet object."""
         raw = run_query(self.index, self.raw_query)
         return ESQuerySet(raw, deepcopy(self))
+
+    def scroll(self):
+        """
+        Run the query against the scroll api. Returns an iterator yielding each
+        document that matches the query.
+        """
+        for r in scroll_query(self.index, self.raw_query):
+            yield ESQuerySet.normalize_result(deepcopy(self), r)
 
     @property
     def _filters(self):
@@ -372,6 +380,16 @@ class ESQuerySet(object):
         self.raw = raw
         self.query = query
 
+    @staticmethod
+    def normalize_result(query, result):
+        """Return the doc from an item in the query response."""
+        if query._exclude_source:
+            return result['_id']
+        if query._legacy_fields:
+            return flatten_field_dict(result)
+        else:
+            return result['_source']
+
     @property
     def raw_hits(self):
         return self.raw['hits']['hits']
@@ -384,12 +402,7 @@ class ESQuerySet(object):
     @property
     def hits(self):
         """Return the docs from the response."""
-        if self.query._exclude_source:
-            return self.doc_ids
-        if self.query._legacy_fields:
-            return [flatten_field_dict(r) for r in self.raw_hits]
-        else:
-            return [r['_source'] for r in self.raw_hits]
+        return [self.normalize_result(self.query, r) for r in self.raw_hits]
 
     @property
     def total(self):

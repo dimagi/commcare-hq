@@ -13,13 +13,13 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.reports.display import xmlns_to_name
+from couchexport.transforms import couch_to_excel_datetime
 from dimagi.utils.couch.database import iter_docs
 from dimagi.ext.couchdbkit import (
     Document,
     DocumentSchema,
     ListProperty,
     StringProperty,
-    IntegerProperty,
     DateTimeProperty,
 )
 from corehq.apps.export.utils import (
@@ -84,7 +84,7 @@ class ExportColumn(DocumentSchema):
     # A list of constants that map to functions to transform the column value
     transforms = ListProperty(validators=is_valid_transform)
 
-    def get_value(self, doc, base_path):
+    def get_value(self, doc, base_path, transform_dates=False):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
@@ -97,7 +97,20 @@ class ExportColumn(DocumentSchema):
         assert base_path == self.item.path[:len(base_path)]
         # Get the path from the doc root to the desired ExportItem
         path = self.item.path[len(base_path):]
-        return NestedDictGetter(path)(doc)
+        return self._transform(NestedDictGetter(path)(doc), transform_dates)
+
+    def _transform(self, value, transform_dates):
+        """
+        Transform the given value with the transforms specified in self.transforms.
+        Also transform dates if the transform_dates flag is true.
+        """
+        # TODO: The functions in self.transforms might expect docs, not values, in which case this needs to move.
+
+        if transform_dates:
+            value = couch_to_excel_datetime(value, None)
+        for transform in self.transforms:
+            value = TRANSFORM_FUNCTIONS[transform](value)
+        return value
 
     @staticmethod
     def create_default_from_export_item(group_schema_path, item, app_ids_and_versions):
@@ -149,10 +162,8 @@ class ExportColumn(DocumentSchema):
 
 
 class TableConfiguration(DocumentSchema):
-    # name is not modified by the user, and denotes the name of the table
-    name = StringProperty()
-    # diplay_name saves the user's decision for the table name
-    display_name = StringProperty()
+    # label saves the user's decision for the table name
+    label = StringProperty()
     path = ListProperty()
     columns = ListProperty(ExportColumn)
     selected = BooleanProperty(default=False)
@@ -160,12 +171,17 @@ class TableConfiguration(DocumentSchema):
     def __hash__(self):
         return hash(tuple(self.path))
 
+    @property
+    def selected_columns(self):
+        """The columns that should be included in the export"""
+        return [c for c in self.columns if c.selected]
+
     def get_headers(self):
         """
         Return a list of column headers
         """
         headers = []
-        for column in self.columns:
+        for column in self.selected_columns:
             headers.extend(column.get_headers())
         return headers
 
@@ -181,7 +197,7 @@ class TableConfiguration(DocumentSchema):
         for doc in sub_documents:
 
             row_data = []
-            for col in self.columns:
+            for col in self.selected_columns:
                 val = col.get_value(doc, self.path)
                 if isinstance(val, list):
                     row_data.extend(val)
@@ -233,15 +249,15 @@ class ExportInstance(Document):
     # Whether to split multiselects into multiple columns
     split_multiselects = BooleanProperty(default=False)
 
-    # Whether to automatically convert dates to excel dates
-    transform_dates = BooleanProperty(default=False)
-
     # Whether to include duplicates and other error'd forms in export
     include_errors = BooleanProperty(default=False)
 
     # Whether the export is de-identified
     is_deidentified = BooleanProperty(default=False)
     is_daily_saved_export = BooleanProperty(default=False)
+
+    # Keep reference to old schema id if we have converted it from the legacy infrastructure
+    legacy_saved_export_schema_id = StringProperty()
 
     class Meta:
         app_label = 'export'
@@ -266,16 +282,7 @@ class ExportInstance(Document):
         raise NotImplementedError()
 
     @classmethod
-    def update_export_from_schema(cls, schema, saved_export):
-        return cls.generate_instance_from_schema(
-            schema,
-            saved_export.domain,
-            app_id=saved_export.app_id,
-            saved_export=saved_export,
-        )
-
-    @classmethod
-    def generate_instance_from_schema(cls, schema, domain, app_id=None, saved_export=None):
+    def generate_instance_from_schema(cls, schema, saved_export=None):
         """Given an ExportDataSchema, this will generate an ExportInstance"""
         if saved_export:
             instance = saved_export
@@ -284,12 +291,14 @@ class ExportInstance(Document):
 
         instance.name = instance.name or instance.defaults.get_default_instance_name(schema)
 
-        latest_app_ids_and_versions = get_latest_built_app_ids_and_versions(domain, app_id)
+        latest_app_ids_and_versions = get_latest_built_app_ids_and_versions(
+            schema.domain,
+            getattr(schema, 'app_id', None),
+        )
         for group_schema in schema.group_schemas:
             table = instance.get_table(group_schema.path) or TableConfiguration(
                 path=group_schema.path,
-                name=instance.defaults.get_default_table_name(group_schema.path),
-                display_name=instance.defaults.get_default_table_name(group_schema.path),
+                label=instance.defaults.get_default_table_name(group_schema.path),
                 selected=instance.defaults.default_is_table_selected(group_schema.path),
             )
             columns = []
@@ -874,5 +883,20 @@ class SplitExportColumn(ExportColumn):
         return row
 
     def get_headers(self):
-        # TODO: Don't return the same header for every sub-column!
-        return [self.label] * len(self.options)
+        header_template = self.label if '{option}' in self.label else u"{name} | {option}"
+        headers = []
+        for option in self.item.options:
+            headers.append(
+                header_template.format(
+                    name=self.label,
+                    option=option.value
+                )
+            )
+        if not self.ignore_extras:
+            headers.append(
+                header_template.format(
+                    name=self.label,
+                    option='extra'
+                )
+            )
+        return headers

@@ -2266,6 +2266,7 @@ class MigrationStatus(models.Model):
     MIGRATION_BACKEND = 'backend'
     MIGRATION_BACKEND_MAP = 'backend_map'
     MIGRATION_DOMAIN_DEFAULT_BACKEND = 'domain_default_backend'
+    MIGRATION_LOGS = 'logs'
 
     class Meta:
         db_table = 'messaging_migrationstatus'

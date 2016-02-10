@@ -54,11 +54,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
                 'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
                 return_value=build_ids_and_versions):
 
-            instance = FormExportInstance.generate_instance_from_schema(
-                self.schema,
-                'dummy',
-                self.app_id
-            )
+            instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
         self.assertEqual(len(instance.tables), 2)
 
@@ -79,11 +75,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
         with mock.patch(
                 'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
                 return_value=build_ids_and_versions):
-            instance = FormExportInstance.generate_instance_from_schema(
-                self.schema,
-                'dummy',
-                self.app_id
-            )
+            instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
         self.assertEqual(len(instance.tables), 2)
 
@@ -159,7 +151,7 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
         with mock.patch(
                 'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
                 return_value=build_ids_and_versions):
-            instance = FormExportInstance.generate_instance_from_schema(self.schema, 'dummy-domain')
+            instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
         selected = filter(
             lambda column: column.selected,
@@ -181,7 +173,7 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
         with mock.patch(
                 'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
                 return_value=build_ids_and_versions):
-            instance = FormExportInstance.generate_instance_from_schema(self.schema, 'dummy-domain')
+            instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
         selected = filter(
             lambda column: column.selected,
@@ -296,7 +288,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
         with mock.patch(
                 'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
                 return_value=build_ids_and_versions):
-            instance = FormExportInstance.generate_instance_from_schema(self.schema, 'my-domain', self.app_id)
+            instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
         instance.save()
         self.assertEqual(len(instance.tables), 1)
@@ -315,8 +307,6 @@ class TestExportInstanceFromSavedInstance(TestCase):
 
             instance = FormExportInstance.generate_instance_from_schema(
                 self.new_schema,
-                'my-domain',
-                self.app_id,
                 saved_export=instance
             )
 
@@ -335,7 +325,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
         with mock.patch(
                 'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
                 return_value=build_ids_and_versions):
-            instance = FormExportInstance.generate_instance_from_schema(self.schema, 'my-domain', self.app_id)
+            instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
         instance.save()
         self.assertEqual(len(instance.tables), 1)
@@ -352,8 +342,6 @@ class TestExportInstanceFromSavedInstance(TestCase):
 
             instance = FormExportInstance.generate_instance_from_schema(
                 self.new_schema,
-                'my-domain',
-                self.app_id,
                 saved_export=instance
             )
 

@@ -20,6 +20,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.export.utils import convert_saved_export_to_export_instance
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import (
     ExportNotFound,
@@ -314,7 +315,7 @@ class BaseCreateCustomExportView(BaseExportView):
         return HttpResponseRedirect(self.export_home_url)
 
 
-class CreateNewCustomFormExportView(BaseCreateNewCustomExportView):
+class CreateNewCustomFormExportView(BaseNewExportView):
     urlname = 'new_custom_export_form'
     page_title = ugettext_lazy("Create Form Export")
     export_type = FORM_EXPORT
@@ -328,19 +329,12 @@ class CreateNewCustomFormExportView(BaseCreateNewCustomExportView):
             app_id,
             xmlns,
         )
-        self.export_instance = self.get_export_instance(schema, app_id)
+        self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 
         return super(CreateNewCustomFormExportView, self).get(request, *args, **kwargs)
 
-    def get_export_instance(self, schema, app_id=None):
-        return FormExportInstance.generate_instance_from_schema(
-            schema,
-            self.domain,
-            app_id,
-        )
 
-
-class CreateNewCustomCaseExportView(BaseCreateNewCustomExportView):
+class CreateNewCustomCaseExportView(BaseNewExportView):
     urlname = 'new_custom_export_case'
     page_title = ugettext_lazy("Create Case Export")
     export_type = CASE_EXPORT
@@ -352,16 +346,9 @@ class CreateNewCustomCaseExportView(BaseCreateNewCustomExportView):
             self.domain,
             case_type,
         )
-        self.export_instance = self.get_export_instance(schema)
+        self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 
         return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)
-
-    def get_export_instance(self, schema, app_id=None):
-        return CaseExportInstance.generate_instance_from_schema(
-            schema,
-            self.domain,
-            app_id,
-        )
 
 
 class BaseEditNewCustomExportView(BaseNewExportView):
@@ -385,10 +372,24 @@ class BaseEditNewCustomExportView(BaseNewExportView):
         try:
             export_instance = FormExportInstance.get(self.export_id)
         except ResourceNotFound:
-            raise Http404()
+            # If it's not found, try and see if it's on the legacy system before throwing a 404
+            try:
+                export_helper = make_custom_export_helper(
+                    self.request,
+                    self.export_type,
+                    self.domain,
+                    self.export_id
+                )
+
+                export_instance = convert_saved_export_to_export_instance(export_helper.custom_export)
+            except ResourceNotFound:
+                raise Http404()
 
         schema = self.get_export_schema(export_instance)
-        self.export_instance = self.export_instance_cls.update_export_from_schema(schema, export_instance)
+        self.export_instance = self.export_instance_cls.generate_instance_from_schema(
+            schema,
+            saved_export=export_instance,
+        )
         return super(BaseEditNewCustomExportView, self).get(request, *args, **kwargs)
 
 

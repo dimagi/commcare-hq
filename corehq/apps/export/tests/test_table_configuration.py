@@ -10,16 +10,25 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
 
     def test_simple(self):
         table_configuration = TableConfiguration(
+            path=[],
             columns=[
                 ExportColumn(
                     item=ScalarItem(
                         path=['form', 'q3'],
-                    )
+                    ),
+                    selected=True,
                 ),
                 ExportColumn(
                     item=ScalarItem(
                         path=['form', 'q1'],
-                    )
+                    ),
+                    selected=True,
+                ),
+                ExportColumn(
+                    item=ScalarItem(
+                        path=['form', 'q2'],
+                    ),
+                    selected=False,
                 ),
             ]
         )
@@ -42,7 +51,8 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
                 ExportColumn(
                     item=ScalarItem(
                         path=['form', 'repeat1', 'q1'],
-                    )
+                    ),
+                    selected=True,
                 ),
             ]
         )
@@ -66,7 +76,8 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
                 ExportColumn(
                     item=ScalarItem(
                         path=['form', 'repeat1', 'group1', 'repeat2', 'q1'],
-                    )
+                    ),
+                    selected=True,
                 ),
             ]
         )
@@ -97,33 +108,60 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
             [['foo'], ['bar'], ['beep'], ['boop']]
         )
 
-    def test_split_columns(self):
-        # TODO: It probably makes more sense to test columns independently...
-        # I'm assuming they will have some sort of get_value(document) property
-        table_configuration = TableConfiguration(
-            path=['form'],
-            columns=[
-                SplitExportColumn(
-                    item=MultipleChoiceItem(
-                        path=['form', 'q1'],
-                        options=[Option(value='a'), Option(value='c')]
-                    ),
-                    ignore_extras=True
-                ),
-                SplitExportColumn(
-                    item=MultipleChoiceItem(
-                        path=['form', 'q1'],
-                        options=[Option(value='a'), Option(value='c')]
-                    ),
-                    ignore_extras=False
-                ),
-            ]
+
+class SplitColumnTest(SimpleTestCase):
+
+    def test_get_value(self):
+        column = SplitExportColumn(
+            item=MultipleChoiceItem(
+                path=['form', 'q1'],
+                options=[Option(value='a'), Option(value='c')]
+            ),
+            ignore_extras=False
         )
-        submission = {"form": {"q1": "a b d"}}
-        self.assertEqual(
-            [row.data for row in table_configuration.get_rows(submission)],
-            [[1, None, 1, None, "b d"]]
+        doc = {"q1": "a b d"}
+        self.assertEqual(column.get_value(doc, ['form']), [1, None, "b d"])
+
+    def test_ignore_extas(self):
+        column = SplitExportColumn(
+            item=MultipleChoiceItem(
+                path=['form', 'q1'],
+                options=[Option(value='a'), Option(value='c')]
+            ),
+            ignore_extras=True
         )
+        doc = {"q1": "a b d"}
+        self.assertEqual(column.get_value(doc, ["form"]), [1, None])
+
+    def test_basic_get_headers(self):
+        column = SplitExportColumn(
+            label="Fruit",
+            item=MultipleChoiceItem(
+                options=[Option(value='Apple'), Option(value='Banana')]
+            ),
+            ignore_extras=True
+        )
+        self.assertEqual(column.get_headers(), ["Fruit | Apple", "Fruit | Banana"])
+
+    def test_get_headers_with_template_string(self):
+        column = SplitExportColumn(
+            label="Fruit - {option}",
+            item=MultipleChoiceItem(
+                options=[Option(value='Apple'), Option(value='Banana')]
+            ),
+            ignore_extras=True
+        )
+        self.assertEqual(column.get_headers(), ["Fruit - Apple", "Fruit - Banana"])
+
+    def test_get_headers_with_extras(self):
+        column = SplitExportColumn(
+            label="Fruit - {option}",
+            item=MultipleChoiceItem(
+                options=[Option(value='Apple'), Option(value='Banana')]
+            ),
+            ignore_extras=False
+        )
+        self.assertEqual(column.get_headers(), ["Fruit - Apple", "Fruit - Banana", "Fruit - extra"])
 
     def test_get_column(self):
         table_configuration = TableConfiguration(

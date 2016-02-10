@@ -8,7 +8,7 @@
                 <input type="checkbox" data-bind="checked: table.selected" />
             </span>
             <span>
-                <span data-bind="text: table.name">
+                <span data-bind="text: Exports.Utils.getTableName(table.path(), $root.type())">
             </span>
         </legend>
         <div data-bind="visibleFade: table.selected">
@@ -37,7 +37,7 @@
             <div class="control-group">
                 <label class="control-label">{% trans "Sheet Name" %}</label>
                 <div class="controls">
-                    <input type="text" data-bind="value: table.display_name" />
+                    <input type="text" data-bind="value: table.label" />
                 </div>
             </div>
             <div class="control-group">
