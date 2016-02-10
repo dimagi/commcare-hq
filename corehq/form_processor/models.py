@@ -18,7 +18,7 @@ from django.conf import settings
 from django.db import models
 from uuidfield import UUIDField
 
-from corehq.blobs import get_blob_db
+from corehq.blobs import get_blob_db, get_content_md5
 from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.routers import db_for_read_write
@@ -65,7 +65,7 @@ class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
 
     @property
     def md5(self):
-        return hashlib.md5(self.content).hexdigest()
+        return get_content_md5(self.content)
 
 
 class SaveStateMixin(object):
@@ -328,8 +328,9 @@ class AbstractAttachment(DisabledDbMixin, models.Model):
     attachment_id = UUIDField(unique=True, db_index=True)
     name = models.CharField(max_length=255, db_index=True)
     content_type = models.CharField(max_length=255)
+
+    # RFC-1864-compliant Content-MD5 header value
     md5 = models.CharField(max_length=255)
-    blob_id = models.CharField(max_length=255)
 
     def _blobdb_bucket(self):
         if self.attachment_id is None:
@@ -343,32 +344,23 @@ class AbstractAttachment(DisabledDbMixin, models.Model):
 
         db = get_blob_db()
         bucket = self._blobdb_bucket()
-        info = db.put(content, self.name, bucket)
-        # blob DB generates its own unique ID for the blob which we need
-        # in order to fetch it again
-        self.blob_id = info.name
+        db.put(content, self.name, bucket, self.md5, str(self.attachment_id))
 
     def read_content(self):
         db = get_blob_db()
         try:
-            blob = db.get(self.blob_id, self._blobdb_bucket())
+            blob = db.get_from_unique_id(self.name, str(self.attachment_id), self._blobdb_bucket())
         except (KeyError, NotFound):
             raise AttachmentNotFound(u"{model} attachment: {name!r}".format(
                                    model=type(self).__name__, name=self.name))
         with blob:
             body = blob.read()
-        try:
-            body = body.decode("utf-8", "strict")
-        except UnicodeDecodeError:
-            # Return bytes on decode failure, otherwise unicode.
-            # Ugly, but consistent with restkit.wrappers.Response.body_string
-            pass
         return body
 
     def delete_content(self):
         deleted = False
         bucket = self._blobdb_bucket()
-        return get_blob_db().delete(self.name, bucket) or deleted
+        return get_blob_db().delete_by_unique_id(self.name, str(self.attachment_id), bucket) or deleted
 
     class Meta:
         abstract = True

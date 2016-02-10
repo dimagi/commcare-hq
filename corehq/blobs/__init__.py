@@ -1,5 +1,7 @@
 from collections import namedtuple
 
+from botocore.handlers import calculate_md5
+
 from .exceptions import Error
 
 DEFAULT_BUCKET = "_default"
@@ -35,3 +37,9 @@ def _get_fs_db(settings):
 
 
 BlobInfo = namedtuple("BlobInfo", ["identifier", "length", "digest"])
+
+
+def get_content_md5(content):
+    params = {"body": content, "headers": {}}
+    calculate_md5(params)
+    return params["headers"]["Content-MD5"]

@@ -3,13 +3,12 @@ import re
 from uuid import uuid4
 from contextlib import contextmanager
 
-from corehq.blobs import BlobInfo, DEFAULT_BUCKET
+from corehq.blobs import BlobInfo, DEFAULT_BUCKET, get_content_md5
 from corehq.blobs.abstractdb import AbstractBlobDB
 from corehq.blobs.exceptions import BadName, NotFound
 
 import boto3
 from botocore.client import Config
-from botocore.handlers import calculate_md5
 from botocore.exceptions import ClientError
 from botocore.utils import fix_s3_host
 
@@ -40,9 +39,7 @@ class S3BlobDB(AbstractBlobDB):
         identifier = self.get_identifier(basename, unique_id)
         path = self.get_path(identifier, bucket)
         if content_md5 is None:
-            params = {"body": content, "headers": {}}
-            calculate_md5(params)
-            content_md5 = params["headers"]["Content-MD5"]
+            content_md5 = get_content_md5(content)
         obj = self._s3_bucket(create=True).put_object(
             Key=path,
             Body=content,
@@ -87,9 +84,7 @@ class S3BlobDB(AbstractBlobDB):
         if info.digest and info.digest.startswith("md5-"):
             content_md5 = info.digest[4:]
         else:
-            params = {"body": content, "headers": {}}
-            calculate_md5(params)
-            content_md5 = params["headers"]["Content-MD5"]
+            content_md5 = get_content_md5(content)
         self._s3_bucket(create=True).put_object(
             Key=self.get_path(info.identifier, bucket),
             Body=content,
