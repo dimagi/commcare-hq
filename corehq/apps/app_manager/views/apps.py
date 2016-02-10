@@ -115,7 +115,7 @@ def default_new_app(request, domain):
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
     if tours.NEW_APP.is_enabled(request.user):
-        update_kissmetrics_properties(request.couch_user.username, {'First Template App Chosen': 'blank'})
+        update_kissmetrics_properties.delay(request.couch_user.username, {'First Template App Chosen': 'blank'})
     lang = 'en'
     app = Application.new_app(
         domain, _("Untitled Application"), lang=lang,
@@ -300,7 +300,7 @@ def app_from_template(request, domain, slug):
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
     if tours.NEW_APP.is_enabled(request.user):
-        update_kissmetrics_properties(request.couch_user.username, {'First Template App Chosen': '%s' % slug})
+        update_kissmetrics_properties.delay(request.couch_user.username, {'First Template App Chosen': '%s' % slug})
     clear_app_cache(request, domain)
     template = load_app_template(slug)
     app = import_app_util(template, domain, {
