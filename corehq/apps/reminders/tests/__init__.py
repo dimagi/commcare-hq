@@ -7,7 +7,7 @@ from corehq.apps.reminders.models import *
 from corehq.apps.reminders.event_handlers import get_message_template_params
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms.models import CallLog, ExpectedCallbackEventLog, CALLBACK_RECEIVED, CALLBACK_PENDING, CALLBACK_MISSED
-from corehq.apps.sms.tests.util import setup_default_sms_test_backend
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.couch import LOCK_EXPIRATION
 from corehq.apps.domain.models import Domain
@@ -26,6 +26,7 @@ class BaseReminderTestCase(BaseAccountingTest, DomainSubscriptionMixin):
         self.sms_backend, self.sms_backend_mapping = setup_default_sms_test_backend()
 
     def tearDown(self):
+        delete_domain_phone_numbers('test')
         self.sms_backend_mapping.delete()
         self.sms_backend.delete()
         self.teardown_subscription()
