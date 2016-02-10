@@ -4,6 +4,7 @@ from uuid import uuid4
 from contextlib import contextmanager
 
 from corehq.blobs import BlobInfo, DEFAULT_BUCKET
+from corehq.blobs.abstractdb import AbstractBlobDB
 from corehq.blobs.exceptions import BadName, NotFound
 
 import boto3
@@ -16,7 +17,7 @@ DEFAULT_S3_BUCKET = "blobdb"
 SAFENAME = re.compile("^[a-z0-9_./-]+$", re.IGNORECASE)
 
 
-class S3BlobDB(object):
+class S3BlobDB(AbstractBlobDB):
 
     def __init__(self, config):
         kwargs = {}
@@ -34,26 +35,10 @@ class S3BlobDB(object):
         # https://github.com/boto/boto3/issues/259
         self.db.meta.client.meta.events.unregister('before-sign.s3', fix_s3_host)
 
-    def put(self, content, basename="", bucket=DEFAULT_BUCKET, content_md5=None):
-        """Put a blob in persistent storage
-
-        :param content: A file-like object in binary read mode.
-        :param basename: Optional name from which the blob name will be
-        derived. This is used to make the unique blob name somewhat
-        recognizable.
-        :param bucket: Optional bucket name used to partition blob data
-        in the persistent storage medium. This may be delimited with
-        slashes (/). It must be a valid relative path.
-        :param content_md5: RFC-1864-compliant Content-MD5 header value.
-        If this parameter is omitted or its value is `None` then content
-        must be a seekable file-like object. NOTE: the value should not
-        be prefixed with `md5-` even though we store it that way.
-        :returns: A `BlobInfo` named tuple. The returned object has a
-        `name` member that must be used to get or delete the blob. It
-        should not be confused with the optional `basename` parameter.
-        """
-        name = self.get_unique_name(basename)
-        path = self.get_path(name, bucket)
+    def put(self, content, basename="", bucket=DEFAULT_BUCKET, content_md5=None, unique_id=None):
+        unique_id = unique_id or uuid4().hex
+        identifier = self.get_identifier(basename, unique_id)
+        path = self.get_path(identifier, bucket)
         if content_md5 is None:
             params = {"body": content, "headers": {}}
             calculate_md5(params)
@@ -63,36 +48,23 @@ class S3BlobDB(object):
             Body=content,
             ContentMD5=content_md5,
         )
-        return BlobInfo(name, obj.content_length, "md5-" + content_md5)
+        return BlobInfo(identifier, obj.content_length, "md5-" + content_md5)
 
-    def get(self, name, bucket=DEFAULT_BUCKET):
-        """Get a blob
-
-        :param name: The name of the object to get.
-        :param bucket: Optional bucket name. This must have the same
-        value that was passed to ``put``.
-        :raises: `NotFound` if the object does not exist.
-        :returns: A file-like object in binary read mode. The returned
-        object should be closed when finished reading.
-        """
-        path = self.get_path(name, bucket)
-        with maybe_not_found(throw=NotFound(name, bucket)):
+    def get(self, identifier, bucket=DEFAULT_BUCKET):
+        path = self.get_path(identifier, bucket)
+        with maybe_not_found(throw=NotFound(identifier, bucket)):
             resp = self._s3_bucket().Object(path).get()
         return ClosingContextProxy(resp["Body"])  # body stream
 
-    def delete(self, name=None, bucket=DEFAULT_BUCKET):
-        """Delete a blob
+    def get_from_unique_id(self, basename, unique_id, bucket=DEFAULT_BUCKET):
+        identifier = self.get_identifier(basename, unique_id)
+        return self.get(identifier, bucket=bucket)
 
-        :param name: The name of the object to be deleted. The entire
-        bucket will be deleted if this is not specified.
-        :param bucket: Optional bucket name. This must have the same
-        value that was passed to ``put``.
-        :returns: True if the blob was deleted else false.
-        """
-        path = self.get_path(name, bucket)
+    def delete(self, identifier=None, bucket=DEFAULT_BUCKET):
+        path = self.get_path(identifier, bucket)
         s3_bucket = self._s3_bucket()
         with maybe_not_found():
-            if name is None:
+            if identifier is None:
                 summaries = s3_bucket.objects.filter(Prefix=path + "/")
                 pages = ([{"Key": o.key} for o in page]
                          for page in summaries.pages())
@@ -107,13 +79,11 @@ class S3BlobDB(object):
             return success
         return False
 
-    def copy_blob(self, content, info, bucket):
-        """Copy blob from other blob database
+    def delete_by_unique_id(self, basename, unique_id, bucket=DEFAULT_BUCKET):
+        identifier = self.get_identifier(basename, unique_id)
+        return self.delete(identifier, bucket=bucket)
 
-        :param content: File-like blob content object.
-        :param info: `BlobInfo` object.
-        :param bucket: Bucket name.
-        """
+    def copy_blob(self, content, info, bucket):
         if info.digest and info.digest.startswith("md5-"):
             content_md5 = info.digest[4:]
         else:
@@ -121,7 +91,7 @@ class S3BlobDB(object):
             calculate_md5(params)
             content_md5 = params["headers"]["Content-MD5"]
         self._s3_bucket(create=True).put_object(
-            Key=self.get_path(info.name, bucket),
+            Key=self.get_path(info.identifier, bucket),
             Body=content,
             ContentMD5=content_md5,
         )
@@ -137,20 +107,10 @@ class S3BlobDB(object):
             self._s3_bucket_exists = True
         return self.db.Bucket(self.s3_bucket_name)
 
-    @staticmethod
-    def get_unique_name(basename):
-        if not basename:
-            return uuid4().hex
-        if SAFENAME.match(basename) and "/" not in basename:
-            prefix = basename
-        else:
-            prefix = "unsafe"
-        return prefix + "." + uuid4().hex
-
-    def get_path(self, name=None, bucket=DEFAULT_BUCKET):
-        if name is None:
+    def get_path(self, identifier=None, bucket=DEFAULT_BUCKET):
+        if identifier is None:
             return safepath(bucket)
-        return safejoin(bucket, name)
+        return safejoin(bucket, identifier)
 
 
 def safepath(path):

@@ -12,13 +12,14 @@ from os.path import commonprefix, exists, isabs, isdir, dirname, join, realpath,
 from uuid import uuid4
 
 from corehq.blobs import BlobInfo, DEFAULT_BUCKET
+from corehq.blobs.abstractdb import AbstractBlobDB
 from corehq.blobs.exceptions import BadName, NotFound
 
 CHUNK_SIZE = 4096
 SAFENAME = re.compile("^[a-z0-9_./-]+$", re.IGNORECASE)
 
 
-class FilesystemBlobDB(object):
+class FilesystemBlobDB(AbstractBlobDB):
     """Filesystem storage for large binary data objects
     """
 
@@ -26,28 +27,20 @@ class FilesystemBlobDB(object):
         assert isabs(rootdir), rootdir
         self.rootdir = rootdir
 
-    def put(self, content, basename="", bucket=DEFAULT_BUCKET):
-        """Put a blob in persistent storage
-
-        :param content: A file-like object in binary read mode.
-        :param basename: Optional name from which the blob name will be
-        derived. This is used to make the unique on-disk filename
-        somewhat recognizable.
-        :param bucket: Optional bucket name used to partition blob data
-        in the persistent storage medium. This may be delimited with
-        file path separators. Nested directories will be created for
-        each logical path element, so it must be a valid relative path.
-        :returns: A `BlobInfo` named tuple. The returned object has a
-        `name` member that must be used to get or delete the blob. It
-        should not be confused with the optional `basename` parameter.
-        """
-        name = self.get_unique_name(basename)
-        path = self.get_path(name, bucket)
+    def put(self, content, basename="", bucket=DEFAULT_BUCKET, content_md5=None, unique_id=None):
+        unique_id = unique_id or uuid4().hex
+        identifier = self.get_identifier(basename, unique_id)
+        path = self.get_path(identifier, bucket)
         dirpath = dirname(path)
         if not isdir(dirpath):
             os.makedirs(dirpath)
         length = 0
         digest = md5()
+
+        def update_md5(chunk):
+            if not content_md5:
+                digest.update(chunk)
+
         with openfile(path, "xb") as fh:
             while True:
                 chunk = content.read(CHUNK_SIZE)
@@ -55,38 +48,31 @@ class FilesystemBlobDB(object):
                     break
                 fh.write(chunk)
                 length += len(chunk)
-                digest.update(chunk)
-        b64digest = base64.b64encode(digest.digest())
-        return BlobInfo(name, length, "md5-" + b64digest)
+                update_md5(chunk)
 
-    def get(self, name, bucket=DEFAULT_BUCKET):
-        """Get a blob
+        content_md5 = content_md5 or base64.b64encode(digest.digest())
+        return BlobInfo(identifier, length, "md5-" + content_md5)
 
-        :param name: The name of the object to get.
-        :param bucket: Optional bucket name. This must have the same
-        value that was passed to ``put``.
-        :returns: A file-like object in binary read mode. The returned
-        object should be closed when finished reading.
-        """
-        path = self.get_path(name, bucket)
+    def get_from_unique_id(self, basename, unique_id, bucket=DEFAULT_BUCKET):
+        identifier = self.get_identifier(basename, unique_id)
+        return self.get(identifier, bucket=bucket)
+
+    def get(self, identifier, bucket=DEFAULT_BUCKET):
+        path = self.get_path(identifier, bucket)
         if not exists(path):
-            raise NotFound(name, bucket)
+            raise NotFound(identifier, bucket)
         return open(path, "rb")
 
-    def delete(self, name=None, bucket=DEFAULT_BUCKET):
-        """Delete a blob
+    def delete_by_unique_id(self, basename, unique_id, bucket=DEFAULT_BUCKET):
+        identifier = self.get_identifier(basename, unique_id)
+        return self.delete(identifier, bucket=bucket)
 
-        :param name: The name of the object to be deleted. The entire
-        bucket will be deleted if this is not specified.
-        :param bucket: Optional bucket name. This must have the same
-        value that was passed to ``put``.
-        :returns: True if the blob was deleted else false.
-        """
-        if name is None:
+    def delete(self, identifier=None, bucket=DEFAULT_BUCKET):
+        if identifier is None:
             path = safejoin(self.rootdir, bucket)
             remove = shutil.rmtree
         else:
-            path = self.get_path(name, bucket)
+            path = self.get_path(identifier, bucket)
             remove = os.remove
         if not exists(path):
             return False
@@ -94,29 +80,13 @@ class FilesystemBlobDB(object):
         return True
 
     def copy_blob(self, content, info, bucket):
-        """Copy blob from other blob database
-
-        :param content: File-like blob content object.
-        :param info: `BlobInfo` object.
-        :param bucket: Bucket name.
-        """
         raise NotImplementedError
 
-    @staticmethod
-    def get_unique_name(basename):
-        if not basename:
-            return uuid4().hex
-        if SAFENAME.match(basename) and "/" not in basename:
-            prefix = basename
-        else:
-            prefix = "unsafe"
-        return prefix + "." + uuid4().hex
-
-    def get_path(self, name=None, bucket=DEFAULT_BUCKET):
+    def get_path(self, identifier=None, bucket=DEFAULT_BUCKET):
         bucket_path = safejoin(self.rootdir, bucket)
-        if name is None:
+        if identifier is None:
             return bucket_path
-        return safejoin(bucket_path, name)
+        return safejoin(bucket_path, identifier)
 
 
 def safejoin(root, subpath):
