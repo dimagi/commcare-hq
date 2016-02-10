@@ -44,6 +44,10 @@ class AbstractXFormInstance(object):
     def is_submission_error_log(self):
         raise NotImplementedError()
 
+    @property
+    def is_deleted(self):
+        raise NotImplementedError()
+
     def auth_context(self):
         raise NotImplementedError()
 
@@ -69,6 +73,9 @@ class AbstractXFormInstance(object):
         raise NotImplementedError()
 
     def set_submission_properties(self, submission_post):
+        raise NotImplementedError()
+
+    def soft_delete(self):
         raise NotImplementedError()
 
     def to_json(self):

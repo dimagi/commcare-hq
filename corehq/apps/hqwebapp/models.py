@@ -291,7 +291,7 @@ class ProjectReportsTab(UITab):
         tools = [(_("Tools"), [
             {'title': _('My Saved Reports'),
              'url': reverse('saved_reports', args=[self.domain]),
-             'icon': 'icon-tasks',
+             'icon': 'icon-tasks fa fa-tasks',
              'show_in_dropdown': True}
         ])]
 
@@ -646,12 +646,27 @@ class ProjectDataTab(UITab):
                 CaseExportListView,
                 CreateCustomFormExportView,
                 CreateCustomCaseExportView,
+                CreateNewCustomFormExportView,
+                CreateNewCustomCaseExportView,
                 DownloadFormExportView,
                 DownloadCaseExportView,
                 BulkDownloadFormExportView,
                 EditCustomFormExportView,
                 EditCustomCaseExportView,
+                EditNewCustomFormExportView,
+                EditNewCustomCaseExportView,
             )
+            if toggles.NEW_EXPORTS.enabled(self.domain):
+                create_case_cls = CreateNewCustomCaseExportView
+                create_form_cls = CreateNewCustomFormExportView
+                edit_form_cls = EditNewCustomFormExportView
+                edit_case_cls = EditNewCustomCaseExportView
+            else:
+                create_case_cls = CreateCustomCaseExportView
+                create_form_cls = CreateCustomFormExportView
+                edit_form_cls = EditCustomFormExportView
+                edit_case_cls = EditCustomCaseExportView
+
             export_data_views.extend([
                 {
                     'title': FormExportListView.page_title,
@@ -661,8 +676,8 @@ class ProjectDataTab(UITab):
                     'icon': 'icon icon-list-alt fa fa-list-alt',
                     'subpages': filter(None, [
                         {
-                            'title': CreateCustomFormExportView.page_title,
-                            'urlname': CreateCustomFormExportView.urlname,
+                            'title': create_form_cls.page_title,
+                            'urlname': create_form_cls.urlname,
                         } if self.can_edit_commcare_data else None,
                         {
                             'title': BulkDownloadFormExportView.page_title,
@@ -673,8 +688,8 @@ class ProjectDataTab(UITab):
                             'urlname': DownloadFormExportView.urlname,
                         },
                         {
-                            'title': EditCustomFormExportView.page_title,
-                            'urlname': EditCustomFormExportView.urlname,
+                            'title': edit_form_cls.page_title,
+                            'urlname': edit_form_cls.urlname,
                         } if self.can_edit_commcare_data else None,
                     ])
                 },
@@ -686,16 +701,16 @@ class ProjectDataTab(UITab):
                     'icon': 'icon icon-share fa fa-share-square-o',
                     'subpages': filter(None, [
                         {
-                            'title': CreateCustomCaseExportView.page_title,
-                            'urlname': CreateCustomCaseExportView.urlname,
+                            'title': create_case_cls.page_title,
+                            'urlname': create_case_cls.urlname,
                         } if self.can_edit_commcare_data else None,
                         {
                             'title': DownloadCaseExportView.page_title,
                             'urlname': DownloadCaseExportView.urlname,
                         },
                         {
-                            'title': EditCustomCaseExportView.page_title,
-                            'urlname': EditCustomCaseExportView.urlname,
+                            'title': edit_case_cls.page_title,
+                            'urlname': edit_case_cls.urlname,
                         } if self.can_edit_commcare_data else None,
                     ])
                 },
@@ -1056,11 +1071,11 @@ class MessagingTab(UITab):
                 'url': reverse(DomainSmsGatewayListView.urlname, args=[self.domain]),
                 'subpages': [
                     {
-                        'title': _("Add Connection"),
+                        'title': _("Add Gateway"),
                         'urlname': AddDomainGatewayView.urlname,
                     },
                     {
-                        'title': _("Edit Connection"),
+                        'title': _("Edit Gateway"),
                         'urlname': EditDomainGatewayView.urlname,
                     },
                 ],
@@ -1518,8 +1533,6 @@ class AdminReportsTab(UITab):
         if self.couch_user and self.couch_user.is_staff:
             from corehq.apps.hqadmin.views import AuthenticateAs
             admin_operations.extend([
-                {'title': _('Mass Email Users'),
-                 'url': reverse('mass_email')},
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
                                 args=('pillow_errors',))},
@@ -1616,17 +1629,19 @@ class SMSAdminTab(UITab):
     @property
     @memoized
     def sidebar_items(self):
+        from corehq.apps.sms.views import (GlobalSmsGatewayListView,
+            AddGlobalGatewayView, EditGlobalGatewayView)
         items = super(SMSAdminTab, self).sidebar_items
         items.append((_('SMS Connectivity'), [
-            {'title': _('SMS Connections'),
-             'url': reverse('list_backends'),
+            {'title': _('Gateways'),
+             'url': reverse(GlobalSmsGatewayListView.urlname),
              'subpages': [
-                 {'title': _('Add Connection'),
-                  'urlname': 'add_backend'},
-                 {'title': _('Edit Connection'),
-                  'urlname': 'edit_backend'},
+                 {'title': _('Add Gateway'),
+                  'urlname': AddGlobalGatewayView.urlname},
+                 {'title': _('Edit Gateway'),
+                  'urlname': EditGlobalGatewayView.urlname},
             ]},
-            {'title': _('SMS Country-Connection Map'),
+            {'title': _('Default Gateways'),
              'url': reverse('global_backend_map')},
         ]))
         return items
@@ -1702,30 +1717,6 @@ class AdminTab(UITab):
         return (self.couch_user and
                 (self.couch_user.is_superuser or
                  toggles.IS_DEVELOPER.enabled(self.couch_user.username)))
-
-
-class ExchangeTab(UITab):
-    title = ugettext_noop("Exchange")
-    view = "corehq.apps.appstore.views.appstore"
-
-    @property
-    def dropdown_items(self):
-        submenu_context = None
-        if self.domain and self.couch_user.is_domain_admin(self.domain):
-            submenu_context = [
-                dropdown_dict(_("CommCare Exchange"), url=reverse("appstore")),
-                dropdown_dict(
-                    _("Publish this project"),
-                    url=reverse("domain_snapshot_settings",
-                                args=[self.domain]))
-            ]
-        return submenu_context
-
-    @property
-    def is_viewable(self):
-        couch_user = self.couch_user
-        return (self.domain and couch_user and couch_user.can_edit_apps() and
-                (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
 
 
 class MaintenanceAlert(models.Model):

@@ -1,6 +1,6 @@
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.views import IncomingBackendView
-from corehq.messaging.smsbackends.apposit.models import AppositBackend
+from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
 from django.http import HttpResponse, HttpResponseBadRequest
 
 
@@ -23,5 +23,5 @@ class AppositIncomingView(IncomingBackendView):
         if not fromAddress or not content:
             return HttpResponseBadRequest("ERROR: Missing fromAddress or content")
 
-        incoming(fromAddress, content, AppositBackend.get_api_id())
+        incoming(fromAddress, content, SQLAppositBackend.get_api_id())
         return HttpResponse("")

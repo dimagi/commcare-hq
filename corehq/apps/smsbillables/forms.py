@@ -3,9 +3,7 @@ from crispy_forms import layout as crispy
 from django import forms
 from django_countries.data import COUNTRIES
 from django.utils.translation import ugettext_lazy as _
-from corehq.apps.sms.mixin import SMSBackend
-from corehq.apps.sms.models import INCOMING, OUTGOING
-from corehq.apps.sms.util import get_backend_by_class_name
+from corehq.apps.sms.models import INCOMING, OUTGOING, SQLMobileBackend
 from phonenumbers import country_code_for_region
 
 
@@ -45,26 +43,10 @@ class SMSRateCalculatorForm(forms.Form):
 
     def __init__(self, domain, *args, **kwargs):
         super(SMSRateCalculatorForm, self).__init__(*args, **kwargs)
-
-        backends = SMSBackend.view(
-            "sms/backend_by_domain",
-            startkey=[domain],
-            endkey=[domain, {}],
-            reduce=False,
-            include_docs=True,
-        ).all()
-        backends.extend(SMSBackend.view(
-            'sms/global_backends',
-            reduce=False,
-            include_docs=True,
-        ).all())
+        backends = SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, domain)
 
         def _get_backend_info(backend):
-            try:
-                api_id = " (%s)" % get_backend_by_class_name(backend.doc_type).get_api_id()
-            except AttributeError:
-                api_id = ""
-            return backend._id, "%s%s" % (backend.name, api_id)
+            return backend.couch_id, "%s (%s)" % (backend.name, backend.hq_api_id)
 
         backends = [_get_backend_info(g) for g in backends]
         self.fields['gateway'].choices = backends

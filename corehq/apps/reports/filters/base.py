@@ -185,13 +185,6 @@ class BaseMultipleOptionFilter(BaseSingleOptionFilter):
         return self.get_value(self.request, self.domain) or self.default_options
 
 
-class BaseSingleOptionTypeaheadFilter(BaseSingleOptionFilter):
-    """
-        Displays a combobox (select field with typeahead).
-    """
-    template = "reports/filters/bootstrap2/single_option_typeahead.html"
-
-
 class BaseDrilldownOptionFilter(BaseReportFilter):
     """
         Displays multiple select fields that display in a hierarchial order and drill down to one value.

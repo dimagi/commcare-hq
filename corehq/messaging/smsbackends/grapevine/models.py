@@ -9,7 +9,6 @@ from tastypie.serializers import Serializer
 from tastypie.throttle import CacheThrottle
 from corehq.messaging.smsbackends.grapevine.forms import GrapevineBackendForm
 from corehq.apps.sms.util import clean_phone_number
-from corehq.apps.sms.mixin import SMSBackend
 from corehq.apps.sms.models import SQLSMSBackend
 from dimagi.ext.couchdbkit import *
 from xml.sax.saxutils import escape, unescape
@@ -33,63 +32,10 @@ TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
     </gviSmsMessage>"""
 
 
-class GrapevineBackend(SMSBackend):
-    affiliate_code = StringProperty()
-    authentication_code = StringProperty()
-
-    @classmethod
-    def get_opt_in_keywords(cls):
-        return ["START"]
-
-    @classmethod
-    def get_opt_out_keywords(cls):
-        return ["STOP", "END", "CANCEL", "UNSUBSCRIBE", "QUIT"]
-
-    @classmethod
-    def get_api_id(cls):
-        return "GVI"
-
-    @classmethod
-    def get_generic_name(cls):
-        return "Grapevine"
-
-    @classmethod
-    def get_template(cls):
-        return "grapevine/backend.html"
-
-    @classmethod
-    def get_form_class(cls):
-        return GrapevineBackendForm
-
-    def send(self, msg, delay=True, *args, **kwargs):
-        phone_number = clean_phone_number(msg.phone_number)
-        text = msg.text.encode("utf-8")
-
-        data = TEMPLATE.format(
-            affiliate_code=escape(self.affiliate_code),
-            auth_code=escape(self.authentication_code),
-            message=escape(text),
-            msisdn=escape(phone_number)
-        )
-
-        url = "http://www.gvi.bms9.vine.co.za/httpInputhandler/ApplinkUpload"
-        req = urllib2.Request(url, data)
-        response = urllib2.urlopen(req, timeout=settings.SMS_GATEWAY_TIMEOUT)
-        resp = response.read()
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLGrapevineBackend
-
-
 class SQLGrapevineBackend(SQLSMSBackend):
     class Meta:
         app_label = 'sms'
         proxy = True
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return GrapevineBackend
 
     @classmethod
     def get_available_extra_fields(cls):
@@ -113,10 +59,6 @@ class SQLGrapevineBackend(SQLSMSBackend):
     @classmethod
     def get_generic_name(cls):
         return "Grapevine"
-
-    @classmethod
-    def get_template(cls):
-        return 'grapevine/backend.html'
 
     @classmethod
     def get_form_class(cls):
@@ -274,7 +216,7 @@ class GrapevineResource(Resource):
         bundle = self.full_hydrate(bundle)
 
         if bundle.obj.is_complete:
-            incoming_sms(bundle.obj.phonenumber, bundle.obj.text, GrapevineBackend.get_api_id())
+            incoming_sms(bundle.obj.phonenumber, bundle.obj.text, SQLGrapevineBackend.get_api_id())
 
         return bundle
 

@@ -5,7 +5,6 @@ from phonelog.models import DeviceReportEntry
 
 
 class DeviceLogTagFilter(BaseReportFilter):
-    # todo: clean this up
     slug = "logtag"
     label = ugettext_noop("Filter Logs by Tag")
     errors_only_slug = "errors_only"
@@ -32,7 +31,6 @@ class DeviceLogTagFilter(BaseReportFilter):
 
 
 class BaseDeviceLogFilter(BaseReportFilter):
-    # todo: make this better
     slug = "logfilter"
     template = "reports/filters/bootstrap2/devicelog_filter.html"
     field = None

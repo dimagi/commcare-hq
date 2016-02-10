@@ -17,7 +17,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import raw_username, user_display_string
 
 from .models import Location, SQLLocation
-from .signals import location_created, location_edited
+from .signals import location_edited
 from .util import allowed_child_types, get_lineage_from_location_id
 
 
@@ -278,12 +278,8 @@ class LocationForm(forms.Form):
         if commit:
             location.save()
 
-        if is_new:
-            location_created.send(sender='loc_mgmt', loc=location)
-        else:
-            location_edited.send(sender='loc_mgmt',
-                                 loc=location,
-                                 moved=reparented)
+        if not is_new:
+            location_edited.send(sender='loc_mgmt', loc=location, moved=reparented)
 
         return location
 

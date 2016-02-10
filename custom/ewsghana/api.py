@@ -5,8 +5,9 @@ from corehq.apps.commtrack.dbaccessors.supply_point_case_by_domain_external_id i
     get_supply_point_case_by_domain_external_id
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.sms.mixin import MobileBackend, apply_leniency, PhoneNumberInUseException, InvalidFormatException, \
+from corehq.apps.sms.mixin import apply_leniency, PhoneNumberInUseException, InvalidFormatException, \
     VerifiedNumber
+from corehq.apps.sms.util import set_domain_default_backend_to_test_backend
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from custom.ewsghana.models import FacilityInCharge
 from custom.ewsghana.utils import TEACHING_HOSPITAL_MAPPING, TEACHING_HOSPITALS
@@ -248,9 +249,9 @@ class EWSApi(APISynchronization):
 
     def set_default_backend(self):
         domain_object = Domain.get_by_name(self.domain)
-        domain_object.default_sms_backend_id = MobileBackend.load_by_name(None, 'MOBILE_BACKEND_TEST').get_id
         domain_object.send_to_duplicated_case_numbers = True
         domain_object.save()
+        set_domain_default_backend_to_test_backend(domain_object.name)
 
     def _create_location_from_supply_point(self, supply_point, location):
         try:

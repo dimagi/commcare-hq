@@ -85,8 +85,8 @@ function makeSaveButton(messageStrings, cssClass) {
                 $retry: $('<span/>').text(SaveButton.message.RETRY).click(function () {
                     button.fire('save');
                 }).addClass(cssClass),
-                $saving: $('<span/>').text(SaveButton.message.SAVING).addClass('btn disabled'),
-                $saved: $('<span/>').text(SaveButton.message.SAVED).addClass('btn disabled'),
+                $saving: $('<span/>').text(SaveButton.message.SAVING).addClass('btn btn-default disabled'),
+                $saved: $('<span/>').text(SaveButton.message.SAVED).addClass('btn btn-default disabled'),
                 ui: $('<div/>').css({float: 'right'}),
                 setStateWhenReady: function (state) {
                     if (this.state === 'saving') {

@@ -23,7 +23,7 @@ from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml,
     get_single_balance_block, get_single_transfer_block
 from casexml.apps.case.tests.util import check_xml_line_by_line, check_user_has_case
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.apps.commtrack.tests.util import make_loc, make_supply_point
+from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from corehq.apps.commtrack.tests.data.balances import (
     balance_ota_block,
@@ -173,7 +173,7 @@ class CommTrackSubmissionTest(CommTrackTest):
         super(CommTrackSubmissionTest, self).setUp()
         self.user = self.users[0]
         loc2 = make_loc('loc2')
-        self.sp2 = make_supply_point(self.domain.name, loc2)
+        self.sp2 = loc2.linked_supply_point()
 
     @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
     def submit_xml_form(self, xml_method, timestamp=None, date_formatter=json_format_datetime, **submit_extras):

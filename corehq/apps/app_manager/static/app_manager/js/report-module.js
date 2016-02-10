@@ -308,9 +308,9 @@ var ReportModule = (function () {
         self.multimedia = function () {
             var multimedia = {};
             multimedia.mediaImage = {};
-            multimedia.mediaImage[self.lang] = self.menuImage.ref().path;
+            multimedia.mediaImage[self.lang] = self.menuImage.currentPath();
             multimedia.mediaAudio = {};
-            multimedia.mediaAudio[self.lang] = self.menuAudio.ref().path;
+            multimedia.mediaAudio[self.lang] = self.menuAudio.currentPath();
             return multimedia;
         };
 

@@ -246,7 +246,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
             for session_id in reminder.xforms_session_ids:
                 session = get_session_by_session_id(session_id)
                 if session.end_time is None:
-                    vn = VerifiedNumber.view("sms/verified_number_by_owner_id",
+                    vn = VerifiedNumber.view("phone_numbers/verified_number_by_owner_id",
                                              key=session.connection_id,
                                              include_docs=True).first()
                     if vn is not None:

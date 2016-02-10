@@ -87,10 +87,10 @@ def get_reverse_indices_for_case_id(domain, case_id):
             for raw in get_reverse_indices_json(domain, case_id)]
 
 
-def get_extension_chain(cases, domain):
-    """given a list of cases, returns a list of all extensions of that case"""
+def get_extension_chain(case_ids, domain):
+    """given a list of case_ids, returns a list of all extensions of those cases"""
     extension_chain_ids = set()
-    incoming_extensions = set(get_extension_case_ids(domain, cases))
+    incoming_extensions = set(get_extension_case_ids(domain, case_ids))
     all_extension_ids = set(incoming_extensions)
     new_extensions = set(incoming_extensions)
     while new_extensions:

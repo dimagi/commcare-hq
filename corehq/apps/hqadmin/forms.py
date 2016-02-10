@@ -7,12 +7,6 @@ from django.core.exceptions import ValidationError
 from corehq.apps.users.models import CommCareUser
 
 
-class EmailForm(forms.Form):
-    email_subject = forms.CharField(max_length=100)
-    email_body = forms.CharField()
-    real_email = forms.BooleanField(required=False)
-
-
 class BrokenBuildsForm(forms.Form):
     builds = forms.CharField(
         widget=forms.Textarea(attrs={'rows': '30', 'cols': '50'})

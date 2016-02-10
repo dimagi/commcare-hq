@@ -1,7 +1,7 @@
 var utils = {
     getIcon: function(question) {
         if (question.tag === 'upload') {
-            return '<span class="icon-paper-clip"></span> ';
+            return '<i class="fa fa-paperclip"></i> ';
         }
         return '';
     },
@@ -28,7 +28,7 @@ ko.bindingHandlers.questionsSelect = {
         ]
      */
     init: function (element, valueAccessor) {
-        $(element).after('<div class="alert alert-error"></div>');
+        $(element).after('<div class="alert alert-danger"></div>');
     },
     update: function (element, valueAccessor, allBindingsAccessor) {
         var optionObjects = ko.utils.unwrapObservable(valueAccessor());
@@ -76,7 +76,7 @@ ko.bindingHandlers.casePropertyTypeahead = {
      */
     init: function (element, valueAccessor) {
         ko.bindingHandlers.typeahead.init(element, valueAccessor);
-        $(element).data("autocomplete")._renderItem = function (ul, item) {
+        $(element).data("ui-autocomplete")._renderItem = function (ul, item) {
             return $("<li></li>")
                 .data("item.autocomplete", item)
                 .append($("<a></a>").html(item.label))
@@ -88,7 +88,7 @@ ko.bindingHandlers.casePropertyTypeahead = {
             return _.map(ko.unwrap(valueAccessor()), function(value) {
                 if (value.indexOf("attachment:") === 0) {
                     var text = value.substring(11),
-                        html = '<span class="icon-paper-clip"></span> ' + text;
+                        html = '<i class="fa fa-paperclip"></i> ' + text;
                     return {value: text, label: html};
                 }
                 return {value: value, label: value};
@@ -101,9 +101,7 @@ ko.bindingHandlers.casePropertyTypeahead = {
 ko.bindingHandlers.accordion = {
     init: function(element, valueAccessor) {
         var options = valueAccessor() || {};
-        setTimeout(function() {
-            $(element).accordion(options);
-        }, 0);
+        $(element).accordion(options);
 
         //handle disposal (if KO removes by the template binding)
         ko.utils.domNodeDisposal.addDisposeCallback(element, function(){

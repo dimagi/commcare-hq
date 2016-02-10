@@ -418,6 +418,8 @@ class AutoPayInvoicePaymentHandler(object):
         for invoice in autopayable_invoices:
             log_accounting_info("[Autopay] Autopaying invoice {}".format(invoice.id))
             amount = invoice.balance.quantize(Decimal(10) ** -2)
+            if not amount:
+                return
 
             auto_payer = invoice.subscription.account.auto_pay_user
             payment_method = StripePaymentMethod.objects.get(web_user=auto_payer)

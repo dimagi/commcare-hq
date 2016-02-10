@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 BULK_CASE_AND_USER_MANAGEMENT = 'bulk_case_and_user_management'
+CROSS_PROJECT_REPORTS = 'cross_project_reports'
 
 
 def cchq_prbac_bootstrap(apps, schema_editor):
@@ -61,8 +62,8 @@ class Command(BaseCommand):
                 self.ensure_grant(plan_role_slug, priv_role_slug, dry_run=dry_run)
 
         for old_priv in self.OLD_PRIVILEGES:
-            for plan_role_slug in self.BOOTSTRAP_GRANTS.keys():
-                self.remove_grant(plan_role_slug, old_priv)
+            self.remove_grant(old_priv)
+            Role.objects.filter(slug=old_priv).delete()
 
     def flush_roles(self):
         logger.info('Flushing ALL Roles...')
@@ -112,16 +113,15 @@ class Command(BaseCommand):
                     to_role=priv,
                 )
 
-    def remove_grant(self, grantee_slug, priv_slug, dry_run=False):
-        grants = Grant.objects.filter(from_role__slug=grantee_slug,
-                                      to_role__slug=priv_slug)
+    def remove_grant(self, priv_slug, dry_run=False):
+        grants = Grant.objects.filter(to_role__slug=priv_slug)
         if dry_run:
             if grants:
-                logger.info("[DRY RUN] Removing privilege %s => %s", grantee_slug, priv_slug)
+                logger.info("[DRY RUN] Removing privilege %s", priv_slug)
         else:
             if grants:
                 grants.delete()
-                logger.info("Removing privilege %s => %s", grantee_slug, priv_slug)
+                logger.info("Removing privilege %s", priv_slug)
 
     BOOTSTRAP_PRIVILEGES = [
         Role(slug=privileges.API_ACCESS, name='API Access', description=''),
@@ -129,7 +129,6 @@ class Command(BaseCommand):
         Role(slug=privileges.CLOUDCARE, name='Web-based Applications (CloudCare)', description=''),
         Role(slug=privileges.CUSTOM_BRANDING, name='Custom Branding', description=''),
         Role(slug=privileges.ACTIVE_DATA_MANAGEMENT, name='Active Data Management', description=''),
-        Role(slug=privileges.CROSS_PROJECT_REPORTS, name='Cross-Project Reports', description=''),
         Role(slug=privileges.CUSTOM_REPORTS, name='Custom Reports', description=''),
         Role(slug=privileges.ROLE_BASED_ACCESS, name='Role-based Access', description=''),
         Role(slug=privileges.OUTBOUND_SMS, name='Outbound SMS',
@@ -173,7 +172,6 @@ class Command(BaseCommand):
     standard_plan_features = community_plan_features + [
         privileges.API_ACCESS,
         privileges.LOOKUP_TABLES,
-        privileges.CROSS_PROJECT_REPORTS,
         privileges.OUTBOUND_SMS,
         privileges.REMINDERS_FRAMEWORK,
         privileges.CUSTOM_SMS_GATEWAY,
@@ -207,6 +205,7 @@ class Command(BaseCommand):
 
     OLD_PRIVILEGES = [
         BULK_CASE_AND_USER_MANAGEMENT,
+        CROSS_PROJECT_REPORTS,
     ]
 
     BOOTSTRAP_GRANTS = {

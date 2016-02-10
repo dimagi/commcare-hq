@@ -7,7 +7,7 @@ from django.core.management.base import LabelCommand
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
-from corehq.messaging.smsbackends.telerivet.models import TelerivetBackend
+from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 
 
 logger = logging.getLogger('accounting')
@@ -19,7 +19,7 @@ def bootstrap_telerivet_gateway(apps):
     sms_gateway_fee_criteria_class = apps.get_model('smsbillables', 'SmsGatewayFeeCriteria') if apps else SmsGatewayFeeCriteria
 
     SmsGatewayFee.create_new(
-        TelerivetBackend.get_api_id(),
+        SQLTelerivetBackend.get_api_id(),
         INCOMING,
         Decimal('0.0'),
         currency=default_currency,
@@ -28,7 +28,7 @@ def bootstrap_telerivet_gateway(apps):
     )
 
     SmsGatewayFee.create_new(
-        TelerivetBackend.get_api_id(),
+        SQLTelerivetBackend.get_api_id(),
         OUTGOING,
         Decimal('0.0'),
         currency=default_currency,

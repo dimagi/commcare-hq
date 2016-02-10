@@ -21,6 +21,7 @@ from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.sofabed.models import CaseData
 from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from couchdbkit.resource import ResourceNotFound
@@ -1558,27 +1559,19 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         user._hq_user = self # don't tell anyone that we snuck this here
         return user
 
-    def get_forms(self, deleted=False, wrap=True, include_docs=False):
+    def get_forms(self, deleted=False, wrap=True):
+        accessor = FormAccessors(self.domain)
         if deleted:
-            view_name = 'deleted_data/deleted_forms_by_user'
-            startkey = [self.user_id]
+            forms_or_form_ids = accessor.get_deleted_forms_for_user(
+                self.domain,
+                self.user_id,
+                ids_only=not wrap
+            )
         else:
-            view_name = 'all_forms/view'
-            startkey = ['submission user', self.domain, self.user_id]
+            forms_or_form_ids = accessor.get_forms_for_user(self.domain, self.user_id, ids_only=not wrap)
 
-        db = XFormInstance.get_db()
-        doc_ids = [r['id'] for r in db.view(view_name,
-            startkey=startkey,
-            endkey=startkey + [{}],
-            reduce=False,
-            include_docs=False,
-        )]
-        if wrap or include_docs:
-            for doc in iter_docs(db, doc_ids):
-                yield XFormInstance.wrap(doc) if wrap else doc
-        else:
-            for id in doc_ids:
-                yield id
+        for form_or_form_id in forms_or_form_ids:
+            yield form_or_form_id
 
     @property
     def form_count(self):
@@ -1638,7 +1631,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             for case in caselist:
                 deleted_cases.add(case['_id'])
 
-        for form_id_list in chunked(self.get_forms(wrap=False, include_docs=False), 50):
+        for form_id_list in chunked(self.get_forms(wrap=False), 50):
             tag_forms_as_deleted_rebuild_associated_cases.delay(
                 self.user_id, self.domain, form_id_list, deletion_id, deletion_date, deleted_cases=deleted_cases
             )
@@ -1962,12 +1955,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             return None
 
     @property
-    @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
     def fixture_statuses(self):
         """Returns all of the last modified times for each fixture type"""
-        return self.get_fixture_statuses()
+        return self._get_fixture_statuses()
 
-    def get_fixture_statuses(self):
+    @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
+    def _get_fixture_statuses(self):
         from corehq.apps.fixtures.models import UserFixtureType, UserFixtureStatus
         last_modifieds = {choice[0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED
                           for choice in UserFixtureType.CHOICES}
@@ -1993,6 +1986,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not new:
             user_fixture_sync.last_modified = now
             user_fixture_sync.save()
+        self._get_fixture_statuses.clear(self)
 
     def __repr__(self):
         return ("{class_name}(username={self.username!r})".format(

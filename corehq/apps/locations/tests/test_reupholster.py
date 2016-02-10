@@ -1,7 +1,8 @@
 from django.test import TestCase
-from corehq.apps.locations.util import get_lineage_from_location_id, get_lineage_from_location
+from corehq.apps.domain.shortcuts import create_domain
 
 from ..models import Location, LocationType
+from ..util import get_lineage_from_location_id, get_lineage_from_location
 from .test_locations import LocationTestBase
 from .util import make_loc, delete_all_locations
 
@@ -64,6 +65,7 @@ class TestNoCouchLocationTypes(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        create_domain('test-domain')
         LocationType.objects.create(domain='test-domain', name='test-type')
 
     @classmethod

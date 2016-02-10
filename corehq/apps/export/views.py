@@ -7,6 +7,7 @@ from django.core.exceptions import SuspiciousOperation
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.template.defaultfilters import filesizeformat
+from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
 import json
 from django.utils.safestring import mark_safe
@@ -14,10 +15,12 @@ from django.utils.safestring import mark_safe
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import pytz
 from corehq import privileges
+from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.export.utils import convert_saved_export_to_export_instance
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import (
     ExportNotFound,
@@ -30,6 +33,20 @@ from corehq.apps.export.forms import (
     CreateCaseExportTagForm,
     FilterFormExportDownloadForm,
     FilterCaseExportDownloadForm,
+)
+from corehq.apps.export.models import (
+    FormExportDataSchema,
+    CaseExportDataSchema,
+    FormExportInstance,
+    CaseExportInstance,
+)
+from corehq.apps.export.const import (
+    FORM_EXPORT,
+    CASE_EXPORT,
+)
+from corehq.apps.export.dbaccessors import (
+    get_form_export_instances,
+    get_case_export_instances,
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.dbaccessors import touch_exports
@@ -146,7 +163,7 @@ class BaseExportView(BaseProjectDataView):
             }
             return base_views[self.export_type]
         except KeyError:
-            raise SuspiciousOperation
+            raise SuspiciousOperation('Attempted to access list view {}'.format(self.export_type))
 
     @property
     def page_context(self):
@@ -1052,6 +1069,8 @@ class FormExportListView(BaseExportListView):
     @memoized
     def get_saved_exports(self):
         exports = FormExportSchema.get_stale_exports(self.domain)
+        new_exports = get_form_export_instances(self.domain)
+        exports += new_exports
         if not self.has_deid_view_permissions:
             exports = filter(lambda x: not x.is_safe, exports)
         return sorted(exports, key=lambda x: x.name)
@@ -1075,6 +1094,10 @@ class FormExportListView(BaseExportListView):
 
     def fmt_export_data(self, export):
         emailed_exports = self.get_formatted_emailed_exports(export)
+        if toggles.NEW_EXPORTS.enabled(self.domain):
+            edit_view = EditNewCustomFormExportView
+        else:
+            edit_view = EditCustomFormExportView
         return {
             'id': export.get_id,
             'isDeid': export.is_safe,
@@ -1083,7 +1106,7 @@ class FormExportListView(BaseExportListView):
             'addedToBulk': False,
             'exportType': export.type,
             'emailedExports': emailed_exports,
-            'editUrl': reverse(EditCustomFormExportView.urlname,
+            'editUrl': reverse(edit_view.urlname,
                                args=(self.domain, export.get_id)),
             'downloadUrl': reverse(DownloadFormExportView.urlname,
                                    args=(self.domain, export.get_id)),
@@ -1111,8 +1134,12 @@ class FormExportListView(BaseExportListView):
 
         app_id = create_form.cleaned_data['application']
         form_xmlns = create_form.cleaned_data['form']
+        if toggles.NEW_EXPORTS.enabled(self.domain):
+            cls = CreateNewCustomFormExportView
+        else:
+            cls = CreateCustomFormExportView
         return reverse(
-            CreateCustomFormExportView.urlname,
+            cls.urlname,
             args=[self.domain],
         ) + ('?export_tag="{export_tag}"{app_id}'.format(
             app_id=('&app_id={}'.format(app_id)
@@ -1150,6 +1177,8 @@ class CaseExportListView(BaseExportListView):
     @memoized
     def get_saved_exports(self):
         exports = CaseExportSchema.get_stale_exports(self.domain)
+        new_exports = get_case_export_instances(self.domain)
+        exports += new_exports
         if not self.has_deid_view_permissions:
             exports = filter(lambda x: not x.is_safe, exports)
         return sorted(exports, key=lambda x: x.name)
@@ -1165,6 +1194,10 @@ class CaseExportListView(BaseExportListView):
 
     def fmt_export_data(self, export):
         emailed_exports = self.get_formatted_emailed_exports(export)
+        if toggles.NEW_EXPORTS.enabled(self.domain):
+            edit_view = EditNewCustomCaseExportView
+        else:
+            edit_view = EditCustomCaseExportView
         return {
             'id': export.get_id,
             'isDeid': export.is_safe,
@@ -1172,7 +1205,7 @@ class CaseExportListView(BaseExportListView):
             'addedToBulk': False,
             'exportType': export.type,
             'emailedExports': emailed_exports,
-            'editUrl': reverse(EditCustomCaseExportView.urlname,
+            'editUrl': reverse(edit_view.urlname,
                                args=(self.domain, export.get_id)),
             'downloadUrl': reverse(DownloadCaseExportView.urlname,
                                    args=(self.domain, export.get_id)),
@@ -1196,9 +1229,179 @@ class CaseExportListView(BaseExportListView):
         if not create_form.is_valid():
             raise ExportFormValidationException()
         case_type = create_form.cleaned_data['case_type']
+        if toggles.NEW_EXPORTS.enabled(self.domain):
+            cls = CreateNewCustomCaseExportView
+        else:
+            cls = CreateCustomCaseExportView
         return reverse(
-            CreateCustomCaseExportView.urlname,
+            cls.urlname,
             args=[self.domain],
         ) + ('?export_tag="{export_tag}"'.format(
             export_tag=case_type,
         ))
+
+
+class BaseNewExportView(BaseExportView):
+    template_name = 'export/new_customize_export.html'
+
+    @property
+    def export_instance_cls(self):
+        return {
+            FORM_EXPORT: FormExportInstance,
+            CASE_EXPORT: CaseExportInstance,
+        }[self.export_type]
+
+    @property
+    def page_context(self):
+        return {
+            'export_instance': self.export_instance,
+            'export_home_url': self.export_home_url,
+            'allow_deid': has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
+        }
+
+    def commit(self, request):
+        export = self.export_instance_cls.wrap(json.loads(request.body))
+        export.save()
+        messages.success(
+            request,
+            mark_safe(
+                _(u"Export <strong>{}</strong> created.").format(
+                    export.name
+                )
+            )
+        )
+        return export._id
+
+
+class BaseModifyNewCustomView(BaseNewExportView):
+
+    @method_decorator(require_can_edit_data)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseEditNewCustomExportView, self).dispatch(request, *args, **kwargs)
+
+
+class CreateNewCustomFormExportView(BaseModifyNewCustomView):
+    urlname = 'new_custom_export_form'
+    page_title = ugettext_lazy("Create Form Export")
+    export_type = FORM_EXPORT
+
+    def get(self, request, *args, **kwargs):
+        app_id = request.GET.get('app_id')
+        xmlns = request.GET.get('export_tag').strip('"')
+
+        schema = FormExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            app_id,
+            xmlns,
+        )
+        self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
+
+        return super(CreateNewCustomFormExportView, self).get(request, *args, **kwargs)
+
+
+class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
+    urlname = 'new_custom_export_case'
+    page_title = ugettext_lazy("Create Case Export")
+    export_type = CASE_EXPORT
+
+    def get(self, request, *args, **kwargs):
+        case_type = request.GET.get('export_tag').strip('"')
+
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            case_type,
+        )
+        self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
+
+        return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)
+
+
+class BaseEditNewCustomExportView(BaseModifyNewCustomView):
+
+    @property
+    def export_id(self):
+        return self.kwargs.get('export_id')
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.export_id])
+
+    def get_export_schema(self, export_instance):
+        raise NotImplementedError()
+
+    def get(self, request, *args, **kwargs):
+        try:
+            export_instance = FormExportInstance.get(self.export_id)
+        except ResourceNotFound:
+            # If it's not found, try and see if it's on the legacy system before throwing a 404
+            try:
+                export_helper = make_custom_export_helper(
+                    self.request,
+                    self.export_type,
+                    self.domain,
+                    self.export_id
+                )
+
+                export_instance = convert_saved_export_to_export_instance(export_helper.custom_export)
+            except ResourceNotFound:
+                raise Http404()
+
+        schema = self.get_export_schema(export_instance)
+        self.export_instance = self.export_instance_cls.generate_instance_from_schema(
+            schema,
+            saved_export=export_instance,
+        )
+        return super(BaseEditNewCustomExportView, self).get(request, *args, **kwargs)
+
+
+class EditNewCustomFormExportView(BaseEditNewCustomExportView):
+    urlname = 'edit_new_custom_export_form'
+    page_title = ugettext_lazy("Edit Form Export")
+    export_type = FORM_EXPORT
+
+    def get_export_schema(self, export_instance):
+        return FormExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            export_instance.app_id,
+            export_instance.xmlns,
+        )
+
+
+class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
+    urlname = 'edit_new_custom_export_case'
+    page_title = ugettext_lazy("Edit Case Export")
+    export_type = CASE_EXPORT
+
+    def get_export_schema(self, export_instance):
+        return CaseExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            export_instance.case_type,
+        )
+
+
+class DeleteNewCustomExportView(BaseModifyNewCustomView):
+    urlname = 'delete_new_custom_export'
+    http_method_names = ['post']
+    is_async = False
+
+    @property
+    def export_id(self):
+        return self.kwargs.get('export_id')
+
+    def commit(self, request):
+        self.export_type = self.kwargs.get('export_type')
+        try:
+            export = self.export_instance_cls.get(self.export_id)
+        except ResourceNotFound:
+            raise Http404()
+
+        export.delete()
+        messages.success(
+            request,
+            mark_safe(
+                _(u"Export <strong>{}</strong> was deleted.").format(
+                    export.name
+                )
+            )
+        )
+        return export._id

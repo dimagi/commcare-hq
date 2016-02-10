@@ -31,10 +31,9 @@ class TelerivetBackendForm(BackendForm):
 
     def clean_webhook_secret(self):
         # Circular import
-        from corehq.messaging.smsbackends.telerivet.models import TelerivetBackend
-        value = self.cleaned_data.get("webhook_secret", None)
-        backend = TelerivetBackend.by_webhook_secret(value)
-        if backend is not None and backend._id != self._cchq_backend_id:
+        from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
+        value = self.cleaned_data['webhook_secret']
+        backend = SQLTelerivetBackend.by_webhook_secret(value)
+        if backend and backend.pk != self._cchq_backend_id:
             raise ValidationError(_("Already in use."))
         return value
-

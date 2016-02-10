@@ -387,7 +387,7 @@ class CaseReportMixin(object):
             return [case]
 
         query = case_es.CaseES().domain(self.domain)\
-                .fields([])\
+                .exclude_source()\
                 .opened_range(lte=self.datespan.enddate_utc)\
                 .case_type(self.default_case_type)
         query.index = 'report_cases'
@@ -406,7 +406,7 @@ class CaseReportMixin(object):
 
         return [
             CommCareCase.wrap(doc)
-            for doc in iter_docs(CommCareCase.get_db(), result.ids)
+            for doc in iter_docs(CommCareCase.get_db(), result.doc_ids)
         ]
 
     @property

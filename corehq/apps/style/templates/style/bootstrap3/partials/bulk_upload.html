@@ -2,14 +2,6 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block stylesheets %}
-    <style>
-        .fa-download, .fa-cloud-upload {
-            color: #fff;
-        }
-    </style>
-{% endblock %}
-
 <h2>
     {% blocktrans with verb=bulk_upload.verb|default:"Upload"|title %}
         {{ verb }}
@@ -22,14 +14,19 @@
     <ol>
         <li id="download_block">
             <p>
-                {% blocktrans with adjective=bulk_upload.adjective %}Download your current {{ adjective }} Excel file.{% endblocktrans %}
+                {% blocktrans with adjective=bulk_upload.adjective %}
+                    Download your current {{ adjective }} Excel file.
+                {% endblocktrans %}
             </p>
             {% block extra_option %}
             {% endblock %}
             <p>
                 <a id="download_link" href="{{ bulk_upload.download_url }}" data-bind="attr: {href: url}">
                     <button class="btn btn-success">
-                        <i class="fa fa-download"></i> {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}Download {{ plural_noun }}{% endblocktrans %}
+                        <i class="fa fa-cloud-download"></i>
+                        {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}
+                            Download {{ plural_noun }}
+                        {% endblocktrans %}
                     </button>
                 </a>
             </p>

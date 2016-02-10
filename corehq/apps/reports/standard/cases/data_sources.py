@@ -75,12 +75,17 @@ class CaseInfo(object):
 
     @property
     def creating_user(self):
-        creator_id = None
-        for action in self.case['actions']:
-            if action['action_type'] == 'create':
-                action_doc = CommCareCaseAction.wrap(action)
-                creator_id = action_doc.get_user_id()
-                break
+        try:
+            creator_id = self.case['opened_by']
+        except KeyError:
+            creator_id = None
+            if 'actions' in self.case:
+                for action in self.case['actions']:
+                    if action['action_type'] == 'create':
+                        action_doc = CommCareCaseAction.wrap(action)
+                        creator_id = action_doc.get_user_id()
+                        break
+
         if not creator_id:
             return None
         return self._user_meta(creator_id)

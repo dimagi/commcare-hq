@@ -25,7 +25,7 @@ def make_supply_point(domain, location):
     # a supply point is currently just a case with a special type
     case_id = uuid.uuid4().hex
     user_id = const.get_commtrack_user_id(domain)
-    owner_id = location.group_id
+    owner_id = location.location_id
     kwargs = {'external_id': location.external_id} if location.external_id else {}
     caseblock = CaseBlock(
         case_id=case_id,

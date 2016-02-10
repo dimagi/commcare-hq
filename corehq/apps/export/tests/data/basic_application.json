@@ -215,7 +215,7 @@
                {
                    "comment": "",
                    "doc_type": "Form",
-                   "xmlns": "undefined",
+                   "xmlns": "my_sweet_xmlns",
                    "name": {
                        "en": "Buy Candy Corn"
                    },

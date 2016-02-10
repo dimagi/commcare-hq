@@ -5,7 +5,7 @@ import xlrd
 from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
-from corehq.messaging.smsbackends.twilio.models import TwilioBackend
+from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.apps.sms.models import OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
 
@@ -96,7 +96,7 @@ def bootstrap_twilio_gateway(apps, twilio_rates_filename):
             if country_code is not None:
                 weighted_price = weighted_price / total_subscriptions
                 SmsGatewayFee.create_new(
-                    TwilioBackend.get_api_id(),
+                    SQLTwilioBackend.get_api_id(),
                     OUTGOING,
                     weighted_price,
                     country_code=country_code,
@@ -109,7 +109,7 @@ def bootstrap_twilio_gateway(apps, twilio_rates_filename):
 
     # https://www.twilio.com/help/faq/sms/will-i-be-charged-if-twilio-encounters-an-error-when-sending-an-sms
     SmsGatewayFee.create_new(
-        TwilioBackend.get_api_id(),
+        SQLTwilioBackend.get_api_id(),
         OUTGOING,
         0.00,
         country_code=None,

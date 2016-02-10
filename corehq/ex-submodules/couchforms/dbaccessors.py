@@ -68,3 +68,26 @@ def get_commtrack_forms(domain):
         reduce=False,
         include_docs=True
     )
+
+
+def get_deleted_form_ids_for_user(user_id):
+    results = XFormInstance.get_db().view(
+        'deleted_data/deleted_forms_by_user',
+        startkey=[user_id],
+        endkey=[user_id, {}],
+        reduce=False,
+        include_docs=False,
+    )
+    return [result['id'] for result in results]
+
+
+def get_form_ids_for_user(domain, user_id):
+    key = ['submission user', domain, user_id]
+    results = XFormInstance.get_db().view(
+        'all_forms/view',
+        startkey=key,
+        endkey=key + [{}],
+        reduce=False,
+        include_docs=False,
+    )
+    return [result['id'] for result in results]

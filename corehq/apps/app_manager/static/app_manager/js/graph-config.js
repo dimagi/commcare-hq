@@ -19,8 +19,8 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
 
     var $editButtonDiv = $(
         '<div>' +
-            '<button class="btn" data-bind="click: openModal">' +
-                '<i class="icon-pencil"></i>' +
+            '<button class="btn btn-default" data-bind="click: openModal">' +
+                '<i class="fa fa-pencil"></i>' +
                 ' Edit Graph' +
             '</button>' +
         '</div>'
@@ -49,7 +49,7 @@ uiElement.GraphConfiguration = function(moduleOptions, serverRepresentationOfGra
         var $modal = $modalDiv.find('.modal');
         $modal.appendTo('body');
         $modal.modal('show');
-        $modal.on('hidden', function () {
+        $modal.on('hidden.bs.modal', function () {
             $modal.remove();
         });
     };

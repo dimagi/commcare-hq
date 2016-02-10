@@ -12,6 +12,7 @@ from .util import LocationHierarchyTestCase
 
 class TestPermissions(LocationHierarchyTestCase):
     location_type_names = ['state', 'county', 'city']
+    stock_tracking_types = ['state', 'county', 'city']
     location_structure = [
         ('Massachusetts', [
             ('Middlesex', [

@@ -8,7 +8,7 @@ from pillowtop.feed.interface import Change
 from pillowtop.listener import BasicPillow
 from inspect import isclass
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processor import LoggingProcessor
+from pillowtop.processors import LoggingProcessor
 
 
 class FakePillow(BasicPillow):

@@ -2,8 +2,7 @@ from django.conf import settings
 from django.test import TestCase
 from corehq.apps.accounting.generator import init_default_currency
 
-from corehq.apps.sms.models import SMSLog
-from corehq.apps.sms.util import get_available_backends
+from corehq.apps.sms.models import SMSLog, SQLMobileBackend
 from corehq.apps.smsbillables.models import *
 from corehq.apps.smsbillables import generator
 
@@ -14,7 +13,6 @@ class TestGatewayFee(TestCase):
         SmsGatewayFeeCriteria.objects.all().delete()
 
         self.currency_usd = init_default_currency()
-        self.available_backends = get_available_backends().values()
 
         self.backend_ids = generator.arbitrary_backend_ids()
         self.message_logs = generator.arbitrary_messages_by_backend_and_direction(self.backend_ids)
@@ -212,6 +210,5 @@ class TestGatewayFee(TestCase):
             SMSLog.by_domain_asc(generator.TEST_DOMAIN).all()
         )
 
-        backend_classes = get_available_backends(index_by_api_id=True)
         for api_id, backend_id in self.backend_ids.iteritems():
-            backend_classes[api_id].get(backend_id).delete()
+            SQLMobileBackend.load(backend_id, is_couch_id=True).delete()

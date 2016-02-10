@@ -9,3 +9,7 @@ class SQLSislogBackend(SQLHttpBackend):
     @classmethod
     def get_api_id(cls):
         return 'SISLOG'
+
+    @classmethod
+    def get_generic_name(cls):
+        return "Sislog"

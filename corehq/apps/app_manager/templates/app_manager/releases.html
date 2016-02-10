@@ -6,10 +6,8 @@
 {% load timezone_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
-    <script src="{% static 'app_manager/js/releases.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/app_manager_utils.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/releases.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
 <script>
@@ -100,7 +98,7 @@
         background-repeat: no-repeat;
     }
     .pending {
-        background-image: url("{% static 'hqwebapp/img/ajax-loader.gif' %}");
+        background-image: url("{% new_static 'hqwebapp/img/ajax-loader.gif' %}");
         background-size: 80%;
         background-position: center;
     }
@@ -115,9 +113,9 @@
 {% endblock %}
 {% block form-view %}
     <div id="releases-table">
-        <div class="alert alert-error" data-bind="visible: brokenBuilds">
+        <div class="alert alert-danger" data-bind="visible: brokenBuilds">
             <p>
-                <span class="icon icon-exclamation-sign"></span>
+                <i class="fa fa-exclamation-circle"></i>
                 {% blocktrans %}
                     One or more of your versions is broken, please make sure it is
                     not marked as released. Make a new version if needed, and update
@@ -161,7 +159,7 @@
             <tbody data-bind="visible: buildState, css: {hide: false}" class="hide">
                 <tr data-bind="visible: buildState() == 'pending'">
                     <td colspan="9">
-                        <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                        <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}"/>
                         <span class="label label-success">
                             {% trans "Please wait while your CommCare Application builds" %}
                         </span>
@@ -189,15 +187,15 @@
                             openModal: 'delete-build-modal-template',
                             visible: !_deleteState()
                         ">
-                            <span class="icon icon-remove"></span>
+                            <i class="fa fa-remove"></i>
                         </a>
                         <div class="pending" data-bind="
                             visible: _deleteState() == 'pending'
                         "></div>
 
-                        <div class="icon icon-exclamation-sign" data-bind="
+                        <i class="fa fa-exclamation-circle" data-bind="
                             visible: _deleteState() == 'error'
-                        "></div>
+                        "></i>
                     </td>
                     <td class="nowrap" data-bind="text: version"></td>
                     <td class="nowrap" data-bind="text: built_on_date"></td>
@@ -213,13 +211,13 @@
                                 css: {'btn-primary': !build_broken(), 'btn-danger': build_broken},
                                 click: clickDeploy
                             ">
-                                <span class="icon icon-exclamation-sign" data-bind="visible: build_broken"></span>
+                                <span class="fa fa-exclamation-circle" data-bind="visible: build_broken"></span>
                                 {% trans "Deploy" %}
                             </a>
                         </div>
                     </td>
                     <td>
-                        <button class="btn" data-bind="
+                        <button class="btn btn-default" data-bind="
                             openModal: 'revert-build-modal-template',
                             visible: version() !== $root.currentAppVersion()
                         ">{% trans "Revert" %}</button>
@@ -231,25 +229,27 @@
                             <b data-bind="visible: !build_comment()">{% trans "(No Comment)" %}</b>
                             <a class="edit-comment-pencil" href="#"
                                data-bind="click: function () {editing_comment(true);}">
-                                <span class="icon-pencil"></span>
+                                <i class="fa fa-pencil"></i>
                             </a>
                         </div>
                         <div data-bind="visible: editing_comment()">
-                            <form data-bind="submit: submit_new_comment">
-                                <input type="text" data-bind="value: new_comment"></input>
+                            <form class="form-inline" data-bind="submit: submit_new_comment">
+                                <div class="form-group">
+                                <input type="text" class="form-control" data-bind="value: new_comment"></input>
                                 <a href="#" data-bind="click: submit_new_comment,
                                                        visible: !pending_comment_update()">
-                                    <span class="icon-ok"></span>
+                                    <span class="fa fa-check"></span>
                                 </a>
                                 <a href="#" data-bind="click: function () {editing_comment(false);}, visible: !pending_comment_update()">
-                                    <span class="icon-remove"></span>
+                                    <i class="fa fa-remove"></i>
                                 </a>
+                                </div>
                             </form>
                             <span data-bind="visible: pending_comment_update()">
-                                <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                                <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}"/>
                             </span>
                         </div>
-                        <div data-bind="visible: comment_update_error()" class="alert alert-error">
+                        <div data-bind="visible: comment_update_error()" class="alert alert-danger">
                             {% trans "Error updating comment.  Please try again" %}
                         </div>
                         {% if request|toggle_enabled:"VIEW_BUILD_SOURCE" %}
@@ -269,7 +269,7 @@
                                        data-bind="visible: $root.selectingVersion() === id(), click: function() {$root.selectingVersion('')}">
                                         Cancel
                                     </a>
-                                    <a href="#" class="btn btn-mini btn-success"
+                                    <a href="#" class="btn btn-xs btn-success"
                                        data-bind="
                                             attr: {href: $root.url('compare', $root.selectingVersion(), id())},
                                             visible: $root.selectingVersion() && $root.selectingVersion() != id()">
@@ -288,15 +288,15 @@
                 <tr>
                     <td colspan="9">
                         <div data-bind="visible: fetchState() === 'pending', css: {hide: false}" class="hide">
-                            <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                            <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}"/>
                         </div>
                         <div data-bind="visible: fetchState() === 'error', css: {hide: false}" class="hide">
-                            <div class="alert alert-error">
+                            <div class="alert alert-danger">
                                 {% trans "Whoops, we couldn't get those versions for you. Could you try that again?" %}
                             </div>
                         </div>
                         <div data-bind="visible: fetchState() !== 'pending' && !doneFetching(), css: {hide: false}" class="hide">
-                            <a href="#" class="btn" data-bind="click: getMoreSavedApps">{% trans "View More" %}</a>
+                            <a href="#" class="btn btn-default" data-bind="click: getMoreSavedApps">{% trans "View More" %}</a>
                         </div>
                         <div data-bind="visible: doneFetching() && !savedApps().length, css: {hide: false}" class="hide">
                             <div class="alert alert-info">
@@ -308,31 +308,43 @@
             </tbody>
         </table>
         <script type="text/html" id="delete-build-modal-template">
-            <div class="modal-header">
-                <a href="#" class="close" data-dismiss="modal">×</a>
-                <h3>{% trans "Delete Version?" %}</h3>
-            </div>
-            <div class="modal-body">
-                <p>{% trans "Are you sure you want to delete this version" %} (<span data-bind="text: version"></span>)?</p>
-            </div>
-            <div class="modal-footer">
-                <a href="#" class="btn" data-dismiss="modal">Cancel</a>
-                <a class="btn btn-danger" href="#" data-bind="click: $root.deleteSavedApp" data-dismiss="modal">{% trans "Delete Version" %}</a>
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="modal-title">{% trans "Delete Version?" %}</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>{% trans "Are you sure you want to delete this version" %} (<span data-bind="text: version"></span>)?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+                        <a class="btn btn-danger" href="#" data-bind="click: $root.deleteSavedApp" data-dismiss="modal">{% trans "Delete Version" %}</a>
+                    </div>
+                </div>
             </div>
         </script>
         <script type="text/html" id="revert-build-modal-template">
-            <div class="modal-header">
-                <a href="#" class="close" data-dismiss="modal">×</a>
-                <h3>{% trans "Revert to Version?" %}</h3>
-            </div>
-            <div class="modal-body">
-                <p>{% blocktrans %}
-                 Are you sure you want to revert to version <span data-bind="text: version"></span>?</p>
-                {% endblocktrans %}
-            </div>
-            <div class="modal-footer">
-                <a href="#" class="btn" data-dismiss="modal">Cancel</a>
-                <a href="#" class="btn btn-danger" data-bind="click: $root.revertSavedApp" data-dismiss="modal">{% trans "Revert" %}</a>
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="modal-title">{% trans "Revert to Version?" %}</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>{% blocktrans %}
+                         Are you sure you want to revert to version <span data-bind="text: version"></span>?</p>
+                        {% endblocktrans %}
+                    </div>
+                    <div class="modal-footer">
+                        <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+                        <a href="#" class="btn btn-danger" data-bind="click: $root.revertSavedApp" data-dismiss="modal">{% trans "Revert" %}</a>
+                    </div>
+                </div>
             </div>
         </script>
         <script type="text/html" id="deploy-build-modal-template">
@@ -341,6 +353,6 @@
     </div>
 
 <!-- Async Download Modals -->
-<script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
+<script src="{% new_static 'app_manager/js/download_async_modal.js' %}"></script>
 {% include 'app_manager/partials/download_async_modal.html' with element_id='download-zip-modal' %}
 {% endblock %}

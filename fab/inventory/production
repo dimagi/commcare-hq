@@ -47,8 +47,8 @@ hqdb0.internal.commcarehq.org
 hqdb0.internal.commcarehq.org
 
 [elasticsearch]
-hqes1.internal.commcarehq.org elasticsearch_node_name=hqes1
-hqes0.internal.commcarehq.org elasticsearch_node_name=hqes0
+hqes2.internal.commcarehq.org elasticsearch_node_name=hqes2
+hqes3.internal.commcarehq.org elasticsearch_node_name=hqes3
 
 [shared_dir_host]
 hqdb0.internal.commcarehq.org

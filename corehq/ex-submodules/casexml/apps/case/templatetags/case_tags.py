@@ -13,7 +13,10 @@ from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 
+from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from casexml.apps.case.dbaccessors import get_reverse_indices_json
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.stock.utils import get_current_ledger_transactions
 from corehq.apps.products.models import SQLProduct
 from couchdbkit import ResourceNotFound
@@ -226,6 +229,20 @@ def process_case_hierarchy(case_output, get_case_url, type_info):
 
 
 def get_case_hierarchy(case, type_info):
+
+    def get_all_reverse_indices(case):
+        """
+        Return a list of child and extension type reverse indices for the given
+        case
+        """
+        children_indices = case.reverse_indices
+        extension_indices = [
+            CommCareCaseIndex.wrap(raw) for raw in
+            get_reverse_indices_json(case.domain, case.case_id, CASE_INDEX_EXTENSION)
+        ]
+        return extension_indices + children_indices
+
+
     def get_children(case, referenced_type=None, seen=None):
         seen = seen or set()
 
@@ -235,7 +252,7 @@ def get_case_hierarchy(case, type_info):
 
         seen.add(case._id)
         children = [
-            get_children(i.referenced_case, i.referenced_type, seen) for i in case.reverse_indices
+            get_children(i.referenced_case, i.referenced_type, seen) for i in get_all_reverse_indices(case)
             if i.referenced_id not in seen
         ]
 
@@ -287,9 +304,11 @@ def render_case_hierarchy(case, options):
     show_view_buttons = options.get('show_view_buttons', True)
     type_info = options.get('related_type_info', case.related_type_info)
 
-    case_list = get_flat_descendant_case_list(
-            case, get_case_url, type_info=type_info)
+    descendent_case_list = get_flat_descendant_case_list(
+        case, get_case_url, type_info=type_info
+    )
 
+    case_list = []
     if case.indices:
         # has parent case(s)
         # todo: handle duplicates in ancestor path (bubbling up of parent-child
@@ -309,11 +328,11 @@ def render_case_hierarchy(case, options):
             else:
                 last_parent_id = None
 
-        for c in case_list:
+        for c in descendent_case_list:
             if not getattr(c, 'treetable_parent_node_id', None) and last_parent_id:
                 c.treetable_parent_node_id = last_parent_id
 
-        case_list = parent_cases + case_list
+        case_list = parent_cases + descendent_case_list
 
     for c in case_list:
         if not c:

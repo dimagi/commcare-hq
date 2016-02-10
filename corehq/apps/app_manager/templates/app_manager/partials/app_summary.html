@@ -22,7 +22,7 @@
                             <ol>
                                 {% for question in form.questions %}
                                     <li>
-                                        <span class="label">{{ question.tag }}</span>
+                                        <span class="label label-default">{{ question.tag }}</span>
                                         <span class="label label-info">{{ question.value }}</span> {{ question.label }}
                                         {% if question.options %}
                                             <ol>

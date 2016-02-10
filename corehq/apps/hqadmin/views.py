@@ -1,14 +1,12 @@
 import HTMLParser
 import json
 import socket
-from datetime import timedelta, datetime, date
+from datetime import timedelta, date
 from collections import defaultdict
 from StringIO import StringIO
 
 import dateutil
-from django.core.mail import EmailMessage
 from django.utils.datastructures import SortedDict
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
 from django.contrib import messages
@@ -17,17 +15,14 @@ from django.contrib.auth import login
 from django.core import management, cache
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
-from django.views.decorators.cache import cache_page
 from django.views.generic import FormView
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
-from django.template.loader import render_to_string
 from django.http import (
     HttpResponseRedirect,
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseNotFound,
-    Http404,
 )
 from restkit import Resource
 from restkit.errors import Unauthorized
@@ -46,12 +41,11 @@ from couchforms.models import XFormInstance
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
 from corehq.apps.app_manager.models import ApplicationBase
-from corehq.apps.app_manager.util import get_settings_values
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
-from corehq.apps.hqadmin.forms import EmailForm, BrokenBuildsForm
+from corehq.apps.hqadmin.forms import BrokenBuildsForm
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
@@ -69,8 +63,7 @@ from corehq.apps.hqadmin.reporting.reports import (
 )
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.graph_models import Axis, LineChart
-from corehq.apps.sofabed.models import FormData, CaseData
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.sql_db.connections import Session
 from corehq.elastic import parse_args_for_es, run_query, ES_META
@@ -78,8 +71,7 @@ from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_date
-from dimagi.utils.web import json_response, get_url_base
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from dimagi.utils.web import json_response
 from .multimech import GlobalConfig
 from .forms import AuthenticateAsForm
 
@@ -108,25 +100,6 @@ def get_hqadmin_base_context(request):
     return {
         "domain": None,
     }
-
-
-@require_POST
-@csrf_exempt
-def contact_email(request):
-    message = render_to_string('hqadmin/email/contact_template.txt', request.POST)
-    EmailMessage(
-        subject="Incoming Contact CommCare Request",
-        body=message,
-        from_email="",
-        to=[settings.CONTACT_EMAIL],
-        headers={'Reply-To': request.POST['email']},
-    ).send()
-    response = HttpResponse('success')
-    response["Access-Control-Allow-Origin"] = "http://www.commcarehq.org"
-    response["Access-Control-Allow-Methods"] = "POST"
-    response["Access-Control-Max-Age"] = "1000"
-    response["Access-Control-Allow-Headers"] = "*"
-    return response
 
 
 class BaseAdminSectionView(BaseB3SectionPageView):
@@ -174,51 +147,6 @@ class AuthenticateAs(BasePageView):
             login(request, request.user)
             return HttpResponseRedirect('/')
         return self.get(request, *args, **kwargs)
-
-
-@require_superuser
-def mass_email(request):
-    if not request.couch_user.is_staff:
-        raise Http404()
-
-    if request.method == "POST":
-        form = EmailForm(request.POST)
-        if form.is_valid():
-            subject = form.cleaned_data['email_subject']
-            body = form.cleaned_data['email_body']
-            real_email = form.cleaned_data['real_email']
-
-            if real_email:
-                recipients = WebUser.view(
-                    'users/mailing_list_emails',
-                    reduce=False,
-                    include_docs=True,
-                ).all()
-            else:
-                recipients = [request.couch_user]
-
-            for recipient in recipients:
-                params = {
-                    'email_body': body,
-                    'user_id': recipient.get_id,
-                    'unsub_url': get_url_base() +
-                                 reverse('unsubscribe', args=[recipient.get_id])
-                }
-                text_content = render_to_string("hqadmin/email/mass_email_base.txt", params)
-                html_content = render_to_string("hqadmin/email/mass_email_base.html", params)
-
-                send_html_email_async.delay(subject, recipient.email, html_content, text_content,
-                                email_from=settings.DEFAULT_FROM_EMAIL)
-
-            messages.success(request, 'Your email(s) were sent successfully.')
-
-    else:
-        form = EmailForm()
-
-    context = get_hqadmin_base_context(request)
-    context['hide_filters'] = True
-    context['form'] = form
-    return render(request, "hqadmin/mass_email.html", context)
 
 
 @require_superuser_or_developer

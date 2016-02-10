@@ -184,11 +184,6 @@ class AppManagerTest(TestCase):
         app.save()
         self.assertEqual(app.name, old_name)
 
-    def testUserReg(self):
-        "regression test for not catching ResourceNotFound"
-        self.app.show_user_registration = True
-        list(self.app.get_forms())
-
     def test_jad_settings(self):
         self.app.build_spec = BuildSpec(version='2.2.0', build_number=1)
         self.assertIn('Build-Number', self.app.jad_settings)

@@ -295,9 +295,9 @@ class EditWebUserView(BaseEditUserView):
 def get_domain_languages(domain):
     query = (AppES()
              .domain(domain)
-             .terms_facet('langs', 'languages')
+             .terms_aggregation('langs', 'languages')
              .size(0))
-    app_languages = query.run().facets.languages.terms
+    app_languages = query.run().aggregations.languages.keys
 
     translation_doc = StandaloneTranslationDoc.get_obj(domain, 'sms')
     sms_languages = translation_doc.langs if translation_doc else []

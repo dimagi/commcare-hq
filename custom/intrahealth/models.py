@@ -47,8 +47,9 @@ class TauxDeSatisfactionFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
     document_filter = ORFilter([
         FormPropertyFilter(xmlns=COMMANDE_XMLNSES[0]),
-        FormPropertyFilter(xmlns=COMMANDE_XMLNSES[1])
-        ])
+        FormPropertyFilter(xmlns=COMMANDE_XMLNSES[1]),
+        FormPropertyFilter(xmlns=COMMANDE_XMLNSES[2])
+    ])
     deleted_types = IH_DELETED_TYPES
 
     domains = INTRAHEALTH_DOMAINS
@@ -59,19 +60,32 @@ class TauxDeSatisfactionFluff(fluff.IndicatorDocument):
 
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
-    commandes = report_calcs.Commandes()
-    recus = report_calcs.Recus()
+    commandes = report_calcs.TauxCalculator(property_name='amountOrdered')
+    recus = report_calcs.TauxCalculator(property_name='amountReceived')
 
 
 class IntraHealthFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
-    document_filter = ANDFilter([
-        FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0]),
-        IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0],
-                                  property_path="form",
-                                  property_value='district_name'),
-        IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0], property_path="form", property_value='PPS_name')
-    ])
+    document_filter = ORFilter(
+        [
+            ANDFilter([
+                FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0]),
+                IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0],
+                                          property_path="form",
+                                          property_value='district_name'),
+                IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0], property_path="form",
+                                          property_value='PPS_name')
+            ]),
+            ANDFilter([
+                FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[1]),
+                IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[1],
+                                          property_path="form",
+                                          property_value='district_name'),
+                IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[1], property_path="form",
+                                          property_value='PPS_name')
+            ]),
+        ]
+    )
     domains = INTRAHEALTH_DOMAINS
     deleted_types = IH_DELETED_TYPES
     save_direct_to_sql = True
@@ -96,8 +110,14 @@ class IntraHealthFluff(fluff.IndicatorDocument):
 class RecapPassageFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
     document_filter = ANDFilter([
-        FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0]),
-        IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0], property_path="form", property_value='PPS_name')
+        ORFilter(
+            [FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0]), FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[1])]
+        ),
+        ORFilter([
+            IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0], property_path="form", property_value='PPS_name'),
+            IsExistFormPropertyFilter(xmlns=OPERATEUR_XMLNSES[1], property_path="form", property_value='PPS_name')
+        ])
+
     ])
 
     domains = INTRAHEALTH_DOMAINS

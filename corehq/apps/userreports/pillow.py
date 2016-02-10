@@ -62,7 +62,7 @@ class ConfigurableIndicatorPillow(PythonPillow):
             tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
 
         _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']))
-        _notify_cory = lambda msg: _assert(False, msg)
+        _notify_cory = lambda msg, obj: _assert(False, msg, obj)
 
         for engine_id, table_map in tables_by_engine.items():
             engine = connection_manager.get_engine(engine_id)
@@ -74,15 +74,25 @@ class ConfigurableIndicatorPillow(PythonPillow):
             for table_name in tables_to_rebuild:
                 sql_adapter = table_map[table_name]
                 try:
+                    rev_before_rebuild = sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
                     self.rebuild_table(sql_adapter)
                 except TableRebuildError, e:
-                    _notify_cory(unicode(e))
+                    _notify_cory(unicode(e), sql_adapter.config.to_json())
                 else:
-                    _notify_cory(u'rebuilt table {} ({}) because {}'.format(
-                        table_name,
-                        u'{} [{}]'.format(sql_adapter.config.display_name, sql_adapter.config._id),
-                        diffs,
-                    ))
+                    # note: this fancy logging can be removed as soon as we get to the
+                    # bottom of http://manage.dimagi.com/default.asp?211297
+                    # if no signs of it popping back up by april 2016, should remove this
+                    rev_after_rebuild = sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
+                    _notify_cory(
+                        u'rebuilt table {} ({}) because {}. rev before: {}, rev after: {}'.format(
+                            table_name,
+                            u'{} [{}]'.format(sql_adapter.config.display_name, sql_adapter.config._id),
+                            diffs,
+                            rev_before_rebuild,
+                            rev_after_rebuild,
+                        ),
+                        sql_adapter.config.to_json(),
+                    )
 
     def rebuild_table(self, sql_adapter):
         config = sql_adapter.config

@@ -21,6 +21,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.database import get_safe_read_kwargs
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.mixins import UnicodeMixIn
 from corehq.util.soft_assert import soft_assert
 from corehq.form_processor.abstract_models import AbstractXFormInstance
@@ -188,6 +189,10 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         return self.doc_type == 'SubmissionErrorLog'
 
     @property
+    def is_deleted(self):
+        return self.doc_type.endswith(DELETED_SUFFIX)
+
+    @property
     def is_normal(self):
         return self.doc_type == 'XFormInstance'
 
@@ -246,6 +251,10 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         """
         node = self.get_data(xpath)
         return node and option in node.split(" ")
+
+    def soft_delete(self):
+        self.doc_type += DELETED_SUFFIX
+        self.save()
 
     def get_xml(self):
         if (self._attachments and ATTACHMENT_NAME in self._attachments

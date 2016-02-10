@@ -32,8 +32,7 @@ from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemException
 from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, EditDataInterfaceDispatcher,
                                                     require_can_edit_data)
-from corehq.apps.style.decorators import use_bootstrap3, use_typeahead, \
-    use_angular_js
+from corehq.apps.style.decorators import use_bootstrap3, use_typeahead, use_angular_js
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
 from .interfaces import FormManagementMode, BulkFormManagementInterface, CaseReassignmentInterface
@@ -176,6 +175,10 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'itemData': item_data,
             'template': 'deleted-group-template',
         }
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(CaseGroupListView, self).dispatch(request, *args, **kwargs)
 
 
 class ArchiveFormView(DataInterfaceSection):
@@ -469,6 +472,10 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
                 return HttpResponseRedirect(self.page_url)
             return self.get(request, *args, **kwargs)
         return self.paginate_crud_response
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(CaseGroupCaseManagementView, self).dispatch(request, *args, **kwargs)
 
 
 class XFormManagementView(DataInterfaceSection):

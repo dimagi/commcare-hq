@@ -5,6 +5,7 @@ from uuid import uuid4
 import corehq.blobs as blobs
 from corehq.blobs.fsdb import FilesystemBlobDB
 from corehq.blobs.s3db import S3BlobDB
+from corehq.blobs.migratingdb import MigratingBlobDB
 
 
 class TemporaryBlobDBMixin(object):
@@ -71,3 +72,15 @@ class TemporaryS3BlobDB(TemporaryBlobDBMixin, S3BlobDB):
             objects = [{"Key": o.key} for o in page]
             s3_bucket.delete_objects(Delete={"Objects": objects})
         s3_bucket.delete()
+
+
+class TemporaryMigratingBlobDB(TemporaryBlobDBMixin, MigratingBlobDB):
+
+    def __init__(self, *args):
+        for arg in args:
+            assert isinstance(arg, TemporaryBlobDBMixin), arg
+        super(TemporaryMigratingBlobDB, self).__init__(*args)
+
+    def clean_db(self):
+        self.old_db.close()
+        self.new_db.close()

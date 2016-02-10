@@ -1,11 +1,11 @@
 var COMMCAREHQ = {};
 
 COMMCAREHQ.icons = {
-    GRIP:   'icon-resize-vertical icon-blue',
-    ADD:    'icon-plus icon-blue',
-    COPY:   'icon-copy icon-blue',
-    DELETE: 'icon-remove icon-blue',
-    PAPERCLIP: 'icon-paper-clip'
+    GRIP:   'icon-resize-vertical icon-blue fa fa-arrows-v',
+    ADD:    'icon-plus icon-blue fa fa-plus',
+    COPY:   'icon-copy icon-blue fa fa-copy',
+    DELETE: 'icon-remove icon-blue fa fa-remove',
+    PAPERCLIP: 'icon-paper-clip fa fa-paperclip'
 };
 
 var eventize = function (that) {
@@ -170,8 +170,8 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                 $retry: $('<div/>').text(SaveButton.message.RETRY).click(function () {
                     button.fire('save');
                 }).addClass(cssClass),
-                $saving: $('<div/>').text(SaveButton.message.SAVING).addClass('btn disabled'),
-                $saved: $('<div/>').text(SaveButton.message.SAVED).addClass('btn disabled'),
+                $saving: $('<div/>').text(SaveButton.message.SAVING).addClass('btn btn-default disabled'),
+                $saved: $('<div/>').text(SaveButton.message.SAVED).addClass('btn btn-default disabled'),
                 ui: $('<div/>').addClass('pull-right'),
                 setStateWhenReady: function (state) {
                     if (this.state === 'saving') {

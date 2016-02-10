@@ -76,7 +76,7 @@ def get_tables_to_rebuild(diffs, table_names):
             else:
                 yield check_diff(diff)
 
-    return [table for table in yield_diffs(diffs) if table]
+    return set([table for table in yield_diffs(diffs) if table])
 
 
 def rebuild_table(engine, pillow_class, indicator_doc):

@@ -5,10 +5,11 @@ from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import Product
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from custom.ewsghana.alerts import URGENT_STOCKOUT, URGENT_NON_REPORTING
 from custom.ewsghana.alerts.urgent_alerts import UrgentStockoutAlert, UrgentNonReporting
 from custom.ewsghana.tests.test_reminders import create_stock_report
-from custom.ewsghana.utils import prepare_domain, make_loc, bootstrap_web_user, create_backend, \
+from custom.ewsghana.utils import prepare_domain, make_loc, bootstrap_web_user, \
     set_sms_notifications
 
 TEST_DOMAIN = 'ewsghana-urgent-alerts'
@@ -18,8 +19,8 @@ class TestUrgentAlerts(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(TEST_DOMAIN)
-        cls.sms_backend_mapping, cls.backend = create_backend()
         cls.district = make_loc(code="district", name="Test District", type="district", domain=TEST_DOMAIN)
         cls.loc1 = make_loc(code="tf", name="Test Facility", type="Hospital", domain=TEST_DOMAIN,
                             parent=cls.district)

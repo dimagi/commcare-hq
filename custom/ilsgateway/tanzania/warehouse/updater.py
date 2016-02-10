@@ -262,18 +262,15 @@ def populate_report_data(start_date, end_date, domain, runner, locations=None, s
 
 
 @task(queue='logistics_background_queue')
-def process_facility_warehouse_data(facility, start_date, end_date, runner):
+def process_facility_warehouse_data(facility, start_date, end_date, runner=None):
     """
     process all the facility-level warehouse tables
     """
     logging.info("processing facility %s (%s)" % (facility.name, str(facility._id)))
-    try:
+
+    if runner:
         runner.location = facility.sql_location
         runner.save()
-    except SQLLocation.DoesNotExist:
-        # TODO Temporary fix
-        facility.delete()
-        return
 
     for alert_type in [const.SOH_NOT_RESPONDING, const.RR_NOT_RESPONDED, const.DELIVERY_NOT_RESPONDING]:
         alert = Alert.objects.filter(location_id=facility._id, date__gte=start_date, date__lt=end_date,
@@ -459,15 +456,19 @@ def get_non_archived_facilities_below(location):
 
 
 @task(queue='logistics_background_queue')
-def process_non_facility_warehouse_data(location, start_date, end_date, runner, strict=True):
-    runner.location = location.sql_location
-    runner.save()
+def process_non_facility_warehouse_data(location, start_date, end_date, runner=None, strict=True):
+    if runner:
+        runner.location = location.sql_location
+        runner.save()
     facs = get_non_archived_facilities_below(location)
     fac_ids = [f._id for f in facs]
-    logging.info("processing non-facility %s (%s), %s children" % (location.name, str(location.location_id), len(facs)))
+    logging.info("processing non-facility %s (%s), %s children"
+                 % (location.name, str(location.location_id), len(facs)))
     for year, month in months_between(start_date, end_date):
         window_date = datetime(year, month, 1)
-        org_summary = OrganizationSummary.objects.get_or_create(location_id=location.location_id, date=window_date)[0]
+        org_summary = OrganizationSummary.objects.get_or_create(
+            location_id=location.location_id, date=window_date
+        )[0]
 
         org_summary.total_orgs = len(facs)
         sub_summaries = OrganizationSummary.objects.filter(date=window_date, location_id__in=fac_ids)

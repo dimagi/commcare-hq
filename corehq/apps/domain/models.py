@@ -251,7 +251,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     sms_case_registration_user_id = StringProperty()
     # Whether or not a mobile worker can register via sms
     sms_mobile_worker_registration_enabled = BooleanProperty(default=False)
-    default_sms_backend_id = StringProperty()
     use_default_sms_response = BooleanProperty(default=False)
     default_sms_response = StringProperty()
     chat_message_count_threshold = IntegerProperty()

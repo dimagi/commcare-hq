@@ -1,19 +1,19 @@
 from datetime import datetime, timedelta
 from django.test import TestCase
-from corehq.apps.locations.models import SQLLocation, LocationType, Location
-from corehq.apps.locations.tests.util import delete_all_locations
 from casexml.apps.phone.models import SyncLog
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.models import CommCareUser
+
 from ..fixtures import _location_to_fixture, _location_footprint, should_sync_locations
-from corehq.apps.fixtures.models import UserFixtureStatus
+from ..models import SQLLocation, LocationType, Location
 
 
 class LocationFixturesTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls._delete_everything()
         cls.domain = "Erebor"
+        cls.domain_obj = create_domain(cls.domain)
         cls.username = "Durins Bane"
         cls.location_type = LocationType(
             domain=cls.domain,
@@ -27,15 +27,7 @@ class LocationFixturesTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls._delete_everything()
-
-    @classmethod
-    def _delete_everything(cls):
-        all_users = CouchUser.all()
-        for user in all_users:
-            user.delete()
-        delete_all_locations()
-        UserFixtureStatus.objects.all().delete()
+        cls.domain_obj.delete()
 
     def test_metadata(self):
         location = SQLLocation(

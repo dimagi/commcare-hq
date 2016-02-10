@@ -20,7 +20,7 @@ class CareSite(ReportSelectField):
         res = (CaseES('report_cases')
                .domain(self.domain)
                .exists('care_site_display.#value')
-               .fields(['care_site_display'])
+               .source('care_site_display')
                .run())
         care_sites = {c['care_site_display']['#value'] for c in res.hits}
         return [{'val': care_site, 'text': care_site}

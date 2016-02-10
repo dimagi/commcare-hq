@@ -1,3 +1,42 @@
+nav.app-manager-content {
+    margin: 20px 0;
+
+    // Menu indentation
+    // First level: whole menu ("Deploy", etc.)
+    > .nav-hq-sidebar {
+        padding-left: 0px;
+
+        // Second level: modules
+        .nav-hq-sidebar {
+            padding-left: 0px;
+
+            li a {
+                padding-left: 20px;
+            }
+
+            // Third level: forms
+            .nav-hq-sidebar {
+                padding-left: 20px;
+            }
+        }
+    }
+
+    // Container for language dropdown
+    #langs {
+        position: absolute;
+        right: 5px;
+        top: 2px;
+
+        select {
+            height: 20px;
+
+            // Chrome on Windows respects padding inherited from .form-control, which
+            // isn't desirable, as it doesn't play well with the explicit (short) height
+            padding: 0;
+        }
+    }
+}
+
 .delete-me {
   float: right;
   top: 1.5em;
@@ -24,8 +63,10 @@
 }
 
 /* full-screen-width modal for editing form source */
-.xml-source {
+.xml-source .modal-dialog {
     position: absolute;
+    top: 20px;
+    bottom: 20px;
     left: 20px;
     right: 20px;
     margin: 0;

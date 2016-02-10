@@ -1,14 +1,15 @@
 from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.models import CommtrackActionConfig
+from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.sms.mixin import MobileBackend
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from corehq.apps.users.models import CommCareUser
-from corehq.messaging.smsbackends.test.models import TestSMSBackend
 from custom.logistics.tests.test_script import TestScript
-from corehq.apps.commtrack.tests.util import make_loc, TEST_BACKEND
+from corehq.apps.commtrack.tests.util import make_loc
 from custom.ilsgateway.models import ILSGatewayConfig
 from custom.logistics.tests.utils import bootstrap_user
 from casexml.apps.stock.models import DocDomainMapping
@@ -27,6 +28,7 @@ class ILSTestScript(TestScript):
 
     @classmethod
     def setUpClass(cls):
+        cls.sms_backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         domain = prepare_domain(TEST_DOMAIN)
         mohsw = make_loc(code="moh1", name="Test MOHSW 1", type="MOHSW", domain=domain.name)
 
@@ -47,8 +49,6 @@ class ILSTestScript(TestScript):
         facility3 = make_loc(
             code="d31049", name="Test Facility 3", type="FACILITY", domain=domain.name, parent=district
         )
-        cls.sms_backend = TestSMSBackend(name=TEST_BACKEND.upper(), is_global=True)
-        cls.sms_backend.save()
         cls.user1 = bootstrap_user(
             facility, username='stella', domain=domain.name, home_loc='loc1', phone_number='5551234',
             first_name='stella', last_name='Test'
@@ -86,6 +86,7 @@ class ILSTestScript(TestScript):
 
     @classmethod
     def tearDownClass(cls):
+        cls.sms_backend_mapping.delete()
         cls.sms_backend.delete()
         CommCareUser.get_by_username('stella').delete()
         CommCareUser.get_by_username('bella').delete()
@@ -148,6 +149,15 @@ def prepare_domain(domain_name):
     subscription.save()
     ils_config = ILSGatewayConfig(enabled=True, domain=domain.name, all_stock_data=True)
     ils_config.save()
+    fields_definition = CustomDataFieldsDefinition.get_or_create(domain.name, 'LocationFields')
+    fields_definition.fields.append(CustomDataField(
+        slug='group',
+        label='Group',
+        is_required=False,
+        choices=['A', 'B', 'C'],
+        is_multiple_choice=False
+    ))
+    fields_definition.save()
     return domain
 
 

@@ -1,0 +1,10 @@
+FROM python:2.7
+
+ENV PYTHONUNBUFFERED 1
+
+RUN pip install moto
+
+EXPOSE 5000
+
+ENTRYPOINT ["moto_server"]
+CMD ["--help"]

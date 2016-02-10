@@ -4,7 +4,7 @@ import xlrd
 from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
-from corehq.messaging.smsbackends.mach.models import MachBackend
+from corehq.messaging.smsbackends.mach.models import SQLMachBackend
 from corehq.apps.sms.models import OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
 
@@ -46,7 +46,7 @@ def bootstrap_mach_gateway(apps):
             weighted_price += price * subscribers
         weighted_price = weighted_price / total_subscribers
         SmsGatewayFee.create_new(
-            MachBackend.get_api_id(),
+            SQLMachBackend.get_api_id(),
             OUTGOING,
             weighted_price,
             country_code=country_code,
@@ -57,7 +57,7 @@ def bootstrap_mach_gateway(apps):
 
     # Fee for invalid phonenumber
     SmsGatewayFee.create_new(
-        MachBackend.get_api_id(),
+        SQLMachBackend.get_api_id(),
         OUTGOING,
         0.0225,
         country_code=None,

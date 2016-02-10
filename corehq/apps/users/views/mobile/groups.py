@@ -174,7 +174,7 @@ class EditGroupMembersView(BaseGroupsView):
     @memoized
     def all_users(self):
         return map(_report_user_dict, sorted(
-            UserES().domain(self.domain).run().hits,
+            UserES().mobile_users().domain(self.domain).run().hits,
             key=lambda user: user['username']
         ))
 

@@ -24,7 +24,7 @@
 {% endblock %}
 
 {% block title %}{% trans 'Edit Submission' %}{% endblock %}
-{% block page_title %}
+{% block page_breadcrumbs %}{{ block.super }}
     {% include 'reports/form/partials/bootstrap3/form_breadcrumbs.html' %}
 {% endblock %}
 

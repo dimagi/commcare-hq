@@ -1,28 +1,33 @@
 from __future__ import absolute_import
 import re
 from uuid import uuid4
+from contextlib import contextmanager
 
-from corehq.blobs import BlobInfo
+from corehq.blobs import BlobInfo, DEFAULT_BUCKET
 from corehq.blobs.exceptions import BadName, NotFound
 
 import boto3
+from botocore.client import Config
 from botocore.handlers import calculate_md5
 from botocore.exceptions import ClientError
 from botocore.utils import fix_s3_host
 
 DEFAULT_S3_BUCKET = "blobdb"
-DEFAULT_BUCKET = "_default"
 SAFENAME = re.compile("^[a-z0-9_./-]+$", re.IGNORECASE)
 
 
 class S3BlobDB(object):
 
     def __init__(self, config):
+        kwargs = {}
+        if "config" in config:
+            kwargs["config"] = Config(**config["config"])
         self.db = boto3.resource(
             's3',
             endpoint_url=config.get("url"),
             aws_access_key_id=config.get("access_key", ""),
             aws_secret_access_key=config.get("secret_key", ""),
+            **kwargs
         )
         self.s3_bucket_name = config.get("s3_bucket", DEFAULT_S3_BUCKET)
         self._s3_bucket_exists = False
@@ -71,12 +76,8 @@ class S3BlobDB(object):
         object should be closed when finished reading.
         """
         path = self.get_path(name, bucket)
-        try:
+        with maybe_not_found(throw=NotFound(name, bucket)):
             resp = self._s3_bucket().Object(path).get()
-        except ClientError as err:
-            if is_not_found(err):
-                raise NotFound(name, bucket)
-            raise
         return ClosingContextProxy(resp["Body"])  # body stream
 
     def delete(self, name=None, bucket=DEFAULT_BUCKET):
@@ -89,20 +90,41 @@ class S3BlobDB(object):
         :returns: True if the blob was deleted else false.
         """
         path = self.get_path(name, bucket)
-        success = True
         s3_bucket = self._s3_bucket()
-        if name is None:
-            summaries = s3_bucket.objects.filter(Prefix=path + "/")
-            pages = ([{"Key": o.key} for o in page]
-                     for page in summaries.pages())
+        with maybe_not_found():
+            if name is None:
+                summaries = s3_bucket.objects.filter(Prefix=path + "/")
+                pages = ([{"Key": o.key} for o in page]
+                         for page in summaries.pages())
+            else:
+                pages = [[{"Key": path}]]
+            success = True
+            for objects in pages:
+                resp = s3_bucket.delete_objects(Delete={"Objects": objects})
+                if success:
+                    deleted = set(d["Key"] for d in resp.get("Deleted", []))
+                    success = all(o["Key"] in deleted for o in objects)
+            return success
+        return False
+
+    def copy_blob(self, content, info, bucket):
+        """Copy blob from other blob database
+
+        :param content: File-like blob content object.
+        :param info: `BlobInfo` object.
+        :param bucket: Bucket name.
+        """
+        if info.digest and info.digest.startswith("md5-"):
+            content_md5 = info.digest[4:]
         else:
-            pages = [[{"Key": path}]]
-        for objects in pages:
-            resp = s3_bucket.delete_objects(Delete={"Objects": objects})
-            if success:
-                deleted = set(d["Key"] for d in resp.get("Deleted", []))
-                success = all(o["Key"] in deleted for o in objects)
-        return success
+            params = {"body": content, "headers": {}}
+            calculate_md5(params)
+            content_md5 = params["headers"]["Content-MD5"]
+        self._s3_bucket(create=True).put_object(
+            Key=self.get_path(info.name, bucket),
+            Body=content,
+            ContentMD5=content_md5,
+        )
 
     def _s3_bucket(self, create=False):
         if create and not self._s3_bucket_exists:
@@ -143,9 +165,20 @@ def safejoin(root, subpath):
     return safepath(root) + "/" + safepath(subpath)
 
 
-def is_not_found(err):
-    return (err.response["Error"]["Code"] == "NoSuchKey" or
-            err.response["Error"]["Code"] == "404")
+def is_not_found(err, not_found_codes=["NoSuchKey", "NoSuchBucket", "404"]):
+    return (err.response["Error"]["Code"] in not_found_codes or
+        err.response.get("Errors", {}).get("Error", {}).get("Code") in not_found_codes)
+
+
+@contextmanager
+def maybe_not_found(throw=None):
+    try:
+        yield
+    except ClientError as err:
+        if not is_not_found(err):
+            raise
+        if throw is not None:
+            raise throw
 
 
 class ClosingContextProxy(object):

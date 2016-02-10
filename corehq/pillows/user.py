@@ -21,8 +21,6 @@ class UserPillow(AliasedElasticPillow):
     document_class = CommCareUser   # while this index includes all users,
                                     # I assume we don't care about querying on properties specific to WebUsers
     couch_filter = "users/all_users"
-    es_host = settings.ELASTICSEARCH_HOST
-    es_port = settings.ELASTICSEARCH_PORT
     es_timeout = 60
     es_alias = "hqusers"
     es_type = "user"

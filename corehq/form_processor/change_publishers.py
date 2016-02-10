@@ -13,7 +13,7 @@ def _change_meta_from_sql_form(form):
         document_id=form.form_id,
         data_source_type=data_sources.FORM_SQL,
         data_source_name='form-sql',  # todo: this isn't really needed.
-        document_type='XFormInstanceSQL',  # todo: should this be the same as the couch models?
+        document_type=form.state,
         document_subtype=form.xmlns,
         domain=form.domain,
         is_deletion=False,

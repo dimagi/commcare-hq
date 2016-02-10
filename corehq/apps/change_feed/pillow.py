@@ -13,7 +13,7 @@ from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.feed.interface import ChangeMeta
 from pillowtop.listener import PythonPillow
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processor import PillowProcessor
+from pillowtop.processors import PillowProcessor
 
 
 class KafkaProcessor(PillowProcessor):

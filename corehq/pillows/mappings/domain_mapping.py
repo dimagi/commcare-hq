@@ -1,6 +1,6 @@
 from corehq.util.elastic import es_index
 
-DOMAIN_INDEX = es_index("hqdomains_20151204_1053")
+DOMAIN_INDEX = es_index("hqdomains_20160128_1552")
 DOMAIN_MAPPING = {'_meta': {'comment': 'farid modified on 2015/11/23',
                             'created': None},
  'date_detection': False,
@@ -69,6 +69,7 @@ DOMAIN_MAPPING = {'_meta': {'comment': 'farid modified on 2015/11/23',
                 'cp_n_cases': {'type': 'long'},
                 'cp_n_cc_users': {'type': 'long'},
                 'cp_n_forms': {'type': 'long'},
+                'cp_n_forms_30_d': {'type': 'long'},
                 'cp_n_inactive_cases': {'type': 'long'},
                 'cp_n_users_submitted_form': {'type': 'long'},
                 'cp_n_web_users': {'type': 'long'},
@@ -86,7 +87,6 @@ DOMAIN_MAPPING = {'_meta': {'comment': 'farid modified on 2015/11/23',
                 'customer_type': {'type': 'string'},
                 'date_created': {'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",
                                  'type': 'date'},
-                'default_sms_backend_id': {'type': 'string'},
                 'default_timezone': {'type': 'string'},
                 'deployment': {'dynamic': False,
                                'properties': {'city': {'fields': {'city': {'index': 'analyzed',

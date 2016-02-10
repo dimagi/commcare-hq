@@ -1,5 +1,4 @@
 import json
-import logging
 
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect, Http404
@@ -10,8 +9,8 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.http import require_POST, require_http_methods
 
-from couchdbkit import ResourceNotFound, MultipleResultsFound
-from corehq.apps.commtrack.dbaccessors import get_supply_point_case_by_location
+from couchdbkit import ResourceNotFound
+from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui
 from corehq.util.files import file_extention_from_filename
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
@@ -20,7 +19,6 @@ from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 
 from corehq import toggles
-from corehq.apps.commtrack.exceptions import MultipleSupplyPointException
 from corehq.apps.commtrack.tasks import import_locations_async
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
@@ -54,6 +52,7 @@ def default(request, domain):
 
 
 class BaseLocationView(BaseDomainView):
+
     @method_decorator(locations_access_required)
     def dispatch(self, request, *args, **kwargs):
         return super(BaseLocationView, self).dispatch(request, *args, **kwargs)
@@ -117,6 +116,8 @@ class LocationTypesView(BaseLocationView):
     template_name = 'locations/location_types.html'
 
     @method_decorator(can_edit_location_types)
+    @use_bootstrap3
+    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(LocationTypesView, self).dispatch(request, *args, **kwargs)
 
@@ -309,20 +310,10 @@ class NewLocationView(BaseLocationView):
 
     @property
     def page_context(self):
-        try:
-            consumption = self.consumption
-        except MultipleSupplyPointException:
-            consumption = []
-            logging.error("Invalid setup: Multiple supply point cases found for the location",
-                          exc_info=True, extra={'request': self.request})
-            messages.error(self.request, _(
-                "There was a problem with the setup for your project. " +
-                "Please contact support at commcarehq-support@dimagi.com."
-            ))
         return {
             'form': self.location_form,
             'location': self.location,
-            'consumption': consumption,
+            'consumption': self.consumption,
             'locations': load_locs_json(self.domain, self.location.parent_id,
                                         user=self.request.couch_user),
             'form_tab': self.form_tab,
@@ -444,10 +435,7 @@ class EditLocationView(NewLocationView):
     @property
     @memoized
     def supply_point(self):
-        try:
-            return get_supply_point_case_by_location(self.location)
-        except MultipleResultsFound:
-            raise MultipleSupplyPointException
+        return self.location.linked_supply_point()
 
     @property
     def page_url(self):

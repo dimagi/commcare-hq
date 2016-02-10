@@ -11,11 +11,10 @@ from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from corehq.apps.userreports.exceptions import (
     UserReportsError, TableNotFoundWarning,
     SortConfigurationError)
-from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.reports.sorting import get_default_sort_value, DESCENDING
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.sql.connection import get_engine_id
-from corehq.apps.userreports.views import get_datasource_config_or_404
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -55,7 +54,7 @@ class ConfigurableReportDataSource(SqlData):
     @property
     def config(self):
         if self._config is None:
-            self._config, _ = get_datasource_config_or_404(self._config_id, self.domain)
+            self._config, _ = get_datasource_config(self._config_id, self.domain)
         return self._config
 
     @property

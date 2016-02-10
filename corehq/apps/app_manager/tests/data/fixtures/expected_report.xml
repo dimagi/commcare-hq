@@ -1,0 +1,15 @@
+<report id="c0ffee">
+  <filters/>
+  <rows>
+    <row index="0" is_total_row="False">
+      <column id="bar">2</column>
+      <column id="baz">3</column>
+      <column id="foo">1</column>
+    </row>
+    <row index="1" is_total_row="False">
+      <column id="eggs">3</column>
+      <column id="ham">1</column>
+      <column id="spam">2</column>
+    </row>
+  </rows>
+</report>

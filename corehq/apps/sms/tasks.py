@@ -2,7 +2,7 @@ import math
 from datetime import datetime, timedelta
 from celery.task import task
 from time import sleep
-from corehq.apps.sms.mixin import SMSLoadBalancingMixin, VerifiedNumber
+from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import (SMSLog, OUTGOING, INCOMING, SMS,
     PhoneLoadBalancingMixin)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
@@ -225,7 +225,7 @@ def store_billable(msg):
 def delete_phone_numbers_for_owners(owner_ids):
     for ids in chunked(owner_ids, 50):
         results = VerifiedNumber.get_db().view(
-            'sms/verified_number_by_owner_id',
+            'phone_numbers/verified_number_by_owner_id',
             keys=ids,
             include_docs=True
         )

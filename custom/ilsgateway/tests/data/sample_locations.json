@@ -98,5 +98,17 @@
         "name": "EXCLUDED-FACILITY",
         "parent_id": 50,
         "type": "FACILITY"
+    },
+    {
+        "code": "Test district2",
+        "date_updated": "2014-07-17T00:00:00",
+        "groups": [],
+        "historical_groups": {},
+        "id": 2626,
+        "latitude": "",
+        "longitude": "",
+        "name": "Bahi",
+        "parent_id": 13,
+        "type": "DISTRICT"
     }
 ]

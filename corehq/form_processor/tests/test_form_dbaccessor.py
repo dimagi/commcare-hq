@@ -145,7 +145,7 @@ class FormAccessorTestsSQL(TestCase):
         # check reverse ordering
         forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormInstance', 5, recent_first=True)
         self.assertEqual(2, len(forms))
-        self.assertEqual({form2.form_id, form1.form_id}, {f.form_id for f in forms})
+        self.assertEqual([form2.form_id, form1.form_id], [f.form_id for f in forms])
 
         # check limit
         forms = FormAccessorSQL.get_forms_by_type(DOMAIN, 'XFormInstance', 1)

@@ -5,7 +5,7 @@ from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.locations.forms import LocationForm
 
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues,\
-    OrganizationSummary, GroupSummary
+    OrganizationSummary, GroupSummary, PendingReportingDataRecalculation
 from custom.ilsgateway.tasks import report_run
 from custom.ilsgateway.tests.handlers.utils import prepare_domain, create_products
 from custom.ilsgateway.utils import make_loc, create_stock_report
@@ -73,7 +73,24 @@ class TestReportRunner(TestCase):
     def _move_location(self, location, new_parent_id):
         form = LocationForm(
             location,
-            bound_data={'name': location.name, 'parent_id': new_parent_id}
+            bound_data={
+                'name': location.name,
+                'parent_id': new_parent_id,
+                'location_type': location.location_type,
+                'data-field-group': location.metadata['group']
+            }
+        )
+        form.save()
+
+    def _change_group(self, location, group):
+        form = LocationForm(
+            location,
+            bound_data={
+                'name': location.name,
+                'data-field-group': group,
+                'location_type': location.location_type,
+                'parent_id': location.parent_id
+            }
         )
         form.save()
 
@@ -81,8 +98,9 @@ class TestReportRunner(TestCase):
         OrganizationSummary.objects.all().delete()
 
     def test_report_runner(self):
-        with mock.patch('custom.ilsgateway.tanzania.warehouse.updater.default_start_date',
-                        return_value=datetime(2015, 9, 1)):
+        d = datetime(2015, 9, 1)
+        with mock.patch('custom.ilsgateway.tanzania.warehouse.updater.default_start_date', return_value=d), \
+                mock.patch('custom.ilsgateway.tasks.default_start_date', return_value=d):
             report_run(TEST_DOMAIN)
             self.assertEqual(OrganizationSummary.objects.filter(date__lte=datetime(2015, 9, 3)).count(), 7)
 
@@ -100,6 +118,15 @@ class TestReportRunner(TestCase):
             )
 
             self._move_location(self.facility1, self.district2.get_id)
+
+            pr = PendingReportingDataRecalculation.objects.filter(sql_location=self.facility1.sql_location).first()
+            self.assertEqual(pr.type, 'parent_change')
+            self.assertDictEqual(
+                pr.data,
+                {'previous_parent': self.district1.get_id, 'current_parent': self.district2.get_id}
+            )
+
+            report_run(TEST_DOMAIN)
             self.assertEqual(
                 GroupSummary.objects.filter(
                     org_summary__location_id=self.district1.get_id,
@@ -123,4 +150,51 @@ class TestReportRunner(TestCase):
                     org_summary__location_id=self.region2.get_id,
                     title=SupplyPointStatusTypes.SOH_FACILITY
                 ).first().total, 2
+            )
+
+    def test_report_runner2(self):
+        d = datetime(2015, 9, 1)
+        with mock.patch('custom.ilsgateway.tanzania.warehouse.updater.default_start_date', return_value=d), \
+                mock.patch('custom.ilsgateway.tasks.default_start_date', return_value=d):
+            report_run(TEST_DOMAIN)
+            self.assertEqual(OrganizationSummary.objects.filter(date__lte=datetime(2015, 9, 3)).count(), 7)
+            self.assertEqual(
+                GroupSummary.objects.filter(
+                    org_summary__location_id=self.facility1.get_id,
+                    title=SupplyPointStatusTypes.DELIVERY_FACILITY,
+                ).first().total, 1
+            )
+
+            self.assertEqual(
+                GroupSummary.objects.filter(
+                    org_summary__location_id=self.facility2.get_id,
+                    title=SupplyPointStatusTypes.R_AND_R_FACILITY
+                ).first().total, 1
+            )
+
+            self._change_group(self.facility1, 'C')
+            pr = PendingReportingDataRecalculation.objects.filter(sql_location=self.facility1.sql_location).first()
+            self.assertEqual(pr.type, 'group_change')
+            self.assertDictEqual(pr.data, {'previous_group': 'A', 'current_group': 'C'})
+
+            report_run(TEST_DOMAIN)
+            self.assertEqual(
+                GroupSummary.objects.filter(
+                    org_summary__location_id=self.facility1.get_id,
+                    title=SupplyPointStatusTypes.DELIVERY_FACILITY,
+                ).first().total, 0
+            )
+
+            self.assertEqual(
+                GroupSummary.objects.filter(
+                    org_summary__location_id=self.facility1.get_id,
+                    title=SupplyPointStatusTypes.R_AND_R_FACILITY,
+                ).first().total, 1
+            )
+
+            self.assertEqual(
+                GroupSummary.objects.filter(
+                    org_summary__location_id=self.facility2.get_id,
+                    title=SupplyPointStatusTypes.R_AND_R_FACILITY
+                ).first().total, 1
             )
