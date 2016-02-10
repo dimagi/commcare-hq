@@ -2292,4 +2292,4 @@ class MigrationStatus(models.Model):
             return False
 
 
-from corehq.apps.sms.signals import *
+from corehq.apps.sms import signals
