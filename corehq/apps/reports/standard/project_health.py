@@ -7,6 +7,7 @@ from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.style.decorators import use_nvd3, use_bootstrap3
 from corehq.apps.users.util import user_id_to_username, raw_username
+from corehq.toggles import PROJECT_HEALTH_DASHBOARD
 from dimagi.ext import jsonobject
 from dimagi.utils.dates import add_months
 
@@ -103,6 +104,10 @@ class ProjectHealthDashboard(ProjectReport):
     name = ugettext_noop("Project Health")
     is_bootstrap3 = True
     base_template = "reports/project_health/project_health_dashboard.html"
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return PROJECT_HEALTH_DASHBOARD.enabled(domain)
 
     @use_bootstrap3
     @use_nvd3
