@@ -3,20 +3,26 @@
     <div class="tab-pane">
         <div class="tabbable">
             <ul class="nav nav-tabs">
-                <li class="active"><a href="#multimedia-download-tab" data-toggle="tab">Download</a></li>
-                <li><a href="#multimedia-upload-tab" data-toggle="tab">Bulk Upload</a></li>
-                <li><a href="#multimedia-references-tab" data-toggle="tab">Reference Checker</a></li>
+                <li class="active">
+                    <a href="#multimedia-download-tab" data-toggle="tab">{% trans "Download" %}</a>
+                </li>
+                <li>
+                    <a href="#multimedia-upload-tab" data-toggle="tab">{% trans "Bulk Upload" %}</a>
+                </li>
+                <li>
+                    <a href="#multimedia-references-tab" data-toggle="tab">{% trans "Reference Checker" %}</a>
+                </li>
             </ul>
             <div class="spacer"></div>
             <div class="tab-content">
                 <div id="multimedia-download-tab" class="tab-pane active">
-                    {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True%}
+                    {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True %}
                 </div>
                 <div id="multimedia-upload-tab" class="tab-pane">
-                    this is the upload tab
+                    <!-- will be async loaded -->
                 </div>
                 <div id="multimedia-references-tab" class="tab-pane">
-                    this is the references tab
+                    <!-- will be async loaded -->
                 </div>
             </div>
         </div>

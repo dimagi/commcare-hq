@@ -64,6 +64,40 @@
                     multimedia_tab.load_if_necessary();
                 }
             });
+
+            var loaded = {
+                download: true, // initially loaded by the ajax call, multimedia_ajax, that loads the whole page
+                upload: false,
+                references: false,
+            };
+            var urls = {
+                download: '{% url 'app_multimedia_ajax_download' domain app.get_id %}',
+                upload: '{% url 'app_multimedia_ajax_upload' domain app.get_id %}',
+                references: '{% url 'app_multimedia_ajax_references' domain app.get_id %}',
+            };
+            _.each(_.keys(urls), function(tab) {
+                $("#multimedia").on("show.bs.tab", "a[href='#multimedia-" + tab + "-tab']", function() {
+                    if (!loaded[tab]) {
+                        var $content = $('#multimedia-' + tab + '-tab');
+                        _.delay(function() {
+                            if (!loaded[tab]) {
+                                $content.html($("#hq-loading").html());
+                            }
+                        }, 500);
+                        $.ajax({
+                            url: urls[tab],
+                        }).success(function(content) {
+                            loaded[tab] = true;
+                            $content.html(content);
+                        }).error(function() {
+                            loaded[tab] = false;
+                            $content.html('<div class="alert alert-error">'
+                                + '{% trans "Oops, there was a problem loading this section. Please try again." %}'
+                                + '</div>');
+                        });
+                    }
+                });
+            });
         });
 
     </script>
@@ -237,7 +271,7 @@
         #default-language-help {
             position: absolute;
             /*width: 100%;*/
-            border: 1px solid #CCC;
+            btemplateorder: 1px solid #CCC;
             padding: .5em 1em;
             padding-left: 150px;
             left: 35px;
@@ -254,8 +288,12 @@
         {% include 'app_manager/languages.html' %}
 
         {% if app.get_doc_type == "Application" %}
+            <script type="text/html" id="hq-loading">
+                <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                {% trans "Loading..." %}
+            </script>
             <div class="tab-pane multimedia" id="multimedia">
-                <div data-bind="if: load_state() === 'loading'">
+                <div data-bind="if: load_state() === 'loading'" id="">
                     <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
                     {% trans "Loading ..." %}
                 </div>
