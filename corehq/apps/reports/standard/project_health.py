@@ -170,7 +170,7 @@ class ProjectHealthDashboard(ProjectReport):
         now = datetime.datetime.utcnow()
         rows = []
         last_month_summary = None
-        for i in range(-3, 0):
+        for i in range(-6, 0):
             year, month = add_months(now.year, now.month, i)
             month_as_date = datetime.date(year, month, 1)
             this_month_summary = MonthlyPerformanceSummary(
