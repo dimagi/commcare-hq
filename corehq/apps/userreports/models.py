@@ -336,13 +336,21 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
 
     @property
     def map_config(self):
+        def map_col(column):
+            if column['column_id'] != self.location_column:
+                return {
+                    'column_id': column['column_id'],
+                    'label': column['display']
+                }
+
         if self.location_column:
             return {
                 'location_column': self.location_column,
                 'layer_name': {
                     'XFormInstance': 'Forms',
                     'CommCareCase': 'Cases'
-                }.get(self.config.referenced_doc_type, "Layer")
+                }.get(self.config.referenced_doc_type, "Layer"),
+                'columns': filter(None, [map_col(col) for col in self.columns])
             }
 
     @property
