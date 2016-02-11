@@ -251,22 +251,12 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_all_forms_received_since(received_on_since=None, chunk_size=500):
-        start_from = received_on_since or datetime.min
-        # todo: this will greedily query the same cases multiple times in a sharded
-        # setup. We should make it smarter
-        batch = FormAccessorSQL.get_forms_received_since(start_from, limit=chunk_size)
-        while batch:
-            for form in batch:
-                yield form
-                next_start_from = form.received_on
-
-            if len(batch) == chunk_size:
-                # we got a full chunk so keep checking for more
-                assert next_start_from > start_from  # make sure we are making progress
-                start_from = next_start_from
-                batch = FormAccessorSQL.get_forms_received_since(start_from, limit=chunk_size)
-            else:
-                batch = []
+        return _batch_iterate(
+            batch_fn=FormAccessorSQL.get_forms_received_since,
+            next_start_from_fn=lambda form: form.received_on,
+            start_from=received_on_since,
+            chunk_size=chunk_size
+        )
 
     @staticmethod
     def get_forms_received_since(received_on_since=None, limit=500):
@@ -437,22 +427,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_all_cases_modified_since(server_modified_on_since=None, chunk_size=500):
-        start_from = server_modified_on_since or datetime.min
-        # todo: this will greedily query the same cases multiple times in a sharded
-        # setup. We should make it smarter
-        batch = CaseAccessorSQL.get_cases_modified_since(start_from, limit=chunk_size)
-        while batch:
-            for case in batch:
-                yield case
-                next_start_from = case.server_modified_on
-
-            if len(batch) == chunk_size:
-                # we got a full chunk so keep checking for more
-                assert next_start_from > start_from  # make sure we are making progress
-                start_from = next_start_from
-                batch = CaseAccessorSQL.get_cases_modified_since(start_from, limit=chunk_size)
-            else:
-                batch = []
+        return _batch_iterate(
+            CaseAccessorSQL.get_cases_modified_since,
+            next_start_from_fn=lambda case: case.server_modified_on,
+            start_from=server_modified_on_since,
+            chunk_size=chunk_size
+        )
 
     @staticmethod
     def get_cases_modified_since(server_modified_on_since=None, limit=500):
@@ -576,3 +556,27 @@ def _attach_prefetch_models(objects_by_id, prefetched_models, link_field_name, c
     for obj_id, group in prefetched_groups:
         obj = objects_by_id[obj_id]
         setattr(obj, cached_attrib_name, list(group))
+
+
+def _batch_iterate(batch_fn, next_start_from_fn, start_from=None, chunk_size=500):
+    """
+    Iterate through a function in batches. Assumes the following signatures:
+
+    batch_fn(start_from, limit) - a function that returns sorted data in batches
+    next_start_from_fn(item) - a function that returns a "start_from" for a item for the next batch
+    """
+    start_from = start_from or datetime.min
+    # todo: this will greedily query the same data multiple times in a sharded setup. We should make it smarter
+    batch = batch_fn(start_from, limit=chunk_size)
+    while batch:
+        for item in batch:
+            yield item
+            next_start_from = next_start_from_fn(item)
+
+        if len(batch) == chunk_size:
+            # we got a full chunk so keep checking for more
+            assert next_start_from > start_from  # make sure we are making progress
+            start_from = next_start_from
+            batch = batch_fn(start_from, limit=chunk_size)
+        else:
+            batch = []  # equivalent to return
