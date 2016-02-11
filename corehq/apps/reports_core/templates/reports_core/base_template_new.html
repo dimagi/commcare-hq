@@ -6,6 +6,7 @@
 {% block stylesheets %}{{ block.super }}
     {% compress css %}
         <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'leaflet/dist/leaflet.css' %}" />
+        <link rel="stylesheet" href="{% new_static 'reports/css/maps.css' %}" />
     {% endcompress %}
 {% endblock stylesheets %}
 
@@ -15,6 +16,7 @@
     <script src="{% new_static 'reports_core/js/charts.js' %}"></script>
     <script src="{% new_static 'reports_core/js/maps.js' %}"></script>
     <script src="{% new_static 'leaflet/dist/leaflet.js' %}"></script>
+    <script src="{% new_static 'reports/javascripts/maps_utils.js' %}"></script>
 {% endblock %}
 
 {% block head %}{{ block.super }}
@@ -205,6 +207,9 @@
         </section>
         <section id="map-container" style="display: none;" >
         </section>
+        <div id="zoomtofit" class="leaflet-control-layers" style="display: none;">
+            <div id="zoomtofit-target" class="zoomtofit leaflet-control-layers-toggle" title="Fit all data into view"></div>
+        </div>
         {% endblock %}
         {% block reporttable %}
         <div class="panel panel-default">
