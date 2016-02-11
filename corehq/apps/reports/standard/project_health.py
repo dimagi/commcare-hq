@@ -28,6 +28,7 @@ class UserActivityStub(namedtuple('UserStub', ['user_id', 'username', 'num_forms
         previous_forms = 0 if self.previous_stub is None else self.previous_stub.num_forms_submitted
         return self.num_forms_submitted - previous_forms
 
+
 class MonthlyPerformanceSummary(jsonobject.JsonObject):
     month = jsonobject.DateProperty()
     domain = jsonobject.StringProperty()
@@ -67,14 +68,6 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     def delta_active_pct(self):
         if self.delta_active and self._previous_summary and self._previous_summary.active:
             return float(self.delta_active / float(self._previous_summary.active)) * 100.
-
-    @memoized
-    def get_active_user_ids(self):
-        return self._base_queryset.values_list('user_id', flat=True).distinct()
-
-    @memoized
-    def get_performing_user_ids(self):
-        return self._performing_queryset.values_list('user_id', flat=True).distinct()
 
     @memoized
     def get_all_user_stubs(self):
