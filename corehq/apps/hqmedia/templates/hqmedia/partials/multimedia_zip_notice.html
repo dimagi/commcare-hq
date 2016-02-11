@@ -19,9 +19,9 @@
             {% endif %}
         >
         {% if multimedia_state.has_form_errors or multimedia_state.has_missing_refs %}
-            <i class="icon icon-white icon-bolt"></i> {% trans 'Download Incomplete ZIP' %}
+            <i class="fa fa-exclamation-triangle"></i> {% trans 'Download Incomplete ZIP' %}
         {% else %}
-            <i class="icon icon-white icon-download-alt"></i> {% trans 'Download ZIP' %}
+            <i class="fa fa-download"></i> {% trans 'Download ZIP' %}
         {% endif %}
         </a>
     </p>
@@ -29,19 +29,23 @@
     <div class="alert alert-info">{% blocktrans %}This application currently does not contain any multimedia references.{% endblocktrans %}</div>
 {% endif %}
 {% if multimedia_state.has_form_errors %}
-    <div class="alert alert-error"><i class="icon icon-warning-sign"></i> {% blocktrans %}<strong>Warning:</strong>
-        This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.
-    {% endblocktrans %}</div>
+    <div class="alert alert-danger">
+        <i class="fa fa-exclamation-triangle"></i>
+        {% blocktrans %}
+              <strong>Warning:</strong>
+              This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.
+        {% endblocktrans %}
+    </div>
 {% endif %}
 {% if multimedia_state.has_missing_refs %}
     <div class="alert alert-warning">
         <p>
-            <i class="icon icon-warning-sign"></i> {% blocktrans %}<strong>Note:</strong> This application is
+            <i class="fa fa-exclamation-triangle"></i> {% blocktrans %}<strong>Note:</strong> This application is
             missing references, so this zip will be incomplete.
         </p>
         <p>
             Please make sure all of your application's multimedia references are linked to media files before
-            starting your Application, or it might be unstable.
+            starting your application, or it might be unstable.
         </p>
     {% endblocktrans %}</div>
 {% endif %}
