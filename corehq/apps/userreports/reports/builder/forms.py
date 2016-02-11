@@ -688,6 +688,7 @@ class ConfigureNewReportBase(forms.Form):
             config_id=data_source_config_id,
             title=self.report_name,
             aggregation_columns=self._report_aggregation_cols,
+            location_column=self._report_location_col,
             columns=self._report_columns,
             filters=self._report_filters,
             configured_charts=self._report_charts,
@@ -1161,7 +1162,7 @@ class ConfigureMapReportForm(ConfigureListReportForm):
         if self.existing_report:
             existing_location_col = existing_report.location_column
             if existing_location_col:
-                self.fields['location'].initial = self._get_property_from_column(existing_location_col[0])
+                self.fields['location'].initial = self._get_property_from_column(existing_location_col)
 
     @property
     def _location_choices(self):
