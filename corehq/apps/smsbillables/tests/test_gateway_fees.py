@@ -1,12 +1,17 @@
 from random import choice
 
-from django.conf import settings
 from django.test import TestCase
-from corehq.apps.accounting.generator import init_default_currency
 
+from corehq.apps.accounting.generator import init_default_currency
 from corehq.apps.sms.models import SMSLog, SQLMobileBackend
-from corehq.apps.smsbillables.models import *
 from corehq.apps.smsbillables import generator
+from corehq.apps.smsbillables.models import (
+    SmsBillable,
+    SmsGatewayFee,
+    SmsGatewayFeeCriteria,
+    SmsUsageFee,
+    SmsUsageFeeCriteria
+)
 
 
 class TestGatewayFee(TestCase):
