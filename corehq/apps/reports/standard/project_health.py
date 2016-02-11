@@ -3,7 +3,6 @@ import datetime
 from django.db.models import F
 from django.utils.translation import ugettext_noop
 from corehq.apps.data_analytics.models import MALTRow
-from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.style.decorators import use_nvd3, use_bootstrap3
 from corehq.apps.users.util import user_id_to_username, raw_username
