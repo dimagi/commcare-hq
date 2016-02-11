@@ -11,6 +11,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.dbaccessors import \
     get_one_case_in_domain_by_external_id
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
+from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import (SMSLog, CallLog,
     SQLMobileBackend, SQLMobileBackendMapping)
 from corehq.apps.smsforms.models import SQLXFormsSession
@@ -29,6 +30,12 @@ from casexml.apps.case.mock import CaseBlock
 
 def time_parser(value):
     return parse(value).time()
+
+
+def delete_domain_phone_numbers(domain):
+    for v in VerifiedNumber.by_domain(domain):
+        # Ensure cache is cleared for all phone lookups
+        v.delete()
 
 
 def setup_default_sms_test_backend():
@@ -312,6 +319,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         settings.DEBUG = True
 
     def tearDown(self):
+        delete_domain_phone_numbers(self.domain)
         for user in self.users:
             user.delete_verified_number()
             user.delete()
