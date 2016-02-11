@@ -1,6 +1,8 @@
 from datetime import datetime
-from django.test.testcases import TestCase
 import mock
+
+from django.test.testcases import TestCase
+
 from casexml.apps.stock.models import StockTransaction, StockReport
 
 from corehq.apps.accounting import generator

@@ -1,16 +1,23 @@
 from datetime import datetime
+
 from casexml.apps.stock.models import StockReport
+
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import Product
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend
+
 from custom.ewsghana.alerts import URGENT_STOCKOUT, URGENT_NON_REPORTING
 from custom.ewsghana.alerts.urgent_alerts import UrgentStockoutAlert, UrgentNonReporting
 from custom.ewsghana.tests.handlers.utils import EWSTestCase
 from custom.ewsghana.tests.test_reminders import create_stock_report
-from custom.ewsghana.utils import prepare_domain, make_loc, bootstrap_web_user, \
-    set_sms_notifications
+from custom.ewsghana.utils import (
+    bootstrap_web_user,
+    make_loc,
+    prepare_domain,
+    set_sms_notifications,
+)
 
 TEST_DOMAIN = 'ewsghana-urgent-alerts'
 

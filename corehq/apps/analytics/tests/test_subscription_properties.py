@@ -2,6 +2,7 @@ import datetime
 
 from django.test.testcases import TestCase
 
+from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import (
     BillingAccount,
     DefaultProductPlan,
@@ -14,7 +15,6 @@ from corehq.apps.accounting.models import (
 from corehq.apps.analytics.signals import get_subscription_properties_by_user
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
-from corehq.apps.accounting import generator
 
 
 class TestSubscriptionProperties(TestCase):
