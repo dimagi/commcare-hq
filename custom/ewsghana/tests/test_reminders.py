@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from decimal import Decimal
-from django.test.testcases import TestCase
 from casexml.apps.stock.models import StockTransaction, StockReport
+
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.products.models import SQLProduct, Product
@@ -15,6 +15,7 @@ from custom.ewsghana.reminders.second_soh_reminder import SecondSOHReminder
 
 from custom.ewsghana.tasks import first_soh_reminder, second_soh_reminder, third_soh_to_super, \
     stockout_notification_to_web_supers, reminder_to_visit_website, reminder_to_submit_rrirv
+from custom.ewsghana.tests.handlers.utils import EWSTestCase
 from custom.ewsghana.utils import prepare_domain, bootstrap_user, bootstrap_web_user, \
     set_sms_notifications
 
@@ -41,7 +42,7 @@ def create_stock_report(location, products_quantities, date=datetime.utcnow()):
         ).save()
 
 
-class TestReminders(TestCase):
+class TestReminders(EWSTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -158,8 +159,7 @@ class TestReminders(TestCase):
         cls.user2.delete()
         cls.user3.delete()
 
-        cls.sms_backend_mapping.delete()
-        cls.backend.delete()
+        super(TestReminders, cls).tearDownClass()
 
     def test_first_soh_reminder(self):
         first_soh_reminder()

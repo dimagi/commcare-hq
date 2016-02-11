@@ -1,4 +1,7 @@
 import datetime
+
+from django.test.testcases import TestCase
+
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
 from corehq.form_processor.interfaces.supply import SupplyInterface
@@ -21,7 +24,15 @@ from casexml.apps.stock.models import DocDomainMapping
 TEST_DOMAIN = 'ewsghana-test'
 
 
-class EWSScriptTest(TestScript):
+class EWSTestCase(TestCase):
+    @classmethod
+    def tearDownClass(cls):
+        cls.sms_backend_mapping.delete()
+        cls.backend.delete()
+        generator.delete_all_subscriptions()
+
+
+class EWSScriptTest(EWSTestCase, TestScript):
 
     def _create_stock_state(self, product, consumption):
         xform = XFormInstance.get('test-xform')

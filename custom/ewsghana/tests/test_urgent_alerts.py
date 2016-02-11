@@ -1,5 +1,4 @@
 from datetime import datetime
-from django.test.testcases import TestCase
 from casexml.apps.stock.models import StockReport
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import Product
@@ -8,6 +7,7 @@ from corehq.apps.sms.models import SMS
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from custom.ewsghana.alerts import URGENT_STOCKOUT, URGENT_NON_REPORTING
 from custom.ewsghana.alerts.urgent_alerts import UrgentStockoutAlert, UrgentNonReporting
+from custom.ewsghana.tests.handlers.utils import EWSTestCase
 from custom.ewsghana.tests.test_reminders import create_stock_report
 from custom.ewsghana.utils import prepare_domain, make_loc, bootstrap_web_user, \
     set_sms_notifications
@@ -15,7 +15,7 @@ from custom.ewsghana.utils import prepare_domain, make_loc, bootstrap_web_user, 
 TEST_DOMAIN = 'ewsghana-urgent-alerts'
 
 
-class TestUrgentAlerts(TestCase):
+class TestUrgentAlerts(EWSTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -106,5 +106,4 @@ class TestUrgentAlerts(TestCase):
         cls.user1.delete()
         for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
             vn.delete()
-        cls.sms_backend_mapping.delete()
-        cls.backend.delete()
+        super(TestUrgentAlerts, cls).tearDownClass()
