@@ -22,8 +22,12 @@ def _get_logs(form, report_name, report_slug):
 
 
 def process_device_log(domain, xform):
-    form_data = xform.form_data
-    userlogs = _get_logs(form_data, 'user_subreport', 'user')
+    _process_user_subreport(xform)
+    _process_log_subreport(domain, xform)
+
+
+def _process_user_subreport(xform):
+    userlogs = _get_logs(xform.form_data, 'user_subreport', 'user')
     UserEntry.objects.filter(xform_id=xform.form_id).delete()
     DeviceReportEntry.objects.filter(xform_id=xform.form_id).delete()
     to_save = []
@@ -37,6 +41,9 @@ def process_device_log(domain, xform):
         ))
     UserEntry.objects.bulk_create(to_save)
 
+
+def _process_log_subreport(domain, xform):
+    form_data = xform.form_data
     logs = _get_logs(form_data, 'log_subreport', 'log')
     logged_in_username = None
     logged_in_user_id = None
