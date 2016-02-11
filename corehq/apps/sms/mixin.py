@@ -15,6 +15,7 @@ from dimagi.utils.modules import try_import
 from dimagi.utils.parsing import json_format_datetime
 from django.db import transaction
 from corehq.apps.domain.models import Domain
+from corehq.util.quickcache import quickcache
 from couchdbkit import ResourceNotFound
 
 
@@ -54,7 +55,13 @@ class VerifiedNumber(Document):
     backend_id      = StringProperty() # the name of a MobileBackend (can be domain-level or system-level)
     ivr_backend_id  = StringProperty() # points to a MobileBackend
     verified        = BooleanProperty()
-    
+    contact_last_modified = DateTimeProperty()
+
+    def __init__(self, *args, **kwargs):
+        super(VerifiedNumber, self).__init__(*args, **kwargs)
+        self._old_phone_number = self.phone_number
+        self._old_owner_id = self.owner_id
+
     def __repr__(self):
         return '{phone} in {domain} (owned by {owner})'.format(
             phone=self.phone_number, domain=self.domain,
@@ -126,11 +133,8 @@ class VerifiedNumber(Document):
 
     @classmethod
     def by_phone(cls, phone_number, include_pending=False):
-        return cls.phone_lookup(
-            "phone_numbers/verified_number_by_number",
-            phone_number,
-            include_pending
-        )
+        result = cls._by_phone(apply_leniency(phone_number))
+        return cls._filter_pending(result, include_pending)
 
     @classmethod
     def by_suffix(cls, phone_number, include_pending=False):
@@ -138,26 +142,43 @@ class VerifiedNumber(Document):
         Used to lookup a VerifiedNumber, trying to exclude country code digits.
         """
         try:
-            result = cls.phone_lookup(
-                "phone_numbers/verified_number_by_suffix",
-                phone_number,
-                include_pending
-            )
+            result = cls._by_suffix(apply_leniency(phone_number))
+            return cls._filter_pending(result, include_pending)
         except MultipleResultsFound:
             # We can't pinpoint who the number belongs to because more than one
             # suffix matches. So treat it as if the result was not found.
-            result = None
-        return result
+            return None
 
     @classmethod
-    def phone_lookup(cls, view_name, phone_number, include_pending=False):
+    @quickcache(['phone_number'], timeout=60 * 60)
+    def _by_phone(cls, phone_number):
+        return cls.phone_lookup('phone_numbers/verified_number_by_number', phone_number)
+
+    @classmethod
+    @quickcache(['phone_number'], timeout=60 * 60)
+    def _by_suffix(cls, phone_number):
+        return cls.phone_lookup('phone_numbers/verified_number_by_suffix', phone_number)
+
+    @classmethod
+    def phone_lookup(cls, view_name, phone_number):
         # We use .one() here because the framework prevents duplicates
         # from being entered when a contact saves a number.
         # See CommCareMobileContactMixin.save_verified_number()
-        v = cls.view(view_name,
-                     key=apply_leniency(phone_number),
-                     include_docs=True).one()
-        return v if (include_pending or (v and v.verified)) else None
+        return cls.view(
+            view_name,
+            key=phone_number,
+            include_docs=True
+        ).one()
+
+    @classmethod
+    def _filter_pending(cls, v, include_pending):
+        if v:
+            if include_pending:
+                return v
+            elif v.verified:
+                return v
+
+        return None
 
     @classmethod
     def by_domain(cls, domain, ids_only=False):
@@ -181,6 +202,47 @@ class VerifiedNumber(Document):
         if result:
             return result[0]['value']
         return 0
+
+    @classmethod
+    @quickcache(['owner_id'], timeout=60 * 60)
+    def by_owner_id(cls, owner_id):
+        """
+        Returns a list of VerifiedNumbers belonging to the given contact.
+        """
+        return cls.view(
+            'phone_numbers/verified_number_by_owner_id',
+            key=owner_id,
+            include_docs=True
+        ).all()
+
+    def _clear_suffix_lookup_cache(self, phone_number):
+        if isinstance(phone_number, basestring):
+            self._by_suffix.clear(VerifiedNumber, phone_number[1:])
+            self._by_suffix.clear(VerifiedNumber, phone_number[2:])
+            self._by_suffix.clear(VerifiedNumber, phone_number[3:])
+
+    def _clear_caches(self):
+        self.by_owner_id.clear(VerifiedNumber, self.owner_id)
+
+        if self._old_owner_id and self._old_owner_id != self.owner_id:
+            self.by_owner_id.clear(VerifiedNumber, self._old_owner_id)
+
+        self._by_phone.clear(VerifiedNumber, self.phone_number)
+        self._clear_suffix_lookup_cache(self.phone_number)
+
+        if self._old_phone_number and self._old_phone_number != self.phone_number:
+            self._by_phone.clear(VerifiedNumber, self._old_phone_number)
+            self._clear_suffix_lookup_cache(self._old_phone_number)
+
+    def save(self, *args, **kwargs):
+        self._clear_caches()
+        self._old_phone_number = self.phone_number
+        self._old_owner_id = self.owner_id
+        return super(VerifiedNumber, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self._clear_caches()
+        return super(VerifiedNumber, self).delete(*args, **kwargs)
 
 
 def add_plus(phone_number):
@@ -235,10 +297,7 @@ class CommCareMobileContactMixin(object):
         raise NotImplementedError('Please implement this method')
 
     def get_verified_numbers(self, include_pending=False):
-        v = VerifiedNumber.view("phone_numbers/verified_number_by_owner_id",
-            key=self._id,
-            include_docs=True
-        )
+        v = VerifiedNumber.by_owner_id(self._id)
         v = filter(lambda c: c.verified or include_pending, v)
         return dict((c.phone_number, c) for c in v)
 
@@ -279,10 +338,7 @@ class CommCareMobileContactMixin(object):
         raises  PhoneNumberInUseException if the phone number is already in use by another contact
         """
         self.validate_number_format(phone_number)
-        v = VerifiedNumber.view("phone_numbers/verified_number_by_number",
-            key=phone_number,
-            include_docs=True
-        ).one()
+        v = VerifiedNumber.by_phone(phone_number, include_pending=True)
         if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self._id):
             raise PhoneNumberInUseException("Phone number is already in use.")
 

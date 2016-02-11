@@ -539,12 +539,6 @@ class AdminReport(GenericTabularReport):
     base_template = "hqadmin/bootstrap3/faceted_report.html"
     report_template_path = "reports/async/bootstrap3/tabular.html"
 
-    @use_jquery_ui
-    @use_bootstrap3
-    @use_datatables
-    def set_bootstrap3_status(self, request, *args, **kwargs):
-        pass
-
 
 class AdminFacetedReport(AdminReport, ElasticTabularReport):
     default_sort = None
@@ -648,8 +642,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     base_template = "hqadmin/domain_faceted_report.html"
 
     @use_nvd3
-    def set_bootstrap3_status(self, request, *args, **kwargs):
-        super(AdminDomainStatsReport, self).set_bootstrap3_status(request, *args, **kwargs)
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        super(AdminDomainStatsReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     @property
     def template_context(self):
@@ -836,9 +830,6 @@ class AdminDomainMapReport(AdminDomainStatsReport):
     base_template = "hqadmin/project_map.html"
 
     exportable = False
-
-    def set_bootstrap3_status(self, request, *args, **kwargs):
-        super(AdminDomainStatsReport, self).set_bootstrap3_status(request, *args, **kwargs)
 
     # a modified version of AdminDomainStatsReport.rows
     @property

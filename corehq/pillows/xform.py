@@ -5,6 +5,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
+from corehq.form_processor.change_providers import SqlFormChangeProvider
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
 from .base import HQPillow
 from couchforms.const import RESERVED_WORDS
@@ -15,6 +16,8 @@ from pillowtop.checkpoints.manager import PillowCheckpoint, get_django_checkpoin
 from pillowtop.es_utils import ElasticsearchIndexMeta
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
+from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
+from pillowtop.reindexer.reindexer import PillowReindexer
 
 
 UNKNOWN_VERSION = 'XXX'
@@ -139,3 +142,18 @@ def get_sql_xform_to_elasticsearch_pillow():
             checkpoint=checkpoint, checkpoint_frequency=100,
         ),
     )
+
+
+def get_couch_form_reindexer():
+    return PillowReindexer(XFormPillow(), CouchViewChangeProvider(
+        document_class=XFormInstance,
+        view_name='all_docs/by_doc_type',
+        view_kwargs={
+            'startkey': ['XFormInstance'],
+            'endkey': ['XFormInstance', {}],
+        }
+    ))
+
+
+def get_sql_form_reindexer():
+    return PillowReindexer(get_sql_xform_to_elasticsearch_pillow(), SqlFormChangeProvider())

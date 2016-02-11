@@ -3,6 +3,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
+from corehq.form_processor.change_providers import SqlCaseChangeProvider
 from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX
 from dimagi.utils.couch import LockManager
 from dimagi.utils.decorators.memoized import memoized
@@ -14,6 +15,8 @@ from pillowtop.es_utils import doc_exists, ElasticsearchIndexMeta
 from pillowtop.listener import lock_manager
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
+from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
+from pillowtop.reindexer.reindexer import PillowReindexer
 
 
 UNKNOWN_DOMAIN = "__nodomain__"
@@ -92,3 +95,14 @@ def get_sql_case_to_elasticsearch_pillow():
             checkpoint=checkpoint, checkpoint_frequency=100,
         ),
     )
+
+
+def get_couch_case_reindexer():
+    return PillowReindexer(CasePillow(), CouchViewChangeProvider(
+        document_class=CommCareCase,
+        view_name='cases_by_owner/view'
+    ))
+
+
+def get_sql_case_reindexer():
+    return PillowReindexer(get_sql_case_to_elasticsearch_pillow(), SqlCaseChangeProvider())

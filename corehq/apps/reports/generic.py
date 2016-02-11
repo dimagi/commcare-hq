@@ -17,6 +17,13 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.util import \
     DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_jquery_ui,
+    use_datatables,
+    use_select2,
+    use_daterangepicker,
+)
 from corehq.apps.users.models import CouchUser
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse
@@ -693,12 +700,26 @@ class GenericReportView(object):
         """
         return []
 
-    def set_bootstrap3_status(self, request, *args, **kwargs):
+    @use_bootstrap3
+    @use_jquery_ui
+    @use_select2
+    @use_datatables
+    @use_daterangepicker
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
         """
-        Use this function to apply the bootstrap 3 decorators found in
-        style/decorators.py to a report. We're using this in the interim until
-        we overhaul the reports framework, but still want to migrate some
-        reports to bootstrap 3.
+        Decorate this method in your report subclass and call super to make sure
+        appropriate decorators are used to render the page and its javascript
+        libraries.
+
+        example:
+
+        class MyNewReport(GenericReport):
+            ...
+
+            @use_nvd3
+            def bootstrap3_dispatcher(self, request, *args, **kwargs):
+                super(MyNewReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+
         """
         pass
 
