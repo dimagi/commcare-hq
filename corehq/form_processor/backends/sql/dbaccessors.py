@@ -255,19 +255,18 @@ class FormAccessorSQL(AbstractFormAccessor):
         # todo: this will greedily query the same cases multiple times in a sharded
         # setup. We should make it smarter
         batch = FormAccessorSQL.get_forms_received_since(start_from, limit=chunk_size)
-        while len(batch) == chunk_size:
+        while batch:
             for form in batch:
                 yield form
                 next_start_from = form.received_on
 
-            # make sure we are making progress
-            assert next_start_from > start_from
-            start_from = next_start_from
-            batch = FormAccessorSQL.get_forms_received_since(start_from, limit=chunk_size)
-
-        # last batch
-        for form in batch:
-            yield form
+            if len(batch) == chunk_size:
+                # we got a full chunk so keep checking for more
+                assert next_start_from > start_from  # make sure we are making progress
+                start_from = next_start_from
+                batch = FormAccessorSQL.get_forms_received_since(start_from, limit=chunk_size)
+            else:
+                batch = []
 
     @staticmethod
     def get_forms_received_since(received_on_since=None, limit=500):
@@ -442,19 +441,18 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         # todo: this will greedily query the same cases multiple times in a sharded
         # setup. We should make it smarter
         batch = CaseAccessorSQL.get_cases_modified_since(start_from, limit=chunk_size)
-        while len(batch) == chunk_size:
+        while batch:
             for case in batch:
                 yield case
                 next_start_from = case.server_modified_on
 
-            # make sure we are making progress
-            assert next_start_from > start_from
-            start_from = next_start_from
-            batch = CaseAccessorSQL.get_cases_modified_since(start_from, limit=chunk_size)
-
-        # last batch
-        for case in batch:
-            yield case
+            if len(batch) == chunk_size:
+                # we got a full chunk so keep checking for more
+                assert next_start_from > start_from  # make sure we are making progress
+                start_from = next_start_from
+                batch = CaseAccessorSQL.get_cases_modified_since(start_from, limit=chunk_size)
+            else:
+                batch = []
 
     @staticmethod
     def get_cases_modified_since(server_modified_on_since=None, limit=500):
