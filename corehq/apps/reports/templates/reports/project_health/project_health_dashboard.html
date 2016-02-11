@@ -1,0 +1,118 @@
+{% extends "reports_core/base_template_new.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block head %}
+    <style>
+        #chart svg {
+            height: 300px;
+        }
+    </style>
+{% endblock %}
+{% block js-inline %}
+<script type="text/javascript">
+    $(function() {
+        // setup chart
+        var data = {{ rows|JSON }};
+        var performingSeries = {
+            'key': 'performing',
+            values: _.map(data, function(item) {
+                return {
+                    'x': item.month,
+                    'y': item.performing
+                };
+            })
+        };
+        var activeNonPerformingSeries = {
+            'key': 'active',
+            values: _.map(data, function(item) {
+                return {
+                    'x': item.month,
+                    'y': item.active - item.performing
+                };
+            })
+        };
+        nv.addGraph(function() {
+            var chart = nv.models.multiBarChart()
+              .showControls(false)
+              .stacked(true)
+            ;
+            chart.yAxis.tickFormat(d3.format(',.0f'));
+            d3.select('#chart svg')
+                .datum([performingSeries, activeNonPerformingSeries])
+                .call(chart);
+            nv.utils.windowResize(chart.update);
+            return chart;
+        });
+    });
+</script>
+{% endblock %}
+{% block main_column_content %}
+<h1>{% trans "Last Month Stats" %}</h1>
+<table class="table lead">
+    <thead>
+        <tr>
+            <th>{% trans "Category" %}</th>
+            <th>{% trans "Last month" %}</th>
+            <th>{% trans "Change from previous month" %}</th>
+        </tr>
+    </thead>
+    <tr>
+        <th>{% trans "Performing users" %}</th>
+        <td>{{ last_month.performing }}</td>
+        <td>
+            {% if last_month.delta_performing_pct > 0 %}
+                <span class="glyphicon glyphicon-chevron-up" style="color: #006400;"> </span>
+            {% elif last_month.delta_performing_pct < 0 %}
+                <span class="glyphicon glyphicon-chevron-down" style="color: #8b0000;"> </span>
+            {% endif %}
+            {{ last_month.delta_performing_pct|floatformat }} %
+        </td>
+    </tr>
+    <tr>
+        <th>{% trans "All active users" %}</th>
+        <td>{{ last_month.active }}</td>
+        <td>
+            {% if last_month.delta_active_pct > 0 %}
+                <span class="glyphicon glyphicon-chevron-up" style="color: #006400;"> </span>
+            {% elif last_month.delta_active_pct < 0 %}
+                <span class="glyphicon glyphicon-chevron-down" style="color: #8b0000;"> </span>
+            {% endif %}
+            {{ last_month.delta_active_pct|floatformat }} %
+        </td>
+    </tr>
+</table>
+<h1>{% trans "Performing / Active Users" %}</h1>
+<div id="chart"><svg></svg></div>
+<div class="col-md-6">
+    <h1>{% trans "Recently Non-Performing Users" %}</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>{% trans "Username" %}</th>
+                <th>{% trans "Forms Submitted Last Month" %}</th>
+            </tr>
+        </thead>
+        {% for user in last_month.get_unhealthy_users %}
+        <tr>
+            <td>{{ user.username }}</td>
+            <td>{{ user.num_forms_submitted }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+<div class="col-md-6">
+    <h1>{% trans "Recently Inactive Users" %}</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>{% trans "Username" %}</th>
+            </tr>
+        </thead>
+        {% for user in last_month.get_dropouts %}
+        <tr>
+            <td>{{ user.username }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}
