@@ -347,8 +347,8 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
             return {
                 'location_column': self.location_column,
                 'layer_name': {
-                    'XFormInstance': 'Forms',
-                    'CommCareCase': 'Cases'
+                    'XFormInstance': _('Forms'),
+                    'CommCareCase': _('Cases')
                 }.get(self.config.referenced_doc_type, "Layer"),
                 'columns': filter(None, [map_col(col) for col in self.columns])
             }
