@@ -12,7 +12,16 @@ from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.memoized import memoized
 
 
-UserActivityStub = namedtuple('UserStub', ['user_id', 'username', 'num_forms_submitted'])
+class UserActivityStub(namedtuple('UserStub', ['user_id', 'username', 'num_forms_submitted',
+                                               'is_performing', 'previous_stub'])):
+
+    @property
+    def is_active(self):
+        return self.num_forms_submitted > 0
+
+    @property
+    def is_newly_performing(self):
+        return self.is_performing and (self.previous_stub is None or not self.previous_stub.is_performing)
 
 
 class MonthlyPerformanceSummary(jsonobject.JsonObject):
@@ -63,23 +72,54 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     def get_performing_user_ids(self):
         return self._performing_queryset.values_list('user_id', flat=True).distinct()
 
+    @memoized
+    def get_all_user_stubs(self):
+        return {
+            row.user_id: UserActivityStub(
+                user_id=row.user_id,
+                username=raw_username(row.username),
+                num_forms_submitted=row.num_of_forms,
+                is_performing=row.num_of_forms > row.threshold,
+                previous_stub=None,
+            ) for row in self._base_queryset.distinct('user_id')
+        }
+
+    @memoized
+    def get_all_user_stubs_with_previous_data(self):
+        if self._previous_summary:
+            previous_stubs = self._previous_summary.get_all_user_stubs()
+            user_stubs = self.get_all_user_stubs()
+            ret = []
+            for user_stub in user_stubs.values():
+                ret.append(UserActivityStub(
+                    user_id=user_stub.user_id,
+                    username=user_stub.username,
+                    num_forms_submitted=user_stub.num_forms_submitted,
+                    is_performing=user_stub.is_performing,
+                    previous_stub=previous_stubs.get(user_stub.user_id)
+                ))
+            for missing_user_id in set(previous_stubs.keys()) - set(user_stubs.keys()):
+                previous_stub = previous_stubs[missing_user_id]
+                ret.append(UserActivityStub(
+                    user_id=previous_stub.user_id,
+                    username=previous_stub.username,
+                    num_forms_submitted=0,
+                    is_performing=False,
+                    previous_stub=previous_stub
+                ))
+            return ret
+
     def get_unhealthy_users(self):
         """
         Get a list of unhealthy users - defined as those who were "performing" last month
         but are not this month (though are still active).
         """
         if self._previous_summary:
-            previously_performing = set(self._previous_summary.get_performing_user_ids())
-            currently_performing = set(self.get_performing_user_ids())
-            return [
-                UserActivityStub(
-                    user_id=row.user_id,
-                    username=raw_username(row.username),
-                    num_forms_submitted=row.num_of_forms,
-                ) for row in self._base_queryset.filter(
-                    user_id__in=previously_performing - currently_performing
-                ).order_by('-num_of_forms')
-            ]
+            unhealthy_users = filter(
+                lambda stub: stub.is_active and not stub.is_performing,
+                self.get_all_user_stubs_with_previous_data()
+            )
+            return sorted(unhealthy_users, key=lambda stub: -stub.num_forms_submitted)
 
     def get_dropouts(self):
         """
@@ -87,18 +127,11 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         but are not active this month
         """
         if self._previous_summary:
-            previously_active = set(self._previous_summary.get_active_user_ids())
-            currently_active = set(self.get_active_user_ids())
-            dropout_ids = previously_active - currently_active
-            dropouts = [
-                UserActivityStub(
-                    user_id=user_id,
-                    username=user_id_to_username(user_id),
-                    num_forms_submitted=0,
-                )
-                for user_id in dropout_ids
-            ]
-            return sorted(dropouts, key=lambda userstub: userstub.username)
+            dropouts = filter(
+                lambda stub: not stub.is_active,
+                self.get_all_user_stubs_with_previous_data()
+            )
+            return sorted(dropouts, key=lambda stub: stub.username)
 
     def get_newly_performing(self):
         """
@@ -106,17 +139,11 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         after not performing last month.
         """
         if self._previous_summary:
-            previously_performing = set(self._previous_summary.get_performing_user_ids())
-            currently_performing = set(self.get_performing_user_ids())
-            return [
-                UserActivityStub(
-                    user_id=row.user_id,
-                    username=raw_username(row.username),
-                    num_forms_submitted=row.num_of_forms,
-                ) for row in self._base_queryset.filter(
-                    user_id__in=currently_performing - previously_performing
-                ).order_by('-num_of_forms')
-            ]
+            dropouts = filter(
+                lambda stub: stub.is_newly_performing,
+                self.get_all_user_stubs_with_previous_data()
+            )
+            return sorted(dropouts, key=lambda stub: -stub.num_forms_submitted)
 
 
 class ProjectHealthDashboard(ProjectReport):
