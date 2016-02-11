@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_noop
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.style.decorators import use_nvd3, use_bootstrap3
-from corehq.apps.users.util import user_id_to_username, raw_username
+from corehq.apps.users.util import raw_username
 from corehq.toggles import PROJECT_HEALTH_DASHBOARD
 from dimagi.ext import jsonobject
 from dimagi.utils.dates import add_months
@@ -23,6 +23,10 @@ class UserActivityStub(namedtuple('UserStub', ['user_id', 'username', 'num_forms
     def is_newly_performing(self):
         return self.is_performing and (self.previous_stub is None or not self.previous_stub.is_performing)
 
+    @property
+    def delta_forms(self):
+        previous_forms = 0 if self.previous_stub is None else self.previous_stub.num_forms_submitted
+        return self.num_forms_submitted - previous_forms
 
 class MonthlyPerformanceSummary(jsonobject.JsonObject):
     month = jsonobject.DateProperty()
@@ -119,7 +123,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 lambda stub: stub.is_active and not stub.is_performing,
                 self.get_all_user_stubs_with_previous_data()
             )
-            return sorted(unhealthy_users, key=lambda stub: -stub.num_forms_submitted)
+            return sorted(unhealthy_users, key=lambda stub: stub.delta_forms)
 
     def get_dropouts(self):
         """
@@ -131,7 +135,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 lambda stub: not stub.is_active,
                 self.get_all_user_stubs_with_previous_data()
             )
-            return sorted(dropouts, key=lambda stub: stub.username)
+            return sorted(dropouts, key=lambda stub: stub.delta_forms)
 
     def get_newly_performing(self):
         """
@@ -143,7 +147,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 lambda stub: stub.is_newly_performing,
                 self.get_all_user_stubs_with_previous_data()
             )
-            return sorted(dropouts, key=lambda stub: -stub.num_forms_submitted)
+            return sorted(dropouts, key=lambda stub: -stub.delta_forms)
 
 
 class ProjectHealthDashboard(ProjectReport):
