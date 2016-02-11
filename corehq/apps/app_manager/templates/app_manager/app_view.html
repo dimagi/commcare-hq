@@ -91,7 +91,7 @@
                             $content.html(content);
                         }).error(function() {
                             loaded[tab] = false;
-                            $content.html('<div class="alert alert-error">'
+                            $content.html('<div class="alert alert-danger">'
                                 + '{% trans "Oops, there was a problem loading this section. Please try again." %}'
                                 + '</div>');
                         });
