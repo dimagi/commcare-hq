@@ -665,7 +665,6 @@ class ConfigureNewReportBase(forms.Form):
             self.existing_report.config_id = data_source_config_id
 
         self.existing_report.aggregation_columns = self._report_aggregation_cols
-        self.existing_report.location_column = self._report_location_col
         self.existing_report.columns = self._report_columns
         self.existing_report.filters = self._report_filters
         self.existing_report.configured_charts = self._report_charts
@@ -688,7 +687,6 @@ class ConfigureNewReportBase(forms.Form):
             config_id=data_source_config_id,
             title=self.report_name,
             aggregation_columns=self._report_aggregation_cols,
-            location_column=self._report_location_col,
             columns=self._report_columns,
             filters=self._report_filters,
             configured_charts=self._report_charts,
@@ -785,10 +783,6 @@ class ConfigureNewReportBase(forms.Form):
     @property
     def _report_aggregation_cols(self):
         return ['doc_id']
-
-    @property
-    def _report_location_col(self):
-        return None
 
     @property
     def _report_columns(self):
@@ -1160,7 +1154,7 @@ class ConfigureMapReportForm(ConfigureListReportForm):
 
         # Set initial value of location
         if self.existing_report:
-            existing_location_col = existing_report.location_column
+            existing_location_col = existing_report.location_column.column_id
             if existing_location_col:
                 self.fields['location'].initial = self._get_property_from_column(existing_location_col)
 
@@ -1192,17 +1186,14 @@ class ConfigureMapReportForm(ConfigureListReportForm):
         # It gets removed because we want it to be a column in the report,
         # but we don't want it to appear in the builder.
         if self.existing_report:
-            location_property = self._get_property_from_column(self.existing_report.location_column)
+            col_id = self.existing_report.location_column.column_id
+            location_property = self._get_property_from_column(col_id)
             return [c for c in columns if c.property != location_property]
         return columns
 
     @property
     def location_field(self):
         return self.cleaned_data["location"]
-
-    @property
-    def _report_location_col(self):
-        return self.data_source_properties[self.location_field].column_id
 
     @property
     def _report_columns(self):
@@ -1215,9 +1206,8 @@ class ConfigureMapReportForm(ConfigureListReportForm):
         displaying_loc_column = bool([c for c in columns if c['field'] == loc_field_id])
         if not displaying_loc_column:
             columns = columns + [{
-                'format': 'default',
-                'aggregation': 'simple',
-                "type": "field",
+                "column_id": loc_field_id,
+                "type": "location",
                 'field': loc_field_id,
                 'display': loc_field_text
             }]

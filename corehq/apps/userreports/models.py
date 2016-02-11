@@ -304,7 +304,6 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     title = StringProperty()
     description = StringProperty()
     aggregation_columns = StringListProperty()
-    location_column = StringProperty()
     filters = ListProperty()
     columns = ListProperty()
     configured_charts = ListProperty()
@@ -335,9 +334,16 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
         return [ChartFactory.from_spec(g._obj) for g in self.configured_charts]
 
     @property
+    @memoized
+    def location_column(self):
+        cols = [col for col in self.report_columns if col.type == 'location']
+        if cols:
+            return cols[0]
+
+    @property
     def map_config(self):
         def map_col(column):
-            if column['column_id'] != self.location_column:
+            if column != self.location_column:
                 return {
                     'column_id': column['column_id'],
                     'label': column['display']
@@ -345,7 +351,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
 
         if self.location_column:
             return {
-                'location_column': self.location_column,
+                'location_column': self.location_column.column_id,
                 'layer_name': {
                     'XFormInstance': _('Forms'),
                     'CommCareCase': _('Cases')
