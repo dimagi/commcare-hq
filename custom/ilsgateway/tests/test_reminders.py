@@ -1,5 +1,7 @@
 from datetime import datetime
 from django.test.testcases import TestCase
+
+from corehq.apps.accounting import generator
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMS
@@ -57,6 +59,7 @@ class TestReminders(TestCase):
         cls.sms_backend_mapping.delete()
         cls.sms_backend.delete()
         Domain.get_by_name(TEST_DOMAIN).delete()
+        generator.delete_all_subscriptions()
 
     def tearDown(self):
         SMS.objects.all().delete()
