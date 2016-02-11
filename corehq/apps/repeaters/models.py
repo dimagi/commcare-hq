@@ -26,6 +26,11 @@ from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.post import simple_post
 from dimagi.utils.couch import LockableMixIn
 
+from .dbaccessors import (
+    get_pending_repeat_record_count,
+    get_failure_repeat_record_count,
+    get_success_repeat_record_count,
+)
 from .const import MAX_RETRY_WAIT, MIN_RETRY_WAIT
 
 
@@ -190,6 +195,15 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     use_basic_auth = BooleanProperty(default=False)
     username = StringProperty()
     password = StringProperty()
+
+    def get_pending_record_count(self):
+        return get_pending_repeat_record_count(self.domain, self._id)
+
+    def get_failure_record_count(self):
+        return get_failure_repeat_record_count(self.domain, self._id)
+
+    def get_success_record_count(self):
+        return get_success_repeat_record_count(self.domain, self._id)
 
     def format_or_default_format(self):
         return self.format or RegisterGenerator.default_format_by_repeater(self.__class__)
