@@ -1,0 +1,62 @@
+{% extends 'style/bootstrap3/base_section.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load djangular_tags %}
+{% load crispy_forms_tags %}
+
+
+{% block js %}{{ block.super }}
+    <script src="{% new_static 'hqwebapp/js/main.js' %}"></script>
+{% endblock %}
+
+
+{% block js-inline %}{{ block.super }}
+<script type="text/javascript">
+(function (angular) {
+    'use strict';
+    var telerivetSetupApp = angular.module('telerivetSetupApp', ['ngRoute', 'ng.django.rmi']);
+
+    telerivetSetupApp.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+    }]);
+
+    telerivetSetupApp.config(function(djangoRMIProvider) {
+        djangoRMIProvider.configure({% djng_current_rmi %});
+    });
+
+    telerivetSetupApp.config(function($routeProvider) {
+        $routeProvider
+            .when('/step1', {templateUrl: 'step1.tpl'})
+            .when('/step2', {templateUrl: 'step2.tpl'})
+            .when('/step3', {templateUrl: 'step3.tpl'})
+            .otherwise({redirectTo: '/step1'});
+    });
+
+    telerivetSetupApp.controller('TelerivetSetupController', function($scope, djangoRMI) {
+    });
+}(window.angular));
+</script>
+{% endblock %}
+
+
+{% block page_content %}
+<div ng-app="telerivetSetupApp" ng-controller="TelerivetSetupController" ng-cloak>
+    <script type="text/ng-template" id="step1.tpl">
+        Step 1
+    </script>
+    <script type="text/ng-template" id="step2.tpl">
+        Step 2
+    </script>
+    <script type="text/ng-template" id="step3.tpl">
+        Step 3
+    </script>
+    <div>
+        <a href="#/step1">Step1</a>
+        <a href="#/step2">Step2</a>
+        <a href="#/step3">Step3</a>
+        <div ng-view></div>
+    </div>
+</div>
+{% endblock %}
