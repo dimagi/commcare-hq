@@ -75,7 +75,7 @@
 </table>
 <h1>{% trans "Performing / Active Users" %}</h1>
 <div id="chart"><svg></svg></div>
-<div class="col-md-6">
+<div class="col-md-4">
     <h1>{% trans "Recently Non-Performing Users" %}</h1>
     <table class="table">
         <thead>
@@ -92,7 +92,7 @@
         {% endfor %}
     </table>
 </div>
-<div class="col-md-6">
+<div class="col-md-4">
     <h1>{% trans "Recently Inactive Users" %}</h1>
     <table class="table">
         <thead>
@@ -103,6 +103,23 @@
         {% for user in last_month.get_dropouts %}
         <tr>
             <td>{{ user.username }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+<div class="col-md-4">
+    <h1>{% trans "Newly Performing Users" %}</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>{% trans "Username" %}</th>
+                <th>{% trans "Forms Submitted Last Month" %}</th>
+            </tr>
+        </thead>
+        {% for user in last_month.get_newly_performing %}
+        <tr>
+            <td>{{ user.username }}</td>
+            <td>{{ user.num_forms_submitted }}</td>
         </tr>
         {% endfor %}
     </table>

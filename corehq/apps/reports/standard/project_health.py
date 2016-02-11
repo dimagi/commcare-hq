@@ -9,6 +9,7 @@ from corehq.apps.users.util import user_id_to_username, raw_username
 from corehq.toggles import PROJECT_HEALTH_DASHBOARD
 from dimagi.ext import jsonobject
 from dimagi.utils.dates import add_months
+from dimagi.utils.decorators.memoized import memoized
 
 
 UserActivityStub = namedtuple('UserStub', ['user_id', 'username', 'num_forms_submitted'])
@@ -54,9 +55,11 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         if self.delta_active and self._previous_summary and self._previous_summary.active:
             return float(self.delta_active / float(self._previous_summary.active)) * 100.
 
+    @memoized
     def get_active_user_ids(self):
         return self._base_queryset.values_list('user_id', flat=True).distinct()
 
+    @memoized
     def get_performing_user_ids(self):
         return self._performing_queryset.values_list('user_id', flat=True).distinct()
 
@@ -68,19 +71,19 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         if self._previous_summary:
             previously_performing = set(self._previous_summary.get_performing_user_ids())
             currently_performing = set(self.get_performing_user_ids())
-            unhealthy_ids = previously_performing - currently_performing
-            unhealthy_users = self._base_queryset.filter(user_id__in=unhealthy_ids).order_by('-num_of_forms')
             return [
                 UserActivityStub(
                     user_id=row.user_id,
                     username=raw_username(row.username),
                     num_forms_submitted=row.num_of_forms,
-                ) for row in unhealthy_users
+                ) for row in self._base_queryset.filter(
+                    user_id__in=previously_performing - currently_performing
+                ).order_by('-num_of_forms')
             ]
 
     def get_dropouts(self):
         """
-        Get a list of dropout users - defined as those who were "performing" last month
+        Get a list of dropout users - defined as those who were active last month
         but are not active this month
         """
         if self._previous_summary:
@@ -96,6 +99,24 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 for user_id in dropout_ids
             ]
             return sorted(dropouts, key=lambda userstub: userstub.username)
+
+    def get_newly_performing(self):
+        """
+        Get a list of "newly performing" users - defined as those who are "performing" this month
+        after not performing last month.
+        """
+        if self._previous_summary:
+            previously_performing = set(self._previous_summary.get_performing_user_ids())
+            currently_performing = set(self.get_performing_user_ids())
+            return [
+                UserActivityStub(
+                    user_id=row.user_id,
+                    username=raw_username(row.username),
+                    num_forms_submitted=row.num_of_forms,
+                ) for row in self._base_queryset.filter(
+                    user_id__in=currently_performing - previously_performing
+                ).order_by('-num_of_forms')
+            ]
 
 
 class ProjectHealthDashboard(ProjectReport):
