@@ -1,3 +1,5 @@
+from random import choice
+
 from django.conf import settings
 from django.test import TestCase
 from corehq.apps.accounting.generator import init_default_currency
@@ -157,7 +159,10 @@ class TestGatewayFee(TestCase):
                 self.country_code_and_prefixes
         ):
             messages = generator.arbitrary_messages_by_backend_and_direction(
-                self.backend_ids,
+                {
+                    random_key: self.backend_ids[random_key]
+                    for random_key in [choice(self.backend_ids.keys())]
+                },
                 phone_number=phone_number,
             )
 
