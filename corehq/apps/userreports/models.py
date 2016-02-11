@@ -335,6 +335,17 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
         return [ChartFactory.from_spec(g._obj) for g in self.configured_charts]
 
     @property
+    def map_config(self):
+        if self.location_column:
+            return {
+                'location_column': self.location_column,
+                'layer_name': {
+                    'XFormInstance': 'Forms',
+                    'CommCareCase': 'Cases'
+                }.get(self.config.referenced_doc_type, "Layer")
+            }
+
+    @property
     @memoized
     def sort_order(self):
         return [ReportOrderByFactory.from_spec(e) for e in self.sort_expression]

@@ -1,11 +1,28 @@
 {% extends "style/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load compress %}
+
+{% block stylesheets %}{{ block.super }}
+    {% compress css %}
+        <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'leaflet/dist/leaflet.css' %}" />
+    {% endcompress %}
+{% endblock stylesheets %}
 
 {% block js %}{{ block.super }}
     <script src="{% new_static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
     <script src="{% new_static 'reports_core/js/choice-list-api.js' %}"></script>
     <script src="{% new_static 'reports_core/js/charts.js' %}"></script>
+    <script src="{% new_static 'reports_core/js/maps.js' %}"></script>
+    <script src="{% new_static 'leaflet/dist/leaflet.js' %}"></script>
+{% endblock %}
+
+{% block head %}{{ block.super }}
+    <style>
+        #map-container {
+            height: 500px;
+        }
+    </style>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -23,6 +40,14 @@
                 charts.render(chartSpecs, data.aaData, $("#chart-container"));
             }
         };
+
+        var mapSpec = {{ report.spec.map_config|JSON }};
+        var updateMap = function (data) {
+            if (mapSpec !== null) {
+                maps.render(mapSpec, data.aaData, $("#map-container"));
+            }
+        };
+
         var reportTables = new HQReportDataTables({
             dataTableElem: '#report_table_{{ report.slug }}',
             paginationType: 'bs_normal',
@@ -44,7 +69,7 @@
                 fixColsNumLeft: {{ report_table.left_col.fixed.num }},
                 fixColsWidth: {{ report_table.left_col.fixed.width }},
             {% endif %}
-            extraCallbacks: [updateCharts]
+            extraCallbacks: [updateCharts, updateMap]
         });
         $('#report-filters').submit(function(event) {
             $('#reportHint').remove();
@@ -177,6 +202,8 @@
     <div id="reportContent" class="hide">
         {% block reportcharts %}
         <section id="chart-container" style="display: none;">
+        </section>
+        <section id="map-container" style="display: none;" >
         </section>
         {% endblock %}
         {% block reporttable %}

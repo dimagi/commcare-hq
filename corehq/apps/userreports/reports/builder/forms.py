@@ -665,6 +665,7 @@ class ConfigureNewReportBase(forms.Form):
             self.existing_report.config_id = data_source_config_id
 
         self.existing_report.aggregation_columns = self._report_aggregation_cols
+        self.existing_report.location_column = self._report_location_col
         self.existing_report.columns = self._report_columns
         self.existing_report.filters = self._report_filters
         self.existing_report.configured_charts = self._report_charts
@@ -783,6 +784,10 @@ class ConfigureNewReportBase(forms.Form):
     @property
     def _report_aggregation_cols(self):
         return ['doc_id']
+
+    @property
+    def _report_location_col(self):
+        return None
 
     @property
     def _report_columns(self):
@@ -1178,11 +1183,6 @@ class ConfigureMapReportForm(ConfigureListReportForm):
         )
 
     @property
-    def _report_charts(self):
-        # Override the behavior inherited from ConfigureBarChartReportForm
-        return []
-
-    @property
     @memoized
     def initial_columns(self):
         columns = super(ConfigureMapReportForm, self).initial_columns
@@ -1198,6 +1198,10 @@ class ConfigureMapReportForm(ConfigureListReportForm):
     @property
     def location_field(self):
         return self.cleaned_data["location"]
+
+    @property
+    def _report_location_col(self):
+        return self.data_source_properties[self.location_field].column_id
 
     @property
     def _report_columns(self):
