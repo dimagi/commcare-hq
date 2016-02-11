@@ -40,9 +40,9 @@ var COMMCAREHQ = (function () {
                 }
             }
         },
-        SaveButton: makeSaveButton({SAVE: 'Save', SAVING: 'Saving...', SAVED: 'Saved', RETRY: 'Try Again',
+        SaveButton: _makeSaveButton({SAVE: 'Save', SAVING: 'Saving...', SAVED: 'Saved', RETRY: 'Try Again',
     ERROR_SAVING: 'There was an error saving'}, 'btn btn-success'),
-        DeleteButton: makeSaveButton({SAVE: 'Delete', SAVING: 'Deleting...', SAVED: 'Deleted', RETRY: 'Try Again',
+        DeleteButton: _makeSaveButton({SAVE: 'Delete', SAVING: 'Deleting...', SAVED: 'Deleted', RETRY: 'Try Again',
     ERROR_SAVING: 'There was an error deleting'}, 'btn btn-danger')
     };
 }());
@@ -69,7 +69,7 @@ var eventize = function (that) {
     return that;
 };
 
-function makeSaveButton(messageStrings, cssClass) {
+function _makeSaveButton(messageStrings, cssClass) {
     var SaveButton = {
         /*
          options: {
