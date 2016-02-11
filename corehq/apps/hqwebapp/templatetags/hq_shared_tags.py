@@ -348,6 +348,7 @@ class CaptureasNode(template.Node):
         context[self.varname] = output
         return ''
 
+
 @register.simple_tag
 def chevron(value):
     """
