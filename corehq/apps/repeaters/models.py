@@ -490,14 +490,14 @@ class RepeatRecord(Document, LockableMixIn):
         except ResourceNotFound:
             # this repeater is pointing at a missing document
             # quarantine it and tell it to stop trying.
-            logging.exception('Repeater {} in domain {} references a missing or deleted document!'.format(
+            logging.exception(u'Repeater {} in domain {} references a missing or deleted document!'.format(
                 self._id, self.domain,
             ))
             self.doc_type = self.doc_type + '-Failed'
             self.save()
         except IgnoreDocument:
             # this repeater is pointing at a document with no payload
-            logging.info('Repeater {} in domain {} references a document with no payload'.format(
+            logging.info(u'Repeater {} in domain {} references a document with no payload'.format(
                 self._id, self.domain,
             ))
             # Mark it succeeded so that we don't try again
