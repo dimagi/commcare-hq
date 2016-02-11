@@ -73,6 +73,7 @@ from corehq.apps.userreports.ui.forms import (
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
 from corehq.util.couch import get_document_or_404
 
 from couchexport.export import export_from_tables
@@ -145,7 +146,12 @@ class ReportBuilderView(BaseDomainView):
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
         if has_report_builder_access(request):
-            return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
+            report_type = kwargs.get('report_type', None)
+            domain = kwargs.get('domain', None)
+            if report_type != 'map' or REPORT_BUILDER_MAP_REPORTS.enabled(domain):
+                return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
+            else:
+                raise Http404
         else:
             raise Http404
 
@@ -204,7 +210,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
     @property
     def tiles(self):
         analytics_workflow_label = "Clicked on Report Builder Tile"
-        return [
+        tiles = [
             TileConfiguration(
                 title=_('Chart'),
                 slug='chart',
@@ -249,7 +255,9 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 help_text=_('A table of aggregated data from form submissions or case properties.'
                             ' You choose the columns and rows.'),
             ),
-            TileConfiguration(
+        ]
+        if REPORT_BUILDER_MAP_REPORTS.enabled(self.domain):
+            tiles.append(TileConfiguration(
                 title=_('Map'),
                 slug='map',
                 analytics_usage_label="Map",
@@ -259,8 +267,8 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 url=reverse('report_builder_select_source', args=[self.domain, 'map']),
                 help_text=_('A map to show data from your cases or forms.'
                             ' You choose the property to map.'),
-            ),
-        ]
+            ))
+        return tiles
 
 
 class ReportBuilderDataSourceSelect(ReportBuilderView):
