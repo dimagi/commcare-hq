@@ -1,6 +1,7 @@
 import random
 import datetime
 import string
+from collections import namedtuple
 from decimal import Decimal
 
 from dimagi.utils.data import generator as data_gen
@@ -31,6 +32,8 @@ OTHER_COUNTRY_CODES = (31, 40, 245, 502)
 
 DIRECTIONS = [INCOMING, OUTGOING]
 
+CountryPrefixPair = namedtuple('CountryPrefixPair', ['country_code', 'prefix'])
+
 
 def arbitrary_message():
     return random.choice(SMS_MESSAGE_CONTENT)
@@ -41,8 +44,7 @@ def arbitrary_fee():
 
 
 def arbitrary_country_code_and_prefixes(country_codes=TEST_COUNTRY_CODES):
-    country_codes_and_prefixes = []
-    for country_code in country_codes:
+    def _generate_prefixes(country_code):
         prefixes = [""]
         for _ in range(8):
             for i in range(4):
@@ -51,9 +53,11 @@ def arbitrary_country_code_and_prefixes(country_codes=TEST_COUNTRY_CODES):
                     if prefix not in prefixes:
                         prefixes.append(prefix)
                         break
-        for prefix in prefixes:
-            country_codes_and_prefixes.append((str(country_code), prefix))
-    return country_codes_and_prefixes
+    return [
+        CountryPrefixPair(str(country_code), prefix)
+        for country_code in country_codes
+        for prefix in _generate_prefixes(country_code)
+    ]
 
 
 def arbitrary_fees_by_prefix(backend_ids, country_codes_and_prefixes):
