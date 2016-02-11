@@ -7,7 +7,7 @@ from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.products.models import SQLProduct, Product
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
-from corehq.apps.sms.tests.util import setup_default_sms_test_backend
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from custom.ewsghana.models import FacilityInCharge, EWSExtension
 from custom.ewsghana.reminders import STOCK_ON_HAND_REMINDER, SECOND_STOCK_ON_HAND_REMINDER, \
     SECOND_INCOMPLETE_SOH_REMINDER, STOCKOUT_REPORT, THIRD_STOCK_ON_HAND_REMINDER, INCOMPLETE_SOH_TO_SUPER
@@ -153,11 +153,10 @@ class TestReminders(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        delete_domain_phone_numbers(TEST_DOMAIN)
         cls.user1.delete()
         cls.user2.delete()
         cls.user3.delete()
-        for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
-            vn.delete()
 
         cls.sms_backend_mapping.delete()
         cls.backend.delete()

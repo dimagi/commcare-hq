@@ -10,7 +10,7 @@ from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.sms.tests.util import setup_default_sms_test_backend
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser
 from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge
 from custom.ewsghana.utils import prepare_domain, bootstrap_user
@@ -169,6 +169,7 @@ class EWSScriptTest(TestScript):
 
     @classmethod
     def tearDownClass(cls):
+        delete_domain_phone_numbers(TEST_DOMAIN)
         CommCareUser.get_by_username('stella').delete()
         CommCareUser.get_by_username('super').delete()
         FacilityInCharge.objects.all().delete()
