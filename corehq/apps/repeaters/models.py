@@ -26,6 +26,8 @@ from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.post import simple_post
 from dimagi.utils.couch import LockableMixIn
 
+from .const import MAX_RETRY_WAIT, MIN_RETRY_WAIT
+
 
 repeater_types = {}
 
@@ -175,6 +177,10 @@ class RegisterGenerator(object):
 
 
 class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
+    """
+    Represents the configuration of a repeater. Will specify the URL to forward to and
+    other properties of the configuration.
+    """
     base_doc = 'Repeater'
 
     domain = StringProperty()
@@ -461,8 +467,10 @@ class RepeatRecord(Document, LockableMixIn):
         if self.last_checked:
             window = self.next_check - self.last_checked
             window += (window // 2)  # window *= 1.5
-        if window < timedelta(minutes=60):
-            window = timedelta(minutes=60)
+        if window < MIN_RETRY_WAIT:
+            window = MIN_RETRY_WAIT
+        elif window > MAX_RETRY_WAIT:
+            window = MAX_RETRY_WAIT
 
         self.last_checked = now
         self.next_check = self.last_checked + window
