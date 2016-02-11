@@ -1,0 +1,20 @@
+# app tester sample
+---
+login:
+  domain: nhproject
+  username: nhooper@dimagi.com
+  lang: en
+  app: 8c6abc640d5c3d0a1881243e111539ce
+
+tests:
+  - Mobile worker should be able to register a case:
+      result: success
+      modules:
+        - Registration:
+            forms:
+              - http://openrosa.org/formdesigner/11FAC65A-F2CD-427F-A870-CF126336AAB5:
+                  answers:
+                    welcome_message:
+                    name: Joe Bloggs
+                    sample_choice_question: choice1
+                    sample_number_question: 1

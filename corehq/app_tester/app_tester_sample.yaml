@@ -1,0 +1,39 @@
+# app tester sample
+---
+login:
+  domain: nhproject
+  username: nhooper@dimagi.com
+  lang: en
+  app: Case Management
+
+tests:
+  - Mobile worker should be able to register a case:
+      result: success
+      modules:
+        - Registration:
+            forms:
+              - Registration:
+                  answers:
+                    welcome_message:
+                    name: Joe Bloggs
+                    sample_choice_question: choice1
+                    sample_number_question: 1
+  - Invalid choice should fail:
+      result: failure
+      modules:
+        - Registration:
+            forms:
+              - Registration:
+                  answers:
+                    welcome_message:
+                    name: Joe Bloggs
+                    sample_choice_question: choice1
+                    sample_number_question: 1
+        - Follow Up:
+            case: Joe Bloggs
+            forms:
+              - Visit:
+                  answers:
+                    welcome_message:
+                    sample_choice_question: not_a_valid_choice
+                    sample_number_question: 1
