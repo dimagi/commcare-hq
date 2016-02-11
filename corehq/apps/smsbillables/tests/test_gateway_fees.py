@@ -21,7 +21,7 @@ class TestGatewayFee(TestCase):
         self.country_code_fees = generator.arbitrary_fees_by_country()
         self.instance_fees = generator.arbitrary_fees_by_backend_instance(self.backend_ids)
         self.most_specific_fees = generator.arbitrary_fees_by_all(self.backend_ids)
-        self.country_code_and_prefixes = generator.arbitrary_country_code_and_prefixes()
+        self.country_code_and_prefixes = generator.arbitrary_country_code_and_prefixes(8, 4)
         self.prefix_fees = generator.arbitrary_fees_by_prefix(self.backend_ids, self.country_code_and_prefixes)
 
         self.other_currency = generator.arbitrary_currency()
