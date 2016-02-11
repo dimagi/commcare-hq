@@ -20,6 +20,8 @@ from corehq.apps.accounting import generator
 class TestSubscriptionProperties(TestCase):
     @classmethod
     def setUpClass(cls):
+        generator.instantiate_accounting_for_tests()
+
         cls.base_domain = Domain(name="base", is_active=True)
         cls.base_domain.save()
         cls.user = WebUser.create(cls.base_domain.name, "tarso", "*****")
@@ -39,8 +41,6 @@ class TestSubscriptionProperties(TestCase):
 
     @classmethod
     def _setup_subscription(cls, domain_name, software_plan):
-        generator.instantiate_accounting_for_tests()
-
         plan = DefaultProductPlan.get_default_plan_by_domain(
             domain_name, edition=software_plan
         )
