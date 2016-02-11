@@ -60,11 +60,7 @@
         <th>{% trans "Performing users" %}</th>
         <td>{{ last_month.performing }}</td>
         <td>
-            {% if last_month.delta_performing_pct > 0 %}
-                <span class="glyphicon glyphicon-chevron-up" style="color: #006400;"> </span>
-            {% elif last_month.delta_performing_pct < 0 %}
-                <span class="glyphicon glyphicon-chevron-down" style="color: #8b0000;"> </span>
-            {% endif %}
+            {% chevron last_month.delta_performing_pct %}
             {{ last_month.delta_performing_pct|floatformat }} %
         </td>
     </tr>
@@ -72,11 +68,7 @@
         <th>{% trans "All active users" %}</th>
         <td>{{ last_month.active }}</td>
         <td>
-            {% if last_month.delta_active_pct > 0 %}
-                <span class="glyphicon glyphicon-chevron-up" style="color: #006400;"> </span>
-            {% elif last_month.delta_active_pct < 0 %}
-                <span class="glyphicon glyphicon-chevron-down" style="color: #8b0000;"> </span>
-            {% endif %}
+            {% chevron last_month.delta_active_pct %}
             {{ last_month.delta_active_pct|floatformat }} %
         </td>
     </tr>
