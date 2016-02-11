@@ -16,6 +16,12 @@
     'use strict';
     var telerivetSetupApp = angular.module('telerivetSetupApp', ['ngRoute', 'ng.django.rmi']);
 
+    var globalApiKey = '';
+    var globalProjectId = '';
+    var globalPhoneId = '';
+    var globalTestPhoneNumber = '';
+    var globalTestSMSSent = false;
+
     telerivetSetupApp.config(['$httpProvider', function($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
@@ -35,6 +41,55 @@
     });
 
     telerivetSetupApp.controller('TelerivetSetupController', function($scope, djangoRMI) {
+        $scope.apiKey = globalApiKey;
+        $scope.projectId = globalProjectId;
+        $scope.phoneId = globalPhoneId;
+        $scope.testPhoneNumber = globalTestPhoneNumber;
+        $scope.testSMSSent = globalTestSMSSent;
+        $scope.showApiKeyGeneration = false;
+        $scope.showApiInfoLocation = false;
+        $scope.showAddWebookNavigation = false;
+        $scope.showWebhookDetails = false;
+
+        $scope.toggleApiInfoLocation = function() {
+            $scope.showApiInfoLocation = !$scope.showApiInfoLocation;
+        };
+
+        $scope.toggleApiKeyGeneration = function() {
+            $scope.showApiKeyGeneration = !$scope.showApiKeyGeneration;
+        };
+
+        $scope.toggleAddWebookNavigation = function() {
+            $scope.showAddWebookNavigation = !$scope.showAddWebookNavigation;
+        };
+
+        $scope.toggleWebhookDetails = function() {
+            $scope.showWebhookDetails = !$scope.showWebhookDetails;
+        };
+
+        $scope.sendTestSMS = function() {
+            $scope.testSMSSent = true;
+        };
+
+        // TODO: Figure out if there's a better way to deal with these scope issues
+        $scope.$watch('apiKey', function(newValue, oldValue) {
+            globalApiKey = newValue;
+            $scope.testSMSSent = false;
+        });
+        $scope.$watch('projectId', function(newValue, oldValue) {
+            globalProjectId = newValue;
+            $scope.testSMSSent = false;
+        });
+        $scope.$watch('phoneId', function(newValue, oldValue) {
+            globalPhoneId = newValue;
+            $scope.testSMSSent = false;
+        });
+        $scope.$watch('testPhoneNumber', function(newValue, oldValue) {
+            globalTestPhoneNumber = newValue;
+        });
+        $scope.$watch('testSMSSent', function(newValue, oldValue) {
+            globalTestSMSSent = newValue;
+        });
     });
 }(window.angular));
 </script>
@@ -42,20 +97,182 @@
 
 
 {% block page_content %}
-<div ng-app="telerivetSetupApp" ng-controller="TelerivetSetupController" ng-cloak>
+<div ng-app="telerivetSetupApp">
     <script type="text/ng-template" id="step1.tpl">
-        Step 1
+        <h2>{% trans "Step 1. Download Telerivet App" %}</h2>
+        <div ng-controller="TelerivetSetupController" ng-cloak>
+            <ol>
+                <li>
+                    <p>
+                        {% blocktrans %}
+                        If you have not already done so, create an account at <a target="_blank" href="https://www.telerivet.com">www.telerivet.com</a>.
+                        Be sure to give your Telerivet project a name:
+                        {% endblocktrans %}
+                    </p>
+                    <p>
+                        <img src="{% new_static 'telerivet/img/update_project_name.png' %}" />
+                    </p>
+                </li>
+                <li>
+                    <p>
+                        {% blocktrans %}
+                        On your Android phone, go to <a target="_blank" href="https://telerivet.com/app">telerivet.com/app</a> and download the Telerivet App.</li>
+                        {% endblocktrans %}
+                    </p>
+                </li>
+                <li>
+                    <p>
+                        {% blocktrans %}
+                        Open the Telerivet App on your Android phone and log in.
+                        {% endblocktrans %}
+                    </p>
+                </li>
+                <li>
+                    <p>
+                        {% blocktrans %}
+                        Follow the instructions in the Telerivet App to connect the Android phone to your Telerivet project.
+                        {% endblocktrans %}
+                    </p>
+                </li>
+            </ol>
+        </div>
+        <div class="row">
+            <a class="btn btn-primary col-sm-2" href="#/step2">
+                {% trans "Continue" %}
+                <span class="glyphicon glyphicon-chevron-right" />
+            </a>
+        </div>
     </script>
     <script type="text/ng-template" id="step2.tpl">
-        Step 2
+        <h2>{% trans "Step 2. Connect Outgoing SMS" %}</h2>
+        <div ng-controller="TelerivetSetupController" ng-cloak>
+            <ol>
+                <li>
+                    <div>
+                        <p>
+                            {% blocktrans %}
+                            Generate an API key for your Telerivet account if you have not already done so.
+                            <a href="#/step2" ng-hide="showApiKeyGeneration" ng-click="toggleApiKeyGeneration();">Show</a>
+                            <a href="#/step2" ng-show="showApiKeyGeneration" ng-click="toggleApiKeyGeneration();">Hide</a>
+                            how to do this.
+                            {% endblocktrans %}
+                        </p>
+                        <p ng-show="showApiKeyGeneration">
+                            <img src="{% new_static 'telerivet/img/generate_api_key.png' %}" />
+                        </p>
+                    </div>
+                </li>
+                <li>
+                    <div>
+                        <p>
+                            {% blocktrans %}
+                            On that same page, make note of your API Key, Project ID, and Phone ID, and enter them below.
+                            <a href="#/step2" ng-hide="showApiInfoLocation" ng-click="toggleApiInfoLocation();">Show</a>
+                            <a href="#/step2" ng-show="showApiInfoLocation" ng-click="toggleApiInfoLocation();">Hide</a>
+                            where to find this.
+                            {% endblocktrans %}
+                        </p>
+                        <p class="help-block" ng-show="showApiInfoLocation">
+                            {% blocktrans %}
+                            <i class="fa fa-info-circle" /> You may need to click "Show" to view your API Key.
+                            {% endblocktrans %}
+                        </p>
+                        <p ng-show="showApiInfoLocation">
+                            <img src="{% new_static 'telerivet/img/api_settings.png' %}" />
+                        </p>
+                    </div>
+                    <div class="row">
+                        {% crispy outgoing_sms_form %}
+                    </div>
+                </li>
+                <li>
+                    <div>
+                        <p>
+                            {% blocktrans %}
+                            Enter the phone number of a different phone below and click Send to send a test SMS from CommCareHQ.
+                            {% endblocktrans %}
+                        </p>
+                        <p class="help-block">
+                            {% blocktrans %}
+                            <i class="fa fa-info-circle" />
+                            This phone number should be different from the Telerivet Android phone number.
+                            Please enter in international format, starting with the country code, digits only.
+                            {% endblocktrans %}
+                        </p>
+                        <div class="row">
+                            {% crispy test_sms_form %}
+                        </div>
+                    </div>
+                </li>
+                <li ng-show="testSMSSent">
+                    <div>
+                        <p>
+                            {% blocktrans %}
+                            Did you receive the test SMS?
+                            {% endblocktrans %}
+                        </p>
+                        <div class="row">
+                            <button class="btn btn-default col-sm-2">
+                                {% trans "No, Troubleshoot" %}
+                            </button>
+                            <a class="btn btn-primary col-sm-2" href="#/step3">
+                                {% trans "Yes, Continue" %}
+                                <span class="glyphicon glyphicon-chevron-right" />
+                            </a>
+                        </div>
+                    </div>
+                </li>
+            </ol>
+        </div>
     </script>
     <script type="text/ng-template" id="step3.tpl">
-        Step 3
+        <h2>{% trans "Step 3. Connect Incoming SMS" %}</h2>
+        <div ng-controller="TelerivetSetupController" ng-cloak>
+            <ol>
+                <li>
+                    <div>
+                        <p>
+                            {% blocktrans %}
+                            Navigate to the Add Webhook Service page in Telerivet.
+                            <a href="#/step3" ng-hide="showAddWebookNavigation" ng-click="toggleAddWebookNavigation();">Show</a>
+                            <a href="#/step3" ng-show="showAddWebookNavigation" ng-click="toggleAddWebookNavigation();">Hide</a>
+                            how to do this.
+                            {% endblocktrans %}
+                        </p>
+                        <p class="help-block" ng-show="showAddWebookNavigation">
+                            {% blocktrans %}
+                            <i class="fa fa-info-circle" /> You may need to click "Add New Service" in the top-right corner of the page.
+                            {% endblocktrans %}
+                        </p>
+                        <p ng-show="showAddWebookNavigation">
+                            <img src="{% new_static 'telerivet/img/add_webhook_service.png' %}" />
+                        </p>
+                    </div>
+                </li>
+                <li>
+                    <div>
+                        <p>
+                            {% blocktrans %}
+                            Enter the details below.
+                            <a href="#/step3" ng-hide="showWebhookDetails" ng-click="toggleWebhookDetails();">Show</a>
+                            <a href="#/step3" ng-show="showWebhookDetails" ng-click="toggleWebhookDetails();">Hide</a>
+                            where to add these fields.
+                            {% endblocktrans %}
+                        </p>
+                        <p ng-show="showWebhookDetails">
+                            <img src="{% new_static 'telerivet/img/webhook_detail_screen.png' %}" />
+                        </p>
+                    </div>
+                    <div class="row">
+                        <p><strong>Service Name:</strong> CommCareHQ</p>
+                        <p><strong>Webhook URL:</strong> {{ webhook_url }}</p>
+                        <p><strong>Webhook Secret:</strong> {{ webhook_secret}}</p>
+                    </div>
+                </li>
+            </ol>
+        </div>
     </script>
     <div>
-        <a href="#/step1">Step1</a>
-        <a href="#/step2">Step2</a>
-        <a href="#/step3">Step3</a>
         <div ng-view></div>
     </div>
 </div>

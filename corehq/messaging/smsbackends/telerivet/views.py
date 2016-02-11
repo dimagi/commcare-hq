@@ -7,6 +7,8 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
 from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message
+from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSForm,
+    TelerivetPhoneNumberForm)
 
 
 # Tuple of (hq field name, telerivet field name) tuples
@@ -47,7 +49,10 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
 
     @property
     def page_context(self):
-        return {}
+        return {
+            'outgoing_sms_form': TelerivetOutgoingSMSForm(),
+            'test_sms_form': TelerivetPhoneNumberForm(),
+        }
 
     @allow_remote_invocation
     def test(self):
