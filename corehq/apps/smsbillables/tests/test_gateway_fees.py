@@ -156,7 +156,7 @@ class TestGatewayFee(TestCase):
         self.create_prefix_gateway_fees()
 
         for phone_number, prefix in generator.arbitrary_phone_numbers_and_prefixes(
-                self.country_code_and_prefixes
+            self.country_code_and_prefixes
         ):
             messages = generator.arbitrary_messages_by_backend_and_direction(
                 {
