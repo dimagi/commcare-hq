@@ -110,7 +110,7 @@ def delete_all_accounts():
     Currency.objects.all().delete()
 
 
-def subscribable_plan(edition=SoftwarePlanEdition.ADVANCED):
+def subscribable_plan(edition=SoftwarePlanEdition.STANDARD):
     return DefaultProductPlan.objects.get(
         edition=edition,
         product_type=SoftwareProductType.COMMCARE,
