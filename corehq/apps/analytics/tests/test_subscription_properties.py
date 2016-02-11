@@ -58,7 +58,7 @@ class TestSubscriptionProperties(TestCase):
         cls._to_delete.append(subscription)
 
     @classmethod
-    def tesrDownClass(cls):
+    def tearDownClass(cls):
         SubscriptionAdjustment.objects.all().delete()
         for obj in [cls.base_domain, cls.community, cls.enterprise] + cls._to_delete:
             obj.delete()
