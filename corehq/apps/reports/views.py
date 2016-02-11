@@ -1638,14 +1638,6 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
         return start, end
 
 
-@login_and_domain_required
-@permission_required("is_superuser")
-def clear_report_caches(request, domain):
-    print "CLEARING CACHE FOR DOMAIN", domain
-    print "ALL CACHES", cache.all()
-    return HttpResponse("TESTING")
-
-
 @require_case_view_permission
 @login_and_domain_required
 @require_GET
