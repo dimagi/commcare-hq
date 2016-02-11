@@ -5,6 +5,7 @@ from django.utils.translation import ugettext_noop
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.standard import ProjectReport
+from corehq.apps.style.decorators import use_nvd3, use_bootstrap3
 from corehq.apps.users.util import user_id_to_username, raw_username
 from dimagi.ext import jsonobject
 from dimagi.utils.dates import add_months
@@ -97,15 +98,19 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             return sorted(dropouts, key=lambda userstub: userstub.username)
 
 
-class ProjectHealthDashboard(ProjectReport, GenericReportView):
+class ProjectHealthDashboard(ProjectReport):
     slug = 'project_health'
     name = ugettext_noop("Project Health")
     is_bootstrap3 = True
     base_template = "reports/project_health/project_health_dashboard.html"
 
+    @use_bootstrap3
+    @use_nvd3
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        pass
+
     @property
     def template_context(self):
-        self.request.use_nvd3 = True
         now = datetime.datetime.utcnow()
         rows = []
         last_month_summary = None
