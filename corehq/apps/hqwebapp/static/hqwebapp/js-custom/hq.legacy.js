@@ -184,10 +184,6 @@ function makeSaveButton(messageStrings, cssClass) {
 
     return SaveButton;
 }
-SaveButton = makeSaveButton({SAVE: 'Save', SAVING: 'Saving...', SAVED: 'Saved', RETRY: 'Try Again',
-    ERROR_SAVING: 'There was an error saving'}, 'btn btn-success');
-DeleteButton = makeSaveButton({SAVE: 'Delete', SAVING: 'Deleting...', SAVED: 'Deleted', RETRY: 'Try Again',
-    ERROR_SAVING: 'There was an error deleting'}, 'btn btn-danger');
 
 // thanks to http://stackoverflow.com/questions/1149454/non-ajax-get-post-using-jquery-plugin
 // thanks to http://stackoverflow.com/questions/1131630/javascript-jquery-param-inverse-function#1131658
