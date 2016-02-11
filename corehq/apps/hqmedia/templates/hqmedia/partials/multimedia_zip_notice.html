@@ -1,8 +1,12 @@
 {% load i18n %}
 {% if multimedia_state.has_media %}
-    <p>{% blocktrans %}This .zip file is structured to match the multimedia paths referenced in your CommCare Application.{% endblocktrans %}</p>
+    <p class="help-block">
+        {% blocktrans %}
+            This .zip file is structured to match the multimedia paths referenced in your CommCare Application.
+        {% endblocktrans %}
+    </p>
     <p>
-        <a class="btn btn-warning" style="color: #ffffff;"
+        <a class="btn btn-warning"
             {% if include_modal %}
                 href="#multimedia-zip-modal" data-toggle="modal" onclick="download_application_zip()"
             }
