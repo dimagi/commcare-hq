@@ -262,7 +262,7 @@ class DataSourceBuilder(object):
             return self._get_data_source_properties_from_case(self.case_properties)
 
         if self.source_type == 'form':
-            return self._get_data_source_properties_from_form(self.source_xform)
+            return self._get_data_source_properties_from_form(self.source_form, self.source_xform)
 
     @classmethod
     def _get_data_source_properties_from_case(cls, case_properties):
@@ -306,9 +306,9 @@ class DataSourceBuilder(object):
         )
 
     @staticmethod
-    def _get_data_source_properties_from_form(xform):
+    def _get_data_source_properties_from_form(form, form_xml):
         properties = OrderedDict()
-        questions = xform.get_questions([])
+        questions = form_xml.get_questions([])
         for question in questions:
             properties[question['value']] = DataSourceProperty(
                 type="question",
@@ -324,6 +324,14 @@ class DataSourceBuilder(object):
                 column_id=get_column_name(prop[0].strip("/")),
                 text=prop[0],
                 source=prop,
+            )
+        if form.get_app().auto_gps_capture:
+            properties['location'] = DataSourceProperty(
+                type="meta",
+                id='location',
+                column_id=get_column_name('location'),
+                text='location',
+                source=(['location', '#text'], 'Text'),
             )
         return properties
 
@@ -1128,3 +1136,85 @@ class ConfigureWorkerReportForm(ConfigureTableReportForm):
             self.column_fieldset,
             self.filter_fieldset
         )
+
+
+class ConfigureMapReportForm(ConfigureListReportForm):
+    report_type = 'map'
+    location = forms.ChoiceField(label="Location field")
+
+    def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
+        super(ConfigureMapReportForm, self).__init__(
+            report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs
+        )
+        if self.source_type == "form":
+            self.fields['location'].widget = QuestionSelect(attrs={'class': 'input-large'})
+        else:
+            self.fields['location'].widget = Select2(attrs={'class': 'input-large'})
+        self.fields['location'].choices = self._location_choices
+
+        # Set initial value of location
+        if self.existing_report:
+            existing_location_col = existing_report.location_column
+            if existing_location_col:
+                self.fields['location'].initial = self._get_property_from_column(existing_location_col[0])
+
+    @property
+    def _location_choices(self):
+        return [(p.id, p.text) for p in self.data_source_properties.values()]
+
+    @property
+    def container_fieldset(self):
+        return crispy.Fieldset(
+            "",
+            self.column_fieldset,
+            crispy.Fieldset(
+                _legend(
+                    _("Location"),
+                    _('Choose which property represents the location.'),
+                ),
+                'location',
+            ),
+            self.filter_fieldset
+        )
+
+    @property
+    def _report_charts(self):
+        # Override the behavior inherited from ConfigureBarChartReportForm
+        return []
+
+    @property
+    @memoized
+    def initial_columns(self):
+        columns = super(ConfigureMapReportForm, self).initial_columns
+
+        # Remove the location indicator from the columns.
+        # It gets removed because we want it to be a column in the report,
+        # but we don't want it to appear in the builder.
+        if self.existing_report:
+            location_property = self._get_property_from_column(self.existing_report.location_column)
+            return [c for c in columns if c.property != location_property]
+        return columns
+
+    @property
+    def location_field(self):
+        return self.cleaned_data["location"]
+
+    @property
+    def _report_columns(self):
+        loc_field_id = self.data_source_properties[self.location_field].column_id
+        loc_field_text = self.data_source_properties[self.location_field].text
+
+        columns = super(ConfigureMapReportForm, self)._report_columns
+
+        # Add the location indicator to the columns if it's not already present.
+        displaying_loc_column = bool([c for c in columns if c['field'] == loc_field_id])
+        if not displaying_loc_column:
+            columns = columns + [{
+                'format': 'default',
+                'aggregation': 'simple',
+                "type": "field",
+                'field': loc_field_id,
+                'display': loc_field_text
+            }]
+
+        return columns

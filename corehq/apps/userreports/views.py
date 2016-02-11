@@ -51,8 +51,8 @@ from corehq.apps.userreports.reports.builder.forms import (
     DataSourceForm,
     ConfigureBarChartReportForm,
     ConfigureListReportForm,
-    ConfigureWorkerReportForm
-)
+    ConfigureWorkerReportForm,
+    ConfigureMapReportForm)
 from corehq.apps.userreports.models import (
     ReportConfiguration,
     DataSourceConfiguration,
@@ -203,12 +203,13 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
 
     @property
     def tiles(self):
+        analytics_workflow_label = "Clicked on Report Builder Tile"
         return [
             TileConfiguration(
                 title=_('Chart'),
                 slug='chart',
                 analytics_usage_label="Chart",
-                analytics_workflow_label="Clicked on Report Builder Tile",
+                analytics_workflow_label=analytics_workflow_label,
                 icon='fcc fcc-piegraph-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'chart']),
@@ -219,7 +220,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Form or Case List'),
                 slug='form-or-case-list',
                 analytics_usage_label="List",
-                analytics_workflow_label="Clicked on Report Builder Tile",
+                analytics_workflow_label=analytics_workflow_label,
                 icon='fcc fcc-form-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'list']),
@@ -230,7 +231,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Worker Report'),
                 slug='worker-report',
                 analytics_usage_label="Worker",
-                analytics_workflow_label="Clicked on Report Builder Tile",
+                analytics_workflow_label=analytics_workflow_label,
                 icon='fcc fcc-user-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'worker']),
@@ -241,12 +242,23 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Data Table'),
                 slug='data-table',
                 analytics_usage_label="Table",
-                analytics_workflow_label="Clicked on Report Builder Tile",
+                analytics_workflow_label=analytics_workflow_label,
                 icon='fcc fcc-datatable-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'table']),
                 help_text=_('A table of aggregated data from form submissions or case properties.'
                             ' You choose the columns and rows.'),
+            ),
+            TileConfiguration(
+                title=_('Map'),
+                slug='map',
+                analytics_usage_label="Map",
+                analytics_workflow_label=analytics_workflow_label,
+                icon='fcc',
+                context_processor_class=IconContext,
+                url=reverse('report_builder_select_source', args=[self.domain, 'map']),
+                help_text=_('A map to show data from your cases or forms.'
+                            ' You choose the property to map.'),
             ),
         ]
 
@@ -284,6 +296,7 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'chart': 'configure_chart_report',
                 'table': 'configure_table_report',
                 'worker': 'configure_worker_report',
+                'map': 'configure_map_report',
             }
             url_name = url_names_map[self.report_type]
             get_params = {
@@ -315,7 +328,8 @@ class EditReportInBuilder(View):
                 'chart': ConfigureChartReport,
                 'list': ConfigureListReport,
                 'worker': ConfigureWorkerReport,
-                'table': ConfigureTableReport
+                'table': ConfigureTableReport,
+                'map': ConfigureMapReport,
             }[report.report_meta.builder_report_type]
             try:
                 return view_class.as_view(existing_report=report)(request, *args, **kwargs)
@@ -431,6 +445,16 @@ class ConfigureWorkerReport(ConfigureChartReport):
     @memoized
     def configuration_form_class(self):
         return ConfigureWorkerReportForm
+
+
+class ConfigureMapReport(ConfigureChartReport):
+    report_title = ugettext_noop("Map Report: {}")
+    report_type = 'map'
+
+    @property
+    @memoized
+    def configuration_form_class(self):
+        return ConfigureMapReportForm
 
 
 def _edit_report_shared(request, domain, config, read_only=False):

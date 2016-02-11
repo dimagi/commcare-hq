@@ -291,7 +291,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 class ReportMeta(DocumentSchema):
     # `True` if this report was initially constructed by the report builder.
     created_by_builder = BooleanProperty(default=False)
-    builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker'])
+    builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker', 'map'])
 
 
 class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
@@ -304,6 +304,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     title = StringProperty()
     description = StringProperty()
     aggregation_columns = StringListProperty()
+    location_column = StringProperty()
     filters = ListProperty()
     columns = ListProperty()
     configured_charts = ListProperty()

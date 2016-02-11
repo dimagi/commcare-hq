@@ -183,8 +183,8 @@ def make_form_meta_block_indicator(spec, column_id=None):
     ret = {
         "type": "raw",
         "column_id": column_id,
-        "property_path": ['form', 'meta'] + [field_name],
-        "display_name": field_name,
+        "property_path": ['form', 'meta'] + list(field_name),
+        "display_name": list(field_name)[0],
         "datatype": get_form_indicator_data_type(data_type),
     }
     return ret
