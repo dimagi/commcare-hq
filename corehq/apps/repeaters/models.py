@@ -452,13 +452,13 @@ class RepeatRecord(Document, LockableMixIn):
         return self.repeater.get_url(self)
 
     @property
-    def status(self):
-        status = RECORD_PENDING_STATE
+    def state(self):
+        state = RECORD_PENDING_STATE
         if self.succeeded:
-            status = RECORD_SUCCESS_STATE
+            state = RECORD_SUCCESS_STATE
         elif self.failure_reason:
-            status = RECORD_FAILURE_STATE
-        return status
+            state = RECORD_FAILURE_STATE
+        return state
 
     @classmethod
     def all(cls, domain=None, due_before=None, limit=None):

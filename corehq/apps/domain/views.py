@@ -104,7 +104,15 @@ from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
 from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
     RepeatRecord, repeater_types, RegisterGenerator
-from corehq.apps.repeaters.dbaccessors import get_repeat_records
+from corehq.apps.repeaters.dbaccessors import (
+    get_paged_repeat_records,
+    get_repeat_record_count,
+)
+from corehq.apps.repeaters.const import (
+    RECORD_FAILURE_STATE,
+    RECORD_PENDING_STATE,
+    RECORD_SUCCESS_STATE,
+)
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -2087,10 +2095,13 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     section_name = 'Domain Reports'
     slug = 'repeat_record_report'
     dispatcher = DomainReportDispatcher
+    # ajax_pagination = True
+    asynchronous = False
     is_bootstrap3 = True
 
     fields = [
-        'corehq.apps.reports.filters.select.RepeaterFilter'
+        'corehq.apps.reports.filters.select.RepeaterFilter',
+        'corehq.apps.reports.filters.select.RepeatRecordStateFilter',
     ]
 
     @use_datatables
@@ -2122,15 +2133,46 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         </button>
         '''.format(record_id)
 
+    def _make_state_label(self, record):
+        label_cls = ''
+        label_text = ''
+
+        if record.state == RECORD_SUCCESS_STATE:
+            label_cls = 'success'
+            label_text = _('Success')
+        elif record.state == RECORD_PENDING_STATE:
+            label_cls = 'warning'
+            label_text = _('Pending')
+        elif record.state == RECORD_FAILURE_STATE:
+            label_cls = 'danger'
+            label_text = _('Failed')
+
+        return '''
+        <span class="label label-{}">
+            {}
+        </span>
+        '''.format(label_cls, label_text)
+
+    @property
+    def total_records(self):
+        return get_repeat_record_count(self.domain, self.repeater_id, self.state)
+
     @property
     def rows(self):
-        repeater_id = self.request.GET.get('repeater', None)
-        records = get_repeat_records(self.domain, repeater_id=repeater_id)
+        self.repeater_id = self.request.GET.get('repeater', None)
+        self.state = self.request.GET.get('record_state', None)
+        records = get_paged_repeat_records(
+            self.domain,
+            self.pagination.start,
+            self.pagination.count,
+            repeater_id=self.repeater_id,
+            state=self.state
+        )
         return map(
             lambda record: [
-                record.status,
+                self._make_state_label(record),
                 record.url,
-                record.next_check,
+                record.next_check.strftime('%b %m, %Y %H:%M') if record.next_check else None,
                 self._make_view_payload_button(record.get_id),
                 self._make_resend_payload_button(record.get_id),
             ],

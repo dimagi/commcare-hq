@@ -12,6 +12,11 @@ from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseMultipleOptionFilter
 from corehq.apps.repeaters.dbaccessors import get_repeaters_by_domain
+from corehq.apps.repeaters.const import (
+    RECORD_FAILURE_STATE,
+    RECORD_SUCCESS_STATE,
+    RECORD_PENDING_STATE,
+)
 
 
 class GroupFilterMixin(object):
@@ -128,3 +133,17 @@ class RepeaterFilter(BaseSingleOptionFilter):
             )),
             repeaters,
         )
+
+
+class RepeatRecordStateFilter(BaseSingleOptionFilter):
+    slug = "record_state"
+    label = ugettext_lazy("Record Status")
+    default_text = ugettext_lazy("Show All")
+
+    @property
+    def options(self):
+        return [
+            (RECORD_SUCCESS_STATE, _("Successful")),
+            (RECORD_PENDING_STATE, _("Pending")),
+            (RECORD_FAILURE_STATE, _("Failed")),
+        ]
