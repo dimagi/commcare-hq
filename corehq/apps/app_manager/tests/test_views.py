@@ -230,10 +230,18 @@ class TestTemplateAppViews(TestCase):
         self.assertTrue(redirect_location.endswith(expected))
         self.addCleanup(lambda: Application.get_db().delete_doc(app_id))
 
-    def test_app_from_template(self):
+    def test_case_management_app_from_template(self):
         response = self.client.get(reverse('app_from_template', kwargs={
             'domain': self.domain.name,
             'slug': 'case_management'
+        }), follow=False)
+
+        self._check_response(response)
+
+    def test_survey_app_from_template(self):
+        response = self.client.get(reverse('app_from_template', kwargs={
+            'domain': self.domain.name,
+            'slug': 'survey'
         }), follow=False)
 
         self._check_response(response)
