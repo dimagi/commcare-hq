@@ -11,6 +11,7 @@ from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseMultipleOptionFilter
+from corehq.apps.repeaters.dbaccessors import get_repeaters_by_domain
 
 
 class GroupFilterMixin(object):
@@ -109,3 +110,21 @@ class MultiCaseGroupFilter(BaseMultipleOptionFilter):
     @property
     def options(self):
         return get_case_group_meta_in_domain(self.domain)
+
+
+class RepeaterFilter(BaseSingleOptionFilter):
+    slug = 'repeater'
+    label = ugettext_lazy('Repeater')
+    default_text = ugettext_lazy("All Repeaters")
+    placeholder = ugettext_lazy('Click to select repeaters')
+
+    @property
+    def options(self):
+        repeaters = get_repeaters_by_domain(self.domain)
+        return map(
+            lambda repeater: (repeater.get_id, '{}: {}'.format(
+                repeater.doc_type,
+                repeater.url,
+            )),
+            repeaters,
+        )

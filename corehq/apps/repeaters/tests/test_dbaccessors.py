@@ -4,11 +4,13 @@ from corehq.apps.repeaters.dbaccessors import (
     get_pending_repeat_record_count,
     get_success_repeat_record_count,
     get_failure_repeat_record_count,
+    get_repeaters_by_domain,
+    get_repeat_records,
 )
-from corehq.apps.repeaters.models import RepeatRecord
+from corehq.apps.repeaters.models import RepeatRecord, CaseRepeater
 
 
-class TestDBAccessors(TestCase):
+class TestRepeatRecordDBAccessors(TestCase):
     dependent_apps = ['corehq.apps.repeaters', 'corehq.couchapps']
     repeater_id = '1234'
     domain = 'test-domain'
@@ -56,3 +58,34 @@ class TestDBAccessors(TestCase):
     def test_get_failure_repeat_record_count(self):
         count = get_failure_repeat_record_count(self.domain, self.repeater_id)
         self.assertEqual(count, 1)
+
+    def test_get_repeat_records(self):
+        records = get_repeat_records(self.domain)
+        self.assertEqual(len(records), 3)
+
+
+class TestRepeatersDBAccessors(TestCase):
+    dependent_apps = ['corehq.apps.repeaters', 'corehq.couchapps']
+    domain = 'test-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        repeater = CaseRepeater(
+            domain=cls.domain,
+        )
+        cls.repeaters = [
+            repeater
+        ]
+
+        for repeater in cls.repeaters:
+            repeater.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        for repeater in cls.repeaters:
+            repeater.save()
+
+    def test_get_repeaters_by_domain(self):
+        repeaters = get_repeaters_by_domain(self.domain)
+        self.assertEqual(len(repeaters), 1)
+        self.assertEqual(repeaters[0].__class__, CaseRepeater)

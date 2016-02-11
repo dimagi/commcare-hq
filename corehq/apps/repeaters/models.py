@@ -31,7 +31,13 @@ from .dbaccessors import (
     get_failure_repeat_record_count,
     get_success_repeat_record_count,
 )
-from .const import MAX_RETRY_WAIT, MIN_RETRY_WAIT
+from .const import (
+    MAX_RETRY_WAIT,
+    MIN_RETRY_WAIT,
+    RECORD_FAILURE_STATE,
+    RECORD_SUCCESS_STATE,
+    RECORD_PENDING_STATE,
+)
 
 
 repeater_types = {}
@@ -42,7 +48,7 @@ def register_repeater_type(cls):
     return cls
 
 
-def simple_post_with_cached_timeout(data, url, expiry=60 * 60, *args, **kwargs):
+def simple_post_with_cached_timeout(data, url, expiry=60 * 60, force_send=False, *args, **kwargs):
     # no control characters (e.g. '/') in keys
     key = hashlib.md5(
         '{0} timeout {1}'.format(__name__, url)
@@ -50,9 +56,9 @@ def simple_post_with_cached_timeout(data, url, expiry=60 * 60, *args, **kwargs):
 
     cache_value = cache.get(key)
 
-    if cache_value == 'timeout':
+    if cache_value == 'timeout' and not force_send:
         raise socket.timeout('recently timed out, not retrying')
-    elif cache_value == 'error':
+    elif cache_value == 'error' and not force_send:
         raise socket.timeout('recently errored, not retrying')
 
     try:
@@ -445,6 +451,15 @@ class RepeatRecord(Document, LockableMixIn):
     def url(self):
         return self.repeater.get_url(self)
 
+    @property
+    def status(self):
+        status = RECORD_PENDING_STATE
+        if self.succeeded:
+            status = RECORD_SUCCESS_STATE
+        elif self.failure_reason:
+            status = RECORD_FAILURE_STATE
+        return status
+
     @classmethod
     def all(cls, domain=None, due_before=None, limit=None):
         json_now = json_format_datetime(due_before or datetime.utcnow())
@@ -498,7 +513,7 @@ class RepeatRecord(Document, LockableMixIn):
     def get_payload(self):
         return self.repeater.get_payload(self)
 
-    def fire(self, max_tries=3, post_fn=None):
+    def fire(self, max_tries=3, post_fn=None, force_send=False):
         try:
             payload = self.get_payload()
         except ResourceNotFound:
@@ -519,16 +534,18 @@ class RepeatRecord(Document, LockableMixIn):
         else:
             post_fn = post_fn or simple_post_with_cached_timeout
             headers = self.repeater.get_headers(self)
-            if self.try_now():
+            if self.try_now() or force_send:
                 # we don't use celery's version of retry because
                 # we want to override the success/fail each try
                 failure_reason = None
                 for i in range(max_tries):
                     try:
-                        resp = post_fn(payload, self.url, headers=headers)
+                        resp = post_fn(payload, self.url, headers=headers, force_send=force_send)
                         if 200 <= resp.status_code < 300:
                             self.update_success()
                             break
+                        else:
+                            failure_reason = u'{}: {}'.format(resp.status_code, resp.reason)
                     except Exception, e:
                         failure_reason = unicode(e)
 

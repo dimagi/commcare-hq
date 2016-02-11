@@ -31,8 +31,16 @@ from custom.dhis2.models import Dhis2Settings
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui, \
-    use_jquery_ui_multiselect, use_select2
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_jquery_ui,
+    use_jquery_ui_multiselect,
+    use_select2,
+    use_datatables,
+    use_daterangepicker,
+    use_select2,
+    use_jquery_ui,
+)
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
@@ -96,6 +104,10 @@ from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
 from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
     RepeatRecord, repeater_types, RegisterGenerator
+from corehq.apps.repeaters.dbaccessors import get_repeat_records
+from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.dispatcher import DomainReportDispatcher
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from dimagi.utils.post import simple_post
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -2067,6 +2079,73 @@ class RepeaterMixin(object):
             'ShortFormRepeater': _("Form Stubs"),
             'AppStructureRepeater': _("App Schema Changes"),
         }
+
+
+class DomainForwardingRepeatRecords(GenericTabularReport):
+    name = 'Repeat Records'
+    base_template = 'domain/repeat_record_report.html'
+    section_name = 'Domain Reports'
+    slug = 'repeat_record_report'
+    dispatcher = DomainReportDispatcher
+    is_bootstrap3 = True
+
+    fields = [
+        'corehq.apps.reports.filters.select.RepeaterFilter'
+    ]
+
+    @use_datatables
+    @use_bootstrap3
+    @use_daterangepicker
+    @use_select2
+    @use_jquery_ui
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        pass
+
+    def _make_view_payload_button(self, record_id):
+        return '''
+        <a
+            class="btn btn-default"
+            role="button"
+            data-record-id={}
+            data-toggle="modal"
+            data-target="#view-record-payload-modal">
+            View Payload
+        </a>
+        '''.format(record_id)
+
+    def _make_resend_payload_button(self, record_id):
+        return '''
+        <button
+            class="btn btn-default resend-record-payload"
+            data-record-id={}>
+            Resend Payload
+        </button>
+        '''.format(record_id)
+
+    @property
+    def rows(self):
+        repeater_id = self.request.GET.get('repeater', None)
+        records = get_repeat_records(self.domain, repeater_id=repeater_id)
+        return map(
+            lambda record: [
+                record.status,
+                record.url,
+                record.next_check,
+                self._make_view_payload_button(record.get_id),
+                self._make_resend_payload_button(record.get_id),
+            ],
+            records
+        )
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn('Status'),
+            DataTablesColumn('URL'),
+            DataTablesColumn('Retry Date'),
+            DataTablesColumn('View payload'),
+            DataTablesColumn('Resend'),
+        )
 
 
 class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
