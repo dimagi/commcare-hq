@@ -16,6 +16,13 @@ from corehq.apps.reports.generic import (GenericTabularReport,
                                          ElasticProjectInspectionReport)
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin
 from corehq.apps.reports.util import datespan_from_beginning
+from corehq.apps.style.decorators import (
+    use_jquery_ui,
+    use_bootstrap3,
+    use_datatables,
+    use_select2,
+    use_daterangepicker,
+)
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.toggles import SUPPORT
 from dimagi.utils.decorators.memoized import memoized
@@ -30,6 +37,22 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
     ajax_pagination = True
     fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
+    is_bootstrap3 = True
+
+    @use_jquery_ui
+    @use_bootstrap3
+    @use_datatables
+    @use_select2
+    @use_daterangepicker
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        pass
+
+    def get_user_link(self, user):
+        user_link = self.get_raw_user_link(user)
+        return self.table_cell(user.raw_username, user_link)
+
+    def get_raw_user_link(self, user):
+        raise NotImplementedError
 
 
 class SubmitHistoryMixin(ElasticProjectInspectionReport,
@@ -165,6 +188,15 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
 
 
 class SubmitHistory(SubmitHistoryMixin, ProjectReport):
+    is_bootstrap3 = True
+
+    @use_jquery_ui
+    @use_bootstrap3
+    @use_datatables
+    @use_select2
+    @use_daterangepicker
+    def set_bootstrap3_status(self, request, *args, **kwargs):
+        pass
 
     @property
     def show_extra_columns(self):
