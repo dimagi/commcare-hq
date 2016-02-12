@@ -2095,7 +2095,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     section_name = 'Domain Reports'
     slug = 'repeat_record_report'
     dispatcher = DomainReportDispatcher
-    # ajax_pagination = True
+    ajax_pagination = True
     asynchronous = False
     is_bootstrap3 = True
 
@@ -2156,6 +2156,13 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     @property
     def total_records(self):
         return get_repeat_record_count(self.domain, self.repeater_id, self.state)
+
+    @property
+    def shared_pagination_GET_params(self):
+        return [
+            {'name': 'repeater', 'value': self.request.GET.get('repeater')},
+            {'name': 'record_state', 'value': self.request.GET.get('record_state')},
+        ]
 
     @property
     def rows(self):
