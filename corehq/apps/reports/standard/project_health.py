@@ -155,7 +155,7 @@ class ProjectHealthDashboard(ProjectReport):
 
     @use_nvd3
     def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        pass
+        super(ProjectHealthDashboard, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     @property
     def template_context(self):
