@@ -7,6 +7,7 @@ function (doc) {
             state = 'FAIL';
         }
         emit([doc.domain, doc.repeater_id, state], null);
+        emit([doc.domain, null, state], null);
     }
 }
 

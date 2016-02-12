@@ -41,27 +41,24 @@ def get_repeat_record_count(domain, repeater_id=None, state=None):
 
 def get_paged_repeat_records(domain, skip, limit, repeater_id=None, state=None):
     from .models import RepeatRecord
-    startkey = [domain]
-    endkey = [domain, {}]
+    kwargs = {
+        'include_docs': True,
+        'reduce': False,
+        'limit': limit,
+        'skip': skip,
+    }
 
     if repeater_id and not state:
-        startkey = [domain, repeater_id]
-        endkey = [domain, repeater_id, {}]
+        kwargs['startkey'] = [domain, repeater_id]
+        kwargs['endkey'] = [domain, repeater_id, {}]
     elif repeater_id and state:
-        startkey = [domain, repeater_id, state]
-        endkey = [domain, repeater_id, state]
+        kwargs['startkey'] = [domain, repeater_id, state]
+        kwargs['endkey'] = [domain, repeater_id, state]
     elif not repeater_id and state:
-        ids = sorted(_get_repeater_ids_by_domain(domain))
-        startkey = [domain, ids[0], state]
-        endkey = [domain, ids[-1], state]
+        kwargs['key'] = [domain, None, state]
 
     results = RepeatRecord.get_db().view('receiverwrapper/repeat_records',
-        startkey=startkey,
-        endkey=endkey,
-        include_docs=True,
-        reduce=False,
-        limit=limit,
-        skip=skip,
+        **kwargs
     ).all()
 
     return [RepeatRecord.wrap(result['doc']) for result in results]
@@ -90,4 +87,4 @@ def _get_repeater_ids_by_domain(domain):
         reduce=False,
     ).all()
 
-    return [result['_id'] for result in results]
+    return [result['id'] for result in results]

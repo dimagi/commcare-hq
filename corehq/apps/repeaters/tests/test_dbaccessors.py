@@ -81,7 +81,7 @@ class TestRepeatRecordDBAccessors(TestCase):
                 'corehq.apps.repeaters.dbaccessors._get_repeater_ids_by_domain',
                 return_value=[self.repeater_id, self.other_id]):
             records = get_paged_repeat_records(self.domain, 0, 10, state=RECORD_PENDING_STATE)
-        self.assertEqual(len(records), 3)
+        self.assertEqual(len(records), 2)
 
 
 class TestRepeatersDBAccessors(TestCase):
