@@ -13,6 +13,12 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
+            model_name='xformattachmentsql',
+            name='properties',
+            field=json_field.fields.JSONField(default=dict, help_text='Enter a valid JSON object'),
+            preserve_default=True,
+        ),
+        migrations.AddField(
             model_name='caseattachmentsql',
             name='attachment_from',
             field=models.TextField(null=True),
@@ -20,7 +26,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='caseattachmentsql',
-            name='attachment_properties',
+            name='properties',
             field=json_field.fields.JSONField(default=dict, help_text='Enter a valid JSON object'),
             preserve_default=True,
         ),

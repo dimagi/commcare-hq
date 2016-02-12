@@ -31,7 +31,7 @@ from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
-from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, CaseAttachmentMixin
+from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, CaseAttachmentMixin, IsImageMixin
 from .exceptions import AttachmentNotFound, AccessRestricted
 
 XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
@@ -329,6 +329,8 @@ class AbstractAttachment(DisabledDbMixin, models.Model):
     # RFC-1864-compliant Content-MD5 header value
     md5 = models.CharField(max_length=255)
 
+    properties = JSONField(lazy=True, default=dict)
+
     def write_content(self, content):
         if not self.name:
             raise InvalidAttachment("cannot save attachment without name")
@@ -364,7 +366,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model):
         abstract = True
 
 
-class XFormAttachmentSQL(AbstractAttachment):
+class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
     objects = RestrictedManager()
     _attachment_prefix = 'form'
 

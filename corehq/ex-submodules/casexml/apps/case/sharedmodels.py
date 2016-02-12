@@ -61,6 +61,10 @@ class CommCareCaseAttachment(LooselyEqualDocumentSchema, CaseAttachmentMixin, Un
     attachment_size = IntegerProperty()  # file size
     attachment_properties = DictProperty()  # width, height, other relevant metadata
 
+    @property
+    def content_type(self):
+        return self.server_mime
+
     @classmethod
     def from_case_index_update(cls, attachment):
         if attachment.attachment_src:

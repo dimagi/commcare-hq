@@ -161,13 +161,15 @@ class AbstractSupplyInterface(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
 
-class CaseAttachmentMixin(object):
+class IsImageMixin(object):
     @property
     def is_image(self):
-        if self.server_mime is None:
+        if self.content_type is None:
             return None
-        return True if self.server_mime.startswith('image/') else False
+        return True if self.content_type.startswith('image/') else False
 
+
+class CaseAttachmentMixin(IsImageMixin):
     @property
     def is_present(self):
         """

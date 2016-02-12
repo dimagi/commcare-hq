@@ -68,6 +68,7 @@ def base_attachment_fields(attachment):
         adapt(attachment.md5).getquoted(),
         adapt(attachment.content_length).getquoted(),
         adapt(attachment.blob_id).getquoted(),
+        adapt(json.dumps(attachment.properties, cls=JSONEncoder)).getquoted(),
     ]
 
 def form_attachment_adapter(attachment):
