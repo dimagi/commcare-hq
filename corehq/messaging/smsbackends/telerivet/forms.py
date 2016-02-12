@@ -5,8 +5,18 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, Field, Div, HTML
 from dimagi.utils.django.fields import TrimmedCharField
 from django.core.exceptions import ValidationError
+from django.forms.fields import ChoiceField
 from django.forms.forms import Form
 from django.utils.translation import ugettext as _, ugettext_lazy
+
+
+YES = 'Y'
+NO = 'N'
+
+YES_NO_CHOICES = (
+    (YES, ugettext_lazy("Yes")),
+    (NO, ugettext_lazy("No")),
+)
 
 
 class TelerivetBackendForm(BackendForm):
@@ -109,6 +119,42 @@ class TelerivetPhoneNumberForm(Form):
                         HTML('<button class="btn btn-success" ng-click="sendTestSMS();">%s</button>' %
                              _('Send'))
                     )
+                )
+            )
+        )
+
+
+class FinalizeGatewaySetupForm(Form):
+    name = TrimmedCharField(
+        label=ugettext_lazy("Name"),
+        required=True
+    )
+    set_as_default = ChoiceField(
+        label=ugettext_lazy("Set as default gateway?"),
+        choices=YES_NO_CHOICES,
+        required=True
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(FinalizeGatewaySetupForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-3 col-md-2'
+        self.helper.layout = Layout(
+            Fieldset(
+                _("Finalize Gateway Setup"),
+                Field(
+                    'name',
+                    ng_model='name',
+                ),
+                Field(
+                    'set_as_default',
+                    ng_model='setAsDefault',
+                ),
+                Div(
+                    HTML('<button class="btn btn-primary" ng-click="createBackend();">%s</button>' %
+                         _('Finish'))
                 )
             )
         )

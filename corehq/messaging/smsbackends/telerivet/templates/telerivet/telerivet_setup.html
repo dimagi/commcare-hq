@@ -37,6 +37,7 @@
             .when('/step1', {templateUrl: 'step1.tpl'})
             .when('/step2', {templateUrl: 'step2.tpl'})
             .when('/step3', {templateUrl: 'step3.tpl'})
+            .when('/finish', {templateUrl: 'finish.tpl'})
             .otherwise({redirectTo: '/step1'});
     });
 
@@ -54,6 +55,8 @@
         $scope.pollingErrorOccurred = false;
         $scope.inboundSMSReceived = false;
         $scope.inboundWaitTimedOut = false;
+        $scope.name = '';
+        $scope.setAsDefault = '';
 
         $scope.toggleApiInfoLocation = function() {
             $scope.showApiInfoLocation = !$scope.showApiInfoLocation;
@@ -80,6 +83,9 @@
                 request_token: '{{ request_token }}',
             });
             $scope.testSMSSent = true;
+        };
+
+        $scope.createBackend = function() {
         };
 
         $scope.getLastInboundSMS = function() {
@@ -354,6 +360,22 @@
                     </div>
                 </li>
             </ol>
+        </div>
+    </script>
+    <script type="text/ng-template" id="finish.tpl">
+        <h2>{% trans "Success!" %}</h2>
+        <div ng-controller="TelerivetSetupController" ng-cloak>
+            <div>
+                <p>
+                {% blocktrans %}
+                Now that you have verified that inbound and outbound SMS are functioning, all that's left is to
+                choose a name for this gateway below and click Finish.
+                {% endblocktrans %}
+                </p>
+            </div>
+            <div>
+                {% crispy finalize_gateway_form %}
+            </div>
         </div>
     </script>
     <div>

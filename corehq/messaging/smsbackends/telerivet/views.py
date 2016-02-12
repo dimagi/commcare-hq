@@ -5,7 +5,7 @@ from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
 from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message
 from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSForm,
-    TelerivetPhoneNumberForm)
+    TelerivetPhoneNumberForm, FinalizeGatewaySetupForm)
 from corehq.messaging.smsbackends.telerivet.models import IncomingRequest, SQLTelerivetBackend
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -85,6 +85,7 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
         return {
             'outgoing_sms_form': TelerivetOutgoingSMSForm(),
             'test_sms_form': TelerivetPhoneNumberForm(),
+            'finalize_gateway_form': FinalizeGatewaySetupForm(),
             'webhook_url': absolute_reverse('telerivet_in'),
             'webhook_secret': webhook_secret,
             'request_token': request_token,
