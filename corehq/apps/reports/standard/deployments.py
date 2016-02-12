@@ -39,14 +39,6 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
     Base class for all deployments reports
     """
     is_bootstrap3 = True
-
-    @use_jquery_ui
-    @use_bootstrap3
-    @use_datatables
-    @use_select2
-    @use_daterangepicker
-    def set_bootstrap3_status(self, request, *args, **kwargs):
-        pass
    
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
