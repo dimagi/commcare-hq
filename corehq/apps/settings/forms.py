@@ -222,4 +222,3 @@ class HQEmptyForm(forms.Form):
                 )
             )
         )
-

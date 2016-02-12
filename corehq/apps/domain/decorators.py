@@ -1,7 +1,6 @@
 # Standard Library imports
 from functools import wraps
 import logging
-import json
 from base64 import b64decode
 
 # Django imports
@@ -9,7 +8,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden, HttpResponse, JsonResponse
+from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden, JsonResponse
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
 from django.utils.http import urlquote

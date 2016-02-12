@@ -32,12 +32,8 @@ from django.template import loader
 from django.template.context import RequestContext
 from django.template.response import TemplateResponse
 from restkit import Resource
-from two_factor.views import LoginView, SetupView
-from two_factor.forms import (
-    AuthenticationTokenForm, BackupTokenForm, MethodForm,
-    TOTPDeviceForm, PhoneNumberForm, PhoneNumberForm,
-    DeviceValidationForm
-)
+from two_factor.views import LoginView
+from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 
 
 from corehq.apps.accounting.models import Subscription
