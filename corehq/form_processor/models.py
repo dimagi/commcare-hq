@@ -644,6 +644,13 @@ class CaseAttachmentSQL(AbstractAttachment):
         'CommCareCaseSQL', to_field='case_id', db_index=True,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
+    identifier = models.CharField(max_length=255)
+    attachment_src = models.TextField(null=True)
+    attachment_from = models.TextField(null=True)
+    server_mime = models.CharField(max_length=255, null=True)
+
+    attachment_size = models.IntegerField(null=True)
+    attachment_properties = JSONField(lazy=True, default=dict)
 
     class Meta:
         db_table = CaseAttachmentSQL_DB_TABLE
