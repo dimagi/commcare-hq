@@ -64,7 +64,6 @@ branches:
   - finish-two-factor # Cal 1/21
   - show-form-case-refs-in-summary # j$ 1/29
   - legacy-be-gone # Noah 2/12
-  - fix-compress # Jenny 2/12
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
