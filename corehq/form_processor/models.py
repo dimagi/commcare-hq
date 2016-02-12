@@ -1,5 +1,6 @@
 import hashlib
 import json
+import mimetypes
 import os
 from collections import (
     namedtuple,
@@ -651,6 +652,24 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
 
     attachment_size = models.IntegerField(null=True)
     attachment_properties = JSONField(lazy=True, default=dict)
+
+    @classmethod
+    def from_case_update(cls, attachment):
+        if attachment.attachment_src:
+            guessed = mimetypes.guess_type(attachment.attachment_src)
+            if len(guessed) > 0 and guessed[0] is not None:
+                mime_type = guessed[0]
+            else:
+                mime_type = None
+
+            ret = cls(name=attachment.attachment_name,
+                      identifier=attachment.identifier,
+                      attachment_src=attachment.attachment_src,
+                      attachment_from=attachment.attachment_from,
+                      server_mime=mime_type)
+        else:
+            ret = cls(name=attachment.identifier, identifier=attachment.identifier)
+        return ret
 
     class Meta:
         db_table = CaseAttachmentSQL_DB_TABLE
