@@ -33,6 +33,12 @@
 
 .accordion-multimedia {
     .panel-heading {
+        cursor: pointer;
+
+        &:hover {
+            background-color: @cc-bg;
+        }
+
         a:hover {
             text-decoration: none;
         }
@@ -40,7 +46,6 @@
         h1, h3 {
             margin: 0;
             color: @cc-brand-low;
-            cursor: pointer;
         }
 
         h1 {
