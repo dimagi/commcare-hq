@@ -1,0 +1,67 @@
+{% load i18n %}
+
+<!-- Handle app manager's multimedia management page -->
+<script>
+    $(function () {
+        var multimedia_tab = (function () {
+            var self = {};
+            self.load_state = ko.observable(null);
+            self.multimedia_page_html = ko.observable('');
+            self.load_if_necessary = function () {
+                if (!self.load_state() || self.load_state() === 'error') {
+                    self.load_state('loading');
+                    $.ajax({
+                        url: '{% url 'app_multimedia_ajax' domain app.get_id %}'
+                    }).success(function (content) {
+                        self.load_state('loaded');
+                        self.multimedia_page_html(content);
+                    }).error(function () {
+                        alert('Oops, there was a problem loading this section. Please try again.');
+                        self.load_state('error');
+                    });
+                }
+            };
+            return self;
+        }());
+        $("#multimedia").koApplyBindings(multimedia_tab);
+        $('#multimedia-shower').on('show.bs.tab', function () {
+            if (multimedia_tab.load_state() === null) {
+                multimedia_tab.load_if_necessary();
+            }
+        });
+
+        var loaded = {
+            download: true, // initially loaded by the ajax call, multimedia_ajax, that loads the whole page
+            upload: false,
+            references: false,
+        };
+        var urls = {
+            download: '{% url 'app_multimedia_ajax_download' domain app.get_id %}',
+            upload: '{% url 'app_multimedia_ajax_upload' domain app.get_id %}',
+            references: '{% url 'app_multimedia_ajax_references' domain app.get_id %}',
+        };
+        _.each(_.keys(urls), function(tab) {
+            $("#multimedia").on("show.bs.tab", "a[href='#multimedia-" + tab + "-tab']", function() {
+                if (!loaded[tab]) {
+                    var $content = $('#multimedia-' + tab + '-tab .container-fluid');
+                    _.delay(function() {
+                        if (!loaded[tab]) {
+                            $content.html($("#hq-loading").html());
+                        }
+                    }, 500);
+                    $.ajax({
+                        url: urls[tab],
+                    }).success(function(content) {
+                        loaded[tab] = true;
+                        $content.html(content);
+                    }).error(function() {
+                        loaded[tab] = false;
+                        $content.html('<div class="alert alert-danger">'
+                            + '{% trans "Oops, there was a problem loading this section. Please try again." %}'
+                            + '</div>');
+                    });
+                }
+            });
+        });
+    });
+</script>
