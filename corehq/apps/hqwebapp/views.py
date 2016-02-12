@@ -196,12 +196,14 @@ def redirect_to_default(req, domain=None):
                     url = reverse('landing_page')
             else:
                 url = reverse('landing_page')
-    elif domain and Domain.get_by_name(domain).two_factor_auth and not req.user.is_verified():
-        return TemplateResponse(
-            request=req,
-            template='two_factor/core/otp_required.html',
-            status=403,
-        )
+    elif domain:
+        domain = Domain.get_by_name(normalize_domain_name(domain))
+        if domain.two_factor_auth and not req.user.is_verified():
+            return TemplateResponse(
+                request=req,
+                template='two_factor/core/otp_required.html',
+                status=403,
+            )
     else:
         if domain:
             domain = normalize_domain_name(domain)
