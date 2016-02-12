@@ -31,6 +31,7 @@
             isExportAll: {{ report.is_export_all|JSON }},
             isEmailable: {{ report.is_emailable|JSON }},
             emailDefaultSubject: {{ report.title|JSON }},
+            filterSubmitSelector: '#apply-filters',
             emailSuccessMessage: "{% trans 'Report successfully emailed' %}",
             emailErrorMessage: "{% trans 'An error occurred emailing your report. Please try again.' %}",
 
@@ -104,6 +105,7 @@
                             {% block report_filter_actions %}
                                 <div class="{{ report_filter_form_action_css_class }}">
                                     <button type="submit" class="btn disabled"
+                                            disabled="disabled"
                                             data-loading-text="{% trans "Generating Report..." %}"
                                             data-standard-text="{% trans "Apply" %}"
                                             id="apply-btn">
