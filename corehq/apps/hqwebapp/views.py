@@ -196,14 +196,12 @@ def redirect_to_default(req, domain=None):
                     url = reverse('landing_page')
             else:
                 url = reverse('landing_page')
-    elif domain:
-        domain = Domain.get_by_name(normalize_domain_name(domain))
-        if domain.two_factor_auth and not req.user.is_verified():
-            return TemplateResponse(
-                request=req,
-                template='two_factor/core/otp_required.html',
-                status=403,
-            )
+    elif domain and _two_factor_needed(domain, req):
+        return TemplateResponse(
+            request=req,
+            template='two_factor/core/otp_required.html',
+            status=403,
+        )
     else:
         if domain:
             domain = normalize_domain_name(domain)
@@ -230,6 +228,11 @@ def redirect_to_default(req, domain=None):
             url = settings.DOMAIN_SELECT_URL
     return HttpResponseRedirect(url)
 
+def _two_factor_needed(domain_name, request):
+    domain_name = normalize_domain_name(domain_name)
+    domain = Domain.get_by_name(domain_name)
+    if domain:
+        return domain.two_factor_auth and not request.user.is_verified()
 
 def landing_page(req, template_name="home.html"):
     # this view, and the one below, is overridden because
