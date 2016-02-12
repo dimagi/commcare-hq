@@ -109,5 +109,10 @@
       {% include 'appstore/partials/bootstrap3/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
     </div>
   </div>
+  <script type="application/javascript">
+      $(function () {
+          projectMapInit('{{ MAPBOX_ACCESS_TOKEN }}');
+      });
+  </script>
 </body>
 </html>

@@ -343,7 +343,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     @property
     def map_config(self):
         def map_col(column):
-            if column.column_id != self.location_column_id:
+            if column['column_id'] != self.location_column_id:
                 return {
                     'column_id': column['column_id'],
                     'label': column['display']

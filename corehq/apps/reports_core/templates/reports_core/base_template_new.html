@@ -45,7 +45,8 @@
 
         var mapSpec = {{ report.spec.map_config|JSON }};
         var updateMap = function (data) {
-            if (mapSpec !== null) {
+            if (mapSpec) {
+                mapSpec.mapboxAccessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
                 maps.render(mapSpec, data.aaData, $("#map-container"));
             }
         };

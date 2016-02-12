@@ -3,15 +3,12 @@ var maps = (function() {
 
     fn.init_map = function (config, mapContainer) {
         if (!fn.hasOwnProperty('map')) {
-            //L.Icon.Default.imagePath = config.resourceUrl;
-
             fn.map = L.map(mapContainer, {trackResize: false}).setView([0, 0], 3);
             var mapId = 'mapbox.streets';
-            var accessToken = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA';
             L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
                 maxZoom: 18,
                 id: mapId,
-                accessToken: accessToken
+                accessToken: config.mapboxAccessToken
             }).addTo(fn.map);
             L.control.scale().addTo(fn.map);
 
