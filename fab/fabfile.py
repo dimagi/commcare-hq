@@ -416,6 +416,11 @@ def webworkers():
 
 
 @task
+def pillowtop():
+    env.supervisor_roles = ROLES_PILLOWTOP
+
+
+@task
 def remove_submodule_source(path):
     """
     Remove submodule source folder.
