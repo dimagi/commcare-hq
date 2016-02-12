@@ -59,13 +59,19 @@ def form_adapter(form):
     return _adapt_fields(fields, XFormInstanceSQL_DB_TABLE)
 
 
-def form_attachment_adapter(attachment):
-    fields = [
+def base_attachment_fields(attachment):
+    return [
         adapt(attachment.id).getquoted(),
         adapt(attachment.attachment_id).getquoted(),
         adapt(attachment.name).getquoted(),
         adapt(attachment.content_type).getquoted(),
         adapt(attachment.md5).getquoted(),
+        adapt(attachment.content_length).getquoted(),
+        adapt(attachment.blob_id).getquoted(),
+    ]
+
+def form_attachment_adapter(attachment):
+    fields = base_attachment_fields(attachment) + [
         adapt(attachment.form_id).getquoted(),
         adapt(attachment.blob_id).getquoted(),
         adapt(attachment.content_length).getquoted(),
@@ -98,12 +104,7 @@ def case_adapter(case):
 
 
 def case_attachment_adapter(attachment):
-    fields = [
-        adapt(attachment.id).getquoted(),
-        adapt(attachment.attachment_id).getquoted(),
-        adapt(attachment.name).getquoted(),
-        adapt(attachment.content_type).getquoted(),
-        adapt(attachment.md5).getquoted(),
+    fields = base_attachment_fields(attachment) + [
         adapt(attachment.case_id).getquoted(),
         adapt(attachment.blob_id).getquoted(),
         adapt(attachment.content_length).getquoted(),
