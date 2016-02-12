@@ -32,6 +32,7 @@
         </ul>
         <p><a href="{% url 'two_factor:phone_create' %}"
            class="btn btn-info">{% trans "Add Phone Number" %}</a></p>
+        <br/>
     </fieldset>
 
     <fieldset>
@@ -47,6 +48,7 @@
         </p>
         <p><a href="{% url 'two_factor:backup_tokens' %}"
               class="btn btn-info">{% trans "Show Codes" %}</a></p>
+        <br/>
     </fieldset>
 
     <fieldset>
@@ -55,6 +57,7 @@
           also disable two-factor authentication for your account.{% endblocktrans %}</p>
         <p><a class="btn btn-danger" href="{% url 'two_factor:disable' %}">
           {% trans "Disable Two-Factor Authentication" %}</a></p>
+        <br/>
     </fieldset>
     <fieldset>
         <legend>{% trans "New Phone" %}</legend>
@@ -65,6 +68,7 @@
         {% endblocktrans %}</p>
         <p><a class="btn btn-default" href="{% url 'new_phone' %}">
           {% trans "Set Up New Phone" %}</a></p>
+        <br/>
     </fieldset>
       {% else %}
       <fieldset>

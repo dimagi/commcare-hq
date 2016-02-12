@@ -228,11 +228,13 @@ def redirect_to_default(req, domain=None):
             url = settings.DOMAIN_SELECT_URL
     return HttpResponseRedirect(url)
 
+
 def _two_factor_needed(domain_name, request):
     domain_name = normalize_domain_name(domain_name)
     domain = Domain.get_by_name(domain_name)
     if domain:
         return domain.two_factor_auth and not request.user.is_verified()
+
 
 def landing_page(req, template_name="home.html"):
     # this view, and the one below, is overridden because
