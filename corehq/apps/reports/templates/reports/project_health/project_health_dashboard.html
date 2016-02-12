@@ -76,13 +76,13 @@
 <h1>{% trans "Performing / Active User Trends" %}</h1>
 <div id="chart"><svg></svg></div>
 <div class="col-md-4">
-    <h1>{% trans "Recently Non-Performing Users" %}</h1>
+    <h1>{% trans "Active, Non-Performing Users" %}</h1>
     {% with last_month.get_unhealthy_users as user_list %}
         {% include "reports/project_health/partials/user_list.html" %}
     {% endwith %}
 </div>
 <div class="col-md-4">
-    <h1>{% trans "Recently Inactive Users" %}</h1>
+    <h1>{% trans "Newly Inactive Users" %}</h1>
     {% with last_month.get_dropouts as user_list %}
         {% include "reports/project_health/partials/user_list.html" %}
     {% endwith %}
