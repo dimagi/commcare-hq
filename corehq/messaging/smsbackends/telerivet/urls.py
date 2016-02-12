@@ -3,7 +3,7 @@ from django.conf.urls import patterns, url
 
 
 urlpatterns = patterns('corehq.messaging.smsbackends.telerivet.views',
-    url(r'^in/?$', 'incoming_message', name='incoming_message'),
+    url(r'^in/?$', 'incoming_message', name='telerivet_in'),
 )
 
 

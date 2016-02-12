@@ -1,14 +1,18 @@
+import uuid
+from corehq.apps.sms.views import BaseMessagingSectionView
+from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
+from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message
+from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSForm,
+    TelerivetPhoneNumberForm)
+from corehq.messaging.smsbackends.telerivet.models import IncomingRequest
+from corehq.util.view_utils import absolute_reverse
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.utils.translation import ugettext_lazy
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
-from corehq.apps.sms.views import BaseMessagingSectionView
-from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
-from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message
-from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSForm,
-    TelerivetPhoneNumberForm)
 
 
 # Tuple of (hq field name, telerivet field name) tuples
@@ -47,21 +51,66 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
 
+    def get_cache_key(self, request_token):
+        return 'telerivet-setup-%s' % request_token
+
+    def set_cached_webook_secret(self, request_token, webhook_secret):
+        client = get_redis_client()
+        key = self.get_cache_key(request_token)
+        client.set(key, webhook_secret)
+        client.expire(key, 7 * 24 * 60 * 60)
+
+    def get_cached_webook_secret(self, request_token):
+        client = get_redis_client()
+        key = self.get_cache_key(request_token)
+        return client.get(key)
+
     @property
     def page_context(self):
+        # The webhook secret is a piece of data that is sent to hq on each
+        # Telerivet inbound request. It's used to tie an inbound request to
+        # a Telerivet backend.
+        webhook_secret = uuid.uuid4().hex
+
+        # The request token is only used for the purposes of using this UI to
+        # setup a Telerivet backend. We need a way to post the webhook_secret
+        # to create the backend, but we want hq to be the origin of the secret
+        # generation. So instead, the request_token resolves to the webhook_secret
+        # via a redis lookup which expires in 1 week.
+        request_token = uuid.uuid4().hex
+
+        self.set_cached_webook_secret(request_token, webhook_secret)
         return {
             'outgoing_sms_form': TelerivetOutgoingSMSForm(),
             'test_sms_form': TelerivetPhoneNumberForm(),
+            'webhook_url': absolute_reverse('telerivet_in'),
+            'webhook_secret': webhook_secret,
+            'request_token': request_token,
         }
 
     @allow_remote_invocation
-    def test(self):
-        return {}
+    def get_last_inbound_sms(self, data):
+        request_token = data.get('request_token')
+        if not request_token:
+            return {'success': False}
+
+        webhook_secret = self.get_cached_webook_secret(request_token)
+        if not webhook_secret:
+            return {'success': False}
+
+        result = IncomingRequest.get_last_sms_by_webhook_secret(webhook_secret)
+        if result:
+            return {
+                'success': True,
+                'found': True,
+            }
+        else:
+            return {
+                'success': True,
+                'found': False,
+            }
 
     @use_bootstrap3
     @use_angular_js
     def dispatch(self, *args, **kwargs):
         return super(TelerivetSetupView, self).dispatch(*args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        return HttpResponse()

@@ -50,6 +50,10 @@
         $scope.showApiInfoLocation = false;
         $scope.showAddWebookNavigation = false;
         $scope.showWebhookDetails = false;
+        $scope.pollForInboundSMS = false;
+        $scope.pollingErrorOccurred = false;
+        $scope.inboundSMSReceived = false;
+        $scope.inboundWaitTimedOut = false;
 
         $scope.toggleApiInfoLocation = function() {
             $scope.showApiInfoLocation = !$scope.showApiInfoLocation;
@@ -69,6 +73,37 @@
 
         $scope.sendTestSMS = function() {
             $scope.testSMSSent = true;
+        };
+
+        $scope.getLastInboundSMS = function() {
+            djangoRMI.get_last_inbound_sms({
+                request_token: '{{ request_token }}',
+            })
+            .success(function(data) {
+                if(data.success) {
+                    if(data.found) {
+                        $scope.inboundSMSReceived = true;
+                    } else {
+                        setTimeout($scope.getLastInboundSMS, 10000);
+                    }
+                } else {
+                    $scope.pollingErrorOccurred = true;
+                }
+            })
+            .error(function() {
+                // This is just an http error, for example, rather than
+                // something like a missing request token, so just retry it.
+                setTimeout($scope.getLastInboundSMS, 10000);
+            });
+        };
+
+        $scope.startInboundPolling = function() {
+            $scope.pollForInboundSMS = true;
+            $scope.inboundWaitTimedOut = false;
+            setTimeout(function() {
+                $scope.inboundWaitTimedOut = true;
+            }, 60000);
+            $scope.getLastInboundSMS();
         };
 
         // TODO: Figure out if there's a better way to deal with these scope issues
@@ -253,20 +288,62 @@
                     <div>
                         <p>
                             {% blocktrans %}
-                            Enter the details below.
+                            Enter the information below and click Done.
                             <a href="#/step3" ng-hide="showWebhookDetails" ng-click="toggleWebhookDetails();">Show</a>
                             <a href="#/step3" ng-show="showWebhookDetails" ng-click="toggleWebhookDetails();">Hide</a>
                             where to add these fields.
                             {% endblocktrans %}
                         </p>
+                        <table style="width: auto;" class="table table-bordered">
+                            <tr>
+                                <th><strong>Service Name</strong></th>
+                                <td>CommCareHQ</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Webhook URL</strong></th>
+                                <td>{{ webhook_url }}</td>
+                            </tr>
+                            <tr>
+                                <th><strong>Webhook Secret</strong></th>
+                                <td>{{ webhook_secret}}</td>
+                            </tr>
+                        </table>
                         <p ng-show="showWebhookDetails">
                             <img src="{% new_static 'telerivet/img/webhook_detail_screen.png' %}" />
                         </p>
                     </div>
-                    <div class="row">
-                        <p><strong>Service Name:</strong> CommCareHQ</p>
-                        <p><strong>Webhook URL:</strong> {{ webhook_url }}</p>
-                        <p><strong>Webhook Secret:</strong> {{ webhook_secret}}</p>
+                </li>
+                <li>
+                    <div>
+                        <p>
+                            {% blocktrans %}
+                            After creating the Webhook Service in Telerivet, send an SMS to the Telerivet Android phone from
+                            another phone. <button class="btn btn-success" ng-click="startInboundPolling();">Click Here</button> after you have sent the SMS.
+                            {% endblocktrans %}
+                        </p>
+                    </div>
+                </li>
+                <li ng-show="pollForInboundSMS">
+                    <div>
+                        <p ng-show="!inboundSMSReceived && !inboundWaitTimedOut && !pollingErrorOccurred">{% trans "Waiting for inbound SMS..." %}</p>
+                        <p ng-show="inboundSMSReceived && !pollingErrorOccurred">
+                            {% trans "Message received!" %}
+                            <a class="btn btn-primary" href="#/finish">
+                                {% trans "Continue" %}
+                                <span class="glyphicon glyphicon-chevron-right" />
+                            </a>
+                        </p>
+                        <p ng-show="inboundWaitTimedOut && !inboundSMSReceived && !pollingErrorOccurred">
+                            {% blocktrans %}
+                            Message not received. <button class="btn btn-default">Troubleshoot</button>
+                            {% endblocktrans %}
+                        </p>
+                        <p ng-show="pollingErrorOccurred">
+                            {% blocktrans %}
+                            An error occurred. This can happen if it has been longer than one week since you started the Telerivet setup process in CommCareHQ.
+                            Please restart the setup process and if the problem persists, please report an issue.
+                            {% endblocktrans %}
+                        </p>
                     </div>
                 </li>
             </ol>
