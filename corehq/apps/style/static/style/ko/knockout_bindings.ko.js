@@ -226,19 +226,13 @@ ko.bindingHandlers.saveButton2 = {
             state = valueAccessor(),
             saveButton;
 
+        saveButton = COMMCAREHQ.SaveButton.init({
+            save: function () {
+                saveButton.ajax(saveOptions());
+            }
+        });
         if (USE_BOOTSTRAP_3) {
-            saveButton = COMMCAREHQ.SaveButton.init({
-                save: function () {
-                    saveButton.ajax(saveOptions());
-                }
-            });
             $(element).css('vertical-align', 'top').css('display', 'inline-block');
-        } else {
-            saveButton = SaveButton.init({
-                save: function () {
-                    saveButton.ajax(saveOptions());
-                }
-            });
         }
 
         saveButton.ui.appendTo(element);
@@ -259,19 +253,13 @@ ko.bindingHandlers.deleteButton = {
             state = valueAccessor(),
             deleteButton;
 
+        deleteButton = COMMCAREHQ.DeleteButton.init({
+            save: function () {
+                deleteButton.ajax(saveOptions());
+            }
+        });
         if (USE_BOOTSTRAP_3) {
-            deleteButton = COMMCAREHQ.DeleteButton.init({
-                save: function () {
-                    deleteButton.ajax(saveOptions());
-                }
-            });
             $(element).css('vertical-align', 'top').css('display', 'inline-block');
-        } else {
-            deleteButton = DeleteButton.init({
-                save: function () {
-                    deleteButton.ajax(saveOptions());
-                }
-            });
         }
         deleteButton.ui.appendTo(element);
         element.deleteButton = deleteButton;
