@@ -132,6 +132,10 @@ var HQAsyncReport = function (o) {
                 self.loadingIssueModal.modal('hide');
                 self.hqLoading = $('.hq-loading');
                 self.reportContent.html(data.report);
+                // clear lingering popovers
+                _.each($('body > .popover'), function (popover) {
+                    $(popover).remove();
+                });
                 self.reportContent.append(self.hqLoading);
                 self.hqLoading.removeClass('hide');
 
