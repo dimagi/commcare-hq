@@ -153,9 +153,8 @@ class ProjectHealthDashboard(ProjectReport):
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return PROJECT_HEALTH_DASHBOARD.enabled(domain)
 
-    @use_bootstrap3
     @use_nvd3
-    def set_bootstrap3_status(self, request, *args, **kwargs):
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
         pass
 
     @property
