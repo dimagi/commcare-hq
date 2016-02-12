@@ -142,10 +142,16 @@ var HQAsyncReport = function (o) {
 
                 if (!initial_load || !self.standardReport.needsFilters) {
                     self.standardReport.filterSubmitButton
-                        .removeClass('btn-primary')
-                        .button('standard')
-                        .addClass('disabled')
-                        .prop('disabled', true);
+                        .button('reset');
+                    setTimeout(function () {
+                        // Bootstrap 3 clears all btn styles except btn on reset
+                        // This gets around it by waiting 10ms.
+                        self.standardReport.filterSubmitButton
+                            .removeClass('btn-primary')
+                            .addClass('disabled')
+                            .prop('disabled', true);
+
+                    }, 10);
                 } else {
                     self.standardReport.filterSubmitButton
                         .button('reset')
