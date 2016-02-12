@@ -1,4 +1,4 @@
-jQuery(document).ready(function($) {
+var projectMapInit = function(mapboxAccessToken) {
     // courtesy of http://colorbrewer2.org/
     var COUNTRY_COLORS = ['#fef0d9','#fdcc8a','#fc8d59','#e34a33','#b30000'];
 
@@ -147,12 +147,10 @@ jQuery(document).ready(function($) {
     var map = L.map('map').setView([0, 0], 3);
     var mapId = 'mapbox.dark';
     // copied from dimagisphere
-    // todo: move to config somewhere, maybe localSettings.py?
-    var accessToken = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA';
     L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
         maxZoom: 10,
         id: mapId,
-        accessToken: accessToken
+        accessToken: mapboxAccessToken
     }).addTo(map);
 
     function getColor(featureId) {
@@ -307,4 +305,4 @@ jQuery(document).ready(function($) {
             }
         });
     });
-});
+};
