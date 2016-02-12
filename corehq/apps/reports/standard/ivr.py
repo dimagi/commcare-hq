@@ -27,13 +27,6 @@ from django.conf import settings
 from corehq.apps.reminders.util import get_form_name
 import pytz
 from math import ceil
-from corehq.apps.style.decorators import (
-    use_jquery_ui,
-    use_bootstrap3,
-    use_datatables,
-    use_select2,
-    use_daterangepicker,
-)
 
 
 class CallLogReport(BaseCommConnectLogReport):
@@ -175,14 +168,6 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
     fields = ['corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True
     is_bootstrap3 = True
-
-    @use_jquery_ui
-    @use_bootstrap3
-    @use_datatables
-    @use_select2
-    @use_daterangepicker
-    def set_bootstrap3_status(self, request, *args, **kwargs):
-        pass
     
     @property
     def headers(self):
