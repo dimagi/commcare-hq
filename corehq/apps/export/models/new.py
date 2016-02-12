@@ -229,7 +229,13 @@ class TableConfiguration(DocumentSchema):
 
         >>> TableConfiguration()._get_sub_documents(['foo'], [{'foo': {'bar': 'a'}}, {'foo': {'bar': 'b'}}])
         [{'bar': 'a'}, {'bar': 'b'}]
-        >>> TableConfiguration()._get_sub_documents(['foo', 'bar'], [{'foo': [{'bar': {'baz': 'a'}}, {'bar': {'baz': 'b'}},]}]
+        >>> TableConfiguration()._get_sub_documents(
+        ...     ['foo', 'bar'],
+        ...     [{'foo': [
+        ...         {'bar': {'baz': 'a'}},
+        ...         {'bar': {'baz': 'b'}},
+        ...     ]}]
+        ... )
         [{'baz': 'a'}, {'baz': 'b'}]
 
         :param path: A list of a strings
