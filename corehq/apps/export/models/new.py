@@ -855,7 +855,7 @@ class SplitExportColumn(ExportColumn):
     output = [1, '', 'c d']
     """
     item = SchemaProperty(MultipleChoiceItem)
-    ignore_extras = BooleanProperty()
+    ignore_unspecified_options = BooleanProperty()
 
     def get_value(self, doc, base_path):
         """
@@ -866,13 +866,13 @@ class SplitExportColumn(ExportColumn):
         """
         value = super(SplitExportColumn, self).get_value(doc, base_path)
         if not isinstance(value, basestring):
-            return [None] * len(self.item.options) + [] if self.ignore_extras else [value]
+            return [None] * len(self.item.options) + [] if self.ignore_unspecified_options else [value]
 
         selected = OrderedDict((x, 1) for x in value.split(" "))
         row = []
         for option in self.item.options:
             row.append(selected.pop(option.value, None))
-        if not self.ignore_extras:
+        if not self.ignore_unspecified_options:
             row.append(" ".join(selected.keys()))
         return row
 
@@ -886,7 +886,7 @@ class SplitExportColumn(ExportColumn):
                     option=option.value
                 )
             )
-        if not self.ignore_extras:
+        if not self.ignore_unspecified_options:
             headers.append(
                 header_template.format(
                     name=self.label,
