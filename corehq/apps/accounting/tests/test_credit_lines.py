@@ -58,7 +58,6 @@ class TestCreditLines(BaseInvoiceTestCase):
         )
         self._test_credit_use(rate_credit_by_account)
         self._test_credit_use(rate_credit_by_subscription)
-        self._clean_credits()
 
     def test_feature_line_item_credits(self):
         """
@@ -95,7 +94,6 @@ class TestCreditLines(BaseInvoiceTestCase):
         )
         self._test_credit_use(rate_credit_by_account)
         self._test_credit_use(rate_credit_by_subscription)
-        self._clean_credits()
 
     def _generate_users_fee_to_credit_against(self):
         user_rate = self.subscription.plan_version.feature_rates.filter(feature__feature_type=FeatureType.USER)[:1].get()
@@ -156,15 +154,12 @@ class TestCreditLines(BaseInvoiceTestCase):
 
         self._test_credit_use(subscription_credit)
         self._test_credit_use(account_credit)
-        self._clean_credits()
 
     def test_combined_credits(self):
         """
         Test that line item credits get applied first to the line items
         and invoice credits get applied to the remaining balance.
         """
-        self._clean_credits()
-
         user_rate_credit_by_account = CreditLine.add_credit(
             self.monthly_user_fee, account=self.account,
             feature_type=self.user_rate.feature.feature_type,
@@ -192,7 +187,6 @@ class TestCreditLines(BaseInvoiceTestCase):
         self._test_credit_use(user_rate_credit_by_subscription)
         self._test_credit_use(subscription_credit)
         self._test_credit_use(account_credit)
-        self._clean_credits()
 
     def _generate_subscription_and_account_invoice_credits(self, monthly_fee, subscription, account):
         subscription_credit = CreditLine.add_credit(
@@ -256,10 +250,6 @@ class TestCreditLines(BaseInvoiceTestCase):
         self.assertEqual(CreditAdjustment.objects.filter(credit_line=account_credit).count(), 2)
         current_account_credit = CreditLine.objects.get(id=account_credit.id)
         self.assertEqual(current_account_credit.balance, self.product_rate.monthly_fee + self.monthly_user_fee)
-
-    def _clean_credits(self):
-        CreditAdjustment.objects.all().delete()
-        CreditLine.objects.all().delete()
 
 
 class TestCreditTransfers(BaseAccountingTest):
