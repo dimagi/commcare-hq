@@ -13,10 +13,8 @@ Sample Test
     # App Tester Example
     ---
     login:
-      host: http://www.commcare.org/
       domain: example
       username: john.smith
-      password: s3cr3t
       app: Case Management
 
     tests:
@@ -47,6 +45,8 @@ Sample Test
                 case: Joe Bloggs
                 forms:
                   - Visit:
+                      date: 2016-02-12
+                      time: 12:00:00
                       answers:
                         - welcome_message:
                         - sample_choice_question: not_a_valid_choice
@@ -56,8 +56,7 @@ Sample Test
 Login details
 -------------
 
-In order for the App Tester to log in, you will need to give it the details of the server and the mobile worker to
-log in as.
+In order for the App Tester to log in, you will need to give it the domain, app and mobile worker to log in as.
 
 
 Tests
@@ -65,6 +64,10 @@ Tests
 
 Give each test a name that describes the expected behaviour it is testing, like "Mobile worker should be able to
 register a case".
+
+Use the key "case" to choose a case by its name for modules and forms that require a case.
+
+You can also set the date and time if you want a form to be completed
 
 
 Assertions
