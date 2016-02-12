@@ -39,15 +39,17 @@
 {% endif %}
 {% if multimedia_state.has_missing_refs %}
     <div class="alert alert-warning">
+        {% blocktrans %}
         <p>
-            <i class="fa fa-exclamation-triangle"></i> {% blocktrans %}<strong>Note:</strong> This application is
-            missing references, so this zip will be incomplete.
+            <i class="fa fa-exclamation-triangle"></i>
+            This application is missing references, so this zip will be incomplete.
         </p>
         <p>
             Please make sure all of your application's multimedia references are linked to media files before
             starting your application, or it might be unstable.
         </p>
-    {% endblocktrans %}</div>
+        {% endblocktrans %}
+    </div>
 {% endif %}
 
 {% if include_modal %}

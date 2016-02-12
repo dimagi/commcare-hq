@@ -102,7 +102,6 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
         context.update({
             "references": self.app.get_references(),
             "object_map": self.app.get_object_map(),
-            "totals": self.app.get_reference_totals(),
             "sessionid": self.request.COOKIES.get('sessionid'),
         })
         return context
