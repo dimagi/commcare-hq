@@ -8,7 +8,7 @@ import json_field.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('form_processor', '0047_add_deleted_state'),
+        ('form_processor', '0048_attachment_content_length_blob_id'),
     ]
 
     operations = [
@@ -22,12 +22,6 @@ class Migration(migrations.Migration):
             model_name='caseattachmentsql',
             name='attachment_properties',
             field=json_field.fields.JSONField(default=dict, help_text='Enter a valid JSON object'),
-            preserve_default=True,
-        ),
-        migrations.AddField(
-            model_name='caseattachmentsql',
-            name='attachment_size',
-            field=models.IntegerField(null=True),
             preserve_default=True,
         ),
         migrations.AddField(

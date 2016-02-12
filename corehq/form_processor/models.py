@@ -650,7 +650,6 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
     attachment_from = models.TextField(null=True)
     server_mime = models.CharField(max_length=255, null=True)
 
-    attachment_size = models.IntegerField(null=True)
     attachment_properties = JSONField(lazy=True, default=dict)
 
     @classmethod
