@@ -875,7 +875,7 @@ class ChatMessageHistory(View, DomainViewMixin):
             )
         else:
             return queryset.exclude(
-                Q(xforms_session_couch_id__isnull=False)
+                xforms_session_couch_id__isnull=False
             )
 
     def get_response_data(self, request):
