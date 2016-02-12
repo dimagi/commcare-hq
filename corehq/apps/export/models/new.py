@@ -242,10 +242,6 @@ class ExportInstance(Document):
     tables = ListProperty(TableConfiguration)
     export_format = StringProperty(default='csv')
 
-    # Whether to include duplicates and other error'd forms in export
-    # TODO: Move this to FormExportInstance
-    include_errors = BooleanProperty(default=False)
-
     # Whether the export is de-identified
     is_deidentified = BooleanProperty(default=False)
     is_daily_saved_export = BooleanProperty(default=False)
@@ -332,6 +328,9 @@ class CaseExportInstance(ExportInstance):
 class FormExportInstance(ExportInstance):
     xmlns = StringProperty()
     app_id = StringProperty()
+
+    # Whether to include duplicates and other error'd forms in export
+    include_errors = BooleanProperty(default=False)
 
     @property
     def formname(self):
