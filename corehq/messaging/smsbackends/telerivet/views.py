@@ -1,10 +1,12 @@
 import uuid
+from corehq.apps.sms.models import SMS
+from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
 from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message
 from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSForm,
     TelerivetPhoneNumberForm)
-from corehq.messaging.smsbackends.telerivet.models import IncomingRequest
+from corehq.messaging.smsbackends.telerivet.models import IncomingRequest, SQLTelerivetBackend
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from django.core.urlresolvers import reverse
@@ -54,13 +56,13 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
     def get_cache_key(self, request_token):
         return 'telerivet-setup-%s' % request_token
 
-    def set_cached_webook_secret(self, request_token, webhook_secret):
+    def set_cached_webhook_secret(self, request_token, webhook_secret):
         client = get_redis_client()
         key = self.get_cache_key(request_token)
         client.set(key, webhook_secret)
         client.expire(key, 7 * 24 * 60 * 60)
 
-    def get_cached_webook_secret(self, request_token):
+    def get_cached_webhook_secret(self, request_token):
         client = get_redis_client()
         key = self.get_cache_key(request_token)
         return client.get(key)
@@ -79,7 +81,7 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
         # via a redis lookup which expires in 1 week.
         request_token = uuid.uuid4().hex
 
-        self.set_cached_webook_secret(request_token, webhook_secret)
+        self.set_cached_webhook_secret(request_token, webhook_secret)
         return {
             'outgoing_sms_form': TelerivetOutgoingSMSForm(),
             'test_sms_form': TelerivetPhoneNumberForm(),
@@ -94,7 +96,7 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
         if not request_token:
             return {'success': False}
 
-        webhook_secret = self.get_cached_webook_secret(request_token)
+        webhook_secret = self.get_cached_webhook_secret(request_token)
         if not webhook_secret:
             return {'success': False}
 
@@ -109,6 +111,41 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
                 'success': True,
                 'found': False,
             }
+
+    @allow_remote_invocation
+    def send_sample_sms(self, data):
+        api_key = data.get('api_key')
+        project_id = data.get('project_id')
+        phone_id = data.get('phone_id')
+        test_phone_number = data.get('test_phone_number')
+        request_token = data.get('request_token')
+
+        if not (
+            api_key and
+            project_id and
+            phone_id and
+            test_phone_number and
+            request_token and
+            self.get_cached_webhook_secret(request_token)
+        ):
+            return {
+                'success': False,
+            }
+
+        tmp_backend = SQLTelerivetBackend()
+        tmp_backend.set_extra_fields(
+            api_key=api_key,
+            project_id=project_id,
+            phone_id=phone_id,
+        )
+        sms = SMS(
+            phone_number=clean_phone_number(test_phone_number),
+            text="This is a test SMS from CommCareHQ."
+        )
+        tmp_backend.send(sms)
+        return {
+            'success': True,
+        }
 
     @use_bootstrap3
     @use_angular_js

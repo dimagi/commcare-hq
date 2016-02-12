@@ -72,6 +72,13 @@
         };
 
         $scope.sendTestSMS = function() {
+            djangoRMI.send_sample_sms({
+                api_key: $scope.apiKey,
+                project_id: $scope.projectId,
+                phone_id: $scope.phoneId,
+                test_phone_number: $scope.testPhoneNumber,
+                request_token: '{{ request_token }}',
+            });
             $scope.testSMSSent = true;
         };
 
