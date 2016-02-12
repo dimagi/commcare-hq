@@ -1,3 +1,4 @@
+from mock import patch
 from django.test import TestCase
 
 from corehq.apps.repeaters.dbaccessors import (
@@ -5,14 +6,16 @@ from corehq.apps.repeaters.dbaccessors import (
     get_success_repeat_record_count,
     get_failure_repeat_record_count,
     get_repeaters_by_domain,
-    get_repeat_records,
+    get_paged_repeat_records,
 )
 from corehq.apps.repeaters.models import RepeatRecord, CaseRepeater
+from corehq.apps.repeaters.const import RECORD_PENDING_STATE
 
 
 class TestRepeatRecordDBAccessors(TestCase):
     dependent_apps = ['corehq.apps.repeaters', 'corehq.couchapps']
     repeater_id = '1234'
+    other_id = '5678'
     domain = 'test-domain'
 
     @classmethod
@@ -32,11 +35,17 @@ class TestRepeatRecordDBAccessors(TestCase):
             succeeded=False,
             repeater_id=cls.repeater_id,
         )
+        other_id = RepeatRecord(
+            domain=cls.domain,
+            succeeded=False,
+            repeater_id=cls.other_id,
+        )
 
         cls.records = [
             failed,
             success,
             pending,
+            other_id,
         ]
 
         for record in cls.records:
@@ -59,8 +68,19 @@ class TestRepeatRecordDBAccessors(TestCase):
         count = get_failure_repeat_record_count(self.domain, self.repeater_id)
         self.assertEqual(count, 1)
 
-    def test_get_repeat_records(self):
-        records = get_repeat_records(self.domain)
+    def test_get_paged_repeat_records(self):
+        records = get_paged_repeat_records(self.domain, 0, 2)
+        self.assertEqual(len(records), 2)
+
+    def test_get_paged_repeat_records_with_repeater_id(self):
+        records = get_paged_repeat_records(self.domain, 0, 2, repeater_id=self.other_id)
+        self.assertEqual(len(records), 1)
+
+    def test_get_paged_repeat_records_with_state(self):
+        with patch(
+                'corehq.apps.repeaters.dbaccessors._get_repeater_ids_by_domain',
+                return_value=[self.repeater_id, self.other_id]):
+            records = get_paged_repeat_records(self.domain, 0, 10, state=RECORD_PENDING_STATE)
         self.assertEqual(len(records), 3)
 
 
