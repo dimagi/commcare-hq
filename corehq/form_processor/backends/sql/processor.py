@@ -2,6 +2,7 @@ import datetime
 import logging
 import uuid
 
+from PIL import Image
 from django.db import transaction
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
@@ -29,6 +30,9 @@ class FormProcessorSQL(object):
                 content_type=attachment.content_type,
             )
             xform_attachment.write_content(attachment.content_as_file())
+            if xform_attachment.is_image:
+                img_size = Image.open(attachment.content_as_file()).size
+                xform_attachment.properties = dict(width=img_size[0], height=img_size[1])
             xform_attachments.append(xform_attachment)
 
         xform.unsaved_attachments = xform_attachments
