@@ -1153,10 +1153,9 @@ class ConfigureMapReportForm(ConfigureListReportForm):
         self.fields['location'].choices = self._location_choices
 
         # Set initial value of location
-        if self.existing_report:
-            existing_location_col = existing_report.location_column.column_id
-            if existing_location_col:
-                self.fields['location'].initial = self._get_property_from_column(existing_location_col)
+        if self.existing_report and existing_report.location_column_id:
+            existing_loc_col = existing_report.location_column_id
+            self.fields['location'].initial = self._get_property_from_column(existing_loc_col)
 
     @property
     def _location_choices(self):
@@ -1185,8 +1184,8 @@ class ConfigureMapReportForm(ConfigureListReportForm):
         # Remove the location indicator from the columns.
         # It gets removed because we want it to be a column in the report,
         # but we don't want it to appear in the builder.
-        if self.existing_report:
-            col_id = self.existing_report.location_column.column_id
+        if self.existing_report and self.existing_report.location_column_id:
+            col_id = self.existing_report.location_column_id
             location_property = self._get_property_from_column(col_id)
             return [c for c in columns if c.property != location_property]
         return columns

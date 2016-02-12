@@ -50,7 +50,7 @@ var maps = (function() {
 
 
         var points = _.compact(_.map(data, function(row){
-            var val = row[config.location_column];
+            var val = row[config.location_column_id];
             if (val !== null) {
                 var latlon = val.split(" ").slice(0, 2);
                 return L.marker(latlon).bindPopup(fn.template(row));

@@ -335,23 +335,23 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
 
     @property
     @memoized
-    def location_column(self):
+    def location_column_id(self):
         cols = [col for col in self.report_columns if col.type == 'location']
         if cols:
-            return cols[0]
+            return cols[0].column_id
 
     @property
     def map_config(self):
         def map_col(column):
-            if column != self.location_column:
+            if column.column_id != self.location_column_id:
                 return {
                     'column_id': column['column_id'],
                     'label': column['display']
                 }
 
-        if self.location_column:
+        if self.location_column_id:
             return {
-                'location_column': self.location_column.column_id,
+                'location_column_id': self.location_column_id,
                 'layer_name': {
                     'XFormInstance': _('Forms'),
                     'CommCareCase': _('Cases')
