@@ -4,7 +4,7 @@ from django.db.models import F
 from django.utils.translation import ugettext_noop
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.reports.standard import ProjectReport
-from corehq.apps.style.decorators import use_nvd3, use_bootstrap3
+from corehq.apps.style.decorators import use_nvd3
 from corehq.apps.users.util import raw_username
 from corehq.toggles import PROJECT_HEALTH_DASHBOARD
 from dimagi.ext import jsonobject
