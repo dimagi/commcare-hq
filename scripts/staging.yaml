@@ -56,6 +56,7 @@ branches:
   - formplayer-toggle # Ben/Will 1/21/16
   - java-tf-deploy # Ben/Will 1/21/16
   # B3 Report Migration branches
+  - b3-js-updates # Biyeun 2/12
   - b3-reports-worker-monitoring  # Biyeun 1/21
   - b3-reports-inspect-data  # Biyeun 1/21
   - b3-reports-manage-deployments  # Biyeun 1/21
