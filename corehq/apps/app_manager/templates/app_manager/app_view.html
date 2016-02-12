@@ -78,7 +78,7 @@
             _.each(_.keys(urls), function(tab) {
                 $("#multimedia").on("show.bs.tab", "a[href='#multimedia-" + tab + "-tab']", function() {
                     if (!loaded[tab]) {
-                        var $content = $('#multimedia-' + tab + '-tab');
+                        var $content = $('#multimedia-' + tab + '-tab .container-fluid');
                         _.delay(function() {
                             if (!loaded[tab]) {
                                 $content.html($("#hq-loading").html());

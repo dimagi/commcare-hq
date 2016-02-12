@@ -7,31 +7,37 @@
                     <a href="#multimedia-download-tab" data-toggle="tab">{% trans "Download" %}</a>
                 </li>
                 <li>
-                    <a href="#multimedia-upload-tab" data-toggle="tab">{% trans "Bulk Upload" %}</a>
+                    <a href="#multimedia-references-tab" data-toggle="tab">{% trans "Reference Checker" %}</a>
                 </li>
                 <li>
-                    <a href="#multimedia-references-tab" data-toggle="tab">{% trans "Reference Checker" %}</a>
+                    <a href="#multimedia-upload-tab" data-toggle="tab">{% trans "Bulk Upload" %}</a>
                 </li>
             </ul>
             <div class="spacer"></div>
             <div class="tab-content">
                 <div id="multimedia-download-tab" class="tab-pane active">
-                    <ul class="list-unstyled">
-                        {% for total in totals %}
-                            <li class="media-totals">
-                                <i class="fa {{ total.icon_class }}"></i>
-                                {{ total.matched }}/{{ total.totals }}
-                                {{ total.media_type }} {% trans 'References' %}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                    {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True %}
-                </div>
-                <div id="multimedia-upload-tab" class="tab-pane">
-                    <!-- will be async loaded -->
+                    <div class="container-fluid">
+                        <ul class="list-unstyled">
+                            {% for total in totals %}
+                                <li class="media-totals">
+                                    <i class="fa {{ total.icon_class }}"></i>
+                                    {{ total.matched }}/{{ total.totals }}
+                                    {{ total.media_type }} {% trans 'References' %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True %}
+                    </div>
                 </div>
                 <div id="multimedia-references-tab" class="tab-pane">
-                    <!-- will be async loaded -->
+                    <div class="container-fluid">
+                        <!-- will be async loaded -->
+                    </div>
+                </div>
+                <div id="multimedia-upload-tab" class="tab-pane">
+                    <div class="container-fluid">
+                        <!-- will be async loaded -->
+                    </div>
                 </div>
             </div>
         </div>
