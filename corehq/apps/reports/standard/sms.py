@@ -49,13 +49,6 @@ from corehq.apps.reminders.views import (
     EditScheduledReminderView
 )
 from couchforms.models import XFormInstance
-from corehq.apps.style.decorators import (
-    use_jquery_ui,
-    use_bootstrap3,
-    use_datatables,
-    use_select2,
-    use_daterangepicker,
-)
 
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
@@ -69,14 +62,6 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
         "been verified. Phone numbers can be verified from the Settings and "
         "Users tab.")
     is_bootstrap3 = True
-
-    @use_jquery_ui
-    @use_bootstrap3
-    @use_datatables
-    @use_select2
-    @use_daterangepicker
-    def set_bootstrap3_status(self, request, *args, **kwargs):
-        pass
 
     @property
     def headers(self):
@@ -145,14 +130,6 @@ def _sms_count(user, startdate, enddate):
 
 class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
     is_bootstrap3 = True
-
-    @use_jquery_ui
-    @use_bootstrap3
-    @use_datatables
-    @use_select2
-    @use_daterangepicker
-    def set_bootstrap3_status(self, request, *args, **kwargs):
-        pass
 
     def _fmt(self, val):
         if val is None:
