@@ -36,10 +36,4 @@ class Migration(migrations.Migration):
             field=models.CharField(default='', max_length=255),
             preserve_default=False,
         ),
-        migrations.AddField(
-            model_name='caseattachmentsql',
-            name='server_mime',
-            field=models.CharField(max_length=255, null=True),
-            preserve_default=True,
-        ),
     ]

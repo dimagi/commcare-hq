@@ -109,7 +109,6 @@ def case_attachment_adapter(attachment):
         adapt(attachment.identifier).getquoted(),
         adapt(attachment.attachment_src).getquoted(),
         adapt(attachment.attachment_form).getquoted(),
-        adapt(attachment.server_mime).getquoted(),
         adapt(json.dumps(attachment.attachment_properties, cls=JSONEncoder)).getquoted(),
         adapt(attachment.blob_id).getquoted(),
         adapt(attachment.content_length).getquoted(),
