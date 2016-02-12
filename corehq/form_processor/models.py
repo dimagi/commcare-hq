@@ -30,7 +30,7 @@ from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
-from .abstract_models import AbstractXFormInstance, AbstractCommCareCase
+from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, CaseAttachmentMixin
 from .exceptions import AttachmentNotFound, AccessRestricted
 
 XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
@@ -636,7 +636,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         db_table = CommCareCaseSQL_DB_TABLE
 
 
-class CaseAttachmentSQL(AbstractAttachment):
+class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
     objects = RestrictedManager()
     _attachment_prefix = 'case'
 

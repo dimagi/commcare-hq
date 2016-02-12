@@ -159,3 +159,25 @@ class AbstractSupplyInterface(six.with_metaclass(ABCMeta)):
     @abstractmethod
     def get_or_create_by_location(cls, location):
         raise NotImplementedError
+
+
+class CaseAttachmentMixin(object):
+    @property
+    def is_image(self):
+        if self.server_mime is None:
+            return None
+        return True if self.server_mime.startswith('image/') else False
+
+    @property
+    def is_present(self):
+        """
+        Helper method to see if this is a delete vs. update
+        """
+        if self.identifier and (self.attachment_src == self.attachment_from is None):
+            return False
+        else:
+            return True
+
+    @property
+    def attachment_key(self):
+        return self.identifier
