@@ -30,7 +30,7 @@ var eventize = function (that) {
 };
 
 
-var SaveButton = {
+var _SaveButton = {
     /*
         options: {
             save: "Function to call when the user clicks Save",
@@ -40,14 +40,14 @@ var SaveButton = {
     init: function (options) {
         var button = {
             disabled: false,
-            $save: $('<span/>').text(SaveButton.message.SAVE).click(function () {
+            $save: $('<span/>').text(_SaveButton.message.SAVE).click(function () {
                 button.fire('save');
             }).addClass('btn btn-success'),
-            $retry: $('<span/>').text(SaveButton.message.RETRY).click(function () {
+            $retry: $('<span/>').text(_SaveButton.message.RETRY).click(function () {
                 button.fire('save');
             }).addClass('btn btn-success'),
-            $saving: $('<span/>').text(SaveButton.message.SAVING).prepend('<i class="icon-refresh icon-spin"></i> ').addClass('btn btn-default disabled'),
-            $saved: $('<span/>').text(SaveButton.message.SAVED).addClass('btn btn-default disabled'),
+            $saving: $('<span/>').text(_SaveButton.message.SAVING).prepend('<i class="icon-refresh icon-spin"></i> ').addClass('btn btn-default disabled'),
+            $saved: $('<span/>').text(_SaveButton.message.SAVED).addClass('btn btn-default disabled'),
             ui: $('<div/>').addClass('pull-right'),
             setStateWhenReady: function (state) {
                 if (this.state === 'saving') {
@@ -96,7 +96,7 @@ var SaveButton = {
                     that.nextState = null;
                     that.setState('retry');
                     responseText = data.responseText || '';
-                    alert(SaveButton.message.ERROR_SAVING + '\n' +  data.responseText);
+                    alert(_SaveButton.message.ERROR_SAVING + '\n' +  data.responseText);
                     error.apply(this, arguments);
                 };
                 return options;
@@ -153,7 +153,7 @@ var SaveButton = {
     },
     initForm: function ($form, options) {
         var url = $form.attr('action'),
-            button = SaveButton.init({
+            button = _SaveButton.init({
                 unsavedMessage: options.unsavedMessage,
                 save: function () {
                     button.ajax({
@@ -317,7 +317,7 @@ var COMMCAREHQ = (function () {
                 }]
             });
         },
-        SaveButton: SaveButton,
+        SaveButton: _SaveButton,
         beforeUnload: [],
         bindBeforeUnload: function (callback) {
             COMMCAREHQ.beforeUnload.push(callback);
