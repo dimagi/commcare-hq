@@ -68,25 +68,14 @@ def get_all_reverse_indices_info(domain, case_ids, relationship=None):
     ))
 
 
-def get_reverse_indices_json(domain, case_id, relationship=CASE_INDEX_CHILD, any_relationship=False):
+def get_reverse_indices_json(domain, case_id):
     from casexml.apps.case.models import CommCareCase
-
-    if not any_relationship:
-        key_args = {
-            "key": [domain, case_id, "reverse_index", relationship]
-        }
-    else:
-        key_args = {
-            "startkey": [domain, case_id, "reverse_index"],
-            "endkey": [domain, case_id, "reverse_index", {}]
-        }
-
-
     return CommCareCase.get_db().view(
         "case_indices/related",
+        startkey=[domain, case_id, "reverse_index"],
+        endkey=[domain, case_id, "reverse_index", {}],
         reduce=False,
         wrapper=lambda r: r['value'],
-        **key_args
     ).all()
 
 
@@ -96,7 +85,7 @@ def get_reverse_indices(case):
 
 def get_reverse_indices_for_case_id(domain, case_id):
     return [CommCareCaseIndex.wrap(raw)
-            for raw in get_reverse_indices_json(domain, case_id, any_relationship=True)]
+            for raw in get_reverse_indices_json(domain, case_id)]
 
 
 def get_extension_chain(case_ids, domain):
