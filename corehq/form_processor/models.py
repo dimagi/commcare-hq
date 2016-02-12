@@ -322,6 +322,8 @@ class AbstractAttachment(DisabledDbMixin, models.Model):
     attachment_id = UUIDField(unique=True, db_index=True)
     name = models.CharField(max_length=255, db_index=True)
     content_type = models.CharField(max_length=255)
+    content_length = models.IntegerField(null=True)
+    blob_id = models.CharField(max_length=255)
 
     # RFC-1864-compliant Content-MD5 header value
     md5 = models.CharField(max_length=255)
@@ -332,13 +334,15 @@ class AbstractAttachment(DisabledDbMixin, models.Model):
 
         db = get_blob_db()
         bucket = self._blobdb_bucket()
-        info = db.put(content, self.name, bucket, str(self.attachment_id))
+        info = db.put(content, self.name, bucket)
         self.md5 = info.md5_hash
+        self.content_length = info.length
+        self.blob_id = info.identifier
 
     def read_content(self):
         db = get_blob_db()
         try:
-            blob = db.get_by_unique_id(self.name, str(self.attachment_id), self._blobdb_bucket())
+            blob = db.get(self.blob_id, self._blobdb_bucket())
         except (KeyError, NotFound):
             raise AttachmentNotFound(self.name)
         with blob:
@@ -348,7 +352,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model):
     def delete_content(self):
         db = get_blob_db()
         bucket = self._blobdb_bucket()
-        return db.delete_by_unique_id(self.name, str(self.attachment_id), bucket)
+        return db.delete(self.blob_id, bucket)
 
     def _blobdb_bucket(self):
         if self.attachment_id is None:

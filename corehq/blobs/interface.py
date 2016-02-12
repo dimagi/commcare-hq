@@ -18,7 +18,7 @@ class AbstractBlobDB(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def put(self, content, basename="", bucket=DEFAULT_BUCKET, unique_id=None):
+    def put(self, content, basename="", bucket=DEFAULT_BUCKET):
         """Put a blob in persistent storage
         :param content: A file-like object in binary read mode.
         :param basename: Optional name from which the blob name will be
@@ -27,9 +27,6 @@ class AbstractBlobDB(object):
         :param bucket: Optional bucket name used to partition blob data
         in the persistent storage medium. This may be delimited with
         slashes (/). It must be a valid relative path.
-        :param unique_id: A globally unique identifier for this blob. If one is not
-        provided then one will be generated. Used in conjunction with ``basename``
-        to create the blob identifier.
         :returns: A `BlobInfo` named tuple. The returned object has a
         `identifier` member that must be used to get or delete the blob. It
         should not be confused with the optional `basename` parameter.
@@ -47,17 +44,6 @@ class AbstractBlobDB(object):
         """
         raise NotImplementedError
 
-    def get_by_unique_id(self, basename, unique_id, bucket=DEFAULT_BUCKET):
-        """Get a blob
-        :param basename: The basename that was used when saving the blob using ``put``.
-        :param unique_id: The unique identifier of this blob.
-        :param bucket: Optional bucket name. This must have the same
-        value that was passed to ``put``.
-        """
-        identifier = self.get_identifier(basename, unique_id)
-        return self.get(identifier, bucket=bucket)
-
-
     @abstractmethod
     def delete(self, identifier=None, bucket=DEFAULT_BUCKET):
         """Delete a blob
@@ -69,18 +55,6 @@ class AbstractBlobDB(object):
         """
         raise NotImplementedError
 
-    def delete_by_unique_id(self, basename, unique_id, bucket=DEFAULT_BUCKET):
-        """Delete a blob
-
-        :param basename: The basename that was used when saving the blob using ``put``.
-        :param unique_id: The unique identifier of this blob.
-        :param bucket: Optional bucket name. This must have the same
-        value that was passed to ``put``.
-        :returns: True if the blob was deleted else false.
-        """
-        identifier = self.get_identifier(basename, unique_id)
-        return self.delete(identifier, bucket=bucket)
-
     @abstractmethod
     def copy_blob(self, content, info, bucket):
         """Copy blob from other blob database
@@ -91,16 +65,11 @@ class AbstractBlobDB(object):
         raise NotImplementedError
 
     @staticmethod
-    def get_identifier(basename, unique_id=None):
-        if unique_id:
-            if not SAFENAME.match(unique_id):
-                raise BadName("Unique ID supplied is unsafe: {}".format(unique_id))
-        else:
-            unique_id = uuid4().hex
+    def get_identifier(basename):
         if not basename:
-            return unique_id
+            return uuid4().hex
         if SAFENAME.match(basename) and "/" not in basename:
             prefix = basename
         else:
             prefix = "unsafe"
-        return prefix + "." + unique_id
+        return prefix + "." + uuid4().hex
