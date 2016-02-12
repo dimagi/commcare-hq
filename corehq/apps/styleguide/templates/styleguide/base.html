@@ -14,7 +14,7 @@
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'style/lib/fontawesome-4.1.0/less/font-awesome.less' %}" />
+                  href="{% new_static 'font-awesome/less/font-awesome.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
@@ -42,7 +42,7 @@
         {% endcompress %}
 
         {% if less_debug %}
-            <script src="{% static 'style/lib/lessjs/less-1.7.3.min.js' %}"></script>
+            <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
             {% if less_watch %}<script>less.watch();</script>{% endif %}
         {% endif %}
     </head>
