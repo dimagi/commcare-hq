@@ -209,3 +209,12 @@ class ExportTest(SimpleTestCase):
                     }
                 }
             )
+
+
+class TableHeaderTest(SimpleTestCase):
+    def test_deid_column_headers(self):
+        col = ExportColumn(
+            label="my column",
+            transforms=["deid_id"],
+        )
+        self.assertEqual(col.get_headers(), ["my column[sensitive]"])

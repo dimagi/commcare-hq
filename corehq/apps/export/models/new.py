@@ -35,7 +35,7 @@ from corehq.apps.export.const import (
     CASE_EXPORT,
     MAIN_TABLE,
     TRANSFORM_FUNCTIONS,
-)
+    DEID_TRANSFORM_FUNCTIONS)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -153,8 +153,18 @@ class ExportColumn(DocumentSchema):
         self.is_advanced = is_deleted
         self.tags = tags
 
+    @property
+    def is_deidentifed(self):
+        # TODO: Might be better if we set an is_deidentified flag on the model instead?
+        return bool(set(self.transforms) & set(DEID_TRANSFORM_FUNCTIONS))
+
     def get_headers(self):
-        return [self.label]
+        # TODO: id columns need special treatment
+        # see couchexport.models.ExportTable#get_headers_row
+        if self.is_deidentifed:
+            return [u"{}{}".format(self.label, "[sensitive]")]
+        else:
+            return [self.label]
 
 
 class TableConfiguration(DocumentSchema):
