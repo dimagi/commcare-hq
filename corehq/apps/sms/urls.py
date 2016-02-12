@@ -13,8 +13,10 @@ from corehq.apps.sms.views import (
     GlobalBackendMap,
     ComposeMessageView,
     SMSLanguagesView,
-    ChatMessageHistory)
+    ChatMessageHistory,
+    ChatLastReadMessage)
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
+
 
 urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^$', 'default', name='sms_default'),
@@ -40,7 +42,7 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^chat/(?P<contact_id>[\w-]+)/(?P<vn_id>[\w-]+)/$', 'chat', name='sms_chat'),
     url(r'^chat/(?P<contact_id>[\w-]+)/?$', 'chat', name='sms_chat'),
     url(r'^api/history/$', ChatMessageHistory.as_view(), name=ChatMessageHistory.urlname),
-    url(r'^api/last_read_message/$', 'api_last_read_message', name='api_last_read_message'),
+    url(r'^api/last_read_message/$', ChatLastReadMessage.as_view(), name=ChatLastReadMessage.urlname),
     url(r'^settings/$', SMSSettingsView.as_view(), name=SMSSettingsView.urlname),
     url(r'^subscribe_sms/$', SubscribeSMSView.as_view(), name=SubscribeSMSView.urlname),
     url(r'^languages/$', SMSLanguagesView.as_view(), name=SMSLanguagesView.urlname),
@@ -52,6 +54,7 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^app_info/(?P<token>[\w-]+)/$', InvitationAppInfoView.as_view(),
         name=InvitationAppInfoView.urlname),
 )
+
 
 sms_admin_interface_urls = patterns('corehq.apps.sms.views',
     url(r'^$', GlobalSmsGatewayListView.as_view(), name='default_sms_admin_interface'),

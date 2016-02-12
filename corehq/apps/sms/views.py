@@ -938,21 +938,32 @@ class ChatMessageHistory(View, DomainViewMixin):
         return HttpResponse(json.dumps(data))
 
 
-@require_permission(Permissions.edit_data)
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def api_last_read_message(request, domain):
-    contact_id = request.GET.get("contact_id", None)
-    domain_obj = Domain.get_by_name(domain, strict=True)
-    if domain_obj.count_messages_as_read_by_anyone:
-        lrm = LastReadMessage.by_anyone(domain, contact_id)
-    else:
-        lrm = LastReadMessage.by_user(domain, request.couch_user._id, contact_id)
-    result = {
-        "message_timestamp" : None,
-    }
-    if lrm:
-        result["message_timestamp"] = json_format_datetime(lrm.message_timestamp)
-    return HttpResponse(json.dumps(result))
+class ChatLastReadMessage(View, DomainViewMixin):
+    urlname = 'api_last_read_message'
+
+    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    def dispatch(self, request, *args, **kwargs):
+        return super(ChatLastReadMessage, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def contact_id(self):
+        return self.request.GET.get('contact_id')
+
+    def get(self, request, *args, **kwargs):
+        lrm_timestamp = None
+        if self.contact_id:
+            if self.domain_obj.count_messages_as_read_by_anyone:
+                lrm = SQLLastReadMessage.by_anyone(domain, contact_id)
+            else:
+                lrm = SQLLastReadMessage.by_user(domain, request.couch_user.get_id, self.contact_id)
+
+            if lrm:
+                lrm_timestamp = json_format_datetime(lrm.message_timestamp)
+        return HttpResponse(json.dumps({
+            'message_timestamp': lrm_timestamp,
+        }))
 
 
 class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView):
