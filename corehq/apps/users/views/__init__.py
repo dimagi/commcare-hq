@@ -680,7 +680,6 @@ class UserInvitationView(object):
                                    "New User Accepted a project invitation",
                                    {"New User Accepted a project invitation": "yes"})
                     meta = get_meta(request)
-                    import ipdb; ipdb.set_trace()
                     track_new_user_accepted_invite_on_hubspot.delay(user, request.COOKIES, meta)
                     return HttpResponseRedirect(reverse("domain_homepage", args=[invitation.domain]))
             else:
