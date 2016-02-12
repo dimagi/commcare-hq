@@ -23,9 +23,6 @@ class TwilioIncomingSMSView(NewIncomingBackendView):
     def backend_class(self):
         return SQLTwilioBackend
 
-    def get(self, request, api_key, *args, **kwargs):
-        return HttpResponseBadRequest("POST Expected")
-
     def post(self, request, api_key, *args, **kwargs):
         message_sid = request.POST.get('MessageSid')
         account_sid = request.POST.get('AccountSid')
@@ -48,9 +45,6 @@ class TwilioIncomingIVRView(NewIncomingBackendView):
     @property
     def backend_class(self):
         return SQLTwilioBackend
-
-    def get(self, request, api_key, *args, **kwargs):
-        return HttpResponseBadRequest("POST Expected")
 
     def post(self, request, api_key, *args, **kwargs):
         from_number = request.POST.get('From')
