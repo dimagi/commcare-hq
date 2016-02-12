@@ -670,7 +670,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         except TypeError:
             return "Unknown User"
         except DomainMembershipError:
-            return "Unauthorized User"
+            return "Dimagi User" if self.is_global_admin() else "Unauthorized User"
         except Exception:
             return None
 
