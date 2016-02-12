@@ -40,19 +40,6 @@ function MultimediaReferenceController (references, obj_map, totals) {
         }
         event.preventDefault();
     };
-
-    self.incrementTotals = function (trigger, event, data) {
-        var newTotals = _.map(self.totals(), function (media) {
-            if (media.media_type == data.media_type && media.paths.indexOf(data.path) < 0) {
-                media = _.clone(media);
-                media.paths.push(data.path);
-                media.matched = media.paths.length;
-            }
-            return media;
-        });
-        self.totals(newTotals);
-    };
-
 }
 
 function BaseReferenceGroup (name, obj_map, group_id) {

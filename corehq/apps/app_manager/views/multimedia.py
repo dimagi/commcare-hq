@@ -55,6 +55,7 @@ def multimedia_ajax(request, domain, app_id, template='app_manager/partials/mult
             'multimedia_state': multimedia_state,
             'domain': domain,
             'app': app,
+            'totals': app.get_reference_totals(),
         }
         if extra_context:
             context.update(extra_context)
