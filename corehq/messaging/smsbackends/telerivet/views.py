@@ -1,19 +1,21 @@
 import uuid
-from corehq.apps.sms.models import SMS, SQLMobileBackend
+from corehq.apps.sms.models import SMS, SQLMobileBackend, SQLMobileBackendMapping
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
 from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message
 from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSForm,
-    TelerivetPhoneNumberForm, FinalizeGatewaySetupForm, YES, NO)
+    TelerivetPhoneNumberForm, FinalizeGatewaySetupForm, TelerivetBackendForm,
+    YES, NO)
 from corehq.messaging.smsbackends.telerivet.models import IncomingRequest, SQLTelerivetBackend
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.cache.cache_core import get_redis_client
+from django.db import transaction
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
 
@@ -121,6 +123,12 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
                 'found': False,
             }
 
+    def trim(self, value):
+        if isinstance(value, basestring):
+            return value.strip()
+
+        return value
+
     @allow_remote_invocation
     def send_sample_sms(self, data):
         api_key = data.get('api_key')
@@ -143,9 +151,9 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
 
         tmp_backend = SQLTelerivetBackend()
         tmp_backend.set_extra_fields(
-            api_key=api_key,
-            project_id=project_id,
-            phone_id=phone_id,
+            api_key=self.trim(api_key),
+            project_id=self.trim(project_id),
+            phone_id=self.trim(phone_id),
         )
         sms = SMS(
             phone_number=clean_phone_number(test_phone_number),
@@ -154,6 +162,50 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
         tmp_backend.send(sms)
         return {
             'success': True,
+        }
+
+    @allow_remote_invocation
+    def create_backend(self, data):
+        webhook_secret = self.get_cached_webhook_secret(data.get('request_token'))
+        values = {
+            'name': data.get('name'),
+            'description': _("My Telerivet Gateway '{}'").format(data.get('name')),
+            'api_key': data.get('api_key'),
+            'project_id': data.get('project_id'),
+            'phone_id': data.get('phone_id'),
+            'webhook_secret': webhook_secret,
+        }
+        form = TelerivetBackendForm(values, domain=self.domain, backend_id=None)
+        if form.is_valid():
+            with transaction.atomic():
+                backend = SQLTelerivetBackend(
+                    backend_type=SQLMobileBackend.SMS,
+                    inbound_api_key=webhook_secret,
+                    hq_api_id=SQLTelerivetBackend.get_api_id(),
+                    is_global=False,
+                    domain=self.domain,
+                    name=form.cleaned_data.get('name'),
+                    description=form.cleaned_data.get('description')
+                )
+                backend.set_extra_fields(
+                    api_key=form.cleaned_data.get('api_key'),
+                    project_id=form.cleaned_data.get('project_id'),
+                    phone_id=form.cleaned_data.get('phone_id'),
+                    webhook_secret=webhook_secret
+                )
+                backend.save()
+                if data.get('set_as_default') == YES:
+                    SQLMobileBackendMapping.set_default_domain_backend(self.domain, backend)
+                return {'success': True}
+
+        name_error = form['name'].errors
+        unexpected_error = form.error_class([_(
+            "An unexpected error occurred. Please start over and if the "
+            "problem persists, please report an issue."
+        )])
+        return {
+            'success': False,
+            'error': name_error if name_error else unexpected_error
         }
 
     @use_bootstrap3

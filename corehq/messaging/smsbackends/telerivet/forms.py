@@ -156,7 +156,8 @@ class FinalizeGatewaySetupForm(Form):
                 FormActions(
                     StrictButton(
                         _("Finish"),
-                        css_class="btn-primary",
+                        css_class='btn-primary',
+                        ng_click='createBackend();',
                     )
                 )
             )

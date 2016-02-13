@@ -86,6 +86,14 @@
         };
 
         $scope.createBackend = function() {
+            djangoRMI.create_backend({
+                name: $scope.name,
+                api_key: $scope.apiKey,
+                project_id: $scope.projectId,
+                phone_id: $scope.phoneId,
+                request_token: '{{ request_token }}',
+                set_as_default: $scope.setAsDefault
+            });
         };
 
         $scope.getLastInboundSMS = function() {
