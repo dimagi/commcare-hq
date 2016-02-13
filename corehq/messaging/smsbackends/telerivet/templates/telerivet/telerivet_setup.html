@@ -171,14 +171,7 @@
                 <li>
                     <p>
                         {% blocktrans %}
-                        Open the Telerivet App on your Android phone and log in.
-                        {% endblocktrans %}
-                    </p>
-                </li>
-                <li>
-                    <p>
-                        {% blocktrans %}
-                        Follow the instructions in the Telerivet App to connect the Android phone to your Telerivet project.
+                        Open the Telerivet App on your Android phone. Log in and follow the instructions to connect the App to your Telerivet project.
                         {% endblocktrans %}
                     </p>
                 </li>
@@ -199,7 +192,7 @@
                     <div>
                         <p>
                             {% blocktrans %}
-                            Generate an API key for your Telerivet account if you have not already done so.
+                            Go to the Telerivet website and generate an API key if you have not already done so.
                             <a href="#/step2" ng-hide="showApiKeyGeneration" ng-click="toggleApiKeyGeneration();">Show</a>
                             <a href="#/step2" ng-show="showApiKeyGeneration" ng-click="toggleApiKeyGeneration();">Hide</a>
                             how to do this.
@@ -214,7 +207,7 @@
                     <div>
                         <p>
                             {% blocktrans %}
-                            On that same page, make note of your API Key, Project ID, and Phone ID, and enter them below.
+                            On that same page in the Telerivet website, make note of your API Key, Project ID, and Phone ID, and enter them below.
                             <a href="#/step2" ng-hide="showApiInfoLocation" ng-click="toggleApiInfoLocation();">Show</a>
                             <a href="#/step2" ng-show="showApiInfoLocation" ng-click="toggleApiInfoLocation();">Hide</a>
                             where to find this.
@@ -281,7 +274,7 @@
                     <div>
                         <p>
                             {% blocktrans %}
-                            Navigate to the Add Webhook Service page in Telerivet.
+                            Navigate to the Add Webhook Service page in the Telerivet website.
                             <a href="#/step3" ng-hide="showAddWebookNavigation" ng-click="toggleAddWebookNavigation();">Show</a>
                             <a href="#/step3" ng-show="showAddWebookNavigation" ng-click="toggleAddWebookNavigation();">Hide</a>
                             how to do this.
@@ -330,7 +323,7 @@
                     <div>
                         <p>
                             {% blocktrans %}
-                            After creating the Webhook Service in Telerivet, send an SMS to the Telerivet Android phone from
+                            After creating the Webhook Service in the Telerivet website, send an SMS to the Telerivet Android phone from
                             another phone. <button class="btn btn-success" ng-click="startInboundPolling();">Click Here</button> after you have sent the SMS.
                             {% endblocktrans %}
                         </p>
@@ -363,14 +356,14 @@
         </div>
     </script>
     <script type="text/ng-template" id="finish.tpl">
-        <h2>{% trans "Success!" %}</h2>
+        <h2>{% trans "Finish Setup" %}</h2>
         <div ng-controller="TelerivetSetupController" ng-cloak>
             <div>
-                <p>
-                {% blocktrans %}
-                Now that you have verified that inbound and outbound SMS are functioning, all that's left is to
-                choose a name for this gateway below and click Finish.
-                {% endblocktrans %}
+                <p class="help-block">
+                    <i class="fa fa-info-circle" />
+                    {% blocktrans %}
+                    Choose a name for this gateway below and click Finish.
+                    {% endblocktrans %}
                 </p>
             </div>
             <div>

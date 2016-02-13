@@ -1,6 +1,7 @@
 from corehq.apps.sms.forms import BackendForm
 from corehq.apps.style import crispy as hqcrispy
 from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import StrictButton, FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, Field, Div, HTML
 from dimagi.utils.django.fields import TrimmedCharField
@@ -74,18 +75,20 @@ class TelerivetOutgoingSMSForm(Form):
         self.helper.label_class = 'col-sm-2 col-md-1'
         self.helper.field_class = 'col-sm-4 col-md-3'
         self.helper.layout = Layout(
-            Fieldset(
-                _("Telerivet Outgoing SMS Settings"),
+            Div(
                 Field(
                     'api_key',
+                    placeholder=ugettext_lazy("API Key"),
                     ng_model='apiKey',
                 ),
                 Field(
                     'project_id',
+                    placeholder=ugettext_lazy("Project ID"),
                     ng_model='projectId',
                 ),
                 Field(
                     'phone_id',
+                    placeholder=ugettext_lazy("Phone ID"),
                     ng_model='phoneId',
                 ),
             )
@@ -104,8 +107,7 @@ class TelerivetPhoneNumberForm(Form):
         self.helper.label_class = 'col-sm-2 col-md-1'
         self.helper.field_class = 'col-sm-4 col-md-3'
         self.helper.layout = Layout(
-            Fieldset(
-                _("Send a Test SMS"),
+            Div(
                 hqcrispy.B3MultiField(
                     _("Test Phone Number"),
                     Div(
@@ -130,7 +132,7 @@ class FinalizeGatewaySetupForm(Form):
         required=True
     )
     set_as_default = ChoiceField(
-        label=ugettext_lazy("Set as default gateway?"),
+        label=ugettext_lazy("Set as default gateway"),
         choices=YES_NO_CHOICES,
         required=True
     )
@@ -142,8 +144,7 @@ class FinalizeGatewaySetupForm(Form):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-3 col-md-2'
         self.helper.layout = Layout(
-            Fieldset(
-                _("Finalize Gateway Setup"),
+            Div(
                 Field(
                     'name',
                     ng_model='name',
@@ -152,9 +153,11 @@ class FinalizeGatewaySetupForm(Form):
                     'set_as_default',
                     ng_model='setAsDefault',
                 ),
-                Div(
-                    HTML('<button class="btn btn-primary" ng-click="createBackend();">%s</button>' %
-                         _('Finish'))
+                FormActions(
+                    StrictButton(
+                        _("Finish"),
+                        css_class="btn-primary",
+                    )
                 )
             )
         )

@@ -1,11 +1,11 @@
 import uuid
-from corehq.apps.sms.models import SMS
+from corehq.apps.sms.models import SMS, SQLMobileBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
 from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message
 from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSForm,
-    TelerivetPhoneNumberForm, FinalizeGatewaySetupForm)
+    TelerivetPhoneNumberForm, FinalizeGatewaySetupForm, YES, NO)
 from corehq.messaging.smsbackends.telerivet.models import IncomingRequest, SQLTelerivetBackend
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -82,10 +82,18 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
         request_token = uuid.uuid4().hex
 
         self.set_cached_webhook_secret(request_token, webhook_secret)
+        domain_has_default_gateway = SQLMobileBackend.get_domain_default_backend(
+            SQLMobileBackend.SMS,
+            self.domain,
+            id_only=True
+        ) is not None
+
         return {
             'outgoing_sms_form': TelerivetOutgoingSMSForm(),
             'test_sms_form': TelerivetPhoneNumberForm(),
-            'finalize_gateway_form': FinalizeGatewaySetupForm(),
+            'finalize_gateway_form': FinalizeGatewaySetupForm(initial={
+                'set_as_default': NO if domain_has_default_gateway else YES
+            }),
             'webhook_url': absolute_reverse('telerivet_in'),
             'webhook_secret': webhook_secret,
             'request_token': request_token,
