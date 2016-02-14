@@ -22,6 +22,7 @@ Welcome to CommCareHQ's documentation!
    maps
    ui_helpers
    class_views
+   couchdb
    forms
    management_commands
    commtrack

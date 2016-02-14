@@ -1,6 +1,6 @@
 """
 Aggregate Queries
----------------
+-----------------
 Aggregations are a replacement for Facets
 
 Here is an example used to calculate how many new pregnancy cases each user has
