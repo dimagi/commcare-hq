@@ -309,7 +309,7 @@ ADMIN_REPORTS = (
 )
 
 DOMAIN_REPORTS = (
-    (_('Domain Reports'), (
+    (_('Project Settings'), (
         DomainForwardingRepeatRecords,
     )),
 )

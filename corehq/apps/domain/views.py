@@ -31,6 +31,7 @@ from custom.dhis2.models import Dhis2Settings
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_jquery_ui,
@@ -2092,7 +2093,7 @@ class RepeaterMixin(object):
 class DomainForwardingRepeatRecords(GenericTabularReport):
     name = 'Repeat Records'
     base_template = 'domain/repeat_record_report.html'
-    section_name = 'Domain Reports'
+    section_name = 'Project Settings'
     slug = 'repeat_record_report'
     dispatcher = DomainReportDispatcher
     ajax_pagination = True
@@ -2152,6 +2153,19 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             {}
         </span>
         '''.format(label_cls, label_text)
+
+    @property
+    def report_context(self):
+        context = super(DomainForwardingRepeatRecords, self).report_context
+        context.update({
+            'active_tab': ProjectSettingsTab(
+                self.request,
+                self.slug,
+                domain=self.domain,
+                couch_user=self.request.couch_user,
+            )
+        })
+        return context
 
     @property
     def total_records(self):
