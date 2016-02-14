@@ -1,4 +1,6 @@
 # coding=utf-8
+from collections import OrderedDict
+
 from django.template.defaultfilters import slugify
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import RawFilter, SqlFilter
@@ -372,7 +374,7 @@ class DictDataFormat(BaseDataFormat):
         return dict([(c.slug, self._or_no_value(c.get_value(row))) for c in self.columns])
 
     def format_output(self, row_generator):
-        ret = dict()
+        ret = OrderedDict()
         for key, row in row_generator:
             if key is None:
                 return row
