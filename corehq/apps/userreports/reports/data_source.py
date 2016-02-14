@@ -1,12 +1,14 @@
 from collections import OrderedDict
 
+from sqlalchemy.exc import ProgrammingError
+
+from dimagi.utils.decorators.memoized import memoized
 from sqlagg import (
     ColumnNotFoundException,
     TableNotFoundException,
 )
 from sqlagg.columns import SimpleColumn
 from sqlagg.sorting import OrderBy
-from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from corehq.apps.userreports.exceptions import (
@@ -16,7 +18,6 @@ from corehq.apps.userreports.models import DataSourceConfiguration, get_datasour
 from corehq.apps.userreports.reports.sorting import ASCENDING
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.sql.connection import get_engine_id
-from dimagi.utils.decorators.memoized import memoized
 
 
 class ConfigurableReportDataSource(SqlData):

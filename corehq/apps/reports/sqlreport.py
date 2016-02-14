@@ -2,17 +2,21 @@
 from collections import OrderedDict
 
 from django.template.defaultfilters import slugify
+
+from dimagi.utils.decorators.memoized import memoized
+import sqlagg
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import RawFilter, SqlFilter
-import sqlagg
-from corehq.apps.reports.api import ReportDataSource
 
+from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.basic import GenericTabularReport
-from corehq.apps.reports.datatables import DataTablesHeader, \
-    DataTablesColumn, DTSortType
-from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
-from dimagi.utils.decorators.memoized import memoized
+from corehq.apps.reports.datatables import (
+    DataTablesColumn,
+    DataTablesHeader,
+    DTSortType,
+)
 from corehq.apps.reports.util import format_datatables_data
+from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
 
 
 class SqlReportException(Exception):
