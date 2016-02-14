@@ -1,4 +1,6 @@
+from corehq.apps.hqwebapp.crispy import ErrorsOnlyField
 from corehq.apps.sms.forms import BackendForm
+from corehq.apps.sms.util import validate_phone_number
 from corehq.apps.style import crispy as hqcrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton, FormActions
@@ -6,6 +8,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, Field, Div, HTML
 from dimagi.utils.django.fields import TrimmedCharField
 from django.core.exceptions import ValidationError
+from django.core.urlresolvers import reverse
 from django.forms.fields import ChoiceField
 from django.forms.forms import Form
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -18,6 +21,13 @@ YES_NO_CHOICES = (
     (YES, ugettext_lazy("Yes")),
     (NO, ugettext_lazy("No")),
 )
+
+
+def get_rmi_error_placeholder(error_name):
+    return Div(
+        HTML('<span class="help-block"><strong ng-bind="%s"></strong></span>' % error_name),
+        ng_show=error_name,
+    )
 
 
 class TelerivetBackendForm(BackendForm):
@@ -76,21 +86,36 @@ class TelerivetOutgoingSMSForm(Form):
         self.helper.field_class = 'col-sm-4 col-md-3'
         self.helper.layout = Layout(
             Div(
-                Field(
-                    'api_key',
-                    placeholder=ugettext_lazy("API Key"),
-                    ng_model='apiKey',
+                hqcrispy.B3MultiField(
+                    _("API Key"),
+                    Div(
+                        hqcrispy.MultiInlineField(
+                            'api_key',
+                            ng_model='apiKey'
+                        )
+                    ),
+                    get_rmi_error_placeholder('apiKeyError')
                 ),
-                Field(
-                    'project_id',
-                    placeholder=ugettext_lazy("Project ID"),
-                    ng_model='projectId',
+                hqcrispy.B3MultiField(
+                    _("Project ID"),
+                    Div(
+                        hqcrispy.MultiInlineField(
+                            'project_id',
+                            ng_model='projectId'
+                        )
+                    ),
+                    get_rmi_error_placeholder('projectIdError')
                 ),
-                Field(
-                    'phone_id',
-                    placeholder=ugettext_lazy("Phone ID"),
-                    ng_model='phoneId',
-                ),
+                hqcrispy.B3MultiField(
+                    _("Phone ID"),
+                    Div(
+                        hqcrispy.MultiInlineField(
+                            'phone_id',
+                            ng_model='phoneId'
+                        )
+                    ),
+                    get_rmi_error_placeholder('phoneIdError')
+                )
             )
         )
 
@@ -115,15 +140,26 @@ class TelerivetPhoneNumberForm(Form):
                             'test_phone_number',
                             ng_model='testPhoneNumber'
                         ),
-                        css_class="col-sm-8"
+                        css_class='col-sm-8'
                     ),
                     Div(
-                        HTML('<button class="btn btn-success" ng-click="sendTestSMS();">%s</button>' %
-                             _('Send'))
-                    )
+                        StrictButton(
+                            _("Send"),
+                            id='id_send_sms_button',
+                            css_class='btn btn-success',
+                            ng_click='sendTestSMS();'
+                        ),
+                        css_class='col-sm-4'
+                    ),
+                    get_rmi_error_placeholder('testPhoneNumberError')
                 )
             )
         )
+
+    def clean_test_phone_number(self):
+        value = self.cleaned_data.get('test_phone_number')
+        validate_phone_number(value)
+        return value
 
 
 class FinalizeGatewaySetupForm(Form):
@@ -145,19 +181,32 @@ class FinalizeGatewaySetupForm(Form):
         self.helper.field_class = 'col-sm-3 col-md-2'
         self.helper.layout = Layout(
             Div(
-                Field(
-                    'name',
-                    ng_model='name',
+                hqcrispy.B3MultiField(
+                    _("Name"),
+                    Div(
+                        hqcrispy.MultiInlineField(
+                            'name',
+                            ng_model='name'
+                        )
+                    ),
+                    get_rmi_error_placeholder('nameError')
                 ),
-                Field(
-                    'set_as_default',
-                    ng_model='setAsDefault',
+                hqcrispy.B3MultiField(
+                    _("Set as default gateway"),
+                    Div(
+                        hqcrispy.MultiInlineField(
+                            'set_as_default',
+                            ng_model='setAsDefault'
+                        )
+                    ),
+                    get_rmi_error_placeholder('setAsDefaultError')
                 ),
                 FormActions(
                     StrictButton(
                         _("Finish"),
+                        id="id_create_backend",
                         css_class='btn-primary',
-                        ng_click='createBackend();',
+                        ng_click='createBackend();'
                     )
                 )
             )

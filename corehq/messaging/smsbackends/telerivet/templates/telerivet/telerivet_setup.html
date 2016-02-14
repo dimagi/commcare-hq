@@ -42,21 +42,35 @@
     });
 
     telerivetSetupApp.controller('TelerivetSetupController', function($scope, djangoRMI) {
+        // model attributes
         $scope.apiKey = globalApiKey;
         $scope.projectId = globalProjectId;
         $scope.phoneId = globalPhoneId;
         $scope.testPhoneNumber = globalTestPhoneNumber;
-        $scope.testSMSSent = globalTestSMSSent;
+        $scope.name = '';
+        $scope.setAsDefault = '';
+
+        // error messages
+        $scope.apiKeyError = null;
+        $scope.projectIdError = null;
+        $scope.phoneIdError = null;
+        $scope.testPhoneNumberError = null;
+        $scope.nameError = null;
+        $scope.setAsDefaultError = null;
+
+        // screenshot toggles
         $scope.showApiKeyGeneration = false;
         $scope.showApiInfoLocation = false;
         $scope.showAddWebookNavigation = false;
         $scope.showWebhookDetails = false;
+
+        // control flow variables
+        $scope.testSMSSent = globalTestSMSSent;
         $scope.pollForInboundSMS = false;
         $scope.pollingErrorOccurred = false;
         $scope.inboundSMSReceived = false;
         $scope.inboundWaitTimedOut = false;
-        $scope.name = '';
-        $scope.setAsDefault = '';
+        $scope.setupComplete = false;
 
         $scope.toggleApiInfoLocation = function() {
             $scope.showApiInfoLocation = !$scope.showApiInfoLocation;
@@ -81,11 +95,24 @@
                 phone_id: $scope.phoneId,
                 test_phone_number: $scope.testPhoneNumber,
                 request_token: '{{ request_token }}',
+            })
+            .success(function(data) {
+                $('#id_send_sms_button')
+                .text('{% trans "Send" %}');
+                $scope.apiKeyError = data.api_key_error;
+                $scope.projectIdError = data.project_id_error;
+                $scope.phoneIdError = data.phone_id_error;
+                $scope.testPhoneNumberError = data.unexpected_error || data.test_phone_number_error;
+                $scope.testSMSSent = data.success;
+            })
+            .error(function() {
+                $('#id_send_sms_button')
+                .text('{% trans "Server error. Try again..." %}');
             });
-            $scope.testSMSSent = true;
         };
 
         $scope.createBackend = function() {
+            $('#id_create_backend').prop('disabled', true);
             djangoRMI.create_backend({
                 name: $scope.name,
                 api_key: $scope.apiKey,
@@ -93,6 +120,23 @@
                 phone_id: $scope.phoneId,
                 request_token: '{{ request_token }}',
                 set_as_default: $scope.setAsDefault
+            })
+            .success(function(data) {
+                if(data.success) {
+                    $scope.setupComplete = true;
+                } else {
+                    $scope.nameError = data.unexpected_error || data.name_error;
+                    if(data.name_error) {
+                        $('#id_create_backend')
+                        .prop('disabled', false)
+                        .text('{% trans "Finish" %}');
+                    }
+                }
+            })
+            .error(function() {
+                $('#id_create_backend')
+                .prop('disabled', false)
+                .text('{% trans "Server error. Try again..." %}');
             });
         };
 
@@ -366,7 +410,7 @@
     <script type="text/ng-template" id="finish.tpl">
         <h2>{% trans "Finish Setup" %}</h2>
         <div ng-controller="TelerivetSetupController" ng-cloak>
-            <div>
+            <div ng-hide="setupComplete">
                 <p class="help-block">
                     <i class="fa fa-info-circle" />
                     {% blocktrans %}
@@ -374,8 +418,14 @@
                     {% endblocktrans %}
                 </p>
             </div>
-            <div>
+            <div ng-hide="setupComplete">
                 {% crispy finalize_gateway_form %}
+            </div>
+            <div ng-show="setupComplete">
+                <a href="{% url 'list_domain_backends' domain %}" class="btn btn-success">
+                    {% trans "Success! Return to gateway list" %}
+                    <span class="glyphicon glyphicon-chevron-right" />
+                </a>
             </div>
         </div>
     </script>

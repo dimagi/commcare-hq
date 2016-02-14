@@ -69,6 +69,9 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
         key = self.get_cache_key(request_token)
         return client.get(key)
 
+    def get_error_message(self, form, field_name):
+        return form[field_name].errors[0] if form[field_name].errors else None
+
     @property
     def page_context(self):
         # The webhook secret is a piece of data that is sent to hq on each
@@ -93,13 +96,22 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
         return {
             'outgoing_sms_form': TelerivetOutgoingSMSForm(),
             'test_sms_form': TelerivetPhoneNumberForm(),
-            'finalize_gateway_form': FinalizeGatewaySetupForm(initial={
-                'set_as_default': NO if domain_has_default_gateway else YES
-            }),
+            'finalize_gateway_form': FinalizeGatewaySetupForm(
+                initial={
+                    'set_as_default': NO if domain_has_default_gateway else YES
+                }
+            ),
             'webhook_url': absolute_reverse('telerivet_in'),
             'webhook_secret': webhook_secret,
             'request_token': request_token,
         }
+
+    @property
+    def unexpected_error(self):
+        return _(
+            "An unexpected error occurred. Please start over and if the "
+            "problem persists, please report an issue."
+        )
 
     @allow_remote_invocation
     def get_last_inbound_sms(self, data):
@@ -131,32 +143,43 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
 
     @allow_remote_invocation
     def send_sample_sms(self, data):
-        api_key = data.get('api_key')
-        project_id = data.get('project_id')
-        phone_id = data.get('phone_id')
-        test_phone_number = data.get('test_phone_number')
         request_token = data.get('request_token')
-
-        if not (
-            api_key and
-            project_id and
-            phone_id and
-            test_phone_number and
-            request_token and
-            self.get_cached_webhook_secret(request_token)
-        ):
+        if not self.get_cached_webhook_secret(request_token):
             return {
                 'success': False,
+                'unexpected_error': self.unexpected_error,
+            }
+
+        outgoing_sms_form = TelerivetOutgoingSMSForm({
+            'api_key': data.get('api_key'),
+            'project_id': data.get('project_id'),
+            'phone_id': data.get('phone_id'),
+        })
+
+        test_sms_form = TelerivetPhoneNumberForm({
+            'test_phone_number': data.get('test_phone_number'),
+        })
+
+        # Be sure to call .is_valid() on both
+        outgoing_sms_form_valid = outgoing_sms_form.is_valid()
+        test_sms_form_valid = test_sms_form.is_valid()
+        if not outgoing_sms_form_valid or not test_sms_form_valid:
+            return {
+                'success': False,
+                'api_key_error': self.get_error_message(outgoing_sms_form, 'api_key'),
+                'project_id_error': self.get_error_message(outgoing_sms_form, 'project_id'),
+                'phone_id_error': self.get_error_message(outgoing_sms_form, 'phone_id'),
+                'test_phone_number_error': self.get_error_message(test_sms_form, 'test_phone_number'),
             }
 
         tmp_backend = SQLTelerivetBackend()
         tmp_backend.set_extra_fields(
-            api_key=self.trim(api_key),
-            project_id=self.trim(project_id),
-            phone_id=self.trim(phone_id),
+            api_key=outgoing_sms_form.cleaned_data.get('api_key'),
+            project_id=outgoing_sms_form.cleaned_data.get('project_id'),
+            phone_id=outgoing_sms_form.cleaned_data.get('phone_id'),
         )
         sms = SMS(
-            phone_number=clean_phone_number(test_phone_number),
+            phone_number=clean_phone_number(test_sms_form.cleaned_data.get('test_phone_number')),
             text="This is a test SMS from CommCareHQ."
         )
         tmp_backend.send(sms)
@@ -198,14 +221,11 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
                     SQLMobileBackendMapping.set_default_domain_backend(self.domain, backend)
                 return {'success': True}
 
-        name_error = form['name'].errors
-        unexpected_error = form.error_class([_(
-            "An unexpected error occurred. Please start over and if the "
-            "problem persists, please report an issue."
-        )])
+        name_error = self.get_error_message(form, 'name')
         return {
             'success': False,
-            'error': name_error if name_error else unexpected_error
+            'name_error': name_error,
+            'unexpected_error': None if name_error else self.unexpected_error,
         }
 
     @use_bootstrap3
