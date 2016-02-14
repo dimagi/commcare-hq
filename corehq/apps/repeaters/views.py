@@ -1,3 +1,4 @@
+import json
 from django.core.urlresolvers import reverse
 from django.views.generic import View
 
@@ -37,8 +38,16 @@ class RepeatRecordView(View):
 
     def get(self, request, domain):
         record = RepeatRecord.get(request.GET.get('record_id'))
+        content_type = record.repeater.get_payload_generator(
+            record.repeater.format_or_default_format()
+        ).content_type
+        payload = record.get_payload()
+        if content_type == 'text/xml':
+            payload = indent_xml(payload)
+
         return json_response({
-            'payload': indent_xml(record.get_payload()),
+            'payload': payload,
+            'content_type': content_type,
         })
 
     def post(self, request, domain):

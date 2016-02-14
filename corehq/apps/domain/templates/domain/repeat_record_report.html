@@ -4,6 +4,7 @@
 />{% endblock stylesheets %} {% block js %}{{ block.super }}
 <script src="{% new_static 'codemirror/lib/codemirror.js' %}"></script>
 <script src="{% new_static 'codemirror/mode/xml/xml.js' %}"></script>
+<script src="{% new_static 'codemirror/mode/javascript/javascript.js' %}"></script>
 {% endblock js %} {% block js-inline %}{{ block.super }}
 <script>
     $(document).ready(function() {
@@ -14,14 +15,23 @@
             $.get("{% url 'repeat_record' domain %}", { record_id: recordData.recordId })
                 .success(function(data) {
                     var $payload = $modal.find('.payload'),
-                        codeMirror;
+                        codeMirror,
+                        contentType = data.content_type,
+                        mode = 'xml';
+
+                    if (contentType === 'text/xml') {
+                        mode = 'xml';
+                    } else if (contentType === 'application/json') {
+                        mode = { name: 'javascript', json: true };
+                    }
 
                     codeMirror = CodeMirror($payload[0],
                     {
                         value: data.payload,
-                        mode: 'xml',
+                        mode: mode,
                         readOnly: true,
                         lineNumbers: true,
+                        lineWrapping: true
                     });
                     codeMirror.refresh();
 
