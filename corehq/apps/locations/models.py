@@ -437,7 +437,7 @@ def _filter_for_archived(locations, include_archive_ancestors):
 class Location(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
-    site_code = StringProperty() # should be unique, not yet enforced
+    site_code = StringProperty()  # should be unique, not yet enforced
     # unique id from some external data source
     external_id = StringProperty()
     metadata = DictProperty()
@@ -449,8 +449,6 @@ class Location(CachedCouchDocumentMixin, Document):
 
     # a list of doc ids, referring to the parent location, then the
     # grand-parent, and so on up to the root location in the hierarchy
-    # TODO: in future, support multiple types of parentage with
-    # independent hierarchies
     lineage = StringListProperty()
     previous_parents = StringListProperty()
 
@@ -810,7 +808,6 @@ class Location(CachedCouchDocumentMixin, Document):
     @property
     def location_type_name(self):
         return self.location_type_object.name
-
 
 
 def _unassign_users_from_location(domain, location_id):
