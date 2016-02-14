@@ -94,7 +94,8 @@ class TelerivetOutgoingSMSForm(Form):
                             ng_model='apiKey'
                         )
                     ),
-                    get_rmi_error_placeholder('apiKeyError')
+                    get_rmi_error_placeholder('apiKeyError'),
+                    ng_class="{'has-error': apiKeyError}"
                 ),
                 hqcrispy.B3MultiField(
                     _("Project ID"),
@@ -104,7 +105,8 @@ class TelerivetOutgoingSMSForm(Form):
                             ng_model='projectId'
                         )
                     ),
-                    get_rmi_error_placeholder('projectIdError')
+                    get_rmi_error_placeholder('projectIdError'),
+                    ng_class="{'has-error': projectIdError}"
                 ),
                 hqcrispy.B3MultiField(
                     _("Phone ID"),
@@ -114,7 +116,8 @@ class TelerivetOutgoingSMSForm(Form):
                             ng_model='phoneId'
                         )
                     ),
-                    get_rmi_error_placeholder('phoneIdError')
+                    get_rmi_error_placeholder('phoneIdError'),
+                    ng_class="{'has-error': phoneIdError}"
                 )
             )
         )
@@ -151,7 +154,8 @@ class TelerivetPhoneNumberForm(Form):
                         ),
                         css_class='col-sm-4'
                     ),
-                    get_rmi_error_placeholder('testPhoneNumberError')
+                    get_rmi_error_placeholder('testPhoneNumberError'),
+                    ng_class="{'has-error': testPhoneNumberError}"
                 )
             )
         )
@@ -189,7 +193,8 @@ class FinalizeGatewaySetupForm(Form):
                             ng_model='name'
                         )
                     ),
-                    get_rmi_error_placeholder('nameError')
+                    get_rmi_error_placeholder('nameError'),
+                    ng_class="{'has-error': nameError}"
                 ),
                 hqcrispy.B3MultiField(
                     _("Set as default gateway"),
@@ -199,7 +204,8 @@ class FinalizeGatewaySetupForm(Form):
                             ng_model='setAsDefault'
                         )
                     ),
-                    get_rmi_error_placeholder('setAsDefaultError')
+                    get_rmi_error_placeholder('setAsDefaultError'),
+                    ng_class="{'has-error': setAsDefaultError}"
                 ),
                 FormActions(
                     StrictButton(
