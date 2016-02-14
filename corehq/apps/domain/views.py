@@ -36,11 +36,9 @@ from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_jquery_ui,
     use_jquery_ui_multiselect,
-    use_select2,
     use_datatables,
     use_daterangepicker,
     use_select2,
-    use_jquery_ui,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,

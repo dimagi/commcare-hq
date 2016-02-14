@@ -1,4 +1,3 @@
-import json
 from django.core.urlresolvers import reverse
 from django.views.generic import View
 
