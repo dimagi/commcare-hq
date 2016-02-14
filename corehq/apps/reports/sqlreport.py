@@ -178,6 +178,13 @@ class SqlData(ReportDataSource):
         raise NotImplementedError()
 
     @property
+    def order_by(self):
+        """
+        Returns a list of OrderBy objects.
+        """
+        return []
+
+    @property
     def filters(self):
         """
         Returns a list of filter statements. Filters are instances of sqlagg.filters.SqlFilter.
@@ -231,7 +238,7 @@ class SqlData(ReportDataSource):
 
     @property
     def query_context(self):
-        return sqlagg.QueryContext(self.table_name, self.wrapped_filters, self.group_by)
+        return sqlagg.QueryContext(self.table_name, self.wrapped_filters, self.group_by, self.order_by)
 
     def get_data(self):
         data = self._get_data()

@@ -5,6 +5,7 @@ from sqlagg import (
     TableNotFoundException,
 )
 from sqlagg.columns import SimpleColumn
+from sqlagg.sorting import OrderBy
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
@@ -12,7 +13,7 @@ from corehq.apps.userreports.exceptions import (
     UserReportsError, TableNotFoundWarning,
     SortConfigurationError)
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
-from corehq.apps.userreports.reports.sorting import get_default_sort_value, DESCENDING
+from corehq.apps.userreports.reports.sorting import get_default_sort_value, ASCENDING
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.sql.connection import get_engine_id
 from dimagi.utils.decorators.memoized import memoized
@@ -102,6 +103,15 @@ class ConfigurableReportDataSource(SqlData):
             group_by for col_id in self.aggregation_columns
             for group_by in _contributions(col_id)
         ]
+
+    @property
+    def order_by(self):
+        if self._order_by:
+            return [
+                OrderBy(sort_column_id, order == ASCENDING)
+                for sort_column_id, order in self._order_by
+            ]
+        return [OrderBy(self.column_configs[0].column_id, is_ascending=True)]
 
     @property
     def columns(self):
