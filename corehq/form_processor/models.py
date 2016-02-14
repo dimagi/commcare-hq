@@ -325,6 +325,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
 
     class Meta:
         db_table = XFormInstanceSQL_DB_TABLE
+        app_label = "form_processor"
 
 
 class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
@@ -379,6 +380,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
 
     class Meta:
         abstract = True
+        app_label = "form_processor"
 
 
 class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
@@ -392,6 +394,7 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
 
     class Meta:
         db_table = XFormAttachmentSQL_DB_TABLE
+        app_label = "form_processor"
 
 
 class XFormOperationSQL(DisabledDbMixin, models.Model):
@@ -410,6 +413,7 @@ class XFormOperationSQL(DisabledDbMixin, models.Model):
         return self.user_id
 
     class Meta:
+        app_label = "form_processor"
         db_table = XFormOperationSQL_DB_TABLE
 
 
@@ -651,6 +655,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
             ["domain", "owner_id"],
             ["domain", "closed", "server_modified_on"],
         ]
+        app_label = "form_processor"
         db_table = CommCareCaseSQL_DB_TABLE
 
 
@@ -730,6 +735,7 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
         ).format(a=self)
 
     class Meta:
+        app_label = "form_processor"
         db_table = CaseAttachmentSQL_DB_TABLE
 
 
@@ -789,6 +795,7 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
             ["domain", "referenced_id"],
         ]
         db_table = CommCareCaseIndexSQL_DB_TABLE
+        app_label = "form_processor"
 
 
 class CaseTransaction(DisabledDbMixin, models.Model):
@@ -899,6 +906,7 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         unique_together = ("case", "form_id")
         ordering = ['server_date']
         db_table = CaseTransaction_DB_TABLE
+        app_label = "form_processor"
 
 
 class CaseTransactionDetail(JsonObject):
@@ -953,5 +961,8 @@ class LedgerValue(models.Model):
     section_id = models.CharField(max_length=100, db_index=True, default=None)
     balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
     last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = "form_processor"
 
 CaseAction = namedtuple("CaseAction", ["action_type", "updated_known_properties", "indices"])
