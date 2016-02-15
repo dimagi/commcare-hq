@@ -226,7 +226,8 @@ def convert_custom_fields_to_struct(config):
 
 
 class InvalidDateException(Exception):
-    pass
+    def __init__(self, column=None):
+        self.column = column
 
 
 class ImportErrorDetail(object):
@@ -405,7 +406,10 @@ def populate_updated_fields(config, columns, row, datemode):
 
         if update_value is not None:
             if field_map[key]['type_field'] == 'date':
-                update_value = parse_excel_date(update_value, datemode)
+                try:
+                    update_value = parse_excel_date(update_value, datemode)
+                except InvalidDateException:
+                     raise InvalidDateException(key)
             elif field_map[key]['type_field'] == 'integer':
                 try:
                     update_value = str(int(update_value))

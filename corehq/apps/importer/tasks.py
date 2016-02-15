@@ -104,8 +104,8 @@ def do_import(spreadsheet_or_error, config, domain, task=None, chunksize=CASEBLO
             if not any(fields_to_update.values()):
                 # if the row was blank, just skip it, no errors
                 continue
-        except importer_util.InvalidDateException:
-            errors.add(ImportErrors.InvalidDate, i + 1)
+        except importer_util.InvalidDateException as e:
+            errors.add(ImportErrors.InvalidDate, i + 1, e.column)
             continue
 
         external_id = fields_to_update.pop('external_id', None)
