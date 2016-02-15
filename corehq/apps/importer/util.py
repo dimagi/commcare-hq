@@ -242,7 +242,7 @@ class ImportErrorDetail(object):
             "uploading because of these values."
         ),
         ImportErrors.InvalidDate: _(
-            "Date fields were specified that caused an error during"
+            "Date fields were specified that caused an error during "
             "conversion. This is likely caused by a value from excel having "
             "the wrong type or not being formatted properly."
         ),
