@@ -63,9 +63,13 @@
 
         $scope.addCondition = function() {
             $scope.conditions_objs.push({});
+            analytics.workflow('User clicks "+ Add Filter"');
+            ga_track_event('Automatic Case Closure','User clicks "+ Add Filter"');
         };
         $scope.removeCondition = function(index) {
             $scope.conditions_objs.splice(index, 1);
+            analytics.workflow('User clicks "x Remove"');
+            ga_track_event('Automatic Case Closure', 'User clicks "x Remove"');
         };
         $scope.matchesDaysSince = function(condition) {
             return condition.property_match_type == 'DAYS';
@@ -75,6 +79,10 @@
         };
         $scope.showUpdateProperty = function() {
             return $scope.action == 'UPDATE_AND_CLOSE';
+        };
+        $scope.trackSaveRule = function() {
+            analytics.workflow('User clicks "Save" adding automatic case close rule');
+            ga_track_event('Automatic Case Closure', 'User clicks "Save"');
         };
 
         angular.element(document).ready(function() {
