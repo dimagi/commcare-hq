@@ -668,9 +668,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
         try:
             return self.get_role(domain, checking_global_admin=False).name
         except TypeError:
-            return "Unknown User"
+            return _("Unknown User")
         except DomainMembershipError:
-            return "Dimagi User" if self.is_global_admin() else "Unauthorized User"
+            return _("Dimagi User") if self.is_global_admin() else _("Unauthorized User")
         except Exception:
             return None
 
