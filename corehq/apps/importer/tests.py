@@ -339,6 +339,13 @@ class ImporterTest(TestCase):
         self.assertIn(error_message, res['errors'])
         self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [5])
 
+    def testDateError(self):
+        config = self._config(self.default_headers, type_fields=['plain', 'date', 'plain', 'plain'])
+        file = MockExcelFile(header_columns=self.default_headers, num_rows=3)
+        res = do_import(file, config, self.domain)
+        self.assertIn(self.default_headers[1], res['errors'][error_message])
+        self.assertEqual(res['errors'][error_message][self.default_headers[1]]['rows'], [1,2,3])
+
 
 class ImporterUtilsTest(SimpleTestCase):
 
