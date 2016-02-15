@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 import uuid
 import os
 import hashlib
+
+from django.conf import settings
 from django.template import Template, Context
 
 from django.test import TestCase
@@ -16,7 +18,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -139,17 +141,20 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
     Tests new attachments for cases and case properties
     Spec: https://github.com/dimagi/commcare/wiki/CaseAttachmentAPI
     """
+    @run_with_all_backends
     def testAttachInCreate(self):
         single_attach = 'fruity_file'
         _, xform, [case] = self._doCreateCaseWithMultimedia(attachments=[single_attach])
 
+        case = CaseAccessors(TEST_DOMAIN_NAME).get_case(case.case_id)
         self.assertEqual(1, len(case.case_attachments))
         self.assertTrue(single_attach in case.case_attachments)
-        self.assertEqual(1, len(filter(lambda x: x['action_type'] == 'attachment', case.actions)))
         self.assertEqual(
             self._calc_file_hash(single_attach),
             hashlib.md5(case.get_attachment(single_attach)).hexdigest()
         )
+        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+            self.assertEqual(1, len(filter(lambda x: x['action_type'] == 'attachment', case.actions)))
 
     def testArchiveAfterAttach(self):
         single_attach = 'fruity_file'

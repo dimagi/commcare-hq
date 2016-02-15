@@ -13,6 +13,14 @@ class AbstractXFormInstance(object):
     #     raise NotImplementedError()
 
     @property
+    def attachments(self):
+        """
+        Get the extra attachments for this form. This will not include
+        the form itself
+        """
+        raise NotImplementedError
+
+    @property
     def form_data(self):
         raise NotImplementedError()
 

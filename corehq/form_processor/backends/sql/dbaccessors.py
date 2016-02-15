@@ -364,7 +364,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_attachment_by_name(case_id, attachment_name):
         try:
-            return CommCareCaseSQL.objects.raw(
+            return CaseAttachmentSQL.objects.raw(
                 'select * from get_case_attachment_by_name(%s, %s)',
                 [case_id, attachment_name]
             )[0]
