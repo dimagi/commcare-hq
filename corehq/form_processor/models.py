@@ -574,9 +574,9 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
             return found[0]
         return None
 
-    def _get_attachment_from_db(self, attachment_name):
+    def _get_attachment_from_db(self, identifier):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_attachment_by_name(self.case_id, attachment_name)
+        return CaseAccessorSQL.get_attachment_by_identifier(self.case_id, identifier)
 
     def _get_attachments_from_db(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
