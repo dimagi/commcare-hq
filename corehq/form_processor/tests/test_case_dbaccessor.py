@@ -153,7 +153,8 @@ class CaseAccessorTestsSQL(TestCase):
             case=case1,
             attachment_id=uuid.uuid4().hex,
             name='pic.jpg',
-            content_type='image/jpeg'
+            content_type='image/jpeg',
+            blob_id='122'
         ))
         CaseAccessorSQL.save_case(case1)
 
@@ -173,13 +174,15 @@ class CaseAccessorTestsSQL(TestCase):
             case=case,
             attachment_id=uuid.uuid4().hex,
             name='pic.jpg',
-            content_type='image/jpeg'
+            content_type='image/jpeg',
+            blob_id='123',
         ))
         case.track_create(CaseAttachmentSQL(
             case=case,
             attachment_id=uuid.uuid4().hex,
             name='doc',
-            content_type='text/xml'
+            content_type='text/xml',
+            blob_id='124',
         ))
         CaseAccessorSQL.save_case(case)
 
@@ -200,13 +203,15 @@ class CaseAccessorTestsSQL(TestCase):
             case=case,
             attachment_id=uuid.uuid4().hex,
             name='pic.jpg',
-            content_type='image/jpeg'
+            content_type='image/jpeg',
+            blob_id='125'
         ))
         case.track_create(CaseAttachmentSQL(
             case=case,
             attachment_id=uuid.uuid4().hex,
             name='doc',
-            content_type='text/xml'
+            content_type='text/xml',
+            blob_id='126'
         ))
         CaseAccessorSQL.save_case(case)
 
@@ -323,7 +328,8 @@ class CaseAccessorTestsSQL(TestCase):
             case=case,
             attachment_id=uuid.uuid4().hex,
             name='doc',
-            content_type='text/xml'
+            content_type='text/xml',
+            blob_id='127'
         ))
         CaseAccessorSQL.save_case(case)
 
@@ -339,7 +345,8 @@ class CaseAccessorTestsSQL(TestCase):
             case=case,
             attachment_id=uuid.uuid4().hex,
             name='doc',
-            content_type='text/xml'
+            content_type='text/xml',
+            blob_id='128',
         ))
         CaseAccessorSQL.save_case(case)
 

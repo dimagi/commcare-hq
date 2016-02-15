@@ -147,9 +147,15 @@ BEGIN
                 commcarecase.case_id, attachment.attachment_id;
         ELSE
             INSERT INTO form_processor_caseattachmentsql (
-                attachment_id, name, content_type, md5, case_id
+                attachment_id, name, content_type, md5, case_id, blob_id, content_length
             ) VALUES (
-                attachment.attachment_id, attachment.name, attachment.content_type, attachment.md5, attachment.case_id
+                attachment.attachment_id,
+                attachment.name,
+                attachment.content_type,
+                attachment.md5,
+                attachment.case_id,
+                attachment.blob_id,
+                attachment.content_length
             );
         END IF;
     END LOOP;
