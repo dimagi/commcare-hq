@@ -4,6 +4,44 @@
 {% load tzmigration %}
 
 {% if request.couch_user %}
+    <script type="text/javascript">
+        $('#settingsmenu-projectSettings').click(function () {
+            analytics.workflow('User clicks the gear icon');
+            ga_track_event('New UI', 'User clicks the gear icon');
+        });
+        $('#settingsmenu-help').click(function () {
+            analytics.workflow('User clicks the question mark');
+            ga_track_event('New UI', 'User clicks the question mark');
+        });
+        $('#menuitem-projectsettings').click(function () {
+            analytics.workflow('User clicks "Update Project Settings"');
+            ga_track_event('New UI', 'User clicks "Update Project Settings"');
+        });
+        $('#menuitem-currentsubscription').click(function () {
+            analytics.workflow('User clicks "Current Subscription"');
+            ga_track_event('New UI', 'User clicks "Current Subscription"');
+        });
+        $('#menuitem-accountsettings').click(function () {
+            analytics.workflow('User clicks “My Account Settings”');
+            ga_track_event('New UI', 'User clicks “My Account Settings”');
+        });
+        $('#menuitem-signout').click(function () {
+            analytics.workflow('User clicks "Sign Out"');
+            ga_track_event('New UI', 'User clicks "Sign Out"');
+        });
+        $('#menuitem-helpsite').click(function () {
+            analytics.workflow('User clicks "Visit the Help Site"');
+            ga_track_event('New UI', 'User clicks "Visit the Help Site"');
+        });
+        $('#menuitem-userforum').click(function () {
+            analytics.workflow('User clicks "User Forum"');
+            ga_track_event('New UI', 'User clicks "User Forum"');
+        });
+        $('#menuitem-issue').click(function () {
+            analytics.workflow('User clicks "Report an Issue"');
+            ga_track_event('New UI', 'User clicks "Report an Issue"');
+        });
+    </script>
 <ul class="nav navbar-nav" role="menu">
     <li id="settingsmenu-projectSettings" class="dropdown">
         <a href="#" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown">
@@ -34,12 +72,12 @@
             <li class="nav-divider divider"></li>
             <li class="dropdown-header nav-header">{% trans 'Manage Project' %}</li>
             <li>
-                <a href="{% url "domain_settings_default" domain %}">
+                <a href="{% url "domain_settings_default" domain %}" id="menuitem-projectsettings">
                     <i class="fa fa-cogs icon-cogs dropdown-icon"></i> {% trans "Update Project Settings" %}
                 </a>
             </li>
             <li>
-                <a href="{% url "domain_subscription_view" domain %}">
+                <a href="{% url "domain_subscription_view" domain %}" id="menuitem-currentsubscription">
                     <i class="fa fa-dashboard icon-dashboard dropdown-icon"></i> {% trans "Current Subscription" %}
                 </a>
             </li>
@@ -47,12 +85,12 @@
             <li class="nav-divider divider"></li>
             <li class="dropdown-header nav-header">{% trans 'Manage Account' %}</li>
             <li>
-                <a href="{% url "my_account_settings" %}">
+                <a href="{% url "my_account_settings" %}" id="menuitem-accountsettings">
                     <i class="fa fa-user icon-user dropdown-icon"></i> {% trans 'My Account Settings' %}
                 </a>
             </li>
             <li>
-                <a href="{% url "logout" %}">
+                <a href="{% url "logout" %}" id="menuitem-signout">
                     <i class="icon-signout fa fa-sign-out"></i>
                     {% trans 'Sign Out' %}
                 </a>
@@ -66,17 +104,17 @@
         <ul class="dropdown-menu dropdown-menu-right" role="menu">
             <li class="dropdown-header nav-header">{% trans 'CommCare Help' %}</li>
             <li>
-                <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" target="_blank">
+                <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" id="menuitem-helpsite" target="_blank">
                     <i class="fa fa-question-circle icon-question-sign dropdown-icon"></i> {% trans "Visit the Help Site" %}
                 </a>
             </li>
             <li>
-                <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}" target="_blank">
+                <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}" id="menuitem-userforum" target="_blank">
                     <i class="fa fa-comments icon-comments dropdown-icon"></i> {% trans "User Forum" %}
                 </a>
             </li>
             <li>
-                <a href="#modalReportIssue" data-toggle="modal">
+                <a href="#modalReportIssue" data-toggle="modal" id="menuitem-issue">
                     <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
                 </a>
             </li>
