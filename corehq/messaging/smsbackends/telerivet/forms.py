@@ -1,14 +1,12 @@
-from corehq.apps.hqwebapp.crispy import ErrorsOnlyField
 from corehq.apps.sms.forms import BackendForm
 from corehq.apps.sms.util import validate_phone_number
 from corehq.apps.style import crispy as hqcrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton, FormActions
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Fieldset, Field, Div, HTML
+from crispy_forms.layout import Layout, Div, HTML
 from dimagi.utils.django.fields import TrimmedCharField
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse
 from django.forms.fields import ChoiceField
 from django.forms.forms import Form
 from django.utils.translation import ugettext as _, ugettext_lazy
