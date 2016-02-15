@@ -29,6 +29,7 @@
             {% endif %}
         });
     </script>
+    {% if not report.is_static %}
     <script type="text/javascript">
         $(function(){
             // Poll the status of the data source
@@ -55,6 +56,7 @@
             })();
         });
     </script>
+    {% endif %}
     <script type="text/javascript">
         var standardHQReport = new HQReport({
             domain: '{{ domain }}',
