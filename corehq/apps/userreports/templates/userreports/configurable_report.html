@@ -113,6 +113,7 @@
 
 {% block report_alerts %}
     {{ block.super }}
+    {% if not report.is_static %}
     <div id="built-warning" class="alert alert-warning hide">
         <h4><i class="fa fa-exclamation-triangle"></i> {% trans "Your report is still being populated." %}</h4>
         {% blocktrans %}
@@ -120,6 +121,7 @@
         The report will refresh automatically when the data is finished being populated.
         {% endblocktrans %}
     </div>
+    {% endif %}
 {% endblock %}
 
 {% block page_actions %}
