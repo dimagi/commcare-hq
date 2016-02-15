@@ -291,12 +291,11 @@ def render_case_hierarchy(case, options):
         case, get_case_url, type_info=type_info
     )
 
-    case_list = []
+    parent_cases = []
     if case.indices:
         # has parent case(s)
         # todo: handle duplicates in ancestor path (bubbling up of parent-child
         # relationships)
-        parent_cases = []
         for idx in case.indices:
             try:
                 parent_cases.append(idx.referenced_case)
@@ -315,7 +314,7 @@ def render_case_hierarchy(case, options):
             if not getattr(c, 'treetable_parent_node_id', None) and last_parent_id:
                 c.treetable_parent_node_id = last_parent_id
 
-        case_list = parent_cases + descendent_case_list
+    case_list = parent_cases + descendent_case_list
 
     for c in case_list:
         if not c:
