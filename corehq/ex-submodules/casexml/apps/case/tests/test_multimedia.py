@@ -156,6 +156,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
             self.assertEqual(1, len(filter(lambda x: x['action_type'] == 'attachment', case.actions)))
 
+    @run_with_all_backends
     def testArchiveAfterAttach(self):
         single_attach = 'fruity_file'
         xform, case = self._doCreateCaseWithMultimedia(attachments=[single_attach])
@@ -171,6 +172,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
             form = self.formdb.get_form(xform_id)
             self.assertFalse(form.is_archived)
 
+    @run_with_all_backends
     def testAttachRemoveSingle(self):
         self._doCreateCaseWithMultimedia()
         new_attachments = []
@@ -178,11 +180,14 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         _, case = self._doSubmitUpdateWithMultimedia(new_attachments=new_attachments, removes=removes)
 
         self.assertEqual(0, len(case.case_attachments))
-        attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
-        self.assertEqual(2, len(attach_actions))
-        last_action = attach_actions[-1]
-        self.assertEqual(sorted(removes), sorted(last_action['attachments'].keys()))
 
+        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+            attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
+            self.assertEqual(2, len(attach_actions))
+            last_action = attach_actions[-1]
+            self.assertEqual(sorted(removes), sorted(last_action['attachments'].keys()))
+
+    @run_with_all_backends
     def testAttachRemoveMultiple(self):
         self._doCreateCaseWithMultimedia()
 
@@ -191,14 +196,18 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         _, case = self._doSubmitUpdateWithMultimedia(new_attachments=new_attachments, removes=removes)
 
         self.assertEqual(sorted(new_attachments), sorted(case.case_attachments.keys()))
-        attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
-        self.assertEqual(2, len(attach_actions))
 
+        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+            attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
+            self.assertEqual(2, len(attach_actions))
+
+    @run_with_all_backends
     def testOTARestoreSingle(self):
         _, case = self._doCreateCaseWithMultimedia()
         restore_attachments = ['fruity_file']
         self._validateOTARestore(case.case_id, restore_attachments)
 
+    @run_with_all_backends
     def testOTARestoreMultiple(self):
         _, case = self._doCreateCaseWithMultimedia()
         restore_attachments = ['commcare_logo_file', 'dimagi_logo_file']
@@ -226,6 +235,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
 
         self.assertEqual(0, len(restore_attachments))
 
+    @run_with_all_backends
     def testAttachInUpdate(self):
         new_attachments = ['commcare_logo_file', 'dimagi_logo_file']
 
@@ -234,10 +244,11 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
 
         # 1 plus the 2 we had
         self.assertEqual(len(new_attachments) + 1, len(case.case_attachments))
-        attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
-        self.assertEqual(2, len(attach_actions))
-        last_action = attach_actions[-1]
-        self.assertEqual(sorted(new_attachments), sorted(last_action['attachments'].keys()))
+        if not settings.TESTS_SHOULD_USE_SQL_BACKEND:
+            attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
+            self.assertEqual(2, len(attach_actions))
+            last_action = attach_actions[-1]
+            self.assertEqual(sorted(new_attachments), sorted(last_action['attachments'].keys()))
 
         for attach_name in new_attachments:
             self.assertTrue(attach_name in case.case_attachments)
@@ -274,14 +285,16 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
             [key for key, value in bulk_save_attachments[0].items()
              if value.get('data')], [])
 
+    @run_with_all_backends
     def test_sync_log_invalidation_bug(self):
         sync_log = FormProcessorInterface().sync_log_model(
             user_id='6dac4940-913e-11e0-9d4b-005056aa7fb5'
         )
         sync_log.save()
+        self.addCleanup(FormProcessorTestUtils.delete_all_sync_logs)
+
         _, case = self._doCreateCaseWithMultimedia()
 
         # this used to fail before we fixed http://manage.dimagi.com/default.asp?158373
         self._doSubmitUpdateWithMultimedia(new_attachments=['commcare_logo_file'], removes=[],
                                            sync_token=sync_log._id)
-        FormProcessorTestUtils.delete_all_sync_logs()
