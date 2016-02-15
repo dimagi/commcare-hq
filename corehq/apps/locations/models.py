@@ -5,6 +5,7 @@ from dimagi.ext.couchdbkit import *
 import itertools
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.migration import SyncSQLToCouchMixin, SyncCouchToSQLMixin
 from dimagi.utils.decorators.memoized import memoized
 from datetime import datetime
 from django.db import models, transaction
@@ -218,6 +219,7 @@ class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=100, null=True)
     location_id = models.CharField(max_length=100, db_index=True, unique=True)
+    couch_id_name = "location_id"
     location_type = models.ForeignKey(LocationType)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True)
@@ -243,9 +245,14 @@ class SQLLocation(MPTTModel):
     active_objects = OnlyUnarchivedLocationManager()
 
     def save(self, *args, **kwargs):
+        sync_to_couch = kwargs.pop('sync_to_couch', True)
         from corehq.apps.commtrack.models import sync_supply_point
         self.supply_point_id = sync_supply_point(self)
         return super(SQLLocation, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        sync_to_couch = kwargs.pop('sync_to_couch', True)
+        return super(SQLLocation, self).delete(*args, **kwargs)
 
     @property
     def get_id(self):
@@ -434,7 +441,7 @@ def _filter_for_archived(locations, include_archive_ancestors):
         return locations.filter(is_archived=False)
 
 
-class Location(CachedCouchDocumentMixin, Document):
+class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
     site_code = StringProperty()  # should be unique, not yet enforced
@@ -502,54 +509,6 @@ class Location(CachedCouchDocumentMixin, Document):
 
     def __hash__(self):
         return hash(self._id)
-
-    def _sync_location(self):
-        """
-        This method returns an unsaved SQLLocation object, as it lets
-        us more easily handle the bulk syncing of data in tasks and
-        lets us only save the SQLLocation if the Location was successfuly
-        saved. The actual saving is done in the Location save method.
-        """
-
-        properties_to_sync = [
-            ('location_id', '_id'),
-            'domain',
-            'name',
-            'site_code',
-            'external_id',
-            'latitude',
-            'longitude',
-            'is_archived',
-            'metadata'
-        ]
-
-        try:
-            sql_location = SQLLocation.objects.get(location_id=self._id)
-        except SQLLocation.DoesNotExist:
-            sql_location = SQLLocation(
-                domain=self.domain,
-            )
-
-        # One of these will fail if you try to save a location without a type
-        location_type = self._sql_location_type or sql_location.location_type
-        sql_location.location_type = location_type
-
-        for prop in properties_to_sync:
-            if isinstance(prop, tuple):
-                sql_prop, couch_prop = prop
-            else:
-                sql_prop = couch_prop = prop
-
-            if hasattr(self, couch_prop):
-                setattr(sql_location, sql_prop, getattr(self, couch_prop))
-
-        # sync parent connection
-        parent_id = self.parent_id
-        if parent_id:
-            sql_location.parent = SQLLocation.objects.get(location_id=parent_id)
-        else:
-            sql_location.parent = None
-        return sql_location
 
     @property
     def sql_location(self):
@@ -661,6 +620,27 @@ class Location(CachedCouchDocumentMixin, Document):
             SQLLocation.objects.get(location_id=self._id).delete()
             Location.get_db().bulk_delete(to_delete)
 
+    @classmethod
+    def _migration_get_fields(cls):
+        return ["domain", "name", "location_id", "site_code", "external_id",
+                "metadata", "is_archived", "latitude", "longitude"]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLLocation
+
+    def _migration_do_sync(self):
+        sql_location = self._migration_get_or_create_sql_object()
+
+        # One of these will fail if you try to save a location without a type
+        location_type = self._sql_location_type or sql_location.location_type
+        sql_location.location_type = location_type
+        # sync parent connection
+        sql_location.parent = (SQLLocation.objects.get(location_id=self.parent_id)
+                               if self.parent_id else None)
+
+        self._migration_sync_to_sql(sql_location)
+
     def save(self, *args, **kwargs):
         """
         Saving a couch version of Location will trigger
@@ -679,22 +659,11 @@ class Location(CachedCouchDocumentMixin, Document):
             ]
             self.site_code = generate_code(self.name, all_codes)
 
-        sql_location = None
-        result = super(Location, self).save(*args, **kwargs)
-
-        # try sync locations and when SQLLocation doesn't returned, removed Couch object from database.
-        # added because when we sync location by tasks we can have behavior that the task can be
-        # killed in _sync_location method and this causes the problems
-        try:
-            sql_location = self._sync_location()
-        finally:
-            if sql_location:
-                sql_location.save()
-            else:
-                self.delete()
-                result = None
-
-        return result
+        sync_to_sql = kwargs.pop('sync_to_sql', True)
+        kwargs['sync_to_sql'] = False  # only sync here
+        super(Location, self).save(*args, **kwargs)
+        if sync_to_sql:
+            self._migration_do_sync()
 
     @classmethod
     def filter_by_type(cls, domain, loc_type, root_loc=None):
