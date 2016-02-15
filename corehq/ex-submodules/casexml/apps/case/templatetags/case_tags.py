@@ -13,10 +13,7 @@ from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 
-from casexml.apps.case.const import CASE_INDEX_EXTENSION
-from casexml.apps.case.dbaccessors import get_reverse_indices_json
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.stock.utils import get_current_ledger_transactions
 from corehq.apps.products.models import SQLProduct
 from couchdbkit import ResourceNotFound
@@ -229,20 +226,6 @@ def process_case_hierarchy(case_output, get_case_url, type_info):
 
 
 def get_case_hierarchy(case, type_info):
-
-    def get_all_reverse_indices(case):
-        """
-        Return a list of child and extension type reverse indices for the given
-        case
-        """
-        children_indices = case.reverse_indices
-        extension_indices = [
-            CommCareCaseIndex.wrap(raw) for raw in
-            get_reverse_indices_json(case.domain, case.case_id, CASE_INDEX_EXTENSION)
-        ]
-        return extension_indices + children_indices
-
-
     def get_children(case, referenced_type=None, seen=None):
         seen = seen or set()
 
@@ -252,7 +235,7 @@ def get_case_hierarchy(case, type_info):
 
         seen.add(case._id)
         children = [
-            get_children(i.referenced_case, i.referenced_type, seen) for i in get_all_reverse_indices(case)
+            get_children(i.referenced_case, i.referenced_type, seen) for i in case.reverse_indices
             if i.referenced_id not in seen
         ]
 
