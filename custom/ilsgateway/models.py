@@ -221,19 +221,6 @@ class ReportingModel(models.Model):
         abstract = True
 
 
-# Ported from: https://github.com/dimagi/rapidsms-logistics/blob/master/logistics/warehouse_models.py#L44
-class SupplyPointWarehouseRecord(models.Model):
-    """
-    When something gets updated in the warehouse, create a record of having
-    done that.
-    """
-    supply_point = models.CharField(max_length=100, db_index=True)
-    create_date = models.DateTimeField()
-
-    class Meta:
-        app_label = 'ilsgateway'
-
-
 # Ported from:
 # https://github.com/dimagi/logistics/blob/tz-master/logistics_project/apps/tanzania/reporting/models.py#L9
 class OrganizationSummary(ReportingModel):
@@ -578,7 +565,6 @@ def domain_pre_delete_receiver(domain, **kwargs):
             return
 
         DeliveryGroupReport.objects.filter(location_id__in=locations_ids).delete()
-        SupplyPointWarehouseRecord.objects.filter(supply_point__in=locations_ids).delete()
 
         with connection.cursor() as cursor:
             cursor.execute(
