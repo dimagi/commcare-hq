@@ -318,7 +318,7 @@
                   "default": 0,
                   "cases": {
                     "Kirehe": 82946,
-                    "Nyagatare": 61471
+                    "Nyagatare": 77027
                   },
                   "type": "switch",
                   "switch_on": {
@@ -432,6 +432,8 @@
                   "cases": {
                     "Gahara": 9697,
                     "Gatore": 6062,
+                    "Karama": 7226,
+                    "Katabagemu": 8330,
                     "Kigina": 6454,
                     "Kirehe": 5476,
                     "Kigarama": 7581,
