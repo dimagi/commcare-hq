@@ -1,5 +1,3 @@
-"""Filesystem database for large binary data objects (blobs)
-"""
 from __future__ import absolute_import
 
 import re
@@ -7,19 +5,19 @@ from abc import ABCMeta, abstractmethod
 from uuid import uuid4
 
 from corehq.blobs import DEFAULT_BUCKET
-from corehq.blobs.exceptions import BadName
 
 SAFENAME = re.compile("^[a-z0-9_./-]+$", re.IGNORECASE)
 
 
 class AbstractBlobDB(object):
-    """Filesystem storage for large binary data objects
+    """Storage interface for large binary data objects
     """
     __metaclass__ = ABCMeta
 
     @abstractmethod
     def put(self, content, basename="", bucket=DEFAULT_BUCKET):
         """Put a blob in persistent storage
+
         :param content: A file-like object in binary read mode.
         :param basename: Optional name from which the blob name will be
         derived. This is used to make the unique blob name somewhat
@@ -36,6 +34,7 @@ class AbstractBlobDB(object):
     @abstractmethod
     def get(self, identifier, bucket=DEFAULT_BUCKET):
         """Get a blob
+
         :param identifier: The identifier of the object to get.
         :param bucket: Optional bucket name. This must have the same
         value that was passed to ``put``.
@@ -47,6 +46,7 @@ class AbstractBlobDB(object):
     @abstractmethod
     def delete(self, identifier=None, bucket=DEFAULT_BUCKET):
         """Delete a blob
+
         :param identifier: The identifier of the object to be deleted. The entire
         bucket will be deleted if this is not specified.
         :param bucket: Optional bucket name. This must have the same
@@ -58,6 +58,7 @@ class AbstractBlobDB(object):
     @abstractmethod
     def copy_blob(self, content, info, bucket):
         """Copy blob from other blob database
+
         :param content: File-like blob content object.
         :param info: `BlobInfo` object.
         :param bucket: Bucket name.
