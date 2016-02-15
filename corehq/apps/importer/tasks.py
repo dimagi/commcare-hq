@@ -107,6 +107,9 @@ def do_import(spreadsheet_or_error, config, domain, task=None, chunksize=CASEBLO
         except importer_util.InvalidDateException as e:
             errors.add(ImportErrors.InvalidDate, i + 1, e.column)
             continue
+        except importer_util.InvalidIntegerException as e:
+            errors.add(ImportErrors.InvalidInteger, i + 1, e.column)
+            continue
 
         external_id = fields_to_update.pop('external_id', None)
         parent_id = fields_to_update.pop('parent_id', None)

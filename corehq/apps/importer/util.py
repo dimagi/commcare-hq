@@ -10,8 +10,14 @@ from corehq.apps.hqcase.dbaccessors import get_cases_in_domain_by_external_id
 from corehq.apps.importer.const import LookupErrors, ImportErrors
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.groups.models import Group
-from corehq.apps.importer.exceptions import ImporterExcelFileEncrypted, \
-    ImporterExcelError, ImporterFileNotFound, ImporterRefError
+from corehq.apps.importer.exceptions import (
+    ImporterExcelFileEncrypted,
+    ImporterExcelError,
+    ImporterFileNotFound,
+    ImporterRefError,
+    InvalidDateException,
+    InvalidIntegerException
+)
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
@@ -224,12 +230,6 @@ def convert_custom_fields_to_struct(config):
 
     return field_map
 
-
-class InvalidDateException(Exception):
-    def __init__(self, column=None):
-        self.column = column
-
-
 class ImportErrorDetail(object):
 
     ERROR_MSG = {
@@ -262,6 +262,10 @@ class ImportErrorDetail(object):
             "Owner ID was used in the mapping, but there were errors when "
             "uploading because of these values. There are multiple locations "
             "with this same name, try using site-code instead."
+        ),
+        ImportErrors.InvalidInteger: _(
+            "Integer values were specified, but the values in excel were not "
+            "all integers"
         ),
     }
 
@@ -411,10 +415,11 @@ def populate_updated_fields(config, columns, row, datemode):
                 except InvalidDateException:
                      raise InvalidDateException(key)
             elif field_map[key]['type_field'] == 'integer':
-                try:
-                    update_value = str(int(update_value))
-                except ValueError:
-                    update_value = ''
+                if str(update_value).strip() != '':
+                    try:
+                        update_value = str(int(update_value))
+                    except ValueError:
+                        raise InvalidIntegerException(key)
             else:
                 update_value = convert_field_value(update_value)
 
