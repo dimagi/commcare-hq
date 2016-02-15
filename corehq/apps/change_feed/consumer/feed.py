@@ -1,3 +1,4 @@
+from abc import ABCMeta
 import json
 from dimagi.utils.logging import notify_error
 from django.conf import settings
@@ -17,18 +18,23 @@ class KafkaChangeFeed(ChangeFeed):
     Kafka-based implementation of a ChangeFeed
     """
 
-    def __init__(self, topic, group_id, partition=0):
+    def __init__(self, topics, group_id, partition=0):
         """
-        Create a change feed listener for a particular kafka topic, group ID, and partition.
+        Create a change feed listener for a list of kafka topics, a group ID, and partition.
 
         See http://kafka.apache.org/documentation.html#introduction for a description of what these are.
         """
-        self._topic = topic
+        self._topics = topics
         self._group_id = group_id
         self._partition = partition
 
     def __unicode__(self):
-        return u'KafkaChangeFeed: topic: {}, group: {}'.format(self._topic, self._group_id)
+        return u'KafkaChangeFeed: topics: {}, group: {}'.format(self._topics, self._group_id)
+
+    def _get_single_topic_or_fail(self):
+        if len(self._topics != 1):
+            raise ValueError("This function requires a single topic but found {}!".format(self._topics))
+        return self._topics[0]
 
     def iter_changes(self, since, forever):
         # a special value of since=None will start from the end of the change stream
@@ -39,6 +45,7 @@ class KafkaChangeFeed(ChangeFeed):
         reset = 'smallest' if since is not None else 'largest'
         consumer = self._get_consumer(timeout, auto_offset_reset=reset)
         if since is not None:
+            topic = self._get_single_topic_or_fail()
             try:
                 offset = int(since)  # coerce sequence IDs to ints
             except ValueError:
@@ -49,7 +56,7 @@ class KafkaChangeFeed(ChangeFeed):
                 # these once when each pillow moves over.
                 offset = 0
             # this is how you tell the consumer to start from a certain point in the sequence
-            consumer.set_topic_partitions((self._topic, self._partition, offset))
+            consumer.set_topic_partitions((topic, self._partition, offset))
         try:
             for message in consumer:
                 yield change_from_kafka_message(message)
@@ -58,6 +65,7 @@ class KafkaChangeFeed(ChangeFeed):
             # no need to do anything since this is just telling us we've reached the end of the feed
 
     def get_latest_change_id(self):
+        topic = self._get_single_topic_or_fail()
         consumer = self._get_consumer(MIN_TIMEOUT)
         # we have to fetch one change to populate the highwater offset
         try:
@@ -69,15 +77,18 @@ class KafkaChangeFeed(ChangeFeed):
                 e,
             ))
             return None
-        return consumer.offsets('highwater')[(self._topic, self._partition)]
+        return consumer.offsets('highwater')[(topic, self._partition)]
 
     def _get_consumer(self, timeout, auto_offset_reset='smallest'):
+        config = {
+            'group_id': self._group_id,
+            'bootstrap_servers': [settings.KAFKA_URL],
+            'consumer_timeout_ms': timeout,
+            'auto_offset_reset': auto_offset_reset,
+        }
         return KafkaConsumer(
-            self._topic,
-            group_id=self._group_id,
-            bootstrap_servers=[settings.KAFKA_URL],
-            consumer_timeout_ms=timeout,
-            auto_offset_reset=auto_offset_reset,
+            *self._topics,
+            **config
         )
 
 

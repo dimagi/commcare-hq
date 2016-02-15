@@ -41,7 +41,7 @@ def get_blob_deletion_pillow():
         name='BlobDeletionPillow',
         document_store=None,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topic=topics.META, group_id='blob-deletion-group'),
+        change_feed=KafkaChangeFeed(topics=[topics.META], group_id='blob-deletion-group'),
         processor=BlobDeletionProcessor(get_blob_db(), get_db(None).dbname),
         change_processed_event_handler=PillowCheckpointEventHandler(
             checkpoint=checkpoint,
