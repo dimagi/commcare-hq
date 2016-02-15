@@ -159,7 +159,7 @@ def do_import(spreadsheet_or_error, config, domain, task=None, chunksize=CASEBLO
                 continue
 
             if not uploaded_owner_id:
-                errors.add(ImportErrors.InvalidOwnerName, i + 1)
+                errors.add(ImportErrors.InvalidOwnerName, i + 1, 'owner_name')
                 continue
         if uploaded_owner_id:
             # If an owner_id mapping exists, verify it is a valid user
@@ -168,7 +168,7 @@ def do_import(spreadsheet_or_error, config, domain, task=None, chunksize=CASEBLO
                 owner_id = uploaded_owner_id
                 id_cache[uploaded_owner_id] = True
             else:
-                errors.add(ImportErrors.InvalidOwnerId, i + 1)
+                errors.add(ImportErrors.InvalidOwnerId, i + 1, 'owner_id')
                 id_cache[uploaded_owner_id] = False
                 continue
         else:
@@ -186,7 +186,7 @@ def do_import(spreadsheet_or_error, config, domain, task=None, chunksize=CASEBLO
                         parent_ref: (parent_case.type, parent_id)
                     }
             except ResourceNotFound:
-                errors.add(ImportErrors.InvalidParentId, i + 1)
+                errors.add(ImportErrors.InvalidParentId, i + 1, 'parent_id')
                 continue
         elif parent_external_id:
             parent_case, error = importer_util.lookup_case(
