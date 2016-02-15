@@ -142,19 +142,17 @@ class TelerivetPhoneNumberForm(Form):
                         hqcrispy.MultiInlineField(
                             'test_phone_number',
                             ng_model='testPhoneNumber'
-                        ),
-                        css_class='col-sm-8'
+                        )
                     ),
+                    get_rmi_error_placeholder('testPhoneNumberError'),
                     Div(
                         StrictButton(
                             _("Send"),
                             id='id_send_sms_button',
                             css_class='btn btn-success',
                             ng_click='sendTestSMS();'
-                        ),
-                        css_class='col-sm-4'
+                        )
                     ),
-                    get_rmi_error_placeholder('testPhoneNumberError'),
                     ng_class="{'has-error': testPhoneNumberError}"
                 )
             )
