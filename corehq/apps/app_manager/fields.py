@@ -357,7 +357,6 @@ class ApplicationDataRMIHelper(object):
         return final_choices
 
     def _get_applications_by_type(self, as_dict=True):
-        import pdb; pdb.set_trace()
         apps_by_type = (
             (self.APP_TYPE_ALL, self._available_app_forms),
             (self.APP_TYPE_REMOTE, self._remote_app_forms),
