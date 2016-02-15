@@ -722,7 +722,7 @@ class IntraHealthQueryMeta(QueryMeta):
 
     def __init__(self, table_name, filters, group_by, key):
         self.key = key
-        super(IntraHealthQueryMeta, self).__init__(table_name, filters, group_by)
+        super(IntraHealthQueryMeta, self).__init__(table_name, filters, group_by, [])
 
     def execute(self, metadata, connection, filter_values):
         try:

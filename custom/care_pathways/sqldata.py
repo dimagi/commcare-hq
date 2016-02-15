@@ -32,7 +32,7 @@ class CareQueryMeta(QueryMeta):
 
     def __init__(self, table_name, filters, group_by, key):
         self.key = key
-        super(CareQueryMeta, self).__init__(table_name, filters, group_by)
+        super(CareQueryMeta, self).__init__(table_name, filters, group_by, [])
 
     def execute(self, metadata, connection, filter_values):
         try:
@@ -102,7 +102,7 @@ class CareCustomColumn(CustomQueryColumn):
         table_name = self.table_name or default_table_name
         filters = self.filters or default_filters
         group_by = self.group_by or default_group_by
-        return self.query_cls(table_name, filters, group_by, self.key)
+        return self.query_cls(table_name, filters, group_by, self.key, [])
 
 
 class GeographySqlData(SqlData):
