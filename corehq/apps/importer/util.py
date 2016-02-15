@@ -293,10 +293,7 @@ class ImportErrorDetail(object):
 def parse_excel_date(date_val, datemode):
     """ Convert field value from excel to a date value """
     if date_val:
-        try:
-            parsed_date = str(date(*xlrd.xldate_as_tuple(date_val, datemode)[:3]))
-        except Exception:
-            raise InvalidDateException
+        parsed_date = str(date(*xlrd.xldate_as_tuple(date_val, datemode)[:3]))
     else:
         parsed_date = ''
 
@@ -412,7 +409,7 @@ def populate_updated_fields(config, columns, row, datemode):
             if field_map[key]['type_field'] == 'date':
                 try:
                     update_value = parse_excel_date(update_value, datemode)
-                except InvalidDateException:
+                except Exception:
                     raise InvalidDateException(key)
             elif field_map[key]['type_field'] == 'integer':
                 if str(update_value).strip() != '':
