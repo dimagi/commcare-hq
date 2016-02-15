@@ -72,7 +72,7 @@
                         {% endblocktrans %}
                     </p>
                     <div class="row">
-                        <button class="btn btn-default col-sm-2">
+                        <button class="btn btn-default col-sm-2" ng-click="showOutboundTroubleshoot = true;">
                             {% trans "No, Troubleshoot" %}
                         </button>
                         <a class="btn btn-primary col-sm-2" href="#/step3">
@@ -80,6 +80,46 @@
                             <span class="glyphicon glyphicon-chevron-right" />
                         </a>
                     </div>
+                </div>
+                <div ng-show="showOutboundTroubleshoot">
+                    <h3>{% trans "Troubleshoot Outbound SMS" %}</h3>
+                    <p>
+                        Look at the guidelines below for possible points of failure. At any point,
+                        you can click the Send button again to test resending the SMS with any updated
+                        information.
+                    </p>
+                    <ul>
+                        <li>
+                            {% blocktrans %}
+                            Double-check your configuration in step 2.
+                            {% endblocktrans %}
+                        </li>
+                        <li>
+                            {% blocktrans %}
+                            Double-check the phone number of your test phone number entered in step 3 and
+                            ensure that it is in international format, starting with the country code.
+                            {% endblocktrans %}
+                        </li>
+                        <li>
+                            {% blocktrans %}
+                            Ensure that the Android phone is powered on, connected to wifi, and in a good cell reception area.
+                            {% endblocktrans %}
+                        </li>
+                        <li>
+                            {% blocktrans %}
+                            Check the messages page in your Telerivet account to see if the message shows up there. If
+                            it does, there might be an error message giving you more detail.
+                            {% endblocktrans %}
+                        </li>
+                        <li>
+                            {% blocktrans %}
+                            If none of the above works, test sending an SMS from the Android phone to your test phone
+                            directly. If that succeeds, then it means something is likely incorect with the configuration.
+                            If you do not receive the direct SMS message, then you may need to follow up with the carrier
+                            used by the Android phone to understand why it cannot send SMS.
+                            {% endblocktrans %}
+                        </li>
+                    </ul>
                 </div>
             </li>
         </ol>

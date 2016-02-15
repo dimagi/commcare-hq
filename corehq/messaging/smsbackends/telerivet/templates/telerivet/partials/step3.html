@@ -78,7 +78,8 @@
                     </p>
                     <p ng-show="inboundWaitTimedOut && !inboundSMSReceived && !pollingErrorOccurred">
                         {% blocktrans %}
-                        Message not received. <button class="btn btn-default">Troubleshoot</button>
+                        Message not received.
+                        <button class="btn btn-default" ng-click="showInboundTroubleshoot = true;">Troubleshoot</button>
                         {% endblocktrans %}
                     </p>
                     <p ng-show="pollingErrorOccurred">
@@ -87,6 +88,46 @@
                         Please restart the setup process and if the problem persists, please report an issue.
                         {% endblocktrans %}
                     </p>
+                </div>
+                <div ng-show="showInboundTroubleshoot">
+                    <h3>{% trans "Troubleshoot Inbound SMS" %}</h3>
+                    <p>
+                        Look at the guidelines below for possible points of failure. At any point,
+                        you can send another SMS from your test phone to the Android phone, and if
+                        it is received by CommCareHQ, step 4 will automatically update and show
+                        you a success message.
+                    </p>
+                    <ul>
+                        <li>
+                            {% blocktrans %}
+                            Double-check the configuration entered in your Telerivet account for step 2.
+                            {% endblocktrans %}
+                        </li>
+                        <li>
+                            {% blocktrans %}
+                            Ensure that the Android phone is powered on, connected to wifi, and in a good cell reception area.
+                            {% endblocktrans %}
+                        </li>
+                        <li>
+                            {% blocktrans %}
+                            Check the messages page in your Telerivet account to see if the message shows up there. If
+                            it does, there might be an error message giving you more detail.
+                            {% endblocktrans %}
+                        </li>
+                        <li>
+                            {% blocktrans %}
+                            Try sending a message from your test phone to a third phone. If that succeeds, then you can
+                            rule out any issues with the test phone.
+                            {% endblocktrans %}
+                        </li>
+                        <li>
+                            {% blocktrans %}
+                            Check the Android phone itself and see if the message shows up there. If it does, then it
+                            likely means that there is a configuration error. If it does not, you may need to follow
+                            up with the carrier used by the Android phone to understand why it cannot receive SMS.
+                            {% endblocktrans %}
+                        </li>
+                    </ul>
                 </div>
             </li>
         </ol>
