@@ -167,7 +167,7 @@ def prelogin_url(context, urlname):
     """
     A prefix aware url tag replacement for prelogin URLs
     """
-    if context.get('url_uses_prefix', False):
+    if context.get('url_uses_prefix', False) and context.get('LANGUAGE_CODE', False):
         return reverse(urlname, args=[context['LANGUAGE_CODE']])
     else:
         return reverse(urlname)
