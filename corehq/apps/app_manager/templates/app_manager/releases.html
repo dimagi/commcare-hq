@@ -137,7 +137,12 @@
             attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
             css: {disabled: !buildButtonEnabled()}
         ">{% trans 'Make New Version' %}</button>
-
+        <div class="checkbox pull-right">
+            <label>
+                <input type="checkbox" data-bind="checked: showStarredOnly">
+                {% trans 'Show only starred versions' %}
+            </label>
+        </div>
         <div id="build-errors-wrapper"></div>
         <table class="table">
             <tr>
@@ -181,7 +186,7 @@
                     'build-unreleased': !is_released(),
                     'build-latest-release': id() === $root.latestReleaseId(),
                     'error': build_broken
-                }">
+                }, visible:  !$parent.showStarredOnly() || ($parent.showStarredOnly() && is_released())">
                     <td>
                         <a href="#" data-bind="
                             openModal: 'delete-build-modal-template',
