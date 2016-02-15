@@ -132,7 +132,7 @@ def get_app_sources(domain):
             "case": [{"text": t, "value": t} for t in app.get_case_types()],
             "form": [
                 {
-                    "text": '{} / {}'.format(form.get_module().default_name(), form.default_name()),
+                    "text": u'{} / {}'.format(form.get_module().default_name(), form.default_name()),
                     "value": form.get_unique_id()
                 } for form in app.get_forms()
             ]
@@ -357,6 +357,7 @@ class ApplicationDataRMIHelper(object):
         return final_choices
 
     def _get_applications_by_type(self, as_dict=True):
+        import pdb; pdb.set_trace()
         apps_by_type = (
             (self.APP_TYPE_ALL, self._available_app_forms),
             (self.APP_TYPE_REMOTE, self._remote_app_forms),
