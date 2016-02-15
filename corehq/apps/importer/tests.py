@@ -70,17 +70,18 @@ class ImporterTest(TestCase):
         self.couch_user.delete()
 
     def _config(self, col_names=None, search_column=None, case_type=None,
-                search_field='case_id', named_columns=False, create_new_cases=True):
+                search_field='case_id', named_columns=False, create_new_cases=True, type_fields=None):
         col_names = col_names or self.default_headers
         case_type = case_type or self.default_case_type
         search_column = search_column or col_names[0]
+        type_fields = type_fields if type_fields is not None else ['plain'] * len(col_names)
         return ImporterConfig(
             couch_user_id=self.couch_user._id,
             case_type=case_type,
             excel_fields=col_names,
             case_fields=[''] * len(col_names),
             custom_fields=col_names,
-            type_fields=['plain'] * len(col_names),
+            type_fields=type_fields,
             search_column=search_column,
             search_field=search_field,
             named_columns=named_columns,
