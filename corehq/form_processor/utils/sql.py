@@ -59,23 +59,17 @@ def form_adapter(form):
     return _adapt_fields(fields, XFormInstanceSQL_DB_TABLE)
 
 
-def base_attachment_fields(attachment):
-    return [
+def form_attachment_adapter(attachment):
+    fields = [
         adapt(attachment.id).getquoted(),
         adapt(attachment.attachment_id).getquoted(),
         adapt(attachment.name).getquoted(),
         adapt(attachment.content_type).getquoted(),
         adapt(attachment.md5).getquoted(),
-        adapt(attachment.content_length).getquoted(),
-        adapt(attachment.blob_id).getquoted(),
-        adapt(json.dumps(attachment.properties, cls=JSONEncoder)).getquoted(),
-    ]
-
-def form_attachment_adapter(attachment):
-    fields = base_attachment_fields(attachment) + [
         adapt(attachment.form_id).getquoted(),
         adapt(attachment.blob_id).getquoted(),
         adapt(attachment.content_length).getquoted(),
+        adapt(json.dumps(attachment.properties, cls=JSONEncoder)).getquoted(),
     ]
     return _adapt_fields(fields, XFormAttachmentSQL_DB_TABLE)
 
@@ -105,14 +99,19 @@ def case_adapter(case):
 
 
 def case_attachment_adapter(attachment):
-    fields = base_attachment_fields(attachment) + [
+    fields = [
+        adapt(attachment.id).getquoted(),
+        adapt(attachment.attachment_id).getquoted(),
+        adapt(attachment.name).getquoted(),
+        adapt(attachment.content_type).getquoted(),
+        adapt(attachment.md5).getquoted(),
         adapt(attachment.case_id).getquoted(),
-        adapt(attachment.identifier).getquoted(),
-        adapt(attachment.attachment_src).getquoted(),
-        adapt(attachment.attachment_form).getquoted(),
-        adapt(json.dumps(attachment.attachment_properties, cls=JSONEncoder)).getquoted(),
         adapt(attachment.blob_id).getquoted(),
         adapt(attachment.content_length).getquoted(),
+        adapt(attachment.attachment_from).getquoted(),
+        adapt(json.dumps(attachment.properties, cls=JSONEncoder)).getquoted(),
+        adapt(attachment.attachment_src).getquoted(),
+        adapt(attachment.identifier).getquoted(),
     ]
     return _adapt_fields(fields, CaseAttachmentSQL_DB_TABLE)
 
