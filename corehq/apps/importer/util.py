@@ -267,18 +267,19 @@ class ImportErrorDetail(object):
     def __init__(self, *args, **kwargs):
         self.errors = defaultdict(dict)
 
-    def add(self, error, row_number):
-        self.errors[error]['error'] = _(error)
+    def add(self, error, row_number, column_name=None):
+        self.errors[error].setdefault(column_name, {})
+        self.errors[error][column_name]['error'] = _(error)
 
         try:
-            self.errors[error]['description'] = self.ERROR_MSG[error]
+            self.errors[error][column_name]['description'] = self.ERROR_MSG[error]
         except KeyError:
-            self.errors[error]['description'] = self.ERROR_MSG[ImportErrors.CaseGeneration]
+            self.errors[error][column_name]['description'] = self.ERROR_MSG[ImportErrors.CaseGeneration]
 
-        if 'rows' not in self.errors[error]:
-            self.errors[error]['rows'] = []
+        if 'rows' not in self.errors[error][column_name]:
+            self.errors[error][column_name]['rows'] = []
 
-        self.errors[error]['rows'].append(row_number)
+        self.errors[error][column_name]['rows'].append(row_number)
 
     def as_dict(self):
         return dict(self.errors)
