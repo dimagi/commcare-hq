@@ -1,6 +1,7 @@
 import yaml
 from django.core.management.base import BaseCommand
-from corehq.app_tester.utils import run_tests
+
+from corehq.apps.app_tester import run_tests
 
 
 class Command(BaseCommand):

@@ -3,7 +3,7 @@ These functions need to be callable from both the management command and the vie
 """
 from django.conf import settings
 
-from corehq.app_tester.client import FormPlayerApiClient
+from corehq.apps.app_tester import FormPlayerApiClient
 
 
 def put_key_in_value(dict_):
@@ -33,19 +33,19 @@ def run_test(test_data, login_data, return_results=False, verbosity=1):
         module_dict = put_key_in_value(module)
         # Ignore cases for MVP
         for form in module_dict['forms']:
-            session = client.open_form_session(
+            with client.form_session(
                 login_data['domain'],
                 login_data['username'],
                 form['name'],  # in MVP. TODO: Look up XMLNS from name
-                lang=login_data.get('lang', 'en')
-            )
-            for question in session.iter_questions():
-                try:
-                    result = session.submit_answer(question, form['answers'][question])
-                except Exception as err:
-                    # TODO: Keep err
-                    pass
-                # TODO: Keep result
+                case_id=None
+            ) as session:
+                for question in session.iter_questions():
+                    try:
+                        result = session.submit_answer(question, form['answers'][question])
+                    except Exception as err:
+                        # TODO: Keep err
+                        pass
+                    # TODO: Keep result
     # TODO: Evaluate test result against assertion
     # TODO: Return result
 

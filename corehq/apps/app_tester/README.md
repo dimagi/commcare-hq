@@ -92,27 +92,3 @@ A Little Testing Philosophy for FMs
 
 Bear in mind that, as with science, you are more interested in counter-examples than examples. In other words, you
 certainly want to show that your app *can* work, but it is more important to test where it might break.
-
-
-NOTES TO NOAH
-=============
-
-I started with this document, to sort out in my head how I imagined this would be used.
-
-Then I took a top-down approach. I find that keeps the interface as clean as possible. I wrote the management
-command, and sample YAML files. The long one is how I'd like it to work in the future, and the MVP was how I would
-have liked it to work today. -- No cases, just one form.
-
-Then I wrote utils.py. That stuff should probably move out, but I figured it would be obvious where it should go
-as I progressed -- and now it seems obvious that it needs to be renamed "test_runner.py", or something like that.
-
-Then I got to the hard part -- the client and session classes (client.py). Giovanni's SMS code wraps quite a bit of
-touchforms and formplayer stuff in a nice way, and I figured I'd follow his example, but simplify where I could.
-Iterating questions could be done much simpler, I think. And session management need not be as complicated for us
-because we're just a test runner, and don't need persistence.
-
-So, basically, my next steps would be to write FormPlayerApiClient, FormSession, and the end of utils.run_test
-
-Not trivial -- but there is a lot of potential for the fun stuff -- cleaning and simplifying -- imho.
-
-And then deleting "NOTES TO NOAH".

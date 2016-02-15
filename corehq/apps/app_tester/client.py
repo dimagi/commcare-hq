@@ -1,5 +1,9 @@
+from contextlib import contextmanager
+
 from corehq.apps.cloudcare.touchforms_api import get_session_data
 from corehq.apps.smsforms.app import COMMCONNECT_DEVICE_ID
+from corehq.apps.users.models import CouchUser
+from touchforms.formplayer.api import XFormsConfig
 
 
 class FormSession(object):
@@ -24,18 +28,22 @@ class FormPlayerApiClient(object):
         self._username = username
         self._password = password
 
-    def open_form_session(self, domain, username, xmlns, lang='en'):
+    @contextmanager
+    def form_session(self, domain, username, xmlns):
+        user = CouchUser.get_by_username(username)
+        session_data = get_session_data(domain, user, case_id=None, device_id=COMMCONNECT_DEVICE_ID)
+        session_data["additional_filters"] = {
+            "user_id": user.get_id,
+            "footprint": "true"
+        }
+        Form.get_by_xmlns()
+
         # See smsforms.app.start_session, cloudcare.touchforms_api.get_session_data
 
-        # TODO: user = CouchUser.get(domain, username)
-        session_data = get_session_data(domain, user, case_id=None, device_id=COMMCONNECT_DEVICE_ID)
 
         config = XFormsConfig(
             form_path=form_path,
             instance_content=content,
-            session_data=session_data,
-            language=lang)
+            session_data=session_data)
         response = config.start_session()
-
-
-        return FormSession(response)
+        yield FormSession(response)
