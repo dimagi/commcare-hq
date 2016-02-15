@@ -285,8 +285,9 @@ class ImporterTest(TestCase):
 
         # Should be unable to find parent case on `rows` cases
         res = do_import(file_missing, config, self.domain)
+        error_column_name = None
         self.assertEqual(rows,
-                         len(res['errors'][ImportErrors.InvalidParentId]['rows']),
+                         len(res['errors'][ImportErrors.InvalidParentId][error_column_name]['rows']),
                          "All cases should have missing parent")
 
     def import_mock_file(self, rows):
@@ -313,6 +314,7 @@ class ImporterTest(TestCase):
         make_loc('loc-2', 'Loc 2', self.domain, case_sharing)
         duplicate_loc = make_loc('loc-3', 'Loc 2', self.domain, case_sharing)
         improper_loc = make_loc('loc-4', 'Loc 4', self.domain, non_case_sharing)
+        error_column_name = None
 
         res = self.import_mock_file([
             ['case_id', 'name', 'owner_id', 'owner_name'],
@@ -330,11 +332,11 @@ class ImporterTest(TestCase):
 
         error_message = ImportErrors.DuplicateLocationName
         self.assertIn(error_message, res['errors'])
-        self.assertEqual(res['errors'][error_message]['rows'], [4])
+        self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [4])
 
         error_message = ImportErrors.InvalidOwnerId
         self.assertIn(error_message, res['errors'])
-        self.assertEqual(res['errors'][error_message]['rows'], [5])
+        self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [5])
 
 
 class ImporterUtilsTest(SimpleTestCase):
