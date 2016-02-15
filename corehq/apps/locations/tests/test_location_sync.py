@@ -56,9 +56,8 @@ class TestLocationSync(TestCase):
         for loc in [boston, suffolk, mass]:
             self.assertLocationsEqual(loc, loc.sql_location)
             loc.delete()
-            # right now we don't actually delete these, apparently
-            # with self.assertRaises(SQLLocation.DoesNotExist):
-                # SQLLocation.objects.get(location_id=loc.location_id)
+            with self.assertRaises(SQLLocation.DoesNotExist):
+                SQLLocation.objects.get(location_id=loc.location_id)
 
     def test_save_couch_without_loc_type(self):
         with self.assertRaises(SQLLocation.location_type.RelatedObjectDoesNotExist):
