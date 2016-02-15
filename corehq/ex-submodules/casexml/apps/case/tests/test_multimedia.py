@@ -105,7 +105,7 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
 
     def _submit_and_verify(self, doc_id, xml_data, dict_attachments,
                            sync_token=None, date=None):
-        response, form, cases = self._do_submit(xml_data, dict_attachments, sync_token, date=date)
+        response, form, [case] = self._do_submit(xml_data, dict_attachments, sync_token, date=date)
 
         attachments = form.attachments
         self.assertEqual(len(dict_attachments), len(attachments))
@@ -115,7 +115,9 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
             orig_attachment = vstream
             orig_attachment.seek(0)
             self.assertEqual(hashlib.md5(fileback).hexdigest(), hashlib.md5(orig_attachment.read()).hexdigest())
-        return response, form, cases
+
+        case = CaseAccessors(TEST_DOMAIN_NAME).get_case(case.case_id)  # re-fetch case
+        return form, case
 
     def _doCreateCaseWithMultimedia(self, attachments=['fruity_file']):
         xml_data = self.get_xml('multimedia_create')
@@ -135,7 +137,6 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
         return self._submit_and_verify(doc_id, final_xform, dict_attachments,
                                 sync_token, date=date)
 
-
 class CaseMultimediaTest(BaseCaseMultimediaTest):
     """
     Tests new attachments for cases and case properties
@@ -144,9 +145,8 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
     @run_with_all_backends
     def testAttachInCreate(self):
         single_attach = 'fruity_file'
-        _, xform, [case] = self._doCreateCaseWithMultimedia(attachments=[single_attach])
+        xform, case = self._doCreateCaseWithMultimedia(attachments=[single_attach])
 
-        case = CaseAccessors(TEST_DOMAIN_NAME).get_case(case.case_id)
         self.assertEqual(1, len(case.case_attachments))
         self.assertTrue(single_attach in case.case_attachments)
         self.assertEqual(
@@ -158,7 +158,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
 
     def testArchiveAfterAttach(self):
         single_attach = 'fruity_file'
-        _, _, [case] = self._doCreateCaseWithMultimedia(attachments=[single_attach])
+        xform, case = self._doCreateCaseWithMultimedia(attachments=[single_attach])
 
         for xform_id in case.xform_ids:
             form = self.formdb.get_form(xform_id)
@@ -172,10 +172,10 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
             self.assertFalse(form.is_archived)
 
     def testAttachRemoveSingle(self):
-        _, _, [case] = self._doCreateCaseWithMultimedia()
+        self._doCreateCaseWithMultimedia()
         new_attachments = []
         removes = ['fruity_file']
-        _, _, [case] = self._doSubmitUpdateWithMultimedia(new_attachments=new_attachments, removes=removes)
+        _, case = self._doSubmitUpdateWithMultimedia(new_attachments=new_attachments, removes=removes)
 
         self.assertEqual(0, len(case.case_attachments))
         attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
@@ -184,26 +184,26 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         self.assertEqual(sorted(removes), sorted(last_action['attachments'].keys()))
 
     def testAttachRemoveMultiple(self):
-        _, _, [case] = self._doCreateCaseWithMultimedia()
+        self._doCreateCaseWithMultimedia()
 
         new_attachments = ['commcare_logo_file', 'dimagi_logo_file']
         removes = ['fruity_file']
-        _, _, [case] = self._doSubmitUpdateWithMultimedia(new_attachments=new_attachments, removes=removes)
+        _, case = self._doSubmitUpdateWithMultimedia(new_attachments=new_attachments, removes=removes)
 
         self.assertEqual(sorted(new_attachments), sorted(case.case_attachments.keys()))
         attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
         self.assertEqual(2, len(attach_actions))
 
     def testOTARestoreSingle(self):
-        _, _, [case] = self._doCreateCaseWithMultimedia()
+        _, case = self._doCreateCaseWithMultimedia()
         restore_attachments = ['fruity_file']
         self._validateOTARestore(case.case_id, restore_attachments)
 
     def testOTARestoreMultiple(self):
-        _, _, [case] = self._doCreateCaseWithMultimedia()
+        _, case = self._doCreateCaseWithMultimedia()
         restore_attachments = ['commcare_logo_file', 'dimagi_logo_file']
         removes = ['fruity_file']
-        _, _, [case] = self._doSubmitUpdateWithMultimedia(new_attachments=restore_attachments, removes=removes)
+        _, case = self._doSubmitUpdateWithMultimedia(new_attachments=restore_attachments, removes=removes)
 
         self._validateOTARestore(case.case_id, restore_attachments)
 
@@ -229,8 +229,8 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
     def testAttachInUpdate(self):
         new_attachments = ['commcare_logo_file', 'dimagi_logo_file']
 
-        _, _, _ = self._doCreateCaseWithMultimedia()
-        _, _, [case] = self._doSubmitUpdateWithMultimedia(new_attachments=new_attachments, removes=[])
+        self._doCreateCaseWithMultimedia()
+        _, case = self._doSubmitUpdateWithMultimedia(new_attachments=new_attachments, removes=[])
 
         # 1 plus the 2 we had
         self.assertEqual(len(new_attachments) + 1, len(case.case_attachments))
@@ -247,7 +247,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
             )
 
     def testUpdateWithNoNewAttachment(self):
-        _, _, [case] = self._doCreateCaseWithMultimedia()
+        _, case = self._doCreateCaseWithMultimedia()
         bulk_save = XFormInstance.get_db().bulk_save
         bulk_save_attachments = []
 
@@ -279,7 +279,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
             user_id='6dac4940-913e-11e0-9d4b-005056aa7fb5'
         )
         sync_log.save()
-        _, _, [case] = self._doCreateCaseWithMultimedia()
+        _, case = self._doCreateCaseWithMultimedia()
 
         # this used to fail before we fixed http://manage.dimagi.com/default.asp?158373
         self._doSubmitUpdateWithMultimedia(new_attachments=['commcare_logo_file'], removes=[],
