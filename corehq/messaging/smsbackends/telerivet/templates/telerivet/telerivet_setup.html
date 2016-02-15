@@ -34,11 +34,12 @@
 
     telerivetSetupApp.config(function($routeProvider) {
         $routeProvider
+            .when('/start', {templateUrl: 'start.tpl'})
             .when('/step1', {templateUrl: 'step1.tpl'})
             .when('/step2', {templateUrl: 'step2.tpl'})
             .when('/step3', {templateUrl: 'step3.tpl'})
             .when('/finish', {templateUrl: 'finish.tpl'})
-            .otherwise({redirectTo: '/step1'});
+            .otherwise({redirectTo: '/start'});
     });
 
     telerivetSetupApp.controller('TelerivetSetupController', function($scope, djangoRMI) {
@@ -198,6 +199,7 @@
 
 {% block page_content %}
 <div ng-app="telerivetSetupApp">
+    {% include "telerivet/partials/start.html" %}
     {% include "telerivet/partials/step1.html" %}
     {% include "telerivet/partials/step2.html" %}
     {% include "telerivet/partials/step3.html" %}
