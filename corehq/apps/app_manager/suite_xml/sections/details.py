@@ -341,7 +341,7 @@ def get_detail_column_infos(detail, include_sort):
                        key=lambda (field, (sort_element, order)): order)
 
     for field, (sort_element, order) in sort_only:
-        column = create_temp_sort_column(field, len(columns))
+        column = create_temp_sort_column(field)
         columns.append(DetailColumnInfo(column, sort_element, order))
     return columns
 
