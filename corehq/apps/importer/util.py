@@ -411,12 +411,11 @@ def populate_updated_fields(config, columns, row, datemode):
                     update_value = parse_excel_date(update_value, datemode)
                 except Exception:
                     raise InvalidDateException(key)
-            elif field_map[key]['type_field'] == 'integer':
-                if str(update_value).strip() != '':
-                    try:
-                        update_value = str(int(update_value))
-                    except ValueError:
-                        raise InvalidIntegerException(key)
+            elif field_map[key]['type_field'] == 'integer' and str(update_value).strip() != '':
+                try:
+                    update_value = str(int(update_value))
+                except ValueError:
+                    raise InvalidIntegerException(key)
             else:
                 update_value = convert_field_value(update_value)
 
