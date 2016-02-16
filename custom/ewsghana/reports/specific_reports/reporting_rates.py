@@ -377,7 +377,9 @@ class ReportingRatesReport(MultiReport):
     def reporting_rates(self):
         complete = 0
         incomplete = 0
-        all_locations_count = self.location.get_descendants().count()
+        all_locations_count = self.location.get_descendants().filter(
+            location_type__administrative=False, is_archived=False
+        ).count()
         transactions = self.get_stock_transactions().values_list('case_id', 'product_id', 'report__date')
         grouped_by_case = {}
         parent_sum_rates = {}
@@ -400,12 +402,16 @@ class ReportingRatesReport(MultiReport):
         elif self.location.location_type.name == 'region':
             aggregate_type = 'district'
         if aggregate_type:
-            for location in self.location.get_children().filter(location_type__administrative=True):
+            for location in self.location.get_children().filter(
+                location_type__administrative=True, is_archived=False
+            ):
                 parent_sum_rates[location.name] = {
                     'complete': 0,
                     'incomplete': 0,
                     'location_id': location.location_id,
-                    'all': location.get_descendants().filter(location_type__administrative=False).count()
+                    'all': location.get_descendants().filter(
+                        location_type__administrative=False, is_archived=False
+                    ).count()
                 }
 
         for (case_id, product_id, date) in transactions:
