@@ -21,14 +21,13 @@
         });
 
         // Events for loading tabs
-        _.each(_.keys(urls), function(tab) {
-            $("#multimedia").on("show.bs.tab", "a[href='#multimedia-" + tab + "-tab']", function() {
-                load(tab, $('#multimedia-' + tab + '-tab .container-fluid'));
-            });
+        $main.on("show.bs.tab", ".nav a[data-slug]", function() {
+            var slug = $(this).data("slug");
+            load(slug, $main.find(".tab-pane[data-slug='" + slug + "'] .container-fluid"));
         });
 
         // Error button
-        $("#multimedia").on("click", "button.reload", function() {
+        $main.on("click", "button.reload", function() {
             var $content = $(this).closest("[data-slug]");
             load($content.data("slug"), $content.find(".container-fluid"));
         });
