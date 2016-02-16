@@ -200,16 +200,7 @@
                 "datatype": "string",
                 "display_name": "level_4",
                 "expression": {
-                    "expression": {
-                        "datatype": null,
-                        "property_path": [
-                            "form",
-                            "location_data",
-                            "level_4_name"
-                        ],
-                        "type": "property_path"
-                    },
-                    "type": "root_doc"
+                    "type": "abt_level_4"
                 },
                 "is_nullable": true,
                 "is_primary_key": false,

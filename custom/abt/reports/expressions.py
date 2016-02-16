@@ -236,3 +236,26 @@ class AbtSupervisorExpressionSpec(JsonObject):
 def abt_supervisor_expression(spec, context):
     wrapped = AbtSupervisorExpressionSpec.wrap(spec)
     return wrapped
+
+
+class AbtLevel4ExpressionSpec(JsonObject):
+    type = TypeProperty('abt_level_4')
+
+    def __call__(self, item, context=None):
+        """
+        Return name of the level_4 location.
+        If there is none, return the level_3 location name instead.
+        """
+        if context is not None:
+            location_data = context.root_doc.get('form', {}).get('location_data', {})
+            level_4 = location_data.get('level_4_name')
+            if level_4:
+                return level_4
+            else:
+                return location_data.get('level_3_name')
+        return None
+
+
+def abt_level_4_expression(spec, context):
+    wrapped = AbtLevel4ExpressionSpec.wrap(spec)
+    return wrapped

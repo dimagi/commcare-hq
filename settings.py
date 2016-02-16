@@ -1489,6 +1489,7 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_UCR_EXPRESSIONS = [
     ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
+    ('abt_level_4', 'custom.abt.reports.expressions.abt_level_4_expression'),
     ('mvp_medical_cause', 'mvp.ucr.reports.expressions.medical_cause_expression'),
     ('mvp_no_treatment_reason', 'mvp.ucr.reports.expressions.no_treatment_reason_expression'),
     ('mvp_treatment_provider_name', 'mvp.ucr.reports.expressions.treatment_provider_name_expression'),
