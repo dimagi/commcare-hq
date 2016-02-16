@@ -47,6 +47,47 @@ class CaseDetailDistance(SimpleTestCase, TestXmlMixin):
             template_xpath
         )
 
+    def test_short_detail_xml_with_sort(self):
+        short = self.case_details.short
+        short.display = 'short'
+        short_column = short.get_column(0)
+        short.sort_elements.append(
+            SortElement(
+                field=short_column.field,
+                type='distance',
+                direction='descending',
+            )
+        )
+
+        suite = self.factory.app.create_suite()
+        template_xpath = './detail[@id="m0_case_short"]/field'
+        self.assertXmlHasXpath(suite, template_xpath)
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <field>
+                    <header>
+                        <text>
+                            <locale id="m0.case_short.case_name_1.header"/>
+                        </text>
+                    </header>
+                    <template>
+                        <text>
+                            <xpath function="case_name"/>
+                        </text>
+                    </template>
+                    <sort direction="descending" order="1" type="double">
+                        <text>
+                            <xpath function="round(distance(case_name, here()))"/>
+                        </text>
+                    </sort>
+                </field>
+            </partial>
+            """,
+            suite,
+            template_xpath
+        )
+
     def test_short_detail_xml_sort_only(self):
         short = self.case_details.short
         short.display = 'short'
