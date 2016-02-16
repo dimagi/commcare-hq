@@ -58,7 +58,7 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(mark_safe('Select  <a href="#" class="select-all btn btn-mini btn-inverse">all</a> <a href="#" class="select-none btn btn-mini btn-warning">none</a>'), sortable=False, span=2),
+            DataTablesColumn(mark_safe('Select  <a href="#" class="select-all btn btn-xs btn-info">all</a> <a href="#" class="select-none btn btn-xs btn-default">none</a>'), sortable=False, span=2),
             DataTablesColumn(_("Case Name"), span=3, prop_name="name.exact"),
             DataTablesColumn(_("Case Type"), span=2, prop_name="type.exact"),
             DataTablesColumn(_("Owner"), span=2, prop_name="owner_display", sortable=False),
@@ -196,7 +196,7 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
             DataTablesColumn(
                 mark_safe(
                     """
-                    Select  <a class="select-visible btn btn-mini btn-inverse">all</a>
+                    Select  <a class="select-visible btn btn-xs btn-inverse">all</a>
                     <a class="select-none btn btn-mini btn-warning">none</a>
                     """
                 ),
