@@ -165,7 +165,7 @@ class SummaryReportingRates(ReportingRatesData):
                     ReportingRatesReport,
                     self.config['domain'],
                     '?location_id=%s&startdate=%s&enddate=%s',
-                    (values['location_id'], self.config['startdate'], self.config['enddate'])
+                    (values['location_id'], self.config['startdate'].date(), self.config['enddate'].date())
                 )
                 is_rendered_as_email = self.config['is_rendered_as_email']
                 rows.append(
