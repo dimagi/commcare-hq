@@ -57,6 +57,28 @@ def iter_docs(database, ids, chunksize=100, **query_params):
             yield doc
 
 
+def iter_docs_with_retry(database, ids, chunksize=100, max_attempts=5, **query_params):
+    """
+    A version of iter_docs that retries fetching documents if the connection
+    to couch fails for any reason.
+
+    This is useful for long-running migrations where you don't want a single
+    failed request to make the process fail.
+
+    Note: You may end up processing the same documents more than once if the
+    connection to couch drops out in the middle of processing a chunk of docs.
+    """
+    for doc_ids in chunked(ids, chunksize):
+        for i in range(max_attempts):
+            try:
+                for doc in get_docs(database, keys=doc_ids, **query_params):
+                    yield doc
+                break
+            except:
+                if i == (max_attempts - 1):
+                    raise
+
+
 def iter_bulk_delete(database, ids, chunksize=100):
     for doc_ids in chunked(ids, chunksize):
         doc_dicts = get_docs(database, keys=doc_ids)
