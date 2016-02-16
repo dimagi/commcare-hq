@@ -180,7 +180,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     'corehq.util.context_processors.domain',
     # sticks the base template inside all responses
     "corehq.util.context_processors.base_template",
-    "corehq.util.context_processors.analytics_js",
+    "corehq.util.context_processors.js_api_keys",
     'corehq.util.context_processors.websockets_override',
     'django.core.context_processors.i18n',
 ]
@@ -303,6 +303,7 @@ HQ_APPS = (
     'corehq.apps.builds',
     'corehq.apps.api',
     'corehq.apps.indicators',
+    'corehq.apps.notifications',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
     'corehq.apps.sofabed',
@@ -705,6 +706,8 @@ ANALYTICS_IDS = {
 ANALYTICS_CONFIG = {
     "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
+
+MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA'
 
 OPEN_EXCHANGE_RATES_API_ID = ''
 

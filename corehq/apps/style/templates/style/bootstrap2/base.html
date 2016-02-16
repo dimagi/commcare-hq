@@ -148,8 +148,9 @@
                     <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
                     {% if user.is_authenticated %}
                         &nbsp;|&nbsp;
-                        <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>.
+                        <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>
                     {% endif %}
+                    &nbsp;|&nbsp;
                     <a href="{% url "eula" %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
                     &nbsp;|&nbsp;
                     <a href="{% trans 'http://www.dimagi.com/policy' %}">{% trans 'Privacy' %}</a>
@@ -391,6 +392,15 @@
             <script src="{% static 'hqwebapp/js/keyboard_navigator.js' %}"></script>
         {% endif %}
         {% endblock %}
+
+        {% if request.couch_user and request|toggle_enabled:"NOTIFICATIONS" %}
+        <script type="text/javascript" src="{% new_static '/notifications/js/NotificationsService.ko.js' %}"></script>
+        <script type="text/javascript">
+            $(function () {
+                $('#js-settingsmenu-notifications').startNotificationsService('{% url 'notifications_service' %}');
+            });
+        </script>
+        {% endif %}
 
         {% block js-inline %}
         <script>

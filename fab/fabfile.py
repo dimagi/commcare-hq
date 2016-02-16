@@ -18,8 +18,8 @@ Server layout:
         (i.e. ~/www/staging/log and ~/www/production/log).
 
     ~/www/<environment>/releases/<YYYY-MM-DD-HH.SS>
-        This folder contains a release of commcarehq. Each release has its own virtual environment that can be
-        found in `python_env`.
+        This folder contains a release of commcarehq. Each release has its own
+        virtual environment that can be found in `python_env`.
 
     ~/www/<environment>/current
         This path is a symlink to the release that is being run
@@ -30,18 +30,16 @@ import json
 import os
 import posixpath
 import sh
-import sys
 import time
 import yaml
-from collections import defaultdict
 from distutils.util import strtobool
 
 from fabric import utils
 from fabric.api import run, roles, execute, task, sudo, env, parallel
-from fabric.colors import blue, red
-from fabric.context_managers import settings, cd, shell_env
+from fabric.colors import blue, red, yellow
+from fabric.context_managers import settings, cd
 from fabric.contrib import files, console
-from fabric.operations import require, local, prompt
+from fabric.operations import require
 
 
 ROLES_ALL_SRC = ['pg', 'django_monolith', 'django_app', 'django_celery', 'django_pillowtop', 'formsplayer', 'staticfiles']
@@ -108,6 +106,65 @@ def _require_target():
             provided_by=('staging', 'preview', 'production', 'old_india', 'softlayer', 'zambia'))
 
 
+class DeployMetadata(object):
+    def __init__(self, env):
+        self.env = env
+        self.timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M')
+        self._deploy_ref = None
+
+    def _tag_commit(self):
+        sh.git.fetch("origin", "--tags")
+        deploy_commit = sh.git("rev-parse", self.env.code_branch).strip()
+        self._check_deploy_commit(deploy_commit, self.env.code_branch)
+        pattern = "*{}*".format(self.env.environment)
+        self.last_tag = sh.tail(sh.git.tag("-l", pattern), "-1").strip()
+
+        tag_name = "{}-{}-deploy".format(self.timestamp, self.env.environment)
+        # turn whatever `code_branch` is into a commit
+        msg = "{} deploy at {}".format(self.env.environment, self.timestamp)
+        sh.git.tag(tag_name, "-m", msg, deploy_commit)
+        sh.git.push("origin", tag_name)
+        self._deploy_ref = tag_name
+
+    def _check_deploy_commit(self, deploy_commit, code_branch):
+        try:
+            origin_commit = sh.git("rev-parse", "origin/{}".format(code_branch)).strip()
+        except sh.ErrorReturnCode:
+            print yellow("Branch '{}' was not found on origin".format(code_branch))
+            if not console.confirm("Do you want to deploy it anyways?", default=False):
+                utils.abort('Aborting.')
+        else:
+            if deploy_commit != origin_commit:
+                print yellow("\n*********\n*WARNING*\n*********")
+                print ("Your local copy of '{}' differs from the version on "
+                       "'origin'.\n".format(code_branch))
+                print "Here's the latest local commit:",
+                print sh.git.show(deploy_commit, "--quiet")
+                print "Here's the latest commit on 'origin':",
+                print sh.git.show(origin_commit, "--quiet")
+                if not console.confirm("Are you sure you want to deploy the "
+                                       "local commit?", default=False):
+                    utils.abort('Check yourself before you wreck yourself.')
+
+    @property
+    def diff_url(self):
+        if self._deploy_ref is None:
+            raise Exception("You haven't tagged anything yet.")
+        return "https://github.com/dimagi/commcare-hq/compare/{}...{}".format(
+            self.last_tag,
+            self.tag,
+        )
+
+    @property
+    def tag(self):
+        if self._deploy_ref is None:
+            self._tag_commit()
+        return self._deploy_ref
+
+
+deploy_metadata = DeployMetadata(env)
+
+
 def format_env(current_env, extra=None):
     """
     formats the current env to be a foo=bar,sna=fu type paring
@@ -165,7 +222,7 @@ def _setup_path():
     env.log_dir = posixpath.join(env.home, 'www', env.environment, 'log')
     env.releases = posixpath.join(env.root, 'releases')
     env.code_current = posixpath.join(env.root, 'current')
-    env.code_root = posixpath.join(env.releases, time.strftime('%Y-%m-%d_%H.%M', time.gmtime(time.time())))
+    env.code_root = posixpath.join(env.releases, deploy_metadata.timestamp)
     env.project_root = posixpath.join(env.code_root, env.project)
     env.project_media = posixpath.join(env.code_root, 'media')
     env.virtualenv_current = posixpath.join(env.code_current, 'python_env')
@@ -220,6 +277,7 @@ def swiss():
 @task
 def india():
     softlayer()
+
 
 @task
 def softlayer():
@@ -277,7 +335,8 @@ def staging():
     """staging.commcarehq.org"""
     if env.code_branch == 'master':
         env.code_branch = 'autostaging'
-        print ("using default branch of autostaging. you can override this with --set code_branch=<branch>")
+        print ("using default branch of autostaging. you can override this "
+               "with --set code_branch=<branch>")
 
     env.inventory = os.path.join('fab', 'inventory', 'staging')
     load_env('staging')
@@ -378,6 +437,11 @@ def webworkers():
 
 
 @task
+def pillowtop():
+    env.supervisor_roles = ROLES_PILLOWTOP
+
+
+@task
 def remove_submodule_source(path):
     """
     Remove submodule source folder.
@@ -408,7 +472,8 @@ def _remove_submodule_source_main(path, use_current_release=False):
 @roles(ROLES_DB_ONLY)
 def preindex_views():
     """
-    Creates a new release that runs preindex_everything. Clones code from `current` release and updates it.
+    Creates a new release that runs preindex_everything. Clones code from
+    `current` release and updates it.
     """
     setup_release()
     _preindex_views()
@@ -430,10 +495,9 @@ def _preindex_views():
         version_static()
 
 
-
 @roles(ROLES_ALL_SRC)
 @parallel
-def update_code(use_current_release=False):
+def update_code(git_tag, use_current_release=False):
     # If not updating current release,  we are making a new release and thus have to do cloning
     # we should only ever not make a new release when doing a hotfix deploy
     if not use_current_release:
@@ -463,9 +527,9 @@ def update_code(use_current_release=False):
 
     with cd(env.code_root if not use_current_release else env.code_current):
         sudo('git remote prune origin')
-        sudo('git fetch origin {}'.format(env.code_branch))
-        sudo('git checkout %(code_branch)s' % env)
-        sudo('git reset --hard origin/%(code_branch)s' % env)
+        sudo('git fetch origin --tags')
+        sudo('git checkout {}'.format(git_tag))
+        sudo('git reset --hard {}'.format(git_tag))
         sudo('git submodule sync')
         sudo('git submodule update --init --recursive')
         # remove all untracked files, including submodules
@@ -532,7 +596,7 @@ def hotfix_deploy():
     _require_target()
     run('echo ping!')  # workaround for delayed console response
     try:
-        execute(update_code, True)
+        execute(update_code, deploy_metadata.tag, True)
     except Exception:
         execute(mail_admins, "Deploy failed", "You had better check the logs.")
         # hopefully bring the server back to life
@@ -540,7 +604,7 @@ def hotfix_deploy():
         raise
     else:
         execute(services_restart)
-        url = _tag_commit()
+        url = deploy_metadata.diff_url
         execute(record_successful_deploy, url)
 
 
@@ -556,7 +620,7 @@ def _confirm_translated():
 @task
 def setup_release():
     _execute_with_timing(create_code_dir)
-    _execute_with_timing(update_code)
+    _execute_with_timing(update_code, deploy_metadata.tag)
     _execute_with_timing(update_virtualenv)
 
     _execute_with_timing(copy_release_files)
@@ -611,7 +675,7 @@ def _deploy_without_asking():
                 _execute_with_timing(stop_celery_tasks)
             _execute_with_timing(_migrate)
         else:
-            print(blue("No migration required, skipping."))
+            print blue("No migration required, skipping.")
         _execute_with_timing(do_update_translations)
         if do_migrate:
             _execute_with_timing(flip_es_aliases)
@@ -636,7 +700,7 @@ def _deploy_without_asking():
         _execute_with_timing(update_current)
         _execute_with_timing(services_restart)
         _execute_with_timing(record_successful_release)
-        url = _tag_commit()
+        url = deploy_metadata.diff_url
         _execute_with_timing(record_successful_deploy, url)
 
 
@@ -721,8 +785,8 @@ def copy_release_files():
 @task
 def rollback():
     """
-    Rolls back the servers to the previous release if it exists and is same across servers. Note this will not
-    rollback the supervisor services.
+    Rolls back the servers to the previous release if it exists and is same
+    across servers. Note this will not rollback the supervisor services.
     """
     number_of_releases = execute(get_number_of_releases)
     if not all(map(lambda n: n > 1, number_of_releases)):
@@ -740,7 +804,7 @@ def rollback():
 
     if not unique_release:
         print red('Aborting because release path is empty. '
-            'This probably means there are no releases to rollback to.')
+                  'This probably means there are no releases to rollback to.')
         exit()
 
     if not console.confirm('Do you wish to rollback to release: {}'.format(unique_release), default=False):
@@ -831,25 +895,6 @@ def force_update_static():
     execute(_do_compress, use_current_release=True)
     execute(update_manifest, use_current_release=True)
     execute(services_restart)
-
-
-def _tag_commit():
-    sh.git.fetch("origin", env.code_branch)
-    deploy_time = datetime.datetime.utcnow()
-    tag_name = "{:%Y-%m-%d_%H.%M}-{}-deploy".format(deploy_time, env.environment)
-    pattern = "*{}*".format(env.environment)
-    last_tag = sh.tail(sh.git.tag("-l", pattern), "-1").strip()
-    branch = "origin/{}".format(env.code_branch)
-    msg = getattr(env, "message", "")
-    msg += "\n{} deploy at {}".format(env.environment, deploy_time.isoformat())
-    sh.git.tag(tag_name, "-m", msg, branch)
-    sh.git.push("origin", tag_name)
-    diff_url = "https://github.com/dimagi/commcare-hq/compare/{}...{}".format(
-        last_tag,
-        tag_name
-    )
-    print "Here's a link to the changes you just deployed:\n{}".format(diff_url)
-    return diff_url
 
 
 @task

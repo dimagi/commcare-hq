@@ -10,8 +10,8 @@ def _get_blocks(domain):
              .domain(domain)
              .case_type(['pregnant_mother', 'baby'])
              .size(0)
-             .terms_facet('block.#value', 'block'))
-    return query.run().facets.block.terms
+             .terms_aggregation('block.#value', 'block'))
+    return query.run().aggregations.block.keys
 
 
 class SelectBlockField(ReportSelectField):

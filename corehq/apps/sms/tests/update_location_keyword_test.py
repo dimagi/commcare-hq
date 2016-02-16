@@ -6,7 +6,7 @@ from corehq.apps.locations.models import Location, LocationType
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.messages import get_message
 from corehq.apps.sms.models import SMS
-from corehq.apps.sms.tests.util import setup_default_sms_test_backend
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser
 import corehq.apps.sms.messages as messages
 
@@ -77,6 +77,7 @@ class UpdateLocationKeywordTest(TestCase, DomainSubscriptionMixin):
 
     @classmethod
     def tearDownClass(cls):
+        delete_domain_phone_numbers(cls.domain)
         cls.user.delete()
         cls.backend_mapping.delete()
         cls.backend.delete()

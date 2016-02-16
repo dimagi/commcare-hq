@@ -48,8 +48,8 @@ class BaseModifySubscriptionHandler(object):
         raise NotImplementedError
 
     @classmethod
-    def supported_privileges(self):
-        return self.privilege_to_response_function().keys()
+    def supported_privileges(cls):
+        return cls.privilege_to_response_function().keys()
 
 
 class BaseModifySubscriptionActionHandler(BaseModifySubscriptionHandler):

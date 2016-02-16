@@ -5,6 +5,18 @@ Exports.ViewModels.ExportInstance = function(instanceJSON, options) {
     self.saveState = ko.observable(Exports.Constants.SAVE_STATES.READY);
     self.saveUrl = options.saveUrl;
     self.isDeidColumnVisible = ko.observable(false);
+    self.transformDates = ko.observable(false);
+    self.transformDates.subscribe(function(shouldTransformDates) {
+        _.each(self.tables(), function(table) {
+            _.each(table.columns(), function(column) {
+                if (shouldTransformDates) {
+                    column.addTransform(Exports.Constants.TRANSFORMS.DATE);
+                } else {
+                    column.removeTransform(Exports.Constants.TRANSFORMS.DATE);
+                }
+            });
+        });
+    });
 };
 
 Exports.ViewModels.ExportInstance.prototype.getFormatOptionValues = function() {
@@ -37,13 +49,12 @@ Exports.ViewModels.ExportInstance.prototype.save = function() {
 
     self.saveState(Exports.Constants.SAVE_STATES.SAVING);
     serialized = self.toJS();
-    $.post(self.saveUrl, serialized)
+    $.post(self.saveUrl, JSON.stringify(serialized))
         .success(function(data) {
-            var eventCategory;
-
-            self.saveState(Exports.Constants.SAVE_STATES.SUCCESS);
-
-            self.recordSaveAnalytics(Exports.Utils.redirect.bind(null, data.redirect));
+            self.recordSaveAnalytics(function() {
+                self.saveState(Exports.Constants.SAVE_STATES.SUCCESS);
+                Exports.Utils.redirect(data.redirect);
+            });
         })
         .fail(function(response) {
             self.saveState(Exports.Constants.SAVE_STATES.ERROR);
@@ -66,9 +77,11 @@ Exports.ViewModels.ExportInstance.prototype.recordSaveAnalytics = function(callb
         analytics.usage.apply(null, args);
     }
     if (this.isNew()) {
-        eventCategory = Exports.Utils.getEventCategory(this.type());
+        eventCategory = Exports.Constants.ANALYTICS_EVENT_CATEGORIES[this.type()];
         analytics.usage(eventCategory, 'Custom export creation', '');
         analytics.workflow("Clicked 'Create' in export edit page", callback);
+    } else if (this.export_format !== Exports.Constants.EXPORT_FORMATS.HTML) {
+        callback();
     }
 };
 
@@ -90,10 +103,12 @@ Exports.ViewModels.ExportInstance.mapping = {
         'type',
         'export_format',
         'split_multiselects',
-        'transform_dates',
         'include_errors',
         'is_deidentified',
         'is_daily_saved_export',
+    ],
+    exclude: [
+        'transformDates'
     ],
     tables: {
         create: function(options) {
@@ -132,7 +147,7 @@ Exports.ViewModels.TableConfiguration.prototype.selectNone = function(table) {
 };
 
 Exports.ViewModels.TableConfiguration.mapping = {
-    include: ['name', 'path', 'columns', 'selected', 'display_name'],
+    include: ['name', 'path', 'columns', 'selected', 'label'],
     columns: {
         create: function(options) {
             return new Exports.ViewModels.ExportColumn(options.data);
@@ -147,7 +162,7 @@ Exports.ViewModels.ExportColumn = function(columnJSON) {
     self.deidTransform.subscribe(function(newTransform) {
         self.transforms(Exports.Utils.removeDeidTransforms(self.transforms()));
         if (newTransform) {
-            self.transforms.push(newTransform);
+            self.addTransform(newTransform);
         }
     });
 };
@@ -180,6 +195,22 @@ Exports.ViewModels.ExportColumn.prototype.isVisible = function(table) {
 
 Exports.ViewModels.ExportColumn.prototype.isCaseName = function() {
     return this.item.isCaseName();
+};
+
+Exports.ViewModels.ExportColumn.prototype.addTransform = function(transform) {
+    var availableTransforms = _.values(Exports.Constants.TRANSFORMS),
+        idx = _.indexOf(this.transforms(), transform);
+
+    if (idx === -1) {
+        this.transforms.push(transform);
+    }
+};
+
+Exports.ViewModels.ExportColumn.prototype.removeTransform = function(transform) {
+    var idx = _.indexOf(this.transforms(), transform);
+    if (idx !== -1) {
+        this.transforms.splice(idx, 1);
+    }
 };
 
 Exports.ViewModels.ExportColumn.mapping = {

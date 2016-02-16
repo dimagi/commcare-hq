@@ -41,10 +41,6 @@ class BaseInvoiceTestCase(BaseAccountingTest):
         ).plan.get_version()
 
     def tearDown(self):
-        self.billing_contact.delete()
-        self.dimagi_user.delete()
-        self.domain.delete()
-
         CreditAdjustment.objects.all().delete()
         CreditLine.objects.all().delete()
 
@@ -54,6 +50,11 @@ class BaseInvoiceTestCase(BaseAccountingTest):
         Invoice.objects.all().delete()
         generator.delete_all_subscriptions()
         generator.delete_all_accounts()
+
+        self.billing_contact.delete()
+        self.dimagi_user.delete()
+        self.domain.delete()
+
         super(BaseInvoiceTestCase, self).tearDown()
 
 

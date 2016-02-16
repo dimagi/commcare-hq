@@ -27,9 +27,8 @@ class FormProcessorSQL(object):
                 name=attachment.name,
                 attachment_id=uuid.uuid4(),
                 content_type=attachment.content_type,
-                md5=attachment.md5,
             )
-            xform_attachment.write_content(attachment.content)
+            xform_attachment.write_content(attachment.content_as_file())
             xform_attachments.append(xform_attachment)
 
         xform.unsaved_attachments = xform_attachments

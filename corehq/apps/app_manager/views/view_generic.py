@@ -43,7 +43,7 @@ from django_prbac.utils import has_privilege
 @use_bootstrap3
 @retry_resource(3)
 def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
-                 is_user_registration=False, copy_app_form=None):
+                 copy_app_form=None):
     """
     This is the main view for the app. All other views redirect to here.
 
@@ -55,10 +55,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     try:
         if app_id:
             app = get_app(domain, app_id)
-        if is_user_registration:
-            if not app.show_user_registration:
-                raise Http404()
-            form = app.get_user_registration()
         if module_id:
             try:
                 module = app.get_module(module_id)
@@ -102,7 +98,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
     if form:
         template, form_context = get_form_view_context_and_template(
-            request, domain, form, context['langs'], is_user_registration
+            request, domain, form, context['langs']
         )
         context.update({
             'case_properties': get_all_case_properties(app),

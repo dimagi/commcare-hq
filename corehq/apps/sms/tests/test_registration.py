@@ -2,7 +2,7 @@ from corehq.apps.domain.calculations import num_mobile_users
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.models import SQLMobileBackendMapping
-from corehq.apps.sms.tests.util import BaseSMSTest
+from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
@@ -30,6 +30,7 @@ class RegistrationTestCase(BaseSMSTest):
         SQLMobileBackendMapping.set_default_domain_backend(self.domain, self.backend)
 
     def tearDown(self):
+        delete_domain_phone_numbers(self.domain)
         SQLMobileBackendMapping.unset_default_domain_backend(self.domain)
         self.backend.delete()
         self.domain_obj.delete()

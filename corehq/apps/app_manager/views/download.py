@@ -104,27 +104,16 @@ def download_xform(request, domain, app_id, module_id, form_id):
 
 
 @safe_download
-def download_user_registration(request, domain, app_id):
-    """See Application.fetch_xform"""
-    return HttpResponse(
-        request.app.get_user_registration().render_xform()
-    )
-
-
-@safe_download
 def download_jad(request, domain, app_id):
     """
-    See ApplicationBase.create_jadjar
+    See ApplicationBase.create_jadjar_from_build_files
 
     """
     app = request.app
     if not app.copy_of:
         app.set_form_versions(None)
         app.set_media_versions(None)
-    try:
-        jad, _ = app.create_jadjar()
-    except ResourceConflict:
-        return download_jad(request, domain, app_id)
+    jad, _ = app.create_jadjar_from_build_files()
     try:
         response = HttpResponse(jad)
     except Exception:
@@ -139,7 +128,7 @@ def download_jad(request, domain, app_id):
 @safe_download
 def download_jar(request, domain, app_id):
     """
-    See ApplicationBase.create_jadjar
+    See ApplicationBase.create_jadjar_from_build_files
 
     This is the only view that will actually be called
     in the process of downloading a complete CommCare.jar
@@ -151,7 +140,7 @@ def download_jar(request, domain, app_id):
     if not app.copy_of:
         app.set_form_versions(None)
         app.set_media_versions(None)
-    _, jar = app.create_jadjar()
+    _, jar = app.create_jadjar_from_build_files()
     set_file_download(response, 'CommCare.jar')
     response['Content-Length'] = len(jar)
     try:
@@ -254,6 +243,15 @@ def download_file(request, domain, app_id, path):
                 # which wasn't made on build for a long time
                 add_odk_profile_after_build(request.app)
                 request.app.save()
+                return download_file(request, domain, app_id, path)
+            elif path in ('CommCare.jad', 'CommCare.jar'):
+                request.app.create_jadjar_from_build_files(save=True)
+                try:
+                    request.app.save(increment_version=False)
+                except ResourceConflict:
+                    # Likely that somebody tried to download the jad and jar
+                    # files for the first time simultaneously.
+                    pass
                 return download_file(request, domain, app_id, path)
             else:
                 try:

@@ -33,7 +33,7 @@
   {% endcompress %}
 
   {% compress css %}
-  <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'reports/css/leaflet/leaflet.css' %}" />
+  <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'leaflet/dist/leaflet.css' %}" />
   <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'hqadmin/css/project_map.css' %}" />
   {% endcompress %}
 
@@ -43,7 +43,7 @@
   <script type="text/javascript" src="{% new_static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
   <script type="text/javascript" src="{% new_static 'knockout/dist/knockout.js' %}"></script>
   <script type="text/javascript" src="{% new_static 'style/js/hq.helpers.js' %}"></script>
-  <script type="text/javascript" src="{% new_static 'reports/javascripts/leaflet.js' %}"></script>
+  <script type="text/javascript" src="{% new_static 'leaflet/dist/leaflet.js' %}"></script>
   <script type="text/javascript" src="{% new_static 'hqadmin/js/project_map.js' %}"></script>
   <script src="{% new_static 'appstore/js/facet_sidebar.js' %}"></script>
   {% endcompress %}
@@ -109,5 +109,10 @@
       {% include 'appstore/partials/bootstrap3/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
     </div>
   </div>
+  <script type="application/javascript">
+      $(function () {
+          projectMapInit('{{ MAPBOX_ACCESS_TOKEN }}');
+      });
+  </script>
 </body>
 </html>

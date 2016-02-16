@@ -1454,7 +1454,6 @@ class ConfirmSelectedPlanView(SelectPlanView):
         downgrades = get_change_status(current_plan_version, self.selected_plan_version)[1]
         downgrade_handler = DomainDowngradeStatusHandler(
             self.domain_object, self.selected_plan_version, downgrades,
-            web_user=self.request.user.username
         )
         return downgrade_handler.get_response()
 

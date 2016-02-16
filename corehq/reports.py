@@ -15,6 +15,7 @@ from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
+from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (
     StaticReportConfiguration,
@@ -69,6 +70,7 @@ def REPORTS(project):
             monitoring.CaseActivityReport,
             monitoring.FormCompletionVsSubmissionTrendsReport,
             monitoring.WorkerActivityTimes,
+            ProjectHealthDashboard,
         )),
         (ugettext_lazy("Inspect Data"), (
             inspect.SubmitHistory, CaseListReport,

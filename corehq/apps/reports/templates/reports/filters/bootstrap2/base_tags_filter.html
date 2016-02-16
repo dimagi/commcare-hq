@@ -8,8 +8,5 @@
 <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
 <script type="text/javascript">
     $('#{{ css_id }}').select2({tags:{{ tags|JSON }}, allowClear: true});
-
-    //hack to fix issues with placeholder not showing up fully
-    $('.select2-search-field').width('100%').find('.select2-input').width('100%')
 </script>
 {% endblock %}

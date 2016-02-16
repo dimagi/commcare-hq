@@ -51,8 +51,8 @@ from corehq.apps.userreports.reports.builder.forms import (
     DataSourceForm,
     ConfigureBarChartReportForm,
     ConfigureListReportForm,
-    ConfigureWorkerReportForm
-)
+    ConfigureWorkerReportForm,
+    ConfigureMapReportForm)
 from corehq.apps.userreports.models import (
     ReportConfiguration,
     DataSourceConfiguration,
@@ -73,6 +73,7 @@ from corehq.apps.userreports.ui.forms import (
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
 from corehq.util.couch import get_document_or_404
 
 from couchexport.export import export_from_tables
@@ -145,7 +146,12 @@ class ReportBuilderView(BaseDomainView):
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
         if has_report_builder_access(request):
-            return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
+            report_type = kwargs.get('report_type', None)
+            domain = kwargs.get('domain', None)
+            if report_type != 'map' or REPORT_BUILDER_MAP_REPORTS.enabled(domain):
+                return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
+            else:
+                raise Http404
         else:
             raise Http404
 
@@ -203,12 +209,13 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
 
     @property
     def tiles(self):
-        return [
+        analytics_workflow_label = "Clicked on Report Builder Tile"
+        tiles = [
             TileConfiguration(
                 title=_('Chart'),
                 slug='chart',
                 analytics_usage_label="Chart",
-                analytics_workflow_label="Clicked on Report Builder Tile",
+                analytics_workflow_label=analytics_workflow_label,
                 icon='fcc fcc-piegraph-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'chart']),
@@ -219,7 +226,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Form or Case List'),
                 slug='form-or-case-list',
                 analytics_usage_label="List",
-                analytics_workflow_label="Clicked on Report Builder Tile",
+                analytics_workflow_label=analytics_workflow_label,
                 icon='fcc fcc-form-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'list']),
@@ -230,7 +237,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Worker Report'),
                 slug='worker-report',
                 analytics_usage_label="Worker",
-                analytics_workflow_label="Clicked on Report Builder Tile",
+                analytics_workflow_label=analytics_workflow_label,
                 icon='fcc fcc-user-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'worker']),
@@ -241,7 +248,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Data Table'),
                 slug='data-table',
                 analytics_usage_label="Table",
-                analytics_workflow_label="Clicked on Report Builder Tile",
+                analytics_workflow_label=analytics_workflow_label,
                 icon='fcc fcc-datatable-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'table']),
@@ -249,6 +256,19 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                             ' You choose the columns and rows.'),
             ),
         ]
+        if REPORT_BUILDER_MAP_REPORTS.enabled(self.domain):
+            tiles.append(TileConfiguration(
+                title=_('Map'),
+                slug='map',
+                analytics_usage_label="Map",
+                analytics_workflow_label=analytics_workflow_label,
+                icon='fa fa-globe',
+                context_processor_class=IconContext,
+                url=reverse('report_builder_select_source', args=[self.domain, 'map']),
+                help_text=_('A map to show data from your cases or forms.'
+                            ' You choose the property to map.'),
+            ))
+        return tiles
 
 
 class ReportBuilderDataSourceSelect(ReportBuilderView):
@@ -284,6 +304,7 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'chart': 'configure_chart_report',
                 'table': 'configure_table_report',
                 'worker': 'configure_worker_report',
+                'map': 'configure_map_report',
             }
             url_name = url_names_map[self.report_type]
             get_params = {
@@ -315,7 +336,8 @@ class EditReportInBuilder(View):
                 'chart': ConfigureChartReport,
                 'list': ConfigureListReport,
                 'worker': ConfigureWorkerReport,
-                'table': ConfigureTableReport
+                'table': ConfigureTableReport,
+                'map': ConfigureMapReport,
             }[report.report_meta.builder_report_type]
             try:
                 return view_class.as_view(existing_report=report)(request, *args, **kwargs)
@@ -433,6 +455,16 @@ class ConfigureWorkerReport(ConfigureChartReport):
         return ConfigureWorkerReportForm
 
 
+class ConfigureMapReport(ConfigureChartReport):
+    report_title = ugettext_noop("Map Report: {}")
+    report_type = 'map'
+
+    @property
+    @memoized
+    def configuration_form_class(self):
+        return ConfigureMapReportForm
+
+
 def _edit_report_shared(request, domain, config, read_only=False):
     if request.method == 'POST':
         form = ConfigurableReportEditForm(domain, config, read_only, data=request.POST)
@@ -515,7 +547,7 @@ def edit_data_source(request, domain, config_id):
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def create_data_source(request, domain):
-    return _edit_data_source_shared(request, domain, DataSourceConfiguration(domain=domain))
+    return _edit_data_source_shared(request, domain, DataSourceConfiguration(domain=domain), create=True)
 
 
 @login_and_domain_required
@@ -547,12 +579,15 @@ def create_data_source_from_app(request, domain):
     return render(request, 'userreports/data_source_from_app.html', context)
 
 
-def _edit_data_source_shared(request, domain, config, read_only=False):
+def _edit_data_source_shared(request, domain, config, read_only=False, create=False):
     if request.method == 'POST':
         form = ConfigurableDataSourceEditForm(domain, config, read_only, data=request.POST)
         if form.is_valid():
             config = form.save(commit=True)
             messages.success(request, _(u'Data source "{}" saved!').format(config.display_name))
+            if create:
+                # if we just created a data source, redirect to the edit view to avoid creating a new one
+                return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
     else:
         form = ConfigurableDataSourceEditForm(domain, config, read_only)
     context = _shared_context(domain)

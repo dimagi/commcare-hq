@@ -9,7 +9,7 @@ from corehq.apps.sms.models import (SMS, SMSLog, CommConnectCase,
     SQLMobileBackendMapping, SQLMobileBackend, MobileBackendInvitation,
     PhoneLoadBalancingMixin, BackendMap)
 from corehq.apps.sms.tasks import handle_outgoing
-from corehq.apps.sms.tests.util import BaseSMSTest
+from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
 from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
 from corehq.messaging.smsbackends.http.models import SQLHttpBackend
@@ -346,9 +346,8 @@ class AllBackendTest(BaseSMSTest):
         user.delete()
 
     def tearDown(self):
-        self.contact1.get_verified_number().delete()
+        delete_domain_phone_numbers(self.domain_obj.name)
         self.contact1.delete()
-        self.contact2.get_verified_number().delete()
         self.contact2.delete()
         self.domain_obj.delete()
         self.unicel_backend.delete()
@@ -505,6 +504,8 @@ class OutgoingFrameworkTestCase(BaseSMSTest):
         self.contact = CommConnectCase.wrap(self.case.to_json())
 
     def tearDown(self):
+        delete_domain_phone_numbers(self.domain)
+        delete_domain_phone_numbers(self.domain2)
         for obj in (
             list(MobileBackendInvitation.objects.all()) +
             list(SQLMobileBackendMapping.objects.all())
