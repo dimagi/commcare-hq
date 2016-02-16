@@ -9,15 +9,13 @@
             upload: '{% url 'app_multimedia_ajax_upload' domain app.get_id %}',
             references: '{% url 'app_multimedia_ajax_references' domain app.get_id %}',
         };
-        var loaded = {},
-            $main = $("#multimedia"),
+        var $main = $("#multimedia"),
             $loading = $main.find(".hq-loading").remove(),
             $error = $main.find(".hq-loading-error").remove();
 
         // Event to handle main page load, which includes Download tab
         $('#multimedia-shower').on('show.bs.tab', function () {
             load('main', $main);
-            loaded.download = true;
         });
 
         // Events for loading tabs
@@ -34,14 +32,10 @@
 
         /*
          *  Load a given section, which could be the main multimedia page or a single tab.
-         *    slug: a key from the loaded / urls hashes
+         *    slug: a key from the urls hash
          *    $content: container for fetched content
          */
         function load(slug, $content) {
-            if (loaded[slug]) {
-                return;
-            }
-
             // If the content takes a noticeable amount of time to load, show a spinner
             var showSpinner = true;
             _.delay(function() {
@@ -55,11 +49,9 @@
                 url: urls[slug],
             }).success(function(content) {
                 showSpinner = false;
-                loaded[slug] = true;
                 $content.html(content);
             }).error(function() {
                 showSpinner = false;
-                loaded[slug] = false;
                 $content.html($error.html());
             });
         }
