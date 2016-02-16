@@ -800,6 +800,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
             user_ids,
             self.datespan.startdate_utc,
             self.datespan.enddate_utc,
+            by_submission_time=self.by_submission_time,
         )
 
         for user in users_data.combined_users:
@@ -820,6 +821,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
             user_ids,
             self.datespan.startdate_utc,
             self.datespan.enddate_utc,
+            by_submission_time=self.by_submission_time,
         )
         self.total_row = ["All Users",
                           _fmt_ts(total_data.get('avg')),
