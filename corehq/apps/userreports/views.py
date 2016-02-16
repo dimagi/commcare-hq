@@ -547,7 +547,7 @@ def edit_data_source(request, domain, config_id):
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def create_data_source(request, domain):
-    return _edit_data_source_shared(request, domain, DataSourceConfiguration(domain=domain))
+    return _edit_data_source_shared(request, domain, DataSourceConfiguration(domain=domain), create=True)
 
 
 @login_and_domain_required
@@ -579,12 +579,15 @@ def create_data_source_from_app(request, domain):
     return render(request, 'userreports/data_source_from_app.html', context)
 
 
-def _edit_data_source_shared(request, domain, config, read_only=False):
+def _edit_data_source_shared(request, domain, config, read_only=False, create=False):
     if request.method == 'POST':
         form = ConfigurableDataSourceEditForm(domain, config, read_only, data=request.POST)
         if form.is_valid():
             config = form.save(commit=True)
             messages.success(request, _(u'Data source "{}" saved!').format(config.display_name))
+            if create:
+                # if we just created a data source, redirect to the edit view to avoid creating a new one
+                return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
     else:
         form = ConfigurableDataSourceEditForm(domain, config, read_only)
     context = _shared_context(domain)
