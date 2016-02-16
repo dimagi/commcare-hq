@@ -71,6 +71,8 @@ archive_loc = function(button, name, loc_id) {
             }
         });
         $(archive_location_modal).modal('hide');
+        analytics.workflow('User clicks "Archive Location" on modal');
+        ga_track_event('Organizations', 'User clicks "Archive Location" on modal');
     }
 
     var modal_context = {
@@ -81,6 +83,8 @@ archive_loc = function(button, name, loc_id) {
     ko.cleanNode(archive_location_modal);
     $(archive_location_modal).koApplyBindings(modal_context);
     $(archive_location_modal).modal('show');
+    analytics.workflow('User clicks "Archive" for location');
+    ga_track_event('Organizations', 'User clicks "Archive" for location');
 
 }
 
@@ -118,6 +122,8 @@ delete_loc = function(button, name, loc_id) {
                 }
             });
             $(delete_location_modal).modal('hide');
+            analytics.workflow('User clicks "Delete Location" on modal');
+            ga_track_event('Organizations', 'User clicks "Delete Location" on modal')
         }
     }
 
@@ -139,6 +145,8 @@ delete_loc = function(button, name, loc_id) {
             $(delete_location_modal).modal('show');
         }
     });
+    analytics.workflow('User clicks "Delete" for location');
+    ga_track_event('Organizations', 'User clicks "Delete" for location');
 }
 
 remove_elements_after_action = function(button) {
@@ -149,6 +157,21 @@ $(function() {
     var model = new LocationTreeViewModel(hierarchy);
     $('#location_tree').koApplyBindings(model);
     model.load(locs, selected_loc);
+});
+
+$('#bulk-import-locations').click(function () {
+    analytics.workflow('User clicks "Bulk Import" for organizations')
+    ga_track_event('Organizations', 'User clicks "Bulk Import" for organizations')
+});
+
+$('#edit-org-levels').click(function () {
+    analytics.workflow('User clicks "Edit Organization Levels"')
+    ga_track_event('Organizations', 'User clicks "Edit Organization Levels"')
+});
+
+$('#edit-loc-fields').click(function () {
+    analytics.workflow('User clicks "Edit Location Fields"')
+    ga_track_event('Organizations', 'User clicks "Edit Locations Fields"')
 });
 
 </script>
@@ -193,16 +216,17 @@ $(function() {
         <div class="btn-toolbar">
             <a class="btn btn-primary"
                href="{% url "location_import" domain %}"
+               id="bulk-import-locations"
                {% if not has_location_types or not can_edit_any_location %}
                    disabled
                {% endif %}
             >
                 <i class="icon-upload"></i> {% trans 'Bulk Import' %}
             </a>
-            <a class="btn" href="{% url "location_types" domain %}">
+            <a class="btn" href="{% url "location_types" domain %}" id="edit-org-levels">
                 {% trans "Edit Organization Levels" %}
             </a>
-            <a class="btn" href="{% url "location_fields_view" domain %}">
+            <a class="btn" href="{% url "location_fields_view" domain %}" id="edit-loc-fields">
                 {% trans "Edit Location Fields" %}
             </a>
         </div>
@@ -220,7 +244,8 @@ $(function() {
             <div class="loc_header" data-bind="if: name() != '_root'">
                 <div style="float:right;" data-bind="if: can_edit()">
                     {% if not show_inactive %}
-                        <a class="btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">
+                        <a class="btn btn-primary"
+                           data-bind="attr: { href: loc_edit_url(uuid()) }, click: track_loc_edit">
                             {% trans "Edit" %}
                         </a>
                     {% endif %}
@@ -280,7 +305,9 @@ $(function() {
                 {% if not show_inactive %}
                     <!-- create child button -->
                     <!-- ko if: can_edit() -->
-                        <a class="btn btn-success loc_child" data-bind="attr: { href: NEW_LOC_URL + '?parent=' + (uuid() || '') }">
+                        <a class="btn btn-success loc_child"
+                           data-bind="attr: { href: NEW_LOC_URL + '?parent=' + (uuid() || '') },
+                                      click: new_location_tracking">
                             <i class="icon icon-white icon-plus"></i> <span data-bind="text: new_child_caption"></span>
                         </a>
                     <!-- /ko -->

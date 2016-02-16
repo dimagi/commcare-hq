@@ -3,6 +3,18 @@
 
 {% block js %} {{ block.super }}
     <script src="{% static 'commtrack/ko/location_bulk_upload_file.js' %}"></script>
+    <script type="text/javascript">
+        $(function() {
+            $('#download_link').click(function() {
+                analytics.workflow('User clicks "Download Organization Structure"');
+                ga_track_event('Organizations', 'User clicks "Download Organization Structure"');
+            });
+            $("button[type='submit']").click(function() {
+                analytics.workflow('User clicks "Upload Organization Structure"');
+                ga_track_event('Organizations', 'User clicks "Upload Organization Structure"');
+            })
+        });
+    </script>
 {% endblock %}
 
 {% block main_column %}
