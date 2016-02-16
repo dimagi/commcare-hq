@@ -121,6 +121,18 @@ class TestSubscription(BaseAccountingTest):
         self.subscription.save()
         self.assertEqual(1, len(Subscription.objects.filter(id=self.subscription.id)))
 
+    def test_next_subscription(self):
+        this_subscription_date_end = self.subscription.date_end
+        already_canceled_future_subscription, _ = generator.generate_domain_subscription_from_date(
+            this_subscription_date_end, self.account, self.domain.name,
+            subscription_length=0
+        )
+        next_future_subscription, _ = generator.generate_domain_subscription_from_date(
+            this_subscription_date_end, self.account, self.domain.name,
+            subscription_length=1
+        )
+        self.assertEqual(self.subscription.next_subscription, next_future_subscription)
+
     def tearDown(self):
         self.billing_contact.delete()
         self.dimagi_user.delete()
