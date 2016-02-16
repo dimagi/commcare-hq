@@ -1,5 +1,4 @@
 from collections import namedtuple
-from couchexport.transforms import couch_to_excel_datetime
 
 SystemProperty = namedtuple('SystemProperty', ['tag', 'name'])
 
@@ -33,6 +32,5 @@ CASE_HISTORY_TABLE = ['case_history']
 
 TRANSFORM_FUNCTIONS = {
     'deid_id': lambda x: x,  # TODO: map these to actual deid functions
-    'deid_date': lambda x: x,
-    'transform_date': couch_to_excel_datetime
+    'deid_date': lambda x: x
 }

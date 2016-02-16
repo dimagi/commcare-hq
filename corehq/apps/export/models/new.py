@@ -242,6 +242,15 @@ class ExportInstance(Document):
     tables = ListProperty(TableConfiguration)
     export_format = StringProperty(default='csv')
 
+    # Whether to split multiselects into multiple columns
+    split_multiselects = BooleanProperty(default=False)
+
+    # Whether to automatically convert dates to excel dates
+    transform_dates = BooleanProperty(default=False)
+
+    # Whether to include duplicates and other error'd forms in export
+    include_errors = BooleanProperty(default=False)
+
     # Whether the export is de-identified
     is_deidentified = BooleanProperty(default=False)
     is_daily_saved_export = BooleanProperty(default=False)
