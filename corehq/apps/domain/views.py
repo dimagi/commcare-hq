@@ -36,8 +36,6 @@ from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_jquery_ui,
     use_jquery_ui_multiselect,
-    use_datatables,
-    use_daterangepicker,
     use_select2,
 )
 from corehq.apps.accounting.exceptions import (
@@ -2102,14 +2100,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         'corehq.apps.reports.filters.select.RepeaterFilter',
         'corehq.apps.reports.filters.select.RepeatRecordStateFilter',
     ]
-
-    @use_datatables
-    @use_bootstrap3
-    @use_daterangepicker
-    @use_select2
-    @use_jquery_ui
-    def set_bootstrap3_status(self, request, *args, **kwargs):
-        pass
 
     def _make_view_payload_button(self, record_id):
         return '''
