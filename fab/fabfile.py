@@ -127,18 +127,24 @@ class DeployMetadata(object):
         self._deploy_ref = tag_name
 
     def _check_deploy_commit(self, deploy_commit, code_branch):
-        origin_commit = sh.git("rev-parse", "origin/{}".format(code_branch)).strip()
-        if deploy_commit != origin_commit:
-            print yellow("\n*********\n*WARNING*\n*********")
-            print ("Your local copy of '{}' differs from the version on "
-                   "'origin'.\n".format(code_branch))
-            print "Here's the latest local commit:",
-            print sh.git.show(deploy_commit, "--quiet")
-            print "Here's the latest commit on `origin`:",
-            print sh.git.show(origin_commit, "--quiet")
-            if not console.confirm("Are you sure you want to deploy the local "
-                                   "commit?", default=False):
-                utils.abort('Check yourself before you wreck yourself.')
+        try:
+            origin_commit = sh.git("rev-parse", "origin/{}".format(code_branch)).strip()
+        except sh.ErrorReturnCode:
+            print yellow("Branch '{}' was not found on origin".format(code_branch))
+            if not console.confirm("Do you want to deploy it anyways?", default=False):
+                utils.abort('Aborting.')
+        else:
+            if deploy_commit != origin_commit:
+                print yellow("\n*********\n*WARNING*\n*********")
+                print ("Your local copy of '{}' differs from the version on "
+                       "'origin'.\n".format(code_branch))
+                print "Here's the latest local commit:",
+                print sh.git.show(deploy_commit, "--quiet")
+                print "Here's the latest commit on 'origin':",
+                print sh.git.show(origin_commit, "--quiet")
+                if not console.confirm("Are you sure you want to deploy the "
+                                       "local commit?", default=False):
+                    utils.abort('Check yourself before you wreck yourself.')
 
     @property
     def diff_url(self):
