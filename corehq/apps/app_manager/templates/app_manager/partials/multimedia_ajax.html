@@ -23,15 +23,6 @@
             <div class="tab-content">
                 <div id="multimedia-download-tab" class="tab-pane active" data-slug="download">
                     <div class="container-fluid">
-                        <ul class="list-unstyled">
-                            {% for total in totals %}
-                                <li>
-                                    <i class="fa {{ total.icon_class }}"></i>
-                                    {{ total.matched }}/{{ total.totals }}
-                                    {{ total.media_type }} {% trans 'References' %}
-                                </li>
-                            {% endfor %}
-                        </ul>
                         {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True %}
                     </div>
                 </div>

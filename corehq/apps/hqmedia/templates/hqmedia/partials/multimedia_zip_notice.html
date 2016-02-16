@@ -5,6 +5,15 @@
             This .zip file is structured to match the multimedia paths referenced in your CommCare Application.
         {% endblocktrans %}
     </p>
+    <ul class="list-unstyled">
+        {% for total in multimedia_totals %}
+            <li>
+                <i class="fa {{ total.icon_class }}"></i>
+                {{ total.matched }}/{{ total.totals }}
+                {{ total.media_type }} {% trans 'References' %}
+            </li>
+        {% endfor %}
+    </ul>
     <p>
         <a class="btn btn-primary"
             {% if include_modal %}
