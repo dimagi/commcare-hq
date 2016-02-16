@@ -781,9 +781,6 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
                 s=seconds,
             )
 
-        def _fmt(pretty_fn, val):
-            return format_datatables_data(pretty_fn(val), val)
-
         def _fmt_ts(timestamp):
             return format_datatables_data(to_minutes(timestamp), timestamp, to_minutes_raw(timestamp))
 
@@ -813,7 +810,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
                 _fmt_ts(stats.get('std_deviation')),
                 _fmt_ts(stats.get('min')),
                 _fmt_ts(stats.get('max')),
-                _fmt(lambda x: x, stats.get("count", 0)),
+                stats.get('count', 0),
             ])
 
         total_data = get_form_duration_stats_for_users(
