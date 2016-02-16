@@ -3,6 +3,7 @@
 <!-- Handle app manager's multimedia management page -->
 <script>
     $(function () {
+        // Load entire page (tab structure plus the Download tab)
         var multimedia_tab = (function () {
             var self = {};
             self.load_state = ko.observable(null);
@@ -30,6 +31,7 @@
             }
         });
 
+        // Handle on-demand loading of individual tabs
         var loaded = {
             download: true, // initially loaded by the ajax call, multimedia_ajax, that loads the whole page
             upload: false,
@@ -40,28 +42,42 @@
             upload: '{% url 'app_multimedia_ajax_upload' domain app.get_id %}',
             references: '{% url 'app_multimedia_ajax_references' domain app.get_id %}',
         };
+
         _.each(_.keys(urls), function(tab) {
             $("#multimedia").on("show.bs.tab", "a[href='#multimedia-" + tab + "-tab']", function() {
                 if (!loaded[tab]) {
-                    var $content = $('#multimedia-' + tab + '-tab .container-fluid');
-                    _.delay(function() {
-                        if (!loaded[tab]) {
-                            $content.html($("#hq-loading").html());
-                        }
-                    }, 500);
-                    $.ajax({
-                        url: urls[tab],
-                    }).success(function(content) {
-                        loaded[tab] = true;
-                        $content.html(content);
-                    }).error(function() {
-                        loaded[tab] = false;
-                        $content.html('<div class="alert alert-danger">'
-                            + '{% trans "Oops, there was a problem loading this section. Please try again." %}'
-                            + '</div>');
-                    });
+                    loadTab(tab);
                 }
             });
         });
+
+        $("#multimedia").on("click", "button.reload", function() {
+            loadTab($(this).closest(".container-fluid").data("tab"));
+        });
+
+        function loadTab(tab) {
+            var $content = $('#multimedia-' + tab + '-tab .container-fluid').data("tab", tab),
+                showSpinner = true;
+
+            // If the tab takes a noticeable amount of time to load, show a spinner
+            _.delay(function() {
+                if (showSpinner) {
+                    $content.html($("#hq-loading").html());
+                }
+            }, 100);
+
+            // Load the tab
+            $.ajax({
+                url: urls[tab],
+            }).success(function(content) {
+                showSpinner = false;
+                loaded[tab] = true;
+                $content.html(content);
+            }).error(function() {
+                showSpinner = false;
+                loaded[tab] = false;
+                $content.html($("#hq-loading-error").html());
+            });
+        }
     });
 </script>

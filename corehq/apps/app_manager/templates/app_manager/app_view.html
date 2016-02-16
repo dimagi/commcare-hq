@@ -218,10 +218,6 @@
         {% include 'app_manager/languages.html' %}
 
         {% if app.get_doc_type == "Application" %}
-            <script type="text/html" id="hq-loading">
-                <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
-                {% trans "Loading..." %}
-            </script>
             <div class="tab-pane multimedia" id="multimedia">
                 <div data-bind="if: load_state() === 'loading'" id="">
                     <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
@@ -229,8 +225,22 @@
                 </div>
                 <div data-bind="html: multimedia_page_html"></div>
                 <div data-bind="if: load_state() === 'error'">
-                    <button class="btn btn-default" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
+                    <button class="btn btn-default" data-bind="click: load_if_necessary">
+                        {% trans "Try again" %}
+                    </button>
                 </div>
+                <script type="text/html" id="hq-loading">
+                    <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                    {% trans "Loading..." %}
+                </script>
+                <script type="text/html" id="hq-loading-error">
+                    <div class="alert alert-danger">
+                        {% trans "Oops, there was a problem loading this section. Please try again." %}
+                    </div>
+                    <button class="btn btn-primary reload">
+                        {% trans "Try again" %}
+                    </button>
+                </script>
             </div>
 
         {% endif %}
