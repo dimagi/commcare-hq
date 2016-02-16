@@ -203,7 +203,7 @@ def get_form_duration_stats_by_user(
         startdate,
         enddate,
         by_submission_time=True):
-    """Gets stats on the duration of a selected form"""
+    """Gets stats on the duration of a selected form grouped by users"""
     date_filter_fn = submitted_filter if by_submission_time else completed_filter
 
     query = (
@@ -239,6 +239,7 @@ def get_form_duration_stats_for_users(
         startdate,
         enddate,
         by_submission_time=True):
+    """Gets the form duration stats for a group of users"""
     date_filter_fn = submitted_filter if by_submission_time else completed_filter
 
     query = (

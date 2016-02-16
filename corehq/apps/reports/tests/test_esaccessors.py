@@ -219,6 +219,10 @@ class TestFormESAccessors(BaseESAccessorsTest):
         })
 
     def test_get_form_duration_stats_by_user(self):
+        """
+        Tests the get_form_duration_stats_by_user basic ability to get duration stats
+        grouped by user
+        """
         user1, user2 = 'u1', 'u2'
         app1 = '123'
         xmlns1 = 'abc'
@@ -260,6 +264,10 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(timedelta(milliseconds=results[user2]['max']), completion_time - time_start)
 
     def test_get_form_duration_stats_by_user_decoys(self):
+        """
+        Tests the get_form_duration_stats_by_user ability to filter out forms that
+        do not fit within the filters specified
+        """
         user1, user2 = 'u1', 'u2'
         app1, app2 = '123', '456'
         xmlns1, xmlns2 = 'abc', 'def'
@@ -326,6 +334,9 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertIsNone(results.get('user2'))
 
     def test_get_form_duration_stats_for_users(self):
+        """
+        Tests the get_form_duration_stats_for_users basic ability to get duration stats
+        """
         user1, user2 = 'u1', 'u2'
         app1 = '123'
         xmlns1 = 'abc'
@@ -365,6 +376,10 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(timedelta(milliseconds=results['max']), completion_time - time_start)
 
     def test_get_form_duration_stats_for_users_decoys(self):
+        """
+        Tests the get_form_duration_stats_for_users ability to filter out forms that
+        do not fit within the filters specified
+        """
         user1, user2 = 'u1', 'u2'
         app1, app2 = '123', '456'
         xmlns1, xmlns2 = 'abc', 'def'

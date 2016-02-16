@@ -182,7 +182,7 @@ class TermsAggregation(Aggregation):
 
 class StatsAggregation(Aggregation):
     """
-    Bucket aggregation that computes a stats aggregation by field
+    Stats aggregation that computes a stats aggregation by field
 
     :param name: aggregation name
     :param field: name of the field to collect stats on
@@ -202,7 +202,7 @@ class StatsAggregation(Aggregation):
 
 class ExtendedStatsAggregation(StatsAggregation):
     """
-    Bucket aggregation that computes an extended stats aggregation by field
+    Extended stats aggregation that computes an extended stats aggregation by field
     """
     type = "extended_stats"
     result_class = ExtendedStatsResult
