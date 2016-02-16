@@ -8,7 +8,9 @@ login:
 
 tests:
   - Mobile worker should be able to register a case:
-      result: success
+      result: success  # or "failure", "error" or "exception"
+      # error: <part of error message returned by API>  # If result: error
+      # exception: <part of exception error message raised by test runner>  # If result: exception
       modules:
         - Registration:
             forms:
