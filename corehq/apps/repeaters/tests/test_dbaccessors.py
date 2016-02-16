@@ -16,7 +16,7 @@ class TestRepeatRecordDBAccessors(TestCase):
     dependent_apps = ['corehq.apps.repeaters', 'corehq.couchapps']
     repeater_id = '1234'
     other_id = '5678'
-    domain = 'test-domain'
+    domain = 'test-domain-2'
 
     @classmethod
     def setUpClass(cls):
@@ -77,10 +77,7 @@ class TestRepeatRecordDBAccessors(TestCase):
         self.assertEqual(len(records), 1)
 
     def test_get_paged_repeat_records_with_state(self):
-        with patch(
-                'corehq.apps.repeaters.dbaccessors._get_repeater_ids_by_domain',
-                return_value=[self.repeater_id, self.other_id]):
-            records = get_paged_repeat_records(self.domain, 0, 10, state=RECORD_PENDING_STATE)
+        records = get_paged_repeat_records(self.domain, 0, 10, state=RECORD_PENDING_STATE)
         self.assertEqual(len(records), 2)
 
 
