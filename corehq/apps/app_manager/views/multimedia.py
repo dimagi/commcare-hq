@@ -35,7 +35,8 @@ def multimedia_list_download(request, domain, app_id):
 
 
 @require_deploy_apps
-def multimedia_ajax(request, domain, app_id, template='app_manager/partials/multimedia_ajax.html', extra_context=None):
+def multimedia_ajax(request, domain, app_id, template='app_manager/partials/multimedia_ajax.html',
+                    extra_context=None):
     app = get_app(domain, app_id)
     if app.get_doc_type() == 'Application':
         try:
