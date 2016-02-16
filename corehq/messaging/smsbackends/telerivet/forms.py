@@ -12,15 +12,6 @@ from django.forms.forms import Form
 from django.utils.translation import ugettext as _, ugettext_lazy
 
 
-YES = 'Y'
-NO = 'N'
-
-YES_NO_CHOICES = (
-    (YES, ugettext_lazy("Yes")),
-    (NO, ugettext_lazy("No")),
-)
-
-
 def get_rmi_error_placeholder(error_name):
     return Div(
         HTML('<span class="help-block"><strong ng-bind="%s"></strong></span>' % error_name),
@@ -163,6 +154,14 @@ class TelerivetPhoneNumberForm(Form):
 
 
 class FinalizeGatewaySetupForm(Form):
+    YES = 'Y'
+    NO = 'N'
+
+    YES_NO_CHOICES = (
+        (YES, ugettext_lazy("Yes")),
+        (NO, ugettext_lazy("No")),
+    )
+
     name = TrimmedCharField(
         label=ugettext_lazy("Name"),
         required=True

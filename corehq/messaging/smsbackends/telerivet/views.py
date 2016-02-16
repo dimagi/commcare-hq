@@ -5,8 +5,7 @@ from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
 from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message
 from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSForm,
-    TelerivetPhoneNumberForm, FinalizeGatewaySetupForm, TelerivetBackendForm,
-    YES, NO)
+    TelerivetPhoneNumberForm, FinalizeGatewaySetupForm, TelerivetBackendForm)
 from corehq.messaging.smsbackends.telerivet.models import IncomingRequest, SQLTelerivetBackend
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -98,7 +97,9 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
             'test_sms_form': TelerivetPhoneNumberForm(),
             'finalize_gateway_form': FinalizeGatewaySetupForm(
                 initial={
-                    'set_as_default': NO if domain_has_default_gateway else YES
+                    'set_as_default': (FinalizeGatewaySetupForm.NO
+                                       if domain_has_default_gateway
+                                       else FinalizeGatewaySetupForm.YES),
                 }
             ),
             'webhook_url': absolute_reverse('telerivet_in'),
@@ -217,7 +218,7 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
                     webhook_secret=webhook_secret
                 )
                 backend.save()
-                if data.get('set_as_default') == YES:
+                if data.get('set_as_default') == FinalizeGatewaySetupForm.YES:
                     SQLMobileBackendMapping.set_default_domain_backend(self.domain, backend)
                 return {'success': True}
 
