@@ -37,6 +37,8 @@
     - properties.cc-autosync-freq  # Auto-Sync Frequency
     - properties.unsent-time-limit  # Unsynced Time Limit
     - properties.password_format  # Password Format
+    - properties.logenabled  # Logging Enabled
+
 
 - title: 'Java Phone User Interface Settings'
   id: app-settings-j2me-ui
@@ -71,7 +73,6 @@
   id: app-settings-advanced
   collapse: true
   settings:
-    - properties.logenabled  # Logging Enabled
     - properties.log_prop_weekly  # Weekly Log Sending Frequency
     - properties.log_prop_daily  # Daily Log Sending Frequency
     - hq.secure_submissions
