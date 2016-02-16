@@ -31,7 +31,7 @@ class KafkaChangeFeed(ChangeFeed):
         return u'KafkaChangeFeed: topics: {}, group: {}'.format(self._topics, self._group_id)
 
     def _get_single_topic_or_fail(self):
-        if len(self._topics != 1):
+        if len(self._topics) != 1:
             raise ValueError("This function requires a single topic but found {}!".format(self._topics))
         return self._topics[0]
 
