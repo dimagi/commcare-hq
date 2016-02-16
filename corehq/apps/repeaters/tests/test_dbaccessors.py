@@ -1,4 +1,3 @@
-from mock import patch
 from django.test import TestCase
 
 from corehq.apps.repeaters.dbaccessors import (
