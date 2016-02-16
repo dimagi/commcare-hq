@@ -272,7 +272,7 @@ class DataSourceBuilder(object):
                 type='case_property',
                 id=property,
                 column_id=get_column_name(property),
-                text=property,
+                text=property.replace('_', ' '),
                 source=property
             )
         properties['computed/owner_name'] = cls._get_owner_name_pseudo_property()
@@ -288,7 +288,7 @@ class DataSourceBuilder(object):
             type='case_property',
             id='computed/owner_name',
             column_id=get_column_name('computed/owner_name'),
-            text='owner name',
+            text='Case Owner',
             source='computed/owner_name'
         )
 
@@ -301,7 +301,7 @@ class DataSourceBuilder(object):
             type='case_property',
             id='computed/user_name',
             column_id=get_column_name('computed/user_name'),
-            text='mobile worker',
+            text='Mobile Worker Last Updating Case',
             source='computed/user_name',
         )
 
@@ -718,14 +718,14 @@ class ConfigureNewReportBase(forms.Form):
                 exists_in_current_version=True,
                 property='closed',
                 data_source_field=None,
-                display_text='closed',
+                display_text='Closed',
                 format='Choice',
             ),
             FilterViewModel(
                 exists_in_current_version=True,
                 property='computed/owner_name',
                 data_source_field=None,
-                display_text='owner name',
+                display_text='Case Owner',
                 format='Choice',
             ),
         ]
@@ -852,7 +852,7 @@ class ConfigureNewReportBase(forms.Form):
 
 
 class ConfigureBarChartReportForm(ConfigureNewReportBase):
-    group_by = forms.ChoiceField(label="Group by")
+    group_by = forms.ChoiceField(label="Bar Chart Categories")
     report_type = 'chart'
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
@@ -933,6 +933,7 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
 
 
 class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
+    group_by = forms.ChoiceField(label="Pie Chart Segments")
 
     @property
     def container_fieldset(self):
