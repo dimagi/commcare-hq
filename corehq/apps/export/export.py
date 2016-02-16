@@ -88,6 +88,7 @@ def _get_writer(export_instances):
     writer = _Writer(legacy_writer)
     return writer
 
+
 def _get_tables(export_instances):
     """
     Return a list of tables for the given ExportInstances
@@ -121,9 +122,6 @@ def _get_export_documents(export_instance, filters):
     for filter in filters:
         query = query.filter(filter.to_es_filter())
     return query.scroll()
-
-
-
 
 
 def _write_export_instance(writer, export_instance, documents):
