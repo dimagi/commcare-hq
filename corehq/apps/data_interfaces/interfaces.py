@@ -38,8 +38,9 @@ class DataInterface(GenericReportView):
 class CaseReassignmentInterface(CaseListMixin, DataInterface):
     name = ugettext_noop("Reassign Cases")
     slug = "reassign_cases"
-
     report_template_path = 'data_interfaces/interfaces/case_management.html'
+
+    is_bootstrap3 = True
 
     @property
     @memoized
