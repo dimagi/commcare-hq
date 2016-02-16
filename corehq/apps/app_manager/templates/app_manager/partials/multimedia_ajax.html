@@ -15,7 +15,7 @@
             </ul>
             <div class="spacer"></div>
             <div class="tab-content">
-                <div id="multimedia-download-tab" class="tab-pane active" data-tab-name="download">
+                <div id="multimedia-download-tab" class="tab-pane active" data-slug="download">
                     <div class="container-fluid">
                         <ul class="list-unstyled">
                             {% for total in totals %}
@@ -29,12 +29,12 @@
                         {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True %}
                     </div>
                 </div>
-                <div id="multimedia-references-tab" class="tab-pane" data-tab-name="references">
+                <div id="multimedia-references-tab" class="tab-pane" data-slug="references">
                     <div class="container-fluid">
                         <!-- will be async loaded -->
                     </div>
                 </div>
-                <div id="multimedia-upload-tab" class="tab-pane" data-tab-name="upload">
+                <div id="multimedia-upload-tab" class="tab-pane" data-slug="upload">
                     <div class="container-fluid">
                         <!-- will be async loaded -->
                     </div>

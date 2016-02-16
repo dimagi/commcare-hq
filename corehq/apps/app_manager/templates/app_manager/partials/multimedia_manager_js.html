@@ -3,80 +3,65 @@
 <!-- Handle app manager's multimedia management page -->
 <script>
     $(function () {
-        // Load entire page (tab structure plus the Download tab)
-        var multimedia_tab = (function () {
-            var self = {};
-            self.load_state = ko.observable(null);
-            self.multimedia_page_html = ko.observable('');
-            self.load_if_necessary = function () {
-                if (!self.load_state() || self.load_state() === 'error') {
-                    self.load_state('loading');
-                    $.ajax({
-                        url: '{% url 'app_multimedia_ajax' domain app.get_id %}'
-                    }).success(function (content) {
-                        self.load_state('loaded');
-                        self.multimedia_page_html(content);
-                    }).error(function () {
-                        alert('Oops, there was a problem loading this section. Please try again.');
-                        self.load_state('error');
-                    });
-                }
-            };
-            return self;
-        }());
-        $("#multimedia").koApplyBindings(multimedia_tab);
-        $('#multimedia-shower').on('show.bs.tab', function () {
-            if (multimedia_tab.load_state() === null) {
-                multimedia_tab.load_if_necessary();
-            }
-        });
-
-        // Handle on-demand loading of individual tabs
-        var loaded = {
-            download: true, // initially loaded by the ajax call, multimedia_ajax, that loads the whole page
-            upload: false,
-            references: false,
-        };
         var urls = {
+            main: '{% url 'app_multimedia_ajax' domain app.get_id %}',
             download: '{% url 'app_multimedia_ajax_download' domain app.get_id %}',
             upload: '{% url 'app_multimedia_ajax_upload' domain app.get_id %}',
             references: '{% url 'app_multimedia_ajax_references' domain app.get_id %}',
         };
+        var loaded = {},
+            $main = $("#multimedia"),
+            $loading = $main.find(".hq-loading").remove(),
+            $error = $main.find(".hq-loading-error").remove();
 
+        // Event to handle main page load, which includes Download tab
+        $('#multimedia-shower').on('show.bs.tab', function () {
+            load('main', $main);
+            loaded.download = true;
+        });
+
+        // Events for loading tabs
         _.each(_.keys(urls), function(tab) {
             $("#multimedia").on("show.bs.tab", "a[href='#multimedia-" + tab + "-tab']", function() {
-                if (!loaded[tab]) {
-                    loadTab(tab);
-                }
+                load(tab, $('#multimedia-' + tab + '-tab .container-fluid'));
             });
         });
 
+        // Error button
         $("#multimedia").on("click", "button.reload", function() {
-            loadTab($(this).closest(".container-fluid").data("tab"));
+            var $content = $(this).closest("[data-slug]");
+            load($content.data("slug"), $content.find(".container-fluid"));
         });
 
-        function loadTab(tab) {
-            var $content = $('#multimedia-' + tab + '-tab .container-fluid').data("tab", tab),
-                showSpinner = true;
+        /*
+         *  Load a given section, which could be the main multimedia page or a single tab.
+         *    slug: a key from the loaded / urls hashes
+         *    $content: container for fetched content
+         */
+        function load(slug, $content) {
+            if (loaded[slug]) {
+                return;
+            }
 
-            // If the tab takes a noticeable amount of time to load, show a spinner
+            // If the content takes a noticeable amount of time to load, show a spinner
+            var showSpinner = true;
             _.delay(function() {
                 if (showSpinner) {
-                    $content.html($("#hq-loading").html());
+                    $content.html($loading.html());
                 }
             }, 100);
 
-            // Load the tab
+            // Load the content
             $.ajax({
-                url: urls[tab],
+                url: urls[slug],
             }).success(function(content) {
                 showSpinner = false;
-                loaded[tab] = true;
+                loaded[slug] = true;
                 $content.html(content);
             }).error(function() {
                 showSpinner = false;
-                loaded[tab] = false;
-                $content.html($("#hq-loading-error").html());
+                loaded[slug] = false;
+                $content.html($error.html());
             });
         }
     });
