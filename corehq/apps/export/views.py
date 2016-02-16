@@ -1289,7 +1289,7 @@ class BaseModifyNewCustomView(BaseNewExportView):
 
     @method_decorator(require_can_edit_data)
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseEditNewCustomExportView, self).dispatch(request, *args, **kwargs)
+        return super(BaseModifyNewCustomView, self).dispatch(request, *args, **kwargs)
 
 
 class CreateNewCustomFormExportView(BaseModifyNewCustomView):
