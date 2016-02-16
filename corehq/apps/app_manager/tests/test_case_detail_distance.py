@@ -1,4 +1,6 @@
 from django.test import SimpleTestCase
+
+from corehq.apps.app_manager.models import SortElement
 from corehq.apps.app_manager.tests import AppFactory, TestXmlMixin
 
 
@@ -36,6 +38,56 @@ class CaseDetailDistance(SimpleTestCase, TestXmlMixin):
                     <sort direction="ascending" order="1" type="double">
                         <text>
                                 <xpath function="round(distance(case_name, here()))"/>
+                        </text>
+                    </sort>
+                </field>
+            </partial>
+            """,
+            suite,
+            template_xpath
+        )
+
+    def test_short_detail_xml_sort_only(self):
+        short = self.case_details.short
+        short.display = 'short'
+        short.sort_elements.append(
+            SortElement(
+                field='gps',
+                type='distance',
+                direction='descending',
+            )
+        )
+
+        suite = self.factory.app.create_suite()
+        template_xpath = './detail[@id="m0_case_short"]/field'
+        self.assertXmlHasXpath(suite, template_xpath)
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <field>
+                    <header>
+                        <text>
+                            <locale id="m0.case_short.case_name_1.header"/>
+                        </text>
+                    </header>
+                    <template>
+                        <text>
+                            <xpath function="case_name"/>
+                        </text>
+                    </template>
+                </field>
+                <field>
+                    <header width="0">
+                        <text/>
+                    </header>
+                    <template width="0">
+                        <text>
+                            <xpath function="gps"/>
+                        </text>
+                    </template>
+                    <sort direction="descending" order="1" type="double">
+                        <text>
+                            <xpath function="round(distance(case_name, here()))"/>
                         </text>
                     </sort>
                 </field>
