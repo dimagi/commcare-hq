@@ -111,6 +111,32 @@ class BucketResult(AggregationResult):
         return {b['key']: b['doc_count'] for b in self.normalized_buckets}
 
 
+class StatsResult(AggregationResult):
+
+    @property
+    def count(self):
+        return self.result['count']
+
+    @property
+    def max(self):
+        return self.result['max']
+
+    @property
+    def min(self):
+        return self.result['min']
+
+    @property
+    def avg(self):
+        return self.result['avg']
+
+
+class ExtendedStatsResult(StatsResult):
+
+    @property
+    def std_dev(self):
+        return self.result['std_deviation']
+
+
 class Bucket(object):
     def __init__(self, result, aggregations):
         self.result = result
@@ -152,6 +178,34 @@ class TermsAggregation(Aggregation):
             "field": field,
             "size": size if size is not None else SIZE_LIMIT,
         }
+
+
+class StatsAggregation(Aggregation):
+    """
+    Bucket aggregation that computes a stats aggregation by field
+
+    :param name: aggregation name
+    :param field: name of the field to collect stats on
+    :param script: an optional field to allow you to script the computed field
+    """
+    type = "stats"
+    result_class = StatsResult
+
+    def __init__(self, name, field, script=None):
+        assert re.match(r'\w+$', name), \
+            "Names must be valid python variable names, was {}".format(name)
+        self.name = name
+        self.body = {"field": field}
+        if script:
+            self.body.update({'script': script})
+
+
+class ExtendedStatsAggregation(StatsAggregation):
+    """
+    Bucket aggregation that computes an extended stats aggregation by field
+    """
+    type = "extended_stats"
+    result_class = ExtendedStatsResult
 
 
 class FilterResult(AggregationResult):
