@@ -1,3 +1,7 @@
+"""
+Some of these constants need correspond to constants set in corehq/apps/export/static/export/js/const.js
+so if changing a value, ensure that both places reflect the change
+"""
 from collections import namedtuple
 
 SystemProperty = namedtuple('SystemProperty', ['tag', 'name'])
@@ -27,7 +31,7 @@ CASE_HISTORY_PROPERTIES = [
 FORM_EXPORT = 'form'
 CASE_EXPORT = 'case'
 
-MAIN_TABLE = None
+MAIN_TABLE = []
 CASE_HISTORY_TABLE = ['case_history']
 
 DEID_TRANSFORM_FUNCTIONS = {
