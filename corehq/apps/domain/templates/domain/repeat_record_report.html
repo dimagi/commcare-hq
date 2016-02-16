@@ -25,8 +25,7 @@
                         mode = { name: 'javascript', json: true };
                     }
 
-                    codeMirror = CodeMirror($payload[0],
-                    {
+                    codeMirror = CodeMirror($payload[0], {
                         value: data.payload,
                         mode: mode,
                         readOnly: true,
@@ -37,8 +36,7 @@
 
                 })
                 .fail(function(data) {
-                    $modal.find('.modal-body').html(
-                        'fail')
+                    $modal.find('.modal-body').html('fail')
                 });
         })
 
@@ -50,13 +48,10 @@
               $.post("{% url 'repeat_record' domain %}", { record_id: recordId })
                   .success(function(data) {
                       $btn.removeSpinnerFromButton();
-                      if (data.success)
-                      {
+                      if (data.success) {
                           $btn.text(gettext('Success!'));
                           $btn.addClass('btn-success');
-                      }
-                      else
-                      {
+                      } else {
                           $btn.text(gettext('Failed'));
                           $btn.addClass('btn-danger');
                           $('#payload-error-modal').modal(
@@ -64,7 +59,6 @@
                           $(
                               '#payload-error-modal .error-message'
                           ).text(data.failure_reason);
-
                       }
 
                   })
