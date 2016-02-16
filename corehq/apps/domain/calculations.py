@@ -13,7 +13,6 @@ from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.forms import FormES
 from corehq.apps.hqadmin.reporting.reports import (
-    USER_COUNT_UPPER_BOUND,
     get_mobile_users,
 )
 from couchforms.analytics import get_number_of_forms_per_domain, \
@@ -49,28 +48,28 @@ def active_mobile_users(domain, *args):
 
     user_ids = get_mobile_users(domain)
 
-    form_users = {q['term'] for q in (
+    form_users = set(
         FormES()
         .domain(domain)
-        .user_facet(size=USER_COUNT_UPPER_BOUND)
+        .user_aggregation()
         .submitted(gte=then)
         .user_id(user_ids)
         .size(0)
         .run()
-        .facets.user.result
-    )}
+        .aggregations.user.keys
+    )
 
-    sms_users = {q['term'] for q in (
+    sms_users = set(
         SMSES()
         .incoming_messages()
-        .user_facet(size=USER_COUNT_UPPER_BOUND)
+        .user_aggregation()
         .to_commcare_user()
         .domain(domain)
         .received(gte=then)
         .size(0)
         .run()
-        .facets.user.result
-    )}
+        .aggregations.user.keys
+    )
 
     num_users = len(form_users | sms_users)
     return num_users if 'inactive' not in args else len(user_ids) - num_users
@@ -117,6 +116,14 @@ def inactive_cases_in_last(domain, days):
 
 def forms(domain, *args):
     return get_number_of_forms_in_domain(domain)
+
+
+def forms_in_last(domain, days):
+    """
+    Returns the number of forms submitted in the last given number of days
+    """
+    then = datetime.utcnow() - timedelta(days=int(days))
+    return FormES().domain(domain).submitted(gte=then).size(0).run().total
 
 
 def _sms_helper(domain, direction=None, days=None):
@@ -238,6 +245,7 @@ CALC_FNS = {
     'num_web_users': num_web_users,
     "num_mobile_users": num_mobile_users,
     "forms": forms,
+    "forms_in_last": forms_in_last,
     "sms": sms,
     "sms_in_last": sms_in_last,
     "sms_in_last_bool": sms_in_last_bool,
@@ -287,7 +295,6 @@ def _all_domain_stats():
             "commcare_users": commcare_counts,
             "forms": form_counts,
             "cases": case_counts}
-
 
 def total_distinct_users(domains=None):
     """

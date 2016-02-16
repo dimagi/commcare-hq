@@ -387,5 +387,11 @@ class BalanceMigrationView(BaseDomainView):
             'locations_count': SQLLocation.objects.filter(domain=self.domain).exclude(is_archived=True).count(),
             'web_users_count': WebUser.by_domain(self.domain, reduce=True)[0]['value'],
             'sms_users_count': CommCareUser.by_domain(self.domain, reduce=True)[0]['value'],
+            'supply_points_count': SQLLocation.active_objects.filter(
+                domain=self.domain, location_type__name='FACILITY'
+            ).exclude(supply_point_id__isnull=True).count(),
+            'facilites_count': SQLLocation.active_objects.filter(
+                domain=self.domain, location_type__name='FACILITY'
+            ).count(),
             'problems': ILSMigrationProblem.objects.filter(domain=self.domain)
         }

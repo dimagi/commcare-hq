@@ -91,11 +91,10 @@ class AddCaseToGroupForm(forms.Form):
         self.helper.form_show_labels = False
         self.helper.layout = Layout(
             InlineField(
-                'case_identifier',
-                css_class='input-xlarge'
+                'case_identifier'
             ),
             StrictButton(
-                mark_safe('<i class="icon-plus"></i> %s' % _("Add Case")),
+                mark_safe('<i class="fa fa-plus"></i> %s' % _("Add Case")),
                 css_class='btn-success',
                 type="submit"
             )

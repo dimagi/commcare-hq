@@ -110,10 +110,12 @@
 {% endblock %}
 
 {% block page_breadcrumbs %}
-    <ul class="breadcrumb breadcrumb-hq-section">
-        <li>{% trans 'Applications' %}</li>
-        {% block breadcrumbs %}{% endblock %}
-    </ul>
+    {% if not formdesigner %}
+        <ul class="breadcrumb breadcrumb-hq-section">
+            <li>{% trans 'Applications' %}</li>
+            {% block breadcrumbs %}{% endblock %}
+        </ul>
+    {% endif %}
 {% endblock %}
 
 {% block page_content %}

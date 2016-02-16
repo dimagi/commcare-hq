@@ -308,6 +308,13 @@ REPORT_BUILDER_BETA_GROUP = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+REPORT_BUILDER_MAP_REPORTS = StaticToggle(
+    'report_builder_map_reports',
+    'Report Builder map reports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
@@ -750,17 +757,26 @@ CUSTOM_APP_BASE_URL = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-TF_USES_SQLITE_BACKEND = StaticToggle(
-    'tf_sql_backend',
-    'Use a SQLite backend for Touchforms',
+
+CASE_LIST_DISTANCE_SORT = StaticToggle(
+    'case_list_distance_sort',
+    'Allow sorting by distance from current location in the case list',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
 
-CASE_LIST_DISTANCE_SORT = StaticToggle(
-    'case_list_distance_sort',
-    'Allow sorting by distance from current location in the case list',
+NOTIFICATIONS = StaticToggle(
+    'hq_notifications',
+    'Shows notification icon when announcements need to be made',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_USER]
+)
+
+
+PROJECT_HEALTH_DASHBOARD = StaticToggle(
+    'project_health_dashboard',
+    'Shows the project health dashboard in the reports navigation',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )

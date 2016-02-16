@@ -1,6 +1,6 @@
-from django.test import TestCase
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend
+from custom.ewsghana.tests.handlers.utils import EWSTestCase
 from custom.ewsghana.tests.test_reminders import create_stock_report
 from custom.ewsghana.utils import prepare_domain, make_loc, report_status, \
     assign_products_to_location
@@ -9,7 +9,7 @@ from custom.ewsghana.utils import prepare_domain, make_loc, report_status, \
 TEST_DOMAIN = 'ews-reminders-test'
 
 
-class EWSTestReminders(TestCase):
+class EWSTestReminders(EWSTestCase):
     """Moved from EWS"""
 
     @classmethod
@@ -58,8 +58,3 @@ class EWSTestReminders(TestCase):
         self.assertTrue(sql_commodity in products_reported)
         self.assertTrue(sql_commodity2 in products_reported)
         self.assertEqual(len(products_not_reported), 0)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.sms_backend_mapping.delete()
-        cls.backend.delete()

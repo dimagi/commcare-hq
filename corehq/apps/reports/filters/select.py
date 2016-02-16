@@ -9,7 +9,6 @@ from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 
 from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
 
-from corehq.apps.app_manager.models import Application
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseMultipleOptionFilter
 

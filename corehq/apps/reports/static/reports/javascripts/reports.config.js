@@ -6,7 +6,8 @@ var HQReport = function (options) {
     self.filterSet = options.filterSet || false;
     self.needsFilters = options.needsFilters || false;
     self.filterAccordion = options.filterAccordion || "#reportFilters";
-    self.filterSubmitButton = options.filterSubmitButton || $('#paramSelectorForm button[type="submit"]');
+    self.filterSubmitSelector = options.filterSubmitSelector || '#paramSelectorForm button[type="submit"]';
+    self.filterSubmitButton = $(self.filterSubmitSelector);
     self.toggleFiltersButton = options.toggleFiltersButton || "#toggle-report-filters";
     self.exportReportButton = options.exportReportButton || "#export-report-excel";
     self.emailReportButton = options.emailReportButton || "#email-report";
@@ -160,14 +161,14 @@ var HQReport = function (options) {
 
     self.resetFilterState = function () {
         $('#paramSelectorForm fieldset button, #paramSelectorForm fieldset span[data-dropdown="dropdown"]').click(function() {
-            $('#paramSelectorForm button[type="submit"]')
+            $(self.filterSubmitSelector)
                 .button('reset')
                 .addClass('btn-primary')
                 .removeClass('disabled')
                 .removeProp('disabled');
         });
         $('#paramSelectorForm fieldset').on('change apply', function () {
-            $('#paramSelectorForm button[type="submit"]')
+            $(self.filterSubmitSelector)
                 .button('reset')
                 .addClass('btn-primary')
                 .removeClass('disabled')

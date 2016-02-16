@@ -12,4 +12,10 @@ describe('Export Utility functions', function() {
         });
     });
 
+    describe('#removeDeidTransforms', function() {
+        it('Should remove all deid transforms', function() {
+            result = Exports.Utils.removeDeidTransforms(['deid_id', 'username_transform']);
+            assert.sameMembers(result, ['username_transform']);
+        });
+    });
 });

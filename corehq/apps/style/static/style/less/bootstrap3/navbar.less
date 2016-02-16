@@ -29,16 +29,14 @@
   }
 }
 
-.navbar-hq-footer {
+.navbar.navbar-hq-footer {
   margin-bottom: 0px;
   border-radius: 0px;
+  height: @navbar-footer-height;
   min-height: @navbar-footer-height;
   color: #ffffff;
-
-  .container-fluid > .navbar-header {
-    margin-top: 2px;
-    margin-right: 20px;
-  }
+  text-align: center;
+  line-height: @navbar-footer-height - 1px;
 
   a, a:link, a:visited {
     color: @navbar-footer-link-color;
@@ -49,8 +47,9 @@
     color: @navbar-footer-link-color-hover;
     &.btn { color: #ffffff; }
   }
-
-  .btn-toolbar {
-    margin-top: 6px;
+  a.footer-link-img {
+    &:hover {
+      text-decoration: none;
+    }
   }
 }

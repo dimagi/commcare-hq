@@ -1,5 +1,16 @@
 $(function () {
     'use strict';
+
+    var getLocalDate = function (date) {
+        /**
+         * This fixes an issue with daterangepicker where a date is passed in
+         * then converted to the browser's local timezone. So if you are in
+         * EST that means the date shows up as the day before.
+         */
+        var _date = new Date(date);
+        _date.setMinutes(_date.getMinutes() + _date.getTimezoneOffset());
+        return _date;
+    };
     $.fn.getDateRangeSeparator = function () {
         return ' to ';
     };
@@ -23,6 +34,7 @@ $(function () {
         var config = {
             showDropdowns: true,
             ranges: ranges,
+            timePicker: false,
             locale: {
                 format: 'YYYY-MM-DD',
                 separator: separator
@@ -30,8 +42,8 @@ $(function () {
         };
         var hasStartAndEndDate = !_.isEmpty(startdate) && !_.isEmpty(enddate);
         if (hasStartAndEndDate) {
-            config.startDate = new Date(startdate);
-            config.endDate = new Date(enddate);
+            config.startDate = getLocalDate(startdate);
+            config.endDate = getLocalDate(enddate);
         }
 
         $(this).daterangepicker(config);

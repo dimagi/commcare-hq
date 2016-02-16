@@ -1,6 +1,7 @@
 from django.test import TestCase
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.reminders.util import get_verified_number_for_recipient
+from corehq.apps.sms.tests.util import delete_domain_phone_numbers
 
 
 class ReminderUtilTest(TestCase):
@@ -27,4 +28,5 @@ class ReminderUtilTest(TestCase):
         self.assertEqual(get_verified_number_for_recipient(self.user).phone_number, '456')
 
     def tearDown(self):
+        delete_domain_phone_numbers('test')
         self.user.delete()

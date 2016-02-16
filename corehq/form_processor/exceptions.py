@@ -26,3 +26,7 @@ class CaseSaveError(Exception):
 
 class AccessRestricted(Exception):
     pass
+
+
+class InvalidAttachment(Exception):
+    pass

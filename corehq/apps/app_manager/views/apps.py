@@ -69,7 +69,7 @@ from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from django_prbac.utils import has_privilege
-from corehq.apps.analytics.tasks import track_app_from_template_on_hubspot
+from corehq.apps.analytics.tasks import track_app_from_template_on_hubspot, update_kissmetrics_properties
 from corehq.apps.analytics.utils import get_meta
 
 
@@ -114,6 +114,8 @@ def default_new_app(request, domain):
     """
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
+    if tours.NEW_APP.is_enabled(request.user):
+        update_kissmetrics_properties.delay(request.couch_user.username, {'First Template App Chosen': 'blank'})
     lang = 'en'
     app = Application.new_app(
         domain, _("Untitled Application"), lang=lang,
@@ -297,6 +299,8 @@ def copy_app(request, domain):
 def app_from_template(request, domain, slug):
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
+    if tours.NEW_APP.is_enabled(request.user):
+        update_kissmetrics_properties.delay(request.couch_user.username, {'First Template App Chosen': '%s' % slug})
     clear_app_cache(request, domain)
     template = load_app_template(slug)
     app = import_app_util(template, domain, {
@@ -544,7 +548,7 @@ def edit_app_attr(request, domain, app_id, attr):
     attributes = [
         'all',
         'recipients', 'name', 'use_commcare_sense',
-        'text_input', 'platform', 'build_spec', 'show_user_registration',
+        'text_input', 'platform', 'build_spec',
         'use_custom_suite', 'custom_suite',
         'admin_password',
         'comment',
@@ -616,13 +620,6 @@ def edit_app_attr(request, domain, app_id, attr):
             raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
         if not has_privilege(request, privileges.CLOUDCARE):
             app.cloudcare_enabled = False
-
-    if should_edit('show_user_registration'):
-        show_user_registration = hq_settings['show_user_registration']
-        app.show_user_registration = show_user_registration
-        if show_user_registration:
-            #  load the form source and also set its unique_id
-            app.get_user_registration()
 
     def require_remote_app():
         if app.get_doc_type() not in ("RemoteApp",):

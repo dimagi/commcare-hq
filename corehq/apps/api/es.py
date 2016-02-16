@@ -9,6 +9,7 @@ from django.utils.decorators import method_decorator, classonlymethod
 from django.views.generic import View
 from elasticsearch.exceptions import ElasticsearchException
 
+from corehq.apps.es.utils import flatten_field_dict
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
@@ -151,6 +152,7 @@ class ESView(View):
             if '_source' in res:
                 res_domain = res['_source'].get('domain', None)
             elif 'fields' in res:
+                res['fields'] = flatten_field_dict(res)
                 res_domain = res['fields'].get('domain', None)
 
             # security check
@@ -355,30 +357,6 @@ def report_term_filter(terms, mapping):
             if is_property and 'properties' in curr_mapping[sub_term]:
                 curr_mapping = curr_mapping[sub_term]['properties']
     return ret_terms
-
-
-
-def get_report_script_field(field_path, is_known=False):
-    """
-    Generate a script field string for easier querying.
-    field_path: is the path.to.property.name in the _source
-    is_known: if true, then query as is, if false, then it's a dynamically mapped item,
-    so put on the #value property at the end.
-    """
-    property_split = field_path.split('.')
-    property_path = '_source%s' % ''.join("['%s']" % x for x in property_split)
-    if is_known:
-        script_string = property_path
-    else:
-        full_script_path = "%s['#value']" % property_path
-        script_string = """if (%(prop_path)s != null) { %(value_path)s; }
-        else { null; }""" % {
-            'prop_path': property_path,
-            'value_path': full_script_path
-        }
-
-    ret = {"script": script_string}
-    return ret
 
 
 class ReportXFormES(XFormES):

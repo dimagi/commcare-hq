@@ -71,5 +71,20 @@ describe('Form Workflow', function() {
             FormWorkflow.prototype.onAddFormLink.call(workflow, workflow, {});
             assert.lengthOf(workflow.formLinks(), 1);
         });
+
+        it ('Should ignore links to non-existent forms', function() {
+            var realID = 'abc123',
+                fakeID = 'nope123';
+            options.forms = [
+                { name: 'My First Form', unique_id: realID, auto_link: true },
+            ];
+            options.formLinks = [
+                { xpath: "true()", doc_type: "FormLink", form_id: realID, datums: [] },
+                { xpath: "false()", doc_type: "FormLink", form_id: fakeID, datums: [] },
+            ];
+            workflow = new FormWorkflow(options);
+            assert.lengthOf(workflow.forms, 1);
+            assert.lengthOf(workflow.formLinks(), 1);
+        });
     });
 });

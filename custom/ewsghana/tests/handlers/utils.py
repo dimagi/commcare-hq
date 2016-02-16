@@ -1,27 +1,39 @@
 import datetime
+
+from django.test.testcases import TestCase
+
+from casexml.apps.stock.models import DocDomainMapping
+from casexml.apps.stock.models import StockReport, StockTransaction
 from couchdbkit.exceptions import ResourceNotFound
-from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
-from corehq.form_processor.interfaces.supply import SupplyInterface
 from couchforms.models import XFormInstance
-from corehq.apps.domain.models import Domain
+
 from corehq.apps.accounting import generator
 from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState, ConsumptionConfig
 from corehq.apps.commtrack.tests.util import make_loc
+from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
+from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.sms.tests.util import setup_default_sms_test_backend
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser
+
 from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge
 from custom.ewsghana.utils import prepare_domain, bootstrap_user
 from custom.logistics.tests.test_script import TestScript
-from casexml.apps.stock.models import StockReport, StockTransaction
-from casexml.apps.stock.models import DocDomainMapping
 
 TEST_DOMAIN = 'ewsghana-test'
 
 
-class EWSScriptTest(TestScript):
+class EWSTestCase(TestCase):
+    @classmethod
+    def tearDownClass(cls):
+        cls.sms_backend_mapping.delete()
+        cls.backend.delete()
+        generator.delete_all_subscriptions()
+
+
+class EWSScriptTest(EWSTestCase, TestScript):
 
     def _create_stock_state(self, product, consumption):
         xform = XFormInstance.get('test-xform')
@@ -169,6 +181,7 @@ class EWSScriptTest(TestScript):
 
     @classmethod
     def tearDownClass(cls):
+        delete_domain_phone_numbers(TEST_DOMAIN)
         CommCareUser.get_by_username('stella').delete()
         CommCareUser.get_by_username('super').delete()
         FacilityInCharge.objects.all().delete()

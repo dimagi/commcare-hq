@@ -180,7 +180,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     'corehq.util.context_processors.domain',
     # sticks the base template inside all responses
     "corehq.util.context_processors.base_template",
-    "corehq.util.context_processors.analytics_js",
+    "corehq.util.context_processors.js_api_keys",
     'corehq.util.context_processors.websockets_override',
     'django.core.context_processors.i18n',
 ]
@@ -303,6 +303,7 @@ HQ_APPS = (
     'corehq.apps.builds',
     'corehq.apps.api',
     'corehq.apps.indicators',
+    'corehq.apps.notifications',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
     'corehq.apps.sofabed',
@@ -391,7 +392,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'djtables',
     'gunicorn',
     'langcodes',
-    'luna',
     'custom.apps.crs_reports',
     'custom.m4change',
 
@@ -707,6 +707,8 @@ ANALYTICS_CONFIG = {
     "HQ_INSTANCE": '',  # e.g. "www" or "staging"
 }
 
+MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA'
+
 OPEN_EXCHANGE_RATES_API_ID = ''
 
 # for touchforms maps
@@ -1016,18 +1018,7 @@ fix_logger_obfuscation_ = globals().get("FIX_LOGGER_ERROR_OBFUSCATION")
 helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
 
 if DEBUG:
-    try:
-        import luna
-        del luna
-    except ImportError:
-        pass
-    else:
-        INSTALLED_APPS = INSTALLED_APPS + (
-            'luna',
-        )
-
     INSTALLED_APPS = INSTALLED_APPS + ('corehq.apps.mocha',)
-
     import warnings
     warnings.simplefilter('default')
     os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
@@ -1355,7 +1346,16 @@ PILLOWTOPS = {
         'corehq.apps.userreports.pillow.StaticDataSourcePillow',
     ],
     'cache': [
-        'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+        {
+            'name': 'CacheInvalidatePillow',
+            'class': 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+            'instance': 'corehq.pillows.cacheinvalidate.get_main_cache_invalidation_pillow',
+        },
+        {
+            'name': 'UserCacheInvalidatePillow',
+            'class': 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+            'instance': 'corehq.pillows.cacheinvalidate.get_user_groups_cache_invalidation_pillow',
+        },
     ],
     'fluff': [
         'custom.bihar.models.CareBiharFluffPillow',

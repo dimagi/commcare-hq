@@ -4,6 +4,7 @@ from corehq.apps.export.models import (
     ExportItem,
     ExportColumn,
 )
+from corehq.apps.export.const import MAIN_TABLE
 
 
 class TestExportItemGeneration(SimpleTestCase):
@@ -17,14 +18,14 @@ class TestExportItemGeneration(SimpleTestCase):
         )
 
     def test_create_default_from_export_item(self):
-        column = ExportColumn.create_default_from_export_item([None], self.item, {self.app_id: 3})
+        column = ExportColumn.create_default_from_export_item(MAIN_TABLE, self.item, {self.app_id: 3})
 
         self.assertEqual(column.is_advanced, False)
         self.assertEqual(column.label, 'Question One')
         self.assertEqual(column.selected, True)
 
     def test_create_default_from_export_item_deleted(self):
-        column = ExportColumn.create_default_from_export_item([None], self.item, {self.app_id: 4})
+        column = ExportColumn.create_default_from_export_item(MAIN_TABLE, self.item, {self.app_id: 4})
 
         self.assertEqual(column.is_advanced, True)
         self.assertEqual(column.label, 'Question One')

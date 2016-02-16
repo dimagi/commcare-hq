@@ -96,21 +96,21 @@ class TestS3BlobDB(TestCase):
     def test_put_and_get(self):
         name = "test.1"
         info = self.db.put(StringIO(b"content"), name)
-        with self.db.get(info.name) as fh:
+        with self.db.get(info.identifier) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_and_get_with_unicode_names(self):
         name = "test.\u4500"
         bucket = "doc.4500"
         info = self.db.put(StringIO(b"content"), name, bucket)
-        with self.db.get(info.name, bucket) as fh:
+        with self.db.get(info.identifier, bucket) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_and_get_with_bucket(self):
         name = "test.2"
         bucket = "doc.2"
         info = self.db.put(StringIO(b"content"), name, bucket)
-        with self.db.get(info.name, bucket) as fh:
+        with self.db.get(info.identifier, bucket) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_with_bucket_and_get_without_bucket(self):
@@ -118,30 +118,30 @@ class TestS3BlobDB(TestCase):
         bucket = "doc.3"
         info = self.db.put(StringIO(b"content"), name, bucket)
         with self.assertRaises(mod.NotFound):
-            self.db.get(info.name)
+            self.db.get(info.identifier)
 
     def test_delete(self):
         name = "test.4"
         bucket = "doc.4"
         info = self.db.put(StringIO(b"content"), name, bucket)
 
-        self.assertTrue(self.db.delete(info.name, bucket), 'delete failed')
+        self.assertTrue(self.db.delete(info.identifier, bucket), 'delete failed')
 
         with self.assertRaises(mod.NotFound):
-            self.db.get(info.name, bucket)
+            self.db.get(info.identifier, bucket)
 
         # boto3 client reports that the object was deleted even if there was
         # no object to delete
-        #self.assertFalse(self.db.delete(info.name, bucket), 'delete should fail')
+        #self.assertFalse(self.db.delete(info.identifier, bucket), 'delete should fail')
 
     def test_delete_bucket(self):
         bucket = join("doctype", "ys7v136b")
         info = self.db.put(StringIO(b"content"), bucket=bucket)
         self.assertTrue(self.db.delete(bucket=bucket))
 
-        self.assertTrue(info.name)
+        self.assertTrue(info.identifier)
         with self.assertRaises(mod.NotFound):
-            self.db.get(info.name, bucket=bucket)
+            self.db.get(info.identifier, bucket=bucket)
 
     def test_bucket_path(self):
         bucket = join("doctype", "8cd98f0")
@@ -152,23 +152,23 @@ class TestS3BlobDB(TestCase):
         name = "test.1"
         bucket = join("doctype", "8cd98f0")
         info = self.db.put(StringIO(b"content"), name, bucket)
-        self.assertTrue(info.name.startswith(name + "."), info.name)
+        self.assertTrue(info.identifier.startswith(name + "."), info.identifier)
 
     def test_unsafe_attachment_path(self):
         name = "\u4500.1"
         bucket = join("doctype", "8cd98f0")
         info = self.db.put(StringIO(b"content"), name, bucket)
-        self.assertTrue(info.name.startswith("unsafe."), info.name)
+        self.assertTrue(info.identifier.startswith("unsafe."), info.identifier)
 
     def test_unsafe_attachment_name(self):
         name = "test/1"  # name with directory separator
         bucket = join("doctype", "8cd98f0")
         info = self.db.put(StringIO(b"content"), name, bucket)
-        self.assertTrue(info.name.startswith("unsafe."), info.name)
+        self.assertTrue(info.identifier.startswith("unsafe."), info.identifier)
 
     def test_empty_attachment_name(self):
         info = self.db.put(StringIO(b"content"))
-        self.assertNotIn(".", info.name)
+        self.assertNotIn(".", info.identifier)
 
 
 @generate_cases([

@@ -2044,3 +2044,27 @@ class IncomingBackendView(View):
             return HttpResponse(status=401)
 
         return super(IncomingBackendView, self).dispatch(request, api_key, *args, **kwargs)
+
+
+class NewIncomingBackendView(View):
+    domain = None
+    backend_couch_id = None
+
+    @property
+    def backend_class(self):
+        """
+        Should return the model class of the backend (a subclass of SQLMobileBackend).
+        """
+        raise NotImplementedError("Please implement this method")
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, api_key, *args, **kwargs):
+        try:
+            self.domain, self.backend_couch_id = SQLMobileBackend.get_backend_info_by_api_key(
+                self.backend_class.get_api_id(),
+                api_key
+            )
+        except SQLMobileBackend.DoesNotExist:
+            return HttpResponse(status=401)
+
+        return super(NewIncomingBackendView, self).dispatch(request, api_key, *args, **kwargs)

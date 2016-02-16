@@ -1,7 +1,11 @@
 from datetime import datetime
-from django.test.testcases import TestCase
 import mock
+
+from django.test.testcases import TestCase
+
 from casexml.apps.stock.models import StockTransaction, StockReport
+
+from corehq.apps.accounting import generator
 from corehq.apps.locations.forms import LocationForm
 
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues,\
@@ -21,6 +25,7 @@ class TestReportRunner(TestCase):
         SupplyPointStatus.objects.all().delete()
         StockTransaction.objects.all().delete()
         StockReport.objects.all().delete()
+        generator.delete_all_subscriptions()
 
     @classmethod
     def setUpClass(cls):

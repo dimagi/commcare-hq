@@ -36,7 +36,7 @@ SUBSCRIBABLE_EDITIONS = [
 
 def instantiate_accounting_for_tests():
     call_command('cchq_prbac_bootstrap', testing=True)
-    call_command('cchq_software_plan_bootstrap', testing=True)
+    call_command('cchq_software_plan_bootstrap', testing=True, fresh_start=True)
 
 
 def init_default_currency():
@@ -110,7 +110,7 @@ def delete_all_accounts():
     Currency.objects.all().delete()
 
 
-def subscribable_plan(edition=SoftwarePlanEdition.ADVANCED):
+def subscribable_plan(edition=SoftwarePlanEdition.STANDARD):
     return DefaultProductPlan.objects.get(
         edition=edition,
         product_type=SoftwareProductType.COMMCARE,
