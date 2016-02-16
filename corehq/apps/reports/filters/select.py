@@ -127,7 +127,7 @@ class RepeaterFilter(BaseSingleOptionFilter):
     def options(self):
         repeaters = get_repeaters_by_domain(self.domain)
         return map(
-            lambda repeater: (repeater.get_id, '{}: {}'.format(
+            lambda repeater: (repeater.get_id, u'{}: {}'.format(
                 repeater.doc_type,
                 repeater.url,
             )),
