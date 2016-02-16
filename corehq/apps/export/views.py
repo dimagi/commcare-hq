@@ -1093,11 +1093,17 @@ class FormExportListView(BaseExportListView):
         return _("Select a Form to Export")
 
     def fmt_export_data(self, export):
-        emailed_exports = self.get_formatted_emailed_exports(export)
         if toggles.NEW_EXPORTS.enabled(self.domain):
             edit_view = EditNewCustomFormExportView
         else:
             edit_view = EditCustomFormExportView
+
+        if isinstance(export, FormExportSchema):
+            emailed_exports = self.get_formatted_emailed_exports(export)
+        else:
+            # New export
+            emailed_exports = [export.daily_saved_export_metadata()]  # Have to wrap as array for legacy reasons
+
         return {
             'id': export.get_id,
             'isDeid': export.is_safe,
@@ -1198,6 +1204,12 @@ class CaseExportListView(BaseExportListView):
             edit_view = EditNewCustomCaseExportView
         else:
             edit_view = EditCustomCaseExportView
+
+        if isinstance(export, CaseExportSchema):
+            emailed_exports = self.get_formatted_emailed_exports(export)
+        else:
+            # New export
+            emailed_exports = [export.daily_saved_export_metadata()]  # Have to wrap as array for legacy reasons
         return {
             'id': export.get_id,
             'isDeid': export.is_safe,
