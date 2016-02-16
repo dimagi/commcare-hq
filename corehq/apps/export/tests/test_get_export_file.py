@@ -3,9 +3,9 @@ import json
 from django.test import SimpleTestCase
 
 from corehq.apps.export.export import (
-    _write_export_file,
+    _write_export_instance,
     get_export_file,
-)
+    _get_writer, ExportFile)
 from corehq.apps.export.models import (
     TableConfiguration,
     ExportColumn,
@@ -77,7 +77,11 @@ class WriterTest(SimpleTestCase):
             ]
         )
 
-        with _write_export_file(export_instance, self.docs) as export:
+        writer = _get_writer([export_instance])
+        with writer.open(export_instance.tables):
+            _write_export_instance(writer, export_instance, self.docs)
+
+        with ExportFile(writer.path) as export:
             self.assertEqual(
                 json.loads(export),
                 {
@@ -121,8 +125,10 @@ class WriterTest(SimpleTestCase):
                 )
             ]
         )
-
-        with _write_export_file(export_instance, self.docs) as export:
+        writer = _get_writer([export_instance])
+        with writer.open(export_instance.tables):
+            _write_export_instance(writer, export_instance, self.docs)
+        with ExportFile(writer.path) as export:
             self.assertEqual(
                 json.loads(export),
                 {
@@ -166,31 +172,33 @@ class ExportTest(SimpleTestCase):
 
     def test_get_export_file(self):
         export_file = get_export_file(
-            CaseExportInstance(
-                export_format=Format.JSON,
-                domain=DOMAIN,
-                case_type=DEFAULT_CASE_TYPE,
-                tables=[TableConfiguration(
-                    name="My table",
-                    path=[],
-                    columns=[
-                        ExportColumn(
-                            label="Foo column",
-                            item=ExportItem(
-                                path=["foo"]
+            [
+                CaseExportInstance(
+                    export_format=Format.JSON,
+                    domain=DOMAIN,
+                    case_type=DEFAULT_CASE_TYPE,
+                    tables=[TableConfiguration(
+                        name="My table",
+                        path=[],
+                        columns=[
+                            ExportColumn(
+                                label="Foo column",
+                                item=ExportItem(
+                                    path=["foo"]
+                                ),
+                                selected=True,
                             ),
-                            selected=True,
-                        ),
-                        ExportColumn(
-                            label="Bar column",
-                            item=ExportItem(
-                                path=["bar"]
-                            ),
-                            selected=True,
-                        )
-                    ]
-                )]
-            ),
+                            ExportColumn(
+                                label="Bar column",
+                                item=ExportItem(
+                                    path=["bar"]
+                                ),
+                                selected=True,
+                            )
+                        ]
+                    )]
+                ),
+            ],
             []  # No filters
         )
         with export_file as export:
