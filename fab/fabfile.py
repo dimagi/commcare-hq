@@ -694,6 +694,16 @@ def copy_tf_localsettings():
         ))
 
 
+@parallel
+@roles(ROLES_TOUCHFORMS)
+def copy_formplayer_properties():
+    sudo(
+        'cp {}/submodules/formplayer/config/{}.properties '
+        '{}/submodules/formplayer/config'.format(
+            env.code_current, env.environment, env.code_root
+        ))
+
+
 @task
 @roles(ROLES_TOUCHFORMS)
 def build_formplayer():
@@ -714,6 +724,7 @@ def copy_components():
 def copy_release_files():
     execute(copy_localsettings)
     execute(copy_tf_localsettings)
+    execute(copy_formplayer_properties)
     execute(copy_components)
 
 
