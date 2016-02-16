@@ -1,5 +1,7 @@
 from datetime import datetime
 import json
+
+from django.conf import settings
 from celery.task import periodic_task
 from celery.utils.log import get_task_logger
 
@@ -9,7 +11,10 @@ from corehq.apps.repeaters.const import CHECK_REPEATERS_INTERVAL
 logging = get_task_logger(__name__)
 
 
-@periodic_task(run_every=CHECK_REPEATERS_INTERVAL, queue='background_queue')
+@periodic_task(
+    run_every=CHECK_REPEATERS_INTERVAL,
+    queue=settings.CELERY_PERIODIC_QUEUE,
+)
 def check_repeaters():
     start = datetime.utcnow()
     LIMIT = 100
