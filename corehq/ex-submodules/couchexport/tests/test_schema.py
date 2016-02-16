@@ -181,7 +181,7 @@ class GetFormattedRowsTests(SimpleTestCase):
             {
                 'id': '0',
                 'gender.gender': scalar_never_was,
-                'gender.': 'boy'
+                'gender': 'boy'
             }
         )
 
