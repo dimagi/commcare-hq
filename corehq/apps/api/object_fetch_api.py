@@ -40,7 +40,7 @@ class CaseAttachmentAPI(View):
                 r.write('<html><body>')
                 r.write('<ul>')
                 for fsize in IMAGE_SIZE_ORDERING:
-                    meta, stream = CommCareCase.fetch_case_image(case_id, attachment_id, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=fsize)
+                    meta, stream = fetch_case_image(case_id, attachment_id, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=fsize)
 
                     r.write('<li>')
                     r.write('Size: %s<br>' % fsize)
@@ -75,7 +75,7 @@ class CaseAttachmentAPI(View):
                 return r
             else:
                 # image workflow
-                attachment_meta, attachment_stream = CommCareCase.fetch_case_image(case_id, attachment_id, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=size)
+                attachment_meta, attachment_stream = fetch_case_image(case_id, attachment_id, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=size)
         else:
             # default stream
             attachment_meta, attachment_stream = CommCareCase.fetch_case_attachment(case_id, attachment_id)
