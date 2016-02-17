@@ -15,6 +15,10 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
     should be static or classmethods.
     """
     @abstractmethod
+    def form_exists(self, form_id, domain=None):
+        raise NotImplementedError
+
+    @abstractmethod
     def get_form(form_id):
         raise NotImplementedError
 
@@ -24,6 +28,14 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def get_with_attachments(form_id):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_attachment_content(form_id, attachment_name):
+        """
+        :param attachment_id:
+        :return: AttachmentContent object
+        """
         raise NotImplementedError
 
     @abstractmethod
@@ -55,6 +67,9 @@ class FormAccessors(object):
     def get_form(self, form_id):
         return self.db_accessor.get_form(form_id)
 
+    def form_exists(self, form_id):
+        return self.db_accessor.form_exists(form_id)
+
     def get_forms_by_type(self, type_, limit, recent_first=False):
         return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)
 
@@ -72,6 +87,9 @@ class FormAccessors(object):
 
     def get_forms_for_user(self, domain, user_id, ids_only=False):
         return self.db_accessor.get_forms_for_user(domain, user_id, ids_only)
+
+    def get_attachment_content(self, form_id, attachment_name):
+        return self.db_accessor.get_attachment_content(form_id, attachment_name)
 
 
 class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):

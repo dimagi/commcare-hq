@@ -6,8 +6,8 @@ from django.http import HttpResponse, Http404, StreamingHttpResponse, HttpRespon
 from django.utils.decorators import method_decorator
 from django.views.generic import View
 from corehq.apps.reports.views import can_view_attachments
-from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, get_cached_case_attachment
+from corehq.form_processor.exceptions import CaseNotFound, AttachmentNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, get_cached_case_attachment, FormAccessors
 from couchforms.models import XFormInstance
 from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
@@ -115,18 +115,16 @@ class CaseAttachmentAPI(View):
 class FormAttachmentAPI(View):
     @method_decorator(login_or_digest_or_basic_or_apikey())
     def get(self, request, domain, form_id=None, attachment_id=None):
-        if not form_id or not attachment_id or not XFormInstance.get_db().doc_exist(form_id):
+        if not form_id or not attachment_id or not FormAccessors(domain).form_exists(form_id):
             raise Http404
 
         try:
-            resp = XFormInstance.get_db().fetch_attachment(form_id, attachment_id, stream=True)
-        except ResourceNotFound:
+            content = FormAccessors(domain).get_attachment_content(form_id, attachment_id)
+        except AttachmentNotFound as e:
+            print e
             raise Http404
         
-        headers = resp.resp.headers
-        content_type = headers.get('Content-Type', None)
-
-        return StreamingHttpResponse(streaming_content=resp, content_type=content_type)
+        return StreamingHttpResponse(streaming_content=content.content_stream, content_type=content.content_type)
 
 
 def fetch_case_image(domain, case_id, attachment_id, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):
