@@ -12,7 +12,7 @@ from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 
 class CaseAttachmentAPI(View):
     @method_decorator(login_or_digest_or_basic_or_apikey())
-    def get(self, *args, **kwargs):
+    def get(self, request, domain, case_id=None, attachment_id=None):
         """
         https://github.com/dimagi/commcare/wiki/CaseAttachmentAPI
         max_size	The largest size (in bytes) for the attachment
@@ -29,11 +29,8 @@ class CaseAttachmentAPI(View):
         max_width = int(self.request.GET.get('max_image_width', 0))
         max_height = int(self.request.GET.get('max_image_height', 0))
 
-        case_id = kwargs.get('case_id', None)
         if not case_id or not CommCareCase.get_db().doc_exist(case_id):
             raise Http404
-
-        attachment_key = kwargs.get('attachment_id', None)
 
         if img is not None:
             if size == "debug_all":
@@ -42,7 +39,7 @@ class CaseAttachmentAPI(View):
                 r.write('<html><body>')
                 r.write('<ul>')
                 for fsize in IMAGE_SIZE_ORDERING:
-                    meta, stream = CommCareCase.fetch_case_image(case_id, attachment_key, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=fsize)
+                    meta, stream = CommCareCase.fetch_case_image(case_id, attachment_id, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=fsize)
 
                     r.write('<li>')
                     r.write('Size: %s<br>' % fsize)
@@ -60,10 +57,10 @@ class CaseAttachmentAPI(View):
                                     "attach_url": reverse("api_case_attachment", kwargs={
                                         "domain": self.request.domain,
                                         "case_id": case_id,
-                                        "attachment_id": attachment_key,
+                                        "attachment_id": attachment_id,
                                     }),
                                     "domain": case_doc.domain, "case_id": case_id,
-                                    "attachment_key": attachment_key,
+                                    "attachment_key": attachment_id,
                                     "size_key": fsize,
                                     "max_filesize": max_filesize,
                                     "max_width": max_width,
@@ -77,10 +74,10 @@ class CaseAttachmentAPI(View):
                 return r
             else:
                 # image workflow
-                attachment_meta, attachment_stream = CommCareCase.fetch_case_image(case_id, attachment_key, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=size)
+                attachment_meta, attachment_stream = CommCareCase.fetch_case_image(case_id, attachment_id, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=size)
         else:
             # default stream
-            attachment_meta, attachment_stream = CommCareCase.fetch_case_attachment(case_id, attachment_key)
+            attachment_meta, attachment_stream = CommCareCase.fetch_case_attachment(case_id, attachment_id)
 
         if attachment_meta is not None:
             mime_type = attachment_meta['content_type']
@@ -93,15 +90,12 @@ class CaseAttachmentAPI(View):
 
 class FormAttachmentAPI(View):
     @method_decorator(login_or_digest_or_basic_or_apikey())
-    def get(self, *args, **kwargs):
-        form_id = kwargs.get('form_id', None)
+    def get(self, request, domain, form_id=None, attachment_id=None):
         if not form_id or not XFormInstance.get_db().doc_exist(form_id):
             raise Http404
 
-        attachment_key = kwargs.get('attachment_id', None)
-
         try:
-            resp = XFormInstance.get_db().fetch_attachment(form_id, attachment_key, stream=True)
+            resp = XFormInstance.get_db().fetch_attachment(form_id, attachment_id, stream=True)
         except ResourceNotFound:
             raise Http404
         
