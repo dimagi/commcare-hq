@@ -29,7 +29,7 @@ class CaseAttachmentAPI(View):
         max_width = int(self.request.GET.get('max_image_width', 0))
         max_height = int(self.request.GET.get('max_image_height', 0))
 
-        if not case_id or not CommCareCase.get_db().doc_exist(case_id):
+        if not case_id or not attachment_id or CommCareCase.get_db().doc_exist(case_id):
             raise Http404
 
         if img is not None:
@@ -91,7 +91,7 @@ class CaseAttachmentAPI(View):
 class FormAttachmentAPI(View):
     @method_decorator(login_or_digest_or_basic_or_apikey())
     def get(self, request, domain, form_id=None, attachment_id=None):
-        if not form_id or not XFormInstance.get_db().doc_exist(form_id):
+        if not form_id or not attachment_id or not XFormInstance.get_db().doc_exist(form_id):
             raise Http404
 
         try:
