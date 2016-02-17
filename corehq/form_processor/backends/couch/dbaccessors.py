@@ -113,3 +113,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     @staticmethod
     def get_all_reverse_indices_info(domain, case_ids):
         return get_all_reverse_indices_info(domain, case_ids)
+
+    @staticmethod
+    def fetch_attachment(case_id, attachment_id):
+        return CommCareCase.get_db().fetch_attachment(case_id, attachment_id)

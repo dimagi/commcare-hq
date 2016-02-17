@@ -1,12 +1,12 @@
-from StringIO import StringIO
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, StreamingHttpResponse, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.views.generic import View
 from corehq.apps.reports.views import can_view_attachments
+from corehq.form_processor.interfaces.dbaccessors import get_cached_case_attachment
 from couchforms.models import XFormInstance
-from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL, CachedImage
+from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 
@@ -40,7 +40,7 @@ class CaseAttachmentAPI(View):
                 r.write('<html><body>')
                 r.write('<ul>')
                 for fsize in IMAGE_SIZE_ORDERING:
-                    meta, stream = fetch_case_image(case_id, attachment_id, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=fsize)
+                    meta, stream = fetch_case_image(domain, case_id, attachment_id, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=fsize)
 
                     r.write('<li>')
                     r.write('Size: %s<br>' % fsize)
@@ -75,10 +75,11 @@ class CaseAttachmentAPI(View):
                 return r
             else:
                 # image workflow
-                attachment_meta, attachment_stream = fetch_case_image(case_id, attachment_id, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=size)
+                attachment_meta, attachment_stream = fetch_case_image(domain, case_id, attachment_id, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=size)
         else:
             # default stream
-            attachment_meta, attachment_stream = CommCareCase.fetch_case_attachment(case_id, attachment_id)
+            cached_attachment = get_cached_case_attachment(domain, case_id, attachment_id)
+            attachment_meta, attachment_stream = cached_attachment.get()
 
         if attachment_meta is not None:
             mime_type = attachment_meta['content_type']
@@ -106,7 +107,7 @@ class FormAttachmentAPI(View):
         return StreamingHttpResponse(streaming_content=resp, content_type=content_type)
 
 
-def fetch_case_image(case_id, attachment_id, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):
+def fetch_case_image(domain, case_id, attachment_id, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):
     """
     Return (metadata, stream) information of best matching image attachment.
 
@@ -128,7 +129,7 @@ def fetch_case_image(case_id, attachment_id, filesize_limit=0, width_limit=0, he
         constraint_dict['width'] = width_limit
     do_constrain = bool(constraint_dict)
 
-    cached_image = cache_and_get_image(case_id, attachment_id)
+    cached_image = get_cached_case_attachment(domain, case_id, attachment_id, is_image=True)
     meta, stream = cached_image.get(size_key=size_key)
 
     if do_constrain:
@@ -157,19 +158,3 @@ def fetch_case_image(case_id, attachment_id, filesize_limit=0, width_limit=0, he
                 stream = None
 
     return meta, stream
-
-
-def cache_and_get_image(case_id, attachment_id):
-    attachment_cache_key = "%(case_id)s_%(attachment)s" % {
-        "case_id": case_id,
-        "attachment": attachment_id,
-    }
-
-    cached_image = CachedImage(attachment_cache_key)
-    if not cached_image.is_cached():
-        resp = CommCareCase.get_db().fetch_attachment(case_id, attachment_id, stream=True)
-        stream = StringIO(resp.read())
-        headers = resp.resp.headers
-        cached_image.cache_put(stream, headers)
-
-    return cached_image

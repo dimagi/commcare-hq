@@ -395,28 +395,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         else:
             return None
 
-    @classmethod
-    def fetch_case_attachment(cls, case_id, attachment_key, fixed_size=None, **kwargs):
-        """
-        Return (metadata, stream) information of best matching image attachment.
-        TODO: This should be the primary case_attachment retrieval method, the image one is a silly separation of similar functionality
-        Additional functionality to be abstracted by content_type of underlying attachment
-        """
-        size_key = OBJECT_ORIGINAL
-        if fixed_size is not None and fixed_size in OBJECT_SIZE_MAP:
-            size_key = fixed_size
-
-        # if size key is None, then one of the limit criteria are set
-        attachment_cache_key = "%(case_id)s_%(attachment)s" % {
-            "case_id": case_id,
-            "attachment": attachment_key
-        }
-
-        cobject = CachedObject(attachment_cache_key)
-        meta, stream = cls.cache_and_get_object(cobject, case_id, attachment_key, size_key=size_key)
-
-        return meta, stream
-
     def dynamic_case_properties(self):
         """(key, value) tuples sorted by key"""
         json = self.to_json()

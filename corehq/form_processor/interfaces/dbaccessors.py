@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 
 import six
+from StringIO import StringIO
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -126,6 +127,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
     def get_all_reverse_indices_info(domain, case_ids):
         raise NotImplementedError
 
+    @abstractmethod
+    def fetch_attachment(case_id, attachment_id):
+        raise NotImplementedError
+
 
 class CaseAccessors(object):
     """
@@ -180,6 +185,27 @@ class CaseAccessors(object):
     def get_all_reverse_indices_info(self, case_ids):
         return self.db_accessor.get_all_reverse_indices_info(self.domain, case_ids)
 
+    def fetch_attachment(self, case_id, attachment_id):
+        return self.db_accessor.fetch_attachment(case_id, attachment_id)
+
+
 CaseIndexInfo = namedtuple(
     'CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship']
 )
+
+
+def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
+    attachment_cache_key = "%(case_id)s_%(attachment)s" % {
+        "case_id": case_id,
+        "attachment": attachment_id
+    }
+
+    from dimagi.utils.django.cached_object import CachedObject, CachedImage
+    cobject = CachedImage(attachment_cache_key) if is_image else CachedObject(attachment_cache_key)
+    if not cobject.is_cached():
+        resp = CaseAccessors(domain).fetch_attachment(case_id, attachment_id)
+        stream = StringIO(resp)
+        headers = resp.resp.headers
+        cobject.cache_put(stream, headers)
+
+    return cobject
