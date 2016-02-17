@@ -80,7 +80,7 @@ case $key in
         web_runner run --rm web python manage.py migrate $@
         ;;
     runserver)
-        web_runner run --service-ports web $@
+	web_runner run --rm --service-ports web /mnt/docker/runserver.sh
         ;;
     shell)
         web_runner run --rm web python manage.py shell

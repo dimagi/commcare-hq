@@ -94,5 +94,3 @@ CACHES = {
 
 ELASTICSEARCH_HOST = 'elasticsearch'
 ELASTICSEARCH_PORT = 9200
-
-SHARED_DRIVE_ROOT = '/sharedfiles'
