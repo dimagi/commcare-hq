@@ -106,11 +106,11 @@ class FormAttachmentAPI(View):
         return StreamingHttpResponse(streaming_content=resp, content_type=content_type)
 
 
-def fetch_case_image(case_id, attachment_key, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):
+def fetch_case_image(case_id, attachment_id, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):
     """
     Return (metadata, stream) information of best matching image attachment.
-    attachment_key is the case property of the attachment
-    attachment filename is the filename of the original submission - full extension and all.
+
+    :param attachment_id: the identifier of the attachment to fetch
     """
     if fixed_size is not None:
         size_key = fixed_size
@@ -128,21 +128,10 @@ def fetch_case_image(case_id, attachment_key, filesize_limit=0, width_limit=0, h
         constraint_dict['width'] = width_limit
     do_constrain = bool(constraint_dict)
 
-    # if size key is None, then one of the limit criteria are set
-    attachment_cache_key = "%(case_id)s_%(attachment)s" % {
-        "case_id": case_id,
-        "attachment": attachment_key,
-    }
-
-    cached_image = CachedImage(attachment_cache_key)
-    meta, stream = cache_and_get_object(cached_image, case_id, attachment_key, size_key=size_key)
-
-    # now that we got it cached, let's check for size constraints
+    cached_image = cache_and_get_image(case_id, attachment_id)
+    meta, stream = cached_image.get(size_key=size_key)
 
     if do_constrain:
-        #check this size first
-        #see if the current size matches the criteria
-
         def meets_constraint(constraints, meta):
             for c, limit in constraints.items():
                 if meta[c] > limit:
@@ -150,10 +139,9 @@ def fetch_case_image(case_id, attachment_key, filesize_limit=0, width_limit=0, h
             return True
 
         if meets_constraint(constraint_dict, meta):
-            #yay, do nothing
             pass
         else:
-            #this meta is no good, find another one
+            # this meta is no good, find another one
             lesser_keys = IMAGE_SIZE_ORDERING[0:IMAGE_SIZE_ORDERING.index(size_key)]
             lesser_keys.reverse()
             is_met = False
@@ -171,16 +159,17 @@ def fetch_case_image(case_id, attachment_key, filesize_limit=0, width_limit=0, h
     return meta, stream
 
 
-def cache_and_get_object(cobject, case_id, attachment_key, size_key=OBJECT_ORIGINAL):
-    """
-    Retrieve cached_object or image and cache sizes if necessary
-    """
-    if not cobject.is_cached():
-        resp = CommCareCase.get_db().fetch_attachment(case_id, attachment_key, stream=True)
+def cache_and_get_image(case_id, attachment_id):
+    attachment_cache_key = "%(case_id)s_%(attachment)s" % {
+        "case_id": case_id,
+        "attachment": attachment_id,
+    }
+
+    cached_image = CachedImage(attachment_cache_key)
+    if not cached_image.is_cached():
+        resp = CommCareCase.get_db().fetch_attachment(case_id, attachment_id, stream=True)
         stream = StringIO(resp.read())
         headers = resp.resp.headers
-        cobject.cache_put(stream, headers)
+        cached_image.cache_put(stream, headers)
 
-    meta, stream = cobject.get(size_key=size_key)
-    return meta, stream
-
+    return cached_image
