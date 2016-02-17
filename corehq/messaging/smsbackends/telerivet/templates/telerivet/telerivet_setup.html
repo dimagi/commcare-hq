@@ -101,7 +101,7 @@
             })
             .success(function(data) {
                 $('#id_send_sms_button')
-                .text('{% trans "Send" %}');
+                .text(gettext("Send"));
                 $scope.apiKeyError = data.api_key_error;
                 $scope.projectIdError = data.project_id_error;
                 $scope.phoneIdError = data.phone_id_error;
@@ -110,7 +110,7 @@
             })
             .error(function() {
                 $('#id_send_sms_button')
-                .text('{% trans "Server error. Try again..." %}');
+                .text(gettext("Server error. Try again..."));
             });
         };
 
@@ -132,14 +132,14 @@
                     if(data.name_error) {
                         $('#id_create_backend')
                         .prop('disabled', false)
-                        .text('{% trans "Finish" %}');
+                        .text(gettext("Finish"));
                     }
                 }
             })
             .error(function() {
                 $('#id_create_backend')
                 .prop('disabled', false)
-                .text('{% trans "Server error. Try again..." %}');
+                .text(gettext("Server error. Try again..."));
             });
         };
 
