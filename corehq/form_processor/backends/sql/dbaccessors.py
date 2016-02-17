@@ -164,7 +164,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         if unsaved_attachments:
             del form.unsaved_attachments
             for unsaved_attachment in unsaved_attachments:
-                    unsaved_attachment.form = form
+                unsaved_attachment.form = form
 
         operations = form.get_tracked_models_to_create(XFormOperationSQL)
         for operation in operations:
