@@ -115,26 +115,22 @@ class BaseAdminSectionView(BaseB3SectionPageView):
         return reverse(self.urlname)
 
 
-class AuthenticateAs(BasePageView):
+class AuthenticateAs(BaseAdminSectionView):
     urlname = 'authenticate_as'
-    page_title = _("Login as other user")
+    page_title = _("Login as Other User")
     template_name = 'hqadmin/authenticate_as.html'
 
     @method_decorator(require_superuser)
+    @use_bootstrap3
     def dispatch(self, *args, **kwargs):
         return super(AuthenticateAs, self).dispatch(*args, **kwargs)
 
-    def page_url(self):
-        return reverse(self.urlname)
-
-    def get_context_data(self, **kwargs):
-        context = super(AuthenticateAs, self).get_context_data(**kwargs)
-        context.update({
+    @property
+    def page_context(self):
+        return {
             'hide_filters': True,
-            'page_url': self.page_url(),
-            'form': AuthenticateAsForm(initial=kwargs)
-        })
-        return context
+            'form': AuthenticateAsForm(initial=self.kwargs)
+        }
 
     def post(self, request, *args, **kwargs):
         form = AuthenticateAsForm(self.request.POST)
