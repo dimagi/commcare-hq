@@ -12,3 +12,4 @@ class ImportErrors:
     BlankExternalId = ugettext_noop('Blank External ID')
     CaseGeneration = ugettext_noop('Case Generation Error')
     DuplicateLocationName = ugettext_noop('Duplicated Location Name')
+    InvalidInteger = ugettext_noop('Invalid Integer')
