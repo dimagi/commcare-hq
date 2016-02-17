@@ -376,4 +376,4 @@ class TableHeaderTest(SimpleTestCase):
             label="my column",
             transforms=["deid_id"],
         )
-        self.assertEqual(col.get_headers(), ["my column[sensitive]"])
+        self.assertEqual(col.get_headers(), ["my column [sensitive]"])

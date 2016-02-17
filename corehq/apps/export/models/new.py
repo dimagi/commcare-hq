@@ -166,7 +166,7 @@ class ExportColumn(DocumentSchema):
         # TODO: id columns need special treatment
         # see couchexport.models.ExportTable#get_headers_row
         if self.is_deidentifed:
-            return [u"{}{}".format(self.label, "[sensitive]")]
+            return [u"{} {}".format(self.label, "[sensitive]")]
         else:
             return [self.label]
 
