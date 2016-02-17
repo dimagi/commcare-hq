@@ -470,6 +470,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         attachments_to_save = case.get_tracked_models_to_create(CaseAttachmentSQL)
         attachment_ids_to_delete = [att.id for att in case.get_tracked_models_to_delete(CaseAttachmentSQL)]
 
+        for index in indices_to_save_or_update:
+            index.domain = case.domain  # ensure domain is set on indices
+
         # cast arrays that can be empty to appropriate type
         query = """SELECT case_pk FROM save_case_and_related_models(
             %s, %s, %s, %s::{}[], %s::{}[], %s::INTEGER[], %s::INTEGER[]
