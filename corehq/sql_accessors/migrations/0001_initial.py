@@ -70,7 +70,6 @@ class Migration(migrations.Migration):
         migrator.get_migration('archive_unarchive_form.sql'),
         migrator.get_migration('case_modified_since.sql'),
         migrator.get_migration('check_form_exists.sql'),
-        noop_migration(),
         migrator.get_migration('get_case_attachments.sql'),
         migrator.get_migration('get_case_by_id.sql'),
         migrator.get_migration('get_case_by_location_id.sql'),

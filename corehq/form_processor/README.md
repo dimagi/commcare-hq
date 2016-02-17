@@ -22,6 +22,6 @@ Renaming a SQL function
 2. Rename the function references
 3. Rename the function template file to match the function name
 4. Create a new migration to delete the old function and add the new one
-5. Replace any references to the old SQL template file in old migrations
-with `noop_migration()`
+5. Delete any references to the old SQL template file in old migrations (or
+replace them with a `noop_migration` operation if it is the only operation in the migration)
 6. Do steps 3-5 for the plproxy function as well
