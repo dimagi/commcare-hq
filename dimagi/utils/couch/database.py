@@ -4,6 +4,8 @@ from dimagi.ext.couchdbkit import Document
 from django.conf import settings
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs
+from time import sleep
+
 
 class DesignDoc(object):
     """Data structure representing a design doc"""
@@ -73,6 +75,7 @@ def iter_docs_with_retry(database, ids, chunksize=100, max_attempts=5, **query_p
             except Exception:
                 if i == (max_attempts - 1):
                     raise
+                sleep(30)
 
         for doc in result:
             yield doc
