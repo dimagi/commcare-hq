@@ -687,6 +687,13 @@ MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+TELERIVET_SETUP_WALKTHROUGH = StaticToggle(
+    'telerivet_setup_walkthrough',
+    'Use the new Telerivet setup walkthrough for creating Telerivet backends.',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
 EWS_BROADCAST_BY_ROLE = StaticToggle(
     'ews_broadcast_by_role',
     'EWS: Filter broadcast recipients by role',
