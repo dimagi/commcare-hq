@@ -61,6 +61,7 @@ branches:
   - legacy-be-gone # Noah 2/12
   - revamp-multimedia # Jenny 2/16
   - remove-link-disabled # Nick P 2/17
+  - find-offending-code # Nick P 2/17
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
