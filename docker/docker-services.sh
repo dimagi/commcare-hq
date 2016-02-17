@@ -16,9 +16,14 @@ function usage() {
 }
 
 function runner() {
-    sudo \
+    if [ `uname` == 'Linux' ]; then
+        sudo \
+            env ES_CLUSTER_NAME=$ES_CLUSTER_NAME DOCKER_DATA_HOME=$DOCKER_DATA_HOME \
+            docker-compose -f $DOCKER_DIR/compose/docker-compose-services.yml -p $PROJECT_NAME $@
+    else
         env ES_CLUSTER_NAME=$ES_CLUSTER_NAME DOCKER_DATA_HOME=$DOCKER_DATA_HOME \
-        docker-compose -f $DOCKER_DIR/compose/docker-compose-services.yml -p $PROJECT_NAME $@
+            docker-compose -f $DOCKER_DIR/compose/docker-compose-services.yml -p $PROJECT_NAME $@
+    fi
 }
 
 while [[ $# > 0 ]]; do
