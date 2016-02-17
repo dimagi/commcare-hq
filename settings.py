@@ -186,9 +186,9 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     'django.core.context_processors.i18n',
 ]
 
-location = lambda x: os.path.join(os.path.dirname(os.path.realpath(__file__)), x)
+_location = lambda x: os.path.join(FILEPATH, x)
 TEMPLATE_DIRS = (
-    location('corehq/apps/domain/templates/login_and_password'),
+    _location('corehq/apps/domain/templates/login_and_password'),
 )
 
 DEFAULT_APPS = (
