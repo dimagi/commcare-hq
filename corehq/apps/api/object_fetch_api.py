@@ -10,7 +10,6 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, get_cached_case_attachment
 from couchforms.models import XFormInstance
 from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 
 
@@ -26,15 +25,15 @@ class CaseAttachmentAPI(View):
 
         if self.request.couch_user.is_web_user() and not can_view_attachments(self.request):
             return HttpResponseForbidden()
-        max_filesize = int(self.request.GET.get('max_size', 0)) #todo
-
-        img = self.request.GET.get('img', None)
-        size = self.request.GET.get('size', OBJECT_ORIGINAL) #alternative to abs size
-        max_width = int(self.request.GET.get('max_image_width', 0))
-        max_height = int(self.request.GET.get('max_image_height', 0))
 
         if not case_id or not attachment_id:
             raise Http404
+
+        img = self.request.GET.get('img', None)
+        size = self.request.GET.get('size', OBJECT_ORIGINAL)
+        max_width = int(self.request.GET.get('max_image_width', 0))
+        max_height = int(self.request.GET.get('max_image_height', 0))
+        max_filesize = int(self.request.GET.get('max_size', 0))
 
         try:
             CaseAccessors(domain).get_case(case_id)
@@ -92,10 +91,16 @@ class CaseAttachmentAPI(View):
                 r.write('</ul></body></html>')
                 return r
             else:
-                # image workflow
-                attachment_meta, attachment_stream = fetch_case_image(domain, case_id, attachment_id, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=size)
+                attachment_meta, attachment_stream = fetch_case_image(
+                    domain,
+                    case_id,
+                    attachment_id,
+                    filesize_limit=max_filesize,
+                    width_limit=max_width,
+                    height_limit=max_height,
+                    fixed_size=size
+                )
         else:
-            # default stream
             cached_attachment = get_cached_case_attachment(domain, case_id, attachment_id)
             attachment_meta, attachment_stream = cached_attachment.get()
 
@@ -103,9 +108,8 @@ class CaseAttachmentAPI(View):
             mime_type = attachment_meta['content_type']
         else:
             mime_type = "plain/text"
-        response = StreamingHttpResponse(streaming_content=attachment_stream,
-                content_type=mime_type)
-        return response
+
+        return StreamingHttpResponse(streaming_content=attachment_stream, content_type=mime_type)
 
 
 class FormAttachmentAPI(View):
