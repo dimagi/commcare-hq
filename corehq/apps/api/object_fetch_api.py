@@ -1,10 +1,13 @@
+import urllib
+
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, StreamingHttpResponse, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.views.generic import View
 from corehq.apps.reports.views import can_view_attachments
-from corehq.form_processor.interfaces.dbaccessors import get_cached_case_attachment
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, get_cached_case_attachment
 from couchforms.models import XFormInstance
 from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL
 from casexml.apps.case.models import CommCareCase
@@ -30,7 +33,12 @@ class CaseAttachmentAPI(View):
         max_width = int(self.request.GET.get('max_image_width', 0))
         max_height = int(self.request.GET.get('max_image_height', 0))
 
-        if not case_id or not attachment_id or CommCareCase.get_db().doc_exist(case_id):
+        if not case_id or not attachment_id:
+            raise Http404
+
+        try:
+            CaseAccessors(domain).get_case(case_id)
+        except CaseNotFound:
             raise Http404
 
         if img is not None:
