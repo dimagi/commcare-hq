@@ -5,7 +5,7 @@ postgres:
   ports:
     - "5432:5432"
   volumes:
-    - ${DOCKER_DATA_HOME}/postgresql:/var/lib/postgresql/data
+    - /data/postgresql:/var/lib/postgresql/data
 
 couch:
   extends:
@@ -33,7 +33,7 @@ elasticsearch:
   ports:
     - "9200:9200"
   volumes:
-    - ${DOCKER_DATA_HOME}/elasticsearch:/usr/share/elasticsearch/data
+    - /data/elasticsearch:/usr/share/elasticsearch/data
 
 kafka:
   extends:
