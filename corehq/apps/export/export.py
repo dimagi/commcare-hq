@@ -2,7 +2,11 @@ import contextlib
 import os
 import tempfile
 
+from soil import DownloadBase
+
 from couchexport.export import FormattedRow, get_writer
+from couchexport.files import Temp
+from couchexport.models import Format
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
@@ -11,8 +15,6 @@ from corehq.apps.export.models.new import (
     CaseExportInstance,
     FormExportInstance,
 )
-from couchexport.files import Temp
-from couchexport.models import Format
 
 
 class ExportFile(object):
@@ -102,6 +104,19 @@ def _get_tables(export_instances):
     for export_instance in export_instances:
         tables.extend(export_instance.tables)
     return tables
+
+
+def get_download_task(export_instances, filters, filename=None):
+    from corehq.apps.export.tasks import get_export_download
+
+    download = DownloadBase()
+    download.set_task(get_export_download.delay(
+        export_instances,
+        filters,
+        download.download_id,
+        filename=filename
+    ))
+    return download
 
 
 def get_export_file(export_instances, filters):
