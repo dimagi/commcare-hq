@@ -707,7 +707,7 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
         return ret
 
     def __unicode__(self):
-        return (
+        return unicode(
             "CaseAttachmentSQL("
             "attachment_id='{a.attachment_id}', "
             "case_id='{a.case_id}', "
