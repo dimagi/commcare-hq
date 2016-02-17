@@ -119,15 +119,24 @@ def _hubspot_post(url, data):
 def _get_user_hubspot_id(webuser):
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key:
-        req = requests.get(
-            u"https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
-                urllib.quote(webuser.username)
-            ),
-            params={'hapikey': api_key},
-        )
-        if req.status_code == 404:
-            return None
-        req.raise_for_status()
+        for i in range(ANALYTICS_RETRIES):
+            try:
+                req = requests.get(
+                    u"https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
+                        urllib.quote(webuser.username)
+                    ),
+                    params={'hapikey': api_key},
+                )
+                if req.status_code == 404:
+                    return None
+                req.raise_for_status()
+            except requests.exceptions.HTTPError:
+                if i < ANALYTICS_RETRIES - 1:
+                    time.sleep(ANALYTICS_SLEEP)
+                else:
+                    raise
+            else:
+                break
         return req.json().get("vid", None)
     return None
 
