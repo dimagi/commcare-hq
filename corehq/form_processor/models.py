@@ -665,6 +665,11 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
     attachment_from = models.TextField(null=True)
 
     def update_from_attachment(self, attachment):
+        """
+        Update fields in this attachment with fields from anaother attachment
+
+        :param attachment: XFormAttachmentSQL or CaseAttachmentSQL object
+        """
         self.content_length = attachment.content_length
         self.blob_id = attachment.blob_id
         self.md5 = attachment.md5
