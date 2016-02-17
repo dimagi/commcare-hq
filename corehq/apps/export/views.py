@@ -7,6 +7,8 @@ from django.core.exceptions import SuspiciousOperation
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.template.defaultfilters import filesizeformat
+
+from corehq.apps.export.export import get_download_task
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
 import json
@@ -39,7 +41,7 @@ from corehq.apps.export.models import (
     CaseExportDataSchema,
     FormExportInstance,
     CaseExportInstance,
-)
+    ExportInstance)
 from corehq.apps.export.const import (
     FORM_EXPORT,
     CASE_EXPORT,
@@ -533,7 +535,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
             exports = map(lambda e: self.get_export_schema(self.domain, e['id']),
                           raw_export_list)
         elif self.export_id:
-            exports = [self.get_export_schema(self.domain, self.export_id)]
+            exports = [self._get_export(self.domain, self.export_id)]
 
         if not self.has_view_permissions:
             if self.has_deid_view_permissions:
@@ -550,6 +552,9 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
             exports
         )
         return exports
+
+    def _get_export(self, domain, export_id):
+        return self.get_export_schema(self.domain, self.export_id)
 
     @property
     def max_column_size(self):
@@ -1108,9 +1113,16 @@ class FormExportListView(BaseExportListView):
             'emailedExports': emailed_exports,
             'editUrl': reverse(edit_view.urlname,
                                args=(self.domain, export.get_id)),
-            'downloadUrl': reverse(DownloadFormExportView.urlname,
-                                   args=(self.domain, export.get_id)),
+            'downloadUrl': self._get_download_url(export.get_id),
         }
+
+    def _get_download_url(self, export_id):
+        # TODO: Assumes all exports have been converted to the new type. Don't make that assumption.
+        view_cls = DownloadFormExportView
+        if toggles.NEW_EXPORTS.enabled(self.domain):
+            view_cls = DownloadNewFormExportView
+        return reverse(view_cls.urlname, args=(self.domain, export_id))
+
 
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):
@@ -1405,3 +1417,34 @@ class DeleteNewCustomExportView(BaseModifyNewCustomView):
             )
         )
         return export._id
+
+
+class DownloadNewFormExportView(DownloadFormExportView):
+    urlname = 'new_export_download_forms'
+
+    def _get_export(self, domain, export_id):
+        return FormExportInstance.get(self.export_id)
+
+    def _get_download_task(self, export_specs, export_filter, max_column_size):
+        # TODO: Actually do something with the arguments...
+        # TODO: Don't assume form!
+        export_instance = FormExportInstance.get(self.export_id)
+        self._check_deid_permissions(export_instance)
+
+        return get_download_task(
+            export_instances=[export_instance],
+            filters=[], # TODO: Do something with export_filters
+            filename=u"{}{}".format(
+                export_instance.name,
+                date.today().isoformat()
+            ),
+        )
+
+    def _check_deid_permissions(self, export_instance):
+        # if the export is de-identified, check that
+        # the requesting domain has access to the deid feature.
+        if export_instance.is_deidentified and not self.has_deid_view_permissions:
+            raise ExportAsyncException(
+                _("You do not have permission to export this "
+                  "De-Identified export.")
+            )
