@@ -35,15 +35,50 @@ elasticsearch:
   volumes:
     - ${DOCKER_DATA_HOME}/elasticsearch:/usr/share/elasticsearch/data
 
-kafka:
+#zookeeper:
+#  extends:
+#    file: docker-compose-base.yml
+#    service: zookeeper
+#  ports:
+#    - "2181:2181"
+
+#kafka:
+#  extends:
+#    file: docker-compose-base.yml
+#    service: kafka
+#  environment:
+#    KAFKA_ADVERTISED_HOST_NAME: 'localhost' # docker machine ip. i.e. export DOCKER_HOST_IP=`docker-machine ip $(docker-machine active)`
+#    KAFKA_CREATE_TOPICS: "case:1:1,form:1:1,case-sql:1:1,form-sql:1:1,meta:1:1"
+#  links: 
+#    - zookeeper:zk
+#  ports:
+#    - "9092:9092"
+#  volumes:
+#    - /var/run/docker.sock:/var/run/docker.sock
+
+rabbit:
   extends:
     file: docker-compose-base.yml
-    service: kafka
+    service: rabbit
   ports:
-    - "2181:2181"
-    - "9092:9092"
-  environment:
-    ADVERTISED_HOST: localhost
+    - "5671:5672"
+    - "15672:15672"  
   volumes:
-    - ${DOCKER_DATA_HOME}/kafka:/tmp/kafka-logs
-    - ${DOCKER_DATA_HOME}/zookeeper:/var/lib/zookeeper
+    - ${DOCKER_DATA_HOME}/rabbitmq:/var/lib/rabbitmq/mnesia
+    - ${DOCKER_DATA_HOME}/rabbitmq-logs:/var/log/rabbitmq
+  hostname: "rabbit"
+
+celery:
+  extends: 
+    file: docker-compose-base.yml
+    service: celery
+  ports: 
+    - "5555:5555"
+  volumes:
+    - ${DOCKER_DATA_HOME}/sharedfiles:/sharedfiles
+  links:
+    - rabbit
+    - postgres
+    - couch
+    - redis
+    - elasticsearch

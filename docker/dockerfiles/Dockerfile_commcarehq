@@ -18,7 +18,19 @@ RUN pip install \
 
 WORKDIR /mnt
 
+RUN wget -O jython_installer-2.5.3.jar http://search.maven.org/remotecontent?filepath=org/python/jython-installer/2.5.3/jython-installer-2.5.3.jar 
+RUN ls
+RUN mkdir /usr/local/lib/jython
+RUN java -jar jython_installer-2.5.3.jar -s -d /usr/local/lib/jython
+RUN ln -s /usr/local/lib/jython/bin/jython /usr/local/bin/
+RUN wget http://peak.telecommunity.com/dist/ez_setup.py
+RUN jython ez_setup.py
+
+RUN mkdir /mnt/shared
+
+
 ADD docker/entrypoint.sh /mnt/docker/entrypoint.sh
 
 ENTRYPOINT ["/mnt/docker/entrypoint.sh"]
 CMD ["help"]
+

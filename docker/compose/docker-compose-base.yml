@@ -31,6 +31,18 @@ elasticsearch:
   expose:
     - "9200"
 
+#zookeeper:
+#  image: wurstmeister/zookeeper
+#  labels: 
+#    commcare.name: "zookeeper"
+#  expose: 
+#    - "2181"
+
+#kafka:
+#  build: ../dockerfiles/kafka-docker-master
+#  expose:
+#    - "9092"
+
 web:
   build: ../../
   dockerfile: ./docker/dockerfiles/Dockerfile_commcarehq
@@ -45,12 +57,31 @@ web:
   labels:
     commcare.name: "web"
 
-kafka:
-  image: spotify/kafka
+rabbit:
+# build: ../../
+# dockerfile: ./docker/dockerfiles/Dockerfile_rabbit
+  image: rabbitmq:3-management
   environment:
-    ADVERTISED_PORT: 9092
-  expose:
-    - "2181"
-    - "9092"
+    RABBITMQ_DEFAULT_VHOST: "commcarehq"  
+
+  expose: 
+    - "15672"
+    - "5672"
   labels:
-    commcare.name: "kafka"
+    commcare.name: "rabbit"
+
+celery:
+  build: ../../
+  dockerfile: ./docker/dockerfiles/Dockerfile_celery
+  working_dir: /mnt
+  command: ./docker/run_celery.sh
+  expose: 
+    - "5555"
+  volumes:
+    - ../../:/mnt
+  environment:
+    PYTHONUSERBASE: /vendor
+    C_FORCE_ROOT: true
+  labels:
+    commcare.name: "celery"
+

@@ -47,3 +47,4 @@ RUN pip install \
     && rm -rf /root/.cache/pip
 
 ENV PATH=/vendor/bin:$PATH
+
