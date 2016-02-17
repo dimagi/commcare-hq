@@ -5,7 +5,7 @@ from datetime import datetime
 from django.db import connections, InternalError, transaction
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor, \
-    CaseIndexInfo
+    CaseIndexInfo, AttachmentContent
 from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL,
@@ -75,6 +75,11 @@ class FormAccessorSQL(AbstractFormAccessor):
             raise AttachmentNotFound(attachment_name)
 
     @staticmethod
+    def get_attachment_content(form_id, attachment_name, stream=False):
+        meta = FormAccessorSQL.get_attachment_by_name(form_id, attachment_name)
+        return AttachmentContent(meta.content_type, meta.read_content(stream=True))
+
+    @staticmethod
     def get_form_operations(form_id):
         return list(XFormOperationSQL.objects.raw('SELECT * from get_form_operations(%s)', [form_id]))
 
@@ -111,7 +116,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         return forms[:limit]
 
     @staticmethod
-    def form_with_id_exists(form_id, domain=None):
+    def form_exists(form_id, domain=None):
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT * FROM check_form_exists(%s, %s)', [form_id, domain])
             result = fetchone_as_namedtuple(cursor)
@@ -164,7 +169,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         if unsaved_attachments:
             del form.unsaved_attachments
             for unsaved_attachment in unsaved_attachments:
-                    unsaved_attachment.form = form
+                unsaved_attachment.form = form
 
         operations = form.get_tracked_models_to_create(XFormOperationSQL)
         for operation in operations:
@@ -370,6 +375,11 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             )[0]
         except IndexError:
             raise AttachmentNotFound(attachment_name)
+
+    @staticmethod
+    def get_attachment_content(case_id, attachment_id):
+        meta = CaseAccessorSQL.get_attachment_by_name(case_id, attachment_id)
+        return AttachmentContent(meta.content_type, meta.read_content(steam=True))
 
     @staticmethod
     def get_attachments(case_id):

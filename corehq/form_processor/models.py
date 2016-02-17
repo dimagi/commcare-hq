@@ -339,15 +339,18 @@ class AbstractAttachment(DisabledDbMixin, models.Model):
         self.content_length = info.length
         self.blob_id = info.identifier
 
-    def read_content(self):
+    def read_content(self, stream=False):
         db = get_blob_db()
         try:
             blob = db.get(self.blob_id, self._blobdb_bucket())
         except (KeyError, NotFound):
             raise AttachmentNotFound(self.name)
+
+        if stream:
+            return blob
+
         with blob:
-            body = blob.read()
-        return body
+            return blob.read()
 
     def delete_content(self):
         db = get_blob_db()
