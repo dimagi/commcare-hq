@@ -473,6 +473,13 @@ VELLUM_RICH_TEXT = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+VELLUM_DATA_IN_SETVALUE = StaticToggle(
+    'allow_data_reference_in_setvalue',
+    "Allow data references in a setvalue",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 CACHE_AND_INDEX = StaticToggle(
     'cache_and_index',
     'Enable the "Cache and Index" format option when choosing sort properties '
@@ -640,6 +647,13 @@ BASIC_CHILD_MODULE = StaticToggle(
 HSPH_HACK = StaticToggle(
     'hsph_hack',
     'Optmization hack for HSPH',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
+USE_FORMPLAYER = StaticToggle(
+    'use_formplayer',
+    'Use the new formplayer server',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
 )

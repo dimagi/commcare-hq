@@ -264,6 +264,12 @@ class TestCreditTransfers(BaseAccountingTest):
             self.domain, created_by="biyeun@dimagi.com",
         )[0]
 
+    def tearDown(self):
+        CreditAdjustment.objects.all().delete()
+        CreditLine.objects.all().delete()
+        generator.delete_all_subscriptions()
+        super(TestCreditTransfers, self).tearDown()
+
     def _ensure_transfer(self, original_credits):
         transferred_credits = []
         for credit_line in original_credits:
