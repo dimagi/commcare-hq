@@ -38,6 +38,9 @@ HUBSPOT_NEW_USER_INVITE_FORM = "3e275361-72be-4e1d-9c68-893c259ed8ff"
 HUBSPOT_EXISTING_USER_INVITE_FORM = "7533717e-3095-4072-85ff-96b139bcb147"
 HUBSPOT_COOKIE = 'hubspotutk'
 
+ANALYTICS_RETRIES = 3
+ANALYTICS_SLEEP = 5
+
 
 def _track_on_hubspot(webuser, properties):
     """
@@ -94,14 +97,23 @@ def _hubspot_post(url, data):
         headers = {
             'content-type': 'application/json'
         }
-        response = requests.post(
-            url,
-            params={'hapikey': api_key},
-            data=data,
-            headers=headers
-        )
-        _log_response(data, response)
-        response.raise_for_status()
+        for i in range(ANALYTICS_RETRIES):
+            try:
+                response = requests.post(
+                    url,
+                    params={'hapikey': api_key},
+                    data=data,
+                    headers=headers
+                )
+                _log_response(data, response)
+                response.raise_for_status()
+            except requests.exceptions.HTTPError:
+                if i < ANALYTICS_RETRIES - 1:
+                    time.sleep(ANALYTICS_SLEEP)
+                else:
+                    raise
+            else:
+                break
 
 
 def _get_user_hubspot_id(webuser):
@@ -148,12 +160,21 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta):
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
         }
 
-        response = requests.post(
-            url,
-            data=data
-        )
-        _log_response(data, response)
-        response.raise_for_status()
+        for i in range(ANALYTICS_RETRIES):
+            try:
+                response = requests.post(
+                    url,
+                    data=data
+                )
+                _log_response(data, response)
+                response.raise_for_status()
+            except requests.exceptions.HTTPError:
+                if i < ANALYTICS_RETRIES - 1:
+                    time.sleep(ANALYTICS_SLEEP)
+                else:
+                    raise
+            else:
+                break
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
@@ -253,7 +274,7 @@ def _track_workflow_task(email, event, properties=None, timestamp=0):
     if api_key:
         km = KISSmetrics.Client(key=api_key)
         km.record(email, event, properties if properties else {}, timestamp)
-        # TODO: Consider adding some error handling for bad/failed requests.
+        # TODO: Consider adding some better error handling for bad/failed requests.
 
 
 @task(queue='background_queue', ignore_result=True)
@@ -267,8 +288,17 @@ def identify(email, properties):
     api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
         km = KISSmetrics.Client(key=api_key)
-        km.set(email, properties)
-        # TODO: Consider adding some error handling for bad/failed requests.
+        for i in range(ANALYTICS_RETRIES):
+            try:
+                km.set(email, properties)
+                # TODO: Consider adding some better error handling for bad/failed requests.
+            except:
+                if i < ANALYTICS_RETRIES - 1:
+                    time.sleep(ANALYTICS_SLEEP)
+                else:
+                    raise
+            else:
+                break
 
 
 @periodic_task(run_every=crontab(minute="0", hour="0"), queue='background_queue')
