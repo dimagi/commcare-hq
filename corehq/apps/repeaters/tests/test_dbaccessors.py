@@ -99,7 +99,7 @@ class TestRepeatersDBAccessors(TestCase):
     @classmethod
     def tearDownClass(cls):
         for repeater in cls.repeaters:
-            repeater.save()
+            repeater.delete()
 
     def test_get_repeaters_by_domain(self):
         repeaters = get_repeaters_by_domain(self.domain)
