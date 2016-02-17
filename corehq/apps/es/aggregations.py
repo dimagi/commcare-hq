@@ -156,7 +156,7 @@ class Bucket(object):
             return sub_aggregation.parse_result(self.result)
 
     def __repr__(self):
-        return "Bucket(key='{}', doc_count='{})".format(self.key, self.doc_count)
+        return "Bucket(key='{}', doc_count='{}')".format(self.key, self.doc_count)
 
 
 class TermsAggregation(Aggregation):

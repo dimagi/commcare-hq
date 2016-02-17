@@ -226,8 +226,8 @@ def get_form_duration_stats_by_user(
     )
     result = {}
     buckets_dict = query.run().aggregations.user_id.buckets_dict
-    for user_id, bucket_dict in buckets_dict.iteritems():
-        result[user_id] = bucket_dict.result['duration_stats']
+    for user_id, bucket in buckets_dict.iteritems():
+        result[user_id] = bucket.duration_stats.result
     return result
 
 
