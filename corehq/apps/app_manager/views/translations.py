@@ -37,12 +37,12 @@ def get_index_for_defaults(langs):
 def upload_bulk_ui_translations(request, domain, app_id):
 
     def _html_message(header_text, messages):
-        message = _(header_text or "Upload failed. We found problem with following translations:")
-        message += "<br>"
+        message = header_text + "<br>"
         for prop in messages:
             message += "<li>%s</li>" % prop
         return message
 
+    messages.error(request, _(None or "Welcome to CommCare."))
     success = False
     try:
         app = get_app(domain, app_id)
@@ -50,7 +50,8 @@ def upload_bulk_ui_translations(request, domain, app_id):
             app, request.file
         )
         if error_properties:
-            message = _html_message(error_properties)
+            message = _html_message(_("Upload failed. We found problem with following translations:"),
+                                    error_properties)
             messages.error(request, message, extra_tags='html')
         else:
             # update translations only if there were no errors
@@ -59,7 +60,7 @@ def upload_bulk_ui_translations(request, domain, app_id):
             success = True
 
         if warnings:
-            message = _html_message("Upload succeeded, but we found following issues for some properties",
+            message = _html_message(_("Upload succeeded, but we found following issues for some properties"),
                                     warnings)
             messages.warning(request, message)
 
