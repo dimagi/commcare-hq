@@ -31,7 +31,8 @@ from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-from corehq.apps.style.decorators import use_datatables, use_jquery_ui
+from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
+    use_bootstrap3
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.couchdb_management import couch_config
@@ -682,20 +683,29 @@ def callcenter_test(request):
     return render(request, "hqadmin/callcenter_test.html", context)
 
 
-@require_superuser
-def malt_as_csv(request):
-    from django.core.exceptions import ValidationError
+class DownloadMALTView(BaseAdminSectionView):
+    urlname = 'download_malt'
+    page_title = ugettext_lazy("Download MALT")
+    template_name = "hqadmin/malt_downloader.html"
 
-    if 'year_month' in request.GET:
-        try:
-            year, month = request.GET['year_month'].split('-')
-            year, month = int(year), int(month)
-            return _malt_csv_response(month, year)
-        except (ValueError, ValidationError):
-            messages.error(request, "Enter a valid year-month. e.g. 2015-09 (for December 2015)")
-            return render(request, "hqadmin/malt_downloader.html")
-    else:
-        return render(request, "hqadmin/malt_downloader.html")
+    @method_decorator(require_superuser)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(DownloadMALTView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        from django.core.exceptions import ValidationError
+        if 'year_month' in request.GET:
+            try:
+                year, month = request.GET['year_month'].split('-')
+                year, month = int(year), int(month)
+                return _malt_csv_response(month, year)
+            except (ValueError, ValidationError):
+                messages.error(
+                    request,
+                    _("Enter a valid year-month. e.g. 2015-09 (for December 2015)")
+                )
+        return super(DownloadMALTView, self).get(request, *args, **kwargs)
 
 
 def _malt_csv_response(month, year):
