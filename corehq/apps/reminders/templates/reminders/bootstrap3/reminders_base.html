@@ -1,8 +1,6 @@
-{% extends 'style/bootstrap2/two_column.html' %}
+{% extends 'style/bootstrap3/base_section.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
-
-{% block title %}{% trans "Reminders" %}{% endblock %}
 
 {% block js-inline %}
     <script>
@@ -24,9 +22,7 @@
     </script>
 {% endblock%}
 
-{% block head %}
-    
-    {{ block.super }}
+{% block stylesheets %}{{ block.super }}
     <style>
         #scheduled-reminders-container {
             margin: 10px;
@@ -95,17 +91,4 @@
             list-style-type: none;
         }
     </style>
-{% endblock %}
-
-{% block page-title %}
-    <ul class="breadcrumb">
-        <li>
-            <a href="{% url "sms_default" domain %}"><strong>{% trans 'Reminders' %}</strong></a> <span class="divider">&gt;</span>
-        </li>
-        {% block subsection-title %}
-        {% endblock %}
-    </ul>
-    {% endblock %}
-
-{% block main_column %}
 {% endblock %}

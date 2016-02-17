@@ -14,7 +14,9 @@ from corehq.apps.reminders.views import (
     CreateBroadcastView,
     EditBroadcastView,
     CopyBroadcastView,
-    ScheduledRemindersCalendarView)
+    ScheduledRemindersCalendarView,
+    RemindersInErrorView,
+)
 
 urlpatterns = patterns('corehq.apps.reminders.views',
     url(r'^list/$', RemindersListView.as_view(), name=RemindersListView.urlname),
@@ -42,7 +44,8 @@ urlpatterns = patterns('corehq.apps.reminders.views',
         name=EditStructuredKeywordView.urlname),
     url(r'^keywords/normal/edit/(?P<keyword_id>[\w-]+)/$',
         EditNormalKeywordView.as_view(), name=EditNormalKeywordView.urlname),
-    url(r'^reminders_in_error/$', 'reminders_in_error', name='reminders_in_error'),
+    url(r'^reminders_in_error/$',
+        RemindersInErrorView.as_view(), name=RemindersInErrorView.urlname),
     url(r'^one_time_reminders/$', 'list_reminders', name='one_time_reminders', kwargs={"reminder_type" : REMINDER_TYPE_ONE_TIME}),
     url(r'^one_time_reminders/add/$', 'add_one_time_reminder', name='add_one_time_reminder'),
     url(r'^one_time_reminders/edit/(?P<handler_id>[\w-]+)/$', 'add_one_time_reminder', name='edit_one_time_reminder'),

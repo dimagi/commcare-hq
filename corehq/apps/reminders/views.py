@@ -1079,59 +1079,86 @@ class CopyBroadcastView(EditBroadcastView):
     force_create_new_broadcast = True
 
 
-@reminders_framework_permission
-def reminders_in_error(request, domain):
-    handler_map = {}
-    if request.method == "POST":
-        form = RemindersInErrorForm(request.POST)
-        if form.is_valid():
+class RemindersInErrorView(BaseMessagingSectionView):
+    page_title = ugettext_noop("Reminders in Error")
+    template_name = 'reminders/reminders_in_error.html'
+    urlname = 'reminders_in_error'
+
+    def __init__(self, **kwargs):
+        self.handler_map = {}
+        self.reminders = []
+        super(RemindersInErrorView, self).__init__(**kwargs)
+
+    @method_decorator(reminders_framework_permission)
+    @use_bootstrap3
+    @use_datatables
+    def dispatch(self, *args, **kwargs):
+        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+
+    @property
+    @memoized
+    def reminder_form(self):
+        if self.request.method == 'POST':
+            return RemindersInErrorForm(self.request.POST)
+        return RemindersInErrorForm()
+
+    @property
+    def page_context(self):
+        timezone = get_timezone_for_user(self.request.couch_user, self.domain)
+        reminders = []
+        for reminder in CaseReminder.view(
+                "reminders/reminders_in_error",
+                startkey=[self.domain],
+                endkey=[self.domain, {}],
+                include_docs=True
+        ).all():
+            if reminder.handler_id in self.handler_map:
+                handler = self.handler_map[reminder.handler_id]
+            else:
+                handler = reminder.handler
+                self.handler_map[reminder.handler_id] = handler
+            recipient = reminder.recipient
+            case = reminder.case
+            reminders.append({
+                "reminder_id": reminder._id,
+                "handler_type": handler.reminder_type,
+                "handler_id": reminder.handler_id,
+                "handler_name": handler.nickname,
+                "case_id": case.get_id if case is not None else None,
+                "case_name": case.name if case is not None else None,
+                "next_fire": ServerTime(
+                    reminder.next_fire).user_time(timezone).ui_string(
+                        SERVER_DATETIME_FORMAT),
+                "error_msg": reminder.error_msg or "-",
+                "recipient_name": get_recipient_name(recipient),
+            })
+        return {
+            "reminders": reminders,
+            "timezone": timezone,
+            "timezone_now": datetime.now(tz=timezone),
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.reminder_form.is_valid():
             kwargs = {}
             if is_bigcouch():
                 # Force a write to all nodes before returning
                 kwargs["w"] = bigcouch_quorum_count()
             current_timestamp = datetime.utcnow()
-            for reminder_id in form.cleaned_data.get("selected_reminders"):
+            for reminder_id in self.reminder_form.cleaned_data.get("selected_reminders"):
                 reminder = CaseReminder.get(reminder_id)
-                if reminder.domain != domain:
+                if reminder.domain != self.domain:
                     continue
-                if reminder.handler_id in handler_map:
-                    handler = handler_map[reminder.handler_id]
+                if reminder.handler_id in self.handler_map:
+                    handler = self.handler_map[reminder.handler_id]
                 else:
                     handler = reminder.handler
-                    handler_map[reminder.handler_id] = handler
+                    self.handler_map[reminder.handler_id] = handler
                 reminder.error = False
                 reminder.error_msg = None
                 handler.set_next_fire(reminder, current_timestamp)
                 reminder.save(**kwargs)
-    
-    timezone = get_timezone_for_user(request.couch_user, domain)
-    reminders = []
-    for reminder in CaseReminder.view("reminders/reminders_in_error", startkey=[domain], endkey=[domain, {}], include_docs=True).all():
-        if reminder.handler_id in handler_map:
-            handler = handler_map[reminder.handler_id]
-        else:
-            handler = reminder.handler
-            handler_map[reminder.handler_id] = handler
-        recipient = reminder.recipient
-        case = reminder.case
-        reminders.append({
-            "reminder_id" : reminder._id,
-            "handler_type" : handler.reminder_type,
-            "handler_id" : reminder.handler_id,
-            "handler_name" : handler.nickname,
-            "case_id" : case.get_id if case is not None else None,
-            "case_name" : case.name if case is not None else None,
-            "next_fire" : ServerTime(reminder.next_fire).user_time(timezone).ui_string(SERVER_DATETIME_FORMAT),
-            "error_msg" : reminder.error_msg or "-",
-            "recipient_name" : get_recipient_name(recipient),
-        })
-    context = {
-        "domain" : domain,
-        "reminders" : reminders,
-        "timezone" : timezone,
-        "timezone_now" : datetime.now(tz=timezone),
-    }
-    return render(request, "reminders/partial/reminders_in_error.html", context)
+        return self.get(request, *args, **kwargs)
 
 
 class RemindersListView(BaseMessagingSectionView):
