@@ -63,11 +63,8 @@
                       } else {
                           $btn.text(gettext('Failed'));
                           $btn.addClass('btn-danger');
-                          $('#payload-error-modal').modal(
-                              'show')
-                          $(
-                              '#payload-error-modal .error-message'
-                          ).text(data.failure_reason);
+                          $('#payload-error-modal').modal('show');
+                          $('#payload-error-modal .error-message').text(data.failure_reason);
                       }
 
                   })
