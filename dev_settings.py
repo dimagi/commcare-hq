@@ -74,8 +74,7 @@ CACHE_REPORTS = False
 CSRF_SOFT_MODE = False
 
 # Make a dir to use for storing attachments as blobs on the filesystem
-shared_dirname = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                              'sharedfiles')
+shared_dirname = '/mnt/sharedfiles'
 if not os.path.exists(shared_dirname):
     os.mkdir(shared_dirname)
 SHARED_DRIVE_ROOT = shared_dirname
