@@ -1,5 +1,12 @@
 from django.conf.urls import *
 from corehq.apps.domain.views import PublicSMSRatesView
+from corehq.apps.settings.views import (
+    TwoFactorProfileView, TwoFactorSetupView, TwoFactorSetupCompleteView,
+    TwoFactorBackupTokensView, TwoFactorDisableView, TwoFactorPhoneSetupView,
+    NewPhoneView
+)
+from two_factor.urls import urlpatterns as tf_urls
+from two_factor.gateways.twilio.urls import urlpatterns as tf_twilio_urls
 
 urlpatterns = patterns(
     'corehq.apps.hqwebapp.views',
@@ -27,6 +34,14 @@ urlpatterns = patterns(
     url(r'^jserror/$', 'jserror', name='jserror'),
     url(r'^dropbox_upload/(?P<download_id>[0-9a-fA-Z]{25,32})/$', 'dropbox_upload',
         name='dropbox_upload'),
+    url(r'^account/two_factor/$', TwoFactorProfileView.as_view(), name=TwoFactorProfileView.urlname),
+    url(r'^account/two_factor/setup/$', TwoFactorSetupView.as_view(), name=TwoFactorSetupView.urlname),
+    url(r'^account/two_factor/setup/complete/$', TwoFactorSetupCompleteView.as_view(), name=TwoFactorSetupCompleteView.urlname),
+    url(r'^account/two_factor/backup/tokens/$', TwoFactorBackupTokensView.as_view(), name=TwoFactorBackupTokensView.urlname),
+    url(r'^account/two_factor/disable/$', TwoFactorDisableView.as_view(), name=TwoFactorDisableView.urlname),
+    url(r'^account/two_factor/backup/phone/register/$', TwoFactorPhoneSetupView.as_view(), name=TwoFactorPhoneSetupView.urlname),
+    url(r'', include(tf_urls + tf_twilio_urls, 'two_factor')),
+    url(r'^account/two_factor/new_phone/$', NewPhoneView.as_view(), name=NewPhoneView.urlname)
 )
 
 domain_specific = patterns('corehq.apps.hqwebapp.views',
