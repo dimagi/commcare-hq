@@ -128,7 +128,11 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def fetch_attachment(case_id, attachment_id):
+    def get_attachment_content(case_id, attachment_id):
+        """
+        :param attachment_id:
+        :return: AttachmentContent object
+        """
         raise NotImplementedError
 
 
@@ -185,13 +189,20 @@ class CaseAccessors(object):
     def get_all_reverse_indices_info(self, case_ids):
         return self.db_accessor.get_all_reverse_indices_info(self.domain, case_ids)
 
-    def fetch_attachment(self, case_id, attachment_id):
-        return self.db_accessor.fetch_attachment(case_id, attachment_id)
+    def get_attachment_content(self, case_id, attachment_id):
+        return self.db_accessor.get_attachment_content(case_id, attachment_id)
 
 
 CaseIndexInfo = namedtuple(
     'CaseIndexInfo', ['case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship']
 )
+
+
+class AttachmentContent(namedtuple('AttachmentContent', ['content_type', 'content_stream'])):
+    @property
+    def content_body(self):
+        with self.content_stream as stream:
+            return stream.read()
 
 
 def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
@@ -203,9 +214,9 @@ def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
     from dimagi.utils.django.cached_object import CachedObject, CachedImage
     cobject = CachedImage(attachment_cache_key) if is_image else CachedObject(attachment_cache_key)
     if not cobject.is_cached():
-        resp = CaseAccessors(domain).fetch_attachment(case_id, attachment_id)
-        stream = StringIO(resp)
-        headers = resp.resp.headers
-        cobject.cache_put(stream, headers)
+        content = CaseAccessors(domain).get_attachment_content(case_id, attachment_id)
+        stream = StringIO(content.content_body)
+        metadata = {'content_type': content.content_type}
+        cobject.cache_put(stream, metadata)
 
     return cobject

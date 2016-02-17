@@ -5,7 +5,7 @@ from datetime import datetime
 from django.db import connections, InternalError, transaction
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound, CaseSaveError
 from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor, \
-    CaseIndexInfo
+    CaseIndexInfo, AttachmentContent
 from corehq.form_processor.models import (
     XFormInstanceSQL, CommCareCaseIndexSQL, CaseAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, XFormAttachmentSQL, XFormOperationSQL,
@@ -372,9 +372,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             raise AttachmentNotFound(attachment_name)
 
     @staticmethod
-    def fetch_attachment(case_id, attachment_id):
+    def get_attachment_content(case_id, attachment_id):
         meta = CaseAccessorSQL.get_attachment_by_name(case_id, attachment_id)
-        return meta.read_content()
+        return AttachmentContent(meta.content_type, meta.read_content(steam=True))
 
     @staticmethod
     def get_attachments(case_id):

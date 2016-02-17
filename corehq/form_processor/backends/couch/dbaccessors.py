@@ -12,7 +12,7 @@ from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_
     get_case_ids_modified_with_owner_since
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
     get_last_modified_dates
-from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor
+from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor, AttachmentContent
 from couchforms.dbaccessors import (
     get_forms_by_type,
     get_deleted_form_ids_for_user,
@@ -115,5 +115,8 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return get_all_reverse_indices_info(domain, case_ids)
 
     @staticmethod
-    def fetch_attachment(case_id, attachment_id):
-        return CommCareCase.get_db().fetch_attachment(case_id, attachment_id)
+    def get_attachment_content(case_id, attachment_id):
+        resp = CommCareCase.get_db().fetch_attachment(case_id, attachment_id, stream=True)
+        headers = resp.resp.headers
+        content_type = headers.get('Content-Type', None)
+        return AttachmentContent(content_type, resp)
