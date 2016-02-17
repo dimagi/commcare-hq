@@ -4,6 +4,8 @@ from dimagi.ext.couchdbkit import Document
 from django.conf import settings
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs
+from time import sleep
+
 
 class DesignDoc(object):
     """Data structure representing a design doc"""
@@ -64,19 +66,19 @@ def iter_docs_with_retry(database, ids, chunksize=100, max_attempts=5, **query_p
 
     This is useful for long-running migrations where you don't want a single
     failed request to make the process fail.
-
-    Note: You may end up processing the same documents more than once if the
-    connection to couch drops out in the middle of processing a chunk of docs.
     """
     for doc_ids in chunked(ids, chunksize):
         for i in range(max_attempts):
             try:
-                for doc in get_docs(database, keys=doc_ids, **query_params):
-                    yield doc
+                result = get_docs(database, keys=doc_ids, **query_params)
                 break
-            except:
+            except Exception:
                 if i == (max_attempts - 1):
                     raise
+                sleep(30)
+
+        for doc in result:
+            yield doc
 
 
 def iter_bulk_delete(database, ids, chunksize=100):
