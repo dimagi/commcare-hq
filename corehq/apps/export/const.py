@@ -1,5 +1,5 @@
 """
-Some of these constants need correspond to constants set in corehq/apps/export/static/export/js/const.js
+Some of these constants correspond to constants set in corehq/apps/export/static/export/js/const.js
 so if changing a value, ensure that both places reflect the change
 """
 from collections import namedtuple
