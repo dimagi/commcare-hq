@@ -197,8 +197,8 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
             DataTablesColumn(
                 mark_safe(
                     """
-                    Select  <a class="select-visible btn btn-xs btn-inverse">all</a>
-                    <a class="select-none btn btn-mini btn-warning">none</a>
+                    Select  <a class="select-visible btn btn-xs btn-info">all</a>
+                    <a class="select-none btn btn-xs btn-default">none</a>
                     """
                 ),
                 sortable=False, span=3
