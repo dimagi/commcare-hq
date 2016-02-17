@@ -969,8 +969,22 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
     @property
     def container_fieldset(self):
+        source_name = ''
+        if self.source_type == 'case':
+            source_name = self.report_source_id
+        if self.source_type == 'form':
+            source_name = Form.get_form(self.report_source_id).default_name()
         return crispy.Fieldset(
-            "",
+            '',
+            crispy.Fieldset(
+                _legend(
+                    _("Rows"),
+                    _('This report will show one row for each {name} {source}'.format(
+                            name=source_name, source=self.source_type
+                        )
+                    ),
+                )
+            ),
             self.column_fieldset,
             self.filter_fieldset
         )
@@ -1001,7 +1015,12 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                     )
                 )
             return cols
-        return []
+        return [ColumnViewModel(
+                        display_text='',
+                        exists_in_current_version=True,
+                        property=None,
+                        data_source_field=None,
+                    )]
 
     @property
     def _report_columns(self):
@@ -1024,6 +1043,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
     report_type = 'table'
     column_legend_fine_print = ugettext_noop('Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no."')
+    group_by = forms.ChoiceField(label="Show one row for each")
 
     @property
     def container_fieldset(self):
@@ -1132,8 +1152,15 @@ class ConfigureWorkerReportForm(ConfigureTableReportForm):
 
     @property
     def container_fieldset(self):
+        import ipdb; ipdb.set_trace()
         return crispy.Fieldset(
-            "",
+            '',
+            crispy.Fieldset(
+                _legend(
+                    _("Rows"),
+                    _('This report will show one row for *each mobile worker*'),
+                )
+            ),
             self.column_fieldset,
             self.filter_fieldset
         )
