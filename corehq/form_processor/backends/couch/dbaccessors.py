@@ -12,7 +12,9 @@ from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_
     get_case_ids_modified_with_owner_since
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
     get_last_modified_dates
-from corehq.form_processor.interfaces.dbaccessors import AbstractCaseAccessor, AbstractFormAccessor, AttachmentContent
+from corehq.form_processor.interfaces.dbaccessors import (
+    AbstractCaseAccessor, AbstractFormAccessor, AttachmentContent
+)
 from couchforms.dbaccessors import (
     get_forms_by_type,
     get_deleted_form_ids_for_user,
