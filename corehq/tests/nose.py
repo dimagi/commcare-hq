@@ -113,18 +113,19 @@ class ErrorOnDbAccessContext(object):
         mock_couch = Mock(side_effect=error, spec=[])
 
         # register our dbs with the extension document classes
-        self.real_couch_dbs = dbs = []
-        old_handler = loading.couchdbkit_handler
-        for app, value in old_handler.app_schema.items():
-            for name, cls in value.items():
-                dbs.append((cls, cls.get_db()))
+        self.db_classes = db_classes = []
+        for app, value in loading.couchdbkit_handler.app_schema.items():
+            for cls in value.values():
+                db_classes.append(cls)
+                db = cls.get_db()
                 cls.set_db(mock_couch)
 
     def teardown(self):
         """Enable database access"""
         from django.conf import settings
         settings.DB_ENABLED = self.original_db_enabled
-        for cls, db in self.real_couch_dbs:
+        for cls in self.db_classes:
+            db = loading.get_db(cls._meta.app_label)
             cls.set_db(db)
         self.db_patch.stop()
 
@@ -143,7 +144,7 @@ class HqdbContext(DatabaseContext):
     def verify_test_db(cls, app, uri):
         if '/test_' not in uri:
             raise ValueError("not a test db url: app=%s url=%r" % (app, uri))
-        return app
+        return app, uri
 
     def should_skip_test_setup(self):
         # FRAGILE look in sys.argv; can't get nose config from here
@@ -175,21 +176,17 @@ class HqdbContext(DatabaseContext):
 
         # delete couch databases
         deleted_databases = []
-        skipcount = 0
-        for app in self.apps:
+        for app, uri in self.apps:
+            if uri in deleted_databases:
+                continue
             app_label = app.split('.')[-1]
             db = loading.get_db(app_label)
-            if db.dbname in deleted_databases:
-                skipcount += 1
-                continue
             try:
                 db.server.delete_db(db.dbname)
-                deleted_databases.append(db.dbname)
+                deleted_databases.append(uri)
                 log.info("deleted database %s for %s", db.dbname, app_label)
             except ResourceNotFound:
                 log.info("database %s not found for %s! it was probably already deleted.", db.dbname, app_label)
-        if skipcount:
-            log.info("skipped deleting %s app databases that were already deleted", skipcount)
 
         # HACK clean up leaked database connections
         from corehq.sql_db.connections import connection_manager
