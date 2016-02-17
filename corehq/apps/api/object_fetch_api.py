@@ -43,12 +43,25 @@ class CaseAttachmentAPI(View):
 
         if img is not None:
             if size == "debug_all":
-                case_doc = CommCareCase.get(case_id)
+                url_base = reverse("api_case_attachment", kwargs={
+                    "domain": self.request.domain,
+                    "case_id": case_id,
+                    "attachment_id": attachment_id,
+                })
+
                 r = HttpResponse(content_type="text/html")
                 r.write('<html><body>')
                 r.write('<ul>')
                 for fsize in IMAGE_SIZE_ORDERING:
-                    meta, stream = fetch_case_image(domain, case_id, attachment_id, filesize_limit=max_filesize, width_limit=max_width, height_limit=max_height, fixed_size=fsize)
+                    meta, stream = fetch_case_image(
+                        domain,
+                        case_id,
+                        attachment_id,
+                        filesize_limit=max_filesize,
+                        width_limit=max_width,
+                        height_limit=max_height,
+                        fixed_size=fsize
+                    )
 
                     r.write('<li>')
                     r.write('Size: %s<br>' % fsize)
@@ -60,22 +73,19 @@ class CaseAttachmentAPI(View):
                     r.write("<br>")
                     if meta is not None:
                         r.write('Resolution: %d x %d<br>' % (meta['width'], meta['height']))
-                        r.write('Filesize: %d<br>' % ( meta['content_length']))
-                        r.write('<img src="%(attach_url)s?img&size=%(size_key)s&max_size=%(max_filesize)s&max_image_width=%(max_width)s&max_image_height=%(max_height)s">' %
-                                {
-                                    "attach_url": reverse("api_case_attachment", kwargs={
-                                        "domain": self.request.domain,
-                                        "case_id": case_id,
-                                        "attachment_id": attachment_id,
-                                    }),
-                                    "domain": case_doc.domain, "case_id": case_id,
-                                    "attachment_key": attachment_id,
-                                    "size_key": fsize,
-                                    "max_filesize": max_filesize,
-                                    "max_width": max_width,
-                                    "max_height": max_height
-                                }
-                        )
+                        r.write('Filesize: %d<br>' % meta['content_length'])
+
+                        url_params = urllib.parse.urlencode({
+                            "img": '1',
+                            "size": fsize,
+                            "max_size": max_filesize,
+                            "max_image_width": max_width,
+                            "max_image_height": max_height
+                        })
+                        r.write('<img src="%(attach_url)s?%(params)s">' % {
+                                "attach_url": url_base,
+                                "params": url_params
+                        })
                     else:
                         r.write('Not available')
                     r.write('</li>')
