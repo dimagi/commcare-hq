@@ -1,3 +1,4 @@
+from StringIO import StringIO
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, StreamingHttpResponse, HttpResponseForbidden
@@ -5,7 +6,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import View
 from corehq.apps.reports.views import can_view_attachments
 from couchforms.models import XFormInstance
-from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL
+from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL, CachedImage
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 
@@ -103,3 +104,83 @@ class FormAttachmentAPI(View):
         content_type = headers.get('Content-Type', None)
 
         return StreamingHttpResponse(streaming_content=resp, content_type=content_type)
+
+
+def fetch_case_image(case_id, attachment_key, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):
+    """
+    Return (metadata, stream) information of best matching image attachment.
+    attachment_key is the case property of the attachment
+    attachment filename is the filename of the original submission - full extension and all.
+    """
+    if fixed_size is not None:
+        size_key = fixed_size
+    else:
+        size_key = OBJECT_ORIGINAL
+
+    constraint_dict = {}
+    if filesize_limit:
+        constraint_dict['content_length'] = filesize_limit
+
+    if height_limit:
+        constraint_dict['height'] = height_limit
+
+    if width_limit:
+        constraint_dict['width'] = width_limit
+    do_constrain = bool(constraint_dict)
+
+    # if size key is None, then one of the limit criteria are set
+    attachment_cache_key = "%(case_id)s_%(attachment)s" % {
+        "case_id": case_id,
+        "attachment": attachment_key,
+    }
+
+    cached_image = CachedImage(attachment_cache_key)
+    meta, stream = cache_and_get_object(cached_image, case_id, attachment_key, size_key=size_key)
+
+    # now that we got it cached, let's check for size constraints
+
+    if do_constrain:
+        #check this size first
+        #see if the current size matches the criteria
+
+        def meets_constraint(constraints, meta):
+            for c, limit in constraints.items():
+                if meta[c] > limit:
+                    return False
+            return True
+
+        if meets_constraint(constraint_dict, meta):
+            #yay, do nothing
+            pass
+        else:
+            #this meta is no good, find another one
+            lesser_keys = IMAGE_SIZE_ORDERING[0:IMAGE_SIZE_ORDERING.index(size_key)]
+            lesser_keys.reverse()
+            is_met = False
+            for lesser_size in lesser_keys:
+                less_meta, less_stream = cached_image.get_size(lesser_size)
+                if meets_constraint(constraint_dict, less_meta):
+                    meta = less_meta
+                    stream = less_stream
+                    is_met = True
+                    break
+            if not is_met:
+                meta = None
+                stream = None
+
+    return meta, stream
+
+
+def cache_and_get_object(cobject, case_id, attachment_key, size_key=OBJECT_ORIGINAL):
+    """
+    Retrieve cached_object or image and cache sizes if necessary
+    """
+    if not cobject.is_cached():
+        resp = CommCareCase.get_db().fetch_attachment(case_id, attachment_key, stream=True)
+        stream = StringIO(resp.read())
+        headers = resp.resp.headers
+        cobject.cache_put(stream, headers)
+
+    meta, stream = cobject.get(size_key=size_key)
+    return meta, stream
+
