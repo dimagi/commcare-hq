@@ -93,7 +93,7 @@ class WriterTest(SimpleTestCase):
         with writer.open(export_instance.tables):
             _write_export_instance(writer, export_instance, self.docs)
 
-        with ExportFile(writer.path) as export:
+        with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
                 json.loads(export),
                 {
@@ -140,7 +140,7 @@ class WriterTest(SimpleTestCase):
         writer = _get_writer([export_instance])
         with writer.open(export_instance.tables):
             _write_export_instance(writer, export_instance, self.docs)
-        with ExportFile(writer.path) as export:
+        with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
                 json.loads(export),
                 {
@@ -201,12 +201,12 @@ class WriterTest(SimpleTestCase):
 
         ]
 
-        writer = _Writer(get_writer(Format.JSON))
+        writer = _Writer(get_writer(Format.JSON), Format.JSON)
         with writer.open(_get_tables(export_instances)):
             _write_export_instance(writer, export_instances[0], self.docs)
             _write_export_instance(writer, export_instances[1], self.docs)
 
-        with ExportFile(writer.path) as export:
+        with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
                 json.loads(export),
                 {

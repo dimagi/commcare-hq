@@ -16,9 +16,11 @@ from couchexport.models import Format
 
 
 class ExportFile(object):
+    # This is essentially coppied from couchexport.files.ExportFiles
 
-    def __init__(self, path):
+    def __init__(self, path, format):
         self.file = Temp(path)
+        self.format = format
 
     def __enter__(self):
         return self.file.payload
@@ -31,9 +33,10 @@ class _Writer(object):
     """
     An object that provides a friendlier interface to couchexport.ExportWriters.
     """
-    def __init__(self, writer):
+    def __init__(self, writer, format):
         # An instance of a couchexport.ExportWriter
         self.writer = writer
+        self.format = format
         self._path = None
 
     @contextlib.contextmanager
@@ -85,7 +88,7 @@ def _get_writer(export_instances):
         format = export_instances[0].export_format
 
     legacy_writer = get_writer(format)
-    writer = _Writer(legacy_writer)
+    writer = _Writer(legacy_writer, format)
     return writer
 
 
@@ -114,7 +117,7 @@ def get_export_file(export_instances, filters):
             docs = _get_export_documents(export_instance, filters)
             _write_export_instance(writer, export_instance, docs)
 
-    return ExportFile(writer.path)
+    return ExportFile(writer.path, writer.format)
 
 
 def _get_export_documents(export_instance, filters):
