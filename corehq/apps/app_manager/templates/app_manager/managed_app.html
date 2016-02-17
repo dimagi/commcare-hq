@@ -34,7 +34,8 @@
     {{ block.super }}
     <script>
         $(function () {
-            COMMCAREHQ.app_manager.init({
+            var init = hqImport('app_manager/js/app_manager.js').init;
+            init({
                 appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
                 commcareVersion: {{ app.commcare_minor_release|JSON }},
                 latestCommcareVersion: {% if latest_commcare_version %}{{ latest_commcare_version|JSON }}{% else %}null{% endif %}
