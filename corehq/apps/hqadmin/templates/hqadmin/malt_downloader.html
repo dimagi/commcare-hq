@@ -1,33 +1,23 @@
-{% extends "style/bootstrap2/two_column.html" %}
+{% extends "style/bootstrap3/base_section.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "Download MALT" %}{% endblock %}
-
-{% block page-title %}
-    <ul class="breadcrumb">
-    <li>
-        <a href="{% url "default_admin_report" %}"><strong>{% trans "Admin Reports" %}</strong></a> <span class="divider">&gt;</span>
-    </li>
-	    <li class="active">
-            <a href="{% url "download_malt" %}"><strong>{% trans "Download MALT" %}</strong></a>
-        </li>
-    </ul>
-{% endblock %}
-
-
-{% block main_column %}
-<form method="get" action="{% url "download_malt" %}">
-	<div class="control-group">
-		<div class="alert info">
-			Enter a month to download all MALT data as csv for that month
-		</div>
-	    <label class="control-label" for="month-year-input">{% trans "Year Month" %}</label>
-	    <div class="controls">
-	        <input type="text" name="year_month" id="month-year-input" placeholder="YYYY-MM"/>
+{% block page_content %}
+<form method="get" class="form form-horizontal" action="{% url "download_malt" %}">
+    <div class="alert alert-info">
+        {% trans 'Enter a month to download all MALT data as csv for that month' %}
+    </div>
+	<div class="form-group">
+	    <label class="col-xs-2 control-label" for="month-year-input">{% trans "Year Month" %}</label>
+	    <div class="col-xs-4">
+	        <input type="text" name="year_month" class="form-control" id="month-year-input" placeholder="YYYY-MM"/>
 	    </div>
 	</div>
-	<button type="submit" class="btn btn-primary">
-	    <i class="icon icon-cloud-download"></i> {% trans 'Download as CSV' %}
-	</button>
+    <div class="form-actions">
+        <div class="col-xs-offset-2 col-xs-4">
+            <button type="submit" class="btn btn-primary">
+                <i class="fa fa-cloud-download"></i> {% trans 'Download as CSV' %}
+            </button>
+        </div>
+    </div>
 </form>
 {% endblock %}
