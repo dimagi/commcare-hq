@@ -11,7 +11,6 @@ def get_form_export_base_query(domain, app_id, xmlns, include_errors):
     if include_errors:
         query = query.remove_default_filter("is_xform_instance")
         query = query.doc_type(["xforminstance", "xformarchived", "xformdeprecated", "xformduplicate"])
-        # TODO: Confirm that the doc types get lower cased like this
     return query
 
 
