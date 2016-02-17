@@ -54,7 +54,7 @@ class _Writer(object):
 
             # open the ExportWriter
             headers = [(t, (t.get_headers(),)) for t in tables]
-            table_titles = {t: t.name for t in tables}
+            table_titles = {t: t.label for t in tables}
             self.writer.open(headers, file, table_titles=table_titles)
             yield
             self.writer.close()

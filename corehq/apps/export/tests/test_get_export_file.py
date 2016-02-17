@@ -68,7 +68,7 @@ class WriterTest(SimpleTestCase):
             export_format=Format.JSON,
             tables=[
                 TableConfiguration(
-                    name="My table",
+                    label="My table",
                     columns=[
                         ExportColumn(
                             label="Q3",
@@ -110,7 +110,7 @@ class WriterTest(SimpleTestCase):
             export_format=Format.JSON,
             tables=[
                 TableConfiguration(
-                    name="My table",
+                    label="My table",
                     path=[],
                     columns=[
                         ExportColumn(
@@ -123,7 +123,7 @@ class WriterTest(SimpleTestCase):
                     ]
                 ),
                 TableConfiguration(
-                    name="My other table",
+                    label="My other table",
                     path=['form', 'q2'],
                     columns=[
                         ExportColumn(
@@ -166,7 +166,7 @@ class WriterTest(SimpleTestCase):
                 # export_format=Format.JSON,
                 tables=[
                     TableConfiguration(
-                        name="My table",
+                        label="My table",
                         path=[],
                         columns=[
                             ExportColumn(
@@ -184,7 +184,7 @@ class WriterTest(SimpleTestCase):
                 # export_format=Format.JSON,
                 tables=[
                     TableConfiguration(
-                        name="My other table",
+                        label="My other table",
                         path=['form', 'q2'],
                         columns=[
                             ExportColumn(
@@ -257,7 +257,7 @@ class ExportTest(SimpleTestCase):
                     domain=DOMAIN,
                     case_type=DEFAULT_CASE_TYPE,
                     tables=[TableConfiguration(
-                        name="My table",
+                        label="My table",
                         path=[],
                         columns=[
                             ExportColumn(
@@ -306,7 +306,7 @@ class ExportTest(SimpleTestCase):
                     domain=DOMAIN,
                     case_type=DEFAULT_CASE_TYPE,
                     tables=[TableConfiguration(
-                        name="My table",
+                        label="My table",
                         path=MAIN_TABLE,
                         columns=[
                             ExportColumn(
@@ -324,7 +324,7 @@ class ExportTest(SimpleTestCase):
                     domain=DOMAIN,
                     case_type=DEFAULT_CASE_TYPE,
                     tables=[TableConfiguration(
-                        name="My table",
+                        label="My table",
                         path=MAIN_TABLE,
                         columns=[
                             ExportColumn(
