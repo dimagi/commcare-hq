@@ -3317,9 +3317,16 @@ def _filter_by_user_id(user, ui_filter):
     return Choice(value=user._id, display=None)
 
 
+def _filter_by_parent_location_id(user, ui_filter):
+    location = user.sql_location or user.location
+    location_parent = location.parent.location_id if location and location.parent else None
+    return ui_filter.value(**{ui_filter.name: location_parent})
+
+
 _filter_type_to_func = {
     'case_sharing_group': _filter_by_case_sharing_group_id,
     'location_id': _filter_by_location_id,
+    'parent_location_id': _filter_by_parent_location_id,
     'username': _filter_by_username,
     'user_id': _filter_by_user_id,
 }
