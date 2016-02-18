@@ -1012,7 +1012,7 @@ def view_scheduled_report(request, domain, scheduled_report_id):
 @require_GET
 def case_details(request, domain, case_id):
     try:
-        case = get_document_or_404(CommCareCase, domain, case_id)
+        case = _get_case_or_404(domain, case_id)
     except Http404:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake please report an issue.")
         return HttpResponseRedirect(CaseListReport.get_url(domain=domain))
@@ -1050,7 +1050,7 @@ def case_details(request, domain, case_id):
 @login_and_domain_required
 @require_GET
 def case_forms(request, domain, case_id):
-    case = get_document_or_404(CommCareCase, domain, case_id)
+    case = _get_case_or_404(domain, case_id)
     try:
         start_range = int(request.GET['start_range'])
         end_range = int(request.GET['end_range'])
@@ -1080,7 +1080,7 @@ def case_attachments(request, domain, case_id):
     if not can_view_attachments(request):
         return HttpResponseForbidden(_("You don't have permission to access this page."))
 
-    case = get_document_or_404(CommCareCase, domain, case_id)
+    case = _get_case_or_404(domain, case_id)
     return render(request, 'reports/reportdata/case_attachments.html',
                   {'domain': domain, 'case': case})
 
@@ -1089,7 +1089,7 @@ def case_attachments(request, domain, case_id):
 @login_and_domain_required
 @require_GET
 def case_xml(request, domain, case_id):
-    case = get_document_or_404(CommCareCase, domain, case_id)
+    case = _get_case_or_404(domain, case_id)
     version = request.GET.get('version', V2)
     return HttpResponse(case.to_xml(version), content_type='text/xml')
 
@@ -1098,7 +1098,7 @@ def case_xml(request, domain, case_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def rebuild_case_view(request, domain, case_id):
-    case = get_document_or_404(CommCareCase, domain, case_id)
+    case = _get_case_or_404(domain, case_id)
     rebuild_case_from_forms(domain, case_id, UserRequestedRebuild(user_id=request.couch_user.user_id))
     messages.success(request, _(u'Case %s was rebuilt from its forms.' % case.name))
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
@@ -1110,7 +1110,7 @@ def rebuild_case_view(request, domain, case_id):
 def resave_case(request, domain, case_id):
     """Re-save the case to have it re-processed by pillows
     """
-    case = get_document_or_404(CommCareCase, domain, case_id)
+    case = _get_case_or_404(domain, case_id)
     CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
     messages.success(
         request,
@@ -1126,7 +1126,7 @@ def bootstrap_ledgers(request, domain, case_id):
     # todo: this is just to fix a mobile issue that requires ledgers to be initialized
     # this view and code can be removed when that bug is released (likely anytime after
     # october 2015 if you are reading this after then)
-    case = get_document_or_404(CommCareCase, domain, case_id)
+    case = _get_case_or_404(domain, case_id)
     if (not StockTransaction.objects.filter(case_id=case_id).exists() and
             SQLProduct.objects.filter(domain=domain).exists()):
         submit_case_blocks([
@@ -1145,7 +1145,7 @@ def bootstrap_ledgers(request, domain, case_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def close_case_view(request, domain, case_id):
-    case = get_document_or_404(CommCareCase, domain, case_id)
+    case = _get_case_or_404(domain, case_id)
     if case.closed:
         messages.info(request, u'Case {} is already closed.'.format(case.name))
     else:
@@ -1172,7 +1172,7 @@ def close_case_view(request, domain, case_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def undo_close_case_view(request, domain, case_id):
-    case = get_document_or_404(CommCareCase, domain, case_id)
+    case = _get_case_or_404(domain, case_id)
     if not case.closed:
         messages.info(request, u'Case {} is not closed.'.format(case.name))
     else:
@@ -1188,7 +1188,7 @@ def undo_close_case_view(request, domain, case_id):
 @login_and_domain_required
 @require_GET
 def export_case_transactions(request, domain, case_id):
-    case = get_document_or_404(CommCareCase, domain, case_id)
+    case = _get_case_or_404(domain, case_id)
     products_by_id = dict(SQLProduct.objects.filter(domain=domain).values_list('product_id', 'name'))
 
     headers = [
@@ -1354,6 +1354,16 @@ def _get_form_or_404(domain, id):
     try:
         return FormAccessors(domain).get_form(id)
     except XFormNotFound:
+        raise Http404()
+
+
+def _get_case_or_404(domain, case_id):
+    try:
+        case = CaseAccessors(domain).get_case(case_id)
+        if case.domain != domain:
+            raise Http404()
+        return case
+    except CaseNotFound:
         raise Http404()
 
 
