@@ -159,9 +159,9 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         (DELETED, 'deleted'),
     )
 
-    form_id = models.CharField(max_length=255, unique=True, db_index=True)
+    form_id = models.CharField(max_length=255, unique=True, db_index=True, default=None)
 
-    domain = models.CharField(max_length=255)
+    domain = models.CharField(max_length=255, default=None)
     app_id = models.CharField(max_length=255, null=True)
     xmlns = models.CharField(max_length=255)
     user_id = models.CharField(max_length=255, null=True)
@@ -330,13 +330,13 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
 
 class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
     attachment_id = UUIDField(unique=True, db_index=True)
-    name = models.CharField(max_length=255, db_index=True)
+    name = models.CharField(max_length=255, db_index=True, default=None)
     content_type = models.CharField(max_length=255, null=True)
     content_length = models.IntegerField(null=True)
-    blob_id = models.CharField(max_length=255)
+    blob_id = models.CharField(max_length=255, default=None)
 
     # RFC-1864-compliant Content-MD5 header value
-    md5 = models.CharField(max_length=255)
+    md5 = models.CharField(max_length=255, default=None)
 
     properties = JSONField(lazy=True, default=dict)
 
@@ -403,7 +403,7 @@ class XFormOperationSQL(DisabledDbMixin, models.Model):
 
     form = models.ForeignKey(XFormInstanceSQL, to_field='form_id')
     user_id = models.CharField(max_length=255, null=True)
-    operation = models.CharField(max_length=255)
+    operation = models.CharField(max_length=255, default=None)
     date = models.DateTimeField(auto_now_add=True)
 
     @property
@@ -473,7 +473,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     objects = RestrictedManager()
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
-    domain = models.CharField(max_length=255)
+    domain = models.CharField(max_length=255, default=None)
     type = models.CharField(max_length=255)
     name = models.CharField(max_length=255, null=True)
 
@@ -663,7 +663,7 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
         'CommCareCaseSQL', to_field='case_id', db_index=True,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
-    identifier = models.CharField(max_length=255)
+    identifier = models.CharField(max_length=255, default=None)
     attachment_src = models.TextField(null=True)
     attachment_from = models.TextField(null=True)
 
@@ -697,8 +697,8 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
                     "Case attachment content not deleted. bucket=%s, blob_id=%s",
                     self._blobdb_bucket(), self.blob_id
                 )
-        content = attachment.read_content()
-        self.write_content(StringIO(content))
+        content = attachment.read_content(stream=True)
+        self.write_content(content)
 
     @classmethod
     def from_case_update(cls, attachment):
@@ -751,10 +751,10 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
         'CommCareCaseSQL', to_field='case_id', db_index=True,
         related_name="index_set", related_query_name="index"
     )
-    domain = models.CharField(max_length=255)
-    identifier = models.CharField(max_length=255, null=False)
-    referenced_id = models.CharField(max_length=255, null=False)
-    referenced_type = models.CharField(max_length=255, null=False)
+    domain = models.CharField(max_length=255, default=None)
+    identifier = models.CharField(max_length=255, default=None)
+    referenced_id = models.CharField(max_length=255, default=None)
+    referenced_type = models.CharField(max_length=255, default=None)
     relationship_id = models.PositiveSmallIntegerField(choices=RELATIONSHIP_CHOICES)
 
     @property
@@ -947,11 +947,11 @@ class LedgerValue(models.Model):
     Represents the current state of a ledger. Supercedes StockState
     """
     # domain not included and assumed to be accessed through the foreign key to the case table. legit?
-    case_id = models.CharField(max_length=255, db_index=True)  # remove foreign key until we're sharding this
+    case_id = models.CharField(max_length=255, db_index=True, default=None)  # remove foreign key until we're sharding this
     # can't be a foreign key to products because of sharding.
     # also still unclear whether we plan to support ledgers to non-products
-    entry_id = models.CharField(max_length=100, db_index=True)
-    section_id = models.CharField(max_length=100, db_index=True)
+    entry_id = models.CharField(max_length=100, db_index=True, default=None)
+    section_id = models.CharField(max_length=100, db_index=True, default=None)
     balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
     last_modified = models.DateTimeField(auto_now=True)
 
