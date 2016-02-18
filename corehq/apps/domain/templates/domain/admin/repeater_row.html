@@ -1,7 +1,17 @@
 {% load i18n %}
 <tr>
     <td>{{ repeater.url }}</td>
+    <td>{{ repeater.get_pending_record_count }}</td>
+    <td>{{ repeater.get_failure_record_count }}</td>
+    <td>{{ repeater.get_success_record_count }}</td>
     <td>
+        <a
+            class="btn btn-default"
+            href="
+            {% url 'domain_report_dispatcher' domain 'repeat_record_report' %}?repeater={{ repeater.get_id }}"
+            >
+            {% trans "View forwarded records" %}
+        </a>
         <a class="btn btn-danger" href="#stop_forwarding_{{ repeater.get_id }}" data-toggle="modal"><i
                 class="icon icon-white icon-remove"></i> {% trans "Stop Forwarding" %}</a>
 

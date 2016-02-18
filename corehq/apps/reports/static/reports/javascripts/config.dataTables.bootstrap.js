@@ -88,7 +88,8 @@ function HQReportDataTables(options) {
                 iDisplayLength: self.defaultRows,
                 bAutoWidth: self.autoWidth,
                 sScrollX: "100%",
-                bSort: self.defaultSort
+                bSort: self.defaultSort,
+                bFilter: false
             };
             if (self.aaSorting !== null || self.customSort !== null) {
                 params.aaSorting = self.aaSorting || self.customSort;
