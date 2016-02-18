@@ -282,11 +282,10 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         if not xml:
             return None
 
-        def _to_xml_element(payload):
-            if isinstance(payload, unicode):
-                payload = payload.encode('utf-8', errors='replace')
-            return etree.fromstring(payload)
-        return _to_xml_element(xml)
+        if isinstance(xml, unicode):
+            xml = xml.encode('utf-8', errors='replace')
+
+        return etree.fromstring(xml)
 
     def get_data(self, path):
         """
