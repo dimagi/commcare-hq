@@ -22,7 +22,11 @@ from corehq.apps.userreports.views import (
     ReportBuilderTypeSelect,
 )
 from .filters import urls as filter_urls
-from .views import EditFormInstance, AddSavedReportConfigView
+from .views import (
+    EditFormInstance,
+    AddSavedReportConfigView,
+    MySavedReportsView,
+)
 
 
 custom_report_urls = patterns('',
@@ -43,7 +47,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^builder/edit/(?P<report_id>[\w\-]+)/$', EditReportInBuilder.as_view(), name='edit_report_in_builder'),
 
     url(r'^$', "default", name="reports_home"),
-    url(r'^saved/', "saved_reports", name="saved_reports"),
+    url(r'^saved/', MySavedReportsView.as_view(), name=MySavedReportsView.urlname),
     url(r'^saved_reports', 'old_saved_reports'),
 
     url(r'^case_data/(?P<case_id>[\w\-]+)/$', 'case_details', name="case_details"),
