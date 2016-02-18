@@ -121,7 +121,6 @@ class FormAttachmentAPI(View):
         try:
             content = FormAccessors(domain).get_attachment_content(form_id, attachment_id)
         except AttachmentNotFound as e:
-            print e
             raise Http404
         
         return StreamingHttpResponse(streaming_content=content.content_stream, content_type=content.content_type)
@@ -159,9 +158,7 @@ def fetch_case_image(domain, case_id, attachment_id, filesize_limit=0, width_lim
                     return False
             return True
 
-        if meets_constraint(constraint_dict, meta):
-            pass
-        else:
+        if not meets_constraint(constraint_dict, meta):
             # this meta is no good, find another one
             lesser_keys = IMAGE_SIZE_ORDERING[0:IMAGE_SIZE_ORDERING.index(size_key)]
             lesser_keys.reverse()
