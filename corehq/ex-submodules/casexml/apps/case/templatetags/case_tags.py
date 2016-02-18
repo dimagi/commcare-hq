@@ -27,8 +27,6 @@ DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
 class CaseDisplayWrapper(object):
     def __init__(self, case):
         self.case = case
-        self.domain = case.domain
-        self.case_id = case.case_id
 
     def actions(self):
         actions = self.case.to_json()['actions']
@@ -106,6 +104,35 @@ class CaseDisplayWrapper(object):
             dynamic_data['external_id'] = self.case.external_id
 
         return dynamic_data
+
+    @property
+    def related_cases_columns(self):
+        return [
+            {
+                'name': _('Status'),
+                'expr': "status"
+            },
+            {
+                'name': _('Case Type'),
+                'expr': "type",
+            },
+            {
+                'name': _('Date Opened'),
+                'expr': "opened_on",
+                'parse_date': True,
+                "is_phone_time": True,
+            },
+            {
+                'name': _('Date Modified'),
+                'expr': "modified_on",
+                'parse_date': True,
+                "is_phone_time": True,
+            }
+        ]
+
+    @property
+    def related_type_info(self):
+        return None
 
 
 class SupplyPointDisplayWrapper(CaseDisplayWrapper):
@@ -229,7 +256,7 @@ def render_case(case, options):
         except SQLProduct.DoesNotExist:
             return (_('Unknown Product ("{}")').format(product_id))
 
-    ledgers = get_current_ledger_transactions(wrapped_case.case_id)
+    ledgers = get_current_ledger_transactions(case.case_id)
     for section, product_map in ledgers.items():
         product_tuples = sorted(
             (_product_name(product_id), product_map[product_id]) for product_id in product_map
@@ -257,7 +284,7 @@ def render_case(case, options):
         "ledgers": ledgers,
         "timezone_offset": tz_offset_ms,
         "show_transaction_export": show_transaction_export,
-        "xform_api_url": reverse('single_case_forms', args=[wrapped_case.domain, wrapped_case.case_id]),
+        "xform_api_url": reverse('single_case_forms', args=[case.domain, case.case_id]),
     })
 
 
@@ -417,12 +444,12 @@ def render_case_hierarchy(case, options):
     # todo: what are these doing here?
     from corehq.apps.hqwebapp.templatetags.proptable_tags import get_display_data
 
-    case = wrapped_case(case)
+    wrapped_case = get_wrapped_case(case)
     get_case_url = options.get('get_case_url')
     timezone = options.get('timezone', pytz.utc)
-    columns = options.get('columns') or case.related_cases_columns
+    columns = options.get('columns') or wrapped_case.related_cases_columns
     show_view_buttons = options.get('show_view_buttons', True)
-    type_info = options.get('related_type_info', case.related_type_info)
+    type_info = options.get('related_type_info', wrapped_case.related_type_info)
 
     descendent_case_list = get_flat_descendant_case_list(
         case, get_case_url, type_info=type_info

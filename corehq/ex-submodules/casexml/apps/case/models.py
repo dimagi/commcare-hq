@@ -388,35 +388,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         super(CommCareCase, self).save(**params)
         case_post_save.send(CommCareCase, case=self)
 
-    @property
-    def related_cases_columns(self):
-        return [
-            {
-                'name': _('Status'),
-                'expr': "status"
-            },
-            {
-                'name': _('Case Type'),
-                'expr': "type",
-            },
-            {
-                'name': _('Date Opened'),
-                'expr': "opened_on",
-                'parse_date': True,
-                "is_phone_time": True,
-            },
-            {
-                'name': _('Date Modified'),
-                'expr': "modified_on",
-                'parse_date': True,
-                "is_phone_time": True,
-            }
-        ]
-
-    @property
-    def related_type_info(self):
-        return None
-
 
 # import signals
 import casexml.apps.case.signals
