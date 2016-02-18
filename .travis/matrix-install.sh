@@ -1,7 +1,11 @@
 #!/bin/bash
 set -ev
 
-source .travis/utils.sh
+source docker/utils.sh
+FLAVOUR='travis'
+if [ "${MATRIX_TYPE}" = "javascript" ]; then
+    FLAVOUR='travis-js'
+fi
 
 echo "Matrix params: MATRIX_TYPE=${MATRIX_TYPE:?Empty value for MATRIX_TYPE}, BOWER=${BOWER:-no}"
 
