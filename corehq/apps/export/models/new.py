@@ -61,7 +61,7 @@ class ExportItem(DocumentSchema):
     @classmethod
     def create_from_question(cls, question, app_id, app_version):
         return cls(
-            path=_string_path_to_list(question['value']),
+            path=_question_path_to_doc_path(question['value']),
             label=question['label'],
             last_occurrences={app_id: app_version},
         )
@@ -624,10 +624,10 @@ class FormExportDataSchema(ExportDataSchema):
             # If group_path is None, that means the questions are part of the form and not a repeat group
             # inside of the form
             group_schema = ExportGroupSchema(
-                path=_string_path_to_list(group_path),
+                path=_question_path_to_doc_path(group_path),
                 last_occurrences={app_id: app_version},
             )
-            if group_path == MAIN_TABLE:
+            if group_path is None:
                 for system_prop in MAIN_TABLE_PROPERTIES:
                     group_schema.items.append(ScalarItem(
                         path=[system_prop.name],
@@ -783,6 +783,24 @@ class CaseExportDataSchema(ExportDataSchema):
 
 def _string_path_to_list(path):
     return path if path is None else path[1:].split('/')
+
+
+def _question_path_to_doc_path(string_path):
+    """
+    Convert a question path into the format expected by the export code,
+    specifically the logic in ExportColumn.get_value().
+    The export code will use this path to traverse the JSON representation of
+    the form that is stored in ElasticSearch.
+
+    E.g. "/data/question1/" is converted to ["form", "question1"]
+    """
+    path = _string_path_to_list(string_path)
+    if path is None:
+        path = []
+    else:
+        assert path[0] == "data"
+        path[0] = "form"
+    return path
 
 
 def _list_path_to_string(path, separator='.'):
