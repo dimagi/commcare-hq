@@ -567,8 +567,12 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
 
         return indices
 
+    @property
+    def has_indices(self):
+        return self.indices or self.reverse_indices
+
     def has_index(self, index_id):
-            return index_id in (i.identifier for i in self.indices)
+        return index_id in (i.identifier for i in self.indices)
 
     def get_index(self, index_id):
         found = filter(lambda i: i.identifier == index_id, self.indices)
