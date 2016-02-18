@@ -37,14 +37,10 @@ class FormES(HQESQuery):
 
 
 def xmlns(xmlnss):
-    if not isinstance(xmlnss, list):
-        xmlnss = [xmlnss]
     return filters.term('xmlns.exact', xmlnss)
 
 
 def app(app_ids):
-    if not isinstance(app_ids, list):
-        app_ids = [app_ids]
     return filters.term('app_id', app_ids)
 
 
