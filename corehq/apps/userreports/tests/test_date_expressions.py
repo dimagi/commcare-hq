@@ -29,3 +29,35 @@ def test_add_months_to_date_expression(self, source_doc, months_expression, expe
         'months_expression': months_expression
     })
     self.assertEqual(expected_value, expression(source_doc))
+
+
+@generate_cases([
+    ({'dob': '2015-01-20'},  date(2015, 1, 1)),
+    ({'dob': date(2015, 1, 31)},  date(2015, 1, 1)),
+    ({'dob': datetime(2015, 1, 20)}, date(2015, 1, 1)),
+])
+def test_month_start_date_expression(self, source_doc, expected_value):
+    expression = ExpressionFactory.from_spec({
+        'type': 'month_start_date',
+        'date_expression': {
+            'type': 'property_name',
+            'property_name': 'dob',
+        },
+    })
+    self.assertEqual(expected_value, expression(source_doc))
+
+
+@generate_cases([
+    ({'dob': '2015-01-20'},  date(2015, 1, 31)),
+    ({'dob': date(2015, 2, 20)},  date(2015, 2, 28)),
+    ({'dob': datetime(2015, 4, 20)}, date(2015, 4, 30)),
+])
+def test_month_end_date_expression(self, source_doc, expected_value):
+    expression = ExpressionFactory.from_spec({
+        'type': 'month_end_date',
+        'date_expression': {
+            'type': 'property_name',
+            'property_name': 'dob',
+        },
+    })
+    self.assertEqual(expected_value, expression(source_doc))

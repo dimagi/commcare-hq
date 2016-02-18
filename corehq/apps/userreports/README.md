@@ -88,6 +88,9 @@ nested          | A way to chain any two expressions together | `f1(f2(doc))`
 dict            | A way to emit a dictionary of key/value pairs | `{"name": "test", "value": f(doc)}`
 add_days        | A way to add days to a date | `my_date + timedelta(days=15)`
 add_months      | A way to add months to a date | `my_date + relativedelta(months=15)`
+month_start_date| First day in the month of a date | `2015-01-20` -> `2015-01-01`
+month_end_date  | Last day in the month of a date | `2015-01-20` -> `2015-01-31`
+
 
 ### JSON snippets for expressions
 
@@ -337,6 +340,22 @@ The date_expression and months_expression can be any valid expressions, or simpl
         "property_name": "dob",
     },
     "months_expression": 28
+}
+```
+
+#### "Month Start Date" and "Month End Date" expressions
+
+`month_start_date` returns date of first day in the month of given date and `month_end_date` returns date of last day in the month of given date.
+
+The `date_expression` can be any valid expression, or simply constant
+
+```json
+{
+    "type": "month_start_date",
+    "date_expression": {
+        "type": "property_name",
+        "property_name": "dob",
+    },
 }
 ```
 
