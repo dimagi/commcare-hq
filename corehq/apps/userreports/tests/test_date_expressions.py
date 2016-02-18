@@ -32,8 +32,8 @@ def test_add_months_to_date_expression(self, source_doc, months_expression, expe
 
 
 @generate_cases([
-    ({'dob': '2015-01-20'},  date(2015, 1, 1)),
-    ({'dob': date(2015, 1, 31)},  date(2015, 1, 1)),
+    ({'dob': '2015-01-20'}, date(2015, 1, 1)),
+    ({'dob': date(2015, 1, 31)}, date(2015, 1, 1)),
     ({'dob': datetime(2015, 1, 20)}, date(2015, 1, 1)),
 ])
 def test_month_start_date_expression(self, source_doc, expected_value):
@@ -48,8 +48,8 @@ def test_month_start_date_expression(self, source_doc, expected_value):
 
 
 @generate_cases([
-    ({'dob': '2015-01-20'},  date(2015, 1, 31)),
-    ({'dob': date(2015, 2, 20)},  date(2015, 2, 28)),
+    ({'dob': '2015-01-20'}, date(2015, 1, 31)),
+    ({'dob': date(2015, 2, 20)}, date(2015, 2, 28)),
     ({'dob': datetime(2015, 4, 20)}, date(2015, 4, 30)),
 ])
 def test_month_end_date_expression(self, source_doc, expected_value):
