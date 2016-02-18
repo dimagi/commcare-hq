@@ -7,7 +7,7 @@ from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_updates
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.backends.couch.update_strategy import ActionsUpdateStrategy
+from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdateStrategy
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
@@ -41,7 +41,7 @@ def close_case(case_id, domain, user):
 
 
 def rebuild_case_from_actions(case, actions):
-    strategy = ActionsUpdateStrategy(case)
+    strategy = CouchCaseUpdateStrategy(case)
     strategy.reset_case_state()
     # in addition to resetting the state, also manually clear xform_ids and actions
     # since we're going to rebuild these from the forms

@@ -8,7 +8,7 @@ from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
-from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction
+from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction, CaseAttachmentSQL
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
 
@@ -135,8 +135,26 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                     )
                     self.case.track_create(index)
 
-    def _apply_attachments_action(self, attachment_action, xform=None):
-        raise NotImplementedError()
+    def _apply_attachments_action(self, attachment_action, xform):
+        current_attachments = self.case.case_attachments
+        for identifier, att in attachment_action.attachments.items():
+            new_attachment = CaseAttachmentSQL.from_case_update(att)
+            if new_attachment.is_present:
+                form_attachment = xform.get_attachment_meta(att.attachment_src)
+                new_attachment.update_from_attachment(form_attachment)
+
+                if identifier in current_attachments:
+                    existing_attachment = current_attachments[identifier]
+                    existing_attachment.update_from_attachment(new_attachment)
+                    existing_attachment.copy_content(form_attachment)
+                    self.case.track_update(existing_attachment)
+                else:
+                    new_attachment.copy_content(form_attachment)
+                    new_attachment.case = self.case
+                    self.case.track_create(new_attachment)
+            elif identifier in current_attachments:
+                existing_attachment = current_attachments[identifier]
+                self.case.track_delete(existing_attachment)
 
     def _apply_close_action(self, case_update):
         self.case.closed = True

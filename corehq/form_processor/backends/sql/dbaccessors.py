@@ -367,14 +367,14 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return sum([result.deleted_count for result in results])
 
     @staticmethod
-    def get_attachment_by_name(case_id, attachment_name):
+    def get_attachment_by_identifier(case_id, identifier):
         try:
-            return CommCareCaseSQL.objects.raw(
-                'select * from get_case_attachment_by_name(%s, %s)',
-                [case_id, attachment_name]
+            return CaseAttachmentSQL.objects.raw(
+                'select * from get_case_attachment_by_identifier(%s, %s)',
+                [case_id, identifier]
             )[0]
         except IndexError:
-            raise AttachmentNotFound(attachment_name)
+            raise AttachmentNotFound(identifier)
 
     @staticmethod
     def get_attachment_content(case_id, attachment_id):
@@ -501,6 +501,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                     )
                     logging.debug(msg)
                 raise CaseSaveError(e)
+            else:
+                for attachment in case.get_tracked_models_to_delete(CaseAttachmentSQL):
+                    attachment.delete_content()
 
     @staticmethod
     def get_open_case_ids(domain, owner_id):
