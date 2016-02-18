@@ -62,6 +62,7 @@ branches:
   - legacy-be-gone # Noah 2/12
   - revamp-multimedia # Jenny 2/16
   - ascii-jar # Nick P 2/18
+  - analytics-retry # Cal 2/18
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
