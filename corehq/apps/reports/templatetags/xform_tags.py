@@ -144,7 +144,7 @@ def render_form(form, domain, options):
 
     definition = get_default_definition(sorted_form_metadata_keys(meta.keys()))
     form_meta_data = _get_tables_as_columns(meta, definition)
-    if 'auth_context' in form:
+    if getattr(form, 'auth_context', None):
         auth_context = AuthContext(form.auth_context)
         auth_context_user_id = auth_context.user_id
         auth_user_info = get_doc_info_by_id(domain, auth_context_user_id)
@@ -192,7 +192,7 @@ def render_form(form, domain, options):
             'was_edited': False,
             'is_edit': False,
         }
-        if instance.doc_type == "XFormDeprecated":
+        if instance.is_deprecated:
             info.update({
                 'was_edited': True,
                 'latest_version': instance.orig_id,
@@ -208,7 +208,7 @@ def render_form(form, domain, options):
     return render_to_string("reports/form/partials/single_form.html", {
         "context_case_id": case_id,
         "instance": form,
-        "is_archived": form.doc_type == "XFormArchived",
+        "is_archived": form.is_archived,
         "edit_info": _get_edit_info(form),
         "domain": domain,
         'question_list_not_found': question_list_not_found,
